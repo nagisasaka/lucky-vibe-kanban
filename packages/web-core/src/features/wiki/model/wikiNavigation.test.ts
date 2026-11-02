@@ -215,3 +215,21 @@ describe('Wiki navigation', () => {
     ).toEqual([{ id: 'direct-workspace', name: 'Notes' }]);
   });
 });
+
+it('localizes only the unnamed direct-folder fallback and preserves user names/IDs', () => {
+  const workspace = {
+    id: 'raw-direct',
+    workspace_kind: 'direct_folder',
+    name: null,
+  } as unknown as import('shared/types').Workspace;
+  expect(wikiRepositoryOptions(workspace, [], '直接参照フォルダー')).toEqual([
+    { id: 'raw-direct', name: '直接参照フォルダー' },
+  ]);
+  expect(
+    wikiRepositoryOptions(
+      { ...workspace, name: 'Direct folder' },
+      [],
+      '直接参照フォルダー'
+    )
+  ).toEqual([{ id: 'raw-direct', name: 'Direct folder' }]);
+});

@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import React from 'react';
 
 interface SimpleMarkdownProps {
@@ -11,6 +12,8 @@ interface SimpleMarkdownProps {
  * bare URLs (with PR shortening), and @mentions.
  */
 export function SimpleMarkdown({ content, className }: SimpleMarkdownProps) {
+  const { t } = useTranslation('common');
+  const linkLabel = t('releaseNotes.link');
   const lines = content.split('\n');
   const elements: React.ReactNode[] = [];
   let currentList: string[] = [];
@@ -23,7 +26,7 @@ export function SimpleMarkdown({ content, className }: SimpleMarkdownProps) {
           {currentList.map((item, i) => (
             <li key={i} className="flex gap-1.5">
               <span className="text-low shrink-0">{'·'}</span>
-              <span>{renderInline(item)}</span>
+              <span>{renderInline(item, linkLabel)}</span>
             </li>
           ))}
         </ul>
@@ -58,7 +61,7 @@ export function SimpleMarkdown({ content, className }: SimpleMarkdownProps) {
     flushList();
     elements.push(
       <p key={key++} className="text-xs text-low">
-        {renderInline(trimmed)}
+        {renderInline(trimmed, linkLabel)}
       </p>
     );
   }
@@ -68,7 +71,7 @@ export function SimpleMarkdown({ content, className }: SimpleMarkdownProps) {
   return <div className={className}>{elements}</div>;
 }
 
-function renderInline(text: string): React.ReactNode {
+function renderInline(text: string, linkLabel: string): React.ReactNode {
   const parts: React.ReactNode[] = [];
   const regex =
     /(\*\*(.+?)\*\*)|(\[([^\]]+)\]\(([^)]+)\))|(https?:\/\/[^\s)]+)|(@[\w-]+)/g;
@@ -105,7 +108,7 @@ function renderInline(text: string): React.ReactNode {
       // Bare URL — shorten PR links
       const url = match[6];
       const prMatch = url.match(/\/pull\/(\d+)$/);
-      const label = prMatch ? `#${prMatch[1]}` : 'link';
+      const label = prMatch ? `#${prMatch[1]}` : linkLabel;
       parts.push(
         <a
           key={i++}

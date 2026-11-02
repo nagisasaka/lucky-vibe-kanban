@@ -1,6 +1,7 @@
+import i18n from '@/i18n/config';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AgentGoalStatus, type AgentGoalState } from 'shared/types';
 import { GoalProgressCard } from './GoalProgressCard';
 
@@ -27,6 +28,9 @@ function render(status: AgentGoalStatus, active = false, disabled = false) {
 }
 
 describe('Saved Goal actions', () => {
+  beforeEach(async () => {
+    await i18n.changeLanguage('en');
+  });
   it('offers resume even when the last recorded native status was active', () => {
     const html = render(AgentGoalStatus.active);
     expect(html).toContain('Resume Goal');
@@ -44,4 +48,14 @@ describe('Saved Goal actions', () => {
     expect(html).toContain('Stop current turn');
     expect(html).not.toContain('Resume Goal');
   });
+});
+
+it('renders saved Goal controls in Japanese without translating its objective', async () => {
+  await i18n.changeLanguage('ja');
+  const html = render(AgentGoalStatus.blocked);
+  expect(html).toContain('保存済みのGoal');
+  expect(html).toContain('Goalを再開');
+  expect(html).toContain('ブロック中');
+  expect(html).toContain('Continue investigation');
+  expect(html).toContain('0分45秒');
 });

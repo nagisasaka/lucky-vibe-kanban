@@ -213,7 +213,7 @@ function ProcessesTab({ sessionId }: ProcessesTabProps) {
                         {getStatusIcon(runtimeDisplay.tone)}
                         <div className="min-w-0">
                           <h3 className="font-medium text-sm">
-                            {process.run_reason}
+                            {t(`processes.reason.${process.run_reason}`)}
                           </h3>
                           <p
                             className="text-sm text-muted-foreground mt-1 truncate"
@@ -246,7 +246,7 @@ function ProcessesTab({ sessionId }: ProcessesTabProps) {
                           )}`}
                           title={process.status}
                         >
-                          {runtimeDisplay.label}
+                          {t(`processes.status.${runtimeDisplay.status}`)}
                         </span>
                         {process.exit_code !== null && (
                           <p className="text-xs text-muted-foreground mt-1">

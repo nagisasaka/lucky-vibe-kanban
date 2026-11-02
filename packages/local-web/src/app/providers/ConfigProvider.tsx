@@ -1,3 +1,4 @@
+import { useWebPushLocale } from '@/shared/components/web-push/useWebPushLocale';
 import { ReactNode, useCallback, useEffect, useMemo } from 'react';
 import type { Config, LoginStatus } from 'shared/types';
 import { configApi } from '@/shared/lib/api';
@@ -24,6 +25,7 @@ export function UserSystemProvider({ children }: UserSystemProviderProps) {
     save: saveConfig,
   });
   const { updateConfig, updateAndSaveConfig } = value;
+  useWebPushLocale(Boolean(value.config));
 
   const localMode = true;
   const localLoginStatus = useMemo<LoginStatus>(

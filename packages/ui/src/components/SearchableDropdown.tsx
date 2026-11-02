@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import type { KeyboardEvent, ReactNode, RefObject } from 'react';
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 import { cn } from '../lib/cn';
@@ -75,17 +76,18 @@ export function SearchableDropdown<T>({
   onKeyDown,
   virtuosoRef,
   contentClassName,
-  placeholder = 'Search',
-  emptyMessage = 'No items found',
+  placeholder,
+  emptyMessage,
   getItemBadge,
   getItemIcon,
 }: SearchableDropdownProps<T>) {
+  const { t } = useTranslation('common');
   return (
     <DropdownMenu open={open} onOpenChange={onOpenChange}>
       <DropdownMenuTrigger asChild>{trigger}</DropdownMenuTrigger>
       <DropdownMenuContent className={contentClassName}>
         <DropdownMenuSearchInput
-          placeholder={placeholder}
+          placeholder={placeholder ?? t('search.placeholder')}
           value={searchTerm}
           onValueChange={onSearchTermChange}
           onKeyDown={onKeyDown}
@@ -93,7 +95,7 @@ export function SearchableDropdown<T>({
         <DropdownMenuSeparator />
         {filteredItems.length === 0 ? (
           <div className="px-base py-half text-sm text-low text-center">
-            {emptyMessage}
+            {emptyMessage ?? t('search.noItems')}
           </div>
         ) : (
           <Virtuoso

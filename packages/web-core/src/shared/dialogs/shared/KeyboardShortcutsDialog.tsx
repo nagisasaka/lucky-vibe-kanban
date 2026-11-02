@@ -1,3 +1,4 @@
+import { sequentialShortcutLabel } from '@/shared/keyboard/labels';
 import { useMemo, useCallback, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
@@ -87,10 +88,7 @@ function useShortcutGroups(): ShortcutGroup[] {
 
       sequentialByFirstKey.get(firstKey)!.push({
         keys: formatSequentialKeys(binding.keys),
-        description: t(
-          `shortcuts.actions.${binding.actionId}`,
-          binding.description
-        ),
+        description: sequentialShortcutLabel(t, binding.actionId),
         hasScope: hasWorkspaceScope,
       });
     }
@@ -152,7 +150,7 @@ function ShortcutRow({ item }: { item: ShortcutItem }) {
           </Tooltip>
         )}
       </span>
-      <div className="flex items-center gap-1">
+      <div className="flex shrink-0 items-center gap-1">
         {keysArray.map((key, i) => (
           <kbd
             key={i}
@@ -219,8 +217,11 @@ const KeyboardShortcutsDialogImpl = create<NoProps>(() => {
       <div className="fixed z-[9999] left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
         {/* Dialog content - handles animation */}
         <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="keyboard-shortcuts-title"
           className={cn(
-            'w-[700px] max-h-[80vh]',
+            'w-[700px] max-w-[calc(100vw-2rem)] max-h-[80vh]',
             'bg-panel/95 backdrop-blur-sm rounded-sm border border-border/50 shadow-lg',
             'animate-in fade-in-0 slide-in-from-bottom-4 duration-200',
             'flex flex-col overflow-hidden'
@@ -228,10 +229,14 @@ const KeyboardShortcutsDialogImpl = create<NoProps>(() => {
         >
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-border">
-            <h2 className="text-lg font-semibold text-high">
+            <h2
+              id="keyboard-shortcuts-title"
+              className="text-lg font-semibold text-high"
+            >
               {t('shortcuts.title')}
             </h2>
             <button
+              aria-label={t('buttons.close')}
               onClick={handleClose}
               className="p-1 rounded-sm hover:bg-secondary text-low hover:text-normal"
             >

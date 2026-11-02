@@ -1,4 +1,8 @@
 import {
+  mapGhCliErrorToUi,
+  type GhCliSupportVariant,
+} from '@/shared/lib/githubCliNotice';
+import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -18,46 +22,6 @@ import { useTranslation } from 'react-i18next';
 interface GhCliSetupDialogProps {
   workspaceId: string;
 }
-
-export type GhCliSupportVariant = 'homebrew' | 'manual';
-
-export interface GhCliSupportContent {
-  message: string;
-  variant: GhCliSupportVariant | null;
-}
-
-export const mapGhCliErrorToUi = (
-  error: GhCliSetupError | null,
-  fallbackMessage: string,
-  t: (key: string) => string
-): GhCliSupportContent => {
-  if (!error) {
-    return { message: fallbackMessage, variant: null };
-  }
-
-  if (error === 'BREW_MISSING') {
-    return {
-      message: t('settings:integrations.github.cliSetup.errors.brewMissing'),
-      variant: 'homebrew',
-    };
-  }
-
-  if (error === 'SETUP_HELPER_NOT_SUPPORTED') {
-    return {
-      message: t('settings:integrations.github.cliSetup.errors.notSupported'),
-      variant: 'manual',
-    };
-  }
-
-  if (typeof error === 'object' && 'OTHER' in error) {
-    return {
-      message: error.OTHER.message || fallbackMessage,
-      variant: null,
-    };
-  }
-
-  return { message: fallbackMessage, variant: null };
-};
 
 export const GhCliHelpInstructions = ({
   variant,
@@ -125,11 +89,8 @@ const GhCliSetupDialogImpl = create<GhCliSetupDialogProps>(
     const modal = useModal();
     const { t } = useTranslation();
     const [isRunning, setIsRunning] = useState(false);
-    const [errorInfo, setErrorInfo] = useState<{
-      error: GhCliSetupError;
-      message: string;
-      variant: GhCliSupportVariant | null;
-    } | null>(null);
+    const [errorInfo, setErrorInfo] = useState<GhCliSetupError | null>(null);
+    const activeErrorUi = errorInfo ? mapGhCliErrorToUi(errorInfo, t) : null;
     const pendingResultRef = useRef<GhCliSetupError | null>(null);
     const hasResolvedRef = useRef(false);
 
@@ -165,14 +126,9 @@ const GhCliSetupDialogImpl = create<GhCliSetupDialogProps>(
         const resolvedError: GhCliSetupError = errorData ?? {
           OTHER: { message: rawMessage },
         };
-        const ui = mapGhCliErrorToUi(resolvedError, rawMessage, t);
 
         pendingResultRef.current = resolvedError;
-        setErrorInfo({
-          error: resolvedError,
-          message: ui.message,
-          variant: ui.variant,
-        });
+        setErrorInfo(resolvedError);
       } finally {
         setIsRunning(false);
       }
@@ -224,12 +180,15 @@ const GhCliSetupDialogImpl = create<GhCliSetupDialogProps>(
                 {t('settings:integrations.github.cliSetup.setupNote')}
               </p>
             </div>
-            {errorInfo && (
+            {activeErrorUi && (
               <Alert variant="destructive">
                 <AlertDescription className="space-y-2">
-                  <p>{errorInfo.message}</p>
-                  {errorInfo.variant && (
-                    <GhCliHelpInstructions variant={errorInfo.variant} t={t} />
+                  <p>{activeErrorUi.message}</p>
+                  {activeErrorUi.variant && (
+                    <GhCliHelpInstructions
+                      variant={activeErrorUi.variant}
+                      t={t}
+                    />
                   )}
                 </AlertDescription>
               </Alert>

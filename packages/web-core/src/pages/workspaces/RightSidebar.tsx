@@ -113,7 +113,7 @@ export const RightSidebar = memo(function RightSidebar({
         actions: [],
       },
       {
-        title: 'Terminal',
+        title: t('common:sections.terminal'),
         persistKey: PERSIST_KEYS.terminalSection,
         visible:
           selectedWorkspace?.usage === 'interactive' &&
@@ -137,7 +137,7 @@ export const RightSidebar = memo(function RightSidebar({
       case RIGHT_MAIN_PANEL_MODES.CHANGES:
         if (selectedWorkspace) {
           result.unshift({
-            title: 'Changes',
+            title: t('common:sections.changes'),
             persistKey: PERSIST_KEYS.changesSection,
             visible: hasUpperContent,
             expanded: upperExpanded,
@@ -156,7 +156,7 @@ export const RightSidebar = memo(function RightSidebar({
       case RIGHT_MAIN_PANEL_MODES.FILES:
         if (selectedWorkspace) {
           result.unshift({
-            title: 'Files',
+            title: t('common:fileTree.title'),
             persistKey: PERSIST_KEYS.rightPanelFiles,
             visible: hasUpperContent,
             expanded: upperExpanded,
@@ -182,7 +182,7 @@ export const RightSidebar = memo(function RightSidebar({
         break;
       case RIGHT_MAIN_PANEL_MODES.LOGS:
         result.unshift({
-          title: 'Logs',
+          title: t('common:sections.logs'),
           persistKey: PERSIST_KEYS.rightPanelprocesses,
           visible: hasUpperContent,
           expanded: upperExpanded,
@@ -219,10 +219,12 @@ export const RightSidebar = memo(function RightSidebar({
   if (rightMainPanelMode === RIGHT_MAIN_PANEL_MODES.WIKI) {
     return (
       <aside
-        aria-label="Wiki navigation"
+        aria-label={t('common:workspaceWiki.navigation')}
         className="h-full min-h-0 border-l bg-secondary flex flex-col"
       >
-        <div className="p-base border-b text-high shrink-0">Wiki pages</div>
+        <div className="p-base border-b text-high shrink-0">
+          {t('common:workspaceWiki.pages')}
+        </div>
         <WorkspaceWikiNavigation />
       </aside>
     );
@@ -236,7 +238,7 @@ export const RightSidebar = memo(function RightSidebar({
           className="w-full p-base text-left text-normal hover:bg-panel border-b"
           onClick={() => setRightMainPanelMode('wiki', selectedWorkspace.id)}
         >
-          Open Wiki
+          {t('common:workspaceWiki.open')}
         </button>
       )}
       <div className="divide-y border-b">

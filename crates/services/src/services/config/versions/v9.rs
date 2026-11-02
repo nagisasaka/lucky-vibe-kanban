@@ -44,6 +44,11 @@ pub struct Config {
     pub show_release_notes: bool,
     #[serde(default)]
     pub language: UiLanguage,
+    /// Last browser locale supplied with an explicit server-wide config save.
+    /// This is a notification hint, not a user preference or UI language override.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub notification_browser_language: Option<String>,
     #[serde(default = "default_git_branch_prefix")]
     pub git_branch_prefix: String,
     #[serde(default)]
@@ -66,6 +71,25 @@ pub struct Config {
 }
 
 impl Config {
+    pub fn notification_language(&self) -> UiLanguage {
+        match self.language {
+            UiLanguage::Ja => UiLanguage::Ja,
+            UiLanguage::Browser if self.notification_browser_language.as_deref() == Some("ja") => {
+                UiLanguage::Ja
+            }
+            _ => UiLanguage::En,
+        }
+    }
+
+    pub fn capture_browser_notification_language(&mut self, hint: Option<&str>, previous: &Config) {
+        self.notification_browser_language = hint
+            .map(|hint| match hint.split(['-', '_']).next() {
+                Some(base) if base.eq_ignore_ascii_case("ja") => "ja".to_string(),
+                _ => "en".to_string(),
+            })
+            .or_else(|| previous.notification_browser_language.clone());
+    }
+
     fn from_v8_config(old_config: v8::Config) -> Self {
         Self {
             config_version: "v9".to_string(),
@@ -81,6 +105,7 @@ impl Config {
             last_app_version: old_config.last_app_version,
             show_release_notes: old_config.show_release_notes,
             language: old_config.language,
+            notification_browser_language: None,
             git_branch_prefix: old_config.git_branch_prefix,
             showcases: old_config.showcases,
             pr_auto_description_enabled: old_config.pr_auto_description_enabled,
@@ -139,6 +164,7 @@ impl Default for Config {
             last_app_version: None,
             show_release_notes: false,
             language: UiLanguage::default(),
+            notification_browser_language: None,
             git_branch_prefix: default_git_branch_prefix(),
             showcases: ShowcaseState::default(),
             pr_auto_description_enabled: true,
@@ -155,6 +181,45 @@ impl Default for Config {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn notification_browser_hint_is_optional_persisted_and_never_overrides_explicit_language() {
+        let original = Config::default();
+        assert!(original.notification_browser_language.is_none());
+        let mut next = original.clone();
+        next.capture_browser_notification_language(Some("ja-JP"), &original);
+        assert!(matches!(next.notification_language(), UiLanguage::Ja));
+        let stored = serde_json::to_string(&next).unwrap();
+        let reloaded: Config = serde_json::from_str(&stored).unwrap();
+        assert_eq!(
+            reloaded.notification_browser_language.as_deref(),
+            Some("ja")
+        );
+        let mut old_client_save = original.clone();
+        old_client_save.capture_browser_notification_language(None, &reloaded);
+        assert!(matches!(
+            old_client_save.notification_language(),
+            UiLanguage::Ja
+        ));
+        next.language = UiLanguage::En;
+        assert!(matches!(next.notification_language(), UiLanguage::En));
+        next.language = UiLanguage::Fr;
+        assert!(matches!(next.notification_language(), UiLanguage::En));
+        next.language = UiLanguage::Browser;
+        next.capture_browser_notification_language(Some("zh-TW"), &reloaded);
+        assert!(matches!(next.notification_language(), UiLanguage::En));
+        let mut legacy = serde_json::to_value(Config::default()).unwrap();
+        legacy
+            .as_object_mut()
+            .unwrap()
+            .remove("notification_browser_language");
+        assert!(matches!(
+            serde_json::from_value::<Config>(legacy)
+                .unwrap()
+                .notification_language(),
+            UiLanguage::En
+        ));
+    }
 
     #[test]
     fn editor_migration_preserves_other_settings_and_explicit_empty() {

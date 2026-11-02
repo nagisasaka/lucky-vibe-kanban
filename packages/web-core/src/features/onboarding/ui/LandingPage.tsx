@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next';
+import { notificationSoundLabel } from '@/shared/lib/notificationSoundLabel';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   BookOpenIcon,
@@ -33,44 +35,36 @@ import { PrimaryButton } from '@vibe/ui/components/PrimaryButton';
 
 type SoundOption = {
   value: SoundFile;
-  label: string;
   icon: Icon;
 };
 
 const SOUND_OPTIONS: SoundOption[] = [
   {
     value: SoundFile.ABSTRACT_SOUND1,
-    label: 'Abstract Sound 1',
     icon: WaveformIcon,
   },
   {
     value: SoundFile.ABSTRACT_SOUND2,
-    label: 'Abstract Sound 2',
     icon: MusicNoteIcon,
   },
   {
     value: SoundFile.ABSTRACT_SOUND3,
-    label: 'Abstract Sound 3',
     icon: MusicNotesIcon,
   },
   {
     value: SoundFile.ABSTRACT_SOUND4,
-    label: 'Abstract Sound 4',
     icon: SpeakerHighIcon,
   },
   {
     value: SoundFile.COW_MOOING,
-    label: 'Cow Mooing',
     icon: CowIcon,
   },
   {
     value: SoundFile.PHONE_VIBRATION,
-    label: 'Phone Vibration',
     icon: DeviceMobileIcon,
   },
   {
     value: SoundFile.ROOSTER,
-    label: 'Rooster',
     icon: BirdIcon,
   },
 ];
@@ -82,12 +76,12 @@ const AGENT_PRIORITY: BaseCodingAgent[] = [
 
 const SOCIAL_LINKS = [
   {
-    label: 'GitHub',
+    label: (t: (key: string) => string) => t('onboarding.github'),
     href: LVK_GITHUB_URL,
     icon: GithubLogoIcon,
   },
   {
-    label: 'Docs',
+    label: (t: (key: string) => string) => t('onboarding.docs'),
     href: 'https://www.vibekanban.com/docs',
     icon: BookOpenIcon,
   },
@@ -115,6 +109,7 @@ function resolveTheme(theme: ThemeMode): 'light' | 'dark' {
 }
 
 export function LandingPage() {
+  const { t } = useTranslation('common');
   const appNavigation = useAppNavigation();
   const { theme } = useTheme();
   const { config, profiles, updateAndSaveConfig, loading } = useUserSystem();
@@ -254,7 +249,7 @@ export function LandingPage() {
           sound_file: soundFile,
         },
       },
-      setSaveError
+      (message) => setSaveError(message)
     );
     setSaving(false);
 
@@ -278,7 +273,7 @@ export function LandingPage() {
   if (loading || !config || !initialized) {
     return (
       <div className="h-screen bg-primary flex items-center justify-center">
-        <p className="text-low">Loading...</p>
+        <p className="text-low">{t('onboarding.loading')}</p>
       </div>
     );
   }
@@ -292,7 +287,7 @@ export function LandingPage() {
       <div className="flex max-h-full w-full max-w-5xl flex-col rounded-sm border border-border bg-secondary">
         {/* Header */}
         <header className="shrink-0 space-y-base p-double pb-base">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-base">
             <img
               src={logoSrc}
               alt="Lucky Vibe Kanban"
@@ -301,8 +296,8 @@ export function LandingPage() {
             <div className="flex flex-wrap items-center gap-2">
               {SOCIAL_LINKS.map((link) => (
                 <PrimaryButton
-                  key={link.label}
-                  value={link.label}
+                  key={link.href}
+                  value={link.label(t)}
                   variant="tertiary"
                   actionIcon={link.icon}
                   onClick={() => openExternalLink(link.href)}
@@ -317,19 +312,18 @@ export function LandingPage() {
                 weight="fill"
               />
               <p className="text-sm text-normal">
-                Lucky Vibe Kanban runs AI coding agents with{' '}
+                {t('onboarding.safetyBefore')}{' '}
                 <code>--dangerously-skip-permissions</code> /{' '}
-                <code>--yolo</code> by default. Always review what agents are
-                doing.{' '}
+                <code>--yolo</code> {t('onboarding.safetyAfter')}{' '}
                 <a
                   href="https://www.vibekanban.com/docs/getting-started#safety-notice"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-brand hover:underline"
                 >
-                  Learn more
+                  {t('onboarding.learnMore')}
                 </a>
-                .
+                {t('onboarding.safetyEnd')}
               </p>
             </div>
           </div>
@@ -337,10 +331,12 @@ export function LandingPage() {
 
         {/* 3-column grid */}
         <div className="min-h-0 flex-1 overflow-y-auto px-double pb-double">
-          <div className="grid grid-cols-3 gap-double">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-double">
             {/* Column 1: Coding Agent */}
             <section className="space-y-half">
-              <h2 className="text-sm font-medium text-high">Coding Agent</h2>
+              <h2 className="text-sm font-medium text-high">
+                {t('onboarding.codingAgent')}
+              </h2>
               <div className="grid gap-1.5">
                 {executorOptions.map((agent) => {
                   const selected = selectedAgent === agent;
@@ -350,6 +346,8 @@ export function LandingPage() {
                       key={agent}
                       type="button"
                       onClick={() => setSelectedAgent(agent)}
+                      aria-label={getAgentName(agent)}
+                      aria-pressed={selected}
                       className={cn(
                         'flex items-center gap-base rounded-sm border px-base py-half text-left',
                         selected
@@ -383,7 +381,7 @@ export function LandingPage() {
               />
               {saveError && (
                 <p role="alert" className="text-error">
-                  {saveError}
+                  {t('onboarding.saveUnconfirmed')} {saveError}
                 </p>
               )}
             </section>
@@ -391,7 +389,7 @@ export function LandingPage() {
             {/* Column 3: Notification Sound */}
             <section className="space-y-half">
               <h2 className="text-sm font-medium text-high">
-                Notification Sound
+                {t('onboarding.notificationSound')}
               </h2>
               <div className="grid gap-1.5">
                 {SOUND_OPTIONS.map((option) => {
@@ -403,6 +401,7 @@ export function LandingPage() {
                       key={option.value}
                       type="button"
                       onClick={() => handleSoundSelect(option.value)}
+                      aria-pressed={selected}
                       className={cn(
                         'flex items-center gap-base rounded-sm border px-base py-half text-left',
                         selected
@@ -418,7 +417,7 @@ export function LandingPage() {
                         weight={selected ? 'fill' : 'bold'}
                       />
                       <span className="text-sm text-normal flex-1 truncate">
-                        {option.label}
+                        {notificationSoundLabel(option.value, t)}
                       </span>
                       {selected && (
                         <CheckIcon
@@ -432,6 +431,7 @@ export function LandingPage() {
                 <button
                   type="button"
                   onClick={() => setSoundEnabled(false)}
+                  aria-pressed={!soundEnabled}
                   className={cn(
                     'flex items-center gap-base rounded-sm border px-base py-half text-left',
                     !soundEnabled
@@ -446,7 +446,9 @@ export function LandingPage() {
                     )}
                     weight={!soundEnabled ? 'fill' : 'bold'}
                   />
-                  <span className="text-sm text-normal flex-1">No sound</span>
+                  <span className="text-sm text-normal flex-1">
+                    {t('onboarding.noSound')}
+                  </span>
                   {!soundEnabled && (
                     <CheckIcon
                       className="size-icon-xs text-brand shrink-0"
@@ -460,30 +462,30 @@ export function LandingPage() {
         </div>
 
         {/* Footer */}
-        <div className="shrink-0 border-t border-border p-double pt-base flex items-center justify-between gap-base">
+        <div className="shrink-0 border-t border-border p-double pt-base flex flex-wrap items-center justify-between gap-base">
           <p className="text-xs text-low">
-            By continuing you agree to the{' '}
+            {t('onboarding.termsBefore')}{' '}
             <a
               href="https://www.vibekanban.com/terms"
               target="_blank"
               rel="noopener noreferrer"
               className="text-brand hover:underline"
             >
-              terms and conditions
+              {t('onboarding.terms')}
             </a>{' '}
-            and{' '}
+            {t('onboarding.termsAnd')}{' '}
             <a
               href="https://www.vibekanban.com/privacy"
               target="_blank"
               rel="noopener noreferrer"
               className="text-brand hover:underline"
             >
-              privacy policy
+              {t('onboarding.privacy')}
             </a>
-            .
+            {t('onboarding.termsAfter')}
           </p>
           <PrimaryButton
-            value={saving ? 'Saving...' : 'Continue'}
+            value={saving ? t('onboarding.saving') : t('onboarding.continue')}
             onClick={handleContinue}
             disabled={!canContinue}
           />

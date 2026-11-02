@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useMemo, useCallback } from 'react';
 import { useParams } from '@tanstack/react-router';
 import {
@@ -26,6 +27,7 @@ interface IssueRelationshipsSectionContainerProps {
 export function IssueRelationshipsSectionContainer({
   issueId,
 }: IssueRelationshipsSectionContainerProps) {
+  const { t } = useTranslation('common');
   const { projectId } = useParams({ strict: false });
   const appNavigation = useAppNavigation();
   const { openRelationshipSelection } = useActions();
@@ -87,6 +89,7 @@ export function IssueRelationshipsSectionContainer({
       <DropdownMenuTrigger asChild>
         <span
           role="button"
+          aria-label={t('kanban.addRelationship')}
           tabIndex={0}
           className="text-low hover:text-normal"
           onClick={(e) => e.stopPropagation()}
@@ -99,25 +102,25 @@ export function IssueRelationshipsSectionContainer({
           icon={ArrowBendUpRightIcon}
           onSelect={() => handleSelectType('blocking', 'forward')}
         >
-          Blocks...
+          {t('kanban.relationshipChoices.blocks')}
         </DropdownMenuItem>
         <DropdownMenuItem
           icon={ProhibitIcon}
           onSelect={() => handleSelectType('blocking', 'reverse')}
         >
-          Blocked by...
+          {t('kanban.relationshipChoices.blockedBy')}
         </DropdownMenuItem>
         <DropdownMenuItem
           icon={ArrowsLeftRightIcon}
           onSelect={() => handleSelectType('related', 'forward')}
         >
-          Related to...
+          {t('kanban.relationshipChoices.relatedTo')}
         </DropdownMenuItem>
         <DropdownMenuItem
           icon={CopyIcon}
           onSelect={() => handleSelectType('has_duplicate', 'forward')}
         >
-          Duplicate of...
+          {t('kanban.relationshipChoices.duplicateOf')}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

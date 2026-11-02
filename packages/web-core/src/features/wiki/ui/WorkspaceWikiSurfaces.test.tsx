@@ -1,3 +1,8 @@
+import i18n from '@/i18n/config';
+import { beforeEach } from 'vitest';
+beforeEach(async () => {
+  await i18n.changeLanguage('en');
+});
 import { createElement, type ReactNode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -93,6 +98,25 @@ afterEach(() => {
 });
 
 describe('split Wiki navigation and article surfaces', () => {
+  it('shows translated context and original Wiki load diagnostics', async () => {
+    const { controller, api } = await fixture();
+    api.snapshot.mockRejectedValue(
+      new Error('Raw internal Wiki secret <script>diagnostic</script>')
+    );
+    await controller.reload();
+    const article = renderToStaticMarkup(createElement(WorkspaceWikiArticle));
+    expect(article).toContain('Wiki files could not be loaded.');
+    expect(article).toContain(
+      'Raw internal Wiki secret &lt;script&gt;diagnostic&lt;/script&gt;'
+    );
+    expect(article).not.toContain('<script>');
+    const navigation = renderToStaticMarkup(
+      createElement(WorkspaceWikiNavigation)
+    );
+    expect(navigation).toContain('Wiki files could not be loaded.');
+    expect(navigation).toContain('Raw internal Wiki secret');
+  });
+
   it('renders a directory tree in the sidebar and keeps the body only in the main surface', async () => {
     const { controller } = await fixture();
     controller.selectPage('concepts/job.md');

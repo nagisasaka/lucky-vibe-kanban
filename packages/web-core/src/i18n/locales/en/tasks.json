@@ -23,7 +23,9 @@
     "copied": "Copied",
     "copyFailed": "Copy failed",
     "completedAt": "Completion observed: {{time}}",
-    "providerDuration": "Provider reported: {{seconds}}s"
+    "providerDuration": "Provider reported: {{seconds}}s",
+    "workingDirectory": "Working directory: {{path}}",
+    "statusCount": "{{status}} {{formattedCount}}"
   },
   "dropzone": {
     "dropImagesHere": "Drop images here",
@@ -60,7 +62,8 @@
         "description": "Choose a new target branch for the workspace.",
         "placeholder": "Select a target branch",
         "action": "Change Branch",
-        "inProgress": "Changing..."
+        "inProgress": "Changing...",
+        "unconfirmed": "The target branch change could not be confirmed. Check the current branch before retrying."
       }
     }
   },
@@ -72,8 +75,9 @@
   },
   "diff": {
     "unavailable": "Changes unavailable",
-    "filesChanged_one": "{{count}} file changed",
-    "filesChanged_other": "{{count}} files changed"
+    "filesChanged_one": "{{formattedCount}} file changed",
+    "filesChanged_other": "{{formattedCount}} files changed",
+    "degraded": "Some changes could not be loaded"
   },
   "processes": {
     "noLogsAvailable": "No logs available",
@@ -93,7 +97,21 @@
     "loadingDetails": "Loading process details...",
     "errorLoadingDetails": "Failed to load process details. Please try again.",
     "copyLogs": "Copy logs",
-    "logsCopied": "Copied!"
+    "logsCopied": "Copied!",
+    "status": {
+      "running": "Running",
+      "completed": "Completed",
+      "failed": "Failed",
+      "killed": "Stopped"
+    },
+    "reason": {
+      "setupscript": "Setup script",
+      "cleanupscript": "Cleanup script",
+      "archivescript": "Archive script",
+      "devserver": "Preview server",
+      "integrationvalidation": "Integration validation",
+      "resourcecommand": "Resource command"
+    }
   },
   "followUp": {
     "queuedMessage": "Message queued - will execute when current run finishes"
@@ -162,7 +180,8 @@
       "renameTitle": "Rename Session",
       "renameDescription": "Enter a new name for this session.",
       "renamePlaceholder": "Enter session name",
-      "renaming": "Renaming..."
+      "renaming": "Renaming...",
+      "renameUnconfirmed": "Could not confirm the session name change. Your input is retained. Check the current name before trying again."
     },
     "reviewComments": {
       "count_one": "{{count}} review comment will be included",
@@ -213,8 +232,8 @@
       "ranFetchCommands_one": "Ran {{count}} fetch command",
       "ranFetchCommands_other": "Ran {{count}} fetch commands",
       "otherCommandDetail": "Build, test, or other terminal operation",
-      "operationCount_one": "{{count}} operation",
-      "operationCount_other": "{{count}} operations",
+      "operationCount_one": "{{formattedCount}} operation",
+      "operationCount_other": "{{formattedCount}} operations",
       "toolCallsInProgress": "Tool calls in progress",
       "toolCallsComplete": "Tool calls complete",
       "changedFiles_one": "Changed {{count}} file",
@@ -263,7 +282,7 @@
       "description": "The remote branch{{branchLabel}} has diverged from your local branch. A regular push was rejected.",
       "warning": "Force pushing will overwrite the remote changes with your local changes. This action cannot be undone.",
       "note": "Only proceed if you're certain you want to replace the remote branch history.",
-      "error": "Failed to force push"
+      "error": "Force push could not be confirmed. Check the remote branch before trying again."
     },
     "status": {
       "commits_one": "commit",
@@ -285,14 +304,9 @@
       "pushFailed": "Failed",
       "forcePush": "Force Push",
       "forcePushing": "Force Pushing...",
-      "creating": "Creating...",
       "createPr": "Create PR"
     },
     "errors": {
-      "changeTargetBranch": "Failed to change target branch",
-      "pushChanges": "Failed to push changes",
-      "mergeChanges": "Failed to merge changes",
-      "rebaseBranch": "Failed to rebase branch",
       "branchStatusUnavailable": "Unable to fetch branch status. You can still change the target branch."
     },
     "pr": {
@@ -303,16 +317,7 @@
     "actions": {
       "title": "Git Actions",
       "changeTarget": "Change target",
-      "prMerged": "PR #{{number}} is already merged",
-      "loginRequired": {
-        "title": "Sign in to manage git actions",
-        "description": "Sign in to Lucky Vibe Kanban so you can push branches, merge changes, or open pull requests for this task.",
-        "action": "Sign in"
-      }
-    },
-    "mergeDialog": {
-      "title": "Merge Changes",
-      "description": "This will merge your changes into the target branch. Are you sure you want to continue?"
+      "prMerged": "PR #{{number}} is already merged"
     },
     "createRepo": {
       "dialog": {
@@ -412,7 +417,6 @@
     "creating": "Creating...",
     "createButton": "Create PR",
     "errors": {
-      "failedToCreate": "Failed to create PR",
       "gitCliNotLoggedIn": "Git is not authenticated. Run \"gh auth login\" (or configure Git credentials) and try again.",
       "gitCliNotInstalled": "Git CLI is not installed. Install Git to create a PR.",
       "targetBranchNotFound": "Target branch '{{branch}}' does not exist on remote. Please ensure the branch exists before creating a pull request."
@@ -433,32 +437,7 @@
     }
   },
   "taskFormDialog": {
-    "createTitle": "Create New Task",
-    "editTitle": "Edit Task",
-    "titlePlaceholder": "Task title...",
-    "descriptionPlaceholder": "Add more details (optional). Type @ to search files.",
-    "statusLabel": "Status",
-    "statusOptions": {
-      "todo": "To Do",
-      "inprogress": "In Progress",
-      "inreview": "In Review",
-      "done": "Done",
-      "cancelled": "Cancelled"
-    },
-    "startLabel": "Start",
-    "attachFile": "Attach file",
-    "dropImagesHere": "Drop images here",
-    "updating": "Updating...",
-    "updateTask": "Update Task",
-    "starting": "Starting...",
-    "creating": "Creating...",
-    "create": "Create",
-    "discardDialog": {
-      "title": "Discard unsaved changes?",
-      "description": "You have unsaved changes. Are you sure you want to discard them?",
-      "continueEditing": "Continue Editing",
-      "discardChanges": "Discard Changes"
-    }
+    "attachFile": "Attach file"
   },
   "restoreLogsDialog": {
     "title": "Confirm Retry",
@@ -501,7 +480,8 @@
     "buttons": {
       "retry": "Retry",
       "reset": "Reset"
-    }
+    },
+    "repositoryCount": " ({{count}} repos)"
   },
   "scriptFixer": {
     "setupScriptTitle": "Fix Setup Script",
@@ -518,7 +498,12 @@
     "statusRunning": "Running...",
     "statusSuccess": "Completed successfully",
     "statusFailed": "Failed with exit code {{exitCode}}",
-    "statusKilled": "Process was killed"
+    "statusKilled": "Process was killed",
+    "errors": {
+      "loadFailed": "Could not load the script. Check repository access and try opening it again.",
+      "saveUnconfirmed": "Could not confirm that the script was saved. Your draft is retained. Check the current repository settings before trying again.",
+      "runUnconfirmed": "Could not confirm the save or execution result. Check repository settings and execution history before running the script again."
+    }
   },
   "shareDialog": {
     "loginRequired": {}
@@ -550,7 +535,10 @@
       "unsupportedProvider": "Git provider not supported",
       "failedToLoadPrs": "Failed to load pull requests",
       "prNotFound": "Pull request not found",
-      "failedToCreateWorkspace": "Failed to create workspace"
+      "failedToCreateWorkspace": "Workspace creation could not be confirmed. Check the current workspace list before trying again.",
+      "authUnconfirmed": "Git authentication could not be confirmed. Check the selected repository, remote and sign-in status before trying again.",
+      "branchFetchUnconfirmed": "The PR branch could not be fetched. Check the selected repository and remote before trying again.",
+      "missingFields": "Select a repository, remote and pull request before creating the workspace."
     }
   },
   "linkPrToIssue": {
@@ -568,7 +556,9 @@
     "edit": "Edit",
     "remove": "Delete",
     "moveUp": "Move queued message {{position}} up",
-    "moveDown": "Move queued message {{position}} down"
+    "moveDown": "Move queued message {{position}} down",
+    "label": "Follow-up queue",
+    "updateUnconfirmed": "The queue update could not be confirmed. Check the current queue before trying again."
   },
   "devServer": {
     "title": "Dev server",
@@ -584,6 +574,400 @@
     "copyUrl": "Copy URL",
     "openBrowser": "Open in browser",
     "addressHint": "This address belongs to the server. On a remote host or WSL, use a reachable application URL or forward its port with an SSH tunnel. Running does not prove application readiness.",
-    "failed": "Failed"
+    "failed": "Failed",
+    "operationUnconfirmed": "The dev server operation could not be confirmed. Check its process and logs before trying again.",
+    "exitCode": " (exit {{code}})"
+  },
+  "createAttemptDialog": {
+    "loadingBranches": "Loading branches…",
+    "selectBranch": "Select a branch"
+  },
+  "workspaceGoal": {
+    "active": "Active",
+    "paused": "Paused",
+    "blocked": "Blocked",
+    "usageLimited": "Usage limited",
+    "budgetLimited": "Budget limited",
+    "complete": "Complete",
+    "goal": "Goal",
+    "savedGoal": "Saved Goal",
+    "noActive": "No active run",
+    "auto": "Auto",
+    "elapsed": "Elapsed",
+    "recordedTime": "Recorded time",
+    "resetWarning": "Replacing the objective resets Codex Goal usage accounting.",
+    "cancel": "Cancel",
+    "save": "Save Goal",
+    "pause": "Pause",
+    "resume": "Resume",
+    "edit": "Edit Goal",
+    "stopTurn": "Stop current turn",
+    "clear": "Clear Goal",
+    "clearConfirm": "Clear this Goal permanently?",
+    "resumeSaved": "Resume Goal",
+    "resumeHelp": "Continue the saved Goal in this Codex session without replacing its objective or resetting usage. Codex checks whether it still exists.",
+    "error": "The Goal operation result could not be confirmed. Check the current state before retrying.",
+    "objectiveLabel": "Goal objective",
+    "tokens": "Tokens: {{used}} / {{budget}}",
+    "durationHours": "{{hours, number}}h {{minutes, number}}m {{seconds, number}}s",
+    "durationMinutes": "{{minutes, number}}m {{seconds, number}}s",
+    "savedHelp": "No agent is running for this Goal. Last recorded Goal status: {{status}}. The time shown is the last reported value."
+  },
+  "executionInspection": {
+    "session": "Session",
+    "sessionLabel": "Execution session",
+    "selectSession": "Select saved session",
+    "panelLabel": "Execution inspection",
+    "wiki": "OpenWiki",
+    "execution": "Execution",
+    "stopping": "Stopping…",
+    "stop": "Stop execution",
+    "help": "While this execution is active, use its controls below. Normal development becomes available after execution and cleanup finish.",
+    "loading": "Loading execution…",
+    "unknownOwner": "Unknown owner",
+    "noChanges": "No changes required (successful reconciliation)",
+    "published": "Published result",
+    "unconfirmed": "Publication not confirmed; files may be unpublished",
+    "missingFiles": "Files are missing or unprepared. Inspection will not recreate the worktree. Saved logs remain available.",
+    "wikiInstructions": "OpenWiki instructions",
+    "wikiPlaceholder": "Additional instructions for this Wiki update",
+    "sendInstructions": "Send instructions",
+    "responseLabel": "Owner request response",
+    "respond": "Respond to request",
+    "approve": "Approve",
+    "deny": "Deny",
+    "approvalRequested": "Approval requested: {{tool}}",
+    "runId": "Run: {{id}}",
+    "ownerOriginal": "Owner (original): {{owner}}",
+    "statusOriginal": "Status (original): {{status}}",
+    "reportedError": "The execution reported an error. Check its saved details.",
+    "loadError": "Execution details could not be loaded. Retry loading the current state.",
+    "stopError": "The stop result could not be confirmed. Check whether execution is still active.",
+    "responseError": "The response result could not be confirmed. Check the pending request before retrying.",
+    "steerError": "Instruction delivery could not be confirmed. Check the execution before resending.",
+    "status": {
+      "unknown": "Unknown",
+      "pending": "Pending",
+      "queued": "Queued",
+      "starting": "Starting",
+      "running": "Running",
+      "awaiting_input": "Awaiting input",
+      "awaiting_approval": "Awaiting approval",
+      "cancelling": "Cancelling",
+      "succeeded": "Succeeded",
+      "failed": "Failed",
+      "cancelled": "Cancelled",
+      "canceled": "Cancelled",
+      "crashed": "Crashed",
+      "audit_failed": "Audit failed",
+      "preparing": "Preparing",
+      "integrating": "Integrating",
+      "validating": "Validating",
+      "publishing": "Publishing",
+      "finalizing": "Finalizing",
+      "recovery_required": "Recovery required",
+      "blocked": "Blocked",
+      "applied": "Applied",
+      "stale": "Stale",
+      "admitted": "Admitted",
+      "cleaningup": "Cleaning up",
+      "sourcing": "Gathering sources",
+      "analyzing": "Analyzing",
+      "generating": "Generating",
+      "verifying": "Verifying"
+    },
+    "owner": {
+      "integration": "Auto-merge",
+      "resource_mediation": "Resource coordination",
+      "openwiki_sync": "OpenWiki update",
+      "openwiki_bootstrap": "OpenWiki initialization"
+    }
+  },
+  "actionLabels": {
+    "duplicate": "Duplicate",
+    "rename": "Rename",
+    "unpin": "Unpin",
+    "pin": "Pin",
+    "unarchive": "Unarchive",
+    "archive": "Archive",
+    "delete": "Delete",
+    "start_review": "Start Review",
+    "review_changes_with_agent": "Review changes with agent",
+    "spin_off_workspace": "Spin off workspace",
+    "new_workspace": "New Workspace",
+    "create_workspace_from_pr": "Create Workspace from PR",
+    "settings": "Settings",
+    "project_settings": "Project Settings",
+    "workspaces_guide": "Workspaces Guide",
+    "projects_guide": "Projects Guide",
+    "open_command_bar": "Open Command Bar",
+    "switch_to_side_by_side_view": "Switch to Side-by-Side View",
+    "switch_to_inline_view": "Switch to Inline View",
+    "inline_view": "Inline view",
+    "side_by_side_view": "Side-by-side view",
+    "show_whitespace_changes": "Show Whitespace Changes",
+    "ignore_whitespace_changes": "Ignore Whitespace Changes",
+    "disable_line_wrapping": "Disable Line Wrapping",
+    "enable_line_wrapping": "Enable Line Wrapping",
+    "hide_left_sidebar": "Hide Left Sidebar",
+    "show_left_sidebar": "Show Left Sidebar",
+    "toggle_chat_panel": "Toggle Chat Panel",
+    "hide_chat_panel": "Hide Chat Panel",
+    "show_chat_panel": "Show Chat Panel",
+    "hide_right_sidebar": "Hide Right Sidebar",
+    "show_right_sidebar": "Show Right Sidebar",
+    "toggle_changes_panel": "Toggle Changes Panel",
+    "hide_changes_panel": "Hide Changes Panel",
+    "show_changes_panel": "Show Changes Panel",
+    "toggle_files_panel": "Toggle Files Panel",
+    "hide_files_panel": "Hide Files Panel",
+    "show_files_panel": "Show Files Panel",
+    "toggle_todo_list": "Toggle TODO list",
+    "hide_todo_list": "Hide TODO list",
+    "show_todo_list": "Show TODO list",
+    "toggle_logs_panel": "Toggle Logs Panel",
+    "hide_logs_panel": "Hide Logs Panel",
+    "show_logs_panel": "Show Logs Panel",
+    "toggle_wiki_reader": "Toggle Wiki Reader",
+    "close_wiki_reader": "Close Wiki Reader",
+    "open_wiki_reader": "Open Wiki Reader",
+    "collapse_all_diffs": "Collapse All Diffs",
+    "expand_all_diffs": "Expand All Diffs",
+    "open_in_external_editor": "Open in external editor",
+    "copy_workspace_path": "Copy Workspace Path",
+    "copy_raw_logs": "Copy Raw Logs",
+    "dev_server": "Dev Server",
+    "starting_dev_server": "Starting dev server...",
+    "stopping_dev_server": "Stopping dev server...",
+    "stop_dev_server": "Stop dev server",
+    "start_dev_server": "Start dev server",
+    "create_pull_request": "Create Pull Request",
+    "link_pull_request": "Link Pull Request",
+    "merge": "Merge",
+    "rebase": "Rebase",
+    "change_target_branch": "Change Target Branch",
+    "push": "Push",
+    "copy_repo_path": "Copy Repo Path",
+    "open_repo_in_external_editor": "Open repo in external editor",
+    "repository_settings": "Repository Settings",
+    "run_setup_script": "Run Setup Script",
+    "run_cleanup_script": "Run Cleanup Script",
+    "run_archive_script": "Run Archive Script",
+    "create_issue": "Create Issue",
+    "change_status": "Change Status",
+    "change_priority": "Change Priority",
+    "change_assignees": "Change Assignees",
+    "make_sub_issue_of": "Make Sub-issue of",
+    "add_sub_issue": "Add Sub-issue",
+    "create_sub_issue": "Create Sub-issue",
+    "remove_parent": "Remove Parent",
+    "link_workspace": "Link Workspace",
+    "link_workspace_archived_hint": "Link Workspace (available after unarchiving)",
+    "archive_issue": "Archive",
+    "unarchive_issue": "Unarchive",
+    "delete_issue": "Delete Issue",
+    "duplicate_issue": "Duplicate Issue",
+    "mark_blocking": "Mark Blocking",
+    "mark_blocked_by": "Mark Blocked By",
+    "mark_related": "Mark Related",
+    "mark_duplicate_of": "Mark Duplicate Of"
+  },
+  "commandPages": {
+    "actions": "Actions",
+    "view": "View",
+    "general": "General",
+    "workspaceActions": "Workspace Actions",
+    "workspace": "Workspace",
+    "scripts": "Scripts",
+    "diffOptions": "Diff Options",
+    "display": "Display",
+    "viewOptions": "View Options",
+    "panels": "Panels",
+    "repoActions": "Repository Actions",
+    "issueActions": "Issue Actions"
+  },
+  "actionErrors": {
+    "executionOnly": "This workspace is execution-only. Use its owner controls and inspection views.",
+    "workspaceRequired": "Select a workspace for this action.",
+    "repositoryRequired": "Select a workspace and repository for this action.",
+    "issuesRequired": "Select a project and at least one issue for this action.",
+    "forcePushRequired": "The remote branch has diverged. Review it before deciding whether to force push.",
+    "copyPath": "The repository path could not be copied. Check clipboard access and try again.",
+    "noSetupScript": "No setup script is configured for this project.",
+    "noCleanupScript": "No cleanup script is configured for this project.",
+    "noArchiveScript": "No archive script is configured for this project.",
+    "processRunning": "A process is already running. Wait for it to finish before running the script.",
+    "singleDuplicate": "Select one issue to duplicate.",
+    "unconfirmed": "The action could not be confirmed. Check the current state before retrying."
+  },
+  "actionDialogs": {
+    "archiveWorktree": "The worktree will be deleted.",
+    "prLinked": "Pull Request Linked",
+    "linkedPr": "Linked PR #{{number}}",
+    "noPr": "No Pull Request Found",
+    "noPrBody": "No open pull request was found matching this branch. Make sure a PR exists for this branch on the remote.",
+    "cannotMerge": "Cannot Merge",
+    "openPrBody": "This repository has an open pull request. Close or merge the PR before merging directly.",
+    "rebaseRequired": "Rebase Required",
+    "behind_one": "Your branch is {{formattedCount}} commit behind the target branch. Would you like to rebase first?",
+    "behind_other": "Your branch is {{formattedCount}} commits behind the target branch. Would you like to rebase first?",
+    "mergeBranch": "Merge Branch",
+    "mergeBody": "Are you sure you want to merge this branch into the target branch?",
+    "deleteIssues_one": "Delete {{formattedCount}} Issue",
+    "deleteIssues_other": "Delete {{formattedCount}} Issues",
+    "deleteIssuesBody_one": "Are you sure you want to delete {{formattedCount}} issue? This action cannot be undone.",
+    "deleteIssuesBody_other": "Are you sure you want to delete these {{formattedCount}} issues? This action cannot be undone."
+  },
+  "selections": {
+    "selectStatus": "Select Status",
+    "statuses": "Statuses",
+    "selectPriority": "Select Priority",
+    "priority": "Priority",
+    "selectRepo": "Select Repository",
+    "repos": "Repositories",
+    "setParent": "Make Sub-issue of",
+    "addChild": "Add Sub-issue",
+    "issues": "Issues",
+    "selectIssue": "Select Issue",
+    "branches": "Branches",
+    "urgent": "Urgent",
+    "high": "High",
+    "medium": "Medium",
+    "low": "Low"
+  },
+  "issueArchive": {
+    "title": "Archive issue",
+    "description": "The work status will not change. The description, comments, relationships and history are retained.",
+    "includeWorkspaces": "Also archive linked workspaces",
+    "workspaceWarning": "Linked workspaces that are not yet archived will be archived and their worktrees physically deleted. Database history and Git branches are retained. If any target is in use, the entire operation is rejected.",
+    "issueOnly": "Only the issue will be archived. Workspaces, processes and files will not change.",
+    "noWorktree": "No worktree",
+    "alreadyArchived": " (already archived; unchanged)",
+    "unchanged": " (unchanged)",
+    "close": "Close",
+    "cancel": "Cancel",
+    "inspect": "Check result",
+    "confirm": "Archive",
+    "prepareError": "The archive targets could not be prepared. Close this dialog, check the issue and linked workspaces, and try again.",
+    "confirmUnconfirmed": "The result is unknown. Some worktrees may already have been physically deleted. Do not repeat the operation; use “Check result”. Request ID: {{requestId}}",
+    "inspectError": "The result could not be retrieved. Do not repeat the operation. Check the existing request again. Request ID: {{requestId}}",
+    "receiptUnconfirmed": "The operation is not confirmed complete. Check the receipt and current state before recovery; do not repeat it automatically. Request ID: {{requestId}}",
+    "receiptUnreadable": "The operation reported success, but its result details could not be read. Check the current state before recovery; do not repeat the operation. Request ID: {{requestId}}",
+    "deletionWarnings": "Archiving completed, but worktree deletion could not be confirmed for the workspaces below. Check their state before recovery. Request ID: {{requestId}}\n{{workspaceIds}}",
+    "unknownWorkspace": "Unknown workspace",
+    "restoreUnconfirmed": "Unarchiving could not be confirmed. Check the current issue and the existing request before retrying. Request ID: {{requestId}}"
+  },
+  "approval": {
+    "submittingApproval": "Submitting approval",
+    "approve": "Approve",
+    "submitting": "Submitting…",
+    "approveRequest": "Approve request",
+    "submittingDenial": "Submitting denial",
+    "deny": "Deny",
+    "provideReason": "Provide denial reason",
+    "reasonPlaceholder": "Let the agent know why this request was denied... Type @ to insert tags or search files.",
+    "cancel": "Cancel",
+    "prompt": "Would you like to approve this?",
+    "missingExecution": "The execution context for this request is missing. Reopen the session before responding.",
+    "responseUnconfirmed": "Your response could not be confirmed. Check the request and current session before retrying."
+  },
+  "repoCard": {
+    "openPullRequest": "Open pull request",
+    "linkPullRequest": "Link pull request",
+    "merge": "Merge"
+  },
+  "sessionRuntime": {
+    "blocked": {
+      "no_content": "Add a message before sending.",
+      "no_workspace": "Select a workspace first.",
+      "no_session": "Select or create a session first.",
+      "no_executor": "Select an agent before sending.",
+      "provider_not_ready": "The selected agent is not ready.",
+      "provider_capability_missing": "The selected agent does not support this action.",
+      "runtime_starting": "The agent action is starting. Wait for it to finish.",
+      "runtime_busy": "The agent is still running. Queue a follow-up instead.",
+      "runtime_cancelling": "The agent is stopping. Wait for cancellation to finish.",
+      "runtime_terminal": "The last run ended and cannot continue from here.",
+      "approval_timed_out": "The approval request timed out.",
+      "approval_required": "Respond to the pending approval first.",
+      "question_required": "Answer the pending question first.",
+      "queue_already_present": "A follow-up is already queued.",
+      "queue_empty": "There is no queued follow-up to cancel.",
+      "unknown_runtime": "This action is not available in the current runtime state.",
+      "unavailable": "This action is not available right now."
+    },
+    "unavailable": "{{action}} unavailable: {{reason}}",
+    "placeholder": {
+      "feedback": "Provide feedback for the plan...",
+      "edit": "Edit your message...",
+      "changes": "Provide feedback to request changes...",
+      "answer": "Type a different answer...",
+      "newConversation": "Start a new conversation...",
+      "continue": "Continue working on this task..."
+    },
+    "steer": "Steer",
+    "openWorkspace": "Open Workspace",
+    "inputTools": "Input tools",
+    "addPrComments": "Add PR comments",
+    "goalObjectiveTooLong": "The Codex Goal objective contains {{formattedCount}} characters; the maximum is {{maximum}}. Shorten the instructions before sending.",
+    "noExecutor": "Select an agent before sending.",
+    "noWorkspace": "Select a workspace before sending.",
+    "submissionUnconfirmed": "Message delivery could not be confirmed. Check the Session and its history before sending again.",
+    "steerUnconfirmed": "Delivery of the instruction could not be confirmed. Check the Session before sending again.",
+    "configUnavailable": "The session configuration could not be loaded. Check the connection and try again.",
+    "notifiedRunMissing": "The run referenced by the notification was not found in this session. Check the notification’s Session ID and the history.",
+    "notifiedRun": "Run referenced by the notification: {{runId}} — {{status}}. Check test, auto-merge and publication results separately.",
+    "runStatus": {
+      "pending": "Pending",
+      "starting": "Starting",
+      "running": "Running",
+      "awaiting_input": "Awaiting input",
+      "awaiting_approval": "Awaiting approval",
+      "cancelling": "Cancelling",
+      "succeeded": "Completed",
+      "failed": "Failed",
+      "cancelled": "Cancelled",
+      "crashed": "Crashed",
+      "audit_failed": "Audit failed",
+      "unknown": "Unknown status"
+    }
+  },
+  "elapsedTime": {
+    "lessThanSecond": "<1s",
+    "hoursMinutes": "{{hours}}h {{minutes}}m",
+    "minutesSeconds": "{{minutes}}m {{seconds}}s",
+    "seconds": "{{seconds}}s"
+  },
+  "gitNotice": {
+    "rebaseUnconfirmed": "The rebase result could not be confirmed. Check the repository state before retrying.",
+    "mergeUnconfirmed": "The merge result could not be confirmed. Check the repository state before retrying.",
+    "forcePushUnconfirmed": "The force-push result could not be confirmed. Check the remote branch before retrying.",
+    "pushUnconfirmed": "The push result could not be confirmed. Check the remote branch before retrying.",
+    "targetUnconfirmed": "The target branch change could not be confirmed. Check the current branch before retrying.",
+    "renameUnconfirmed": "The branch rename could not be confirmed. Check the current branch name before retrying.",
+    "branchEmpty": "Enter a branch name.",
+    "branchSpaces": "The branch name cannot contain spaces.",
+    "sessionUnconfirmed": "The session could not be confirmed. Check the workspace sessions before trying again.",
+    "reviewUnconfirmed": "The review start could not be confirmed. Check the session before trying again.",
+    "conflictUnconfirmed": "The conflict-resolution start could not be confirmed. Check the session and repository before trying again.",
+    "reviewPlaceholder": "Add any specific instructions for the review…"
+  },
+  "githubCliNotice": {
+    "setupUnconfirmed": "The GitHub CLI setup result could not be confirmed. Check its status before trying again.",
+    "homebrewTitle": "Homebrew is required for automatic setup",
+    "manualTitle": "GitHub CLI needs manual setup"
+  },
+  "prCommentNotice": {
+    "noPr": "No PR is attached to this workspace. Create a PR first to see comments.",
+    "cliMissing": "The Git host CLI is not installed. Install it to load PR comments.",
+    "cliLogin": "The Git host CLI is not signed in. Sign in to load PR comments.",
+    "unavailable": "PR comments could not be loaded. Check the connection and try again."
+  },
+  "prCreationNotice": {
+    "authentication": "GitHub authentication could not be confirmed. Check the token in Settings → Repositories → GitHub authentication. For repositories without an LVK token, check the server’s GitHub CLI login.",
+    "cliMissing": "{{provider}} CLI is not installed.",
+    "cliLogin": "{{provider}} CLI is not signed in.",
+    "gitHost": "Git host",
+    "unconfirmed": "PR creation could not be confirmed. Check the repository’s pull requests before trying again."
   }
 }

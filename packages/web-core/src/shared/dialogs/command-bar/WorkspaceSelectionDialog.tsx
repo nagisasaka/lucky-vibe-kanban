@@ -1,3 +1,4 @@
+import i18n from '@/i18n/config';
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { create, useModal } from '@ebay/nice-modal-react';
 import { useTranslation } from 'react-i18next';
@@ -36,9 +37,9 @@ export interface WorkspaceSelectionDialogProps {
 
 const PAGE_SIZE = 50;
 
-function getLinkWorkspaceErrorMessage(error: unknown): string | null {
+function isAlreadyLinked(error: unknown): boolean {
   if (error instanceof ApiError && error.status === 409) {
-    return 'This workspace is already linked to an issue.';
+    return true;
   }
 
   if (error instanceof Error) {
@@ -47,12 +48,12 @@ function getLinkWorkspaceErrorMessage(error: unknown): string | null {
       normalizedMessage.includes('already exists') ||
       normalizedMessage.includes('already linked')
     ) {
-      return 'This workspace is already linked to an issue.';
+      return true;
     }
-    return error.message;
+    return false;
   }
 
-  return null;
+  return false;
 }
 
 /** Inner component that uses contexts to render the selection UI */
@@ -148,20 +149,21 @@ function WorkspaceSelectionContent({
         // Success - close dialog. UI will auto-update via Electric sync.
         modal.hide();
       } catch (err) {
-        const errorMessage =
-          getLinkWorkspaceErrorMessage(err) ??
-          t('workspaces.linkError', 'Failed to link workspace');
+        const alreadyLinked = isAlreadyLinked(err);
 
         await ErrorDialog.show({
-          title: t('common:error'),
-          message: errorMessage,
-          buttonText: t('common:ok'),
+          title: () => i18n.t('common:error'),
+          message: () =>
+            alreadyLinked
+              ? i18n.t('workspaces.alreadyLinked', { ns: 'common' })
+              : i18n.t('workspaces.linkError', { ns: 'common' }),
+          buttonText: () => i18n.t('common:ok'),
         });
       } finally {
         setIsLinking(false);
       }
     },
-    [projectId, issueId, isLinking, issueArchived, modal, t]
+    [projectId, issueId, isLinking, issueArchived, modal]
   );
 
   const handleCreateNewWorkspace = useCallback(async () => {
@@ -202,12 +204,10 @@ function WorkspaceSelectionContent({
       });
       if (!draftId) {
         await ErrorDialog.show({
-          title: t('common:error'),
-          message: t(
-            'workspaces.createDraftError',
-            'Failed to prepare workspace draft. Please try again.'
-          ),
-          buttonText: t('common:ok'),
+          title: () => i18n.t('common:error'),
+          message: () =>
+            i18n.t('workspaces.createDraftError', { ns: 'common' }),
+          buttonText: () => i18n.t('common:ok'),
         });
       }
     } finally {
@@ -225,7 +225,6 @@ function WorkspaceSelectionContent({
     issueArchived,
     activeWorkspaces,
     archivedWorkspaces,
-    t,
   ]);
 
   // Restore focus when dialog closes
@@ -262,7 +261,7 @@ function WorkspaceSelectionContent({
           />
         </div>
         {issueArchived && (
-          <p className="px-base text-low">アーカイブ解除すると利用できます</p>
+          <p className="px-base text-low">{t('kanban.restoreToUse')}</p>
         )}
         <CommandList className="min-h-[200px]">
           <CommandEmpty>

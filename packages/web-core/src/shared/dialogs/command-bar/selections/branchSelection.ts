@@ -13,12 +13,15 @@ export function buildBranchSelectionPages(
   return {
     selectBranch: {
       id: 'selectBranch',
-      title: repoDisplayName
-        ? i18n.t('commandBar.selectBranchFor', { repoName: repoDisplayName })
-        : i18n.t('commandBar.selectBranch'),
-      buildGroups: () => [
+      title: (t) =>
+        repoDisplayName
+          ? i18n.t('common:commandBar.selectBranchFor', {
+              repoName: repoDisplayName,
+            })
+          : t('common:commandBar.selectBranch'),
+      buildGroups: (t) => [
         {
-          label: 'Branches',
+          label: t('tasks:selections.branches'),
           items: branches.map((b) => ({
             type: 'branch' as const,
             branch: b,

@@ -23,6 +23,8 @@ import { ProjectProvider } from '@/shared/providers/remote/ProjectProvider';
 import { buildWorkflowRunInput } from '../model/issueWorkflow';
 import {
   formatScheduledTaskDateTime,
+  scheduledTaskNoticeLabel,
+  type ScheduledTaskNotice,
   getScheduledTaskStatusKey,
   getScheduledTaskWeekdayKey,
   SCHEDULED_TASK_TIMEZONES,
@@ -47,12 +49,6 @@ export type ScheduledTaskDialogResult =
   | { kind: 'run'; taskId: string; runId: string }
   | { kind: 'canceled' };
 
-function getErrorMessage(error: unknown, fallback: string): string {
-  if (error instanceof Error) return error.message;
-  if (typeof error === 'string') return error;
-  return fallback;
-}
-
 const fieldLabelClassName = 'text-xs font-medium text-low';
 const nativeSelectClassName =
   'h-10 w-full rounded border border-secondary bg-secondary px-2 text-sm text-normal outline-none focus:border-brand disabled:cursor-not-allowed disabled:opacity-50';
@@ -63,7 +59,7 @@ function ScheduledTaskDialogContent({
   workflowName,
   existingTask = null,
 }: ScheduledTaskDialogProps) {
-  const { t } = useTranslation('common');
+  const { t, i18n } = useTranslation('common');
   const modal = useModal();
   const navigation = useAppNavigation();
   const { issues, getIssue } = useProjectContext();
@@ -100,7 +96,8 @@ function ScheduledTaskDialogContent({
       })
   );
   const [inputTouched, setInputTouched] = useState(Boolean(existingTask));
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<ScheduledTaskNotice | null>(null);
+  const [errorDetail, setErrorDetail] = useState<string | null>(null);
 
   const selectedIssue = useMemo(
     () => (contextIssueId ? getIssue(contextIssueId) : undefined),
@@ -153,22 +150,23 @@ function ScheduledTaskDialogContent({
 
   const validateForm = (): boolean => {
     if (!contextIssueId) {
-      setError(t('workflow.schedule.errors.issueRequired'));
+      setError('issueRequired');
       return false;
     }
     if (!timeOfDay || !/^\d{2}:\d{2}$/.test(timeOfDay)) {
-      setError(t('workflow.schedule.errors.timeRequired'));
+      setError('timeRequired');
       return false;
     }
     if (scheduleKind === 'weekly' && !weekday) {
-      setError(t('workflow.schedule.errors.weekdayRequired'));
+      setError('weekdayRequired');
       return false;
     }
     if (!inputText.trim()) {
-      setError(t('workflow.schedule.errors.inputRequired'));
+      setError('inputRequired');
       return false;
     }
     setError(null);
+    setErrorDetail(null);
     return true;
   };
 
@@ -203,8 +201,9 @@ function ScheduledTaskDialogContent({
         taskId: task.id,
       } satisfies ScheduledTaskDialogResult);
       modal.hide();
-    } catch (err) {
-      setError(getErrorMessage(err, t('workflow.schedule.errors.saveFailed')));
+    } catch (error) {
+      setErrorDetail(error instanceof Error ? error.message : String(error));
+      setError('saveFailed');
     }
   };
 
@@ -223,11 +222,16 @@ function ScheduledTaskDialogContent({
         navigation.goToProjectWorkflowRun(projectId, result.run.id);
         return;
       }
+      setErrorDetail(result.task.last_error);
       setError(
-        result.task.last_error || t('workflow.schedule.errors.runSkipped')
+        result.skipped &&
+          result.task.last_error === 'Previous scheduled run is still active'
+          ? 'runSkipped'
+          : 'runFailed'
       );
-    } catch (err) {
-      setError(getErrorMessage(err, t('workflow.schedule.errors.runFailed')));
+    } catch (error) {
+      setErrorDetail(error instanceof Error ? error.message : String(error));
+      setError('runFailed');
     }
   };
 
@@ -235,9 +239,9 @@ function ScheduledTaskDialogContent({
     if (!existingTask) return;
 
     const result = await ConfirmDialog.show({
-      title: t('workflow.schedule.deleteTitle'),
-      message: t('workflow.schedule.deleteMessage'),
-      confirmText: t('buttons.delete'),
+      title: () => i18n.t('common:workflow.schedule.deleteTitle'),
+      message: () => i18n.t('common:workflow.schedule.deleteMessage'),
+      confirmText: () => i18n.t('common:buttons.delete'),
       variant: 'destructive',
     });
     if (result !== 'confirmed') return;
@@ -248,10 +252,9 @@ function ScheduledTaskDialogContent({
         kind: 'deleted',
       } satisfies ScheduledTaskDialogResult);
       modal.hide();
-    } catch (err) {
-      setError(
-        getErrorMessage(err, t('workflow.schedule.errors.deleteFailed'))
-      );
+    } catch (error) {
+      setErrorDetail(error instanceof Error ? error.message : String(error));
+      setError('deleteFailed');
     }
   };
 
@@ -259,14 +262,16 @@ function ScheduledTaskDialogContent({
     ? formatScheduledTaskDateTime(
         existingTask.next_run_at,
         timezone,
-        t('workflow.schedule.none')
+        t('workflow.schedule.none'),
+        i18n.resolvedLanguage || i18n.language
       )
     : t('workflow.schedule.none');
   const lastTriggeredLabel = existingTask
     ? formatScheduledTaskDateTime(
         existingTask.last_triggered_at,
         timezone,
-        t('workflow.schedule.none')
+        t('workflow.schedule.none'),
+        i18n.resolvedLanguage || i18n.language
       )
     : t('workflow.schedule.none');
   const lastStatusLabel = existingTask
@@ -332,7 +337,13 @@ function ScheduledTaskDialogContent({
 
               {existingTask?.last_error ? (
                 <div className="mt-base rounded-sm border border-error/30 bg-error/10 px-3 py-2 text-xs text-error">
-                  {existingTask.last_error}
+                  <p>{t('workflow.schedule.lastErrorNotice')}</p>
+                  <details>
+                    <summary>{t('workflow.schedule.originalError')}</summary>
+                    <pre className="whitespace-pre-wrap break-all">
+                      {existingTask.last_error}
+                    </pre>
+                  </details>
                 </div>
               ) : null}
             </section>
@@ -477,7 +488,7 @@ function ScheduledTaskDialogContent({
 
             {error ? (
               <p className="text-xs text-error" role="alert">
-                {error}
+                {scheduledTaskNoticeLabel(error, t)} {errorDetail}
               </p>
             ) : null}
           </div>

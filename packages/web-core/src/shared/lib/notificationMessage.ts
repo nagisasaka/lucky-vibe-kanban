@@ -1,3 +1,4 @@
+import type { TFunction } from 'i18next';
 import type { GroupedNotification } from '@/shared/lib/notifications';
 import { getPayload } from '@/shared/lib/notifications';
 import type { OrganizationMemberWithProfile } from 'shared/types';
@@ -8,220 +9,181 @@ export type MessageSegment =
   | { type: 'issue'; value: string }
   | { type: 'user'; userId: string };
 
-function text(value: string): MessageSegment {
-  return { type: 'text', value };
-}
-
-function emphasis(value: string): MessageSegment {
-  return { type: 'emphasis', value };
-}
-
-function issue(value: string): MessageSegment {
-  return { type: 'issue', value };
-}
-
-function user(userId: string): MessageSegment {
-  return { type: 'user', userId };
-}
+const text = (value: string): MessageSegment => ({ type: 'text', value });
+const emphasis = (value: string): MessageSegment => ({
+  type: 'emphasis',
+  value,
+});
+const user = (userId: string): MessageSegment => ({ type: 'user', userId });
 
 function getMemberLabel(member?: OrganizationMemberWithProfile): string | null {
   if (!member) return null;
-
   const fullName = [member.first_name, member.last_name]
     .filter((value): value is string => Boolean(value && value.trim()))
     .join(' ');
-
-  if (fullName) return fullName;
-  if (member.username?.trim()) return member.username;
-
-  return null;
+  return fullName || (member.username?.trim() ? member.username : null);
 }
 
-function formatPriority(priority?: string | null): string | null {
-  if (!priority) return null;
-
-  return priority
-    .split('_')
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(' ');
-}
-
-function getActorSegments(group: GroupedNotification): MessageSegment[] {
-  const actorId = getPayload(group.latest).actor_user_id;
-  return actorId ? [user(actorId)] : [text('Someone')];
-}
-
-function getIssueSegments(group: GroupedNotification): MessageSegment[] {
-  const payload = getPayload(group.latest);
-  if (payload.issue_simple_id) {
-    return [issue(payload.issue_simple_id)];
-  }
-
-  return [emphasis(payload.issue_title ?? 'an issue')];
-}
-
-function formatCountLabel(
-  count: number,
-  singular: string,
-  plural = `${singular}s`
-): string {
-  return `${count} ${count === 1 ? singular : plural}`;
+// Translate sentence order before inserting raw segments. Raw payload values are
+// never parsed as templates or markup, even if they resemble interpolation tags.
+function compose(
+  template: string,
+  values: Record<string, MessageSegment[]>
+): MessageSegment[] {
+  return template
+    .split(/(\uE000[a-z]+\uE001)/)
+    .filter(Boolean)
+    .flatMap((part) =>
+      part.startsWith('\uE000')
+        ? (values[part.slice(1, -1)] ?? [text(part)])
+        : [text(part)]
+    );
 }
 
 export function getGroupedNotificationSegments(
-  group: GroupedNotification
+  group: GroupedNotification,
+  t: TFunction<'common'>,
+  locale: string
 ): MessageSegment[] {
   const payload = getPayload(group.latest);
-  const actor = getActorSegments(group);
-  const issueSegments = getIssueSegments(group);
+  const someone = () => [text(t('notifications.someone'))];
+  const actor = payload.actor_user_id
+    ? [user(payload.actor_user_id)]
+    : someone();
+  const issue: MessageSegment[] = payload.issue_simple_id
+    ? [{ type: 'issue', value: payload.issue_simple_id }]
+    : [emphasis(payload.issue_title ?? t('notifications.anIssue'))];
+  const tokens = {
+    actor: '\uE000actor\uE001',
+    issue: '\uE000issue\uE001',
+    assignee: '\uE000assignee\uE001',
+    old: '\uE000old\uE001',
+    next: '\uE000next\uE001',
+    quantity: '\uE000quantity\uE001',
+    emoji: '\uE000emoji\uE001',
+  };
+  const render = (
+    template: string,
+    values: Record<string, MessageSegment[]> = {}
+  ) => compose(template, { actor, issue, ...values });
+  const countOptions = (count: number) => ({
+    count,
+    formattedCount: new Intl.NumberFormat(locale).format(count),
+  });
+  const priorities: Record<string, string> = {
+    urgent: t('notifications.priorityUrgent'),
+    high: t('notifications.priorityHigh'),
+    medium: t('notifications.priorityMedium'),
+    low: t('notifications.priorityLow'),
+  };
+  const priority = (value: string) =>
+    Object.prototype.hasOwnProperty.call(priorities, value)
+      ? priorities[value]
+      : value;
 
   if (group.kind !== 'single' && group.notificationCount > 1) {
     switch (group.kind) {
       case 'issue_changes':
-        return [
-          ...actor,
-          text(' changed '),
-          emphasis(formatCountLabel(group.issueChangeCount, 'field')),
-          text(' on '),
-          ...issueSegments,
-        ];
+        return render(t('notifications.groupChanges', tokens), {
+          quantity: [
+            emphasis(
+              t('notifications.fields', countOptions(group.issueChangeCount))
+            ),
+          ],
+        });
       case 'comments':
-        return [
-          ...actor,
-          text(' left '),
-          emphasis(formatCountLabel(group.notificationCount, 'comment')),
-          text(' on '),
-          ...issueSegments,
-        ];
+        return render(t('notifications.groupComments', tokens), {
+          quantity: [
+            emphasis(
+              t('notifications.comments', countOptions(group.notificationCount))
+            ),
+          ],
+        });
       case 'status_changes':
-        return [...actor, text(' changed status on '), ...issueSegments];
+        return render(t('notifications.statusChanged', tokens));
       case 'reactions':
-        return [
-          ...actor,
-          text(' reacted '),
-          emphasis(formatCountLabel(group.notificationCount, 'time')),
-          text(' on '),
-          ...issueSegments,
-        ];
+        return render(t('notifications.groupReactions', tokens), {
+          quantity: [
+            emphasis(
+              t('notifications.times', countOptions(group.notificationCount))
+            ),
+          ],
+        });
       case 'issue_deleted':
-        return [
-          ...actor,
-          text(' deleted '),
-          emphasis(formatCountLabel(group.notificationCount, 'issue')),
-        ];
+        return render(t('notifications.groupDeleted', tokens), {
+          quantity: [
+            emphasis(
+              t('notifications.issues', countOptions(group.notificationCount))
+            ),
+          ],
+        });
     }
   }
-
   switch (group.latest.notification_type) {
-    case 'issue_title_changed': {
-      const newTitle = payload.new_title;
-      if (newTitle) {
-        return [
-          ...actor,
-          text(' changed the title of '),
-          ...issueSegments,
-          text(' to '),
-          emphasis(newTitle),
-        ];
-      }
-      return [...actor, text(' changed the title of '), ...issueSegments];
-    }
-    case 'issue_assignee_changed': {
-      const assigneeId = payload.assignee_user_id;
-      const assignee = assigneeId ? [user(assigneeId)] : [text('Someone')];
-      return [
-        ...assignee,
-        text(' was assigned to '),
-        ...issueSegments,
-        text(' by '),
-        ...actor,
-      ];
-    }
+    case 'issue_title_changed':
+      return payload.new_title
+        ? render(t('notifications.titleChangedTo', tokens), {
+            next: [emphasis(payload.new_title)],
+          })
+        : render(t('notifications.titleChanged', tokens));
+    case 'issue_assignee_changed':
+      return render(t('notifications.assigned', tokens), {
+        assignee: payload.assignee_user_id
+          ? [user(payload.assignee_user_id)]
+          : someone(),
+      });
     case 'issue_unassigned':
-      return [...actor, text(' unassigned you from '), ...issueSegments];
+      return render(t('notifications.unassigned', tokens));
     case 'issue_description_changed':
-      return [...actor, text(' changed the description on '), ...issueSegments];
+      return render(t('notifications.descriptionChanged', tokens));
     case 'issue_priority_changed': {
-      const oldPriority = formatPriority(payload.old_priority);
-      const newPriority = formatPriority(payload.new_priority);
-
-      if (oldPriority && newPriority) {
-        return [
-          ...actor,
-          text(' changed the priority of '),
-          ...issueSegments,
-          text(' from '),
-          emphasis(oldPriority),
-          text(' to '),
-          emphasis(newPriority),
-        ];
-      }
-
-      if (newPriority) {
-        return [
-          ...actor,
-          text(' changed the priority of '),
-          ...issueSegments,
-          text(' to '),
-          emphasis(newPriority),
-        ];
-      }
-
-      return [...actor, text(' cleared the priority of '), ...issueSegments];
+      const old = payload.old_priority;
+      const next = payload.new_priority;
+      if (old && next)
+        return render(t('notifications.priorityChangedFrom', tokens), {
+          old: [emphasis(priority(old))],
+          next: [emphasis(priority(next))],
+        });
+      if (next)
+        return render(t('notifications.priorityChangedTo', tokens), {
+          next: [emphasis(priority(next))],
+        });
+      return render(t('notifications.priorityCleared', tokens));
     }
     case 'issue_comment_added':
-      return [...actor, text(' commented on '), ...issueSegments];
-    case 'issue_comment_reaction': {
-      const emoji = payload.emoji;
-      if (emoji) {
-        return [
-          ...actor,
-          text(' reacted '),
-          emphasis(emoji),
-          text(' to your comment on '),
-          ...issueSegments,
-        ];
-      }
-      return [...actor, text(' reacted to your comment on '), ...issueSegments];
-    }
-    case 'issue_status_changed': {
-      const oldStatusName = payload.old_status_name;
-      const newStatusName = payload.new_status_name;
-
-      if (oldStatusName && newStatusName) {
-        return [
-          ...actor,
-          text(' changed status of '),
-          ...issueSegments,
-          text(' from '),
-          emphasis(oldStatusName),
-          text(' to '),
-          emphasis(newStatusName),
-        ];
-      }
-
-      return [...actor, text(' changed status of '), ...issueSegments];
-    }
+      return render(t('notifications.commented', tokens));
+    case 'issue_comment_reaction':
+      return payload.emoji
+        ? render(t('notifications.reactedWith', tokens), {
+            emoji: [emphasis(payload.emoji)],
+          })
+        : render(t('notifications.reacted', tokens));
+    case 'issue_status_changed':
+      return payload.old_status_name && payload.new_status_name
+        ? render(t('notifications.statusChangedFrom', tokens), {
+            old: [emphasis(payload.old_status_name)],
+            next: [emphasis(payload.new_status_name)],
+          })
+        : render(t('notifications.statusChanged', tokens));
     case 'issue_deleted':
-      return [...actor, text(' deleted '), ...issueSegments];
+      return render(t('notifications.deleted', tokens));
     default:
-      return [text('New notification')];
+      return [text(t('notifications.newNotification'))];
   }
 }
 
 export function getGroupedNotificationText(
   group: GroupedNotification,
+  t: TFunction<'common'>,
+  locale: string,
   membersByUserId?: Map<string, OrganizationMemberWithProfile>
 ): string {
-  return getGroupedNotificationSegments(group)
-    .map((segment) => {
-      if (segment.type === 'user') {
-        return (
-          getMemberLabel(membersByUserId?.get(segment.userId)) ?? 'Someone'
-        );
-      }
-
-      return segment.value;
-    })
+  return getGroupedNotificationSegments(group, t, locale)
+    .map((segment) =>
+      segment.type === 'user'
+        ? (getMemberLabel(membersByUserId?.get(segment.userId)) ??
+          t('notifications.someone'))
+        : segment.value
+    )
     .join('');
 }

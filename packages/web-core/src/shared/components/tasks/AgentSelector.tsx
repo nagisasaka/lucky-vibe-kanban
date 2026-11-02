@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { Bot, ArrowDown } from 'lucide-react';
 import { Button } from '@vibe/ui/components/Button';
 import {
@@ -28,6 +29,7 @@ export function AgentSelector({
   className = '',
   showLabel = false,
 }: AgentSelectorProps) {
+  const { t } = useTranslation('common');
   const selectedAgent = selectedExecutorProfile?.executor;
   const { config } = useUserSystem();
   const agents = profiles
@@ -44,7 +46,7 @@ export function AgentSelector({
     <div className="flex-1">
       {showLabel && (
         <Label htmlFor="executor-profile" className="text-sm font-medium">
-          Agent
+          {t('modelSelector.agent')}
         </Label>
       )}
       <DropdownMenu>
@@ -54,11 +56,13 @@ export function AgentSelector({
             size="sm"
             className={`w-full justify-between text-xs ${showLabel ? 'mt-1.5' : ''} ${className}`}
             disabled={disabled}
-            aria-label="Select agent"
+            aria-label={t('taskSelectors.selectAgent')}
           >
             <div className="flex items-center gap-1.5 w-full">
               <Bot className="h-3 w-3" />
-              <span className="truncate">{selectedAgent || 'Agent'}</span>
+              <span className="truncate">
+                {selectedAgent || t('modelSelector.agent')}
+              </span>
             </div>
             <ArrowDown className="h-3 w-3" />
           </Button>
@@ -66,7 +70,7 @@ export function AgentSelector({
         <DropdownMenuContent className="w-60">
           {agents.length === 0 ? (
             <div className="p-2 text-sm text-muted-foreground text-center">
-              No agents available
+              {t('taskSelectors.noAgents')}
             </div>
           ) : (
             agents.map((agent) => (

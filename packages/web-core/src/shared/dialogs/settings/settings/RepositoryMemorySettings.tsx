@@ -1,6 +1,11 @@
+import { useTranslation } from 'react-i18next';
 import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import type { Repo } from 'shared/types';
+import type {
+  Repo,
+  RepositoryWikiStatus,
+  OpenWikiBootstrapPhase,
+} from 'shared/types';
 import type { MachineClient } from '@/shared/lib/machineClient';
 import { WorkspaceWorkflowLink } from '@/shared/components/WorkspaceWorkflowLink';
 import { PrimaryButton } from '@vibe/ui/components/PrimaryButton';
@@ -21,6 +26,33 @@ export function RepositoryMemorySettings({
   projectId?: string;
   client: MachineClient;
 }) {
+  const { t, i18n } = useTranslation('settings');
+  const statuses: Record<RepositoryWikiStatus, string> = {
+    disabled: t('repositoryMemory.status.disabled'),
+    uninitialized: t('repositoryMemory.status.uninitialized'),
+    initializing: t('repositoryMemory.status.initializing'),
+    current: t('repositoryMemory.status.current'),
+    stale: t('repositoryMemory.status.stale'),
+    reconciling: t('repositoryMemory.status.reconciling'),
+    error: t('repositoryMemory.status.error'),
+  };
+  const phases: Record<OpenWikiBootstrapPhase, string> = {
+    generating: t('repositoryMemory.phase.generating'),
+    reviewing: t('repositoryMemory.phase.reviewing'),
+    refining: t('repositoryMemory.phase.refining'),
+    publishing: t('repositoryMemory.phase.publishing'),
+    cleaning_up: t('repositoryMemory.phase.cleaningUp'),
+  };
+  const checkpointMessage = (message: string) => {
+    const identities =
+      /^Workspace ([0-9a-f-]{36}) \/ run ([0-9a-f-]{36}):/i.exec(message);
+    return identities
+      ? t('repositoryMemory.checkpointIdentified', {
+          workspace: identities[1],
+          run: identities[2],
+        })
+      : t('repositoryMemory.checkpoint');
+  };
   const query = useQuery({
     queryKey: [...client.queryScopeKey, 'repository-memory', repo.id],
     queryFn: () => client.getRepositoryMemory(repo.id),
@@ -88,8 +120,8 @@ export function RepositoryMemorySettings({
           output_language: language,
         });
       await query.refetch();
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : String(cause));
+    } catch (error) {
+      setError(error instanceof Error ? error.message : String(error));
       await query.refetch();
     } finally {
       setBusy(false);
@@ -97,29 +129,45 @@ export function RepositoryMemorySettings({
   };
   return (
     <SettingsCard
-      title="OpenWiki repository memory"
-      description="Auto-merge updates openwiki/ in its integration candidate. Standalone updates and initial generation require an explicit request and use a dedicated workspace; publication and pending changes never start one automatically. Initial generation receives an independent read-only review and optional refinement before publication. Coding workspaces read the Wiki and keep their own Workspace Memory."
+      title={t('repositoryMemory.title')}
+      description={t('repositoryMemory.description')}
     >
       <p className="text-sm text-normal" role="status">
-        Status: {state?.status ?? 'Loading…'}
-        {state?.bootstrap && ` · ${state.bootstrap.phase}`}
+        {state?.bootstrap
+          ? t('repositoryMemory.stateWithPhase', {
+              status: statuses[state.status],
+              phase: phases[state.bootstrap.phase],
+            })
+          : t('repositoryMemory.state', {
+              status: state
+                ? statuses[state.status]
+                : t('repositoryMemory.loading'),
+            })}
       </p>
       <SettingsCheckbox
         id={`openwiki-enabled-${repo.id}`}
-        label="Enable repository memory"
+        label={t('repositoryMemory.enabled')}
         checked={enabled}
         onChange={setEnabled}
         disabled={busy || active}
       />
-      <SettingsField label="Integrated local branch">
+      <SettingsField
+        label={t('repositoryMemory.targetBranch')}
+        htmlFor={`openwiki-branch-${repo.id}`}
+      >
         <SettingsInput
+          id={`openwiki-branch-${repo.id}`}
           value={branch}
           onChange={setBranch}
           disabled={busy || active}
         />
       </SettingsField>
-      <SettingsField label="Output language (BCP 47)">
+      <SettingsField
+        label={t('repositoryMemory.outputLanguage')}
+        htmlFor={`openwiki-language-${repo.id}`}
+      >
         <SettingsInput
+          id={`openwiki-language-${repo.id}`}
           value={language}
           onChange={setLanguage}
           placeholder="en, ja, fr, zh-Hans"
@@ -129,41 +177,52 @@ export function RepositoryMemorySettings({
       {state?.wiki_exists && (
         <>
           <p className="text-sm text-low">
-            Existing openwiki/ found on {state.target_branch}. Adopt and update
-            its contents without regenerating the Wiki.
+            {t('repositoryMemory.existingWiki', {
+              branch: state.target_branch,
+            })}
           </p>
-          <SettingsField label="Reconciliation scope">
+          <SettingsField
+            label={t('repositoryMemory.scope')}
+            htmlFor={`openwiki-scope-${repo.id}`}
+          >
             <SettingsSelect
+              id={`openwiki-scope-${repo.id}`}
               value={scope}
               onChange={setScope}
               disabled={busy || active}
               options={[
                 {
                   value: 'current',
-                  label: `Compare with current ${state.target_branch ?? 'branch'}`,
+                  label: t('repositoryMemory.compareCurrent', {
+                    branch: state.target_branch ?? t('repositoryMemory.branch'),
+                  }),
                 },
-                { value: 'since', label: 'Changes since a commit' },
+                { value: 'since', label: t('repositoryMemory.sinceCommit') },
               ]}
             />
           </SettingsField>
           {needsCommit && (
             <SettingsField
-              label="Starting commit"
-              description="Enter a commit SHA on this branch. Review changes after that commit through the current branch head; earlier content remains unverified."
+              label={t('repositoryMemory.startingCommit')}
+              htmlFor={`openwiki-commit-${repo.id}`}
+              description={t('repositoryMemory.startingCommitHint')}
+              error={invalidCommit ? t('repositoryMemory.invalidCommit') : null}
             >
               <SettingsInput
+                id={`openwiki-commit-${repo.id}`}
+                error={Boolean(invalidCommit)}
                 value={fromCommit}
                 onChange={setFromCommit}
-                placeholder="Commit SHA"
+                placeholder={t('repositoryMemory.commitPlaceholder')}
                 disabled={busy || active}
               />
             </SettingsField>
           )}
         </>
       )}
-      <div className="flex gap-base">
+      <div className="flex flex-wrap gap-base">
         <PrimaryButton
-          value="Save settings"
+          value={t('repositoryMemory.save')}
           disabled={busy || active || !state}
           onClick={() => void perform(false)}
         />
@@ -171,42 +230,43 @@ export function RepositoryMemorySettings({
           value={
             state?.wiki_exists
               ? state.last_success
-                ? 'Sync Wiki'
-                : 'Adopt existing Wiki'
-              : 'Initialize Wiki'
+                ? t('repositoryMemory.sync')
+                : t('repositoryMemory.adopt')
+              : t('repositoryMemory.initialize')
           }
           disabled={cannotStart}
           onClick={() => void perform(true)}
         />
       </div>
       {!state?.last_success && (
-        <p className="text-sm text-low">
-          Enabling memory records future development changes. Wiki maintenance
-          starts only when you choose Initialize Wiki or Adopt existing Wiki.
-        </p>
+        <p className="text-sm text-low">{t('repositoryMemory.startHint')}</p>
       )}
       {unsaved && (
         <p className="text-sm text-low" role="status">
-          Save settings before starting Wiki generation. The run uses the saved
-          branch and language.
+          {t('repositoryMemory.unsaved')}
         </p>
       )}
       <p className="text-sm text-low">
-        Last successful reconciliation:{' '}
-        {state?.last_success
-          ? new Date(state.last_success).toLocaleString()
-          : 'None'}
+        {t('repositoryMemory.lastSuccess', {
+          date: state?.last_success
+            ? new Date(state.last_success).toLocaleString(
+                i18n.resolvedLanguage || i18n.language
+              )
+            : t('repositoryMemory.none'),
+        })}
       </p>
       {state?.unverified_before && (
         <p className="break-all text-sm text-low" role="status">
-          Only changes after {state.unverified_before} have been reconciled.
-          Earlier Wiki content has not been verified. Choose Compare with
-          current branch to review it.
+          {t('repositoryMemory.unverifiedBefore', {
+            commit: state.unverified_before,
+          })}
         </p>
       )}
       {state?.source_commit && (
         <p className="break-all text-sm text-low">
-          Integrated source: {state.source_commit}
+          {t('repositoryMemory.integratedSource', {
+            commit: state.source_commit,
+          })}
         </p>
       )}
       {state?.maintenance_workspace_id && (
@@ -219,12 +279,19 @@ export function RepositoryMemorySettings({
             className="block break-all text-sm text-brand underline"
             href={`${client.target.apiHostId ? `/hosts/${client.target.apiHostId}` : ''}/workspaces/${state.maintenance_workspace_id}`}
           >
-            Maintenance workspace: {state.maintenance_workspace_id}
+            {t('repositoryMemory.workspace', {
+              id: state.maintenance_workspace_id,
+            })}
           </a>
         </div>
       )}
       {(error || query.error || state?.error) && (
         <p className="whitespace-pre-wrap text-sm text-error" role="alert">
+          {error
+            ? t('repositoryMemory.operationUnconfirmed')
+            : query.error
+              ? t('repositoryMemory.loadFailed')
+              : t('repositoryMemory.maintenanceError')}{' '}
           {error ?? query.error?.message ?? state?.error}
         </p>
       )}
@@ -234,16 +301,11 @@ export function RepositoryMemorySettings({
           className="whitespace-pre-wrap text-sm text-error"
           role="alert"
         >
-          Source checkpoint needs attention: {message}. Source files are
-          retained; fix the draft or unexpected Wiki edits before merging or
-          pushing.
+          {checkpointMessage(message)} {message}
         </p>
       ))}
       {state?.status === 'error' && (
-        <p className="text-sm text-low">
-          Source changes are retained. Inspect the error and retry Sync Wiki
-          after resolving it; failed semantic events remain pending.
-        </p>
+        <p className="text-sm text-low">{t('repositoryMemory.errorHint')}</p>
       )}
     </SettingsCard>
   );

@@ -46,7 +46,7 @@ export function createSemanticHook<A extends Action>(action: A) {
           return;
         }
 
-        if (isEnabled) {
+        if (typeof isEnabled === 'function' ? isEnabled() : isEnabled) {
           handler(event);
         }
       },

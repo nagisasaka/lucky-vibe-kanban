@@ -2,35 +2,26 @@ import type { WorkflowNodeKind, WorkflowNodeData } from './workflowGraph';
 
 export interface CatalogEntry {
   type: WorkflowNodeKind;
-  label: string;
-  description: string;
   defaultData: WorkflowNodeData;
 }
 
 export interface WorkflowNodeCatalogSection {
   id: 'execution' | 'control' | 'structure';
-  label: string;
-  labelKey: string;
+  label: (t: (key: string) => string) => string;
   entries: CatalogEntry[];
 }
 
 export const WORKFLOW_NODE_CATALOG: CatalogEntry[] = [
   {
     type: 'start',
-    label: 'Start',
-    description: 'Entry point of the workflow',
     defaultData: { display_name: 'Start' },
   },
   {
     type: 'end',
-    label: 'End',
-    description: 'Exit point of the workflow',
     defaultData: { display_name: 'End' },
   },
   {
     type: 'agent',
-    label: 'Agent',
-    description: 'AI agent to execute tasks',
     defaultData: {
       display_name: 'Agent',
       role_template_id: 'custom',
@@ -39,8 +30,6 @@ export const WORKFLOW_NODE_CATALOG: CatalogEntry[] = [
   },
   {
     type: 'condition',
-    label: 'Condition',
-    description: 'Agentic routing across connected branches',
     defaultData: {
       display_name: 'Condition',
       routing_mode: 'single',
@@ -49,8 +38,6 @@ export const WORKFLOW_NODE_CATALOG: CatalogEntry[] = [
   },
   {
     type: 'human_gate',
-    label: 'Human Gate',
-    description: 'Wait for human approval',
     defaultData: {
       display_name: 'Human Gate',
       required_action: 'approve_or_reject',
@@ -58,8 +45,6 @@ export const WORKFLOW_NODE_CATALOG: CatalogEntry[] = [
   },
   {
     type: 'transform',
-    label: 'Transform',
-    description: 'Transform data between nodes',
     defaultData: {
       display_name: 'Transform',
       mode: 'template',
@@ -68,8 +53,6 @@ export const WORKFLOW_NODE_CATALOG: CatalogEntry[] = [
   },
   {
     type: 'arena',
-    label: 'Arena',
-    description: 'Run multiple agents in parallel',
     defaultData: {
       display_name: 'Arena',
       promote_strategy: 'manual',
@@ -115,20 +98,17 @@ export function getWorkflowNodeCatalogSections(): WorkflowNodeCatalogSection[] {
   );
   const sections: Array<{
     id: WorkflowNodeCatalogSection['id'];
-    label: string;
-    labelKey: string;
+    label: (t: (key: string) => string) => string;
     types: WorkflowNodeKind[];
   }> = [
     {
       id: 'execution',
-      label: 'Execution',
-      labelKey: 'workflow.editor.sections.execution',
+      label: (t) => t('workflow.editor.sections.execution'),
       types: ['agent'],
     },
     {
       id: 'control',
-      label: 'Control',
-      labelKey: 'workflow.editor.sections.control',
+      label: (t) => t('workflow.editor.sections.control'),
       types: ['condition', 'human_gate'],
     },
   ];
@@ -137,7 +117,6 @@ export function getWorkflowNodeCatalogSections(): WorkflowNodeCatalogSection[] {
     .map((section) => ({
       id: section.id,
       label: section.label,
-      labelKey: section.labelKey,
       entries: section.types
         .map((type) => entryByType.get(type))
         .filter((entry): entry is CatalogEntry => Boolean(entry)),

@@ -1,6 +1,8 @@
+import i18n from '@/i18n/config';
 import { describe, expect, it } from 'vitest';
 import {
   AgentRunStatus,
+  ProjectionStatus,
   type WorkflowNodeExecutionResponse,
   type WorkflowRunResponse,
 } from 'shared/types';
@@ -12,6 +14,7 @@ import {
   buildArenaWinnerOptions,
   buildWorkflowRunDashboardSummary,
   formatWorkflowDuration,
+  formatWorkflowElapsedMs,
   getNodeStatusTone,
   getWorkflowRunTaskAttemptLabel,
   getWorkflowRunStatusLabel,
@@ -27,7 +30,7 @@ function withAgentRun(
     ...node,
     agent_run_id: agentRunId,
     orchestration_node_execution_id: `orch-${node.id}`,
-    projection_status: 'current',
+    projection_status: ProjectionStatus.current,
   };
 }
 
@@ -49,7 +52,7 @@ function canonicalRun(run: WorkflowRunResponse): WorkflowRunResponse {
           active_session_id: node.session_id,
           orchestration_node_execution_id: node.orchestration_node_execution_id,
           active_agent_run_id: node.agent_run_id,
-          projection_status: 'current',
+          projection_status: ProjectionStatus.current,
         };
       }),
     },
@@ -60,6 +63,7 @@ const baseRun = {
   id: 'run-1',
   orchestration_run_id: null,
   workflow_id: 'workflow-1',
+  repository_id: null,
   attempt_id: null,
   issue_id: 'issue-1',
   workspace_id: null,
@@ -83,6 +87,7 @@ const baseRun = {
       input_text: 'input',
       output_text: 'output',
       session_id: null,
+      execution_process_id: null,
       orchestration_node_execution_id: null,
       agent_run_id: null,
       projection_status: null,
@@ -105,6 +110,7 @@ const baseRun = {
       input_text: 'review this',
       output_text: null,
       session_id: null,
+      execution_process_id: null,
       orchestration_node_execution_id: null,
       agent_run_id: null,
       projection_status: null,
@@ -175,12 +181,14 @@ const baseArenaGroup = {
   ],
 } satisfies ArenaGroupResponse;
 
+const t = i18n.getFixedT('en', 'common');
+
 describe('workflow run view helpers', () => {
   it('formats run statuses for compact UI labels', () => {
-    expect(getWorkflowRunStatusLabel('awaiting_human')).toBe(
+    expect(getWorkflowRunStatusLabel('awaiting_human', t)).toBe(
       'Waiting for human'
     );
-    expect(getWorkflowRunStatusLabel('awaiting_arena')).toBe(
+    expect(getWorkflowRunStatusLabel('awaiting_arena', t)).toBe(
       'Waiting for arena'
     );
   });
@@ -230,7 +238,7 @@ describe('workflow run view helpers', () => {
             active_session_id: null,
             orchestration_node_execution_id: null,
             active_agent_run_id: null,
-            projection_status: 'current',
+            projection_status: ProjectionStatus.current,
             active_started_at: null,
             active_elapsed_ms: null,
             active_slow: false,
@@ -255,7 +263,7 @@ describe('workflow run view helpers', () => {
             active_session_id: null,
             orchestration_node_execution_id: null,
             active_agent_run_id: null,
-            projection_status: 'current',
+            projection_status: ProjectionStatus.current,
             active_started_at: null,
             active_elapsed_ms: null,
             active_slow: false,
@@ -280,7 +288,7 @@ describe('workflow run view helpers', () => {
             active_session_id: null,
             orchestration_node_execution_id: null,
             active_agent_run_id: null,
-            projection_status: 'current',
+            projection_status: ProjectionStatus.current,
             active_started_at: null,
             active_elapsed_ms: null,
             active_slow: false,
@@ -362,9 +370,22 @@ describe('workflow run view helpers', () => {
 
   it('formats elapsed durations from timestamps', () => {
     expect(
-      formatWorkflowDuration('2026-05-09T00:00:00Z', '2026-05-09T00:02:05Z')
+      formatWorkflowDuration(
+        '2026-05-09T00:00:00Z',
+        '2026-05-09T00:02:05Z',
+        t,
+        'en'
+      )
     ).toBe('2m 5s');
-    expect(formatWorkflowDuration(null, null)).toBe('Not started');
+    expect(formatWorkflowDuration(null, null, t, 'en')).toBe('Not started');
+    const japanese = i18n.getFixedT('ja', 'common');
+    expect(formatWorkflowElapsedMs(74045000, japanese, 'ja')).toBe(
+      '1,234分5秒'
+    );
+    expect(formatWorkflowElapsedMs(-1, t, 'en')).toBe('0s');
+    expect(formatWorkflowDuration('invalid', null, japanese, 'ja')).toBe(
+      '所要時間不明'
+    );
   });
 
   it('builds winner options from arena attempt workspaces only', () => {
@@ -471,7 +492,9 @@ describe('workflow run view helpers', () => {
           baseRun.nodes[1],
         ],
       }),
-      'plan'
+      'plan',
+      t,
+      'en'
     );
 
     expect(rows).toEqual([

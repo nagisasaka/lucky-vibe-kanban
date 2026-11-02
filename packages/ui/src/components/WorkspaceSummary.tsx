@@ -1,3 +1,4 @@
+import { formatRelativeTime } from '../lib/dateFormatting';
 import {
   PushPinIcon,
   HandIcon,
@@ -12,21 +13,6 @@ import { useTranslation } from 'react-i18next';
 import type { AgentRunStatus } from 'shared/types';
 import { cn } from '../lib/cn';
 import { RunningDots } from './RunningDots';
-
-const formatRelativeElapsed = (dateString: string): string => {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffSecs = Math.floor(diffMs / 1000);
-  const diffMins = Math.floor(diffSecs / 60);
-  const diffHours = Math.floor(diffMins / 60);
-  const diffDays = Math.floor(diffHours / 24);
-
-  if (diffSecs < 60) return 'just now';
-  if (diffMins < 60) return `${diffMins}m ago`;
-  if (diffHours < 24) return `${diffHours}h ago`;
-  return `${diffDays}d ago`;
-};
 
 export interface WorkspaceSummaryProps {
   name: string;
@@ -72,7 +58,9 @@ export function WorkspaceSummary({
   isDraft = false,
   onOpenWorkspaceActions,
 }: WorkspaceSummaryProps) {
-  const { t } = useTranslation('common');
+  const { t, i18n } = useTranslation('common');
+  const locale = i18n.resolvedLanguage || i18n.language;
+  const number = new Intl.NumberFormat(locale);
   const hasChanges = filesChanged !== undefined && filesChanged > 0;
   const isPreparing = ['pending', 'starting'].includes(
     latestProcessStatus ?? ''
@@ -145,7 +133,9 @@ export function WorkspaceSummary({
             )}
 
             {/* Running dots OR hand icon for pending approval */}
-            {isPreparing && <span className="text-low">Preparing…</span>}
+            {isPreparing && (
+              <span className="text-low">{t('workspaces.preparing')}</span>
+            )}
             {isRunning &&
               !isPreparing &&
               (hasPendingApproval ? (
@@ -195,7 +185,7 @@ export function WorkspaceSummary({
                 </span>
               ) : latestProcessCompletedAt ? (
                 <span className="min-w-0 flex-1 truncate">
-                  {formatRelativeElapsed(latestProcessCompletedAt)}
+                  {formatRelativeTime(latestProcessCompletedAt, locale)}
                 </span>
               ) : (
                 <span className="flex-1" />
@@ -208,12 +198,16 @@ export function WorkspaceSummary({
             {hasChanges && (
               <span className="shrink-0 text-right flex items-center gap-half">
                 <FileIcon className="size-icon-xs" weight="fill" />
-                <span>{filesChanged}</span>
+                <span>{number.format(filesChanged ?? 0)}</span>
                 {linesAdded !== undefined && (
-                  <span className="text-success">+{linesAdded}</span>
+                  <span className="text-success">
+                    +{number.format(linesAdded)}
+                  </span>
                 )}
                 {linesRemoved !== undefined && (
-                  <span className="text-error">-{linesRemoved}</span>
+                  <span className="text-error">
+                    -{number.format(linesRemoved)}
+                  </span>
                 )}
               </span>
             )}

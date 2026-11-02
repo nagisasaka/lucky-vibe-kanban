@@ -59,7 +59,7 @@ const EditorSelectionDialogImpl = create<EditorSelectionDialogProps>(
             {isFetching && <p role="status">{t('externalEditors.loading')}</p>}
             {error && (
               <p role="alert" className="text-error">
-                {error.message}
+                {t('externalEditors.loadError')} {error.message}
               </p>
             )}
             {!isFetching && !error && data?.entries.length === 0 && (

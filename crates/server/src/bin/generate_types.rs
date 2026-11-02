@@ -574,7 +574,7 @@ fn generate_types_content() -> String {
     format!("{HEADER}\n\n{body}\n\n{constants}")
 }
 
-fn generate_json_schema<T: JsonSchema>() -> Result<String, serde_json::Error> {
+fn generate_json_schema<T: JsonSchema>(executor: &str) -> Result<String, serde_json::Error> {
     // Draft-07, inline everything (no $defs)
     let mut settings = SchemaSettings::draft07();
     settings.inline_subschemas = true;
@@ -588,6 +588,85 @@ fn generate_json_schema<T: JsonSchema>() -> Result<String, serde_json::Error> {
     if let Some(obj) = schema_value.as_object_mut() {
         obj.remove("title");
     }
+    // Stable presentation keys travel with the generated schema. Validation
+    // keywords and canonical property/enum values remain unchanged.
+    if let Some(properties) = schema_value
+        .get_mut("properties")
+        .and_then(|v| v.as_object_mut())
+    {
+        for (name, property) in properties {
+            if let Some(field) = property.as_object_mut() {
+                field.entry("title").or_insert_with(|| {
+                    let title = name
+                        .split('_')
+                        .map(|word| match word {
+                            "oss" => "OSS".to_string(),
+                            "api" => "API".to_string(),
+                            _ => {
+                                let mut chars = word.chars();
+                                chars
+                                    .next()
+                                    .map(|first| {
+                                        first.to_uppercase().collect::<String>() + chars.as_str()
+                                    })
+                                    .unwrap_or_default()
+                            }
+                        })
+                        .collect::<Vec<_>>()
+                        .join(" ");
+                    serde_json::Value::String(title)
+                });
+                if let Some(values) = field.get("enum").and_then(|value| value.as_array()) {
+                    let labels = values.iter().map(|value| {
+                        let canonical = value.as_str().unwrap_or("null");
+                        let label = match canonical {
+                            "null" => "Follow native config",
+                            "auto" => "Automatic",
+                            "read-only" => "Read only",
+                            "workspace-write" => "Workspace write",
+                            "danger-full-access" => "Full access (unsafe)",
+                            "unless-trusted" => "Ask for untrusted commands",
+                            "on-request" => "On request",
+                            "never" => "Never",
+                            "concise" => "Concise",
+                            "detailed" => "Detailed",
+                            "none" => "None",
+                            "experimental" => "Experimental",
+                            "code" => "Code",
+                            "review" => "Review",
+                            "plan" => "Plan",
+                            "goal" => "Goal",
+                            "plan_with_goal" => "Plan with Goal",
+                            "low" => "Low",
+                            "medium" => "Medium",
+                            "high" => "High",
+                            "xhigh" => "Extra high",
+                            "max" => "Maximum",
+                            _ => canonical,
+                        };
+                        serde_json::json!({
+                            "key": format!("settings:executorSchemas.{executor}.{name}.options.{canonical}"),
+                            "source": label
+                        })
+                    }).collect::<Vec<_>>();
+                    field.insert(
+                        "x-lvk-i18n-enum".to_string(),
+                        serde_json::Value::Array(labels),
+                    );
+                }
+                for annotation in ["title", "description"] {
+                    if field.get(annotation).is_some_and(|value| value.is_string()) {
+                        field.insert(
+                            format!("x-lvk-i18n-{annotation}"),
+                            serde_json::Value::String(format!(
+                                "settings:executorSchemas.{executor}.{name}.{annotation}"
+                            )),
+                        );
+                    }
+                }
+            }
+        }
+    }
     let formatted = serde_json::to_string_pretty(&schema_value)?;
     Ok(formatted)
 }
@@ -598,11 +677,11 @@ fn generate_schemas() -> Result<HashMap<&'static str, String>, serde_json::Error
     let schemas: HashMap<&str, String> = HashMap::from([
         (
             "claude_code",
-            generate_json_schema::<executors::executors::claude::ClaudeCode>()?,
+            generate_json_schema::<executors::executors::claude::ClaudeCode>("claude_code")?,
         ),
         (
             "codex",
-            generate_json_schema::<executors::executors::codex::Codex>()?,
+            generate_json_schema::<executors::executors::codex::Codex>("codex")?,
         ),
     ]);
     println!(

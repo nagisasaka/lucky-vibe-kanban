@@ -1,6 +1,7 @@
+import { useTranslation } from 'react-i18next';
 import { Binary, ExternalLink } from 'lucide-react';
 import { Button } from '@vibe/ui/components/Button';
-import { formatFileSize } from '@/shared/lib/utils';
+import { formatFileSize } from '@vibe/ui/lib/formatFileSize';
 import { useOpenInEditor } from '@/shared/hooks/useOpenInEditor';
 import { useWorkspaceRecord } from '@/shared/hooks/useWorkspaceRecord';
 import type { WorkspaceFileContent } from 'shared/types';
@@ -18,24 +19,27 @@ export function UnsupportedFileViewer({
   content,
   rawUrl,
 }: UnsupportedFileViewerProps) {
+  const { t, i18n } = useTranslation('common');
   const openInEditor = useOpenInEditor(target.workspaceId);
   const { data: workspace } = useWorkspaceRecord(target.workspaceId);
 
   return (
     <WorkspaceFileEmptyState
       icon={<Binary className="size-5" />}
-      title="Preview not available"
-      description="This file is binary or not supported by the read-only preview."
+      title={t('workspaceFiles.preview_not_available')}
+      description={t(
+        'workspaceFiles.this_file_is_binary_or_not_supported_by_the_read_only_preview'
+      )}
       action={
         <div className="flex max-w-full flex-col items-center gap-base">
           <dl className="grid max-w-[420px] grid-cols-[auto_1fr] gap-x-base gap-y-half text-left text-sm">
-            <dt className="text-low">Path</dt>
+            <dt className="text-low">{t('workspaceFiles.path')}</dt>
             <dd className="min-w-0 truncate font-ibm-plex-mono text-normal">
               {target.path}
             </dd>
             {content?.mime_type && (
               <>
-                <dt className="text-low">MIME</dt>
+                <dt className="text-low">{t('workspaceFiles.mime')}</dt>
                 <dd className="min-w-0 truncate text-normal">
                   {content.mime_type}
                 </dd>
@@ -43,9 +47,12 @@ export function UnsupportedFileViewer({
             )}
             {content && (
               <>
-                <dt className="text-low">Size</dt>
+                <dt className="text-low">{t('workspaceFiles.size')}</dt>
                 <dd className="text-normal">
-                  {formatFileSize(content.size_bytes)}
+                  {formatFileSize(
+                    content.size_bytes,
+                    i18n.resolvedLanguage || i18n.language
+                  )}
                 </dd>
               </>
             )}
@@ -65,7 +72,7 @@ export function UnsupportedFileViewer({
                 className="gap-half"
               >
                 <ExternalLink className="size-3" />
-                Open editor
+                {t('workspaceFiles.open_editor')}
               </Button>
             )}
             {rawUrl && (
@@ -76,7 +83,7 @@ export function UnsupportedFileViewer({
                 className="gap-half"
               >
                 <a href={rawUrl} target="_blank" rel="noopener noreferrer">
-                  Open raw
+                  {t('workspaceFiles.open_raw')}
                 </a>
               </Button>
             )}

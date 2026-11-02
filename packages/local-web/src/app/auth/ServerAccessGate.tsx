@@ -1,3 +1,8 @@
+import {
+  AccessRequestError,
+  accessErrorNotice,
+  toAccessRequestError,
+} from '@/shared/lib/accessErrorMessage';
 import { SettingsAccessContext } from '@/shared/dialogs/settings/settings/SettingsAccessContext';
 import { useSettingsDirty } from '@/shared/dialogs/settings/settings/SettingsDirtyContext';
 import { useTranslation } from 'react-i18next';
@@ -40,9 +45,13 @@ interface Confirmation {
 }
 const field = 'min-w-0 w-full rounded border bg-secondary p-base text-normal';
 const button =
-  'shrink-0 whitespace-nowrap rounded border bg-secondary px-double py-base text-high hover:bg-panel disabled:opacity-50';
+  'shrink-0 max-w-full whitespace-normal break-words rounded border bg-secondary px-double py-base text-high hover:bg-panel disabled:opacity-50';
 
 function CopyValue({ label, value }: { label: string; value: string }) {
+  const { t } = useTranslation('settings');
+  const [copyStatus, setCopyStatus] = useState<'copied' | 'failed' | null>(
+    null
+  );
   return (
     <div className="space-y-half">
       <label className="text-low">{label}</label>
@@ -51,11 +60,23 @@ function CopyValue({ label, value }: { label: string; value: string }) {
         <button
           className={button}
           type="button"
-          onClick={() => void navigator.clipboard.writeText(value)}
+          onClick={() =>
+            void navigator.clipboard
+              .writeText(value)
+              .then(() => setCopyStatus('copied'))
+              .catch(() => setCopyStatus('failed'))
+          }
         >
-          コピー
+          {t('auth.gate.copy')}
         </button>
       </div>
+      {copyStatus && (
+        <p role={copyStatus === 'failed' ? 'alert' : 'status'}>
+          {copyStatus === 'copied'
+            ? t('auth.gate.copied')
+            : t('auth.gate.copyFailed')}
+        </p>
+      )}
     </div>
   );
 }
@@ -83,11 +104,11 @@ export function ServerAccessGate({
   embedded?: boolean;
   onDirtyChange?: (dirty: boolean) => void;
 }) {
-  const { t } = useTranslation('settings');
+  const { t, i18n } = useTranslation('settings');
   const [status, setStatus] = useState<AccessStatus>();
   const [setupDirty, setSetupDirty] = useState(false);
   const [credentialsDirty, setCredentialsDirty] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState<AccessRequestError | null>(null);
   const [busy, setBusy] = useState(false);
   const [provisioningBusy, setProvisioningBusy] = useState(false);
   const [key, setKey] = useState('');
@@ -119,7 +140,7 @@ export function ServerAccessGate({
     try {
       setStatus(await loadAccessStatus());
     } catch (e) {
-      setError(e instanceof Error ? e.message : '認証状態を取得できません');
+      setError(toAccessRequestError(e, 'auth.gate.statusFailed'));
     }
   }, []);
   useEffect(() => {
@@ -155,14 +176,20 @@ export function ServerAccessGate({
             (config.current.mode === 'basic' ? 'basic' : 'auth0')
         );
       })
-      .catch((e: Error) => setError(e.message));
+      .catch((e: Error) =>
+        setError(toAccessRequestError(e, 'auth.gate.actionFailed'))
+      );
     if (status.authenticated && status.mode !== 'local') {
       void accessRequest<{ members: Member[] }>('members')
         .then((r) => setMembers(r.members))
-        .catch((e: Error) => setError(e.message));
+        .catch((e: Error) =>
+          setError(toAccessRequestError(e, 'auth.gate.actionFailed'))
+        );
       void accessRequest<{ events: typeof audit }>('audit')
         .then((r) => setAudit(r.events))
-        .catch((e: Error) => setError(e.message));
+        .catch((e: Error) =>
+          setError(toAccessRequestError(e, 'auth.gate.actionFailed'))
+        );
     }
   }, [settings, status]);
   useEffect(() => {
@@ -207,11 +234,11 @@ export function ServerAccessGate({
   }
   async function run(action: () => Promise<void>) {
     setBusy(true);
-    setError('');
+    setError(null);
     try {
       await action();
     } catch (e) {
-      setError(e instanceof Error ? e.message : '処理に失敗しました');
+      setError(toAccessRequestError(e, 'auth.gate.actionFailed'));
     } finally {
       setBusy(false);
     }
@@ -268,7 +295,7 @@ export function ServerAccessGate({
                       ? 'Auth0'
                       : status.mode === 'basic'
                         ? 'Basic'
-                        : 'Local'}
+                        : t('settings.account.localMethod')}
                   </dd>
                 </div>
               </dl>
@@ -281,7 +308,7 @@ export function ServerAccessGate({
               </p>
               {error && (
                 <p role="alert" className="text-error">
-                  {error}
+                  {accessErrorNotice(error)}
                 </p>
               )}
               {status.mode !== 'local' && (
@@ -324,23 +351,22 @@ export function ServerAccessGate({
         }
       >
         <h1 className="text-xl text-high">
-          LVK {settings ? '認証とメンバー管理' : 'ログイン・初期設定'}
+          LVK{' '}
+          {settings
+            ? t('auth.gate.managementTitle')
+            : t('auth.gate.loginTitle')}
         </h1>
         {error && (
           <p role="alert" className="text-error">
-            {error}
+            {accessErrorNotice(error)}
           </p>
         )}
-        {!status && <p>認証状態を確認しています…</p>}
+        {!status && <p>{t('auth.gate.checking')}</p>}
         {status?.configuration_error && (
-          <p>
-            認証設定を読み込めないため保護を維持しています。管理者は復旧キーで設定し直してください。
-          </p>
+          <p>{t('auth.gate.configurationError')}</p>
         )}
         {status?.mode === 'locked' && !status.limited && (
-          <p>
-            初期設定が完了していません。サーバー管理者が発行したキーで設定を開始してください。
-          </p>
+          <p>{t('auth.gate.locked')}</p>
         )}
         {(recovery ||
           (status &&
@@ -363,13 +389,13 @@ export function ServerAccessGate({
               });
             }}
           >
-            <p>サーバーで実行するコマンド（キーは15分間有効・一度限り）：</p>
+            <p>{t('auth.gate.keyCommand')}</p>
             <code className="block overflow-auto bg-secondary p-base">
               docker compose exec lvk server{' '}
               {recovery ? 'recovery-token' : 'setup-token'}
             </code>
             <label className="block">
-              {recovery ? '復旧キー' : 'セットアップキー'}
+              {recovery ? t('auth.gate.recoveryKey') : t('auth.gate.setupKey')}
               <input
                 className={field}
                 type="password"
@@ -380,11 +406,9 @@ export function ServerAccessGate({
               />
             </label>
             <button className={button} disabled={busy || provisioningBusy}>
-              設定を開始
+              {t('auth.gate.startSetup')}
             </button>
-            <p className="text-low">
-              このブラウザだけに、認証設定用の期限付きセッションを発行します。
-            </p>
+            <p className="text-low">{t('auth.gate.setupSession')}</p>
           </form>
         )}
         {status?.mode === 'basic' &&
@@ -413,7 +437,7 @@ export function ServerAccessGate({
               }}
             >
               <label className="block">
-                ユーザー名
+                {t('auth.gate.username')}
                 <input
                   className={field}
                   autoComplete="username"
@@ -423,7 +447,7 @@ export function ServerAccessGate({
                 />
               </label>
               <label className="block">
-                パスワード
+                {t('auth.gate.password')}
                 <input
                   className={field}
                   type="password"
@@ -434,7 +458,7 @@ export function ServerAccessGate({
                 />
               </label>
               <button className={button} disabled={busy || provisioningBusy}>
-                ログイン
+                {t('auth.gate.signIn')}
               </button>
             </form>
           )}
@@ -443,33 +467,27 @@ export function ServerAccessGate({
           !recovery &&
           !status.limited && (
             <div className="space-y-base">
-              {view === 'pending' && (
-                <p>
-                  ログインは確認できました。LVK管理者のメンバー承認が必要です。無効化されている場合も管理者へ連絡してください。
-                </p>
-              )}
+              {view === 'pending' && <p>{t('auth.gate.pending')}</p>}
               <button
                 className={button}
                 disabled={busy || provisioningBusy}
                 onClick={() => void login()}
               >
-                Auth0でログイン
+                {t('auth.gate.signInAuth0')}
               </button>
-              <p>
-                Auth0の画面でGoogle／GitHub等の設定済みログイン方法を選びます。
-              </p>
+              <p>{t('auth.gate.providerHint')}</p>
             </div>
           )}
         {settings && configuration && status?.management && (
           <>
             <CopyValue
-              label="LVK公開URL（配置設定）"
+              label={t('auth.gate.publicUrl')}
               value={configuration.public_url || 'Local'}
             />
             <label className="block">
-              認証方式
+              {t('auth.gate.method')}
               <select
-                aria-label="認証方式"
+                aria-label={t('auth.gate.method')}
                 className={field}
                 value={mode}
                 disabled={
@@ -478,15 +496,13 @@ export function ServerAccessGate({
                 onChange={(e) => setMode(e.target.value)}
               >
                 {status.deployment === 'local' && (
-                  <option value="local">Local（ローカル無認証）</option>
+                  <option value="local">{t('auth.gate.localOption')}</option>
                 )}
-                <option value="basic">Basic（単一所有者）</option>
-                <option value="auth0">Auth0（承認されたメンバー）</option>
+                <option value="basic">{t('auth.gate.basicOption')}</option>
+                <option value="auth0">{t('auth.gate.auth0Option')}</option>
               </select>
             </label>
-            {status.forced_mode && (
-              <p>認証方式はLVK_AUTH_MODEで固定されています。</p>
-            )}
+            {status.forced_mode && <p>{t('auth.gate.forcedMode')}</p>}
             {mode === 'local' && (
               <button
                 className={button}
@@ -498,7 +514,7 @@ export function ServerAccessGate({
                   })
                 }
               >
-                Localを有効化
+                {t('auth.gate.enableLocal')}
               </button>
             )}
             {mode === 'basic' && (
@@ -513,12 +529,9 @@ export function ServerAccessGate({
                   });
                 }}
               >
-                <p>
-                  HTTPS上で単一所有者として利用します。リモートHTTP
-                  MCPとMFAは提供しません。
-                </p>
+                <p>{t('auth.gate.basicHint')}</p>
                 <label className="block">
-                  ユーザー名
+                  {t('auth.gate.username')}
                   <input
                     className={field}
                     required
@@ -528,7 +541,7 @@ export function ServerAccessGate({
                   />
                 </label>
                 <label className="block">
-                  新しいパスワード（12文字以上）
+                  {t('auth.gate.newPassword')}
                   <input
                     className={field}
                     type="password"
@@ -540,16 +553,13 @@ export function ServerAccessGate({
                   />
                 </label>
                 <button className={button} disabled={busy || provisioningBusy}>
-                  Basicを設定して再ログイン
+                  {t('auth.gate.enableBasic')}
                 </button>
               </form>
             )}
             {mode === 'auth0' && (
               <div className="space-y-double">
-                <p>
-                  ご自身のAuth0テナントとGitHub／Google接続を用意します。
-                  アプリは自動セットアップで作成するか、手動で設定した情報を入力してください。
-                </p>
+                <p>{t('auth.gate.auth0Hint')}</p>
                 <Auth0Setup
                   onDirtyChange={setSetupDirty}
                   issuer={issuer}
@@ -567,11 +577,11 @@ export function ServerAccessGate({
                   }}
                 />
                 <CopyValue
-                  label="WebアプリのAllowed Callback URL"
+                  label={t('auth.gate.callbackUrl')}
                   value={configuration.callback_url}
                 />
                 <CopyValue
-                  label="Allowed Logout URL"
+                  label={t('auth.gate.logoutUrl')}
                   value={configuration.logout_url}
                 />
                 <form
@@ -593,7 +603,7 @@ export function ServerAccessGate({
                   }}
                 >
                   <label className="block">
-                    Auth0 issuer（末尾 / を含む）
+                    {t('auth.gate.issuer')}
                     <input
                       className={field}
                       type="url"
@@ -604,7 +614,7 @@ export function ServerAccessGate({
                     />
                   </label>
                   <label className="block">
-                    Web用Client ID
+                    {t('auth.gate.webClientId')}
                     <input
                       className={field}
                       required
@@ -613,7 +623,7 @@ export function ServerAccessGate({
                     />
                   </label>
                   <label className="block">
-                    Web用Client Secret
+                    {t('auth.gate.webClientSecret')}
                     <input
                       className={field}
                       type="password"
@@ -621,7 +631,7 @@ export function ServerAccessGate({
                       required={!configuration.current.secret_configured}
                       placeholder={
                         configuration.current.secret_configured
-                          ? '未入力なら現在のSecretを保持'
+                          ? t('auth.gate.keepSecret')
                           : ''
                       }
                       value={clientSecret}
@@ -634,23 +644,22 @@ export function ServerAccessGate({
                       checked={mcp}
                       onChange={(e) => setMcp(e.target.checked)}
                     />
-                    OAuthで保護したリモートHTTP MCPを有効化
+                    {t('auth.gate.enableMcp')}
                   </label>
-                  <p className="text-low">
-                    Discovery／JWKSとPKCE
-                    S256の公開設定を確認してからAuth0へ移動します。現行の認証方式は、ログイン試験後に有効化するまで維持されます。
-                  </p>
+                  <p className="text-low">{t('auth.gate.testHint')}</p>
                   <button
                     className={button}
                     disabled={busy || provisioningBusy}
                   >
-                    設定をチェックしてログイン試験
+                    {t('auth.gate.testLogin')}
                   </button>
                 </form>
                 {confirmation?.ready && confirmation.identity && (
                   <div className="space-y-base rounded border p-base">
-                    <h2 className="text-lg text-high">Webログイン試験に成功</h2>
-                    <p>次の本人識別情報をLVK管理者として確定します。</p>
+                    <h2 className="text-lg text-high">
+                      {t('auth.gate.testSucceeded')}
+                    </h2>
+                    <p>{t('auth.gate.confirmIdentity')}</p>
                     <p>{confirmation.identity.display_name}</p>
                     <code className="block break-all">
                       {confirmation.identity.issuer} /{' '}
@@ -666,11 +675,13 @@ export function ServerAccessGate({
                         })
                       }
                     >
-                      この管理者でAuth0を有効化
+                      {t('auth.gate.activateAuth0')}
                     </button>
                   </div>
                 )}
-                <h2 className="text-lg text-high">ChatGPTへのMCP接続</h2>
+                <h2 className="text-lg text-high">
+                  {t('auth.gate.chatgptTitle')}
+                </h2>
                 <ChatGptCredentials
                   onDirtyChange={setCredentialsDirty}
                   key={`${issuer}:${clientId}:${credentialsVersion}`}
@@ -678,51 +689,30 @@ export function ServerAccessGate({
                   webClientId={clientId}
                   disabled={busy || provisioningBusy}
                 />
-                <p>
-                  自動セットアップ済みなら、Auth0での作成・設定を繰り返す必要はありません。
-                  ChatGPTへMCP URLと専用Client
-                  ID・Secretを登録し、接続を確認してください。
-                  以下は手動で設定する場合の手順です。
-                </p>
+                <p>{t('auth.gate.manualHint')}</p>
                 <CopyValue
                   label="MCP URL / Auth0 API Identifier / Resource / Audience"
                   value={configuration.resource}
                 />
                 <CopyValue
-                  label="API Permissions（必要な操作だけ許可）"
+                  label={t('auth.gate.permissions')}
                   value={configuration.scopes.join(' ')}
                 />
                 <ol className="list-decimal space-y-base pl-double">
-                  <li>
-                    Auth0で上記IdentifierのAPIをRS256で作成し、表示されたスコープを登録します。Resource
-                    Parameter Compatibility ProfileとInclude Issuer in
-                    Authorization Responsesを有効にします。
-                  </li>
-                  <li>
-                    ChatGPT用のRegular Web
-                    ApplicationをWeb用とは別に事前登録し、Authorization
-                    Code＋PKCE S256を設定します。Web用Client
-                    Secretは流用しません。
-                  </li>
-                  <li>
-                    現在のChatGPT接続画面に表示されるコールバックURLを、そのアプリへ正確に登録します。MCP
-                    URLとChatGPT用のClient ID等をChatGPTに入力します。
-                  </li>
-                  <li>
-                    接続して、本人のメンバー承認、読み取り、安全なテストデータへの書き込みを確認します。更新・接続解除の確認は導入手順に従ってください。
-                  </li>
+                  <li>{t('auth.gate.manualApi')}</li>
+                  <li>{t('auth.gate.manualApp')}</li>
+                  <li>{t('auth.gate.manualCallback')}</li>
+                  <li>{t('auth.gate.manualVerify')}</li>
                 </ol>
-                <p>
-                  ChatGPT実接続：未検証。上のWebログイン試験とは別の検証です。
-                </p>
+                <p>{t('auth.gate.chatgptUnverified')}</p>
               </div>
             )}
             {status.authenticated && status.mode === 'auth0' && (
               <div className="space-y-base">
-                <h2 className="text-lg text-high">メンバー承認・無効化</h2>
-                <p>
-                  有効なメンバーは全プロジェクトを利用できます。GoogleとGitHubの本人情報は自動統合しません。
-                </p>
+                <h2 className="text-lg text-high">
+                  {t('auth.gate.membersTitle')}
+                </h2>
+                <p>{t('auth.gate.membersHint')}</p>
                 {members.map((member) => (
                   <div
                     className="space-y-half rounded border p-base"
@@ -733,7 +723,19 @@ export function ServerAccessGate({
                       {member.issuer} / {member.subject}
                     </p>
                     <p>
-                      {member.state} · {member.role}
+                      {member.state === 'active'
+                        ? t('auth.gate.active')
+                        : member.state === 'disabled'
+                          ? t('auth.gate.disabled')
+                          : member.state === 'pending'
+                            ? t('auth.gate.pendingState')
+                            : member.state}{' '}
+                      ·{' '}
+                      {member.role === 'admin'
+                        ? t('auth.gate.operatorRole')
+                        : member.role === 'member'
+                          ? t('auth.gate.memberRole')
+                          : member.role}
                     </p>
                     <div className="flex flex-wrap gap-base">
                       {(['active', 'disabled'] as const).map((state) => (
@@ -755,7 +757,9 @@ export function ServerAccessGate({
                             })
                           }
                         >
-                          {state === 'active' ? '承認・有効化' : '無効化'}
+                          {state === 'active'
+                            ? t('auth.gate.approveMember')
+                            : t('auth.gate.disableMember')}
                         </button>
                       ))}
                       <button
@@ -777,8 +781,8 @@ export function ServerAccessGate({
                         }
                       >
                         {member.role === 'admin'
-                          ? '一般メンバーに変更'
-                          : '管理者に変更'}
+                          ? t('auth.gate.makeMember')
+                          : t('auth.gate.makeOperator')}
                       </button>
                     </div>
                   </div>
@@ -787,31 +791,31 @@ export function ServerAccessGate({
             )}
             {audit.length > 0 && (
               <details>
-                <summary>最近の認証・操作監査</summary>
+                <summary>{t('auth.gate.audit')}</summary>
                 <ul className="space-y-half">
                   {audit.map((event) => (
                     <li key={event.id}>
-                      {new Date(event.at * 1000).toLocaleString()} ·{' '}
-                      {event.actor ?? 'operator / anonymous'} · {event.action} ·{' '}
-                      {event.outcome}
+                      {new Date(event.at * 1000).toLocaleString(
+                        i18n.resolvedLanguage || i18n.language
+                      )}{' '}
+                      · {event.actor ?? t('auth.gate.anonymousActor')} ·{' '}
+                      {event.action} · {event.outcome}
                     </li>
                   ))}
                 </ul>
               </details>
             )}
-            <p className="text-low">
-              Webセッションは最長12時間、認証済みHTTPリクエストが30分ないと失効します。LVKログアウトはChatGPTの委任を取り消しません。
-            </p>
+            <p className="text-low">{t('auth.gate.sessionHint')}</p>
             {status.authenticated && !embedded && (
               <a className="block underline" href="/">
-                Kanbanへ戻る
+                {t('auth.gate.back')}
               </a>
             )}
           </>
         )}
         {status && !status.limited && !recovery && (
           <a className="block text-low underline" href="/?access=recovery">
-            管理者向けの認証設定復旧
+            {t('auth.gate.recover')}
           </a>
         )}
       </div>

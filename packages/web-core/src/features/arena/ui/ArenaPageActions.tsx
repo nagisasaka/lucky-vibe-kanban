@@ -40,7 +40,14 @@ export function ArenaPageActions({ group }: ArenaPageActionsProps) {
   const issueArchived =
     issues.find((issue) => issue.id === group.issue_id)?.archived ?? false;
   const [messageText, setMessageText] = useState('');
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<
+    | 'askAllFailed'
+    | 'challengeFailed'
+    | 'synthesizeFailed'
+    | 'startImplementationFailed'
+    | null
+  >(null);
+  const [errorDetail, setErrorDetail] = useState<string | null>(null);
   const { message, startImplementation } = useArenaActions(
     group.id,
     group.issue_id
@@ -69,6 +76,7 @@ export function ArenaPageActions({ group }: ArenaPageActionsProps) {
     if (!trimmedMessage || actionsDisabled) return;
 
     setErrorMessage(null);
+    setErrorDetail(null);
     try {
       await message.mutateAsync({
         target: { type: 'all' },
@@ -81,9 +89,8 @@ export function ArenaPageActions({ group }: ArenaPageActionsProps) {
       });
       setMessageText('');
     } catch (err) {
-      setErrorMessage(
-        err instanceof Error ? err.message : t('arena.errors.askAllFailed')
-      );
+      setErrorDetail(err instanceof Error ? err.message : String(err));
+      setErrorMessage('askAllFailed');
     }
   };
 
@@ -91,6 +98,7 @@ export function ArenaPageActions({ group }: ArenaPageActionsProps) {
     if (actionsDisabled || attemptWorkspaces.length < 2) return;
 
     setErrorMessage(null);
+    setErrorDetail(null);
     try {
       for (const responder of attemptWorkspaces) {
         if (responder.workspace_id === source.workspace_id) continue;
@@ -105,9 +113,8 @@ export function ArenaPageActions({ group }: ArenaPageActionsProps) {
         });
       }
     } catch (err) {
-      setErrorMessage(
-        err instanceof Error ? err.message : t('arena.errors.challengeFailed')
-      );
+      setErrorDetail(err instanceof Error ? err.message : String(err));
+      setErrorMessage('challengeFailed');
     }
   };
 
@@ -115,6 +122,7 @@ export function ArenaPageActions({ group }: ArenaPageActionsProps) {
     if (actionsDisabled) return;
 
     setErrorMessage(null);
+    setErrorDetail(null);
     try {
       const result = await SynthesizeArenaDialog.show({
         activityCount: group.events.length,
@@ -128,9 +136,8 @@ export function ArenaPageActions({ group }: ArenaPageActionsProps) {
         executor_config: executorConfigForWorkspace(attemptWorkspaces[0]),
       });
     } catch (err) {
-      setErrorMessage(
-        err instanceof Error ? err.message : t('arena.errors.synthesizeFailed')
-      );
+      setErrorDetail(err instanceof Error ? err.message : String(err));
+      setErrorMessage('synthesizeFailed');
     }
   };
 
@@ -140,6 +147,7 @@ export function ArenaPageActions({ group }: ArenaPageActionsProps) {
     if (actionsDisabled) return;
 
     setErrorMessage(null);
+    setErrorDetail(null);
     try {
       await startImplementation.mutateAsync({
         workspace_id: workspace.workspace_id,
@@ -147,11 +155,8 @@ export function ArenaPageActions({ group }: ArenaPageActionsProps) {
         executor_config: null,
       });
     } catch (err) {
-      setErrorMessage(
-        err instanceof Error
-          ? err.message
-          : t('arena.errors.startImplementationFailed')
-      );
+      setErrorDetail(err instanceof Error ? err.message : String(err));
+      setErrorMessage('startImplementationFailed');
     }
   };
 
@@ -164,6 +169,7 @@ export function ArenaPageActions({ group }: ArenaPageActionsProps) {
             onChange={(event) => {
               setMessageText(event.target.value);
               setErrorMessage(null);
+              setErrorDetail(null);
             }}
             rows={2}
             placeholder={t('arena.pageActions.askPlaceholder')}
@@ -187,9 +193,7 @@ export function ArenaPageActions({ group }: ArenaPageActionsProps) {
             disabled={
               actionsDisabled || issueArchived || group.workspaces.length < 2
             }
-            title={
-              issueArchived ? 'アーカイブ解除すると利用できます' : undefined
-            }
+            title={issueArchived ? t('kanban.restoreToUse') : undefined}
             onClick={() => void handleSynthesize()}
           >
             {t('arena.actions.synthesize')}
@@ -235,7 +239,7 @@ export function ArenaPageActions({ group }: ArenaPageActionsProps) {
       ) : null}
       {errorMessage ? (
         <p className="mt-half text-xs text-error" role="alert">
-          {errorMessage}
+          {t(`arena.errors.${errorMessage}`)} {errorDetail}
         </p>
       ) : null}
     </div>

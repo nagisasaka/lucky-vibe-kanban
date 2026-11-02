@@ -28,7 +28,7 @@ export function WorkflowNodePalette({
     () =>
       PALETTE_SECTIONS.map((section) => ({
         id: section.id,
-        label: t(section.labelKey, { defaultValue: section.label }),
+        label: section.label(t),
         items: section.entries.map((entry) => ({
           type: entry.type,
           label: getWorkflowNodeKindLabel(entry.type, t),
@@ -71,24 +71,18 @@ export function WorkflowNodePalette({
     <aside className="workflow-node-palette-surface flex h-full min-h-0 w-[260px] shrink-0 flex-col border-r border-[var(--workflow-panel-border)] bg-[var(--workflow-panel-bg)] shadow-[var(--workflow-palette-shadow)]">
       <div className="shrink-0 border-b border-white/8 px-3 py-3">
         <div className="text-xs font-semibold text-high">
-          {t('workflow.editor.nodePalette', {
-            defaultValue: 'Node library',
-          })}
+          {t('workflow.editor.nodePalette')}
         </div>
         {readOnly ? (
           <div className="mt-1 text-[10px] leading-4 text-low">
-            {t('workflow.editor.nodePaletteReadOnly', {
-              defaultValue: 'Copy this template to add or drag steps.',
-            })}
+            {t('workflow.editor.nodePaletteReadOnly')}
           </div>
         ) : null}
         <input
           className="mt-3 h-8 w-full rounded-md border border-white/10 bg-white/[0.035] px-2 text-xs text-high outline-none placeholder:text-low/60 transition-colors focus:border-brand/50 focus:ring-1 focus:ring-brand/35"
           value={query}
           onChange={(event) => setQuery(event.target.value)}
-          placeholder={t('workflow.editor.searchSteps', {
-            defaultValue: 'Search steps...',
-          })}
+          placeholder={t('workflow.editor.searchSteps')}
         />
       </div>
       <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-2 py-3">
@@ -133,9 +127,7 @@ export function WorkflowNodePalette({
         ))}
         {filteredGroups.length === 0 ? (
           <div className="py-8 text-center text-xs text-low">
-            {t('workflow.editor.noStepTypesFound', {
-              defaultValue: 'No step types found',
-            })}
+            {t('workflow.editor.noStepTypesFound')}
           </div>
         ) : null}
       </div>

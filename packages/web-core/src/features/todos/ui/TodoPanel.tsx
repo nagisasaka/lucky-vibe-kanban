@@ -13,6 +13,7 @@ import {
 import type { Todo, UpdateTodo } from 'shared/types';
 import { useAppNavigation } from '@/shared/hooks/useAppNavigation';
 import { cn } from '@/shared/lib/utils';
+import { ApiError } from '@/shared/lib/api';
 import { matchesListSearch } from '@/shared/lib/listSearch';
 import { TodoBody } from './TodoBody';
 import { todoApi } from '../model/todoApi';
@@ -40,7 +41,8 @@ export function TodoPanel({
   });
   const [search, setSearch] = useState('');
   const [showCompleted, setShowCompleted] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<'category' | 'operation' | null>(null);
+  const [errorDetail, setErrorDetail] = useState<string | null>(null);
   const draft = useTodoViewStore((s) => s.drafts[projectId]);
   const setDraft = useTodoViewStore((s) => s.setDraft);
   const clearDraft = useTodoViewStore((s) => s.clearDraft);
@@ -63,9 +65,13 @@ export function TodoPanel({
     onSuccess: () => {
       clearDraft(projectId);
       setError(null);
+      setErrorDetail(null);
       void queryClient.invalidateQueries({ queryKey });
     },
-    onError: (e: Error) => setError(e.message),
+    onError: (error) => {
+      setErrorDetail(error instanceof Error ? error.message : String(error));
+      setError('operation');
+    },
     onSettled: () => {
       submitting.current = false;
     },
@@ -73,10 +79,11 @@ export function TodoPanel({
   const submit = () => {
     if (!draft?.body.trim() || submitting.current || create.isPending) return;
     if (!draft.category.trim()) {
-      setError(t('todo.categoryRequired'));
+      setError('category');
       return;
     }
     setError(null);
+    setErrorDetail(null);
     submitting.current = true;
     create.mutate();
   };
@@ -190,7 +197,12 @@ export function TodoPanel({
         </label>
         {(error || query.error) && (
           <p role="alert" className="text-error text-sm break-words">
-            {error || query.error?.message}
+            {error === 'category'
+              ? t('todo.categoryRequired')
+              : error
+                ? t('todo.createUnconfirmed')
+                : t('todo.loadError')}{' '}
+            {error ? errorDetail : query.error?.message}
           </p>
         )}
       </div>
@@ -295,7 +307,8 @@ function TodoRow({ todo, categories }: { todo: Todo; categories: string[] }) {
   const [body, setBody] = useState(todo.body);
   const [category, setCategory] = useState(todo.category);
   const [editRevision, setEditRevision] = useState(todo.revision);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<'conflict' | 'operation' | null>(null);
+  const [errorDetail, setErrorDetail] = useState<string | null>(null);
   const mutation = useMutation({
     mutationFn: async (
       changes: (Partial<UpdateTodo> & { expected_revision: number }) | 'delete'
@@ -307,12 +320,18 @@ function TodoRow({ todo, categories }: { todo: Todo; categories: string[] }) {
       setEditing(false);
       setConfirmDelete(false);
       setError(null);
+      setErrorDetail(null);
       void queryClient.invalidateQueries({
         queryKey: ['project-todos', todo.project_id],
       });
     },
-    onError: (e: Error) => {
-      setError(e.message);
+    onError: (error) => {
+      setErrorDetail(error instanceof Error ? error.message : String(error));
+      setError(
+        error instanceof ApiError && error.status === 409
+          ? 'conflict'
+          : 'operation'
+      );
       void queryClient.invalidateQueries({
         queryKey: ['project-todos', todo.project_id],
       });
@@ -323,6 +342,7 @@ function TodoRow({ todo, categories }: { todo: Todo; categories: string[] }) {
     setCategory(todo.category);
     setEditRevision(todo.revision);
     setError(null);
+    setErrorDetail(null);
     setEditing(true);
   };
   return (
@@ -378,6 +398,7 @@ function TodoRow({ todo, categories }: { todo: Todo; categories: string[] }) {
               onClick={() => {
                 setEditing(false);
                 setError(null);
+                setErrorDetail(null);
               }}
             >
               {t('todo.cancel')}
@@ -489,7 +510,10 @@ function TodoRow({ todo, categories }: { todo: Todo; categories: string[] }) {
       )}
       {error && (
         <p role="alert" className="mt-base text-error text-sm break-words">
-          {error}
+          {error === 'conflict'
+            ? t('todo.conflict')
+            : t('todo.changeUnconfirmed')}{' '}
+          {errorDetail}
         </p>
       )}
     </li>

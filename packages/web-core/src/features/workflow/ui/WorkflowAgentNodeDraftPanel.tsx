@@ -314,14 +314,10 @@ export function WorkflowAgentNodeDraftPanel({
                 />
                 <span className="flex min-w-0 flex-col gap-0.5">
                   <span className="font-medium text-high">
-                    {t('workflow.agentDraft.includeWorkflowContext', {
-                      defaultValue: 'Carry workflow context',
-                    })}
+                    {t('workflow.agentDraft.includeWorkflowContext')}
                   </span>
                   <span className="leading-relaxed text-low">
-                    {t('workflow.agentDraft.includeWorkflowContextHelp', {
-                      defaultValue: 'Adds workflow input and upstream results.',
-                    })}
+                    {t('workflow.agentDraft.includeWorkflowContextHelp')}
                   </span>
                 </span>
               </label>

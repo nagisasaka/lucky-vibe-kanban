@@ -192,6 +192,7 @@ export function CommandBar<
   renderSpecialActionIcon,
 }: CommandBarProps<TAction, TPageId>) {
   const { t } = useTranslation('common');
+  const createSubIssueLabel = t('kanban.createNewIssue');
   const deferredSearch = useDeferredValue(search);
   const normalizedSearch = deferredSearch.trim().toLowerCase();
   const isSearching = normalizedSearch.length > 0;
@@ -209,7 +210,7 @@ export function CommandBar<
       const matchedItems: CommandBarGroupItem<TAction, TPageId>[] = [];
 
       for (const item of group.items) {
-        const label = getItemSearchLabel(item, getLabel);
+        const label = getItemSearchLabel(item, getLabel, createSubIssueLabel);
         if (!label) continue;
         if (!label.toLowerCase().includes(normalizedSearch)) continue;
 
@@ -236,7 +237,14 @@ export function CommandBar<
     }
 
     return groups;
-  }, [getLabel, isSearching, normalizedSearch, page.groups, page.id]);
+  }, [
+    getLabel,
+    isSearching,
+    normalizedSearch,
+    page.groups,
+    page.id,
+    createSubIssueLabel,
+  ]);
 
   return (
     <Command
@@ -246,6 +254,7 @@ export function CommandBar<
     >
       <div className="flex items-center border-b border-border">
         <CommandInput
+          aria-label={page.title || t('commandBar.defaultPlaceholder')}
           placeholder={page.title || t('commandBar.defaultPlaceholder')}
           value={search}
           onValueChange={onSearchChange}
@@ -426,7 +435,8 @@ function getItemSearchLabel<
   TPageId extends string,
 >(
   item: CommandBarGroupItem<TAction, TPageId>,
-  getLabel: (action: TAction) => string
+  getLabel: (action: TAction) => string,
+  createSubIssueLabel: string
 ) {
   if (item.type === 'page') {
     return `${item.pageId} ${item.label}`;
@@ -447,7 +457,7 @@ function getItemSearchLabel<
     return `${item.issue.id} ${item.issue.simple_id} ${item.issue.title}`;
   }
   if (item.type === 'createSubIssue') {
-    return 'create new issue';
+    return `create new issue ${createSubIssueLabel}`;
   }
   const keywords = item.action.keywords?.join(' ') ?? '';
   return `${item.action.id} ${getLabel(item.action)} ${keywords}`.trim();

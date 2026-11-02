@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { create, useModal } from '@ebay/nice-modal-react';
 import { defineModal } from '@/shared/lib/modals';
@@ -58,6 +59,7 @@ function getInitialPageId(selectionType: SelectionMode['type']): string {
 
 // Inner component that has access to ProjectContext
 function ProjectSelectionContent({ selection }: { selection: SelectionMode }) {
+  const { t } = useTranslation('tasks');
   const modal = useModal();
   const previousFocusRef = useRef<HTMLElement | null>(null);
   const {
@@ -255,11 +257,11 @@ function ProjectSelectionContent({ selection }: { selection: SelectionMode }) {
       currentPage
         ? {
             id: currentPage.id,
-            title: currentPage.title,
-            groups: currentPage.buildGroups(),
+            title: currentPage.title(t),
+            groups: currentPage.buildGroups(t),
           }
         : { id: initialPageId, title: '', groups: [] },
-    [currentPage, initialPageId]
+    [currentPage, initialPageId, t]
   );
 
   const handleSelect = useCallback(
@@ -316,7 +318,7 @@ function ProjectSelectionContent({ selection }: { selection: SelectionMode }) {
         canGoBack={pageStack.length > 0}
         onGoBack={handleGoBack}
         onSelect={handleSelect}
-        getLabel={(action) => resolveLabel(action)}
+        getLabel={(action) => resolveLabel(action, undefined, t)}
         search={search}
         onSearchChange={setSearch}
         statuses={sortedStatuses}

@@ -55,9 +55,7 @@ export function WorkspaceContextHeader({
         containerRef: draftRepoQuery.data.path,
         branch: draftRepo.target_branch,
         workspaceKind: 'worktree',
-        worktreeLabel: t('workflow.workspaceContext.pendingWorktree', {
-          defaultValue: 'Worktree pending',
-        }),
+        worktreeLabel: t('workflow.workspaceContext.pendingWorktree'),
       });
     }
 
@@ -81,9 +79,7 @@ export function WorkspaceContextHeader({
           'h-4 w-56 animate-pulse rounded-sm bg-secondary',
           className
         )}
-        aria-label={t('workflow.workspaceContext.loading', {
-          defaultValue: 'Loading workspace context',
-        })}
+        aria-label={t('workflow.workspaceContext.loading')}
       />
     );
   }
@@ -91,9 +87,7 @@ export function WorkspaceContextHeader({
   if (parts.length === 0) {
     return (
       <p className={cn('truncate text-xs text-low', className)}>
-        {t('workflow.workspaceContext.unavailable', {
-          defaultValue: 'Workspace context is not available yet',
-        })}
+        {t('workflow.workspaceContext.unavailable')}
       </p>
     );
   }
@@ -104,9 +98,7 @@ export function WorkspaceContextHeader({
         'flex min-w-0 items-center gap-half text-xs text-low',
         className
       )}
-      aria-label={t('workflow.workspaceContext.label', {
-        defaultValue: 'Working context',
-      })}
+      aria-label={t('workflow.workspaceContext.label')}
     >
       <FolderGit2 className="size-icon-xs shrink-0" aria-hidden="true" />
       {parts.map((part, index) => (

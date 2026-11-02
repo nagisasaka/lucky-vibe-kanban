@@ -1,3 +1,5 @@
+import i18n from '@/i18n/config';
+import { I18nextProvider } from 'react-i18next';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
@@ -6,6 +8,24 @@ import { ChatElapsedTime } from '@vibe/ui/components/ChatElapsedTime';
 describe('tool elapsed time evidence', () => {
   const render = (props: Parameters<typeof ChatElapsedTime>[0]) =>
     renderToStaticMarkup(createElement(ChatElapsedTime, props));
+
+  it('localizes elapsed units while retaining rounding, unknown evidence and hour precision', () => {
+    const japanese = i18n.cloneInstance({ lng: 'ja' });
+    const renderJapanese = (durationMs: number) =>
+      renderToStaticMarkup(
+        createElement(
+          I18nextProvider,
+          { i18n: japanese },
+          createElement(ChatElapsedTime, { durationMs })
+        )
+      );
+    expect(renderJapanese(999)).toContain('1秒未満');
+    expect(renderJapanese(1000)).toContain('1秒');
+    expect(renderJapanese(61999)).toContain('1分1秒');
+    expect(renderJapanese(3661999)).toContain('1時間1分');
+    expect(renderJapanese(3600000000)).toContain('1,000時間0分');
+    expect(renderJapanese(NaN)).toBe('');
+  });
 
   it('does not fill missing or reversed endpoints with zero', () => {
     expect(render({ endedAt: '2026-10-25T00:00:04Z' })).toBe('');

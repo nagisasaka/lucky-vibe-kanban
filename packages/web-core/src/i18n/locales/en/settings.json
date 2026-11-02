@@ -7,7 +7,7 @@
       "concurrency": "Saving checks the loaded file, branch and HEAD. A conflicting save is rejected; keep your draft elsewhere before reloading. External Git/editor operations do not share this lock: avoid editing or switching this checkout while saving.",
       "loading": "Loading validation settings…",
       "loadError": "Could not load validation settings. Reload to try again.",
-      "saveError": "Could not save validation settings. Your draft is retained.",
+      "saveError": "Saving the validation plan could not be confirmed. Keep the draft and check the current file and revision before trying again.",
       "missing": "No configuration file exists in this checkout yet.",
       "json": "Configuration JSON (advanced / repair)",
       "invalid": "Use only a commands array with 1–32 non-empty strings. Placeholder commands true, : and exit 0 are not allowed.",
@@ -62,7 +62,8 @@
       "remoteHost": "Remote host",
       "noHostAvailable": "No host is available for host-specific settings yet.",
       "pairMachineHint": "Pair a machine to open machine settings.",
-      "selectMachineHint": "Select a machine to open machine settings."
+      "selectMachineHint": "Select a machine to open machine settings.",
+      "lvkServer": "LVK server"
     },
     "general": {
       "loading": "Loading settings...",
@@ -70,8 +71,7 @@
       "save": {
         "button": "Save Settings",
         "success": "✓ Settings saved successfully!",
-        "error": "Failed to save configuration",
-        "unsavedChanges": "• You have unsaved changes",
+        "error": "Settings save could not be confirmed. Check the current settings before trying again.",
         "discard": "Discard"
       },
       "appearance": {
@@ -86,6 +86,13 @@
           "label": "Language",
           "placeholder": "Select language",
           "helper": "Choose your preferred language. Browser Default follows your system language."
+        },
+        "mobileFont": {
+          "label": "Mobile Font Size",
+          "helper": "Scale text size on mobile for better readability",
+          "default": "Default (100%)",
+          "small": "Small (95%)",
+          "smaller": "Smaller (90%)"
         }
       },
       "taskExecution": {
@@ -100,38 +107,7 @@
         "defaultLabel": "Default"
       },
       "github": {
-        "title": "GitHub Integration",
-        "cliSetup": {
-          "title": "GitHub CLI Setup",
-          "description": "GitHub CLI authentication is required to create pull requests and interact with GitHub repositories.",
-          "setupWillTitle": "This setup will:",
-          "steps": {
-            "checkInstalled": "Check if GitHub CLI (gh) is installed",
-            "installHomebrew": "Install it via Homebrew if needed (macOS)",
-            "authenticate": "Authenticate with GitHub using OAuth"
-          },
-          "setupNote": "The setup will run in the chat window. You'll need to complete the authentication in your browser.",
-          "runSetup": "Run Setup",
-          "running": "Running...",
-          "errors": {
-            "brewMissing": "Homebrew is not installed. Install it to enable automatic setup.",
-            "notSupported": "Automatic setup is not supported on this platform. Install GitHub CLI manually.",
-            "setupFailed": "Failed to run GitHub CLI setup."
-          },
-          "help": {
-            "homebrew": {
-              "description": "Automatic installation requires Homebrew. Install Homebrew from",
-              "brewSh": "brew.sh",
-              "manualInstall": "and then rerun the setup. Alternatively, install GitHub CLI manually with:",
-              "afterInstall": "After installation, authenticate with:"
-            },
-            "manual": {
-              "description": "Install GitHub CLI from the",
-              "officialDocs": "official documentation",
-              "andAuthenticate": "and then authenticate with your GitHub account."
-            }
-          }
-        }
+        "title": "GitHub Integration"
       },
       "git": {
         "title": "Git",
@@ -193,12 +169,14 @@
           "helper": "Play a sound when workspaces finish running.",
           "fileLabel": "Sound",
           "filePlaceholder": "Select sound",
-          "fileHelper": "Choose the sound to play when tasks complete. Click the volume button to preview."
+          "fileHelper": "Choose the sound to play when tasks complete. Click the volume button to preview.",
+          "preview": "Preview sound"
         },
         "push": {
           "label": "OS notifications (master switch)",
           "helper": "Show selected events on the device running the LVK server. Web Push registrations are separate."
-        }
+        },
+        "webPush": "Web Push"
       },
       "messageInput": {
         "title": "Message Input",
@@ -255,10 +233,9 @@
           },
           "errors": {
             "nameRequired": "Tag name is required",
-            "saveFailed": "Failed to save tag"
+            "saveFailed": "Saving the tag could not be confirmed. Check the current tags before trying again."
           },
           "buttons": {
-            "cancel": "Cancel",
             "create": "Create",
             "update": "Update"
           }
@@ -299,8 +276,7 @@
       "selectAgent": "Select agent",
       "save": {
         "button": "Save Agent Configurations",
-        "success": "✓ Executor configurations saved successfully!",
-        "unsavedChanges": "• You have unsaved changes"
+        "success": "✓ Executor configurations saved successfully!"
       },
       "availability": {
         "checking": "Checking...",
@@ -358,7 +334,8 @@
       "deleteConfigDialog": {
         "title": "Delete Configuration?",
         "description": "This will permanently remove \"{{configName}}\" from the {{executorType}} executor. You can't undo this action."
-      }
+      },
+      "profilesLoadFailed": "Could not load launch profiles. Check the selected server, connection and permissions. Native settings remain separate."
     },
     "mcp": {
       "sensitive": {
@@ -378,7 +355,8 @@
         "serverConfig": "Server Configuration (JSON)",
         "popularServers": "Popular servers",
         "serverHelper": "Click a card to insert that MCP Server into the JSON above.",
-        "saveLocation": "Changes will be saved to:"
+        "saveLocation": "Changes will be saved to:",
+        "noDescription": "No description"
       },
       "loadingStates": {
         "jsonEditor": "Loading...",
@@ -387,10 +365,10 @@
       "errors": {
         "loadFailed": "Failed to load configuration.",
         "invalidJson": "Invalid JSON format",
-        "validationError": "Validation error",
-        "saveFailed": "Failed to save MCP servers",
-        "applyFailed": "Failed to apply MCP server configuration",
-        "addServerFailed": "Failed to add preconfigured server",
+        "validationError": "The server configuration does not match the required JSON structure. Check the server container and field types.",
+        "saveFailed": "Could not confirm that MCP settings were saved. Your draft is retained. Read the current native settings before trying again.",
+        "applyFailed": "Could not confirm the MCP configuration update. Check the current native settings before trying again.",
+        "addServerFailed": "Could not insert the server. Check the JSON structure; no write was submitted.",
         "mcpError": "MCP Configuration Error: {{error}}",
         "notSupported": "MCP Not Supported",
         "supportMessage": "To use MCP servers, please select an executor that supports MCP (Claude Code or Codex) above."
@@ -399,8 +377,7 @@
         "button": "Save MCP Configuration",
         "success": "Settings Saved!",
         "successMessage": "✓ MCP configuration saved successfully!",
-        "loading": "Loading current MCP server configuration...",
-        "unsavedChanges": "• You have unsaved changes"
+        "loading": "Loading current MCP server configuration..."
       }
     },
     "projects": {
@@ -433,7 +410,6 @@
         "saving": "Saving...",
         "success": "✓ Project settings saved successfully!",
         "error": "Failed to save project settings",
-        "unsavedChanges": "• You have unsaved changes",
         "discard": "Discard",
         "confirmSwitch": "You have unsaved changes. Are you sure you want to switch projects? Your changes will be lost."
       },
@@ -542,6 +518,12 @@
         "unsavedChanges": "You have unsaved changes",
         "discard": "Discard",
         "confirmSwitch": "You have unsaved changes. Are you sure you want to switch repositories? Your changes will be lost."
+      },
+      "notices": {
+        "removeBlocked": "Repository removal is blocked. Review current references and permissions before trying again.",
+        "removeUnconfirmed": "Could not confirm repository removal. Check the current repository list before trying again.",
+        "addUnconfirmed": "Could not confirm repository registration. Check the current repository list before trying again.",
+        "saveUnconfirmed": "Could not confirm that repository settings were saved. Your draft is retained. Check the current settings before trying again."
       }
     },
     "remoteProjects": {
@@ -555,7 +537,7 @@
       "deleteSuccess": "Project deleted successfully",
       "nameRequired": "Project name is required",
       "saveSuccess": "Project updated successfully",
-      "saveError": "Failed to update project",
+      "saveError": "Project update could not be confirmed. Check the current project before trying again.",
       "columns": {
         "organizations": "Organizations",
         "projects": "Projects"
@@ -596,7 +578,8 @@
         "title": "Sign in required",
         "description": "Sign in to manage your remote projects.",
         "action": "Sign in"
-      }
+      },
+      "deleteUnconfirmed": "Project deletion could not be confirmed. Check the project list before trying again."
     },
     "account": {
       "connection": "Connection",
@@ -609,7 +592,8 @@
       "method": "Authentication method",
       "localHint": "Local connections do not require sign-in or sign-out.",
       "logoutHint": "Sign out of the LVK session in this browser.",
-      "logout": "Log out"
+      "logout": "Log out",
+      "localMethod": "Local"
     },
     "groups": {
       "experience": "Experience",
@@ -730,7 +714,13 @@
       "stale": "State changed; not applied",
       "failed": "Assessment unavailable"
     },
-    "stopMediation": "Stop assessment"
+    "stopMediation": "Stop assessment",
+    "unknownState": "Unknown state",
+    "originalState": "Original state: {{state}}",
+    "actionUnconfirmed": "The resource operation could not be confirmed. Check the current state, owner and operation record before trying again.",
+    "loadUnconfirmed": "Resource information could not be loaded. Check the connection and selected host.",
+    "operationDetailsOriginal": "Operation details (original)",
+    "assessmentDetailsOriginal": "Assessment explanation (original)"
   },
   "runtimeAccess": {
     "title": "Runtime environment access",
@@ -759,6 +749,878 @@
     "open": "Open in external editor",
     "delegate": "Select a link to hand it to your browser and OS. LVK cannot confirm that the editor opened or connected.",
     "loading": "Resolving links…",
-    "empty": "No external editors configured. Add an integration in Settings."
+    "empty": "No external editors configured. Add an integration in Settings.",
+    "loadError": "Editor links could not be loaded. Check the integration settings and access before trying again."
+  },
+  "notifications": {
+    "os": {
+      "scope": "OS notifications appear on the device running the server. These settings apply to every user and project on this LVK server, independently of Web Push registrations above. Use Save to apply changes. Questions and approvals remain available even with all events off. The existing sound settings apply.",
+      "question": {
+        "label": "Question awaiting an answer",
+        "description": "When a running agent requests an answer."
+      },
+      "approval": {
+        "label": "Approval required",
+        "description": "When an action by a running agent requires approval."
+      },
+      "success": {
+        "label": "Execution succeeded",
+        "description": "When a workspace execution process exits successfully. This does not guarantee a successful run, passing tests, or auto-merge publication."
+      },
+      "failure": {
+        "label": "Execution failed",
+        "description": "When a workspace execution process fails. User-initiated stops do not trigger a notification."
+      },
+      "languageHint": "With Browser default selected, OS notifications use the browser language from the latest settings save for this server. Until a browser language is saved, they use English."
+    },
+    "web": {
+      "question": {
+        "label": "Question awaiting an answer",
+        "description": "When Codex asks a question that needs an answer."
+      },
+      "approval": {
+        "label": "Approval required",
+        "description": "When a Codex action requires approval."
+      },
+      "success": {
+        "label": "Run succeeded",
+        "description": "When a Codex run succeeds. Passing tests, auto-merge, and publication are separate outcomes."
+      },
+      "failure": {
+        "label": "Run failed or terminated unexpectedly",
+        "description": "When a run ends in failure, a crash, or an audit failure."
+      },
+      "canceled": {
+        "label": "Run canceled",
+        "description": "When a run is canceled."
+      },
+      "title": "Browser Web Push notifications",
+      "scope": "Receive Codex questions, approval requests, and run outcomes for each user, project, and registered device. Event changes are saved immediately for that registration only. Notifications do not show issue titles or question text. You can use LVK without allowing notifications.",
+      "unsupported": "Unavailable in this environment. Use a supported browser over HTTPS.",
+      "serverRequired": "Web Push must be configured on the server.",
+      "enable": "Enable / re-register this device",
+      "disable": "Disable / unsubscribe",
+      "events": "Notification events",
+      "allOffHint": "Turning off all events keeps the registration and stops notifications. Unsubscribing deletes this registration. Questions and approvals remain available in LVK. Re-registering preserves your event selection; a new registration after unsubscribing enables all events. Past notifications are not resent.",
+      "deviceHint": "On iPhone and iPad, add the web app to your Home Screen. Low Power Mode, Focus, or closing the browser may delay or prevent delivery. Registrations remain active after logout. Use Disable to stop notifications; sign in to view details. Registrations expire after 90 days.",
+      "project": "Project to notify",
+      "permissionDenied": "Notifications are not allowed. You can change this in your browser’s site settings.",
+      "thisDevice": "This device",
+      "registeredDevice": "Registered device {{id}}",
+      "loadFailed": "Could not load Web Push registrations. Check your connection and access before trying again.",
+      "actionUnconfirmed": "Could not confirm the Web Push change. Check current registrations and this browser’s notification settings before trying again."
+    }
+  },
+  "auth": {
+    "gate": {
+      "copy": "Copy",
+      "statusFailed": "Unable to load authentication status",
+      "actionFailed": "The operation failed",
+      "managementTitle": "Authentication and members",
+      "loginTitle": "Sign in and initial setup",
+      "checking": "Checking authentication status…",
+      "configurationError": "Authentication settings could not be loaded. Access remains protected. The server operator can reconfigure authentication with a recovery key.",
+      "locked": "Initial setup is incomplete. Start setup with a key issued by the server operator.",
+      "keyCommand": "Run this command on the server (the key is single-use and valid for 15 minutes):",
+      "recoveryKey": "Recovery key",
+      "setupKey": "Setup key",
+      "startSetup": "Start setup",
+      "setupSession": "A temporary authentication setup session will be issued for this browser only.",
+      "username": "Username",
+      "password": "Password",
+      "signIn": "Sign in",
+      "pending": "Your sign-in was verified. Membership approval by the LVK server operator is required. Contact the operator if your membership is disabled.",
+      "signInAuth0": "Sign in with Auth0",
+      "providerHint": "Choose a configured sign-in method, such as Google or GitHub, on the Auth0 screen.",
+      "publicUrl": "LVK public URL (deployment setting)",
+      "method": "Authentication method",
+      "localOption": "Local (no authentication on a local server)",
+      "basicOption": "Basic (single owner)",
+      "auth0Option": "Auth0 (approved members)",
+      "forcedMode": "The authentication method is fixed by LVK_AUTH_MODE.",
+      "enableLocal": "Enable Local",
+      "basicHint": "Use LVK as a single owner over HTTPS. Remote HTTP MCP and MFA are unavailable with Basic.",
+      "newPassword": "New password (at least 12 characters)",
+      "enableBasic": "Configure Basic and sign in again",
+      "auth0Hint": "Prepare your own Auth0 tenant and GitHub or Google connection. Create the apps with automatic setup, or enter their manually configured details.",
+      "callbackUrl": "Web app Allowed Callback URL",
+      "issuer": "Auth0 issuer (including the trailing /)",
+      "webClientId": "Web Client ID",
+      "webClientSecret": "Web Client Secret",
+      "keepSecret": "Leave blank to keep the current secret",
+      "enableMcp": "Enable OAuth-protected remote HTTP MCP",
+      "testHint": "Check public Discovery/JWKS and PKCE S256 settings before continuing to Auth0. The current authentication method remains active until you complete the login test and activate Auth0.",
+      "testLogin": "Check settings and test sign-in",
+      "testSucceeded": "Web sign-in test succeeded",
+      "confirmIdentity": "Confirm the following identity as the LVK server operator.",
+      "activateAuth0": "Activate Auth0 with this identity",
+      "chatgptTitle": "MCP connection to ChatGPT",
+      "manualHint": "If automatic setup is complete, you do not need to repeat creation or configuration in Auth0. Register the MCP URL and dedicated Client ID and Secret in ChatGPT, then verify the connection. The following steps apply to manual configuration.",
+      "permissions": "API Permissions (allow only the operations you need)",
+      "manualApi": "In Auth0, create an RS256 API with the Identifier above and register the listed scopes. Enable Resource Parameter Compatibility Profile and Include Issuer in Authorization Responses.",
+      "manualApp": "Register a separate Regular Web Application for ChatGPT and configure Authorization Code with PKCE S256. Use a different Client Secret from the web app.",
+      "manualCallback": "Register the exact callback URL shown on the current ChatGPT connection screen for that app. Enter the MCP URL and ChatGPT Client ID in ChatGPT.",
+      "manualVerify": "Connect and verify membership approval, reads, and writes to safe test data. Follow the setup guide to verify refresh and disconnection.",
+      "chatgptUnverified": "Live ChatGPT connection: unverified. This is separate from the web sign-in test above.",
+      "membersTitle": "Approve or disable members",
+      "membersHint": "Active members can access all projects. Google and GitHub identities are not linked automatically.",
+      "approveMember": "Approve / enable",
+      "disableMember": "Disable",
+      "makeMember": "Change to regular member",
+      "makeOperator": "Grant authentication management access",
+      "audit": "Recent authentication and operation audit",
+      "sessionHint": "Web sessions last up to 12 hours and expire after 30 minutes without an authenticated HTTP request. Signing out of LVK does not revoke ChatGPT authorization.",
+      "back": "Back to Kanban",
+      "recover": "Recover authentication settings (server operator)",
+      "anonymousActor": "Server operator / anonymous",
+      "active": "Active",
+      "disabled": "Disabled",
+      "pendingState": "Pending approval",
+      "operatorRole": "Authentication management",
+      "memberRole": "Member",
+      "copied": "Copied",
+      "copyFailed": "Unable to copy. Select and copy the value from the field.",
+      "logoutUrl": "Web app Allowed Logout URL"
+    },
+    "setup": {
+      "failed": "Auth0 configuration failed",
+      "title": "Set up Auth0 automatically",
+      "description": "Create or configure LVK apps using an existing GitHub or Google connection. Register the GitHub or Google OAuth app with Auth0 first.",
+      "tokenHelp": "Prepare a management token and required permissions",
+      "tokenDescription": "Create a management Machine to Machine app in Auth0 with Management API access, and obtain a short-lived access token. This is separate from the sign-in Client Secret.",
+      "tokenGuide": "Official Auth0 token instructions",
+      "permissions": "Required permissions: read:clients, read:client_keys, create:clients, update:clients, read:connections, update:connections, read:tenant_settings, update:tenant_settings. For MCP, also include read:resource_servers, create:resource_servers, update:resource_servers.",
+      "tokenLifetime": "The token is not stored on the server and is cleared from the input after an apply attempt, whether it succeeds or fails. It remains valid in Auth0 until it expires.",
+      "issuer": "Target Auth0 issuer (including the trailing /)",
+      "token": "Management API access token",
+      "inspect": "Load connections and apps",
+      "noConnections": "No GitHub or Google connection was found. Create a social connection in Auth0, then reload.",
+      "connection": "Sign-in connection",
+      "webApp": "LVK web app",
+      "automaticWeb": "Create automatically (reuse if already created for this LVK)",
+      "enableMcp": "Also configure MCP for ChatGPT",
+      "chatgptApp": "ChatGPT app (separate from the web app)",
+      "automaticChatgpt": "Create automatically (reuse if already created)",
+      "callback": "Exact Callback URL shown by ChatGPT",
+      "refreshTokens": "Configure refresh tokens (rotation enabled; maximum 30 days, idle 7 days)",
+      "preview": "Review changes",
+      "previewTitle": "Changes to apply to Auth0 (valid for 5 minutes)",
+      "webPlan": "Web app: ",
+      "createNew": "Create new",
+      "chatgptPlan": "ChatGPT app: ",
+      "mcpPlan": ". The MCP API and permissions will also be configured.",
+      "appPlan": "Enable only the selected social connection for these apps and configure Authorization Code, RS256, and Client Secret Basic. Existing Callback URLs are preserved.",
+      "tenantPlan": "Enable the tenant-wide Resource Parameter Compatibility Profile and Include Issuer settings. These also affect other apps.",
+      "details": "Configuration details",
+      "activateHint": "LVK’s authentication method has not changed yet. After applying, use the form below to test sign-in.",
+      "apply": "Apply these changes to Auth0",
+      "busy": "Checking and configuring Auth0…",
+      "success": "Auth0 configuration is complete. Web app credentials have been filled into the sign-in test form below.",
+      "chatgptSaved": "ChatGPT credentials have been saved. Complete the sign-in test and activate Auth0 first. After signing in, copy the credentials from “MCP connection to ChatGPT” in authentication settings.",
+      "scopes": "Select only the scopes you need: lvk:read / lvk:write / lvk:merge",
+      "offlineAccess": ". Include offline_access if refresh is needed.",
+      "clear": "Clear result",
+      "applyUncertain": "{{message}} Some changes may already have been applied in Auth0. Re-enter the token and review the changes again.",
+      "updateExisting": "Update existing {{id}}",
+      "mcpUrl": "MCP URL: {{url}}"
+    },
+    "credentials": {
+      "saved": "Connection credentials saved. You can copy them here after signing in.",
+      "secretUnavailable": "Unable to retrieve the saved secret",
+      "secretCopied": "ChatGPT secret copied",
+      "failed": "Unable to retrieve connection credentials",
+      "title": "Saved ChatGPT connection credentials",
+      "description": "ChatGPT connection credentials are stored encrypted on the server. The server operator can copy them here after activating Auth0 sign-in.",
+      "clientId": "ChatGPT Client ID",
+      "clientIdCopied": "Client ID copied",
+      "copyFailed": "Unable to copy. Copy the value from the Client ID field instead.",
+      "copyClientId": "Copy ChatGPT Client ID",
+      "clientSecret": "ChatGPT Client Secret",
+      "stored": "Saved",
+      "copySecret": "Copy ChatGPT secret",
+      "hideSecret": "Hide secret",
+      "showSecret": "Show secret",
+      "empty": "No credentials have been saved. Use automatic setup, or save the credentials of an existing ChatGPT app.",
+      "update": "Save or update existing credentials",
+      "updateHint": "Enter the dedicated ChatGPT app credentials from Auth0. This does not change Auth0 settings. Update these values here if you change the secret in Auth0.",
+      "newClientId": "ChatGPT Client ID to save",
+      "newClientSecret": "ChatGPT Client Secret to save",
+      "save": "Save ChatGPT credentials",
+      "copySecretFailed": "Unable to copy the ChatGPT secret. Allow clipboard access and try again."
+    },
+    "errors": {
+      "notActive": "Account is not active",
+      "operatorRequired": "Administrator required",
+      "setupBusy": "Another Auth0 setup is running; retry after it finishes",
+      "otherApplication": "Application belongs to another LVK URL or purpose; select a different application",
+      "tokenTooLong": "Auth0 Management API access token exceeds the 65536-byte limit",
+      "secretPermission": "Auth0 did not return the client secret; check read:client_keys permission",
+      "pkceRequired": "Auth0 discovery does not advertise PKCE S256; check tenant settings",
+      "clientSecretBasicRequired": "Auth0 discovery must advertise client_secret_basic for the configured clients",
+      "auth0Disabled": "Auth0 login is disabled",
+      "auth0Required": "Auth0 required",
+      "setupTimeout": "Auth0 setup exceeded the overall 120-second timeout; preview again before retrying",
+      "tooManyEntries": "Auth0 tenant has too many entries for automatic setup",
+      "authenticationBusy": "Authentication busy",
+      "authenticationRequired": "Authentication required",
+      "authenticationUnavailable": "Authentication unavailable; operator recovery may be required",
+      "basicDisabled": "Basic login is disabled",
+      "csrfFailed": "CSRF check failed",
+      "lastOperator": "Cannot disable or demote the last active administrator",
+      "configurationChanged": "Configuration changed; restart setup",
+      "publicUrlRequired": "Configure a public HTTPS URL before Auth0 setup",
+      "credentialsPublicUrl": "Configure a public HTTPS URL before saving ChatGPT credentials",
+      "dedicatedCredentials": "Enter a dedicated ChatGPT Client ID and Client Secret, separate from the Web application",
+      "tokenRequired": "Enter an Auth0 Management API access token",
+      "callbackRequired": "Enter the exact HTTPS callback URL shown by ChatGPT",
+      "apiAlgorithm": "Existing MCP API is not RS256; review it in Auth0 before continuing",
+      "incompleteResponse": "Incomplete Auth0 response",
+      "invalidIssuer": "Invalid Auth0 issuer",
+      "invalidObject": "Invalid Auth0 object ID",
+      "invalidUsername": "Invalid Basic username",
+      "invalidHost": "Invalid host",
+      "invalidMember": "Invalid member state or role",
+      "invalidOrigin": "Invalid origin",
+      "loopbackOnly": "Local deployment only accepts loopback hosts",
+      "inactiveProvider": "Member belongs to an inactive authentication provider",
+      "approvalRequired": "Membership approval required or account disabled",
+      "credentialsMismatch": "No saved ChatGPT credentials match this Auth0 issuer and Web application",
+      "regularWebApp": "Only Regular Web Applications can be reused",
+      "passwordLength": "Password must be 12 to 1024 bytes",
+      "previewRequired": "Preview the Auth0 changes before applying",
+      "webCredentialsRequired": "Public HTTPS URL, Web Client ID and Web Client Secret are required",
+      "mcpDisabled": "Remote MCP is disabled",
+      "publicPreset": "Restart with the public HTTPS deployment preset first",
+      "connectionRequired": "Select an existing GitHub or Google social connection",
+      "applicationRequired": "Select exactly one existing application or create a new one",
+      "setupIncomplete": "Server setup is incomplete",
+      "previewExpired": "Settings changed or preview expired; preview the Auth0 changes again",
+      "alreadyConfigured": "Setup already completed",
+      "statelessMcp": "This MCP transport is stateless; omit MCP Session ID",
+      "modeDisabled": "This mode is disabled by deployment configuration",
+      "rateLimit": "Too many authentication attempts; retry in one minute",
+      "unexpectedResponse": "Unexpected Auth0 list response",
+      "unknownMember": "Unknown member",
+      "issuerFormat": "Use the exact Auth0 tenant issuer: https://TENANT.REGION.auth0.com/ (including the final slash)",
+      "separateApps": "Web and ChatGPT must use separate applications",
+      "insufficientScope": "insufficient_scope",
+      "forbidden": "You do not have permission for this operation.",
+      "requestFailed": "The authentication request could not be completed. Check the server status and current authentication settings.",
+      "statusFailed": "Unable to load authentication status. Check the server deployment configuration.",
+      "signInRequired": "Sign in to LVK to continue.",
+      "networkFailed": "Unable to reach the authentication service. Check your connection and the server’s availability."
+    }
+  },
+  "configuration": {
+    "createTitle": "Create New Configuration",
+    "createDescription": "Add a new configuration for the {{executor}} executor.",
+    "name": "Configuration Name",
+    "namePlaceholder": "e.g., PRODUCTION, DEVELOPMENT",
+    "cloneFrom": "Clone from (optional)",
+    "clonePlaceholder": "Start blank or clone existing",
+    "blank": "Start blank",
+    "cloneOption": "Clone from {{name}}",
+    "create": "Create Configuration",
+    "errors": {
+      "empty": "Configuration name cannot be empty",
+      "tooLong": "Configuration name must be 40 characters or less",
+      "invalid": "Configuration name can only contain letters, numbers, underscores, and hyphens",
+      "exists": "A configuration with this name already exists",
+      "delete": "Failed to delete configuration. Please try again."
+    }
+  },
+  "githubCredentials": {
+    "saved": "Token saved. Use Check connection to verify repository and PR read access.",
+    "checked": "Repository and PR read access verified. Push and PR write permissions have not been tested.",
+    "removed": "Token removed from LVK. Revoke it on GitHub if it is no longer needed.",
+    "operationFailed": "The GitHub credential operation could not be confirmed. Check the current registration before making another change.",
+    "title": "GitHub authentication",
+    "description": "Register a fine-grained personal access token for LVK Git operations and pull requests. Administrator access is required to change or check credentials.",
+    "permissions": "Select only the required repository when creating the token. Grant Contents and Pull requests read/write access. Add Issues for issue operations, and Workflows if you push workflow changes. Expiring and non-expiring tokens are supported, subject to your organisation’s policy.",
+    "createToken": "Create a fine-grained token on GitHub",
+    "loading": "Loading authentication settings…",
+    "loadFailed": "Could not load authentication settings.",
+    "empty": "Add a GitHub.com remote to this repository to configure a token.",
+    "repository": "GitHub repository",
+    "registered": "Token registered (never displayed).",
+    "notRegistered": "No LVK token registered. Existing system authentication applies.",
+    "replacement": "Replacement token",
+    "token": "Fine-grained personal access token",
+    "replace": "Replace token",
+    "save": "Save token",
+    "check": "Check connection",
+    "removeConfirm": "Remove this token from LVK? All workspaces using this GitHub repository will return to system authentication. This does not revoke the token on GitHub.",
+    "remove": "Remove token",
+    "scope": "Credentials are stored on the LVK server and shared by workspaces using this GitHub repository. Registered tokens take precedence over system authentication; failures do not fall back to another account. Agent terminal commands use their own authentication.",
+    "working": "Working…",
+    "forbidden": "Authentication management access is required to change or check GitHub credentials."
+  },
+  "repositoryMemory": {
+    "title": "OpenWiki repository memory",
+    "description": "Auto-merge updates openwiki/ in its integration candidate. Standalone updates and initial generation require an explicit request and use a dedicated workspace; publication and pending changes never start one automatically. Initial generation receives an independent read-only review and optional refinement before publication. Coding workspaces read the Wiki and keep their own Workspace Memory.",
+    "enabled": "Enable repository memory",
+    "targetBranch": "Integrated local branch",
+    "outputLanguage": "Output language (BCP 47)",
+    "scope": "Reconciliation scope",
+    "sinceCommit": "Changes since a commit",
+    "startingCommit": "Starting commit",
+    "startingCommitHint": "Enter a commit SHA on this branch. Review changes after that commit through the current branch head; earlier content remains unverified.",
+    "commitPlaceholder": "Commit SHA",
+    "save": "Save settings",
+    "sync": "Sync Wiki",
+    "adopt": "Adopt existing Wiki",
+    "initialize": "Initialize Wiki",
+    "startHint": "Enabling memory records future development changes. Wiki maintenance starts only when you choose Initialize Wiki or Adopt existing Wiki.",
+    "unsaved": "Save settings before starting Wiki generation. The run uses the saved branch and language.",
+    "errorHint": "Source changes are retained. Inspect the error and retry Sync Wiki after resolving it; failed semantic events remain pending.",
+    "state": "Status: {{status}}",
+    "stateWithPhase": "Status: {{status}} · {{phase}}",
+    "loading": "Loading…",
+    "existingWiki": "Existing openwiki/ found on {{branch}}. Adopt and update its contents without regenerating the Wiki.",
+    "compareCurrent": "Compare with current {{branch}}",
+    "branch": "branch",
+    "lastSuccess": "Last successful reconciliation: {{date}}",
+    "none": "None",
+    "unverifiedBefore": "Only changes after {{commit}} have been reconciled. Earlier Wiki content has not been verified. Choose Compare with current branch to review it.",
+    "integratedSource": "Integrated source: {{commit}}",
+    "workspace": "Maintenance workspace: {{id}}",
+    "operationUnconfirmed": "The operation result could not be confirmed. Saved source changes are retained. Check the current status and workspace record before making another change.",
+    "loadFailed": "Unable to load repository memory settings.",
+    "maintenanceError": "Wiki maintenance needs attention. Source changes are retained. Inspect the maintenance workspace record.",
+    "checkpoint": "A source checkpoint needs attention. Source files are retained. Inspect the workspace record and resolve draft or unexpected Wiki changes before merging or pushing.",
+    "checkpointIdentified": "Source checkpoint for workspace {{workspace}} / run {{run}} needs attention. Source files are retained. Inspect that workspace record before merging or pushing.",
+    "status": {
+      "disabled": "Disabled",
+      "uninitialized": "Not initialized",
+      "initializing": "Initializing",
+      "current": "Up to date",
+      "stale": "Update needed",
+      "reconciling": "Reconciling",
+      "error": "Needs attention"
+    },
+    "phase": {
+      "generating": "Generating",
+      "reviewing": "Reviewing",
+      "refining": "Refining",
+      "publishing": "Publishing",
+      "cleaningUp": "Cleaning up"
+    },
+    "invalidCommit": "Enter a 4–40 character hexadecimal commit SHA from this branch."
+  },
+  "schemaForm": {
+    "environment": {
+      "key": "Environment variable key",
+      "value": "Value",
+      "keyPlaceholder": "KEY",
+      "newKey": "New environment variable key",
+      "newValue": "New environment variable value",
+      "add": "Add environment variable",
+      "valueFor": "Value for {{key}}",
+      "remove": "Remove {{key}}"
+    },
+    "removeItem": "Remove item"
+  },
+  "agentTools": {
+    "mcpPrompt": "MCP JSON: preserve keeps the current native value; clear removes it; replace uses {\"type\":\"replace\",\"data\":{\"value\":...}}. Existing values are not loaded here. Unknown native fields are preserved by the server.",
+    "skillPrompt": "Edit SKILL.md.",
+    "scopePrompt": "Scope (user or project)",
+    "namePrompt": "Installation name",
+    "editSensitiveConfirm": "Read this native Skill for editing? Its contents may contain private information. Assets not edited here will be preserved.",
+    "readSensitiveConfirm": "Read the full native definition? Credentials and private Skill contents will become visible in this browser.",
+    "title": "Agent Tools",
+    "description": "Manage native MCP servers and Skills. Provider files remain the source of truth.",
+    "refresh": "Refresh",
+    "add": "Add",
+    "projectPath": "Project path (optional)",
+    "pathPlaceholder": "Absolute path for project-scoped tools",
+    "discover": "Discover project tools",
+    "blocked": "Verify the selected Host and refresh this project before changing tools. Cached entries are read-only.",
+    "hideContents": "Hide contents",
+    "mcp": "MCP servers",
+    "skills": "Skills",
+    "loading": "Loading Agent Tool inventory...",
+    "unavailable": "Inventory unavailable.",
+    "installed": "Installed",
+    "notDetected": "Not detected",
+    "read": "Read definition",
+    "edit": "Edit",
+    "copy": "Copy",
+    "reveal": "Copy path",
+    "remove": "Remove",
+    "chooseProvider": "Provider ({{providers}})",
+    "chooseCopyProvider": "Copy to provider ({{providers}})",
+    "replaceConfirm": "{{provider}} already has {{name}}. Replace that installation?",
+    "sensitiveContents": "Sensitive native contents: {{name}} ({{revision}})",
+    "noMcp": "No MCP servers found.",
+    "noSkills": "No Skills found.",
+    "updating": "Updating {{name}}",
+    "toggle": "Toggle {{name}}",
+    "removeConfirm": "Remove {{name}}? This is distinct from disabling it.",
+    "scopeUser": "User",
+    "scopeProject": "Project",
+    "nativePathCopied": "Native path copied: {{path}}",
+    "copyExtensions": "Provider-specific fields remain at the source and were not written to the target provider.",
+    "copyWarning": "The copy returned a warning. Review the source and target native configurations before use.",
+    "nativeUnreadable": "Could not read a native tool configuration. Raw parse diagnostics are withheld.",
+    "nativeInvalid": "Invalid native tool configuration; inspect the native file explicitly.",
+    "providerNoteOriginal": "Provider note (original): {{message}}",
+    "errors": {
+      "invalidRequest": "Invalid tool write intent or missing explicit confirmation.",
+      "invalidConfiguration": "Invalid native configuration. Inspect the native file before continuing.",
+      "notFound": "Tool installation was not found.",
+      "collision": "An installation already exists. Refresh and confirm replacement with its current revision.",
+      "staleRevision": "Native content changed. Refresh before editing.",
+      "unsupported": "This operation is not supported for the selected installation.",
+      "unsafePath": "An unsafe tool path was rejected.",
+      "io": "Native configuration I/O failed. Check the native files and access permissions.",
+      "verificationFailed": "The native write could not be verified. Inspect the current native state before another change.",
+      "unconfirmed": "The operation result could not be confirmed. Refresh and inspect the native state before making another change.",
+      "noProviders": "No supported agent provider is installed.",
+      "noCopyTarget": "No other supported agent provider is installed.",
+      "projectPathRequired": "Enter an absolute project path before adding a project tool.",
+      "invalidMcp": "Invalid MCP JSON. Check the input; no write was submitted.",
+      "invalidSkill": "Invalid Skill definition. Check the input; no write was submitted.",
+      "unexpectedKind": "The returned tool kind was unexpected. Refresh before editing.",
+      "clipboard": "Unable to copy the native path. Allow clipboard access and try again."
+    },
+    "state": {
+      "notInstalled": "Not installed",
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "error": "Error",
+      "unsupported": "Unsupported"
+    },
+    "itemCount_one": "{{count, number}} item",
+    "itemCount_other": "{{count, number}} items"
+  },
+  "agentConfiguration": {
+    "sections": {
+      "overview": "Overview",
+      "general": "General",
+      "permissions": "Permissions & Sandbox",
+      "instructions": "Instructions",
+      "environment": "Environment",
+      "provider": "Provider Settings",
+      "tools": "Tools",
+      "profiles": "Profiles",
+      "nativeFiles": "Native Files",
+      "effectiveConfig": "Effective Config",
+      "settings": "Settings"
+    },
+    "validation": {
+      "maxLength": "Maximum length is {{limit, number}}.",
+      "minimum": "Minimum value is {{limit, number}}.",
+      "maximum": "Maximum value is {{limit, number}}.",
+      "format": "Value does not match the required format.",
+      "number": "Enter a number.",
+      "object": "Enter a JSON object.",
+      "json": "Enter valid JSON.",
+      "option": "Choose a listed option."
+    },
+    "ui": {
+      "inherited": "Inherited / not set",
+      "modified": "Modified",
+      "inherit": "Inherit",
+      "default": "Default",
+      "invalidValues": "Fix the invalid setting values before previewing the diff.",
+      "noChanges": "No setting changes to apply.",
+      "applied": "Agent settings applied. Changes marked for a new session take effect on the next launch.",
+      "readConfirm": "Read this native file? It may contain credentials and private configuration. Its full contents will be displayed for advanced editing.",
+      "profileName": "Profile name",
+      "newProfileName": "New profile name",
+      "profileSaved": "Profile saved locally. It remains inactive until explicitly applied.",
+      "duplicated": "Profile duplicated.",
+      "renamed": "Profile renamed.",
+      "deleted": "Profile deleted.",
+      "targetProvider": "Target provider (codex, claude_code)",
+      "copiedName": "Copied profile name",
+      "copied": "Copied profile saved. Provider-specific fields were not transferred.",
+      "nativeAuthority": "Native provider files remain authoritative. Discovery is read-only until you preview and confirm an Apply action.",
+      "refresh": "Refresh",
+      "installed": "Installed",
+      "yes": "Yes",
+      "notDetected": "Not detected",
+      "version": "Version",
+      "unknown": "Unknown",
+      "executable": "Executable",
+      "notFound": "Not found",
+      "projectPath": "Project path (optional)",
+      "projectHelp": "Provide an absolute project path to discover project-scoped native settings.",
+      "discoverProject": "Discover project settings",
+      "scope": "Apply scope",
+      "scopeHelp": "Typed changes and profile applications target this native scope.",
+      "userConfig": "User configuration",
+      "projectConfig": "Project configuration",
+      "capabilities": "Settings capabilities",
+      "available": "available",
+      "unsupported": "unsupported",
+      "fieldsHelp": "Fields are generated from the installed provider Adapter. Unsupported controls are omitted.",
+      "restore": "Restore inheritance",
+      "withheldHelp": "Value withheld. Leave unchanged to preserve it, enter a replacement, or explicitly restore inheritance to clear it. Use Native Files for a confirmed sensitive read.",
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "followNative": "Follow native config",
+      "nativeFiles": "Native Files",
+      "nativeHelp": "Advanced editing is format-aware and requires a revision-protected diff confirmation.",
+      "closeEditor": "Close editor",
+      "discard": "Discard",
+      "previewDiff": "Preview diff",
+      "effectiveConfig": "Effective Config",
+      "effectiveHelp": "The Adapter resolves precedence and reports observed sources. The UI does not recompute provider precedence.",
+      "setting": "Setting",
+      "effective": "Effective",
+      "source": "Source",
+      "observedSources": "Observed sources",
+      "withheld": "Withheld — preserved unless explicitly changed",
+      "noneObserved": "None observed",
+      "profiles": "Configuration Profiles",
+      "profilesHelp": "Profiles are versioned local definitions. Applying one is explicit and previews its native diff first.",
+      "saveCurrent": "Save current",
+      "none": "None",
+      "saveCopied": "Save copied profile",
+      "loadingProfiles": "Loading profiles…",
+      "noProfiles": "No saved profiles for this provider yet.",
+      "apply": "Apply",
+      "copy": "Copy",
+      "duplicate": "Duplicate",
+      "rename": "Rename",
+      "delete": "Delete",
+      "selectMachine": "Select a machine to discover Agent settings.",
+      "panelTitle": "Installed Agent settings",
+      "discoverFirst": "Discover the selected project before applying changes. The displayed snapshot belongs to the previously loaded scope.",
+      "cached": "Showing cached settings. Changes are disabled until this Host and scope can be verified.",
+      "noSnapshot": "No settings snapshot available.",
+      "retry": "Retry discovery",
+      "sectionsLabel": "Agent settings sections",
+      "editing": "Editing",
+      "editRaw": "Edit raw",
+      "missing": "missing",
+      "missingBytes": "(missing)",
+      "diffConfirm": "Settings diff confirmation",
+      "reviewChanges": "Review changes before applying",
+      "noBytes": "No file bytes would change.",
+      "confirmProfile": "Confirm profile apply",
+      "confirmApply": "Confirm apply",
+      "providerTitle": "{{provider}} settings",
+      "duplicateName": "{{name}} copy",
+      "deleteConfirm": "Delete profile \"{{name}}\"?",
+      "notInstalled": "This provider is not installed on the selected machine. Settings are shown only when the Adapter can discover them.",
+      "unsupportedScope": "This setting is not available in the {{scope}} scope.",
+      "revision": "Revision: {{revision}}",
+      "copyPreview": "Copy preview → {{provider}}",
+      "compatible": "Compatible:",
+      "skipped": "Skipped:",
+      "discovering": "Discovering {{provider}} settings…",
+      "unknownNodes_one": "Unknown native node ({{count, number}})",
+      "unknownNodes_other": "Unknown native nodes ({{count, number}})",
+      "profileUpdated_one": "{{count, number}} managed setting · updated {{date}}",
+      "profileUpdated_other": "{{count, number}} managed settings · updated {{date}}"
+    },
+    "errors": {
+      "invalidRequest": "The settings request is invalid. Review the selected scope and values.",
+      "invalidConfiguration": "The native configuration could not be read. Inspect the configuration file before retrying.",
+      "notFound": "The setting, file or profile could not be found. Refresh the settings before retrying.",
+      "staleRevision": "The settings changed since they were loaded. Refresh and review the changes before retrying.",
+      "unsupported": "This operation is not supported by the selected provider.",
+      "unsafePath": "The configuration path cannot be used safely. Check the selected project and file location.",
+      "validationFailed": "The configuration failed validation. Review the values before retrying.",
+      "io": "The configuration could not be read or written. Check file access and refresh before retrying.",
+      "rollbackFailed": "The operation failed and the previous configuration could not be fully restored. Inspect the native files before making further changes.",
+      "verificationFailed": "The resulting configuration could not be verified. Inspect and refresh the settings before retrying.",
+      "unconfirmed": "The operation result could not be confirmed. Refresh and check the settings before retrying.",
+      "discovery": "Some native settings could not be discovered. Check the provider and configuration files, then refresh.",
+      "nativeInvalid": "This native configuration has an error. Inspect the file through a confirmed read before making changes."
+    },
+    "state": {
+      "readable": "Read settings",
+      "nativeWritable": "Write native settings",
+      "profileStorage": "Store profiles",
+      "perRunOverrides": "Per-run overrides",
+      "rawEditable": "Edit native files",
+      "immediate": "Applies immediately",
+      "nextSession": "Applies to the next session",
+      "explicitRestart": "Requires an explicit restart",
+      "missing": "Missing",
+      "parsed": "Parsed",
+      "invalid": "Invalid"
+    },
+    "descriptors": {
+      "codex_common_model": {
+        "label": "Model",
+        "description": "Default model used by new Codex sessions."
+      },
+      "codex_common_reasoning": {
+        "label": "Reasoning effort",
+        "description": "Default model reasoning effort."
+      },
+      "codex_common_approval_policy": {
+        "label": "Approval policy",
+        "description": "When Codex asks before running commands."
+      },
+      "codex_common_sandbox_mode": {
+        "label": "Sandbox mode",
+        "description": "Filesystem and process isolation used by new sessions."
+      },
+      "codex_codex_web_search": {
+        "label": "Web search",
+        "description": "Enable Codex's documented web search feature flag."
+      },
+      "codex_common_environment": {
+        "label": "Environment variables",
+        "description": "Exact environment values injected by Codex's shell environment policy."
+      },
+      "claude_code_common_model": {
+        "label": "Model",
+        "description": "Default model used by new Claude Code sessions."
+      },
+      "claude_code_common_reasoning": {
+        "label": "Effort",
+        "description": "Claude Code effort level when supported by the installed version."
+      },
+      "claude_code_common_permission_mode": {
+        "label": "Permission mode",
+        "description": "Default Claude Code permission mode."
+      },
+      "claude_code_claude_code_permission_allow": {
+        "label": "Allowed tools",
+        "description": "Native Claude Code allow rules."
+      },
+      "claude_code_claude_code_permission_deny": {
+        "label": "Denied tools",
+        "description": "Native Claude Code deny rules."
+      },
+      "claude_code_common_environment": {
+        "label": "Environment variables",
+        "description": "Exact environment values set for Claude Code sessions."
+      },
+      "claude_code_claude_code_output_style": {
+        "label": "Output style",
+        "description": "Named Claude Code output style."
+      },
+      "claude_code_claude_code_enabled_plugins": {
+        "label": "Enabled plugins",
+        "description": "Native plugin enablement map."
+      },
+      "claude_code_claude_code_hooks": {
+        "label": "Hooks",
+        "description": "Claude Code hook definitions. Advanced JSON preserves provider-specific shapes."
+      },
+      "claude_code_claude_code_status_line": {
+        "label": "Status line",
+        "description": "Claude Code status-line configuration."
+      }
+    },
+    "options": {
+      "codex_reasoning_minimal": "Minimal",
+      "codex_reasoning_low": "Low",
+      "codex_reasoning_medium": "Medium",
+      "codex_reasoning_high": "High",
+      "codex_reasoning_xhigh": "Extra high",
+      "codex_reasoning_max": "Max",
+      "codex_reasoning_ultra": "Ultra",
+      "codex_approval_policy_untrusted": "Untrusted",
+      "codex_approval_policy_on_request": "On request",
+      "codex_approval_policy_never": "Never",
+      "codex_sandbox_mode_read_only": "Read only",
+      "codex_sandbox_mode_workspace_write": "Workspace write",
+      "codex_sandbox_mode_danger_full_access": "Full access",
+      "claude_code_reasoning_low": "Low",
+      "claude_code_reasoning_medium": "Medium",
+      "claude_code_reasoning_high": "High",
+      "claude_code_permission_mode_default": "Default",
+      "claude_code_permission_mode_acceptEdits": "Accept edits",
+      "claude_code_permission_mode_plan": "Plan",
+      "claude_code_permission_mode_dontAsk": "Don't ask",
+      "claude_code_permission_mode_bypassPermissions": "Bypass permissions"
+    },
+    "explanations": {
+      "codexLimit": "Native profiles and per-project trust entries remain available through raw TOML until their installed-version schema can be verified.",
+      "claudeLimit": "Managed settings use ~/.claude/settings.json and project .claude/settings.json; ~/.claude.json authentication and MCP state is not edited here.",
+      "copySkipped": "Provider-specific or unsupported settings were skipped; no native extension was copied.",
+      "newSessions": "Persistent changes affect new provider sessions; active sessions are not restarted.",
+      "rawEditing": "Raw editing can change provider-native fields that Vibe Kanban does not interpret.",
+      "original": "Provider note (original): {{message}}",
+      "observedRevision": "Observed native revision (values withheld)",
+      "requestedChanges": "Requested settings will be applied; unrelated native values are preserved.",
+      "noChange": "No change."
+    }
+  },
+  "executorSchemaValidation": {
+    "required": "This field is required.",
+    "type": "Enter a value of the required type.",
+    "option": "Choose a listed option.",
+    "minimum": "Enter a value of at least {{limit, number}}.",
+    "maximum": "Enter a value of at most {{limit, number}}.",
+    "minLength": "Enter at least {{limit, number}} characters.",
+    "maxLength": "Enter no more than {{limit, number}} characters.",
+    "minItems": "Add at least {{limit, number}} items.",
+    "maxItems": "Add no more than {{limit, number}} items.",
+    "format": "Use the required format.",
+    "additionalProperties": "This field is not supported.",
+    "uniqueItems": "Remove duplicate items.",
+    "invalid": "Check this value."
+  },
+  "executorSchemas": {
+    "codex": {
+      "append_prompt": {
+        "title": "Append Prompt",
+        "description": "Extra text appended to the prompt"
+      },
+      "sandbox": {
+        "description": "Sandbox policy modes for Codex",
+        "title": "Sandbox",
+        "options": {
+          "auto": "Automatic",
+          "read-only": "Read only",
+          "workspace-write": "Workspace write",
+          "danger-full-access": "Full access (unsafe)",
+          "null": "Follow native config"
+        }
+      },
+      "ask_for_approval": {
+        "description": "Determines when the user is consulted to approve Codex actions.\n\n- `UnlessTrusted`: Read-only commands are auto-approved. Everything else will\n  ask the user to approve.\n- `OnRequest`: The model decides when to ask the user for approval.\n- `Never`: Commands never ask for approval. Commands that fail in the\n  restricted sandbox are not retried.",
+        "title": "Ask For Approval",
+        "options": {
+          "unless-trusted": "Ask for untrusted commands",
+          "on-request": "On request",
+          "never": "Never",
+          "null": "Follow native config"
+        }
+      },
+      "oss": {
+        "title": "OSS"
+      },
+      "model": {
+        "title": "Model"
+      },
+      "model_reasoning_effort": {
+        "description": "A non-empty reasoning effort value advertised by Codex model discovery or supplied by the user.",
+        "title": "Model Reasoning Effort"
+      },
+      "model_reasoning_summary": {
+        "description": "Model reasoning summary style",
+        "title": "Model Reasoning Summary",
+        "options": {
+          "auto": "Automatic",
+          "concise": "Concise",
+          "detailed": "Detailed",
+          "none": "None",
+          "null": "Follow native config"
+        }
+      },
+      "model_reasoning_summary_format": {
+        "description": "Format for model reasoning summaries",
+        "title": "Model Reasoning Summary Format",
+        "options": {
+          "none": "None",
+          "experimental": "Experimental",
+          "null": "Follow native config"
+        }
+      },
+      "profile": {
+        "title": "Profile"
+      },
+      "base_instructions": {
+        "title": "Base Instructions"
+      },
+      "include_apply_patch_tool": {
+        "title": "Include Apply Patch Tool"
+      },
+      "model_provider": {
+        "title": "Model Provider"
+      },
+      "compact_prompt": {
+        "title": "Compact Prompt"
+      },
+      "developer_instructions": {
+        "title": "Developer Instructions"
+      },
+      "plan": {
+        "title": "Plan"
+      },
+      "execution_mode": {
+        "description": "How an interactive coding request should be executed.\n\nThis is intentionally separate from [`PermissionPolicy`]: planning and\nlong-running goal execution describe workflow, while permission policy\ndescribes what the provider may do without asking.",
+        "title": "Execution Mode",
+        "options": {
+          "code": "Code",
+          "review": "Review",
+          "plan": "Plan",
+          "goal": "Goal",
+          "plan_with_goal": "Plan with Goal"
+        }
+      },
+      "goal_token_budget": {
+        "title": "Goal Token Budget"
+      },
+      "goal_max_concurrent_agents": {
+        "title": "Goal Max Concurrent Agents"
+      },
+      "base_command_override": {
+        "title": "Base Command Override",
+        "description": "Override the base command with a custom command"
+      },
+      "additional_params": {
+        "title": "Additional Parameters",
+        "description": "Additional parameters to append to the base command"
+      },
+      "env": {
+        "title": "Environment Variables",
+        "description": "Environment variables to set when running the executor"
+      }
+    },
+    "claude_code": {
+      "append_prompt": {
+        "title": "Append Prompt",
+        "description": "Extra text appended to the prompt"
+      },
+      "claude_code_router": {
+        "title": "Claude Code Router"
+      },
+      "plan": {
+        "title": "Plan"
+      },
+      "approvals": {
+        "title": "Approvals"
+      },
+      "model": {
+        "title": "Model"
+      },
+      "effort": {
+        "title": "Effort",
+        "options": {
+          "low": "Low",
+          "medium": "Medium",
+          "high": "High",
+          "xhigh": "Extra high",
+          "max": "Maximum",
+          "null": "Follow native config"
+        }
+      },
+      "agent": {
+        "title": "Agent"
+      },
+      "dangerously_skip_permissions": {
+        "title": "Dangerously Skip Permissions"
+      },
+      "disable_api_key": {
+        "title": "Disable API Key"
+      },
+      "require_subscription_login": {
+        "title": "Require Subscription Login",
+        "description": "Verify the official Claude CLI login before each run. Reject API/provider credentials and custom command overrides instead of using another billing method."
+      },
+      "base_command_override": {
+        "title": "Base Command Override",
+        "description": "Override the base command with a custom command"
+      },
+      "additional_params": {
+        "title": "Additional Parameters",
+        "description": "Additional parameters to append to the base command"
+      },
+      "env": {
+        "title": "Environment Variables",
+        "description": "Environment variables to set when running the executor"
+      }
+    }
   }
 }

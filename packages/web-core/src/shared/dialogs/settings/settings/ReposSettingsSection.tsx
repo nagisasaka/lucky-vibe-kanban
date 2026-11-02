@@ -199,7 +199,14 @@ export function ReposSettingsSection({
   // Form state
   const [draft, setDraft] = useState<RepoScriptsFormState | null>(null);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<
+    | 'removeBlocked'
+    | 'removeUnconfirmed'
+    | 'addUnconfirmed'
+    | 'saveUnconfirmed'
+    | null
+  >(null);
+  const [errorDetail, setErrorDetail] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
@@ -213,6 +220,7 @@ export function ReposSettingsSection({
     setDraft(null);
     setSuccess(false);
     setError(null);
+    setErrorDetail(null);
   }, [initialState?.repoId, isProjectWorkspace, selectedRepoId]);
 
   // Get OS-appropriate script placeholders
@@ -292,6 +300,7 @@ export function ReposSettingsSection({
         setSelectedRepo(null);
         setSuccess(false);
         setError(null);
+        setErrorDetail(null);
       }
 
       setSelectedRepoId(id);
@@ -312,6 +321,7 @@ export function ReposSettingsSection({
 
       setRemoving(true);
       setError(null);
+      setErrorDetail(null);
 
       if (!machineClient) {
         return;
@@ -325,11 +335,12 @@ export function ReposSettingsSection({
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
     } catch (err) {
-      if (err instanceof ApiError && err.status === 409) {
-        setError(err.message);
-      } else if (err instanceof Error) {
-        setError(err.message);
-      }
+      setErrorDetail(err instanceof Error ? err.message : String(err));
+      setError(
+        err instanceof ApiError && err.status === 409
+          ? 'removeBlocked'
+          : 'removeUnconfirmed'
+      );
     } finally {
       setRemoving(false);
     }
@@ -352,9 +363,8 @@ export function ReposSettingsSection({
       await queryClient.invalidateQueries({ queryKey: reposQueryKey });
       setSelectedRepoId(repo.id);
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : t('settings.repos.addRepo.error')
-      );
+      setErrorDetail(err instanceof Error ? err.message : String(err));
+      setError('addUnconfirmed');
     }
   }, [machineClient, queryClient, reposQueryKey, t]);
 
@@ -385,6 +395,7 @@ export function ReposSettingsSection({
 
     setSaving(true);
     setError(null);
+    setErrorDetail(null);
     setSuccess(false);
 
     try {
@@ -416,9 +427,8 @@ export function ReposSettingsSection({
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : t('settings.repos.save.error')
-      );
+      setErrorDetail(err instanceof Error ? err.message : String(err));
+      setError('saveUnconfirmed');
     } finally {
       setSaving(false);
     }
@@ -452,9 +462,7 @@ export function ReposSettingsSection({
     return (
       <div className="py-8">
         <div className="bg-error/10 border border-error/50 rounded-sm p-4 text-error">
-          {reposError instanceof Error
-            ? reposError.message
-            : t('settings.repos.loadError')}
+          {t('settings.repos.loadError')} {reposError.message}
         </div>
       </div>
     );
@@ -468,7 +476,7 @@ export function ReposSettingsSection({
       {/* Status messages */}
       {error && (
         <div className="bg-error/10 border border-error/50 rounded-sm p-4 text-error">
-          {error}
+          {t(`settings.repos.notices.${error}`)} {errorDetail}
         </div>
       )}
 

@@ -8,22 +8,19 @@ describe('workflow node catalog sections', () => {
   it('groups node catalog entries into authoring sections', () => {
     const sections = getWorkflowNodeCatalogSections().map((section) => ({
       id: section.id,
-      label: section.label,
-      labelKey: section.labelKey,
+      label: section.label((key) => key),
       types: section.entries.map((entry) => entry.type),
     }));
 
     expect(sections).toEqual([
       {
         id: 'execution',
-        label: 'Execution',
-        labelKey: 'workflow.editor.sections.execution',
+        label: 'workflow.editor.sections.execution',
         types: ['agent'],
       },
       {
         id: 'control',
-        label: 'Control',
-        labelKey: 'workflow.editor.sections.control',
+        label: 'workflow.editor.sections.control',
         types: ['condition', 'human_gate'],
       },
     ]);

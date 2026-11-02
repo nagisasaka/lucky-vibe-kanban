@@ -12,7 +12,11 @@ describe('Goal objective validation', () => {
   } as ExecutorConfig;
   it('accepts 4000 Unicode characters and rejects 4001', () => {
     expect(goalPromptError('😀'.repeat(4000), config)).toBeNull();
-    expect(goalPromptError('あ'.repeat(4001), config)).toContain('4001');
+    expect(goalPromptError('あ'.repeat(4001), config)).toEqual({
+      code: 'goal_objective_too_long',
+      count: 4001,
+      maximum: 4000,
+    });
   });
   it('does not limit ordinary code, planning, other providers or resume commands', () => {
     for (const execution_mode of [
@@ -38,7 +42,7 @@ describe('Goal objective validation', () => {
         ...config,
         goal_max_concurrent_agents: 3,
       })
-    ).toContain('maximum is 4000');
+    ).toMatchObject({ code: 'goal_objective_too_long', maximum: 4000 });
     expect(
       goalPromptError('a'.repeat(3800), {
         ...config,

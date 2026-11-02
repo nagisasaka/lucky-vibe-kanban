@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useEffect, useState, useRef } from 'react';
 
 interface MermaidDiagramProps {
@@ -10,6 +11,7 @@ let mermaidQueue: Promise<void> = Promise.resolve();
 let initializedTheme: string | null = null;
 
 export function MermaidDiagram({ chart, theme }: MermaidDiagramProps) {
+  const { t } = useTranslation('common');
   const [svg, setSvg] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
   const renderCountRef = useRef(0);
@@ -46,9 +48,7 @@ export function MermaidDiagram({ chart, theme }: MermaidDiagramProps) {
         }
       } catch (err) {
         if (!cancelled) {
-          setError(
-            err instanceof Error ? err.message : 'Failed to render diagram'
-          );
+          setError(err instanceof Error ? err.message : String(err));
           setSvg('');
         }
       }
@@ -62,7 +62,9 @@ export function MermaidDiagram({ chart, theme }: MermaidDiagramProps) {
   if (error) {
     return (
       <div className="rounded-sm border border-error/20 bg-error/5 p-base">
-        <p className="text-xs text-error mb-2">Mermaid diagram error</p>
+        <p className="text-xs text-error mb-2">
+          {t('markdownEditor.diagramError')} {error}
+        </p>
         <pre className="text-xs text-low overflow-auto">
           <code>{chart}</code>
         </pre>
@@ -73,7 +75,7 @@ export function MermaidDiagram({ chart, theme }: MermaidDiagramProps) {
   if (!svg) {
     return (
       <div className="flex items-center justify-center p-base text-low text-sm">
-        Loading diagram…
+        {t('markdownEditor.diagramLoading')}
       </div>
     );
   }

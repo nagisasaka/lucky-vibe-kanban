@@ -45,6 +45,7 @@ export function WorkspaceTodoPanel({ workspaceId }: { workspaceId: string }) {
       </div>
       {scope.error || projects.error ? (
         <p role="alert" className="p-base text-error">
+          {t('todo.loadError')}{' '}
           {scope.error?.message ?? projects.error?.message}
         </p>
       ) : scope.isLoading ? (

@@ -1,5 +1,8 @@
 'use client';
 
+import { formatRelativeTime } from '../lib/dateFormatting';
+
+import { useTranslation } from 'react-i18next';
 import type { MouseEvent } from 'react';
 import { cn } from '../lib/cn';
 import { Draggable } from '@hello-pangea/dnd';
@@ -13,29 +16,6 @@ import {
   type RelationshipDisplayType,
 } from './RelationshipBadge';
 import { Checkbox } from './Checkbox';
-
-/**
- * Formats a date as a relative time string (e.g., "1d", "2h", "3m")
- */
-function formatRelativeTime(dateString: string): string {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffMinutes = Math.floor(diffMs / (1000 * 60));
-  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-  if (diffDays > 0) {
-    return `${diffDays}d`;
-  }
-  if (diffHours > 0) {
-    return `${diffHours}h`;
-  }
-  if (diffMinutes > 0) {
-    return `${diffMinutes}m`;
-  }
-  return 'now';
-}
 
 const MAX_VISIBLE_TAGS = 2;
 
@@ -90,6 +70,7 @@ export function IssueListRow({
   onCheckboxChange,
   className,
 }: IssueListRowProps) {
+  const { t, i18n } = useTranslation('common');
   const showCheckbox = isMultiSelectActive || isChecked;
   const visibleTags = tags.slice(0, MAX_VISIBLE_TAGS);
 
@@ -121,8 +102,8 @@ export function IssueListRow({
           {onMoreActions && (
             <button
               type="button"
-              aria-label="Issue actions"
-              title="Issue actions"
+              aria-label={t('kanban.issueActions')}
+              title={t('kanban.issueActions')}
               className="p-half rounded-sm text-low hover:text-normal"
               onClick={(e) => {
                 e.stopPropagation();
@@ -202,7 +183,10 @@ export function IssueListRow({
             )}
             <KanbanAssignee assignees={assignees} />
             <span className="text-sm text-low w-5 text-right">
-              {formatRelativeTime(issue.created_at)}
+              {formatRelativeTime(
+                issue.created_at,
+                i18n.resolvedLanguage || i18n.language
+              )}
             </span>
           </div>
         </div>

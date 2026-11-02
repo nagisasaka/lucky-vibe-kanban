@@ -37,7 +37,7 @@ export function FollowUpQueue({
   if (!messages.length && !error) return null;
   return (
     <section
-      aria-label="Follow-up queue"
+      aria-label={t('followUpQueue.label')}
       className="mb-2 rounded border p-3 text-sm"
     >
       <div className="mb-2 flex items-center justify-between gap-2">
@@ -157,7 +157,7 @@ export function FollowUpQueue({
       </ol>
       {error && (
         <p role="alert" className="mt-2 text-error">
-          {error}
+          {t('followUpQueue.updateUnconfirmed')} {error}
         </p>
       )}
     </section>

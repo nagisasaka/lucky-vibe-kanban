@@ -1,4 +1,5 @@
-import { useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useCallback, useState } from 'react';
 import { useRouter } from '@tanstack/react-router';
 import { BellIcon, CheckIcon, ChecksIcon } from '@phosphor-icons/react';
 import { UserAvatar } from '@vibe/ui/components/UserAvatar';
@@ -19,6 +20,7 @@ function NotificationMessage({
   segments: MessageSegment[];
   membersByUserId: ReturnType<typeof useNotificationMembers>['membersByUserId'];
 }) {
+  const { t } = useTranslation('common');
   return (
     <>
       {segments.map((seg, i) => {
@@ -50,17 +52,42 @@ function NotificationMessage({
             />
           );
         }
-        return <span key={i}>Someone</span>;
+        return <span key={i}>{t('notifications.someone')}</span>;
       })}
     </>
   );
 }
 
 export function NotificationsPage() {
+  const { t, i18n } = useTranslation('common');
+  const [markUnconfirmed, setMarkUnconfirmed] = useState(false);
   const router = useRouter();
-  const { data, updateMany, enabled, unseenCount, groupedNotifications } =
-    useNotifications();
+  const {
+    data,
+    updateMany,
+    enabled,
+    unseenCount,
+    groupedNotifications,
+    isLoading,
+    error,
+    retry,
+  } = useNotifications();
   const { membersByUserId } = useNotificationMembers(data);
+
+  const markSeen = useCallback(
+    (ids: string[]) => {
+      if (!ids.length) return;
+      setMarkUnconfirmed(false);
+      try {
+        void updateMany(
+          ids.map((id) => ({ id, changes: { seen: true } }))
+        ).persisted.catch(() => setMarkUnconfirmed(true));
+      } catch {
+        setMarkUnconfirmed(true);
+      }
+    },
+    [updateMany]
+  );
 
   const markGroupSeen = useCallback(
     (group: GroupedNotification) => {
@@ -68,14 +95,9 @@ export function NotificationsPage() {
         return;
       }
 
-      updateMany(
-        group.unseenNotificationIds.map((notificationId) => ({
-          id: notificationId,
-          changes: { seen: true },
-        }))
-      );
+      markSeen(group.unseenNotificationIds);
     },
-    [updateMany]
+    [markSeen]
   );
 
   const handleClick = useCallback(
@@ -92,13 +114,13 @@ export function NotificationsPage() {
   const handleMarkAllSeen = useCallback(() => {
     const unseen = data.filter((n) => !n.seen);
     if (unseen.length === 0) return;
-    updateMany(unseen.map((n) => ({ id: n.id, changes: { seen: true } })));
-  }, [data, updateMany]);
+    markSeen(unseen.map((n) => n.id));
+  }, [data, markSeen]);
 
   if (!enabled) {
     return (
       <div className="flex items-center justify-center h-full text-low">
-        Sign in to view notifications
+        {t('notifications.signIn')}
       </div>
     );
   }
@@ -106,7 +128,9 @@ export function NotificationsPage() {
   return (
     <div className="flex flex-col h-full overflow-hidden">
       <div className="flex items-center justify-between px-double py-base border-b border-border">
-        <h1 className="text-xl font-medium text-high">Notifications</h1>
+        <h1 className="text-xl font-medium text-high">
+          {t('notifications.title')}
+        </h1>
         {unseenCount > 0 && (
           <button
             type="button"
@@ -114,16 +138,34 @@ export function NotificationsPage() {
             className="flex items-center gap-1 px-base py-half text-sm text-low hover:text-normal transition-colors cursor-pointer"
           >
             <ChecksIcon size={16} />
-            Mark all as read
+            {t('notifications.markAll')}
           </button>
         )}
       </div>
 
+      {markUnconfirmed && (
+        <p role="alert" className="px-double py-base text-error">
+          {t('notifications.markUnconfirmed')}
+        </p>
+      )}
+      {error && (
+        <div role="alert" className="px-double py-base text-error">
+          <p>{t('notifications.loadError')}</p>
+          <button type="button" onClick={retry}>
+            {t('notifications.retry')}
+          </button>
+        </div>
+      )}
       <div className="flex-1 overflow-y-auto">
-        {groupedNotifications.length === 0 ? (
+        {groupedNotifications.length === 0 && isLoading ? (
+          <p role="status" className="px-double py-base text-low">
+            {t('notifications.loading')}
+          </p>
+        ) : groupedNotifications.length === 0 &&
+          error ? null : groupedNotifications.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full gap-2 text-low">
             <BellIcon size={32} weight="light" />
-            <p className="text-base">No notifications yet</p>
+            <p className="text-base">{t('notifications.empty')}</p>
           </div>
         ) : (
           <div className="divide-y divide-border">
@@ -161,7 +203,11 @@ export function NotificationsPage() {
                     )}
                   >
                     <NotificationMessage
-                      segments={getGroupedNotificationSegments(group)}
+                      segments={getGroupedNotificationSegments(
+                        group,
+                        t,
+                        i18n.resolvedLanguage ?? 'en'
+                      )}
                       membersByUserId={membersByUserId}
                     />
                   </p>
@@ -182,11 +228,13 @@ export function NotificationsPage() {
                       'hover:bg-secondary hover:text-normal',
                       'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-brand'
                     )}
-                    aria-label="Mark notification as read"
-                    title="Mark as read"
+                    aria-label={t('notifications.markNotificationRead')}
+                    title={t('notifications.markRead')}
                   >
                     <CheckIcon size={14} weight="bold" />
-                    <span className="hidden sm:inline">Mark as read</span>
+                    <span className="hidden sm:inline">
+                      {t('notifications.markRead')}
+                    </span>
                   </button>
                 )}
               </div>

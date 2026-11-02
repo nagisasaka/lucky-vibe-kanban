@@ -1,3 +1,5 @@
+import type { TFunction } from 'i18next';
+import { useTranslation } from 'react-i18next';
 import { useEffect, useState } from 'react';
 import { AgentGoalStatus, type AgentGoalState } from 'shared/types';
 import { watchGoalElapsed } from '../model/goalElapsed';
@@ -17,22 +19,13 @@ interface GoalProgressCardProps {
   onInterruptTurn: () => void;
 }
 
-const STATUS_LABELS: Record<AgentGoalStatus, string> = {
-  [AgentGoalStatus.active]: 'Active',
-  [AgentGoalStatus.paused]: 'Paused',
-  [AgentGoalStatus.blocked]: 'Blocked',
-  [AgentGoalStatus.usageLimited]: 'Usage limited',
-  [AgentGoalStatus.budgetLimited]: 'Budget limited',
-  [AgentGoalStatus.complete]: 'Complete',
-};
-
-function formatDuration(totalSeconds: number) {
+function formatDuration(t: TFunction<'tasks'>, totalSeconds: number) {
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = totalSeconds % 60;
   return hours > 0
-    ? `${hours}h ${minutes}m ${seconds}s`
-    : `${minutes}m ${seconds}s`;
+    ? t('tasks:workspaceGoal.durationHours', { hours, minutes, seconds })
+    : t('tasks:workspaceGoal.durationMinutes', { minutes, seconds });
 }
 
 export function GoalProgressCard({
@@ -49,6 +42,16 @@ export function GoalProgressCard({
   onClear,
   onInterruptTurn,
 }: GoalProgressCardProps) {
+  const { t, i18n } = useTranslation('tasks');
+  const statusLabels: Record<AgentGoalStatus, string> = {
+    [AgentGoalStatus.active]: t('workspaceGoal.active'),
+    [AgentGoalStatus.paused]: t('workspaceGoal.paused'),
+    [AgentGoalStatus.blocked]: t('workspaceGoal.blocked'),
+    [AgentGoalStatus.usageLimited]: t('workspaceGoal.usageLimited'),
+    [AgentGoalStatus.budgetLimited]: t('workspaceGoal.budgetLimited'),
+    [AgentGoalStatus.complete]: t('workspaceGoal.complete'),
+  };
+
   const [isEditing, setIsEditing] = useState(false);
   const [draft, setDraft] = useState(goal.objective);
   const [elapsed, setElapsed] = useState(Number(goal.time_used_seconds));
@@ -80,20 +83,37 @@ export function GoalProgressCard({
       <div className="flex flex-wrap items-center justify-between gap-base">
         <div className="flex items-center gap-base">
           <span className="text-sm font-medium text-high">
-            {isRunActive ? 'Goal' : 'Saved Goal'}
+            {isRunActive
+              ? t('workspaceGoal.goal')
+              : t('workspaceGoal.savedGoal')}
           </span>
           <span className="bg-secondary rounded-full px-base py-half text-xs text-normal">
-            {isRunActive ? STATUS_LABELS[goal.status] : 'No active run'}
+            {isRunActive
+              ? statusLabels[goal.status]
+              : t('workspaceGoal.noActive')}
           </span>
         </div>
         <div className="flex flex-wrap gap-base text-xs text-low">
           <span>
-            Tokens: {String(goal.tokens_used)} /{' '}
-            {goal.token_budget == null ? 'Auto' : String(goal.token_budget)}
+            {t('workspaceGoal.tokens', {
+              used: new Intl.NumberFormat(
+                i18n.resolvedLanguage || i18n.language
+              ).format(goal.tokens_used),
+              budget:
+                goal.token_budget == null
+                  ? t('workspaceGoal.auto')
+                  : new Intl.NumberFormat(
+                      i18n.resolvedLanguage || i18n.language
+                    ).format(goal.token_budget),
+            })}
           </span>
           <span>
-            {isRunActive ? 'Elapsed' : 'Recorded time'}:{' '}
+            {isRunActive
+              ? t('workspaceGoal.elapsed')
+              : t('workspaceGoal.recordedTime')}
+            :{' '}
             {formatDuration(
+              t,
               isRunActive ? elapsed : Number(goal.time_used_seconds)
             )}
           </span>
@@ -102,22 +122,21 @@ export function GoalProgressCard({
 
       {!isRunActive && (
         <p className="mt-base text-xs text-low">
-          No agent is running for this Goal. Last recorded Goal status:{' '}
-          {STATUS_LABELS[goal.status]}. The time shown is the last reported
-          value.
+          {t('workspaceGoal.savedHelp', { status: statusLabels[goal.status] })}
         </p>
       )}
 
       {isEditing && isRunActive && controllable ? (
         <div className="mt-base space-y-base">
           <textarea
+            aria-label={t('workspaceGoal.objectiveLabel')}
             value={draft}
             onChange={(event) => setDraft(event.currentTarget.value)}
             rows={5}
             className="border-border bg-secondary text-normal w-full resize-y rounded-sm border p-base text-sm"
           />
           <p className="text-xs text-warning">
-            Replacing the objective resets Codex Goal usage accounting.
+            {t('workspaceGoal.resetWarning')}
           </p>
           <div className="flex justify-end gap-base">
             <button
@@ -128,7 +147,7 @@ export function GoalProgressCard({
                 setIsEditing(false);
               }}
             >
-              Cancel
+              {t('workspaceGoal.cancel')}
             </button>
             <button
               type="button"
@@ -139,7 +158,7 @@ export function GoalProgressCard({
                 setIsEditing(false);
               }}
             >
-              Save Goal
+              {t('workspaceGoal.save')}
             </button>
           </div>
         </div>
@@ -158,7 +177,7 @@ export function GoalProgressCard({
               disabled={busy}
               onClick={onPause}
             >
-              Pause
+              {t('workspaceGoal.pause')}
             </button>
           )}
           {canResume && (
@@ -168,7 +187,7 @@ export function GoalProgressCard({
               disabled={busy}
               onClick={onResume}
             >
-              Resume
+              {t('workspaceGoal.resume')}
             </button>
           )}
           <button
@@ -177,7 +196,7 @@ export function GoalProgressCard({
             disabled={busy}
             onClick={() => setIsEditing(true)}
           >
-            Edit Goal
+            {t('workspaceGoal.edit')}
           </button>
           <button
             type="button"
@@ -185,17 +204,17 @@ export function GoalProgressCard({
             disabled={busy}
             onClick={onInterruptTurn}
           >
-            Stop current turn
+            {t('workspaceGoal.stopTurn')}
           </button>
           <button
             type="button"
             className={buttonClass}
             disabled={busy}
             onClick={() => {
-              if (window.confirm('Clear this Goal permanently?')) onClear();
+              if (window.confirm(t('workspaceGoal.clearConfirm'))) onClear();
             }}
           >
-            Clear Goal
+            {t('workspaceGoal.clear')}
           </button>
         </div>
       )}
@@ -209,16 +228,16 @@ export function GoalProgressCard({
               disabled={busy || resumeSavedDisabled}
               onClick={onResumeSaved}
             >
-              Resume Goal
+              {t('workspaceGoal.resumeSaved')}
             </button>
-            <p className="text-xs text-low">
-              Continue the saved Goal in this Codex session without replacing
-              its objective or resetting usage. Codex checks whether it still
-              exists.
-            </p>
+            <p className="text-xs text-low">{t('workspaceGoal.resumeHelp')}</p>
           </div>
         )}
-      {error && <p className="mt-base text-xs text-error">{error}</p>}
+      {error && (
+        <p className="mt-base text-xs text-error">
+          {t('workspaceGoal.error')} {error}
+        </p>
+      )}
     </section>
   );
 }

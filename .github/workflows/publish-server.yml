@@ -32,6 +32,11 @@ jobs:
           persist-credentials: false
       - uses: ./.github/actions/setup-node
       - run: pnpm install --frozen-lockfile
+      - name: Check owned UI translations (EN and JA)
+        run: |
+          pnpm run i18n:test
+          pnpm run i18n:check
+          node scripts/check-unused-i18n-keys.mjs
       - name: Validate server configuration
         run: |
           pnpm run server:check

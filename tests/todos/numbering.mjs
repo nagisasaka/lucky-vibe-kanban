@@ -83,7 +83,13 @@ export async function checkStdioNumbering({ api, tool, rpc }) {
         },
       });
       assert.equal(result.isError, true);
-      assert.match(JSON.stringify(result), /409 Conflict/);
+      const failure =
+        result.structuredContent ??
+        JSON.parse(result.content.find((item) => item.type === "text").text);
+      assert.equal(failure.success, false);
+      assert.equal(failure.diagnostic.category, "conflict");
+      assert.equal(failure.diagnostic.outcome, "unknown");
+      assert.equal(failure.diagnostic.recovery, "inspect_receipt_and_state");
       await checkBoth();
     }
   }

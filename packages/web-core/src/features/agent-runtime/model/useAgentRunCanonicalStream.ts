@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useEffect, useRef, useState } from 'react';
 import type { AgentEventEnvelope, AgentRunStreamMessage } from 'shared/types';
 import { openLocalApiWebSocket } from '@/shared/lib/localApiTransport';
@@ -24,10 +25,14 @@ export function useAgentRunCanonicalStream(
   agentRunId: string | undefined,
   enabled = true
 ): UseAgentRunCanonicalStreamResult {
+  const { t } = useTranslation('common');
   const [timeline, setTimeline] = useState<CanonicalAgentTimeline | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<
+    'executionUpdate' | 'executionFormat' | 'executionConnection' | null
+  >(null);
+  const [errorDetail, setErrorDetail] = useState<string | null>(null);
   const timelineRef = useRef<CanonicalAgentTimeline | null>(null);
   const retryTimerRef = useRef<number | null>(null);
   const retryAttemptRef = useRef(0);
@@ -46,6 +51,7 @@ export function useAgentRunCanonicalStream(
       setIsConnected(false);
       setIsInitialized(false);
       setError(null);
+      setErrorDetail(null);
       return;
     }
 
@@ -76,6 +82,7 @@ export function useAgentRunCanonicalStream(
     setIsInitialized(false);
     setIsConnected(false);
     setError(null);
+    setErrorDetail(null);
     retryAttemptRef.current = 0;
 
     const scheduleReconnect = () => {
@@ -121,6 +128,7 @@ export function useAgentRunCanonicalStream(
           retryAttemptRef.current = 0;
           setIsConnected(true);
           setError(null);
+          setErrorDetail(null);
         };
         socket.onmessage = (message) => {
           if (cancelled) return;
@@ -149,7 +157,8 @@ export function useAgentRunCanonicalStream(
                 );
                 break;
               case 'error':
-                setError(parsed.data.message);
+                setErrorDetail(parsed.data.message);
+                setError('executionUpdate');
                 return;
             }
             timelineRef.current = next;
@@ -161,16 +170,18 @@ export function useAgentRunCanonicalStream(
               schedulePublish();
             }
           } catch (parseError) {
-            setError(
+            setErrorDetail(
               parseError instanceof Error
                 ? parseError.message
-                : 'Invalid AgentRun event'
+                : String(parseError)
             );
+            setError('executionFormat');
           }
         };
         socket.onerror = () => {
           if (cancelled) return;
-          setError('AgentRun stream connection failed');
+          setErrorDetail(null);
+          setError('executionConnection');
         };
         socket.onclose = () => {
           if (cancelled) return;
@@ -185,11 +196,12 @@ export function useAgentRunCanonicalStream(
       } catch (connectError) {
         if (cancelled) return;
         setIsConnected(false);
-        setError(
+        setErrorDetail(
           connectError instanceof Error
             ? connectError.message
-            : 'AgentRun stream unavailable'
+            : String(connectError)
         );
+        setError('executionConnection');
         scheduleReconnect();
       }
     };
@@ -208,5 +220,12 @@ export function useAgentRunCanonicalStream(
     };
   }, [agentRunId, enabled]);
 
-  return { timeline, isConnected, isInitialized, error };
+  return {
+    timeline,
+    isConnected,
+    isInitialized,
+    error: error
+      ? `${t(`streams.${error}`)}${errorDetail ? ` — ${errorDetail}` : ''}`
+      : null,
+  };
 }

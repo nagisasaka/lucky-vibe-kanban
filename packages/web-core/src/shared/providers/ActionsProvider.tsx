@@ -1,3 +1,6 @@
+import i18n from '@/i18n/config';
+import { ActionError, actionErrorMessage } from '@/shared/lib/actionMessages';
+import { useTranslation } from 'react-i18next';
 import {
   useContext,
   useCallback,
@@ -43,6 +46,7 @@ interface ActionsProviderProps {
 }
 
 export function ActionsProvider({ children }: ActionsProviderProps) {
+  const { t } = useTranslation('tasks');
   const appRuntime = useAppRuntime();
   const appNavigation = useAppNavigation();
   const { projectId } = useParams({ strict: false });
@@ -283,9 +287,7 @@ export function ActionsProvider({ children }: ActionsProviderProps) {
             target.usage !== 'interactive' &&
             !isManualArchiveAction(action, target.archived)
           ) {
-            throw new Error(
-              'This workspace is execution-only. Use its owner controls and inspection views.'
-            );
+            throw new ActionError('executionOnly');
           }
         }
         switch (action.requiresTarget) {
@@ -295,18 +297,14 @@ export function ActionsProvider({ children }: ActionsProviderProps) {
 
           case ActionTargetType.WORKSPACE:
             if (!workspaceId) {
-              throw new Error(
-                `Action "${action.id}" requires a workspace target`
-              );
+              throw new ActionError('workspaceRequired');
             }
             await action.execute(executorContext, workspaceId);
             break;
 
           case ActionTargetType.GIT:
             if (!workspaceId || !repoIdOrProjectId) {
-              throw new Error(
-                `Action "${action.id}" requires both workspace and repository`
-              );
+              throw new ActionError('repositoryRequired');
             }
             await action.execute(
               executorContext,
@@ -317,9 +315,7 @@ export function ActionsProvider({ children }: ActionsProviderProps) {
 
           case ActionTargetType.ISSUE:
             if (!repoIdOrProjectId || !issueIds || issueIds.length === 0) {
-              throw new Error(
-                `Action "${action.id}" requires project and issue selection`
-              );
+              throw new ActionError('issuesRequired');
             }
             await action.execute(executorContext, repoIdOrProjectId, issueIds);
             break;
@@ -327,9 +323,9 @@ export function ActionsProvider({ children }: ActionsProviderProps) {
       } catch (error) {
         // Show error to user via alert dialog
         ConfirmDialog.show({
-          title: 'Error',
-          message: error instanceof Error ? error.message : 'An error occurred',
-          confirmText: 'OK',
+          title: () => i18n.t('common:error'),
+          message: () => actionErrorMessage(error),
+          confirmText: () => i18n.t('common:ok'),
           showCancelButton: false,
           variant: 'destructive',
         });
@@ -346,11 +342,11 @@ export function ActionsProvider({ children }: ActionsProviderProps) {
       ctx?: ActionVisibilityContext
     ) => {
       if (ctx) {
-        return getActionLabel(action, ctx, workspace);
+        return getActionLabel(action, ctx, workspace, t);
       }
-      return resolveLabel(action, workspace);
+      return resolveLabel(action, workspace, t);
     },
-    []
+    [t]
   );
 
   const value = useMemo(

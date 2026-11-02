@@ -1,3 +1,4 @@
+import i18n from '@/i18n/config';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { IntegrationSelection, WorkspaceActivity } from 'shared/types';
 
@@ -11,9 +12,19 @@ vi.mock('@/shared/lib/api', () => ({
 import {
   integrationApi,
   integrationCanCancel,
+  integrationStatusLabel,
+  integrationWikiLabel,
   integrationDoneLabel,
   integrationSelectionIsCurrent,
 } from './integrationApi';
+
+const doneLabel = (status: string, published: boolean, result: string | null) =>
+  integrationDoneLabel(
+    status,
+    published,
+    result,
+    i18n.getFixedT('en', 'common')
+  );
 
 const selection: IntegrationSelection = {
   card_id: 'card-a',
@@ -31,22 +42,16 @@ const activity = {
 describe('formal Integration selection and controls', () => {
   it('does not promise a later Done update for cancelled or held unpublished work', () => {
     for (const status of ['cancelled', 'blocked', 'failed'])
-      expect(integrationDoneLabel(status, false, null)).toBe(
-        'Done not applied'
-      );
-    expect(integrationDoneLabel('integrating', false, null)).toBe(
-      'Done pending'
-    );
-    expect(integrationDoneLabel('post_processing', true, null)).toBe(
-      'Done pending'
-    );
-    expect(integrationDoneLabel('recovery_required', false, null)).toBe(
+      expect(doneLabel(status, false, null)).toBe('Done not applied');
+    expect(doneLabel('integrating', false, null)).toBe('Done pending');
+    expect(doneLabel('post_processing', true, null)).toBe('Done pending');
+    expect(doneLabel('recovery_required', false, null)).toBe(
       'Done awaiting reconciliation'
     );
-    expect(integrationDoneLabel('succeeded', true, 'applied')).toBe('applied');
-    expect(
-      integrationDoneLabel('post_processing', true, 'conditions changed')
-    ).toBe('conditions changed');
+    expect(doneLabel('succeeded', true, 'applied')).toBe('applied');
+    expect(doneLabel('post_processing', true, 'conditions changed')).toBe(
+      'conditions changed'
+    );
   });
   it('keeps adopted HEAD fixed when polling observes a newer commit or relink', () => {
     expect(integrationSelectionIsCurrent([selection], [activity])).toBe(true);
@@ -65,7 +70,7 @@ describe('formal Integration selection and controls', () => {
     expect(
       integrationSelectionIsCurrent(
         [selection],
-        [{ ...activity, active_agent_runs: 1, active_scripts: 1 }]
+        [{ ...activity, active_agent_runs: 1n, active_scripts: 1n }]
       )
     ).toBe(true);
     expect(selection.expected_commit).toBe('a'.repeat(40));
@@ -147,4 +152,28 @@ describe('formal Integration selection and controls', () => {
       selection,
     ]);
   });
+});
+
+it('localizes owned integration receipts and statuses without displaying arbitrary receipt bodies', () => {
+  for (const language of ['en', 'ja']) {
+    const t = i18n.getFixedT(language, 'common');
+    expect(integrationDoneLabel('succeeded', true, 'done', t)).toBe(
+      language === 'ja' ? 'Doneを反映済み' : 'Done applied'
+    );
+    expect(integrationStatusLabel('queued', t)).toBe(
+      language === 'ja' ? '待機中' : 'Queued'
+    );
+    expect(integrationStatusLabel('constructor', t)).toBe(
+      integrationStatusLabel('future-status', t)
+    );
+    expect(
+      integrationWikiLabel('Wiki receipt pending: Raw secret /internal/path', t)
+    ).toBe(language === 'ja' ? '記録を確認中' : 'receipt pending');
+    expect(integrationWikiLabel('Raw future receipt', t)).not.toContain(
+      'Raw future receipt'
+    );
+    expect(integrationWikiLabel('disabled', t)).toBe(
+      language === 'ja' ? '無効' : 'disabled'
+    );
+  }
 });

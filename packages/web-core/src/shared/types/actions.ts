@@ -1,3 +1,7 @@
+import i18n from '@/i18n/config';
+
+export type ActionTranslator = (key: string) => string;
+
 import type { Icon } from '@phosphor-icons/react';
 import type { QueryClient } from '@tanstack/react-query';
 import type { ExecutionProcess, Workspace, PatchType } from 'shared/types';
@@ -160,7 +164,7 @@ export enum ActionTargetType {
 // Base properties shared by all actions
 interface ActionBase {
   id: string;
-  label: string | ((workspace?: Workspace) => string);
+  label: string | ((workspace?: Workspace, t?: ActionTranslator) => string);
   icon: ActionIcon;
   shortcut?: string;
   variant?: 'default' | 'destructive';
@@ -169,8 +173,8 @@ interface ActionBase {
   isActive?: (ctx: ActionVisibilityContext) => boolean;
   isEnabled?: (ctx: ActionVisibilityContext) => boolean;
   getIcon?: (ctx: ActionVisibilityContext) => ActionIcon;
-  getTooltip?: (ctx: ActionVisibilityContext) => string;
-  getLabel?: (ctx: ActionVisibilityContext) => string;
+  getTooltip?: (ctx: ActionVisibilityContext, t?: ActionTranslator) => string;
+  getLabel?: (ctx: ActionVisibilityContext, t?: ActionTranslator) => string;
 }
 
 // Global action (no target needed)
@@ -224,10 +228,11 @@ export type ContextBarItem = ActionDefinition | typeof ContextBarDivider;
 // Helper to resolve dynamic label
 export function resolveLabel(
   action: ActionDefinition,
-  workspace?: Workspace
+  workspace?: Workspace,
+  t: ActionTranslator = i18n.getFixedT(null, 'tasks')
 ): string {
   return typeof action.label === 'function'
-    ? action.label(workspace)
+    ? action.label(workspace, t)
     : action.label;
 }
 
@@ -300,17 +305,21 @@ export function getActionIcon(
 
 export function getActionTooltip(
   action: ActionDefinition,
-  ctx: ActionVisibilityContext
+  ctx: ActionVisibilityContext,
+  t: ActionTranslator = i18n.getFixedT(null, 'tasks')
 ): string {
-  return action.getTooltip ? action.getTooltip(ctx) : resolveLabel(action);
+  return action.getTooltip
+    ? action.getTooltip(ctx, t)
+    : resolveLabel(action, undefined, t);
 }
 
 export function getActionLabel(
   action: ActionDefinition,
   ctx: ActionVisibilityContext,
-  workspace?: Workspace
+  workspace?: Workspace,
+  t: ActionTranslator = i18n.getFixedT(null, 'tasks')
 ): string {
   return action.getLabel
-    ? action.getLabel(ctx)
-    : resolveLabel(action, workspace);
+    ? action.getLabel(ctx, t)
+    : resolveLabel(action, workspace, t);
 }

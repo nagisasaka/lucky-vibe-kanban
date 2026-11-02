@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@vibe/ui/components/Button';
 import type { BaseCodingAgent } from 'shared/types';
-import { ConfirmDialog } from '@/shared/dialogs/shared/ConfirmDialog';
+import { ConfirmDialog } from '@vibe/ui/components/ConfirmDialog';
 import { useArenaActions } from '@/shared/hooks/useArenaActions';
 import type {
   ArenaGroupResponse,
@@ -38,9 +38,12 @@ interface ArenaActionsBarProps {
  * action surfaced separately at the group level (not per-workspace).
  */
 export function ArenaActionsBar({ group, workspace }: ArenaActionsBarProps) {
-  const { t } = useTranslation('common');
+  const { t, i18n } = useTranslation('common');
   const { promote, retry } = useArenaActions(group.id, group.issue_id);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<
+    'promoteFailed' | 'retryFailed' | 'retryUnknownExecutor' | null
+  >(null);
+  const [errorDetail, setErrorDetail] = useState<string | null>(null);
 
   if (group.mode === 'design') {
     return null;
@@ -59,16 +62,17 @@ export function ArenaActionsBar({ group, workspace }: ArenaActionsBarProps) {
 
   const handlePromote = async () => {
     setErrorMessage(null);
+    setErrorDetail(null);
     const result = await ConfirmDialog.show({
-      title: t('arena.confirm.promoteTitle'),
-      message:
+      title: () => i18n.t('common:arena.confirm.promoteTitle'),
+      message: () =>
         liveSiblings > 0
-          ? t('arena.confirm.promoteMessageWithSiblings', {
+          ? i18n.t('common:arena.confirm.promoteMessageWithSiblings', {
               count: liveSiblings,
             })
-          : t('arena.confirm.promoteMessageSingle'),
-      confirmText: t('arena.actions.promote'),
-      cancelText: t('buttons.cancel'),
+          : i18n.t('common:arena.confirm.promoteMessageSingle'),
+      confirmText: () => i18n.t('common:arena.actions.promote'),
+      cancelText: () => i18n.t('common:buttons.cancel'),
       variant: 'destructive',
     });
     if (result !== 'confirmed') return;
@@ -76,16 +80,16 @@ export function ArenaActionsBar({ group, workspace }: ArenaActionsBarProps) {
     try {
       await promote.mutateAsync({ workspaceId: workspace.workspace_id });
     } catch (err) {
-      setErrorMessage(
-        err instanceof Error ? err.message : t('arena.errors.promoteFailed')
-      );
+      setErrorDetail(err instanceof Error ? err.message : String(err));
+      setErrorMessage('promoteFailed');
     }
   };
 
   const handleRetry = async () => {
     setErrorMessage(null);
+    setErrorDetail(null);
     if (!workspace.executor) {
-      setErrorMessage(t('arena.errors.retryUnknownExecutor'));
+      setErrorMessage('retryUnknownExecutor');
       return;
     }
 
@@ -112,9 +116,8 @@ export function ArenaActionsBar({ group, workspace }: ArenaActionsBarProps) {
         payload,
       });
     } catch (err) {
-      setErrorMessage(
-        err instanceof Error ? err.message : t('arena.errors.retryFailed')
-      );
+      setErrorDetail(err instanceof Error ? err.message : String(err));
+      setErrorMessage('retryFailed');
     }
   };
 
@@ -146,7 +149,7 @@ export function ArenaActionsBar({ group, workspace }: ArenaActionsBarProps) {
       </div>
       {errorMessage ? (
         <p className="mt-half text-xs text-error" role="alert">
-          {errorMessage}
+          {t(`arena.errors.${errorMessage}`)} {errorDetail}
         </p>
       ) : null}
     </div>

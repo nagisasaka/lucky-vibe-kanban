@@ -31,7 +31,8 @@ export function ProcessListContainer() {
   const disableAutoSelect =
     logsPanelContent?.type === 'tool' || logsPanelContent?.type === 'terminal';
   const matchCount = logMatchIndices.length;
-  const { t } = useTranslation('common');
+  const { t, i18n } = useTranslation('common');
+  const number = new Intl.NumberFormat(i18n.resolvedLanguage || i18n.language);
   const { executionProcessesVisible } = useExecutionProcessesContext();
 
   // Sort processes by created_at descending (newest first)
@@ -95,8 +96,8 @@ export function ProcessListContainer() {
           <span className="text-xs text-low whitespace-nowrap">
             {matchCount > 0
               ? t('search.matchCount', {
-                  current: currentMatchIdx + 1,
-                  total: matchCount,
+                  current: number.format(currentMatchIdx + 1),
+                  total: number.format(matchCount),
                 })
               : t('search.noMatches')}
           </span>
@@ -105,7 +106,7 @@ export function ProcessListContainer() {
               onClick={onPrevMatch}
               disabled={matchCount === 0}
               className="p-1 text-low hover:text-normal disabled:opacity-50 disabled:cursor-not-allowed"
-              title="Previous match (Shift+Enter)"
+              title={t('search.previousMatch')}
             >
               <CaretUpIcon className="size-icon-sm" weight="bold" />
             </button>
@@ -113,7 +114,7 @@ export function ProcessListContainer() {
               onClick={onNextMatch}
               disabled={matchCount === 0}
               className="p-1 text-low hover:text-normal disabled:opacity-50 disabled:cursor-not-allowed"
-              title="Next match (Enter)"
+              title={t('search.nextMatch')}
             >
               <CaretDownIcon className="size-icon-sm" weight="bold" />
             </button>

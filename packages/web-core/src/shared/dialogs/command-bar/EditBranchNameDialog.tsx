@@ -11,7 +11,7 @@ import {
 import { Button } from '@vibe/ui/components/Button';
 import { Input } from '@vibe/ui/components/Input';
 import { create, useModal } from '@ebay/nice-modal-react';
-import { defineModal, getErrorMessage } from '@/shared/lib/modals';
+import { defineModal } from '@/shared/lib/modals';
 import { useRenameBranch } from '@/shared/hooks/useRenameBranch';
 
 export interface EditBranchNameDialogProps {
@@ -29,11 +29,15 @@ const EditBranchNameDialogImpl = create<EditBranchNameDialogProps>(
     const modal = useModal();
     const { t } = useTranslation(['tasks', 'common']);
     const [branchName, setBranchName] = useState<string>(currentBranchName);
-    const [error, setError] = useState<string | null>(null);
+    const [error, setError] = useState<
+      'empty' | 'spaces' | 'unconfirmed' | null
+    >(null);
+    const [errorDetail, setErrorDetail] = useState<string | null>(null);
 
     useEffect(() => {
       setBranchName(currentBranchName);
       setError(null);
+      setErrorDetail(null);
     }, [currentBranchName]);
 
     const renameMutation = useRenameBranch(
@@ -45,8 +49,9 @@ const EditBranchNameDialogImpl = create<EditBranchNameDialogProps>(
         } as EditBranchNameDialogResult);
         modal.hide();
       },
-      (err: unknown) => {
-        setError(getErrorMessage(err) || 'Failed to rename branch');
+      (error) => {
+        setErrorDetail(error instanceof Error ? error.message : String(error));
+        setError('unconfirmed');
       }
     );
 
@@ -54,7 +59,7 @@ const EditBranchNameDialogImpl = create<EditBranchNameDialogProps>(
       const trimmedName = branchName.trim();
 
       if (!trimmedName) {
-        setError('Branch name cannot be empty');
+        setError('empty');
         return;
       }
 
@@ -65,11 +70,12 @@ const EditBranchNameDialogImpl = create<EditBranchNameDialogProps>(
       }
 
       if (trimmedName.includes(' ')) {
-        setError('Branch name cannot contain spaces');
+        setError('spaces');
         return;
       }
 
       setError(null);
+      setErrorDetail(null);
       renameMutation.mutate(trimmedName);
     };
 
@@ -106,6 +112,7 @@ const EditBranchNameDialogImpl = create<EditBranchNameDialogProps>(
                 onChange={(e) => {
                   setBranchName(e.target.value);
                   setError(null);
+                  setErrorDetail(null);
                 }}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && !renameMutation.isPending) {
@@ -116,7 +123,16 @@ const EditBranchNameDialogImpl = create<EditBranchNameDialogProps>(
                 disabled={renameMutation.isPending}
                 autoFocus
               />
-              {error && <p className="text-sm text-destructive">{error}</p>}
+              {error && (
+                <p className="text-sm text-destructive">
+                  {error === 'empty'
+                    ? t('gitNotice.branchEmpty')
+                    : error === 'spaces'
+                      ? t('gitNotice.branchSpaces')
+                      : t('gitNotice.renameUnconfirmed')}{' '}
+                  {errorDetail}
+                </p>
+              )}
             </div>
           </div>
 

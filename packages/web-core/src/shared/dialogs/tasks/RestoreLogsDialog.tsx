@@ -348,7 +348,10 @@ const RestoreLogsDialogImpl = create<RestoreLogsDialogProps>(
                       <div className="text-sm min-w-0 w-full break-words">
                         <p className="font-medium mb-2">
                           {t('restoreLogsDialog.resetWorktree.title')}
-                          {repoCount > 1 && ` (${repoCount} repos)`}
+                          {repoCount > 1 &&
+                            t('restoreLogsDialog.repositoryCount', {
+                              count: repoCount,
+                            })}
                         </p>
                         <div
                           className="mt-2 w-full flex items-center cursor-pointer select-none"
@@ -445,7 +448,10 @@ const RestoreLogsDialogImpl = create<RestoreLogsDialogProps>(
                       <div className="text-sm min-w-0 w-full break-words">
                         <p className="font-medium text-destructive">
                           {t('restoreLogsDialog.resetWorktree.title')}
-                          {repoCount > 1 && ` (${repoCount} repos)`}
+                          {repoCount > 1 &&
+                            t('restoreLogsDialog.repositoryCount', {
+                              count: repoCount,
+                            })}
                         </p>
                         <div
                           className={`mt-2 w-full flex items-center select-none cursor-pointer`}

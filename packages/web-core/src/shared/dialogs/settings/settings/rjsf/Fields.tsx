@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { FieldProps } from '@rjsf/utils';
 import { PlusIcon, XIcon } from '@phosphor-icons/react';
 import { useState, useCallback, useMemo } from 'react';
@@ -16,6 +17,7 @@ export function KeyValueField({
   readonly,
   registry,
 }: FieldProps<KeyValueData>) {
+  const { t } = useTranslation('settings');
   const [newKey, setNewKey] = useState('');
   const [newValue, setNewValue] = useState('');
 
@@ -75,15 +77,15 @@ export function KeyValueField({
             value={key}
             disabled
             className={cn(inputClassName, 'opacity-70')}
-            aria-label="Environment variable key"
+            aria-label={t('schemaForm.environment.key')}
           />
           <input
             value={value ?? ''}
             onChange={(e) => handleValueChange(key, e.target.value)}
             disabled={isDisabled}
             className={inputClassName}
-            placeholder="Value"
-            aria-label={`Value for ${key}`}
+            placeholder={t('schemaForm.environment.value')}
+            aria-label={t('schemaForm.environment.valueFor', { key })}
           />
           <button
             type="button"
@@ -95,7 +97,7 @@ export function KeyValueField({
               'focus:outline-none focus:ring-1 focus:ring-brand',
               'disabled:opacity-50 disabled:cursor-not-allowed transition-colors'
             )}
-            aria-label={`Remove ${key}`}
+            aria-label={t('schemaForm.environment.remove', { key })}
           >
             <XIcon className="size-icon-xs" weight="bold" />
           </button>
@@ -108,15 +110,15 @@ export function KeyValueField({
           value={newKey}
           onChange={(e) => setNewKey(e.target.value)}
           disabled={isDisabled}
-          placeholder="KEY"
+          placeholder={t('schemaForm.environment.keyPlaceholder')}
           className={inputClassName}
-          aria-label="New environment variable key"
+          aria-label={t('schemaForm.environment.newKey')}
         />
         <input
           value={newValue}
           onChange={(e) => setNewValue(e.target.value)}
           disabled={isDisabled}
-          placeholder="value"
+          placeholder={t('schemaForm.environment.value')}
           className={inputClassName}
           onKeyDown={(e) => {
             if (e.key === 'Enter') {
@@ -124,7 +126,7 @@ export function KeyValueField({
               handleAdd();
             }
           }}
-          aria-label="New environment variable value"
+          aria-label={t('schemaForm.environment.newValue')}
         />
         <button
           type="button"
@@ -136,7 +138,7 @@ export function KeyValueField({
             'focus:outline-none focus:ring-1 focus:ring-brand',
             'disabled:opacity-50 disabled:cursor-not-allowed transition-colors'
           )}
-          aria-label="Add environment variable"
+          aria-label={t('schemaForm.environment.add')}
         >
           <PlusIcon className="size-icon-xs" weight="bold" />
         </button>

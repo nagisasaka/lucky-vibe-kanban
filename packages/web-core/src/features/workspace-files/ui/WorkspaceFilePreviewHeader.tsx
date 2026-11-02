@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useMemo, useState } from 'react';
 import {
   Copy,
@@ -8,7 +9,8 @@ import {
   X,
 } from 'lucide-react';
 import { Tooltip } from '@vibe/ui/components/Tooltip';
-import { cn, formatFileSize } from '@/shared/lib/utils';
+import { cn } from '@/shared/lib/utils';
+import { formatFileSize } from '@vibe/ui/lib/formatFileSize';
 import { writeClipboardViaBridge } from '@/shared/lib/clipboard';
 import { getFileIcon } from '@/shared/lib/fileTypeIcon';
 import { getActualTheme } from '@/shared/lib/theme';
@@ -40,10 +42,13 @@ export function WorkspaceFilePreviewHeader({
   onRefresh,
   onClearTarget,
 }: WorkspaceFilePreviewHeaderProps) {
+  const { t, i18n } = useTranslation('common');
   const { theme } = useTheme();
   const actualTheme = getActualTheme(theme);
   const hostId = useHostId();
-  const [copied, setCopied] = useState(false);
+  const [copyState, setCopyState] = useState<
+    'idle' | 'copied' | 'requested' | 'error'
+  >('idle');
   const openInEditor = useOpenInEditor(target.workspaceId);
   const { data: workspace } = useWorkspaceRecord(target.workspaceId);
   const fileName = content?.name || target.path.split('/').pop() || target.path;
@@ -56,9 +61,13 @@ export function WorkspaceFilePreviewHeader({
   );
 
   const handleCopyPath = async () => {
-    await writeClipboardViaBridge(target.path);
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 1500);
+    try {
+      const confirmed = await writeClipboardViaBridge(target.path);
+      setCopyState(confirmed ? 'copied' : 'requested');
+      window.setTimeout(() => setCopyState('idle'), 1500);
+    } catch {
+      setCopyState('error');
+    }
   };
 
   const handleOpenEditor = () => {
@@ -67,11 +76,11 @@ export function WorkspaceFilePreviewHeader({
 
   return (
     <div className="sticky top-0 z-10 border-b border-border bg-primary">
-      <div className="flex min-h-[48px] items-center gap-base px-base py-half">
+      <div className="flex min-h-[48px] flex-wrap items-center gap-base px-base py-half">
         <div className="flex size-8 shrink-0 items-center justify-center rounded border border-border bg-secondary">
           <FileIcon className="size-5" />
         </div>
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0 flex-1 basis-[160px]">
           <div className="flex min-w-0 items-center gap-half">
             <div className="truncate text-base font-semibold text-high">
               {fileName}
@@ -88,7 +97,10 @@ export function WorkspaceFilePreviewHeader({
               <>
                 <span className="shrink-0">|</span>
                 <span className="shrink-0">
-                  {formatFileSize(content.size_bytes)}
+                  {formatFileSize(
+                    content.size_bytes,
+                    i18n.resolvedLanguage || i18n.language
+                  )}
                 </span>
               </>
             )}
@@ -102,18 +114,29 @@ export function WorkspaceFilePreviewHeader({
         </div>
         <div className="flex shrink-0 items-center gap-half">
           <HeaderIconButton
-            label={copied ? 'Copied path' : 'Copy path'}
+            label={
+              copyState === 'requested'
+                ? t('workspaceFiles.copyRequested')
+                : copyState === 'error'
+                  ? t('workspaceFiles.copyFailed')
+                  : copyState === 'copied'
+                    ? t('workspaceFiles.copied_path')
+                    : t('workspaceFiles.copy_path')
+            }
             onClick={() => void handleCopyPath()}
           >
             <Copy className="size-4" />
           </HeaderIconButton>
           {workspace?.usage === 'interactive' && (
-            <HeaderIconButton label="Open in editor" onClick={handleOpenEditor}>
+            <HeaderIconButton
+              label={t('workspaceFiles.open_in_editor')}
+              onClick={handleOpenEditor}
+            >
               <ExternalLink className="size-4" />
             </HeaderIconButton>
           )}
           <HeaderIconButton
-            label="Refresh preview"
+            label={t('workspaceFiles.refresh_preview')}
             onClick={onRefresh}
             disabled={isRefreshing}
           >
@@ -121,12 +144,18 @@ export function WorkspaceFilePreviewHeader({
               className={cn('size-4', isRefreshing && 'animate-spin')}
             />
           </HeaderIconButton>
-          <Tooltip content={rawUrl ? 'Open raw file' : 'Raw file unavailable'}>
+          <Tooltip
+            content={
+              rawUrl
+                ? t('workspaceFiles.open_raw_file')
+                : t('workspaceFiles.raw_file_unavailable')
+            }
+          >
             <a
               href={rawUrl ?? undefined}
               target="_blank"
               rel="noopener noreferrer"
-              aria-label="Open raw file"
+              aria-label={t('workspaceFiles.open_raw_file')}
               className={cn(
                 'flex size-8 items-center justify-center rounded border border-border bg-secondary text-low transition-colors hover:text-normal focus:outline-none focus:ring-1 focus:ring-brand',
                 !rawUrl && 'pointer-events-none opacity-50'
@@ -136,7 +165,10 @@ export function WorkspaceFilePreviewHeader({
             </a>
           </Tooltip>
           {onClearTarget && (
-            <HeaderIconButton label="Close preview" onClick={onClearTarget}>
+            <HeaderIconButton
+              label={t('workspaceFiles.close_preview')}
+              onClick={onClearTarget}
+            >
               <X className="size-4" />
             </HeaderIconButton>
           )}
@@ -145,7 +177,7 @@ export function WorkspaceFilePreviewHeader({
       {isRefreshing && (
         <div className="flex h-6 items-center gap-half border-t border-border px-base text-xs text-low">
           <Loader2 className="size-3 animate-spin" />
-          Refreshing preview
+          {t('workspaceFiles.refreshing_preview')}
         </div>
       )}
     </div>

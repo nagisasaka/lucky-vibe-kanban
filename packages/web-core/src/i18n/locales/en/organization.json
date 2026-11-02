@@ -3,7 +3,8 @@
   "inviteDialog": {},
   "roles": {
     "member": "Member",
-    "admin": "Admin"
+    "admin": "Admin",
+    "unknown": "Unknown role"
   },
   "memberList": {
     "you": "You"

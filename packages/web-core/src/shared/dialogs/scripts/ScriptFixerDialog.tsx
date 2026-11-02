@@ -1,3 +1,4 @@
+import { errorDiagnostic } from '@/shared/lib/errorDiagnostic';
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { create, useModal } from '@ebay/nice-modal-react';
@@ -64,7 +65,10 @@ const ScriptFixerDialogImpl = create<ScriptFixerDialogProps>(
     const [isLoadingRepo, setIsLoadingRepo] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [isTesting, setIsTesting] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    const [error, setError] = useState<
+      'loadFailed' | 'saveUnconfirmed' | 'runUnconfirmed' | null
+    >(null);
+    const [errorDetail, setErrorDetail] = useState<string | null>(null);
     // Track session ID locally so we can update it after starting a script
     const [activeSessionId, setActiveSessionId] = useState<string | undefined>(
       sessionId
@@ -134,6 +138,7 @@ const ScriptFixerDialogImpl = create<ScriptFixerDialogProps>(
       let cancelled = false;
       setIsLoadingRepo(true);
       setError(null);
+      setErrorDetail(null);
 
       (async () => {
         try {
@@ -152,10 +157,9 @@ const ScriptFixerDialogImpl = create<ScriptFixerDialogProps>(
           setScript(scriptContent);
           setOriginalScript(scriptContent);
         } catch (err) {
+          setErrorDetail(errorDiagnostic(err));
           if (cancelled) return;
-          setError(
-            err instanceof Error ? err.message : t('common:errors.generic')
-          );
+          setError('loadFailed');
         } finally {
           if (!cancelled) setIsLoadingRepo(false);
         }
@@ -164,7 +168,7 @@ const ScriptFixerDialogImpl = create<ScriptFixerDialogProps>(
       return () => {
         cancelled = true;
       };
-    }, [selectedRepoId, scriptType, t]);
+    }, [selectedRepoId, scriptType]);
 
     const hasChanges = script !== originalScript;
 
@@ -184,6 +188,7 @@ const ScriptFixerDialogImpl = create<ScriptFixerDialogProps>(
 
       setIsSaving(true);
       setError(null);
+      setErrorDetail(null);
 
       try {
         // Only send the field being edited - other fields will be preserved by the backend
@@ -206,19 +211,19 @@ const ScriptFixerDialogImpl = create<ScriptFixerDialogProps>(
         modal.resolve({ action: 'saved' } as ScriptFixerDialogResult);
         modal.hide();
       } catch (err) {
-        setError(
-          err instanceof Error ? err.message : t('common:errors.generic')
-        );
+        setErrorDetail(errorDiagnostic(err));
+        setError('saveUnconfirmed');
       } finally {
         setIsSaving(false);
       }
-    }, [selectedRepoId, script, scriptType, queryClient, modal, t]);
+    }, [selectedRepoId, script, scriptType, queryClient, modal]);
 
     const handleSaveAndTest = useCallback(async () => {
       if (!selectedRepoId) return;
 
       setIsTesting(true);
       setError(null);
+      setErrorDetail(null);
 
       try {
         // Only send the field being edited - other fields will be preserved by the backend
@@ -266,13 +271,12 @@ const ScriptFixerDialogImpl = create<ScriptFixerDialogProps>(
         // Keep dialog open so user can see the new execution logs
         // The logs will update automatically via useLogStream/useExecutionProcesses
       } catch (err) {
-        setError(
-          err instanceof Error ? err.message : t('common:errors.generic')
-        );
+        setErrorDetail(errorDiagnostic(err));
+        setError('runUnconfirmed');
       } finally {
         setIsTesting(false);
       }
-    }, [selectedRepoId, script, scriptType, workspaceId, queryClient, t]);
+    }, [selectedRepoId, script, scriptType, workspaceId, queryClient]);
 
     const dialogTitle =
       scriptType === 'setup'
@@ -407,7 +411,11 @@ const ScriptFixerDialogImpl = create<ScriptFixerDialogProps>(
             </div>
 
             {/* Error display */}
-            {error && <div className="text-destructive text-sm">{error}</div>}
+            {error && (
+              <div role="alert" className="text-destructive text-sm">
+                {t(`scriptFixer.errors.${error}`)} {errorDetail}
+              </div>
+            )}
           </div>
 
           <DialogFooter className="gap-2 sm:gap-0">

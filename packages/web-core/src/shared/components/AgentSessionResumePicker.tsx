@@ -36,11 +36,11 @@ const EXTENDED_DAYS = 30;
 const RECENT_LIMIT = 10;
 const PREVIEW_TURNS = 20;
 
-function formatResumeTime(value: string) {
+function formatResumeTime(value: string, locale: string) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
 
-  return date.toLocaleString(undefined, {
+  return date.toLocaleString(locale, {
     month: 'short',
     day: 'numeric',
     hour: 'numeric',
@@ -55,7 +55,7 @@ export function AgentSessionResumePicker({
   disabled,
   onSelect,
 }: AgentSessionResumePickerProps) {
-  const { t } = useTranslation('common');
+  const { t, i18n } = useTranslation('common');
   const [open, setOpen] = useState(false);
   const [days, setDays] = useState(RECENT_DAYS);
   const [previewSessionId, setPreviewSessionId] = useState<string | null>(
@@ -130,9 +130,7 @@ export function AgentSessionResumePicker({
     staleTime: 30_000,
   });
 
-  const triggerLabel = t('agentSessionResume.open', {
-    defaultValue: 'Recent agent sessions',
-  });
+  const triggerLabel = t('agentSessionResume.open');
 
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
@@ -166,33 +164,24 @@ export function AgentSessionResumePicker({
         </DropdownMenuLabel>
 
         <DropdownMenuLabel className="pt-0 text-xs font-normal">
-          {t('agentSessionResume.sourceHint', {
-            defaultValue: "Loaded from the agent's native resume history",
-          })}
+          {t('agentSessionResume.sourceHint')}
         </DropdownMenuLabel>
 
         {isLoading && (
           <DropdownMenuItem disabled>
-            {t('agentSessionResume.loading', {
-              defaultValue: 'Loading sessions...',
-            })}
+            {t('agentSessionResume.loading')}
           </DropdownMenuItem>
         )}
 
         {isError && (
           <DropdownMenuItem disabled>
-            {t('agentSessionResume.error', {
-              defaultValue: 'Failed to load sessions',
-            })}
+            {t('agentSessionResume.error')}
           </DropdownMenuItem>
         )}
 
         {discoveryState === 'unsupported' && (
           <DropdownMenuItem disabled>
-            {t('agentSessionResume.unsupported', {
-              defaultValue:
-                'Native session discovery is not available for this agent',
-            })}
+            {t('agentSessionResume.unsupported')}
           </DropdownMenuItem>
         )}
 
@@ -201,9 +190,7 @@ export function AgentSessionResumePicker({
           discoveryState !== 'unsupported' &&
           sessions.length === 0 && (
             <DropdownMenuItem disabled>
-              {t('agentSessionResume.empty', {
-                defaultValue: 'No recent sessions',
-              })}
+              {t('agentSessionResume.empty')}
             </DropdownMenuItem>
           )}
 
@@ -219,7 +206,10 @@ export function AgentSessionResumePicker({
               }
               badge={
                 <span className="whitespace-nowrap text-xs text-low">
-                  {formatResumeTime(session.last_used_at)}
+                  {formatResumeTime(
+                    session.last_used_at,
+                    i18n.resolvedLanguage || i18n.language
+                  )}
                 </span>
               }
               onFocus={() => setPreviewSessionId(session.agent_session_id)}
@@ -248,9 +238,7 @@ export function AgentSessionResumePicker({
                 setDays(EXTENDED_DAYS);
               }}
             >
-              {t('agentSessionResume.more', {
-                defaultValue: 'Show last 30 days',
-              })}
+              {t('agentSessionResume.more')}
             </DropdownMenuItem>
           </>
         )}
@@ -273,22 +261,16 @@ function NativeSessionPreviewPanel({
       <DropdownMenuSeparator />
       <div className="mx-half max-h-72 overflow-y-auto px-half py-half">
         <div className="mb-half text-xs font-medium text-low">
-          {t('agentSessionResume.previewLabel', {
-            defaultValue: 'Recent context',
-          })}
+          {t('agentSessionResume.previewLabel')}
         </div>
         {isLoading && (
           <div className="px-half py-base text-xs text-low">
-            {t('agentSessionResume.previewLoading', {
-              defaultValue: 'Loading preview...',
-            })}
+            {t('agentSessionResume.previewLoading')}
           </div>
         )}
         {!isLoading && (!preview || preview.entries.length === 0) && (
           <div className="px-half py-base text-xs text-low">
-            {t('agentSessionResume.previewEmpty', {
-              defaultValue: 'No preview available',
-            })}
+            {t('agentSessionResume.previewEmpty')}
           </div>
         )}
         {!isLoading &&
@@ -299,12 +281,8 @@ function NativeSessionPreviewPanel({
             >
               <div className="mb-[2px] text-[11px] uppercase text-low">
                 {entry.role === 'assistant'
-                  ? t('agentSessionResume.previewAssistant', {
-                      defaultValue: 'Assistant',
-                    })
-                  : t('agentSessionResume.previewUser', {
-                      defaultValue: 'User',
-                    })}
+                  ? t('agentSessionResume.previewAssistant')
+                  : t('agentSessionResume.previewUser')}
               </div>
               <div className="whitespace-pre-wrap break-words rounded-sm bg-secondary px-half py-half text-xs leading-relaxed text-normal">
                 {entry.content}
@@ -320,15 +298,24 @@ export function AgentSessionResumeChip({
   session,
   onClear,
 }: AgentSessionResumeChipProps) {
-  const { t } = useTranslation('common');
+  const { t, i18n } = useTranslation('common');
   const label = useMemo(
     () =>
       t('agentSessionResume.pending', {
         title: session.title,
-        time: formatResumeTime(session.last_used_at),
+        time: formatResumeTime(
+          session.last_used_at,
+          i18n.resolvedLanguage || i18n.language
+        ),
         defaultValue: 'Will resume: {{title}} - {{time}}',
       }),
-    [session.last_used_at, session.title, t]
+    [
+      session.last_used_at,
+      session.title,
+      t,
+      i18n.language,
+      i18n.resolvedLanguage,
+    ]
   );
 
   return (
@@ -345,9 +332,7 @@ export function AgentSessionResumeChip({
         type="button"
         onClick={onClear}
         className="shrink-0 text-low hover:text-normal"
-        aria-label={t('agentSessionResume.clear', {
-          defaultValue: 'Clear resume session',
-        })}
+        aria-label={t('agentSessionResume.clear')}
       >
         <XIcon className="size-icon-xs" weight="bold" />
       </button>

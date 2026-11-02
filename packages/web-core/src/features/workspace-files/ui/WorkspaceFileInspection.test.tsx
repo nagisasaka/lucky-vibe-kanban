@@ -1,8 +1,14 @@
+import i18n from '@/i18n/config';
+import { beforeEach } from 'vitest';
+beforeEach(async () => {
+  await i18n.changeLanguage('en');
+});
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 import type { WorkspaceFilePreviewTarget } from '../model/types';
 import { WorkspaceFilePreviewHeader } from './WorkspaceFilePreviewHeader';
+import { WorkspaceFilePreviewPanel } from './WorkspaceFilePreviewPanel';
 import { UnsupportedFileViewer } from './viewers/UnsupportedFileViewer';
 
 const state = vi.hoisted(() => ({ usage: undefined as string | undefined }));
@@ -13,6 +19,16 @@ vi.mock('@/shared/hooks/useWorkspaceRecord', () => ({
 }));
 vi.mock('@/shared/hooks/useOpenInEditor', () => ({
   useOpenInEditor: () => vi.fn(),
+}));
+vi.mock('../model/useWorkspaceFileContent', () => ({
+  useWorkspaceFileContent: () => ({
+    data: undefined,
+    isLoading: false,
+    isFetching: false,
+    error: new Error('Raw internal preview secret'),
+    refresh: vi.fn(),
+    refetch: vi.fn(),
+  }),
 }));
 vi.mock('@/shared/providers/HostIdProvider', () => ({ useHostId: () => null }));
 vi.mock('@/shared/hooks/useTheme', () => ({
@@ -26,6 +42,15 @@ describe('passive file inspection controls', () => {
     path: 'file.bin',
     source: 'file-tree',
   };
+  it('shows original preview diagnostics with translated context', () => {
+    state.usage = 'execution_only';
+    const html = renderToStaticMarkup(
+      createElement(WorkspaceFilePreviewPanel, { target })
+    );
+    expect(html).toContain('Could not load preview');
+    expect(html).toContain('Raw internal preview secret');
+    expect(html).not.toContain('Open in editor');
+  });
   it.each([undefined, 'execution_only'])(
     'does not offer an editor for usage %s',
     (usage) => {

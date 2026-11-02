@@ -68,7 +68,7 @@ export function IssueRelationshipsSection({
                     onRemoveRelationship(rel.relationshipId);
                   }}
                   className="p-half rounded-sm text-low hover:text-error hover:bg-error/10 transition-colors opacity-0 group-hover:opacity-100"
-                  aria-label="Remove relationship"
+                  aria-label={t('kanban.removeRelationship')}
                 >
                   <XIcon className="size-icon-2xs" weight="bold" />
                 </button>

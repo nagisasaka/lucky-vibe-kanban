@@ -1,4 +1,5 @@
-'use client';
+import { useTranslation } from 'react-i18next';
+('use client');
 
 import { UsersIcon } from '@phosphor-icons/react';
 import { cn } from '../lib/cn';
@@ -101,11 +102,12 @@ export const KanbanAssignee = ({
   assignees,
   className,
 }: KanbanAssigneeProps) => {
+  const { t } = useTranslation('common');
   if (assignees.length === 0) {
     return (
       <div
         className={cn('flex items-center justify-center', 'h-6 w-6', className)}
-        aria-label="Unassigned"
+        aria-label={t('kanban.unassigned')}
       >
         <UsersIcon className="size-icon-xs text-low" weight="bold" />
       </div>

@@ -1,3 +1,4 @@
+import { workflowNodeStatusKey } from './workflowI18n';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { WorkflowRunResponse } from 'shared/types';
@@ -10,6 +11,7 @@ import {
   buildWorkflowRunDashboardSummary,
   formatWorkflowDuration,
   getNodeStatusTone,
+  getWorkflowRunStatusLabel,
 } from '../model/workflowRunView';
 import {
   getDefaultWorkflowRuntimeNodeId,
@@ -69,16 +71,19 @@ export function WorkflowRunDashboardTab({
   projectId,
   run,
 }: WorkflowRunDashboardTabProps) {
-  const { t } = useTranslation('common');
+  const { t, i18n } = useTranslation('common');
+  const locale = i18n.resolvedLanguage || i18n.language;
   const { data: template } = useWorkflowTemplate(run.workflow_id);
   const mutations = useWorkflowRunMutations();
   const appNav = useAppNavigation();
   const runtimeView = getWorkflowRuntimeView(run);
   const summary = buildWorkflowRunDashboardSummary(run, runtimeView);
-  const [actionError, setActionError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<
+    'unavailable' | 'unconfirmed' | null
+  >(null);
+  const [actionDetail, setActionDetail] = useState<string | null>(null);
   const formatDuration = (start: string | null, end: string | null) => {
-    const label = formatWorkflowDuration(start, end);
-    return label === 'Not started' ? t('workflow.dashboard.notStarted') : label;
+    return formatWorkflowDuration(start, end, t, locale);
   };
 
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(
@@ -107,7 +112,12 @@ export function WorkflowRunDashboardTab({
         selectedNode.output_text
       )
     : null;
-  const selectedAgentSessionRows = buildAgentSessionRows(run, selectedNodeId);
+  const selectedAgentSessionRows = buildAgentSessionRows(
+    run,
+    selectedNodeId,
+    t,
+    locale
+  );
   const workflowWorkspaceHref = run.workspace_id
     ? run.issue_id && projectId
       ? `/projects/${projectId}/issues/${run.issue_id}/workspaces/${run.workspace_id}`
@@ -128,44 +138,34 @@ export function WorkflowRunDashboardTab({
 
   const handleCancelRun = async () => {
     if (!canCancelWorkflowRun(run, runtimeView)) {
-      setActionError(
-        t('workflow.runCanvas.actionUnavailable', {
-          defaultValue:
-            'Action unavailable while runtime projection is unavailable.',
-        })
-      );
+      setActionDetail(null);
+      setActionError('unavailable');
       return;
     }
     setActionError(null);
+    setActionDetail(null);
     try {
       await mutations.cancelRun(run.id);
-    } catch (err) {
-      setActionError(
-        err instanceof Error
-          ? err.message
-          : t('workflow.dashboard.cancelFailed')
-      );
+    } catch (error) {
+      setActionDetail(error instanceof Error ? error.message : String(error));
+      setActionError('unconfirmed');
     }
   };
 
   const handleRetryNode = async (nodeId: string) => {
     const work = getWorkflowNodeWork(runtimeView, nodeId);
     if (!getWorkflowNodeActionGate(work).canRetry) {
-      setActionError(
-        t('workflow.runCanvas.actionUnavailable', {
-          defaultValue:
-            'Action unavailable while runtime projection is unavailable.',
-        })
-      );
+      setActionDetail(null);
+      setActionError('unavailable');
       return;
     }
     setActionError(null);
+    setActionDetail(null);
     try {
       await mutations.retryNode({ runId: run.id, nodeId });
-    } catch (err) {
-      setActionError(
-        err instanceof Error ? err.message : t('workflow.dashboard.retryFailed')
-      );
+    } catch (error) {
+      setActionDetail(error instanceof Error ? error.message : String(error));
+      setActionError('unconfirmed');
     }
   };
 
@@ -174,27 +174,21 @@ export function WorkflowRunDashboardTab({
       !getWorkflowNodeActionGate(getWorkflowNodeWork(runtimeView, nodeId))
         .canApprove
     ) {
-      setActionError(
-        t('workflow.runCanvas.actionUnavailable', {
-          defaultValue:
-            'Action unavailable while runtime projection is unavailable.',
-        })
-      );
+      setActionDetail(null);
+      setActionError('unavailable');
       return;
     }
     setActionError(null);
+    setActionDetail(null);
     try {
       await mutations.approveNode({
         runId: run.id,
         nodeId,
         payload: {},
       });
-    } catch (err) {
-      setActionError(
-        err instanceof Error
-          ? err.message
-          : t('workflow.dashboard.approveFailed')
-      );
+    } catch (error) {
+      setActionDetail(error instanceof Error ? error.message : String(error));
+      setActionError('unconfirmed');
     }
   };
 
@@ -203,27 +197,21 @@ export function WorkflowRunDashboardTab({
       !getWorkflowNodeActionGate(getWorkflowNodeWork(runtimeView, nodeId))
         .canReject
     ) {
-      setActionError(
-        t('workflow.runCanvas.actionUnavailable', {
-          defaultValue:
-            'Action unavailable while runtime projection is unavailable.',
-        })
-      );
+      setActionDetail(null);
+      setActionError('unavailable');
       return;
     }
     setActionError(null);
+    setActionDetail(null);
     try {
       await mutations.rejectNode({
         runId: run.id,
         nodeId,
         payload: {},
       });
-    } catch (err) {
-      setActionError(
-        err instanceof Error
-          ? err.message
-          : t('workflow.dashboard.rejectFailed')
-      );
+    } catch (error) {
+      setActionDetail(error instanceof Error ? error.message : String(error));
+      setActionError('unconfirmed');
     }
   };
 
@@ -239,7 +227,7 @@ export function WorkflowRunDashboardTab({
             <div>
               <span className="text-low">
                 {run.repository_id
-                  ? 'Repository'
+                  ? t('workflow.repository.repository')
                   : t('workflow.dashboard.issueId')}
                 :
               </span>
@@ -269,7 +257,7 @@ export function WorkflowRunDashboardTab({
                   getNodeStatusToneClass(run.status)
                 )}
               >
-                {t(`workflow.runStatus.${statusKey(run.status)}`)}
+                {getWorkflowRunStatusLabel(run.status, t)}
               </span>
             </div>
           </div>
@@ -417,7 +405,9 @@ export function WorkflowRunDashboardTab({
                           getToneTextClass(getNodeStatusTone(node.status))
                         )}
                       >
-                        {t(`workflow.nodeStatus.${statusKey(node.status)}`)}
+                        {t(
+                          `workflow.nodeStatus.${workflowNodeStatusKey(node.status)}`
+                        )}
                       </span>
                     </div>
                     <div className="flex items-center gap-3 text-low">
@@ -527,7 +517,10 @@ export function WorkflowRunDashboardTab({
             <div className="space-y-4 text-xs">
               {actionError ? (
                 <p className="text-xs text-error" role="alert">
-                  {actionError}
+                  {actionError === 'unavailable'
+                    ? t('workflow.runCanvas.actionUnavailable')
+                    : t('workflow.repository.actionUnconfirmed')}{' '}
+                  {actionDetail}
                 </p>
               ) : null}
 
@@ -671,7 +664,9 @@ export function WorkflowRunDashboardTab({
                               getToneTextClass(getNodeStatusTone(node.status))
                             )}
                           >
-                            {t(`workflow.nodeStatus.${statusKey(node.status)}`)}
+                            {t(
+                              `workflow.nodeStatus.${workflowNodeStatusKey(node.status)}`
+                            )}
                           </span>
                         </div>
                       )}
@@ -681,7 +676,7 @@ export function WorkflowRunDashboardTab({
                             {t('workflow.dashboard.status')}:{' '}
                             <span className="text-high">
                               {t(
-                                `workflow.nodeStatus.${statusKey(node.status)}`
+                                `workflow.nodeStatus.${workflowNodeStatusKey(node.status)}`
                               )}
                             </span>
                           </div>
@@ -782,17 +777,6 @@ export function WorkflowRunDashboardTab({
 }
 
 // Helpers for styling
-function statusKey(status: string): string {
-  switch (status) {
-    case 'awaiting_human':
-      return 'awaitingHuman';
-    case 'awaiting_arena':
-      return 'awaitingArena';
-    default:
-      return status;
-  }
-}
-
 function getToneTextClass(tone: string) {
   switch (tone) {
     case 'success':

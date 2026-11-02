@@ -1,3 +1,4 @@
+import { getWorkflowRunStatusLabel } from '../model/workflowRunView';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useWorkflowRun } from '@/shared/hooks/useWorkflowRun';
@@ -74,7 +75,7 @@ export function WorkflowRunPage({ projectId, runId }: WorkflowRunPageProps) {
                 statusTone
               )}
             >
-              {t(`workflow.runStatus.${statusKey(run.status)}`)}
+              {getWorkflowRunStatusLabel(run.status, t)}
             </div>
           </div>
           <WorkspaceContextHeader
@@ -115,31 +116,30 @@ export function WorkflowRunPage({ projectId, runId }: WorkflowRunPageProps) {
 
       {run.repository_id && (
         <div className="flex flex-none flex-wrap gap-base border-b border-secondary p-half text-xs text-normal">
-          <span>
-            Repository-managed workflow · Generate → Review → optional Refine →
-            Publish
-          </span>
+          <span>{t('workflow.repository.phases')}</span>
           {run.workspace_id && (
             <a
               className="text-brand underline"
               href={`/workspaces/${run.workspace_id}`}
             >
-              Open workspace
+              {t('workspaces.open')}
             </a>
           )}
-          <span>
-            Step retry and template editing are unavailable. After a failure,
-            start a new bootstrap from OpenWiki settings.
-          </span>
+          <span>{t('workflow.repository.recovery')}</span>
         </div>
       )}
       {run.error_text && (
-        <p
-          className="max-h-32 flex-none overflow-y-auto whitespace-pre-wrap border-b border-secondary p-half text-sm text-error"
+        <div
           role="alert"
+          className="max-h-32 flex-none overflow-y-auto whitespace-pre-wrap border-b border-secondary p-half text-sm text-error"
         >
-          {run.error_text}
-        </p>
+          <details>
+            <summary>{t('workflow.repository.errorDetails')}</summary>
+            <pre className="whitespace-pre-wrap break-words">
+              {run.error_text}
+            </pre>
+          </details>
+        </div>
       )}
 
       <main className="relative min-h-0 flex-1">
@@ -152,15 +152,4 @@ export function WorkflowRunPage({ projectId, runId }: WorkflowRunPageProps) {
       </main>
     </div>
   );
-}
-
-function statusKey(status: string): string {
-  switch (status) {
-    case 'awaiting_human':
-      return 'awaitingHuman';
-    case 'awaiting_arena':
-      return 'awaitingArena';
-    default:
-      return status;
-  }
 }

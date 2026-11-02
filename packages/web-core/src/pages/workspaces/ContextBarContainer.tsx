@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useMemo, useCallback, type RefObject } from 'react';
 import { CopyIcon } from '@phosphor-icons/react';
 import {
@@ -147,6 +148,7 @@ export interface ContextBarContainerProps {
 export function ContextBarContainer({
   containerRef,
 }: ContextBarContainerProps) {
+  const { t } = useTranslation('tasks');
   const { executeAction } = useActions();
 
   // Get visibility context (now includes dev server state)
@@ -173,7 +175,7 @@ export function ContextBarContainer({
 
         const action = item;
         const enabled = isActionEnabled(action, actionCtx);
-        const tooltip = getActionTooltip(action, actionCtx);
+        const tooltip = getActionTooltip(action, actionCtx, t);
         const shortcut = action.shortcut;
         const iconClassName = getIconClassName(action, actionCtx, !enabled);
         const key = `${prefix}-${action.id}-${index}`;
@@ -215,7 +217,7 @@ export function ContextBarContainer({
         ];
       });
     },
-    [actionCtx, handleExecuteAction]
+    [actionCtx, handleExecuteAction, t]
   );
 
   // Filter visible actions and map to render items

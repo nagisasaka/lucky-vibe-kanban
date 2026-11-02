@@ -1,7 +1,12 @@
-import { useMemo, useEffect, useState, useCallback } from 'react';
+import {
+  localizeExecutorSchema,
+  executorSchemaUiOptions,
+  localizeSchemaErrors,
+} from '@/shared/lib/executorSchemaLocalization';
+import { useMemo, useEffect, useState, useCallback, useRef } from 'react';
 import Form from '@rjsf/core';
 import type { IChangeEvent } from '@rjsf/core';
-import { RJSFSchema, RJSFValidationError } from '@rjsf/utils';
+import { RJSFSchema } from '@rjsf/utils';
 import validator from '@rjsf/validator-ajv8';
 import { useTranslation } from 'react-i18next';
 import { BaseCodingAgent } from 'shared/types';
@@ -148,14 +153,15 @@ export function ExecutorConfigForm({
 }: ExecutorConfigFormProps) {
   const { t } = useTranslation('settings');
   const [formData, setFormData] = useState<unknown>(value || {});
-  const [validationErrors, setValidationErrors] = useState<
-    RJSFValidationError[]
-  >([]);
+  const commonForm = useRef<Form<unknown>>(null);
+  const advancedForm = useRef<Form<unknown>>(null);
   const [advancedOpen, setAdvancedOpen] = useState(false);
 
   const schema = useMemo(() => {
-    return schemas[executor];
-  }, [executor]);
+    return schemas[executor]
+      ? localizeExecutorSchema(schemas[executor], t)
+      : undefined;
+  }, [executor, t]);
 
   const splitSchema = useMemo(() => {
     return schema ? splitExecutorSchema(schema) : null;
@@ -178,11 +184,12 @@ export function ExecutorConfigForm({
 
   const uiSchema = useMemo(
     () => ({
+      ...executorSchemaUiOptions(schema, t),
       env: {
         'ui:field': 'KeyValueField',
       },
     }),
-    []
+    [schema, t]
   );
 
   // Pass the env update handler via formContext
@@ -195,7 +202,6 @@ export function ExecutorConfigForm({
 
   useEffect(() => {
     setFormData(value || {});
-    setValidationErrors([]);
     setAdvancedOpen(false);
   }, [value, executor]);
 
@@ -225,9 +231,14 @@ export function ExecutorConfigForm({
     }
   };
 
-  const handleError = (errors: RJSFValidationError[]) => {
-    setValidationErrors(errors);
-  };
+  const validationErrors = useMemo(
+    () => (schema ? validator.validateFormData(formData, schema).errors : []),
+    [formData, schema]
+  );
+  useEffect(() => {
+    commonForm.current?.validateForm();
+    advancedForm.current?.validateForm();
+  }, [schema, advancedOpen]);
 
   if (!schema) {
     return (
@@ -248,6 +259,7 @@ export function ExecutorConfigForm({
   return (
     <div className="space-y-4">
       <Form
+        ref={commonForm}
         schema={splitSchema?.commonSchema ?? schema}
         uiSchema={uiSchema}
         formData={commonFormData}
@@ -257,8 +269,8 @@ export function ExecutorConfigForm({
             ? handleSectionChange(splitSchema.commonFieldNames)
             : (event) => handleChange(event.formData)
         }
-        onError={handleError}
         validator={validator}
+        transformErrors={(errors) => localizeSchemaErrors(errors, t)}
         disabled={disabled}
         liveValidate
         showErrorList={false}
@@ -296,13 +308,14 @@ export function ExecutorConfigForm({
           {advancedOpen && (
             <div className="pt-1">
               <Form
+                ref={advancedForm}
                 schema={splitSchema.advancedSchema}
                 uiSchema={uiSchema}
                 formData={advancedFormData}
                 formContext={formContext}
                 onChange={handleSectionChange(splitSchema.advancedFieldNames)}
-                onError={handleError}
                 validator={validator}
+                transformErrors={(errors) => localizeSchemaErrors(errors, t)}
                 disabled={disabled}
                 liveValidate
                 showErrorList={false}
@@ -320,7 +333,7 @@ export function ExecutorConfigForm({
       {hasValidationErrors && (
         <div className="bg-error/10 border border-error/50 rounded-sm p-4 text-error">
           <ul className="list-disc list-inside space-y-1">
-            {validationErrors.map((error, index) => (
+            {localizeSchemaErrors(validationErrors, t).map((error, index) => (
               <li key={index}>
                 {error.property}: {error.message}
               </li>
@@ -334,7 +347,6 @@ export function ExecutorConfigForm({
           show={isDirty}
           saving={saving}
           saveDisabled={hasValidationErrors}
-          unsavedMessage={t('settings.agents.save.unsavedChanges')}
           onSave={handleSave}
           onDiscard={onDiscard}
         />

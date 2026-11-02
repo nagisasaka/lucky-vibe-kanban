@@ -11,10 +11,10 @@ export function buildRelationshipSelectionPages(
   return {
     selectRelationshipIssue: {
       id: 'selectRelationshipIssue',
-      title: 'Select Issue',
-      buildGroups: () => [
+      title: (t) => t('tasks:selections.selectIssue'),
+      buildGroups: (t) => [
         {
-          label: 'Issues',
+          label: t('tasks:selections.issues'),
           items: issues.map((issue) => ({ type: 'issue' as const, issue })),
         },
       ],

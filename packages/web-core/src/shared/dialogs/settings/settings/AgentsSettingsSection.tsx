@@ -1,3 +1,4 @@
+import { errorDiagnostic } from '@/shared/lib/errorDiagnostic';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -62,7 +63,10 @@ export function AgentsSettingsSection() {
 
   // Local editor state
   const [profilesSuccess, setProfilesSuccess] = useState(false);
-  const [saveError, setSaveError] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<
+    'deleteFailed' | 'visibilitySaveFailed' | 'saveConfigFailed' | null
+  >(null);
+  const [errorDetail, setErrorDetail] = useState<string | null>(null);
   const [visibilitySavingAgent, setVisibilitySavingAgent] =
     useState<BaseCodingAgent | null>(null);
 
@@ -181,6 +185,7 @@ export function AgentsSettingsSection() {
     if (!localParsedProfiles) return;
 
     setSaveError(null);
+    setErrorDetail(null);
 
     try {
       const executorConfigs =
@@ -233,7 +238,8 @@ export function AgentsSettingsSection() {
         reloadSystem();
       } catch (error: unknown) {
         console.error('Failed to save deletion to backend:', error);
-        setSaveError(t('settings.agents.errors.deleteFailed'));
+        setErrorDetail(errorDiagnostic(error));
+        setSaveError('deleteFailed');
       }
     } catch (error) {
       console.error('Error deleting configuration:', error);
@@ -258,6 +264,7 @@ export function AgentsSettingsSection() {
     if (!config) return;
 
     setSaveError(null);
+    setErrorDetail(null);
     setVisibilitySavingAgent(executor);
     const hiddenAgents = new Set(config.hidden_agents ?? []);
 
@@ -272,22 +279,14 @@ export function AgentsSettingsSection() {
         hidden_agents: Array.from(hiddenAgents),
       });
       if (!success) {
-        setSaveError(
-          t('settings.agents.errors.visibilitySaveFailed', {
-            defaultValue:
-              'Failed to update agent visibility. Please try again.',
-          })
-        );
+        setSaveError('visibilitySaveFailed');
         return;
       }
       await reloadSystem();
     } catch (err) {
       console.error('Error updating agent visibility:', err);
-      setSaveError(
-        t('settings.agents.errors.visibilitySaveFailed', {
-          defaultValue: 'Failed to update agent visibility. Please try again.',
-        })
-      );
+      setErrorDetail(errorDiagnostic(err));
+      setSaveError('visibilitySaveFailed');
     } finally {
       setVisibilitySavingAgent(null);
     }
@@ -328,6 +327,7 @@ export function AgentsSettingsSection() {
       return;
 
     setSaveError(null);
+    setErrorDetail(null);
 
     const updatedProfiles = {
       ...localParsedProfiles,
@@ -352,7 +352,8 @@ export function AgentsSettingsSection() {
       reloadSystem();
     } catch (err: unknown) {
       console.error('Failed to save profiles:', err);
-      setSaveError(t('settings.agents.errors.saveConfigFailed'));
+      setErrorDetail(errorDiagnostic(err));
+      setSaveError('saveConfigFailed');
     }
   };
 
@@ -434,6 +435,7 @@ export function AgentsSettingsSection() {
           className="bg-error/10 border border-error/50 rounded-sm p-4 text-error mb-4"
           role="alert"
         >
+          {t('settings.agents.profilesLoadFailed')}{' '}
           {profilesError instanceof Error
             ? profilesError.message
             : String(profilesError)}
@@ -455,7 +457,7 @@ export function AgentsSettingsSection() {
           className="bg-error/10 border border-error/50 rounded-sm p-4 text-error mb-4"
           role="alert"
         >
-          {saveError}
+          {t(`settings.agents.errors.${saveError}`)} {errorDetail}
         </div>
       )}
 
@@ -477,12 +479,8 @@ export function AgentsSettingsSection() {
                   typedExecutor
                 );
                 const visibilityTitle = isHidden
-                  ? t('settings.agents.editor.enableAgent', {
-                      defaultValue: 'Enable agent',
-                    })
-                  : t('settings.agents.editor.disableAgent', {
-                      defaultValue: 'Disable agent',
-                    });
+                  ? t('settings.agents.editor.enableAgent')
+                  : t('settings.agents.editor.disableAgent');
                 return (
                   <TwoColumnPickerItem
                     key={executor}
@@ -508,9 +506,7 @@ export function AgentsSettingsSection() {
                       <div className="flex shrink-0 items-center gap-half">
                         {isHidden && (
                           <TwoColumnPickerBadge>
-                            {t('settings.agents.editor.isDisabled', {
-                              defaultValue: 'Disabled',
-                            })}
+                            {t('settings.agents.editor.isDisabled')}
                           </TwoColumnPickerBadge>
                         )}
                         {isDefault && (
@@ -692,7 +688,6 @@ export function AgentsSettingsSection() {
         show={isDirty}
         saving={profilesSaving}
         saveDisabled={!!profilesError}
-        unsavedMessage={t('settings.agents.save.unsavedChanges')}
         onSave={handleSave}
         onDiscard={handleDiscard}
       />

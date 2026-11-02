@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useWorkspaceRepositoryWorkflow } from '@/shared/hooks/useWorkspaceRepositoryWorkflow';
 import { WorkflowRunPage } from './WorkflowRunPage';
 
@@ -6,6 +7,7 @@ export function WorkspaceWorkflowPage({
 }: {
   workspaceId: string;
 }) {
+  const { t } = useTranslation('common');
   const {
     data: run,
     isPending,
@@ -16,7 +18,7 @@ export function WorkspaceWorkflowPage({
   if (isPending) {
     return (
       <p className="p-base text-normal" role="status">
-        Loading workflow…
+        {t('workflow.repository.loading')}
       </p>
     );
   }
@@ -24,17 +26,19 @@ export function WorkspaceWorkflowPage({
     return (
       <div className="space-y-base p-base">
         <p className="text-error" role="alert">
-          {error?.message ??
-            'No repository workflow exists for this workspace.'}
+          {error
+            ? t('workflow.repository.unavailable')
+            : t('workflow.repository.missing')}{' '}
+          {error?.message}
         </p>
         <button className="text-brand underline" onClick={() => void refetch()}>
-          Reload
+          {t('workflow.repository.reload')}
         </button>
         <a
           className="block text-brand underline"
           href={`/workspaces/${workspaceId}`}
         >
-          Open workspace
+          {t('workspaces.open')}
         </a>
       </div>
     );

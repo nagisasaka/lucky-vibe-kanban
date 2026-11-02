@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import type { ReactNode } from 'react';
 import { isSystemTag } from '../lib/issue-classification';
 import { PlusIcon, HashIcon, GitPullRequest } from '@phosphor-icons/react';
@@ -66,6 +67,7 @@ export function IssueTagsRow<TTag extends IssueTagBase>({
   disabled,
   className,
 }: IssueTagsRowProps<TTag>) {
+  const { t } = useTranslation('common');
   const selectedTags = availableTags.filter((tag) =>
     selectedTagIds.includes(tag.id)
   );
@@ -89,7 +91,7 @@ export function IssueTagsRow<TTag extends IssueTagBase>({
       type="button"
       className="flex items-center justify-center h-5 w-5 rounded-sm text-low hover:text-normal hover:bg-panel transition-colors disabled:opacity-50"
       disabled={disabled}
-      aria-label="Add tag"
+      aria-label={t('kanban.addTag')}
     >
       <PlusIcon className="size-icon-xs" weight="bold" />
     </button>
@@ -104,7 +106,7 @@ export function IssueTagsRow<TTag extends IssueTagBase>({
           type="button"
           onClick={() => handleTagToggle(tag.id)}
           disabled={disabled || isSystemTag(tag)}
-          title={isSystemTag(tag) ? 'Managed by LVK' : undefined}
+          title={isSystemTag(tag) ? t('kanban.managedTag') : undefined}
           className={cn(
             'inline-flex items-center justify-center',
             'h-5 px-base gap-half',
@@ -143,7 +145,7 @@ export function IssueTagsRow<TTag extends IssueTagBase>({
           onClick={onLinkPr}
           disabled={disabled}
           className="flex items-center justify-center h-5 w-5 rounded-sm text-low hover:text-normal hover:bg-panel transition-colors disabled:opacity-50"
-          aria-label="Link pull request"
+          aria-label={t('kanban.linkPullRequest')}
         >
           <GitPullRequest className="size-icon-xs" weight="bold" />
         </button>

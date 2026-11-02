@@ -1,3 +1,4 @@
+import { detectBrowserNotificationLanguage } from '@/i18n/config';
 // Import all necessary types from shared types
 
 import {
@@ -1173,6 +1174,9 @@ export const configApi = {
   ): Promise<Config> => {
     const response = await makeHostAwareRequest('/api/config', hostId, {
       method: 'PUT',
+      headers: {
+        'X-LVK-Browser-Language': detectBrowserNotificationLanguage(),
+      },
       body: JSON.stringify(config),
     });
     return handleApiResponse<Config>(response);

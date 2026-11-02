@@ -1,3 +1,9 @@
+import {
+  AccessRequestError,
+  accessErrorNotice,
+  toAccessRequestError,
+} from '@/shared/lib/accessErrorMessage';
+import { useTranslation } from 'react-i18next';
 import { useEffect, useState } from 'react';
 import { accessRequest } from './serverAccess';
 
@@ -56,6 +62,7 @@ export function Auth0Setup({
   onBusyChange: (value: boolean) => void;
   onConfigured: (result: Result) => void;
 }) {
+  const { t } = useTranslation('settings');
   const [token, setToken] = useState('');
   const [inventory, setInventory] = useState<Inventory>();
   const [inventoryIssuer, setInventoryIssuer] = useState('');
@@ -72,7 +79,10 @@ export function Auth0Setup({
   }>();
   const [result, setResult] = useState<Result & { refresh_tokens: boolean }>();
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState<{
+    cause: AccessRequestError;
+    apply: boolean;
+  } | null>(null);
   const options = {
     issuer,
     connection_id: connection,
@@ -107,7 +117,7 @@ export function Auth0Setup({
   async function run(step: 'inspect' | 'preview' | 'apply') {
     setBusy(true);
     onBusyChange(true);
-    setError('');
+    setError(null);
     setResult(undefined);
     try {
       const input = { ...options, management_token: token, step };
@@ -144,13 +154,10 @@ export function Auth0Setup({
         onConfigured(next);
       }
     } catch (e) {
-      const message =
-        e instanceof Error ? e.message : 'Auth0の設定に失敗しました';
-      setError(
-        step === 'apply'
-          ? `${message} Auth0側に一部の変更が適用されている可能性があります。トークンを再入力して変更内容を確認し直してください。`
-          : message
-      );
+      setError({
+        cause: toAccessRequestError(e, 'auth.setup.failed'),
+        apply: step === 'apply',
+      });
     } finally {
       if (step === 'apply') {
         setToken('');
@@ -163,46 +170,40 @@ export function Auth0Setup({
   return (
     <details className="rounded border p-base">
       <summary className="cursor-pointer text-high">
-        Auth0を自動セットアップ
+        {t('auth.setup.title')}
       </summary>
       <div className="mt-base space-y-base">
-        <p>
-          既存のGitHub／Google接続を使って、LVK用アプリを作成または設定します。GitHub／Google側のOAuthアプリは先にAuth0へ登録してください。
-        </p>
+        <p>{t('auth.setup.description')}</p>
         <details>
           <summary className="cursor-pointer">
-            管理トークンの準備と必要な権限
+            {t('auth.setup.tokenHelp')}
           </summary>
           <div className="space-y-base py-base text-low">
-            <p>
-              Auth0でManagement APIを許可した管理用Machine to
-              Machineアプリを用意し、短い有効期限のアクセストークンを取得してください。ログイン用Client
-              Secretとは別の値です。
-            </p>
+            <p>{t('auth.setup.tokenDescription')}</p>
             <a
               className="underline"
               href="https://auth0.com/docs/secure/tokens/access-tokens/management-api-access-tokens/get-management-api-access-tokens-for-production"
               target="_blank"
               rel="noreferrer"
             >
-              Auth0公式のトークン取得手順
+              {t('auth.setup.tokenGuide')}
             </a>
-            <p className="break-words">
-              必要な権限：read:clients、read:client_keys、create:clients、update:clients、read:connections、update:connections、read:tenant_settings、update:tenant_settings。MCPも設定する場合：read:resource_servers、create:resource_servers、update:resource_servers。
-            </p>
-            <p>
-              トークンはサーバーに保存せず、適用の成否にかかわらず入力欄から消去します。有効期限まではAuth0側で有効です。
-            </p>
+            <p className="break-words">{t('auth.setup.permissions')}</p>
+            <p>{t('auth.setup.tokenLifetime')}</p>
           </div>
         </details>
         {error && (
           <p role="alert" className="text-error">
-            {error}
+            {error.apply
+              ? t('auth.setup.applyUncertain', {
+                  message: accessErrorNotice(error.cause),
+                })
+              : accessErrorNotice(error.cause)}
           </p>
         )}
         <fieldset disabled={busy || disabled} className="min-w-0 space-y-base">
           <label className="block">
-            設定先のAuth0 issuer（末尾 / を含む）
+            {t('auth.setup.issuer')}
             <input
               className={field}
               type="url"
@@ -212,7 +213,7 @@ export function Auth0Setup({
             />
           </label>
           <label className="block">
-            Management APIアクセストークン
+            {t('auth.setup.token')}
             <input
               className={field}
               type="password"
@@ -227,17 +228,15 @@ export function Auth0Setup({
             disabled={!issuer || !token}
             onClick={() => void run('inspect')}
           >
-            接続とアプリを取得
+            {t('auth.setup.inspect')}
           </button>
           {ready && (
             <>
               {!inventory.connections.length && (
-                <p>
-                  GitHubまたはGoogle接続がありません。Auth0でソーシャル接続を作成してから再取得してください。
-                </p>
+                <p>{t('auth.setup.noConnections')}</p>
               )}
               <label className="block">
-                ログインに使う接続
+                {t('auth.setup.connection')}
                 <select
                   className={field}
                   value={connection}
@@ -251,15 +250,13 @@ export function Auth0Setup({
                 </select>
               </label>
               <label className="block">
-                LVK Web用アプリ
+                {t('auth.setup.webApp')}
                 <select
                   className={field}
                   value={web}
                   onChange={(e) => setWeb(e.target.value)}
                 >
-                  <option value="">
-                    自動作成（このLVK用に作成済みなら再利用）
-                  </option>
+                  <option value="">{t('auth.setup.automaticWeb')}</option>
                   {inventory.clients.map((c) => (
                     <option key={c.client_id} value={c.client_id}>
                       {c.name} ({c.client_id})
@@ -273,18 +270,20 @@ export function Auth0Setup({
                   checked={mcp}
                   onChange={(e) => setMcp(e.target.checked)}
                 />
-                ChatGPT向けMCPも設定する
+                {t('auth.setup.enableMcp')}
               </label>
               {mcp && (
                 <>
                   <label className="block">
-                    ChatGPT用アプリ（Web用とは別）
+                    {t('auth.setup.chatgptApp')}
                     <select
                       className={field}
                       value={chat}
                       onChange={(e) => setChat(e.target.value)}
                     >
-                      <option value="">自動作成（作成済みなら再利用）</option>
+                      <option value="">
+                        {t('auth.setup.automaticChatgpt')}
+                      </option>
                       {inventory.clients
                         .filter((c) => c.client_id !== web)
                         .map((c) => (
@@ -295,7 +294,7 @@ export function Auth0Setup({
                     </select>
                   </label>
                   <label className="block">
-                    ChatGPTに表示された正確なCallback URL
+                    {t('auth.setup.callback')}
                     <input
                       className={field}
                       type="url"
@@ -309,7 +308,7 @@ export function Auth0Setup({
                       checked={refresh}
                       onChange={(e) => setRefresh(e.target.checked)}
                     />
-                    更新トークンを設定する（ローテーション有効・最大30日・未使用7日）
+                    {t('auth.setup.refreshTokens')}
                   </label>
                 </>
               )}
@@ -319,80 +318,71 @@ export function Auth0Setup({
                 disabled={!token || !connection || (mcp && !callback)}
                 onClick={() => void run('preview')}
               >
-                変更内容を確認
+                {t('auth.setup.preview')}
               </button>
             </>
           )}
           {validPreview && (
             <div className="space-y-base rounded border p-base">
-              <h3 className="text-high">Auth0への適用内容（5分間有効）</h3>
+              <h3 className="text-high">{t('auth.setup.previewTitle')}</h3>
               <ul className="list-disc space-y-half pl-double">
                 <li>
-                  Web用アプリ：
+                  {t('auth.setup.webPlan')}
                   {validPreview.plan.web.id
-                    ? `既存 ${validPreview.plan.web.id} を更新`
-                    : '新規作成'}
+                    ? t('auth.setup.updateExisting', {
+                        id: validPreview.plan.web.id,
+                      })
+                    : t('auth.setup.createNew')}
                 </li>
                 {validPreview.plan.chatgpt && (
                   <li>
-                    ChatGPT用アプリ：
+                    {t('auth.setup.chatgptPlan')}
                     {validPreview.plan.chatgpt.id
-                      ? `既存 ${validPreview.plan.chatgpt.id} を更新`
-                      : '新規作成'}
-                    。MCP APIと権限も設定します。
+                      ? t('auth.setup.updateExisting', {
+                          id: validPreview.plan.chatgpt.id,
+                        })
+                      : t('auth.setup.createNew')}
+                    {t('auth.setup.mcpPlan')}
                   </li>
                 )}
-                <li>
-                  対象アプリは選択したソーシャル接続だけを有効にし、Authorization
-                  Code・RS256・Client Secret Basicに設定します。既存Callback
-                  URLは保持します。
-                </li>
+                <li>{t('auth.setup.appPlan')}</li>
                 {Object.keys(validPreview.plan.tenant).length > 0 && (
-                  <li>
-                    テナント共通のResource Parameter Compatibility
-                    Profile／Include
-                    Issuer設定を有効にします。他のアプリにも適用されます。
-                  </li>
+                  <li>{t('auth.setup.tenantPlan')}</li>
                 )}
               </ul>
               <details>
-                <summary className="cursor-pointer">設定値の詳細</summary>
+                <summary className="cursor-pointer">
+                  {t('auth.setup.details')}
+                </summary>
                 <pre className="max-h-64 overflow-auto whitespace-pre-wrap break-all text-xs">
                   {JSON.stringify(validPreview.plan, null, 2)}
                 </pre>
               </details>
-              <p>
-                LVKの認証方式はまだ切り替わりません。適用後、下のフォームでログイン試験を行ってください。
-              </p>
+              <p>{t('auth.setup.activateHint')}</p>
               <button
                 className={button}
                 type="button"
                 disabled={!token}
                 onClick={() => void run('apply')}
               >
-                この内容をAuth0へ適用
+                {t('auth.setup.apply')}
               </button>
             </div>
           )}
         </fieldset>
-        {busy && <p role="status">Auth0を確認・設定しています…</p>}
+        {busy && <p role="status">{t('auth.setup.busy')}</p>}
         {result && (
           <div className="space-y-base rounded border p-base" role="status">
-            <p>
-              Auth0の設定が完了しました。Web用の情報を下のログイン試験フォームへ入力しました。
-            </p>
+            <p>{t('auth.setup.success')}</p>
             {result.chatgpt && (
               <>
-                <p>
-                  ChatGPT用の接続情報を保存しました。先にログイン試験とAuth0の有効化を完了し、ログイン後に認証設定の「ChatGPTへのMCP接続」からコピーしてください。
+                <p>{t('auth.setup.chatgptSaved')}</p>
+                <p className="break-all">
+                  {t('auth.setup.mcpUrl', { url: result.resource })}
                 </p>
-                <p className="break-all">MCP URL：{result.resource}</p>
                 <p>
-                  要求スコープは必要なものだけ選んでください：lvk:read /
-                  lvk:write / lvk:merge
-                  {result.refresh_tokens
-                    ? '。更新する場合は offline_access も指定します。'
-                    : ''}
+                  {t('auth.setup.scopes')}
+                  {result.refresh_tokens ? t('auth.setup.offlineAccess') : ''}
                 </p>
               </>
             )}
@@ -401,7 +391,7 @@ export function Auth0Setup({
               type="button"
               onClick={() => setResult(undefined)}
             >
-              結果の表示を消去
+              {t('auth.setup.clear')}
             </button>
           </div>
         )}

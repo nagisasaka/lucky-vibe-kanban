@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useEffect, useState, useRef } from 'react';
 import { produce } from 'immer';
 import type { Operation } from 'rfc6902';
@@ -36,11 +37,14 @@ export const useJsonPatchWsStream = <T extends object>(
   initialData: () => T,
   options?: UseJsonPatchStreamOptions<T>
 ): UseJsonPatchStreamResult<T> => {
+  const { t } = useTranslation('common');
   const [data, setData] = useState<T | undefined>(undefined);
   const [isConnected, setIsConnected] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
   const initializedForEndpointRef = useRef<string | undefined>(undefined);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<
+    'patchInvalid' | 'connectionLost' | 'connectionFailed' | null
+  >(null);
   const activeEndpointRef = useRef<string | undefined>(undefined);
   const wsRef = useRef<WebSocket | null>(null);
   const dataRef = useRef<T | undefined>(undefined);
@@ -171,7 +175,7 @@ export const useJsonPatchWsStream = <T extends object>(
               }
             } catch (err) {
               console.error('Failed to process WebSocket message:', err);
-              setError('Failed to process stream update');
+              setError('patchInvalid');
             }
           };
 
@@ -194,7 +198,7 @@ export const useJsonPatchWsStream = <T extends object>(
 
             // Otherwise, reconnect on unexpected/error closures
             retryAttemptsRef.current += 1;
-            setError('Connection lost; reconnecting');
+            setError('connectionLost');
             scheduleReconnect();
           };
 
@@ -205,7 +209,7 @@ export const useJsonPatchWsStream = <T extends object>(
           }
 
           console.error('Failed to open WebSocket stream:', error);
-          setError('Connection failed; reconnecting');
+          setError('connectionFailed');
           retryAttemptsRef.current += 1;
           scheduleReconnect();
         }
@@ -251,6 +255,9 @@ export const useJsonPatchWsStream = <T extends object>(
     isConnected:
       enabled && activeEndpointRef.current === endpoint && isConnected,
     isInitialized: isInitializedForCurrentEndpoint,
-    error: enabled && activeEndpointRef.current === endpoint ? error : null,
+    error:
+      enabled && activeEndpointRef.current === endpoint && error
+        ? t(`streams.${error}`)
+        : null,
   };
 };

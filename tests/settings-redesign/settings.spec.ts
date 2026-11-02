@@ -42,9 +42,6 @@ test("grouped navigation, storage scope, notifications and unchanged configurati
   await sound.click();
   await page.getByRole("button", { name: "破棄", exact: true }).click();
   await expect(sound).toBeChecked();
-  await page.screenshot({
-    path: "test-results/settings-redesign/desktop-notifications.png",
-  });
 });
 
 test("unsaved edits survive cancelled navigation, discard on confirmed navigation and protect close", async ({
@@ -110,9 +107,6 @@ for (const width of [360, 390])
         () => document.documentElement.scrollWidth <= innerWidth,
       ),
     ).toBe(true);
-    await page.screenshot({
-      path: `test-results/settings-redesign/mobile-${width}.png`,
-    });
   });
 
 for (const auth of ["basic", "auth0", "local"])
@@ -133,9 +127,6 @@ for (const auth of ["basic", "auth0", "local"])
       await expect(
         page.getByRole("heading", { name: "LVK 認証とメンバー管理" }),
       ).toBeVisible();
-    await page.screenshot({
-      path: `test-results/settings-redesign/access-${auth}.png`,
-    });
   });
 
 test("member has no management navigation; explicit access falls back safely", async ({
@@ -187,9 +178,6 @@ test("English, dark theme and desktop keyboard focus", async ({ page }) => {
       () => document.activeElement?.closest('[role="dialog"]') !== null,
     ),
   ).toBe(true);
-  await page.screenshot({
-    path: "test-results/settings-redesign/english-dark.png",
-  });
 });
 
 test("authentication drafts revert cleanly and recovery remains reachable", async ({
@@ -250,7 +238,7 @@ test("save failure preserves the notification draft and leave protection", async
   await page.locator("#sound-enabled").click();
   await page.getByRole("button", { name: "保存", exact: true }).click();
   await expect(
-    page.getByText("Fixture save rejected", { exact: true }),
+    page.getByText("Fixture save rejected", { exact: false }),
   ).toBeVisible();
   await expect(page.locator("#sound-enabled")).toBeChecked();
   await expect(
@@ -302,9 +290,6 @@ for (const auth of ["basic", "auth0", "local"])
             .map((node) => node.tagName + "." + node.className),
         ),
     ).toEqual([]);
-    await page.screenshot({
-      path: `test-results/settings-redesign/mobile-access-${auth}.png`,
-    });
   });
 
 test("updating stored ChatGPT credentials protects the draft and clears dirty after its own save", async ({
@@ -394,7 +379,7 @@ for (const failSave of [false, true]) {
     await page.getByRole("button", { name: "保存", exact: true }).click();
     if (failSave) {
       await expect(
-        page.getByText("Fixture save rejected", { exact: true }),
+        page.getByText("Fixture save rejected", { exact: false }),
       ).toBeVisible();
       await expect(event).not.toBeChecked();
       expect(await persisted()).toEqual(before);

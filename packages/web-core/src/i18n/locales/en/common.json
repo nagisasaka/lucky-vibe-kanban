@@ -26,17 +26,13 @@
     "edit": "Edit",
     "create": "Create",
     "continue": "Continue",
-    "reset": "Reset",
-    "manage": "Manage",
-    "connect": "Connect",
-    "disconnect": "Disconnect",
     "close": "Close",
-    "replay": "Replay",
     "discard": "Discard",
     "addItem": "Add Item",
     "reply": "Reply",
-    "retry": "Retry",
-    "add": "Add"
+    "add": "Add",
+    "chooseAction": "Choose action",
+    "openInBrowser": "Open in browser"
   },
   "form": {
     "notSpecified": "Not specified",
@@ -48,7 +44,7 @@
   "ok": "OK",
   "error": "Error",
   "errors": {
-    "generic": "An unexpected error occurred"
+    "dismiss": "Dismiss error"
   },
   "language": {
     "browserDefault": "Browser Default"
@@ -110,18 +106,19 @@
     },
     "errors": {
       "loadFailed": "Failed to load arena group: {{message}}",
-      "closeFailed": "Close failed",
-      "dissolveFailed": "Dissolve failed",
-      "askAllFailed": "Ask all failed",
-      "challengeFailed": "Challenge failed",
-      "synthesizeFailed": "Synthesize failed",
-      "startImplementationFailed": "Start implementation failed",
-      "promoteFailed": "Promote failed",
-      "retryFailed": "Retry failed",
-      "createFailed": "Failed to create Arena",
+      "closeFailed": "Could not confirm that the Arena was closed. Check its current status before trying again.",
+      "dissolveFailed": "Could not confirm that the Arena was dissolved. Check the Arena and its attempts before trying again.",
+      "askAllFailed": "Could not confirm message delivery. Check the attempt conversations before sending again.",
+      "challengeFailed": "Could not confirm delivery to every responder. Check each attempt conversation before sending again.",
+      "synthesizeFailed": "Could not confirm synthesis. Check the Arena conversations before trying again.",
+      "startImplementationFailed": "Could not confirm implementation startup. Check the Arena and execution history before starting again.",
+      "promoteFailed": "Could not confirm promotion. Check the Arena and its remaining attempts before trying again.",
+      "retryFailed": "Could not confirm the retry. Check the Arena attempts and execution history before trying again.",
+      "createFailed": "Could not confirm Arena creation. Check the issue’s current Arena before trying again.",
       "emptyGroupRecovered": "A failed empty Arena was cleared. Start again to create fresh attempts.",
       "retryUnknownExecutor": "Cannot retry: original executor is unknown for this attempt.",
-      "diffStream": "Diff stream error: {{message}}"
+      "diffStream": "Diff stream error: {{message}}",
+      "loadUnconfirmed": "The arena group could not be loaded. Check access and try loading it again."
     },
     "confirm": {
       "dissolveTitle": "Dissolve this arena?",
@@ -177,8 +174,11 @@
         "baseBranchRequired": "Base branch is required.",
         "repositoryRequired": "Pick a repository.",
         "minAttempts": "At least {{count}} attempts are required.",
-        "maxAttempts": "At most {{count}} attempts are allowed."
-      }
+        "maxAttempts": "At most {{count}} attempts are allowed.",
+        "noAvailableAgents": "No agents are available for arena runs.",
+        "executorUnavailable": "{{agent}} is unavailable for arena runs: {{reason}}."
+      },
+      "noAvailableAgents": "No available agents"
     },
     "workspace": {
       "workspace": "Workspace",
@@ -233,7 +233,13 @@
       "inProgress": "In progress",
       "completed": "Completed",
       "empty": "No plan items provided"
-    }
+    },
+    "emptyTitle": "Send a message to start the conversation.",
+    "emptyDescription": "Your workspace conversation will appear here once a new turn starts.",
+    "editResendPlaceholder": "Edit and resend your message…",
+    "inspectionEmptyTitle": "No saved messages in this session.",
+    "inspectionEmptyDescription": "This execution is inspected here; its owner controls agent activity.",
+    "retryUnconfirmed": "Could not confirm the retry request. Your message is retained. Check the conversation and execution history before sending again."
   },
   "branchSelector": {
     "placeholder": "Select a branch",
@@ -279,9 +285,6 @@
     "needsAttention": "Needs Attention",
     "idle": "Idle",
     "running": "Running",
-    "pin": "Pin",
-    "unpin": "Unpin",
-    "archive": "Archive",
     "more": "More actions",
     "rename": {
       "title": "Rename Workspace",
@@ -289,17 +292,16 @@
       "nameLabel": "Name",
       "placeholder": "Enter workspace name",
       "action": "Rename",
-      "renaming": "Renaming..."
+      "renaming": "Renaming...",
+      "unconfirmed": "Could not confirm the workspace name change. Your input is retained. Check the current name before trying again."
     },
     "unlinkFromIssue": "Unlink from issue",
     "deleteWorkspace": "Delete workspace",
     "unlink": "Unlink",
-    "delete": "Delete",
     "unlinkConfirmMessage": "Are you sure you want to unlink this workspace from the issue? The workspace will still exist but will no longer be associated with this issue.",
-    "deleteConfirmMessage": "Are you sure you want to delete this workspace? This will unlink it from the issue and delete the local workspace. This action cannot be undone.",
-    "unlinkError": "Failed to unlink workspace",
-    "deleteError": "Failed to delete workspace",
-    "linkError": "Failed to link workspace",
+    "unlinkError": "Workspace unlinking could not be confirmed. Check the current links before trying again.",
+    "deleteError": "Workspace deletion could not be confirmed. Check the workspace list before trying again.",
+    "linkError": "Workspace linking could not be confirmed. Check the current links before trying again.",
     "filesChanged": "{{count}} files",
     "filesChangedUnknown": "— files",
     "textLineCounts": "Text lines added/removed; binary files are excluded from line counts.",
@@ -309,7 +311,19 @@
       "deleteBranchLabel": "Delete branch",
       "cannotDeleteOpenPr": "Cannot delete branch while PR is open",
       "unlinkFromIssueLabel": "Also unlink from issue"
-    }
+    },
+    "createDraftError": "Failed to prepare workspace draft. Please try again.",
+    "preparing": "Preparing…",
+    "scrollToBottom": "Scroll to bottom",
+    "openLinkedIssue": "Open linked issue",
+    "closeCreationView": "Close create workspace view",
+    "open": "Open workspace",
+    "openView": "Open in workspace view",
+    "closeConversation": "Close conversation view",
+    "openExternalEditor": "Open in external editor",
+    "terminalUnavailable": "Interactive terminals are unavailable in execution-only workspaces.",
+    "fallbackLabel": "Workspace",
+    "alreadyLinked": "This workspace is already linked to an issue."
   },
   "projectWorkspaceDefault": {
     "label": "Project default working location",
@@ -345,7 +359,7 @@
     "deleteAttempt": "Delete attempt",
     "deleteWorkflowTitle": "Delete workflow attempt?",
     "deleteWorkflowMessage": "This deletes the workflow attempt and run history. This cannot be undone.",
-    "deleteWorkflowError": "Failed to delete workflow attempt.",
+    "deleteWorkflowError": "Workflow attempt deletion could not be confirmed. Check its current state before trying again.",
     "status": {
       "draft": "Draft",
       "ready": "Ready",
@@ -357,8 +371,14 @@
       "canceled": "Canceled",
       "archived": "Archived",
       "completed": "Completed",
-      "active": "Active"
-    }
+      "active": "Active",
+      "cancelling": "Cancelling",
+      "preparing": "Preparing",
+      "awaitingInput": "Waiting for input",
+      "awaitingApproval": "Waiting for approval"
+    },
+    "latestRun": "Latest run {{id}}",
+    "workflowDraftReady": "Workflow draft ready"
   },
   "workflow": {
     "entry": {
@@ -508,9 +528,11 @@
       "draftMissing": "This local workflow draft no longer exists. Create a new workflow attempt to continue.",
       "saveBeforeRun": "Save the workflow attempt before starting a run.",
       "saveBeforeSession": "Save the workflow attempt before opening an agent session.",
-      "startFailed": "Failed to start workflow run.",
+      "startFailed": "Starting the workflow could not be confirmed. Check current runs before trying again.",
       "invalidGraph": "Workflow JSON did not contain a valid workflow.",
-      "parseGraphFailed": "Workflow JSON could not be parsed."
+      "parseGraphFailed": "Workflow JSON could not be parsed.",
+      "loadGuidance": "Check the connection and current project before trying again.",
+      "operationUnconfirmed": "The workflow operation could not be confirmed. Check the saved draft and current run before trying again."
     },
     "repositoryDialog": {
       "title": "New workflow attempt",
@@ -587,11 +609,13 @@
         "timeRequired": "Choose a valid time.",
         "weekdayRequired": "Choose a weekday.",
         "inputRequired": "Add run input before saving the scheduled task.",
-        "saveFailed": "Failed to save scheduled task.",
-        "runFailed": "Failed to run scheduled task.",
+        "saveFailed": "Saving the scheduled task could not be confirmed. Check the current task before trying again.",
+        "runFailed": "The scheduled run could not be confirmed. Check current runs before trying again.",
         "runSkipped": "This run was skipped because the previous scheduled run is still active.",
-        "deleteFailed": "Failed to delete scheduled task."
-      }
+        "deleteFailed": "Deleting the scheduled task could not be confirmed. Check the current task before trying again."
+      },
+      "lastErrorNotice": "The last attempt needs attention. Review its status and original details before retrying.",
+      "originalError": "Last attempt details (original)"
     },
     "editor": {
       "runAttempt": "Run workflow attempt",
@@ -672,7 +696,9 @@
       "executor": "Executor",
       "selectExecutor": "Select executor",
       "agent": "Agent",
-      "saveStep": "Save step"
+      "saveStep": "Save step",
+      "includeWorkflowContext": "Carry workflow context",
+      "includeWorkflowContextHelp": "Send workflow input, direct upstream results, and downstream handoff guidance with this prompt."
     },
     "router": {
       "toolbar": "Router",
@@ -716,7 +742,9 @@
       "promptPlaceholder": "Describe this workflow step...",
       "selectExecutor": "Select executor",
       "startRun": "Start run",
-      "starting": "Starting..."
+      "starting": "Starting...",
+      "includeWorkflowContext": "Carry workflow context",
+      "includeWorkflowContextHelp": "Adds workflow input and upstream results."
     },
     "templates": {
       "title": "Workflows",
@@ -765,7 +793,8 @@
       "finished": "Finished",
       "notFinished": "Not finished",
       "selectConditionBranch": "Select",
-      "selectingConditionBranch": "Selecting..."
+      "selectingConditionBranch": "Selecting...",
+      "actionUnavailable": "Action unavailable while runtime projection is unavailable."
     },
     "debug": {
       "noDebugData": "No debug data for this step.",
@@ -787,7 +816,8 @@
       "awaitingArena": "Waiting for arena",
       "succeeded": "Succeeded",
       "failed": "Failed",
-      "canceled": "Canceled"
+      "canceled": "Canceled",
+      "cancelling": "Cancelling"
     },
     "nodeStatus": {
       "pending": "Pending",
@@ -796,7 +826,9 @@
       "failed": "Failed",
       "awaitingHuman": "Waiting for human",
       "awaitingArena": "Waiting for arena",
-      "skipped": "Skipped"
+      "skipped": "Skipped",
+      "cancelling": "Cancelling",
+      "cancelled": "Cancelled"
     },
     "dashboard": {
       "runDetails": "Run details",
@@ -846,7 +878,8 @@
       "agentSteps": "Agent steps",
       "controlSteps": "Control steps",
       "notStarted": "Not started",
-      "notAvailable": "N/A"
+      "notAvailable": "N/A",
+      "runtimeProjectionUnavailable": "The runtime state is unavailable."
     },
     "agentSessions": {
       "title": "Agent sessions",
@@ -862,7 +895,7 @@
     "arenaWinner": {
       "title": "Arena selection required",
       "description": "Pick a completed attempt to apply its diff back to the workflow workspace.",
-      "selectFailed": "Failed to select arena winner.",
+      "selectFailed": "Selecting the Arena winner could not be confirmed. Check the adopted attempt before trying again.",
       "noGroupLink": "Arena group link is not available.",
       "loadingAttempts": "Loading attempts...",
       "loadFailed": "Failed to load arena group: {{message}}",
@@ -885,7 +918,8 @@
         "running": "Running",
         "failed": "Failed",
         "canceled": "Canceled"
-      }
+      },
+      "openArena": "Open Arena"
     },
     "nodeSession": {
       "agentStepSession": "Agent Step Session",
@@ -927,6 +961,53 @@
       "nodePrompt": "Node prompt",
       "noPrompt": "No prompt has been captured yet.",
       "rawRouterOutput": "Raw router output"
+    },
+    "workspaceDialog": {
+      "title": "Choose workflow workspace",
+      "description": "Choose one Git repository and a base branch. The workflow will run in an isolated worktree."
+    },
+    "workspaceContext": {
+      "pendingWorktree": "Worktree pending",
+      "loading": "Loading workspace context",
+      "unavailable": "Workspace context is not available yet",
+      "label": "Working context"
+    },
+    "validationMessages": {
+      "unsupportedVersion": "Unsupported graph version",
+      "startCount": "Expected exactly 1 Start node, found {{formattedCount}}",
+      "endRequired": "Workflow must have at least one End node",
+      "duplicateId": "Duplicate node ID found: {{node}}",
+      "selfEdge": "Self-edge found on node {{node}}",
+      "missingSource": "Edge source node missing: {{node}}",
+      "missingTarget": "Edge target node missing: {{node}}",
+      "cycle": "Workflow contains a cycle at {{node}}",
+      "unreachable": "Unreachable node: {{node}}",
+      "duplicateOutgoing": "Condition node {{node}} has duplicate outgoing target: {{target}}",
+      "routerRequired": "Workflow with Condition nodes requires a router agent",
+      "missingBranch": "Condition node {{node}} is missing branch config for {{target}}",
+      "branchTargetRequired": "Condition node {{node}} has a branch without target",
+      "duplicateBranch": "Condition node {{node}} has duplicate branch target: {{target}}",
+      "staleBranch": "Condition node {{node}} has stale branch target: {{target}}",
+      "emptyCondition": "Condition node {{node}} has empty branch condition for {{target}}"
+    },
+    "agentDisplay": {
+      "defaultAgent": "Default agent",
+      "defaultModel": "Default model"
+    },
+    "repository": {
+      "loading": "Loading workflow…",
+      "unavailable": "The workflow status could not be loaded. Check the connection and try again.",
+      "missing": "No repository workflow exists for this workspace.",
+      "reload": "Reload",
+      "view": "View Workflow · {{status}}",
+      "phases": "Repository-managed workflow · Generate → Review → optional Refine → Publish",
+      "recovery": "Step retry and template editing are unavailable. After a failure, start a new initialization from OpenWiki settings.",
+      "repository": "Repository",
+      "errorDetails": "Workflow error · original details",
+      "actionUnconfirmed": "The workflow action result could not be confirmed. Check the current run before retrying.",
+      "unknownTime": "Unknown duration",
+      "minutesSeconds": "{{minutes}}m {{seconds}}s",
+      "seconds": "{{seconds}}s"
     }
   },
   "fileTree": {
@@ -936,22 +1017,16 @@
     "showGitHubComments": "Show GitHub comments",
     "hideGitHubComments": "Hide GitHub comments",
     "prevGitHubComment": "Previous file with comments",
-    "nextGitHubComment": "Next file with comments"
+    "nextGitHubComment": "Next file with comments",
+    "noChangedFiles": "No changed files"
   },
   "sections": {
     "changes": "Changes",
-    "repositories": "Repositories",
-    "addRepositories": "Add Repositories",
-    "project": "Project",
-    "processes": "Processes",
-    "devServer": "Dev Server",
-    "advanced": "Advanced",
     "workingBranch": "Working Branch",
-    "recent": "Recent",
-    "other": "Other",
-    "devServerPreview": "Dev Server Preview",
     "terminal": "Terminal",
-    "notes": "Notes"
+    "notes": "Notes",
+    "logs": "Logs",
+    "viewChanges": "View changes"
   },
   "notes": {
     "placeholder": "Add notes about this workspace...",
@@ -987,7 +1062,8 @@
     "back": "Back",
     "defaultPlaceholder": "Type a command or search...",
     "selectBranch": "Select Branch",
-    "selectBranchFor": "Select Branch for {{repoName}}"
+    "selectBranchFor": "Select Branch for {{repoName}}",
+    "title": "Command Menu"
   },
   "agentSessionResume": {
     "open": "Recent agent sessions",
@@ -999,7 +1075,13 @@
     "empty": "No recent sessions",
     "more": "Show last 30 days",
     "pending": "Will resume: {{title}} · {{time}}",
-    "clear": "Clear resume session"
+    "clear": "Clear resume session",
+    "unsupported": "Native session discovery is not available for this agent",
+    "previewLabel": "Recent context",
+    "previewLoading": "Loading preview...",
+    "previewEmpty": "No preview available",
+    "previewAssistant": "Assistant",
+    "previewUser": "User"
   },
   "workspacesGuide": {
     "welcome": {
@@ -1045,7 +1127,11 @@
   },
   "search": {
     "matchCount": "{{current}} of {{total}}",
-    "noMatches": "No matches"
+    "noMatches": "No matches",
+    "placeholder": "Search",
+    "noItems": "No items found",
+    "previousMatch": "Previous match (Shift+Enter)",
+    "nextMatch": "Next match (Enter)"
   },
   "contextUsage": {
     "cumulative": "Cumulative tokens: {{tokens}}",
@@ -1129,7 +1215,51 @@
     "missingRepo": "Selected repo is no longer available.",
     "noTagsOrFiles": "No tags or files found",
     "createTag": "Create new tag",
-    "noCommands": "No commands available for this agent."
+    "noCommands": "No commands available for this agent.",
+    "loadingCommands": "Loading commands…",
+    "discoveringCommands": "Discovering commands…",
+    "commandGroups": {
+      "product": {
+        "label": "Product commands",
+        "badge": "VK",
+        "description": "LVK product command entry points"
+      },
+      "skill": {
+        "label": "Skills",
+        "badge": "Skill",
+        "description": "Provided by agent skills"
+      },
+      "native": {
+        "label": "Native commands",
+        "badge": "Native",
+        "description": "Native commands from the current agent backend"
+      },
+      "custom": {
+        "label": "Custom commands",
+        "badge": "Custom",
+        "description": "Provided by custom commands or plugins"
+      },
+      "diagnostic": {
+        "label": "Diagnostics",
+        "badge": "Diagnostic",
+        "description": "Diagnostic or debugging commands"
+      },
+      "fallback": {
+        "label": "Fallback commands",
+        "badge": "Fallback",
+        "description": "From a fallback list; less reliable than live discovery"
+      },
+      "unsupported": {
+        "label": "Unsupported commands",
+        "badge": "Unsupported",
+        "description": "Not supported as a standard product feature"
+      },
+      "other": {
+        "label": "Commands",
+        "badge": "Agent",
+        "description": "Commands provided by the current agent backend"
+      }
+    }
   },
   "kanban": {
     "compact": {
@@ -1268,9 +1398,9 @@
         "title": "Workspaces",
         "content": "To start working on an issue, create a workspace. A single issue can have multiple workspaces. Issues describe the work to be done, workspaces are where the work happens."
       },
-      "organizations": {
-        "title": "Invite your team",
-        "content": "We've automatically created a personal organization and initial project so you can get started with Lucky Vibe Kanban. Export your cloud data before shutdown."
+      "serverAccess": {
+        "title": "Shared server access",
+        "content": "Projects and issues are shared on this LVK server. Access is controlled by the server’s authentication and member settings. Review these settings when your permissions allow it."
       }
     },
     "switchToList": "Switch to list view",
@@ -1281,7 +1411,54 @@
       "conflict": "Newer activity changed this card. Its saved position takes priority over the dropped position.",
       "retry": "Refresh board",
       "dismiss": "Dismiss"
-    }
+    },
+    "hideBlockedFilterLabel": "Hide blocked",
+    "bulkSelectedCount": "{{count}} selected",
+    "bulkChangeStatus": "Status",
+    "bulkChangePriority": "Priority",
+    "bulkChangeAssignees": "Assignee",
+    "bulkDelete": "Delete",
+    "bulkClearSelection": "Clear selection",
+    "closeSearch": "Close search",
+    "issueActions": "Issue actions",
+    "subIssueActions": "Sub-issue actions",
+    "removeParentIssue": "Remove parent issue",
+    "removeRelationship": "Remove relationship",
+    "addTag": "Add tag",
+    "managedTag": "Managed by LVK",
+    "linkPullRequest": "Link pull request",
+    "issueTitle": "Issue title",
+    "deleteDraft": "Delete draft",
+    "removeLinkedIssue": "Remove link to {{issueId}}",
+    "restoreToUse": "Restore this issue from the archive to use this action.",
+    "projectDisplay": "Project view",
+    "projectMenu": "Project menu",
+    "addRelationship": "Add relationship",
+    "relationshipChoices": {
+      "blocks": "Blocks…",
+      "blockedBy": "Blocked by…",
+      "relatedTo": "Related to…",
+      "duplicateOf": "Duplicate of…"
+    },
+    "deleteSubIssue": "Delete sub-issue",
+    "deleteNamedSubIssue": "Delete “{{title}}”? This action cannot be undone.",
+    "deleteSubIssuePrompt": "Delete this sub-issue? This action cannot be undone.",
+    "copyTitle": "{{title}} (Copy)",
+    "sortChoices": {
+      "manual": "Manual",
+      "created": "Created",
+      "updated": "Updated"
+    },
+    "attachmentUploading": "Uploading",
+    "selectStatus": "Select status",
+    "previewWorkspacesSidebar": "Preview workspaces sidebar",
+    "priorityLabels": {
+      "urgent": "Urgent",
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low"
+    },
+    "issueSaveUnconfirmed": "Could not confirm the issue operation. Check the issue list and related workspace before submitting again."
   },
   "createMode": {
     "headings": {
@@ -1305,10 +1482,55 @@
         "alreadySelected": "Repository is already selected",
         "noRecentRepositories": "No recently used repositories found. Browse repositories instead.",
         "loadRepositoriesOrBranches": "Failed to load repositories or branches",
-        "registerRepository": "Failed to register repository",
-        "createRepository": "Failed to create repository",
+        "registerRepository": "Repository registration could not be confirmed. Check the repository list before trying again.",
+        "createRepository": "Repository creation could not be confirmed. Check the selected directory before trying again.",
         "loadBranches": "Failed to load branches"
       }
+    },
+    "directFolder": {
+      "errors": {
+        "required": "Select a folder before continuing"
+      },
+      "summaryLabel": "Direct folder"
+    },
+    "workspaceDialog": {
+      "launchHint": "Choose one directory, then decide whether to use an isolated worktree or work in place.",
+      "open": "Choose workspace",
+      "errors": {
+        "loadBranches": "Failed to load repository branches.",
+        "pathRequired": "Choose or enter a directory path.",
+        "inspect": "Unable to inspect this directory.",
+        "browse": "Unable to open the folder picker."
+      },
+      "nativePickerTitle": "Choose working directory",
+      "useProjectLocation": "Use this location",
+      "useDirectory": "Use this directory",
+      "useWorkspace": "Use this workspace",
+      "title": "Choose workspace",
+      "description": "Choose one directory and decide how the agent should work in it.",
+      "pathLabel": "Working directory",
+      "pathPlaceholder": "C:\\path\\to\\project",
+      "inspecting": "Checking directory…",
+      "gitRepository": "Git repository",
+      "regularDirectory": "Directory",
+      "currentBranch": "Current branch",
+      "nonGitHint": "This directory is not a Git repository, so worktree isolation is unavailable.",
+      "modeLabel": "Working mode",
+      "worktreeTitle": "Isolated worktree",
+      "worktreeDescription": "Create an isolated checkout and leave the source directory unchanged.",
+      "worktreeUnavailable": "Requires the selected directory to be a Git repository.",
+      "directTitle": "Work directly in this directory",
+      "directDescription": "The agent edits the selected directory itself. No worktree is created.",
+      "branchLabel": "Base branch",
+      "loadingBranches": "Loading branches…",
+      "branchPlaceholder": "Choose a branch",
+      "directWarning": "The agent will modify this directory directly: {{path}}"
+    },
+    "taskPlaceholder": "Describe the task…",
+    "errors": {
+      "workspaceRequired": "Choose a workspace before creating it.",
+      "branchRequired": "Select a branch before creating a workspace.",
+      "createUnconfirmed": "Workspace creation could not be confirmed. Check the workspace list before trying again."
     }
   },
   "modelSelector": {
@@ -1321,24 +1543,53 @@
     "permissionPlan": "Plan",
     "agent": "Agent",
     "default": "Default",
-    "model": "Model"
+    "model": "Model",
+    "filterPlaceholder": "Filter by name or ID...",
+    "reasoningSupported": "Reasoning supported",
+    "noMatches": "No matches.",
+    "noModels": "No models available.",
+    "loadError": "Model options could not be loaded. Check the connection and selected agent before trying again.",
+    "unavailable": "Models unavailable",
+    "modeCode": "Code",
+    "modeReview": "Review",
+    "modePlan": "Plan",
+    "modeGoal": "Goal",
+    "reviewHint": "Review and investigate; report findings and stop. Implementation requires a separate instruction.",
+    "executionMode": "Execution mode",
+    "goalSettings": "Goal settings",
+    "tokenBudget": "Token budget",
+    "parallelAgents": "Parallel agents",
+    "auto": "Auto",
+    "off": "Off",
+    "maximum": "Max",
+    "parallelAgentLimit": "Parallel agent limit",
+    "parallelHint": "Parallel agents is a maximum for subagents, excluding the main agent."
   },
   "crashScreen": {
     "title": "Something went wrong",
     "description": "The application encountered an unexpected error.",
     "reload": "Reload",
     "showDetails": "Show details",
-    "hideDetails": "Hide details"
+    "hideDetails": "Hide details",
+    "componentStack": "Component stack"
   },
   "syncError": {
     "networkErrors": "Network Errors",
-    "streamsAffected": "{{count}} stream affected",
-    "streamsAffected_other": "{{count}} streams affected",
+    "streamsAffected": "{{formattedCount}} stream affected",
+    "streamsAffected_other": "{{formattedCount}} streams affected",
     "status": "(status {{status}})",
-    "refreshPage": "Refresh Page"
+    "refreshPage": "Refresh Page",
+    "unconfirmed": "Synchronization could not be confirmed. Check the connection and current data before retrying changes.",
+    "count_one": "{{formattedCount}} sync error",
+    "count_other": "{{formattedCount}} sync errors"
   },
   "appBar": {
-    "kanban": {}
+    "kanban": {},
+    "localWorkspaces": "Local workspaces",
+    "createProject": "Create project",
+    "projects": "Projects",
+    "starOnGitHub": "Star on GitHub",
+    "update": "Update"
   },
   "askQuestion": {
     "title": "Agent is asking a question",
@@ -1350,13 +1601,14 @@
   },
   "asyncQuestions": {
     "title": "Questions from the agent",
-    "pending": "{{count}} unanswered question",
-    "pending_other": "{{count}} unanswered questions",
+    "pending": "{{formattedCount}} unanswered question",
+    "pending_other": "{{formattedCount}} unanswered questions",
     "description": "The agent can continue working while you answer. Choose an option or write your own response.",
     "placeholder": "Write your answer",
     "send": "Send answer",
     "sending": "Sending…",
-    "sendFailed": "The answer could not be sent. Your draft has been kept; please try again."
+    "sendFailed": "The answer could not be sent. Your draft has been kept; please try again.",
+    "deliveryUnconfirmed": "Answer delivery could not be confirmed. Inspect the Session before retrying."
   },
   "todo": {
     "expandBody": "Show more",
@@ -1387,7 +1639,11 @@
     "confirmDelete": "Delete this TODO?",
     "project": "Project",
     "chooseProject": "Choose a Project",
-    "integration": "Auto-merge"
+    "integration": "Auto-merge",
+    "loadError": "TODOs could not be loaded.",
+    "createUnconfirmed": "TODO creation could not be confirmed. Check the list before trying again.",
+    "changeUnconfirmed": "The TODO change could not be confirmed. Check the latest state before trying again.",
+    "conflict": "This TODO changed elsewhere. Review its latest state before applying your changes again."
   },
   "serverFolderPicker": {
     "title": "Choose server directory",
@@ -1395,7 +1651,8 @@
     "path": "Server directory path",
     "load": "Load path",
     "select": "Select this directory",
-    "browse": "Browse server"
+    "browse": "Browse server",
+    "loadError": "Server directories could not be loaded. Check the path and access before trying again."
   },
   "integrationPanel": {
     "title": "Auto-merge",
@@ -1453,7 +1710,25 @@
       "failed": "Failed",
       "recovery_required": "Recovery required"
     },
-    "candidateDetails": "Candidate commit"
+    "candidateDetails": "Candidate commit",
+    "operationUnconfirmed": "The Auto-merge operation could not be confirmed. Check the current run before retrying; keep the same request when checking an uncertain start.",
+    "loadError": "Auto-merge information could not be loaded. Check the connection before changing the selection.",
+    "runIdentity": "Run {{id}}",
+    "runError": "This run needs attention. Review the original details and the assigned Workspace before taking further action.",
+    "stopTargetChanged": "The target branch changed, so the candidate was not applied. Review the saved candidate and validation evidence before giving new instructions.",
+    "stopReview": "Review the candidate, validation evidence and the assigned run’s explanation, then send the next instruction in the same conversation.",
+    "baseCommit": "Base",
+    "resultCommit": "Result",
+    "originalDetails": "Run details (original)",
+    "unknownStatus": "Unknown run status",
+    "wikiDisabled": "disabled",
+    "wikiIncluded": "included in the published candidate",
+    "wikiPending": "receipt pending",
+    "wikiResultRecorded": "result recorded (see original details)",
+    "doneApplied": "Done applied",
+    "doneReserved": "Not changed: Card reserved by another Auto-merge",
+    "doneUnavailable": "Not changed: Card or destination column is unavailable",
+    "stopUnknown": "Review the original stop details and the current run before taking further action."
   },
   "workspaceTokens": {
     "label": "Workspace cumulative tokens",
@@ -1517,5 +1792,444 @@
       "minutes_one": "{{count}} minute",
       "minutes_other": "{{count}} minutes"
     }
+  },
+  "agentProvider": {
+    "disabled": {
+      "capabilityMissing": "Missing required capability",
+      "notReady": "Provider not ready"
+    },
+    "profileUnavailable": "Unable to check the selected agent profile. Reopen the session to try again."
+  },
+  "common": {
+    "loading": "Loading...",
+    "saving": "Saving..."
+  },
+  "designNotes": {
+    "kinds": {
+      "decision": "Decision (sourced human judgment)",
+      "proposal": "Proposal",
+      "openQuestion": "Open question"
+    },
+    "edit": "Edit",
+    "preview": "Preview",
+    "saving": "Saving",
+    "create": "New design note",
+    "search": "Search design notes",
+    "searchPlaceholder": "Search titles and content",
+    "loading": "Loading…",
+    "empty": "Keep the initial idea and the decisions that follow.",
+    "back": "Back to list",
+    "select": "Select a design note.",
+    "title": "Title",
+    "body": "Body (Markdown)",
+    "bodyPlaceholder": "What you want to build, and why",
+    "optionalReason": "Reason for change (optional)",
+    "save": "Save",
+    "cancel": "Cancel",
+    "bodyConflictHint": "Your draft above is preserved. Review the differences, incorporate any needed content into your draft, then reapply it.",
+    "reapplyBody": "Reapply body draft after reviewing the current version",
+    "editBody": "Edit body",
+    "history": "History and first version",
+    "showCurrent": "Return to current version",
+    "restore": "Restore this version as a new version",
+    "firstVersionHint": "The first version is this note’s earliest record. It is not necessarily a record from the project’s founding.",
+    "firstVersion": "First version",
+    "additions": "Additions from conversations",
+    "additionsHint": "These records are separate from the body. Respect the latest clearly sourced human judgment and distinguish it from AI proposals.",
+    "append": "Add an entry",
+    "showHidden": "Show hidden additions",
+    "hidden": " (hidden)",
+    "speakerOrigin": "Speaker / origin of the idea",
+    "source": "Source",
+    "recorder": "Recorded by",
+    "referencedVersion": "Referenced body version",
+    "recordedUpdated": "Recorded / updated at · editor",
+    "correctAddition": "Correct addition",
+    "unhide": "Show again",
+    "hide": "Hide",
+    "additionHistory": "Addition history",
+    "integrateConfirm": "Append this addition to the current body and save it as a new body revision? The original addition and its history will be kept.",
+    "integrate": "Integrate into body",
+    "reapplyAddition": "Reapply addition draft after reviewing the current version",
+    "heading": "Short heading",
+    "speaker": "Speaker",
+    "sourceReference": "Source (reference to the conversation or statement)",
+    "kind": "Kind",
+    "additionContent": "Addition content (Markdown)",
+    "additionPlaceholder": "Briefly record an important judgment, proposal, or open question",
+    "referencedRevision": "Referenced body revision",
+    "optionalQuote": "Short quote (optional)",
+    "saveAddition": "Save addition",
+    "currentBody": "Saved current version (revision {{revision}}): {{title}}",
+    "bodyMetadata": "{{version}} · revision {{revision}} · {{date}} · Editor: {{editor}}",
+    "pastVersion": "Past version",
+    "currentVersion": "Current version",
+    "changeReason": "Reason for change: {{reason}}",
+    "additionMetadata": "{{created}} / {{updated}} · {{editor}} · addition revision {{revision}}",
+    "additionConflict": "The saved current version is shown above (addition revision {{revision}}). Your draft is preserved. Review the differences in source and content before reapplying it.",
+    "revision": "revision {{revision}}",
+    "errors": {
+      "list": "Unable to load design notes.",
+      "detail": "Unable to load this design note.",
+      "history": "Unable to load version history.",
+      "conflict": "The saved version or request has changed. Your input is preserved. Review the current content before editing and reapplying your draft.",
+      "invalid": "Check your input: titles and headings must be 1–300 characters; bodies and additions at most 100,000; sources and speakers 1–2,000; quotes and reasons at most 2,000. Your input is preserved.",
+      "unconfirmed": "The save result could not be confirmed. Your input is preserved. Review the latest saved content before making another change."
+    }
+  },
+  "releaseNotes": {
+    "title": "What’s New",
+    "failed": "Unable to load release notes.",
+    "viewOnGitHub": "View on GitHub",
+    "openOnGitHub": "Open on GitHub",
+    "link": "Link"
+  },
+  "editorToolbar": {
+    "undo": "Undo",
+    "bold": "Bold",
+    "italic": "Italic",
+    "strikethrough": "Strikethrough",
+    "inlineCode": "Inline Code",
+    "bulletList": "Bullet List",
+    "numberedList": "Numbered List",
+    "boldShortcut": "Bold (Cmd+B)",
+    "italicShortcut": "Italic (Cmd+I)",
+    "codeShortcut": "Inline Code (Cmd+E)"
+  },
+  "electricDiagnostics": {
+    "retry": "Retry",
+    "no_data_found": "No data found.",
+    "mutations_optimistic": "Mutations (Optimistic)",
+    "create": "Create",
+    "update_selected": "Update Selected",
+    "delete_selected": "Delete Selected",
+    "selected_prefix": "Selected:",
+    "sync_error": "Sync Error",
+    "loading_projects": "Loading projects...",
+    "name": "Name",
+    "id": "ID",
+    "updated": "Updated",
+    "project_name": "Project name",
+    "project_key": "Project key",
+    "2_10_letters_or_digits_starting_with_a_letter_cannot_be_changed_later": "2–10 letters or digits, starting with a letter. Cannot be changed later.",
+    "color": "Color",
+    "loading_notifications": "Loading notifications...",
+    "type": "Type",
+    "seen": "Seen",
+    "created": "Created",
+    "loading_issues": "Loading issues...",
+    "title": "Title",
+    "priority": "Priority",
+    "loading_workspaces": "Loading workspaces...",
+    "archived": "Archived",
+    "files_changed": "Files Changed",
+    "loading_statuses": "Loading statuses...",
+    "order": "Order",
+    "loading_tags": "Loading tags...",
+    "tag_name": "Tag name",
+    "loading_assignees": "Loading assignees...",
+    "issue_id": "Issue ID",
+    "user_id": "User ID",
+    "assigned": "Assigned",
+    "loading_followers": "Loading followers...",
+    "loading_issue_tags": "Loading issue tags...",
+    "tag_id": "Tag ID",
+    "loading_dependencies": "Loading dependencies...",
+    "issue": "Issue",
+    "related_issue": "Related Issue",
+    "loading_comments": "Loading comments...",
+    "message": "Message",
+    "author": "Author",
+    "enter_comment_message": "Enter comment message...",
+    "loading_reactions": "Loading reactions...",
+    "emoji": "Emoji",
+    "comment": "Comment",
+    "user": "User",
+    "loading": "Loading...",
+    "electric_sdk_test": "Electric SDK Test",
+    "please_sign_in_to_test_electric_sync": "Please sign in to test Electric sync.",
+    "configuration": "Configuration",
+    "organization": "Organization",
+    "select_an_organization": "Select an organization...",
+    "connect": "Connect",
+    "disconnect": "Disconnect",
+    "organization_id_prefix": "Organization ID:",
+    "user_id_prefix": "User ID:",
+    "organization_collections": "Organization Collections",
+    "projects": "Projects",
+    "notifications": "Notifications",
+    "loading_user_info": "Loading user info...",
+    "selected_project_prefix": "Selected project:",
+    "click_a_row_to_select": "(click a row to select)",
+    "project_collections": "Project Collections",
+    "issues": "Issues",
+    "workspaces": "Workspaces",
+    "statuses": "Statuses",
+    "tags": "Tags",
+    "assignees": "Assignees",
+    "followers": "Followers",
+    "issue_tags": "Issue Tags",
+    "dependencies": "Dependencies",
+    "selected_issue_prefix": "Selected issue:",
+    "issue_collections": "Issue Collections",
+    "comments": "Comments",
+    "reactions": "Reactions",
+    "yes": "Yes",
+    "no": "No",
+    "connected": "Connected",
+    "not_connected": "Not connected",
+    "synced": "{{formattedCount}} synced",
+    "syncGuidance": "Sync could not be confirmed. Inspect the current state before retrying mutations.",
+    "originalDetails": "Diagnostic details (original)"
+  },
+  "navbar": {
+    "back": "Back",
+    "menu": "Open menu",
+    "projects": "Projects",
+    "board": "Board",
+    "reload": "Reload",
+    "settings": "Settings",
+    "commandMenu": "Command bar",
+    "tabs": {
+      "workspaces": "Wksps",
+      "chat": "Chat",
+      "files": "Files",
+      "wiki": "Wiki",
+      "todos": "TODO",
+      "changes": "Diff",
+      "logs": "Logs",
+      "git": "Git"
+    }
+  },
+  "onboarding": {
+    "docs": "Docs",
+    "github": "GitHub",
+    "loading": "Loading...",
+    "learnMore": "Learn more",
+    "codingAgent": "Coding Agent",
+    "notificationSound": "Notification Sound",
+    "noSound": "No sound",
+    "terms": "terms and conditions",
+    "privacy": "privacy policy",
+    "saving": "Saving...",
+    "continue": "Continue",
+    "safetyBefore": "Lucky Vibe Kanban runs AI coding agents with",
+    "safetyAfter": "by default. Always review what agents are doing.",
+    "termsBefore": "By continuing you agree to the",
+    "termsAnd": "and",
+    "termsAfter": ".",
+    "saveUnconfirmed": "Saving could not be confirmed. Check the current settings before retrying.",
+    "safetyEnd": "."
+  },
+  "notificationSounds": {
+    "ABSTRACT_SOUND1": "Abstract Sound 1",
+    "ABSTRACT_SOUND2": "Abstract Sound 2",
+    "ABSTRACT_SOUND3": "Abstract Sound 3",
+    "ABSTRACT_SOUND4": "Abstract Sound 4",
+    "COW_MOOING": "Cow Mooing",
+    "PHONE_VIBRATION": "Phone Vibration",
+    "ROOSTER": "Rooster",
+    "FAHHHHH": "Fahhhhh"
+  },
+  "workspaceWiki": {
+    "reload": "Reload Wiki files",
+    "repository": "Wiki repository",
+    "search": "Search Wiki",
+    "pages": "Wiki pages",
+    "article": "Wiki article",
+    "current": "Current workspace · {{path}}",
+    "currentReadOnly": "Current workspace · {{path}} · Read-only",
+    "scope": "This shows the current worktree, including unpublished changes. Initialisation and Sync use repository memory settings.",
+    "noMatches": "No matching pages.",
+    "loading": "Loading Wiki…",
+    "noPages": "No Wiki pages in this repository.",
+    "directory": "Directory {{path}}",
+    "selectWorkspace": "Select a workspace to read its Wiki.",
+    "unavailable": "OpenWiki files are invalid or unavailable. This viewer does not repair or initialise files.",
+    "noRepositories": "This workspace has no repositories.",
+    "notInitialized": "No openwiki/ exists in this repository. Use Initialize Wiki in repository memory settings.",
+    "selectPage": "Select a Wiki page.",
+    "loadUnconfirmed": "Wiki files could not be loaded. Check the selected workspace and repository before reloading.",
+    "branch": "Workspace branch: {{branch}}",
+    "language": "Language: {{value}}",
+    "tags": "Tags: {{value}}",
+    "sources": "Sources:",
+    "updated": "Updated: {{value}}",
+    "directFolder": "Direct folder",
+    "navigation": "Wiki navigation",
+    "open": "Open Wiki"
+  },
+  "workspaceFiles": {
+    "search_files": "Search files",
+    "refresh_files": "Refresh files",
+    "loading_files": "Loading files",
+    "reading_the_workspace_repositories": "Reading the workspace repositories.",
+    "could_not_load_files": "Could not load files",
+    "retry": "Retry",
+    "no_repositories": "No repositories",
+    "this_workspace_has_no_repository_files_to_inspect": "This workspace has no repository files to inspect.",
+    "no_matches": "No matches",
+    "try_a_different_file_name_or_path": "Try a different file name or path.",
+    "partial": "partial",
+    "no_files": "No files",
+    "error": "error",
+    "directory_truncated": "Directory truncated",
+    "select_a_file": "Select a file",
+    "open_a_workspace_file_to_inspect_it_here": "Open a workspace file to inspect it here.",
+    "large_file_preview_truncated_by_the_backend": "Large file preview truncated by the backend.",
+    "loading_preview": "Loading preview",
+    "reading_file_content_from_the_workspace": "Reading file content from the workspace.",
+    "could_not_load_preview": "Could not load preview",
+    "file_missing": "File missing",
+    "the_file_was_not_returned_by_the_workspace_api": "The file was not returned by the workspace API.",
+    "copied_path": "Copied path",
+    "copy_path": "Copy path",
+    "open_in_editor": "Open in editor",
+    "refresh_preview": "Refresh preview",
+    "open_raw_file": "Open raw file",
+    "raw_file_unavailable": "Raw file unavailable",
+    "close_preview": "Close preview",
+    "refreshing_preview": "Refreshing preview",
+    "preview_not_available": "Preview not available",
+    "this_file_is_binary_or_not_supported_by_the_read_only_preview": "This file is binary or not supported by the read-only preview.",
+    "path": "Path",
+    "mime": "MIME",
+    "size": "Size",
+    "open_editor": "Open editor",
+    "open_raw": "Open raw",
+    "image_unavailable": "Image unavailable",
+    "the_backend_did_not_provide_a_raw_image_url": "The backend did not provide a raw image URL.",
+    "image_failed_to_load": "Image failed to load",
+    "open_the_raw_file_if_you_need_to_inspect_it_directly": "Open the raw file if you need to inspect it directly.",
+    "treeUnconfirmed": "The file tree could not be loaded. Check the workspace and retry.",
+    "directoryUnconfirmed": "The directory could not be loaded. Close and reopen it to retry.",
+    "previewUnconfirmed": "The preview could not be loaded. Check the selected file and retry.",
+    "copyFailed": "Path could not be copied. Check clipboard access and retry.",
+    "kindSvg": "SVG source",
+    "kindImage": "Image",
+    "kindText": "Text",
+    "kindUnsupported": "Unsupported",
+    "copyRequested": "Copy requested. Check the clipboard result.",
+    "files": "Files",
+    "conversation": "Conversation",
+    "open_preview": "Open file preview",
+    "renamePath": "Rename {{path}} to {{newPath}}"
+  },
+  "colorPicker": {
+    "select": "Select a color"
+  },
+  "resourceSummary": {
+    "label": "Server resources",
+    "unknown": "unknown",
+    "stale": "Unavailable or stale. ",
+    "scope": "System-visible; physical host unknown. {{stale}}Observed: {{timestamp}}.",
+    "milliseconds": "{{value}} ms",
+    "cpu": "CPU {{value}}. {{scope}} Sample: {{sample}}.",
+    "ram": "RAM {{value}}: (total − available) / total. {{scope}}",
+    "disk": "{{stale}}Worktree filesystem: used / total capacity. 1 GB = 1,000,000,000 bytes. Observed: {{timestamp}}.",
+    "diskLabel": "DISK"
+  },
+  "webviewContextMenu": {
+    "copy": "Copy",
+    "cut": "Cut",
+    "paste": "Paste",
+    "undo": "Undo",
+    "redo": "Redo",
+    "selectAll": "Select All"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "signIn": "Sign in to view notifications",
+    "markAll": "Mark all as read",
+    "empty": "No notifications yet",
+    "markRead": "Mark as read",
+    "markNotificationRead": "Mark notification as read",
+    "loading": "Loading notifications…",
+    "loadError": "Notifications could not be loaded. Check the connection and retry.",
+    "retry": "Retry",
+    "markUnconfirmed": "Marking notifications as read could not be confirmed. Check their current state before retrying.",
+    "someone": "Someone",
+    "anIssue": "an issue",
+    "newNotification": "New notification",
+    "priorityUrgent": "Urgent",
+    "priorityHigh": "High",
+    "priorityMedium": "Medium",
+    "priorityLow": "Low",
+    "fields": "{{formattedCount}} field",
+    "fields_other": "{{formattedCount}} fields",
+    "comments": "{{formattedCount}} comment",
+    "comments_other": "{{formattedCount}} comments",
+    "times": "{{formattedCount}} time",
+    "times_other": "{{formattedCount}} times",
+    "issues": "{{formattedCount}} issue",
+    "issues_other": "{{formattedCount}} issues",
+    "groupChanges": "{{actor}} changed {{quantity}} on {{issue}}",
+    "groupComments": "{{actor}} left {{quantity}} on {{issue}}",
+    "groupReactions": "{{actor}} reacted {{quantity}} on {{issue}}",
+    "groupDeleted": "{{actor}} deleted {{quantity}}",
+    "titleChangedTo": "{{actor}} changed the title of {{issue}} to {{next}}",
+    "titleChanged": "{{actor}} changed the title of {{issue}}",
+    "assigned": "{{assignee}} was assigned to {{issue}} by {{actor}}",
+    "unassigned": "{{actor}} unassigned you from {{issue}}",
+    "descriptionChanged": "{{actor}} changed the description on {{issue}}",
+    "priorityChangedFrom": "{{actor}} changed the priority of {{issue}} from {{old}} to {{next}}",
+    "priorityChangedTo": "{{actor}} changed the priority of {{issue}} to {{next}}",
+    "priorityCleared": "{{actor}} cleared the priority of {{issue}}",
+    "commented": "{{actor}} commented on {{issue}}",
+    "reactedWith": "{{actor}} reacted {{emoji}} to your comment on {{issue}}",
+    "reacted": "{{actor}} reacted to your comment on {{issue}}",
+    "statusChangedFrom": "{{actor}} changed status of {{issue}} from {{old}} to {{next}}",
+    "statusChanged": "{{actor}} changed status of {{issue}}",
+    "deleted": "{{actor}} deleted {{issue}}"
+  },
+  "userAvatar": {
+    "unknown": "User"
+  },
+  "markdownEditor": {
+    "content": "Markdown content",
+    "editor": "Markdown editor",
+    "copied": "Copied!",
+    "copy": "Copy as Markdown",
+    "copyRequested": "Copy requested. Check the clipboard result.",
+    "edit": "Edit",
+    "delete": "Delete",
+    "diagramError": "Mermaid diagram error",
+    "diagramLoading": "Loading diagram…"
+  },
+  "guide": {
+    "topics": "Topics",
+    "back": "Back"
+  },
+  "skillPicker": {
+    "title": "Skills",
+    "empty": "No skills available",
+    "loading": "Loading skills…"
+  },
+  "conversationNavigation": {
+    "title": "Your messages",
+    "turns_one": "{{formattedCount}} turn",
+    "turns_other": "{{formattedCount}} turns"
+  },
+  "taskSelectors": {
+    "selectAgent": "Select agent",
+    "noAgents": "No agents available",
+    "configuration": "Configuration",
+    "selectConfiguration": "Select configuration"
+  },
+  "processLogs": {
+    "empty": "No logs available",
+    "unavailable": "Logs could not be loaded. Check the connection and try again."
+  },
+  "streams": {
+    "patchInvalid": "Live updates could not be read. Check the connection and refresh if the problem continues.",
+    "connectionLost": "Connection lost; reconnecting…",
+    "connectionFailed": "Connection failed; reconnecting…",
+    "logsUnavailable": "Logs could not be loaded. Check the connection and current run status.",
+    "executionUpdate": "Live execution updates could not be confirmed. Check the run status and connection.",
+    "executionFormat": "An execution update could not be read. Check the current run status.",
+    "executionConnection": "Live execution updates are unavailable. Check the connection and current run status."
+  },
+  "table": {
+    "empty": "No data"
   }
 }

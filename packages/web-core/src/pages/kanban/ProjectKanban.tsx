@@ -45,6 +45,7 @@ function getClampedKanbanLeftPanelSize(size: number | string) {
  * Must be rendered inside both ActionsProvider and ProjectProvider.
  */
 function ProjectMutationsRegistration({ children }: { children: ReactNode }) {
+  const { i18n } = useTranslation('common');
   const { registerProjectMutations } = useActions();
   const { removeIssue, insertIssue, getIssue, getAssigneesForIssue, issues } =
     useProjectContext();
@@ -76,7 +77,7 @@ function ProjectMutationsRegistration({ children }: { children: ReactNode }) {
         insertIssue({
           project_id: issue.project_id,
           status_id: issue.status_id,
-          title: `${issue.title} (Copy)`,
+          title: i18n.t('common:kanban.copyTitle', { title: issue.title }),
           description: issue.description,
           priority: issue.priority,
           sort_order: minSortOrder - 1,
@@ -101,6 +102,7 @@ function ProjectMutationsRegistration({ children }: { children: ReactNode }) {
     insertIssue,
     getIssue,
     getAssigneesForIssue,
+    i18n,
   ]);
 
   return <>{children}</>;

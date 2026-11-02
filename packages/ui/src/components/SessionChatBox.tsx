@@ -1,3 +1,7 @@
+import {
+  getSessionRuntimeActionBlockedReasonLabel,
+  type SessionRuntimeTranslator,
+} from '../lib/sessionRuntimeLabels';
 import { type ChangeEvent, type ReactNode, useRef } from 'react';
 import {
   type Icon,
@@ -76,52 +80,30 @@ export type SessionRuntimeActionPolicy = Record<
   SessionRuntimeActionDecision
 >;
 
-const SESSION_RUNTIME_ACTION_BLOCKED_REASON_LABELS: Record<string, string> = {
-  no_content: 'Add a message before sending.',
-  no_workspace: 'Select a workspace first.',
-  no_session: 'Select or create a session first.',
-  no_executor: 'Select an agent before sending.',
-  provider_not_ready: 'The selected agent is not ready.',
-  provider_capability_missing:
-    'The selected agent does not support this action.',
-  runtime_starting: 'The agent action is starting. Wait for it to finish.',
-  runtime_busy: 'The agent is still running. Queue a follow-up instead.',
-  runtime_cancelling: 'The agent is stopping. Wait for cancellation to finish.',
-  runtime_terminal: 'The last run ended and cannot continue from here.',
-  approval_timed_out: 'The approval request timed out.',
-  approval_required: 'Respond to the pending approval first.',
-  question_required: 'Answer the pending question first.',
-  queue_already_present: 'A follow-up is already queued.',
-  queue_empty: 'There is no queued follow-up to cancel.',
-  unknown_runtime: 'This action is not available in the current runtime state.',
-};
-
-export function getSessionRuntimeActionBlockedReasonLabel(
-  reason: string | null | undefined
-) {
-  if (!reason) return null;
-  return (
-    SESSION_RUNTIME_ACTION_BLOCKED_REASON_LABELS[reason] ??
-    'This action is not available right now.'
-  );
-}
-
 function getBlockedActionMessage(
   actionLabel: string,
-  decision: SessionRuntimeActionDecision
+  decision: SessionRuntimeActionDecision,
+  t: SessionRuntimeTranslator
 ) {
   if (decision.allowed) return undefined;
   const reasonLabel = getSessionRuntimeActionBlockedReasonLabel(
-    decision.reason
+    decision.reason,
+    t
   );
-  return reasonLabel ? `${actionLabel} unavailable: ${reasonLabel}` : undefined;
+  return reasonLabel
+    ? t('sessionRuntime.unavailable', {
+        action: actionLabel,
+        reason: reasonLabel,
+      })
+    : undefined;
 }
 
-function getActionButtonA11yProps(
+function actionButtonA11yProps(
   actionLabel: string,
-  decision: SessionRuntimeActionDecision
+  decision: SessionRuntimeActionDecision,
+  t: SessionRuntimeTranslator
 ) {
-  const blockedMessage = getBlockedActionMessage(actionLabel, decision);
+  const blockedMessage = getBlockedActionMessage(actionLabel, decision, t);
   if (blockedMessage) {
     return {
       title: blockedMessage,
@@ -372,7 +354,12 @@ export function SessionChatBox<TExecutor extends string = string>({
   isMobile,
   runningActionLabel,
 }: SessionChatBoxProps<TExecutor>) {
-  const { t } = useTranslation('tasks');
+  const { t, i18n } = useTranslation('tasks');
+  const number = new Intl.NumberFormat(i18n.resolvedLanguage ?? 'en');
+  const getActionButtonA11yProps = (
+    label: string,
+    decision: SessionRuntimeActionDecision
+  ) => actionButtonA11yProps(label, decision, t);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const askQuestionBannerRef = useRef<AskUserQuestionBannerHandle>(null);
 
@@ -470,7 +457,7 @@ export function SessionChatBox<TExecutor extends string = string>({
   const blockedSendHint =
     !normalSendDecision.allowed &&
     !INLINE_BLOCKED_HINT_EXCLUDED_REASONS.has(normalSendDecision.reason ?? '')
-      ? getSessionRuntimeActionBlockedReasonLabel(normalSendDecision.reason)
+      ? getSessionRuntimeActionBlockedReasonLabel(normalSendDecision.reason, t)
       : null;
   const hasInputTools =
     Boolean(onPrCommentClick) || Boolean(toolbarActions?.items.length);
@@ -481,16 +468,16 @@ export function SessionChatBox<TExecutor extends string = string>({
     editor.value.trim().length === 0;
 
   const placeholder = isInFeedbackMode
-    ? 'Provide feedback for the plan...'
+    ? t('sessionRuntime.placeholder.feedback')
     : isInEditMode
-      ? 'Edit your message...'
+      ? t('sessionRuntime.placeholder.edit')
       : isInApprovalMode
-        ? 'Provide feedback to request changes...'
+        ? t('sessionRuntime.placeholder.changes')
         : isInAskQuestionMode
-          ? 'Type a different answer...'
+          ? t('sessionRuntime.placeholder.answer')
           : session.isNewSessionMode
-            ? 'Start a new conversation...'
-            : 'Continue working on this task...';
+            ? t('sessionRuntime.placeholder.newConversation')
+            : t('sessionRuntime.placeholder.continue');
 
   // Cmd+Enter handler
   const handleCmdEnter = () => {
@@ -764,8 +751,8 @@ export function SessionChatBox<TExecutor extends string = string>({
               <PrimaryButton
                 onClick={actions.onSteer}
                 disabled={!queueFollowUpDecision.allowed}
-                value="Steer"
-                aria-label="Steer"
+                value={t('sessionRuntime.steer')}
+                aria-label={t('sessionRuntime.steer')}
               />
             )}
             <PrimaryButton
@@ -990,7 +977,7 @@ export function SessionChatBox<TExecutor extends string = string>({
                     <PrimaryButton
                       variant="secondary"
                       onClick={onOpenWorkspace}
-                      value="Open Workspace"
+                      value={t('sessionRuntime.openWorkspace')}
                       actionIcon={ArrowsOutIcon}
                       className="min-w-0"
                     />
@@ -999,15 +986,19 @@ export function SessionChatBox<TExecutor extends string = string>({
                     <span
                       role="status"
                       className="text-sm text-low truncate"
-                      title={stats.diffStatsStatus}
+                      title={
+                        stats.diffStatsStatus === 'degraded'
+                          ? t('diff.degraded')
+                          : stats.diffStatsStatus === 'loading'
+                            ? t('common:states.loading')
+                            : t('diff.unavailable')
+                      }
                     >
                       {stats.diffStatsStatus === 'loading'
                         ? t('common:states.loading')
-                        : t('diff.unavailable', {
-                            defaultValue: 'Changes unavailable',
-                          })}
+                        : t('diff.unavailable')}
                       {stats.diffStatsStatus === 'degraded' &&
-                        ` (${t('diff.filesChanged', { count: filesChanged })})`}
+                        ` (${t('diff.filesChanged', { count: filesChanged, formattedCount: number.format(filesChanged) })})`}
                     </span>
                   ) : onViewCode ? (
                     <PrimaryButton
@@ -1017,19 +1008,22 @@ export function SessionChatBox<TExecutor extends string = string>({
                     >
                       <span className="text-sm space-x-half whitespace-nowrap truncate">
                         <span>
-                          {t('diff.filesChanged', { count: filesChanged })}
+                          {t('diff.filesChanged', {
+                            count: filesChanged,
+                            formattedCount: number.format(filesChanged),
+                          })}
                         </span>
                         {(linesAdded !== undefined ||
                           linesRemoved !== undefined) && (
                           <span className="space-x-half">
                             {linesAdded !== undefined && (
                               <span className="text-success">
-                                +{linesAdded}
+                                +{number.format(linesAdded)}
                               </span>
                             )}
                             {linesRemoved !== undefined && (
                               <span className="text-error">
-                                -{linesRemoved}
+                                -{number.format(linesRemoved)}
                               </span>
                             )}
                           </span>
@@ -1039,16 +1033,23 @@ export function SessionChatBox<TExecutor extends string = string>({
                   ) : (
                     <span className="text-sm text-low space-x-half whitespace-nowrap truncate min-w-0">
                       <span>
-                        {t('diff.filesChanged', { count: filesChanged })}
+                        {t('diff.filesChanged', {
+                          count: filesChanged,
+                          formattedCount: number.format(filesChanged),
+                        })}
                       </span>
                       {(linesAdded !== undefined ||
                         linesRemoved !== undefined) && (
                         <span className="space-x-half">
                           {linesAdded !== undefined && (
-                            <span className="text-success">+{linesAdded}</span>
+                            <span className="text-success">
+                              +{number.format(linesAdded)}
+                            </span>
                           )}
                           {linesRemoved !== undefined && (
-                            <span className="text-error">-{linesRemoved}</span>
+                            <span className="text-error">
+                              -{number.format(linesRemoved)}
+                            </span>
                           )}
                         </span>
                       )}
@@ -1180,21 +1181,23 @@ export function SessionChatBox<TExecutor extends string = string>({
                 <button
                   type="button"
                   className="flex items-center justify-center text-low hover:text-normal"
-                  aria-label="Input tools"
-                  title="Input tools"
+                  aria-label={t('sessionRuntime.inputTools')}
+                  title={t('sessionRuntime.inputTools')}
                 >
                   <ToolboxIcon className="size-icon-base" />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent>
-                <DropdownMenuLabel>Input tools</DropdownMenuLabel>
+                <DropdownMenuLabel>
+                  {t('sessionRuntime.inputTools')}
+                </DropdownMenuLabel>
                 {onPrCommentClick && (
                   <DropdownMenuItem
                     icon={GithubLogoIcon}
                     onClick={onPrCommentClick}
                     disabled={areContentInsertActionsDisabled}
                   >
-                    Add PR comments
+                    {t('sessionRuntime.addPrComments')}
                   </DropdownMenuItem>
                 )}
                 {onPrCommentClick && Boolean(toolbarActions?.items.length) && (

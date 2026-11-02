@@ -9,31 +9,41 @@
         "null"
       ],
       "format": "textarea",
-      "default": null
+      "default": null,
+      "x-lvk-i18n-title": "settings:executorSchemas.claude_code.append_prompt.title",
+      "x-lvk-i18n-description": "settings:executorSchemas.claude_code.append_prompt.description"
     },
     "claude_code_router": {
       "type": [
         "boolean",
         "null"
-      ]
+      ],
+      "title": "Claude Code Router",
+      "x-lvk-i18n-title": "settings:executorSchemas.claude_code.claude_code_router.title"
     },
     "plan": {
       "type": [
         "boolean",
         "null"
-      ]
+      ],
+      "title": "Plan",
+      "x-lvk-i18n-title": "settings:executorSchemas.claude_code.plan.title"
     },
     "approvals": {
       "type": [
         "boolean",
         "null"
-      ]
+      ],
+      "title": "Approvals",
+      "x-lvk-i18n-title": "settings:executorSchemas.claude_code.approvals.title"
     },
     "model": {
       "type": [
         "string",
         "null"
-      ]
+      ],
+      "title": "Model",
+      "x-lvk-i18n-title": "settings:executorSchemas.claude_code.model.title"
     },
     "effort": {
       "type": [
@@ -47,25 +57,59 @@
         "xhigh",
         "max",
         null
-      ]
+      ],
+      "title": "Effort",
+      "x-lvk-i18n-enum": [
+        {
+          "key": "settings:executorSchemas.claude_code.effort.options.low",
+          "source": "Low"
+        },
+        {
+          "key": "settings:executorSchemas.claude_code.effort.options.medium",
+          "source": "Medium"
+        },
+        {
+          "key": "settings:executorSchemas.claude_code.effort.options.high",
+          "source": "High"
+        },
+        {
+          "key": "settings:executorSchemas.claude_code.effort.options.xhigh",
+          "source": "Extra high"
+        },
+        {
+          "key": "settings:executorSchemas.claude_code.effort.options.max",
+          "source": "Maximum"
+        },
+        {
+          "key": "settings:executorSchemas.claude_code.effort.options.null",
+          "source": "Follow native config"
+        }
+      ],
+      "x-lvk-i18n-title": "settings:executorSchemas.claude_code.effort.title"
     },
     "agent": {
       "type": [
         "string",
         "null"
-      ]
+      ],
+      "title": "Agent",
+      "x-lvk-i18n-title": "settings:executorSchemas.claude_code.agent.title"
     },
     "dangerously_skip_permissions": {
       "type": [
         "boolean",
         "null"
-      ]
+      ],
+      "title": "Dangerously Skip Permissions",
+      "x-lvk-i18n-title": "settings:executorSchemas.claude_code.dangerously_skip_permissions.title"
     },
     "disable_api_key": {
       "type": [
         "boolean",
         "null"
-      ]
+      ],
+      "title": "Disable API Key",
+      "x-lvk-i18n-title": "settings:executorSchemas.claude_code.disable_api_key.title"
     },
     "require_subscription_login": {
       "title": "Require Subscription Login",
@@ -73,7 +117,9 @@
       "type": [
         "boolean",
         "null"
-      ]
+      ],
+      "x-lvk-i18n-title": "settings:executorSchemas.claude_code.require_subscription_login.title",
+      "x-lvk-i18n-description": "settings:executorSchemas.claude_code.require_subscription_login.description"
     },
     "base_command_override": {
       "title": "Base Command Override",
@@ -81,7 +127,9 @@
       "type": [
         "string",
         "null"
-      ]
+      ],
+      "x-lvk-i18n-title": "settings:executorSchemas.claude_code.base_command_override.title",
+      "x-lvk-i18n-description": "settings:executorSchemas.claude_code.base_command_override.description"
     },
     "additional_params": {
       "title": "Additional Parameters",
@@ -92,7 +140,9 @@
       ],
       "items": {
         "type": "string"
-      }
+      },
+      "x-lvk-i18n-title": "settings:executorSchemas.claude_code.additional_params.title",
+      "x-lvk-i18n-description": "settings:executorSchemas.claude_code.additional_params.description"
     },
     "env": {
       "title": "Environment Variables",
@@ -103,7 +153,9 @@
       ],
       "additionalProperties": {
         "type": "string"
-      }
+      },
+      "x-lvk-i18n-title": "settings:executorSchemas.claude_code.env.title",
+      "x-lvk-i18n-description": "settings:executorSchemas.claude_code.env.description"
     }
   },
   "type": "object"

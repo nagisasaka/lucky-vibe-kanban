@@ -1,3 +1,4 @@
+import { errorDiagnostic } from '@/shared/lib/errorDiagnostic';
 import { useState, useEffect, useMemo } from 'react';
 import { Button } from '@vibe/ui/components/Button';
 import { Input } from '@vibe/ui/components/Input';
@@ -44,7 +45,16 @@ const CreateRemoteProjectDialogImpl = create<CreateRemoteProjectDialogProps>(
     const [name, setName] = useState('');
     const [keyInput, setKeyInput] = useState<string | null>(null);
     const [color, setColor] = useState<string>(() => getRandomPresetColor());
-    const [error, setError] = useState<string | null>(null);
+    const [error, setError] = useState<
+      | 'nameRequired'
+      | 'nameShort'
+      | 'nameLong'
+      | 'keyInvalid'
+      | 'keyDuplicate'
+      | 'unconfirmed'
+      | null
+    >(null);
+    const [errorDetail, setErrorDetail] = useState<string | null>(null);
     const [isCreating, setIsCreating] = useState(false);
 
     const params = useMemo(
@@ -74,24 +84,26 @@ const CreateRemoteProjectDialogImpl = create<CreateRemoteProjectDialogProps>(
         setKeyInput(null);
         setColor(getRandomPresetColor());
         setError(null);
+        setErrorDetail(null);
         setIsCreating(false);
       }
     }, [modal.visible]);
 
     useEffect(() => {
       if (syncError) {
-        setError(syncError.message || 'Failed to create project');
+        setErrorDetail(errorDiagnostic(syncError));
+        setError('unconfirmed');
         setIsCreating(false);
       }
     }, [syncError]);
 
-    const validateName = (value: string): string | null => {
+    const validateName = (
+      value: string
+    ): 'nameRequired' | 'nameShort' | 'nameLong' | null => {
       const trimmedValue = value.trim();
-      if (!trimmedValue) return 'Project name is required';
-      if (trimmedValue.length < 2)
-        return 'Project name must be at least 2 characters';
-      if (trimmedValue.length > 100)
-        return 'Project name must be 100 characters or less';
+      if (!trimmedValue) return 'nameRequired';
+      if (trimmedValue.length < 2) return 'nameShort';
+      if (trimmedValue.length > 100) return 'nameLong';
       return null;
     };
 
@@ -103,17 +115,18 @@ const CreateRemoteProjectDialogImpl = create<CreateRemoteProjectDialogProps>(
       }
 
       if (!isValidProjectKey(key)) {
-        setError(t('createProjectDialog.keyInvalid'));
+        setError('keyInvalid');
         return;
       }
       if (
         projects.some((project) => project.key === normalizeProjectKey(key))
       ) {
-        setError(t('createProjectDialog.keyDuplicate'));
+        setError('keyDuplicate');
         return;
       }
       setKeyInput(key);
       setError(null);
+      setErrorDetail(null);
       setIsCreating(true);
 
       try {
@@ -132,9 +145,8 @@ const CreateRemoteProjectDialogImpl = create<CreateRemoteProjectDialogProps>(
         } as CreateRemoteProjectResult);
         modal.hide();
       } catch (err) {
-        setError(
-          err instanceof Error ? err.message : 'Failed to create project'
-        );
+        setErrorDetail(errorDiagnostic(err));
+        setError('unconfirmed');
         setIsCreating(false);
       }
     };
@@ -186,6 +198,7 @@ const CreateRemoteProjectDialogImpl = create<CreateRemoteProjectDialogProps>(
                   onChange={(e) => {
                     setName(e.target.value);
                     setError(null);
+                    setErrorDetail(null);
                   }}
                   onKeyDown={handleKeyDown}
                   placeholder={t(
@@ -229,6 +242,7 @@ const CreateRemoteProjectDialogImpl = create<CreateRemoteProjectDialogProps>(
                 onChange={(event) => {
                   setKeyInput(normalizeProjectKey(event.target.value));
                   setError(null);
+                  setErrorDetail(null);
                 }}
                 onKeyDown={handleKeyDown}
                 disabled={isCreating}
@@ -241,7 +255,9 @@ const CreateRemoteProjectDialogImpl = create<CreateRemoteProjectDialogProps>(
 
             {error && (
               <Alert variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
+                <AlertDescription>
+                  {t(`createProjectDialog.${error}`)} {errorDetail}
+                </AlertDescription>
               </Alert>
             )}
           </div>

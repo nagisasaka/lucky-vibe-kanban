@@ -379,15 +379,25 @@ export function ModelSelectorContainer({
     persistPendingSelections();
   }, [isOpen, persistPendingSelections]);
 
-  const presetLabel = resolvedPreset
-    ? toPrettyCase(resolvedPreset)
-    : defaultLabel;
+  const presetLabel =
+    resolvedPreset && resolvedPreset !== 'DEFAULT'
+      ? toPrettyCase(resolvedPreset)
+      : defaultLabel;
 
   if (!config) {
     return (
       <>
         <DropdownMenu>
-          <DropdownMenuTriggerButton size="sm" label={loadingLabel} disabled />
+          <DropdownMenuTriggerButton
+            size="sm"
+            label={streamError ? t('modelSelector.unavailable') : loadingLabel}
+            disabled
+          />
+          {streamError && (
+            <span role="alert" className="text-sm text-error">
+              {t('modelSelector.loadError')} {streamError}
+            </span>
+          )}
         </DropdownMenu>
       </>
     );
@@ -432,10 +442,10 @@ export function ModelSelectorContainer({
   const isGoalMode = executionMode === ExecutionMode.goal;
   const parallelAgentLimit = executorConfig?.goal_max_concurrent_agents ?? 0;
   const executionModeOptions = [
-    { value: ExecutionMode.code, label: 'Code' },
-    { value: ExecutionMode.review, label: 'Review' },
-    { value: ExecutionMode.plan, label: 'Plan' },
-    { value: ExecutionMode.goal, label: 'Goal' },
+    { value: ExecutionMode.code, label: t('modelSelector.modeCode') },
+    { value: ExecutionMode.review, label: t('modelSelector.modeReview') },
+    { value: ExecutionMode.plan, label: t('modelSelector.modePlan') },
+    { value: ExecutionMode.goal, label: t('modelSelector.modeGoal') },
   ];
   const handleExecutionModeChange = (nextMode: ExecutionMode) => {
     const usesGoalOptions = nextMode === ExecutionMode.goal;
@@ -481,7 +491,7 @@ export function ModelSelectorContainer({
                 icon={preset === resolvedPreset ? CheckIcon : undefined}
                 onClick={() => onPresetSelect?.(preset)}
               >
-                {toPrettyCase(preset)}
+                {preset === 'DEFAULT' ? defaultLabel : toPrettyCase(preset)}
               </DropdownMenuItem>
             ))
           ) : (
@@ -524,12 +534,23 @@ export function ModelSelectorContainer({
         />
       )}
 
+      {!showModelSelector && streamError && (
+        <span role="alert" className="text-sm text-error">
+          {t('modelSelector.loadError')} {streamError}
+        </span>
+      )}
+      {!loadingModels && !streamError && config.models.length === 0 && (
+        <span role="status" className="text-sm text-low">
+          {t('modelSelector.noModels')}
+        </span>
+      )}
+
       {isCodex && (
         <DropdownMenu>
           <DropdownMenuTriggerButton
             title={
               executionMode === ExecutionMode.review
-                ? 'Review and investigate; report findings and stop. Implementation requires a separate instruction.'
+                ? t('modelSelector.reviewHint')
                 : undefined
             }
             size="sm"
@@ -544,11 +565,13 @@ export function ModelSelectorContainer({
             }
             label={
               executionModeOptions.find(({ value }) => value === executionMode)
-                ?.label ?? 'Code'
+                ?.label ?? t('modelSelector.modeCode')
             }
           />
           <DropdownMenuContent align="start">
-            <DropdownMenuLabel>Execution mode</DropdownMenuLabel>
+            <DropdownMenuLabel>
+              {t('modelSelector.executionMode')}
+            </DropdownMenuLabel>
             {executionModeOptions.map(({ value, label }) => (
               <DropdownMenuItem
                 key={value}
@@ -567,19 +590,21 @@ export function ModelSelectorContainer({
           <DropdownMenuTriggerButton
             size="sm"
             icon={TargetIcon}
-            label="Goal settings"
+            label={t('modelSelector.goalSettings')}
           />
           <DropdownMenuContent align="start" className="w-72">
-            <DropdownMenuLabel>Goal settings</DropdownMenuLabel>
+            <DropdownMenuLabel>
+              {t('modelSelector.goalSettings')}
+            </DropdownMenuLabel>
             <div className="space-y-base px-base py-base">
               <label className="block space-y-half text-sm text-normal">
-                <span>Token budget</span>
+                <span>{t('modelSelector.tokenBudget')}</span>
                 <input
                   type="number"
                   min={1}
                   step={1}
                   value={executorConfig?.goal_token_budget ?? ''}
-                  placeholder="Auto"
+                  placeholder={t('modelSelector.auto')}
                   onChange={(event) =>
                     onOverrideChange({
                       goal_token_budget: parsePositiveInteger(
@@ -590,8 +615,12 @@ export function ModelSelectorContainer({
                   className="border-border bg-primary text-normal w-full rounded-sm border px-base py-half"
                 />
               </label>
-              <label className="block space-y-half text-sm text-normal">
-                <span>Parallel agents</span>
+              <div
+                role="group"
+                aria-label={t('modelSelector.parallelAgents')}
+                className="block space-y-half text-sm text-normal"
+              >
+                <span>{t('modelSelector.parallelAgents')}</span>
                 <div className="flex gap-half">
                   <button
                     type="button"
@@ -600,7 +629,7 @@ export function ModelSelectorContainer({
                       onOverrideChange({ goal_max_concurrent_agents: null })
                     }
                   >
-                    Auto
+                    {t('modelSelector.auto')}
                   </button>
                   <button
                     type="button"
@@ -609,15 +638,15 @@ export function ModelSelectorContainer({
                       onOverrideChange({ goal_max_concurrent_agents: 0 })
                     }
                   >
-                    Off
+                    {t('modelSelector.off')}
                   </button>
                   <input
                     type="number"
                     min={1}
                     step={1}
                     value={parallelAgentLimit > 0 ? parallelAgentLimit : ''}
-                    placeholder="Max"
-                    aria-label="Parallel agent limit"
+                    placeholder={t('modelSelector.maximum')}
+                    aria-label={t('modelSelector.parallelAgentLimit')}
                     onChange={(event) =>
                       onOverrideChange({
                         goal_max_concurrent_agents: parsePositiveInteger(
@@ -628,10 +657,9 @@ export function ModelSelectorContainer({
                     className="border-border bg-primary text-normal min-w-0 flex-1 rounded-sm border px-base py-half"
                   />
                 </div>
-              </label>
+              </div>
               <p className="text-xs text-low">
-                Parallel agents is a maximum for subagents, excluding the main
-                agent.
+                {t('modelSelector.parallelHint')}
               </p>
             </div>
           </DropdownMenuContent>
@@ -643,6 +671,7 @@ export function ModelSelectorContainer({
           <DropdownMenuTriggerButton
             size="sm"
             icon={permissionIcon}
+            aria-label={t('modelSelector.permissions')}
             showCaret={false}
           />
           <DropdownMenuContent align="start">

@@ -87,40 +87,23 @@ impl ExecutorApprovalBridge {
                         .workspace
                         .name
                         .unwrap_or_else(|| ctx.workspace.branch.clone());
-                    (name, Some(ctx.workspace.id))
+                    (Some(name), Some(ctx.workspace.id))
                 })
-                .unwrap_or_else(|_| ("Unknown workspace".to_string(), None));
+                .unwrap_or_else(|_| (None, None));
 
-        let (title, message) = if let Some(count) = question_count {
-            if count == 1 {
-                (
-                    format!("Question Asked: {}", workspace_name),
-                    "1 question requires an answer".to_string(),
-                )
-            } else {
-                (
-                    format!("Question Asked: {}", workspace_name),
-                    format!("{} questions require answers", count),
-                )
+        let content = if let Some(count) = question_count {
+            crate::services::notification::text::OwnedNotification::Questions {
+                workspace: workspace_name.as_deref(),
+                count,
             }
         } else {
-            (
-                format!("Approval Needed: {}", workspace_name),
-                format!("Tool '{}' requires approval", tool_name),
-            )
+            crate::services::notification::text::OwnedNotification::Approval {
+                workspace: workspace_name.as_deref(),
+                tool: tool_name,
+            }
         };
-
         notification_service
-            .notify(
-                if question_count.is_some() {
-                    crate::services::notification::NotificationEvent::Question
-                } else {
-                    crate::services::notification::NotificationEvent::Approval
-                },
-                &title,
-                &message,
-                workspace_id,
-            )
+            .notify_owned(content, workspace_id)
             .await;
 
         Ok(approval_id)

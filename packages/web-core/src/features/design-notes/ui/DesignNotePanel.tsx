@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next';
+import { ApiError } from '@/shared/lib/api';
 import { useId, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type {
@@ -16,12 +18,17 @@ const button =
   'rounded-sm border border-border px-base py-half text-sm text-normal hover:bg-secondary focus-visible:ring-1 focus-visible:ring-brand disabled:opacity-50';
 const input =
   'w-full rounded-sm border border-border bg-primary p-base text-normal focus-visible:ring-1 focus-visible:ring-brand';
-const kinds: Record<string, string> = {
-  decision: '確定事項（出典のある人間の判断）',
-  proposal: '提案',
-  open_question: '未決事項',
-};
-const date = (value: string) => new Date(value).toLocaleString();
+function useDesignNoteText() {
+  const { t, i18n } = useTranslation('common');
+  const kinds: Record<string, string> = {
+    decision: t('designNotes.kinds.decision'),
+    proposal: t('designNotes.kinds.proposal'),
+    open_question: t('designNotes.kinds.openQuestion'),
+  };
+  const date = (value: string) =>
+    new Date(value).toLocaleString(i18n.resolvedLanguage || i18n.language);
+  return { t, kinds, date };
+}
 function Markdown({ value }: { value: string }) {
   return (
     <WYSIWYGEditor value={value} disabled className="break-words p-base" />
@@ -42,6 +49,7 @@ function MarkdownInput({
   placeholder: string;
   className: string;
 }) {
+  const { t } = useDesignNoteText();
   const id = useId();
   const [tab, setTab] = useState('edit');
   return (
@@ -75,7 +83,7 @@ function MarkdownInput({
               document.getElementById(`${id}-${next}`)?.focus();
             }}
           >
-            {mode === 'edit' ? '編集' : 'プレビュー'}
+            {mode === 'edit' ? t('designNotes.edit') : t('designNotes.preview')}
           </button>
         ))}
       </div>
@@ -109,12 +117,16 @@ function MarkdownInput({
 }
 type Write = (operation: DesignNoteAction) => Promise<DesignNoteResult>;
 export function DesignNotePanel({ projectId }: { projectId: string }) {
+  const { t, date } = useDesignNoteText();
   const client = useQueryClient();
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState<
+    'conflict' | 'invalid' | 'unconfirmed' | null
+  >(null);
+  const [errorDetail, setErrorDetail] = useState<string | null>(null);
   const active = useRef(false);
   // Retain an identical request ID after a lost response; changed input is a new intent.
   const request = useRef({ fingerprint: '', id: '' });
@@ -131,10 +143,11 @@ export function DesignNotePanel({ projectId }: { projectId: string }) {
     refetchInterval: 5000,
   });
   const write: Write = async (operation) => {
-    if (active.current) throw new Error('保存中です');
+    if (active.current) throw new Error(t('designNotes.saving'));
     active.current = true;
     setBusy(true);
-    setError('');
+    setError(null);
+    setErrorDetail(null);
     const fingerprint = JSON.stringify(operation);
     if (request.current.fingerprint !== fingerprint)
       request.current = { fingerprint, id: crypto.randomUUID() };
@@ -147,8 +160,13 @@ export function DesignNotePanel({ projectId }: { projectId: string }) {
       request.current = { fingerprint: '', id: '' };
       return result;
     } catch (e) {
+      setErrorDetail(e instanceof Error ? e.message : String(e));
       setError(
-        `${e instanceof Error ? e.message : String(e)}。入力は保持しています。最新の内容を確認してから編集し直してください。`
+        e instanceof ApiError && e.status === 409
+          ? 'conflict'
+          : e instanceof ApiError && e.status === 400
+            ? 'invalid'
+            : 'unconfirmed'
       );
       // Refresh the comparison/current view immediately, without changing the
       // captured editor revision or draft. Reapplication remains explicit.
@@ -175,22 +193,27 @@ export function DesignNotePanel({ projectId }: { projectId: string }) {
           }}
           disabled={busy}
         >
-          新しい設計メモ
+          {t('designNotes.create')}
         </button>
         <input
           type="search"
-          aria-label="設計メモを検索"
-          placeholder="タイトル・本文を検索"
+          aria-label={t('designNotes.search')}
+          placeholder={t('designNotes.searchPlaceholder')}
           className={`${input} mt-base`}
           value={search}
           onChange={(event) => setSearch(event.target.value)}
         />
-        {list.error && <p role="alert">{String(list.error)}</p>}
-        {list.isLoading && <p>読み込み中…</p>}
-        {list.data?.length === 0 && (
-          <p className="p-base text-low">
-            最初の考えと、その後の判断を残せます。
+        {list.error && (
+          <p role="alert">
+            {t('designNotes.errors.list')}{' '}
+            {list.error instanceof Error
+              ? list.error.message
+              : String(list.error)}
           </p>
+        )}
+        {list.isLoading && <p>{t('designNotes.loading')}</p>}
+        {list.data?.length === 0 && (
+          <p className="p-base text-low">{t('designNotes.empty')}</p>
         )}
         {list.data
           ?.filter((n) => matchesListSearch(search, n.title, n.body))
@@ -203,7 +226,8 @@ export function DesignNotePanel({ projectId }: { projectId: string }) {
               onClick={() => {
                 setSelected(n.id);
                 setCreating(false);
-                setError('');
+                setError(null);
+                setErrorDetail(null);
               }}
             >
               <span className="block">{n.title}</span>
@@ -222,11 +246,16 @@ export function DesignNotePanel({ projectId }: { projectId: string }) {
             setCreating(false);
           }}
         >
-          一覧へ
+          {t('designNotes.back')}
         </button>
         {error && (
           <p role="alert" className="mb-base text-error">
-            {error}
+            {error === 'conflict'
+              ? t('designNotes.errors.conflict')
+              : error === 'invalid'
+                ? t('designNotes.errors.invalid')
+                : t('designNotes.errors.unconfirmed')}{' '}
+            {errorDetail}
           </p>
         )}
         {creating ? (
@@ -241,8 +270,15 @@ export function DesignNotePanel({ projectId }: { projectId: string }) {
           />
         ) : selected ? (
           <>
-            {detail.error && <p role="alert">{String(detail.error)}</p>}
-            {detail.isLoading && <p>読み込み中…</p>}
+            {detail.error && (
+              <p role="alert">
+                {t('designNotes.errors.detail')}{' '}
+                {detail.error instanceof Error
+                  ? detail.error.message
+                  : String(detail.error)}
+              </p>
+            )}
+            {detail.isLoading && <p>{t('designNotes.loading')}</p>}
             {detail.data && (
               <NoteDetail
                 key={selected}
@@ -255,7 +291,7 @@ export function DesignNotePanel({ projectId }: { projectId: string }) {
             )}
           </>
         ) : (
-          <p className="text-low">設計メモを選択してください。</p>
+          <p className="text-low">{t('designNotes.select')}</p>
         )}
       </main>
     </div>
@@ -272,6 +308,7 @@ function BodyForm({
   onCancel: () => void;
   busy: boolean;
 }) {
+  const { t } = useDesignNoteText();
   const [title, setTitle] = useState(note?.title ?? '');
   const [body, setBody] = useState(note?.body ?? '');
   const [reason, setReason] = useState('');
@@ -284,7 +321,7 @@ function BodyForm({
       }}
     >
       <label className="block">
-        タイトル
+        {t('designNotes.title')}
         <input
           className={input}
           value={title}
@@ -295,21 +332,21 @@ function BodyForm({
         />
       </label>
       <div>
-        <span>本文（Markdown）</span>
+        <span>{t('designNotes.body')}</span>
         <div data-testid="note-body-editor">
           <MarkdownInput
             value={body}
             onChange={setBody}
             busy={busy}
-            label="本文（Markdown）"
-            placeholder="何を作りたいか、なぜそう考えたか"
+            label={t('designNotes.body')}
+            placeholder={t('designNotes.bodyPlaceholder')}
             className="min-h-40 p-base"
           />
         </div>
       </div>
       {note && (
         <label className="block">
-          変更理由（任意）
+          {t('designNotes.optionalReason')}
           <input
             className={input}
             value={reason}
@@ -321,7 +358,7 @@ function BodyForm({
       )}
       <div className="flex gap-base">
         <button className={button} disabled={busy || !title.trim()}>
-          保存
+          {t('designNotes.save')}
         </button>
         <button
           type="button"
@@ -329,7 +366,7 @@ function BodyForm({
           disabled={busy}
           onClick={onCancel}
         >
-          キャンセル
+          {t('designNotes.cancel')}
         </button>
       </div>
     </form>
@@ -348,6 +385,7 @@ function NoteDetail({
   write: Write;
   busy: boolean;
 }) {
+  const { t, date } = useDesignNoteText();
   // Capture the version being edited. Background refresh must never silently rebase a draft.
   const [editing, setEditing] = useState<DesignNote | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -385,18 +423,21 @@ function NoteDetail({
             data-testid="body-conflict-current"
           >
             <p>
-              保存済みの現在版（revision {note.revision}）: {note.title}
+              {t('designNotes.currentBody', {
+                revision: note.revision,
+                title: note.title,
+              })}
             </p>
             <Markdown value={note.body} />
             <p className="text-sm text-low">
-              上の下書きは保持しています。差分を確認し、必要な内容を下書きへ取り込んでから再適用してください。
+              {t('designNotes.bodyConflictHint')}
             </p>
             <button
               className={button}
               disabled={busy}
               onClick={() => setEditing(note)}
             >
-              現在版を確認したので本文の下書きを再適用
+              {t('designNotes.reapplyBody')}
             </button>
           </section>
         )}
@@ -407,10 +448,20 @@ function NoteDetail({
       <header className="space-y-base">
         <h2 className="text-xl text-high break-words">{shown.title}</h2>
         <p className="text-xs text-low break-all">
-          {viewed ? '過去版' : '現在版'} · revision {shown.revision} ·{' '}
-          {date(shown.updated_at)} · 編集者: {shown.editor}
+          {t('designNotes.bodyMetadata', {
+            version: viewed
+              ? t('designNotes.pastVersion')
+              : t('designNotes.currentVersion'),
+            revision: shown.revision,
+            date: date(shown.updated_at),
+            editor: shown.editor,
+          })}
         </p>
-        {shown.change_reason && <p>変更理由: {shown.change_reason}</p>}
+        {shown.change_reason && (
+          <p>
+            {t('designNotes.changeReason', { reason: shown.change_reason })}
+          </p>
+        )}
         <div className="flex flex-wrap gap-base">
           <button
             className={button}
@@ -420,18 +471,18 @@ function NoteDetail({
               setEditing(note);
             }}
           >
-            本文を編集
+            {t('designNotes.editBody')}
           </button>
           <button
             className={button}
             onClick={() => setHistoryOpen(!historyOpen)}
           >
-            履歴・初版
+            {t('designNotes.history')}
           </button>
           {viewed && (
             <>
               <button className={button} onClick={() => setViewed(null)}>
-                現在版へ
+                {t('designNotes.showCurrent')}
               </button>
               <button
                 className={button}
@@ -448,7 +499,7 @@ function NoteDetail({
                     .catch(() => {})
                 }
               >
-                この版を新しい版として復元
+                {t('designNotes.restore')}
               </button>
             </>
           )}
@@ -456,9 +507,16 @@ function NoteDetail({
         {historyOpen && (
           <div className="space-y-base rounded-sm border border-border p-base">
             <p className="text-xs text-low">
-              初版はこのメモの最初の記録です。Project創始時の思想とは限りません。
+              {t('designNotes.firstVersionHint')}
             </p>
-            {history.error && <p role="alert">{String(history.error)}</p>}
+            {history.error && (
+              <p role="alert">
+                {t('designNotes.errors.history')}{' '}
+                {history.error instanceof Error
+                  ? history.error.message
+                  : String(history.error)}
+              </p>
+            )}
             <div className="flex flex-wrap gap-base">
               {history.data?.map((n) => (
                 <button
@@ -466,8 +524,10 @@ function NoteDetail({
                   className={button}
                   onClick={() => setViewed(n)}
                 >
-                  {n.revision === 1 ? '初版' : `revision ${n.revision}`} ·{' '}
-                  {date(n.updated_at)}
+                  {n.revision === 1
+                    ? t('designNotes.firstVersion')
+                    : t('designNotes.revision', { revision: n.revision })}{' '}
+                  · {date(n.updated_at)}
                 </button>
               ))}
             </div>
@@ -481,17 +541,15 @@ function NoteDetail({
         <Markdown value={shown.body} />
       </section>
       <section className="space-y-base border-t border-border pt-double">
-        <h3 className="text-lg text-high">会話からの追記</h3>
-        <p className="text-xs text-low">
-          本文とは別の記録です。出典の明確な最新の人間の判断を尊重し、AIの提案と区別します。
-        </p>
+        <h3 className="text-lg text-high">{t('designNotes.additions')}</h3>
+        <p className="text-xs text-low">{t('designNotes.additionsHint')}</p>
         <div className="flex flex-wrap gap-base">
           <button
             className={button}
             disabled={busy}
             onClick={() => setAdding(!adding)}
           >
-            追記する
+            {t('designNotes.append')}
           </button>
           <label>
             <input
@@ -499,7 +557,7 @@ function NoteDetail({
               checked={showHidden}
               onChange={(e) => setShowHidden(e.target.checked)}
             />{' '}
-            非表示の追記も表示
+            {t('designNotes.showHidden')}
           </label>
         </div>
         {adding && (
@@ -529,27 +587,34 @@ function NoteDetail({
   );
 }
 function AdditionText({ addition: a }: { addition: DesignNoteAddition }) {
+  const { t, kinds, date } = useDesignNoteText();
   return (
     <>
       <h4 className="text-high break-words">
         {a.heading}
-        {a.hidden && '（非表示）'}
+        {a.hidden && t('designNotes.hidden')}
       </h4>
       <p className="text-sm">{kinds[a.kind] ?? a.kind}</p>
       <Markdown value={a.content} />
       <dl className="space-y-half text-xs text-low break-all">
-        <dt>発言者・考えの出所</dt>
+        <dt>{t('designNotes.speakerOrigin')}</dt>
         <dd>{a.speaker}</dd>
-        <dt>出典</dt>
+        <dt>{t('designNotes.source')}</dt>
         <dd>{a.source}</dd>
-        <dt>記録者</dt>
+        <dt>{t('designNotes.recorder')}</dt>
         <dd>{a.recorder}</dd>
-        <dt>参照本文版</dt>
-        <dd>revision {a.referenced_body_revision}</dd>
-        <dt>記録日時 / 更新日時・編集者</dt>
+        <dt>{t('designNotes.referencedVersion')}</dt>
         <dd>
-          {date(a.created_at)} / {date(a.updated_at)} · {a.editor} ·
-          追記revision {a.revision}
+          {t('designNotes.revision', { revision: a.referenced_body_revision })}
+        </dd>
+        <dt>{t('designNotes.recordedUpdated')}</dt>
+        <dd>
+          {t('designNotes.additionMetadata', {
+            created: date(a.created_at),
+            updated: date(a.updated_at),
+            editor: a.editor,
+            revision: a.revision,
+          })}
         </dd>
       </dl>
       {a.short_quote && (
@@ -575,6 +640,7 @@ function Addition({
   write: Write;
   busy: boolean;
 }) {
+  const { t } = useDesignNoteText();
   const [editing, setEditing] = useState<DesignNoteAddition | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
   const history = useQuery({
@@ -596,7 +662,7 @@ function Addition({
           disabled={busy || !!editing}
           onClick={() => setEditing(a)}
         >
-          追記を訂正
+          {t('designNotes.correctAddition')}
         </button>
         <button
           className={button}
@@ -611,20 +677,16 @@ function Addition({
             }).catch(() => {})
           }
         >
-          {a.hidden ? '再表示' : '非表示にする'}
+          {a.hidden ? t('designNotes.unhide') : t('designNotes.hide')}
         </button>
         <button className={button} onClick={() => setHistoryOpen(!historyOpen)}>
-          追記の履歴
+          {t('designNotes.additionHistory')}
         </button>
         <button
           className={button}
           disabled={busy || a.hidden || !!editing}
           onClick={() => {
-            if (
-              window.confirm(
-                'この追記を現在の本文末尾に追加し、新しい本文revisionとして保存します。元の追記と履歴は残ります。'
-              )
-            )
+            if (window.confirm(t('designNotes.integrateConfirm')))
               void write({
                 action: 'integrate',
                 note_id: note.id,
@@ -635,7 +697,7 @@ function Addition({
               }).catch(() => {});
           }}
         >
-          本文へ統合
+          {t('designNotes.integrate')}
         </button>
       </div>
       {editing && (
@@ -661,22 +723,26 @@ function Addition({
           className="space-y-base border border-border p-base"
           data-testid="addition-conflict-current"
         >
-          <p>
-            保存済みの現在版は上に表示しています（追記revision {a.revision}
-            ）。下書きは保持しています。出典と内容の差分を確認してから再適用してください。
-          </p>
+          <p>{t('designNotes.additionConflict', { revision: a.revision })}</p>
           <button
             className={button}
             disabled={busy}
             onClick={() => setEditing(a)}
           >
-            現在版を確認したので追記の下書きを再適用
+            {t('designNotes.reapplyAddition')}
           </button>
         </div>
       )}
       {historyOpen && (
         <div className="space-y-base">
-          {history.error && <p role="alert">{String(history.error)}</p>}
+          {history.error && (
+            <p role="alert">
+              {t('designNotes.errors.history')}{' '}
+              {history.error instanceof Error
+                ? history.error.message
+                : String(history.error)}
+            </p>
+          )}
           {history.data?.map((old) => (
             <div className="border-t border-border pt-base" key={old.revision}>
               <AdditionText addition={old} />
@@ -700,6 +766,7 @@ function AdditionForm({
   onSave: (a: AdditionContent) => Promise<void>;
   onCancel: () => void;
 }) {
+  const { t, kinds } = useDesignNoteText();
   const [value, setValue] = useState<AdditionContent>({
     heading: initial?.heading ?? '',
     content: initial?.content ?? '',
@@ -721,9 +788,9 @@ function AdditionForm({
         <label key={field} className="block">
           {
             {
-              heading: '短い見出し',
-              speaker: '発言者',
-              source: '出典（会話・発言の参照）',
+              heading: t('designNotes.heading'),
+              speaker: t('designNotes.speaker'),
+              source: t('designNotes.sourceReference'),
             }[field]
           }
           <input
@@ -737,7 +804,7 @@ function AdditionForm({
         </label>
       ))}
       <label className="block">
-        区分
+        {t('designNotes.kind')}
         <select
           className={input}
           value={value.kind}
@@ -756,13 +823,13 @@ function AdditionForm({
           value={value.content}
           onChange={(content) => setValue({ ...value, content })}
           busy={busy}
-          label="追記の内容（Markdown）"
-          placeholder="重要な判断・提案・未決事項を短く記録"
+          label={t('designNotes.additionContent')}
+          placeholder={t('designNotes.additionPlaceholder')}
           className="min-h-24 p-base"
         />
       </div>
       <label className="block">
-        参照本文revision
+        {t('designNotes.referencedRevision')}
         <input
           type="number"
           min={1}
@@ -779,7 +846,7 @@ function AdditionForm({
         />
       </label>
       <label className="block">
-        短い引用（任意）
+        {t('designNotes.optionalQuote')}
         <input
           className={input}
           value={value.short_quote ?? ''}
@@ -792,7 +859,7 @@ function AdditionForm({
       </label>
       <div className="flex gap-base">
         <button className={button} disabled={busy || !value.content.trim()}>
-          追記を保存
+          {t('designNotes.saveAddition')}
         </button>
         <button
           type="button"
@@ -800,7 +867,7 @@ function AdditionForm({
           disabled={busy}
           onClick={onCancel}
         >
-          キャンセル
+          {t('designNotes.cancel')}
         </button>
       </div>
     </form>

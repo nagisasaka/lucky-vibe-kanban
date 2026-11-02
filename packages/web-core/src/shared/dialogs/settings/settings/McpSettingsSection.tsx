@@ -35,7 +35,17 @@ export function McpSettingsSection() {
   const [mcpServers, setMcpServers] = useState('{}');
   const [originalMcpServers, setOriginalMcpServers] = useState('{}');
   const [mcpConfig, setMcpConfig] = useState<McpConfig | null>(null);
-  const [mcpError, setMcpError] = useState<string | null>(null);
+  const [mcpError, setMcpError] = useState<
+    | 'loadFailed'
+    | 'invalidJson'
+    | 'validationError'
+    | 'saveFailed'
+    | 'applyFailed'
+    | 'addServerFailed'
+    | 'notSupported'
+    | null
+  >(null);
+  const [errorDetail, setErrorDetail] = useState<string | null>(null);
   const [mcpLoading, setMcpLoading] = useState(false);
   const [selectedProfileKey, setSelectedProfileKey] =
     useState<BaseCodingAgent | null>(null);
@@ -80,6 +90,7 @@ export function McpSettingsSection() {
     const loadMcpServersForProfile = async (profileKey: BaseCodingAgent) => {
       setMcpLoading(true);
       setMcpError(null);
+      setErrorDetail(null);
       setMcpConfigPath('');
 
       try {
@@ -103,10 +114,11 @@ export function McpSettingsSection() {
         setMcpConfigPath(result.config_path);
       } catch (err: unknown) {
         if (!active) return;
+        setErrorDetail(err instanceof Error ? err.message : String(err));
         setMcpError(
-          err instanceof Error
-            ? err.message
-            : t('settings.mcp.errors.loadFailed')
+          err instanceof Error && err.message.includes('does not support MCP')
+            ? 'notSupported'
+            : 'loadFailed'
         );
         setRevision(null);
       } finally {
@@ -126,25 +138,23 @@ export function McpSettingsSection() {
     return () => {
       active = false;
     };
-  }, [machineClient, selectedProfileKey, hasConsent, t]);
+  }, [machineClient, selectedProfileKey, hasConsent]);
 
   const handleMcpServersChange = (value: string) => {
     setMcpServers(value);
     setMcpError(null);
+    setErrorDetail(null);
 
     if (value.trim() && mcpConfig) {
       try {
         const parsedConfig = JSON.parse(value);
         McpConfigStrategyGeneral.validateFullConfig(mcpConfig, parsedConfig);
       } catch (err) {
+        setErrorDetail(err instanceof Error ? err.message : String(err));
         if (err instanceof SyntaxError) {
-          setMcpError(t('settings.mcp.errors.invalidJson'));
+          setMcpError('invalidJson');
         } else {
-          setMcpError(
-            err instanceof Error
-              ? err.message
-              : t('settings.mcp.errors.validationError')
-          );
+          setMcpError('validationError');
         }
       }
     }
@@ -163,6 +173,7 @@ export function McpSettingsSection() {
 
     setMcpApplying(true);
     setMcpError(null);
+    setErrorDetail(null);
 
     try {
       if (mcpServers.trim()) {
@@ -193,19 +204,19 @@ export function McpSettingsSection() {
           setSuccess(true);
           setTimeout(() => setSuccess(false), 3000);
         } catch (mcpErr) {
+          setErrorDetail(
+            mcpErr instanceof Error ? mcpErr.message : String(mcpErr)
+          );
           if (mcpErr instanceof SyntaxError) {
-            setMcpError(t('settings.mcp.errors.invalidJson'));
+            setMcpError('invalidJson');
           } else {
-            setMcpError(
-              mcpErr instanceof Error
-                ? mcpErr.message
-                : t('settings.mcp.errors.saveFailed')
-            );
+            setMcpError('saveFailed');
           }
         }
       }
     } catch (err) {
-      setMcpError(t('settings.mcp.errors.applyFailed'));
+      setErrorDetail(err instanceof Error ? err.message : String(err));
+      setMcpError('applyFailed');
       console.error('Error applying MCP servers:', err);
     } finally {
       setMcpApplying(false);
@@ -215,6 +226,7 @@ export function McpSettingsSection() {
   const handleDiscard = () => {
     setMcpServers(originalMcpServers);
     setMcpError(null);
+    setErrorDetail(null);
   };
 
   const addServer = (key: string) => {
@@ -227,13 +239,11 @@ export function McpSettingsSection() {
       );
       setMcpServers(JSON.stringify(updated, null, 2));
       setMcpError(null);
+      setErrorDetail(null);
     } catch (err) {
+      setErrorDetail(err instanceof Error ? err.message : String(err));
       console.error(err);
-      setMcpError(
-        err instanceof Error
-          ? err.message
-          : t('settings.mcp.errors.addServerFailed')
-      );
+      setMcpError('addServerFailed');
     }
   };
 
@@ -272,9 +282,11 @@ export function McpSettingsSection() {
   return (
     <>
       {/* Status messages */}
-      {mcpError && !mcpError.includes('does not support MCP') && (
+      {mcpError && mcpError !== 'notSupported' && (
         <div className="bg-error/10 border border-error/50 rounded-sm p-4 text-error">
-          {t('settings.mcp.errors.mcpError', { error: mcpError })}
+          {t('settings.mcp.errors.mcpError', {
+            error: `${t(`settings.mcp.errors.${mcpError}`)} ${errorDetail ?? ''}`,
+          })}
         </div>
       )}
 
@@ -341,14 +353,15 @@ export function McpSettingsSection() {
               {t('settings.mcp.sensitive.read')}
             </button>
           </div>
-        ) : mcpError && mcpError.includes('does not support MCP') ? (
+        ) : mcpError === 'notSupported' ? (
           <div className="rounded-sm border border-warning/50 bg-warning/10 p-4">
             <h3 className="text-sm font-medium text-warning">
               {t('settings.mcp.errors.notSupported')}
             </h3>
             <div className="mt-2 text-sm text-low">
-              <p>{mcpError}</p>
-              <p className="mt-1">{t('settings.mcp.errors.supportMessage')}</p>
+              <p className="mt-1">
+                {t('settings.mcp.errors.supportMessage')} {errorDetail}
+              </p>
             </div>
           </div>
         ) : (
@@ -404,7 +417,8 @@ export function McpSettingsSection() {
                       };
                       const name = metaObj.name || key;
                       const description =
-                        metaObj.description || 'No description';
+                        metaObj.description ||
+                        t('settings.mcp.labels.noDescription');
                       const icon = metaObj.icon ? `/${metaObj.icon}` : null;
 
                       return (
@@ -453,7 +467,7 @@ export function McpSettingsSection() {
       </SettingsCard>
 
       <SettingsSaveBar
-        show={isDirty && !mcpError?.includes('does not support MCP')}
+        show={isDirty && mcpError !== 'notSupported'}
         saving={mcpApplying}
         saveDisabled={
           !!mcpError || !revision || !canEdit || !hasConsent || mcpLoading

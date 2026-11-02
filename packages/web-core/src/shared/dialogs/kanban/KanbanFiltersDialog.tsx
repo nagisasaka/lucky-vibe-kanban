@@ -36,14 +36,6 @@ import {
   type PropertyDropdownOption,
 } from '@vibe/ui/components/PropertyDropdown';
 
-const SORT_OPTIONS: PropertyDropdownOption<KanbanSortField>[] = [
-  { value: 'sort_order', label: 'Manual' },
-  { value: 'priority', label: 'Priority' },
-  { value: 'created_at', label: 'Created' },
-  { value: 'updated_at', label: 'Updated' },
-  { value: 'title', label: 'Title' },
-];
-
 interface KanbanFiltersDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -87,6 +79,13 @@ export function KanbanFiltersDialog({
   onHideBlockedChange,
 }: KanbanFiltersDialogProps) {
   const { t } = useTranslation('common');
+  const sortOptions: PropertyDropdownOption<KanbanSortField>[] = [
+    { value: 'sort_order', label: t('kanban.sortChoices.manual') },
+    { value: 'priority', label: t('kanban.priority') },
+    { value: 'created_at', label: t('kanban.sortChoices.created') },
+    { value: 'updated_at', label: t('kanban.sortChoices.updated') },
+    { value: 'title', label: t('kanban.issueTitle') },
+  ];
 
   const currentUser = useMemo(
     () => users.find((user) => user.user_id === currentUserId) ?? null,
@@ -250,7 +249,7 @@ export function KanbanFiltersDialog({
 
             <PropertyDropdown
               value={filters.sortField}
-              options={SORT_OPTIONS}
+              options={sortOptions}
               onChange={(field) => onSortChange(field, filters.sortDirection)}
               icon={
                 filters.sortDirection === 'asc'
@@ -302,7 +301,7 @@ export function KanbanFiltersDialog({
 
             <div className="flex items-center gap-half rounded-sm bg-panel px-base py-half">
               <span className="whitespace-nowrap text-sm text-normal">
-                {t('kanban.hideBlockedFilterLabel', 'Hide blocked')}
+                {t('kanban.hideBlockedFilterLabel')}
               </span>
               <Switch
                 checked={hideBlocked}

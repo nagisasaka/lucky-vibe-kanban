@@ -1,7 +1,9 @@
+import i18n from '@/i18n/config';
 import { describe, expect, it, vi } from 'vitest';
 import {
   createResourceCoordinationClient,
   resourceOperationCanCancel,
+  resourceStatusLabel,
 } from './resourceCoordinationApi';
 import type { ResourceRecovery } from 'shared/types';
 
@@ -64,4 +66,27 @@ describe('resource ownership controls', () => {
     );
     expect(a).toHaveBeenCalledTimes(1);
   });
+});
+
+it('formats known coordination states in ENJA without exposing arbitrary status as a translation key', () => {
+  for (const language of ['en', 'ja']) {
+    const t = i18n.getFixedT(language, 'settings');
+    expect(resourceStatusLabel('operation', 'succeeded', t)).toBe(
+      language === 'ja' ? '確認完了' : 'Verified complete'
+    );
+    expect(resourceStatusLabel('health', 'recovery_required', t)).not.toContain(
+      'resources.'
+    );
+    expect(resourceStatusLabel('mediation', 'applied', t)).not.toContain(
+      'resources.'
+    );
+    for (const kind of ['health', 'operation', 'mediation'] as const) {
+      expect(resourceStatusLabel(kind, 'constructor', t)).toBe(
+        resourceStatusLabel(kind, 'future-state', t)
+      );
+      expect(resourceStatusLabel(kind, 'future-state', t)).not.toContain(
+        'future-state'
+      );
+    }
+  }
 });

@@ -81,7 +81,13 @@ export function CreateModeRepoPickerBar({
     useCreateMode();
   const [pendingAction, setPendingAction] = useState<PendingAction>(null);
   const [branchRepoId, setBranchRepoId] = useState<string | null>(null);
-  const [pickerError, setPickerError] = useState<string | null>(null);
+  const [pickerError, setPickerError] = useState<
+    | Exclude<PendingAction, null>
+    | 'alreadySelected'
+    | 'noRecentRepositories'
+    | null
+  >(null);
+  const [errorDetail, setErrorDetail] = useState<string | null>(null);
   const [setupHintDismissed, setSetupHintDismissed] = useState(false);
   const isBusy = pendingAction !== null;
 
@@ -111,18 +117,16 @@ export function CreateModeRepoPickerBar({
   }, []);
 
   const runPickerAction = useCallback(
-    async (
-      action: Exclude<PendingAction, null>,
-      run: () => Promise<void>,
-      fallbackError: string
-    ) => {
+    async (action: Exclude<PendingAction, null>, run: () => Promise<void>) => {
       setPickerError(null);
+      setErrorDetail(null);
       setPendingAction(action);
 
       try {
         await run();
       } catch (error) {
-        setPickerError(error instanceof Error ? error.message : fallbackError);
+        setErrorDetail(error instanceof Error ? error.message : String(error));
+        setPickerError(action);
       } finally {
         setPendingAction(null);
         if (action === 'branch') {
@@ -136,7 +140,7 @@ export function CreateModeRepoPickerBar({
   const addRepoWithBranchSelection = useCallback(
     async (repo: Repo) => {
       if (selectedRepoIds.has(repo.id)) {
-        setPickerError(t('createMode.repoPicker.errors.alreadySelected'));
+        setPickerError('alreadySelected');
         return false;
       }
 
@@ -147,103 +151,96 @@ export function CreateModeRepoPickerBar({
       setTargetBranch(repo.id, selectedBranch);
       return true;
     },
-    [addRepo, pickBranchForRepo, selectedRepoIds, setTargetBranch, t]
+    [addRepo, pickBranchForRepo, selectedRepoIds, setTargetBranch]
   );
 
   const handleChooseRepo = useCallback(async () => {
-    await runPickerAction(
-      'choose',
-      async () => {
-        const allRepos = await repoApi.listRecent();
-        const availableRepos = allRepos.filter(
-          (repo) => !selectedRepoIds.has(repo.id)
-        );
+    await runPickerAction('choose', async () => {
+      const allRepos = await repoApi.listRecent();
+      const availableRepos = allRepos.filter(
+        (repo) => !selectedRepoIds.has(repo.id)
+      );
 
-        if (availableRepos.length === 0) {
-          setPickerError(
-            t('createMode.repoPicker.errors.noRecentRepositories')
-          );
-          return;
-        }
+      if (availableRepos.length === 0) {
+        setPickerError('noRecentRepositories');
+        return;
+      }
 
-        const repoResult = (await SelectionDialog.show({
-          initialPageId: 'selectRepo',
-          pages: buildRepoSelectionPages(
-            availableRepos.map(toRepoItem)
-          ) as Record<string, SelectionPage>,
-        })) as RepoSelectionResult | undefined;
+      const repoResult = (await SelectionDialog.show({
+        initialPageId: 'selectRepo',
+        pages: buildRepoSelectionPages(
+          availableRepos.map(toRepoItem)
+        ) as Record<string, SelectionPage>,
+      })) as RepoSelectionResult | undefined;
 
-        if (!repoResult?.repoId) return;
+      if (!repoResult?.repoId) return;
 
-        const selectedRepo = availableRepos.find(
-          (repo) => repo.id === repoResult.repoId
-        );
-        if (!selectedRepo) return;
+      const selectedRepo = availableRepos.find(
+        (repo) => repo.id === repoResult.repoId
+      );
+      if (!selectedRepo) return;
 
-        await addRepoWithBranchSelection(selectedRepo);
-      },
-      t('createMode.repoPicker.errors.loadRepositoriesOrBranches')
-    );
-  }, [addRepoWithBranchSelection, runPickerAction, selectedRepoIds, t]);
+      await addRepoWithBranchSelection(selectedRepo);
+    });
+  }, [addRepoWithBranchSelection, runPickerAction, selectedRepoIds]);
 
   const handleBrowseRepo = useCallback(async () => {
-    await runPickerAction(
-      'browse',
-      async () => {
-        const selectedPath = await FolderPickerDialog.show({
-          title: t('dialogs.selectGitRepository'),
-          description: t('dialogs.chooseExistingRepo'),
-        });
-        if (!selectedPath) return;
+    await runPickerAction('browse', async () => {
+      const selectedPath = await FolderPickerDialog.show({
+        title: t('dialogs.selectGitRepository'),
+        description: t('dialogs.chooseExistingRepo'),
+      });
+      if (!selectedPath) return;
 
-        const repo = await repoApi.register({ path: selectedPath });
-        queryClient.invalidateQueries({ queryKey: ['repos'] });
-        await addRepoWithBranchSelection(repo);
-      },
-      t('createMode.repoPicker.errors.registerRepository')
-    );
-  }, [addRepoWithBranchSelection, runPickerAction, t]);
+      const repo = await repoApi.register({ path: selectedPath });
+      queryClient.invalidateQueries({ queryKey: ['repos'] });
+      await addRepoWithBranchSelection(repo);
+    });
+  }, [addRepoWithBranchSelection, queryClient, runPickerAction, t]);
 
   const handleCreateRepo = useCallback(async () => {
-    await runPickerAction(
-      'create',
-      async () => {
-        await CreateRepoDialog.show({
-          onBrowseForPath: async (currentPath) =>
-            FolderPickerDialog.show({
-              title: t('git.createRepo.browseDialog.title'),
-              description: t('git.createRepo.browseDialog.description'),
-              value: currentPath,
-            }),
-          onCreateRepo: async ({ parentPath, folderName }) => {
-            const repo = await repoApi.init({
-              parent_path: parentPath,
-              folder_name: folderName,
-            });
-            queryClient.invalidateQueries({ queryKey: ['repos'] });
-            await addRepoWithBranchSelection(repo);
-          },
-        });
-      },
-      t('createMode.repoPicker.errors.createRepository')
-    );
-  }, [addRepoWithBranchSelection, runPickerAction, t]);
+    await runPickerAction('create', async () => {
+      await CreateRepoDialog.show({
+        onBrowseForPath: async (currentPath) =>
+          FolderPickerDialog.show({
+            title: t('tasks:git.createRepo.browseDialog.title'),
+            description: t('tasks:git.createRepo.browseDialog.description'),
+            value: currentPath,
+          }),
+        onCreateRepo: async ({ parentPath, folderName }) => {
+          const repo = await repoApi.init({
+            parent_path: parentPath,
+            folder_name: folderName,
+          });
+          queryClient.invalidateQueries({ queryKey: ['repos'] });
+          await addRepoWithBranchSelection(repo);
+        },
+      });
+    });
+  }, [addRepoWithBranchSelection, queryClient, runPickerAction, t]);
 
   const handleChangeBranch = useCallback(
     async (repo: Repo) => {
       setBranchRepoId(repo.id);
-      await runPickerAction(
-        'branch',
-        async () => {
-          const selectedBranch = await pickBranchForRepo(repo);
-          if (!selectedBranch) return;
-          setTargetBranch(repo.id, selectedBranch);
-        },
-        t('createMode.repoPicker.errors.loadBranches')
-      );
+      await runPickerAction('branch', async () => {
+        const selectedBranch = await pickBranchForRepo(repo);
+        if (!selectedBranch) return;
+        setTargetBranch(repo.id, selectedBranch);
+      });
     },
-    [pickBranchForRepo, runPickerAction, setTargetBranch, t]
+    [pickBranchForRepo, runPickerAction, setTargetBranch]
   );
+
+  const pickerNotices = {
+    choose: t('createMode.repoPicker.errors.loadRepositoriesOrBranches'),
+    browse: t('createMode.repoPicker.errors.registerRepository'),
+    create: t('createMode.repoPicker.errors.createRepository'),
+    branch: t('createMode.repoPicker.errors.loadBranches'),
+    alreadySelected: t('createMode.repoPicker.errors.alreadySelected'),
+    noRecentRepositories: t(
+      'createMode.repoPicker.errors.noRecentRepositories'
+    ),
+  };
 
   return (
     <div className="w-chat max-w-full">
@@ -403,7 +400,9 @@ export function CreateModeRepoPickerBar({
       )}
       {pickerError && (
         <div className="mt-half rounded-sm border border-error/30 bg-error/10 px-base py-half">
-          <p className="text-xs text-error">{pickerError}</p>
+          <p className="text-xs text-error">
+            {pickerNotices[pickerError]} {errorDetail}
+          </p>
         </div>
       )}
     </div>

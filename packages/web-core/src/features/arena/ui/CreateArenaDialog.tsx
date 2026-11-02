@@ -132,7 +132,10 @@ const CreateArenaDialogImpl = create<CreateArenaDialogProps>(
       defaultDraft(getDefaultArenaExecutor(1, FALLBACK_EXECUTOR_OPTIONS)),
     ]);
     const [submitting, setSubmitting] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    const [error, setError] = useState<
+      'validation' | 'emptyGroupRecovered' | 'createFailed' | null
+    >(null);
+    const [errorDetail, setErrorDetail] = useState<string | null>(null);
     const canceledRef = useRef(false);
 
     const { options: arenaExecutorOptions, garage: agentGarage } =
@@ -157,13 +160,9 @@ const CreateArenaDialogImpl = create<CreateArenaDialogProps>(
     const getProviderDisabledLabel = useCallback(
       (reason: string | null | undefined): string => {
         if (reason === 'provider_capability_missing') {
-          return t('agentProvider.disabled.capabilityMissing', {
-            defaultValue: 'Missing required capability',
-          });
+          return t('agentProvider.disabled.capabilityMissing');
         }
-        return t('agentProvider.disabled.notReady', {
-          defaultValue: 'Provider not ready',
-        });
+        return t('agentProvider.disabled.notReady');
       },
       [t]
     );
@@ -318,6 +317,7 @@ const CreateArenaDialogImpl = create<CreateArenaDialogProps>(
       setRepoId(nextRepoId || null);
       setBaseBranch(preferredBranch ?? '');
       setError(null);
+      setErrorDetail(null);
     };
 
     const handleAddAttempt = () => {
@@ -350,9 +350,7 @@ const CreateArenaDialogImpl = create<CreateArenaDialogProps>(
         return t('arena.create.validation.baseBranchRequired');
       if (!repoId) return t('arena.create.validation.repositoryRequired');
       if (arenaExecutorOptions.length === 0) {
-        return t('arena.create.validation.noAvailableAgents', {
-          defaultValue: 'No agents are available for arena runs.',
-        });
+        return t('arena.create.validation.noAvailableAgents');
       }
       const unavailableAttempt = attempts.find((attempt) => {
         const option = arenaExecutorOptionByExecutor.get(attempt.executor);
@@ -393,13 +391,14 @@ const CreateArenaDialogImpl = create<CreateArenaDialogProps>(
 
     const handleSubmit = async () => {
       if (validationError) {
-        setError(validationError);
+        setError('validation');
         return;
       }
       if (!repoId) return;
       canceledRef.current = false;
       setSubmitting(true);
       setError(null);
+      setErrorDetail(null);
 
       const payload: CreateArenaRequest = {
         project_id: projectId,
@@ -432,6 +431,7 @@ const CreateArenaDialogImpl = create<CreateArenaDialogProps>(
         } satisfies CreateArenaDialogResult);
         modal.hide();
       } catch (err) {
+        setErrorDetail(err instanceof Error ? err.message : String(err));
         const message =
           err instanceof Error ? err.message : t('arena.errors.createFailed');
         if (isActiveArenaConflict(message)) {
@@ -445,7 +445,7 @@ const CreateArenaDialogImpl = create<CreateArenaDialogProps>(
               await queryClient.invalidateQueries({
                 queryKey: arenaQueryKeys.activeForIssue(issueId),
               });
-              setError(t('arena.errors.emptyGroupRecovered'));
+              setError('emptyGroupRecovered');
               return;
             }
 
@@ -467,7 +467,7 @@ const CreateArenaDialogImpl = create<CreateArenaDialogProps>(
         }
 
         if (canceledRef.current) return;
-        setError(message);
+        setError('createFailed');
         setSubmitting(false);
       }
     };
@@ -590,6 +590,7 @@ const CreateArenaDialogImpl = create<CreateArenaDialogProps>(
                   onBranchSelect={(branch) => {
                     setBaseBranch(branch);
                     setError(null);
+                    setErrorDetail(null);
                   }}
                   placeholder={
                     branchesLoading
@@ -645,9 +646,7 @@ const CreateArenaDialogImpl = create<CreateArenaDialogProps>(
                     >
                       {arenaExecutorOptions.length === 0 ? (
                         <option value={attempt.executor}>
-                          {t('arena.create.noAvailableAgents', {
-                            defaultValue: 'No available agents',
-                          })}
+                          {t('arena.create.noAvailableAgents')}
                         </option>
                       ) : (
                         arenaExecutorOptions.map((option) => {
@@ -701,7 +700,10 @@ const CreateArenaDialogImpl = create<CreateArenaDialogProps>(
 
             {error ? (
               <p className="text-xs text-error" role="alert">
-                {error}
+                {error === 'validation'
+                  ? validationError
+                  : t(`arena.errors.${error}`)}{' '}
+                {errorDetail}
               </p>
             ) : null}
           </div>
@@ -714,9 +716,7 @@ const CreateArenaDialogImpl = create<CreateArenaDialogProps>(
               type="button"
               onClick={() => void handleSubmit()}
               disabled={submitting || issueArchived || !!validationError}
-              title={
-                issueArchived ? 'アーカイブ解除すると利用できます' : undefined
-              }
+              title={issueArchived ? t('kanban.restoreToUse') : undefined}
             >
               {submitting
                 ? t('arena.actions.starting')

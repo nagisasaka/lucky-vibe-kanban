@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next';
+import { ApiError } from '@/shared/lib/api';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import type { MachineClient } from '@/shared/lib/machineClient';
@@ -11,6 +13,7 @@ export function GithubCredentialsSettings({
   repoId: string;
   client: MachineClient;
 }) {
+  const { t } = useTranslation('settings');
   const query = useQuery({
     queryKey: [...client.queryScopeKey, 'github-credentials', repoId],
     queryFn: () => client.getGithubCredentials(repoId),
@@ -18,41 +21,40 @@ export function GithubCredentialsSettings({
   const [selected, setSelected] = useState('');
   const [token, setToken] = useState('');
   const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState('');
-  const [error, setError] = useState('');
+  const [message, setMessage] = useState<
+    'saved' | 'checked' | 'removed' | null
+  >(null);
+  const [error, setError] = useState<'forbidden' | 'unconfirmed' | null>(null);
+  const [errorDetail, setErrorDetail] = useState<string | null>(null);
   const repository = selected || query.data?.[0]?.repository || '';
   const configured =
     query.data?.find((entry) => entry.repository === repository)?.configured ??
     false;
   const perform = async (action: 'save' | 'check' | 'remove') => {
     setBusy(true);
-    setMessage('');
-    setError('');
+    setMessage(null);
+    setError(null);
+    setErrorDetail(null);
     try {
       if (action === 'save') {
         await client.saveGithubCredential(repoId, { repository, token });
         setToken('');
-        setMessage(
-          'Token saved. Use Check connection to verify repository and PR read access.'
-        );
+        setMessage('saved');
       } else if (action === 'check') {
         await client.checkGithubCredential(repoId, { repository });
-        setMessage(
-          'Repository and PR read access verified. Push and PR write permissions have not been tested.'
-        );
+        setMessage('checked');
       } else {
         await client.removeGithubCredential(repoId, { repository });
         setToken('');
-        setMessage(
-          'Token removed from LVK. Revoke it on GitHub if it is no longer needed.'
-        );
+        setMessage('removed');
       }
       await query.refetch();
     } catch (cause) {
+      setErrorDetail(cause instanceof Error ? cause.message : String(cause));
       setError(
-        cause instanceof Error
-          ? cause.message
-          : 'GitHub credential operation failed'
+        cause instanceof ApiError && cause.statusCode === 403
+          ? 'forbidden'
+          : 'unconfirmed'
       );
     } finally {
       setBusy(false);
@@ -60,15 +62,11 @@ export function GithubCredentialsSettings({
   };
   return (
     <SettingsCard
-      title="GitHub authentication"
-      description="Register a fine-grained personal access token for LVK Git operations and pull requests. Administrator access is required to change or check credentials."
+      title={t('githubCredentials.title')}
+      description={t('githubCredentials.description')}
     >
       <p className="text-sm text-normal">
-        Select only the required repository when creating the token. Grant
-        Contents and Pull requests read/write access. Add Issues for issue
-        operations, and Workflows if you push workflow changes. Expiring and
-        non-expiring tokens are supported, subject to your organisation’s
-        policy.
+        {t('githubCredentials.permissions')}
       </p>
       <a
         className="text-sm text-brand underline"
@@ -76,23 +74,21 @@ export function GithubCredentialsSettings({
         target="_blank"
         rel="noreferrer"
       >
-        Create a fine-grained token on GitHub
+        {t('githubCredentials.createToken')}
       </a>
-      {query.isLoading && <p role="status">Loading authentication settings…</p>}
+      {query.isLoading && <p role="status">{t('githubCredentials.loading')}</p>}
       {query.isError && (
         <p role="alert" className="text-error">
-          Could not load authentication settings.
+          {t('githubCredentials.loadFailed')} {query.error?.message}
         </p>
       )}
       {query.data?.length === 0 && (
-        <p className="text-sm text-low">
-          Add a GitHub.com remote to this repository to configure a token.
-        </p>
+        <p className="text-sm text-low">{t('githubCredentials.empty')}</p>
       )}
       {repository && (
         <>
           <label className="block text-sm text-normal">
-            GitHub repository
+            {t('githubCredentials.repository')}
             <select
               className="mt-half block w-full rounded-sm border border-border bg-panel p-base"
               value={repository}
@@ -100,8 +96,9 @@ export function GithubCredentialsSettings({
               onChange={(event) => {
                 setSelected(event.target.value);
                 setToken('');
-                setMessage('');
-                setError('');
+                setMessage(null);
+                setError(null);
+                setErrorDetail(null);
               }}
             >
               {query.data?.map((entry) => (
@@ -113,13 +110,13 @@ export function GithubCredentialsSettings({
           </label>
           <p role="status" className="text-sm text-low">
             {configured
-              ? 'Token registered (never displayed).'
-              : 'No LVK token registered. Existing system authentication applies.'}
+              ? t('githubCredentials.registered')
+              : t('githubCredentials.notRegistered')}
           </p>
           <label className="block text-sm text-normal">
             {configured
-              ? 'Replacement token'
-              : 'Fine-grained personal access token'}
+              ? t('githubCredentials.replacement')
+              : t('githubCredentials.token')}
             <input
               type="password"
               autoComplete="new-password"
@@ -138,51 +135,53 @@ export function GithubCredentialsSettings({
               }
               onClick={() => void perform('save')}
             >
-              {configured ? 'Replace token' : 'Save token'}
+              {configured
+                ? t('githubCredentials.replace')
+                : t('githubCredentials.save')}
             </Button>
             <Button
               variant="outline"
               disabled={busy || !configured || query.isError || !!token}
               onClick={() => void perform('check')}
             >
-              Check connection
+              {t('githubCredentials.check')}
             </Button>
             <Button
               variant="outline"
               disabled={busy || !configured || query.isError}
               onClick={() => {
-                if (
-                  window.confirm(
-                    'Remove this token from LVK? All workspaces using this GitHub repository will return to system authentication. This does not revoke the token on GitHub.'
-                  )
-                )
+                if (window.confirm(t('githubCredentials.removeConfirm')))
                   void perform('remove');
               }}
             >
-              Remove token
+              {t('githubCredentials.remove')}
             </Button>
           </div>
         </>
       )}
-      <p className="text-sm text-low">
-        Credentials are stored on the LVK server and shared by workspaces using
-        this GitHub repository. Registered tokens take precedence over system
-        authentication; failures do not fall back to another account. Agent
-        terminal commands use their own authentication.
-      </p>
+      <p className="text-sm text-low">{t('githubCredentials.scope')}</p>
       {busy && (
         <p role="status" className="text-sm text-low">
-          Working…
+          {t('githubCredentials.working')}
         </p>
       )}
       {message && (
         <p role="status" className="text-sm text-success">
-          {message}
+          {
+            {
+              saved: t('githubCredentials.saved'),
+              checked: t('githubCredentials.checked'),
+              removed: t('githubCredentials.removed'),
+            }[message]
+          }
         </p>
       )}
       {error && (
         <p role="alert" className="text-sm text-error">
-          {error}
+          {error === 'forbidden'
+            ? t('githubCredentials.forbidden')
+            : t('githubCredentials.operationFailed')}{' '}
+          {errorDetail}
         </p>
       )}
     </SettingsCard>

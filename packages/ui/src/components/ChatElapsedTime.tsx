@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { cn } from '../lib/cn';
+import { useTranslation, type UseTranslationResponse } from 'react-i18next';
 
 interface ChatElapsedTimeProps {
   startedAt?: string | null;
@@ -17,22 +18,33 @@ function parseTime(value?: string | null) {
   return Number.isNaN(timestamp) ? null : timestamp;
 }
 
-function formatElapsedMs(ms: number) {
-  if (ms >= 0 && ms < 1000) return '<1s';
+function formatElapsedMs(
+  ms: number,
+  t: UseTranslationResponse<'tasks', undefined>['t'],
+  locale: string
+) {
+  if (ms >= 0 && ms < 1000) return t('tasks:elapsedTime.lessThanSecond');
   const totalSeconds = Math.max(0, Math.floor(ms / 1000));
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = totalSeconds % 60;
 
+  const number = new Intl.NumberFormat(locale);
   if (hours > 0) {
-    return `${hours}h ${minutes}m`;
+    return t('tasks:elapsedTime.hoursMinutes', {
+      hours: number.format(hours),
+      minutes: number.format(minutes),
+    });
   }
 
   if (minutes > 0) {
-    return `${minutes}m ${seconds}s`;
+    return t('tasks:elapsedTime.minutesSeconds', {
+      minutes: number.format(minutes),
+      seconds: number.format(seconds),
+    });
   }
 
-  return `${seconds}s`;
+  return t('tasks:elapsedTime.seconds', { seconds: number.format(seconds) });
 }
 
 export function ChatElapsedTime({
@@ -43,6 +55,7 @@ export function ChatElapsedTime({
   className,
   unknownLabel,
 }: ChatElapsedTimeProps) {
+  const { t, i18n } = useTranslation('tasks');
   const [now, setNow] = useState(() => Date.now());
   const startedAtMs = useMemo(() => parseTime(startedAt), [startedAt]);
   const endedAtMs = useMemo(() => parseTime(endedAt), [endedAt]);
@@ -80,7 +93,9 @@ export function ChatElapsedTime({
         className
       )}
     >
-      {elapsed != null ? formatElapsedMs(elapsed) : unknownLabel}
+      {elapsed != null
+        ? formatElapsedMs(elapsed, t, i18n.resolvedLanguage || i18n.language)
+        : unknownLabel}
     </span>
   );
 }

@@ -501,19 +501,15 @@ export function CreateChatBoxContainer({
     hasAttemptedSubmit &&
     workspaceMode === 'direct_folder' &&
     !hasDirectFolderPath
-      ? t('createMode.directFolder.errors.required', {
-          defaultValue: 'Select a folder before continuing',
-        })
+      ? t('createMode.directFolder.errors.required')
       : hasAttemptedSubmit && workspaceMode === 'worktree' && !selectedRepo
-        ? 'Choose a workspace before creating it'
+        ? t('createMode.errors.workspaceRequired')
         : hasAttemptedSubmit &&
             workspaceMode === 'worktree' &&
             !hasSelectedBranch
-          ? 'Select a branch before creating a workspace'
+          ? t('createMode.errors.branchRequired')
           : createWorkspace.error
-            ? createWorkspace.error instanceof Error
-              ? createWorkspace.error.message
-              : 'Failed to create workspace'
+            ? `${t('createMode.errors.createUnconfirmed')} ${createWorkspace.error.message}`
             : null;
 
   // Wait for initial value to be applied before rendering
@@ -533,10 +529,7 @@ export function CreateChatBoxContainer({
               </h2>
               <div className="mx-auto flex max-w-md flex-col items-center gap-base text-center">
                 <p className="text-sm text-low">
-                  {t('createMode.workspaceDialog.launchHint', {
-                    defaultValue:
-                      'Choose one directory, then decide whether to use an isolated worktree or work in place.',
-                  })}
+                  {t('createMode.workspaceDialog.launchHint')}
                 </p>
                 <button
                   type="button"
@@ -544,11 +537,7 @@ export function CreateChatBoxContainer({
                   className="inline-flex items-center gap-half rounded-sm bg-brand px-base py-half text-sm font-medium text-on-brand hover:bg-brand-hover"
                 >
                   <FolderOpenIcon className="size-icon-xs" weight="bold" />
-                  <span>
-                    {t('createMode.workspaceDialog.open', {
-                      defaultValue: 'Choose workspace',
-                    })}
-                  </span>
+                  <span>{t('createMode.workspaceDialog.open')}</span>
                 </button>
               </div>
             </>
@@ -578,7 +567,7 @@ export function CreateChatBoxContainer({
                     localAttachments,
                   }) => (
                     <WYSIWYGEditor
-                      placeholder="Describe the task..."
+                      placeholder={t('createMode.taskPlaceholder')}
                       value={value}
                       onChange={onChange}
                       onCmdEnter={onCmdEnter}
@@ -626,9 +615,7 @@ export function CreateChatBoxContainer({
                   onEditRepos={() => void openWorkspaceTargetDialog()}
                   repoSummaryLabel={
                     workspaceMode === 'direct_folder'
-                      ? t('createMode.directFolder.summaryLabel', {
-                          defaultValue: 'Direct folder',
-                        })
+                      ? t('createMode.directFolder.summaryLabel')
                       : repoSummaryLabel
                   }
                   repoSummaryTitle={

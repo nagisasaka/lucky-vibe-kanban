@@ -1,6 +1,11 @@
 // Browser-only fixture: no database, native files, provider or live server calls.
 export function installFixtureApi() {
   const calls: string[] = [];
+  const localeSaves: Array<{
+    language: string;
+    browserLanguage: string | null;
+  }> = [];
+  Object.defineProperty(window, "__fixtureLocaleSaves", { value: localeSaves });
   Object.defineProperty(window, "__settingsFixtureCalls", { value: calls });
   const params = new URLSearchParams(location.search);
   const role = params.get("role") ?? "admin";
@@ -8,7 +13,12 @@ export function installFixtureApi() {
   const config = {
     config_version: "v2",
     theme: "SYSTEM",
-    language: params.get("lang") === "en" ? "EN" : "JA",
+    language:
+      params.get("browserLanguage") === "true"
+        ? "BROWSER"
+        : params.get("lang") === "en"
+          ? "EN"
+          : "JA",
     executor_profile: { executor: "CODEX", variant: null },
     disclaimer_acknowledged: true,
     onboarding_acknowledged: true,
@@ -170,6 +180,12 @@ export function installFixtureApi() {
         login_status: { status: "loggedout" },
       });
     if (path === "/api/config" && method === "PUT") {
+      localeSaves.push({
+        language: body.language,
+        browserLanguage: new Headers(init?.headers).get(
+          "X-LVK-Browser-Language",
+        ),
+      });
       if (params.get("failSave") === "true")
         return json({ success: false, message: "Fixture save rejected" }, 409);
       Object.assign(config, body);
@@ -180,6 +196,8 @@ export function installFixtureApi() {
         runtime = { ...body, revision: runtime.revision + 1, source: "saved" };
       return json(runtime);
     }
+    if (params.has("web-push-load-error") && path === "/api/web-push")
+      return json({ message: "Private push fixture endpoint secret" }, 503);
     if (path === "/api/web-push" || path === "/api/web-push/status")
       return json({ public_key: null, registrations: [], projects: [] });
     if (path === "/api/profiles")
@@ -189,6 +207,8 @@ export function installFixtureApi() {
         revision: "fixture",
         sensitive_values_included: false,
       });
+    if (path === "/api/agent-tools")
+      return success({ providers: [], errors: [] });
     if (path === "/api/agent-settings")
       return success({ providers: [], errors: [] });
     if (path === "/api/resource-coordination/snapshot")

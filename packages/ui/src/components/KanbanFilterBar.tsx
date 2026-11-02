@@ -165,7 +165,7 @@ export function KanbanFilterBar<
               setMobileSearchExpanded(false);
             }}
             className="p-half rounded-sm text-low hover:text-normal hover:bg-secondary transition-colors shrink-0"
-            aria-label={t('kanban.closeSearch', 'Close search')}
+            aria-label={t('kanban.closeSearch')}
           >
             <ArrowLeftIcon className="size-icon-sm" weight="bold" />
           </button>

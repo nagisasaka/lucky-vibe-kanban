@@ -645,7 +645,7 @@ c.commit()
   const editor = page.locator('[contenteditable="true"]').first();
   await editor.fill("未送信のチャットを保持");
   await page
-    .getByRole("button", { name: "Toggle TODO list", exact: true })
+    .getByRole("button", { name: "TODOリストを切り替え", exact: true })
     .click();
   await page.getByLabel("プロジェクト", { exact: true }).selectOption(project);
   const panel = page.getByTestId("todo-list");
@@ -708,11 +708,11 @@ c.commit()
   });
 
   await page
-    .getByRole("button", { name: "Toggle TODO list", exact: true })
+    .getByRole("button", { name: "TODOリストを切り替え", exact: true })
     .click();
   await expect(editor).toContainText("未送信のチャットを保持");
   await page
-    .getByRole("button", { name: "Toggle TODO list", exact: true })
+    .getByRole("button", { name: "TODOリストを切り替え", exact: true })
     .click();
   await expect(panel).toBeVisible();
   await page.setViewportSize({ width: 390, height: 844 });
@@ -728,7 +728,7 @@ c.commit()
     ),
     "workspace mobile overflow",
   );
-  await page.getByRole("button", { name: "Chat", exact: true }).click();
+  await page.getByRole("button", { name: "チャット", exact: true }).click();
   await expect(page.locator('[contenteditable="true"]').first()).toContainText(
     "未送信のチャットを保持",
   );
@@ -776,6 +776,21 @@ c.commit()
   await expect(page.locator(`[data-todo-id="${mcpId}"]`)).toHaveCount(0, {
     timeout: 15000,
   });
+  // Real persisted locale changes must not rewrite TODO identities, revisions or content.
+  const beforeLocale = (await api(todoPath)).data;
+  const localeConfig = (await api("/api/info")).data.config;
+  await api("/api/config", "PUT", { ...localeConfig, language: "EN" });
+  await page.reload();
+  await expect(page.locator("html")).toHaveAttribute("lang", "en");
+  await page.getByRole("button", { name: "TODO list", exact: true }).click();
+  await expect(
+    page.getByRole("button", { name: samples[0][1], exact: true }),
+  ).toBeVisible();
+  assert.deepEqual((await api(todoPath)).data, beforeLocale);
+  await api("/api/config", "PUT", { ...localeConfig, language: "JA" });
+  await page.reload();
+  await expect(page.locator("html")).toHaveAttribute("lang", "ja");
+  assert.deepEqual((await api(todoPath)).data, beforeLocale);
   assert.deepEqual(errors, [], "browser runtime errors");
   console.log(
     "PASS: real API + stdio MCP + Chromium CRUD, revisions, immutable TODO identifiers, pane navigation, responsive grid, dark/light, reload persistence. No agents executed.",

@@ -74,7 +74,8 @@ const StartReviewDialogImpl = create<StartReviewDialogProps>(
     );
     const [includeGitContext, setIncludeGitContext] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    const [error, setError] = useState<'session' | 'unconfirmed' | null>(null);
+    const [errorDetail, setErrorDetail] = useState<string | null>(null);
 
     const effectiveProfile = userSelectedProfile ?? resolvedDefaultProfile;
 
@@ -85,6 +86,7 @@ const StartReviewDialogImpl = create<StartReviewDialogProps>(
 
       setIsSubmitting(true);
       setError(null);
+      setErrorDetail(null);
 
       try {
         let targetSessionId = resolvedSessionId;
@@ -103,7 +105,7 @@ const StartReviewDialogImpl = create<StartReviewDialogProps>(
         }
 
         if (!targetSessionId) {
-          setError('Failed to create session');
+          setError('session');
           setIsSubmitting(false);
           return;
         }
@@ -135,7 +137,8 @@ const StartReviewDialogImpl = create<StartReviewDialogProps>(
         modal.hide();
       } catch (err) {
         console.error('Failed to start review:', err);
-        setError('Failed to start review. Please try again.');
+        setErrorDetail(err instanceof Error ? err.message : String(err));
+        setError('unconfirmed');
       } finally {
         setIsSubmitting(false);
       }
@@ -152,6 +155,7 @@ const StartReviewDialogImpl = create<StartReviewDialogProps>(
       selectSession,
       onSuccess,
       modal,
+      t,
     ]);
 
     const handleOpenChange = (open: boolean) => {
@@ -189,7 +193,7 @@ const StartReviewDialogImpl = create<StartReviewDialogProps>(
                 id="additional-prompt"
                 value={additionalPrompt}
                 onChange={(e) => setAdditionalPrompt(e.target.value)}
-                placeholder="Add any specific instructions for the review..."
+                placeholder={t('gitNotice.reviewPlaceholder')}
                 className="min-h-[80px] resize-none"
               />
             </div>
@@ -212,7 +216,14 @@ const StartReviewDialogImpl = create<StartReviewDialogProps>(
               </div>
             )}
 
-            {error && <div className="text-sm text-destructive">{error}</div>}
+            {error && (
+              <div className="text-sm text-destructive">
+                {error === 'session'
+                  ? t('gitNotice.sessionUnconfirmed')
+                  : t('gitNotice.reviewUnconfirmed')}{' '}
+                {errorDetail}
+              </div>
+            )}
 
             <div className="space-y-1">
               <div className="flex items-center space-x-2">

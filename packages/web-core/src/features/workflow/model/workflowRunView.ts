@@ -1,3 +1,4 @@
+import type { TFunction } from 'i18next';
 import type {
   NodeExecutionStatus,
   WorkflowNodeExecutionResponse,
@@ -24,24 +25,27 @@ type CanonicalWorkflowNodeExecution = WorkflowNodeExecutionResponse & {
   projection_status?: import('shared/types').ProjectionStatus | null;
 };
 
-export function getWorkflowRunStatusLabel(status: WorkflowRunStatus): string {
+export function getWorkflowRunStatusLabel(
+  status: WorkflowRunStatus,
+  t: TFunction<'common'>
+): string {
   switch (status) {
     case 'pending':
-      return 'Pending';
+      return t('workflow.runStatus.pending');
     case 'running':
-      return 'Running';
+      return t('workflow.runStatus.running');
     case 'awaiting_human':
-      return 'Waiting for human';
+      return t('workflow.runStatus.awaitingHuman');
     case 'awaiting_arena':
-      return 'Waiting for arena';
+      return t('workflow.runStatus.awaitingArena');
     case 'succeeded':
-      return 'Succeeded';
+      return t('workflow.runStatus.succeeded');
     case 'failed':
-      return 'Failed';
+      return t('workflow.runStatus.failed');
     case 'canceled':
-      return 'Canceled';
+      return t('workflow.runStatus.canceled');
     case 'cancelling':
-      return 'Cancelling';
+      return t('workflow.runStatus.cancelling');
   }
 }
 
@@ -182,26 +186,34 @@ export function buildWorkflowRunDashboardSummary(
   };
 }
 
+export function formatWorkflowElapsedMs(
+  value: number,
+  t: TFunction<'common'>,
+  locale: string
+): string {
+  if (!Number.isFinite(value)) return t('workflow.repository.unknownTime');
+  const totalSeconds = Math.floor(Math.max(0, value) / 1000);
+  const number = new Intl.NumberFormat(locale);
+  const seconds = number.format(totalSeconds % 60);
+  const minutes = Math.floor(totalSeconds / 60);
+  return minutes > 0
+    ? t('workflow.repository.minutesSeconds', {
+        minutes: number.format(minutes),
+        seconds,
+      })
+    : t('workflow.repository.seconds', { seconds });
+}
+
 export function formatWorkflowDuration(
   start: string | null,
-  end: string | null
+  end: string | null,
+  t: TFunction<'common'>,
+  locale: string
 ): string {
-  if (!start) return 'Not started';
-
+  if (!start) return t('workflow.dashboard.notStarted');
   const startTime = new Date(start).getTime();
   const endTime = end ? new Date(end).getTime() : Date.now();
-
-  const diffMs = endTime - startTime;
-  if (diffMs < 0) return '0s';
-
-  const diffSecs = Math.floor(diffMs / 1000);
-  const minutes = Math.floor(diffSecs / 60);
-  const seconds = diffSecs % 60;
-
-  if (minutes > 0) {
-    return `${minutes}m ${seconds}s`;
-  }
-  return `${seconds}s`;
+  return formatWorkflowElapsedMs(endTime - startTime, t, locale);
 }
 
 export interface AgentSessionRow {
@@ -235,7 +247,9 @@ export function buildWorkspaceSessionHref(
 
 export function buildAgentSessionRows(
   run: WorkflowRunResponse,
-  nodeId: string | null
+  nodeId: string | null,
+  t: TFunction<'common'>,
+  locale: string
 ): AgentSessionRow[] {
   if (!nodeId) return [];
 
@@ -261,7 +275,9 @@ export function buildAgentSessionRows(
         startedLabel: node.started_at ?? 'Not started',
         durationLabel: formatWorkflowDuration(
           node.started_at,
-          node.finished_at
+          node.finished_at,
+          t,
+          locale
         ),
         outputPreview: node.output_text ?? 'No output yet',
       } satisfies AgentSessionRow;

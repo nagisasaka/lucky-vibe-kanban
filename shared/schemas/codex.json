@@ -9,7 +9,9 @@
         "null"
       ],
       "format": "textarea",
-      "default": null
+      "default": null,
+      "x-lvk-i18n-title": "settings:executorSchemas.codex.append_prompt.title",
+      "x-lvk-i18n-description": "settings:executorSchemas.codex.append_prompt.description"
     },
     "sandbox": {
       "description": "Sandbox policy modes for Codex",
@@ -23,7 +25,32 @@
         "workspace-write",
         "danger-full-access",
         null
-      ]
+      ],
+      "title": "Sandbox",
+      "x-lvk-i18n-enum": [
+        {
+          "key": "settings:executorSchemas.codex.sandbox.options.auto",
+          "source": "Automatic"
+        },
+        {
+          "key": "settings:executorSchemas.codex.sandbox.options.read-only",
+          "source": "Read only"
+        },
+        {
+          "key": "settings:executorSchemas.codex.sandbox.options.workspace-write",
+          "source": "Workspace write"
+        },
+        {
+          "key": "settings:executorSchemas.codex.sandbox.options.danger-full-access",
+          "source": "Full access (unsafe)"
+        },
+        {
+          "key": "settings:executorSchemas.codex.sandbox.options.null",
+          "source": "Follow native config"
+        }
+      ],
+      "x-lvk-i18n-title": "settings:executorSchemas.codex.sandbox.title",
+      "x-lvk-i18n-description": "settings:executorSchemas.codex.sandbox.description"
     },
     "ask_for_approval": {
       "description": "Determines when the user is consulted to approve Codex actions.\n\n- `UnlessTrusted`: Read-only commands are auto-approved. Everything else will\n  ask the user to approve.\n- `OnRequest`: The model decides when to ask the user for approval.\n- `Never`: Commands never ask for approval. Commands that fail in the\n  restricted sandbox are not retried.",
@@ -36,19 +63,44 @@
         "on-request",
         "never",
         null
-      ]
+      ],
+      "title": "Ask For Approval",
+      "x-lvk-i18n-enum": [
+        {
+          "key": "settings:executorSchemas.codex.ask_for_approval.options.unless-trusted",
+          "source": "Ask for untrusted commands"
+        },
+        {
+          "key": "settings:executorSchemas.codex.ask_for_approval.options.on-request",
+          "source": "On request"
+        },
+        {
+          "key": "settings:executorSchemas.codex.ask_for_approval.options.never",
+          "source": "Never"
+        },
+        {
+          "key": "settings:executorSchemas.codex.ask_for_approval.options.null",
+          "source": "Follow native config"
+        }
+      ],
+      "x-lvk-i18n-title": "settings:executorSchemas.codex.ask_for_approval.title",
+      "x-lvk-i18n-description": "settings:executorSchemas.codex.ask_for_approval.description"
     },
     "oss": {
       "type": [
         "boolean",
         "null"
-      ]
+      ],
+      "title": "OSS",
+      "x-lvk-i18n-title": "settings:executorSchemas.codex.oss.title"
     },
     "model": {
       "type": [
         "string",
         "null"
-      ]
+      ],
+      "title": "Model",
+      "x-lvk-i18n-title": "settings:executorSchemas.codex.model.title"
     },
     "model_reasoning_effort": {
       "description": "A non-empty reasoning effort value advertised by Codex model discovery or supplied by the user.",
@@ -56,7 +108,10 @@
         "string",
         "null"
       ],
-      "minLength": 1
+      "minLength": 1,
+      "title": "Model Reasoning Effort",
+      "x-lvk-i18n-title": "settings:executorSchemas.codex.model_reasoning_effort.title",
+      "x-lvk-i18n-description": "settings:executorSchemas.codex.model_reasoning_effort.description"
     },
     "model_reasoning_summary": {
       "description": "Model reasoning summary style",
@@ -70,7 +125,32 @@
         "detailed",
         "none",
         null
-      ]
+      ],
+      "title": "Model Reasoning Summary",
+      "x-lvk-i18n-enum": [
+        {
+          "key": "settings:executorSchemas.codex.model_reasoning_summary.options.auto",
+          "source": "Automatic"
+        },
+        {
+          "key": "settings:executorSchemas.codex.model_reasoning_summary.options.concise",
+          "source": "Concise"
+        },
+        {
+          "key": "settings:executorSchemas.codex.model_reasoning_summary.options.detailed",
+          "source": "Detailed"
+        },
+        {
+          "key": "settings:executorSchemas.codex.model_reasoning_summary.options.none",
+          "source": "None"
+        },
+        {
+          "key": "settings:executorSchemas.codex.model_reasoning_summary.options.null",
+          "source": "Follow native config"
+        }
+      ],
+      "x-lvk-i18n-title": "settings:executorSchemas.codex.model_reasoning_summary.title",
+      "x-lvk-i18n-description": "settings:executorSchemas.codex.model_reasoning_summary.description"
     },
     "model_reasoning_summary_format": {
       "description": "Format for model reasoning summaries",
@@ -82,47 +162,78 @@
         "none",
         "experimental",
         null
-      ]
+      ],
+      "title": "Model Reasoning Summary Format",
+      "x-lvk-i18n-enum": [
+        {
+          "key": "settings:executorSchemas.codex.model_reasoning_summary_format.options.none",
+          "source": "None"
+        },
+        {
+          "key": "settings:executorSchemas.codex.model_reasoning_summary_format.options.experimental",
+          "source": "Experimental"
+        },
+        {
+          "key": "settings:executorSchemas.codex.model_reasoning_summary_format.options.null",
+          "source": "Follow native config"
+        }
+      ],
+      "x-lvk-i18n-title": "settings:executorSchemas.codex.model_reasoning_summary_format.title",
+      "x-lvk-i18n-description": "settings:executorSchemas.codex.model_reasoning_summary_format.description"
     },
     "profile": {
       "type": [
         "string",
         "null"
-      ]
+      ],
+      "title": "Profile",
+      "x-lvk-i18n-title": "settings:executorSchemas.codex.profile.title"
     },
     "base_instructions": {
       "type": [
         "string",
         "null"
-      ]
+      ],
+      "title": "Base Instructions",
+      "x-lvk-i18n-title": "settings:executorSchemas.codex.base_instructions.title"
     },
     "include_apply_patch_tool": {
       "type": [
         "boolean",
         "null"
-      ]
+      ],
+      "title": "Include Apply Patch Tool",
+      "x-lvk-i18n-title": "settings:executorSchemas.codex.include_apply_patch_tool.title"
     },
     "model_provider": {
       "type": [
         "string",
         "null"
-      ]
+      ],
+      "title": "Model Provider",
+      "x-lvk-i18n-title": "settings:executorSchemas.codex.model_provider.title"
     },
     "compact_prompt": {
       "type": [
         "string",
         "null"
-      ]
+      ],
+      "title": "Compact Prompt",
+      "x-lvk-i18n-title": "settings:executorSchemas.codex.compact_prompt.title"
     },
     "developer_instructions": {
       "type": [
         "string",
         "null"
-      ]
+      ],
+      "title": "Developer Instructions",
+      "x-lvk-i18n-title": "settings:executorSchemas.codex.developer_instructions.title"
     },
     "plan": {
       "type": "boolean",
-      "default": false
+      "default": false,
+      "title": "Plan",
+      "x-lvk-i18n-title": "settings:executorSchemas.codex.plan.title"
     },
     "execution_mode": {
       "description": "How an interactive coding request should be executed.\n\nThis is intentionally separate from [`PermissionPolicy`]: planning and\nlong-running goal execution describe workflow, while permission policy\ndescribes what the provider may do without asking.",
@@ -134,7 +245,32 @@
         "goal",
         "plan_with_goal"
       ],
-      "default": "code"
+      "default": "code",
+      "title": "Execution Mode",
+      "x-lvk-i18n-enum": [
+        {
+          "key": "settings:executorSchemas.codex.execution_mode.options.code",
+          "source": "Code"
+        },
+        {
+          "key": "settings:executorSchemas.codex.execution_mode.options.review",
+          "source": "Review"
+        },
+        {
+          "key": "settings:executorSchemas.codex.execution_mode.options.plan",
+          "source": "Plan"
+        },
+        {
+          "key": "settings:executorSchemas.codex.execution_mode.options.goal",
+          "source": "Goal"
+        },
+        {
+          "key": "settings:executorSchemas.codex.execution_mode.options.plan_with_goal",
+          "source": "Plan with Goal"
+        }
+      ],
+      "x-lvk-i18n-title": "settings:executorSchemas.codex.execution_mode.title",
+      "x-lvk-i18n-description": "settings:executorSchemas.codex.execution_mode.description"
     },
     "goal_token_budget": {
       "type": [
@@ -142,7 +278,9 @@
         "null"
       ],
       "format": "uint32",
-      "minimum": 0
+      "minimum": 0,
+      "title": "Goal Token Budget",
+      "x-lvk-i18n-title": "settings:executorSchemas.codex.goal_token_budget.title"
     },
     "goal_max_concurrent_agents": {
       "type": [
@@ -151,7 +289,9 @@
       ],
       "format": "uint16",
       "minimum": 0,
-      "maximum": 65535
+      "maximum": 65535,
+      "title": "Goal Max Concurrent Agents",
+      "x-lvk-i18n-title": "settings:executorSchemas.codex.goal_max_concurrent_agents.title"
     },
     "base_command_override": {
       "title": "Base Command Override",
@@ -159,7 +299,9 @@
       "type": [
         "string",
         "null"
-      ]
+      ],
+      "x-lvk-i18n-title": "settings:executorSchemas.codex.base_command_override.title",
+      "x-lvk-i18n-description": "settings:executorSchemas.codex.base_command_override.description"
     },
     "additional_params": {
       "title": "Additional Parameters",
@@ -170,7 +312,9 @@
       ],
       "items": {
         "type": "string"
-      }
+      },
+      "x-lvk-i18n-title": "settings:executorSchemas.codex.additional_params.title",
+      "x-lvk-i18n-description": "settings:executorSchemas.codex.additional_params.description"
     },
     "env": {
       "title": "Environment Variables",
@@ -181,7 +325,9 @@
       ],
       "additionalProperties": {
         "type": "string"
-      }
+      },
+      "x-lvk-i18n-title": "settings:executorSchemas.codex.env.title",
+      "x-lvk-i18n-description": "settings:executorSchemas.codex.env.description"
     }
   },
   "type": "object"

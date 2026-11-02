@@ -59,6 +59,10 @@ it('keeps failures and reasoned skips with their code SHA without claiming a pas
   expect(html).toContain('no fresh environment test');
   expect(html).not.toContain('integrationFacts.passed');
   expect(html).not.toContain('integrationFacts.published');
+  fixture.run!.payload.evidence[0].result = 'Original {{value}} 日本語';
+  const unknown = render();
+  expect(unknown).toContain('Original {{value}} 日本語');
+  expect(unknown).not.toContain('integrationFacts.Original');
 });
 it('uses the host publication receipt, distinguishing intent and Wiki commit', () => {
   fixture.run!.payload.publication_intent = true;

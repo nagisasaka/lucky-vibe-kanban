@@ -87,7 +87,12 @@ export const SelectWidget = (props: WidgetProps) => {
     const selectOptions = enumOptions || [];
     if (isNullable) {
       return [
-        { value: '__null__', label: t('form.notSpecified') },
+        {
+          value: '__null__',
+          label:
+            selectOptions.find((option) => option.value === null)?.label ??
+            t('form.notSpecified'),
+        },
         ...selectOptions.filter((opt) => opt.value !== null),
       ];
     }

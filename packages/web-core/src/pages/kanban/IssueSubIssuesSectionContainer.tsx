@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useMemo, useCallback, useState } from 'react';
 import { useParams } from '@tanstack/react-router';
 import { DragDropContext, type DropResult } from '@hello-pangea/dnd';
@@ -27,6 +28,7 @@ interface IssueSubIssuesSectionContainerProps {
 export function IssueSubIssuesSectionContainer({
   issueId,
 }: IssueSubIssuesSectionContainerProps) {
+  const { i18n } = useTranslation('common');
   const { projectId } = useParams({ strict: false });
   const appNavigation = useAppNavigation();
   const {
@@ -192,12 +194,15 @@ export function IssueSubIssuesSectionContainer({
     async (subIssueId: string) => {
       const subIssue = issues.find((issue) => issue.id === subIssueId);
       const result = await ConfirmDialog.show({
-        title: 'Delete Sub-issue',
-        message: subIssue
-          ? `Are you sure you want to delete "${subIssue.title}"? This action cannot be undone.`
-          : 'Are you sure you want to delete this sub-issue? This action cannot be undone.',
-        confirmText: 'Delete',
-        cancelText: 'Cancel',
+        title: () => i18n.t('common:kanban.deleteSubIssue'),
+        message: () =>
+          subIssue
+            ? i18n.t('common:kanban.deleteNamedSubIssue', {
+                title: subIssue.title,
+              })
+            : i18n.t('common:kanban.deleteSubIssuePrompt'),
+        confirmText: () => i18n.t('common:buttons.delete'),
+        cancelText: () => i18n.t('common:buttons.cancel'),
         variant: 'destructive',
       });
 
@@ -205,7 +210,7 @@ export function IssueSubIssuesSectionContainer({
         removeIssue(subIssueId);
       }
     },
-    [issues, removeIssue]
+    [issues, removeIssue, i18n]
   );
 
   // Actions for the section header

@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import {
   useCallback,
   useEffect,
@@ -50,6 +51,7 @@ export function WorkspaceFileBrowserPanel({
   className,
   onSelectFile,
 }: WorkspaceFileBrowserPanelProps) {
+  const { t } = useTranslation('common');
   const { theme } = useTheme();
   const actualTheme = getActualTheme(theme);
   const [searchQuery, setSearchQuery] = useState('');
@@ -140,16 +142,17 @@ export function WorkspaceFileBrowserPanel({
           <input
             value={searchQuery}
             onChange={(event) => setSearchQuery(event.target.value)}
-            placeholder="Search files"
+            aria-label={t('workspaceFiles.search_files')}
+            placeholder={t('workspaceFiles.search_files')}
             className="h-8 w-full rounded border border-border bg-primary pl-7 pr-2 text-sm text-normal outline-none placeholder:text-low focus:ring-1 focus:ring-brand"
           />
         </div>
-        <Tooltip content="Refresh files" side="bottom">
+        <Tooltip content={t('workspaceFiles.refresh_files')} side="bottom">
           <button
             type="button"
             onClick={handleRefresh}
             className="flex size-8 shrink-0 items-center justify-center rounded border border-border bg-primary text-low transition-colors hover:text-normal focus:outline-none focus:ring-1 focus:ring-brand disabled:opacity-50"
-            aria-label="Refresh files"
+            aria-label={t('workspaceFiles.refresh_files')}
             disabled={isFetching}
           >
             <RefreshCw className={cn('size-4', isFetching && 'animate-spin')} />
@@ -161,34 +164,34 @@ export function WorkspaceFileBrowserPanel({
         {isLoading ? (
           <WorkspaceFileEmptyState
             icon={<Loader2 className="size-5 animate-spin" />}
-            title="Loading files"
-            description="Reading the workspace repositories."
+            title={t('workspaceFiles.loading_files')}
+            description={t('workspaceFiles.reading_the_workspace_repositories')}
           />
         ) : error ? (
           <WorkspaceFileEmptyState
-            title="Could not load files"
-            description={
-              error instanceof Error ? error.message : 'The file tree failed.'
-            }
+            title={t('workspaceFiles.could_not_load_files')}
+            description={`${t('workspaceFiles.treeUnconfirmed')} ${error instanceof Error ? error.message : String(error)}`}
             action={
               <button
                 type="button"
                 onClick={handleRefresh}
                 className="rounded border border-border bg-primary px-base py-half text-sm text-normal hover:text-high focus:outline-none focus:ring-1 focus:ring-brand"
               >
-                Retry
+                {t('workspaceFiles.retry')}
               </button>
             }
           />
         ) : repos.length === 0 ? (
           <WorkspaceFileEmptyState
-            title="No repositories"
-            description="This workspace has no repository files to inspect."
+            title={t('workspaceFiles.no_repositories')}
+            description={t(
+              'workspaceFiles.this_workspace_has_no_repository_files_to_inspect'
+            )}
           />
         ) : filteredRepos.length === 0 ? (
           <WorkspaceFileEmptyState
-            title="No matches"
-            description="Try a different file name or path."
+            title={t('workspaceFiles.no_matches')}
+            description={t('workspaceFiles.try_a_different_file_name_or_path')}
           />
         ) : (
           <div className="space-y-base">
@@ -233,19 +236,22 @@ function RepoGroup({
   onSelectFile,
   renderFileIcon,
 }: RepoGroupProps) {
+  const { t } = useTranslation('common');
   return (
     <section className="min-w-0">
       <div className="mb-half flex h-6 min-w-0 items-center gap-half px-half text-xs font-semibold uppercase text-low">
         <span className="truncate">{repo.repoDisplayName}</span>
         {repo.truncated && (
           <span className="shrink-0 rounded border border-border px-1 py-0.5 font-normal normal-case text-low">
-            partial
+            {t('workspaceFiles.partial')}
           </span>
         )}
       </div>
       <div className="space-y-0.5">
         {repo.children.length === 0 ? (
-          <div className="px-half py-base text-sm text-low">No files</div>
+          <div className="px-half py-base text-sm text-low">
+            {t('workspaceFiles.no_files')}
+          </div>
         ) : (
           repo.children.map((node) => (
             <WorkspaceFileNodeRow
@@ -283,6 +289,7 @@ function WorkspaceFileNodeRow({
   onSelectFile,
   renderFileIcon,
 }: WorkspaceFileNodeRowProps) {
+  const { t } = useTranslation('common');
   const isFolder = node.type === 'folder';
   const isExpanded = expandedKeys.has(node.id);
   const isSelected = selectedKey === node.id;
@@ -332,8 +339,11 @@ function WorkspaceFileNodeRow({
           </span>
           <span className="min-w-0 truncate">{node.name}</span>
           {error && (
-            <span className="shrink-0 text-xs text-error" title={error.message}>
-              error
+            <span
+              className="shrink-0 text-xs text-error"
+              title={`${t('workspaceFiles.directoryUnconfirmed')} ${error.message}`}
+            >
+              {t('workspaceFiles.error')}
             </span>
           )}
         </span>
@@ -359,7 +369,7 @@ function WorkspaceFileNodeRow({
               className="h-[28px] truncate px-half text-xs text-low"
               style={{ paddingLeft: `${(depth + 1) * 12 + 24}px` }}
             >
-              Directory truncated
+              {t('workspaceFiles.directory_truncated')}
             </div>
           )}
         </div>

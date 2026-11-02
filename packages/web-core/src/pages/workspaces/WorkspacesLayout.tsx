@@ -153,7 +153,7 @@ export function WorkspacesLayout() {
       className={wikiButtonClass}
       onClick={() => setWikiMobileNavigation(true)}
     >
-      Wiki pages
+      {t('workspaceWiki.pages')}
     </button>
   ) : undefined;
   const mainContainerRef = useRef<WorkspacesMainContainerHandle>(null);
@@ -377,7 +377,9 @@ export function WorkspacesLayout() {
                       !wikiMobileNavigation && 'hidden'
                     )}
                   >
-                    <div className="p-base border-b text-high">Wiki pages</div>
+                    <div className="p-base border-b text-high">
+                      {t('workspaceWiki.pages')}
+                    </div>
                     <WorkspaceWikiNavigation
                       showReload
                       onSelectPage={() => setWikiMobileNavigation(false)}

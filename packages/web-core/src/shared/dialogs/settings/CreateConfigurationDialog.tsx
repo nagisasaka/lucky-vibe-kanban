@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useState, useEffect } from 'react';
 import { Button } from '@vibe/ui/components/Button';
 import { Input } from '@vibe/ui/components/Input';
@@ -21,6 +22,8 @@ import { Alert, AlertDescription } from '@vibe/ui/components/Alert';
 import { create, useModal } from '@ebay/nice-modal-react';
 import { defineModal } from '@/shared/lib/modals';
 
+type NameError = 'empty' | 'tooLong' | 'invalid' | 'exists';
+
 export interface CreateConfigurationDialogProps {
   executorType: string;
   existingConfigs: string[];
@@ -34,10 +37,11 @@ export type CreateConfigurationResult = {
 
 const CreateConfigurationDialogImpl = create<CreateConfigurationDialogProps>(
   ({ executorType, existingConfigs }) => {
+    const { t } = useTranslation('settings');
     const modal = useModal();
     const [configName, setConfigName] = useState('');
     const [cloneFrom, setCloneFrom] = useState<string | null>(null);
-    const [error, setError] = useState<string | null>(null);
+    const [error, setError] = useState<NameError | null>(null);
 
     useEffect(() => {
       // Reset form when dialog opens
@@ -48,16 +52,15 @@ const CreateConfigurationDialogImpl = create<CreateConfigurationDialogProps>(
       }
     }, [modal.visible]);
 
-    const validateConfigName = (name: string): string | null => {
+    const validateConfigName = (name: string): NameError | null => {
       const trimmedName = name.trim();
-      if (!trimmedName) return 'Configuration name cannot be empty';
-      if (trimmedName.length > 40)
-        return 'Configuration name must be 40 characters or less';
+      if (!trimmedName) return 'empty';
+      if (trimmedName.length > 40) return 'tooLong';
       if (!/^[a-zA-Z0-9_-]+$/.test(trimmedName)) {
-        return 'Configuration name can only contain letters, numbers, underscores, and hyphens';
+        return 'invalid';
       }
       if (existingConfigs.includes(trimmedName)) {
-        return 'A configuration with this name already exists';
+        return 'exists';
       }
       return null;
     };
@@ -89,18 +92,24 @@ const CreateConfigurationDialogImpl = create<CreateConfigurationDialogProps>(
     };
 
     return (
-      <Dialog open={modal.visible} onOpenChange={handleOpenChange}>
+      <Dialog
+        role="dialog"
+        aria-modal="true"
+        aria-label={t('configuration.createTitle')}
+        open={modal.visible}
+        onOpenChange={handleOpenChange}
+      >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Create New Configuration</DialogTitle>
+            <DialogTitle>{t('configuration.createTitle')}</DialogTitle>
             <DialogDescription>
-              Add a new configuration for the {executorType} executor.
+              {t('configuration.createDescription', { executor: executorType })}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="config-name">Configuration Name</Label>
+              <Label htmlFor="config-name">{t('configuration.name')}</Label>
               <Input
                 id="config-name"
                 value={configName}
@@ -108,14 +117,14 @@ const CreateConfigurationDialogImpl = create<CreateConfigurationDialogProps>(
                   setConfigName(e.target.value);
                   setError(null);
                 }}
-                placeholder="e.g., PRODUCTION, DEVELOPMENT"
+                placeholder={t('configuration.namePlaceholder')}
                 maxLength={40}
                 autoFocus
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="clone-from">Clone from (optional)</Label>
+              <Label htmlFor="clone-from">{t('configuration.cloneFrom')}</Label>
               <Select
                 value={cloneFrom || '__blank__'}
                 onValueChange={(value) =>
@@ -123,13 +132,17 @@ const CreateConfigurationDialogImpl = create<CreateConfigurationDialogProps>(
                 }
               >
                 <SelectTrigger id="clone-from">
-                  <SelectValue placeholder="Start blank or clone existing" />
+                  <SelectValue
+                    placeholder={t('configuration.clonePlaceholder')}
+                  />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="__blank__">Start blank</SelectItem>
+                  <SelectItem value="__blank__">
+                    {t('configuration.blank')}
+                  </SelectItem>
                   {existingConfigs.map((configuration) => (
                     <SelectItem key={configuration} value={configuration}>
-                      Clone from {configuration}
+                      {t('configuration.cloneOption', { name: configuration })}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -138,17 +151,26 @@ const CreateConfigurationDialogImpl = create<CreateConfigurationDialogProps>(
 
             {error && (
               <Alert variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
+                <AlertDescription>
+                  {
+                    {
+                      empty: t('configuration.errors.empty'),
+                      tooLong: t('configuration.errors.tooLong'),
+                      invalid: t('configuration.errors.invalid'),
+                      exists: t('configuration.errors.exists'),
+                    }[error]
+                  }
+                </AlertDescription>
               </Alert>
             )}
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={handleCancel}>
-              Cancel
+            <Button type="button" variant="outline" onClick={handleCancel}>
+              {t('common:buttons.cancel')}
             </Button>
             <Button onClick={handleCreate} disabled={!configName.trim()}>
-              Create Configuration
+              {t('configuration.create')}
             </Button>
           </DialogFooter>
         </DialogContent>

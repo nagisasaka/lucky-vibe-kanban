@@ -1,3 +1,4 @@
+import { notificationSoundLabel } from '@/shared/lib/notificationSoundLabel';
 import { OsNotificationEvents } from './OsNotificationEvents';
 import { ExternalEditorSettings } from '@/shared/components/ExternalEditorSettings';
 import { WebPushSettings } from '@/shared/components/web-push/WebPushSettings';
@@ -66,17 +67,14 @@ export function GeneralSettingsSection({
   const isMobile = useIsMobile();
   const [mobileFontScale, setMobileFontScale] = useMobileFontScale();
   const languageOptions = getLanguageOptions(
-    t('language.browserDefault', {
-      ns: 'common',
-      defaultValue: 'Browser Default',
-    })
+    t('language.browserDefault', { ns: 'common' })
   );
   const { config, loading, updateAndSaveConfig, profiles } = useUserSystem();
 
   const [draft, setDraft] = useState(() => (config ? cloneDeep(config) : null));
   const [dirty, setDirty] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [branchPrefixError, setBranchPrefixError] = useState<string | null>(
     null
@@ -191,17 +189,20 @@ export function GeneralSettingsSection({
     if (!draft) return;
 
     setSaving(true);
-    setError(null);
+    setSaveError(null);
     setSuccess(false);
 
     try {
-      if (!(await updateAndSaveConfig(draft, setError))) return;
+      if (
+        !(await updateAndSaveConfig(draft, (message) => setSaveError(message)))
+      )
+        return;
       setTheme(draft.theme);
       setDirty(false);
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
     } catch (err) {
-      setError(t('settings.general.save.error'));
+      setSaveError(err instanceof Error ? err.message : String(err));
       console.error('Error saving config:', err);
     } finally {
       setSaving(false);
@@ -251,15 +252,15 @@ export function GeneralSettingsSection({
 
   const soundOptions = Object.values(SoundFile).map((sound) => ({
     value: sound,
-    label: toPrettyCase(sound),
+    label: notificationSoundLabel(sound, t),
   }));
 
   return (
     <>
       {/* Status messages */}
-      {error && (
+      {saveError && (
         <div className="bg-error/10 border border-error/50 rounded-sm p-4 text-error">
-          {error}
+          {t('settings.general.save.error')} {saveError}
         </div>
       )}
 
@@ -304,20 +305,23 @@ export function GeneralSettingsSection({
 
           {isMobile && (
             <SettingsField
-              label="Mobile Font Size"
-              description="Scale text size on mobile for better readability"
+              label={t('settings.general.appearance.mobileFont.label')}
+              description={t('settings.general.appearance.mobileFont.helper')}
             >
               <SettingsSelect
                 value={mobileFontScale}
                 options={[
                   {
                     value: 'default' as MobileFontScale,
-                    label: 'Default (100%)',
+                    label: t('settings.general.appearance.mobileFont.default'),
                   },
-                  { value: 'small' as MobileFontScale, label: 'Small (95%)' },
+                  {
+                    value: 'small' as MobileFontScale,
+                    label: t('settings.general.appearance.mobileFont.small'),
+                  },
                   {
                     value: 'smaller' as MobileFontScale,
-                    label: 'Smaller (90%)',
+                    label: t('settings.general.appearance.mobileFont.smaller'),
                   },
                 ]}
                 onChange={(value: MobileFontScale) => setMobileFontScale(value)}
@@ -622,7 +626,7 @@ export function GeneralSettingsSection({
       )}
 
       {category === 'notifications' && (
-        <SettingsCard title="Web Push">
+        <SettingsCard title={t('settings.general.notifications.webPush')}>
           <p className="text-xs text-low">{t('settings.scope.push')}</p>
           <WebPushSettings />
         </SettingsCard>
@@ -676,8 +680,8 @@ export function GeneralSettingsSection({
                 <IconButton
                   icon={SpeakerHighIcon}
                   onClick={() => previewSound(draft.notifications.sound_file)}
-                  aria-label="Preview sound"
-                  title="Preview sound"
+                  aria-label={t('settings.general.notifications.sound.preview')}
+                  title={t('settings.general.notifications.sound.preview')}
                 />
               </div>
               <p className="text-sm text-low">

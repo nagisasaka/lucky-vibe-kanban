@@ -1,3 +1,4 @@
+import { useId } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Dialog,
@@ -17,11 +18,14 @@ import {
 } from '@phosphor-icons/react';
 import { defineModal, type ConfirmResult } from '../lib/modals';
 
+// Deferred owned text follows live UI language changes while the dialog is open.
+export type ConfirmDialogText = string | (() => string);
+
 export interface ConfirmDialogProps {
-  title: string;
-  message: string;
-  confirmText?: string;
-  cancelText?: string;
+  title: ConfirmDialogText;
+  message: ConfirmDialogText;
+  confirmText?: ConfirmDialogText;
+  cancelText?: ConfirmDialogText;
   variant?: 'default' | 'destructive' | 'info' | 'success';
   icon?: boolean;
   showCancelButton?: boolean;
@@ -30,6 +34,8 @@ export interface ConfirmDialogProps {
 const ConfirmDialogImpl = NiceModal.create<ConfirmDialogProps>((props) => {
   const { t } = useTranslation(['tasks', 'common']);
   const modal = useModal();
+  const titleId = useId();
+  const descriptionId = useId();
   const {
     title,
     message,
@@ -39,6 +45,9 @@ const ConfirmDialogImpl = NiceModal.create<ConfirmDialogProps>((props) => {
     icon = true,
     showCancelButton = true,
   } = props;
+
+  const text = (value: ConfirmDialogText) =>
+    typeof value === 'function' ? value() : value;
 
   const handleConfirm = () => {
     modal.resolve('confirmed' as ConfirmResult);
@@ -72,24 +81,31 @@ const ConfirmDialogImpl = NiceModal.create<ConfirmDialogProps>((props) => {
   };
 
   return (
-    <Dialog open={modal.visible} onOpenChange={handleCancel}>
+    <Dialog
+      open={modal.visible}
+      onOpenChange={handleCancel}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={titleId}
+      aria-describedby={descriptionId}
+    >
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <div className="flex items-center gap-3">
             {getIcon()}
-            <DialogTitle>{title}</DialogTitle>
+            <DialogTitle id={titleId}>{text(title)}</DialogTitle>
           </div>
-          <DialogDescription className="text-left pt-2">
-            {message}
+          <DialogDescription id={descriptionId} className="text-left pt-2">
+            {text(message)}
           </DialogDescription>
         </DialogHeader>
         {showCancelButton ? (
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={handleCancel}>
-              {cancelText}
+              {text(cancelText)}
             </Button>
             <Button variant={getConfirmButtonVariant()} onClick={handleConfirm}>
-              {confirmText}
+              {text(confirmText)}
             </Button>
           </DialogFooter>
         ) : (
@@ -99,7 +115,7 @@ const ConfirmDialogImpl = NiceModal.create<ConfirmDialogProps>((props) => {
               variant={getConfirmButtonVariant()}
               onClick={handleConfirm}
             >
-              {confirmText}
+              {text(confirmText)}
             </Button>
           </div>
         )}

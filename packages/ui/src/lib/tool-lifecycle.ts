@@ -18,15 +18,12 @@ export function toolDisplayStatus(entry: ToolLifecycle) {
     return entry.active === false ? 'unknown' : 'pending_approval';
   if (status === 'created') return isToolActive(entry) ? 'running' : 'unknown';
   if (
-    status &&
-    [
-      'success',
-      'failed',
-      'denied',
-      'timed_out',
-      'cancelled',
-      'approved',
-    ].includes(status)
+    status === 'success' ||
+    status === 'failed' ||
+    status === 'denied' ||
+    status === 'timed_out' ||
+    status === 'cancelled' ||
+    status === 'approved'
   )
     return status;
   return isToolActive(entry) ? 'running' : 'unknown';

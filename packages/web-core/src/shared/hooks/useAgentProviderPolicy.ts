@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -28,6 +29,7 @@ export function useAgentProviderPolicy(
   variant?: string | null,
   scope?: { workspaceId?: string; sessionId?: string }
 ): AgentProviderPolicy | null {
+  const { t } = useTranslation('common');
   const { data: garage } = useQuery<AgentGarageEntry[]>({
     queryKey: agentProviderPolicyKeys.garage(),
     queryFn: agentsApi.getGarage,
@@ -70,8 +72,7 @@ export function useAgentProviderPolicy(
           diagnostics: [
             {
               kind: AgentProviderDiagnosticKind.UNKNOWN,
-              message:
-                'Unable to check the selected agent profile. Reopen the session to retry.',
+              message: t('agentProvider.profileUnavailable'),
             },
           ],
         };
@@ -79,7 +80,7 @@ export function useAgentProviderPolicy(
       return profilePolicy ?? null;
     }
     return garage?.find((entry) => entry.executor === executor)?.policy ?? null;
-  }, [executor, garage, isClaude, profileError, profilePolicy]);
+  }, [executor, garage, isClaude, profileError, profilePolicy, t]);
 }
 
 interface UseAgentProviderOptionsInput {

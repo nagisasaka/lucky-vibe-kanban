@@ -169,7 +169,9 @@ export const FileTree = memo(function FileTree({
           renderNodes(nodes)
         ) : (
           <div className="p-base text-low text-sm">
-            {searchQuery ? t('common:fileTree.noResults') : 'No changed files'}
+            {searchQuery
+              ? t('common:fileTree.noResults')
+              : t('common:fileTree.noChangedFiles')}
           </div>
         )}
       </div>

@@ -759,9 +759,7 @@ export function KanbanIssuePanelContainer({
       }
     } catch (error) {
       console.error('Failed to save issue:', error);
-      setSubmitError(
-        error instanceof Error ? error.message : 'Failed to save issue'
-      );
+      setSubmitError(error instanceof Error ? error.message : String(error));
     } finally {
       setIsSubmitting(false);
     }
@@ -902,7 +900,11 @@ export function KanbanIssuePanelContainer({
         />
       )}
       isSubmitting={isSubmitting || (mode === 'create' && !contextPresets.data)}
-      submitError={submitError}
+      submitError={
+        submitError
+          ? `${t('kanban.issueSaveUnconfirmed')} ${submitError}`
+          : null
+      }
       onDismissSubmitError={() => setSubmitError(null)}
       descriptionSaveStatus={
         mode === 'edit' ? descriptionSaveStatus : undefined

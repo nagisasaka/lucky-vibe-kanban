@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useCallback, useEffect, useState, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
@@ -45,6 +46,7 @@ function ToolbarButton({
 
 export function ToolbarPlugin() {
   const [editor] = useLexicalComposerContext();
+  const { t } = useTranslation('common');
 
   // Visibility and position state
   const [isVisible, setIsVisible] = useState(false);
@@ -192,13 +194,13 @@ export function ToolbarPlugin() {
     >
       <ToolbarButton
         onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'bold')}
-        title="Bold (Cmd+B)"
+        title={t('editorToolbar.boldShortcut')}
       >
         <Bold size={iconSize} />
       </ToolbarButton>
       <ToolbarButton
         onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'italic')}
-        title="Italic (Cmd+I)"
+        title={t('editorToolbar.italicShortcut')}
       >
         <Italic size={iconSize} />
       </ToolbarButton>
@@ -206,13 +208,13 @@ export function ToolbarPlugin() {
         onClick={() =>
           editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'strikethrough')
         }
-        title="Strikethrough"
+        title={t('editorToolbar.strikethrough')}
       >
         <Strikethrough size={iconSize} />
       </ToolbarButton>
       <ToolbarButton
         onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'code')}
-        title="Inline Code (Cmd+E)"
+        title={t('editorToolbar.codeShortcut')}
       >
         <Code size={iconSize} />
       </ToolbarButton>

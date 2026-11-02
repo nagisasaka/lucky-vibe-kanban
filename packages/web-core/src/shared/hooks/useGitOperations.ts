@@ -1,3 +1,4 @@
+import { errorDiagnostic } from '@/shared/lib/errorDiagnostic';
 import { useRebase } from '@/shared/hooks/useRebase';
 import { useMerge } from '@/shared/hooks/useMerge';
 import { usePush } from '@/shared/hooks/usePush';
@@ -25,7 +26,7 @@ export function useGitOperations(
           data?.type === 'merge_conflicts' ||
           data?.type === 'rebase_in_progress';
         if (!isConflict) {
-          setError(err.message || 'Failed to rebase');
+          setError('rebase', errorDiagnostic(err));
         }
       }
     }
@@ -34,31 +35,19 @@ export function useGitOperations(
   const merge = useMerge(
     workspaceId,
     () => setError(null),
-    (err: unknown) => {
-      const message =
-        err && typeof err === 'object' && 'message' in err
-          ? String(err.message)
-          : 'Failed to merge';
-      setError(message);
-    }
+    (error) => setError('merge', errorDiagnostic(error))
   );
 
   const forcePush = useForcePush(
     workspaceId,
     () => setError(null),
-    (err: unknown) => {
-      const message =
-        err && typeof err === 'object' && 'message' in err
-          ? String(err.message)
-          : 'Failed to force push';
-      setError(message);
-    }
+    (error) => setError('forcePush', errorDiagnostic(error))
   );
 
   const push = usePush(
     workspaceId,
     () => setError(null),
-    async (err: unknown, errorData, params?: PushWorkspaceRequest) => {
+    async (_err: unknown, errorData, params?: PushWorkspaceRequest) => {
       // Handle typed push errors
       if (errorData?.type === 'force_push_required') {
         // Show confirmation dialog - dialog handles the force push internally
@@ -68,11 +57,7 @@ export function useGitOperations(
         return;
       }
 
-      const message =
-        err && typeof err === 'object' && 'message' in err
-          ? String(err.message)
-          : 'Failed to push';
-      setError(message);
+      setError('push', errorDiagnostic(_err));
     }
   );
 
@@ -80,13 +65,7 @@ export function useGitOperations(
     workspaceId,
     repoId,
     () => setError(null),
-    (err: unknown) => {
-      const message =
-        err && typeof err === 'object' && 'message' in err
-          ? String(err.message)
-          : 'Failed to change target branch';
-      setError(message);
-    }
+    (error) => setError('targetBranch', errorDiagnostic(error))
   );
 
   const isAnyLoading =

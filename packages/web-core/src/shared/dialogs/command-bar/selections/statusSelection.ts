@@ -11,10 +11,10 @@ export function buildStatusSelectionPages(
   return {
     selectStatus: {
       id: 'selectStatus',
-      title: 'Select Status',
-      buildGroups: () => [
+      title: (t) => t('tasks:selections.selectStatus'),
+      buildGroups: (t) => [
         {
-          label: 'Statuses',
+          label: t('tasks:selections.statuses'),
           items: statuses.map((s) => ({ type: 'status' as const, status: s })),
         },
       ],

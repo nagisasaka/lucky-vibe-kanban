@@ -72,7 +72,7 @@ export function WorkflowTemplateListPage({
   }
 
   if (error) {
-    const message = error instanceof Error ? error.message : String(error);
+    const message = `${t('workflow.errors.loadGuidance')} ${error.message}`;
     return (
       <div className="flex h-full items-center justify-center text-error">
         {t('workflow.templates.loadFailed', { message })}

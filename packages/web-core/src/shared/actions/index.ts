@@ -1,8 +1,14 @@
+import { errorDiagnostic } from '@/shared/lib/errorDiagnostic';
+import {
+  IssueArchiveActionError,
+  receiptMessage,
+} from '@/shared/lib/issueArchiveNotice';
+import { ActionError } from '@/shared/lib/actionMessages';
+import i18n from '@/i18n/config';
 import { IssueArchiveDialog } from '@/shared/dialogs/kanban/IssueArchiveDialog';
 import {
   issueArchiveApi,
   refreshIssueArchive,
-  receiptMessage,
 } from '@/shared/lib/issueArchiveApi';
 import { forwardRef, createElement } from 'react';
 import type { Icon, IconProps } from '@phosphor-icons/react';
@@ -179,7 +185,8 @@ export const Actions = {
   // === Workspace Actions ===
   DuplicateWorkspace: {
     id: 'duplicate-workspace',
-    label: 'Duplicate',
+    label: (_workspace, t = i18n.getFixedT(null, 'tasks')) =>
+      t('tasks:actionLabels.duplicate'),
     icon: CopyIcon,
     shortcut: 'W D',
     requiresTarget: ActionTargetType.WORKSPACE,
@@ -224,7 +231,8 @@ export const Actions = {
 
   RenameWorkspace: {
     id: 'rename-workspace',
-    label: 'Rename',
+    label: (_workspace, t = i18n.getFixedT(null, 'tasks')) =>
+      t('tasks:actionLabels.rename'),
     icon: PencilSimpleIcon,
     shortcut: 'W R',
     requiresTarget: ActionTargetType.WORKSPACE,
@@ -242,7 +250,10 @@ export const Actions = {
 
   PinWorkspace: {
     id: 'pin-workspace',
-    label: (workspace?: Workspace) => (workspace?.pinned ? 'Unpin' : 'Pin'),
+    label: (workspace?: Workspace, t = i18n.getFixedT(null, 'tasks')) =>
+      workspace?.pinned
+        ? t('tasks:actionLabels.unpin')
+        : t('tasks:actionLabels.pin'),
     icon: PushPinIcon,
     shortcut: 'W P',
     requiresTarget: ActionTargetType.WORKSPACE,
@@ -257,8 +268,10 @@ export const Actions = {
 
   ArchiveWorkspace: {
     id: 'archive-workspace',
-    label: (workspace?: Workspace) =>
-      workspace?.archived ? 'Unarchive' : 'Archive',
+    label: (workspace?: Workspace, t = i18n.getFixedT(null, 'tasks')) =>
+      workspace?.archived
+        ? t('tasks:actionLabels.unarchive')
+        : t('tasks:actionLabels.archive'),
     icon: ArchiveIcon,
     shortcut: 'W A',
     requiresTarget: ActionTargetType.WORKSPACE,
@@ -279,9 +292,9 @@ export const Actions = {
         // Reject busy workspaces before showing the single confirmation.
         const prepared = await workspacesApi.prepareArchive(workspaceId);
         const result = await ConfirmDialog.show({
-          title: prepared.message,
+          title: () => i18n.t('tasks:actionDialogs.archiveWorktree'),
           message: '',
-          confirmText: 'Archive',
+          confirmText: () => i18n.t('tasks:actionLabels.archive'),
           variant: 'destructive',
         });
         if (result !== 'confirmed') return;
@@ -303,7 +316,8 @@ export const Actions = {
 
   DeleteWorkspace: {
     id: 'delete-workspace',
-    label: 'Delete',
+    label: (_workspace, t = i18n.getFixedT(null, 'tasks')) =>
+      t('tasks:actionLabels.delete'),
     icon: TrashIcon,
     shortcut: 'W X',
     variant: 'destructive',
@@ -362,11 +376,13 @@ export const Actions = {
 
   StartReview: {
     id: 'start-review',
-    label: 'Start Review',
+    label: (_workspace, t = i18n.getFixedT(null, 'tasks')) =>
+      t('tasks:actionLabels.start_review'),
     icon: HighlighterIcon,
     requiresTarget: ActionTargetType.WORKSPACE,
     isVisible: (ctx) => ctx.hasWorkspace,
-    getTooltip: () => 'Review changes with agent',
+    getTooltip: (_ctx, t = i18n.getFixedT(null, 'tasks')) =>
+      t('tasks:actionLabels.review_changes_with_agent'),
     execute: async (_ctx, workspaceId) => {
       await StartReviewDialog.show({
         workspaceId,
@@ -376,7 +392,8 @@ export const Actions = {
 
   SpinOffWorkspace: {
     id: 'spin-off-workspace',
-    label: 'Spin off workspace',
+    label: (_workspace, t = i18n.getFixedT(null, 'tasks')) =>
+      t('tasks:actionLabels.spin_off_workspace'),
     icon: GitForkIcon,
     requiresTarget: ActionTargetType.WORKSPACE,
     isVisible: (ctx) => ctx.hasWorkspace,
@@ -412,7 +429,8 @@ export const Actions = {
   // === Global/Navigation Actions ===
   NewWorkspace: {
     id: 'new-workspace',
-    label: 'New Workspace',
+    label: (_workspace, t = i18n.getFixedT(null, 'tasks')) =>
+      t('tasks:actionLabels.new_workspace'),
     icon: PlusIcon,
     shortcut: 'G N',
     requiresTarget: ActionTargetType.NONE,
@@ -423,7 +441,8 @@ export const Actions = {
 
   CreateWorkspaceFromPR: {
     id: 'create-workspace-from-pr',
-    label: 'Create Workspace from PR',
+    label: (_workspace, t = i18n.getFixedT(null, 'tasks')) =>
+      t('tasks:actionLabels.create_workspace_from_pr'),
     icon: GitPullRequestIcon,
     keywords: ['pull request'],
     requiresTarget: ActionTargetType.NONE,
@@ -435,7 +454,8 @@ export const Actions = {
 
   Settings: {
     id: 'settings',
-    label: 'Settings',
+    label: (_workspace, t = i18n.getFixedT(null, 'tasks')) =>
+      t('tasks:actionLabels.settings'),
     icon: GearIcon,
     shortcut: 'G S',
     requiresTarget: ActionTargetType.NONE,
@@ -446,7 +466,8 @@ export const Actions = {
 
   ProjectSettings: {
     id: 'project-settings',
-    label: 'Project Settings',
+    label: (_workspace, t = i18n.getFixedT(null, 'tasks')) =>
+      t('tasks:actionLabels.project_settings'),
     icon: GearIcon,
     requiresTarget: ActionTargetType.NONE,
     isVisible: (ctx) => ctx.layoutMode === 'kanban',
@@ -463,7 +484,8 @@ export const Actions = {
 
   WorkspacesGuide: {
     id: 'workspaces-guide',
-    label: 'Workspaces Guide',
+    label: (_workspace, t = i18n.getFixedT(null, 'tasks')) =>
+      t('tasks:actionLabels.workspaces_guide'),
     icon: QuestionIcon,
     requiresTarget: ActionTargetType.NONE,
     isVisible: (ctx) => ctx.layoutMode === 'workspaces',
@@ -474,7 +496,8 @@ export const Actions = {
 
   ProjectsGuide: {
     id: 'projects-guide',
-    label: 'Projects Guide',
+    label: (_workspace, t = i18n.getFixedT(null, 'tasks')) =>
+      t('tasks:actionLabels.projects_guide'),
     icon: QuestionIcon,
     requiresTarget: ActionTargetType.NONE,
     isVisible: (ctx) => ctx.layoutMode === 'kanban',
@@ -485,7 +508,8 @@ export const Actions = {
 
   OpenCommandBar: {
     id: 'open-command-bar',
-    label: 'Open Command Bar',
+    label: (_workspace, t = i18n.getFixedT(null, 'tasks')) =>
+      t('tasks:actionLabels.open_command_bar'),
     icon: ListIcon,
     shortcut: '{mod} K',
     requiresTarget: ActionTargetType.NONE,
@@ -501,10 +525,10 @@ export const Actions = {
   // === Diff View Actions ===
   ToggleDiffViewMode: {
     id: 'toggle-diff-view-mode',
-    label: () =>
+    label: (_workspace, t = i18n.getFixedT(null, 'tasks')) =>
       useDiffViewStore.getState().mode === 'unified'
-        ? 'Switch to Side-by-Side View'
-        : 'Switch to Inline View',
+        ? t('tasks:actionLabels.switch_to_side_by_side_view')
+        : t('tasks:actionLabels.switch_to_inline_view'),
     icon: ColumnsIcon,
     requiresTarget: ActionTargetType.NONE,
     isVisible: (ctx) =>
@@ -512,8 +536,10 @@ export const Actions = {
       ctx.layoutMode === 'workspaces',
     isActive: (ctx) => ctx.diffViewMode === 'split',
     getIcon: (ctx) => (ctx.diffViewMode === 'split' ? ColumnsIcon : RowsIcon),
-    getTooltip: (ctx) =>
-      ctx.diffViewMode === 'split' ? 'Inline view' : 'Side-by-side view',
+    getTooltip: (ctx, t = i18n.getFixedT(null, 'tasks')) =>
+      ctx.diffViewMode === 'split'
+        ? t('tasks:actionLabels.inline_view')
+        : t('tasks:actionLabels.side_by_side_view'),
     execute: () => {
       useDiffViewStore.getState().toggle();
     },
@@ -521,10 +547,10 @@ export const Actions = {
 
   ToggleIgnoreWhitespace: {
     id: 'toggle-ignore-whitespace',
-    label: () =>
+    label: (_workspace, t = i18n.getFixedT(null, 'tasks')) =>
       useDiffViewStore.getState().ignoreWhitespace
-        ? 'Show Whitespace Changes'
-        : 'Ignore Whitespace Changes',
+        ? t('tasks:actionLabels.show_whitespace_changes')
+        : t('tasks:actionLabels.ignore_whitespace_changes'),
     icon: EyeSlashIcon,
     requiresTarget: ActionTargetType.NONE,
     isVisible: (ctx) =>
@@ -538,10 +564,10 @@ export const Actions = {
 
   ToggleWrapLines: {
     id: 'toggle-wrap-lines',
-    label: () =>
+    label: (_workspace, t = i18n.getFixedT(null, 'tasks')) =>
       useDiffViewStore.getState().wrapText
-        ? 'Disable Line Wrapping'
-        : 'Enable Line Wrapping',
+        ? t('tasks:actionLabels.disable_line_wrapping')
+        : t('tasks:actionLabels.enable_line_wrapping'),
     icon: TextAlignLeftIcon,
     shortcut: 'T W',
     requiresTarget: ActionTargetType.NONE,
@@ -557,10 +583,10 @@ export const Actions = {
   // === Layout Panel Actions ===
   ToggleLeftSidebar: {
     id: 'toggle-left-sidebar',
-    label: () =>
+    label: (_workspace, t = i18n.getFixedT(null, 'tasks')) =>
       useUiPreferencesStore.getState().isLeftSidebarVisible
-        ? 'Hide Left Sidebar'
-        : 'Show Left Sidebar',
+        ? t('tasks:actionLabels.hide_left_sidebar')
+        : t('tasks:actionLabels.show_left_sidebar'),
     icon: SidebarSimpleIcon,
     shortcut: 'V S',
     requiresTarget: ActionTargetType.NONE,
@@ -573,7 +599,8 @@ export const Actions = {
 
   ToggleLeftMainPanel: {
     id: 'toggle-left-main-panel',
-    label: 'Toggle Chat Panel',
+    label: (_workspace, t = i18n.getFixedT(null, 'tasks')) =>
+      t('tasks:actionLabels.toggle_chat_panel'),
     icon: ChatsTeardropIcon,
     shortcut: 'V H',
     requiresTarget: ActionTargetType.NONE,
@@ -581,8 +608,10 @@ export const Actions = {
     isActive: (ctx) => ctx.isLeftMainPanelVisible,
     isEnabled: (ctx) =>
       !(ctx.isLeftMainPanelVisible && ctx.rightMainPanelMode === null),
-    getLabel: (ctx) =>
-      ctx.isLeftMainPanelVisible ? 'Hide Chat Panel' : 'Show Chat Panel',
+    getLabel: (ctx, t = i18n.getFixedT(null, 'tasks')) =>
+      ctx.isLeftMainPanelVisible
+        ? t('tasks:actionLabels.hide_chat_panel')
+        : t('tasks:actionLabels.show_chat_panel'),
     execute: (ctx) => {
       useUiPreferencesStore
         .getState()
@@ -592,10 +621,10 @@ export const Actions = {
 
   ToggleRightSidebar: {
     id: 'toggle-right-sidebar',
-    label: () =>
+    label: (_workspace, t = i18n.getFixedT(null, 'tasks')) =>
       useUiPreferencesStore.getState().isRightSidebarVisible
-        ? 'Hide Right Sidebar'
-        : 'Show Right Sidebar',
+        ? t('tasks:actionLabels.hide_right_sidebar')
+        : t('tasks:actionLabels.show_right_sidebar'),
     icon: RightSidebarIcon,
     requiresTarget: ActionTargetType.NONE,
     isVisible: (ctx) => ctx.layoutMode === 'workspaces',
@@ -607,7 +636,8 @@ export const Actions = {
 
   ToggleChangesMode: {
     id: 'toggle-changes-mode',
-    label: 'Toggle Changes Panel',
+    label: (_workspace, t = i18n.getFixedT(null, 'tasks')) =>
+      t('tasks:actionLabels.toggle_changes_panel'),
     icon: GitDiffIcon,
     shortcut: 'V C',
     requiresTarget: ActionTargetType.NONE,
@@ -615,10 +645,10 @@ export const Actions = {
     isActive: (ctx) =>
       ctx.rightMainPanelMode === RIGHT_MAIN_PANEL_MODES.CHANGES,
     isEnabled: (ctx) => !ctx.isCreateMode,
-    getLabel: (ctx) =>
+    getLabel: (ctx, t = i18n.getFixedT(null, 'tasks')) =>
       ctx.rightMainPanelMode === RIGHT_MAIN_PANEL_MODES.CHANGES
-        ? 'Hide Changes Panel'
-        : 'Show Changes Panel',
+        ? t('tasks:actionLabels.hide_changes_panel')
+        : t('tasks:actionLabels.show_changes_panel'),
     execute: (ctx) => {
       useUiPreferencesStore
         .getState()
@@ -631,17 +661,18 @@ export const Actions = {
 
   ToggleFilesMode: {
     id: 'toggle-files-mode',
-    label: 'Toggle Files Panel',
+    label: (_workspace, t = i18n.getFixedT(null, 'tasks')) =>
+      t('tasks:actionLabels.toggle_files_panel'),
     icon: FilesIcon,
     shortcut: 'V F',
     requiresTarget: ActionTargetType.NONE,
     isVisible: (ctx) => !ctx.isCreateMode && ctx.layoutMode === 'workspaces',
     isActive: (ctx) => ctx.rightMainPanelMode === RIGHT_MAIN_PANEL_MODES.FILES,
     isEnabled: (ctx) => !ctx.isCreateMode,
-    getLabel: (ctx) =>
+    getLabel: (ctx, t = i18n.getFixedT(null, 'tasks')) =>
       ctx.rightMainPanelMode === RIGHT_MAIN_PANEL_MODES.FILES
-        ? 'Hide Files Panel'
-        : 'Show Files Panel',
+        ? t('tasks:actionLabels.hide_files_panel')
+        : t('tasks:actionLabels.show_files_panel'),
     execute: (ctx) => {
       useUiPreferencesStore
         .getState()
@@ -654,16 +685,17 @@ export const Actions = {
 
   ToggleTodosMode: {
     id: 'toggle-todos-mode',
-    label: 'Toggle TODO list',
+    label: (_workspace, t = i18n.getFixedT(null, 'tasks')) =>
+      t('tasks:actionLabels.toggle_todo_list'),
     icon: ListChecksIcon,
     requiresTarget: ActionTargetType.NONE,
     isVisible: (ctx) => !ctx.isCreateMode && ctx.layoutMode === 'workspaces',
     isActive: (ctx) => ctx.rightMainPanelMode === RIGHT_MAIN_PANEL_MODES.TODOS,
     isEnabled: (ctx) => !ctx.isCreateMode,
-    getLabel: (ctx) =>
+    getLabel: (ctx, t = i18n.getFixedT(null, 'tasks')) =>
       ctx.rightMainPanelMode === RIGHT_MAIN_PANEL_MODES.TODOS
-        ? 'Hide TODO list'
-        : 'Show TODO list',
+        ? t('tasks:actionLabels.hide_todo_list')
+        : t('tasks:actionLabels.show_todo_list'),
     execute: (ctx) => {
       useUiPreferencesStore
         .getState()
@@ -676,17 +708,18 @@ export const Actions = {
 
   ToggleLogsMode: {
     id: 'toggle-logs-mode',
-    label: 'Toggle Logs Panel',
+    label: (_workspace, t = i18n.getFixedT(null, 'tasks')) =>
+      t('tasks:actionLabels.toggle_logs_panel'),
     icon: TerminalIcon,
     shortcut: 'V L',
     requiresTarget: ActionTargetType.NONE,
     isVisible: (ctx) => !ctx.isCreateMode && ctx.layoutMode === 'workspaces',
     isActive: (ctx) => ctx.rightMainPanelMode === RIGHT_MAIN_PANEL_MODES.LOGS,
     isEnabled: (ctx) => !ctx.isCreateMode,
-    getLabel: (ctx) =>
+    getLabel: (ctx, t = i18n.getFixedT(null, 'tasks')) =>
       ctx.rightMainPanelMode === RIGHT_MAIN_PANEL_MODES.LOGS
-        ? 'Hide Logs Panel'
-        : 'Show Logs Panel',
+        ? t('tasks:actionLabels.hide_logs_panel')
+        : t('tasks:actionLabels.show_logs_panel'),
     execute: (ctx) => {
       useUiPreferencesStore
         .getState()
@@ -699,16 +732,17 @@ export const Actions = {
 
   ToggleWikiMode: {
     id: 'toggle-wiki-mode',
-    label: 'Toggle Wiki Reader',
+    label: (_workspace, t = i18n.getFixedT(null, 'tasks')) =>
+      t('tasks:actionLabels.toggle_wiki_reader'),
     icon: BookOpenIcon,
     requiresTarget: ActionTargetType.NONE,
     isVisible: (ctx) => !ctx.isCreateMode && ctx.layoutMode === 'workspaces',
     isActive: (ctx) => ctx.rightMainPanelMode === RIGHT_MAIN_PANEL_MODES.WIKI,
     isEnabled: (ctx) => !ctx.isCreateMode && ctx.hasWorkspace,
-    getLabel: (ctx) =>
+    getLabel: (ctx, t = i18n.getFixedT(null, 'tasks')) =>
       ctx.rightMainPanelMode === RIGHT_MAIN_PANEL_MODES.WIKI
-        ? 'Close Wiki Reader'
-        : 'Open Wiki Reader',
+        ? t('tasks:actionLabels.close_wiki_reader')
+        : t('tasks:actionLabels.open_wiki_reader'),
     execute: (ctx) => {
       useUiPreferencesStore
         .getState()
@@ -722,13 +756,15 @@ export const Actions = {
   // === Diff Actions for Navbar ===
   ToggleAllDiffs: {
     id: 'toggle-all-diffs',
-    label: () => {
+    label: (_workspace, t = i18n.getFixedT(null, 'tasks')) => {
       const diffPaths = Array.from(useWorkspaceDiffStore.getState().diffPaths);
       const { expanded } = useUiPreferencesStore.getState();
       const keys = diffPaths.map((p) => `diff:${p}`);
       const isAllExpanded =
         keys.length > 0 && keys.every((k) => expanded[k] !== false);
-      return isAllExpanded ? 'Collapse All Diffs' : 'Expand All Diffs';
+      return isAllExpanded
+        ? t('tasks:actionLabels.collapse_all_diffs')
+        : t('tasks:actionLabels.expand_all_diffs');
     },
     icon: CaretDoubleUpIcon,
     requiresTarget: ActionTargetType.NONE,
@@ -737,8 +773,10 @@ export const Actions = {
       ctx.layoutMode === 'workspaces',
     getIcon: (ctx) =>
       ctx.isAllDiffsExpanded ? CaretDoubleUpIcon : CaretDoubleDownIcon,
-    getTooltip: (ctx) =>
-      ctx.isAllDiffsExpanded ? 'Collapse all diffs' : 'Expand all diffs',
+    getTooltip: (ctx, t = i18n.getFixedT(null, 'tasks')) =>
+      ctx.isAllDiffsExpanded
+        ? t('tasks:actionLabels.collapse_all_diffs')
+        : t('tasks:actionLabels.expand_all_diffs'),
     execute: () => {
       const diffPaths = Array.from(useWorkspaceDiffStore.getState().diffPaths);
       const { expanded, setExpandedAll } = useUiPreferencesStore.getState();
@@ -752,11 +790,13 @@ export const Actions = {
   // === ContextBar Actions ===
   OpenInIDE: {
     id: 'open-in-ide',
-    label: 'Open in external editor',
+    label: (_workspace, t = i18n.getFixedT(null, 'tasks')) =>
+      t('tasks:actionLabels.open_in_external_editor'),
     icon: 'ide-icon' as const,
     requiresTarget: ActionTargetType.NONE,
     isVisible: (ctx) => ctx.hasWorkspace,
-    getTooltip: () => 'Open in external editor',
+    getTooltip: (_ctx, t = i18n.getFixedT(null, 'tasks')) =>
+      t('tasks:actionLabels.open_in_external_editor'),
     execute: async (ctx) => {
       if (ctx.currentWorkspaceId)
         await EditorSelectionDialog.show({
@@ -767,7 +807,8 @@ export const Actions = {
 
   CopyWorkspacePath: {
     id: 'copy-workspace-path',
-    label: 'Copy Workspace Path',
+    label: (_workspace, t = i18n.getFixedT(null, 'tasks')) =>
+      t('tasks:actionLabels.copy_workspace_path'),
     icon: 'copy-icon' as const,
     shortcut: 'Y P',
     requiresTarget: ActionTargetType.NONE,
@@ -780,7 +821,8 @@ export const Actions = {
 
   CopyRawLogs: {
     id: 'copy-raw-logs',
-    label: 'Copy Raw Logs',
+    label: (_workspace, t = i18n.getFixedT(null, 'tasks')) =>
+      t('tasks:actionLabels.copy_raw_logs'),
     icon: CopyIcon,
     shortcut: 'Y L',
     requiresTarget: ActionTargetType.NONE,
@@ -796,7 +838,8 @@ export const Actions = {
 
   ToggleDevServer: {
     id: 'toggle-dev-server',
-    label: 'Dev Server',
+    label: (_workspace, t = i18n.getFixedT(null, 'tasks')) =>
+      t('tasks:actionLabels.dev_server'),
     icon: PlayIcon,
     shortcut: 'T D',
     requiresTarget: ActionTargetType.NONE,
@@ -815,20 +858,22 @@ export const Actions = {
       }
       return PlayIcon;
     },
-    getTooltip: (ctx) => {
+    getTooltip: (ctx, t = i18n.getFixedT(null, 'tasks')) => {
       switch (ctx.devServerState) {
         case 'starting':
-          return 'Starting dev server...';
+          return t('tasks:actionLabels.starting_dev_server');
         case 'stopping':
-          return 'Stopping dev server...';
+          return t('tasks:actionLabels.stopping_dev_server');
         case 'running':
-          return 'Stop dev server';
+          return t('tasks:actionLabels.stop_dev_server');
         default:
-          return 'Start dev server';
+          return t('tasks:actionLabels.start_dev_server');
       }
     },
-    getLabel: (ctx) =>
-      ctx.devServerState === 'running' ? 'Stop Dev Server' : 'Start Dev Server',
+    getLabel: (ctx, t = i18n.getFixedT(null, 'tasks')) =>
+      ctx.devServerState === 'running'
+        ? t('tasks:actionLabels.stop_dev_server')
+        : t('tasks:actionLabels.start_dev_server'),
     execute: (ctx) => {
       if (ctx.runningDevServers.length > 0) {
         ctx.stopDevServer();
@@ -848,7 +893,8 @@ export const Actions = {
   // === Git Actions ===
   GitCreatePR: {
     id: 'git-create-pr',
-    label: 'Create Pull Request',
+    label: (_workspace, t = i18n.getFixedT(null, 'tasks')) =>
+      t('tasks:actionLabels.create_pull_request'),
     icon: GitPullRequestIcon,
     shortcut: 'X P',
     requiresTarget: ActionTargetType.GIT,
@@ -884,7 +930,8 @@ export const Actions = {
 
   GitLinkPR: {
     id: 'git-link-pr',
-    label: 'Link Pull Request',
+    label: (_workspace, t = i18n.getFixedT(null, 'tasks')) =>
+      t('tasks:actionLabels.link_pull_request'),
     icon: LinkIcon,
     requiresTarget: ActionTargetType.GIT,
     isVisible: (ctx) => ctx.hasWorkspace && ctx.hasGitRepos && !ctx.hasOpenPR,
@@ -900,18 +947,20 @@ export const Actions = {
         });
 
         await ConfirmDialog.show({
-          title: 'Pull Request Linked',
-          message: `Linked PR #${result.data.pr_number}${result.data.pr_url ? ` — ${result.data.pr_url}` : ''}`,
-          confirmText: 'OK',
+          title: () => i18n.t('tasks:actionDialogs.prLinked'),
+          message: () =>
+            i18n.t('tasks:actionDialogs.linkedPr', {
+              number: result.data.pr_number,
+            }) + (result.data.pr_url ? ` — ${result.data.pr_url}` : ''),
+          confirmText: () => i18n.t('common:ok'),
           showCancelButton: false,
           variant: 'success',
         });
       } else if (result.success && !result.data.pr_attached) {
         await ConfirmDialog.show({
-          title: 'No Pull Request Found',
-          message:
-            'No open pull request was found matching this branch. Make sure a PR exists for this branch on the remote.',
-          confirmText: 'OK',
+          title: () => i18n.t('tasks:actionDialogs.noPr'),
+          message: () => i18n.t('tasks:actionDialogs.noPrBody'),
+          confirmText: () => i18n.t('common:ok'),
           showCancelButton: false,
           variant: 'info',
         });
@@ -923,7 +972,8 @@ export const Actions = {
 
   GitMerge: {
     id: 'git-merge',
-    label: 'Merge',
+    label: (_workspace, t = i18n.getFixedT(null, 'tasks')) =>
+      t('tasks:actionLabels.merge'),
     icon: GitMergeIcon,
     shortcut: 'X M',
     requiresTarget: ActionTargetType.GIT,
@@ -939,10 +989,9 @@ export const Actions = {
       );
       if (hasOpenPR) {
         await ConfirmDialog.show({
-          title: 'Cannot Merge',
-          message:
-            'This repository has an open pull request. Please close or merge the PR before merging directly.',
-          confirmText: 'OK',
+          title: () => i18n.t('tasks:actionDialogs.cannotMerge'),
+          message: () => i18n.t('tasks:actionDialogs.openPrBody'),
+          confirmText: () => i18n.t('common:ok'),
           showCancelButton: false,
         });
         return;
@@ -982,10 +1031,16 @@ export const Actions = {
       if (commitsBehind > 0) {
         // Prompt user to rebase first
         const confirmRebase = await ConfirmDialog.show({
-          title: 'Rebase Required',
-          message: `Your branch is ${commitsBehind} commit${commitsBehind === 1 ? '' : 's'} behind the target branch. Would you like to rebase first?`,
-          confirmText: 'Rebase',
-          cancelText: 'Cancel',
+          title: () => i18n.t('tasks:actionDialogs.rebaseRequired'),
+          message: () =>
+            i18n.t('tasks:actionDialogs.behind', {
+              count: commitsBehind,
+              formattedCount: new Intl.NumberFormat(
+                i18n.resolvedLanguage || 'en'
+              ).format(commitsBehind),
+            }),
+          confirmText: () => i18n.t('tasks:actionLabels.rebase'),
+          cancelText: () => i18n.t('common:buttons.cancel'),
         });
 
         if (confirmRebase === 'confirmed') {
@@ -999,11 +1054,10 @@ export const Actions = {
       }
 
       const confirmResult = await ConfirmDialog.show({
-        title: 'Merge Branch',
-        message:
-          'Are you sure you want to merge this branch into the target branch?',
-        confirmText: 'Merge',
-        cancelText: 'Cancel',
+        title: () => i18n.t('tasks:actionDialogs.mergeBranch'),
+        message: () => i18n.t('tasks:actionDialogs.mergeBody'),
+        confirmText: () => i18n.t('tasks:actionLabels.merge'),
+        cancelText: () => i18n.t('common:buttons.cancel'),
       });
 
       if (confirmResult === 'confirmed') {
@@ -1015,7 +1069,8 @@ export const Actions = {
 
   GitRebase: {
     id: 'git-rebase',
-    label: 'Rebase',
+    label: (_workspace, t = i18n.getFixedT(null, 'tasks')) =>
+      t('tasks:actionLabels.rebase'),
     icon: ArrowsClockwiseIcon,
     shortcut: 'X R',
     requiresTarget: ActionTargetType.GIT,
@@ -1031,7 +1086,8 @@ export const Actions = {
 
   GitChangeTarget: {
     id: 'git-change-target',
-    label: 'Change Target Branch',
+    label: (_workspace, t = i18n.getFixedT(null, 'tasks')) =>
+      t('tasks:actionLabels.change_target_branch'),
     icon: CrosshairIcon,
     requiresTarget: ActionTargetType.GIT,
     isVisible: (ctx) => ctx.hasWorkspace && ctx.hasGitRepos,
@@ -1067,7 +1123,8 @@ export const Actions = {
 
   GitPush: {
     id: 'git-push',
-    label: 'Push',
+    label: (_workspace, t = i18n.getFixedT(null, 'tasks')) =>
+      t('tasks:actionLabels.push'),
     icon: ArrowUpIcon,
     shortcut: 'X U',
     requiresTarget: ActionTargetType.GIT,
@@ -1080,9 +1137,7 @@ export const Actions = {
       const result = await workspacesApi.push(workspaceId, { repo_id: repoId });
       if (!result.success) {
         if (result.error?.type === 'force_push_required') {
-          throw new Error(
-            'Force push required. The remote branch has diverged.'
-          );
+          throw new ActionError('forcePushRequired');
         }
         throw new Error('Failed to push changes');
       }
@@ -1093,7 +1148,8 @@ export const Actions = {
   // === Repo-specific Actions (for command bar when selecting a repo) ===
   RepoCopyPath: {
     id: 'repo-copy-path',
-    label: 'Copy Repo Path',
+    label: (_workspace, t = i18n.getFixedT(null, 'tasks')) =>
+      t('tasks:actionLabels.copy_repo_path'),
     icon: CopyIcon,
     requiresTarget: ActionTargetType.GIT,
     isVisible: (ctx) => ctx.hasWorkspace && ctx.hasGitRepos,
@@ -1105,14 +1161,15 @@ export const Actions = {
         }
       } catch (err) {
         console.error('Failed to copy repo path:', err);
-        throw new Error('Failed to copy repository path');
+        throw new ActionError('copyPath');
       }
     },
   },
 
   RepoOpenInIDE: {
     id: 'repo-open-in-ide',
-    label: 'Open repo in external editor',
+    label: (_workspace, t = i18n.getFixedT(null, 'tasks')) =>
+      t('tasks:actionLabels.open_repo_in_external_editor'),
     icon: DesktopIcon,
     requiresTarget: ActionTargetType.GIT,
     isVisible: (ctx) => ctx.hasWorkspace && ctx.hasGitRepos,
@@ -1126,7 +1183,8 @@ export const Actions = {
 
   RepoSettings: {
     id: 'repo-settings',
-    label: 'Repository Settings',
+    label: (_workspace, t = i18n.getFixedT(null, 'tasks')) =>
+      t('tasks:actionLabels.repository_settings'),
     icon: GearIcon,
     requiresTarget: ActionTargetType.GIT,
     isVisible: (ctx) => ctx.hasWorkspace && ctx.hasGitRepos,
@@ -1143,7 +1201,8 @@ export const Actions = {
   // === Script Actions ===
   RunSetupScript: {
     id: 'run-setup-script',
-    label: 'Run Setup Script',
+    label: (_workspace, t = i18n.getFixedT(null, 'tasks')) =>
+      t('tasks:actionLabels.run_setup_script'),
     icon: TerminalIcon,
     shortcut: 'R S',
     requiresTarget: ActionTargetType.WORKSPACE,
@@ -1153,10 +1212,10 @@ export const Actions = {
       const result = await workspacesApi.runSetupScript(workspaceId);
       if (!result.success) {
         if (result.error?.type === 'no_script_configured') {
-          throw new Error('No setup script configured for this project');
+          throw new ActionError('noSetupScript');
         }
         if (result.error?.type === 'process_already_running') {
-          throw new Error('Cannot run script while another process is running');
+          throw new ActionError('processRunning');
         }
         throw new Error('Failed to run setup script');
       }
@@ -1165,7 +1224,8 @@ export const Actions = {
 
   RunCleanupScript: {
     id: 'run-cleanup-script',
-    label: 'Run Cleanup Script',
+    label: (_workspace, t = i18n.getFixedT(null, 'tasks')) =>
+      t('tasks:actionLabels.run_cleanup_script'),
     icon: TerminalIcon,
     shortcut: 'R C',
     requiresTarget: ActionTargetType.WORKSPACE,
@@ -1175,10 +1235,10 @@ export const Actions = {
       const result = await workspacesApi.runCleanupScript(workspaceId);
       if (!result.success) {
         if (result.error?.type === 'no_script_configured') {
-          throw new Error('No cleanup script configured for this project');
+          throw new ActionError('noCleanupScript');
         }
         if (result.error?.type === 'process_already_running') {
-          throw new Error('Cannot run script while another process is running');
+          throw new ActionError('processRunning');
         }
         throw new Error('Failed to run cleanup script');
       }
@@ -1187,7 +1247,8 @@ export const Actions = {
 
   RunArchiveScript: {
     id: 'run-archive-script',
-    label: 'Run Archive Script',
+    label: (_workspace, t = i18n.getFixedT(null, 'tasks')) =>
+      t('tasks:actionLabels.run_archive_script'),
     icon: TerminalIcon,
     shortcut: 'R A',
     requiresTarget: ActionTargetType.WORKSPACE,
@@ -1197,10 +1258,10 @@ export const Actions = {
       const result = await workspacesApi.runArchiveScript(workspaceId);
       if (!result.success) {
         if (result.error?.type === 'no_script_configured') {
-          throw new Error('No archive script configured for this project');
+          throw new ActionError('noArchiveScript');
         }
         if (result.error?.type === 'process_already_running') {
-          throw new Error('Cannot run script while another process is running');
+          throw new ActionError('processRunning');
         }
         throw new Error('Failed to run archive script');
       }
@@ -1210,7 +1271,8 @@ export const Actions = {
   // === Issue Actions ===
   CreateIssue: {
     id: 'create-issue',
-    label: 'Create Issue',
+    label: (_workspace, t = i18n.getFixedT(null, 'tasks')) =>
+      t('tasks:actionLabels.create_issue'),
     icon: PlusIcon,
     shortcut: 'I C',
     requiresTarget: ActionTargetType.NONE,
@@ -1222,7 +1284,8 @@ export const Actions = {
 
   ChangeIssueStatus: {
     id: 'change-issue-status',
-    label: 'Change Status',
+    label: (_workspace, t = i18n.getFixedT(null, 'tasks')) =>
+      t('tasks:actionLabels.change_status'),
     icon: ArrowsLeftRightIcon,
     shortcut: 'I S',
     requiresTarget: ActionTargetType.ISSUE,
@@ -1235,7 +1298,8 @@ export const Actions = {
 
   ChangeNewIssueStatus: {
     id: 'change-new-issue-status',
-    label: 'Change Status',
+    label: (_workspace, t = i18n.getFixedT(null, 'tasks')) =>
+      t('tasks:actionLabels.change_status'),
     icon: ArrowsLeftRightIcon,
     shortcut: 'I S',
     requiresTarget: ActionTargetType.NONE,
@@ -1254,7 +1318,8 @@ export const Actions = {
 
   ChangePriority: {
     id: 'change-issue-priority',
-    label: 'Change Priority',
+    label: (_workspace, t = i18n.getFixedT(null, 'tasks')) =>
+      t('tasks:actionLabels.change_priority'),
     icon: ArrowFatLineUpIcon,
     shortcut: 'I P',
     requiresTarget: ActionTargetType.ISSUE,
@@ -1267,7 +1332,8 @@ export const Actions = {
 
   ChangeNewIssuePriority: {
     id: 'change-new-issue-priority',
-    label: 'Change Priority',
+    label: (_workspace, t = i18n.getFixedT(null, 'tasks')) =>
+      t('tasks:actionLabels.change_priority'),
     icon: ArrowFatLineUpIcon,
     shortcut: 'I P',
     requiresTarget: ActionTargetType.NONE,
@@ -1286,7 +1352,8 @@ export const Actions = {
 
   ChangeAssignees: {
     id: 'change-assignees',
-    label: 'Change Assignees',
+    label: (_workspace, t = i18n.getFixedT(null, 'tasks')) =>
+      t('tasks:actionLabels.change_assignees'),
     icon: UsersIcon,
     shortcut: 'I A',
     requiresTarget: ActionTargetType.ISSUE,
@@ -1299,7 +1366,8 @@ export const Actions = {
 
   ChangeNewIssueAssignees: {
     id: 'change-new-issue-assignees',
-    label: 'Change Assignees',
+    label: (_workspace, t = i18n.getFixedT(null, 'tasks')) =>
+      t('tasks:actionLabels.change_assignees'),
     icon: UsersIcon,
     shortcut: 'I A',
     requiresTarget: ActionTargetType.NONE,
@@ -1313,7 +1381,8 @@ export const Actions = {
 
   MakeSubIssueOf: {
     id: 'make-sub-issue-of',
-    label: 'Make Sub-issue of',
+    label: (_workspace, t = i18n.getFixedT(null, 'tasks')) =>
+      t('tasks:actionLabels.make_sub_issue_of'),
     icon: TreeStructureIcon,
     shortcut: 'I M',
     requiresTarget: ActionTargetType.ISSUE,
@@ -1328,7 +1397,8 @@ export const Actions = {
 
   AddSubIssue: {
     id: 'add-sub-issue',
-    label: 'Add Sub-issue',
+    label: (_workspace, t = i18n.getFixedT(null, 'tasks')) =>
+      t('tasks:actionLabels.add_sub_issue'),
     icon: PlusIcon,
     shortcut: 'I B',
     requiresTarget: ActionTargetType.ISSUE,
@@ -1350,7 +1420,8 @@ export const Actions = {
 
   CreateSubIssue: {
     id: 'create-sub-issue',
-    label: 'Create Sub-issue',
+    label: (_workspace, t = i18n.getFixedT(null, 'tasks')) =>
+      t('tasks:actionLabels.create_sub_issue'),
     icon: PlusIcon,
     requiresTarget: ActionTargetType.ISSUE,
     isVisible: (ctx) =>
@@ -1363,7 +1434,8 @@ export const Actions = {
 
   RemoveParentIssue: {
     id: 'remove-parent-issue',
-    label: 'Remove Parent',
+    label: (_workspace, t = i18n.getFixedT(null, 'tasks')) =>
+      t('tasks:actionLabels.remove_parent'),
     icon: XIcon,
     shortcut: 'I U',
     requiresTarget: ActionTargetType.ISSUE,
@@ -1386,15 +1458,16 @@ export const Actions = {
 
   LinkWorkspace: {
     id: 'link-workspace',
-    label: 'Link Workspace',
+    label: (_workspace, t = i18n.getFixedT(null, 'tasks')) =>
+      t('tasks:actionLabels.link_workspace'),
     icon: LinkIcon,
     shortcut: 'I W',
     requiresTarget: ActionTargetType.ISSUE,
     isEnabled: (ctx) => !ctx.selectedIssueArchived,
-    getLabel: (ctx) =>
+    getLabel: (ctx, t = i18n.getFixedT(null, 'tasks')) =>
       ctx.selectedIssueArchived
-        ? 'ワークスペースを紐付け（アーカイブ解除すると利用できます）'
-        : 'Link Workspace',
+        ? t('tasks:actionLabels.link_workspace_archived_hint')
+        : t('tasks:actionLabels.link_workspace'),
     isVisible: (ctx) =>
       ctx.layoutMode === 'kanban' && ctx.hasSelectedKanbanIssue,
     execute: async (ctx, projectId, issueIds) => {
@@ -1406,9 +1479,12 @@ export const Actions = {
 
   ArchiveIssue: {
     id: 'archive-issue',
-    label: 'アーカイブ',
-    getLabel: (ctx) =>
-      ctx.selectedIssueArchived ? 'アーカイブ解除' : 'アーカイブ',
+    label: (_workspace, t = i18n.getFixedT(null, 'tasks')) =>
+      t('tasks:actionLabels.archive_issue'),
+    getLabel: (ctx, t = i18n.getFixedT(null, 'tasks')) =>
+      ctx.selectedIssueArchived
+        ? t('tasks:actionLabels.unarchive_issue')
+        : t('tasks:actionLabels.archive_issue'),
     icon: ArchiveIcon,
     requiresTarget: ActionTargetType.ISSUE,
     isVisible: (ctx) =>
@@ -1419,14 +1495,24 @@ export const Actions = {
       if (issueIds.length !== 1) return;
       const issue = ctx.projectMutations?.getIssue(issueIds[0]);
       if (issue?.archived) {
-        const receipt = await issueArchiveApi.restore(
-          projectId,
-          issueIds[0],
-          crypto.randomUUID()
-        );
+        const requestId = crypto.randomUUID();
+        let receipt;
+        try {
+          receipt = await issueArchiveApi.restore(
+            projectId,
+            issueIds[0],
+            requestId
+          );
+        } catch (error) {
+          throw new IssueArchiveActionError(
+            { kind: 'request', requestId },
+            errorDiagnostic(error)
+          );
+        }
         refreshIssueArchive(projectId);
-        const message = receiptMessage(receipt);
-        if (message) throw new Error(message);
+        const message = receiptMessage(receipt, i18n.getFixedT(null, 'tasks'));
+        if (message)
+          throw new IssueArchiveActionError({ kind: 'receipt', receipt });
       } else {
         await IssueArchiveDialog.show({ projectId, issueId: issueIds[0] });
       }
@@ -1435,7 +1521,8 @@ export const Actions = {
 
   DeleteIssue: {
     id: 'delete-issue',
-    label: 'Delete Issue',
+    label: (_workspace, t = i18n.getFixedT(null, 'tasks')) =>
+      t('tasks:actionLabels.delete_issue'),
     icon: TrashIcon,
     shortcut: 'I X',
     variant: 'destructive',
@@ -1445,13 +1532,22 @@ export const Actions = {
     execute: async (ctx, _projectId, issueIds) => {
       const count = issueIds.length;
       const result = await ConfirmDialog.show({
-        title: count === 1 ? 'Delete Issue' : `Delete ${count} Issues`,
-        message:
-          count === 1
-            ? 'Are you sure you want to delete this issue? This action cannot be undone.'
-            : `Are you sure you want to delete these ${count} issues? This action cannot be undone.`,
-        confirmText: 'Delete',
-        cancelText: 'Cancel',
+        title: () =>
+          i18n.t('tasks:actionDialogs.deleteIssues', {
+            count,
+            formattedCount: new Intl.NumberFormat(
+              i18n.resolvedLanguage || 'en'
+            ).format(count),
+          }),
+        message: () =>
+          i18n.t('tasks:actionDialogs.deleteIssuesBody', {
+            count,
+            formattedCount: new Intl.NumberFormat(
+              i18n.resolvedLanguage || 'en'
+            ).format(count),
+          }),
+        confirmText: () => i18n.t('common:buttons.delete'),
+        cancelText: () => i18n.t('common:buttons.cancel'),
         variant: 'destructive',
       });
       if (result === 'confirmed' && ctx.projectMutations?.removeIssue) {
@@ -1464,7 +1560,8 @@ export const Actions = {
 
   DuplicateIssue: {
     id: 'duplicate-issue',
-    label: 'Duplicate Issue',
+    label: (_workspace, t = i18n.getFixedT(null, 'tasks')) =>
+      t('tasks:actionLabels.duplicate_issue'),
     icon: CopyIcon,
     shortcut: 'I D',
     requiresTarget: ActionTargetType.ISSUE,
@@ -1472,7 +1569,7 @@ export const Actions = {
       ctx.layoutMode === 'kanban' && ctx.hasSelectedKanbanIssue,
     execute: async (ctx, _projectId, issueIds) => {
       if (issueIds.length !== 1) {
-        throw new Error('Can only duplicate one issue at a time');
+        throw new ActionError('singleDuplicate');
       }
       ctx.projectMutations?.duplicateIssue(issueIds[0]);
     },
@@ -1480,7 +1577,8 @@ export const Actions = {
 
   MarkBlocking: {
     id: 'mark-blocking',
-    label: 'Mark Blocking',
+    label: (_workspace, t = i18n.getFixedT(null, 'tasks')) =>
+      t('tasks:actionLabels.mark_blocking'),
     icon: ArrowBendUpRightIcon,
     requiresTarget: ActionTargetType.ISSUE,
     isVisible: (ctx) =>
@@ -1499,7 +1597,8 @@ export const Actions = {
 
   MarkBlockedBy: {
     id: 'mark-blocked-by',
-    label: 'Mark Blocked By',
+    label: (_workspace, t = i18n.getFixedT(null, 'tasks')) =>
+      t('tasks:actionLabels.mark_blocked_by'),
     icon: ProhibitIcon,
     requiresTarget: ActionTargetType.ISSUE,
     isVisible: (ctx) =>
@@ -1518,7 +1617,8 @@ export const Actions = {
 
   MarkRelated: {
     id: 'mark-related',
-    label: 'Mark Related',
+    label: (_workspace, t = i18n.getFixedT(null, 'tasks')) =>
+      t('tasks:actionLabels.mark_related'),
     icon: ArrowsLeftRightIcon,
     requiresTarget: ActionTargetType.ISSUE,
     isVisible: (ctx) =>
@@ -1537,7 +1637,8 @@ export const Actions = {
 
   MarkDuplicateOf: {
     id: 'mark-duplicate-of',
-    label: 'Mark Duplicate Of',
+    label: (_workspace, t = i18n.getFixedT(null, 'tasks')) =>
+      t('tasks:actionLabels.mark_duplicate_of'),
     icon: CopyIcon,
     requiresTarget: ActionTargetType.ISSUE,
     isVisible: (ctx) =>

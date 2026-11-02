@@ -1,3 +1,4 @@
+import type { IssueArchiveReceipt } from './issueArchiveNotice';
 import { makeLocalApiRequest } from './localApiTransport';
 import { refreshShapeFallback } from './electric/collections';
 import {
@@ -17,11 +18,6 @@ export interface PreparedIssueArchive {
   archive_workspaces: boolean;
   workspaces: IssueArchiveTarget[];
   message: string;
-}
-export interface IssueArchiveReceipt {
-  request_id: string;
-  status: string;
-  result: string | null;
 }
 async function request<T>(path: string, body?: unknown): Promise<T> {
   const response = await makeLocalApiRequest(
@@ -68,16 +64,4 @@ export function refreshIssueArchive(projectId: string) {
   refreshShapeFallback(PROJECT_ISSUES_SHAPE, { project_id: projectId });
   refreshShapeFallback(PROJECT_WORKSPACES_SHAPE, { project_id: projectId });
   refreshShapeFallback(USER_WORKSPACES_SHAPE, {});
-}
-export function receiptMessage(receipt: IssueArchiveReceipt): string {
-  const result = receipt.result ? JSON.parse(receipt.result) : {};
-  if (receipt.status !== 'succeeded')
-    return `${result.message || '結果を確認してください。自動再実行しないでください。'} (request_id: ${receipt.request_id})`;
-  return (result.workspaces ?? [])
-    .filter((ws: { deletion_error?: string }) => ws.deletion_error)
-    .map(
-      (ws: { workspace_id: string; deletion_error: string }) =>
-        `${ws.workspace_id}: ${ws.deletion_error}`
-    )
-    .join('\n');
 }

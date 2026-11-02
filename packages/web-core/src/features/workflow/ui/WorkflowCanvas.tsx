@@ -68,7 +68,10 @@ import {
   getWorkflowNodeVisual,
 } from '../model/workflowPresentation';
 import { getWorkflowNodeIcon } from './workflowNodeIcons';
-import type { ValidationIssue } from './WorkflowValidationPanel';
+import {
+  workflowValidationMessage,
+  type ValidationIssue,
+} from './WorkflowValidationPanel';
 import { cn } from '../../../shared/lib/utils';
 import { AgentIcon } from '@/shared/components/AgentIcon';
 import { getWorkflowAgentDisplay } from '../model/workflowAgentDisplay';
@@ -395,7 +398,7 @@ function renderWorkflowHandles({
 }
 
 const BaseNode = ({ id, data, type, selected }: BaseNodeProps) => {
-  const { t } = useTranslation('common');
+  const { t, i18n } = useTranslation('common');
   const nodeKind = type ?? 'agent';
   const Icon = getWorkflowNodeIcon(nodeKind);
   const visual = getWorkflowNodeVisual(nodeKind);
@@ -406,7 +409,7 @@ const BaseNode = ({ id, data, type, selected }: BaseNodeProps) => {
   const structural = nodeKind === 'start' || nodeKind === 'end';
   const compactAgent = nodeKind === 'agent';
   const sessionReady = hasSession(data);
-  const agentDisplay = compactAgent ? getWorkflowAgentDisplay(data) : null;
+  const agentDisplay = compactAgent ? getWorkflowAgentDisplay(data, t) : null;
   const nodeState = getNodeUiState(data);
   const nodeStateLabel = getWorkflowCanvasNodeStateLabel(nodeState, t);
   const isRunning = nodeState === 'running';
@@ -447,7 +450,15 @@ const BaseNode = ({ id, data, type, selected }: BaseNodeProps) => {
         {issueCount > 0 ? (
           <div
             data-testid={`workflow-node-issue-${id}`}
-            title={validationIssues.map((issue) => issue.message).join('\n')}
+            title={validationIssues
+              .map((issue) =>
+                workflowValidationMessage(
+                  issue,
+                  t,
+                  i18n.resolvedLanguage || i18n.language
+                )
+              )
+              .join('\n')}
             className={cn(
               'absolute -right-2 -top-2 z-10 flex h-5 min-w-5 items-center justify-center rounded-full border bg-amber-500 px-1 text-[10px] font-semibold text-white shadow-sm',
               WORKFLOW_CANVAS_NODE_SURFACE_CLASSES.issueBadgeBorder
@@ -511,7 +522,15 @@ const BaseNode = ({ id, data, type, selected }: BaseNodeProps) => {
       {issueCount > 0 ? (
         <div
           data-testid={`workflow-node-issue-${id}`}
-          title={validationIssues.map((issue) => issue.message).join('\n')}
+          title={validationIssues
+            .map((issue) =>
+              workflowValidationMessage(
+                issue,
+                t,
+                i18n.resolvedLanguage || i18n.language
+              )
+            )
+            .join('\n')}
           className={cn(
             'absolute -right-2 -top-2 z-10 flex h-5 min-w-5 items-center justify-center rounded-full border bg-amber-500 px-1 text-[10px] font-semibold text-white shadow-sm',
             WORKFLOW_CANVAS_NODE_SURFACE_CLASSES.issueBadgeBorder
@@ -583,9 +602,7 @@ const BaseNode = ({ id, data, type, selected }: BaseNodeProps) => {
         data.attempts.length > 0 ? (
           <div className="text-[10px] text-low/80 flex flex-col gap-1">
             <div className="flex items-center gap-1.5 mt-1">
-              <span>
-                {t('workflow.metadata.attempts', { defaultValue: 'Attempts' })}
-              </span>
+              <span>{t('workflow.metadata.attempts')}</span>
               <div className="flex -space-x-1.5 overflow-hidden">
                 {data.attempts.map((attempt, idx) => {
                   const execConfig = coerceWorkflowNodeExecutorConfig(

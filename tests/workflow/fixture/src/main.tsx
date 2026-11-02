@@ -1,15 +1,15 @@
-import { GithubCredentialsHarness } from './GithubCredentialsHarness';
-import { useMemo, useState } from 'react';
-import { createRoot } from 'react-dom/client';
-import { ReactFlowProvider } from '@xyflow/react';
-import '../../../../packages/web-core/src/i18n/config';
-import './style.css';
-import { CardContextHarness } from './CardContextHarness';
-import { RuntimeInputHarness } from './RuntimeInputHarness';
-import { SettingsSafetyHarness } from './SettingsSafetyHarness';
-import { RouteLoadingHarness } from './RouteLoadingHarness';
-import { WorkflowDraftHarness } from './WorkflowDraftHarness';
-import { DiffTreeHarness } from './DiffTreeHarness';
+import { GithubCredentialsHarness } from "./GithubCredentialsHarness";
+import { useMemo, useState } from "react";
+import { createRoot } from "react-dom/client";
+import { ReactFlowProvider } from "@xyflow/react";
+import i18n from "../../../../packages/web-core/src/i18n/config";
+import "./style.css";
+import { CardContextHarness } from "./CardContextHarness";
+import { RuntimeInputHarness } from "./RuntimeInputHarness";
+import { SettingsSafetyHarness } from "./SettingsSafetyHarness";
+import { RouteLoadingHarness } from "./RouteLoadingHarness";
+import { WorkflowDraftHarness } from "./WorkflowDraftHarness";
+import { DiffTreeHarness } from "./DiffTreeHarness";
 import {
   WORKFLOW_GRAPH_VERSION,
   createDefaultWorkflowGraph,
@@ -21,98 +21,99 @@ import {
   type WorkflowGraph,
   type WorkflowNodeKind,
   type WorkflowNodePosition,
-} from '../../../../packages/web-core/src/features/workflow/model/workflowGraph';
-import { WorkflowCanvas } from '../../../../packages/web-core/src/features/workflow/ui/WorkflowCanvas';
-import { WorkflowEdgeInspector } from '../../../../packages/web-core/src/features/workflow/ui/WorkflowEdgeInspector';
-import { IssueWorkflowEntryCard } from '../../../../packages/web-core/src/features/workflow/ui/IssueWorkflowEntryCard';
-import { WorkflowNodeInspector } from '../../../../packages/web-core/src/features/workflow/ui/WorkflowNodeInspector';
-import { IssueTaskAttemptsSection } from '../../../../packages/ui/src/components/IssueTaskAttemptsSection';
-import type { ValidationIssue } from '../../../../packages/web-core/src/features/workflow/ui/WorkflowValidationPanel';
+} from "../../../../packages/web-core/src/features/workflow/model/workflowGraph";
+import { WorkflowCanvas } from "../../../../packages/web-core/src/features/workflow/ui/WorkflowCanvas";
+import { WorkflowEdgeInspector } from "../../../../packages/web-core/src/features/workflow/ui/WorkflowEdgeInspector";
+import { IssueWorkflowEntryCard } from "../../../../packages/web-core/src/features/workflow/ui/IssueWorkflowEntryCard";
+import { WorkflowNodeInspector } from "../../../../packages/web-core/src/features/workflow/ui/WorkflowNodeInspector";
+import { IssueTaskAttemptsSection } from "../../../../packages/ui/src/components/IssueTaskAttemptsSection";
+import type { ValidationIssue } from "../../../../packages/web-core/src/features/workflow/ui/WorkflowValidationPanel";
 
 const initialGraph: WorkflowGraph = {
   version: WORKFLOW_GRAPH_VERSION,
-  router_executor_config: { executor: 'codex' },
+  router_executor_config: { executor: "codex" },
   nodes: [
     {
-      id: 'start',
-      type: 'start',
-      data: { display_name: 'Start' },
+      id: "start",
+      type: "start",
+      data: { display_name: "Start" },
       position: { x: 40, y: 140 },
     },
     {
-      id: 'condition',
-      type: 'condition',
+      id: "condition",
+      type: "condition",
       data: {
-        display_name: 'Condition',
-        routing_mode: 'single',
+        display_name: "Condition",
+        routing_mode: "single",
         branches: [
           {
-            id: 'branch-condition-yes',
-            target_node_id: 'yes',
-            condition: 'Input asks to ship',
+            id: "branch-condition-yes",
+            target_node_id: "yes",
+            condition: "Input asks to ship",
           },
           {
-            id: 'branch-condition-no',
-            target_node_id: 'no',
-            condition: 'Input does not need action',
+            id: "branch-condition-no",
+            target_node_id: "no",
+            condition: "Input does not need action",
           },
         ],
       },
       position: { x: 280, y: 140 },
     },
     {
-      id: 'yes',
-      type: 'agent',
+      id: "yes",
+      type: "agent",
       data: {
-        display_name: 'Yes path',
-        role_template_id: 'reviewer',
-        prompt_template: 'Review {{input}} and {{upstream}}',
-        session_id: 'session-yes',
+        display_name: "Yes path",
+        role_template_id: "reviewer",
+        prompt_template: "Review {{input}} and {{upstream}}",
+        session_id: "session-yes",
       },
       position: { x: 540, y: 40 },
     },
     {
-      id: 'no',
-      type: 'agent',
-      data: { display_name: 'No path', role_template_id: 'fixer' },
+      id: "no",
+      type: "agent",
+      data: { display_name: "No path", role_template_id: "fixer" },
       position: { x: 540, y: 240 },
     },
     {
-      id: 'end',
-      type: 'end',
-      data: { display_name: 'End' },
+      id: "end",
+      type: "end",
+      data: { display_name: "End" },
       position: { x: 820, y: 140 },
     },
   ],
   edges: [
     {
-      id: 'start-condition',
-      source: 'start',
-      target: 'condition',
-      type: 'default',
+      id: "start-condition",
+      source: "start",
+      target: "condition",
+      type: "default",
     },
     {
-      id: 'condition-yes',
-      source: 'condition',
-      target: 'yes',
-      type: 'condition_branch',
+      id: "condition-yes",
+      source: "condition",
+      target: "yes",
+      type: "condition_branch",
     },
     {
-      id: 'condition-no',
-      source: 'condition',
-      target: 'no',
-      type: 'condition_branch',
+      id: "condition-no",
+      source: "condition",
+      target: "no",
+      type: "condition_branch",
     },
-    { id: 'yes-end', source: 'yes', target: 'end', type: 'default' },
-    { id: 'no-end', source: 'no', target: 'end', type: 'default' },
+    { id: "yes-end", source: "yes", target: "end", type: "default" },
+    { id: "no-end", source: "no", target: "end", type: "default" },
   ],
 };
 
 const canvasValidationIssues: ValidationIssue[] = [
   {
-    type: 'warning',
-    nodeId: 'condition',
-    message: 'Condition needs a fallback route',
+    type: "warning",
+    nodeId: "condition",
+    code: "branchTargetRequired",
+    values: { node: "condition" },
   },
 ];
 
@@ -124,7 +125,7 @@ interface AgentStepContextMenuState {
 
 function avoidOverlap(
   graph: WorkflowGraph,
-  position: WorkflowNodePosition
+  position: WorkflowNodePosition,
 ): WorkflowNodePosition {
   let next = { ...position };
   let guard = 0;
@@ -146,9 +147,9 @@ function avoidOverlap(
 
 function WorkflowCanvasHarness() {
   const searchParams = new URLSearchParams(window.location.search);
-  const readOnly = searchParams.get('readonly') === '1';
-  const legacyGraphMode = searchParams.get('legacy') === '1';
-  const defaultGraphMode = searchParams.get('mode') === 'default-graph';
+  const readOnly = searchParams.get("readonly") === "1";
+  const legacyGraphMode = searchParams.get("legacy") === "1";
+  const defaultGraphMode = searchParams.get("mode") === "default-graph";
 
   const [graph, setGraph] = useState<WorkflowGraph>(() => {
     const baseGraph = defaultGraphMode
@@ -160,7 +161,7 @@ function WorkflowCanvasHarness() {
       edges: legacyGraphMode
         ? baseGraph.edges.map(
             ({ source_handle: _source, target_handle: _target, ...edge }) =>
-              edge
+              edge,
           )
         : baseGraph.edges,
     });
@@ -168,50 +169,50 @@ function WorkflowCanvasHarness() {
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
   const [sessionPanelNodeId, setSessionPanelNodeId] = useState<string | null>(
-    null
+    null,
   );
   const [contextMenu, setContextMenu] =
     useState<AgentStepContextMenuState | null>(null);
   const [editNodeId, setEditNodeId] = useState<string | null>(null);
-  const [editTitle, setEditTitle] = useState('');
-  const [editPrompt, setEditPrompt] = useState('');
+  const [editTitle, setEditTitle] = useState("");
+  const [editPrompt, setEditPrompt] = useState("");
 
   const selectedNode = useMemo(
     () => graph.nodes.find((node) => node.id === selectedNodeId) ?? null,
-    [graph, selectedNodeId]
+    [graph, selectedNodeId],
   );
   const selectedEdge = useMemo(
     () => graph.edges.find((edge) => edge.id === selectedEdgeId) ?? null,
-    [graph, selectedEdgeId]
+    [graph, selectedEdgeId],
   );
   const sessionPanelNode = useMemo(
     () => graph.nodes.find((node) => node.id === sessionPanelNodeId) ?? null,
-    [graph, sessionPanelNodeId]
+    [graph, sessionPanelNodeId],
   );
   const editNode = useMemo(
     () => graph.nodes.find((node) => node.id === editNodeId) ?? null,
-    [graph, editNodeId]
+    [graph, editNodeId],
   );
 
   const addAgentStep = (position?: WorkflowNodePosition) => {
     setGraph((current) => {
       const selectedNode = current.nodes.find(
-        (node) => node.id === selectedNodeId
+        (node) => node.id === selectedNodeId,
       );
       const requestedPosition =
         position ??
         (selectedNode?.position
           ? { x: selectedNode.position.x + 300, y: selectedNode.position.y }
           : { x: 360, y: 160 });
-      const node = createWorkflowNode('agent', {
+      const node = createWorkflowNode("agent", {
         position: avoidOverlap(current, requestedPosition),
       });
       setSelectedNodeId(node.id);
       setSelectedEdgeId(null);
       setSessionPanelNodeId(null);
       setEditNodeId(node.id);
-      setEditTitle(String(node.data.display_name ?? ''));
-      setEditPrompt(String(node.data.prompt_template ?? ''));
+      setEditTitle(String(node.data.display_name ?? ""));
+      setEditPrompt(String(node.data.prompt_template ?? ""));
 
       return {
         ...current,
@@ -223,9 +224,9 @@ function WorkflowCanvasHarness() {
 
   const handleNodeDrop = (
     kind: WorkflowNodeKind,
-    position: WorkflowNodePosition
+    position: WorkflowNodePosition,
   ) => {
-    if (kind === 'agent') addAgentStep(position);
+    if (kind === "agent") addAgentStep(position);
   };
 
   const handleEdgeChange = (
@@ -233,33 +234,33 @@ function WorkflowCanvasHarness() {
     updates: Partial<
       Pick<
         WorkflowEdge,
-        'source' | 'target' | 'source_handle' | 'target_handle' | 'type'
+        "source" | "target" | "source_handle" | "target_handle" | "type"
       >
-    >
+    >,
   ) => {
     setGraph((current) => {
       return syncConditionBranches(
         normalizeConditionEdgeTypes({
           ...current,
           edges: current.edges.map((edge) =>
-            edge.id === edgeId ? { ...edge, ...updates } : edge
+            edge.id === edgeId ? { ...edge, ...updates } : edge,
           ),
         }),
-        current
+        current,
       );
     });
   };
 
   const handleNodeChange = (
     nodeId: string,
-    dataUpdates: Partial<WorkflowGraph['nodes'][number]['data']>
+    dataUpdates: Partial<WorkflowGraph["nodes"][number]["data"]>,
   ) => {
     setGraph((current) => ({
       ...current,
       nodes: current.nodes.map((node) =>
         node.id === nodeId
           ? { ...node, data: { ...node.data, ...dataUpdates } }
-          : node
+          : node,
       ),
     }));
   };
@@ -268,8 +269,8 @@ function WorkflowCanvasHarness() {
     const node = graph.nodes.find((candidate) => candidate.id === nodeId);
     if (!node) return;
     setEditNodeId(nodeId);
-    setEditTitle(String(node.data.display_name ?? ''));
-    setEditPrompt(String(node.data.prompt_template ?? ''));
+    setEditTitle(String(node.data.display_name ?? ""));
+    setEditPrompt(String(node.data.prompt_template ?? ""));
     setContextMenu(null);
   };
 
@@ -287,7 +288,7 @@ function WorkflowCanvasHarness() {
                 prompt_template: editPrompt,
               },
             }
-          : node
+          : node,
       ),
     }));
     setEditNodeId(null);
@@ -296,13 +297,13 @@ function WorkflowCanvasHarness() {
   const duplicateAgentStep = (nodeId: string) => {
     setGraph((current) => {
       const node = current.nodes.find((candidate) => candidate.id === nodeId);
-      if (!node || node.type !== 'agent') return current;
+      if (!node || node.type !== "agent") return current;
       const duplicateData = { ...node.data };
       delete duplicateData.session_id;
-      const duplicate = createWorkflowNode('agent', {
+      const duplicate = createWorkflowNode("agent", {
         data: {
           ...duplicateData,
-          display_name: `${node.data.display_name ?? 'Agent Step'} copy`,
+          display_name: `${node.data.display_name ?? "Agent Step"} copy`,
         },
         position: avoidOverlap(current, {
           x: (node.position?.x ?? 360) + 80,
@@ -319,7 +320,7 @@ function WorkflowCanvasHarness() {
       ...current,
       nodes: current.nodes.filter((node) => node.id !== nodeId),
       edges: current.edges.filter(
-        (edge) => edge.source !== nodeId && edge.target !== nodeId
+        (edge) => edge.source !== nodeId && edge.target !== nodeId,
       ),
     }));
     setContextMenu(null);
@@ -333,14 +334,14 @@ function WorkflowCanvasHarness() {
         </button>
         <button
           data-testid="select-condition-edge"
-          onClick={() => setSelectedEdgeId('condition-yes')}
+          onClick={() => setSelectedEdgeId("condition-yes")}
         >
           Select condition edge
         </button>
         <button
           data-testid="select-condition-node"
           onClick={() => {
-            setSelectedNodeId('condition');
+            setSelectedNodeId("condition");
             setSelectedEdgeId(null);
             setSessionPanelNodeId(null);
           }}
@@ -365,9 +366,9 @@ function WorkflowCanvasHarness() {
             }}
             onNodeOpen={(nodeId) => {
               const node = graph.nodes.find(
-                (candidate) => candidate.id === nodeId
+                (candidate) => candidate.id === nodeId,
               );
-              if (!node || node.type === 'start' || node.type === 'end') {
+              if (!node || node.type === "start" || node.type === "end") {
                 return;
               }
               setSelectedNodeId(nodeId);
@@ -376,9 +377,9 @@ function WorkflowCanvasHarness() {
             }}
             onNodeContextMenu={(event) => {
               const node = graph.nodes.find(
-                (candidate) => candidate.id === event.nodeId
+                (candidate) => candidate.id === event.nodeId,
               );
-              setContextMenu(node?.type === 'agent' ? event : null);
+              setContextMenu(node?.type === "agent" ? event : null);
             }}
             onNodeEdit={openEditDialog}
             onNodeDuplicate={duplicateAgentStep}
@@ -405,7 +406,7 @@ function WorkflowCanvasHarness() {
         <section data-testid="workflow-node-session-panel">
           <h2>{sessionPanelNode.data.display_name}</h2>
           <p data-testid="workflow-node-session-id">
-            {String(sessionPanelNode.data.session_id ?? 'draft-session')}
+            {String(sessionPanelNode.data.session_id ?? "draft-session")}
           </p>
           <textarea aria-label="Message" defaultValue="" />
         </section>
@@ -416,7 +417,7 @@ function WorkflowCanvasHarness() {
           role="menu"
           data-testid="agent-step-context-menu"
           style={{
-            position: 'fixed',
+            position: "fixed",
             left: contextMenu.x,
             top: contextMenu.y,
             zIndex: 1000,
@@ -490,15 +491,15 @@ function WorkflowCanvasHarness() {
 }
 
 function WorkflowEntryHarness() {
-  const [lastAction, setLastAction] = useState('none');
+  const [lastAction, setLastAction] = useState("none");
 
   return (
     <main>
       <IssueWorkflowEntryCard
         isCreating={false}
         error={null}
-        onOpenCanvas={() => setLastAction('open-canvas')}
-        onRunExisting={() => setLastAction('open-canvas')}
+        onOpenCanvas={() => setLastAction("open-canvas")}
+        onRunExisting={() => setLastAction("open-canvas")}
       />
       <output data-testid="workflow-entry-action">{lastAction}</output>
     </main>
@@ -508,62 +509,66 @@ function WorkflowEntryHarness() {
 function TaskAttemptsHarness() {
   const attempts = [
     {
-      id: 'workflow-attempt-1',
-      kind: 'workflow' as const,
-      title: 'Workflow attempt for Familiarize code',
-      subtitle: 'Draft workflow attempt',
-      statusLabel: 'Draft',
-      statusTone: 'draft' as const,
-      updatedAt: '2026-05-14T02:00:00Z',
-      primaryActionLabel: 'Open workflow',
+      id: "workflow-attempt-1",
+      kind: "workflow" as const,
+      title: "Workflow attempt for Familiarize code",
+      subtitle: "Draft workflow attempt",
+      statusLabel: "Draft",
+      statusTone: "draft" as const,
+      updatedAt: "2026-05-14T02:00:00Z",
+      primaryActionLabel: "Open workflow",
     },
     {
-      id: 'workspace-attempt-1',
-      kind: 'single_agent' as const,
-      title: 'Codex try',
-      subtitle: 'Workspace workspace-1',
-      statusLabel: 'Completed',
-      statusTone: 'succeeded' as const,
-      updatedAt: '2026-05-14T01:00:00Z',
-      primaryActionLabel: 'Open session',
+      id: "workspace-attempt-1",
+      kind: "single_agent" as const,
+      title: "Codex try",
+      subtitle: "Workspace workspace-1",
+      statusLabel: "Completed",
+      statusTone: "succeeded" as const,
+      updatedAt: "2026-05-14T01:00:00Z",
+      primaryActionLabel: "Open session",
     },
   ];
-  const [lastAction, setLastAction] = useState('none');
+  const [lastAction, setLastAction] = useState("none");
 
   return (
     <main>
       <IssueTaskAttemptsSection
         attempts={attempts}
         onOpenAttempt={(attempt) => setLastAction(`open:${attempt.kind}`)}
-        onCreateWorkflowAttempt={() => setLastAction('create-workflow')}
+        onCreateWorkflowAttempt={() => setLastAction("create-workflow")}
       />
       <output data-testid="task-attempt-action">{lastAction}</output>
     </main>
   );
 }
 
-const mode = new URLSearchParams(window.location.search).get('mode');
+Object.assign(window, {
+  __setUiLanguage: (locale: string) => i18n.changeLanguage(locale),
+});
 
-createRoot(document.getElementById('root')!).render(
-  mode === 'github-credentials' ? (
+const mode = new URLSearchParams(window.location.search).get("mode");
+
+createRoot(document.getElementById("root")!).render(
+  mode === "github-credentials" ? (
     <GithubCredentialsHarness />
-  ) : mode === 'diff-tree' ? (
+  ) : mode === "diff-tree" ? (
     <DiffTreeHarness />
-  ) : mode === 'workflow-draft' ? (
+  ) : mode === "workflow-draft" ? (
     <WorkflowDraftHarness />
-  ) : mode === 'route-loading' ? (
+  ) : mode === "route-loading" ? (
     <RouteLoadingHarness />
-  ) : mode === 'settings-safety' ? (
+  ) : mode === "settings-safety" ? (
     <SettingsSafetyHarness />
-  ) : mode === 'runtime-input' ? (
+  ) : mode === "runtime-input" ? (
     <RuntimeInputHarness />
-  ) : mode === 'card-context' ? (
+  ) : mode === "card-context" ? (
     <CardContextHarness />
-  ) : mode === 'entry' ? (
+  ) : mode === "entry" ? (
     <WorkflowEntryHarness />
-  ) : mode === 'task-attempts' ? (
+  ) : mode === "task-attempts" ? (
     <TaskAttemptsHarness />
   ) : (
     <WorkflowCanvasHarness />
-  )
+  ),
 );

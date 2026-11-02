@@ -1,3 +1,8 @@
+import {
+  executionOwnerLabel,
+  executionStatusLabel,
+} from '../model/executionPresentation';
+import { useTranslation } from 'react-i18next';
 import { useEffect, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import type { Session, Workspace } from 'shared/types';
@@ -19,6 +24,7 @@ export function ExecutionInspectionPanel({
   selectedSessionId?: string;
   onSelectSession: (id: string) => void;
 }) {
+  const { t } = useTranslation('tasks');
   const wiki = ['openwiki_sync', 'openwiki_bootstrap'].includes(
     workspace.execution_owner?.kind ?? ''
   );
@@ -69,14 +75,16 @@ export function ExecutionInspectionPanel({
   const run = execution.data;
   const sessionSelector = (
     <label className="flex items-center gap-base text-normal">
-      Session
+      {t('executionInspection.session')}
       <select
-        aria-label="Execution session"
+        aria-label={t('executionInspection.sessionLabel')}
         className="bg-primary border border-border rounded-sm p-half min-w-0 flex-1"
         value={selectedSessionId ?? ''}
         onChange={(event) => onSelectSession(event.target.value)}
       >
-        {!selectedSessionId && <option value="">Select saved session</option>}
+        {!selectedSessionId && (
+          <option value="">{t('executionInspection.selectSession')}</option>
+        )}
         {sessions.map((session) => (
           <option key={session.id} value={session.id}>
             {session.name ?? session.id}
@@ -88,81 +96,87 @@ export function ExecutionInspectionPanel({
   return (
     <section
       className="border-t border-border bg-secondary p-base flex flex-col gap-half text-sm"
-      aria-label="Execution inspection"
+      aria-label={t('executionInspection.panelLabel')}
     >
       <div className="flex items-center justify-between gap-base">
-        <strong className="text-high">{wiki ? 'OpenWiki' : 'Execution'}</strong>
+        <strong className="text-high">
+          {wiki
+            ? t('executionInspection.wiki')
+            : t('executionInspection.execution')}
+        </strong>
         <PrimaryButton
           variant="secondary"
           disabled={!run?.can_stop || execution.stop.isPending}
           onClick={() => execution.stop.mutate()}
         >
           {run?.stop_requested || execution.stop.isPending
-            ? 'Stopping…'
-            : 'Stop execution'}
+            ? t('executionInspection.stopping')
+            : t('executionInspection.stop')}
         </PrimaryButton>
       </div>
-      <p className="text-low">
-        While this execution is active, use its controls below. Normal
-        development becomes available after execution and cleanup finish.
-      </p>
+      <p className="text-low">{t('executionInspection.help')}</p>
       <>
         <p className="text-normal">
-          {run?.status ?? 'Loading execution…'} ·{' '}
-          {run?.owner?.kind ??
-            workspace.execution_owner?.kind ??
-            'Unknown owner'}
+          {run
+            ? executionStatusLabel(t, run.status)
+            : t('executionInspection.loading')}{' '}
+          ·{' '}
+          {executionOwnerLabel(
+            t,
+            run?.owner?.kind ?? workspace.execution_owner?.kind
+          )}
         </p>
         {run?.owner?.run_id && (
           <p className="font-mono text-xs text-low break-all">
-            Run: {run.owner.run_id}
+            {t('executionInspection.runId', { id: run.owner.run_id })}
           </p>
         )}
         {/* Integration publication is shown below from the full run, including its intent. */}
         {run && (
           <p className="text-low">
             {run.owner?.result?.no_op && run.status === 'succeeded'
-              ? 'No changes required (successful reconciliation)'
+              ? t('executionInspection.noChanges')
               : run.published
-                ? 'Published result'
-                : 'Publication not confirmed; files may be unpublished'}
+                ? t('executionInspection.published')
+                : t('executionInspection.unconfirmed')}
           </p>
         )}
       </>
       {run && !run.files_available && (
-        <p className="text-warning">
-          Files are missing or unprepared. Inspection will not recreate the
-          worktree. Saved logs remain available.
-        </p>
+        <p className="text-warning">{t('executionInspection.missingFiles')}</p>
       )}
       {[
-        run?.error,
-        execution.error?.message,
-        execution.stop.error?.message,
-        response.error?.message,
-        steer.error?.message,
+        run?.error && `${t('executionInspection.reportedError')} ${run?.error}`,
+        execution.error &&
+          `${t('executionInspection.loadError')} ${execution.error?.message}`,
+        execution.stop.error &&
+          `${t('executionInspection.stopError')} ${execution.stop.error?.message}`,
+        response.error &&
+          `${t('executionInspection.responseError')} ${response.error?.message}`,
+        steer.error &&
+          `${t('executionInspection.steerError')} ${steer.error?.message}`,
       ]
         .filter(Boolean)
-        .map((error) => (
-          <p key={error} role="alert" className="text-error break-words">
-            {error}
+        .map((message, index) => (
+          <p key={index} role="alert" className="text-error break-words">
+            {message}
           </p>
         ))}
       {sessionSelector}
       {wiki && activeRun && run?.can_stop && !run.stop_requested && (
         <div className="flex flex-col gap-half">
           <textarea
-            aria-label="OpenWiki instructions"
+            aria-label={t('executionInspection.wikiInstructions')}
             className="bg-primary border border-border rounded-sm p-half"
             value={instruction}
             onChange={(event) => setInstruction(event.target.value)}
-            placeholder="Additional instructions for this Wiki update"
+            placeholder={t('executionInspection.wikiPlaceholder')}
           />
           <PrimaryButton
             disabled={steer.isPending || !instruction.trim()}
             onClick={() => steer.mutate()}
           >
-            Send instructions
+            {t('executionInspection.sendInstructions')}
           </PrimaryButton>
         </div>
       )}
@@ -171,11 +185,13 @@ export function ExecutionInspectionPanel({
           <p>
             {pending.kind === 'input'
               ? pending.prompt
-              : `Approval requested: ${pending.toolName}`}
+              : t('executionInspection.approvalRequested', {
+                  tool: pending.toolName,
+                })}
           </p>
           <textarea
             key={pending.controlId}
-            aria-label="Owner request response"
+            aria-label={t('executionInspection.responseLabel')}
             className="bg-primary border border-border rounded-sm p-half"
             value={answer}
             onChange={(event) => setAnswer(event.target.value)}
@@ -190,7 +206,9 @@ export function ExecutionInspectionPanel({
               }
               onClick={() => response.mutate(true)}
             >
-              {pending.kind === 'input' ? 'Respond to request' : 'Approve'}
+              {pending.kind === 'input'
+                ? t('executionInspection.respond')
+                : t('executionInspection.approve')}
             </PrimaryButton>
             {pending.kind === 'approval' && (
               <PrimaryButton
@@ -200,7 +218,7 @@ export function ExecutionInspectionPanel({
                 }
                 onClick={() => response.mutate(false)}
               >
-                Deny
+                {t('executionInspection.deny')}
               </PrimaryButton>
             )}
           </div>

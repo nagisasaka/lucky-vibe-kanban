@@ -123,7 +123,7 @@ export function DevServerControlsContainer() {
       </div>
       {error && (
         <p role="alert" className="text-error">
-          {error}
+          {t('devServer.operationUnconfirmed')} {error}
         </p>
       )}
       {devServerProcesses.length > 0 && (
@@ -149,7 +149,7 @@ export function DevServerControlsContainer() {
                 : process.status}
               {process.exit_code != null &&
                 process.exit_code !== 0n &&
-                ` (exit ${process.exit_code})`}
+                t('devServer.exitCode', { code: String(process.exit_code) })}
             </button>
           ))}
         </div>

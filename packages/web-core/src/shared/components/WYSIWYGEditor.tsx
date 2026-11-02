@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import {
   useMemo,
   useState,
@@ -323,6 +324,7 @@ const WYSIWYGEditor = forwardRef<WYSIWYGEditorRef, WysiwygProps>(
     }: WysiwygProps,
     ref: React.ForwardedRef<WYSIWYGEditorRef>
   ) {
+    const { t } = useTranslation('common');
     // Ref to capture the Lexical editor instance for imperative methods
     const editorInstanceRef = useRef<LexicalEditor | null>(null);
     const selectedSkillsRef = useRef(selectedSkills);
@@ -345,7 +347,16 @@ const WYSIWYGEditor = forwardRef<WYSIWYGEditorRef, WysiwygProps>(
     }));
 
     // Copy button state
-    const [copied, setCopied] = useState(false);
+    const [copyState, setCopyState] = useState<'idle' | 'copied' | 'requested'>(
+      'idle'
+    );
+    const copied = copyState === 'copied';
+    const copyLabel =
+      copyState === 'requested'
+        ? t('markdownEditor.copyRequested')
+        : copied
+          ? t('markdownEditor.copied')
+          : t('markdownEditor.copy');
     const diffPaths = useDiffPaths();
     const preferredRepoId = useUiPreferencesStore(
       (state) => state.fileSearchRepoId
@@ -467,9 +478,9 @@ const WYSIWYGEditor = forwardRef<WYSIWYGEditorRef, WysiwygProps>(
         const unescaped = preserveCopySource
           ? value
           : value.replace(/\\_/g, '_');
-        await writeClipboardViaBridge(unescaped);
-        setCopied(true);
-        window.setTimeout(() => setCopied(false), 400);
+        const confirmed = await writeClipboardViaBridge(unescaped);
+        setCopyState(confirmed ? 'copied' : 'requested');
+        window.setTimeout(() => setCopyState('idle'), confirmed ? 400 : 3000);
       } catch {
         // noop – bridge handles fallback
       }
@@ -625,7 +636,7 @@ const WYSIWYGEditor = forwardRef<WYSIWYGEditorRef, WysiwygProps>(
       () => (
         <div
           className={cn(
-            'absolute top-0 left-0 text-base text-secondary-foreground text-low pointer-events-none truncate',
+            'absolute top-0 left-0 right-0 text-base text-secondary-foreground text-low pointer-events-none truncate',
             className
           )}
         >
@@ -662,7 +673,9 @@ const WYSIWYGEditor = forwardRef<WYSIWYGEditorRef, WysiwygProps>(
                       <ContentEditable
                         className={cn('outline-none', className)}
                         aria-label={
-                          disabled ? 'Markdown content' : 'Markdown editor'
+                          disabled
+                            ? t('markdownEditor.content')
+                            : t('markdownEditor.editor')
                         }
                         onPasteCapture={handlePaste}
                       />
@@ -771,8 +784,8 @@ const WYSIWYGEditor = forwardRef<WYSIWYGEditorRef, WysiwygProps>(
               {/* Copy button */}
               <Button
                 type="button"
-                aria-label={copied ? 'Copied!' : 'Copy as Markdown'}
-                title={copied ? 'Copied!' : 'Copy as Markdown'}
+                aria-label={copyLabel}
+                title={copyLabel}
                 variant="icon"
                 size="icon"
                 onClick={handleCopy}
@@ -788,8 +801,8 @@ const WYSIWYGEditor = forwardRef<WYSIWYGEditorRef, WysiwygProps>(
               {onEdit && (
                 <Button
                   type="button"
-                  aria-label="Edit"
-                  title="Edit"
+                  aria-label={t('markdownEditor.edit')}
+                  title={t('markdownEditor.edit')}
                   variant="icon"
                   size="icon"
                   onClick={onEdit}
@@ -802,8 +815,8 @@ const WYSIWYGEditor = forwardRef<WYSIWYGEditorRef, WysiwygProps>(
               {onDelete && (
                 <Button
                   type="button"
-                  aria-label="Delete"
-                  title="Delete"
+                  aria-label={t('markdownEditor.delete')}
+                  title={t('markdownEditor.delete')}
                   variant="icon"
                   size="icon"
                   onClick={onDelete}

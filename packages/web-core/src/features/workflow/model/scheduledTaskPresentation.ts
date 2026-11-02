@@ -103,17 +103,47 @@ export function getScheduleLabel(
 export function formatScheduledTaskDateTime(
   value: string | null | undefined,
   timezone: string,
-  fallback: string
+  fallback: string,
+  locale: string
 ): string {
   if (!value) return fallback;
+  const date = new Date(value);
+  if (!Number.isFinite(date.getTime())) return fallback;
 
   try {
-    return new Intl.DateTimeFormat(undefined, {
+    return new Intl.DateTimeFormat(locale, {
       dateStyle: 'medium',
       timeStyle: 'short',
       timeZone: timezone || 'UTC',
-    }).format(new Date(value));
+    }).format(date);
   } catch {
-    return new Date(value).toLocaleString();
+    return date.toLocaleString(locale);
   }
+}
+
+export type ScheduledTaskNotice =
+  | 'issueRequired'
+  | 'timeRequired'
+  | 'weekdayRequired'
+  | 'inputRequired'
+  | 'saveFailed'
+  | 'runSkipped'
+  | 'runFailed'
+  | 'deleteFailed';
+
+export function scheduledTaskNoticeLabel(
+  notice: ScheduledTaskNotice,
+  t: TFunction<'common'>
+): string {
+  const labels: Record<ScheduledTaskNotice, string> = {
+    issueRequired: t('common:workflow.schedule.errors.issueRequired'),
+    timeRequired: t('common:workflow.schedule.errors.timeRequired'),
+    weekdayRequired: t('common:workflow.schedule.errors.weekdayRequired'),
+    inputRequired: t('common:workflow.schedule.errors.inputRequired'),
+    saveFailed: t('common:workflow.schedule.errors.saveFailed'),
+    runSkipped: t('common:workflow.schedule.errors.runSkipped'),
+    runFailed: t('common:workflow.schedule.errors.runFailed'),
+    deleteFailed: t('common:workflow.schedule.errors.deleteFailed'),
+  };
+  return labels[notice];
 }

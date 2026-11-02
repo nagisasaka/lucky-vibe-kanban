@@ -1,7 +1,8 @@
+import { errorDiagnostic } from '@/shared/lib/errorDiagnostic';
+import i18n from '@/i18n/config';
 import { useCallback, useMemo, useState } from 'react';
 import { useParams } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
-import type { TFunction } from 'i18next';
 import type { WorkflowTemplateResponse } from 'shared/types';
 import { GitBranchIcon, LinkIcon, PlusIcon } from '@phosphor-icons/react';
 import { useProjectContext } from '@/shared/hooks/useProjectContext';
@@ -144,10 +145,13 @@ export function IssueTaskAttemptsSectionContainer({
 
   const attempts = useMemo(
     () =>
-      buildTaskAttempts({
-        workspaceAttempts: workspacesWithStats,
-        workflowAttempts: workflowAttemptData?.attempts ?? [],
-      }).map((attempt) => localizeTaskAttemptView(attempt, t)),
+      buildTaskAttempts(
+        {
+          workspaceAttempts: workspacesWithStats,
+          workflowAttempts: workflowAttemptData?.attempts ?? [],
+        },
+        t
+      ),
     [workspacesWithStats, workflowAttemptData, t]
   );
   const workflowTemplates = useMemo(
@@ -288,11 +292,11 @@ export function IssueTaskAttemptsSectionContainer({
       if (result === 'confirmed') {
         try {
           await workspacesApi.unlinkFromIssue(attempt.localWorkspaceId);
-        } catch (err) {
+        } catch (error) {
           ConfirmDialog.show({
             title: t('common:error'),
-            message:
-              err instanceof Error ? err.message : t('workspaces.unlinkError'),
+            message: () =>
+              `${i18n.t('workspaces.unlinkError', { ns: 'common' })} ${errorDiagnostic(error)}`,
             confirmText: t('common:ok'),
             showCancelButton: false,
           });
@@ -321,13 +325,11 @@ export function IssueTaskAttemptsSectionContainer({
 
         try {
           await deleteWorkflowAttempt(attempt.workflowAttemptId);
-        } catch (err) {
+        } catch (error) {
           ConfirmDialog.show({
             title: t('common:error'),
-            message:
-              err instanceof Error
-                ? err.message
-                : t('attempts.deleteWorkflowError'),
+            message: () =>
+              `${i18n.t('attempts.deleteWorkflowError', { ns: 'common' })} ${errorDiagnostic(error)}`,
             confirmText: t('common:ok'),
             showCancelButton: false,
           });
@@ -373,11 +375,11 @@ export function IssueTaskAttemptsSectionContainer({
         if (result.unlinkFromIssue) {
           await workspacesApi.unlinkFromIssue(attempt.localWorkspaceId);
         }
-      } catch (err) {
+      } catch (error) {
         ConfirmDialog.show({
           title: t('common:error'),
-          message:
-            err instanceof Error ? err.message : t('workspaces.deleteError'),
+          message: () =>
+            `${i18n.t('workspaces.deleteError', { ns: 'common' })} ${errorDiagnostic(error)}`,
           confirmText: t('common:ok'),
           showCancelButton: false,
         });
@@ -398,21 +400,21 @@ export function IssueTaskAttemptsSectionContainer({
     () => [
       {
         disabled: issueArchived,
-        title: issueArchived ? 'アーカイブ解除すると利用できます' : undefined,
+        title: issueArchived ? t('kanban.restoreToUse') : undefined,
         icon: GitBranchIcon,
         onClick: handleCreateWorkflowAttempt,
         label: t('attempts.newWorkflow', 'New workflow attempt'),
       },
       {
         disabled: issueArchived,
-        title: issueArchived ? 'アーカイブ解除すると利用できます' : undefined,
+        title: issueArchived ? t('kanban.restoreToUse') : undefined,
         icon: PlusIcon,
         onClick: handleAddWorkspace,
         label: t('attempts.newSingleAgent', 'New single-agent attempt'),
       },
       {
         disabled: issueArchived,
-        title: issueArchived ? 'アーカイブ解除すると利用できます' : undefined,
+        title: issueArchived ? t('kanban.restoreToUse') : undefined,
         icon: LinkIcon,
         onClick: handleLinkWorkspace,
         label: t('kanban.linkWorkspace', 'Link workspace'),
@@ -437,7 +439,7 @@ export function IssueTaskAttemptsSectionContainer({
         onUnlinkAttempt={handleUnlinkAttempt}
         onDeleteAttempt={handleDeleteAttempt}
         createDisabledReason={
-          issueArchived ? 'アーカイブ解除すると利用できます' : undefined
+          issueArchived ? t('kanban.restoreToUse') : undefined
         }
         onCreateWorkflowAttempt={handleCreateWorkflowAttempt}
         onCreateSingleAgentAttempt={handleAddWorkspace}
@@ -449,73 +451,4 @@ export function IssueTaskAttemptsSectionContainer({
       ) : null}
     </div>
   );
-}
-
-function localizeTaskAttemptView(
-  attempt: TaskAttemptView,
-  t: TFunction<'common'>
-): TaskAttemptView {
-  if (attempt.kind === 'workflow') {
-    return {
-      ...attempt,
-      title:
-        attempt.title === 'Workflow attempt'
-          ? t('attempts.workflowFallbackTitle')
-          : attempt.title,
-      subtitle: attempt.latestRunId
-        ? t('attempts.workflowRun', {
-            id: attempt.latestRunId.slice(0, 8),
-          })
-        : t('attempts.draftWorkflow'),
-      statusLabel: localizeAttemptStatus(attempt.statusLabel, t),
-      primaryActionLabel: t('attempts.openCanvas'),
-    };
-  }
-
-  return {
-    ...attempt,
-    title:
-      attempt.title === 'Single agent attempt'
-        ? t('attempts.singleAgentFallbackTitle')
-        : attempt.title,
-    subtitle: attempt.localWorkspaceId
-      ? t('attempts.workspace', {
-          id: attempt.localWorkspaceId.slice(0, 8),
-        })
-      : t('attempts.remoteWorkspace'),
-    statusLabel: localizeAttemptStatus(attempt.statusLabel, t),
-    primaryActionLabel: t('attempts.openSession'),
-  };
-}
-
-function localizeAttemptStatus(
-  statusLabel: string,
-  t: TFunction<'common'>
-): string {
-  switch (statusLabel) {
-    case 'Draft':
-      return t('attempts.status.draft');
-    case 'Ready':
-      return t('attempts.status.ready');
-    case 'Running':
-      return t('attempts.status.running');
-    case 'Waiting for human':
-      return t('attempts.status.awaitingHuman');
-    case 'Waiting for arena':
-      return t('attempts.status.awaitingArena');
-    case 'Succeeded':
-      return t('attempts.status.succeeded');
-    case 'Failed':
-      return t('attempts.status.failed');
-    case 'Canceled':
-      return t('attempts.status.canceled');
-    case 'Archived':
-      return t('attempts.status.archived');
-    case 'Completed':
-      return t('attempts.status.completed');
-    case 'Active':
-      return t('attempts.status.active');
-    default:
-      return statusLabel;
-  }
 }

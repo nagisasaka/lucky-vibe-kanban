@@ -52,7 +52,7 @@ export function CardContextSection({
         </span>
         {error && (
           <span className="ml-base text-xs text-error">
-            {t('cardContext.loadFailed')}
+            {t('cardContext.loadFailed')} {error}
           </span>
         )}
       </summary>
@@ -60,7 +60,7 @@ export function CardContextSection({
         <p className="text-xs text-low">{t('cardContext.description')}</p>
         {error && (
           <p role="alert" className="text-xs text-error">
-            {error}
+            {t('cardContext.loadFailed')} {error}
           </p>
         )}
         {error && (

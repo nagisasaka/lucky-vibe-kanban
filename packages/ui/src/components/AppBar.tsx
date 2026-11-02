@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import {
   DragDropContext,
   Draggable,
@@ -145,6 +146,7 @@ export function AppBar({
   onUpdateClick,
   githubIconPath,
 }: AppBarProps) {
+  const { t } = useTranslation('common');
   const sections: AppBarSection[] = [];
 
   if (showWorkspacesButton) {
@@ -154,7 +156,7 @@ export function AppBar({
         {
           key: 'local-workspaces',
           kind: 'icon-button',
-          label: 'Local workspaces',
+          label: t('appBar.localWorkspaces'),
           icon: LayoutIcon,
           isActive: isWorkspacesActive,
           onClick: onWorkspacesClick,
@@ -185,7 +187,7 @@ export function AppBar({
     projectSectionItems.push({
       key: 'create-project',
       kind: 'icon-button',
-      label: 'Create project',
+      label: t('appBar.createProject'),
       icon: PlusIcon,
       onClick: onCreateProject,
       className: 'bg-primary text-muted hover:text-normal hover:bg-tertiary',
@@ -196,7 +198,7 @@ export function AppBar({
   if (projectSectionItems.length > 0) {
     sections.push({
       key: 'projects',
-      label: 'Projects',
+      label: t('appBar.projects'),
       items: projectSectionItems,
     });
   }
@@ -326,7 +328,7 @@ export function AppBar({
         {userPopover}
         <AppBarSocialLink
           href={LVK_GITHUB_URL}
-          label="Star on GitHub"
+          label={t('appBar.starOnGitHub')}
           iconPath={githubIconPath}
           badge={
             starCount != null && (
@@ -349,7 +351,7 @@ export function AppBar({
                 'transition-colors cursor-pointer'
               )}
             >
-              Update
+              {t('appBar.update')}
             </button>
           </Tooltip>
         ) : (

@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import {
   Dialog,
   DialogContent,
@@ -14,9 +15,9 @@ import { SimpleMarkdown } from '@/shared/components/SimpleMarkdown';
 
 const GITHUB_RELEASES_URL = 'https://github.com/BloopAI/vibe-kanban/releases';
 
-function formatDate(dateStr: string): string {
+function formatDate(dateStr: string, locale: string): string {
   try {
-    return new Date(dateStr).toLocaleDateString(undefined, {
+    return new Date(dateStr).toLocaleDateString(locale, {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -31,6 +32,7 @@ function extractVersion(tagName: string): string {
 }
 
 const ReleaseNotesDialogImpl = create<NoProps>(() => {
+  const { t, i18n } = useTranslation('common');
   const modal = useModal();
   const { data: releases, isLoading, isError } = useReleases();
 
@@ -40,20 +42,32 @@ const ReleaseNotesDialogImpl = create<NoProps>(() => {
 
   return (
     <Dialog
+      role="dialog"
+      aria-modal="true"
+      aria-label={t('releaseNotes.title')}
       open={modal.visible}
-      onOpenChange={(open) => !open && modal.resolve()}
+      onOpenChange={(open) => {
+        if (!open) {
+          modal.resolve();
+          modal.hide();
+        }
+      }}
       className="h-[calc(100%-4rem)]"
     >
       <DialogContent className="flex flex-col w-full h-full max-w-2xl max-h-[calc(100dvh-4rem)] p-0">
         <DialogHeader className="px-6 pt-5 pb-4 border-b flex-shrink-0">
           <DialogTitle className="text-lg font-semibold text-high">
-            What&apos;s New
+            {t('releaseNotes.title')}
           </DialogTitle>
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto px-6 py-4 space-y-6 scrollbar-thin">
           {isLoading && (
-            <div className="flex items-center justify-center py-12">
+            <div
+              className="flex items-center justify-center py-12"
+              role="status"
+              aria-label={t('states.loading')}
+            >
               <Loader2 className="h-5 w-5 animate-spin text-low" />
             </div>
           )}
@@ -61,10 +75,10 @@ const ReleaseNotesDialogImpl = create<NoProps>(() => {
           {isError && (
             <div className="flex flex-col items-center justify-center py-12 text-center space-y-3">
               <AlertCircle className="h-8 w-8 text-low" />
-              <p className="text-sm text-low">Unable to load release notes.</p>
+              <p className="text-sm text-low">{t('releaseNotes.failed')}</p>
               <Button variant="outline" size="sm" onClick={handleOpenInBrowser}>
                 <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
-                View on GitHub
+                {t('releaseNotes.viewOnGitHub')}
               </Button>
             </div>
           )}
@@ -76,7 +90,10 @@ const ReleaseNotesDialogImpl = create<NoProps>(() => {
                   {extractVersion(release.tag_name)}
                 </h2>
                 <span className="text-xs text-low">
-                  {formatDate(release.published_at)}
+                  {formatDate(
+                    release.published_at,
+                    i18n.resolvedLanguage || i18n.language
+                  )}
                 </span>
               </div>
               {release.body && (
@@ -92,7 +109,7 @@ const ReleaseNotesDialogImpl = create<NoProps>(() => {
         <DialogFooter className="px-6 py-3 border-t flex-shrink-0">
           <Button variant="outline" size="sm" onClick={handleOpenInBrowser}>
             <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
-            Open on GitHub
+            {t('releaseNotes.openOnGitHub')}
           </Button>
         </DialogFooter>
       </DialogContent>

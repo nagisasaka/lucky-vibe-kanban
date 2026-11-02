@@ -1,3 +1,8 @@
+import {
+  formatScheduledTaskDateTime,
+  scheduledTaskNoticeLabel,
+} from './scheduledTaskPresentation';
+import i18n from '@/i18n/config';
 import { describe, expect, it } from 'vitest';
 import {
   getWorkflowEdgeVisual,
@@ -22,7 +27,10 @@ describe('workflow presentation helpers', () => {
     ).toBe('Role: reviewer');
     expect(
       getWorkflowNodeSummary('condition', {
-        branches: [{ name: 'Matched' }, { name: 'Fallback' }],
+        branches: [
+          { condition: 'Matched', target_node_id: 'raw-matched' },
+          { condition: 'Fallback', target_node_id: 'raw-fallback' },
+        ],
       })
     ).toBe('2 branches');
     expect(getWorkflowNodeSummary('human_gate', {})).toBe('Waits for approval');
@@ -37,32 +45,16 @@ describe('workflow presentation helpers', () => {
   });
 
   it('returns ordered edge kind options for the edge inspector', () => {
-    expect(getWorkflowEdgeKindOptions()).toEqual([
-      {
-        value: 'default',
-        label: 'Default',
-        description: 'Continue to the next node.',
-      },
-      {
-        value: 'condition_branch',
-        label: 'Condition',
-        description: 'Route through a conditional branch.',
-      },
-      {
-        value: 'approval',
-        label: 'Approve',
-        description: 'Continue after a human approval.',
-      },
-      {
-        value: 'rejection',
-        label: 'Reject',
-        description: 'Route after a human rejection.',
-      },
-      {
-        value: 'arena_winner',
-        label: 'Winner',
-        description: 'Promote the winning arena attempt.',
-      },
+    expect(
+      getWorkflowEdgeKindOptions(i18n.getFixedT('en', 'common')).map(
+        (option) => option.value
+      )
+    ).toEqual([
+      'default',
+      'condition_branch',
+      'approval',
+      'rejection',
+      'arena_winner',
     ]);
   });
 
@@ -142,4 +134,37 @@ describe('workflow presentation helpers', () => {
       chipClass: expect.stringContaining('rose'),
     });
   });
+});
+
+it.each([
+  ['en', 'UTC', 'Jan 2, 2026, 3:04 PM'],
+  ['ja', 'UTC', '2026/01/02 15:04'],
+  ['ja', 'Asia/Shanghai', '2026/01/02 23:04'],
+  ['en', 'America/New_York', 'Jan 2, 2026, 10:04 AM'],
+])(
+  'formats scheduled times in %s while preserving %s',
+  (locale, timezone, expected) => {
+    expect(
+      formatScheduledTaskDateTime('2026-01-02T15:04:05Z', timezone, '—', locale)
+    ).toBe(expected);
+    expect(formatScheduledTaskDateTime('invalid', timezone, '—', locale)).toBe(
+      '—'
+    );
+    expect(formatScheduledTaskDateTime(null, timezone, '—', locale)).toBe('—');
+  }
+);
+
+it('resolves an existing scheduled-task notice in the current display language', () => {
+  const code = 'runFailed';
+  const english = scheduledTaskNoticeLabel(
+    code,
+    i18n.getFixedT('en', 'common')
+  );
+  const japanese = scheduledTaskNoticeLabel(
+    code,
+    i18n.getFixedT('ja', 'common')
+  );
+  expect(english).toContain('could not be confirmed');
+  expect(japanese).toContain('開始結果を確認できません');
+  expect(japanese).not.toBe(english);
 });

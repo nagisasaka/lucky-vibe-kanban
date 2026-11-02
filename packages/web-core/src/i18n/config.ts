@@ -1,7 +1,12 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
-import { SUPPORTED_I18N_CODES, uiLanguageToI18nCode } from './languages';
+import {
+  SUPPORTED_I18N_CODES,
+  uiLanguageToI18nCode,
+  resolveUiLocale,
+  normalizeDetectedLocale,
+} from './languages';
 
 // Import translation files
 import enCommon from './locales/en/common.json';
@@ -98,13 +103,14 @@ i18n
   .init({
     resources,
     fallbackLng: {
-      'zh-TW': ['zh-Hant'],
-      'zh-HK': ['zh-Hant'],
-      'zh-MO': ['zh-Hant'],
-      zh: ['zh-Hans'], // Map generic Chinese to Simplified Chinese
+      'zh-TW': ['zh-Hant', 'en'],
+      'zh-HK': ['zh-Hant', 'en'],
+      'zh-MO': ['zh-Hant', 'en'],
+      zh: ['zh-Hans', 'en'], // Map generic Chinese to Simplified Chinese
       default: ['en'],
     },
     defaultNS: 'common',
+    returnEmptyString: false,
     debug: import.meta.env.DEV,
     // Include 'zh' + Traditional Chinese locales for browser detection
     supportedLngs: [...SUPPORTED_I18N_CODES, 'zh', 'zh-TW', 'zh-HK', 'zh-MO'],
@@ -121,9 +127,21 @@ i18n
 
     detection: {
       order: ['navigator', 'htmlTag'],
+      convertDetectedLanguage: normalizeDetectedLocale,
       caches: [], // Disable localStorage cache - we'll handle this via config
     },
   });
+
+// Keep assistive technology and browser typography aligned with the UI language.
+const updateDocumentLanguage = () => {
+  if (typeof document !== 'undefined') {
+    document.documentElement.lang = resolveUiLocale(
+      i18n.resolvedLanguage || i18n.language || 'en'
+    );
+  }
+};
+i18n.on('languageChanged', updateDocumentLanguage);
+updateDocumentLanguage();
 
 // Debug logging in development
 if (import.meta.env.DEV) {
@@ -136,10 +154,9 @@ if (import.meta.env.DEV) {
 // Function to update language from config
 export const updateLanguageFromConfig = (configLanguage: string) => {
   if (configLanguage === 'BROWSER') {
-    // Use browser detection
-    const detected = i18n.services.languageDetector?.detect();
-    const detectedLang = Array.isArray(detected) ? detected[0] : detected;
-    i18n.changeLanguage(detectedLang || 'en');
+    // Let i18next select the first supported language from the detector list.
+    // Mapping an unsupported first preference to English would hide later choices.
+    i18n.changeLanguage();
   } else {
     // Use explicit language selection with proper mapping
     const langCode = uiLanguageToI18nCode(configLanguage);
@@ -155,3 +172,12 @@ export const updateLanguageFromConfig = (configLanguage: string) => {
 };
 
 export default i18n;
+
+// Use the configured detector and supported-language selection without changing
+// the current UI language, persistence or detector caches.
+export function detectBrowserNotificationLanguage(): 'en' | 'ja' {
+  const detected = i18n.services.languageDetector?.detect();
+  const codes = typeof detected === 'string' ? [detected] : (detected ?? []);
+  const preferred = i18n.services.languageUtils.getBestMatchFromCodes(codes);
+  return resolveUiLocale(preferred || 'en') === 'ja' ? 'ja' : 'en';
+}

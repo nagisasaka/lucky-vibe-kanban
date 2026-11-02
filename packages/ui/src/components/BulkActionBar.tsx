@@ -67,27 +67,24 @@ export function BulkActionBar({
     <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
       <div className="flex items-center gap-half bg-primary border border-secondary rounded-lg shadow-[0_4px_24px_rgba(0,0,0,0.3)] px-base py-half">
         <span className="text-sm font-medium text-high whitespace-nowrap px-half">
-          {t('kanban.bulkSelectedCount', {
-            count: selectedCount,
-            defaultValue: '{{count}} selected',
-          })}
+          {t('kanban.bulkSelectedCount', { count: selectedCount })}
         </span>
 
         <div className="h-4 w-px bg-border" />
 
         <BulkActionButton
           icon={ArrowsLeftRightIcon}
-          label={t('kanban.bulkChangeStatus', { defaultValue: 'Status' })}
+          label={t('kanban.bulkChangeStatus')}
           onClick={onChangeStatus}
         />
         <BulkActionButton
           icon={ArrowFatLineUpIcon}
-          label={t('kanban.bulkChangePriority', { defaultValue: 'Priority' })}
+          label={t('kanban.bulkChangePriority')}
           onClick={onChangePriority}
         />
         <BulkActionButton
           icon={UsersIcon}
-          label={t('kanban.bulkChangeAssignees', { defaultValue: 'Assignee' })}
+          label={t('kanban.bulkChangeAssignees')}
           onClick={onChangeAssignees}
         />
 
@@ -95,25 +92,19 @@ export function BulkActionBar({
 
         <BulkActionButton
           icon={TrashIcon}
-          label={t('kanban.bulkDelete', { defaultValue: 'Delete' })}
+          label={t('kanban.bulkDelete')}
           onClick={onDelete}
           variant="destructive"
         />
 
         <div className="h-4 w-px bg-border" />
 
-        <Tooltip
-          content={t('kanban.bulkClearSelection', {
-            defaultValue: 'Clear selection',
-          })}
-        >
+        <Tooltip content={t('kanban.bulkClearSelection')}>
           <button
             type="button"
             onClick={onClearSelection}
             className="flex items-center justify-center p-half rounded-sm text-low hover:text-normal hover:bg-secondary transition-colors"
-            aria-label={t('kanban.bulkClearSelection', {
-              defaultValue: 'Clear selection',
-            })}
+            aria-label={t('kanban.bulkClearSelection')}
           >
             <XIcon className="size-icon-xs" weight="bold" />
           </button>

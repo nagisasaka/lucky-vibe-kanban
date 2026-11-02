@@ -1,3 +1,4 @@
+import { formatUtcDateTime } from '@/shared/lib/date';
 import { useTranslation } from 'react-i18next';
 import { useTodoViewStore } from '@/features/todos/model/todoViewStore';
 import { useRef, useState } from 'react';
@@ -27,6 +28,9 @@ import {
 import {
   integrationApi,
   integrationCanCancel,
+  integrationDoneLabel,
+  integrationStatusLabel,
+  integrationWikiLabel,
   integrationSelectionIsCurrent,
 } from '@/shared/lib/integrationApi';
 import type {
@@ -43,7 +47,7 @@ export function IntegrationPanel({
   focusedRunId: string | null;
   onClearFocus: () => void;
 }) {
-  const { t } = useTranslation('common');
+  const { t, i18n } = useTranslation('common');
   const { projectId, issues } = useProjectContext();
   const navigation = useAppNavigation();
   const client = useQueryClient();
@@ -58,7 +62,8 @@ export function IntegrationPanel({
   const [selected, setSelected] = useState<
     Record<string, IntegrationSelection>
   >({});
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<'preference' | 'operation' | null>(null);
+  const [errorDetail, setErrorDetail] = useState<string | null>(null);
   const pendingRequest = useRef<CreateIntegrationRequest | null>(null);
   const { profiles, config, updateAndSaveConfig } = useUserSystem();
   const skipValidation = config?.integration_skip_validation ?? false;
@@ -70,7 +75,10 @@ export function IntegrationPanel({
         throw new Error(t('integrationPanel.saveError'));
       }
     },
-    onError: (error: Error) => setError(error.message),
+    onError: (error) => {
+      setErrorDetail(error instanceof Error ? error.message : String(error));
+      setError('preference');
+    },
   });
   const agent = useExecutorConfig({
     profiles,
@@ -129,22 +137,31 @@ export function IntegrationPanel({
       pendingRequest.current = null;
       setSelected({});
       setError(null);
+      setErrorDetail(null);
       void refresh();
     },
-    onError: (error: Error) => setError(error.message),
+    onError: (error) => {
+      setErrorDetail(error instanceof Error ? error.message : String(error));
+      setError('operation');
+    },
   });
   const action = useMutation({
     mutationFn: ({ id, recover }: { id: string; recover: boolean }) =>
       recover ? integrationApi.recover(id) : integrationApi.cancel(id),
     onSuccess: () => {
       setError(null);
+      setErrorDetail(null);
       void refresh();
     },
-    onError: (error: Error) => setError(error.message),
+    onError: (error) => {
+      setErrorDetail(error instanceof Error ? error.message : String(error));
+      setError('operation');
+    },
   });
   const resetRequest = () => {
     pendingRequest.current = null;
     setError(null);
+    setErrorDetail(null);
   };
   const start = () => {
     const request = pendingRequest.current ?? {
@@ -165,11 +182,13 @@ export function IntegrationPanel({
     activities.data ?? []
   );
   const dataError =
-    error ??
-    repos.error?.message ??
-    branches.error?.message ??
-    activities.error?.message ??
-    runs.error?.message;
+    error === 'preference'
+      ? t('integrationPanel.saveError')
+      : error === 'operation'
+        ? t('integrationPanel.operationUnconfirmed')
+        : repos.error || branches.error || activities.error || runs.error
+          ? t('integrationPanel.loadError')
+          : null;
 
   return (
     <>
@@ -193,7 +212,15 @@ export function IntegrationPanel({
           <div className="overflow-y-auto space-y-base min-h-0">
             {dataError && (
               <p role="alert" className="text-error whitespace-pre-wrap">
-                {dataError}
+                {dataError}{' '}
+                {error
+                  ? errorDetail
+                  : (
+                      repos.error ??
+                      branches.error ??
+                      activities.error ??
+                      runs.error
+                    )?.message}
               </p>
             )}
             <p className="text-low">{t('integrationPanel.help')}</p>
@@ -498,24 +525,30 @@ export function IntegrationPanel({
                   aria-label={`${t('integrationPanel.title')} ${run.id}`}
                 >
                   <div className="flex flex-wrap items-center gap-base">
-                    <strong>
-                      {t(`integrationPanel.status.${run.status}`, {
-                        defaultValue: run.status,
-                      })}
-                    </strong>
+                    <strong>{integrationStatusLabel(run.status, t)}</strong>
                     <code>{run.target_ref}</code>
-                    <span className="text-low">{run.created_at}</span>
+                    <span className="text-low" title={run.created_at}>
+                      {formatUtcDateTime(
+                        run.created_at,
+                        i18n.resolvedLanguage || i18n.language
+                      )}
+                    </span>
                   </div>
-                  <p className="text-low break-all">Run {run.id}</p>
+                  <p className="text-low break-all">
+                    {t('integrationPanel.runIdentity', { id: run.id })}
+                  </p>
                   {run.error && (
                     <p role="alert" className="text-error whitespace-pre-wrap">
-                      {run.error}
+                      {t('integrationPanel.runError')}
                     </p>
                   )}
                   {run.payload.stop && (
                     <p>
-                      {run.payload.stop.stage} · {run.payload.stop.category}:{' '}
-                      {run.payload.stop.next_action}
+                      {run.payload.stop.category === 'target_changed'
+                        ? t('integrationPanel.stopTargetChanged')
+                        : run.payload.stop.category === 'unpublished'
+                          ? t('integrationPanel.stopReview')
+                          : t('integrationPanel.stopUnknown')}
                     </p>
                   )}
                   {run.payload.semantic_summary && (
@@ -529,9 +562,9 @@ export function IntegrationPanel({
                   <details>
                     <summary>{t('integrationPanel.candidateDetails')}</summary>
                     <p className="break-all">
-                      B:{' '}
+                      {t('integrationPanel.baseCommit')}:{' '}
                       {run.payload.base_commit ?? t('integrationPanel.waiting')}{' '}
-                      → R:{' '}
+                      → {t('integrationPanel.resultCommit')}:{' '}
                       {run.payload.result_commit ??
                         t('integrationPanel.notPrepared')}
                     </p>
@@ -543,25 +576,47 @@ export function IntegrationPanel({
                       : run.payload.publication_intent
                         ? t('integrationPanel.reconciling')
                         : t('integrationPanel.notPublished')}{' '}
-                    · Wiki:{' '}
-                    {run.payload.wiki_result ??
-                      t('integrationPanel.notScheduled')}
+                    · Wiki: {integrationWikiLabel(run.payload.wiki_result, t)}
                   </p>
+                  {(run.error ||
+                    run.payload.stop ||
+                    run.payload.wiki_result) && (
+                    <details>
+                      <summary>{t('integrationPanel.originalDetails')}</summary>
+                      <p>
+                        <code>{run.status}</code>
+                      </p>
+                      {run.error && (
+                        <pre className="whitespace-pre-wrap break-all">
+                          {run.error}
+                        </pre>
+                      )}
+                      {run.payload.stop && (
+                        <pre className="whitespace-pre-wrap break-all">
+                          {run.payload.stop.stage}
+                          {'\n'}
+                          {run.payload.stop.category}
+                          {'\n'}
+                          {run.payload.stop.next_action}
+                        </pre>
+                      )}
+                      {run.payload.wiki_result && (
+                        <pre className="whitespace-pre-wrap break-all">
+                          {run.payload.wiki_result}
+                        </pre>
+                      )}
+                    </details>
+                  )}
                   <ul>
                     {run.payload.sources.map((source) => (
                       <li key={source.selection.card_id}>
                         {source.title}: {source.commit.slice(0, 10)} ·{' '}
-                        {source.done_result ??
-                          t(
-                            !run.payload.published &&
-                              ['cancelled', 'blocked', 'failed'].includes(
-                                run.status
-                              )
-                              ? 'integrationPanel.doneNotApplied'
-                              : run.status === 'recovery_required'
-                                ? 'integrationPanel.doneReconciling'
-                                : 'integrationPanel.donePending'
-                          )}
+                        {integrationDoneLabel(
+                          run.status,
+                          run.payload.published,
+                          source.done_result,
+                          t
+                        )}
                       </li>
                     ))}
                   </ul>

@@ -1,3 +1,19 @@
+import { errorDiagnostic } from '@/shared/lib/errorDiagnostic';
+import type { TFunction } from 'i18next';
+import { useTranslation } from 'react-i18next';
+import {
+  agentSettingsSectionLabels,
+  agentSettingsSourceLabel,
+  agentSettingsExplanation,
+  agentSettingsDiffText,
+  agentSettingDescriptorText,
+  agentSettingOptionLabel,
+  agentSettingsErrorCode,
+  agentSettingsErrorMessages,
+  agentSettingsStateLabels,
+  type AgentSettingsUiError,
+  agentSettingValidationMessage,
+} from '@/shared/lib/agentSettingsTranslations';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ArrowClockwiseIcon,
@@ -42,8 +58,8 @@ import {
   PROVIDER_LABELS,
   settingKeyId,
   type AgentSettingsDraft,
+  type AgentSettingValidationError,
 } from '@/shared/lib/agentSettingsModel';
-import { formatAgentSettingOperationError } from '@/shared/lib/machineClient';
 import { cn } from '@/shared/lib/utils';
 import { AgentToolsSettingsSection } from './AgentToolsSettingsSection';
 import {
@@ -82,29 +98,33 @@ function executorForProvider(provider: AgentSettingsProvider): BaseCodingAgent {
   }
 }
 
-function displayJson(value: JsonValue | undefined): string {
-  if (value === undefined) return 'Inherited / not set';
+function displayJson(
+  t: TFunction<'settings'>,
+  value: JsonValue | undefined
+): string {
+  if (value === undefined) return t('agentConfiguration.ui.inherited');
   return JSON.stringify(value, null, 2);
 }
 
 function sourceLabel(
+  t: TFunction<'settings'>,
   snapshot: SettingsSnapshot,
   descriptor: SettingDescriptor,
   entry: AgentSettingsDraft[string] | undefined
 ): string {
-  if (entry?.action === 'set') return 'Modified';
-  if (entry?.action === 'unset') return 'Inherit';
+  if (entry?.action === 'set') return t('agentConfiguration.ui.modified');
+  if (entry?.action === 'unset') return t('agentConfiguration.ui.inherit');
   const setting = snapshot.effective_settings.find(
     (candidate) => settingKeyId(candidate) === settingKeyId(descriptor)
   );
-  return setting?.effective_source ?? 'Default';
+  return agentSettingsSourceLabel(t, setting?.effective_source);
 }
 
 function parseDraftChange(
   descriptor: SettingDescriptor,
   raw: string,
   value?: JsonValue
-): { value?: JsonValue; error?: string } {
+): { value?: JsonValue; error?: AgentSettingValidationError } {
   if (descriptor.control === 'select') {
     return parseSettingInput(descriptor, raw);
   }
@@ -132,6 +152,10 @@ function AgentConfigurationSettingsContent({
   executor: BaseCodingAgent;
   variant: string | null;
 }) {
+  const { t, i18n } = useTranslation('settings');
+  const sectionLabels = agentSettingsSectionLabels(t);
+  const errorMessages = agentSettingsErrorMessages(t);
+  const stateLabels = agentSettingsStateLabels(t);
   const machineClient = useSettingsMachineClient();
   const { canEdit } = useSettingsHost();
   const { setDirty: setContextDirty } = useSettingsDirty();
@@ -150,8 +174,20 @@ function AgentConfigurationSettingsContent({
   const [loading, setLoading] = useState(false);
   const [profilesLoading, setProfilesLoading] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
+  const [error, setError] = useState<AgentSettingsUiError | null>(null);
+  const [errorDetail, setErrorDetail] = useState<string | null>(null);
+  const noticeMessages = {
+    noChanges: t('agentConfiguration.ui.noChanges'),
+    applied: t('agentConfiguration.ui.applied'),
+    profileSaved: t('agentConfiguration.ui.profileSaved'),
+    duplicated: t('agentConfiguration.ui.duplicated'),
+    renamed: t('agentConfiguration.ui.renamed'),
+    deleted: t('agentConfiguration.ui.deleted'),
+    copied: t('agentConfiguration.ui.copied'),
+  };
+  const [notice, setNotice] = useState<keyof typeof noticeMessages | null>(
+    null
+  );
   const [diff, setDiff] = useState<SettingsDiff | null>(null);
   const [pending, setPending] = useState<PendingAction | null>(null);
   const [copyPreview, setCopyPreview] = useState<ProfileCopyPreview | null>(
@@ -182,6 +218,7 @@ function AgentConfigurationSettingsContent({
       const sequence = ++requestSequence.current;
       setLoading(true);
       setError(null);
+      setErrorDetail(null);
       try {
         const inventory = await machineClient.discoverAgentSettings({
           provider,
@@ -200,11 +237,12 @@ function AgentConfigurationSettingsContent({
         setPending(null);
         setRawFile(null);
         if (inventory.errors.length > 0 && !next) {
-          setError(inventory.errors.map((item) => item.message).join(' '));
+          setError('discovery');
         }
       } catch (nextError) {
         if (sequence === requestSequence.current) {
-          setError(formatAgentSettingOperationError(nextError));
+          setErrorDetail(errorDiagnostic(nextError));
+          setError(agentSettingsErrorCode(nextError));
           setLoadFailed(true);
         }
       } finally {
@@ -220,7 +258,8 @@ function AgentConfigurationSettingsContent({
     try {
       setProfiles(await machineClient.listAgentSettingsProfiles({ provider }));
     } catch (nextError) {
-      setError(formatAgentSettingOperationError(nextError));
+      setErrorDetail(errorDiagnostic(nextError));
+      setError(agentSettingsErrorCode(nextError));
     } finally {
       setProfilesLoading(false);
     }
@@ -301,22 +340,24 @@ function AgentConfigurationSettingsContent({
   const previewSettings = async () => {
     if (!machineClient || !patch || !snapshot || writeBlocked) return;
     if (hasDraftErrors(draft)) {
-      setError('Fix the invalid setting values before previewing the diff.');
+      setError('invalidValues');
       return;
     }
     if (patch.operations.length === 0) {
-      setNotice('No setting changes to apply.');
+      setNotice('noChanges');
       return;
     }
     setBusy(true);
     setError(null);
+    setErrorDetail(null);
     setNotice(null);
     try {
       const nextDiff = await machineClient.diffAgentSettings(patch);
       setDiff(nextDiff);
       setPending({ kind: 'settings', patch });
     } catch (nextError) {
-      setError(formatAgentSettingOperationError(nextError));
+      setErrorDetail(errorDiagnostic(nextError));
+      setError(agentSettingsErrorCode(nextError));
     } finally {
       setBusy(false);
     }
@@ -326,6 +367,7 @@ function AgentConfigurationSettingsContent({
     if (!machineClient || !pending || writeBlocked) return;
     setBusy(true);
     setError(null);
+    setErrorDetail(null);
     try {
       let nextSnapshot: SettingsSnapshot;
       if (pending.kind === 'settings') {
@@ -346,11 +388,10 @@ function AgentConfigurationSettingsContent({
       }
       applySnapshot(nextSnapshot);
       await loadProfiles();
-      setNotice(
-        'Agent settings applied. Changes marked for a new session take effect on the next launch.'
-      );
+      setNotice('applied');
     } catch (nextError) {
-      setError(formatAgentSettingOperationError(nextError));
+      setErrorDetail(errorDiagnostic(nextError));
+      setError(agentSettingsErrorCode(nextError));
     } finally {
       setBusy(false);
     }
@@ -365,13 +406,14 @@ function AgentConfigurationSettingsContent({
     setPending(null);
     setNotice(null);
     setError(null);
+    setErrorDetail(null);
   };
 
   const updateDraft = (
     descriptor: SettingDescriptor,
     raw: string,
     value?: JsonValue,
-    parseError?: string
+    parseError?: AgentSettingValidationError
   ) => {
     const id = settingKeyId(descriptor);
     setDraft((previous) => ({
@@ -415,6 +457,7 @@ function AgentConfigurationSettingsContent({
     };
     setBusy(true);
     setError(null);
+    setErrorDetail(null);
     try {
       const nextDiff = await machineClient.diffAgentSettingsNativeFile({
         patch: nextPatch,
@@ -423,7 +466,8 @@ function AgentConfigurationSettingsContent({
       setDiff(nextDiff);
       setPending({ kind: 'native', patch: nextPatch });
     } catch (nextError) {
-      setError(formatAgentSettingOperationError(nextError));
+      setErrorDetail(errorDiagnostic(nextError));
+      setError(agentSettingsErrorCode(nextError));
     } finally {
       setBusy(false);
     }
@@ -438,14 +482,10 @@ function AgentConfigurationSettingsContent({
       loadedProjectPath !== projectPath.trim()
     )
       return;
-    if (
-      !window.confirm(
-        'Read this native file? It may contain credentials and private configuration. Its full contents will be displayed for advanced editing.'
-      )
-    )
-      return;
+    if (!window.confirm(t('agentConfiguration.ui.readConfirm'))) return;
     setBusy(true);
     setError(null);
+    setErrorDetail(null);
     try {
       const read = await machineClient.readAgentSettingsNativeFile({
         provider,
@@ -461,8 +501,10 @@ function AgentConfigurationSettingsContent({
       setDiff(null);
       setPending(null);
     } catch (nextError) {
-      if (mounted.current)
-        setError(formatAgentSettingOperationError(nextError));
+      if (mounted.current) {
+        setErrorDetail(errorDiagnostic(nextError));
+        setError(agentSettingsErrorCode(nextError));
+      }
     } finally {
       if (mounted.current) setBusy(false);
     }
@@ -470,10 +512,11 @@ function AgentConfigurationSettingsContent({
 
   const saveProfile = async () => {
     if (!machineClient || !snapshot || writeBlocked) return;
-    const name = window.prompt('Profile name');
+    const name = window.prompt(t('agentConfiguration.ui.profileName'));
     if (!name?.trim()) return;
     setBusy(true);
     setError(null);
+    setErrorDetail(null);
     try {
       await machineClient.saveAgentSettingsProfile({
         type: 'capture',
@@ -492,11 +535,10 @@ function AgentConfigurationSettingsContent({
         },
       });
       await loadProfiles();
-      setNotice(
-        'Profile saved locally. It remains inactive until explicitly applied.'
-      );
+      setNotice('profileSaved');
     } catch (nextError) {
-      setError(formatAgentSettingOperationError(nextError));
+      setErrorDetail(errorDiagnostic(nextError));
+      setError(agentSettingsErrorCode(nextError));
     } finally {
       setBusy(false);
     }
@@ -504,7 +546,10 @@ function AgentConfigurationSettingsContent({
 
   const duplicateProfile = async (profile: ConfigProfile) => {
     if (!machineClient) return;
-    const name = window.prompt('New profile name', `${profile.name} copy`);
+    const name = window.prompt(
+      t('agentConfiguration.ui.newProfileName'),
+      t('agentConfiguration.ui.duplicateName', { name: profile.name })
+    );
     if (!name?.trim()) return;
     setBusy(true);
     try {
@@ -516,9 +561,10 @@ function AgentConfigurationSettingsContent({
         },
       });
       await loadProfiles();
-      setNotice('Profile duplicated.');
+      setNotice('duplicated');
     } catch (nextError) {
-      setError(formatAgentSettingOperationError(nextError));
+      setErrorDetail(errorDiagnostic(nextError));
+      setError(agentSettingsErrorCode(nextError));
     } finally {
       setBusy(false);
     }
@@ -526,7 +572,10 @@ function AgentConfigurationSettingsContent({
 
   const renameProfile = async (profile: ConfigProfile) => {
     if (!machineClient) return;
-    const name = window.prompt('Profile name', profile.name);
+    const name = window.prompt(
+      t('agentConfiguration.ui.profileName'),
+      profile.name
+    );
     if (!name?.trim() || name.trim() === profile.name) return;
     setBusy(true);
     try {
@@ -538,16 +587,22 @@ function AgentConfigurationSettingsContent({
         },
       });
       await loadProfiles();
-      setNotice('Profile renamed.');
+      setNotice('renamed');
     } catch (nextError) {
-      setError(formatAgentSettingOperationError(nextError));
+      setErrorDetail(errorDiagnostic(nextError));
+      setError(agentSettingsErrorCode(nextError));
     } finally {
       setBusy(false);
     }
   };
 
   const deleteProfile = async (profile: ConfigProfile) => {
-    if (!machineClient || !window.confirm(`Delete profile "${profile.name}"?`))
+    if (
+      !machineClient ||
+      !window.confirm(
+        t('agentConfiguration.ui.deleteConfirm', { name: profile.name })
+      )
+    )
       return;
     setBusy(true);
     try {
@@ -558,9 +613,10 @@ function AgentConfigurationSettingsContent({
         },
       });
       await loadProfiles();
-      setNotice('Profile deleted.');
+      setNotice('deleted');
     } catch (nextError) {
-      setError(formatAgentSettingOperationError(nextError));
+      setErrorDetail(errorDiagnostic(nextError));
+      setError(agentSettingsErrorCode(nextError));
     } finally {
       setBusy(false);
     }
@@ -579,13 +635,15 @@ function AgentConfigurationSettingsContent({
     };
     setBusy(true);
     setError(null);
+    setErrorDetail(null);
     try {
       const nextDiff =
         await machineClient.previewAgentSettingsProfileApply(request);
       setDiff(nextDiff);
       setPending({ kind: 'profile', preview: request });
     } catch (nextError) {
-      setError(formatAgentSettingOperationError(nextError));
+      setErrorDetail(errorDiagnostic(nextError));
+      setError(agentSettingsErrorCode(nextError));
     } finally {
       setBusy(false);
     }
@@ -594,7 +652,7 @@ function AgentConfigurationSettingsContent({
   const previewProfileCopy = async (profile: ConfigProfile) => {
     if (!machineClient) return;
     const target = window.prompt(
-      'Target provider (codex, claude_code)',
+      t('agentConfiguration.ui.targetProvider'),
       'codex'
     );
     if (
@@ -603,12 +661,13 @@ function AgentConfigurationSettingsContent({
     )
       return;
     const targetName = window.prompt(
-      'Copied profile name',
+      t('agentConfiguration.ui.copiedName'),
       `${profile.name} (${PROVIDER_LABELS[target as AgentSettingsProvider]})`
     );
     if (!targetName?.trim()) return;
     setBusy(true);
     setError(null);
+    setErrorDetail(null);
     try {
       const preview = await machineClient.previewAgentSettingsProfileCopy({
         source: { id: profile.id, expected_revision: profile.revision },
@@ -621,7 +680,8 @@ function AgentConfigurationSettingsContent({
       });
       setCopyPreview(preview);
     } catch (nextError) {
-      setError(formatAgentSettingOperationError(nextError));
+      setErrorDetail(errorDiagnostic(nextError));
+      setError(agentSettingsErrorCode(nextError));
     } finally {
       setBusy(false);
     }
@@ -637,11 +697,10 @@ function AgentConfigurationSettingsContent({
       });
       setCopyPreview(null);
       await loadProfiles();
-      setNotice(
-        'Copied profile saved. Provider-specific fields were not transferred.'
-      );
+      setNotice('copied');
     } catch (nextError) {
-      setError(formatAgentSettingOperationError(nextError));
+      setErrorDetail(errorDiagnostic(nextError));
+      setError(agentSettingsErrorCode(nextError));
     } finally {
       setBusy(false);
     }
@@ -649,12 +708,14 @@ function AgentConfigurationSettingsContent({
 
   const renderOverview = () => (
     <SettingsCard
-      title={`${PROVIDER_LABELS[provider]} settings`}
-      description="Native provider files remain authoritative. Discovery is read-only until you preview and confirm an Apply action."
+      title={t('agentConfiguration.ui.providerTitle', {
+        provider: PROVIDER_LABELS[provider],
+      })}
+      description={t('agentConfiguration.ui.nativeAuthority')}
       headerAction={
         <PrimaryButton
           variant="tertiary"
-          value="Refresh"
+          value={t('agentConfiguration.ui.refresh')}
           onClick={() => void loadSettings(projectPath.trim() || undefined)}
           disabled={loading || busy || !machineClient}
           actionIcon={loading ? 'spinner' : undefined}
@@ -663,22 +724,30 @@ function AgentConfigurationSettingsContent({
     >
       <div className="grid gap-3 md:grid-cols-3">
         <InfoTile
-          label="Installed"
-          value={snapshot?.installed ? 'Yes' : 'Not detected'}
+          label={t('agentConfiguration.ui.installed')}
+          value={
+            snapshot?.installed
+              ? t('agentConfiguration.ui.yes')
+              : t('agentConfiguration.ui.notDetected')
+          }
         />
         <InfoTile
-          label="Version"
-          value={snapshot?.provider_version ?? 'Unknown'}
+          label={t('agentConfiguration.ui.version')}
+          value={
+            snapshot?.provider_version ?? t('agentConfiguration.ui.unknown')
+          }
         />
         <InfoTile
-          label="Executable"
-          value={snapshot?.executable_path ?? 'Not found'}
+          label={t('agentConfiguration.ui.executable')}
+          value={
+            snapshot?.executable_path ?? t('agentConfiguration.ui.notFound')
+          }
           mono
         />
       </div>
       <SettingsField
-        label="Project path (optional)"
-        description="Provide an absolute project path to discover project-scoped native settings."
+        label={t('agentConfiguration.ui.projectPath')}
+        description={t('agentConfiguration.ui.projectHelp')}
       >
         <div className="flex gap-2">
           <SettingsInput
@@ -698,7 +767,7 @@ function AgentConfigurationSettingsContent({
           <button
             type="button"
             className="rounded-sm border border-border px-3 text-low hover:text-normal disabled:opacity-40"
-            aria-label="Discover project settings"
+            aria-label={t('agentConfiguration.ui.discoverProject')}
             disabled={busy || loading}
             onClick={() => void loadSettings(projectPath.trim() || undefined)}
           >
@@ -707,8 +776,8 @@ function AgentConfigurationSettingsContent({
         </div>
       </SettingsField>
       <SettingsField
-        label="Apply scope"
-        description="Typed changes and profile applications target this native scope."
+        label={t('agentConfiguration.ui.scope')}
+        description={t('agentConfiguration.ui.scopeHelp')}
       >
         <select
           value={scope}
@@ -720,24 +789,34 @@ function AgentConfigurationSettingsContent({
           disabled={busy}
           className="w-full rounded-sm border border-border bg-secondary px-base py-half text-sm text-high focus:outline-none focus:ring-1 focus:ring-brand"
         >
-          <option value={SettingScope.user}>User configuration</option>
+          <option value={SettingScope.user}>
+            {t('agentConfiguration.ui.userConfig')}
+          </option>
           <option
             value={SettingScope.project}
             disabled={!projectPath.trim() || !projectScopeSupported}
           >
-            Project configuration
+            {t('agentConfiguration.ui.projectConfig')}
           </option>
         </select>
       </SettingsField>
-      <div className="flex flex-wrap gap-2" aria-label="Settings capabilities">
+      <div
+        className="flex flex-wrap gap-2"
+        aria-label={t('agentConfiguration.ui.capabilities')}
+      >
         {snapshot &&
           Object.entries(snapshot.capabilities).map(([key, enabled]) => (
             <span
               key={key}
               className="rounded bg-secondary px-2 py-1 text-xs text-low"
             >
-              {key.replaceAll('_', ' ')}:{' '}
-              {enabled ? 'available' : 'unsupported'}
+              {stateLabels.capabilities[
+                key as keyof typeof stateLabels.capabilities
+              ] ?? key}
+              :{' '}
+              {enabled
+                ? t('agentConfiguration.ui.available')
+                : t('agentConfiguration.ui.unsupported')}
             </span>
           ))}
       </div>
@@ -747,8 +826,7 @@ function AgentConfigurationSettingsContent({
             className="mt-0.5 size-icon-sm shrink-0"
             aria-hidden="true"
           />
-          This provider is not installed on the selected machine. Settings are
-          shown only when the Adapter can discover them.
+          {t('agentConfiguration.ui.notInstalled')}
         </div>
       )}
       {snapshot?.limitations.map((limitation) => (
@@ -756,7 +834,7 @@ function AgentConfigurationSettingsContent({
           key={limitation}
           className="rounded-sm border border-border bg-secondary/20 p-3 text-xs text-low"
         >
-          {limitation}
+          {agentSettingsExplanation(t, limitation)}
         </div>
       ))}
       {snapshot?.errors.map((item) => (
@@ -765,7 +843,8 @@ function AgentConfigurationSettingsContent({
           className="rounded-sm border border-error/40 bg-error/10 p-3 text-sm text-error"
           role="alert"
         >
-          {item.message} {item.recovery}
+          {t('agentConfiguration.errors.nativeInvalid')} {item.message}{' '}
+          {item.recovery} {item.file_id} {item.setting_key}
         </div>
       ))}
     </SettingsCard>
@@ -774,14 +853,19 @@ function AgentConfigurationSettingsContent({
   const renderSettings = (descriptors: SettingDescriptor[]) => (
     <SettingsCard
       title={
-        sections.find((section) => section.id === activeSection)?.label ??
-        'Settings'
+        sectionLabels[activeSection as keyof typeof sectionLabels] ??
+        t('agentConfiguration.sections.settings')
       }
-      description="Fields are generated from the installed provider Adapter. Unsupported controls are omitted."
+      description={t('agentConfiguration.ui.fieldsHelp')}
     >
       <div className="space-y-5">
         {descriptors.map((descriptor) => {
           const id = settingKeyId(descriptor);
+          const descriptorText = agentSettingDescriptorText(
+            t,
+            provider,
+            descriptor
+          );
           const entry = draft[id] ?? { action: 'unchanged' as const, raw: '' };
           const resettable = descriptor.capabilities.resettable;
           const scopeSupported = descriptor.supported_scopes.includes(scope);
@@ -799,17 +883,17 @@ function AgentConfigurationSettingsContent({
           return (
             <SettingsField
               key={id}
-              label={descriptor.label}
-              description={descriptor.description}
-              error={entry.error}
+              label={descriptorText.label}
+              description={descriptorText.description}
+              error={agentSettingValidationMessage(t, entry.error)}
             >
               <div className="flex items-center justify-between gap-2">
                 <span className="text-xs text-low">
                   <span className="rounded bg-secondary px-1.5 py-0.5">
-                    {sourceLabel(snapshot!, descriptor, entry)}
+                    {sourceLabel(t, snapshot!, descriptor, entry)}
                   </span>
                   <span className="ml-2">
-                    {descriptor.activation.replaceAll('_', ' ')}
+                    {stateLabels.activation[descriptor.activation]}
                   </span>
                 </span>
                 {resettable && (
@@ -819,21 +903,24 @@ function AgentConfigurationSettingsContent({
                     disabled={disabled}
                     onClick={() => resetDraft(descriptor)}
                   >
-                    Restore inheritance
+                    {t('agentConfiguration.ui.restore')}
                   </button>
                 )}
               </div>
               {!scopeSupported && (
                 <div className="text-xs text-low">
-                  This setting is not available in the {scope} scope.
+                  {t('agentConfiguration.ui.unsupportedScope', {
+                    scope:
+                      scope === SettingScope.user
+                        ? t('agentConfiguration.ui.userConfig')
+                        : t('agentConfiguration.ui.projectConfig'),
+                  })}
                 </div>
               )}
               {snapshot?.withheld_setting_keys.includes(id) &&
                 entry.action === 'unchanged' && (
                   <p className="text-xs text-low">
-                    Value withheld. Leave unchanged to preserve it, enter a
-                    replacement, or explicitly restore inheritance to clear it.
-                    Use Native Files for a confirmed sensitive read.
+                    {t('agentConfiguration.ui.withheldHelp')}
                   </p>
                 )}
               {descriptor.control === 'toggle' ? (
@@ -843,30 +930,34 @@ function AgentConfigurationSettingsContent({
                       entry.action === 'unset' ? false : Boolean(entry.value)
                     }
                     disabled={disabled}
-                    aria-label={descriptor.label}
+                    aria-label={descriptorText.label}
                     onCheckedChange={(checked) =>
                       update(checked ? 'true' : 'false', checked)
                     }
                   />
                   <span className="text-sm text-normal">
-                    {entry.value ? 'Enabled' : 'Disabled'}
+                    {entry.value
+                      ? t('agentConfiguration.ui.enabled')
+                      : t('agentConfiguration.ui.disabled')}
                   </span>
                 </div>
               ) : descriptor.control === 'select' ? (
                 <select
                   value={selectValue}
                   disabled={disabled}
-                  aria-label={descriptor.label}
+                  aria-label={descriptorText.label}
                   onChange={(event) => update(event.target.value)}
                   className="w-full rounded-sm border border-border bg-secondary px-base py-half text-sm text-high focus:outline-none focus:ring-1 focus:ring-brand"
                 >
-                  <option value="">Follow native config</option>
+                  <option value="">
+                    {t('agentConfiguration.ui.followNative')}
+                  </option>
                   {descriptor.options.map((option) => (
                     <option
                       key={JSON.stringify(option.value)}
                       value={JSON.stringify(option.value)}
                     >
-                      {option.label}
+                      {agentSettingOptionLabel(t, provider, descriptor, option)}
                     </option>
                   ))}
                 </select>
@@ -917,8 +1008,8 @@ function AgentConfigurationSettingsContent({
 
   const renderNativeFiles = () => (
     <SettingsCard
-      title="Native Files"
-      description="Advanced editing is format-aware and requires a revision-protected diff confirmation."
+      title={t('agentConfiguration.ui.nativeFiles')}
+      description={t('agentConfiguration.ui.nativeHelp')}
     >
       <div className="space-y-3">
         {snapshot?.native_files.map((file) => (
@@ -938,7 +1029,9 @@ function AgentConfigurationSettingsContent({
                 {rawFile.path}
               </div>
               <div className="font-mono text-xs text-low">
-                Revision: {nativeFileRevision(rawFile)}
+                {t('agentConfiguration.ui.revision', {
+                  revision: nativeFileRevision(rawFile),
+                })}
               </div>
             </div>
             <button
@@ -946,7 +1039,7 @@ function AgentConfigurationSettingsContent({
               className="text-xs text-low underline hover:text-normal"
               onClick={() => setRawFile(null)}
             >
-              Close editor
+              {t('agentConfiguration.ui.closeEditor')}
             </button>
           </div>
           <SettingsTextarea
@@ -959,12 +1052,12 @@ function AgentConfigurationSettingsContent({
           <div className="flex justify-end gap-2">
             <PrimaryButton
               variant="tertiary"
-              value="Discard"
+              value={t('agentConfiguration.ui.discard')}
               onClick={() => setRawContent(rawOriginal)}
               disabled={busy || rawContent === rawOriginal}
             />
             <PrimaryButton
-              value="Preview diff"
+              value={t('agentConfiguration.ui.previewDiff')}
               onClick={() => void previewNativeFile()}
               disabled={busy || rawContent === rawOriginal}
               actionIcon={busy ? 'spinner' : undefined}
@@ -977,17 +1070,23 @@ function AgentConfigurationSettingsContent({
 
   const renderEffective = () => (
     <SettingsCard
-      title="Effective Config"
-      description="The Adapter resolves precedence and reports observed sources. The UI does not recompute provider precedence."
+      title={t('agentConfiguration.ui.effectiveConfig')}
+      description={t('agentConfiguration.ui.effectiveHelp')}
     >
       <div className="overflow-x-auto rounded-sm border border-border">
         <table className="w-full text-left text-xs">
           <thead className="bg-secondary/50 text-low">
             <tr>
-              <th className="px-3 py-2">Setting</th>
-              <th className="px-3 py-2">Effective</th>
-              <th className="px-3 py-2">Source</th>
-              <th className="px-3 py-2">Observed sources</th>
+              <th className="px-3 py-2">
+                {t('agentConfiguration.ui.setting')}
+              </th>
+              <th className="px-3 py-2">
+                {t('agentConfiguration.ui.effective')}
+              </th>
+              <th className="px-3 py-2">{t('agentConfiguration.ui.source')}</th>
+              <th className="px-3 py-2">
+                {t('agentConfiguration.ui.observedSources')}
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -1003,18 +1102,21 @@ function AgentConfigurationSettingsContent({
                   {snapshot?.withheld_setting_keys.includes(
                     settingKeyId(setting)
                   )
-                    ? 'Withheld — preserved unless explicitly changed'
-                    : displayJson(setting.effective_value)}
+                    ? t('agentConfiguration.ui.withheld')
+                    : displayJson(t, setting.effective_value)}
                 </td>
                 <td className="px-3 py-2 text-low">
-                  {setting.effective_source ?? 'Default'}
+                  {agentSettingsSourceLabel(t, setting.effective_source)}
                 </td>
                 <td className="px-3 py-2 text-low">
                   {setting.sources.length
                     ? setting.sources
-                        .map((source) => `${source.source} (${source.scope})`)
+                        .map(
+                          (source) =>
+                            `${agentSettingsSourceLabel(t, source.source)} (${source.scope === SettingScope.user ? t('agentConfiguration.ui.userConfig') : t('agentConfiguration.ui.projectConfig')})`
+                        )
                         .join(', ')
-                    : 'None observed'}
+                    : t('agentConfiguration.ui.noneObserved')}
                 </td>
               </tr>
             ))}
@@ -1024,7 +1126,9 @@ function AgentConfigurationSettingsContent({
       {snapshot?.unknown_native_nodes.length ? (
         <details className="rounded-sm border border-border bg-secondary/20 p-3">
           <summary className="cursor-pointer text-sm text-normal">
-            Unknown native nodes ({snapshot.unknown_native_nodes.length})
+            {t('agentConfiguration.ui.unknownNodes', {
+              count: snapshot.unknown_native_nodes.length,
+            })}
           </summary>
           <div className="mt-3 space-y-2">
             {snapshot.unknown_native_nodes.map((node) => (
@@ -1043,11 +1147,11 @@ function AgentConfigurationSettingsContent({
 
   const renderProfiles = () => (
     <SettingsCard
-      title="Configuration Profiles"
-      description="Profiles are versioned local definitions. Applying one is explicit and previews its native diff first."
+      title={t('agentConfiguration.ui.profiles')}
+      description={t('agentConfiguration.ui.profilesHelp')}
       headerAction={
         <PrimaryButton
-          value="Save current"
+          value={t('agentConfiguration.ui.saveCurrent')}
           onClick={() => void saveProfile()}
           disabled={busy || !snapshot?.capabilities.profile_storage}
           actionIcon={busy ? 'spinner' : undefined}
@@ -1057,35 +1161,36 @@ function AgentConfigurationSettingsContent({
       {copyPreview && (
         <div className="space-y-2 rounded-sm border border-border bg-secondary/20 p-3">
           <div className="text-sm font-medium text-high">
-            Copy preview →{' '}
-            {PROVIDER_LABELS[copyPreview.request.target_provider]}
+            {t('agentConfiguration.ui.copyPreview', {
+              provider: PROVIDER_LABELS[copyPreview.request.target_provider],
+            })}
           </div>
           <div className="text-xs text-low">
-            Compatible:{' '}
+            {t('agentConfiguration.ui.compatible')}{' '}
             {copyPreview.compatible_keys.length
               ? copyPreview.compatible_keys.join(', ')
-              : 'None'}
+              : t('agentConfiguration.ui.none')}
           </div>
           <div className="text-xs text-low">
-            Skipped:{' '}
+            {t('agentConfiguration.ui.skipped')}{' '}
             {copyPreview.skipped_keys.length
               ? copyPreview.skipped_keys.join(', ')
-              : 'None'}
+              : t('agentConfiguration.ui.none')}
           </div>
           {copyPreview.warnings.map((warning) => (
             <div key={warning} className="text-xs text-error">
-              {warning}
+              {agentSettingsExplanation(t, warning)}
             </div>
           ))}
           <div className="flex justify-end gap-2">
             <PrimaryButton
               variant="tertiary"
-              value="Cancel"
+              value={t('common:buttons.cancel')}
               onClick={() => setCopyPreview(null)}
               disabled={busy}
             />
             <PrimaryButton
-              value="Save copied profile"
+              value={t('agentConfiguration.ui.saveCopied')}
               onClick={() => void saveCopiedProfile()}
               disabled={busy}
               actionIcon={busy ? 'spinner' : undefined}
@@ -1099,12 +1204,12 @@ function AgentConfigurationSettingsContent({
           role="status"
           aria-live="polite"
         >
-          <SpinnerIcon className="size-icon-xs animate-spin" /> Loading
-          profiles…
+          <SpinnerIcon className="size-icon-xs animate-spin" />
+          {t('agentConfiguration.ui.loadingProfiles')}
         </div>
       ) : profiles.length === 0 ? (
         <div className="rounded-sm border border-dashed border-border p-4 text-sm text-low">
-          No saved profiles for this provider yet.
+          {t('agentConfiguration.ui.noProfiles')}
         </div>
       ) : (
         <div className="space-y-2">
@@ -1118,37 +1223,41 @@ function AgentConfigurationSettingsContent({
                   {profile.name}
                 </div>
                 <div className="text-xs text-low">
-                  {profile.setting_keys.length} managed settings · updated{' '}
-                  {new Date(profile.updated_at).toLocaleString()}
+                  {t('agentConfiguration.ui.profileUpdated', {
+                    count: profile.setting_keys.length,
+                    date: new Date(profile.updated_at).toLocaleString(
+                      i18n.resolvedLanguage || i18n.language
+                    ),
+                  })}
                 </div>
               </div>
               <div className="flex flex-wrap gap-1">
                 <ToolAction
-                  label="Apply"
+                  label={t('agentConfiguration.ui.apply')}
                   icon={CheckCircleIcon}
                   disabled={busy || !snapshot}
                   onClick={() => void previewProfileApply(profile)}
                 />
                 <ToolAction
-                  label="Copy"
+                  label={t('agentConfiguration.ui.copy')}
                   icon={CopyIcon}
                   disabled={busy}
                   onClick={() => void previewProfileCopy(profile)}
                 />
                 <ToolAction
-                  label="Duplicate"
+                  label={t('agentConfiguration.ui.duplicate')}
                   icon={PlusIcon}
                   disabled={busy}
                   onClick={() => void duplicateProfile(profile)}
                 />
                 <ToolAction
-                  label="Rename"
+                  label={t('agentConfiguration.ui.rename')}
                   icon={PencilSimpleIcon}
                   disabled={busy}
                   onClick={() => void renameProfile(profile)}
                 />
                 <ToolAction
-                  label="Delete"
+                  label={t('agentConfiguration.ui.delete')}
                   icon={TrashIcon}
                   danger
                   disabled={busy}
@@ -1165,7 +1274,7 @@ function AgentConfigurationSettingsContent({
   if (!machineClient)
     return (
       <div className="py-4 text-sm text-low">
-        Select a machine to discover Agent settings.
+        {t('agentConfiguration.ui.selectMachine')}
       </div>
     );
   if (loading && !snapshot)
@@ -1175,8 +1284,10 @@ function AgentConfigurationSettingsContent({
         role="status"
         aria-live="polite"
       >
-        <SpinnerIcon className="size-icon-sm animate-spin" /> Discovering{' '}
-        {PROVIDER_LABELS[provider]} settings…
+        <SpinnerIcon className="size-icon-sm animate-spin" />
+        {t('agentConfiguration.ui.discovering', {
+          provider: PROVIDER_LABELS[provider],
+        })}
       </div>
     );
 
@@ -1189,7 +1300,7 @@ function AgentConfigurationSettingsContent({
       <div className="flex items-center gap-2">
         <CodeIcon className="size-icon-sm text-brand" aria-hidden="true" />
         <h3 className="text-base font-medium text-high">
-          Installed Agent settings
+          {t('agentConfiguration.ui.panelTitle')}
         </h3>
       </div>
       {error && (
@@ -1198,7 +1309,7 @@ function AgentConfigurationSettingsContent({
           role="alert"
         >
           <WarningCircleIcon className="mt-0.5 size-icon-sm shrink-0" />
-          {error}
+          {errorMessages[error]} {errorDetail}
         </div>
       )}
       {notice && (
@@ -1207,21 +1318,21 @@ function AgentConfigurationSettingsContent({
           role="status"
         >
           <CheckCircleIcon className="mt-0.5 size-icon-sm shrink-0" />
-          {notice}
+          {noticeMessages[notice]}
         </div>
       )}
       {snapshot && writeBlocked && (
         <p role="status" className="text-sm text-warning">
           {loadedProjectPath !== projectPath.trim()
-            ? 'Discover the selected project before applying changes. The displayed snapshot belongs to the previously loaded scope.'
-            : 'Showing cached settings. Changes are disabled until this Host and scope can be verified.'}
+            ? t('agentConfiguration.ui.discoverFirst')
+            : t('agentConfiguration.ui.cached')}
         </p>
       )}
       {!snapshot ? (
         <div className="rounded-sm border border-border p-4 text-sm text-low">
-          No settings snapshot available.
+          {t('agentConfiguration.ui.noSnapshot')}
           <PrimaryButton
-            value="Retry discovery"
+            value={t('agentConfiguration.ui.retry')}
             onClick={() => void loadSettings(projectPath.trim() || undefined)}
             disabled={busy || loading || !machineClient}
           />
@@ -1231,7 +1342,7 @@ function AgentConfigurationSettingsContent({
           <div
             className="flex flex-wrap gap-1 border-b border-border"
             role="tablist"
-            aria-label="Agent settings sections"
+            aria-label={t('agentConfiguration.ui.sectionsLabel')}
           >
             {sections.map((section) => (
               <button
@@ -1247,7 +1358,7 @@ function AgentConfigurationSettingsContent({
                     : 'border-transparent text-low hover:text-normal'
                 )}
               >
-                {section.label}
+                {sectionLabels[section.id]}
               </button>
             ))}
           </div>
@@ -1316,6 +1427,8 @@ function NativeFileRow({
   selected: boolean;
   onEdit: () => void;
 }) {
+  const { t } = useTranslation('settings');
+  const stateLabels = agentSettingsStateLabels(t);
   return (
     <div className="flex items-center justify-between gap-3 rounded-sm border border-border bg-secondary/20 px-3 py-2">
       <div className="min-w-0">
@@ -1323,13 +1436,25 @@ function NativeFileRow({
           {file.path}
         </div>
         <div className="text-xs text-low">
-          {file.format} · {file.parse_status} ·{' '}
-          {file.exists ? `revision ${nativeFileRevision(file)}` : 'missing'}
+          {file.format} · {stateLabels.parse[file.parse_status]} ·{' '}
+          {file.exists
+            ? t('agentConfiguration.ui.revision', {
+                revision: nativeFileRevision(file),
+              })
+            : t('agentConfiguration.ui.missing')}
         </div>
-        {file.error && <div className="text-xs text-error">{file.error}</div>}
+        {file.error && (
+          <div className="text-xs text-error">
+            {t('agentConfiguration.errors.nativeInvalid')} {file.error}
+          </div>
+        )}
       </div>
       <ToolAction
-        label={selected ? 'Editing' : 'Edit raw'}
+        label={
+          selected
+            ? t('agentConfiguration.ui.editing')
+            : t('agentConfiguration.ui.editRaw')
+        }
         icon={PencilSimpleIcon}
         disabled={!file.raw_editable || !file.exists || selected}
         onClick={onEdit}
@@ -1351,19 +1476,20 @@ function DiffConfirmation({
   onCancel: () => void;
   onConfirm: () => void;
 }) {
+  const { t } = useTranslation('settings');
   return (
     <div
       className="space-y-3 rounded-sm border border-brand/40 bg-brand/5 p-3"
       role="dialog"
-      aria-label="Settings diff confirmation"
+      aria-label={t('agentConfiguration.ui.diffConfirm')}
     >
       <div className="flex items-center gap-2 text-sm font-medium text-high">
-        <FloppyDiskIcon className="size-icon-sm text-brand" /> Review changes
-        before applying
+        <FloppyDiskIcon className="size-icon-sm text-brand" />
+        {t('agentConfiguration.ui.reviewChanges')}
       </div>
       {diff.warnings.map((warning) => (
         <div key={warning} className="text-xs text-error">
-          {warning}
+          {agentSettingsExplanation(t, warning)}
         </div>
       ))}
       {diff.files
@@ -1379,29 +1505,39 @@ function DiffConfirmation({
             </summary>
             <div className="grid gap-2 border-t border-border p-3 md:grid-cols-2">
               <pre className="max-h-64 overflow-auto rounded bg-secondary p-2 text-xs text-low">
-                {file.before || '(missing)'}
+                {agentSettingsDiffText(
+                  t,
+                  file.before,
+                  pending?.kind === 'native'
+                )}
               </pre>
               <pre className="max-h-64 overflow-auto rounded bg-secondary p-2 text-xs text-normal">
-                {file.after || '(missing)'}
+                {agentSettingsDiffText(
+                  t,
+                  file.after,
+                  pending?.kind === 'native'
+                )}
               </pre>
             </div>
           </details>
         ))}
       {!hasChangedFiles(diff) && (
-        <div className="text-sm text-low">No file bytes would change.</div>
+        <div className="text-sm text-low">
+          {t('agentConfiguration.ui.noBytes')}
+        </div>
       )}
       <div className="flex justify-end gap-2">
         <PrimaryButton
           variant="tertiary"
-          value="Cancel"
+          value={t('common:buttons.cancel')}
           onClick={onCancel}
           disabled={busy}
         />
         <PrimaryButton
           value={
             pending?.kind === 'profile'
-              ? 'Confirm profile apply'
-              : 'Confirm apply'
+              ? t('agentConfiguration.ui.confirmProfile')
+              : t('agentConfiguration.ui.confirmApply')
           }
           onClick={onConfirm}
           disabled={busy || !hasChangedFiles(diff)}
@@ -1431,7 +1567,7 @@ function ToolAction({
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        'inline-flex items-center gap-1 rounded-sm px-2 py-1 text-xs',
+        'inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-sm px-2 py-1 text-xs',
         danger
           ? 'text-error hover:bg-error/10'
           : 'text-low hover:bg-secondary hover:text-normal',

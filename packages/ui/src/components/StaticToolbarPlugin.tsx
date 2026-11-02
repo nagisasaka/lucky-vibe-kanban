@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { type ReactNode } from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { FORMAT_TEXT_COMMAND, UNDO_COMMAND } from 'lexical';
@@ -70,6 +71,7 @@ export function StaticToolbarPlugin({
   readOnly,
 }: StaticToolbarPluginProps) {
   const [editor] = useLexicalComposerContext();
+  const { t } = useTranslation('common');
 
   /** Dispatch a command, switching to edit mode first if needed */
   const dispatch = (fn: () => void) => {
@@ -93,7 +95,7 @@ export function StaticToolbarPlugin({
           dispatch(() => editor.dispatchCommand(UNDO_COMMAND, undefined))
         }
         icon={ArrowCounterClockwise}
-        label="Undo"
+        label={t('editorToolbar.undo')}
       />
 
       {/* Separator */}
@@ -105,14 +107,14 @@ export function StaticToolbarPlugin({
           dispatch(() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'bold'))
         }
         icon={TextB}
-        label="Bold"
+        label={t('editorToolbar.bold')}
       />
       <ToolbarButton
         onClick={() =>
           dispatch(() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'italic'))
         }
         icon={TextItalic}
-        label="Italic"
+        label={t('editorToolbar.italic')}
       />
       <ToolbarButton
         onClick={() =>
@@ -121,14 +123,14 @@ export function StaticToolbarPlugin({
           )
         }
         icon={TextStrikethrough}
-        label="Strikethrough"
+        label={t('editorToolbar.strikethrough')}
       />
       <ToolbarButton
         onClick={() =>
           dispatch(() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'code'))
         }
         icon={Code}
-        label="Inline Code"
+        label={t('editorToolbar.inlineCode')}
       />
 
       {/* Separator */}
@@ -142,7 +144,7 @@ export function StaticToolbarPlugin({
           )
         }
         icon={ListBullets}
-        label="Bullet List"
+        label={t('editorToolbar.bulletList')}
       />
       <ToolbarButton
         onClick={() =>
@@ -151,7 +153,7 @@ export function StaticToolbarPlugin({
           )
         }
         icon={ListNumbers}
-        label="Numbered List"
+        label={t('editorToolbar.numberedList')}
       />
 
       {extraActions && (

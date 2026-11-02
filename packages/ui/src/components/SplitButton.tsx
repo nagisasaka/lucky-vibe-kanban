@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import * as DropdownMenuPrimitive from '@radix-ui/react-dropdown-menu';
 import { CaretDownIcon, CheckIcon, type Icon } from '@phosphor-icons/react';
 import { cn } from '../lib/cn';
@@ -28,6 +29,7 @@ export function SplitButton<T extends string>({
   onAction,
   className,
 }: SplitButtonProps<T>) {
+  const { t } = useTranslation('common');
   const selectedOption = options.find((opt) => opt.value === selectedValue);
   const label = selectedOption?.label ?? '';
 
@@ -51,6 +53,7 @@ export function SplitButton<T extends string>({
         {/* Dropdown trigger */}
         <DropdownMenu>
           <DropdownMenuPrimitive.Trigger
+            aria-label={t('buttons.chooseAction')}
             className={cn(
               'flex items-center justify-center bg-panel px-base py-half',
               'focus:outline-none focus-visible:ring-1 focus-visible:ring-brand focus-visible:ring-inset',

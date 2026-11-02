@@ -1,7 +1,7 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from "@playwright/test";
 
 async function readGraph(page: Page) {
-  const text = await page.getByTestId('graph-json').textContent();
+  const text = await page.getByTestId("graph-json").textContent();
   expect(text).toBeTruthy();
   return JSON.parse(text!) as {
     nodes: Array<{
@@ -22,7 +22,7 @@ async function readGraph(page: Page) {
 }
 
 function workflowNodeLocator(page: Page, nodeId: string) {
-  return page.locator('.react-flow__node').filter({
+  return page.locator(".react-flow__node").filter({
     has: page.getByTestId(`workflow-node-${nodeId}`),
   });
 }
@@ -31,10 +31,10 @@ async function waitForWorkflowNodeVisible(page: Page, nodeId: string) {
   const node = workflowNodeLocator(page, nodeId);
   await expect
     .poll(async () => {
-      if ((await node.count()) === 0) return 'missing';
+      if ((await node.count()) === 0) return "missing";
       return node.evaluate((element) => getComputedStyle(element).visibility);
     })
-    .toBe('visible');
+    .toBe("visible");
   return node;
 }
 
@@ -48,11 +48,11 @@ async function clickWorkflowNode(page: Page, nodeId: string) {
       clientX: rect.left + rect.width / 2,
       clientY: rect.top + rect.height / 2,
     };
-    element.dispatchEvent(new PointerEvent('pointerdown', eventInit));
-    element.dispatchEvent(new MouseEvent('mousedown', eventInit));
-    element.dispatchEvent(new PointerEvent('pointerup', eventInit));
-    element.dispatchEvent(new MouseEvent('mouseup', eventInit));
-    element.dispatchEvent(new MouseEvent('click', eventInit));
+    element.dispatchEvent(new PointerEvent("pointerdown", eventInit));
+    element.dispatchEvent(new MouseEvent("mousedown", eventInit));
+    element.dispatchEvent(new PointerEvent("pointerup", eventInit));
+    element.dispatchEvent(new MouseEvent("mouseup", eventInit));
+    element.dispatchEvent(new MouseEvent("click", eventInit));
   });
 }
 
@@ -85,43 +85,43 @@ async function dragHandleToHandle({
 
   await page.mouse.move(
     sourceBox!.x + sourceBox!.width / 2,
-    sourceBox!.y + sourceBox!.height / 2
+    sourceBox!.y + sourceBox!.height / 2,
   );
   await page.mouse.down();
   await page.mouse.move(
     targetBox!.x + targetBox!.width / 2,
     targetBox!.y + targetBox!.height / 2,
-    { steps: 16 }
+    { steps: 16 },
   );
   await page.mouse.up();
 }
 
 async function getWorkflowNodeTransform(page: Page, nodeId: string) {
   return waitForWorkflowNodeVisible(page, nodeId).then((node) =>
-    node.evaluate((element) => getComputedStyle(element).transform)
+    node.evaluate((element) => getComputedStyle(element).transform),
   );
 }
 
-test('shows the default workflow attempt skeleton without overlapping nodes', async ({
+test("shows the default workflow attempt skeleton without overlapping nodes", async ({
   page,
 }) => {
-  await page.goto('/?mode=default-graph');
+  await page.goto("/?mode=default-graph");
 
-  await expect(page.getByTestId('workflow-node-start')).toBeVisible();
-  await expect(page.getByTestId('workflow-node-familiarize')).toContainText(
-    'Understand project'
+  await expect(page.getByTestId("workflow-node-start")).toBeVisible();
+  await expect(page.getByTestId("workflow-node-familiarize")).toContainText(
+    "Understand project",
   );
-  await expect(page.getByTestId('workflow-node-end')).toBeVisible();
+  await expect(page.getByTestId("workflow-node-end")).toBeVisible();
 
   const graph = await readGraph(page);
   expect(graph.nodes.map((node) => node.id)).toEqual([
-    'start',
-    'familiarize',
-    'end',
+    "start",
+    "familiarize",
+    "end",
   ]);
   expect(graph.edges.map((edge) => edge.id)).toEqual([
-    'start-familiarize',
-    'familiarize-end',
+    "start-familiarize",
+    "familiarize-end",
   ]);
 
   const positions = graph.nodes.map((node) => node.position);
@@ -132,14 +132,14 @@ test('shows the default workflow attempt skeleton without overlapping nodes', as
   expect(positions[2]!.x - positions[1]!.x).toBeGreaterThan(200);
 });
 
-test('adds an unconnected agent step from the toolbar', async ({ page }) => {
-  await page.goto('/');
+test("adds an unconnected agent step from the toolbar", async ({ page }) => {
+  await page.goto("/");
 
   const before = await readGraph(page);
-  await clickWorkflowNode(page, 'condition');
-  await page.getByRole('button', { name: 'Add Agent Step' }).click();
+  await clickWorkflowNode(page, "condition");
+  await page.getByRole("button", { name: "Add Agent Step" }).click();
 
-  await expect(page.getByTestId('agent-step-edit-dialog')).toBeVisible();
+  await expect(page.getByTestId("agent-step-edit-dialog")).toBeVisible();
   await expect
     .poll(async () => {
       const graph = await readGraph(page);
@@ -148,25 +148,25 @@ test('adds an unconnected agent step from the toolbar', async ({ page }) => {
     .toBe(before.nodes.length + 1);
 
   const graph = await readGraph(page);
-  const addedNode = graph.nodes.find((node) => node.id.startsWith('agent-'));
+  const addedNode = graph.nodes.find((node) => node.id.startsWith("agent-"));
   expect(addedNode?.position).toBeTruthy();
   expect(addedNode!.position!.x).toBeGreaterThan(400);
   expect(
     graph.edges.some(
-      (edge) => edge.source === 'condition' && edge.target === addedNode?.id
-    )
+      (edge) => edge.source === "condition" && edge.target === addedNode?.id,
+    ),
   ).toBe(false);
   expect(graph.edges.length).toBe(before.edges.length);
 });
 
-test('a selected stage never covers the contained agent or its edit action', async ({
+test("a selected stage never covers the contained agent or its edit action", async ({
   page,
 }) => {
-  await page.goto('/?mode=default-graph');
+  await page.goto("/?mode=default-graph");
   // Include the actual Canvas stacking rules; the lightweight fixture normally
   // supplies only layout utilities, not the application stylesheet.
   await page.addStyleTag({
-    path: 'packages/web-core/src/app/styles/new/index.css',
+    path: "packages/web-core/src/app/styles/new/index.css",
   });
   const stage = page.locator('.react-flow__node[data-id="stage-understand"]');
   await expect(stage).toBeVisible();
@@ -174,29 +174,29 @@ test('a selected stage never covers the contained agent or its edit action', asy
   // a selected decorative group's overlay and hide this regression.
   await stage.click({ position: { x: 12, y: 12 } });
   await expect(stage).toHaveClass(/selected/);
-  const node = await waitForWorkflowNodeVisible(page, 'familiarize');
+  const node = await waitForWorkflowNodeVisible(page, "familiarize");
   await node.click({ position: { x: 100, y: 40 }, timeout: 5000 });
-  await expect(page.getByTestId('agent-step-edit-dialog')).toBeVisible();
-  await page.getByRole('button', { name: 'Save step', exact: true }).click();
-  await node.getByRole('button', { name: 'Edit', exact: true }).click({
+  await expect(page.getByTestId("agent-step-edit-dialog")).toBeVisible();
+  await page.getByRole("button", { name: "Save step", exact: true }).click();
+  await node.getByRole("button", { name: "Edit", exact: true }).click({
     timeout: 5000,
   });
-  await expect(page.getByTestId('agent-step-edit-dialog')).toBeVisible();
+  await expect(page.getByTestId("agent-step-edit-dialog")).toBeVisible();
 });
 
-test('moves an existing workflow node by dragging it on the canvas', async ({
+test("moves an existing workflow node by dragging it on the canvas", async ({
   page,
 }) => {
   const pageErrors: string[] = [];
-  page.on('pageerror', (error) => pageErrors.push(error.message));
+  page.on("pageerror", (error) => pageErrors.push(error.message));
 
-  await page.goto('/');
+  await page.goto("/");
 
   const before = await readGraph(page);
-  const beforeCondition = before.nodes.find((node) => node.id === 'condition');
+  const beforeCondition = before.nodes.find((node) => node.id === "condition");
   expect(beforeCondition?.position).toBeTruthy();
 
-  const node = await waitForWorkflowNodeVisible(page, 'condition');
+  const node = await waitForWorkflowNodeVisible(page, "condition");
   const box = await node.boundingBox();
   expect(box).toBeTruthy();
 
@@ -210,7 +210,7 @@ test('moves an existing workflow node by dragging it on the canvas', async ({
   await expect
     .poll(async () => {
       const graph = await readGraph(page);
-      const moved = graph.nodes.find((node) => node.id === 'condition');
+      const moved = graph.nodes.find((node) => node.id === "condition");
       return {
         x: Math.round(moved?.position?.x ?? 0),
         y: Math.round(moved?.position?.y ?? 0),
@@ -224,18 +224,18 @@ test('moves an existing workflow node by dragging it on the canvas', async ({
   expect(pageErrors).toEqual([]);
 });
 
-test('connects workflow nodes from non-default handle directions', async ({
+test("connects workflow nodes from non-default handle directions", async ({
   page,
 }) => {
-  await page.goto('/');
+  await page.goto("/");
 
   const before = await readGraph(page);
   await dragHandleToHandle({
     page,
-    sourceNodeId: 'yes',
-    sourceSelector: '.react-flow__handle-bottom',
-    targetNodeId: 'no',
-    targetSelector: '.react-flow__handle-top',
+    sourceNodeId: "yes",
+    sourceSelector: ".react-flow__handle-bottom",
+    targetNodeId: "no",
+    targetSelector: ".react-flow__handle-top",
   });
 
   await expect
@@ -246,19 +246,19 @@ test('connects workflow nodes from non-default handle directions', async ({
     .toBe(before.edges.length + 1);
 
   const graph = await readGraph(page);
-  const edge = graph.edges.find((candidate) => candidate.id === 'yes-no');
+  const edge = graph.edges.find((candidate) => candidate.id === "yes-no");
   expect(edge).toMatchObject({
-    source: 'yes',
-    source_handle: 'port-bottom',
-    target: 'no',
-    target_handle: 'port-top',
+    source: "yes",
+    source_handle: "port-bottom",
+    target: "no",
+    target_handle: "port-top",
   });
 });
 
-test('loads legacy workflow graphs and assigns default handles', async ({
+test("loads legacy workflow graphs and assigns default handles", async ({
   page,
 }) => {
-  await page.goto('/?legacy=1');
+  await page.goto("/?legacy=1");
 
   await expect
     .poll(async () => {
@@ -266,18 +266,18 @@ test('loads legacy workflow graphs and assigns default handles', async ({
       return graph.edges[0];
     })
     .toMatchObject({
-      source_handle: 'port-right',
-      target_handle: 'port-left',
+      source_handle: "port-right",
+      target_handle: "port-left",
     });
 });
 
-test('uses a stable preview path while stretching a new connection', async ({
+test("uses a stable preview path while stretching a new connection", async ({
   page,
 }) => {
-  await page.goto('/');
+  await page.goto("/");
 
-  const yesNode = await waitForWorkflowNodeVisible(page, 'yes');
-  const sourceHandle = yesNode.locator('.react-flow__handle-right');
+  const yesNode = await waitForWorkflowNodeVisible(page, "yes");
+  const sourceHandle = yesNode.locator(".react-flow__handle-right");
   const sourceBox = await sourceHandle.boundingBox();
   expect(sourceBox).toBeTruthy();
 
@@ -288,27 +288,27 @@ test('uses a stable preview path while stretching a new connection', async ({
   await page.mouse.move(startX + 160, startY + 90, { steps: 8 });
 
   const connectionPath = await page
-    .locator('.react-flow__connection-path')
-    .getAttribute('d');
+    .locator(".react-flow__connection-path")
+    .getAttribute("d");
   expect(connectionPath).toBeTruthy();
-  expect(connectionPath).toContain('M');
-  expect(connectionPath).not.toContain('NaN');
+  expect(connectionPath).toContain("M");
+  expect(connectionPath).not.toContain("NaN");
 
   await page.mouse.up();
 });
 
-test('reconnects an existing workflow edge by dragging an endpoint', async ({
+test("reconnects an existing workflow edge by dragging an endpoint", async ({
   page,
 }) => {
-  await page.goto('/');
-  await waitForWorkflowNodeVisible(page, 'condition');
-  await waitForWorkflowNodeVisible(page, 'no');
+  await page.goto("/");
+  await waitForWorkflowNodeVisible(page, "condition");
+  await waitForWorkflowNodeVisible(page, "no");
 
   const edgeTargetUpdater = page
-    .getByTestId('rf__edge-condition-yes')
-    .locator('.react-flow__edgeupdater-target');
-  const noTargetHandle = workflowNodeLocator(page, 'no').locator(
-    '.react-flow__handle-left'
+    .getByTestId("rf__edge-condition-yes")
+    .locator(".react-flow__edgeupdater-target");
+  const noTargetHandle = workflowNodeLocator(page, "no").locator(
+    ".react-flow__handle-left",
   );
 
   const updaterBox = await edgeTargetUpdater.boundingBox();
@@ -318,99 +318,99 @@ test('reconnects an existing workflow edge by dragging an endpoint', async ({
 
   await page.mouse.move(
     updaterBox!.x + updaterBox!.width / 2,
-    updaterBox!.y + updaterBox!.height / 2
+    updaterBox!.y + updaterBox!.height / 2,
   );
   await page.mouse.down();
   await page.mouse.move(
     targetBox!.x + targetBox!.width / 2,
     targetBox!.y + targetBox!.height / 2,
-    { steps: 16 }
+    { steps: 16 },
   );
   await page.mouse.up();
 
   await expect
     .poll(async () => {
       const graph = await readGraph(page);
-      return graph.edges.find((edge) => edge.id === 'condition-yes')?.target;
+      return graph.edges.find((edge) => edge.id === "condition-yes")?.target;
     })
-    .toBe('no');
+    .toBe("no");
 
   const graph = await readGraph(page);
-  expect(graph.edges.find((edge) => edge.id === 'condition-yes')).toMatchObject(
+  expect(graph.edges.find((edge) => edge.id === "condition-yes")).toMatchObject(
     {
-      source: 'condition',
-      source_handle: 'port-right',
-      target: 'no',
-      target_handle: 'port-left',
-    }
+      source: "condition",
+      source_handle: "port-right",
+      target: "no",
+      target_handle: "port-left",
+    },
   );
 });
 
-test('opens a draft agent session panel on double-click and ignores start/end', async ({
+test("opens a draft agent session panel on double-click and ignores start/end", async ({
   page,
 }) => {
-  await page.goto('/');
+  await page.goto("/");
 
-  await doubleClickWorkflowNode(page, 'start');
-  await expect(page.getByTestId('workflow-node-session-panel')).toHaveCount(0);
+  await doubleClickWorkflowNode(page, "start");
+  await expect(page.getByTestId("workflow-node-session-panel")).toHaveCount(0);
 
-  await doubleClickWorkflowNode(page, 'end');
-  await expect(page.getByTestId('workflow-node-session-panel')).toHaveCount(0);
+  await doubleClickWorkflowNode(page, "end");
+  await expect(page.getByTestId("workflow-node-session-panel")).toHaveCount(0);
 
-  await doubleClickWorkflowNode(page, 'yes');
-  await expect(page.getByTestId('workflow-node-session-panel')).toBeVisible();
-  await expect(page.getByTestId('workflow-node-session-panel')).toContainText(
-    'Yes path'
+  await doubleClickWorkflowNode(page, "yes");
+  await expect(page.getByTestId("workflow-node-session-panel")).toBeVisible();
+  await expect(page.getByTestId("workflow-node-session-panel")).toContainText(
+    "Yes path",
   );
-  await expect(page.getByTestId('workflow-node-session-id')).toContainText(
-    'session-yes'
+  await expect(page.getByTestId("workflow-node-session-id")).toContainText(
+    "session-yes",
   );
-  await expect(page.getByLabel('Message')).toBeVisible();
+  await expect(page.getByLabel("Message")).toBeVisible();
 });
 
-test('opens agent node toolbar and edits title and default prompt', async ({
+test("opens agent node toolbar and edits title and default prompt", async ({
   page,
 }) => {
-  await page.goto('/');
+  await page.goto("/");
 
-  await clickWorkflowNode(page, 'yes');
-  const yesNode = await waitForWorkflowNodeVisible(page, 'yes');
+  await clickWorkflowNode(page, "yes");
+  const yesNode = await waitForWorkflowNodeVisible(page, "yes");
   await expect(
-    yesNode.getByRole('button', { name: 'Open session' })
+    yesNode.getByRole("button", { name: "Open session" }),
   ).toBeVisible();
   await expect(
-    yesNode.getByRole('button', {
-      name: 'Single-step run is not available yet.',
-    })
+    yesNode.getByRole("button", {
+      name: "Single-step run is not available yet.",
+    }),
   ).toBeDisabled();
 
-  await yesNode.getByRole('button', { name: 'Edit' }).click();
-  const dialog = page.getByTestId('agent-step-edit-dialog');
+  await yesNode.getByRole("button", { name: "Edit" }).click();
+  const dialog = page.getByTestId("agent-step-edit-dialog");
   await expect(dialog).toBeVisible();
-  await dialog.getByLabel('Step title').fill('Review code');
-  await dialog.getByLabel('Default prompt').fill('Review implementation');
-  await dialog.getByRole('button', { name: 'Save step' }).click();
+  await dialog.getByLabel("Step title").fill("Review code");
+  await dialog.getByLabel("Default prompt").fill("Review implementation");
+  await dialog.getByRole("button", { name: "Save step" }).click();
 
   await expect
     .poll(async () => {
       const graph = await readGraph(page);
-      return graph.nodes.find((node) => node.id === 'yes')?.data;
+      return graph.nodes.find((node) => node.id === "yes")?.data;
     })
     .toMatchObject({
-      display_name: 'Review code',
-      prompt_template: 'Review implementation',
+      display_name: "Review code",
+      prompt_template: "Review implementation",
     });
 });
 
-test('duplicates agent configuration without copying session identity', async ({
+test("duplicates agent configuration without copying session identity", async ({
   page,
 }) => {
-  await page.goto('/');
+  await page.goto("/");
 
   const before = await readGraph(page);
-  await clickWorkflowNode(page, 'yes');
-  const yesNode = await waitForWorkflowNodeVisible(page, 'yes');
-  await yesNode.getByRole('button', { name: 'Duplicate' }).click();
+  await clickWorkflowNode(page, "yes");
+  const yesNode = await waitForWorkflowNodeVisible(page, "yes");
+  await yesNode.getByRole("button", { name: "Duplicate" }).click();
 
   await expect
     .poll(async () => {
@@ -421,110 +421,110 @@ test('duplicates agent configuration without copying session identity', async ({
 
   const graph = await readGraph(page);
   const duplicate = graph.nodes.find(
-    (node) => node.id.startsWith('agent-') && node.data?.display_name
+    (node) => node.id.startsWith("agent-") && node.data?.display_name,
   );
   expect(duplicate?.data).toMatchObject({
-    role_template_id: 'reviewer',
-    prompt_template: 'Review {{input}} and {{upstream}}',
+    role_template_id: "reviewer",
+    prompt_template: "Review {{input}} and {{upstream}}",
   });
   expect(duplicate?.data?.session_id).toBeUndefined();
 });
 
-test('renders polished workflow chrome and quiet idle edges', async ({
+test("renders polished workflow chrome and quiet idle edges", async ({
   page,
 }) => {
-  await page.goto('/');
+  await page.goto("/");
 
-  const conditionNode = page.getByTestId('workflow-node-condition');
+  const conditionNode = page.getByTestId("workflow-node-condition");
   await expect(conditionNode).toBeVisible();
-  await expect(page.getByTestId('workflow-node-kind-condition')).toHaveText(
-    'Condition'
+  await expect(page.getByTestId("workflow-node-kind-condition")).toHaveText(
+    "Condition",
   );
-  await expect(page.getByTestId('workflow-node-summary-condition')).toHaveText(
-    '2 branches'
+  await expect(page.getByTestId("workflow-node-summary-condition")).toHaveText(
+    "2 branches",
   );
-  await expect(conditionNode.locator('.react-flow__handle')).toHaveCount(4);
-  await expect(page.getByTestId('workflow-node-session-yes')).toHaveText(
-    'Session ready'
+  await expect(conditionNode.locator(".react-flow__handle")).toHaveCount(4);
+  await expect(page.getByTestId("workflow-node-session-yes")).toHaveText(
+    "Session ready",
   );
-  await expect(page.getByTestId('workflow-node-session-no')).toHaveText(
-    'Draft session'
+  await expect(page.getByTestId("workflow-node-session-no")).toHaveText(
+    "Draft session",
   );
 
-  await expect(page.locator('.react-flow__minimap')).toHaveCount(0);
-  await expect(page.locator('.workflow-edge-beam-running')).toHaveCount(0);
+  await expect(page.locator(".react-flow__minimap")).toHaveCount(0);
+  await expect(page.locator(".workflow-edge-beam-running")).toHaveCount(0);
 });
 
-test('does not expose old edge midpoint insert or quick add search paths', async ({
+test("does not expose old edge midpoint insert or quick add search paths", async ({
   page,
 }) => {
-  await page.goto('/');
+  await page.goto("/");
 
   await expect(
-    page.getByTestId('workflow-edge-insert-start-condition')
+    page.getByTestId("workflow-edge-insert-start-condition"),
   ).toHaveCount(0);
-  await page.keyboard.press('ControlOrMeta+K');
+  await page.keyboard.press("ControlOrMeta+K");
   await expect(
-    page.getByRole('dialog', { name: 'Add workflow step' })
+    page.getByRole("dialog", { name: "Add workflow step" }),
   ).toHaveCount(0);
 });
 
-test('presents the workflow entry as canvas-first for both actions', async ({
+test("presents the workflow entry as canvas-first for both actions", async ({
   page,
 }) => {
-  await page.goto('/?mode=entry');
+  await page.goto("/?mode=entry");
 
-  const openCanvasButtons = page.getByRole('button', {
-    name: 'Open workflow attempt',
+  const openCanvasButtons = page.getByRole("button", {
+    name: "Open workflow attempt",
   });
   await expect(openCanvasButtons).toHaveCount(2);
 
   await openCanvasButtons.first().click();
-  await expect(page.getByTestId('workflow-entry-action')).toHaveText(
-    'open-canvas'
+  await expect(page.getByTestId("workflow-entry-action")).toHaveText(
+    "open-canvas",
   );
 
   await openCanvasButtons.nth(1).click();
-  await expect(page.getByTestId('workflow-entry-action')).toHaveText(
-    'open-canvas'
+  await expect(page.getByTestId("workflow-entry-action")).toHaveText(
+    "open-canvas",
   );
 });
 
-test('shows workflow attempts in the issue task attempt list without direct run action', async ({
+test("shows workflow attempts in the issue task attempt list without direct run action", async ({
   page,
 }) => {
-  await page.goto('/?mode=task-attempts');
+  await page.goto("/?mode=task-attempts");
 
-  await expect(page.getByText('Task Attempts')).toBeVisible();
+  await expect(page.getByText("Task Attempts")).toBeVisible();
   await expect(
-    page.getByTestId('task-attempt-workflow-attempt-1')
-  ).toContainText('Workflow attempt for Familiarize code');
+    page.getByTestId("task-attempt-workflow-attempt-1"),
+  ).toContainText("Workflow attempt for Familiarize code");
   await expect(
-    page.getByRole('button', { name: 'Run workflow attempt' })
+    page.getByRole("button", { name: "Run workflow attempt" }),
   ).toHaveCount(0);
 
   await page
-    .getByTestId('task-attempt-workflow-attempt-1')
-    .getByRole('button', { name: /Open workflow/i })
+    .getByTestId("task-attempt-workflow-attempt-1")
+    .getByRole("button", { name: /Open workflow/i })
     .click();
-  await expect(page.getByTestId('task-attempt-action')).toHaveText(
-    'open:workflow'
+  await expect(page.getByTestId("task-attempt-action")).toHaveText(
+    "open:workflow",
   );
 });
 
-test('allows read-only nodes to move visually without persisting the graph', async ({
+test("allows read-only nodes to move visually without persisting the graph", async ({
   page,
 }) => {
-  await page.goto('/?readonly=1');
+  await page.goto("/?readonly=1");
 
   const beforeGraph = await readGraph(page);
   const beforeCondition = beforeGraph.nodes.find(
-    (node) => node.id === 'condition'
+    (node) => node.id === "condition",
   );
   expect(beforeCondition?.position).toBeTruthy();
 
-  const beforeTransform = await getWorkflowNodeTransform(page, 'condition');
-  const node = await waitForWorkflowNodeVisible(page, 'condition');
+  const beforeTransform = await getWorkflowNodeTransform(page, "condition");
+  const node = await waitForWorkflowNodeVisible(page, "condition");
   const box = await node.boundingBox();
   expect(box).toBeTruthy();
 
@@ -536,39 +536,49 @@ test('allows read-only nodes to move visually without persisting the graph', asy
   await page.mouse.up();
 
   await expect
-    .poll(() => getWorkflowNodeTransform(page, 'condition'))
+    .poll(() => getWorkflowNodeTransform(page, "condition"))
     .not.toBe(beforeTransform);
 
   const afterGraph = await readGraph(page);
   const afterCondition = afterGraph.nodes.find(
-    (node) => node.id === 'condition'
+    (node) => node.id === "condition",
   );
   expect(afterCondition?.position).toEqual(beforeCondition?.position);
 });
 
-test('edits condition branch conditions from the node inspector', async ({
+test("edits condition branch conditions from the node inspector", async ({
   page,
 }) => {
-  await page.goto('/');
+  await page.goto("/");
 
-  await page.getByTestId('select-condition-node').click();
+  await page.getByTestId("select-condition-node").click();
 
   const branchCondition = page
-    .getByTestId('node-inspector')
-    .locator('textarea')
+    .getByTestId("node-inspector")
+    .locator("textarea")
     .first();
-  await expect(branchCondition).toHaveValue('Input asks to ship');
-  await branchCondition.fill('Upstream result needs implementation');
+  await expect(branchCondition).toHaveValue("Input asks to ship");
+  await branchCondition.fill("Upstream result needs implementation");
+  const beforeLocale = await readGraph(page);
+  await page.evaluate(() => (window as any).__setUiLanguage("ja"));
+  await expect(
+    page.getByTestId("node-inspector").getByText("分岐モード", { exact: true }),
+  ).toBeVisible();
+  await expect(branchCondition).toHaveValue(
+    "Upstream result needs implementation",
+  );
+  await page.evaluate(() => (window as any).__setUiLanguage("en"));
+  expect(await readGraph(page)).toEqual(beforeLocale);
 
   await expect
     .poll(async () => {
       const graph = await readGraph(page);
-      const condition = graph.nodes.find((node) => node.id === 'condition');
+      const condition = graph.nodes.find((node) => node.id === "condition");
       const branches = condition?.data?.branches as
         | Array<{ condition?: string; target_node_id?: string }>
         | undefined;
-      return branches?.find((branch) => branch.target_node_id === 'yes')
+      return branches?.find((branch) => branch.target_node_id === "yes")
         ?.condition;
     })
-    .toBe('Upstream result needs implementation');
+    .toBe("Upstream result needs implementation");
 });

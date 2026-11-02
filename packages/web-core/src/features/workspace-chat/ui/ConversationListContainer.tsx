@@ -1021,19 +1021,13 @@ const ScopedConversationList = forwardRef<
                 <ChatEmptyState
                   title={
                     attempt.usage === 'execution_only'
-                      ? 'No saved messages in this session.'
-                      : t('conversation.emptyTitle', {
-                          defaultValue:
-                            'Send a message to start the conversation.',
-                        })
+                      ? t('conversation.inspectionEmptyTitle')
+                      : t('conversation.emptyTitle')
                   }
                   description={
                     attempt.usage === 'execution_only'
-                      ? 'This execution is inspected here; its owner controls agent activity.'
-                      : t('conversation.emptyDescription', {
-                          defaultValue:
-                            'Your workspace conversation will appear here once a new turn starts.',
-                        })
+                      ? t('conversation.inspectionEmptyDescription')
+                      : t('conversation.emptyDescription')
                   }
                 />
               </div>

@@ -10,7 +10,7 @@ export const Pages: Record<StaticPageId, CommandBarPage> = {
     items: [
       {
         type: 'group',
-        label: 'Actions',
+        label: (t) => t('tasks:commandPages.actions'),
         items: [
           { type: 'action', action: Actions.NewWorkspace },
           { type: 'action', action: Actions.CreateWorkspaceFromPR },
@@ -26,7 +26,7 @@ export const Pages: Record<StaticPageId, CommandBarPage> = {
       },
       {
         type: 'group',
-        label: 'View',
+        label: (t) => t('tasks:commandPages.view'),
         items: [
           { type: 'childPages', id: 'viewOptions' },
           { type: 'childPages', id: 'diffOptions' },
@@ -34,7 +34,7 @@ export const Pages: Record<StaticPageId, CommandBarPage> = {
       },
       {
         type: 'group',
-        label: 'General',
+        label: (t) => t('tasks:commandPages.general'),
         items: [
           { type: 'action', action: Actions.WorkspacesGuide },
           { type: 'action', action: Actions.ProjectsGuide },
@@ -48,13 +48,13 @@ export const Pages: Record<StaticPageId, CommandBarPage> = {
   // Workspace actions page - shown when clicking three-dots on a workspace
   workspaceActions: {
     id: 'workspace-actions',
-    title: 'Workspace Actions',
+    title: (t) => t('tasks:commandPages.workspaceActions'),
     parent: 'root',
     isVisible: (ctx) => ctx.hasWorkspace,
     items: [
       {
         type: 'group',
-        label: 'Workspace',
+        label: (t) => t('tasks:commandPages.workspace'),
         items: [
           { type: 'action', action: Actions.StartReview },
           { type: 'action', action: Actions.RenameWorkspace },
@@ -67,7 +67,7 @@ export const Pages: Record<StaticPageId, CommandBarPage> = {
       },
       {
         type: 'group',
-        label: 'Scripts',
+        label: (t) => t('tasks:commandPages.scripts'),
         items: [
           { type: 'action', action: Actions.RunSetupScript },
           { type: 'action', action: Actions.RunCleanupScript },
@@ -80,14 +80,14 @@ export const Pages: Record<StaticPageId, CommandBarPage> = {
   // Diff options page - shown when changes panel is visible
   diffOptions: {
     id: 'diff-options',
-    title: 'Diff Options',
+    title: (t) => t('tasks:commandPages.diffOptions'),
     parent: 'root',
     isVisible: (ctx) =>
       ctx.rightMainPanelMode === RIGHT_MAIN_PANEL_MODES.CHANGES,
     items: [
       {
         type: 'group',
-        label: 'Display',
+        label: (t) => t('tasks:commandPages.display'),
         items: [
           { type: 'action', action: Actions.ToggleDiffViewMode },
           { type: 'action', action: Actions.ToggleWrapLines },
@@ -101,13 +101,13 @@ export const Pages: Record<StaticPageId, CommandBarPage> = {
   // View options page - layout panel controls
   viewOptions: {
     id: 'view-options',
-    title: 'View Options',
+    title: (t) => t('tasks:commandPages.viewOptions'),
     parent: 'root',
     isVisible: (ctx) => ctx.layoutMode === 'workspaces',
     items: [
       {
         type: 'group',
-        label: 'Panels',
+        label: (t) => t('tasks:commandPages.panels'),
         items: [
           { type: 'action', action: Actions.ToggleLeftSidebar },
           { type: 'action', action: Actions.ToggleLeftMainPanel },
@@ -123,13 +123,13 @@ export const Pages: Record<StaticPageId, CommandBarPage> = {
   // Repository actions page - shown when clicking "..." on a repo card or via CMD+K
   repoActions: {
     id: 'repo-actions',
-    title: 'Repository Actions',
+    title: (t) => t('tasks:commandPages.repoActions'),
     parent: 'root',
     isVisible: (ctx) => ctx.hasWorkspace && ctx.hasGitRepos,
     items: [
       {
         type: 'group',
-        label: 'Actions',
+        label: (t) => t('tasks:commandPages.actions'),
         items: [
           { type: 'action', action: Actions.RepoCopyPath },
           { type: 'action', action: Actions.RepoOpenInIDE },
@@ -148,13 +148,13 @@ export const Pages: Record<StaticPageId, CommandBarPage> = {
   // Issue actions page - shown in kanban mode
   issueActions: {
     id: 'issue-actions',
-    title: 'Issue Actions',
+    title: (t) => t('tasks:commandPages.issueActions'),
     parent: 'root',
     isVisible: (ctx) => ctx.layoutMode === 'kanban',
     items: [
       {
         type: 'group',
-        label: 'Actions',
+        label: (t) => t('tasks:commandPages.actions'),
         items: [
           { type: 'action', action: Actions.CreateIssue },
           { type: 'action', action: Actions.ChangeIssueStatus },

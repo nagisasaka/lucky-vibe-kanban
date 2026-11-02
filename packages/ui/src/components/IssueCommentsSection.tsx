@@ -1,3 +1,4 @@
+import { formatRelativeTime } from "../lib/dateFormatting";
 import type { Ref, ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import type { LocalAttachmentMetadata } from "./WorkspaceContext";
@@ -53,19 +54,7 @@ export interface ReactionGroup {
   userNames: string[];
 }
 
-function formatRelativeTime(dateString: string): string {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffMinutes = Math.floor(diffMs / (1000 * 60));
-  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-  if (diffDays > 0) return `${diffDays}d`;
-  if (diffHours > 0) return `${diffHours}h`;
-  if (diffMinutes > 0) return `${diffMinutes}m`;
-  return "now";
-}
 
 interface DropzoneProps {
   getRootProps: () => Record<string, unknown>;
@@ -282,8 +271,11 @@ function CommentItem({
   onReply,
   renderEditor,
 }: CommentItemProps) {
-  const { t } = useTranslation("common");
-  const timeAgo = formatRelativeTime(comment.createdAt);
+  const { t, i18n } = useTranslation("common");
+  const timeAgo = formatRelativeTime(
+    comment.createdAt,
+    i18n.resolvedLanguage || i18n.language,
+  );
 
   return (
     <div className="flex flex-col gap-base">

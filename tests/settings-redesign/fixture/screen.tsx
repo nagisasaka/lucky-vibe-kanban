@@ -1,7 +1,9 @@
+import { ModelSelectorFixture } from "./model-selector";
+import { SchemaFormFixture } from "./schema-form";
 import { useState } from "react";
 import { createRoot } from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { HotkeysProvider } from "../../../packages/web-core/node_modules/react-hotkeys-hook";
+import { HotkeysProvider } from "react-hotkeys-hook";
 import { Provider } from "@ebay/nice-modal-react";
 import i18n from "@/i18n/config";
 import { AppRuntimeProvider } from "@/shared/hooks/useAppRuntime";
@@ -14,6 +16,9 @@ import "@/app/styles/new/index.css";
 
 const params = new URLSearchParams(location.search);
 void i18n.changeLanguage(params.get("lang") ?? "ja");
+Object.defineProperty(window, "__setUiLanguage", {
+  value: (language: string) => i18n.changeLanguage(language),
+});
 if (params.get("theme") === "dark")
   document.documentElement.classList.add("dark");
 function Screen() {
@@ -25,6 +30,8 @@ function Screen() {
         undefined) as SettingsSectionType,
     });
   };
+  if (params.get("view") === "model-selector") return <ModelSelectorFixture />;
+  if (params.get("view") === "schema-form") return <SchemaFormFixture />;
   return (
     <div className="p-double text-normal bg-primary min-h-screen">
       <h1 className="text-lg text-high">
