@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:76991ed725bd83e1456f858634b05068420848bd1a85293a546a48e2431fbc9c",
+  "pageVersion": "sha256:e292ed9062312fd28a9d96be37536ad4a73f2ff52fb3baa256fceb3756407115",
   "claims": [
     {
       "id": "claim_1640e4eaeac94676a84eb3b9d9970d30",
@@ -1034,7 +1034,7 @@
         },
         {
           "resource": "repo://skills/lvk-orchestration/SKILL.md",
-          "version": "repo-file-v1:sha256:dd0ec4008c11354d253235d14d9a8d28e5c4838b8450be4d904e2f1621548ca9"
+          "version": "repo-file-v1:sha256:7770b39a370c8757b1bb9063d25ad50c8d2f977abd57fb61f508fa4e7c8317d3"
         }
       ]
     },
@@ -1057,10 +1057,20 @@
           "version": "repo-lines-v1:sha256:93c571d3c5c6692e8428ee353dc90865342754584620c46bc7d4f9f8483e00da:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhmZjY1ZTA0ODExYjVkYzJmMmY4ZDE5NDE4ZGQ0YTIwNjZjZDY2YTU5NDM1NjdkYjc2MWUwMDVkMTYwNmVjOGQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhhMDA5MWM1YzQxN2NhNDA2NTQ2NzgxYmZiMWQ4ZGIwN2ZjMDNhOWUzMTEwNTY5YWEzMDQzYjgwMmRjNTVlYzIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjUwNmFhYmRmNThjMThjZTAwZDI3YjNmZmJlODBjMWExM2ViNWMxNDEwZGMwOGRmNDY0Nzk0MDNkMmIzYzZiNzYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
         }
       ]
+    },
+    {
+      "id": "claim_8fdd14f4ac6045059d9b05f48399cd3f",
+      "statement": "共通orchestration Skillは、ビルドを適切なLVK管理Workspaceの担当coding agentへ委譲し、上位AIによる直接ビルドを禁止する常時適用原則を持つ。",
+      "evidence": [
+        {
+          "resource": "repo://skills/lvk-orchestration/SKILL.md#L10-L17",
+          "version": "repo-lines-v1:sha256:38ae77762e531fd5d49d9c4f73d616dc2b4cb9345eca0e2ba9e8a85c16a3d73c:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNjJmNjE3OGU2ZjU2YmJjMDE4MGFlMWM0ZjZiOTlmMjM2YzM4YjdhODg2Yjc4OGY4NDBiYjAzYTllYzk5Mzc0MCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYmY2NzQ3MjhjZjg0ZTZlOWE2ODZmMzI3NTUyNTk4YjNiYjNiMWI2MzA5OGM1NzEyYzdjYTM0NjY4MzNlMjBkNyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOTU1YTM1MTdhZDI5OGVhNjdjZTAyNTNiM2Y3OTc3Njk2NDNlMTVlNWZjMzRmZTg0ZDg4MDY2MGVjOTYyMmJkMCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNWEzMThjOTdhYjYyMTE5YTkwOWExOTIxNjA3ZDhkNDgxODFhNjA5NmY1MjM3MjBmY2ZkYmNhNzE4NmQ4ZTQxZiJ9"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-02T14:37:55.273Z"
+    "at": "2026-11-02T15:35:02.470Z"
   }
 }

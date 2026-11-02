@@ -168,10 +168,10 @@ sources:
     resource: repo://tests/workflow/playwright.config.ts
   - id: openwiki-source-1d08facbf90704cd4c4c54d8
     resource: repo://tests/workflow/specs/card-context.spec.ts
-generated: { by: "codex", at: "2026-11-02T14:37:55.273Z" }
+generated: { by: "codex", at: "2026-11-02T15:35:02.470Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-02T14:37:55.273Z
+    at: 2026-11-02T15:35:02.470Z
 ---
 
 # 開発・検証・運用文書の使い分け
@@ -539,6 +539,8 @@ settings-redesignの恒久i18n browserは、言語保存とBrowser通知hint、J
 ## 共通orchestration Skillの正本と配布
 
 共通正本は `skills/lvk-orchestration/`。薄いルートが思想・共通原則と読み込み条件を持ち、実行、調査、自動マージと移管・片付け、記録、プレビュー、LVK開発、利用指針の7資料を必要な場面だけ読む。既存の操作用 `lvk-work` と担当実行用auto-merge Skillは別責務として保つ。[ルート](../../skills/lvk-orchestration/SKILL.md)・[配置と変更理由](../../docs/development/orchestration-skill-distribution.md)。
+
+ビルドは適切なLVK管理Workspaceの担当coding agentへ委譲し、上位AIは直接実行しない。これはルートSkillの常時適用原則である。[ビルドの担当境界](../../skills/lvk-orchestration/SKILL.md#L10-L17)。追加候補 `a373c5b61732d673eac4eba22c7367bd9625308b` はこの1bulletとOpenAI両manifest・Claude manifestの版 `1.0.43` のみを変更し、プラグイン登録成功を意味しない。[OpenAI版](../../plugins/lvk-orchestration/openai/plugin.json)・[Codex版](../../plugins/lvk-orchestration/openai/.codex-plugin/plugin.json)・[Claude版](../../plugins/lvk-orchestration/claude/.claude-plugin/plugin.json)。
 
 `scripts/package-orchestration.py` は指定Git commitからOpenAI/Claudeの共通Skillと全参照資料を生成し、配布元SHA・一覧・ZIPハッシュをreceiptへ保存する。作業木の未commit内容を配布元にしない。Claudeの `--claude-without-connection` はmanifest・共通Skill・配布元記録のallowlistだけを含め、既存コネクターを上書きしない。接続付き方式は明示HTTPS URLで `.mcp.json` を追加する。[生成入口](../../scripts/package-orchestration.py)。
 

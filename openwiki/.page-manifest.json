@@ -170,11 +170,11 @@
       "completedRunId": "f2a0588a-a56a-44ff-a7c1-df5d532bdf03"
     },
     "/openwiki/operations/development.md": {
-      "pageVersion": "sha256:76991ed725bd83e1456f858634b05068420848bd1a85293a546a48e2431fbc9c",
+      "pageVersion": "sha256:e292ed9062312fd28a9d96be37536ad4a73f2ff52fb3baa256fceb3756407115",
       "completedBy": "codex",
-      "completedRunId": "9b327cd8-4f75-4e8a-8547-eea91ea59b8d",
-      "gitHead": "a1f87c7c93e8818aa84d4213788c1429b723ecd7",
-      "sourceFingerprint": "sha256:4a80afb4509f04a5ae6bdb5ed6f384427d7d2311d4d367ce3169219029735435"
+      "completedRunId": "89ccec3e-ff63-4625-86be-9535904032de",
+      "gitHead": "a373c5b61732d673eac4eba22c7367bd9625308b",
+      "sourceFingerprint": "sha256:e4cb2f66e897a7f450a5c15d2b1bc9fdffede69283d75859ea7a5f48d334aef5"
     },
     "/openwiki/operations/openwiki-maintenance.md": {
       "gitHead": "1957d8edfa98ebe512ea4a960a38a59e936507fc",
