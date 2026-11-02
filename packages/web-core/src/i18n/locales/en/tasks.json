@@ -869,7 +869,16 @@
     "cancel": "Cancel",
     "prompt": "Would you like to approve this?",
     "missingExecution": "The execution context for this request is missing. Reopen the session before responding.",
-    "responseUnconfirmed": "Your response could not be confirmed. Check the request and current session before retrying."
+    "responseUnconfirmed": "Your response could not be confirmed. Check the request and current session before retrying.",
+    "detailsTitle": "Execution approval details",
+    "singleRequest": "Pending: allow this requested operation once. This grants no session or permanent permission and does not approve publication or prove execution success.",
+    "unavailable": "Unavailable",
+    "arguments": "Actual arguments",
+    "argumentsUnavailable": "Arguments unavailable; this does not mean no arguments.",
+    "noArguments": "No arguments ({})",
+    "redactionNotice": "Credential fields are redacted. Assess the operation and its arguments before deciding; its effects are not inferred from the tool name.",
+    "originalExpiry": "Valid only while the original provider request is pending. Cancellation, timeout or a changed bound call invalidates this permission.",
+    "invokeOperation": "Invoke {{operation}} once with the following arguments."
   },
   "repoCard": {
     "openPullRequest": "Open pull request",

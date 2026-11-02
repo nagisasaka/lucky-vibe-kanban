@@ -1,9 +1,18 @@
 import { getSessionRunStatusLabel } from '@vibe/ui/lib/sessionRuntimeLabels';
+import { ExecutionApprovalDetails } from '@vibe/ui/components/ExecutionApprovalDetails';
+import { UserContext } from '@/shared/hooks/useUserContext';
 import { FollowUpQueue } from './FollowUpQueue';
 import { useTranslation } from 'react-i18next';
 import { AsyncAgentQuestions } from '@/features/agent-runtime/ui/AsyncAgentQuestions';
 import { type AsyncAgentQuestion } from '@/features/agent-runtime/model/asyncAgentQuestions';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { agentRunsApi } from '@/shared/lib/agentRunApi';
 import { useDropzone } from 'react-dropzone';
@@ -249,6 +258,10 @@ function InteractiveSessionChatBox(props: SessionChatBoxContainerProps) {
     mode === 'existing-session' ? props.onStartNewSession : undefined;
 
   const sessionId = session?.id;
+  const userContext = useContext(UserContext);
+  const approvalProjectId = userContext?.workspaces.find(
+    (w) => w.local_workspace_id === workspaceId
+  )?.project_id;
   const queryClient = useQueryClient();
   const hostId = useHostId();
 
@@ -1694,6 +1707,18 @@ function InteractiveSessionChatBox(props: SessionChatBoxContainerProps) {
           pendingApproval?.kind === 'approval'
             ? {
                 isActive: true,
+                details: (
+                  <ExecutionApprovalDetails
+                    projectId={approvalProjectId}
+                    workspaceId={workspaceId}
+                    sessionId={sessionId}
+                    agentRunId={pendingApproval.agentRunId}
+                    approvalId={pendingApproval.approvalId}
+                    toolName={pendingApproval.toolName}
+                    operation={pendingApproval.operation}
+                    arguments={pendingApproval.arguments}
+                  />
+                ),
                 onApprove: handleApprove,
                 onRequestChanges: handleRequestChanges,
                 onDeny: handleDeny,

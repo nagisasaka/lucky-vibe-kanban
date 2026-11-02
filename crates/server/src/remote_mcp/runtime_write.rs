@@ -67,6 +67,18 @@ pub(super) enum Change {
 
 #[async_trait]
 pub(super) trait RuntimeActions: Send + Sync {
+    async fn decide_approval(
+        &self,
+        _target: Target,
+        _operation: Uuid,
+        _approval: String,
+        _approved: bool,
+        _reason: Option<String>,
+        _event: Uuid,
+    ) -> Result<Value, ApiError> {
+        Err(ApiError::Conflict("Approval runtime unavailable".into()))
+    }
+
     async fn dev_server_status(&self, _project: Uuid, _workspace: Uuid) -> Result<Value, ApiError> {
         Err(ApiError::Conflict("DevServer runtime unavailable".into()))
     }
@@ -127,6 +139,35 @@ pub(super) fn identity(operation: Uuid, key: String) -> agent_runs::AgentRunCont
 
 #[async_trait]
 impl RuntimeActions for ExistingRuntime {
+    async fn decide_approval(
+        &self,
+        target: Target,
+        operation: Uuid,
+        approval: String,
+        approved: bool,
+        reason: Option<String>,
+        event: Uuid,
+    ) -> Result<Value, ApiError> {
+        let state = agent_runs::dispatch_control_for_input(
+            &self.0,
+            target.agent_run_id,
+            identity(operation, format!("mcp:{operation}")),
+            AgentRunPortCommand::ResolveApproval {
+                approval_id: approval,
+                approved,
+                reason,
+            },
+            Some(event),
+        )
+        .await?
+        .0
+        .into_data();
+        Ok(
+            json!({"command_id":operation,"decision_accepted":true,"decision_confirmed":false,
+            "tool_execution_complete":null,"tool_execution_status":"not_observed","state":state}),
+        )
+    }
+
     async fn dev_server_status(&self, project: Uuid, workspace: Uuid) -> Result<Value, ApiError> {
         crate::routes::workspaces::dev_server::status(&self.0, project, workspace).await
     }
@@ -265,7 +306,7 @@ impl RuntimeActions for ExistingRuntime {
             }
             Kind::Approval => {
                 return Err(ApiError::Forbidden(
-                    "Resolve execution approval in LVK".into(),
+                    "Use decide_execution_approval for execution decisions".into(),
                 ));
             }
         };
@@ -281,6 +322,24 @@ pub(super) async fn validate_run(
     pool: &SqlitePool,
     target: &Target,
     terminal: bool,
+) -> Result<(), ApiError> {
+    validate_target(pool, target, terminal, false).await
+}
+
+pub(super) async fn validate_approval_target(
+    pool: &SqlitePool,
+    target: &Target,
+) -> Result<(), ApiError> {
+    // Execution-only workspaces have legitimate provider approvals too. The
+    // shared UI dispatcher validates the live execution owner before dispatch.
+    validate_target(pool, target, false, true).await
+}
+
+async fn validate_target(
+    pool: &SqlitePool,
+    target: &Target,
+    terminal: bool,
+    approval: bool,
 ) -> Result<(), ApiError> {
     let belongs: bool = sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM local_workspace_links l JOIN local_issues i ON i.id=l.issue_id AND i.project_id=l.project_id WHERE l.workspace_id=? AND l.project_id=?)")
         .bind(target.workspace_id).bind(target.project_id).fetch_one(pool).await?;
@@ -319,7 +378,9 @@ pub(super) async fn validate_run(
     let workspace = Workspace::find_by_id(pool, target.workspace_id)
         .await?
         .ok_or_else(|| ApiError::Conflict("Workspace missing".into()))?;
-    workspace.require_interactive()?;
+    if !approval {
+        workspace.require_interactive()?;
+    }
     if workspace.archived {
         return Err(ApiError::Conflict("Workspace is archived".into()));
     }
@@ -338,7 +399,7 @@ pub(super) fn tools() -> Vec<rmcp::model::Tool> {
         ),
         definition::<AnswerArgs>(
             "answer_question",
-            "Answer exactly one current specification question after reading get_question. Requires its ID, kind, run and revision. Already answered or changed questions conflict; execution approvals require the LVK link.",
+            "Answer exactly one current specification question after reading get_question. Requires its ID, kind, run and revision. Already answered or changed questions conflict; execution approvals use decide_execution_approval.",
         ),
     ];
     for tool in &mut tools {
@@ -412,7 +473,7 @@ pub(super) async fn call(
             args.kind != Kind::Approval,
             super::errors::rejection_with_message(
                 utils::mcp_error::Category::Permission,
-                "Execution approvals must be handled in LVK"
+                "Specification answers cannot grant execution permission; use decide_execution_approval"
             )
         );
         ensure!(

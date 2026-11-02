@@ -188,6 +188,7 @@ interface EditModeProps {
 
 interface ApprovalModeProps {
   isActive: boolean;
+  details?: ReactNode;
   onApprove: () => void;
   onRequestChanges: () => void;
   /** One-tap deny (reason optional). Used by the mobile approval footer. */
@@ -825,6 +826,10 @@ export function SessionChatBox<TExecutor extends string = string>({
   // Banner content
   const renderBanner = () => {
     const banners: ReactNode[] = [];
+
+    if (isInApprovalMode && approvalMode?.details) {
+      banners.push(<div key="execution-approval">{approvalMode.details}</div>);
+    }
 
     // Review comments banner
     if (reviewComments && reviewComments.count > 0) {

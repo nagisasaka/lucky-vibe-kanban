@@ -207,7 +207,7 @@ fn project(payload: &Value) -> Option<Value> {
 /// Defence in depth for already user-visible prose, not a general secret
 /// classifier. Scan the full message before truncating. Only ASCII shapes are
 /// recognised; ordinary paths, quotes, assignments and prose remain readable.
-fn safe_commentary(text: &str) -> Option<&str> {
+pub(super) fn safe_commentary(text: &str) -> Option<&str> {
     if text
         .chars()
         .any(|c| c.is_control() && c != '\n' && c != '\t')

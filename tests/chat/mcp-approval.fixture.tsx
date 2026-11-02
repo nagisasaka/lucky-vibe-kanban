@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
+import { ExecutionApprovalDetails } from '../../packages/ui/src/components/ExecutionApprovalDetails';
 import { ChatToolSummary } from '../../packages/ui/src/components/ChatToolSummary';
 import {
   SessionChatBox,
@@ -13,17 +14,19 @@ import common from '../../packages/web-core/src/i18n/locales/ja/common.json';
 import tasks from '../../packages/web-core/src/i18n/locales/ja/tasks.json';
 void i18n.use(initReactI18next).init({
   lng: 'ja',
+  interpolation: { escapeValue: false },
   resources: { ja: { common, tasks } },
   initImmediate: false,
 });
 function Fixture() {
   const [thirdParty, setThirdParty] = useState(false);
+  const [empty, setEmpty] = useState(false);
   const [timedOut, setTimedOut] = useState(false);
   const [value, onChange] = useState('');
   const [result, setResult] = useState('No mock decision');
   const server = thirdParty ? 'third_party_example' : 'lvk_fixture';
   const tool = thirdParty ? 'run_process' : 'get_dev_server_status';
-  const label = `MCP third-party server=${JSON.stringify(server)} tool=${JSON.stringify(tool)} (one call only; arguments/scope in tool details)`;
+  const label = `MCP third-party server=${JSON.stringify(server)} tool=${JSON.stringify(tool)} (one call only)`;
   const args = {
     project_id: '00000000-0000-0000-0000-000000000001',
     workspace_id: '00000000-0000-0000-0000-000000000002',
@@ -78,6 +81,7 @@ function Fixture() {
         >
           Toggle timeout
         </button>
+        <button onClick={() => setEmpty(!empty)}>Toggle empty arguments</button>
         <ChatToolSummary
           summary={label}
           toolName={`${server}/${tool}`}
@@ -118,6 +122,18 @@ function Fixture() {
           session={{ sessions: [], onSelectSession: () => {} }}
           approvalMode={{
             isActive: true,
+            details: (
+              <ExecutionApprovalDetails
+                projectId="project-fixture"
+                workspaceId="workspace-fixture"
+                sessionId="session-fixture"
+                agentRunId="run-fixture"
+                approvalId="mock-service-owned-id"
+                toolName={label}
+                operation={`${server}/${tool}`}
+                arguments={empty ? {} : args}
+              />
+            ),
             isSubmitting: false,
             isTimedOut: timedOut,
             onApprove: decision('approve'),

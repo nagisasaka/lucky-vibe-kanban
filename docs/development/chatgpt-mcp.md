@@ -127,7 +127,9 @@ is exported.
 | `get_resource_observation` | No arguments; bounded on-demand Linux system-visible statistics and separate cgroup limits |
 | `list_run_events` | Exact Project/Workspace/Session/Run; saved commentary and safe execution metadata, bounded cursor pages |
 | `list_run_commands`, `get_run_command` | Exact Project/Workspace/run and optional command ID; delivery state and paged direct instructions, never implied implementation completion |
-| `list_questions`, `get_question` | Project/Workspace/Session, then run/question/kind; exact question/options/revision; execution approvals link to LVK |
+| `list_questions`, `get_question` | Project/Workspace/Session, then run/question/kind; exact question/options/revision; correlated execution approval arguments and single-request scope |
+| `get_execution_approval` | Project/Workspace/Session/Run + approval ID; pending, decision_reserved, resolved or inactive, command delivery and provider decision; never infers tool completion |
+| `decide_execution_approval` | External authenticated member, read + write; explicit approval ID/revision, boolean decision and request_id; uses UI ResolveApproval domain dispatch |
 | `list_project_repositories`, `list_repository_branches`, `get_execution_defaults` | Project and repository; eligible IDs/branches and current configured executor/native mode |
 | `get_integration_candidate`, `list_integrations`, `get_integration` | Project/repository/Workspace/target branch or Auto-merge ID/section; observed heads, validation, publication and Wiki state |
 | `list_project_merge_status`, `get_workspace_merge_status` | Project or Project/Workspace/repository; bounded included/unmerged/unknown observations |
@@ -236,7 +238,7 @@ under `crates/server/src/remote_mcp/` unless a different location is named.
 | T05 | `disconnected_start_waiter_does_not_cancel_domain_admission` aborts the caller then observes one durable accepted run; launch result explicitly says implementation is incomplete; canonical creation dispatches server-owned immediate/setup-gated work |
 | T06 | Board fixture has two attempts per Issue; `runtime_changes_pin_parent_ids_current_run_and_lifecycle` checks exact dispatch, stale run/session rejection and live-versus-terminal routes; native Session regression checks provider/resume guards |
 | T07 | Question projection preserves options/free text and IDs; `question_answers_share_real_reservations_and_reject_direct_duplicates` races UI/MCP through real reservations, checks one delivery and rejects already answered/wrong event/attempt; write-scope checks apply before dispatch |
-| T08 | Approval projection returns `requires_lvk` and a canonical link without private command details; answer schema/handler rejects approval kind |
+| T08 | Approval read preserves correlated arguments (including `{}`), single-request scope and canonical link; credential fields/shaped text are redacted with a reason. Dedicated member decision binds run/event/revision and uses durable receipts; specification answers still reject approval kind. |
 | T09 | Board and command fixtures change state through the canonical stored records and observe it on the next MCP read; command delivery is explicitly not implementation completion; direct answers disappear and new direct runs invalidate old targets |
 | T10 | Runtime, verification, merge and Integration tests distinguish blocked/running/failed, test pass/fail/unavailable/skipped/unknown, dirty/unmerged/ambiguous Git, publication and recorded-versus-current Wiki evidence |
 | T11 | Scoped-head launch test passes explicit selections to existing formal admission; canonical Integration regression checks target races, required validation/exceptions, exact publication, lost receipts and frozen Wiki inputs; no remote target-write mechanism exists |
@@ -888,3 +890,15 @@ semantics, while stdio keeps its sort/offset/count response.
 ## MCP material attachments
 
 Remote/stdio attachment saving, verified placement, execution inputs and the separate real-host gate are described in [MCP attachments](mcp-attachments.md). The live tool catalogue must be refreshed after an authorised rollout; this source change does not deploy it.
+
+## Execution approval decisions (LOCAL-295)
+
+Read `list_questions`, then every page of `get_question` with `kind: approval` and the same revision. The content identifies the operation, correlated tool-call arguments, single-request scope and provider-wait lifetime. Empty `{}` means no arguments; unavailable arguments are explicitly distinguished. Only the matching tool start in the original attempt is exported, never arbitrary provider-extension payloads or tool results. Credential fields and credential-shaped text use redaction; these heuristics cannot identify every arbitrary secret.
+
+After the user explicitly chooses approval or denial, call `decide_execution_approval` with its full parent IDs, approval ID, revision, `approved`, optional denial reason and a fresh `request_id`. The authenticated external member must hold read and write permission. Internal agents/stdio cannot use this decision route, even with an internal token; a specification answer never grants execution permission. This does not alter integration publication approval or grant session/permanent permission.
+
+UI and MCP reserve the same canonical approval under the Session lock and dispatch the existing `ResolveApproval` command. Operation receipts audit the member, target and boolean decision and bind repeated request IDs to the same input. The provider still checks its original thread/turn/server/tool/arguments/call binding. The approval service independently checks the target and deadline at response time.
+
+Read `get_operation`, `get_execution_approval`, then the returned command's delivery state. `decision_accepted` means command admission; `decision_confirmed` requires the provider's `approval_resolved` event. Neither means tool execution completed. `inactive` means the originating attempt is no longer pending, without inventing an expiry or cancellation reason. An uncertain delivery retains its command/request identity; do not submit a second decision blindly. A resolved, cancelled, expired, reserved, foreign or revised approval cannot accept another new decision.
+
+The existing composer displays the approval details next to its controls on desktop/mobile. English/Japanese text covers scope, arguments, redaction and expiry. Canonical `openwiki/` is read-only in normal coding; its integration/session pages need a subsequent authorised maintenance refresh.

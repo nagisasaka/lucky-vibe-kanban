@@ -4,7 +4,7 @@ import { chromium, expect } from '@playwright/test';
 import { execFileSync } from 'node:child_process';
 import { mkdir, writeFile } from 'node:fs/promises';
 const root = process.cwd();
-const output = `${root}/.build/seven-source-candidate-fdf7c33f/mcp-approval`;
+const output = `${root}/.build/local-295/mcp-approval`;
 await mkdir(output, { recursive: true });
 const bundle = await build({
   entryPoints: ['tests/chat/mcp-approval.fixture.tsx'],
@@ -61,6 +61,27 @@ if (!process.argv.includes('--prepare-only')) {
       await expect(page.locator('output')).toHaveText('No mock decision');
       const approve = page.getByRole('button', { name: '承認', exact: true });
       await expect(approve).toBeEnabled();
+      const details = page.getByRole('region', { name: '実行承認の詳細' });
+      // Native section role requires an accessible name; expand in place next to controls.
+      await details.getByText('実行承認の詳細', { exact: true }).click();
+      await expect(details).toContainText('lvk_fixture/get_dev_server_status');
+      await expect(details).not.toContainText('&#x2F;');
+      await expect(details).toContainText('project-fixture');
+      await expect(details).toContainText('workspace-fixture');
+      await expect(details).toContainText('session-fixture');
+      await expect(details).toContainText('run-fixture');
+      await expect(details).toContainText('[REDACTED: credential field]');
+      await page
+        .getByRole('button', { name: 'Toggle empty arguments' })
+        .click();
+      await expect(details).toContainText('引数なし ({})');
+      await approve.click();
+      await expect(page.locator('output')).toHaveText('MOCK ONLY: approve');
+      if (mobile) {
+        await page.getByRole('button', { name: '拒否', exact: true }).click();
+        await expect(page.locator('output')).toHaveText('MOCK ONLY: deny');
+      }
+
       await page.screenshot({
         path: `${output}/${mobile ? 'mobile-dark' : 'desktop-light'}.png`,
         fullPage: true,

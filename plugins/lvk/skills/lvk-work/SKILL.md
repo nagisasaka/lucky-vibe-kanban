@@ -1,6 +1,6 @@
 ---
 name: lvk-work
-description: Read an LVK Project, turn agreed requirements into normal Issues, start or steer existing agent work including bounded REVIEW investigations, answer specification questions, and inspect or request Auto-merge. Use for work on a connected LVK server.
+description: Read an LVK Project, turn agreed requirements into normal Issues, start or steer existing agent work including bounded REVIEW investigations, answer specification questions, read execution approvals and relay explicit member decisions, and inspect or request Auto-merge. Use for work on a connected LVK server.
 ---
 
 ## Direct repository evidence
@@ -47,8 +47,16 @@ within the permissions enforced by LVK and the conversation host.
   `get_run_command` when direct LVK/Codex instructions may supersede the chat.
 - For questions, use `list_questions`, then `get_question` for the complete
   question, options, kind and revision. Send `answer_question` only to that
-  unanswered specification question. Execution approvals belong at the returned
-  LVK link; this tool does not approve shell commands.
+  unanswered specification question; this tool never grants execution permission.
+- For execution approvals, read every `get_question(kind=approval)` page at the
+  same revision, including target, operation, arguments and single-request scope.
+  After the user explicitly chooses approve/deny, external authenticated members
+  with read/write permission can use `decide_execution_approval` with that exact
+  approval ID, run, revision and `request_id`. Internal LVK agents cannot approve
+  their own pending operations. Keep the LVK link when details are unavailable.
+  Read `get_operation`, `get_execution_approval` and command delivery before any
+  retry. Admission, provider decision, tool completion and publication are separate;
+  never widen one decision to session/permanent permission.
 - Return the acceptance IDs and LVK links, then end the request. Acceptance or
   command delivery does not mean implementation is complete. Retrieve progress
   when the user asks; do not start a polling loop or promise automatic notices.

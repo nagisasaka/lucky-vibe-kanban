@@ -109,6 +109,37 @@ impl FixtureRuntime {
 }
 #[async_trait]
 impl RuntimeActions for FixtureRuntime {
+    async fn decide_approval(
+        &self,
+        target: Target,
+        operation: Uuid,
+        approval: String,
+        approved: bool,
+        reason: Option<String>,
+        event: Uuid,
+    ) -> Result<Value, ApiError> {
+        let _guard = self.queue.lock_session(target.session_id).await;
+        agent_runs::validate_pending_approval(
+            &self.pool,
+            target.workspace_id,
+            target.agent_run_id,
+            operation,
+            &approval,
+            Some(event),
+        )
+        .await?;
+        self.record(target.agent_run_id,operation,json!({"type":"resolve_approval","data":{"approval_id":approval,"approved":approved,"reason":reason}})).await?;
+        if self
+            .fail_after_delivery
+            .swap(false, std::sync::atomic::Ordering::SeqCst)
+        {
+            return Err(ApiError::Conflict("fixture failed after delivery".into()));
+        }
+        Ok(
+            json!({"command_id":operation,"decision_accepted":true,"decision_confirmed":false,"tool_execution_complete":null,"tool_execution_status":"not_observed"}),
+        )
+    }
+
     async fn goal(
         &self,
         target: Target,

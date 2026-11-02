@@ -865,7 +865,16 @@
     "cancel": "キャンセル",
     "prompt": "このリクエストを承認しますか？",
     "missingExecution": "このリクエストの実行情報がありません。応答する前にセッションを開き直してください。",
-    "responseUnconfirmed": "応答結果を確認できませんでした。再試行する前にリクエストと現在のセッションを確認してください。"
+    "responseUnconfirmed": "応答結果を確認できませんでした。再試行する前にリクエストと現在のセッションを確認してください。",
+    "detailsTitle": "実行承認の詳細",
+    "singleRequest": "承認待ち：この要求の操作を一回だけ許可します。Session・恒久許可にはならず、公開の承認や実行成功も意味しません。",
+    "unavailable": "取得できません",
+    "arguments": "実際の引数",
+    "argumentsUnavailable": "引数を取得できません。「引数なし」を意味しません。",
+    "noArguments": "引数なし ({})",
+    "redactionNotice": "資格情報の項目は伏せています。操作と引数を確認して判断してください。ツール名から影響を推測して表示していません。",
+    "originalExpiry": "元のprovider要求が保留中の間のみ有効です。取消・期限切れ・束縛された呼出しの変更で無効になります。",
+    "invokeOperation": "{{operation}} を、次の引数で一回呼び出す操作です。"
   },
   "repoCard": {
     "openPullRequest": "プルリクエストを作成",

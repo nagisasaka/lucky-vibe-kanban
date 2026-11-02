@@ -57,6 +57,10 @@ pub struct Approvals {
 pub enum ApprovalError {
     #[error("approval request not found")]
     NotFound,
+    #[error("approval target does not match its original request")]
+    TargetMismatch,
+    #[error("approval request expired")]
+    Expired,
     #[error("approval request already completed")]
     AlreadyCompleted,
     #[error("no executor session found for session_id: {0}")]
@@ -145,13 +149,19 @@ impl Approvals {
         id: &str,
         req: ApprovalResponse,
     ) -> Result<(ApprovalOutcome, ToolContext), ApprovalError> {
-        if let Some((_, p)) = self.pending.remove(id) {
-            if let Err(e) = Self::validate_approval_response(&req.status, p.is_question) {
-                self.pending.insert(id.to_string(), p);
-                return Err(e);
+        if let dashmap::mapref::entry::Entry::Occupied(entry) = self.pending.entry(id.to_string()) {
+            let p = entry.get();
+            if p.execution_process_id != req.execution_process_id {
+                return Err(ApprovalError::TargetMismatch);
             }
-
-            let outcome = req.status.clone();
+            Self::validate_approval_response(&req.status, p.is_question)?;
+            let expired = p.timeout_at <= Utc::now();
+            let p = entry.remove();
+            let outcome = if expired {
+                ApprovalOutcome::TimedOut
+            } else {
+                req.status.clone()
+            };
             self.completed.insert(id.to_string(), outcome.clone());
             let _ = p.response_tx.send(outcome.clone());
 
@@ -166,7 +176,11 @@ impl Approvals {
                 execution_process_id: p.execution_process_id,
             };
 
-            Ok((outcome, tool_ctx))
+            if expired {
+                Err(ApprovalError::Expired)
+            } else {
+                Ok((outcome, tool_ctx))
+            }
         } else if self.completed.contains_key(id) {
             Err(ApprovalError::AlreadyCompleted)
         } else {
@@ -288,5 +302,57 @@ impl Approvals {
                 }
             })
             .collect()
+    }
+}
+
+#[cfg(test)]
+mod decision_tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn decisions_preserve_target_deadline_and_single_use() {
+        let service = Approvals::new();
+        let process = Uuid::new_v4();
+        let (request, waiter) = service
+            .create_with_waiter(ApprovalRequest::new("tool".into(), process), false)
+            .await
+            .unwrap();
+        let response = |execution_process_id| ApprovalResponse {
+            execution_process_id,
+            status: ApprovalOutcome::Approved,
+        };
+        assert!(matches!(
+            service.respond(&request.id, response(Uuid::new_v4())).await,
+            Err(ApprovalError::TargetMismatch)
+        ));
+        service
+            .respond(&request.id, response(process))
+            .await
+            .unwrap();
+        assert!(matches!(waiter.await, ApprovalOutcome::Approved));
+        assert!(matches!(
+            service.respond(&request.id, response(process)).await,
+            Err(ApprovalError::AlreadyCompleted)
+        ));
+
+        let mut expired = ApprovalRequest::new("tool".into(), process);
+        expired.timeout_at = Utc::now() - chrono::Duration::seconds(1);
+        let (expired, waiter) = service.create_with_waiter(expired, false).await.unwrap();
+        assert!(matches!(
+            service.respond(&expired.id, response(process)).await,
+            Err(ApprovalError::Expired)
+        ));
+        assert!(matches!(waiter.await, ApprovalOutcome::TimedOut));
+
+        let (cancelled, waiter) = service
+            .create_with_waiter(ApprovalRequest::new("tool".into(), process), false)
+            .await
+            .unwrap();
+        service.cancel(&cancelled.id).await;
+        assert!(matches!(waiter.await, ApprovalOutcome::Denied { .. }));
+        assert!(matches!(
+            service.respond(&cancelled.id, response(process)).await,
+            Err(ApprovalError::AlreadyCompleted)
+        ));
     }
 }

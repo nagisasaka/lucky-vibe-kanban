@@ -87,7 +87,7 @@ pub(super) fn tools() -> Vec<rmcp::model::Tool> {
     vec![
         definition::<ListArgs>(
             "list_questions",
-            "Read unresolved specification questions and execution approvals for one current Session. Preview only; get_question preserves the complete question and options. Approvals must be handled through the LVK link.",
+            "Read unresolved specification questions and execution approvals for one current Session. Preview only; get_question preserves the complete question and options. Read approval details with get_question(kind=approval); use decide_execution_approval for an explicit member decision.",
         ),
         definition::<DetailArgs>(
             "get_question",
@@ -154,8 +154,10 @@ impl Remote {
                 run,
                 kind,
                 content: if kind == Kind::Approval {
-                    json!({"approval_id":id,"requires_lvk":true,"message":"Inspect and decide this execution approval in LVK"})
-                } else { data.clone() },
+                    super::execution_approvals::content(&self.pool, &event).await?
+                } else {
+                    data.clone()
+                },
                 delivery_status: None,
             });
         }
@@ -191,8 +193,8 @@ impl Remote {
         let end = (start + args.limit as usize).min(questions.len());
         let more = end < questions.len();
         let items = questions[start..end].iter().map(|question| {
-            let title = question.content["title"].as_str().or_else(||question.content["prompt"].as_str()).unwrap_or("Execution approval; inspect in LVK");
-            json!({"question_id":question.id,"kind":question.kind,"agent_run_id":question.run,"session_id":args.session_id,"workspace_id":args.workspace_id,"issue_id":issue,"project_id":args.project_id,"title_preview":title.chars().take(500).collect::<String>(),"preview_truncated":title.chars().count()>500,"revision":question.revision(),"delivery_status":question.delivery_status,"requires_lvk":question.kind==Kind::Approval,"url":self.config.workspace_url(args.project_id,issue,args.workspace_id)})
+            let title = question.content["title"].as_str().or_else(||question.content["prompt"].as_str()).or_else(||question.content["tool_name"].as_str()).unwrap_or("Execution approval");
+            json!({"question_id":question.id,"kind":question.kind,"agent_run_id":question.run,"session_id":args.session_id,"workspace_id":args.workspace_id,"issue_id":issue,"project_id":args.project_id,"scope":question.content["scope"],"state":question.content["state"],"title_preview":title.chars().take(500).collect::<String>(),"preview_truncated":title.chars().count()>500,"revision":question.revision(),"delivery_status":question.delivery_status,"requires_lvk":question.content["requires_lvk"]==true,"url":self.config.workspace_url(args.project_id,issue,args.workspace_id)})
         }).collect::<Vec<_>>();
         Ok(
             json!({"items":items,"has_more":more,"next_cursor":if more {Some(questions[end-1].cursor())} else {None},"observed_at":chrono::Utc::now()}),
@@ -239,7 +241,7 @@ impl Remote {
         );
         let end = (args.offset as usize + args.limit as usize).min(total);
         Ok(
-            json!({"question_id":question.id,"kind":question.kind,"agent_run_id":question.run,"session_id":args.session_id,"workspace_id":args.workspace_id,"project_id":args.project_id,"revision":revision,"format":"json","content":text.chars().skip(args.offset as usize).take(args.limit as usize).collect::<String>(),"offset":args.offset,"has_more":end<total,"next_offset":if end<total {Some(end)} else {None},"requires_lvk":question.kind==Kind::Approval,"delivery_status":question.delivery_status,"url":self.config.workspace_url(args.project_id,issue,args.workspace_id)}),
+            json!({"question_id":question.id,"kind":question.kind,"agent_run_id":question.run,"session_id":args.session_id,"workspace_id":args.workspace_id,"project_id":args.project_id,"revision":revision,"format":"json","content":text.chars().skip(args.offset as usize).take(args.limit as usize).collect::<String>(),"offset":args.offset,"has_more":end<total,"next_offset":if end<total {Some(end)} else {None},"requires_lvk":question.content["requires_lvk"]==true,"delivery_status":question.delivery_status,"url":self.config.workspace_url(args.project_id,issue,args.workspace_id)}),
         )
     }
 }
