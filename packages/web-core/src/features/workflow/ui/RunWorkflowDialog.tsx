@@ -76,6 +76,7 @@ const RunWorkflowDialogImpl = create<RunWorkflowDialogProps>(
     const [error, setError] = useState<
       'runInputRequired' | 'repository' | 'unconfirmed' | null
     >(null);
+    const [errorDetail, setErrorDetail] = useState<string | null>(null);
     const errorLabel =
       error === 'runInputRequired'
         ? t('workflow.errors.runInputRequired')
@@ -113,6 +114,7 @@ const RunWorkflowDialogImpl = create<RunWorkflowDialogProps>(
       }
 
       setError(null);
+      setErrorDetail(null);
       const workspaceId =
         selectedWorkspaceValue === CREATE_WORKFLOW_WORKSPACE_VALUE
           ? null
@@ -145,6 +147,7 @@ const RunWorkflowDialogImpl = create<RunWorkflowDialogProps>(
         modal.hide();
         navigation.goToProjectWorkflowRun(projectId, run.id);
       } catch (err) {
+        setErrorDetail(err instanceof Error ? err.message : String(err));
         setError(getWorkflowRunErrorCode(err));
       } finally {
         setIsPreparingRun(false);
@@ -227,7 +230,7 @@ const RunWorkflowDialogImpl = create<RunWorkflowDialogProps>(
 
             {error ? (
               <p className="text-xs text-error" role="alert">
-                {errorLabel}
+                {errorLabel} {errorDetail}
               </p>
             ) : null}
 

@@ -97,6 +97,7 @@ function ScheduledTaskDialogContent({
   );
   const [inputTouched, setInputTouched] = useState(Boolean(existingTask));
   const [error, setError] = useState<ScheduledTaskNotice | null>(null);
+  const [errorDetail, setErrorDetail] = useState<string | null>(null);
 
   const selectedIssue = useMemo(
     () => (contextIssueId ? getIssue(contextIssueId) : undefined),
@@ -165,6 +166,7 @@ function ScheduledTaskDialogContent({
       return false;
     }
     setError(null);
+    setErrorDetail(null);
     return true;
   };
 
@@ -199,7 +201,8 @@ function ScheduledTaskDialogContent({
         taskId: task.id,
       } satisfies ScheduledTaskDialogResult);
       modal.hide();
-    } catch {
+    } catch (error) {
+      setErrorDetail(error instanceof Error ? error.message : String(error));
       setError('saveFailed');
     }
   };
@@ -219,13 +222,15 @@ function ScheduledTaskDialogContent({
         navigation.goToProjectWorkflowRun(projectId, result.run.id);
         return;
       }
+      setErrorDetail(result.task.last_error);
       setError(
         result.skipped &&
           result.task.last_error === 'Previous scheduled run is still active'
           ? 'runSkipped'
           : 'runFailed'
       );
-    } catch {
+    } catch (error) {
+      setErrorDetail(error instanceof Error ? error.message : String(error));
       setError('runFailed');
     }
   };
@@ -247,7 +252,8 @@ function ScheduledTaskDialogContent({
         kind: 'deleted',
       } satisfies ScheduledTaskDialogResult);
       modal.hide();
-    } catch {
+    } catch (error) {
+      setErrorDetail(error instanceof Error ? error.message : String(error));
       setError('deleteFailed');
     }
   };
@@ -482,7 +488,7 @@ function ScheduledTaskDialogContent({
 
             {error ? (
               <p className="text-xs text-error" role="alert">
-                {scheduledTaskNoticeLabel(error, t)}
+                {scheduledTaskNoticeLabel(error, t)} {errorDetail}
               </p>
             ) : null}
           </div>

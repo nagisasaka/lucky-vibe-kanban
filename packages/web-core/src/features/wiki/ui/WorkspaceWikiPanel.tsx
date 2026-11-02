@@ -124,7 +124,7 @@ export function WorkspaceWikiNavigation({
         )}
         {error && (
           <p role="status" className="text-sm text-error">
-            {t('workspaceWiki.loadUnconfirmed')}
+            {t('workspaceWiki.loadUnconfirmed')} {error}
           </p>
         )}
       </div>
@@ -318,7 +318,7 @@ export function WorkspaceWikiArticle({ actions }: { actions?: ReactNode }) {
       </header>
       {error && (
         <p role="status" className="border-b p-base text-base text-error">
-          {t('workspaceWiki.loadUnconfirmed')}
+          {t('workspaceWiki.loadUnconfirmed')} {error}
         </p>
       )}
       <div

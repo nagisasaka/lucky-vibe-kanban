@@ -126,6 +126,7 @@ export function DesignNotePanel({ projectId }: { projectId: string }) {
   const [error, setError] = useState<
     'conflict' | 'invalid' | 'unconfirmed' | null
   >(null);
+  const [errorDetail, setErrorDetail] = useState<string | null>(null);
   const active = useRef(false);
   // Retain an identical request ID after a lost response; changed input is a new intent.
   const request = useRef({ fingerprint: '', id: '' });
@@ -146,6 +147,7 @@ export function DesignNotePanel({ projectId }: { projectId: string }) {
     active.current = true;
     setBusy(true);
     setError(null);
+    setErrorDetail(null);
     const fingerprint = JSON.stringify(operation);
     if (request.current.fingerprint !== fingerprint)
       request.current = { fingerprint, id: crypto.randomUUID() };
@@ -158,6 +160,7 @@ export function DesignNotePanel({ projectId }: { projectId: string }) {
       request.current = { fingerprint: '', id: '' };
       return result;
     } catch (e) {
+      setErrorDetail(e instanceof Error ? e.message : String(e));
       setError(
         e instanceof ApiError && e.status === 409
           ? 'conflict'
@@ -200,7 +203,14 @@ export function DesignNotePanel({ projectId }: { projectId: string }) {
           value={search}
           onChange={(event) => setSearch(event.target.value)}
         />
-        {list.error && <p role="alert">{t('designNotes.errors.list')}</p>}
+        {list.error && (
+          <p role="alert">
+            {t('designNotes.errors.list')}{' '}
+            {list.error instanceof Error
+              ? list.error.message
+              : String(list.error)}
+          </p>
+        )}
         {list.isLoading && <p>{t('designNotes.loading')}</p>}
         {list.data?.length === 0 && (
           <p className="p-base text-low">{t('designNotes.empty')}</p>
@@ -217,6 +227,7 @@ export function DesignNotePanel({ projectId }: { projectId: string }) {
                 setSelected(n.id);
                 setCreating(false);
                 setError(null);
+                setErrorDetail(null);
               }}
             >
               <span className="block">{n.title}</span>
@@ -243,7 +254,8 @@ export function DesignNotePanel({ projectId }: { projectId: string }) {
               ? t('designNotes.errors.conflict')
               : error === 'invalid'
                 ? t('designNotes.errors.invalid')
-                : t('designNotes.errors.unconfirmed')}
+                : t('designNotes.errors.unconfirmed')}{' '}
+            {errorDetail}
           </p>
         )}
         {creating ? (
@@ -259,7 +271,12 @@ export function DesignNotePanel({ projectId }: { projectId: string }) {
         ) : selected ? (
           <>
             {detail.error && (
-              <p role="alert">{t('designNotes.errors.detail')}</p>
+              <p role="alert">
+                {t('designNotes.errors.detail')}{' '}
+                {detail.error instanceof Error
+                  ? detail.error.message
+                  : String(detail.error)}
+              </p>
             )}
             {detail.isLoading && <p>{t('designNotes.loading')}</p>}
             {detail.data && (
@@ -493,7 +510,12 @@ function NoteDetail({
               {t('designNotes.firstVersionHint')}
             </p>
             {history.error && (
-              <p role="alert">{t('designNotes.errors.history')}</p>
+              <p role="alert">
+                {t('designNotes.errors.history')}{' '}
+                {history.error instanceof Error
+                  ? history.error.message
+                  : String(history.error)}
+              </p>
             )}
             <div className="flex flex-wrap gap-base">
               {history.data?.map((n) => (
@@ -714,7 +736,12 @@ function Addition({
       {historyOpen && (
         <div className="space-y-base">
           {history.error && (
-            <p role="alert">{t('designNotes.errors.history')}</p>
+            <p role="alert">
+              {t('designNotes.errors.history')}{' '}
+              {history.error instanceof Error
+                ? history.error.message
+                : String(history.error)}
+            </p>
           )}
           {history.data?.map((old) => (
             <div className="border-t border-border pt-base" key={old.revision}>

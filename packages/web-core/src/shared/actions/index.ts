@@ -1,3 +1,4 @@
+import { errorDiagnostic } from '@/shared/lib/errorDiagnostic';
 import {
   IssueArchiveActionError,
   receiptMessage,
@@ -1502,8 +1503,11 @@ export const Actions = {
             issueIds[0],
             requestId
           );
-        } catch {
-          throw new IssueArchiveActionError({ kind: 'request', requestId });
+        } catch (error) {
+          throw new IssueArchiveActionError(
+            { kind: 'request', requestId },
+            errorDiagnostic(error)
+          );
         }
         refreshIssueArchive(projectId);
         const message = receiptMessage(receipt, i18n.getFixedT(null, 'tasks'));

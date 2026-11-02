@@ -84,7 +84,9 @@ export function ApprovalFeedbackProvider({
       exitFeedbackMode,
       submitFeedback,
       isSubmitting: isDenying,
-      error: denyError ? t('approval.responseUnconfirmed') : null,
+      error: denyError
+        ? `${t('approval.responseUnconfirmed')} ${denyError.message}`
+        : null,
       isTimedOut: false,
     }),
     [

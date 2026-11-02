@@ -157,7 +157,7 @@ export function FollowUpQueue({
       </ol>
       {error && (
         <p role="alert" className="mt-2 text-error">
-          {t('followUpQueue.updateUnconfirmed')}
+          {t('followUpQueue.updateUnconfirmed')} {error}
         </p>
       )}
     </section>

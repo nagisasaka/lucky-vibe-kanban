@@ -23,7 +23,7 @@ const ServerFolderPickerDialogImpl = create<FolderPickerDialogProps>(
     const [path, setPath] = useState(value);
     const [requestedPath, setRequestedPath] = useState({ path: value });
     const [listing, setListing] = useState<DirectoryListResponse | null>(null);
-    const [error, setError] = useState(false);
+    const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -31,7 +31,7 @@ const ServerFolderPickerDialogImpl = create<FolderPickerDialogProps>(
       let active = true;
       setLoading(true);
       setListing(null);
-      setError(false);
+      setError(null);
       void fileSystemApi
         .list(requestedPath.path.trim() || undefined, hostId)
         .then((result) => {
@@ -39,8 +39,9 @@ const ServerFolderPickerDialogImpl = create<FolderPickerDialogProps>(
           setListing(result);
           setPath(result.current_path);
         })
-        .catch(() => {
-          if (active) setError(true);
+        .catch((error) => {
+          if (active)
+            setError(error instanceof Error ? error.message : String(error));
         })
         .finally(() => {
           if (active) setLoading(false);
@@ -89,7 +90,7 @@ const ServerFolderPickerDialogImpl = create<FolderPickerDialogProps>(
           </form>
           {error && (
             <p role="alert" className="text-error">
-              {t('serverFolderPicker.loadError')}
+              {t('serverFolderPicker.loadError')} {error}
             </p>
           )}
           <div

@@ -9,56 +9,6 @@ const root = fileURLToPath(new URL("../..", import.meta.url)).replace(
 );
 const tokens = loadConfig(`${root}/packages/local-web/tailwind.new.config.js`);
 // Only replace dependencies of the named consumer; other product imports stay real.
-const scopedFixtures = [
-  [
-    "/shared/components/NormalizedConversation/PendingApprovalEntry.tsx",
-    ["@/shared/hooks/useApprovals"],
-    "approval.tsx",
-  ],
-  [
-    "/shared/dialogs/kanban/IssueArchiveDialog.tsx",
-    ["@/shared/lib/issueArchiveApi"],
-    "issue-archive.tsx",
-  ],
-  [
-    "/pages/workspaces/NotificationsPage.tsx",
-    [
-      "@/shared/hooks/useNotifications",
-      "@/shared/hooks/useNotificationMembers",
-      "@tanstack/react-router",
-    ],
-    "notifications.tsx",
-  ],
-  [
-    "/pages/workspaces/AppBarNotificationBellContainer.tsx",
-    [
-      "@/shared/hooks/useNotifications",
-      "@/shared/hooks/useNotificationMembers",
-      "@tanstack/react-router",
-    ],
-    "notifications.tsx",
-  ],
-  [
-    "/shared/components/ModelSelectorContainer.tsx",
-    ["@/shared/hooks/useUserSystem", "@/shared/hooks/useExecutorDiscovery"],
-    "model-selector.tsx",
-  ],
-  [
-    "/features/onboarding/ui/LandingPage.tsx",
-    ["@/shared/hooks/useUserSystem", "@/shared/hooks/useAppNavigation"],
-    "onboarding.ts",
-  ],
-  [
-    "/pages/workspaces/ElectricTestPage.tsx",
-    [
-      "@/shared/hooks/auth/useAuth",
-      "@/shared/hooks/useUserOrganizations",
-      "@/shared/hooks/auth/useCurrentUser",
-      "@/shared/integrations/electric/hooks",
-    ],
-    "electric-diagnostics.ts",
-  ],
-] as const;
 export default defineConfig({
   root: `${root}/tests/settings-redesign/fixture`,
   publicDir: `${root}/packages/public`,
@@ -73,13 +23,14 @@ export default defineConfig({
         if (!importer || options.scan) return;
         // Vite's alias plugin may already have expanded @ before this hook.
         const source = id.replace(`${root}/packages/web-core/src/`, "@/");
-        const match = scopedFixtures.find(
-          ([owner, sources]) =>
-            importer.split("?")[0].endsWith(owner) &&
-            sources.some((value) => value === source),
-        );
-        return match
-          ? `${root}/tests/settings-redesign/fixture/${match[2]}`
+        return importer
+          .split("?")[0]
+          .endsWith("/shared/components/ModelSelectorContainer.tsx") &&
+          [
+            "@/shared/hooks/useUserSystem",
+            "@/shared/hooks/useExecutorDiscovery",
+          ].includes(source)
+          ? `${root}/tests/settings-redesign/fixture/model-selector.tsx`
           : undefined;
       },
     },

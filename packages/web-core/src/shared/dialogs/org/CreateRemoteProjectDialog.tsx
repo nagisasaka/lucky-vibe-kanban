@@ -1,3 +1,4 @@
+import { errorDiagnostic } from '@/shared/lib/errorDiagnostic';
 import { useState, useEffect, useMemo } from 'react';
 import { Button } from '@vibe/ui/components/Button';
 import { Input } from '@vibe/ui/components/Input';
@@ -53,6 +54,7 @@ const CreateRemoteProjectDialogImpl = create<CreateRemoteProjectDialogProps>(
       | 'unconfirmed'
       | null
     >(null);
+    const [errorDetail, setErrorDetail] = useState<string | null>(null);
     const [isCreating, setIsCreating] = useState(false);
 
     const params = useMemo(
@@ -82,12 +84,14 @@ const CreateRemoteProjectDialogImpl = create<CreateRemoteProjectDialogProps>(
         setKeyInput(null);
         setColor(getRandomPresetColor());
         setError(null);
+        setErrorDetail(null);
         setIsCreating(false);
       }
     }, [modal.visible]);
 
     useEffect(() => {
       if (syncError) {
+        setErrorDetail(errorDiagnostic(syncError));
         setError('unconfirmed');
         setIsCreating(false);
       }
@@ -122,6 +126,7 @@ const CreateRemoteProjectDialogImpl = create<CreateRemoteProjectDialogProps>(
       }
       setKeyInput(key);
       setError(null);
+      setErrorDetail(null);
       setIsCreating(true);
 
       try {
@@ -140,6 +145,7 @@ const CreateRemoteProjectDialogImpl = create<CreateRemoteProjectDialogProps>(
         } as CreateRemoteProjectResult);
         modal.hide();
       } catch (err) {
+        setErrorDetail(errorDiagnostic(err));
         setError('unconfirmed');
         setIsCreating(false);
       }
@@ -192,6 +198,7 @@ const CreateRemoteProjectDialogImpl = create<CreateRemoteProjectDialogProps>(
                   onChange={(e) => {
                     setName(e.target.value);
                     setError(null);
+                    setErrorDetail(null);
                   }}
                   onKeyDown={handleKeyDown}
                   placeholder={t(
@@ -235,6 +242,7 @@ const CreateRemoteProjectDialogImpl = create<CreateRemoteProjectDialogProps>(
                 onChange={(event) => {
                   setKeyInput(normalizeProjectKey(event.target.value));
                   setError(null);
+                  setErrorDetail(null);
                 }}
                 onKeyDown={handleKeyDown}
                 disabled={isCreating}
@@ -248,7 +256,7 @@ const CreateRemoteProjectDialogImpl = create<CreateRemoteProjectDialogProps>(
             {error && (
               <Alert variant="destructive">
                 <AlertDescription>
-                  {t(`createProjectDialog.${error}`)}
+                  {t(`createProjectDialog.${error}`)} {errorDetail}
                 </AlertDescription>
               </Alert>
             )}

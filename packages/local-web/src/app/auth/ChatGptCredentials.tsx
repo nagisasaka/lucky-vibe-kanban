@@ -89,8 +89,11 @@ export function ChatGptCredentials({
           throw new AccessRequestError('auth.credentials.secretUnavailable');
         setSecret(value);
         if (action === 'copy') {
-          await navigator.clipboard.writeText(value).catch(() => {
-            throw new AccessRequestError('auth.credentials.copySecretFailed');
+          await navigator.clipboard.writeText(value).catch((error) => {
+            throw toAccessRequestError(
+              error,
+              'auth.credentials.copySecretFailed'
+            );
           });
           setNotice('secretCopied');
         } else {

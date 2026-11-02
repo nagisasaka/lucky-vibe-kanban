@@ -415,11 +415,12 @@ export function WorkflowRunCanvasTab({
   const [actionNotice, setActionNotice] = useState<
     'unavailable' | 'unconfirmed' | null
   >(null);
+  const [actionDetail, setActionDetail] = useState<string | null>(null);
   const actionError =
     actionNotice === 'unavailable'
       ? t('workflow.runCanvas.actionUnavailable')
       : actionNotice
-        ? t('workflow.errors.operationUnconfirmed')
+        ? `${t('workflow.errors.operationUnconfirmed')} ${actionDetail ?? ''}`
         : null;
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [nodes, setNodes, onNodesChange] = useNodesState<
@@ -431,11 +432,13 @@ export function WorkflowRunCanvasTab({
 
   const selectNodeById = useCallback((nodeId: string | null) => {
     setActionNotice(null);
+    setActionDetail(null);
     setSelectedNodeId(nodeId);
   }, []);
 
   const openNodeConversationById = useCallback((nodeId: string) => {
     setActionNotice(null);
+    setActionDetail(null);
     setSelectedNodeId(nodeId);
   }, []);
 
@@ -447,6 +450,7 @@ export function WorkflowRunCanvasTab({
     if (!queuedFocus) return;
 
     setActionNotice(null);
+    setActionDetail(null);
     setSelectedNodeId(queuedFocus.nodeId);
   }, [run.id]);
 
@@ -549,6 +553,7 @@ export function WorkflowRunCanvasTab({
   const onSelectionChange = useCallback(
     ({ nodes: selectedNodes }: { nodes: ReactFlowNode[] }) => {
       setActionNotice(null);
+      setActionDetail(null);
       setSelectedNodeId(selectedNodes.length > 0 ? selectedNodes[0].id : null);
     },
     []
@@ -592,17 +597,20 @@ export function WorkflowRunCanvasTab({
       !selectedExecution ||
       !getWorkflowNodeActionGate(selectedWork).canApprove
     ) {
+      setActionDetail(null);
       setActionNotice('unavailable');
       return;
     }
     setActionNotice(null);
+    setActionDetail(null);
     try {
       await approveNode({
         runId: run.id,
         nodeId: selectedExecution.node_id,
         payload: {},
       });
-    } catch {
+    } catch (error) {
+      setActionDetail(error instanceof Error ? error.message : String(error));
       setActionNotice('unconfirmed');
     }
   };
@@ -612,17 +620,20 @@ export function WorkflowRunCanvasTab({
       !selectedExecution ||
       !getWorkflowNodeActionGate(selectedWork).canReject
     ) {
+      setActionDetail(null);
       setActionNotice('unavailable');
       return;
     }
     setActionNotice(null);
+    setActionDetail(null);
     try {
       await rejectNode({
         runId: run.id,
         nodeId: selectedExecution.node_id,
         payload: {},
       });
-    } catch {
+    } catch (error) {
+      setActionDetail(error instanceof Error ? error.message : String(error));
       setActionNotice('unconfirmed');
     }
   };
@@ -632,10 +643,12 @@ export function WorkflowRunCanvasTab({
       !selectedExecution ||
       !getWorkflowNodeActionGate(selectedWork).canSelectConditionBranch
     ) {
+      setActionDetail(null);
       setActionNotice('unavailable');
       return;
     }
     setActionNotice(null);
+    setActionDetail(null);
     try {
       await selectConditionBranch({
         runId: run.id,
@@ -644,7 +657,8 @@ export function WorkflowRunCanvasTab({
           selected_target_node_ids: targetNodeIds,
         },
       });
-    } catch {
+    } catch (error) {
+      setActionDetail(error instanceof Error ? error.message : String(error));
       setActionNotice('unconfirmed');
     }
   };

@@ -395,7 +395,7 @@ export function ModelSelectorContainer({
           />
           {streamError && (
             <span role="alert" className="text-sm text-error">
-              {t('modelSelector.loadError')}
+              {t('modelSelector.loadError')} {streamError}
             </span>
           )}
         </DropdownMenu>
@@ -536,7 +536,7 @@ export function ModelSelectorContainer({
 
       {!showModelSelector && streamError && (
         <span role="alert" className="text-sm text-error">
-          {t('modelSelector.loadError')}
+          {t('modelSelector.loadError')} {streamError}
         </span>
       )}
       {!loadingModels && !streamError && config.models.length === 0 && (

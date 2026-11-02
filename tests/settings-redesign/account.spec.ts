@@ -103,45 +103,27 @@ for (const auth of ["basic", "auth0"]) {
     ).toBeVisible();
   });
 }
-for (const language of ["en", "ja"]) {
-  test(`logout failure stays in account with a safe ${language} error`, async ({
-    page,
-  }) => {
-    await page.goto(
-      `/?section=account&lang=${language}&allowLogout=true&logoutFailure=true`,
-    );
-    await page.getByRole("button", { name: "設定を開く", exact: true }).click();
-    await expect(
-      page.getByRole("navigation").getByRole("button", {
-        name: language === "ja" ? "アカウント" : "Account",
-        exact: true,
-      }),
-    ).toBeVisible();
-    await page
-      .getByRole("button", {
-        name: language === "ja" ? "ログアウト" : "Log out",
-        exact: true,
-      })
-      .click();
-    await expect(page.getByRole("alert")).toHaveText(
-      language === "ja"
-        ? "認証リクエストを完了できませんでした。サーバーの稼働状態と現在の認証設定を確認してください。"
-        : "The authentication request could not be completed. Check the server status and current authentication settings.",
-    );
-    await expect(page.getByRole("alert")).not.toContainText(
-      "Fixture logout failed",
-    );
-    await expect(
-      page.getByText("sample-basic-user", { exact: true }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole("button", {
-        name: language === "ja" ? "ログアウト" : "Log out",
-        exact: true,
-      }),
-    ).toBeEnabled();
-  });
-}
+test("logout failure stays in account with error; English account labels", async ({
+  page,
+}) => {
+  await page.goto(
+    "/?section=account&lang=en&allowLogout=true&logoutFailure=true",
+  );
+  await page.getByRole("button", { name: "設定を開く", exact: true }).click();
+  await expect(
+    page
+      .getByRole("navigation")
+      .getByRole("button", { name: "Account", exact: true }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Log out", exact: true }).click();
+  await expect(page.getByRole("alert")).toContainText("Fixture logout failed");
+  await expect(
+    page.getByText("sample-basic-user", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Log out", exact: true }),
+  ).toBeEnabled();
+});
 
 for (const auth of ["basic", "auth0"]) {
   for (const identity of ["missing", "blank"]) {

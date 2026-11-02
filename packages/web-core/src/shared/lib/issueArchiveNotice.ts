@@ -14,7 +14,8 @@ export class IssueArchiveActionError extends Error {
   constructor(
     notice:
       | { kind: 'request'; requestId: string }
-      | { kind: 'receipt'; receipt: IssueArchiveReceipt }
+      | { kind: 'receipt'; receipt: IssueArchiveReceipt },
+    readonly detail?: string
   ) {
     super('issueArchiveUnconfirmed');
     this.name = 'IssueArchiveActionError';
@@ -30,9 +31,11 @@ export function receiptMessage(
   t: TFunction<'tasks'>
 ): string {
   if (receipt.status !== 'succeeded')
-    return t('tasks:issueArchive.receiptUnconfirmed', {
-      requestId: receipt.request_id,
-    });
+    return (
+      t('tasks:issueArchive.receiptUnconfirmed', {
+        requestId: receipt.request_id,
+      }) + (receipt.result ? ` — ${receipt.result}` : '')
+    );
   let result: unknown;
   try {
     result = receipt.result ? JSON.parse(receipt.result) : {};
@@ -63,8 +66,12 @@ export function receiptMessage(
         : t('tasks:issueArchive.unknownWorkspace')
     )
     .join('\n');
-  return t('tasks:issueArchive.deletionWarnings', {
-    requestId: receipt.request_id,
-    workspaceIds,
-  });
+  return (
+    t('tasks:issueArchive.deletionWarnings', {
+      requestId: receipt.request_id,
+      workspaceIds,
+    }) +
+    '\n' +
+    warnings.map((ws) => String(ws.deletion_error)).join('\n')
+  );
 }

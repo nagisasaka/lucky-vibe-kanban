@@ -48,7 +48,7 @@ function ResourceSettingsContent() {
   const host = useSettingsHost();
   const queryClient = useQueryClient();
   const [draft, setDraft] = useState(emptyResource);
-  const [error, setError] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [recovery, setRecovery] = useState<ResourceOperation | null>(null);
   const [evidence, setEvidence] = useState('');
@@ -74,12 +74,12 @@ function ResourceSettingsContent() {
   });
   async function act(action: () => Promise<unknown>) {
     setBusy(true);
-    setError(false);
+    setError(null);
     try {
       await action();
       await queryClient.invalidateQueries({ queryKey });
-    } catch {
-      setError(true);
+    } catch (error) {
+      setError(error instanceof Error ? error.message : String(error));
     } finally {
       setBusy(false);
     }
@@ -97,7 +97,8 @@ function ResourceSettingsContent() {
           <p role="alert" className="text-sm text-error">
             {error
               ? t('resources.actionUnconfirmed')
-              : t('resources.loadUnconfirmed')}
+              : t('resources.loadUnconfirmed')}{' '}
+            {error ?? query.error?.message}
           </p>
         )}
         {query.isLoading && <p role="status">{t('resources.loading')}</p>}

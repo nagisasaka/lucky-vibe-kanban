@@ -42,13 +42,13 @@ describe('passive file inspection controls', () => {
     path: 'file.bin',
     source: 'file-tree',
   };
-  it('withholds private preview failure details', () => {
+  it('shows original preview diagnostics with translated context', () => {
     state.usage = 'execution_only';
     const html = renderToStaticMarkup(
       createElement(WorkspaceFilePreviewPanel, { target })
     );
     expect(html).toContain('Could not load preview');
-    expect(html).not.toContain('Raw internal preview secret');
+    expect(html).toContain('Raw internal preview secret');
     expect(html).not.toContain('Open in editor');
   });
   it.each([undefined, 'execution_only'])(

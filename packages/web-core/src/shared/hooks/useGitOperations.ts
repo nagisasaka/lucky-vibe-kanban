@@ -1,3 +1,4 @@
+import { errorDiagnostic } from '@/shared/lib/errorDiagnostic';
 import { useRebase } from '@/shared/hooks/useRebase';
 import { useMerge } from '@/shared/hooks/useMerge';
 import { usePush } from '@/shared/hooks/usePush';
@@ -25,7 +26,7 @@ export function useGitOperations(
           data?.type === 'merge_conflicts' ||
           data?.type === 'rebase_in_progress';
         if (!isConflict) {
-          setError('rebase');
+          setError('rebase', errorDiagnostic(err));
         }
       }
     }
@@ -34,13 +35,13 @@ export function useGitOperations(
   const merge = useMerge(
     workspaceId,
     () => setError(null),
-    () => setError('merge')
+    (error) => setError('merge', errorDiagnostic(error))
   );
 
   const forcePush = useForcePush(
     workspaceId,
     () => setError(null),
-    () => setError('forcePush')
+    (error) => setError('forcePush', errorDiagnostic(error))
   );
 
   const push = usePush(
@@ -56,7 +57,7 @@ export function useGitOperations(
         return;
       }
 
-      setError('push');
+      setError('push', errorDiagnostic(_err));
     }
   );
 
@@ -64,7 +65,7 @@ export function useGitOperations(
     workspaceId,
     repoId,
     () => setError(null),
-    () => setError('targetBranch')
+    (error) => setError('targetBranch', errorDiagnostic(error))
   );
 
   const isAnyLoading =

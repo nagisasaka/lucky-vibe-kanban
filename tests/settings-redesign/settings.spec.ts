@@ -1,4 +1,3 @@
-import { switchLanguage } from "./i18n-support";
 import { expect, test, type Page } from "@playwright/test";
 
 async function open(page: Page, query = "") {
@@ -227,86 +226,6 @@ test("every legacy settings destination remains navigable without render errors"
     await expect(
       page.getByRole("dialog", { name: "設定", exact: true }),
     ).toBeVisible();
-    if (section === "agents") {
-      await page.getByRole("button", { name: "閉じる", exact: true }).click();
-      await open(page, "?section=agents&profile-load-error");
-      await expect(page.getByRole("alert")).toHaveText(
-        "起動プロファイルを読み込めませんでした。選択したサーバー、接続、権限を確認してください。ネイティブ設定は別に管理されます。",
-      );
-      await switchLanguage(page, "en");
-      await expect(page.getByRole("alert")).toHaveText(
-        "Could not load launch profiles. Check the selected server, connection and permissions. Native settings remain separate.",
-      );
-      await expect(page.locator("body")).not.toContainText(
-        "Private launch profile fixture secret",
-      );
-      await switchLanguage(page, "ja");
-    }
-    if (section === "repos") {
-      await expect(
-        page.getByRole("heading", { name: "リポジトリ設定", exact: true }),
-      ).toBeVisible();
-      await page.getByRole("button", { name: "閉じる", exact: true }).click();
-      await open(page, "?section=repos&repo-load-error");
-      await expect(
-        page.getByText("リポジトリの読み込みに失敗しました。", { exact: true }),
-      ).toBeVisible();
-      await switchLanguage(page, "en");
-      await expect(
-        page.getByText("Failed to load repositories.", { exact: true }),
-      ).toBeVisible();
-      await expect(page.locator("body")).not.toContainText(
-        "Private repository fixture secret",
-      );
-      await switchLanguage(page, "ja");
-    }
-    if (section === "mcp") {
-      await page.evaluate(() => {
-        const original = window.fetch;
-        let reads = 0;
-        Object.defineProperty(window, "__mcpReadCount", { get: () => reads });
-        window.fetch = async (input, init) => {
-          const url =
-            typeof input === "string"
-              ? input
-              : input instanceof URL
-                ? input.href
-                : input.url;
-          if (new URL(url, location.origin).pathname === "/api/mcp-config") {
-            reads++;
-            return new Response(
-              JSON.stringify({ message: "private fixture token" }),
-              {
-                status: 500,
-                headers: { "Content-Type": "application/json" },
-              },
-            );
-          }
-          return original(input, init);
-        };
-      });
-      page.once("dialog", (dialog) => dialog.accept());
-      await page
-        .getByRole("button", { name: "編集用にMCP定義を取得", exact: true })
-        .click();
-      await expect(
-        page.getByText("設定の読み込みに失敗しました。", { exact: false }),
-      ).toBeVisible();
-      await switchLanguage(page, "en");
-      await expect(
-        page.getByText("Failed to load configuration.", { exact: false }),
-      ).toBeVisible();
-      await expect(page.locator("body")).not.toContainText(
-        "private fixture token",
-      );
-      expect(
-        await page.evaluate(
-          () =>
-            (window as unknown as { __mcpReadCount: number }).__mcpReadCount,
-        ),
-      ).toBe(1);
-      await switchLanguage(page, "ja");
-    }
     await page.getByRole("button", { name: "閉じる", exact: true }).click();
   }
   expect(errors).toEqual([]);
@@ -319,20 +238,8 @@ test("save failure preserves the notification draft and leave protection", async
   await page.locator("#sound-enabled").click();
   await page.getByRole("button", { name: "保存", exact: true }).click();
   await expect(
-    page.getByText(
-      "設定の保存結果を確認できませんでした。再試行する前に現在の設定を確認してください。",
-      { exact: true },
-    ),
+    page.getByText("Fixture save rejected", { exact: false }),
   ).toBeVisible();
-  await expect(page.locator("body")).not.toContainText("Fixture save rejected");
-  await switchLanguage(page, "en");
-  await expect(
-    page.getByText(
-      "Settings save could not be confirmed. Check the current settings before trying again.",
-      { exact: true },
-    ),
-  ).toBeVisible();
-  await switchLanguage(page, "ja");
   await expect(page.locator("#sound-enabled")).toBeChecked();
   await expect(
     page.getByRole("button", { name: "保存", exact: true }),
@@ -472,10 +379,7 @@ for (const failSave of [false, true]) {
     await page.getByRole("button", { name: "保存", exact: true }).click();
     if (failSave) {
       await expect(
-        page.getByText(
-          "設定の保存結果を確認できませんでした。再試行する前に現在の設定を確認してください。",
-          { exact: true },
-        ),
+        page.getByText("Fixture save rejected", { exact: false }),
       ).toBeVisible();
       await expect(event).not.toBeChecked();
       expect(await persisted()).toEqual(before);

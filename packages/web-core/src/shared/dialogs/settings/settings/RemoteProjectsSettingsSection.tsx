@@ -364,6 +364,7 @@ export function RemoteProjectsSettingsSection({
 
   // UI state
   const [error, setError] = useState<'name' | 'save' | 'delete' | null>(null);
+  const [errorDetail, setErrorDetail] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -903,6 +904,7 @@ export function RemoteProjectsSettingsSection({
     setEditingStatusId(null);
     setEditingStatusColorId(null);
     setError(null);
+    setErrorDetail(null);
     setSuccess(null);
   };
 
@@ -921,6 +923,7 @@ export function RemoteProjectsSettingsSection({
     setEditingStatusId(null);
     setEditingStatusColorId(null);
     setError(null);
+    setErrorDetail(null);
     setSuccess(null);
   };
 
@@ -953,6 +956,7 @@ export function RemoteProjectsSettingsSection({
 
   const handleDeleteProject = async (project: Project) => {
     setError(null);
+    setErrorDetail(null);
     setSuccess(null);
     try {
       const result = await DeleteRemoteProjectDialog.show({
@@ -973,7 +977,8 @@ export function RemoteProjectsSettingsSection({
         );
         setTimeout(() => setSuccess(null), 3000);
       }
-    } catch {
+    } catch (error) {
+      setErrorDetail(error instanceof Error ? error.message : String(error));
       setError('delete');
     }
   };
@@ -988,6 +993,7 @@ export function RemoteProjectsSettingsSection({
     }
 
     setError(null);
+    setErrorDetail(null);
     setDefaultReposError(null);
     setIsSaving(true);
 
@@ -1035,7 +1041,8 @@ export function RemoteProjectsSettingsSection({
         t('settings.remoteProjects.saveSuccess', 'Project updated successfully')
       );
       setTimeout(() => setSuccess(null), 3000);
-    } catch {
+    } catch (error) {
+      setErrorDetail(error instanceof Error ? error.message : String(error));
       setError('save');
     } finally {
       setIsSaving(false);
@@ -1103,7 +1110,8 @@ export function RemoteProjectsSettingsSection({
             ? t('settings.remoteProjects.nameRequired')
             : error === 'delete'
               ? t('settings.remoteProjects.deleteUnconfirmed')
-              : t('settings.remoteProjects.saveError')}
+              : t('settings.remoteProjects.saveError')}{' '}
+          {errorDetail}
         </div>
       )}
 

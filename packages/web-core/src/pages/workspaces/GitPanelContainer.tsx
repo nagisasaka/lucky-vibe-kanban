@@ -1,3 +1,4 @@
+import { errorDiagnostic } from '@/shared/lib/errorDiagnostic';
 import { useTranslation } from 'react-i18next';
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { useActions } from '@/shared/hooks/useActions';
@@ -156,7 +157,8 @@ export function GitPanelContainer({
       setPushStates((prev) => ({ ...prev, [repoId]: 'error' }));
       ConfirmDialog.show({
         title: () => i18n.t('common:error'),
-        message: () => i18n.t('tasks:gitNotice.pushUnconfirmed'),
+        message: () =>
+          `${i18n.t('tasks:gitNotice.pushUnconfirmed')} ${errorDiagnostic(_err)}`,
         confirmText: () => i18n.t('common:ok'),
         showCancelButton: false,
         variant: 'destructive',

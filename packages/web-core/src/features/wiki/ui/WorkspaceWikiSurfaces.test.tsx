@@ -98,18 +98,23 @@ afterEach(() => {
 });
 
 describe('split Wiki navigation and article surfaces', () => {
-  it('withholds private Wiki load failure details', async () => {
+  it('shows translated context and original Wiki load diagnostics', async () => {
     const { controller, api } = await fixture();
-    api.snapshot.mockRejectedValue(new Error('Raw internal Wiki secret'));
+    api.snapshot.mockRejectedValue(
+      new Error('Raw internal Wiki secret <script>diagnostic</script>')
+    );
     await controller.reload();
     const article = renderToStaticMarkup(createElement(WorkspaceWikiArticle));
     expect(article).toContain('Wiki files could not be loaded.');
-    expect(article).not.toContain('Raw internal Wiki secret');
+    expect(article).toContain(
+      'Raw internal Wiki secret &lt;script&gt;diagnostic&lt;/script&gt;'
+    );
+    expect(article).not.toContain('<script>');
     const navigation = renderToStaticMarkup(
       createElement(WorkspaceWikiNavigation)
     );
     expect(navigation).toContain('Wiki files could not be loaded.');
-    expect(navigation).not.toContain('Raw internal Wiki secret');
+    expect(navigation).toContain('Raw internal Wiki secret');
   });
 
   it('renders a directory tree in the sidebar and keeps the body only in the main surface', async () => {

@@ -1,3 +1,4 @@
+import { errorDiagnostic } from '@/shared/lib/errorDiagnostic';
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -349,6 +350,7 @@ function WorkflowTemplateEditor({
     | 'saveBeforeSession'
     | null
   >(null);
+  const [runStartDetail, setRunStartDetail] = useState<string | null>(null);
   const runStartError = runStartNotice
     ? {
         repository: t('workflow.errors.repositoryRequired'),
@@ -357,7 +359,7 @@ function WorkflowTemplateEditor({
         saveBeforeRun: t('workflow.errors.saveBeforeRun'),
         notLinkedToAttempt: t('workflow.errors.notLinkedToAttempt'),
         saveBeforeSession: t('workflow.errors.saveBeforeSession'),
-      }[runStartNotice]
+      }[runStartNotice] + (runStartDetail ? ` — ${runStartDetail}` : '')
     : null;
   const [isStartingRun, setIsStartingRun] = useState(false);
   const [isPreparingAttempt, setIsPreparingAttempt] = useState(false);
@@ -391,7 +393,7 @@ function WorkflowTemplateEditor({
   const name = editor.state?.value.name ?? '';
   const description = editor.state?.value.description ?? '';
   const graphParseError = editor.parseError
-    ? t('workflow.errors.parseGraphFailed')
+    ? `${t('workflow.errors.parseGraphFailed')} ${editor.parseError}`
     : null;
   const setGraph = (next: WorkflowGraph) =>
     editor.edit((value) => ({ ...value, graph: next }));
@@ -542,6 +544,7 @@ function WorkflowTemplateEditor({
   const handleSave = async (navigateAfterCreate = true): Promise<boolean> => {
     if (!graph || readOnly) return false;
     setRunStartNotice(null);
+    setRunStartDetail(null);
     try {
       if (isLocalDraft)
         return !!(await createAttemptFromLocalDraft(
@@ -553,7 +556,10 @@ function WorkflowTemplateEditor({
       if (editor.isDirty()) setRunStartNotice('newerChanges');
       return !editor.isDirty();
     } catch (err) {
-      if (editor.isCurrent()) setRunStartNotice(getWorkflowRunErrorCode(err));
+      if (editor.isCurrent()) {
+        setRunStartDetail(errorDiagnostic(err));
+        setRunStartNotice(getWorkflowRunErrorCode(err));
+      }
       return false;
     }
   };
@@ -581,12 +587,14 @@ function WorkflowTemplateEditor({
       router_executor_config: executorConfig,
     };
     setRunStartNotice(null);
+    setRunStartDetail(null);
     setGraph(nextGraph);
     try {
       await persistWorkflowGraph(nextGraph);
       if (!editor.isCurrent() || editor.isDirty()) return;
       closeRouterConfigPanel();
     } catch (err) {
+      setRunStartDetail(errorDiagnostic(err));
       setRunStartNotice(getWorkflowRunErrorCode(err));
     }
   };
@@ -613,6 +621,7 @@ function WorkflowTemplateEditor({
 
     setIsStartingRun(true);
     setRunStartNotice(null);
+    setRunStartDetail(null);
     try {
       let repoOverrides: DraftWorkspaceRepo[] = [];
       if (!workflowAttempt.workspace_id) {
@@ -650,6 +659,7 @@ function WorkflowTemplateEditor({
       setStaleNodeIds(new Set());
       navigation.goToProjectWorkflowRun(projectId, run.id);
     } catch (err) {
+      setRunStartDetail(errorDiagnostic(err));
       setRunStartNotice(getWorkflowRunErrorCode(err));
     } finally {
       setIsStartingRun(false);
@@ -787,6 +797,7 @@ function WorkflowTemplateEditor({
   const handleGraphChange = (newGraph: WorkflowGraph) => {
     setValidationTouched(false);
     setRunStartNotice(null);
+    setRunStartDetail(null);
     setGraph(
       syncConditionBranches(
         normalizeConditionEdgeTypes(newGraph),
@@ -844,6 +855,7 @@ function WorkflowTemplateEditor({
   ) => {
     if (!graph || readOnly) return;
     setRunStartNotice(null);
+    setRunStartDetail(null);
     editor.edit((value) => ({
       ...value,
       graph: applyWorkflowNodeDataPatch(value.graph, nodeId, dataUpdates),
@@ -889,6 +901,7 @@ function WorkflowTemplateEditor({
         JSON.stringify(nextNode?.data.executor_config ?? null);
     setGraph(nextGraph);
     setRunStartNotice(null);
+    setRunStartDetail(null);
     try {
       await persistWorkflowGraph(nextGraph);
       if (!editor.isCurrent() || editor.isDirty()) return;
@@ -901,6 +914,7 @@ function WorkflowTemplateEditor({
       }
       setEditPanelNodeId(null);
     } catch (err) {
+      setRunStartDetail(errorDiagnostic(err));
       setRunStartNotice(getWorkflowRunErrorCode(err));
     }
   };
@@ -918,6 +932,7 @@ function WorkflowTemplateEditor({
     setEditPanelNodeId(null);
     closeRouterConfigPanel();
     setRunStartNotice(null);
+    setRunStartDetail(null);
 
     if (isLocalDraft) {
       setRunStartNotice('saveBeforeSession');
@@ -928,6 +943,7 @@ function WorkflowTemplateEditor({
       try {
         await persistWorkflowGraph(graph);
       } catch (err) {
+        setRunStartDetail(errorDiagnostic(err));
         setRunStartNotice(getWorkflowRunErrorCode(err));
         return;
       }
@@ -1013,6 +1029,7 @@ function WorkflowTemplateEditor({
     try {
       await persistWorkflowGraph(nextGraph);
     } catch (err) {
+      setRunStartDetail(errorDiagnostic(err));
       setRunStartNotice(getWorkflowRunErrorCode(err));
     }
   };
@@ -1047,6 +1064,7 @@ function WorkflowTemplateEditor({
     if (!graph || readOnly) return;
     setValidationTouched(false);
     setRunStartNotice(null);
+    setRunStartDetail(null);
     setSelectedEdgeId(null);
     setEdgeReconnectFocus(null);
     setEdgeActionMenu(null);
@@ -1144,6 +1162,7 @@ function WorkflowTemplateEditor({
 
     setValidationTouched(false);
     setRunStartNotice(null);
+    setRunStartDetail(null);
     setGraph(branchGraph);
     setSelectedNodeId(insertedNode.id);
     setSelectedEdgeId(null);
@@ -1260,7 +1279,7 @@ function WorkflowTemplateEditor({
 
   if (!template || !graph) {
     const message = error
-      ? t('workflow.errors.loadGuidance')
+      ? `${t('workflow.errors.loadGuidance')} ${error.message}`
       : (graphParseError ?? t('workflow.errors.draftMissing'));
     return (
       <div

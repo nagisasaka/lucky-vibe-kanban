@@ -32,10 +32,12 @@ const EditBranchNameDialogImpl = create<EditBranchNameDialogProps>(
     const [error, setError] = useState<
       'empty' | 'spaces' | 'unconfirmed' | null
     >(null);
+    const [errorDetail, setErrorDetail] = useState<string | null>(null);
 
     useEffect(() => {
       setBranchName(currentBranchName);
       setError(null);
+      setErrorDetail(null);
     }, [currentBranchName]);
 
     const renameMutation = useRenameBranch(
@@ -47,7 +49,10 @@ const EditBranchNameDialogImpl = create<EditBranchNameDialogProps>(
         } as EditBranchNameDialogResult);
         modal.hide();
       },
-      () => setError('unconfirmed')
+      (error) => {
+        setErrorDetail(error instanceof Error ? error.message : String(error));
+        setError('unconfirmed');
+      }
     );
 
     const handleConfirm = () => {
@@ -70,6 +75,7 @@ const EditBranchNameDialogImpl = create<EditBranchNameDialogProps>(
       }
 
       setError(null);
+      setErrorDetail(null);
       renameMutation.mutate(trimmedName);
     };
 
@@ -106,6 +112,7 @@ const EditBranchNameDialogImpl = create<EditBranchNameDialogProps>(
                 onChange={(e) => {
                   setBranchName(e.target.value);
                   setError(null);
+                  setErrorDetail(null);
                 }}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && !renameMutation.isPending) {
@@ -122,7 +129,8 @@ const EditBranchNameDialogImpl = create<EditBranchNameDialogProps>(
                     ? t('gitNotice.branchEmpty')
                     : error === 'spaces'
                       ? t('gitNotice.branchSpaces')
-                      : t('gitNotice.renameUnconfirmed')}
+                      : t('gitNotice.renameUnconfirmed')}{' '}
+                  {errorDetail}
                 </p>
               )}
             </div>

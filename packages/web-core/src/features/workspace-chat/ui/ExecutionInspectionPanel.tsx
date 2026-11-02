@@ -146,11 +146,15 @@ export function ExecutionInspectionPanel({
         <p className="text-warning">{t('executionInspection.missingFiles')}</p>
       )}
       {[
-        run?.error && t('executionInspection.reportedError'),
-        execution.error && t('executionInspection.loadError'),
-        execution.stop.error && t('executionInspection.stopError'),
-        response.error && t('executionInspection.responseError'),
-        steer.error && t('executionInspection.steerError'),
+        run?.error && `${t('executionInspection.reportedError')} ${run?.error}`,
+        execution.error &&
+          `${t('executionInspection.loadError')} ${execution.error?.message}`,
+        execution.stop.error &&
+          `${t('executionInspection.stopError')} ${execution.stop.error?.message}`,
+        response.error &&
+          `${t('executionInspection.responseError')} ${response.error?.message}`,
+        steer.error &&
+          `${t('executionInspection.steerError')} ${steer.error?.message}`,
       ]
         .filter(Boolean)
         .map((message, index) => (

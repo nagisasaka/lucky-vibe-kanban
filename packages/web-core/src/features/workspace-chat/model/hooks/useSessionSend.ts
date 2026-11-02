@@ -1,3 +1,4 @@
+import { errorDiagnostic } from '@/shared/lib/errorDiagnostic';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import type { ExecutorConfig, SelectedSkill } from 'shared/types';
@@ -85,8 +86,10 @@ export function useSessionSend({
     | 'submission_unconfirmed'
     | null
   >(null);
+  const [errorDetail, setErrorDetail] = useState<string | null>(null);
   useEffect(() => {
     setError(null);
+    setErrorDetail(null);
   }, [scope]);
 
   const send = useCallback(
@@ -108,6 +111,7 @@ export function useSessionSend({
       }
 
       setError(null);
+      setErrorDetail(null);
       const validationError = goalPromptError(trimmed, effectiveConfig);
       if (validationError) {
         setError(validationError);
@@ -155,8 +159,10 @@ export function useSessionSend({
             return { createdSessionId: session.id };
           } catch (e: unknown) {
             pending.update(pendingId, deliveryFailure(e));
-            if (currentScope.current === scope)
+            if (currentScope.current === scope) {
+              setErrorDetail(errorDiagnostic(e));
               setError('submission_unconfirmed');
+            }
             return null;
           }
         } else {
@@ -188,8 +194,10 @@ export function useSessionSend({
             return {};
           } catch (e: unknown) {
             pending.update(pendingId, deliveryFailure(e));
-            if (currentScope.current === scope)
+            if (currentScope.current === scope) {
+              setErrorDetail(errorDiagnostic(e));
               setError('submission_unconfirmed');
+            }
             return null;
           } finally {
             setIsSendingFollowUp(false);
@@ -211,7 +219,10 @@ export function useSessionSend({
     ]
   );
 
-  const clearError = useCallback(() => setError(null), []);
+  const clearError = useCallback(() => {
+    setError(null);
+    setErrorDetail(null);
+  }, []);
 
   return {
     send,
@@ -232,7 +243,7 @@ export function useSessionSend({
             ? t('sessionRuntime.noExecutor')
             : error === 'no_workspace'
               ? t('sessionRuntime.noWorkspace')
-              : t('sessionRuntime.submissionUnconfirmed'),
+              : `${t('sessionRuntime.submissionUnconfirmed')} ${errorDetail ?? ''}`,
     clearError,
   };
 }

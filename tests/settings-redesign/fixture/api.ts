@@ -1,5 +1,3 @@
-import { createAgentToolsFixture } from "./agent-tools";
-import { createDesignNoteFixture } from "./design-notes";
 // Browser-only fixture: no database, native files, provider or live server calls.
 export function installFixtureApi() {
   const calls: string[] = [];
@@ -10,8 +8,6 @@ export function installFixtureApi() {
   Object.defineProperty(window, "__fixtureLocaleSaves", { value: localeSaves });
   Object.defineProperty(window, "__settingsFixtureCalls", { value: calls });
   const params = new URLSearchParams(location.search);
-  const designNotes = createDesignNoteFixture(params);
-  const agentTools = createAgentToolsFixture(params);
   const role = params.get("role") ?? "admin";
   const mode = params.get("auth") ?? "basic";
   const config = {
@@ -54,14 +50,6 @@ export function installFixtureApi() {
       file_roots: ["/fixture"],
     },
   };
-  const archiveRestoreCalls: unknown[] = [];
-  Object.defineProperty(window, "__archiveRestoreCalls", {
-    value: archiveRestoreCalls,
-  });
-  const prCalls: unknown[] = [];
-  Object.defineProperty(window, "__prFixtureCalls", { value: prCalls });
-  const approvalCalls: unknown[] = [];
-  Object.defineProperty(window, "__approvalCalls", { value: approvalCalls });
   const nativeFetch = window.fetch.bind(window);
   window.fetch = async (input, init) => {
     const url = new URL(
@@ -73,10 +61,6 @@ export function installFixtureApi() {
     calls.push(path);
     const method = init?.method ?? "GET";
     const body = init?.body ? JSON.parse(String(init.body)) : {};
-    const toolsResponse = agentTools(url, method, body);
-    if (toolsResponse) return toolsResponse;
-    const noteResponse = designNotes(url, method, body);
-    if (noteResponse) return noteResponse;
     const json = (data: unknown, status = 200) =>
       Promise.resolve(
         new Response(JSON.stringify(data), {
@@ -85,65 +69,6 @@ export function installFixtureApi() {
         }),
       );
     const success = (data: unknown) => json({ success: true, data });
-    if (params.has("repo-load-error") && path === "/api/repos")
-      return json(
-        { success: false, message: "Private repository fixture secret" },
-        503,
-      );
-    if (params.has("pr") && path === "/api/repos/raw-repo/branches")
-      return success([
-        {
-          name: "feature/raw-target-原文",
-          is_current: false,
-          is_remote: false,
-        },
-      ]);
-    if (path === "/api/workspaces/raw-pr-workspace/messages/first")
-      return success("Raw initial title 原文\n\nRaw initial body 原文");
-    if (
-      path === "/api/workspaces/raw-pr-workspace/pull-requests" &&
-      method === "POST"
-    ) {
-      prCalls.push({ path, body });
-      if (params.get("pr") === "throw")
-        throw new TypeError("Raw PR secret /internal/path");
-      return json({
-        success: false,
-        message: "Raw PR secret /internal/path",
-        error_data: { type: "cli_not_logged_in", provider: "git_hub" },
-      });
-    }
-
-    if (path === "/api/approvals/raw-approval/respond" && method === "POST") {
-      approvalCalls.push(body);
-      if (params.has("approval-error"))
-        return json(
-          { success: false, message: "Raw approval provider secret" },
-          500,
-        );
-      if (params.has("approval-hold"))
-        await new Promise<void>((resolve) =>
-          Object.defineProperty(window, "__finishApproval", {
-            value: resolve,
-            configurable: true,
-          }),
-        );
-      return success(body.status);
-    }
-
-    if (path === "/api/board/issues/raw-issue/unarchive" && method === "POST") {
-      archiveRestoreCalls.push(body);
-      if (params.has("restore-lost-response"))
-        throw new Error("Raw restore transport secret");
-      return success({
-        request_id: body.request_id,
-        status: params.has("restore-uncertain") ? "uncertain" : "succeeded",
-        result: params.has("restore-uncertain")
-          ? JSON.stringify({ message: "Raw receipt secret" })
-          : "{}",
-      });
-    }
-
     if (path === "/api/access/status")
       return json({
         mode,
@@ -239,8 +164,6 @@ export function installFixtureApi() {
         403,
       );
     }
-    if (path === "/api/releases")
-      return json({ message: "fixture private release detail" }, 503);
     if (path === "/api/info")
       return success({
         config,
@@ -277,11 +200,6 @@ export function installFixtureApi() {
       return json({ message: "Private push fixture endpoint secret" }, 503);
     if (path === "/api/web-push" || path === "/api/web-push/status")
       return json({ public_key: null, registrations: [], projects: [] });
-    if (params.has("profile-load-error") && path === "/api/profiles")
-      return json(
-        { success: false, message: "Private launch profile fixture secret" },
-        403,
-      );
     if (path === "/api/profiles")
       return success({
         content: '{"executors":{"CODEX":{"DEFAULT":{}}}}',
@@ -289,129 +207,8 @@ export function installFixtureApi() {
         revision: "fixture",
         sensitive_values_included: false,
       });
-    if (
-      path === "/api/agent-settings/diff" &&
-      params.get("view") === "agent-configuration"
-    )
-      return success({
-        provider: "codex",
-        files: [
-          {
-            file_id: "native-1",
-            path: "/fixture/config.toml",
-            before: "Observed native revision (values withheld)",
-            after:
-              "Requested settings will be applied; unrelated native values are preserved.",
-            changed: true,
-          },
-        ],
-        warnings: [
-          "Persistent changes affect new provider sessions; active sessions are not restarted.",
-        ],
-      });
-    if (path === "/api/agent-settings" && params.has("configurationError"))
-      return json({
-        success: false,
-        error_data: {
-          code: params.get("configurationError"),
-          message: "PRIVATE_BODY",
-          recovery: "PRIVATE_RECOVERY",
-        },
-      });
-    if (
-      path === "/api/agent-settings" &&
-      params.get("view") === "agent-configuration"
-    )
-      return success({
-        providers: [
-          {
-            provider: "codex",
-            installed: true,
-            provider_version: "fixture",
-            executable_path: "/fixture/codex",
-            schema_revision: "schema-1",
-            capabilities: {
-              readable: true,
-              native_writable: true,
-              profile_storage: true,
-              per_run_overrides: true,
-              raw_editable: true,
-            },
-            descriptors: [
-              {
-                key: { namespace: "raw", name: "number" },
-                section: "general",
-                label: "RAW_NUMBER",
-                description: "",
-                value_type: "number",
-                control: "number",
-                options: [],
-                validation: { minimum: 2, maximum: 4 },
-                supported_scopes: ["user"],
-                capabilities: {
-                  writable: true,
-                  readable: true,
-                  resettable: true,
-                  profile_storable: true,
-                  run_override: true,
-                },
-                native_locations: [],
-                activation: "next_session",
-              },
-              {
-                key: { namespace: "common", name: "reasoning" },
-                section: "general",
-                label: "Reasoning effort",
-                description: "Default model reasoning effort.",
-                value_type: "string",
-                control: "select",
-                options: [
-                  { value: "high", label: "High" },
-                  { value: "future_option", label: "Raw future option 原文" },
-                ],
-                validation: {},
-                supported_scopes: ["user"],
-                capabilities: {
-                  writable: true,
-                  readable: true,
-                  resettable: true,
-                  profile_storable: true,
-                  run_override: true,
-                },
-                native_locations: [],
-                activation: "next_session",
-              },
-            ],
-            native_files: [
-              {
-                id: "native-1",
-                path: "/fixture/config.toml",
-                format: "toml",
-                scope: "user",
-                exists: true,
-                parse_status: "parsed",
-                revision: "revision-1",
-                writable: true,
-                raw_editable: true,
-              },
-            ],
-            effective_settings: [
-              {
-                key: { namespace: "raw", name: "number" },
-                sources: [],
-                effective_value: 2,
-                effective_source: "user",
-                warnings: [],
-              },
-            ],
-            unknown_native_nodes: [],
-            withheld_setting_keys: [],
-            limitations: [],
-            errors: [],
-          },
-        ],
-        errors: [],
-      });
+    if (path === "/api/agent-tools")
+      return success({ providers: [], errors: [] });
     if (path === "/api/agent-settings")
       return success({ providers: [], errors: [] });
     if (path === "/api/resource-coordination/snapshot")

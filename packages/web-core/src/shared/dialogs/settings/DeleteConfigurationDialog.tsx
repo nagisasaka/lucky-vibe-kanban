@@ -26,18 +26,18 @@ const DeleteConfigurationDialogImpl = create<DeleteConfigurationDialogProps>(
     const { t } = useTranslation(['settings', 'common']);
     const modal = useModal();
     const [isDeleting, setIsDeleting] = useState(false);
-    const [error, setError] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     const handleDelete = async () => {
       setIsDeleting(true);
-      setError(false);
+      setError(null);
 
       try {
         // Resolve with 'deleted' to let parent handle the deletion
         modal.resolve('deleted' as DeleteConfigurationResult);
         modal.hide();
-      } catch {
-        setError(true);
+      } catch (error) {
+        setError(error instanceof Error ? error.message : String(error));
       } finally {
         setIsDeleting(false);
       }
@@ -78,7 +78,7 @@ const DeleteConfigurationDialogImpl = create<DeleteConfigurationDialogProps>(
           {error && (
             <Alert variant="destructive">
               <AlertDescription>
-                {t('configuration.errors.delete')}
+                {t('configuration.errors.delete')} {error}
               </AlertDescription>
             </Alert>
           )}

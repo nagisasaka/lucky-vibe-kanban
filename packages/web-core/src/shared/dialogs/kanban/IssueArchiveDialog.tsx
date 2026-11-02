@@ -1,3 +1,4 @@
+import { errorDiagnostic } from '@/shared/lib/errorDiagnostic';
 import {
   receiptMessage,
   type IssueArchiveReceipt,
@@ -30,7 +31,7 @@ const Impl = create<Props>(({ projectId, issueId }) => {
   const [archiveWorkspaces, setArchiveWorkspaces] = useState(true);
   const [prepared, setPrepared] = useState<PreparedIssueArchive | null>(null);
   const [error, setError] = useState<
-    | { kind: 'prepare' | 'confirm' | 'inspect' }
+    | { kind: 'prepare' | 'confirm' | 'inspect'; detail: string }
     | { kind: 'receipt'; receipt: IssueArchiveReceipt }
     | null
   >(null);
@@ -46,8 +47,9 @@ const Impl = create<Props>(({ projectId, issueId }) => {
       .then((value) => {
         if (current) setPrepared(value);
       })
-      .catch(() => {
-        if (current) setError({ kind: 'prepare' });
+      .catch((error) => {
+        if (current)
+          setError({ kind: 'prepare', detail: errorDiagnostic(error) });
       });
     return () => {
       current = false;
@@ -95,8 +97,8 @@ const Impl = create<Props>(({ projectId, issueId }) => {
           id
         )
       );
-    } catch {
-      setError({ kind: 'confirm' });
+    } catch (error) {
+      setError({ kind: 'confirm', detail: errorDiagnostic(error) });
     } finally {
       setBusy(false);
     }
@@ -106,8 +108,8 @@ const Impl = create<Props>(({ projectId, issueId }) => {
     setBusy(true);
     try {
       accept(await issueArchiveApi.receipt(requestId));
-    } catch {
-      setError({ kind: 'inspect' });
+    } catch (error) {
+      setError({ kind: 'inspect', detail: errorDiagnostic(error) });
     } finally {
       setBusy(false);
     }
@@ -171,6 +173,7 @@ const Impl = create<Props>(({ projectId, issueId }) => {
                 : error.kind === 'confirm'
                   ? t('issueArchive.confirmUnconfirmed', { requestId })
                   : t('issueArchive.inspectError', { requestId })}
+            {error.kind !== 'receipt' && <> {error.detail}</>}
           </p>
         )}
         <DialogFooter>

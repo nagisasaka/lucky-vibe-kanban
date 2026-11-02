@@ -28,7 +28,8 @@ export function WorkspaceWorkflowPage({
         <p className="text-error" role="alert">
           {error
             ? t('workflow.repository.unavailable')
-            : t('workflow.repository.missing')}
+            : t('workflow.repository.missing')}{' '}
+          {error?.message}
         </p>
         <button className="text-brand underline" onClick={() => void refetch()}>
           {t('workflow.repository.reload')}

@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { createHmrContext } from '@/shared/lib/hmrContext';
 
 type GitOperationNotice =
@@ -11,7 +11,7 @@ type GitOperationNotice =
 
 type GitOperationsContextType = {
   error: string | null;
-  setError: (error: GitOperationNotice | null) => void;
+  setError: (error: GitOperationNotice | null, detail?: string) => void;
 };
 
 const GitOperationsContext = createHmrContext<GitOperationsContextType | null>(
@@ -24,7 +24,15 @@ export const GitOperationsProvider: React.FC<{
   children: React.ReactNode;
 }> = ({ workspaceId, children }) => {
   const { t } = useTranslation('tasks');
-  const [notice, setError] = useState<GitOperationNotice | null>(null);
+  const [notice, setNotice] = useState<GitOperationNotice | null>(null);
+  const [detail, setDetail] = useState<string | undefined>();
+  const setError = useCallback(
+    (notice: GitOperationNotice | null, detail?: string) => {
+      setNotice(notice);
+      setDetail(detail);
+    },
+    []
+  );
   const messages: Record<GitOperationNotice, string> = {
     rebase: t('gitNotice.rebaseUnconfirmed'),
     merge: t('gitNotice.mergeUnconfirmed'),
@@ -32,7 +40,9 @@ export const GitOperationsProvider: React.FC<{
     push: t('gitNotice.pushUnconfirmed'),
     targetBranch: t('gitNotice.targetUnconfirmed'),
   };
-  const error = notice ? messages[notice] : null;
+  const error = notice
+    ? `${messages[notice]}${detail ? ` — ${detail}` : ''}`
+    : null;
 
   useEffect(() => {
     setError(null);

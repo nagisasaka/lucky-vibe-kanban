@@ -170,7 +170,7 @@ export function WorkspaceFileBrowserPanel({
         ) : error ? (
           <WorkspaceFileEmptyState
             title={t('workspaceFiles.could_not_load_files')}
-            description={t('workspaceFiles.treeUnconfirmed')}
+            description={`${t('workspaceFiles.treeUnconfirmed')} ${error instanceof Error ? error.message : String(error)}`}
             action={
               <button
                 type="button"
@@ -341,7 +341,7 @@ function WorkspaceFileNodeRow({
           {error && (
             <span
               className="shrink-0 text-xs text-error"
-              title={t('workspaceFiles.directoryUnconfirmed')}
+              title={`${t('workspaceFiles.directoryUnconfirmed')} ${error.message}`}
             >
               {t('workspaceFiles.error')}
             </span>

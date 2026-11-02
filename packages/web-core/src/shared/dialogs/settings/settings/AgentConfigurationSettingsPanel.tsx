@@ -1,3 +1,4 @@
+import { errorDiagnostic } from '@/shared/lib/errorDiagnostic';
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 import {
@@ -174,6 +175,7 @@ function AgentConfigurationSettingsContent({
   const [profilesLoading, setProfilesLoading] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<AgentSettingsUiError | null>(null);
+  const [errorDetail, setErrorDetail] = useState<string | null>(null);
   const noticeMessages = {
     noChanges: t('agentConfiguration.ui.noChanges'),
     applied: t('agentConfiguration.ui.applied'),
@@ -216,6 +218,7 @@ function AgentConfigurationSettingsContent({
       const sequence = ++requestSequence.current;
       setLoading(true);
       setError(null);
+      setErrorDetail(null);
       try {
         const inventory = await machineClient.discoverAgentSettings({
           provider,
@@ -238,6 +241,7 @@ function AgentConfigurationSettingsContent({
         }
       } catch (nextError) {
         if (sequence === requestSequence.current) {
+          setErrorDetail(errorDiagnostic(nextError));
           setError(agentSettingsErrorCode(nextError));
           setLoadFailed(true);
         }
@@ -254,6 +258,7 @@ function AgentConfigurationSettingsContent({
     try {
       setProfiles(await machineClient.listAgentSettingsProfiles({ provider }));
     } catch (nextError) {
+      setErrorDetail(errorDiagnostic(nextError));
       setError(agentSettingsErrorCode(nextError));
     } finally {
       setProfilesLoading(false);
@@ -344,12 +349,14 @@ function AgentConfigurationSettingsContent({
     }
     setBusy(true);
     setError(null);
+    setErrorDetail(null);
     setNotice(null);
     try {
       const nextDiff = await machineClient.diffAgentSettings(patch);
       setDiff(nextDiff);
       setPending({ kind: 'settings', patch });
     } catch (nextError) {
+      setErrorDetail(errorDiagnostic(nextError));
       setError(agentSettingsErrorCode(nextError));
     } finally {
       setBusy(false);
@@ -360,6 +367,7 @@ function AgentConfigurationSettingsContent({
     if (!machineClient || !pending || writeBlocked) return;
     setBusy(true);
     setError(null);
+    setErrorDetail(null);
     try {
       let nextSnapshot: SettingsSnapshot;
       if (pending.kind === 'settings') {
@@ -382,6 +390,7 @@ function AgentConfigurationSettingsContent({
       await loadProfiles();
       setNotice('applied');
     } catch (nextError) {
+      setErrorDetail(errorDiagnostic(nextError));
       setError(agentSettingsErrorCode(nextError));
     } finally {
       setBusy(false);
@@ -397,6 +406,7 @@ function AgentConfigurationSettingsContent({
     setPending(null);
     setNotice(null);
     setError(null);
+    setErrorDetail(null);
   };
 
   const updateDraft = (
@@ -447,6 +457,7 @@ function AgentConfigurationSettingsContent({
     };
     setBusy(true);
     setError(null);
+    setErrorDetail(null);
     try {
       const nextDiff = await machineClient.diffAgentSettingsNativeFile({
         patch: nextPatch,
@@ -455,6 +466,7 @@ function AgentConfigurationSettingsContent({
       setDiff(nextDiff);
       setPending({ kind: 'native', patch: nextPatch });
     } catch (nextError) {
+      setErrorDetail(errorDiagnostic(nextError));
       setError(agentSettingsErrorCode(nextError));
     } finally {
       setBusy(false);
@@ -473,6 +485,7 @@ function AgentConfigurationSettingsContent({
     if (!window.confirm(t('agentConfiguration.ui.readConfirm'))) return;
     setBusy(true);
     setError(null);
+    setErrorDetail(null);
     try {
       const read = await machineClient.readAgentSettingsNativeFile({
         provider,
@@ -488,7 +501,8 @@ function AgentConfigurationSettingsContent({
       setDiff(null);
       setPending(null);
     } catch (nextError) {
-      if (mounted.current) setError(agentSettingsErrorCode(nextError));
+      if (mounted.current) setErrorDetail(errorDiagnostic(nextError));
+      setError(agentSettingsErrorCode(nextError));
     } finally {
       if (mounted.current) setBusy(false);
     }
@@ -500,6 +514,7 @@ function AgentConfigurationSettingsContent({
     if (!name?.trim()) return;
     setBusy(true);
     setError(null);
+    setErrorDetail(null);
     try {
       await machineClient.saveAgentSettingsProfile({
         type: 'capture',
@@ -520,6 +535,7 @@ function AgentConfigurationSettingsContent({
       await loadProfiles();
       setNotice('profileSaved');
     } catch (nextError) {
+      setErrorDetail(errorDiagnostic(nextError));
       setError(agentSettingsErrorCode(nextError));
     } finally {
       setBusy(false);
@@ -545,6 +561,7 @@ function AgentConfigurationSettingsContent({
       await loadProfiles();
       setNotice('duplicated');
     } catch (nextError) {
+      setErrorDetail(errorDiagnostic(nextError));
       setError(agentSettingsErrorCode(nextError));
     } finally {
       setBusy(false);
@@ -570,6 +587,7 @@ function AgentConfigurationSettingsContent({
       await loadProfiles();
       setNotice('renamed');
     } catch (nextError) {
+      setErrorDetail(errorDiagnostic(nextError));
       setError(agentSettingsErrorCode(nextError));
     } finally {
       setBusy(false);
@@ -595,6 +613,7 @@ function AgentConfigurationSettingsContent({
       await loadProfiles();
       setNotice('deleted');
     } catch (nextError) {
+      setErrorDetail(errorDiagnostic(nextError));
       setError(agentSettingsErrorCode(nextError));
     } finally {
       setBusy(false);
@@ -614,12 +633,14 @@ function AgentConfigurationSettingsContent({
     };
     setBusy(true);
     setError(null);
+    setErrorDetail(null);
     try {
       const nextDiff =
         await machineClient.previewAgentSettingsProfileApply(request);
       setDiff(nextDiff);
       setPending({ kind: 'profile', preview: request });
     } catch (nextError) {
+      setErrorDetail(errorDiagnostic(nextError));
       setError(agentSettingsErrorCode(nextError));
     } finally {
       setBusy(false);
@@ -644,6 +665,7 @@ function AgentConfigurationSettingsContent({
     if (!targetName?.trim()) return;
     setBusy(true);
     setError(null);
+    setErrorDetail(null);
     try {
       const preview = await machineClient.previewAgentSettingsProfileCopy({
         source: { id: profile.id, expected_revision: profile.revision },
@@ -656,6 +678,7 @@ function AgentConfigurationSettingsContent({
       });
       setCopyPreview(preview);
     } catch (nextError) {
+      setErrorDetail(errorDiagnostic(nextError));
       setError(agentSettingsErrorCode(nextError));
     } finally {
       setBusy(false);
@@ -674,6 +697,7 @@ function AgentConfigurationSettingsContent({
       await loadProfiles();
       setNotice('copied');
     } catch (nextError) {
+      setErrorDetail(errorDiagnostic(nextError));
       setError(agentSettingsErrorCode(nextError));
     } finally {
       setBusy(false);
@@ -817,7 +841,8 @@ function AgentConfigurationSettingsContent({
           className="rounded-sm border border-error/40 bg-error/10 p-3 text-sm text-error"
           role="alert"
         >
-          {t('agentConfiguration.errors.nativeInvalid')}
+          {t('agentConfiguration.errors.nativeInvalid')} {item.message}{' '}
+          {item.recovery} {item.file_id} {item.setting_key}
         </div>
       ))}
     </SettingsCard>
@@ -1282,7 +1307,7 @@ function AgentConfigurationSettingsContent({
           role="alert"
         >
           <WarningCircleIcon className="mt-0.5 size-icon-sm shrink-0" />
-          {errorMessages[error]}
+          {errorMessages[error]} {errorDetail}
         </div>
       )}
       {notice && (
@@ -1418,7 +1443,7 @@ function NativeFileRow({
         </div>
         {file.error && (
           <div className="text-xs text-error">
-            {t('agentConfiguration.errors.nativeInvalid')}
+            {t('agentConfiguration.errors.nativeInvalid')} {file.error}
           </div>
         )}
       </div>

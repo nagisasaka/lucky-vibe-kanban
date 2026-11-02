@@ -1,7 +1,6 @@
 import i18n from '@/i18n/config';
 
-// Only known LVK messages become UI text. Provider bodies and unknown server
-// errors must not expose secrets or internal details on the authentication screen.
+// Translate owned explanations while preserving original diagnostic text.
 const messages = {
   'Account is not active': 'auth.errors.notActive',
   'Administrator required': 'auth.errors.operatorRequired',
@@ -114,10 +113,13 @@ function accessErrorKey(message: unknown, status: number): AccessNoticeKey {
   return 'auth.errors.requestFailed';
 }
 
-// Keep only a trusted reason, never the provider body or a translated snapshot.
+// Keep the reason separate so the explanation follows live locale changes.
 export class AccessRequestError extends Error {
-  constructor(readonly notice: AccessNoticeKey) {
-    super(notice);
+  constructor(
+    readonly notice: AccessNoticeKey,
+    readonly detail?: string
+  ) {
+    super(detail ?? notice);
   }
 }
 
@@ -127,17 +129,30 @@ export function toAccessRequestError(
 ): AccessRequestError {
   return error instanceof AccessRequestError
     ? error
-    : new AccessRequestError(fallback);
+    : new AccessRequestError(
+        fallback,
+        error instanceof Error
+          ? error.message
+          : typeof error === 'string'
+            ? error
+            : undefined
+      );
 }
 
 export function accessRequestFailure(message: unknown, status: number) {
-  return new AccessRequestError(accessErrorKey(message, status));
+  return new AccessRequestError(
+    accessErrorKey(message, status),
+    typeof message === 'string' ? message : undefined
+  );
 }
 
 export function accessErrorNotice(error: AccessRequestError): string {
-  return i18n.t(error.notice, { ns: 'settings' });
+  const explanation = i18n.t(error.notice, { ns: 'settings' });
+  return error.detail && error.detail !== explanation
+    ? `${explanation} — ${error.detail}`
+    : explanation;
 }
 
 export function accessErrorMessage(message: unknown, status: number): string {
-  return i18n.t(accessErrorKey(message, status), { ns: 'settings' });
+  return accessErrorNotice(accessRequestFailure(message, status));
 }

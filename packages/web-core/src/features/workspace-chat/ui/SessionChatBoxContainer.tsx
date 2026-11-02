@@ -1545,7 +1545,8 @@ function InteractiveSessionChatBox(props: SessionChatBoxContainerProps) {
       />
       {steerMutation.error && (
         <p role="alert" className="text-error">
-          {t('tasks:sessionRuntime.steerUnconfirmed')}
+          {t('tasks:sessionRuntime.steerUnconfirmed')}{' '}
+          {steerMutation.error.message}
         </p>
       )}
       {notifiedRunId && canonicalTimeline && !notifiedRun && (
@@ -1699,7 +1700,7 @@ function InteractiveSessionChatBox(props: SessionChatBoxContainerProps) {
                 isSubmitting: isApproving || isDenying,
                 isTimedOut: isApprovalTimedOut,
                 error: denyError
-                  ? t('tasks:approval.responseUnconfirmed')
+                  ? `${t('tasks:approval.responseUnconfirmed')} ${denyError}`
                   : null,
               }
             : undefined
@@ -1713,7 +1714,7 @@ function InteractiveSessionChatBox(props: SessionChatBoxContainerProps) {
                 isSubmitting: isAnswering,
                 isTimedOut: isApprovalTimedOut,
                 error: answerError
-                  ? t('tasks:approval.responseUnconfirmed')
+                  ? `${t('tasks:approval.responseUnconfirmed')} ${answerError}`
                   : null,
               }
             : undefined

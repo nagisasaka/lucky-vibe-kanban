@@ -375,7 +375,7 @@ export function KanbanIssuePanelContainer({
   }, [displayData.assigneeIds, membersWithProfilesById]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   // Save status for description (shown in WYSIWYG toolbar)
   const [descriptionSaveStatus, setDescriptionSaveStatus] = useState<
@@ -488,7 +488,7 @@ export function KanbanIssuePanelContainer({
       field: K,
       value: IssueFormData[K]
     ) => {
-      setSubmitError(false);
+      setSubmitError(null);
 
       // Create mode: update in-panel form state and composer draft.
       if (kanbanCreateMode) {
@@ -659,7 +659,7 @@ export function KanbanIssuePanelContainer({
     if (!displayData.title.trim()) return;
     if (mode === 'create' && !contextPresets.data) return;
 
-    setSubmitError(false);
+    setSubmitError(null);
     setIsSubmitting(true);
     try {
       if (mode === 'create') {
@@ -759,7 +759,7 @@ export function KanbanIssuePanelContainer({
       }
     } catch (error) {
       console.error('Failed to save issue:', error);
-      setSubmitError(true);
+      setSubmitError(error instanceof Error ? error.message : String(error));
     } finally {
       setIsSubmitting(false);
     }
@@ -785,7 +785,7 @@ export function KanbanIssuePanelContainer({
   ]);
 
   useEffect(() => {
-    setSubmitError(false);
+    setSubmitError(null);
   }, [mode, selectedKanbanIssueId, projectId]);
 
   const handleCmdEnterSubmit = useCallback(() => {
@@ -900,8 +900,12 @@ export function KanbanIssuePanelContainer({
         />
       )}
       isSubmitting={isSubmitting || (mode === 'create' && !contextPresets.data)}
-      submitError={submitError ? t('kanban.issueSaveUnconfirmed') : null}
-      onDismissSubmitError={() => setSubmitError(false)}
+      submitError={
+        submitError
+          ? `${t('kanban.issueSaveUnconfirmed')} ${submitError}`
+          : null
+      }
+      onDismissSubmitError={() => setSubmitError(null)}
       descriptionSaveStatus={
         mode === 'edit' ? descriptionSaveStatus : undefined
       }
@@ -916,7 +920,7 @@ export function KanbanIssuePanelContainer({
         <CardContextSection
           description={displayData.description ?? ''}
           pipelines={contextPresets.data ?? []}
-          error={contextPresets.isError}
+          error={contextPresets.error?.message}
           onRetry={() => void contextPresets.refetch()}
           disabled={isSubmitting}
           onDescriptionChange={(description) =>

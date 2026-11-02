@@ -60,6 +60,7 @@ export interface WorkspaceTargetDialogProps {
 type PendingAction = 'browse' | 'inspect' | 'branches' | null;
 type DialogError = {
   scope: 'path' | 'branch';
+  detail?: string;
   code: 'loadBranches' | 'pathRequired' | 'inspect' | 'browse';
 };
 
@@ -131,13 +132,14 @@ const WorkspaceTargetDialogImpl = create<WorkspaceTargetDialogProps>(
               ? preferredBranch
               : null
           );
-        } catch {
+        } catch (error) {
           if (requestId !== requestIdRef.current) return;
           setBranches([]);
           setTargetBranch(null);
           setError({
             scope: 'branch',
             code: 'loadBranches',
+            detail: error instanceof Error ? error.message : String(error),
           });
         } finally {
           if (requestId === requestIdRef.current) {
@@ -203,11 +205,12 @@ const WorkspaceTargetDialogImpl = create<WorkspaceTargetDialogProps>(
           if (nextMode === 'worktree') {
             await loadBranches(nextInspection.repo, preferredBranch);
           }
-        } catch {
+        } catch (error) {
           if (requestId !== requestIdRef.current) return;
           setError({
             scope: 'path',
             code: 'inspect',
+            detail: error instanceof Error ? error.message : String(error),
           });
         } finally {
           if (requestId === requestIdRef.current) {
@@ -274,11 +277,12 @@ const WorkspaceTargetDialogImpl = create<WorkspaceTargetDialogProps>(
 
         setPath(selectedPath);
         await inspectPath(selectedPath);
-      } catch {
+      } catch (error) {
         if (requestId !== requestIdRef.current) return;
         setError({
           scope: 'path',
           code: 'browse',
+          detail: error instanceof Error ? error.message : String(error),
         });
       } finally {
         if (requestId === requestIdRef.current) {
@@ -437,7 +441,8 @@ const WorkspaceTargetDialogImpl = create<WorkspaceTargetDialogProps>(
               ) : null}
               {error?.scope === 'path' ? (
                 <p className="text-xs text-error" role="alert">
-                  {t(`createMode.workspaceDialog.errors.${error.code}`)}
+                  {t(`createMode.workspaceDialog.errors.${error.code}`)}{' '}
+                  {error.detail}
                 </p>
               ) : null}
             </div>
@@ -577,7 +582,8 @@ const WorkspaceTargetDialogImpl = create<WorkspaceTargetDialogProps>(
                 )}
                 {error?.scope === 'branch' ? (
                   <p className="text-xs text-error" role="alert">
-                    {t(`createMode.workspaceDialog.errors.${error.code}`)}
+                    {t(`createMode.workspaceDialog.errors.${error.code}`)}{' '}
+                    {error.detail}
                   </p>
                 ) : null}
               </div>

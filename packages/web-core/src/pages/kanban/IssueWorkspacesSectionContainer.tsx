@@ -1,3 +1,4 @@
+import { errorDiagnostic } from '@/shared/lib/errorDiagnostic';
 import i18n from '@/i18n/config';
 import { isLocalRemoteApiEnabled } from '@/shared/lib/remoteApi';
 import { useMemo, useCallback } from 'react';
@@ -231,10 +232,11 @@ export function IssueWorkspacesSectionContainer({
       if (result === 'confirmed') {
         try {
           await workspacesApi.unlinkFromIssue(localWorkspaceId);
-        } catch {
+        } catch (error) {
           ConfirmDialog.show({
             title: t('common:error'),
-            message: () => i18n.t('workspaces.unlinkError', { ns: 'common' }),
+            message: () =>
+              `${i18n.t('workspaces.unlinkError', { ns: 'common' })} ${errorDiagnostic(error)}`,
             confirmText: t('common:ok'),
             showCancelButton: false,
           });
@@ -281,10 +283,11 @@ export function IssueWorkspacesSectionContainer({
         if (result.unlinkFromIssue) {
           await workspacesApi.unlinkFromIssue(localWorkspaceId);
         }
-      } catch {
+      } catch (error) {
         ConfirmDialog.show({
           title: t('common:error'),
-          message: () => i18n.t('workspaces.deleteError', { ns: 'common' }),
+          message: () =>
+            `${i18n.t('workspaces.deleteError', { ns: 'common' })} ${errorDiagnostic(error)}`,
           confirmText: t('common:ok'),
           showCancelButton: false,
         });

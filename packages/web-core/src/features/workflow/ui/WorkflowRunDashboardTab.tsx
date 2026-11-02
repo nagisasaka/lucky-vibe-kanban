@@ -81,6 +81,7 @@ export function WorkflowRunDashboardTab({
   const [actionError, setActionError] = useState<
     'unavailable' | 'unconfirmed' | null
   >(null);
+  const [actionDetail, setActionDetail] = useState<string | null>(null);
   const formatDuration = (start: string | null, end: string | null) => {
     return formatWorkflowDuration(start, end, t, locale);
   };
@@ -137,13 +138,16 @@ export function WorkflowRunDashboardTab({
 
   const handleCancelRun = async () => {
     if (!canCancelWorkflowRun(run, runtimeView)) {
+      setActionDetail(null);
       setActionError('unavailable');
       return;
     }
     setActionError(null);
+    setActionDetail(null);
     try {
       await mutations.cancelRun(run.id);
-    } catch {
+    } catch (error) {
+      setActionDetail(error instanceof Error ? error.message : String(error));
       setActionError('unconfirmed');
     }
   };
@@ -151,13 +155,16 @@ export function WorkflowRunDashboardTab({
   const handleRetryNode = async (nodeId: string) => {
     const work = getWorkflowNodeWork(runtimeView, nodeId);
     if (!getWorkflowNodeActionGate(work).canRetry) {
+      setActionDetail(null);
       setActionError('unavailable');
       return;
     }
     setActionError(null);
+    setActionDetail(null);
     try {
       await mutations.retryNode({ runId: run.id, nodeId });
-    } catch {
+    } catch (error) {
+      setActionDetail(error instanceof Error ? error.message : String(error));
       setActionError('unconfirmed');
     }
   };
@@ -167,17 +174,20 @@ export function WorkflowRunDashboardTab({
       !getWorkflowNodeActionGate(getWorkflowNodeWork(runtimeView, nodeId))
         .canApprove
     ) {
+      setActionDetail(null);
       setActionError('unavailable');
       return;
     }
     setActionError(null);
+    setActionDetail(null);
     try {
       await mutations.approveNode({
         runId: run.id,
         nodeId,
         payload: {},
       });
-    } catch {
+    } catch (error) {
+      setActionDetail(error instanceof Error ? error.message : String(error));
       setActionError('unconfirmed');
     }
   };
@@ -187,17 +197,20 @@ export function WorkflowRunDashboardTab({
       !getWorkflowNodeActionGate(getWorkflowNodeWork(runtimeView, nodeId))
         .canReject
     ) {
+      setActionDetail(null);
       setActionError('unavailable');
       return;
     }
     setActionError(null);
+    setActionDetail(null);
     try {
       await mutations.rejectNode({
         runId: run.id,
         nodeId,
         payload: {},
       });
-    } catch {
+    } catch (error) {
+      setActionDetail(error instanceof Error ? error.message : String(error));
       setActionError('unconfirmed');
     }
   };
@@ -506,7 +519,8 @@ export function WorkflowRunDashboardTab({
                 <p className="text-xs text-error" role="alert">
                   {actionError === 'unavailable'
                     ? t('workflow.runCanvas.actionUnavailable')
-                    : t('workflow.repository.actionUnconfirmed')}
+                    : t('workflow.repository.actionUnconfirmed')}{' '}
+                  {actionDetail}
                 </p>
               ) : null}
 

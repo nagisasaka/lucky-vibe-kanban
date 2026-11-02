@@ -1,3 +1,4 @@
+import { errorDiagnostic } from '@/shared/lib/errorDiagnostic';
 import i18n from '@/i18n/config';
 import {
   mapGhCliErrorToUi,
@@ -44,7 +45,7 @@ describe('Git inspection', () => {
   });
 });
 
-it('keeps CLI recovery categories and hides arbitrary setup bodies in both locales', () => {
+it('keeps CLI recovery categories and original setup diagnostics in both locales', () => {
   for (const language of ['en', 'ja']) {
     const t = i18n.getFixedT(language, 'tasks');
     expect(mapGhCliErrorToUi('BREW_MISSING', t).variant).toBe('homebrew');
@@ -55,8 +56,7 @@ it('keeps CLI recovery categories and hides arbitrary setup bodies in both local
       { OTHER: { message: 'Raw setup secret /internal/path' } },
       t
     );
-    expect(unknown).toEqual(mapGhCliErrorToUi(null, t));
-    expect(unknown.message).not.toContain('Raw setup secret');
+    expect(unknown.message).toContain('Raw setup secret');
     expect(unknown.message).not.toContain('githubCliNotice.');
     expect(unknown.message).toContain(
       language === 'ja' ? '確認できません' : 'could not be confirmed'
@@ -65,7 +65,14 @@ it('keeps CLI recovery categories and hides arbitrary setup bodies in both local
   }
 });
 
-it('formats semantic PR workspace failures in the current locale without exposing provider bodies', () => {
+it('formats semantic PR workspace failures with original diagnostics', () => {
+  expect(
+    errorDiagnostic(
+      Object.assign(new Error('git stderr details'), {
+        error_data: { type: 'remote_error' },
+      })
+    )
+  ).toContain('git stderr details');
   const failure = new WorkspaceFromPrFailure({
     type: 'auth_failed',
     message: 'Raw auth secret /internal/path',
@@ -83,7 +90,7 @@ it('formats semantic PR workspace failures in the current locale without exposin
         'create',
         t
       )
-    ).not.toContain('Raw branch secret');
+    ).toContain('Raw branch secret');
     expect(
       workspaceFromPrNotice(
         { type: 'cli_not_installed', provider: 'git_hub' },
@@ -100,7 +107,7 @@ it('formats semantic PR workspace failures in the current locale without exposin
       'createWorkspaceFromPr.'
     );
   }
-  expect(failure.message).toBe('auth_failed');
+  expect(failure.message).toBe('Raw auth secret /internal/path');
   expect(new Error('Raw auth secret') instanceof WorkspaceFromPrFailure).toBe(
     false
   );

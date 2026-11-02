@@ -1,3 +1,4 @@
+import { errorDiagnostic } from '@/shared/lib/errorDiagnostic';
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { create, useModal } from '@ebay/nice-modal-react';
@@ -67,6 +68,7 @@ const ScriptFixerDialogImpl = create<ScriptFixerDialogProps>(
     const [error, setError] = useState<
       'loadFailed' | 'saveUnconfirmed' | 'runUnconfirmed' | null
     >(null);
+    const [errorDetail, setErrorDetail] = useState<string | null>(null);
     // Track session ID locally so we can update it after starting a script
     const [activeSessionId, setActiveSessionId] = useState<string | undefined>(
       sessionId
@@ -136,6 +138,7 @@ const ScriptFixerDialogImpl = create<ScriptFixerDialogProps>(
       let cancelled = false;
       setIsLoadingRepo(true);
       setError(null);
+      setErrorDetail(null);
 
       (async () => {
         try {
@@ -154,6 +157,7 @@ const ScriptFixerDialogImpl = create<ScriptFixerDialogProps>(
           setScript(scriptContent);
           setOriginalScript(scriptContent);
         } catch (err) {
+          setErrorDetail(errorDiagnostic(err));
           if (cancelled) return;
           setError('loadFailed');
         } finally {
@@ -184,6 +188,7 @@ const ScriptFixerDialogImpl = create<ScriptFixerDialogProps>(
 
       setIsSaving(true);
       setError(null);
+      setErrorDetail(null);
 
       try {
         // Only send the field being edited - other fields will be preserved by the backend
@@ -206,6 +211,7 @@ const ScriptFixerDialogImpl = create<ScriptFixerDialogProps>(
         modal.resolve({ action: 'saved' } as ScriptFixerDialogResult);
         modal.hide();
       } catch (err) {
+        setErrorDetail(errorDiagnostic(err));
         setError('saveUnconfirmed');
       } finally {
         setIsSaving(false);
@@ -217,6 +223,7 @@ const ScriptFixerDialogImpl = create<ScriptFixerDialogProps>(
 
       setIsTesting(true);
       setError(null);
+      setErrorDetail(null);
 
       try {
         // Only send the field being edited - other fields will be preserved by the backend
@@ -264,6 +271,7 @@ const ScriptFixerDialogImpl = create<ScriptFixerDialogProps>(
         // Keep dialog open so user can see the new execution logs
         // The logs will update automatically via useLogStream/useExecutionProcesses
       } catch (err) {
+        setErrorDetail(errorDiagnostic(err));
         setError('runUnconfirmed');
       } finally {
         setIsTesting(false);
@@ -405,7 +413,7 @@ const ScriptFixerDialogImpl = create<ScriptFixerDialogProps>(
             {/* Error display */}
             {error && (
               <div role="alert" className="text-destructive text-sm">
-                {t(`scriptFixer.errors.${error}`)}
+                {t(`scriptFixer.errors.${error}`)} {errorDetail}
               </div>
             )}
           </div>

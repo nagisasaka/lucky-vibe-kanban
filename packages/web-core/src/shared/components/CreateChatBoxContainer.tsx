@@ -509,7 +509,7 @@ export function CreateChatBoxContainer({
             !hasSelectedBranch
           ? t('createMode.errors.branchRequired')
           : createWorkspace.error
-            ? t('createMode.errors.createUnconfirmed')
+            ? `${t('createMode.errors.createUnconfirmed')} ${createWorkspace.error.message}`
             : null;
 
   // Wait for initial value to be applied before rendering

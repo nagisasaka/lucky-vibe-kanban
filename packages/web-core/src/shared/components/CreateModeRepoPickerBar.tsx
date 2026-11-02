@@ -87,6 +87,7 @@ export function CreateModeRepoPickerBar({
     | 'noRecentRepositories'
     | null
   >(null);
+  const [errorDetail, setErrorDetail] = useState<string | null>(null);
   const [setupHintDismissed, setSetupHintDismissed] = useState(false);
   const isBusy = pendingAction !== null;
 
@@ -118,11 +119,13 @@ export function CreateModeRepoPickerBar({
   const runPickerAction = useCallback(
     async (action: Exclude<PendingAction, null>, run: () => Promise<void>) => {
       setPickerError(null);
+      setErrorDetail(null);
       setPendingAction(action);
 
       try {
         await run();
-      } catch {
+      } catch (error) {
+        setErrorDetail(error instanceof Error ? error.message : String(error));
         setPickerError(action);
       } finally {
         setPendingAction(null);
@@ -397,7 +400,9 @@ export function CreateModeRepoPickerBar({
       )}
       {pickerError && (
         <div className="mt-half rounded-sm border border-error/30 bg-error/10 px-base py-half">
-          <p className="text-xs text-error">{pickerNotices[pickerError]}</p>
+          <p className="text-xs text-error">
+            {pickerNotices[pickerError]} {errorDetail}
+          </p>
         </div>
       )}
     </div>

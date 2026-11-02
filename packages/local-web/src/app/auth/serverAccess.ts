@@ -1,6 +1,7 @@
 import {
   AccessRequestError,
   accessRequestFailure,
+  toAccessRequestError,
 } from '@/shared/lib/accessErrorMessage';
 import { setLocalServerUserId } from '@/shared/lib/localIdentity';
 export interface AccessStatus {
@@ -22,12 +23,12 @@ export async function loadAccessStatus(): Promise<AccessStatus> {
   const response = await rawFetch('/api/access/status', {
     credentials: 'same-origin',
     cache: 'no-store',
-  }).catch(() => {
-    throw new AccessRequestError('auth.errors.networkFailed');
+  }).catch((error) => {
+    throw toAccessRequestError(error, 'auth.errors.networkFailed');
   });
   if (!response.ok) throw new AccessRequestError('auth.errors.statusFailed');
-  status = (await response.json().catch(() => {
-    throw new AccessRequestError('auth.errors.statusFailed');
+  status = (await response.json().catch((error) => {
+    throw toAccessRequestError(error, 'auth.errors.statusFailed');
   })) as AccessStatus;
   if (status.user) setLocalServerUserId(status.user.id);
   return status;
@@ -89,8 +90,8 @@ export async function accessRequest<T>(
     credentials: 'same-origin',
     headers: requestHeaders,
     ...(value === undefined ? {} : { body: JSON.stringify(value) }),
-  }).catch(() => {
-    throw new AccessRequestError('auth.errors.networkFailed');
+  }).catch((error) => {
+    throw toAccessRequestError(error, 'auth.errors.networkFailed');
   });
   if (!response.ok) {
     const error = await response.json().catch(() => ({}));
@@ -99,8 +100,8 @@ export async function accessRequest<T>(
   return (
     response.status === 204
       ? undefined
-      : await response.json().catch(() => {
-          throw accessRequestFailure(undefined, response.status);
+      : await response.json().catch((error) => {
+          throw toAccessRequestError(error, 'auth.errors.requestFailed');
         })
   ) as T;
 }

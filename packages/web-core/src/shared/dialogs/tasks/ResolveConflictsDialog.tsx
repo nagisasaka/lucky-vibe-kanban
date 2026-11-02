@@ -1,3 +1,4 @@
+import { errorDiagnostic } from '@/shared/lib/errorDiagnostic';
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -121,6 +122,7 @@ const ResolveConflictsDialogImpl = create<ResolveConflictsDialogProps>(
       useState<ExecutorProfileId | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<'session' | 'unconfirmed' | null>(null);
+    const [errorDetail, setErrorDetail] = useState<string | null>(null);
 
     const effectiveProfile = userSelectedProfile ?? resolvedDefaultProfile;
     const canSubmit = Boolean(effectiveProfile && !isSubmitting);
@@ -143,6 +145,7 @@ const ResolveConflictsDialogImpl = create<ResolveConflictsDialogProps>(
 
       setIsSubmitting(true);
       setError(null);
+      setErrorDetail(null);
 
       try {
         let targetSessionId = selectedSessionId;
@@ -198,6 +201,7 @@ const ResolveConflictsDialogImpl = create<ResolveConflictsDialogProps>(
         } as ResolveConflictsDialogResult);
         modal.hide();
       } catch (err) {
+        setErrorDetail(errorDiagnostic(err));
         console.error('Failed to resolve conflicts:', err);
         setError('unconfirmed');
       } finally {
@@ -280,7 +284,8 @@ const ResolveConflictsDialogImpl = create<ResolveConflictsDialogProps>(
               <div className="text-sm text-destructive">
                 {error === 'session'
                   ? t('gitNotice.sessionUnconfirmed')
-                  : t('gitNotice.conflictUnconfirmed')}
+                  : t('gitNotice.conflictUnconfirmed')}{' '}
+                {errorDetail}
               </div>
             )}
 

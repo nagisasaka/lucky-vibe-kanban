@@ -25,6 +25,7 @@ export function GithubCredentialsSettings({
     'saved' | 'checked' | 'removed' | null
   >(null);
   const [error, setError] = useState<'forbidden' | 'unconfirmed' | null>(null);
+  const [errorDetail, setErrorDetail] = useState<string | null>(null);
   const repository = selected || query.data?.[0]?.repository || '';
   const configured =
     query.data?.find((entry) => entry.repository === repository)?.configured ??
@@ -33,6 +34,7 @@ export function GithubCredentialsSettings({
     setBusy(true);
     setMessage(null);
     setError(null);
+    setErrorDetail(null);
     try {
       if (action === 'save') {
         await client.saveGithubCredential(repoId, { repository, token });
@@ -48,6 +50,7 @@ export function GithubCredentialsSettings({
       }
       await query.refetch();
     } catch (cause) {
+      setErrorDetail(cause instanceof Error ? cause.message : String(cause));
       setError(
         cause instanceof ApiError && cause.statusCode === 403
           ? 'forbidden'
@@ -76,7 +79,7 @@ export function GithubCredentialsSettings({
       {query.isLoading && <p role="status">{t('githubCredentials.loading')}</p>}
       {query.isError && (
         <p role="alert" className="text-error">
-          {t('githubCredentials.loadFailed')}
+          {t('githubCredentials.loadFailed')} {query.error?.message}
         </p>
       )}
       {query.data?.length === 0 && (
@@ -95,6 +98,7 @@ export function GithubCredentialsSettings({
                 setToken('');
                 setMessage(null);
                 setError(null);
+                setErrorDetail(null);
               }}
             >
               {query.data?.map((entry) => (
@@ -176,7 +180,8 @@ export function GithubCredentialsSettings({
         <p role="alert" className="text-sm text-error">
           {error === 'forbidden'
             ? t('githubCredentials.forbidden')
-            : t('githubCredentials.operationFailed')}
+            : t('githubCredentials.operationFailed')}{' '}
+          {errorDetail}
         </p>
       )}
     </SettingsCard>

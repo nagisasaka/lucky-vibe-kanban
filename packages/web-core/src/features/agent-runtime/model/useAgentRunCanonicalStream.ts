@@ -32,6 +32,7 @@ export function useAgentRunCanonicalStream(
   const [error, setError] = useState<
     'executionUpdate' | 'executionFormat' | 'executionConnection' | null
   >(null);
+  const [errorDetail, setErrorDetail] = useState<string | null>(null);
   const timelineRef = useRef<CanonicalAgentTimeline | null>(null);
   const retryTimerRef = useRef<number | null>(null);
   const retryAttemptRef = useRef(0);
@@ -50,6 +51,7 @@ export function useAgentRunCanonicalStream(
       setIsConnected(false);
       setIsInitialized(false);
       setError(null);
+      setErrorDetail(null);
       return;
     }
 
@@ -80,6 +82,7 @@ export function useAgentRunCanonicalStream(
     setIsInitialized(false);
     setIsConnected(false);
     setError(null);
+    setErrorDetail(null);
     retryAttemptRef.current = 0;
 
     const scheduleReconnect = () => {
@@ -125,6 +128,7 @@ export function useAgentRunCanonicalStream(
           retryAttemptRef.current = 0;
           setIsConnected(true);
           setError(null);
+          setErrorDetail(null);
         };
         socket.onmessage = (message) => {
           if (cancelled) return;
@@ -153,6 +157,7 @@ export function useAgentRunCanonicalStream(
                 );
                 break;
               case 'error':
+                setErrorDetail(parsed.data.message);
                 setError('executionUpdate');
                 return;
             }
@@ -165,11 +170,17 @@ export function useAgentRunCanonicalStream(
               schedulePublish();
             }
           } catch (parseError) {
+            setErrorDetail(
+              parseError instanceof Error
+                ? parseError.message
+                : String(parseError)
+            );
             setError('executionFormat');
           }
         };
         socket.onerror = () => {
           if (cancelled) return;
+          setErrorDetail(null);
           setError('executionConnection');
         };
         socket.onclose = () => {
@@ -185,6 +196,11 @@ export function useAgentRunCanonicalStream(
       } catch (connectError) {
         if (cancelled) return;
         setIsConnected(false);
+        setErrorDetail(
+          connectError instanceof Error
+            ? connectError.message
+            : String(connectError)
+        );
         setError('executionConnection');
         scheduleReconnect();
       }
@@ -208,6 +224,8 @@ export function useAgentRunCanonicalStream(
     timeline,
     isConnected,
     isInitialized,
-    error: error ? t(`streams.${error}`) : null,
+    error: error
+      ? `${t(`streams.${error}`)}${errorDetail ? ` — ${errorDetail}` : ''}`
+      : null,
   };
 }

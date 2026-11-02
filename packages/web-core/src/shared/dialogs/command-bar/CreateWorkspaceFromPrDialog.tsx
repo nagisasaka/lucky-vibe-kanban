@@ -1,3 +1,4 @@
+import { errorDiagnostic } from '@/shared/lib/errorDiagnostic';
 import {
   WorkspaceFromPrFailure,
   workspaceFromPrNotice,
@@ -112,7 +113,7 @@ const CreateWorkspaceFromPrDialogImpl =
       prsResult?.success === false
         ? workspaceFromPrNotice(prsResult.error, 'load', t)
         : prsError
-          ? workspaceFromPrNotice(undefined, 'load', t)
+          ? `${workspaceFromPrNotice(undefined, 'load', t)} ${errorDiagnostic(prsError)}`
           : null;
 
     const createMutation = useMutation({
@@ -137,7 +138,7 @@ const CreateWorkspaceFromPrDialogImpl =
         });
         if (!result.success) {
           if (result.error) throw new WorkspaceFromPrFailure(result.error);
-          throw new Error('create-from-pr-unconfirmed');
+          throw new Error(result.message ?? 'create-from-pr-unconfirmed');
         }
         return result.data;
       },
@@ -339,6 +340,9 @@ const CreateWorkspaceFromPrDialogImpl =
                     : undefined,
                   'create',
                   t
+                )}
+                {!(createMutation.error instanceof WorkspaceFromPrFailure) && (
+                  <> {errorDiagnostic(createMutation.error)}</>
                 )}
               </div>
             )}

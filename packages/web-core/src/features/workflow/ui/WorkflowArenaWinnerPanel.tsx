@@ -40,6 +40,7 @@ export function WorkflowArenaWinnerPanel({
     useWorkflowRunMutations();
   const { invalidateGroup } = useArenaInvalidators();
   const [actionError, setActionError] = useState(false);
+  const [actionDetail, setActionDetail] = useState<string | null>(null);
   const [selectingWorkspaceId, setSelectingWorkspaceId] = useState<
     string | null
   >(null);
@@ -62,6 +63,7 @@ export function WorkflowArenaWinnerPanel({
 
   const handleSelect = async (workspaceId: string) => {
     setActionError(false);
+    setActionDetail(null);
     setSelectingWorkspaceId(workspaceId);
     try {
       await selectArenaWinner({
@@ -72,7 +74,8 @@ export function WorkflowArenaWinnerPanel({
       if (arenaGroupId) {
         invalidateGroup(arenaGroupId);
       }
-    } catch {
+    } catch (error) {
+      setActionDetail(error instanceof Error ? error.message : String(error));
       setActionError(true);
     } finally {
       setSelectingWorkspaceId(null);
@@ -119,7 +122,7 @@ export function WorkflowArenaWinnerPanel({
       ) : arenaError ? (
         <p className="text-xs text-error" role="alert">
           {t('workflow.arenaWinner.loadFailed', {
-            message: t('workflow.errors.loadGuidance'),
+            message: arenaError.message,
           })}
         </p>
       ) : options.length === 0 ? (
@@ -214,7 +217,7 @@ export function WorkflowArenaWinnerPanel({
 
       {actionError ? (
         <p className="text-xs text-error" role="alert">
-          {t('workflow.arenaWinner.selectFailed')}
+          {t('workflow.arenaWinner.selectFailed')} {actionDetail}
         </p>
       ) : null}
     </div>

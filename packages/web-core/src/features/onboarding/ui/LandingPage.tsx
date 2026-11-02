@@ -117,7 +117,7 @@ export function LandingPage() {
 
   const [initialized, setInitialized] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [saveError, setSaveError] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [selectedAgent, setSelectedAgent] = useState<BaseCodingAgent>(
     BaseCodingAgent.CLAUDE_CODE
   );
@@ -232,7 +232,7 @@ export function LandingPage() {
       sound_file: soundEnabled ? soundFile : null,
     });
 
-    setSaveError(false);
+    setSaveError(null);
     setSaving(true);
     const success = await updateAndSaveConfig(
       {
@@ -249,7 +249,7 @@ export function LandingPage() {
           sound_file: soundFile,
         },
       },
-      () => setSaveError(true)
+      (message) => setSaveError(message)
     );
     setSaving(false);
 
@@ -381,7 +381,7 @@ export function LandingPage() {
               />
               {saveError && (
                 <p role="alert" className="text-error">
-                  {t('onboarding.saveUnconfirmed')}
+                  {t('onboarding.saveUnconfirmed')} {saveError}
                 </p>
               )}
             </section>

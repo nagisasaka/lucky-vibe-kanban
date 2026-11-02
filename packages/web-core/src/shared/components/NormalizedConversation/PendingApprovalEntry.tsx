@@ -199,6 +199,8 @@ const PendingApprovalEntry = ({
     'missingExecution' | 'responseUnconfirmed' | null
   >(null);
 
+  const [errorDetail, setErrorDetail] = useState<string | null>(null);
+
   const {
     isEnteringReason,
     denyReason,
@@ -267,12 +269,14 @@ const PendingApprovalEntry = ({
     async (approved: boolean, reason?: string) => {
       if (disabled) return;
       if (!executionProcessId) {
+        setErrorDetail(null);
         setError('missingExecution');
         return;
       }
 
       setIsResponding(true);
       setError(null);
+      setErrorDetail(null);
 
       const status: ApprovalStatus = approved
         ? { status: 'approved' }
@@ -287,6 +291,7 @@ const PendingApprovalEntry = ({
         clear();
       } catch (e: unknown) {
         console.error('Approval respond failed:', e);
+        setErrorDetail(e instanceof Error ? e.message : String(e));
         setError('responseUnconfirmed');
       } finally {
         setIsResponding(false);
@@ -299,6 +304,7 @@ const PendingApprovalEntry = ({
   const handleStartDeny = useCallback(() => {
     if (disabled) return;
     setError(null);
+    setErrorDetail(null);
     setIsEnteringReason(true);
   }, [disabled, setIsEnteringReason]);
 
@@ -368,6 +374,7 @@ const PendingApprovalEntry = ({
                 {error === 'missingExecution'
                   ? t('approval.missingExecution')
                   : t('approval.responseUnconfirmed')}
+                {errorDetail && <> {errorDetail}</>}
               </div>
             )}
 

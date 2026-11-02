@@ -28,7 +28,11 @@ export function mapGhCliErrorToUi(
       };
     default:
       return {
-        message: t('tasks:githubCliNotice.setupUnconfirmed'),
+        message:
+          t('tasks:githubCliNotice.setupUnconfirmed') +
+          (error && typeof error === 'object' && 'OTHER' in error
+            ? ` — ${error.OTHER.message}`
+            : ''),
         variant: null,
       };
   }
@@ -37,7 +41,7 @@ export function mapGhCliErrorToUi(
 // Trusted local failures keep semantic reasons; arbitrary transport errors stay generic.
 export class WorkspaceFromPrFailure extends Error {
   constructor(readonly reason: CreateFromPrError | { type: 'missing_fields' }) {
-    super(reason.type);
+    super('message' in reason ? reason.message : reason.type);
   }
 }
 
@@ -61,9 +65,9 @@ export function workspaceFromPrNotice(
               : 'Git',
       });
     case 'auth_failed':
-      return t('tasks:createWorkspaceFromPr.errors.authUnconfirmed');
+      return `${t('tasks:createWorkspaceFromPr.errors.authUnconfirmed')} ${reason.message}`;
     case 'branch_fetch_failed':
-      return t('tasks:createWorkspaceFromPr.errors.branchFetchUnconfirmed');
+      return `${t('tasks:createWorkspaceFromPr.errors.branchFetchUnconfirmed')} ${reason.message}`;
     case 'pr_not_found':
       return t('tasks:createWorkspaceFromPr.errors.prNotFound');
     case 'unsupported_provider':

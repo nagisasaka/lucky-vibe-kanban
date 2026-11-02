@@ -56,7 +56,7 @@ function DevServerUrl({ processId }: { processId: string }) {
 export function DevServerControlsContainer() {
   const { t } = useTranslation('tasks');
   const { workspaceId, repos } = useWorkspaceContext();
-  const [error, setError] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const {
     start,
     stop,
@@ -65,10 +65,10 @@ export function DevServerControlsContainer() {
     runningDevServers,
     devServerProcesses,
   } = useDevServer(workspaceId, {
-    onStartError: () => setError(true),
-    onStopError: () => setError(true),
-    onStartSuccess: () => setError(false),
-    onStopSuccess: () => setError(false),
+    onStartError: (error) => setError(String(error)),
+    onStopError: (error) => setError(String(error)),
+    onStartSuccess: () => setError(null),
+    onStopSuccess: () => setError(null),
   });
   const { logsPanelContent, viewProcessInPanel } = useLogsPanel();
   if (!workspaceId) return null;
@@ -123,7 +123,7 @@ export function DevServerControlsContainer() {
       </div>
       {error && (
         <p role="alert" className="text-error">
-          {t('devServer.operationUnconfirmed')}
+          {t('devServer.operationUnconfirmed')} {error}
         </p>
       )}
       {devServerProcesses.length > 0 && (

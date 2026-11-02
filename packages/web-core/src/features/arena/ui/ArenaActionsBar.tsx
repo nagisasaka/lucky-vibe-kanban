@@ -43,6 +43,7 @@ export function ArenaActionsBar({ group, workspace }: ArenaActionsBarProps) {
   const [errorMessage, setErrorMessage] = useState<
     'promoteFailed' | 'retryFailed' | 'retryUnknownExecutor' | null
   >(null);
+  const [errorDetail, setErrorDetail] = useState<string | null>(null);
 
   if (group.mode === 'design') {
     return null;
@@ -61,6 +62,7 @@ export function ArenaActionsBar({ group, workspace }: ArenaActionsBarProps) {
 
   const handlePromote = async () => {
     setErrorMessage(null);
+    setErrorDetail(null);
     const result = await ConfirmDialog.show({
       title: () => i18n.t('common:arena.confirm.promoteTitle'),
       message: () =>
@@ -78,12 +80,14 @@ export function ArenaActionsBar({ group, workspace }: ArenaActionsBarProps) {
     try {
       await promote.mutateAsync({ workspaceId: workspace.workspace_id });
     } catch (err) {
+      setErrorDetail(err instanceof Error ? err.message : String(err));
       setErrorMessage('promoteFailed');
     }
   };
 
   const handleRetry = async () => {
     setErrorMessage(null);
+    setErrorDetail(null);
     if (!workspace.executor) {
       setErrorMessage('retryUnknownExecutor');
       return;
@@ -112,6 +116,7 @@ export function ArenaActionsBar({ group, workspace }: ArenaActionsBarProps) {
         payload,
       });
     } catch (err) {
+      setErrorDetail(err instanceof Error ? err.message : String(err));
       setErrorMessage('retryFailed');
     }
   };
@@ -144,7 +149,7 @@ export function ArenaActionsBar({ group, workspace }: ArenaActionsBarProps) {
       </div>
       {errorMessage ? (
         <p className="mt-half text-xs text-error" role="alert">
-          {t(`arena.errors.${errorMessage}`)}
+          {t(`arena.errors.${errorMessage}`)} {errorDetail}
         </p>
       ) : null}
     </div>

@@ -53,6 +53,7 @@ export function AsyncAgentQuestions({
   const [submitting, setSubmitting] = useState<string | null>(null);
   const submissionLock = useRef(false);
   const [unconfirmed, setUnconfirmed] = useState(false);
+  const [errorDetail, setErrorDetail] = useState<string | null>(null);
   const pending = questions.filter(
     (question) => !saved.answered.includes(question.id)
   );
@@ -72,6 +73,7 @@ export function AsyncAgentQuestions({
     submissionLock.current = true;
     setSubmitting(question.id);
     setUnconfirmed(false);
+    setErrorDetail(null);
     try {
       await onAnswer(question, answer);
       // Only an accepted delivery consumes a question. Failed sends retain the draft.
@@ -82,7 +84,8 @@ export function AsyncAgentQuestions({
       };
       delete next.drafts[question.id];
       save(next);
-    } catch {
+    } catch (error) {
+      setErrorDetail(error instanceof Error ? error.message : String(error));
       setUnconfirmed(true);
     } finally {
       submissionLock.current = false;
@@ -181,7 +184,7 @@ export function AsyncAgentQuestions({
           ))}
           {unconfirmed && (
             <p role="alert" className="text-error">
-              {t('asyncQuestions.deliveryUnconfirmed')}
+              {t('asyncQuestions.deliveryUnconfirmed')} {errorDetail}
             </p>
           )}
         </div>

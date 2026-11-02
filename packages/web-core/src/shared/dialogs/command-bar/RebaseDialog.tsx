@@ -51,6 +51,7 @@ function RebaseDialogContent({
   const [selectedUpstream, setSelectedUpstream] = useState<string>('');
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [error, setError] = useState(false);
+  const [errorDetail, setErrorDetail] = useState<string | null>(null);
   const [hasInitializedBranches, setHasInitializedBranches] = useState(false);
 
   const git = useGitOperations(workspaceId, repoId);
@@ -172,6 +173,7 @@ function RebaseDialogContent({
     if (!selectedBranch) return;
 
     setError(false);
+    setErrorDetail(null);
     try {
       await git.actions.rebase({
         repoId,
@@ -213,6 +215,7 @@ function RebaseDialogContent({
         return;
       }
 
+      setErrorDetail(err instanceof Error ? err.message : String(err));
       // Typed conflict/in-progress paths above retain their dedicated handling.
       setError(true);
     }
@@ -294,7 +297,7 @@ function RebaseDialogContent({
             </div>
             {error && (
               <p className="text-sm text-destructive">
-                {t('gitNotice.rebaseUnconfirmed')}
+                {t('gitNotice.rebaseUnconfirmed')} {errorDetail}
               </p>
             )}
           </div>

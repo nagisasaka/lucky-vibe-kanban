@@ -1,3 +1,4 @@
+import { errorDiagnostic } from './errorDiagnostic';
 import { IssueArchiveActionError, receiptMessage } from './issueArchiveNotice';
 import i18n from '@/i18n/config';
 
@@ -14,7 +15,7 @@ export type ActionErrorCode =
   | 'processRunning'
   | 'singleDuplicate';
 
-// Only locally classified errors expose specific guidance; arbitrary server bodies stay private.
+// Keep local guidance separate from original diagnostic text.
 export class ActionError extends Error {
   constructor(readonly code: ActionErrorCode) {
     super(code);
@@ -25,9 +26,11 @@ export class ActionError extends Error {
 export function actionErrorMessage(error: unknown): string {
   if (error instanceof IssueArchiveActionError) {
     if (error.notice.kind === 'request')
-      return i18n.t('tasks:issueArchive.restoreUnconfirmed', {
-        requestId: error.notice.requestId,
-      });
+      return (
+        i18n.t('tasks:issueArchive.restoreUnconfirmed', {
+          requestId: error.notice.requestId,
+        }) + (error.detail ? ` — ${error.detail}` : '')
+      );
     return (
       receiptMessage(error.notice.receipt, i18n.getFixedT(null, 'tasks')) ||
       i18n.t('tasks:actionErrors.unconfirmed')
@@ -59,5 +62,5 @@ export function actionErrorMessage(error: unknown): string {
         return i18n.t('tasks:actionErrors.singleDuplicate');
     }
   }
-  return i18n.t('tasks:actionErrors.unconfirmed');
+  return `${i18n.t('tasks:actionErrors.unconfirmed')} — ${errorDiagnostic(error)}`;
 }

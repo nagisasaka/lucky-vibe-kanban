@@ -81,6 +81,7 @@ export function WebPushSettings() {
   const [error, setError] = useState<
     'loadFailed' | 'actionUnconfirmed' | 'permissionDenied' | null
   >(null);
+  const [errorDetail, setErrorDetail] = useState<string | null>(null);
   const refresh = useCallback(async () => {
     const next = await request<Status>();
     setStatus(next);
@@ -92,11 +93,15 @@ export function WebPushSettings() {
     }
   }, [supported]);
   useEffect(() => {
-    void refresh().catch(() => setError('loadFailed'));
+    void refresh().catch((error) => {
+      setErrorDetail(error instanceof Error ? error.message : String(error));
+      setError('loadFailed');
+    });
   }, [refresh]);
   const enable = async () => {
     setBusy(true);
     setError(null);
+    setErrorDetail(null);
     try {
       // Must precede awaits that lose the user gesture on Safari.
       const permission = await Notification.requestPermission();
@@ -138,6 +143,7 @@ export function WebPushSettings() {
       localStorage.setItem(ownerKey, owner);
       await refresh();
     } catch (e) {
+      setErrorDetail(e instanceof Error ? e.message : String(e));
       setError('actionUnconfirmed');
     } finally {
       setBusy(false);
@@ -146,6 +152,7 @@ export function WebPushSettings() {
   const disable = async (item: Registration) => {
     setBusy(true);
     setError(null);
+    setErrorDetail(null);
     try {
       // Server removal first; a failed API call must not pretend delivery stopped.
       await request(`/${item.id}`, {});
@@ -161,6 +168,7 @@ export function WebPushSettings() {
       }
       await refresh();
     } catch (e) {
+      setErrorDetail(e instanceof Error ? e.message : String(e));
       setError('actionUnconfirmed');
     } finally {
       setBusy(false);
@@ -169,10 +177,12 @@ export function WebPushSettings() {
   const saveEvents = async (item: Registration, event_mask: number) => {
     setBusy(true);
     setError(null);
+    setErrorDetail(null);
     try {
       await request(`/${item.id}/events`, { event_mask });
       await refresh();
     } catch (e) {
+      setErrorDetail(e instanceof Error ? e.message : String(e));
       setError('actionUnconfirmed');
     } finally {
       setBusy(false);
@@ -262,7 +272,7 @@ export function WebPushSettings() {
       <p className="text-sm text-low">{t('notifications.web.deviceHint')}</p>
       {error && (
         <p role="alert" className="text-error">
-          {t(`notifications.web.${error}`)}
+          {t(`notifications.web.${error}`)} {errorDetail}
         </p>
       )}
     </div>

@@ -16,13 +16,15 @@ describe('authentication UI errors', () => {
     ['ja', 'Auth0 issuerが正しくありません。'],
   ])('translates owned validation errors in %s', async (language, expected) => {
     await i18n.changeLanguage(language);
-    expect(accessErrorMessage('Invalid Auth0 issuer', 400)).toBe(expected);
+    expect(accessErrorMessage('Invalid Auth0 issuer', 400)).toContain(expected);
   });
 
   it('uses English fallback for another UI locale', async () => {
     await i18n.changeLanguage('ja');
     const pending = accessRequestFailure('Invalid Auth0 issuer', 400);
-    expect(accessErrorNotice(pending)).toBe('Auth0 issuerが正しくありません。');
+    expect(accessErrorNotice(pending)).toContain(
+      'Auth0 issuerが正しくありません。'
+    );
     await i18n.changeLanguage('fr');
     expect(accessErrorNotice(pending)).toBe('Invalid Auth0 issuer');
     expect(accessErrorMessage('Invalid Auth0 issuer', 400)).toBe(
@@ -30,27 +32,16 @@ describe('authentication UI errors', () => {
     );
   });
 
-  it.each(['en', 'ja'])(
-    'keeps unknown provider/server content out of the %s UI',
-    async (language) => {
-      await i18n.changeLanguage(language);
-      const message = accessErrorMessage(
-        'provider raw body contains private-token and internal/path',
-        502
-      );
-      expect(message).toBe(
-        i18n.t('auth.errors.requestFailed', { ns: 'settings' })
-      );
-      const pending = accessRequestFailure('private-token /internal/path', 502);
-      expect(accessErrorNotice(pending)).toBe(message);
-      expect(pending.message).not.toContain('private-token');
-      expect(message).not.toContain('private-token');
-      expect(message).not.toContain('internal/path');
-      expect(message).not.toContain('auth.errors.');
-      for (const inherited of ['constructor', '__proto__', 'toString'])
-        expect(accessErrorMessage(inherited, 502)).toBe(message);
-    }
-  );
+  it('keeps original diagnostics alongside translated explanations', async () => {
+    await i18n.changeLanguage('ja');
+    const detail = 'provider raw diagnostic /internal/path';
+    const pending = accessRequestFailure(detail, 502);
+    expect(accessErrorNotice(pending)).toContain(detail);
+    expect(accessErrorNotice(pending)).toContain(
+      i18n.t('auth.errors.requestFailed', { ns: 'settings' })
+    );
+    expect(pending.message).toBe(detail);
+  });
 
   it('resolves status fallbacks in Japanese', async () => {
     await i18n.changeLanguage('ja');

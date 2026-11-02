@@ -64,7 +64,7 @@ export function RepositoryMemorySettings({
   );
   const [language, setLanguage] = useState(query.data?.output_language ?? 'en');
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [scope, setScope] = useState<'current' | 'since'>('current');
   const [fromCommit, setFromCommit] = useState('');
   const state = query.data;
@@ -106,7 +106,7 @@ export function RepositoryMemorySettings({
     // Sync uses the server's saved branch, not the draft displayed in this form.
     if (sync && cannotStart) return;
     setBusy(true);
-    setError(false);
+    setError(null);
     try {
       if (sync)
         await client.syncRepositoryMemory(repo.id, {
@@ -120,8 +120,8 @@ export function RepositoryMemorySettings({
           output_language: language,
         });
       await query.refetch();
-    } catch {
-      setError(true);
+    } catch (error) {
+      setError(error instanceof Error ? error.message : String(error));
       await query.refetch();
     } finally {
       setBusy(false);
@@ -291,7 +291,8 @@ export function RepositoryMemorySettings({
             ? t('repositoryMemory.operationUnconfirmed')
             : query.error
               ? t('repositoryMemory.loadFailed')
-              : t('repositoryMemory.maintenanceError')}
+              : t('repositoryMemory.maintenanceError')}{' '}
+          {error ?? query.error?.message ?? state?.error}
         </p>
       )}
       {state?.coding_errors?.map((message) => (
@@ -300,7 +301,7 @@ export function RepositoryMemorySettings({
           className="whitespace-pre-wrap text-sm text-error"
           role="alert"
         >
-          {checkpointMessage(message)}
+          {checkpointMessage(message)} {message}
         </p>
       ))}
       {state?.status === 'error' && (

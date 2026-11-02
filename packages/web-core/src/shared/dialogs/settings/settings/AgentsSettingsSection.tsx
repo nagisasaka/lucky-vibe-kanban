@@ -1,3 +1,4 @@
+import { errorDiagnostic } from '@/shared/lib/errorDiagnostic';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -65,6 +66,7 @@ export function AgentsSettingsSection() {
   const [saveError, setSaveError] = useState<
     'deleteFailed' | 'visibilitySaveFailed' | 'saveConfigFailed' | null
   >(null);
+  const [errorDetail, setErrorDetail] = useState<string | null>(null);
   const [visibilitySavingAgent, setVisibilitySavingAgent] =
     useState<BaseCodingAgent | null>(null);
 
@@ -183,6 +185,7 @@ export function AgentsSettingsSection() {
     if (!localParsedProfiles) return;
 
     setSaveError(null);
+    setErrorDetail(null);
 
     try {
       const executorConfigs =
@@ -235,6 +238,7 @@ export function AgentsSettingsSection() {
         reloadSystem();
       } catch (error: unknown) {
         console.error('Failed to save deletion to backend:', error);
+        setErrorDetail(errorDiagnostic(error));
         setSaveError('deleteFailed');
       }
     } catch (error) {
@@ -260,6 +264,7 @@ export function AgentsSettingsSection() {
     if (!config) return;
 
     setSaveError(null);
+    setErrorDetail(null);
     setVisibilitySavingAgent(executor);
     const hiddenAgents = new Set(config.hidden_agents ?? []);
 
@@ -280,6 +285,7 @@ export function AgentsSettingsSection() {
       await reloadSystem();
     } catch (err) {
       console.error('Error updating agent visibility:', err);
+      setErrorDetail(errorDiagnostic(err));
       setSaveError('visibilitySaveFailed');
     } finally {
       setVisibilitySavingAgent(null);
@@ -321,6 +327,7 @@ export function AgentsSettingsSection() {
       return;
 
     setSaveError(null);
+    setErrorDetail(null);
 
     const updatedProfiles = {
       ...localParsedProfiles,
@@ -345,6 +352,7 @@ export function AgentsSettingsSection() {
       reloadSystem();
     } catch (err: unknown) {
       console.error('Failed to save profiles:', err);
+      setErrorDetail(errorDiagnostic(err));
       setSaveError('saveConfigFailed');
     }
   };
@@ -427,7 +435,10 @@ export function AgentsSettingsSection() {
           className="bg-error/10 border border-error/50 rounded-sm p-4 text-error mb-4"
           role="alert"
         >
-          {t('settings.agents.profilesLoadFailed')}
+          {t('settings.agents.profilesLoadFailed')}{' '}
+          {profilesError instanceof Error
+            ? profilesError.message
+            : String(profilesError)}
         </div>
       )}
 
@@ -446,7 +457,7 @@ export function AgentsSettingsSection() {
           className="bg-error/10 border border-error/50 rounded-sm p-4 text-error mb-4"
           role="alert"
         >
-          {t(`settings.agents.errors.${saveError}`)}
+          {t(`settings.agents.errors.${saveError}`)} {errorDetail}
         </div>
       )}
 

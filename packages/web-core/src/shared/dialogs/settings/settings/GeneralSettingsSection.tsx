@@ -74,7 +74,7 @@ export function GeneralSettingsSection({
   const [draft, setDraft] = useState(() => (config ? cloneDeep(config) : null));
   const [dirty, setDirty] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [saveError, setSaveError] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [branchPrefixError, setBranchPrefixError] = useState<string | null>(
     null
@@ -189,17 +189,20 @@ export function GeneralSettingsSection({
     if (!draft) return;
 
     setSaving(true);
-    setSaveError(false);
+    setSaveError(null);
     setSuccess(false);
 
     try {
-      if (!(await updateAndSaveConfig(draft, () => setSaveError(true)))) return;
+      if (
+        !(await updateAndSaveConfig(draft, (message) => setSaveError(message)))
+      )
+        return;
       setTheme(draft.theme);
       setDirty(false);
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
     } catch (err) {
-      setSaveError(true);
+      setSaveError(err instanceof Error ? err.message : String(err));
       console.error('Error saving config:', err);
     } finally {
       setSaving(false);
@@ -257,7 +260,7 @@ export function GeneralSettingsSection({
       {/* Status messages */}
       {saveError && (
         <div className="bg-error/10 border border-error/50 rounded-sm p-4 text-error">
-          {t('settings.general.save.error')}
+          {t('settings.general.save.error')} {saveError}
         </div>
       )}
 

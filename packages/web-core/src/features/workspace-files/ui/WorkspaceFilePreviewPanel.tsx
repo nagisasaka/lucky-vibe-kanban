@@ -84,7 +84,7 @@ export function WorkspaceFilePreviewPanel({
         ) : error ? (
           <WorkspaceFileEmptyState
             title={t('workspaceFiles.could_not_load_preview')}
-            description={t('workspaceFiles.previewUnconfirmed')}
+            description={`${t('workspaceFiles.previewUnconfirmed')} ${error instanceof Error ? error.message : String(error)}`}
             action={
               <Button
                 type="button"

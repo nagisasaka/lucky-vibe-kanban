@@ -77,7 +77,7 @@ export function ProcessLogsViewerContent({
       ) : error ? (
         <div className="p-4 text-center text-destructive text-sm">
           <AlertCircle className="h-4 w-4 inline mr-2" />
-          {t('processLogs.unavailable')}
+          {t('processLogs.unavailable')} {error}
         </div>
       ) : (
         <Virtuoso<LogEntry>

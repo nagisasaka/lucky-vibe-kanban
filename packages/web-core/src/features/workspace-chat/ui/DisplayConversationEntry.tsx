@@ -1063,6 +1063,7 @@ function UserMessageEntry({
         ['failed', 'unconfirmed'].includes(pendingDelivery.state) && (
           <div role="alert" className="px-double text-xs text-error">
             {t(`conversation.delivery.${pendingDelivery.state}`)}
+            {pendingDelivery.error && `: ${pendingDelivery.error}`}
           </div>
         )}
     </div>

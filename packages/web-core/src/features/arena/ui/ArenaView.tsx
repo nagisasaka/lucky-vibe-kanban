@@ -60,6 +60,7 @@ function ArenaHeader({
   const [errorMessage, setErrorMessage] = useState<
     'closeFailed' | 'dissolveFailed' | null
   >(null);
+  const [errorDetail, setErrorDetail] = useState<string | null>(null);
 
   const groupAlreadyPromoted = group.promoted_workspace_id != null;
   const canCloseDesign =
@@ -69,16 +70,19 @@ function ArenaHeader({
 
   const handleClose = async () => {
     setErrorMessage(null);
+    setErrorDetail(null);
     try {
       await close.mutateAsync();
       onDissolved?.();
     } catch (err) {
+      setErrorDetail(err instanceof Error ? err.message : String(err));
       setErrorMessage('closeFailed');
     }
   };
 
   const handleDissolve = async () => {
     setErrorMessage(null);
+    setErrorDetail(null);
     const result = await ConfirmDialog.show({
       title: () => i18n.t('common:arena.confirm.dissolveTitle'),
       message: () =>
@@ -93,6 +97,7 @@ function ArenaHeader({
       await dissolve.mutateAsync();
       onDissolved?.();
     } catch (err) {
+      setErrorDetail(err instanceof Error ? err.message : String(err));
       setErrorMessage('dissolveFailed');
     }
   };
@@ -155,7 +160,7 @@ function ArenaHeader({
       </div>
       {errorMessage ? (
         <p className="mt-half text-xs text-error" role="alert">
-          {t(`arena.errors.${errorMessage}`)}
+          {t(`arena.errors.${errorMessage}`)} {errorDetail}
         </p>
       ) : null}
     </div>
@@ -264,7 +269,7 @@ export function ArenaView({
   if (error) {
     return (
       <div className="p-base text-sm text-error">
-        {t('arena.errors.loadUnconfirmed')}
+        {t('arena.errors.loadUnconfirmed')} {error.message}
       </div>
     );
   }

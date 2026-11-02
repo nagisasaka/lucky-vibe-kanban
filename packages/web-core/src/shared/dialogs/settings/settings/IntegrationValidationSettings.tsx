@@ -36,7 +36,7 @@ export function IntegrationValidationSettings({
     content: string;
   } | null>(null);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const snapshot = draft?.base ?? query.data;
   const content = draft?.content ?? snapshot?.content ?? emptyPlan;
@@ -53,12 +53,12 @@ export function IntegrationValidationSettings({
   const edit = (value: string) => {
     if (snapshot) setDraft({ base: snapshot, content: value });
     setSaved(false);
-    setError(false);
+    setError(null);
   };
   const save = async () => {
     if (!snapshot || !valid || busy) return;
     setBusy(true);
-    setError(false);
+    setError(null);
     setSaved(false);
     try {
       const result = await client.saveIntegrationValidation(repoId, {
@@ -68,15 +68,15 @@ export function IntegrationValidationSettings({
       queryClient.setQueryData(queryKey, result);
       setDraft(null);
       setSaved(true);
-    } catch {
-      setError(true);
+    } catch (error) {
+      setError(error instanceof Error ? error.message : String(error));
     } finally {
       setBusy(false);
     }
   };
   const reload = async () => {
     setBusy(true);
-    setError(false);
+    setError(null);
     setSaved(false);
     const result = await query.refetch();
     if (result.isSuccess) setDraft(null);
@@ -101,7 +101,7 @@ export function IntegrationValidationSettings({
       )}
       {query.isError && (
         <p role="alert" className="text-error">
-          {t('settings.integrationValidation.loadError')}
+          {t('settings.integrationValidation.loadError')} {query.error?.message}
         </p>
       )}
       {snapshot && (
@@ -184,7 +184,7 @@ export function IntegrationValidationSettings({
       )}
       {error && (
         <p role="alert" className="text-error">
-          {t('settings.integrationValidation.saveError')}
+          {t('settings.integrationValidation.saveError')} {error}
         </p>
       )}
       {saved && (

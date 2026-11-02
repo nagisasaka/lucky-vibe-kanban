@@ -234,7 +234,9 @@ export function GoalProgressCard({
           </div>
         )}
       {error && (
-        <p className="mt-base text-xs text-error">{t('workspaceGoal.error')}</p>
+        <p className="mt-base text-xs text-error">
+          {t('workspaceGoal.error')} {error}
+        </p>
       )}
     </section>
   );

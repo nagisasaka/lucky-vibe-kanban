@@ -34,7 +34,7 @@ export function RetryEditorInline({
   const { profiles } = useUserSystem();
 
   const [message, setMessage] = useState(initialContent);
-  const [sendError, setSendError] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
 
   // Get sessionId from attempt's session
   const sessionId = attempt.session?.id;
@@ -56,7 +56,8 @@ export function RetryEditorInline({
   const retryMutation = useRetryProcess(
     sessionId ?? '',
     () => onCancelled?.(),
-    () => setSendError(true)
+    (error) =>
+      setSendError(error instanceof Error ? error.message : String(error))
   );
 
   const isSending = retryMutation.isPending;
@@ -69,7 +70,7 @@ export function RetryEditorInline({
 
   const onSend = useCallback(() => {
     if (!canSend || !processProfile) return;
-    setSendError(false);
+    setSendError(null);
     retryMutation.mutate({
       message,
       executor: processProfile.executor,
@@ -200,7 +201,7 @@ export function RetryEditorInline({
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            {t('conversation.retryUnconfirmed')}
+            {t('conversation.retryUnconfirmed')} {sendError}
           </AlertDescription>
         </Alert>
       )}

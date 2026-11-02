@@ -75,6 +75,7 @@ const StartReviewDialogImpl = create<StartReviewDialogProps>(
     const [includeGitContext, setIncludeGitContext] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<'session' | 'unconfirmed' | null>(null);
+    const [errorDetail, setErrorDetail] = useState<string | null>(null);
 
     const effectiveProfile = userSelectedProfile ?? resolvedDefaultProfile;
 
@@ -85,6 +86,7 @@ const StartReviewDialogImpl = create<StartReviewDialogProps>(
 
       setIsSubmitting(true);
       setError(null);
+      setErrorDetail(null);
 
       try {
         let targetSessionId = resolvedSessionId;
@@ -135,6 +137,7 @@ const StartReviewDialogImpl = create<StartReviewDialogProps>(
         modal.hide();
       } catch (err) {
         console.error('Failed to start review:', err);
+        setErrorDetail(err instanceof Error ? err.message : String(err));
         setError('unconfirmed');
       } finally {
         setIsSubmitting(false);
@@ -217,7 +220,8 @@ const StartReviewDialogImpl = create<StartReviewDialogProps>(
               <div className="text-sm text-destructive">
                 {error === 'session'
                   ? t('gitNotice.sessionUnconfirmed')
-                  : t('gitNotice.reviewUnconfirmed')}
+                  : t('gitNotice.reviewUnconfirmed')}{' '}
+                {errorDetail}
               </div>
             )}
 

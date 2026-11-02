@@ -13,7 +13,7 @@ let initializedTheme: string | null = null;
 export function MermaidDiagram({ chart, theme }: MermaidDiagramProps) {
   const { t } = useTranslation('common');
   const [svg, setSvg] = useState<string>('');
-  const [error, setError] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const renderCountRef = useRef(0);
 
   useEffect(() => {
@@ -44,11 +44,11 @@ export function MermaidDiagram({ chart, theme }: MermaidDiagramProps) {
 
         if (!cancelled) {
           setSvg(renderedSvg);
-          setError(false);
+          setError(null);
         }
       } catch (err) {
         if (!cancelled) {
-          setError(true);
+          setError(err instanceof Error ? err.message : String(err));
           setSvg('');
         }
       }
@@ -63,7 +63,7 @@ export function MermaidDiagram({ chart, theme }: MermaidDiagramProps) {
     return (
       <div className="rounded-sm border border-error/20 bg-error/5 p-base">
         <p className="text-xs text-error mb-2">
-          {t('markdownEditor.diagramError')}
+          {t('markdownEditor.diagramError')} {error}
         </p>
         <pre className="text-xs text-low overflow-auto">
           <code>{chart}</code>

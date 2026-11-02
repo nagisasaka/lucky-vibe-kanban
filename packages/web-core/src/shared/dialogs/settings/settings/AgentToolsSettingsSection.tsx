@@ -1,3 +1,4 @@
+import { errorDiagnostic } from '@/shared/lib/errorDiagnostic';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -207,6 +208,7 @@ function AgentToolsSettingsContent({
   const [loading, setLoading] = useState(false);
   const [busyKey, setBusyKey] = useState<string | null>(null);
   const [error, setError] = useState<ToolError | null>(null);
+  const [errorDetail, setErrorDetail] = useState<string | null>(null);
   const [notice, setNotice] = useState<
     | { kind: 'path'; path: string }
     | { kind: 'copyExtensions' | 'copyWarning' }
@@ -241,6 +243,7 @@ function AgentToolsSettingsContent({
       const sequence = ++refreshSequence.current;
       setLoading(true);
       setError(null);
+      setErrorDetail(null);
       try {
         const nextInventory =
           await machineClient.listAgentTools(nextProjectPath);
@@ -253,6 +256,7 @@ function AgentToolsSettingsContent({
         }
       } catch (nextError) {
         if (sequence === refreshSequence.current) {
+          setErrorDetail(errorDiagnostic(nextError));
           setError(operationError(nextError));
           setLoadFailed(true);
         }
@@ -303,12 +307,14 @@ function AgentToolsSettingsContent({
     if (actionDisabled) return;
     setBusyKey(key);
     setError(null);
+    setErrorDetail(null);
     setNotice(null);
     try {
       await operation();
       if (!mounted.current) return;
       await refresh();
     } catch (nextError) {
+      setErrorDetail(errorDiagnostic(nextError));
       setError(operationError(nextError));
     } finally {
       setBusyKey(null);
@@ -360,6 +366,7 @@ function AgentToolsSettingsContent({
                 : null;
             })();
     } catch (nextError) {
+      setErrorDetail(errorDiagnostic(nextError));
       setNotice(null);
       setError(
         nextError instanceof ApiError
@@ -429,6 +436,7 @@ function AgentToolsSettingsContent({
         setBusyKey(null);
       }
     } catch (nextError) {
+      setErrorDetail(errorDiagnostic(nextError));
       setNotice(null);
       setError(
         nextError instanceof ApiError
@@ -654,7 +662,7 @@ function AgentToolsSettingsContent({
           className="rounded-sm border border-error/50 bg-error/10 p-3 text-sm text-error"
           role="alert"
         >
-          {errorMessages[error]}
+          {errorMessages[error]} {errorDetail}
         </div>
       )}
       {notice && (
@@ -723,7 +731,7 @@ function AgentToolsSettingsContent({
                     className="border-b border-error/30 bg-error/5 px-3 py-2 text-xs text-error"
                     role="alert"
                   >
-                    {t('agentTools.nativeUnreadable')}
+                    {t('agentTools.nativeUnreadable')} {providerError}
                   </div>
                 ))}
 
@@ -787,7 +795,7 @@ function AgentToolsSettingsContent({
                             </p>
                             {item.error && (
                               <p className="mt-1 text-xs text-error">
-                                {t('agentTools.nativeInvalid')}
+                                {t('agentTools.nativeInvalid')} {item.error}
                               </p>
                             )}
                           </div>

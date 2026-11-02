@@ -35,6 +35,7 @@ const TagEditDialogImpl = create<TagEditDialogProps>(({ tag }) => {
   const [error, setError] = useState<'nameRequired' | 'saveFailed' | null>(
     null
   );
+  const [errorDetail, setErrorDetail] = useState<string | null>(null);
   const [tagNameError, setTagNameError] = useState(false);
 
   const isEditMode = Boolean(tag);
@@ -52,6 +53,7 @@ const TagEditDialogImpl = create<TagEditDialogProps>(({ tag }) => {
       });
     }
     setError(null);
+    setErrorDetail(null);
     setTagNameError(false);
   }, [tag]);
 
@@ -63,6 +65,7 @@ const TagEditDialogImpl = create<TagEditDialogProps>(({ tag }) => {
 
     setSaving(true);
     setError(null);
+    setErrorDetail(null);
 
     try {
       if (isEditMode && tag) {
@@ -81,7 +84,8 @@ const TagEditDialogImpl = create<TagEditDialogProps>(({ tag }) => {
 
       modal.resolve('saved' as TagEditResult);
       modal.hide();
-    } catch {
+    } catch (error) {
+      setErrorDetail(error instanceof Error ? error.message : String(error));
       setError('saveFailed');
     } finally {
       setSaving(false);
@@ -101,6 +105,7 @@ const TagEditDialogImpl = create<TagEditDialogProps>(({ tag }) => {
         content: '',
       });
       setError(null);
+      setErrorDetail(null);
       handleCancel();
     }
   };
@@ -186,7 +191,8 @@ const TagEditDialogImpl = create<TagEditDialogProps>(({ tag }) => {
             <Alert variant="destructive">
               {error === 'nameRequired'
                 ? t('settings.general.tags.dialog.errors.nameRequired')
-                : t('settings.general.tags.dialog.errors.saveFailed')}
+                : t('settings.general.tags.dialog.errors.saveFailed')}{' '}
+              {errorDetail}
             </Alert>
           )}
         </div>

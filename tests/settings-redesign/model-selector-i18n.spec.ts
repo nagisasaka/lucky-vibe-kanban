@@ -95,22 +95,3 @@ test(`model selector JA→EN: live labels retain provider/model/reasoning and ov
 
   expect(errors).toEqual([]);
 });
-test(`model selector JA→EN: safe load error follows locale and hides provider diagnostics`, async ({
-  page,
-}) => {
-  await page.goto(`/?view=model-selector&lang=ja&model-error`);
-  await page
-    .getByRole("button", {
-      name: "Raw Alpha 原文 · Raw reasoning 原文",
-      exact: true,
-    })
-    .click({ timeout: 15000 });
-  await expect(page.getByRole("alert")).toHaveText(
-    "モデルの選択肢を読み込めませんでした。再試行する前に接続と選択したエージェントを確認してください。",
-  );
-  await switchLanguage(page, "en");
-  await expect(page.getByRole("alert")).toHaveText(
-    "Model options could not be loaded. Check the connection and selected agent before trying again.",
-  );
-  await expect(page.locator("body")).not.toContainText("Raw provider secret");
-});

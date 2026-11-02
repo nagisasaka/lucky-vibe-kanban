@@ -63,6 +63,7 @@ export function IntegrationPanel({
     Record<string, IntegrationSelection>
   >({});
   const [error, setError] = useState<'preference' | 'operation' | null>(null);
+  const [errorDetail, setErrorDetail] = useState<string | null>(null);
   const pendingRequest = useRef<CreateIntegrationRequest | null>(null);
   const { profiles, config, updateAndSaveConfig } = useUserSystem();
   const skipValidation = config?.integration_skip_validation ?? false;
@@ -74,7 +75,10 @@ export function IntegrationPanel({
         throw new Error(t('integrationPanel.saveError'));
       }
     },
-    onError: () => setError('preference'),
+    onError: (error) => {
+      setErrorDetail(error instanceof Error ? error.message : String(error));
+      setError('preference');
+    },
   });
   const agent = useExecutorConfig({
     profiles,
@@ -133,22 +137,31 @@ export function IntegrationPanel({
       pendingRequest.current = null;
       setSelected({});
       setError(null);
+      setErrorDetail(null);
       void refresh();
     },
-    onError: () => setError('operation'),
+    onError: (error) => {
+      setErrorDetail(error instanceof Error ? error.message : String(error));
+      setError('operation');
+    },
   });
   const action = useMutation({
     mutationFn: ({ id, recover }: { id: string; recover: boolean }) =>
       recover ? integrationApi.recover(id) : integrationApi.cancel(id),
     onSuccess: () => {
       setError(null);
+      setErrorDetail(null);
       void refresh();
     },
-    onError: () => setError('operation'),
+    onError: (error) => {
+      setErrorDetail(error instanceof Error ? error.message : String(error));
+      setError('operation');
+    },
   });
   const resetRequest = () => {
     pendingRequest.current = null;
     setError(null);
+    setErrorDetail(null);
   };
   const start = () => {
     const request = pendingRequest.current ?? {
@@ -199,7 +212,15 @@ export function IntegrationPanel({
           <div className="overflow-y-auto space-y-base min-h-0">
             {dataError && (
               <p role="alert" className="text-error whitespace-pre-wrap">
-                {dataError}
+                {dataError}{' '}
+                {error
+                  ? errorDetail
+                  : (
+                      repos.error ??
+                      branches.error ??
+                      activities.error ??
+                      runs.error
+                    )?.message}
               </p>
             )}
             <p className="text-low">{t('integrationPanel.help')}</p>

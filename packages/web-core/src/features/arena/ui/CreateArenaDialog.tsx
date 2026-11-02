@@ -135,6 +135,7 @@ const CreateArenaDialogImpl = create<CreateArenaDialogProps>(
     const [error, setError] = useState<
       'validation' | 'emptyGroupRecovered' | 'createFailed' | null
     >(null);
+    const [errorDetail, setErrorDetail] = useState<string | null>(null);
     const canceledRef = useRef(false);
 
     const { options: arenaExecutorOptions, garage: agentGarage } =
@@ -316,6 +317,7 @@ const CreateArenaDialogImpl = create<CreateArenaDialogProps>(
       setRepoId(nextRepoId || null);
       setBaseBranch(preferredBranch ?? '');
       setError(null);
+      setErrorDetail(null);
     };
 
     const handleAddAttempt = () => {
@@ -396,6 +398,7 @@ const CreateArenaDialogImpl = create<CreateArenaDialogProps>(
       canceledRef.current = false;
       setSubmitting(true);
       setError(null);
+      setErrorDetail(null);
 
       const payload: CreateArenaRequest = {
         project_id: projectId,
@@ -428,6 +431,7 @@ const CreateArenaDialogImpl = create<CreateArenaDialogProps>(
         } satisfies CreateArenaDialogResult);
         modal.hide();
       } catch (err) {
+        setErrorDetail(err instanceof Error ? err.message : String(err));
         const message =
           err instanceof Error ? err.message : t('arena.errors.createFailed');
         if (isActiveArenaConflict(message)) {
@@ -586,6 +590,7 @@ const CreateArenaDialogImpl = create<CreateArenaDialogProps>(
                   onBranchSelect={(branch) => {
                     setBaseBranch(branch);
                     setError(null);
+                    setErrorDetail(null);
                   }}
                   placeholder={
                     branchesLoading
@@ -697,7 +702,8 @@ const CreateArenaDialogImpl = create<CreateArenaDialogProps>(
               <p className="text-xs text-error" role="alert">
                 {error === 'validation'
                   ? validationError
-                  : t(`arena.errors.${error}`)}
+                  : t(`arena.errors.${error}`)}{' '}
+                {errorDetail}
               </p>
             ) : null}
           </div>

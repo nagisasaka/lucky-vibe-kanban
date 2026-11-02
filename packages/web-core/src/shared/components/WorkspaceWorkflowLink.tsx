@@ -18,7 +18,7 @@ export function WorkspaceWorkflowLink({
   if (error) {
     return (
       <p className="p-half text-xs text-error" role="alert">
-        {t('workflow.repository.unavailable')}
+        {t('workflow.repository.unavailable')} {error.message}
       </p>
     );
   }
