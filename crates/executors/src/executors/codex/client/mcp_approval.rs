@@ -178,7 +178,7 @@ impl AppServerClient {
             // The canonical UI joins the same item ID and preserves its existing
             // argument rendering/redaction. Do not duplicate raw args in labels.
             let label = format!(
-                "MCP third-party server={} tool={} (one call only; arguments/scope in tool details)",
+                "MCP third-party server={} tool={} (one call only)",
                 json!(call.server),
                 json!(call.tool)
             );

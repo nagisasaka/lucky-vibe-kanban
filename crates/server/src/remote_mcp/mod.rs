@@ -20,6 +20,7 @@ pub mod environment_settings;
 #[cfg(target_os = "linux")]
 mod environment_switch;
 mod errors;
+mod execution_approvals;
 pub(crate) use errors::database_category;
 mod evidence_read;
 mod goals;
@@ -198,6 +199,7 @@ fn operation_scope(name: &str) -> Option<&'static str> {
         | "read_runtime_path"
         | "observe_process"
         | "get_self_restart_operation" => Some("lvk:runtime:read"),
+        "decide_execution_approval" => Some("lvk:write"),
         "start_integration" | "cancel_integration" => Some("lvk:merge"),
         "change_runtime_path"
         | "edit_issue_comment"
@@ -419,6 +421,7 @@ fn tools() -> Vec<Tool> {
     tools.extend(runtime_read::tools());
     tools.extend(run_events::tools());
     tools.extend(resource_observation::tools());
+    tools.extend(execution_approvals::tools());
     tools.extend(runtime_write::tools());
     tools.extend(dev_server::tools());
     tools.extend(goals::tools());
@@ -515,6 +518,8 @@ impl Remote {
         let mutation = required_scope.is_some_and(|s| s != "lvk:runtime:read");
         let args = Value::Object(request.arguments.unwrap_or_default());
         let result = match request.name.as_ref() {
+            "get_execution_approval" => execution_approvals::status(self, args).await,
+            "decide_execution_approval" => execution_approvals::call(self, principal, args).await,
             "prepare_issue_archive" | "confirm_issue_archive" | "unarchive_issue" => {
                 issue_archive::call(self, principal, request.name.as_ref(), args).await
             }

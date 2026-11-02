@@ -1511,6 +1511,38 @@ async fn auth0_jwt_access_layer_reaches_real_mcp_tools() {
             .unwrap()
             .contains("Invalid tool parameters")
     );
+    assert_eq!(
+        request(&token, "decide_execution_approval")
+            .send()
+            .await
+            .unwrap()
+            .status(),
+        StatusCode::FORBIDDEN
+    );
+    let write_token=jsonwebtoken::encode(&header,&json!({"iss":"https://fixture.auth0.com/","sub":"member","aud":access.resource(),"exp":server_access::now()+300,"scope":"lvk:read lvk:write"}),&jsonwebtoken::EncodingKey::from_rsa_pem(pem.as_bytes()).unwrap()).unwrap();
+    let permitted: Value = request(&write_token, "decide_execution_approval")
+        .send()
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
+    // Validation is reached only after the real JWT member and decision guard.
+    assert_eq!(
+        permitted["result"]["structuredContent"]["error"]["category"],
+        "validation"
+    );
+    let approval_read: Value = request(&token, "get_execution_approval")
+        .send()
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
+    assert_eq!(
+        approval_read["result"]["structuredContent"]["error"]["category"],
+        "validation"
+    );
     let denied = request(&token, "create_issue").send().await.unwrap();
     assert_eq!(denied.status(), StatusCode::FORBIDDEN);
     assert!(

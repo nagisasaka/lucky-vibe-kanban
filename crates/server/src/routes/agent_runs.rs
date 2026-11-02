@@ -368,6 +368,25 @@ pub(crate) async fn dispatch_control_for_input(
         .ok_or_else(|| ApiError::BadRequest("AgentRun not found".into()))?;
     // UI and remote answers share the Session admission lock. Recheck the
     // canonical input immediately before reserving its durable command.
+    let _approval_guard = if let AgentRunPortCommand::ResolveApproval { approval_id, .. } = &command
+    {
+        let guard = deployment
+            .queued_message_service()
+            .lock_session(run.session_id)
+            .await;
+        validate_pending_approval(
+            &deployment.db().pool,
+            run.workspace_id,
+            agent_run_id,
+            identity.command_id,
+            approval_id,
+            expected_input_event,
+        )
+        .await?;
+        Some(guard)
+    } else {
+        None
+    };
     let _input_guard = if let AgentRunPortCommand::SubmitInput { input_id, .. } = &command {
         let guard = deployment
             .queued_message_service()
@@ -486,6 +505,45 @@ pub(crate) async fn dispatch_control_for_input(
         .await
         .map_err(read_api_error)?;
     Ok(ResponseJson(ApiResponse::success(state)))
+}
+
+/// UI and MCP decisions reserve the same exact unresolved approval under the
+/// Session lock. A delivery with an unknown outcome must retain its command ID.
+pub(crate) async fn validate_pending_approval(
+    pool: &sqlx::SqlitePool,
+    workspace: Uuid,
+    run: Uuid,
+    command: Uuid,
+    approval: &str,
+    expected_event: Option<Uuid>,
+) -> Result<(), ApiError> {
+    let retry: bool = sqlx::query_scalar(
+        "SELECT EXISTS(SELECT 1 FROM agent_run_commands WHERE command_id=? AND agent_run_id=?)",
+    )
+    .bind(command)
+    .bind(run)
+    .fetch_one(pool)
+    .await?;
+    if retry {
+        return Ok(());
+    }
+    let pending = super::sessions::questions::pending_blocking(pool, workspace)
+        .await
+        .map_err(|_| ApiError::Conflict("Approval state unavailable".into()))?;
+    let matches = pending.iter().any(|event| {
+        event["agent_run_id"] == serde_json::json!(run)
+            && event["payload"]["type"] == "approval_requested"
+            && event["payload"]["data"]["approval_id"] == approval
+            && expected_event.is_none_or(|id| event["event_id"] == serde_json::json!(id))
+    });
+    let reserved: bool = sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM agent_run_commands WHERE agent_run_id=? AND json_extract(command_envelope,'$.command.type')='resolve_approval' AND json_extract(command_envelope,'$.command.data.approval_id')=?)")
+        .bind(run).bind(approval).fetch_one(pool).await?;
+    if !matches || reserved {
+        return Err(ApiError::Conflict(
+            "Approval resolved, reserved, cancelled or expired; refresh the Session".into(),
+        ));
+    }
+    Ok(())
 }
 
 /// Caller holds the Session lock until dispatch has reserved the command.

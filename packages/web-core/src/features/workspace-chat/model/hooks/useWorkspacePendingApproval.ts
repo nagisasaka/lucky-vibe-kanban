@@ -13,6 +13,8 @@ export type WorkspacePendingApproval =
       approvalId: string;
       controlId: string;
       toolName: string;
+      operation: string;
+      arguments: unknown;
     }
   | {
       kind: 'input';
@@ -46,12 +48,40 @@ export function useWorkspacePendingApproval(): WorkspacePendingApproval | null {
     if (policy.resolve_approval.allowed) {
       const control = findLatestUnresolvedCanonicalControl(events, 'approval');
       if (control?.kind === 'approval') {
+        const requested = events.findLast(
+          (event) =>
+            event.payload.type === 'approval_requested' &&
+            event.payload.data.approval_id === control.controlId
+        );
+        const callId =
+          requested?.payload.type === 'approval_requested'
+            ? requested.payload.data.tool_call_id
+            : undefined;
+        const tool = events
+          .slice(0, requested ? events.indexOf(requested) : 0)
+          .findLast(
+            (event) =>
+              event.run_attempt_id === requested?.run_attempt_id &&
+              event.payload.type === 'tool_call' &&
+              callId != null &&
+              event.payload.data.tool_call_id === callId &&
+              event.payload.data.arguments != null
+          );
+
         return {
           kind: 'approval',
           agentRunId,
           approvalId: control.controlId,
           controlId: control.controlId,
           toolName: control.toolName,
+          operation:
+            tool?.payload.type === 'tool_call'
+              ? tool.payload.data.tool_name
+              : control.toolName,
+          arguments:
+            tool?.payload.type === 'tool_call'
+              ? tool.payload.data.arguments
+              : null,
         };
       }
     }

@@ -267,6 +267,8 @@ ChatGPTのチャットIDが常に取得できることを前提にしない。�
 
 仕様質問はChatGPT経由で回答できるようにする。シェル等の実行承認は別の操作として扱い、既存の承認主体・期限・権限を維持する。安全に表現できなければ、承認画面へのリンクを返す。質問応答toolが任意の承認まで代行してはならない。
 
+実行承認は `get_question(kind=approval)` で対象・操作・引数・single-request scope・revisionを読み、専用の `decide_execution_approval` で明示判断する。認証済み外部メンバーのread/write権限を要求し、内部Agentによる自己承認には公開しない。UI共通のSession lockと `ResolveApproval`、request_idによる永続receiptを使う。`get_execution_approval` で予約・provider判断確定・無効化を読み戻す。判断受付、承認確定、ツール実行成功とIntegration公開は別であり、配送不明時は元のrequest/commandの結果を確認する。
+
 ### 10.2 途中変更
 
 進行中か完了済みか、追加指示可能かを確認する。既存のsteering／継続経路に従う。待機・中断・終了した実行に送れない場合は、状態に合う次の操作を提示する。
