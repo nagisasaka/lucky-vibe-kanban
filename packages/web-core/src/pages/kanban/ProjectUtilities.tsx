@@ -1,5 +1,6 @@
 import { useUiPreferencesStore } from '@/shared/stores/useUiPreferencesStore';
-import { useState } from 'react';
+import { useId, useState } from 'react';
+import { CaretDownIcon, FolderSimpleIcon } from '@phosphor-icons/react';
 import { useTranslation } from 'react-i18next';
 import { CollapsibleSectionHeader } from '@vibe/ui/components/CollapsibleSectionHeader';
 import { TerminalSection } from '@/shared/components/TerminalSection';
@@ -30,6 +31,7 @@ export function ProjectUtilities({
 }) {
   const { t } = useTranslation('common');
   const [repoId, setRepoId] = useState('');
+  const selectorId = useId();
   const wikiKey = `kanban-wiki:${projectId}`;
   const wikiExpanded = useUiPreferencesStore(
     (s) => s.expanded[wikiKey] ?? false
@@ -45,6 +47,30 @@ export function ProjectUtilities({
         <p role="status" className="p-base text-error">
           {t('environment.unavailable')}
         </p>
+      )}
+      {repos.length > 0 && (
+        <details
+          className="group border-b px-base py-base text-xs text-normal"
+          data-testid="main-repository-details"
+        >
+          <summary className="flex cursor-pointer list-none items-center gap-half rounded-sm focus-visible:ring-2 focus-visible:ring-brand [&::-webkit-details-marker]:hidden">
+            <FolderSimpleIcon className="size-icon-xs shrink-0 text-low" />
+            <span className="flex-1 font-medium">
+              {t('utilityPanel.mainRepositories', { count: repos.length })}
+            </span>
+            <CaretDownIcon className="size-icon-2xs text-low group-open:rotate-180" />
+          </summary>
+          <dl className="mt-base space-y-base border-l pl-base">
+            {repos.map((repository) => (
+              <div key={repository.id} className="space-y-half">
+                <dt className="font-medium text-high">{repository.name}</dt>
+                <dd className="break-all font-ibm-plex-mono text-low">
+                  {repository.path}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </details>
       )}
       <CollapsibleSectionHeader
         className="!h-auto"
@@ -62,12 +88,16 @@ export function ProjectUtilities({
       </CollapsibleSectionHeader>
       {repo && (
         <>
-          <div className="p-base text-sm text-low">
+          <div className="space-y-half border-t p-base text-xs text-low">
+            <label htmlFor={selectorId}>
+              {t('utilityPanel.terminalRepository')}
+            </label>
             <select
+              id={selectorId}
               aria-label={t('environment.mainTerminal')}
               data-testid="main-terminal-repository"
               disabled={terminalOpen}
-              className="w-full bg-primary text-normal border rounded"
+              className="w-full rounded-sm border bg-primary px-base py-half text-sm text-high focus-visible:ring-2 focus-visible:ring-brand"
               value={repo.id}
               onChange={(e) => setRepoId(e.target.value)}
             >
@@ -77,6 +107,13 @@ export function ProjectUtilities({
                 </option>
               ))}
             </select>
+            <p
+              className="break-all font-ibm-plex-mono"
+              title={t('utilityPanel.terminalDirectory')}
+              data-testid="terminal-working-directory"
+            >
+              {repo.path}
+            </p>
           </div>
           <TerminalSection
             scope={`main:${projectId}`}
