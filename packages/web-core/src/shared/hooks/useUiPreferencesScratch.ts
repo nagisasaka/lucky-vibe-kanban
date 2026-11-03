@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef } from 'react';
+import { registerPetPreferencesWriter } from '@/shared/lib/petPreferencesPersistence';
 import { useScratch } from '@/shared/hooks/useScratch';
 import { useDebouncedCallback } from '@/shared/hooks/useDebouncedCallback';
 import {
@@ -33,6 +34,7 @@ const UI_PREFERENCES_ID = '00000000-0000-0000-0000-000000000001';
  * Converts store state to scratch data format (camelCase to snake_case)
  */
 function storeToScratchData(state: {
+  petPreferences: JsonValue;
   repoActions: Record<string, RepoAction>;
   expanded: Record<string, boolean>;
   contextBarPosition: ContextBarPosition;
@@ -63,6 +65,7 @@ function storeToScratchData(state: {
   }
 
   return {
+    pet_preferences: state.petPreferences,
     repo_actions: state.repoActions as { [key: string]: string },
     expanded: state.expanded,
     context_bar_position: state.contextBarPosition,
@@ -97,6 +100,7 @@ function storeToScratchData(state: {
  * Converts scratch data to store state format (snake_case to camelCase)
  */
 function scratchDataToStore(data: UiPreferencesData): {
+  petPreferences: JsonValue;
   repoActions: Record<string, RepoAction>;
   expanded: Record<string, boolean>;
   contextBarPosition: ContextBarPosition;
@@ -146,6 +150,7 @@ function scratchDataToStore(data: UiPreferencesData): {
       : null;
 
   return {
+    petPreferences: data.pet_preferences ?? null,
     repoActions: (data.repo_actions ?? {}) as Record<string, RepoAction>,
     expanded: (data.expanded ?? {}) as Record<string, boolean>,
     contextBarPosition:
@@ -196,6 +201,7 @@ export function useUiPreferencesScratch() {
 
   // Get current store state
   const storeState = useUiPreferencesStore((state) => ({
+    petPreferences: state.petPreferences,
     repoActions: state.repoActions,
     expanded: state.expanded,
     contextBarPosition: state.contextBarPosition,
@@ -228,6 +234,7 @@ export function useUiPreferencesScratch() {
 
     const currentState = useUiPreferencesStore.getState();
     const data = storeToScratchData({
+      petPreferences: currentState.petPreferences,
       repoActions: currentState.repoActions,
       expanded: currentState.expanded,
       contextBarPosition: currentState.contextBarPosition,
@@ -276,6 +283,7 @@ export function useUiPreferencesScratch() {
 
       // Merge server state into the store
       useUiPreferencesStore.setState({
+        petPreferences: serverState.petPreferences,
         repoActions: serverState.repoActions,
         expanded: serverState.expanded,
         contextBarPosition: serverState.contextBarPosition,
@@ -303,9 +311,23 @@ export function useUiPreferencesScratch() {
     }
   }, [isLoading, isConnected, scratchData]);
 
+  // Pet imports must not report success until their image reference is durable.
+  useEffect(() => {
+    if (isLoading || !isConnected || !hasInitializedRef.current) return;
+    return registerPetPreferencesWriter(async (petPreferences) => {
+      const data = storeToScratchData({
+        ...useUiPreferencesStore.getState(),
+        petPreferences,
+      });
+      await updateScratch({ payload: { type: 'UI_PREFERENCES', data } });
+    });
+  }, [isLoading, isConnected, updateScratch]);
+
   // Subscribe to store changes and save to server
   useEffect(() => {
     const unsubscribe = useUiPreferencesStore.subscribe((state, previous) => {
+      // Pet changes are already acknowledged by the explicit writer above.
+      if (state.petPreferences !== previous.petPreferences) return;
       if (!isApplyingServerDataRef.current && hasInitializedRef.current) {
         const sortState = (value: typeof state) =>
           JSON.stringify({

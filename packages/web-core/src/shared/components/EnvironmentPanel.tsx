@@ -1,3 +1,4 @@
+import { SidebarPet } from '@/features/pets/SidebarPet';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { resourceView } from '@vibe/ui/lib/resourceObservation';
@@ -65,16 +66,11 @@ export function EnvironmentPanel() {
   return (
     <section
       aria-label={t('environment.title')}
-      className="border-b p-base space-y-base text-sm text-normal break-words"
+      className="relative border-b p-base space-y-base text-sm text-normal break-words"
       data-testid="environment-panel"
     >
       <div className="flex items-start gap-base">
-        <div
-          data-pet-placeholder
-          className="w-16 h-16 shrink-0 flex items-center justify-center"
-        >
-          <img src="/lvk-clover.svg" alt="LVK" className="w-12 h-12" />
-        </div>
+        <SidebarPet />
         <div className="min-w-0">
           <h2 className="font-medium text-high">{t('environment.title')}</h2>
           <p className="break-all">{env.data?.hostname ?? unknown}</p>

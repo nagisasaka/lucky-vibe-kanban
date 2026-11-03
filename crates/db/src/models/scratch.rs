@@ -101,6 +101,10 @@ pub struct WorkspaceSortStateData {
 /// Data for UI preferences scratch (global preferences stored per-user or per-device)
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct UiPreferencesData {
+    /// Shared decorative pet selection and visibility preferences
+    // Keep ScratchPayload compact; boxing preserves the persisted JSON shape.
+    #[serde(default)]
+    pub pet_preferences: Box<serde_json::Value>,
     /// Preferred repo actions per repo
     #[serde(default)]
     pub repo_actions: std::collections::HashMap<String, String>,
@@ -622,5 +626,41 @@ impl Scratch {
 
         let scratch = row.map(Scratch::try_from).transpose()?;
         Ok(scratch)
+    }
+}
+
+#[cfg(test)]
+mod pet_preferences_tests {
+    use serde_json::json;
+
+    use super::UiPreferencesData;
+
+    #[test]
+    fn older_preferences_restore_without_a_pet_field() {
+        let preferences: UiPreferencesData = serde_json::from_value(json!({
+            "expanded": { "notes-section": true }
+        }))
+        .unwrap();
+        assert!(preferences.pet_preferences.is_null());
+        assert_eq!(preferences.expanded.get("notes-section"), Some(&true));
+    }
+
+    #[test]
+    fn pet_preferences_round_trip_without_losing_other_preferences() {
+        let pet = json!({ "selectedId": "imported-pet", "hidden": true });
+        let preferences: UiPreferencesData = serde_json::from_value(json!({
+            "pet_preferences": pet,
+            "is_right_sidebar_visible": false,
+            "selected_project_id": "existing-project"
+        }))
+        .unwrap();
+        let restored: UiPreferencesData =
+            serde_json::from_str(&serde_json::to_string(&preferences).unwrap()).unwrap();
+        assert_eq!(*restored.pet_preferences, pet);
+        assert_eq!(restored.is_right_sidebar_visible, Some(false));
+        assert_eq!(
+            restored.selected_project_id.as_deref(),
+            Some("existing-project")
+        );
     }
 }

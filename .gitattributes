@@ -1,0 +1,2 @@
+# Preserve the pinned upstream license bytes, including its final blank line.
+packages/public/pets/lvk-rabbit/LICENSE whitespace=-blank-at-eof

@@ -2,6 +2,7 @@ import { useCallback, useMemo, useRef } from 'react';
 import { create } from 'zustand';
 import type { RepoAction } from '@vibe/ui/components/RepoCard';
 import type { IssuePriority } from 'shared/remote-types';
+import type { JsonValue } from 'shared/types';
 
 export const RIGHT_MAIN_PANEL_MODES = {
   CHANGES: 'changes',
@@ -323,6 +324,7 @@ export type PersistKey =
 
 type State = {
   // UI preferences
+  petPreferences: JsonValue;
   repoActions: Record<string, RepoAction>;
   expanded: Record<string, boolean>;
   contextBarPosition: ContextBarPosition;
@@ -370,6 +372,7 @@ type State = {
   createDraftWorkspaceByDefault: boolean;
 
   // UI preferences actions
+  setPetPreferences: (preferences: JsonValue) => void;
   setRepoAction: (repoId: string, action: RepoAction) => void;
   setExpanded: (key: string, value: boolean) => void;
   toggleExpanded: (key: string, defaultValue?: boolean) => void;
@@ -460,6 +463,7 @@ type State = {
 
 export const useUiPreferencesStore = create<State>()((set, get) => ({
   // UI preferences state
+  petPreferences: null,
   repoActions: {},
   expanded: {},
   contextBarPosition: 'middle-right',
@@ -500,6 +504,7 @@ export const useUiPreferencesStore = create<State>()((set, get) => ({
   createDraftWorkspaceByDefault: DEFAULT_CREATE_DRAFT_WORKSPACE_BY_DEFAULT,
 
   // UI preferences actions
+  setPetPreferences: (preferences) => set({ petPreferences: preferences }),
   setRepoAction: (repoId, action) =>
     set((s) => ({ repoActions: { ...s.repoActions, [repoId]: action } })),
   setExpanded: (key, value) =>

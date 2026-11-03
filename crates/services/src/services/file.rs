@@ -212,7 +212,10 @@ impl FileService {
     async fn delete_orphaned_file(&self, id: Uuid) -> Result<bool, FileError> {
         // A reference may have appeared since the cleanup snapshot. SQLite's
         // conditional delete is the authority, never the earlier SELECT.
-        let path:Option<String>=sqlx::query_scalar("DELETE FROM attachments WHERE id=? AND NOT EXISTS (SELECT 1 FROM workspace_attachments WHERE attachment_id=attachments.id) AND NOT EXISTS (SELECT 1 FROM project_attachments WHERE attachment_id=attachments.id) RETURNING file_path").bind(id).fetch_optional(&self.pool).await?;
+        let path: Option<String> = sqlx::query_scalar(&format!(
+            "DELETE FROM attachments WHERE id=? AND NOT EXISTS (SELECT 1 FROM workspace_attachments WHERE attachment_id=attachments.id) AND NOT EXISTS (SELECT 1 FROM project_attachments WHERE attachment_id=attachments.id) AND {} RETURNING file_path",
+            db::models::file::NO_PET_ATTACHMENT_REFERENCE
+        )).bind(id).fetch_optional(&self.pool).await?;
         let Some(path) = path else {
             return Ok(false);
         };
@@ -440,6 +443,10 @@ mod attachment_tests {
         let pool = SqlitePool::connect("sqlite::memory:").await.unwrap();
         sqlx::query("CREATE TABLE attachments(id BLOB PRIMARY KEY,file_path TEXT NOT NULL,original_name TEXT NOT NULL,mime_type TEXT,size_bytes INTEGER,hash TEXT NOT NULL,created_at TEXT NOT NULL DEFAULT '2026-10-29T00:00:00Z',updated_at TEXT NOT NULL DEFAULT '2026-10-29T00:00:00Z')").execute(&pool).await.unwrap();
         sqlx::query("CREATE UNIQUE INDEX identity ON attachments(hash,original_name,COALESCE(mime_type,''))").execute(&pool).await.unwrap();
+        sqlx::query("CREATE TABLE scratch(scratch_type TEXT, payload TEXT)")
+            .execute(&pool)
+            .await
+            .unwrap();
         let cache = root.path().join("cache");
         fs::create_dir(&cache).unwrap();
         let service = FileService {
@@ -525,6 +532,10 @@ mod attachment_tests {
             .await
             .unwrap();
         sqlx::raw_sql("PRAGMA foreign_keys=ON; CREATE TABLE projects(id BLOB PRIMARY KEY); CREATE TABLE attachments(id BLOB PRIMARY KEY,file_path TEXT NOT NULL,original_name TEXT NOT NULL,mime_type TEXT,size_bytes INTEGER,hash TEXT NOT NULL UNIQUE,created_at TEXT NOT NULL,updated_at TEXT NOT NULL); CREATE TABLE workspace_attachments(workspace_id BLOB,attachment_id BLOB REFERENCES attachments(id));").execute(&pool).await.unwrap();
+        sqlx::query("CREATE TABLE scratch(scratch_type TEXT, payload TEXT)")
+            .execute(&pool)
+            .await
+            .unwrap();
         let id = Uuid::new_v4();
         let project = Uuid::new_v4();
         sqlx::query("INSERT INTO projects VALUES(?)")
@@ -638,6 +649,56 @@ mod attachment_tests {
         assert!(svc.delete_orphaned_file(file.id).await.unwrap());
         assert!(!legacy.exists());
     }
+    #[tokio::test]
+    async fn pet_attachment_survives_cleanup_and_a_stale_orphan_snapshot() {
+        let (svc, _root) = fixture().await;
+        sqlx::raw_sql("CREATE TABLE workspace_attachments(workspace_id BLOB,attachment_id BLOB);CREATE TABLE project_attachments(project_id BLOB,attachment_id BLOB);").execute(&svc.pool).await.unwrap();
+        let file = svc.store_file(b"pet sprite", "pet.png").await.unwrap();
+        let stale = File::find_orphaned_files(&svc.pool).await.unwrap();
+        assert_eq!(stale.len(), 1);
+        // Malformed/unrelated scratch entries must neither crash nor retain a file.
+        for payload in [
+            "broken JSON",
+            r#"{"data":{"pet_preferences":{"pets":["bad",null,42]}}}"#,
+        ] {
+            sqlx::query("INSERT INTO scratch VALUES('UI_PREFERENCES', ?)")
+                .bind(payload)
+                .execute(&svc.pool)
+                .await
+                .unwrap();
+        }
+        assert_eq!(File::find_orphaned_files(&svc.pool).await.unwrap().len(), 1);
+        let payload = serde_json::json!({"type": "UI_PREFERENCES", "data": {
+            "pet_preferences": {"pets": [{"attachmentId": file.id.to_string()}]}
+        }});
+        sqlx::query("INSERT INTO scratch VALUES('UI_PREFERENCES', ?)")
+            .bind(payload.to_string())
+            .execute(&svc.pool)
+            .await
+            .unwrap();
+        assert!(
+            File::find_orphaned_files(&svc.pool)
+                .await
+                .unwrap()
+                .is_empty()
+        );
+        assert!(!svc.delete_orphaned_file(stale[0].id).await.unwrap());
+        assert!(svc.get_absolute_path(&file).exists());
+        assert!(
+            File::find_by_id(&svc.pool, file.id)
+                .await
+                .unwrap()
+                .is_some()
+        );
+        sqlx::query("DELETE FROM scratch")
+            .execute(&svc.pool)
+            .await
+            .unwrap();
+        assert_eq!(File::find_orphaned_files(&svc.pool).await.unwrap().len(), 1);
+        assert!(svc.delete_orphaned_file(file.id).await.unwrap());
+        assert!(!svc.get_absolute_path(&file).exists());
+    }
+
     #[cfg(unix)]
     #[tokio::test]
     async fn attachment_symlinks_are_rejected() {
