@@ -1,28 +1,19 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import ReactDOM from 'react-dom/client';
 import * as Sentry from '@sentry/react';
 import { ClickToComponent } from 'click-to-react-component';
 import { QueryClientProvider } from '@tanstack/react-query';
 import posthog from 'posthog-js';
 import { PostHogProvider } from 'posthog-js/react';
-import App from '@web/app/entry/App';
 import { CrashScreen } from '@vibe/ui/components/CrashScreen';
-import '@/i18n';
-import { router } from '@web/app/router';
+import i18n from '@/i18n';
+import '@/app/styles/new/index.css';
 import { ServerAccessGate } from '@web/app/auth/ServerAccessGate';
 import { installAccessFetch } from '@web/app/auth/serverAccess';
 import '@/shared/types/modals';
 import { queryClient } from '@/shared/lib/queryClient';
 
-if (import.meta.env.VITE_SENTRY_DSN) {
-  Sentry.init({
-    dsn: import.meta.env.VITE_SENTRY_DSN,
-    tracesSampleRate: 1.0,
-    environment: import.meta.env.MODE === 'development' ? 'dev' : 'production',
-    integrations: [Sentry.tanstackRouterBrowserTracingIntegration(router)],
-  });
-  Sentry.setTag('source', 'frontend');
-}
+const App = lazy(() => import('@web/app/entry/App'));
 
 if (
   import.meta.env.VITE_POSTHOG_API_KEY &&
@@ -59,7 +50,15 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         >
           <ClickToComponent />
           <ServerAccessGate>
-            <App />
+            <Suspense
+              fallback={
+                <div className="flex h-screen items-center justify-center bg-primary text-low">
+                  {i18n.t('common:states.loading')}
+                </div>
+              }
+            >
+              <App />
+            </Suspense>
           </ServerAccessGate>
         </Sentry.ErrorBoundary>
       </PostHogProvider>

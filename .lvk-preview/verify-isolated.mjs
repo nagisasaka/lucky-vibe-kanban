@@ -25,7 +25,40 @@ const browser = await chromium.launch({
 try {
   const context = await browser.newContext();
   const page = await context.newPage();
+  const initialRequests = [];
+  const trackInitial = (request) =>
+    initialRequests.push(new URL(request.url()).pathname);
+  page.on("request", trackInitial);
+  const connection = await context.newCDPSession(page);
+  await connection.send("Network.enable");
+  await connection.send("Network.emulateNetworkConditions", {
+    offline: false,
+    latency: 75,
+    downloadThroughput: 1250000,
+    uploadThroughput: 1250000,
+  });
+  const loginStarted = Date.now();
   await page.goto(base, { waitUntil: "domcontentloaded" });
+  await page
+    .locator('input[autocomplete="username"]')
+    .waitFor({ state: "visible", timeout: 30000 });
+  page.off("request", trackInitial);
+  if (
+    initialRequests.some((path) =>
+      /\/app\/(?:entry\/App\.tsx|router\/)/.test(path),
+    )
+  ) {
+    throw Error("Application/router loaded before authentication");
+  }
+  console.log(
+    `Cold login visible in ${Date.now() - loginStarted}ms with 75ms latency; application/router deferred`,
+  );
+  await connection.send("Network.emulateNetworkConditions", {
+    offline: false,
+    latency: 0,
+    downloadThroughput: -1,
+    uploadThroughput: -1,
+  });
   await page
     .locator('input[autocomplete="username"]')
     .fill(credentials.username);

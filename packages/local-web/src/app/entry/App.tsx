@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/react';
 import { RouterProvider } from '@tanstack/react-router';
 import { HotkeysProvider } from 'react-hotkeys-hook';
 import { UserSystemProvider } from '@web/app/providers/ConfigProvider';
@@ -6,6 +7,16 @@ import { LocalAuthProvider } from '@/shared/providers/auth/LocalAuthProvider';
 import { AppRuntimeProvider } from '@/shared/hooks/useAppRuntime';
 import { AppNavigationProvider } from '@/shared/hooks/useAppNavigation';
 import { router } from '@web/app/router';
+
+if (import.meta.env.VITE_SENTRY_DSN) {
+  Sentry.init({
+    dsn: import.meta.env.VITE_SENTRY_DSN,
+    tracesSampleRate: 1.0,
+    environment: import.meta.env.MODE === 'development' ? 'dev' : 'production',
+    integrations: [Sentry.tanstackRouterBrowserTracingIntegration(router)],
+  });
+  Sentry.setTag('source', 'frontend');
+}
 
 function App() {
   return (
