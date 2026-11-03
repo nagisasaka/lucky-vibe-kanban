@@ -2310,5 +2310,38 @@
       "unknown": "Unknown"
     },
     "resetElapsed": "Refresh pending"
+  },
+  "pets": {
+    "settings": "Pet",
+    "select": "Selected pet",
+    "show": "Show pet",
+    "scope": "Fixed v1 atlas (1536×1872 PNG/WebP). Up to 12 pets. v2 is not supported. Imported artwork stays in this LVK instance; follow its original license.",
+    "gallery": "Petdex gallery ↗",
+    "preview": "Animation preview",
+    "reset": "Restore LVK Rabbit",
+    "remove": "Remove from selection list",
+    "attribution": "Original metadata / license",
+    "unmodified": "Artwork unmodified",
+    "importing": "Importing…",
+    "errors": {
+      "invalid": "Invalid or damaged pet package.",
+      "size": "Package or collection exceeds the size limit.",
+      "unsupported": "Unsupported pet format. Use a fixed v1 1536×1872 atlas.",
+      "storage": "Could not load or save the pet. Check the connection and try again."
+    },
+    "states": {
+      "idle": "Idle",
+      "running-right": "Running right",
+      "running-left": "Running left",
+      "waving": "Waving",
+      "jumping": "Jumping",
+      "failed": "Failed",
+      "waiting": "Waiting",
+      "running": "Working / typing",
+      "review": "Review"
+    },
+    "import": "Import pet ZIP",
+    "fallback": "Showing LVK Rabbit because {{name}} could not be loaded. Your selection is retained.",
+    "retainedAttribution": "Retained selection metadata / license (not displayed)"
   }
 }

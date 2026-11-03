@@ -18,9 +18,14 @@ state.mkdir(parents=True, exist_ok=True, mode=0o700)
 instance = state / 'instance'
 instance.mkdir(exist_ok=True, mode=0o700)
 assert instance.resolve().is_relative_to(state.resolve())
-binary = Path('/var/tmp/lvk-instances/dev/releases/d21d587f-8e61-4ae1-bde8-d745c34bec36/server')
+# A verified workspace-local candidate is prepared by LOCAL-300. The orchestrator
+# owns the managed DevServer stop/start; changing this file does not restart it.
+manifest_path = state / 'backend/manifest.json'
+manifest = json.loads(manifest_path.read_text())
+binary = (repo / manifest['binary']).resolve()
+assert binary.is_relative_to((state / 'backend').resolve()), 'Candidate escapes preview scope'
 with binary.open('rb') as stream:
-    assert hashlib.file_digest(stream, 'sha256').hexdigest() == '5adaed1969154330b563a62dd03d76ff2e97731dbe8fa1cfccbf4daba553f8ae', 'Backend artifact changed; deliberate compatibility review required'
+    assert hashlib.file_digest(stream, 'sha256').hexdigest() == manifest['sha256'], 'Backend candidate changed'
 for port in (18444, 18446):
     with socket.socket() as probe:
         probe.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)

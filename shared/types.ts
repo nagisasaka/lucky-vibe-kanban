@@ -288,6 +288,10 @@ export type WorkspaceSortStateData = { sort_by: WorkspaceSortByData, sort_order:
 
 export type UiPreferencesData = {
 /**
+ * Shared decorative pet selection and visibility preferences
+ */
+pet_preferences: JsonValue,
+/**
  * Preferred repo actions per repo
  */
 repo_actions: { [key in string]?: string },

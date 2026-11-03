@@ -70,7 +70,7 @@ try {
       await page
         .getByRole("button", { name: /Show Right Sidebar|右サイドバーを表示/ })
         .click();
-    await expect(panel.locator("[data-pet-placeholder] img")).toBeVisible();
+    await expect(panel.getByTestId("sidebar-pet").locator("img")).toBeVisible();
   };
   await goto();
   await expect(page.getByTestId("environment-hostname")).not.toHaveText("—");

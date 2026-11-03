@@ -1,3 +1,4 @@
+import { SidebarPet } from '@/features/pets/SidebarPet';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { InfoIcon } from '@phosphor-icons/react';
@@ -94,16 +95,11 @@ export function EnvironmentPanel() {
   return (
     <section
       aria-label={t('environment.title')}
-      className="border-b bg-primary text-sm text-normal"
+      className="relative border-b bg-primary text-sm text-normal"
       data-testid="environment-panel"
     >
       <div className="flex items-center gap-base px-base py-plusfifty">
-        <div
-          data-pet-placeholder
-          className="flex h-16 w-16 shrink-0 items-center justify-center"
-        >
-          <img src="/lvk-clover.svg" alt="LVK" className="h-12 w-12" />
-        </div>
+        <SidebarPet />
         <div className="min-w-0 flex-1 space-y-half">
           <p
             className="break-all font-medium leading-snug text-high"

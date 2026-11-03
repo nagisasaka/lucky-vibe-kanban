@@ -2301,5 +2301,38 @@
       "unknown": "不明"
     },
     "resetElapsed": "再取得待ち"
+  },
+  "pets": {
+    "settings": "Pet",
+    "select": "Petを選択",
+    "show": "Petを表示",
+    "scope": "固定v1アトラス（1536×1872 PNG/WebP）、最大12体。v2は未対応です。持ち込んだ素材はこのLVK内に保存されます。原著作者の利用条件に従ってください。",
+    "gallery": "Petdexギャラリー ↗",
+    "preview": "動作プレビュー",
+    "reset": "LVK Rabbitに戻す",
+    "remove": "選択リストから削除",
+    "attribution": "元のメタデータ・ライセンス",
+    "unmodified": "素材の加工なし",
+    "importing": "インポート中…",
+    "errors": {
+      "invalid": "Petパッケージが不正または破損しています。",
+      "size": "パッケージまたは保存件数の上限を超えています。",
+      "unsupported": "未対応のPet形式です。固定v1（1536×1872）を使用してください。",
+      "storage": "Petの読込・保存に失敗しました。接続を確認して再試行してください。"
+    },
+    "states": {
+      "idle": "待機（idle）",
+      "running-right": "右に走る",
+      "running-left": "左に走る",
+      "waving": "手を振る",
+      "jumping": "ジャンプ",
+      "failed": "失敗",
+      "waiting": "応答待ち",
+      "running": "作業・タイピング",
+      "review": "レビュー"
+    },
+    "import": "Pet ZIPをインポート",
+    "fallback": "「{{name}}」を読み込めないためLVK Rabbitを表示しています。選択は保持されています。",
+    "retainedAttribution": "保持中の選択の情報・ライセンス（現在は非表示）"
   }
 }
