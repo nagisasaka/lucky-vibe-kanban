@@ -12,8 +12,8 @@ if (!loaded) throw Error("Existing Vite configuration missing");
 export default {
   ...loaded.config,
   root: web,
-  envDir: path.join(repo, ".build/ui4-preview/empty-env"),
-  cacheDir: path.join(web, "node_modules/.vite-ui4-preview"),
+  envDir: path.join(repo, ".build/design-preview/empty-env"),
+  cacheDir: path.join(web, "node_modules/.vite-design-preview"),
   server: {
     ...loaded.config.server,
     host: "127.0.0.1",
@@ -29,19 +29,9 @@ export default {
     },
     proxy: {
       "/api": {
-        target: "http://127.0.0.1:4020",
+        target: "http://127.0.0.1:18446",
         changeOrigin: false,
         ws: true,
-        headers: { host: "dev.luckyvibekanban.com" },
-        configure(proxy) {
-          const forwardOrigin = (proxyRequest, request) => {
-            if (request.headers.origin === "https://preview2.luckyvibekanban.com") {
-              proxyRequest.setHeader("origin", "https://dev.luckyvibekanban.com");
-            }
-          };
-          proxy.on("proxyReq", forwardOrigin);
-          proxy.on("proxyReqWs", forwardOrigin);
-        },
       },
     },
     fs: {
