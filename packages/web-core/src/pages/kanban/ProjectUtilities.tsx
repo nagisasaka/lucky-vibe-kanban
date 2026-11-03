@@ -19,7 +19,6 @@ export function ProjectUtilities({
   selectedFile,
   onFile,
   onWiki,
-  onClose,
 }: {
   projectId: string;
   repos: MainRepo[];
@@ -42,20 +41,6 @@ export function ProjectUtilities({
   const repo = repos.find((r) => r.id === repoId) ?? repos[0];
   return (
     <UtilitySidebar>
-      <button
-        type="button"
-        onClick={onClose}
-        className="w-full p-base border-b text-normal hover:bg-panel"
-      >
-        {t('environment.close')}
-      </button>
-      <div className="p-base text-sm text-low space-y-half">
-        {repos.map((repo) => (
-          <p key={repo.id} className="break-all">
-            {repo.name} · {t('environment.mainScope', { path: repo.path })}
-          </p>
-        ))}
-      </div>
       {error && (
         <p role="status" className="p-base text-error">
           {t('environment.unavailable')}
@@ -78,7 +63,6 @@ export function ProjectUtilities({
       {repo && (
         <>
           <div className="p-base text-sm text-low">
-            <p>{t('environment.mainTerminal')}</p>
             <select
               aria-label={t('environment.mainTerminal')}
               data-testid="main-terminal-repository"
@@ -93,9 +77,6 @@ export function ProjectUtilities({
                 </option>
               ))}
             </select>
-            <p className="break-all">
-              {t('environment.mainScope', { path: repo.path })}
-            </p>
           </div>
           <TerminalSection
             scope={`main:${projectId}`}
