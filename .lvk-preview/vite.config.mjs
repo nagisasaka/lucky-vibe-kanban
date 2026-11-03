@@ -29,15 +29,26 @@ export default {
     },
     proxy: {
       "/api": {
-        target: "http://127.0.0.1:18446",
+        target: "http://127.0.0.1:4020",
         changeOrigin: false,
         ws: true,
+        headers: { host: "dev.luckyvibekanban.com" },
+        configure(proxy) {
+          const forwardOrigin = (proxyRequest, request) => {
+            if (request.headers.origin === "https://preview2.luckyvibekanban.com") {
+              proxyRequest.setHeader("origin", "https://dev.luckyvibekanban.com");
+            }
+          };
+          proxy.on("proxyReq", forwardOrigin);
+          proxy.on("proxyReqWs", forwardOrigin);
+        },
       },
     },
     fs: {
       strict: true,
       allow: [
         "packages/local-web/index.html",
+        "packages/public",
         "packages/local-web/src",
         "packages/web-core/src",
         "packages/ui/src",
