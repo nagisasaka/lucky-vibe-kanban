@@ -1,13 +1,27 @@
+import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { resourceTone, resourceView } from '@vibe/ui/lib/resourceObservation';
 import { quotaView } from '@vibe/ui/lib/codexQuota';
 import { useResourceObservation } from '@/shared/hooks/useResourceObservation';
 import { useCodexQuota } from '@/shared/hooks/useCodexQuota';
 import { claudeQuotaView } from '@/shared/lib/claudeQuotaView';
+import { readUtility } from '@/shared/lib/projectUtilitiesApi';
 
 export function EnvironmentPanel() {
   const { t } = useTranslation('common');
   const resources = useResourceObservation();
+  const environment = useQuery({
+    queryKey: ['environment-info'],
+    queryFn: () =>
+      readUtility<{ hostname: string | null }>('/api/environment-info'),
+    enabled: resources.visible,
+    refetchInterval: resources.visible ? 15000 : false,
+    retry: false,
+  });
+  const environmentFresh =
+    !environment.isError &&
+    resources.visible &&
+    resources.now - environment.dataUpdatedAt < 45000;
   const view = resourceView(
     resources.data,
     resources.unavailable,
@@ -39,6 +53,22 @@ export function EnvironmentPanel() {
       className="border-b text-sm text-normal"
       data-testid="environment-panel"
     >
+      <div className="flex items-center gap-base p-base">
+        <div
+          data-pet-placeholder
+          className="flex h-16 w-16 shrink-0 items-center justify-center"
+        >
+          <img src="/lvk-clover.svg" alt="LVK" className="h-12 w-12" />
+        </div>
+        <p
+          className="min-w-0 break-all font-medium text-high"
+          data-testid="environment-hostname"
+        >
+          {environmentFresh
+            ? (environment.data?.hostname ?? t('environment.unknown'))
+            : t('environment.unknown')}
+        </p>
+      </div>
       <dl className="grid grid-cols-4 gap-half p-base text-xs">
         {metrics.map(({ label, value }) => (
           <div key={label} className="flex min-w-0 items-baseline gap-half">

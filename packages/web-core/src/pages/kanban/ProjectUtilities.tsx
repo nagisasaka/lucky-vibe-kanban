@@ -86,6 +86,16 @@ export function ProjectUtilities({
           />
         </>
       )}
+      {!repo && (
+        <button
+          type="button"
+          disabled
+          aria-expanded={false}
+          className="flex w-full items-center justify-between px-base py-half text-low disabled:cursor-not-allowed"
+        >
+          <span className="font-medium">{t('sections.terminal')}</span>
+        </button>
+      )}
       {repos.some((r) => r.wiki_enabled === true) && (
         <CollapsibleSectionHeader
           className="!h-auto"
