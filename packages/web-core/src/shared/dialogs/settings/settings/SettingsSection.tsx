@@ -23,15 +23,15 @@ export function SettingsSection({
   const { t } = useTranslation('settings');
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="p-4 border-b border-border bg-primary hidden md:flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-high">
+    <div className="flex min-w-0 flex-col min-h-full">
+      <div className="sticky top-0 z-10 px-6 py-5 border-b border-border bg-primary hidden md:flex items-center justify-between gap-4">
+        <h2 className="text-xl font-semibold tracking-tight text-high">
           {t(`settings.layout.nav.${type}`)}
         </h2>
         {onClose && (
           <button
             onClick={onClose}
-            className="rounded-sm opacity-70 ring-offset-panel transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2"
+            className="rounded-sm p-2 opacity-70 ring-offset-panel transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2"
           >
             <XIcon className="h-4 w-4 text-normal" weight="bold" />
             <span className="sr-only">
@@ -41,7 +41,7 @@ export function SettingsSection({
         )}
       </div>
 
-      <div className="space-y-6 px-4 md:px-6 pt-4 pb-6 min-w-0">
+      <div className="mx-auto w-full max-w-[960px] space-y-6 px-4 md:px-6 pt-6 pb-6 min-w-0">
         <Suspense
           key={type}
           fallback={<div role="status">{t('settings.general.loading')}</div>}

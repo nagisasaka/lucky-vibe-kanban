@@ -8,6 +8,12 @@
   {
     "kind": "hardcode-markup",
     "file": "packages/local-web/src/app/auth/ServerAccessGate.tsx",
+    "value": "Lucky Vibe Kanban",
+    "reason": "Product brand name; identical in all locales."
+  },
+  {
+    "kind": "hardcode-markup",
+    "file": "packages/local-web/src/app/auth/ServerAccessGate.tsx",
     "value": "docker compose exec lvk server",
     "reason": "Literal server command; translating it would change executable syntax."
   },
