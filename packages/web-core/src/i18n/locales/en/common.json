@@ -2265,6 +2265,13 @@
     "claude": "Claude"
   },
   "utilityPanel": {
+    "diskStatus": {
+      "known": "Current",
+      "unavailable": "Acquisition failed",
+      "stale": "Observation expired",
+      "unreadableDestination": "Unknown · storage destination unreadable",
+      "unknown": "Unknown · no valid capacity data"
+    },
     "details": "Details",
     "environmentDetails": "Environment details",
     "metricDetails": "{{metric}} details",

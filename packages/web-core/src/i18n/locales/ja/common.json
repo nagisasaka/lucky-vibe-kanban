@@ -2256,6 +2256,13 @@
     "claude": "Claude"
   },
   "utilityPanel": {
+    "diskStatus": {
+      "known": "最新",
+      "unavailable": "取得失敗",
+      "stale": "観測期限切れ",
+      "unreadableDestination": "不明 · 保存先を読み取れません",
+      "unknown": "不明 · 有効な容量データなし"
+    },
     "details": "詳細",
     "environmentDetails": "環境の詳細",
     "metricDetails": "{{metric}} の詳細",

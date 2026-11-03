@@ -77,6 +77,13 @@ export function EnvironmentPanel() {
     seven_day_opus: t('environment.seven_day_opus'),
     seven_day_sonnet: t('environment.seven_day_sonnet'),
   };
+  const diskStates: Record<string, string> = {
+    known: t('utilityPanel.diskStatus.known'),
+    unavailable: t('utilityPanel.diskStatus.unavailable'),
+    stale: t('utilityPanel.diskStatus.stale'),
+    unreadableDestination: t('utilityPanel.diskStatus.unreadableDestination'),
+    unknown: t('utilityPanel.diskStatus.unknown'),
+  };
   const metrics = [
     { label: 'CPU', value: view.cpu, used: null, total: null },
     { label: 'RAM', value: view.ram, ...view.memory },
@@ -192,7 +199,7 @@ export function EnvironmentPanel() {
         </Popover>
       </div>
       <div
-        className="grid grid-cols-4 gap-half px-base pb-plusfifty"
+        className="grid grid-cols-[repeat(4,auto)] gap-half px-base pb-plusfifty"
         data-testid="environment-metrics"
       >
         {metrics.map((metric) => (
@@ -203,9 +210,14 @@ export function EnvironmentPanel() {
                 aria-label={t('utilityPanel.metricDetails', {
                   metric: metric.label,
                 })}
-                className="group min-w-0 rounded-sm px-half py-half text-left hover:bg-secondary focus-visible:ring-2 focus-visible:ring-brand"
+                title={
+                  metric.label === 'DISK'
+                    ? diskStates[view.diskStatus]
+                    : undefined
+                }
+                className="group min-w-0 rounded-sm py-half text-left hover:bg-secondary focus-visible:ring-2 focus-visible:ring-brand"
               >
-                <span className="flex items-baseline justify-between gap-half whitespace-nowrap">
+                <span className="flex items-baseline justify-between gap-0.5 whitespace-nowrap">
                   <span className="text-xs text-low">{metric.label}</span>
                   <span
                     className={`text-xs font-medium tabular-nums ${resourceTone(metric.value)}`}
@@ -240,6 +252,11 @@ export function EnvironmentPanel() {
                   {percent(metric.value)}
                 </span>
               </h3>
+              {metric.label === 'DISK' && (
+                <p className="mb-base text-low" role="status">
+                  {diskStates[view.diskStatus]}
+                </p>
+              )}
               {metric.label !== 'CPU' ? (
                 <dl className="space-y-half">
                   <div className="flex justify-between gap-base">
