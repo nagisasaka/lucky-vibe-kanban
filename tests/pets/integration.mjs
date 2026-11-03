@@ -76,16 +76,40 @@ try {
       res.setHeader('Content-Type', 'application/json');
       req.resume();
       const data =
-        req.url === '/api/attachments/upload'
-          ? { id: '11111111-1111-4111-8111-111111111111' }
-          : req.url === '/api/environment-info'
-            ? {
-                hostname: 'isolated-fixture-host',
-                container: true,
-                running_sessions: 0,
-                observed_at: new Date().toISOString(),
-              }
-            : {};
+        req.url.includes('/files/tree') || req.url.includes('/utilities/tree')
+          ? {
+              repos: ['one', 'two'].map((id) => ({
+                workspace_id: 'fixture-project',
+                repo_id: 'repo-' + id,
+                repo_name: id,
+                repo_display_name: 'File repo ' + id,
+                truncated: false,
+                entries: [
+                  {
+                    workspace_id: 'fixture-project',
+                    repo_id: 'repo-' + id,
+                    repo_name: id,
+                    path: id + '.txt',
+                    name: id + '.txt',
+                    kind: 'file',
+                    size_bytes: 1,
+                    modified_at: null,
+                    mime_type: 'text/plain',
+                    is_binary: false,
+                  },
+                ],
+              })),
+            }
+          : req.url === '/api/attachments/upload'
+            ? { id: '11111111-1111-4111-8111-111111111111' }
+            : req.url === '/api/environment-info'
+              ? {
+                  hostname: 'isolated-fixture-host',
+                  container: true,
+                  running_sessions: 0,
+                  observed_at: new Date().toISOString(),
+                }
+              : {};
       res.end(JSON.stringify({ success: true, data }));
       return;
     }
@@ -126,6 +150,53 @@ try {
   const panel = page.getByTestId('environment-panel'),
     pet = panel.getByRole('button', { name: 'LVK Rabbit', exact: true });
   await expect(pet).toBeVisible();
+  await expect(
+    page.getByRole('button', { name: 'Files', exact: true })
+  ).toBeVisible();
+  for (const count of [0, 1, 2, 0, 2]) {
+    await page.getByRole('button', { name: 'Repositories ' + count }).click();
+    await expect(page.getByTestId('main-terminal-repository')).toHaveCount(0);
+    await expect(page.getByTestId('terminal-working-directory')).toHaveCount(0);
+    await expect(
+      page.getByText('Terminal repository', { exact: true })
+    ).toHaveCount(0);
+    const terminal = page.getByRole('button', {
+      name: 'Terminal',
+      exact: true,
+    });
+    await page.evaluate(() => {
+      window.terminalStarts = [];
+    });
+    if (count === 0) await expect(terminal).toBeDisabled();
+    else {
+      await expect(terminal).toBeEnabled();
+      expect(await page.evaluate(() => window.terminalStarts)).toEqual([]);
+      await terminal.click();
+      expect(await page.evaluate(() => window.terminalStarts)).toEqual([
+        { scope: 'main:fixture-project', cwd: '/isolated/first' },
+      ]);
+    }
+  }
+  await page.getByRole('button', { name: 'Repositories 0' }).click();
+  const files = page.getByRole('button', { name: 'Files', exact: true });
+  await files.click();
+  for (const id of ['one', 'two']) {
+    await expect(
+      page.getByText('File repo ' + id, { exact: true })
+    ).toBeVisible();
+    await page.getByRole('button', { name: id + '.txt', exact: true }).click();
+    await expect(page).toHaveTitle('Selected repo-' + id);
+  }
+  await files.click();
+  cases.push(
+    'File tree retains both repository groups and file selection from each'
+  );
+  await page.screenshot({
+    path: path.join(output, 'terminal-menu-removed.png'),
+  });
+  cases.push(
+    'Files title only; terminal selector/cwd menu absent; 0/1/2 repos and async empty/refill use first root only on click'
+  );
   await expect(panel).toContainText('isolated-fixture-host');
   await expect(
     page.getByRole('button', { name: 'Close utilities' })

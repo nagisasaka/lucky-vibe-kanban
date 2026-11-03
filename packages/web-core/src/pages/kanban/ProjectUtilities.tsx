@@ -1,11 +1,10 @@
 import { useUiPreferencesStore } from '@/shared/stores/useUiPreferencesStore';
-import { useId, useState } from 'react';
 import { CaretDownIcon, FolderSimpleIcon } from '@phosphor-icons/react';
 import { useTranslation } from 'react-i18next';
 import { CollapsibleSectionHeader } from '@vibe/ui/components/CollapsibleSectionHeader';
 import { TerminalSection } from '@/shared/components/TerminalSection';
 import { UtilitySidebar } from '@/shared/components/UtilitySidebar';
-import { useTerminal } from '@/shared/hooks/useTerminal';
+import { mainTerminalRepo } from '@/shared/lib/mainTerminalRepo';
 import {
   WorkspaceFileBrowserPanel,
   type WorkspaceFilePreviewTarget,
@@ -30,17 +29,12 @@ export function ProjectUtilities({
   onClose: () => void;
 }) {
   const { t } = useTranslation('common');
-  const [repoId, setRepoId] = useState('');
-  const selectorId = useId();
   const wikiKey = `kanban-wiki:${projectId}`;
   const wikiExpanded = useUiPreferencesStore(
     (s) => s.expanded[wikiKey] ?? false
   );
   const setExpanded = useUiPreferencesStore((s) => s.setExpanded);
-  const terminal = useTerminal();
-  const terminalOpen =
-    terminal.getTabsForWorkspace(`main:${projectId}`).length > 0;
-  const repo = repos.find((r) => r.id === repoId) ?? repos[0];
+  const repo = mainTerminalRepo(repos, error);
   return (
     <UtilitySidebar>
       {error && (
@@ -87,41 +81,12 @@ export function ProjectUtilities({
         </div>
       </CollapsibleSectionHeader>
       {repo && (
-        <>
-          <div className="space-y-half border-t p-base text-xs text-low">
-            <label htmlFor={selectorId}>
-              {t('utilityPanel.terminalRepository')}
-            </label>
-            <select
-              id={selectorId}
-              aria-label={t('environment.mainTerminal')}
-              data-testid="main-terminal-repository"
-              disabled={terminalOpen}
-              className="w-full rounded-sm border bg-primary px-base py-half text-sm text-high focus-visible:ring-2 focus-visible:ring-brand"
-              value={repo.id}
-              onChange={(e) => setRepoId(e.target.value)}
-            >
-              {repos.map((r) => (
-                <option key={r.id} value={r.id}>
-                  {r.name}
-                </option>
-              ))}
-            </select>
-            <p
-              className="break-all font-ibm-plex-mono"
-              title={t('utilityPanel.terminalDirectory')}
-              data-testid="terminal-working-directory"
-            >
-              {repo.path}
-            </p>
-          </div>
-          <TerminalSection
-            scope={`main:${projectId}`}
-            cwd={repo.path}
-            projectId={projectId}
-            repoId={repo.id}
-          />
-        </>
+        <TerminalSection
+          scope={`main:${projectId}`}
+          cwd={repo.path}
+          projectId={projectId}
+          repoId={repo.id}
+        />
       )}
       {!repo && (
         <button

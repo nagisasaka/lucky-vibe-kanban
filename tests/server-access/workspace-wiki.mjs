@@ -470,20 +470,18 @@ try {
       if (view === 'main') {
         const selector = page.getByTestId('main-terminal-repository');
         const before = await sockets();
-        await expect(selector).toBeEnabled();
-        await selector.selectOption(disabledRepo.id);
-        await selector.selectOption(repo.id);
+        await expect(selector).toHaveCount(0);
         assert.equal(
           await sockets(),
           before,
-          'Choosing a repository must not start a shell'
+          'Rendering the default repository must not start a shell'
         );
       }
       let opened = await open();
       if (view === 'main')
         await expect(
           page.getByTestId('main-terminal-repository')
-        ).toBeDisabled();
+        ).toHaveCount(0);
       // Empty shell termination is independent from a running foreground job.
       const emptyFile = join(root, `${view}-empty`);
       await send(`echo $$ > '${emptyFile}'\n`);

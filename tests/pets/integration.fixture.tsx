@@ -24,7 +24,22 @@ useUiPreferencesStore.setState({
 registerPetPreferencesWriter(async (preferences) => {
   localStorage.setItem('integration-pet', JSON.stringify(preferences));
 });
+const fixtureRepos = [
+  {
+    id: 'repo-one',
+    name: 'First',
+    path: '/isolated/first',
+    wiki_enabled: false,
+  },
+  {
+    id: 'repo-two',
+    name: 'Second',
+    path: '/isolated/second',
+    wiki_enabled: false,
+  },
+];
 function App() {
+  const [repoCount, setRepoCount] = useState(0);
   const [screen, setScreen] = useState('Kanban');
   const open = useUiPreferencesStore((s) => s.isRightSidebarVisible);
   const toggle = useUiPreferencesStore((s) => s.toggleRightSidebar);
@@ -34,6 +49,11 @@ function App() {
         <button onClick={() => setScreen('Kanban')}>Kanban screen</button>
         <button onClick={() => setScreen('Workspace')}>Workspace screen</button>
         <button onClick={toggle}>Toggle sidebar</button>
+        {[0, 1, 2].map((count) => (
+          <button key={count} onClick={() => setRepoCount(count)}>
+            Repositories {count}
+          </button>
+        ))}
       </nav>
       <div className="flex flex-1 min-h-0">
         <article className="hidden md:block flex-1 min-w-0 p-base">
@@ -48,10 +68,12 @@ function App() {
             {screen === 'Kanban' ? (
               <ProjectUtilities
                 projectId="fixture-project"
-                repos={[]}
+                repos={fixtureRepos.slice(0, repoCount)}
                 error={false}
                 selectedFile={null}
-                onFile={() => {}}
+                onFile={(target) => {
+                  document.title = 'Selected ' + target.repoId;
+                }}
                 onWiki={() => {}}
                 onClose={toggle}
               />

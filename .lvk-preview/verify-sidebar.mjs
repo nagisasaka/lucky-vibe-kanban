@@ -334,7 +334,7 @@ try {
   for (repoCount of [1, 2]) {
     await goto();
     const selector = page.getByTestId("main-terminal-repository");
-    await expect(selector.locator("option")).toHaveCount(repoCount);
+    await expect(selector).toHaveCount(0);
     await expect(terminal).toBeEnabled();
     expect(results.terminalConnections).toBe(0);
     await page
@@ -345,15 +345,9 @@ try {
       await expect(page.getByTestId("main-repository-details")).toContainText(
         repo.path,
       );
-    if (repoCount === 2) {
-      await selector.selectOption("repo-two");
-      await expect(page.getByTestId("terminal-working-directory")).toHaveText(
-        repos[1].path,
-      );
-    }
   }
   results.cases.push(
-    "0/1/2 repositories, full main paths and selected cwd retained; no mount shell; terminal open/close uses browser-only terminal transport fixture, no real PTY",
+    "0/1/2 repositories, full main paths retained; terminal selector removed and first root used; no mount shell; terminal open/close uses browser-only terminal transport fixture, no real PTY",
   );
   for (mode of ["expired", "stale", "unavailable", "unsupported"]) {
     await goto();
@@ -446,11 +440,11 @@ try {
       "/packages/web-core/src/shared/lib/localApiTransport.ts",
   );
   const selector = page.getByTestId("main-terminal-repository");
-  await selector.selectOption("repo-two");
+  await expect(selector).toHaveCount(0);
   expect(results.terminalConnections).toBe(0);
   await terminal.click();
   await expect(terminal).toHaveAttribute("aria-expanded", "true");
-  await expect(selector).toBeDisabled();
+  await expect(selector).toHaveCount(0);
   await expect
     .poll(() =>
       page.evaluate(() => window.__terminalFixture.connections.length),
@@ -460,7 +454,7 @@ try {
     () => window.__terminalFixture.connections[0],
   );
   results.terminalConnections = 1;
-  expect(new URL(transportUrl).searchParams.get("repo_id")).toBe("repo-two");
+  expect(new URL(transportUrl).searchParams.get("repo_id")).toBe("repo-one");
   await terminal.click();
   await expect
     .poll(() => page.evaluate(() => window.__terminalFixture.closed))

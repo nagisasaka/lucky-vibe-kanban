@@ -2253,7 +2253,7 @@
     "seven_day_sonnet": "7 days · Sonnet",
     "mainScope": "Main repository checkout · {{path}}",
     "mainTerminal": "LVK runtime terminal · main repository (Docker: inside container)",
-    "files": "Files · main repository",
+    "files": "Files",
     "close": "Close utilities",
     "wiki": "Wiki",
     "mainWikiScope": "Main repository OpenWiki · read-only",

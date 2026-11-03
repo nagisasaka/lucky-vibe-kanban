@@ -2244,7 +2244,7 @@
     "seven_day_sonnet": "週間枠 · Sonnet",
     "mainScope": "mainレポジトリのチェックアウト · {{path}}",
     "mainTerminal": "LVK実行環境のターミナル · mainレポジトリ（Dockerではコンテナ内）",
-    "files": "ファイル · mainレポジトリ",
+    "files": "ファイル",
     "close": "ユーティリティを閉じる",
     "wiki": "Wiki",
     "mainWikiScope": "mainレポジトリのOpenWiki · 読取専用",
