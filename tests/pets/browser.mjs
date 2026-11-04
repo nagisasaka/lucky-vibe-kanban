@@ -89,6 +89,9 @@ try {
   const sidebar = page.getByTestId("sidebar-pet"),
     pet = sidebar.getByRole("button", { name: "LVK Rabbit", exact: true });
   await expect(pet).toBeVisible();
+  await expect(pet).toHaveCSS("width", "80px");
+  await expect(pet).toHaveCSS("height", "80px");
+  await expect(pet.locator("img")).toHaveCSS("height", "720px");
   await expect(pet.locator("img")).toHaveJSProperty("naturalWidth", 1536);
   const states = [
     "idle",
@@ -104,6 +107,8 @@ try {
   for (const [row, state] of states.entries()) {
     const sprite = page.getByRole("button", { name: state, exact: true });
     await expect(sprite).toHaveAttribute("data-pet-state", state);
+    await expect(sprite).toHaveCSS("width", "64px");
+    await expect(sprite).toHaveCSS("height", "64px");
     await expect(sprite.locator("img")).toHaveCSS("top", `${-row * 64}px`);
     await expect
       .poll(() => sprite.getAttribute("data-pet-frame"))
@@ -112,6 +117,14 @@ try {
   cases.push(
     "nine states: image decode, correct row and real timer frame progression",
   );
+  await sidebar.locator("summary").first().click();
+  for (const [row, state] of states.entries()) {
+    await sidebar.getByLabel("Animation preview").selectOption(state);
+    await expect(pet.locator("img")).toHaveCSS("top", `${-row * 80}px`);
+  }
+  await sidebar.getByLabel("Animation preview").selectOption("idle");
+  await sidebar.locator("summary").first().click();
+  cases.push("sidebar body 80px; nine rows scaled consistently; default sprites stay 64px");
   await pet.click();
   await expect(pet).toHaveAttribute("data-pet-state", "waving");
   await expect(pet).toHaveAttribute("data-pet-state", "idle", {

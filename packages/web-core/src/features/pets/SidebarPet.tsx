@@ -13,6 +13,8 @@ import {
   type PetPreferences,
 } from './library';
 
+const SIDEBAR_PET_SIZE = 80;
+
 export function SidebarPet() {
   const { t } = useTranslation('common');
   const raw = useUiPreferencesStore((s) => s.petPreferences);
@@ -84,12 +86,17 @@ export function SidebarPet() {
     }
   };
   return (
-    <div className="shrink-0 w-16" data-testid="sidebar-pet">
+    <div
+      className="shrink-0"
+      style={{ width: SIDEBAR_PET_SIZE }}
+      data-testid="sidebar-pet"
+    >
       {!preferences.hidden && (
         <PetSprite
           key={src}
           src={src}
           name={name}
+          size={SIDEBAR_PET_SIZE}
           state={preview}
           onError={() => {
             setFailedSource(source);

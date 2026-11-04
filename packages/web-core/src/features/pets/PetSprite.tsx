@@ -5,9 +5,16 @@ type Props = {
   src: string;
   name: string;
   state?: PetState;
+  size?: number;
   onError?: () => void;
 };
-export function PetSprite({ src, name, state = 'idle', onError }: Props) {
+export function PetSprite({
+  src,
+  name,
+  state = 'idle',
+  size = 64,
+  onError,
+}: Props) {
   const [reaction, setReaction] = useState(false);
   const [frame, setFrame] = useState(0);
   const [visible, setVisible] = useState(!document.hidden);
@@ -53,13 +60,14 @@ export function PetSprite({ src, name, state = 'idle', onError }: Props) {
       type="button"
       aria-label={name}
       onClick={react}
-      className="relative block w-16 h-16 overflow-hidden rounded-sm focus-visible:ring-2 focus-visible:ring-brand"
+      className="relative block overflow-hidden rounded-sm focus-visible:ring-2 focus-visible:ring-brand"
+      style={{ width: size, height: size }}
       data-pet-state={active}
       data-pet-frame={frame}
     >
       <span
         className="relative block mx-auto h-full overflow-hidden"
-        style={{ width: (192 * 64) / 208 }}
+        style={{ width: (192 * size) / 208 }}
       >
         <img
           src={src}
@@ -68,10 +76,10 @@ export function PetSprite({ src, name, state = 'idle', onError }: Props) {
           onError={onError}
           className="absolute max-w-none pointer-events-none"
           style={{
-            width: (1536 * 64) / 208,
-            height: 576,
-            left: -(frame * 192 * 64) / 208,
-            top: -row * 64,
+            width: (1536 * size) / 208,
+            height: 9 * size,
+            left: -(frame * 192 * size) / 208,
+            top: -row * size,
           }}
         />
       </span>

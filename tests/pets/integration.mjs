@@ -279,6 +279,13 @@ try {
       await page.setViewportSize({ width, height: 800 });
       await page.getByRole('button', { name: screen + ' screen' }).click();
       await expect(pet).toBeVisible();
+      const bounds = await pet.boundingBox();
+      expect(bounds.width).toBe(80);
+      expect(bounds.height).toBe(80);
+      const hostname = await page.getByTestId('environment-hostname').boundingBox();
+      assert.ok(bounds.x + bounds.width <= hostname.x, 'pet must not overlap hostname');
+      const metrics = await page.getByTestId('environment-metrics').boundingBox();
+      assert.ok(bounds.y + bounds.height <= metrics.y, 'pet must not overlap metrics');
       const geometry = await panel.evaluate((el) => ({
         right: el.getBoundingClientRect().right,
         width: document.documentElement.clientWidth,
