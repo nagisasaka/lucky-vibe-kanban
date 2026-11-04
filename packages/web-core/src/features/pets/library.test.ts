@@ -18,13 +18,13 @@ const manifest = {
 };
 const key = '0a000000-0000-0000-0000-000000000001';
 const attachmentId = '0a000000-0000-0000-0000-000000000002';
-function png() {
+function png(height = 1872) {
   const b = new Uint8Array(45),
     v = new DataView(b.buffer);
   b.set([137, 80, 78, 71, 13, 10, 26, 10]);
   b.set(encode('IHDR'), 12);
   v.setUint32(16, 1536);
-  v.setUint32(20, 1872);
+  v.setUint32(20, height);
   v.setUint32(8, 13);
   b.set(new TextEncoder().encode('IEND'), 37);
   return b;
@@ -135,6 +135,21 @@ describe('restoring shared pet preferences', () => {
 describe('isolated local pet import', () => {
   function decoder(width = 1536, height = 1872) {
     const close = vi.fn();
+    const pixels = new Uint8ClampedArray(1536 * height * 4);
+    const frames = [6, 8, 8, 4, 5, 8, 6, 6, 6, 8, 8];
+    for (let row = 0; row < height / 208; row++)
+      for (let col = 0; col < frames[row]; col++)
+        pixels[((row * 208 + 1) * 1536 + col * 192 + 1) * 4 + 3] = 255;
+    vi.stubGlobal('document', {
+      createElement: () => ({
+        width: 0,
+        height: 0,
+        getContext: () => ({
+          drawImage: vi.fn(),
+          getImageData: () => ({ data: pixels }),
+        }),
+      }),
+    });
     const decode = vi.fn().mockResolvedValue({ width, height, close });
     vi.stubGlobal('createImageBitmap', decode);
     return { close, decode };
@@ -184,6 +199,38 @@ describe('isolated local pet import', () => {
       'unsupported'
     );
     expect(close).toHaveBeenCalledOnce();
+  });
+  it('imports v2 and restores its version without dropping older v1 records', async () => {
+    decoder(1536, 2288);
+    const v2 = { ...manifest, spriteVersionNumber: 2 };
+    const result = await importPet(
+      fixture([
+        ['pet.json', encode(JSON.stringify(v2))],
+        ['sheet.png', png(2288)],
+      ])
+    );
+    expect(result.manifest).toEqual(v2);
+    const record = {
+      ...saved(),
+      manifest: result.manifest,
+      originalManifest: result.originalManifest,
+    };
+    expect(
+      restorePreferences({ selected: key, hidden: false, pets: [record] })
+        .pets[0].manifest.spriteVersionNumber
+    ).toBe(2);
+    expect(
+      restorePreferences({ selected: key, hidden: false, pets: [saved()] })
+        .pets[0].manifest.spriteVersionNumber
+    ).toBeUndefined();
+    await expect(
+      importPet(
+        fixture([
+          ['pet.json', encode(JSON.stringify(manifest))],
+          ['sheet.png', png(2288)],
+        ])
+      )
+    ).rejects.toThrow('unsupported');
   });
   it('rejects zero/multiple manifests and missing images before decoding', async () => {
     const { decode } = decoder();

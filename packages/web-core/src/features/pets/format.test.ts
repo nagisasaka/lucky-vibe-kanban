@@ -1,7 +1,9 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   frameAt,
   imageType,
+  lookDirection,
+  validateAtlas,
   localPath,
   parseManifest,
   PET_STATES,
@@ -67,11 +69,14 @@ describe('Petdex v1 manifest', () => {
       )
     ).toMatchObject({ ...minimal, author: 'Creator', license: 'CC BY 4.0' });
   });
-  it.each([2, 3, '1', null])('rejects unsupported version %s', (version) => {
-    expect(() =>
-      parseManifest(encode({ ...minimal, spriteVersionNumber: version }))
-    ).toThrow('unsupported');
-  });
+  it.each([0, 3, '1', '2', null])(
+    'rejects unsupported version %s',
+    (version) => {
+      expect(() =>
+        parseManifest(encode({ ...minimal, spriteVersionNumber: version }))
+      ).toThrow('unsupported');
+    }
+  );
   it.each([
     'states',
     'animations',
@@ -153,7 +158,7 @@ describe('bounded image header inspection (not full decoder validation)', () => 
       expect(imageType(webp(kind))).toBe('image/webp');
   });
   it.each([
-    [1536, 2288],
+    [1536, 2287],
     [1536, 1871],
     [1, 1],
     [65535, 65535],
@@ -260,4 +265,76 @@ describe('extended WebP coded-image allocation bounds', () => {
       expect(() => imageType(result)).toThrow('invalid');
     }
   );
+});
+
+describe('v2 compatibility and static look poses', () => {
+  afterEach(() => vi.unstubAllGlobals());
+  it('retains explicit versions and defaults absent metadata to v1', () => {
+    for (const version of [1, 2])
+      expect(
+        parseManifest(encode({ ...minimal, spriteVersionNumber: version }))
+          .spriteVersionNumber
+      ).toBe(version);
+    expect(parseManifest(encode(minimal)).spriteVersionNumber).toBeUndefined();
+  });
+  it('checks PNG and every WebP dimension against the declared version', () => {
+    expect(imageType(png(1536, 2288), 2)).toBe('image/png');
+    for (const kind of ['VP8X', 'VP8L', 'VP8 '] as const) {
+      expect(imageType(webp(kind, 1536, 2288), 2)).toBe('image/webp');
+      expect(() => imageType(webp(kind), 2)).toThrow('unsupported');
+      expect(() => imageType(webp(kind, 1536, 2288), 1)).toThrow('unsupported');
+    }
+    expect(() => imageType(png(), 2)).toThrow('unsupported');
+    expect(() => imageType(png(1536, 2288))).toThrow('unsupported');
+  });
+  it('maps all sixteen clockwise angles, wraps north and keeps center neutral', () => {
+    for (let index = 0; index < 16; index++) {
+      const radians = (index * Math.PI) / 8;
+      expect(
+        lookDirection(Math.sin(radians) * 100, -Math.cos(radians) * 100, 16)
+      ).toBe(index);
+    }
+    expect(lookDirection(-1, -100, 16)).toBe(0);
+    expect(lookDirection(0, 0, 16)).toBeNull();
+    expect(lookDirection(16, 0, 16)).toBeNull();
+    expect(lookDirection(NaN, 0, 16)).toBeNull();
+  });
+  it('enforces v2 cells without imposing new alpha rules on legacy v1', () => {
+    for (const version of [1, 2] as const) {
+      const height = version === 2 ? 2288 : 1872;
+      const pixels = new Uint8ClampedArray(1536 * height * 4);
+      for (let row = 0; row < height / 208; row++) {
+        const frames = row < 9 ? PET_STATES[row].durations.length : 8;
+        for (let col = 0; col < frames; col++)
+          pixels[((row * 208 + 100) * 1536 + col * 192 + 96) * 4 + 3] = 255;
+      }
+      const canvas = {
+        width: 0,
+        height: 0,
+        getContext: () => ({
+          drawImage: vi.fn(),
+          getImageData: () => ({ data: pixels }),
+        }),
+      };
+      vi.stubGlobal('document', { createElement: () => canvas });
+      const image = {} as CanvasImageSource;
+      expect(() => validateAtlas(image, 1536, height, version)).not.toThrow();
+      pixels[(100 * 1536 + 96) * 4 + 3] = 0;
+      if (version === 2)
+        expect(() => validateAtlas(image, 1536, height, version)).toThrow(
+          'invalid'
+        );
+      else
+        expect(() => validateAtlas(image, 1536, height, version)).not.toThrow();
+      pixels[(100 * 1536 + 96) * 4 + 3] = 255;
+      pixels[(100 * 1536 + 6 * 192 + 96) * 4 + 3] = 1;
+      if (version === 2)
+        expect(() => validateAtlas(image, 1536, height, version)).toThrow(
+          'invalid'
+        );
+      else
+        expect(() => validateAtlas(image, 1536, height, version)).not.toThrow();
+      expect(canvas.width).toBe(0);
+    }
+  });
 });

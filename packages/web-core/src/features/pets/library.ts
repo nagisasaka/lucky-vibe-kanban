@@ -1,4 +1,10 @@
-import { imageType, parseManifest, PetError, type PetManifest } from './format';
+import {
+  imageType,
+  parseManifest,
+  PetError,
+  validateAtlas,
+  type PetManifest,
+} from './format';
 import { MAX_ZIP, readPetZip } from './zip';
 
 export type SavedPet = {
@@ -72,7 +78,8 @@ export async function importPet(file: File): Promise<{
   const manifest = parseManifest(raw);
   const image = entries.get(root + manifest.spritesheetPath);
   if (!image) throw new PetError('invalid');
-  const mime = imageType(image);
+  const version = manifest.spriteVersionNumber ?? 1;
+  const mime = imageType(image, version);
   const blob = new Blob([new Uint8Array(image)], { type: mime });
   let bitmap: ImageBitmap;
   try {
@@ -81,8 +88,7 @@ export async function importPet(file: File): Promise<{
     throw new PetError('invalid');
   }
   try {
-    if (bitmap.width !== 1536 || bitmap.height !== 1872)
-      throw new PetError('unsupported');
+    validateAtlas(bitmap, bitmap.width, bitmap.height, version);
   } finally {
     bitmap.close();
   }

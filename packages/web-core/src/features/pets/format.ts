@@ -15,6 +15,7 @@ export const PET_STATES = [
 ] as const;
 export type PetState = (typeof PET_STATES)[number]['name'];
 export type PetManifest = {
+  spriteVersionNumber?: 1 | 2;
   id: string;
   displayName: string;
   description: string;
@@ -46,9 +47,13 @@ export function parseManifest(bytes: Uint8Array): PetManifest {
   if (!value || typeof value !== 'object' || Array.isArray(value))
     throw new PetError('invalid');
   const m = value as Record<string, unknown>;
-  if (m.spriteVersionNumber !== undefined && m.spriteVersionNumber !== 1)
+  if (
+    m.spriteVersionNumber !== undefined &&
+    m.spriteVersionNumber !== 1 &&
+    m.spriteVersionNumber !== 2
+  )
     throw new PetError('unsupported');
-  // Custom frame/state layouts are not part of the supported fixed v1 atlas.
+  // Custom frame/state layouts are not part of the supported fixed atlases.
   for (const key of [
     'states',
     'animations',
@@ -77,6 +82,9 @@ export function parseManifest(bytes: Uint8Array): PetManifest {
       ? (m[key] as string)
       : undefined;
   return {
+    ...(m.spriteVersionNumber === undefined
+      ? {}
+      : { spriteVersionNumber: m.spriteVersionNumber as 1 | 2 }),
     id: m.id,
     displayName: m.displayName,
     description: m.description,
@@ -95,7 +103,11 @@ export function frameAt(state: PetState, elapsed: number): number {
   return 0;
 }
 // Read dimensions before handing compressed images to the browser decoder.
-export function imageType(bytes: Uint8Array): 'image/png' | 'image/webp' {
+export function imageType(
+  bytes: Uint8Array,
+  version: 1 | 2 = 1
+): 'image/png' | 'image/webp' {
+  const expectedHeight = atlasHeight(version);
   const v = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
   const ascii = (start: number, end: number) =>
     String.fromCharCode(...bytes.slice(start, end));
@@ -131,7 +143,8 @@ export function imageType(bytes: Uint8Array): 'image/png' | 'image/webp' {
     if (!ended) throw new PetError('invalid');
     width = v.getUint32(16);
     height = v.getUint32(20);
-    if (width !== 1536 || height !== 1872) throw new PetError('unsupported');
+    if (width !== 1536 || height !== expectedHeight)
+      throw new PetError('unsupported');
     return 'image/png';
   }
   if (
@@ -171,7 +184,7 @@ export function imageType(bytes: Uint8Array): 'image/png' | 'image/webp' {
           codedWidth = v.getUint16(data + 6, true) & 0x3fff;
           codedHeight = v.getUint16(data + 8, true) & 0x3fff;
         }
-        if (codedWidth !== 1536 || codedHeight !== 1872)
+        if (codedWidth !== 1536 || codedHeight !== expectedHeight)
           throw new PetError('unsupported');
       }
       chunk = end;
@@ -202,8 +215,72 @@ export function imageType(bytes: Uint8Array): 'image/png' | 'image/webp' {
       width = v.getUint16(26, true) & 0x3fff;
       height = v.getUint16(28, true) & 0x3fff;
     } else throw new PetError('invalid');
-    if (width !== 1536 || height !== 1872) throw new PetError('unsupported');
+    if (width !== 1536 || height !== expectedHeight)
+      throw new PetError('unsupported');
     return 'image/webp';
   }
   throw new PetError('invalid');
+}
+
+export function atlasHeight(version: 1 | 2 = 1): number {
+  return version === 2 ? 2288 : 1872;
+}
+
+// Screen coordinates: up=0, right=4, down=8, left=12. Null is neutral,
+// never direction 0 (which is the upward-looking pose).
+export function lookDirection(
+  dx: number,
+  dy: number,
+  deadZone: number
+): number | null {
+  if (
+    !Number.isFinite(dx) ||
+    !Number.isFinite(dy) ||
+    Math.hypot(dx, dy) <= deadZone
+  )
+    return null;
+  const angle = ((Math.atan2(dx, -dy) * 180) / Math.PI + 360) % 360;
+  return Math.round(angle / 22.5) % 16;
+}
+
+// v1 retains its historical dimension/decode-only acceptance. For v2 all
+// required cells have content and unused tails are transparent. This checks
+// structure, not artistic pose semantics.
+export function validateAtlas(
+  image: CanvasImageSource,
+  width: number,
+  height: number,
+  version: 1 | 2
+): void {
+  if (width !== 1536 || height !== atlasHeight(version))
+    throw new PetError('unsupported');
+  if (version === 1) return;
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  try {
+    const context = canvas.getContext('2d', { willReadFrequently: true });
+    if (!context) throw new PetError('invalid');
+    context.drawImage(image, 0, 0);
+    const pixels = context.getImageData(0, 0, width, height).data;
+    for (let row = 0; row < height / 208; row++) {
+      const count = row < 9 ? PET_STATES[row].durations.length : 8;
+      for (let col = 0; col < 8; col++) {
+        let occupied = false;
+        for (let y = row * 208; y < (row + 1) * 208 && !occupied; y++) {
+          for (let x = col * 192; x < (col + 1) * 192; x++) {
+            if (pixels[(y * width + x) * 4 + 3] !== 0) {
+              occupied = true;
+              break;
+            }
+          }
+        }
+        const required = col < count;
+        if (occupied !== required) throw new PetError('invalid');
+      }
+    }
+  } finally {
+    canvas.width = 0;
+    canvas.height = 0;
+  }
 }

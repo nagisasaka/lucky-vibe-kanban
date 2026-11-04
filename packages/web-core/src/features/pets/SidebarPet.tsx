@@ -104,6 +104,9 @@ function PetContent({ settings = false }: { settings?: boolean }) {
           name={name}
           size={SIDEBAR_PET_SIZE}
           state={preview}
+          version={
+            isFallback ? 1 : (selected?.manifest.spriteVersionNumber ?? 1)
+          }
           onError={() => {
             setFailedSource(source);
             setError(t('pets.errors.storage'));

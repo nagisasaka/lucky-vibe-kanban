@@ -2316,7 +2316,7 @@
     "settings": "Pet",
     "select": "Selected pet",
     "show": "Show pet",
-    "scope": "Fixed v1 atlas (1536×1872 PNG/WebP). Up to 12 pets. v2 is not supported. Imported artwork stays in this LVK instance; follow its original license.",
+    "scope": "PNG/WebP: v1 (1536×1872) or v2 (1536×2288). Up to 12 pets. Imported artwork stays in this LVK instance; follow its original license.",
     "gallery": "Petdex gallery ↗",
     "preview": "Animation preview",
     "reset": "Restore LVK Rabbit",
@@ -2327,7 +2327,7 @@
     "errors": {
       "invalid": "Invalid or damaged pet package.",
       "size": "Package or collection exceeds the size limit.",
-      "unsupported": "Unsupported pet format. Use a fixed v1 1536×1872 atlas.",
+      "unsupported": "Unsupported pet format. Use a v1 1536×1872 or v2 1536×2288 atlas.",
       "storage": "Could not load or save the pet. Check the connection and try again."
     },
     "states": {

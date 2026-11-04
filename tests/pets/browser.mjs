@@ -238,6 +238,289 @@ try {
   cases.push(
     'missing imported image displays Rabbit name and attribution, retaining separate selected-pet credits'
   );
+
+  await page.evaluate(() => localStorage.removeItem('pet-image-failure'));
+  await page.reload();
+  // Generated geometry is a decoder/coordinate fixture, not pet artwork.
+  const makeAtlas = async (
+    mime = 'image/png',
+    missing = false,
+    paintedTail = false
+  ) =>
+    page.evaluate(
+      ({ mime, missing, paintedTail }) => {
+        const canvas = document.createElement('canvas');
+        canvas.width = 1536;
+        canvas.height = 2288;
+        const ctx = canvas.getContext('2d');
+        const counts = [6, 8, 8, 4, 5, 8, 6, 6, 6, 8, 8];
+        for (let row = 0; row < 11; row++)
+          for (let col = 0; col < counts[row]; col++) {
+            if (missing && row === 10 && col === 7) continue;
+            ctx.save();
+            ctx.translate(col * 192 + 96, row * 208 + 104);
+            ctx.fillStyle = row < 9 ? `hsl(${row * 35},65%,45%)` : '#2877cc';
+            ctx.fillRect(-34, -40, 68, 80);
+            if (row >= 9) {
+              ctx.rotate((((row - 9) * 8 + col) * Math.PI) / 8);
+              ctx.fillStyle = '#ffffff';
+              ctx.beginPath();
+              ctx.moveTo(0, -32);
+              ctx.lineTo(18, 12);
+              ctx.lineTo(0, 3);
+              ctx.lineTo(-18, 12);
+              ctx.closePath();
+              ctx.fill();
+            }
+            ctx.restore();
+          }
+        if (paintedTail) {
+          ctx.fillStyle = '#ff0000';
+          ctx.fillRect(6 * 192, 0, 1, 1);
+        }
+        return canvas.toDataURL(mime, 1);
+      },
+      { mime, missing, paintedTail }
+    );
+  const v2Manifest = {
+    id: 'v2-fixture',
+    displayName: 'V2 direction fixture',
+    description: 'Generated geometric test pattern; not user artwork',
+    spritesheetPath: 'sheet.png',
+    spriteVersionNumber: 2,
+  };
+  const packAtlas = async (name, manifest, dataUrl) => {
+    const image = path.join(scratch, name + '.image'),
+      zipPath = path.join(scratch, name + '.zip');
+    await writeFile(image, Buffer.from(dataUrl.split(',')[1], 'base64'));
+    execFileSync('python3', [
+      '-c',
+      'import zipfile,json,sys\nwith zipfile.ZipFile(sys.argv[1],"w",zipfile.ZIP_DEFLATED) as z:\n z.writestr("pet.json",sys.argv[2]);z.write(sys.argv[3],json.loads(sys.argv[2])["spritesheetPath"])',
+      zipPath,
+      JSON.stringify(manifest),
+      image,
+    ]);
+    return zipPath;
+  };
+  const body = page.getByTestId('sidebar-pet').getByRole('button');
+  // Legacy saved v1s were accepted by dimensions/decode, not cell occupancy.
+  // Keep a visible idle cell, paint an unused tail, leave other cells empty.
+  const legacyPng = await page.evaluate(() => {
+    const c = document.createElement('canvas');
+    c.width = 1536;
+    c.height = 1872;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = '#e47c29';
+    ctx.fillRect(60, 50, 72, 100);
+    ctx.fillRect(6 * 192, 0, 1, 1);
+    return c.toDataURL('image/png');
+  });
+  const legacyManifest = {
+    id: 'legacy-v1',
+    displayName: 'Legacy v1 fixture',
+    description: '',
+    spritesheetPath: 'sheet.png',
+  };
+  await sidebar
+    .locator('input[type=file]')
+    .setInputFiles(await packAtlas('legacy-v1', legacyManifest, legacyPng));
+  const legacyPet = sidebar.getByRole('button', {
+    name: legacyManifest.displayName,
+    exact: true,
+  });
+  await expect(legacyPet).toHaveAttribute('data-pet-version', '1');
+  await page.reload();
+  await expect(legacyPet).toHaveAttribute('data-pet-version', '1');
+  await expect(body.locator('img')).toHaveJSProperty('naturalHeight', 1872);
+  await expect(sidebar.getByRole('status')).toBeEmpty();
+  const restoredVersion = await page.evaluate(
+    () =>
+      JSON.parse(localStorage.getItem('pet-fixture')).pets.find(
+        (p) => p.manifest.id === 'legacy-v1'
+      ).manifest.spriteVersionNumber
+  );
+  assert.equal(restoredVersion, undefined);
+  cases.push(
+    'legacy saved v1 without version: empty required cells and painted tail remain accepted after import and reload, no Rabbit fallback'
+  );
+  const v2Png = await makeAtlas();
+  await sidebar
+    .locator('input[type=file]')
+    .setInputFiles(await packAtlas('v2-png', v2Manifest, v2Png));
+  const v2 = sidebar.getByRole('button', {
+    name: v2Manifest.displayName,
+    exact: true,
+  });
+  await expect(v2).toHaveAttribute('data-pet-version', '2');
+  await expect(body).toHaveAttribute('data-pet-version', '2');
+  await expect(v2.locator('img')).toHaveCSS('height', '880px');
+  await expect(v2.locator('img')).toHaveJSProperty('naturalHeight', 2288);
+  for (let index = 0; index < 16; index++) {
+    const bounds = await v2.boundingBox(),
+      angle = (index * Math.PI) / 8;
+    await page.mouse.move(
+      bounds.x + 40 + Math.sin(angle) * 48,
+      bounds.y + 40 - Math.cos(angle) * 48
+    );
+    await expect(v2).toHaveAttribute('data-pet-direction', String(index));
+    await expect(v2.locator('img')).toHaveCSS(
+      'top',
+      `${-(9 + Math.floor(index / 8)) * 80}px`
+    );
+    await expect(v2).toHaveAttribute('data-pet-frame', String(index % 8));
+    if (index % 4 === 0)
+      await v2.screenshot({ path: path.join(output, `v2-look-${index}.png`) });
+  }
+  await page.waitForTimeout(350);
+  await expect(v2).toHaveAttribute('data-pet-direction', '15');
+  await expect(v2).toHaveAttribute('data-pet-frame', '7');
+  const bounds = await v2.boundingBox();
+  await page.mouse.move(bounds.x + 40, bounds.y + 40);
+  await expect(v2).not.toHaveAttribute('data-pet-direction');
+  await page.mouse.move(bounds.x + 40, bounds.y - 8);
+  await expect(v2).toHaveAttribute('data-pet-direction', '0');
+  await page.evaluate(() =>
+    document.dispatchEvent(
+      new PointerEvent('pointerout', { relatedTarget: null })
+    )
+  );
+  await expect(v2).not.toHaveAttribute('data-pet-direction');
+  await page.mouse.move(bounds.x + 88, bounds.y + 40);
+  await expect(v2).toHaveAttribute('data-pet-direction', '4');
+  await page.evaluate(() =>
+    window.dispatchEvent(
+      new PointerEvent('pointerdown', {
+        pointerType: 'touch',
+        clientX: 50,
+        clientY: 50,
+      })
+    )
+  );
+  await expect(v2).not.toHaveAttribute('data-pet-direction');
+  await v2.click();
+  await expect(v2).toHaveAttribute('data-pet-state', 'waving');
+  await expect(v2).not.toHaveAttribute('data-pet-direction');
+  await expect(v2.locator('img')).toHaveCSS('top', '-240px');
+  await expect(v2).toHaveAttribute('data-pet-state', 'idle', { timeout: 2000 });
+  await sidebar.getByLabel('Animation preview').selectOption('running');
+  await page.mouse.move(bounds.x + 88, bounds.y + 40);
+  await expect(v2).not.toHaveAttribute('data-pet-direction');
+  await expect(v2.locator('img')).toHaveCSS('top', '-560px');
+  await sidebar.getByLabel('Animation preview').selectOption('idle');
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.mouse.move(bounds.x + 40, bounds.y - 8);
+  await expect(v2).not.toHaveAttribute('data-pet-direction');
+  await expect(v2).toHaveAttribute('data-pet-frame', '0');
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  cases.push(
+    'v2 all 16 clockwise static cells; north is up, center/leave/touch/reduced motion return to idle; reaction and state animation take priority'
+  );
+  await page.reload();
+  await expect(v2).toHaveAttribute('data-pet-version', '2');
+  await expect(body).toHaveAttribute('data-pet-version', '2');
+  await sidebar.locator('select').first().selectOption('lvk-rabbit');
+  await expect(pet).toHaveAttribute('data-pet-version', '1');
+  await expect(pet.locator('img')).toHaveCSS('height', '720px');
+  await sidebar
+    .locator('select')
+    .first()
+    .selectOption({ label: v2Manifest.displayName });
+  await expect(v2).toHaveAttribute('data-pet-version', '2');
+  cases.push(
+    'v2 settings and sidebar restore version on reload and v1/v2 selection switches preserve atlas scaling'
+  );
+  const beforeInvalid = uploads;
+  for (const [name, manifest, data] of [
+    ['missing-look', v2Manifest, await makeAtlas('image/png', true)],
+    ['painted-tail', v2Manifest, await makeAtlas('image/png', false, true)],
+    ['unknown-version', { ...v2Manifest, spriteVersionNumber: 3 }, v2Png],
+    [
+      'missing-version',
+      { ...v2Manifest, spriteVersionNumber: undefined },
+      v2Png,
+    ],
+  ]) {
+    await sidebar
+      .locator('input[type=file]')
+      .setInputFiles(await packAtlas(name, manifest, data));
+    await expect(sidebar.getByRole('status')).not.toBeEmpty();
+    await expect(v2).toBeVisible();
+  }
+  assert.equal(uploads, beforeInvalid);
+  cases.push(
+    'empty look cell, painted unused tail, unknown/missing version reject before upload and retain selection'
+  );
+  const v2Webp = await makeAtlas('image/webp');
+  await sidebar.locator('input[type=file]').setInputFiles(
+    await packAtlas(
+      'v2-webp',
+      {
+        ...v2Manifest,
+        id: 'v2-webp',
+        displayName: 'V2 WebP fixture',
+        spritesheetPath: 'sheet.webp',
+      },
+      v2Webp
+    )
+  );
+  await expect(
+    sidebar.getByRole('button', { name: 'V2 WebP fixture' })
+  ).toHaveAttribute('data-pet-version', '2');
+  await page.reload();
+  await expect(body.locator('img')).toHaveJSProperty('naturalHeight', 2288);
+  cases.push(
+    'actual browser WebP encoding, ZIP import/decoded dimensions and reload restoration'
+  );
+  await page.evaluate(
+    (invalidImage) => localStorage.setItem('pet-fixture-image', invalidImage),
+    await makeAtlas('image/png', true)
+  );
+  await page.reload();
+  await expect(
+    sidebar.getByRole('button', { name: 'LVK Rabbit', exact: true })
+  ).toBeVisible();
+  await expect(sidebar.locator('select').first()).toHaveValue(
+    /^[0-9a-f-]{36}$/
+  );
+  await expect(sidebar.getByRole('status')).not.toBeEmpty();
+  await page.evaluate(
+    (validImage) => localStorage.setItem('pet-fixture-image', validImage),
+    v2Webp
+  );
+  await page.reload();
+  await expect(body).toHaveAttribute('data-pet-version', '2');
+  cases.push(
+    'restored malformed v2 atlas falls back to Rabbit while keeping selection/metadata; corrected image reload restores v2'
+  );
+  for (const lang of ['en', 'ja'])
+    for (const width of [360, 1200]) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto(base + '?lang=' + lang);
+      await expect(body).toBeVisible();
+      await page.evaluate(
+        (dark) => document.documentElement.classList.toggle('dark', dark),
+        width === 360
+      );
+      await page.waitForTimeout(300);
+      assert.equal(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth > innerWidth
+        ),
+        false
+      );
+      const panel = await page.getByTestId('sidebar-pet').evaluate((el) => ({
+        panel: el.parentElement.getBoundingClientRect().width,
+        pet: el.getBoundingClientRect().width,
+      }));
+      assert.ok(panel.pet <= panel.panel);
+      await page.screenshot({
+        path: path.join(output, `v2-${lang}-${width}.png`),
+        fullPage: true,
+      });
+    }
+  cases.push(
+    'v2 settings/sidebar screenshots: en/ja, 360px dark and desktop light; no horizontal overflow'
+  );
   assert.deepEqual(errors, []);
   console.log(
     JSON.stringify({ status: 'passed', cases, errors, uploads }, null, 2)
