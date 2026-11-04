@@ -1,10 +1,9 @@
 import { useTranslation } from 'react-i18next';
-import { ArrowClockwiseIcon, CaretDownIcon } from '@phosphor-icons/react';
+import { ArrowClockwiseIcon } from '@phosphor-icons/react';
 import { resourceTone } from '@vibe/ui/lib/resourceObservation';
 
 type QuotaWindow = {
   key: string;
-  label: string;
   remaining: number | null;
   reset: number | null;
 };
@@ -12,7 +11,6 @@ export type EnvironmentQuotaRow = {
   name: string;
   id?: string;
   representative?: boolean;
-  unlimitedCredits?: boolean;
   windows: QuotaWindow[];
 };
 
@@ -39,7 +37,9 @@ export function EnvironmentQuota({
   const percent = (value: number | null) =>
     value === null ? '—' : `${Math.floor(value)}%`;
   const time = (value: number | null) =>
-    value === null ? '—' : new Date(value).toLocaleString(i18n.language);
+    value === null || !Number.isFinite(value) || Math.abs(value) > 8.64e15
+      ? '—'
+      : new Date(value).toLocaleString(i18n.language);
   const countdown = (reset: number | null) => {
     if (reset === null) return '—';
     const minutes = Math.ceil((reset - now) / 60000);
@@ -56,6 +56,24 @@ export function EnvironmentQuota({
       });
     return t('utilityPanel.durationMinutes', { minutes });
   };
+  const observedAge =
+    observed !== null &&
+    Number.isFinite(observed) &&
+    Math.abs(observed) <= 8.64e15 &&
+    Number.isFinite(now) &&
+    observed <= now
+      ? Math.floor((now - observed) / 60000)
+      : null;
+  const fetchedLabel =
+    observedAge === null
+      ? t('utilityPanel.fetchedUnknown')
+      : observedAge < 1
+        ? t('utilityPanel.fetchedNow')
+        : observedAge < 60
+          ? t('utilityPanel.fetchedMinutes', { count: observedAge })
+          : t('utilityPanel.fetchedHours', {
+              count: Math.floor(observedAge / 60),
+            });
   const resetPending = rows.some((row) =>
     row.windows.some((window) => window.reset !== null && window.reset <= now)
   );
@@ -63,11 +81,15 @@ export function EnvironmentQuota({
     row.windows.some((window) => window.remaining === 0)
   );
   const stateLabel =
-    resetPending && (status === 'unknown' || status === 'fresh')
-      ? t('utilityPanel.awaitingRefresh')
-      : exhausted
-        ? t('utilityPanel.resetPending')
-        : t(`utilityPanel.quotaStatus.${status}`);
+    status !== 'fresh' && status !== 'unknown'
+      ? t(`utilityPanel.quotaStatus.${status}`)
+      : resetPending
+        ? t('utilityPanel.awaitingRefresh')
+        : exhausted
+          ? t('utilityPanel.resetPending')
+          : status === 'fresh'
+            ? fetchedLabel
+            : t(`utilityPanel.quotaStatus.${status}`);
   const stateTone =
     status === 'fresh' && !resetPending && !exhausted
       ? 'text-success'
@@ -77,7 +99,7 @@ export function EnvironmentQuota({
 
   return (
     <div
-      className="space-y-base border-t px-base py-plusfifty"
+      className="space-y-half border-t px-base py-base"
       data-testid={`environment-quota-${name.toLowerCase()}`}
     >
       <div className="flex items-center justify-between gap-half">
@@ -87,7 +109,9 @@ export function EnvironmentQuota({
             className={`min-w-0 break-words text-right text-xs ${stateTone}`}
             role="status"
           >
-            {stateLabel}
+            {status !== 'fresh' && observedAge !== null
+              ? `${stateLabel} · ${fetchedLabel}`
+              : stateLabel}
           </span>
           <button
             type="button"
@@ -109,111 +133,81 @@ export function EnvironmentQuota({
           </button>
         </div>
       </div>
-      {rows.length === 0 && (
-        <p className="text-xs text-low">{t(`codexQuota.status.${status}`)}</p>
-      )}
-      {rows.map((row, index) => (
-        <div key={`${row.id ?? row.name}-${index}`} className="space-y-base">
-          {(rows.length > 1 || row.name) && (
-            <p className="break-words text-xs text-low">
-              {row.name ||
-                (row.representative ? t('codexQuota.defaultBucket') : row.id)}
-            </p>
-          )}
-          <dl className="grid grid-cols-2 gap-x-base gap-y-base">
-            {row.windows.map((window) => (
-              <div
-                key={window.key}
-                className="min-w-0 space-y-half"
-                data-quota-window={window.key}
-              >
-                <dt className="break-words text-xs text-normal">
-                  {window.label}
-                </dt>
-                <div className="flex items-baseline justify-between gap-half">
-                  <span className="min-w-0 text-xs text-low">
-                    {t('utilityPanel.quotaRemaining')}
-                  </span>
-                  <dd
-                    className={`shrink-0 font-medium tabular-nums ${resourceTone(window.remaining === null ? null : 100 - window.remaining)}`}
-                  >
-                    {percent(window.remaining)}
-                  </dd>
-                </div>
-                <div className="flex items-center gap-base">
-                  <div
-                    aria-hidden="true"
-                    className="h-0.5 min-w-0 flex-1 overflow-hidden rounded-full bg-panel"
-                  >
-                    {window.remaining !== null && (
-                      <div
-                        className={`h-full bg-current ${resourceTone(100 - window.remaining)}`}
-                        style={{ width: `${window.remaining}%` }}
-                      />
-                    )}
-                  </div>
-                </div>
-                <p
-                  className="break-words text-xs tabular-nums text-low"
-                  title={time(window.reset)}
-                  aria-label={t('utilityPanel.resetsIn', {
-                    time: countdown(window.reset),
-                  })}
+      {rows
+        .filter((row) => row.windows.length > 0)
+        .map((row, index) => (
+          <div key={`${row.id ?? row.name}-${index}`} className="space-y-half">
+            {(rows.length > 1 || row.name) && (
+              <p className="break-words text-xs text-low">
+                {row.name ||
+                  (row.representative ? t('codexQuota.defaultBucket') : row.id)}
+              </p>
+            )}
+            {row.windows.length > 0 && (
+              <>
+                <div
+                  className="grid grid-cols-2 gap-x-base text-xs text-low"
+                  aria-hidden="true"
                 >
-                  {t('utilityPanel.resetsIn', {
-                    time: countdown(window.reset),
-                  })}
-                </p>
-              </div>
-            ))}
-          </dl>
-        </div>
-      ))}
-      <details className="group text-xs text-low">
-        <summary className="flex w-fit cursor-pointer list-none items-center gap-half rounded-sm focus-visible:ring-2 focus-visible:ring-brand [&::-webkit-details-marker]:hidden">
-          {t('utilityPanel.details')}
-          <CaretDownIcon className="size-icon-2xs transition-transform group-open:rotate-180 motion-reduce:transition-none" />
-        </summary>
-        <div className="mt-base space-y-base border-l pl-base">
-          <p>
-            {t('codexQuota.statusLabel', {
-              status: t(`codexQuota.status.${status}`),
-            })}
-          </p>
-          <p>{t('codexQuota.observed', { time: time(observed) })}</p>
-          <p>{t('utilityPanel.accountSource')}</p>
-          {rows.map((row, index) => (
-            <div key={index} className="space-y-half break-words">
-              {row.representative !== undefined && (
-                <p>
-                  {t(
-                    row.representative
-                      ? 'codexQuota.defaultBucket'
-                      : 'codexQuota.additionalBucket',
-                    { index: index + 1 }
-                  )}
-                </p>
-              )}
-              {(row.name || row.id) && (
-                <p>{[row.name, row.id].filter(Boolean).join(' / ')}</p>
-              )}
-              {row.windows.map((window) => (
-                <p key={window.key}>
-                  {t('codexQuota.window', {
-                    kind: window.key,
-                    period: window.label,
-                    value: percent(window.remaining),
-                    reset: time(window.reset),
-                  })}
-                </p>
-              ))}
-              {row.unlimitedCredits && (
-                <p>{t('codexQuota.unlimitedCredits')}</p>
-              )}
-            </div>
-          ))}
-        </div>
-      </details>
+                  <span>{t('utilityPanel.quotaRemaining')}</span>
+                  <span className="text-right">
+                    {t('utilityPanel.resetCountdown')}
+                  </span>
+                </div>
+                <dl className="space-y-half">
+                  {row.windows.map((window, windowIndex) => (
+                    <div
+                      key={window.key}
+                      data-quota-window={window.key}
+                      className="grid min-w-0 grid-cols-2 items-center gap-x-base"
+                    >
+                      <div className="flex min-w-0 items-center gap-half">
+                        <dt
+                          className={
+                            row.windows.length > 1
+                              ? 'shrink-0 text-xs text-low'
+                              : 'sr-only'
+                          }
+                        >
+                          {t('utilityPanel.quotaIndex', {
+                            index:
+                              window.key === 'secondary' ? 2 : windowIndex + 1,
+                          })}
+                        </dt>
+                        <dd
+                          aria-label={t('utilityPanel.quotaRemaining')}
+                          className={`shrink-0 font-medium tabular-nums ${resourceTone(window.remaining === null ? null : 100 - window.remaining)}`}
+                        >
+                          {percent(window.remaining)}
+                        </dd>
+                        <div
+                          aria-hidden="true"
+                          className="h-0.5 min-w-0 flex-1 overflow-hidden rounded-full bg-panel"
+                        >
+                          {window.remaining !== null && (
+                            <div
+                              className={`h-full bg-current ${resourceTone(100 - window.remaining)}`}
+                              style={{ width: `${window.remaining}%` }}
+                            />
+                          )}
+                        </div>
+                      </div>
+                      <p
+                        className="min-w-0 break-words text-right font-medium tabular-nums text-normal"
+                        title={time(window.reset)}
+                        aria-label={t('utilityPanel.resetsIn', {
+                          time: countdown(window.reset),
+                        })}
+                      >
+                        {countdown(window.reset)}
+                      </p>
+                    </div>
+                  ))}
+                </dl>
+              </>
+            )}
+          </div>
+        ))}
     </div>
   );
 }

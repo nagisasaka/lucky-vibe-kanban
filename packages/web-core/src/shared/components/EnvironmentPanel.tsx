@@ -71,13 +71,6 @@ export function EnvironmentPanel() {
     value >= 0
       ? new Intl.NumberFormat(i18n.language).format(value)
       : '—';
-  const periods: Record<string, string> = {
-    five_hour: t('environment.five_hour'),
-    seven_day: t('environment.seven_day'),
-    seven_day_oauth_apps: t('environment.seven_day_oauth_apps'),
-    seven_day_opus: t('environment.seven_day_opus'),
-    seven_day_sonnet: t('environment.seven_day_sonnet'),
-  };
   const diskStates: Record<string, string> = {
     known: t('utilityPanel.diskStatus.known'),
     unavailable: t('utilityPanel.diskStatus.unavailable'),
@@ -301,17 +294,7 @@ export function EnvironmentPanel() {
         observed={cv.observed}
         now={resources.now}
         {...codex}
-        rows={cv.rows.map((row) => ({
-          ...row,
-          windows: row.windows.map((window) => ({
-            ...window,
-            label: window.period
-              ? t(`codexQuota.period.${window.period.unit}`, {
-                  count: window.period.count,
-                })
-              : t('codexQuota.unknownPeriod'),
-          })),
-        }))}
+        rows={cv.rows}
       />
       <EnvironmentQuota
         name="Claude"
@@ -324,12 +307,7 @@ export function EnvironmentPanel() {
             ? [
                 {
                   name: '',
-                  windows: cl.windows.map((window) => ({
-                    ...window,
-                    label:
-                      periods[window.key] ??
-                      (window.label || t('codexQuota.unknownPeriod')),
-                  })),
+                  windows: cl.windows,
                 },
               ]
             : []
