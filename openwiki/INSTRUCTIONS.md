@@ -164,3 +164,45 @@ this finding separately from zero remaining docs dependencies. Preserve already
 migrated knowledge and stable page paths; do not redo unrelated pages merely to
 increase scope. Do not perform an actual shutdown, restore, key change, login or
 other live recovery action as part of this documentation correction.
+
+
+Migration acceptance follow-up: recorded rationale and provider configuration
+
+The content review at cc339608 found two further gaps despite zero retiring-docs
+dependencies. Reconcile them in this pass, using the existing stable page paths
+and normal page/Claims lifecycle. Preserve the already repaired authentication
+recovery sequence; do not repeat unrelated rewrites.
+
+- In architecture/agent-runtime.md, preserve the documented historical reasons
+  from docs/future/agent-runtime/architecture.md:713-725: why a single Message
+  union was rejected (different semantics become optional/unknown fields), and
+  why native input audit was needed to explain LVK requests, adapter translation
+  and provider input for protocol changes, recovery and regression evidence.
+  Corroborate the current contract/event/native_audit separation and actual input
+  recording with runtime/mod.rs and local-deployment/process_host.rs. Label the
+  recorded reasons as historical decisions rather than deriving intent solely
+  from current code. Do not turn the old design into a current universal input
+  write-ahead guarantee. Inspect the adjacent Tool Gateway and V1 knowledge-base
+  exclusions for useful historical rationale, without reinstating them as current
+  product non-goals or inventing subsequent decisions.
+- In integrations/agent-providers.md, make the custom configuration location
+  discoverable. Verify Codex's CODEX_HOME resolution, its empty/unset fallback to
+  ~/.codex, and config.toml/auth.json and native MCP configuration against
+  crates/executors/src/executors/codex.rs:69-79,428-445. Preserve the same execution
+  account and configuration-directory requirement from docs/agents/claude-code.mdx:
+  18-30, including CLAUDE_CONFIG_DIR when selected, and distinguish vendor CLI
+  behavior from LVK's environment/profile auth probe in claude/auth.rs. Explain
+  choosing the location before login/status and checking the selected profile's
+  next execution in that same environment. Link to the standard Compose persistent
+  home explanation. Do not copy credentials, display their contents, imply LVK
+  login authenticates the provider, or repeat obsolete claims that the current
+  container's Codex version is unpinned. Preserve uncertainty where vendor behavior
+  is not established by the available evidence.
+
+Validate that these reasons and configuration keys can be found in the Wiki
+without opening the retiring docs. Keep current behavior separate from historical
+rationale, and keep standard Compose login separate from custom locations. Do not
+reintroduce retiring-docs links in pages, frontmatter or Claims; verify all three
+layers again and preserve stable paths and this user-owned file. No live login,
+account, key, environment, build or restore operations are needed or authorized
+by this documentation correction.
