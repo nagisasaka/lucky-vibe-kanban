@@ -36,7 +36,13 @@ export function quotaView(data: unknown, unavailable: boolean, now: number) {
     ? [defaultBucket, ...others]
     : others;
   const rows = buckets.map((bucket, index) => {
-    const windows = ['primary', 'secondary'].map((key) => {
+    const windows = ['primary', 'secondary'].flatMap((key) => {
+      if (
+        bucket[key] === null ||
+        typeof bucket[key] !== 'object' ||
+        Array.isArray(bucket[key])
+      )
+        return [];
       const w = record(bucket[key]);
       const reset =
         typeof w.resetsAt === 'number' &&
@@ -65,7 +71,7 @@ export function quotaView(data: unknown, unavailable: boolean, now: number) {
               ? { unit: 'hours' as const, count: mins / 60 }
               : { unit: 'minutes' as const, count: mins }
           : null;
-      return { key, period, remaining, reset };
+      return [{ key, period, remaining, reset }];
     });
     // React escapes text; bound length and remove control/bidi characters. Never expose account fields.
     const publicText = (value: unknown) =>
@@ -92,9 +98,7 @@ export function quotaView(data: unknown, unavailable: boolean, now: number) {
       .filter((w) => w.remaining !== null)
       .map((w) => w.remaining as number) ?? [];
   // Unknown windows cannot be treated as unlimited or fully available.
-  const present =
-    rows[0] &&
-    ['primary', 'secondary'].filter((k) => buckets[0][k] != null).length;
+  const present = rows[0] && rows[0].windows.length;
   const remaining =
     hasDefault && values.length && values.length === present
       ? Math.min(...values)

@@ -9,6 +9,9 @@ void i18n.use(initReactI18next).init({
   initImmediate: false,
   interpolation: { escapeValue: false },
 });
+import { EnvironmentQuota } from '../../packages/web-core/src/shared/components/EnvironmentQuota';
+import { quotaView } from '../../packages/ui/src/lib/codexQuota';
+import { useTranslation } from 'react-i18next';
 import { CodexQuota } from '../../packages/ui/src/components/CodexQuota';
 import { useCodexQuota } from '../../packages/web-core/src/shared/hooks/useCodexQuota';
 import { createRoot } from 'react-dom/client';
@@ -26,6 +29,31 @@ function DuplicateSubscriber() {
 function App() {
   const resources = useResourceObservation();
   const quota = useCodexQuota(resources.visible);
+  const { t } = useTranslation('common');
+  const view = quotaView(quota.data, quota.unavailable, resources.now);
+  if (new URLSearchParams(location.search).has('sidebar'))
+    return (
+      <div className="w-[300px] overflow-hidden bg-primary text-normal">
+        <EnvironmentQuota
+          name="Codex"
+          {...quota}
+          {...view}
+          now={resources.now}
+          rows={view.rows.map((row) => ({
+            ...row,
+            name: row.name,
+            windows: row.windows.map((w) => ({
+              ...w,
+              label: w.period
+                ? t(`codexQuota.period.${w.period.unit}`, {
+                    count: w.period.count,
+                  })
+                : t('codexQuota.unknownPeriod'),
+            })),
+          }))}
+        />
+      </div>
+    );
   return (
     <>
       <Navbar

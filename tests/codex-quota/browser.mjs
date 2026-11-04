@@ -51,6 +51,8 @@ try {
     [
       '-c',
       'tailwind.new.config.js',
+      '--content',
+      './src/**/*.{ts,tsx},../web-core/src/**/*.{ts,tsx},../ui/src/**/*.{ts,tsx},../../tests/codex-quota/*.tsx',
       '-i',
       '../web-core/src/app/styles/new/index.css',
       '-o',
@@ -116,6 +118,23 @@ try {
               },
             },
           };
+    if (
+      [
+        'both-null',
+        'primary-null',
+        'secondary-null',
+        'missing-period',
+        'missing-time',
+      ].includes(mode)
+    ) {
+      const bucket = result.quota.data.rateLimits;
+      if (mode === 'both-null' || mode === 'primary-null')
+        bucket.primary = null;
+      if (mode === 'both-null' || mode === 'secondary-null')
+        bucket.secondary = null;
+      if (mode === 'missing-period') delete bucket.primary.windowDurationMins;
+      if (mode === 'missing-time') delete bucket.primary.resetsAt;
+    }
     if (mode === 'buckets') {
       result.quota.data.rateLimits.limitId = 'standard';
       result.quota.data.rateLimitsByLimitId = {
@@ -162,7 +181,7 @@ try {
             quotaBox.y -
             quotaBox.height / 2
         ) < 5 && quotaBox.x >= resourceBox.x + resourceBox.width,
-        'desktop resources and quota share one row'
+        `desktop resources and quota share one row: ${JSON.stringify({ resourceBox, quotaBox })}`
       );
     }
     const quotaBounds = await trigger.boundingBox();
@@ -259,6 +278,98 @@ try {
     await page.getByTestId('codex-quota').click();
     await expect(page.getByText(duration, { exact: false })).toBeVisible();
     results.cases.push(`i18n ${lang}`);
+  }
+  for (const lang of ['en', 'ja']) {
+    for (const dark of [false, true]) {
+      for (const state of [
+        'both-null',
+        'primary-null',
+        'secondary-null',
+        'missing-period',
+        'missing-time',
+        'fresh',
+      ]) {
+        mode = state;
+        await page.setViewportSize({ width: 320, height: 720 });
+        await page.goto(base + '/?sidebar&lang=' + lang);
+        await page.evaluate(
+          (dark) => document.documentElement.classList.toggle('dark', dark),
+          dark
+        );
+        const panel = page.getByTestId('environment-quota-codex');
+        await expect(panel.locator('[data-quota-window]')).toHaveCount(
+          state === 'both-null' ? 0 : state.endsWith('-null') ? 1 : 2
+        );
+        if (state !== 'both-null') {
+          await expect(
+            panel
+              .getByText(lang === 'ja' ? '利用枠の残り' : 'Quota remaining', {
+                exact: true,
+              })
+              .first()
+          ).toBeVisible();
+          await expect(
+            panel
+              .getByText(lang === 'ja' ? 'リセットまで:' : 'Resets in:', {
+                exact: false,
+              })
+              .first()
+          ).toBeVisible();
+          const primary = panel.locator('[data-quota-window="primary"]');
+          if (state !== 'primary-null') {
+            await expect(primary.locator('dd')).toHaveText('83%');
+            assert.equal(
+              await primary
+                .locator('[aria-hidden] > div')
+                .evaluate((el) => el.style.width),
+              '83%'
+            );
+            if (state === 'missing-period')
+              await expect(
+                primary.getByText(
+                  lang === 'ja' ? '期間不明' : 'Unknown period',
+                  { exact: true }
+                )
+              ).toBeVisible();
+            if (state === 'missing-time')
+              await expect(
+                primary.getByText(
+                  lang === 'ja' ? 'リセットまで: —' : 'Resets in: —',
+                  { exact: true }
+                )
+              ).toBeVisible();
+          }
+        }
+        const bounds = await panel.boundingBox();
+        assert.equal(bounds.width, 300);
+        const overflows = await panel
+          .locator('[data-quota-window]')
+          .evaluateAll(
+            (cells) =>
+              cells.filter((cell) => {
+                const b = cell.getBoundingClientRect();
+                return (
+                  cell.scrollWidth > cell.clientWidth ||
+                  [...cell.querySelectorAll('*')].some((el) => {
+                    const r = el.getBoundingClientRect();
+                    return r.left < b.left - 0.5 || r.right > b.right + 0.5;
+                  })
+                );
+              }).length
+          );
+        assert.equal(overflows, 0, `${lang}/${state} cell contents fit`);
+        if (state === 'missing-period')
+          await page.screenshot({
+            path: path.join(
+              output,
+              `sidebar-${lang}-${dark ? 'dark' : 'light'}.png`
+            ),
+          });
+        results.cases.push(
+          `300px sidebar ${lang} ${dark ? 'dark' : 'light'} ${state}`
+        );
+      }
+    }
   }
   mode = 'fresh';
   await page.goto(base);

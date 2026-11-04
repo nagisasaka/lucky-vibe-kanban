@@ -124,13 +124,16 @@ export function EnvironmentQuota({
             {row.windows.map((window) => (
               <div
                 key={window.key}
-                className="space-y-half"
+                className="min-w-0 space-y-half"
                 data-quota-window={window.key}
               >
-                <div className="flex items-baseline justify-between gap-base">
-                  <dt className="min-w-0 break-words text-xs text-normal">
-                    {window.label}
-                  </dt>
+                <dt className="break-words text-xs text-normal">
+                  {window.label}
+                </dt>
+                <div className="flex items-baseline justify-between gap-half">
+                  <span className="min-w-0 text-xs text-low">
+                    {t('utilityPanel.quotaRemaining')}
+                  </span>
                   <dd
                     className={`shrink-0 font-medium tabular-nums ${resourceTone(window.remaining === null ? null : 100 - window.remaining)}`}
                   >
@@ -149,16 +152,18 @@ export function EnvironmentQuota({
                       />
                     )}
                   </div>
-                  <span
-                    className="min-w-0 break-words text-right text-xs tabular-nums text-low"
-                    title={time(window.reset)}
-                    aria-label={t('utilityPanel.resetsIn', {
-                      time: countdown(window.reset),
-                    })}
-                  >
-                    {countdown(window.reset)}
-                  </span>
                 </div>
+                <p
+                  className="break-words text-xs tabular-nums text-low"
+                  title={time(window.reset)}
+                  aria-label={t('utilityPanel.resetsIn', {
+                    time: countdown(window.reset),
+                  })}
+                >
+                  {t('utilityPanel.resetsIn', {
+                    time: countdown(window.reset),
+                  })}
+                </p>
               </div>
             ))}
           </dl>
