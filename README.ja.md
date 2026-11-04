@@ -1,110 +1,53 @@
 # Lucky Vibe Kanban（LVK）
 
-**カンバンで作業を計画し、コーディングエージェントを実行して、変更をレビューする。**
+**看板で作業を計画し、コーディングエージェントを動かして、その変更をレビューする。**
 
-Lucky Vibe Kanban は、Vibe Kanban と Lucky Vibe Kanban を基にした、セルフホスト型の開発環境です。
-手元のコンピューターで動かすことも、自分のサーバーに設置して、ノート PC を切断している間もエージェントの作業を続けることもできます。
+LVKは、Git worktree、複数Session、視覚的なエージェントWorkflow、ローカル統合、
+OpenWikiによるリポジトリの記憶を備えたセルフホストの開発環境です。
+手元のコンピューターや自分のサーバーで動かし、ノートPCを切断している間も作業を続けられます。
+エージェントのアカウント、プロバイダー契約、モデル利用料金は別途必要です。
 
-[English](README.md) · [サーバーのセットアップ](docs/self-hosting/server-container.mdx) ·
+[English](README.md) · [简体中文](README.zh-CN.md) ·
 [ソースコード](https://github.com/nagisasaka/lucky-vibe-kanban) · [Apache-2.0](LICENSE)
-
-## できること
-
-- 課題を整理し、Git worktree で Codex や Claude Code などのコーディングエージェントを実行する。
-- 複数のセッションやワークスペースを管理し、実行履歴や差分を確認する。
-- 並列分岐や条件分岐を含む、エージェントの作業手順を視覚的なワークフローとして組み立てる。
-- ローカルボードで完了した作業を、専用の検証ワークスペースを通じて統合する。
-- OpenWiki でリポジトリの知識を蓄積し、ソース統合後に更新する。
-- 常時稼働するサーバー上でアプリとエージェントを動かし、HTTPS と Basic／Auth0 認証でアクセスする。
-
-エージェントのアカウントやプロバイダーの契約は、別途設定します。
-LVK にモデルの利用料金は含まれておらず、誰でも無制限にエージェントを使える公開サービスでもありません。
 
 ## 配布方法
 
-LVK は GHCR を通じて **Docker イメージのみ**を配布します。現在の対象は Linux amd64 です。
-このフォークでは npm パッケージを公開しません。ローカルで開発する場合は、後述の手順でソースから起動してください。
-旧 npx ランチャーは廃止しました。server・MCP・desktop の各入口は
-[移行案内](docs/self-hosting/server-container.mdx#legacy-npx-cli-migration)を参照してください。
+GHCRを通じてDockerイメージのみを配布し、現在の対象はLinux amd64です。
+このフォークではnpmパッケージを公開しません。旧npxランチャー、Tauri desktop shell、
+上流のCloud・relayは廃止済みです。ブラウザーでLVKサーバーのURLへアクセスします。
+外部Runnerによる実行はExecution Bridgeで引き続き利用できます。
 
-## 自分のサーバーで動かす
+公開配置はHTTPSとBasic／Auth0認証を使い、初回はロック状態です。
+信頼できるチーム向けで、無制限の公開エージェントサービスではありません。
+プロバイダーやアプリの認証はLVKログインとは別です。
+データの永続化は、中断したプロセスの自動再開を保証しません。
 
-[個人用サーバーの導入ガイド](docs/self-hosting/server-container.mdx)と、
-[`deploy/server`](deploy/server) 内のファイルを使用します。
-公開されている Linux amd64 イメージには、LVK、nginx、Codex CLI、Git、Node.js、pnpm、Rust の開発ツールが含まれています。
+## 利用案内
 
-- 固定のパブリック IP アドレスがあれば利用でき、**ドメインの購入は不要**です。
-- Let's Encrypt の証明書を自動で取得・更新します。
-- HTTPS と Basic／Auth0 認証でアプリへのアクセスを保護します。 公開配置の初回はロック状態です。`docker compose exec lvk server setup-token` でキーを発行し、[HTTPSの初期設定画面](docs/self-hosting/authentication.mdx)で設定します。
-- Docker ボリュームにリポジトリ、アプリのデータ、エージェントの認証情報を保存します。
-- サーバーやコンテナを再起動すると、実行中のプロセスは停止します。データの永続化は、中断したエージェントの作業が自動で再開することを保証するものではありません。
+- [サーバー導入・証明書・バックアップ・復元](openwiki/operations/server-container.md)
+- [初期認証・メンバー・復旧](openwiki/concepts/server-access.md)
+- [プロバイダーログイン・profile・MCP設定](openwiki/integrations/agent-providers.md)
+- [Issueから統合まで](openwiki/workflows/task-to-integration.md)と[自動マージ](openwiki/concepts/formal-integration.md)
+- [リポジトリの記憶と正規Wiki保守](openwiki/operations/openwiki-maintenance.md)
 
-この構成は、信頼できる 1 人のユーザーが利用するためのものです。
-ワイルドカードを使ったプロジェクトのプレビューには追加設定が必要です。Android/ADB のリモート接続機能は含まれていません。
-この方法で設置するローカルアプリは、上流プロジェクトの複数ユーザー向けクラウドバックエンドとは別の構成です。
+## LVKを開発する
 
-## LVK を開発する
+ツールチェーン、セットアップ、ビルド、検証、復旧は[開発ガイド](openwiki/operations/development.md)、
+開発時の規則は[AGENTS.md](AGENTS.md)を参照してください。
+配布設定は[deploy/server](deploy/server)、イメージの検証・公開は
+[publish-server.yml](.github/workflows/publish-server.yml)が担当します。公開と配備は別の操作です。
 
-`package.json` に記載された Node.js と pnpm、および `rust-toolchain.toml` に記載された Rust ツールチェーンを使用します。
-`cargo-watch` をインストールし、次を実行してください。
+READMEは人間がAIの支援を受けて保守します。運用詳細はAIが保守するOpenWikiに集約し、
+統合済みsourceと照合します。source・tests・configurationを優先します。
+LVKでは別の文書サイトを再作成せず、Wikiで知識を保守します。
 
-```bash
-pnpm install --frozen-lockfile
-pnpm run dev
-```
+## 名前と帰属
 
-フロントエンドの変更は Vite が反映します。Rust バックエンドの変更は `cargo watch` が再ビルドして再起動します。
-ビルド結果を再利用できるよう、Cargo の target ディレクトリは実行のたびに削除しないでください。
+製品名は**Lucky Vibe Kanban**、略称は**LVK**です。現在の設定・共有リンクは
+`LVK_*`と`.lvk-shared`を使用します。元のVibe Kanbanの保存先、`VK_*`設定、
+ネイティブバイナリ名は変更していません。
 
-サーバー上で開発する場合は、[ソース開発環境のセットアップ](docs/self-hosting/server-container.mdx#develop-lvk-on-the-server)に従ってください。
-標準イメージにはブラウザーE2E用のheadless Chromiumが含まれています。
-LVK自体を開発する場合は、任意の[ホスト側更新サービス](deploy/developer/README.md)を導入すると、サーバー上からforkのイメージを公開し、自分の環境へ反映できます。
-公開済みのイメージを使い、独立した開発用コンテナを起動します。**ソースを編集するたびにイメージを再ビルドする必要はありません。**
-開発版には専用の HTTPS ポート、データベース、home ボリューム、work ボリュームがあります。
-開発版の再起動中も、通常版でエージェントの作業を管理できます。
-
-| コマンド                  | 用途                                                               |
-| ------------------------- | ------------------------------------------------------------------ |
-| `pnpm run dev`            | ローカルでフロントエンドとバックエンドを起動                       |
-| `pnpm run dev:container`  | コンテナ向けに開発ポートを固定して起動                             |
-| `pnpm run check`          | Web の TypeScript 型チェックとルート Rust ワークスペースのチェック |
-| `pnpm run lint`           | Web の lint、ルート Rust の Clippy、未使用の翻訳キーの確認         |
-| `pnpm run format`         | Rust と Web コードのフォーマット                                   |
-| `pnpm run server:check`   | サーバー設定とアクセス制御のテスト                                 |
-| `pnpm run backend:test`  | ルート Rust ワークスペースのテスト                                 |
-| `pnpm run generate-types` | Rust から共有 TypeScript 型を生成                                  |
-
-上流由来の Cloud / relay Remote Access は廃止されています。LVK サーバーの URL へ直接アクセスしてください。
-外部 Runner / Execution Bridge は引き続き利用できます。検証範囲は [AGENTS.md](AGENTS.md) を参照してください。
-`shared/` 内の生成ファイルは直接編集しないでください。
-
-リリース用のビルドと公開は、GitHub Actions の [`publish-server.yml`](.github/workflows/publish-server.yml) で行います。
-ワークフローでサーバーイメージをテストした後、バージョン付きのイメージを GHCR に公開します。
-日常のソース検証やホットリロードに、リリースビルドは必要ありません。
-
-## 自動マージ
-
-変更を検証し、必要に応じてAIが競合を解消して、対象ブランチへ取り込みます。AIを使わずにマージする場合もあり、必要な判断・承認では停止します。コードのマージと後続のOpenWiki更新は別の結果です。Wiki更新だけが失敗しても、マージ済みのコードは取り消されません。
-
-## ワークスペースとリポジトリの記憶
-
-登録したリポジトリでは、`.lvk-shared/persistent` と `.lvk-shared/cache` を通じてローカルファイルを共有できます。
-これらは Git の管理対象外となるリンクで、各ワークスペースから共有されます。
-言語ごとのキャッシュは明示的に設定し、重要なローカルファイルはバックアップしてください。
-
-[OpenWiki](docs/workspaces/openwiki.mdx) はリポジトリごとに設定します。
-コーディングエージェントが変更マニフェストを作成し、ソース統合後にリポジトリの知識を更新します。
-ソースの予約、検証、公開、復旧については、[自動マージ操作ガイド](docs/design/parallel-integration-implementation.md#operation-and-recovery)を参照してください。
-
-## 名前
-
-製品名は **Lucky Vibe Kanban**、略称は **LVK**、リポジトリ名は `lucky-vibe-kanban` です。
-現在の設定・共有リンクは `LVK_*` と `.lvk-shared` に統一しています。
-オリジナル Vibe Kanban の保存先・`VK_*` 設定・ネイティブバイナリ名は変更していません。
-
-## 謝辞とライセンス
-
-LVK は [Easy Vibe Kanban](https://github.com/toby1123yjh/easy-vibe-kanban) と
-[Vibe Kanban](https://github.com/BloopAI/vibe-kanban) を基にしています。
-両プロジェクトの貢献と履歴は、このプロジェクトの一部として引き継がれています。
-ライセンスは [Apache-2.0](LICENSE) です。帰属表示は [NOTICE](NOTICE) を参照してください。
+LVKは[Easy Vibe Kanban](https://github.com/toby1123yjh/easy-vibe-kanban)と
+[Vibe Kanban](https://github.com/BloopAI/vibe-kanban)を基にしています。
+両プロジェクトの貢献と履歴を引き継ぎます。[Apache-2.0](LICENSE)ライセンスで、
+帰属表示は[NOTICE](NOTICE)を参照してください。

@@ -77,7 +77,7 @@ Markdownの危険リンク、1440/390/320px、再読込を実APIとDOMで照合�
 
 ## 追加レビュー修正の検証待ち
 
-追跡可能な報告: [設計メモの検証・追加レビュー修正](../../docs/development/design-notes-validation.md)。
+追跡可能な報告: [設計メモの検証・追加レビュー修正](../../openwiki/concepts/design-notes.md)。
 追加修正時はLOCAL-88との競合を避け軽量チェックのみで停止した。その後ユーザーの
 heavy並行実行承認を受け、Rust/HTTP/MCP、型生成、SQLx、Lint/Clippy/build、隔離E2Eを
 実行して成功。最新の結果・対象commit・未検証範囲は上記の追跡報告を参照。

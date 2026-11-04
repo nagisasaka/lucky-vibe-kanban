@@ -146,7 +146,7 @@ export default defineConfig({
     open: process.env.VITE_OPEN === 'true',
     allowedHosts: [
       '.trycloudflare.com', // allow all cloudflared tunnels
-      '.ts.net', // allow Tailscale MagicDNS hosts (docs/ai-mobile/tailscale-local-access.md)
+      '.ts.net', // allow Tailscale MagicDNS hosts (openwiki/integrations/remote-access.md)
     ],
   },
   optimizeDeps: {

@@ -57,7 +57,7 @@ and failure contexts are under `test-results/claude-subscription`.
 The official CLI was not installed for these tests. The user must install it,
 review applicable terms, and run `claude auth login` themselves under the same
 execution account and configuration directory. See
-[Claude setup and limitations](../../docs/agents/claude-code.mdx).
+[Claude setup and limitations](../../openwiki/integrations/agent-providers.md#claude-のサブスクリプション専用-profile).
 
 Public auth metadata does not prove a live model request, refreshability or
 remaining quota. Managed settings retain precedence over per-process settings.
