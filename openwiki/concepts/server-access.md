@@ -26,6 +26,18 @@ sources:
     resource: repo://crates/server/src/main.rs
   - id: openwiki-source-6cb471b32e19ce921b78d86e
     resource: repo://crates/server/src/remote_mcp/environment_settings.rs
+  - id: openwiki-source-7d788a7c8b1c5bf5122bab53
+    resource: repo://crates/utils/src/assets.rs
+  - id: openwiki-source-394060232279d0ae0be019c2
+    resource: repo://deploy/server/compose.acme.yaml
+  - id: openwiki-source-df6b7819295f53fc2381f23d
+    resource: repo://deploy/server/compose.yaml
+  - id: openwiki-source-eb00c8fb4075578ba5a7c691
+    resource: repo://deploy/server/healthcheck.mjs
+  - id: openwiki-source-89d0fb22262f0a0ac1df7d1e
+    resource: repo://deploy/server/server.mjs
+  - id: openwiki-source-bb1ebe868e35e9e500714501
+    resource: repo://Dockerfile
   - id: openwiki-source-d236349bbead901a9455b33c
     resource: repo://packages/local-web/src/app/auth/Auth0Setup.tsx
   - id: openwiki-source-5d3aad6c180293a86853f6ec
@@ -34,10 +46,10 @@ sources:
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/SettingsAccessContext.tsx
   - id: openwiki-source-b42d4696e9f82a515195aa22
     resource: repo://tests/auth0-setup/setup.spec.ts
-generated: { by: "codex", at: "2026-11-04T20:06:10.920Z" }
+generated: { by: "codex", at: "2026-11-04T20:43:36.614Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-04T20:06:10.920Z
+    at: 2026-11-04T20:43:36.614Z
 ---
 
 # サーバー認証・設定・セッション
@@ -131,13 +143,24 @@ sourceには設定消失時の閉鎖、SSE失効、並行admin無効化と実soc
 
 Basicでは任意のユーザー名と12〜1024byteのpasswordを設定し、保存後に再ログインする。共通の初期passwordや読戻しAPIはない。Auth0では作成支援の適用後も、実ログイン試験でissuer/subjectを確認してからactivateする。MCP用clientはWeb用と分け、設定画面のresourceとJWT audienceを完全一致させる。[password検査](../../crates/server-access/src/store.rs#L390-L406)・[設定手順の状態遷移](../../crates/server-access/src/handlers.rs)
 
-Auth0停止・誤設定でログインできない場合もBasic/Localへ自動fallbackしない。次の順序で操作する。
+Auth0停止・誤設定でログインできない場合もBasic/Localへ自動fallbackしない。次は認証設定だけを回復する手順であり、image更新やDBのrollbackとは分ける。対象の配置directory、元のCompose project名・Composeファイル選択、稼働していたimage digest/binary、volume名・内部path、配置設定を記録し、この回復中は変更しない。新しいagent・Runner作業を開始せず、中断した作業もここでは再開しない。
 
-1. DB（存在するWAL/SHMを含む）、`access.key`、`access.configured`、配置設定とsecretを保全する。DBと暗号化鍵を異なる時点の組にしない。全volumeの整合した退避は [バックアップ手順](../operations/server-container.md#更新前のバックアップと復元検証)に従う。
-2. 対象のdata directoryで `server recovery-token`（標準Composeでは `docker compose exec lvk server recovery-token`）を発行し、公開URLの `/?access=recovery` を開いて入力する。
-3. 復旧sessionでBasicを設定し直す、またはAuth0の設定・実ログイン試験・本人確認・activateを行う。復旧sessionは認証設定用で、Kanban・ファイル・member一覧・MCPを開放しない。
-4. 設定変更成功後は旧sessionが失効するため、新しい方式でログインし、権限と拒否も確認する。
+1. agentを完了/停止させ、Goal・定期実行・共有resource operationと外部Runnerを確認する。接続断を停止完了と扱わず、実processの停止・containmentの状態を確認する。元の配置directory・projectで `docker compose stop` を行い、停止中にhome/repos/workの全volume、DBと存在するWAL/SHM、`access.key`、`access.configured`、設定・secret・証明書・ACME volumeを同じ時点の組として保全する。具体的なarchiveコマンドは [停止バックアップ手順](../operations/server-container.md#更新前のバックアップと復元検証)にある。各コマンドのexit status、`tar -tzf` によるarchive読取、SHA-256と設定・秘密の退避を確認する。一つでも失敗したら先へ進まない。この時点ではLVKは停止したままである。
+2. 退避を検証できたら、**同じ既存deploymentを同じimage/binary・project・volume・設定で起動し直す**。停止に使った配置directoryと同じComposeファイル選択・project指定で次を実行する。
+
+   ```bash
+   docker compose start
+   docker compose ps
+   docker compose logs --tail=100 lvk
+   ```
+
+   `start` は停止した既存serviceを戻すために使う。全serviceを停止したACME配置では `certificates` も戻す。ここでimageのpull/build、`.env` の更新、serviceの再作成、別projectでの起動や空volumeの初期化を行わない。既存containerがない、image/volume/configの対応が不明、または起動に失敗した場合は、この手順を止めて配置の対応関係とログを確認する。source配置でも停止前と同じbinary・起動設定・`LVK_INSTANCE_DIR` で対象を戻す。[Composeのserviceとmount](../../deploy/server/compose.yaml#L1-L37)・[ACMEの依存](../../deploy/server/compose.acme.yaml#L1-L6)・[起動前検査](../../deploy/server/server.mjs#L434-L512)
+3. `lvk` が稼働し、内部healthとTLSの検査を満たすことを確認する。標準server imageでは `docker compose exec lvk node /opt/lvk-server/healthcheck.mjs` のexit statusが0となることを確認できる（[同梱healthcheck](../../Dockerfile#L221-L233)）。既存の公開HTTPS URLで `/?access=recovery` を開き、証明書検証が成功して復旧キー入力画面が表示されることを確認してからキーを発行する。残存nginx Basicがある配置ではその既存のproxy認証も必要になる。health成功や画面表示は認証設定の修復成功ではなく、設定破損中のlocked表示や業務API拒否を解除する理由にならない。到達できなければログ・TLS・proxy・起動設定を直す段階で止め、token発行で迂回しない。[healthと期待status](../../deploy/server/healthcheck.mjs#L34-L74)・[復旧フォーム](../../packages/local-web/src/app/auth/ServerAccessGate.tsx#L371-L405)・[認証前の入口と業務APIの分離](../../crates/server-access/src/lib.rs#L570-L616)
+4. 起動したその対象のdata directoryで `server recovery-token` を発行する。標準Composeでは同じ配置directory・project指定で `docker compose exec lvk server recovery-token` を使う。CLIはDBと鍵の保存先をlistenerと共有する必要があり、独立instanceでは同じ `LVK_INSTANCE_DIR` をCLIにも指定する。キーは既に確認したHTTPS復旧画面へ15分以内に入力し、URL・チャット・通常ログに残さない。CLI自体はlistenerやagentを起動しないため、停止したserviceの代わりにはならない。[CLIの早期分岐](../../crates/server/src/main.rs#L54-L68)・[同じdata保存先](../../crates/utils/src/assets.rs#L6-L38)・[一度限りのキー](../../crates/server-access/src/store.rs#L408-L450)
+5. 限定復旧sessionで、配置の `LVK_AUTH_MODE` が許すBasicを設定し直す、またはAuth0の設定・実ログイン試験・本人確認・activateを行う。復旧sessionは認証設定用で、Kanban・ファイル・member一覧・MCPを開放しない。設定変更成功後は旧sessionが失効するため、新しい方式でログインし、権限と拒否も確認する。その後に既存Goal・定期実行・資源所有を照合し、必要な作業だけを意図的に再開する。再起動自体を作業の完了・再開成功と扱わない。[方式の制約](../../crates/server-access/src/lib.rs#L349-L359)・[再起動後の確認](../operations/server-container.md#更新前のバックアップと復元検証)
 
 [限定sessionの試験](../../crates/server-access/src/tests.rs#L306-L350)・[設定切替のtransaction](../../crates/server-access/src/store.rs#L311-L375)
+
+元の正しい `access.key` を保全してある場合は、まず現在の組を退避し、対象を停止した状態でそのDBに対応する元鍵の復元を検討する。これは元鍵を失って新しい認証設定を登録する回復とは異なる。復元後も上記の同一配置の再起動・到達確認から進み、DBと鍵・markerを異なる時点の組へ置換しない。
 
 `access.key` の形式・permission不正でCLI自体が拒否する場合は、運用者がまず元ファイルとDBを保全し、破損した鍵を退避してから同じdata directoryで復旧キーを発行する。存在する不正鍵をCLIは上書きせず、鍵がない場合だけ新しい32byte鍵を作る。新しい鍵は旧暗号化設定を復号しないため、認証設定を入力し直す必要がある。元の鍵がなければ旧secretは復元できず、ChatGPT用など同じ鍵で暗号化された情報も再登録が必要になる。業務DBや `access.configured` を削除して未設定扱いへ戻さない。Unix鍵permissionは0600相当とし、backupも同等に保護する。[鍵生成と復号](../../crates/server-access/src/store.rs#L28-L105)・[再発行だけでは復号しない試験](../../crates/server-access/src/tests.rs#L464-L476)・[ChatGPT secretの暗号化](../../crates/server-access/src/chatgpt.rs)
