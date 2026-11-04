@@ -86,18 +86,6 @@ sources:
     resource: repo://deploy/server/server.test.mjs
   - id: openwiki-source-bb1ebe868e35e9e500714501
     resource: repo://Dockerfile
-  - id: openwiki-source-9e44bb74d3697078482d577d
-    resource: repo://docs/development/auto-merge-naming.md
-  - id: openwiki-source-fd4e5484aac03297c6295350
-    resource: repo://docs/development/cargo-cache.md
-  - id: openwiki-source-d95a345bb2e865055223b40f
-    resource: repo://docs/development/dev-switch-bundle-validation.md
-  - id: openwiki-source-08306757a777c9f7f95abe2d
-    resource: repo://docs/development/orchestration-skill-distribution.md
-  - id: openwiki-source-e654c61365add1d192b8b7b8
-    resource: repo://docs/development/seven-source-candidate.md
-  - id: openwiki-source-2e1d91f21691cd271afffb6f
-    resource: repo://docs/self-hosting/server-container.mdx
   - id: openwiki-source-5b54a58d1b51cd490b0e7162
     resource: repo://package.json
   - id: openwiki-source-96cd4c94fb57fb4764608e3d
@@ -168,10 +156,10 @@ sources:
     resource: repo://tests/workflow/playwright.config.ts
   - id: openwiki-source-1d08facbf90704cd4c4c54d8
     resource: repo://tests/workflow/specs/card-context.spec.ts
-generated: { by: "codex", at: "2026-11-02T15:35:02.470Z" }
+generated: { by: "codex", at: "2026-11-04T20:35:55.356Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-02T23:50:54.203Z
+    at: 2026-11-04T20:35:55.356Z
 ---
 
 # 開発・検証・運用文書の使い分け
@@ -211,13 +199,13 @@ LVK 自身の POSIX source 開発は checkout 内から `node scripts/dev-cargo.
 | 常用 dev | `node scripts/dev-cargo.mjs --purpose dev build --locked -p server -p local-deployment -p mcp --bin server --bin agent-process-host --bin vibe-kanban-mcp --features server/developer-runtime` → checkout の `target/release/` | opt-level=3、line-tables-only、strip=none |
 | stable | 配布は root Dockerfile の `server` target。ローカルの `--purpose stable build` は同じ profile の確認入口 | opt-level=3、debug=0、strip=symbols |
 
-dev/test profile は incremental=true、release は incremental=false、全用途で split-debuginfo=off。preview / dev は行情報を実行ファイル内に残し、コピーした bundle に debug sidecar を追加しないという判断が記録されている。stable は chef cook と server build の両 command に同じ release 環境値を限定し、image 全体の ENV や製品 runtime へ適用しない。[記録された理由](../../docs/development/cargo-cache.md#server-purposes)・[Docker の適用箇所](../../Dockerfile#L73-L107)
+dev/test profile は incremental=true、release は incremental=false、全用途で split-debuginfo=off。preview / dev は行情報を実行ファイル内に残し、コピーした bundle に debug sidecar を追加しないという判断が記録されている。stable は chef cook と server build の両 command に同じ release 環境値を限定し、image 全体の ENV や製品 runtime へ適用しない。[記録された理由](#lvk-開発用-cargo-と共有キャッシュ)・[Docker の適用箇所](../../Dockerfile#L73-L107)
 
 instance / bundle 作成前に frontend を build する。常用 dev bundle は上表の developer-runtime 付き build と [成果物切替](#開発用成果物切替と復旧)を組み合わせる。`instance:build` と `staging:build` は frontend の後に既定 preview の入口で server / process-host を作り、source の `target/debug/` から候補へコピーする。staging は環境名であり常用 dev の用途名ではない。[instance の結線](../../deploy/developer/instance.mjs#L130-L183)・[bundle 作成手順](../../deploy/developer/switch/README.md#buildとbundle作成切替engineの外側)
 
 ### 保存先と runtime の境界
 
-[Workspace の cache リンク](../concepts/workspace.md#共有ディレクトリの意味)は保存先を提供し、利用設定はこの入口が明示的に所有する。global / auto-loaded Cargo 設定や Project setup へこの方針を導入しないという判断が記録されている。[適用境界の記録](../../docs/development/cargo-cache.md)
+[Workspace の cache リンク](../concepts/workspace.md#共有ディレクトリの意味)は保存先を提供し、利用設定はこの入口が明示的に所有する。global / auto-loaded Cargo 設定や Project setup へこの方針を導入しないという判断が記録されている。[適用境界の記録](#lvk-開発用-cargo-と共有キャッシュ)
 
 | 保存・設定 | 契約 |
 | --- | --- |
@@ -226,7 +214,7 @@ instance / bundle 作成前に frontend を build する。常用 dev bundle は
 | 共有リンクなし | 中間物も checkout の `target/` に置き、警告する。instance の source snapshot も同じ規則 |
 | compiler cache | 開発入口はsccacheの探索・起動・設定を行わずrustcを直接使う。明示wrapperがあれば設定を変更せず拒否する |
 
-[保存先とwrapper拒否](../../scripts/dev-cargo.mjs)・[廃止の範囲](../../docs/development/cargo-cache.md#compiler-cache-retirement-2026-10-27)
+[保存先とwrapper拒否](../../scripts/dev-cargo.mjs)・[廃止の範囲](#lvk-開発用-cargo-と共有キャッシュ)
 
 Cargo や `cargo run` の binary、そこから起動した子 Project へ、この入口が追加の compiler 環境変数を export することはない。ただし無関係な既存の継承環境を洗い流す仕組みでもない。watch は `cargo watch -w crates -s` から選択用途を付けて入口を二度呼び、まず server と agent-process-host を build し、成功後に server を run する。外部 cargo-watch が Cargo の global 引数を伝播することには依存しない。[watch の結線](../../scripts/dev-cargo.mjs#L19-L29)・[runtime と子 repository の fixture](../../scripts/dev-cargo.test.mjs#L87-L104)
 
@@ -234,7 +222,7 @@ Cargo や `cargo run` の binary、そこから起動した子 Project へ、こ
 
 `CARGO_INCREMENTAL` と `CARGO_BUILD_INCREMENTAL` は0を含め未設定が必要で、設定済み `build.incremental` も拒否する。dev/test/release の opt/debug/strip/split/incremental profile 競合値、target/build-dir 環境変数、別の rustc / workspace wrapper は明示エラーとなる。環境と Cargo build/target 設定の Rust flags も調べ、これらの codegen 方針を上書きする値を拒否する。設定検査自体に失敗しても停止する。競合を解除して opt in するか raw Cargo を使う。[拒否条件](../../scripts/dev-cargo.mjs#L37-L79)・[wrapper の検査](../../scripts/dev-cargo.mjs#L96-L111)
 
-開発入口はsccacheを探索せず、stats取得も行わない。明示のcompiler wrapperはraw Cargoで意図的に使うか、利用者が競合設定を解除する。ホストtool・稼働daemon・共有cacheは削除も再設定もしない。コンパイル操作にはnightly Cargoのchecksum-freshnessを要求し、fmt/metadataは対象外である。[入口](../../scripts/dev-cargo.mjs)・[適用範囲](../../docs/development/cargo-cache.md)。
+開発入口はsccacheを探索せず、stats取得も行わない。明示のcompiler wrapperはraw Cargoで意図的に使うか、利用者が競合設定を解除する。ホストtool・稼働daemon・共有cacheは削除も再設定もしない。コンパイル操作にはnightly Cargoのchecksum-freshnessを要求し、fmt/metadataは対象外である。[入口](../../scripts/dev-cargo.mjs)・[適用範囲](#lvk-開発用-cargo-と共有キャッシュ)。
 
 中間物の競合は Cargo 自身の build lock が扱うため、最終 target が異なる Workspace 間でも待機し得る。独自 lock や deps symlink で回避しない。入口は `clean` を拒否する。raw clean は共有中間物も削除でき、他 checkout の最終 binary が残っていても cache の保持を意味しない。[拒否](../../scripts/dev-cargo.mjs#L30-L32)・[実 Cargo の lock / clean fixture](../../scripts/dev-cargo.test.mjs#L106-L119)
 
@@ -244,7 +232,7 @@ SQLx prepare は raw Cargo の専用手順を維持する。一方、instance bu
 
 `node --test scripts/dev-cargo.test.mjs` はpinned Cargo/rustcと依存不要の一時repositoryで、三用途のprofile、ELF行情報、dev/test incremental=trueとrelease=false、共有中間物と分離target、fallback、wrapper競合、run/watch環境、Cargo lockとcleanを検査する。PATH上のpoisoned sccacheが呼ばれないことも確認し、実cache daemonは使わない。[試験](../../scripts/dev-cargo.test.mjs)。
 
-[LOCAL-197の局所4件成功と実sccache smoke省略](../../docs/development/cargo-cache.md#historical-local-197-local-verification-2026-10-26)は過去の記録である。現在の開発入口の方針と混ぜず、fixtureの成功を実LVK性能測定や配備後のhealth受入に読み替えない。このWiki保守ではsourceと試験定義を照合し、これらのfixtureを追加実行していない。[現在の検証範囲](../../docs/development/cargo-cache.md#scoped-verification)。
+[LOCAL-197の局所4件成功と実sccache smoke省略](#lvk-開発用-cargo-と共有キャッシュ)は過去の記録である。現在の開発入口の方針と混ぜず、fixtureの成功を実LVK性能測定や配備後のhealth受入に読み替えない。このWiki保守ではsourceと試験定義を照合し、これらのfixtureを追加実行していない。[現在の検証範囲](#lvk-開発用-cargo-と共有キャッシュ)。
 
 ## 検証の対象を取り違えない
 
@@ -254,7 +242,7 @@ repository の orchestration Skill は、検証済みSHA、候補差分、競合
 
 ### 同梱 Skill の責務と調査範囲
 
-`skills/lvk-orchestration/SKILL.md` は対話・設計・調査・実行調整の指針である。LOCAL-224 の記録は dev plugin v1.0.33 への全文同期を示し、以前の「名称差分のみ」「指定5段落のみ」は当時の限定範囲として残す。`plugins/lvk/skills/lvk-work/SKILL.md` は接続済み LVK の作業操作を担う別 Skill で、orchestration の配布コピーではない。[同期範囲の記録](../../docs/development/auto-merge-naming.md#L25-L46)・[作業操作の責務](../../plugins/lvk/skills/lvk-work/SKILL.md#L1-L29)。この区別を保ち、一方の同期を理由に他方を全文置換しない。
+`skills/lvk-orchestration/SKILL.md` は対話・設計・調査・実行調整の指針である。LOCAL-224 の記録は dev plugin v1.0.33 への全文同期を示し、以前の「名称差分のみ」「指定5段落のみ」は当時の限定範囲として残す。`plugins/lvk/skills/lvk-work/SKILL.md` は接続済み LVK の作業操作を担う別 Skill で、orchestration の配布コピーではない。移行した過去の「同期範囲の記録」・[作業操作の責務](../../plugins/lvk/skills/lvk-work/SKILL.md#L1-L29)。この区別を保ち、一方の同期を理由に他方を全文置換しない。
 
 orchestration の記録では、明示された調査には必要な独立 Workspace と、その中の再現コード・script・fixture・test が含まれる。一方、製品変更の採用、merge、公開、配備、共有環境・live data の変更はその調査許可に含まれない。最新の明示指示が過去の一時制約を更新したかを引継ぎ時に区別するが、実際の実行拒否は回避しない。独立 worktree は DB・資格情報・background process・外部 service の隔離を保証しない。[意図と許可の区別](../../skills/lvk-orchestration/references/execution.md)・[副作用の境界](../../skills/lvk-orchestration/references/investigation.md#investigation-boundaries-and-artifacts)。これらは AI の運用指針であり、新しい API 権限や実行 engine ではない。
 
@@ -301,7 +289,7 @@ runner は終了時に自身の instance に属する process の停止を確認
 
 ブラウザー fixture は保存行を投入し、unknown → 120 → 200、partial、内訳の 1/2 thread、5秒再取得、日英表示、390px 幅、reload と server restart、API と実 stdio MCP の JSON 一致、削除済み attempt 数 field の不在を確認する。provider は起動しないため、通知からの保存は上記 Rust fixture と組み合わせて確認する。[試験本体](../../tests/server/specs/workspace-tokens.spec.ts#L7-L191)
 
-[開発時記録](../../docs/development/workspace-token-usage.md#検証記録)の成功報告は今回の Sync の再実行結果ではない。凍結された統合 source `066b2b4bd93d06d046865d66ae16bf1537e8b184` を adapter、schema/保存、API/MCP、UI、独立した試験定義から静的に照合した。入力にある自動マージ は明示的な検証省略であり、今回も製品テストや有料モデル run は実行していない。実アカウント精度・実 Auth0 経由・全 provider・子 thread 独立計測・counter reset 後の差分の保証はない。無関係な過去の説明全体を再検証したものでもない。
+移行した過去の「開発時記録」の成功報告は今回の Sync の再実行結果ではない。凍結された統合 source `066b2b4bd93d06d046865d66ae16bf1537e8b184` を adapter、schema/保存、API/MCP、UI、独立した試験定義から静的に照合した。入力にある自動マージ は明示的な検証省略であり、今回も製品テストや有料モデル run は実行していない。実アカウント精度・実 Auth0 経由・全 provider・子 thread 独立計測・counter reset 後の差分の保証はない。無関係な過去の説明全体を再検証したものでもない。
 
 ## モバイル向け built preview
 
@@ -321,8 +309,7 @@ stagingの認証stateはstableと独立しており、同じ`LVK_INSTANCE_DIR`�
 
 ## 開発用成果物切替と復旧
 
-<!-- openwiki: broken internal link [../concepts/runtime-access.md#開発-instance-の専用自己再起動] heading anchor "開発-instance-の専用自己再起動" does not exist in "../concepts/runtime-access.md". Fix the href or restore the target, then delete this comment. -->
-`deploy/developer/switch` は、稼働中Linux開発instanceを外部で試験済みのbundleへ切り替えるoperator配置用kitである。安定版Docker imageの更新や停止済みserverの復旧とは別の入口で、repositoryへの統合はlive導入を意味しない。engineはGit操作・build・migration互換性審査を行わず、migrationは新serverの通常起動に任せる。MCPの認可・受付・再接続は [専用自己再起動](../concepts/runtime-access.md#開発-instance-の専用自己再起動)、具体的な配置と移行操作は [kitの手順](../../deploy/developer/switch/README.md)を参照する。
+`deploy/developer/switch` は、稼働中Linux開発instanceを外部で試験済みのbundleへ切り替えるoperator配置用kitである。安定版Docker imageの更新や停止済みserverの復旧とは別の入口で、repositoryへの統合はlive導入を意味しない。engineはGit操作・build・migration互換性審査を行わず、migrationは新serverの通常起動に任せる。MCPの認可・受付・再接続は [専用自己再起動](../concepts/runtime-access.md#開発専用-self_restart)、具体的な配置と移行操作は [kitの手順](../../deploy/developer/switch/README.md)を参照する。
 
 ### 起動設定とbundleの境界
 
@@ -364,7 +351,7 @@ signal前に `terminal-drain.json` へserverと対象processの所属・start情
 
 Python `test_switch.py` はコピー後の元bundle不可視、manifest虚偽、停止前snapshot差異、backup/health失敗、worker中断、冪等性、保持世代を検査する。Rust `environment_switch_tests.rs` はproduction MCP routerとmock認証で呼出元停止・再接続後の同receipt取得を扱う。`test_real_server.py` は実binaryのruntime子にLandlockを適用し、source不可視でmigrationあり/なし、asset/API、host bootstrap、Workspace cwdからの同梱stdio MCP、async worker生存を検査する。engineはprocfs identity観測のため同じLandlock隔離に入れない。[Python回帰](../../deploy/developer/switch/test_switch.py#L210-L297)・[実runtime試験](../../deploy/developer/switch/test_real_server.py#L188-L250)
 
-今回のSyncは凍結source `93913677602eaa8f975911641dcd2e81acb91f66` の実装・呼出元・設定・試験定義の静的照合で、製品テストやlive切替は実施していない。開発時の成功記録と、自動マージの明示的検証省略は別の証拠である。実Auth0/ChatGPTの一体E2E、実provider/model、browser操作、live移行は未確認。既存 `/mcp/*` 画像URLの一部404も残る。無関係な過去のWiki全体を再検証したものではない。[記録された試験結果・残る範囲](../../docs/development/dev-switch-bundle-validation.md#検証境界と観測)
+今回のSyncは凍結source `93913677602eaa8f975911641dcd2e81acb91f66` の実装・呼出元・設定・試験定義の静的照合で、製品テストやlive切替は実施していない。開発時の成功記録と、自動マージの明示的検証省略は別の証拠である。実Auth0/ChatGPTの一体E2E、実provider/model、browser操作、live移行は未確認。既存 `/mcp/*` 画像URLの一部404も残る。無関係な過去のWiki全体を再検証したものではない。移行した過去の「記録された試験結果・残る範囲」
 
 今回のPTY変更のSyncでは、凍結入力全3チャンクとSHA-256、統合source `647ceb8512b717fc42b6de29d7b78270669b3a71` を照合した。独立入口としてMCP handoff、固定kitの実行順序、製品PTY生成、procfs/pidfd所有判定、既存停止guard、Python/C fixtureと回帰定義を確認した。`test_terminal_drain.py` は別parent/instance・非管理PTYの保全、nested command、TERM無視、所属/PID変化、旧親のwaitなしを扱い、`test_switch.py` はdry-run非破壊、drain後の切替、再生成拒否を扱う。[drain回帰](../../deploy/developer/switch/test_terminal_drain.py)・[切替回帰](../../deploy/developer/switch/test_switch.py#L586-L637)
 
@@ -384,7 +371,7 @@ instance runner は `build.json` と同じ revision / dirty を build 環境へ�
 
 ## Docker 配布と同梱 binary
 
-LVK の配布先は GHCR の Docker image のみ。root Dockerfile の `server` target を配布対象とする。[配布契約](../../docs/self-hosting/server-container.mdx)。
+LVK の配布先は GHCR の Docker image のみ。root Dockerfile の `server` target を配布対象とする。[配布契約](server-container.md)。
 `server` と `agent-process-host`、
 `vibe-kanban-mcp` を同じ image に同梱する。既定 MCP 設定は同梱バイナリを直接起動し、
 npm から別バージョンを取得しない。
@@ -411,13 +398,13 @@ npm から別バージョンを取得しない。
 | Git publication | `LVK-Memory-Source` / `LVK-Memory-Integration` / `LVK-Wiki-Publication` trailer を記録し、復旧時も同じ marker を検索して重複 commit を防ぐ。 | [Memory 復旧](../../crates/services/src/services/repository_memory.rs)、[Wiki 公開](../../crates/services/src/services/openwiki.rs) |
 | publication lock | repository 共通の `lvk-publication.lock` 一つを保持する。この lock は外部の任意 Git 操作までは制御しない。 | [GitPublicationGuard](../../crates/git/src/publication.rs) |
 | サーバー | Compose project/service は `lvk-server` / `lvk`。接続先は IP・DNS 共通で `LVK_HOST`、Certbot lineage は `lvk`。 | [Compose](../../deploy/server/compose.yaml)、[ACME](../../deploy/server/acme.py) |
-| MCP・配布 | 既定 MCP は image に同梱した `vibe-kanban-mcp` を直接実行する。LVK の npm package を取得する preset は提供しない。 | [既定 MCP](../../crates/executors/default_mcp.json)、[接続手順](../../docs/integrations/vibe-kanban-mcp-server.mdx) |
+| MCP・配布 | 既定 MCP は image に同梱した `vibe-kanban-mcp` を直接実行する。LVK の npm package を取得する preset は提供しない。 | [既定 MCP](../../crates/executors/default_mcp.json)、[接続手順](../integrations/agent-providers.md#外部-mcp-client--lvk) |
 
 ## サーバー配布 kit の検証
 
 `pnpm run server:check` は `node --test deploy/server/*.test.mjs` を実行する。設定・証明書・process supervision 等の検査と、nginx を実際に起動する TLS/Basic 認証・WebSocket・SSE・preview 境界の検査を含む。nginx がなければ後者は skip するため、全 subtest が実行されたかを結果で確認する。`LVK_TEST_NGINX` で実行ファイルを指定でき、`LVK_REQUIRE_NGINX_TEST=1` は欠落を失敗にする。[script](../../package.json)、[native test の前提](../../deploy/server/nginx.test.mjs)
 
-この確認だけで Docker image の build・実配置・live agent 認証が成功したことにはならない。配布済み binary と作業 checkout の分離、永続 volume、停止・更新・復旧の契約は [サーバーコンテナー](server-container.md)に置く。[記録された検証限界](../../docs/self-hosting/server-container.mdx#validation-boundaries)
+この確認だけで Docker image の build・実配置・live agent 認証が成功したことにはならない。配布済み binary と作業 checkout の分離、永続 volume、停止・更新・復旧の契約は [サーバーコンテナー](server-container.md)に置く。[記録された検証限界](server-container.md)
 
 ### 独立アプリの CSV ルートを変更するとき
 
@@ -425,7 +412,7 @@ npm から別バージョンを取得しない。
 
 native nginx fixture は自己署名証明書と loopback の模擬 upstream を使い、LVK の Basic 保護と独立経路への匿名到達の併存、Authorization/Cookie/Host/forwarded 情報、独自認証ヘッダー、Set-Cookie、WebSocket upgrade/subprotocol、各 route の証明書名不足を検査する。253文字の DNS 名も含む。parser が受理するだけでは nginx の設定読込成功を保証しないため、長い名前の回帰はこの層で扱う。[fixture と長い名前](../../deploy/server/nginx.test.mjs#L23-L66)・[到達と認証の検査](../../deploy/server/nginx.test.mjs#L314-L377)
 
-[開発時の検証記録](../../docs/development/preview-routes-validation.md)には native nginx を含む39件成功・Compose CLI 1件省略と、期待値補強後の局所18件成功が記録されている。実 ACME/DNS/VPS/アプリ・配布 image は未確認であり、凍結された自動マージ の入力も検証の明示省略を記録する。今回の Wiki 保守は source と試験定義の静的照合で、これらの成功を再実行したものではない。
+移行した過去の「開発時の検証記録」には native nginx を含む39件成功・Compose CLI 1件省略と、期待値補強後の局所18件成功が記録されている。実 ACME/DNS/VPS/アプリ・配布 image は未確認であり、凍結された自動マージ の入力も検証の明示省略を記録する。今回の Wiki 保守は source と試験定義の静的照合で、これらの成功を再実行したものではない。
 
 ## 版番号の検証と選別移植の追跡
 
@@ -433,7 +420,7 @@ native nginx fixture は自己署名証明書と loopback の模擬 upstream を
 そのテストは現在の Docker image の build・公開成功を証明しない。
 現在の配布検証は [release test](../../deploy/server/release.test.mjs) とサーバー配布文書を参照する。
 
-上流変更の採否・LVK 向け適応・故障注入・実 Codex を使った MCP 受入は [選別移植の実装記録](../../docs/design/upstream-selective-backport-implementation.md)にある。各試験の source revision と実行対象を識別し、過去の成功を別 revision の成功と取り違えない。特に server と `agent-process-host` を同じソースから更新し、旧 Host の互換接続と新 Host の journal 回復を分けて試す。[Host の回復契約](../architecture/agent-runtime.md#接続断と確認済み終了を分ける)
+上流変更の採否・LVK 向け適応・故障注入・実 Codex を使った MCP 受入は 移行した過去の「選別移植の実装記録」にある。各試験の source revision と実行対象を識別し、過去の成功を別 revision の成功と取り違えない。特に server と `agent-process-host` を同じソースから更新し、旧 Host の互換接続と新 Host の journal 回復を分けて試す。[Host の回復契約](../architecture/agent-runtime.md#接続断と確認済み終了を分ける)
 
 Workflow fixture には draft / Undo、設定安全性、route loading、Runtime input、diff tree の harness がある。これは製品 component のブラウザー試験であり、認証済み provider・publication を含む実機試験とは別である。[fixture の入口](../../tests/workflow/fixture/src/main.tsx#L1-L29)
 
@@ -475,18 +462,18 @@ server の `routes::workspaces::integration::editor_tests` は一時ディレク
 
 `node --test tests/chat/external-editors.test.mjs` は実設定 UI・Config controller・選択 dialog を Chromium に載せ、API を fixture に置換する。初期値保存、並べ替え、全削除保存、空一覧保持、対象別 request、古い候補の非表示、リンクの明示クリックと opener 分離を検査する。[fixture 境界](../../tests/chat/external-editors.test.mjs#L15-L65)・[操作検査](../../tests/chat/external-editors.test.mjs#L119-L301)。小さな helper の回帰は [初期値と diff path の Vitest](../../packages/web-core/src/shared/lib/externalEditors.test.ts)にある。
 
-この Sync は凍結 source `887b8049b71093beca6a80ec7e522da2a1c2fab1` の外部エディター変更を、設定・API・パス検査・UI 呼出元・試験定義から静的照合した。製品テストは再実行していない。[開発時の検証記録](../../docs/development/external-editor-uri-validation.md)と、凍結入力に記録された自動マージ の明示的検証省略は別である。実 Windows IDE、WSL / SSH 認証、Docker Attach と Dev Containers のネスト URI は未検証であり、fixture の成功で補えない。無関係な既存節の再検証も主張しない。
+この Sync は凍結 source `887b8049b71093beca6a80ec7e522da2a1c2fab1` の外部エディター変更を、設定・API・パス検査・UI 呼出元・試験定義から静的照合した。製品テストは再実行していない。移行した過去の「開発時の検証記録」と、凍結入力に記録された自動マージ の明示的検証省略は別である。実 Windows IDE、WSL / SSH 認証、Docker Attach と Dev Containers のネスト URI は未検証であり、fixture の成功で補えない。無関係な既存節の再検証も主張しない。
 
 ## 文書の適用範囲
 
 - [CONTRIBUTORS](../../CONTRIBUTORS.md) は maintainer review、変更管理、生成ファイルを直接編集しないという方針を記録する。実装の挙動の証拠とは分けて読む。[変更管理](../../CONTRIBUTORS.md)・[生成物の方針](../../CONTRIBUTORS.md)
-- [LVK release distribution](../../docs/easy-npx-npm-publish.md) は旧 npm 手順の廃止案内である。現行の Docker 公開・検証は [サーバー配布手順](../../docs/self-hosting/server-container.mdx)を参照する。
+- 旧 npm 配布手順は廃止され、LVK の npm package を公開しない。現行の Docker 公開・検証は [サーバー配布手順](server-container.md)を参照する。
 - 旧Mobile設計のremote-web / relay前提は現在使えない。built previewと[直接アクセス](../integrations/remote-access.md#ui-の直接アクセス)を確認する。
 - [OpenWiki maintenance](openwiki-maintenance.md) は、通常開発の tests や release と別の生成・レビュー・公開 checkpoint を説明する。
 
 この Wiki は実装理解のための派生知識であり、試験成績そのものではない。初期生成時の静的調査と、その後の選別移植で行った自動検証・MCP受入を区別する。再検証するときは上記の実装記録と現行コマンドを参照し、未実行や既存 skip を合格に数えない。
 
-認証の回帰検証は `crates/server-access/src/tests.rs`、公開MCPのJWT-to-tool検証、nginx ingress fixture、`tests/server-access/`のブラウザー経路を分けて読む。実Auth0/ChatGPTの受入はこれらと別である。[検証境界の記録](../../docs/development/server-access.md)、[配布の認証境界test](../../deploy/server/access.test.mjs)。
+認証の回帰検証は `crates/server-access/src/tests.rs`、公開MCPのJWT-to-tool検証、nginx ingress fixture、`tests/server-access/`のブラウザー経路を分けて読む。実Auth0/ChatGPTの受入はこれらと別である。[検証境界の記録](../concepts/server-access.md#検証と残る確認)、[配布の認証境界test](../../deploy/server/access.test.mjs)。
 
 ## 未起動予約と host receipt の回帰検証
 
@@ -512,13 +499,13 @@ busy_timeout=0 の port fixture では、独立した監視 SELECT の SQLITE_BU
 
 コメント本人編集はowner/revision/receiptとWAL競合、raw配信はUTF-8 filename・header injection・全binary bytes・認証とpath containmentを確認する。[コメント試験](../../crates/server/src/remote_mcp/issue_comments.rs#L370-L558)・[file試験](../../crates/server/src/routes/workspaces/files.rs)。詳細契約は [コメント編集](../concepts/issue-collaboration.md#自分の既存コメント本文を編集する)と [Workspace file viewer](workspace-inspection.md#repo-内ファイルを読む)に置く。
 
-凍結入力の候補合成記録は局所Rust・Clippy・型・モデル/部品試験の成功を報告するが、最終統合 `b9fd2194154bfff52fe362eb9253037521f91963` は明示的に正式検証を省略した。初期失敗と修復後の成功、実agentが承認待ちへ到達して取消された証拠、人の承認後のtool成功を区別する。実Auth0/ChatGPT、全本番DB移行、Windows、配布artifactの保証は残る未確認範囲である。[候補合成と限界](../../docs/development/seven-source-candidate.md)。今回の文書保守はソース・試験定義・差分・リンクとOpenWiki lifecycleの検証で、製品試験は再実行していない。
+凍結入力の候補合成記録は局所Rust・Clippy・型・モデル/部品試験の成功を報告するが、最終統合 `b9fd2194154bfff52fe362eb9253037521f91963` は明示的に正式検証を省略した。初期失敗と修復後の成功、実agentが承認待ちへ到達して取消された証拠、人の承認後のtool成功を区別する。実Auth0/ChatGPT、全本番DB移行、Windows、配布artifactの保証は残る未確認範囲である。移行した過去の「候補合成と限界」。今回の文書保守はソース・試験定義・差分・リンクとOpenWiki lifecycleの検証で、製品試験は再実行していない。
 
 ## REVIEW・添付搬送・Wiki再開を変更するとき
 
 REVIEWは既存CODE経路を使うため、mode保存・復元、permission parity、通常会話の終了とsource finalisation抑制を一組で検証する。`tests/review-mode/selector.test.mjs` はChromiumの1440/390幅でREVIEW選択・再表示・送信とCODE/PLAN/GOALを確認する。`run_isolated.py` はUI/API/SQLite/hostを使いproviderだけをmockする。実モデルの指示遵守や外部承認改善は別の未検証事項である。[試験の範囲](../../tests/review-mode/README.md)
 
-添付は `isolated_attachment_remote_stdio_e2e` を新しい `attachment-fixture-*` instanceとその内側のXDG_CACHE_HOMEで実行する。実HTTP MCPとstdio codecから初回・続行まで通し、bytes・サイズ/hash・所属・再送・改変/部分失敗を確認する。native実行はmockで、実ChatGPT/Library fileParams・署名URL期限・host/proxy適合は公開後ゲートに残す。260の保存設定読取routeは267の隔離local routerにも必要であり、製品routeの追加時にfixtureのHTTP面も追従させる。[隔離fixture](../../crates/server/src/remote_mcp/attachment_tests.rs)・[公開後の確認](../../docs/development/mcp-attachments.md#検証と公開後ゲート)
+添付は `isolated_attachment_remote_stdio_e2e` を新しい `attachment-fixture-*` instanceとその内側のXDG_CACHE_HOMEで実行する。実HTTP MCPとstdio codecから初回・続行まで通し、bytes・サイズ/hash・所属・再送・改変/部分失敗を確認する。native実行はmockで、実ChatGPT/Library fileParams・署名URL期限・host/proxy適合は公開後ゲートに残す。260の保存設定読取routeは267の隔離local routerにも必要であり、製品routeの追加時にfixtureのHTTP面も追従させる。[隔離fixture](../../crates/server/src/remote_mcp/attachment_tests.rs)・[公開後の確認](../integrations/remote-access.md#外部接続と素材搬送を受け入れる)
 
 Wiki継続proofのprotocol testsと `isolated_conversation_repair_publication_drift_and_idempotence` は、所有begin→中断→同じ会話の明示再開→finish→exact publication→archiveを確認する。実外部OpenWikiや実Codexを起動する試験ではない。[proof](../../crates/services/src/services/openwiki/completion.rs)・[server境界](../../crates/server/src/routes/openwiki/completion.rs)・[実Git/SQLite fixture](../../crates/server/src/routes/integrations/conversation_tests.rs)
 
@@ -538,7 +525,7 @@ settings-redesignの恒久i18n browserは、言語保存とBrowser通知hint、J
 
 ## 共通orchestration Skillの正本と配布
 
-共通正本は `skills/lvk-orchestration/`。薄いルートが思想・共通原則と読み込み条件を持ち、実行、調査、自動マージと移管・片付け、記録、プレビュー、LVK開発、利用指針の7資料を必要な場面だけ読む。既存の操作用 `lvk-work` と担当実行用auto-merge Skillは別責務として保つ。[ルート](../../skills/lvk-orchestration/SKILL.md)・[配置と変更理由](../../docs/development/orchestration-skill-distribution.md)。
+共通正本は `skills/lvk-orchestration/`。薄いルートが思想・共通原則と読み込み条件を持ち、実行、調査、自動マージと移管・片付け、記録、プレビュー、LVK開発、利用指針の7資料を必要な場面だけ読む。既存の操作用 `lvk-work` と担当実行用auto-merge Skillは別責務として保つ。[ルート](../../skills/lvk-orchestration/SKILL.md)・[配置と変更理由](#共通orchestration-skillの正本と配布)。
 
 ビルドは適切なLVK管理Workspaceの担当coding agentへ委譲し、上位AIは直接実行しない。これはルートSkillの常時適用原則である。[ビルドの担当境界](../../skills/lvk-orchestration/SKILL.md#L10-L17)。追加候補 `a373c5b61732d673eac4eba22c7367bd9625308b` はこの1bulletとOpenAI両manifest・Claude manifestの版 `1.0.43` のみを変更し、プラグイン登録成功を意味しない。[OpenAI版](../../plugins/lvk-orchestration/openai/plugin.json)・[Codex版](../../plugins/lvk-orchestration/openai/.codex-plugin/plugin.json)・[Claude版](../../plugins/lvk-orchestration/claude/.claude-plugin/plugin.json)。
 
@@ -547,3 +534,9 @@ settings-redesignの恒久i18n browserは、言語保存とBrowser通知hint、J
 移管後にAI判断で旧IssueをCancelledへ変えた場合は、Issueと全Workspaceのarchive・物理削除を個別に確認する。同対象・削除範囲の既承認は再確認せず、未承認やbusy拒否は迂回しない。部分移管や人間の単なるRun取消から自動archiveを導かず、Cancelledだけを片付け完了としない。[片付けの完了条件](../../skills/lvk-orchestration/references/auto-merge.md#cleanup-completion-gate)。
 
 LOCAL-242統合ではコード候補 `a1f87c7c93e8818aa84d4213788c1429b723ecd7` の関連内容が検証済みsource `c14c22f` と同一であることを確認した。候補から両配布経路を生成し、参照・ZIP/CRC・正本byte一致・接続なしの正確な集合を管理commandで再確認した。参考アプリ検証は既存証拠と差分からagent判断で省略し、今回の成功へ付け替えていない。Wikiはその後の別commitである。プラグイン登録、Claudeアカウント導入/認証、サーバー再起動・デプロイは実施していない。配布生成成功、登録保存、実読、mainへのGit公開は独立した結果として扱う。
+
+## チャット表示と入力の再検証
+
+依存をfrozen lockfileで準備し、`pnpm run chat:test`、agent-runtimeのcanonical conversation/timelineとsessionDraftのVitest、影響packageの型検査・lintを選ぶ。built-app経路では先に `pnpm --dir packages/local-web run build` と `node scripts/dev-cargo.mjs build --locked --bin server --bin agent-process-host` を行い、`python3 tests/chat/run-isolated.py` を実行する。runnerは固有のinstance・loopback portを使い、finallyで停止・port閉鎖を確認する。実Codex steeringを含むため認証済み環境の明示的受入として扱い、共有devへ向けない。[runner](../../tests/chat/run-isolated.py)
+
+`isolated.spec.ts` の合成AgentRun履歴、実Scratchと制御follow-up、実Codex steeringは別の証拠である。prepend座標・最新追従・遅延Workspace応答、末尾改行・IME・Enter設定、再接続後の一度だけのuser inputを確認し、component成功を実provider成功へ拡張しない。[試験定義](../../tests/chat/isolated.spec.ts)

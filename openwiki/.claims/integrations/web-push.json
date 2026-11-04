@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:56c507e4291efa4489d161c439f9b4d38cd01dd4f47d3f1ae29c79d48f4b5757",
+  "pageVersion": "sha256:565257a2d0355ae778cf0b9170e537875a473cb6a03e15b30115e470ee1036f6",
   "claims": [
     {
       "id": "claim_12d9a2cd77a84b53a677021c3e9d8057",
@@ -55,10 +55,6 @@
         {
           "resource": "repo://crates/server/src/routes/web_push.rs",
           "version": "repo-file-v1:sha256:4c806f096d52fad83c09f1401a28461cd8faa85e9e0b09657f3b2dc620607a21"
-        },
-        {
-          "resource": "repo://docs/development/web-push.md",
-          "version": "repo-file-v1:sha256:ed4070f7d67ebd736e3fdde0709b74a13cee98386b93046211b234c935367a6a"
         },
         {
           "resource": "repo://packages/web-core/src/shared/components/web-push/WebPushSettings.tsx",
@@ -133,11 +129,11 @@
       "statement": "composerは通知対象Runを最新Runと区別して表示し、見つからなければSession IDと履歴の確認を案内する。相談コピー・外部ChatGPTリンク・fallback textareaは削除済みで、通知対象表示は残る。",
       "evidence": [
         {
-          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx#L1552-L1585",
+          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx#L1565-L1598",
           "version": "repo-lines-v1:sha256:5980b5f67f55d475e9464929ca4585e6bf95dba85d46c227631f3ed954e3ba36:eyJzZWxlY3RlZExpbmVDb3VudCI6MzQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBmNjVkYTM5NzQ2NjJmZmMyY2ZjYTAwZGE0MjAwYmEzNzBiNmQ2OTFmNmI2N2ZhMzcyYjYxMzMwMDRiNzk5MjIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIzMDFiZWM4MjA0NjlhYjM1N2JiMzhmZjE5MjhjMzA4Y2Q0NDM0OGEzMDBiYWUwY2E5YTE1Yzk1OTZjMzhjODEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImNkZTgwOWUxNGI1MTlkOTgwYWYyMDIwYjIyYWU4Yzg3NTdkMTgwMmI0NDkzNmI2ZGRhYWQ2ZTg1YmIzY2I0NjkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZjYTVkZWZmYjllZmRlZWQyYTc1MjM3MTcwNzZkOTE3NzlkYmQxZTg5ZWY5Zjk4NzIzZjQxOGI3YTZjY2E4NzgifQ"
         },
         {
-          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx#L320-L325",
+          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx#L333-L338",
           "version": "repo-lines-v1:sha256:7b2d9ed1c9aed4623885831839646eb04ce166acf42fc9dff99a3f77376c461f:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiM2ZkYTJjNTQyN2FkNDlhNmI2OWU5MTdmZGYyYzQyOTJhZjExNjZmOTFjYWZlYjMyNDJjZGIzMjU2ZjdjNjU2MiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOTVlZjAxYmMwOGRiYzNiNjNlNGU3NWVhM2QyNmE1Yjk0MTg5MTg3N2UyN2FkODkxMzI5Yzg0MTFkN2Q4ZGM0ZCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZGM3MGRlNDgzNTNiYTkwNGI2YWE1NWZkZjUyYjZhYWRhY2JlZWNmNDQxZTJkOGRlZWUzYzY0NDFiMTY2MzBlZCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiODRmZWJiN2Y5MTYyZTFkZjgzMTU3ZDNkZmY1ZmMwYzlhYTQ1MmRiMWIwOWUyOTA2MDMyNTYwMDRhM2U4MDVlNCJ9"
         },
         {
@@ -153,10 +149,6 @@
         {
           "resource": "repo://crates/server/src/routes/web_push.rs",
           "version": "repo-file-v1:sha256:4c806f096d52fad83c09f1401a28461cd8faa85e9e0b09657f3b2dc620607a21"
-        },
-        {
-          "resource": "repo://docs/development/web-push.md",
-          "version": "repo-file-v1:sha256:ed4070f7d67ebd736e3fdde0709b74a13cee98386b93046211b234c935367a6a"
         }
       ]
     },
@@ -313,6 +305,6 @@
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-02T14:26:25.232Z"
+    "at": "2026-11-04T20:22:03.096Z"
   }
 }

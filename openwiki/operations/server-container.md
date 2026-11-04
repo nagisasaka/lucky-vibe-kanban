@@ -60,10 +60,10 @@ sources:
     resource: repo://package.json
   - id: openwiki-source-d64d3c5fa2f722c3a06ba2e6
     resource: repo://tests/embedded-browser-removal/controls.test.mjs
-generated: { by: "codex", at: "2026-11-04T20:06:10.920Z" }
+generated: { by: "codex", at: "2026-11-04T20:35:55.356Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-04T20:06:10.920Z
+    at: 2026-11-04T20:35:55.356Z
 ---
 
 # 単一サーバーコンテナーの運用境界
@@ -152,8 +152,7 @@ Compose は host の `443` だけを nginx の `8443` へ公開する。Rust bac
 
 `LVK_PREVIEW_DOMAIN` は廃止済みで警告して無視し、CSVとの併用で旧preview機能が復活することはない。CSVは独立アプリへの静的転送として残る。[設定](../../deploy/server/server.mjs)・[移行](#埋込みpreviewの廃止)。
 
-<!-- openwiki: broken internal link [#preview-は別-origin] heading anchor "preview-は別-origin" does not exist in /openwiki/operations/server-container.md. Fix the href or restore the target, then delete this comment. -->
-独立経路では nginx Basic を無効化し、LVK の server-access/handoff を経由せず upstream へ渡す。Host・Authorization・Cookie・Origin・WebSocket の情報はアプリへ保持し、HTTPS の forwarded 情報を設定する。`Proxy-Authorization` と `X-LVK-Internal-Token` は除去する。nginx の header 定義をこの server block で置き換えることが、親の LVK 用資格情報除去を継承しないための重要な境界である。LVK 側が認証済みでも、このアプリが認証を実装しなければ匿名で到達できる。cookie は sibling host 間へ資格情報を広げない host-only 運用を使う。[転送設定](../../deploy/server/server.mjs#L252-L274)・[認証境界の回帰](../../deploy/server/nginx.test.mjs#L332-L377)・[cookie の運用](#独立アプリの-csv-ルート)。旧previewからの移行は[廃止した機能](#preview-は別-origin)を参照する。
+独立経路では nginx Basic を無効化し、LVK の server-access/handoff を経由せず upstream へ渡す。Host・Authorization・Cookie・Origin・WebSocket の情報はアプリへ保持し、HTTPS の forwarded 情報を設定する。`Proxy-Authorization` と `X-LVK-Internal-Token` は除去する。nginx の header 定義をこの server block で置き換えることが、親の LVK 用資格情報除去を継承しないための重要な境界である。LVK 側が認証済みでも、このアプリが認証を実装しなければ匿名で到達できる。cookie は sibling host 間へ資格情報を広げない host-only 運用を使う。[転送設定](../../deploy/server/server.mjs#L252-L274)・[認証境界の回帰](../../deploy/server/nginx.test.mjs#L332-L377)・[cookie の運用](#独立アプリの-csv-ルート)。旧previewからの移行は[廃止した機能](#埋込みpreviewの廃止)を参照する。
 
 ### 証明書と設定変更の寿命
 

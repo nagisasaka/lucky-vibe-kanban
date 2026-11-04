@@ -236,10 +236,10 @@ sources:
     resource: repo://tests/workspace-navigation/run-isolated.py
   - id: openwiki-source-b87e3253bd1458a0091f8587
     resource: repo://tests/workspace-navigation/workspace-navigation.spec.ts
-generated: { by: "codex", at: "2026-11-02T23:50:54.203Z" }
+generated: { by: "codex", at: "2026-11-04T20:35:55.356Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-02T23:50:54.203Z
+    at: 2026-11-04T20:35:55.356Z
 ---
 
 # Web の実行環境と同期
@@ -248,7 +248,7 @@ verified:
 
 Local App は TanStack Router と Hotkeys、設定、ローカル identity を組み立てる。Tauri の通知クリック・更新 listener と native 通知 bridge は撤去済みである。共有画面と hooks は web-core にある。Remote Web shell は削除済みである。[Local App](../../packages/local-web/src/app/entry/App.tsx)
 
-UI package は既に Kanban や chat、preview などの再利用部品を持つ。[Kanban の例](../../packages/ui/src/components/KanbanBoard.tsx#L1-L58)。`packages/ui/README.md` の「initial scaffold」と [抽出前の監査](../../docs/frontend-ui-library-refactor-audit.md)は現行配置の全体図ではない。監査は責任分割の経緯を知る資料として読み、古い `local-web/src/components` の位置を変更先にしない。
+UI package は既に Kanban や chat、preview などの再利用部品を持つ。[Kanban の例](../../packages/ui/src/components/KanbanBoard.tsx#L1-L58)。`packages/ui/README.md` の「initial scaffold」と 2026-02-21 の抽出前監査は現行配置の全体図ではない。当時の監査は汎用primitiveを先に分離し、domain containerとfeature dialogをアプリ側へ残す方針だった。古い `local-web/src/components` の位置を変更先にしない。
 
 ## ブラウザー操作と廃止された native bridge
 
@@ -448,7 +448,7 @@ anchor は React 更新後だけでなく、末尾 lock がないときの同じ
 
 変更時は layout の Chromium fixture で prepend・遅い initial・DOM の遅延 resize 後の同一行座標と scope 切替を確認し、canonical projection の unit test で live と replay の `before → steer → after`、重複、Run identity を確認する。順序 assertion は user / assistant message を対象にし、時間 footer を会話本文と混同しない。[layout 試験](../../tests/chat/conversation-layout.test.mjs#L87-L172)・[順序試験](../../packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.test.ts#L100-L166)。composer の試験対象は [送信 snapshot の保護](../concepts/session-and-agent-run.md#送信中の編集と-markdown-正規化)を参照する。
 
-built-app の隔離試験は、実 backend と合成履歴、実 Scratch と制御した follow-up 応答、実 Codex steering の3経路を区別する。[試験定義](../../tests/chat/isolated.spec.ts)と [再実行手順・過去の結果](../../docs/development/chat-stability-local21.md)を参照し、component fixture の成功を provider 全体の保証にしない。特に遅延 DOM resize の追加検証は実画像ダウンロードや全体 E2E の再実行ではない。
+built-app の隔離試験は、実 backend と合成履歴、実 Scratch と制御した follow-up 応答、実 Codex steering の3経路を区別する。[試験定義](../../tests/chat/isolated.spec.ts)と [再実行手順と試験範囲](../operations/development.md#チャット表示と入力の再検証)を参照し、component fixture の成功を provider 全体の保証にしない。特に遅延 DOM resize の追加検証は実画像ダウンロードや全体 E2E の再実行ではない。
 
 今回の Sync は凍結 source `a044769b1dfdf1972c6e10937fa0dfb98faf31db` のチャット変更を、購読・投影・backend の steering 保存・リスト・editor・試験定義という独立した入口で静的に照合した。凍結入力の正式 Integration は検証省略であり、開発時の成功記録を統合後の成功証拠へ読み替えない。この Sync で製品テストを再実行したことや、無関係な過去の Wiki 全体を再検証したことは意味しない。
 
@@ -506,7 +506,7 @@ Workspace の Wiki アイコンは有効な Wiki 項目を展開して右サイ�
 
 ### Wiki・端末の検証境界
 
-`workspace-wiki.mjs` は build 済み frontend/server と専用一時 instance の実 file/Wiki/PTY API を使い、両ビュー・狭幅・下書き保持、終了時の実 PID、他ブラウザー/同 cwd 別実行の非干渉、archive guard を検査する。account quota は stub、資源失敗は注入で、実 AI/provider・Auth0・物理回線の保証ではない。source SHA の開発時成功と統合候補上の試験は別に扱う。[検証手順と限界](../../docs/development/project-utilities-validation.md)・[試験](../../tests/server-access/workspace-wiki.mjs)
+`workspace-wiki.mjs` は build 済み frontend/server と専用一時 instance の実 file/Wiki/PTY API を使い、両ビュー・狭幅・下書き保持、終了時の実 PID、他ブラウザー/同 cwd 別実行の非干渉、archive guard を検査する。account quota は stub、資源失敗は注入で、実 AI/provider・Auth0・物理回線の保証ではない。source SHA の開発時成功と統合候補上の試験は別に扱う。[端末の運用と検証限界](../operations/workspace-inspection.md#terminal-と-editor)・[試験](../../tests/server-access/workspace-wiki.mjs)
 
 ## 統一一覧と実行予約
 
@@ -524,7 +524,7 @@ Session 一覧の再取得では利用者が選んだ古いログや new-session
 
 モバイル shell は `visualViewport.height` を CSS 変数 `--app-vh` に反映する。キーボード表示時の composer 隠れを避け、重い shell を viewport のたびに React render しない意図がコードに記録されている。[実装と理由](../../packages/web-core/src/shared/hooks/useVisualViewportHeightVar.ts#L3-L50)
 
-[モバイル設計](../../docs/ai-mobile/design.md)は draft、[390px 監査](../../docs/ai-mobile/audit-2026-07-07.md)は過去時点のギャップ調査である。QR、PWA、native shell の構想を現行保証へ置き換えず、実画面・hooks・transport の実装を確認する。画布の見た目や操作設計は [Workflow UI 設計](../../docs/future/ai-workflow/spec-ui.md)に委ね、実行順序の意味は [Workflow Attempt](../concepts/workflow-attempt.md)で確認する。
+2026-07-06 のモバイル設計は web/PWA 優先の draft、翌日の390px監査は承認への到達・キーボード遮蔽・dialog収まりなどの過去時点のギャップ調査だった。QR、PWA、native shell の構想を現行保証へ置き換えず、実画面・hooks・transport の実装を確認する。歴史的な画布UI設計ではedgeを実行順序とし、状態が分かる節度ある動き・対象に近い操作・色以外の状態表現を意図していた。これは全項目の実装保証ではなく、現在の画布は [WorkflowCanvas](../../packages/web-core/src/features/workflow/ui/WorkflowCanvas.tsx)で確認する。実行順序の意味は [Workflow Attempt](../concepts/workflow-attempt.md)で確認する。
 
 ### 操作のプレビューと provider の説明
 

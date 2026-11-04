@@ -48,21 +48,19 @@ sources:
     resource: repo://crates/server/src/routes/repo.rs
   - id: openwiki-source-fa966dc92e5b940e2e3155e3
     resource: repo://crates/services/src/services/openwiki/completion.rs
-  - id: openwiki-source-ccf8ab737c324e8e2a967444
-    resource: repo://docs/development/conversation-auto-merge.md
   - id: openwiki-source-dbaab3d3ce907e13656fcbed
     resource: repo://packages/web-core/src/features/workspace-chat/ui/IntegrationFacts.tsx
   - id: openwiki-source-344aff2e68b53276f6be4e40
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/IntegrationValidationSettings.tsx
-generated: { by: "codex", at: "2026-10-31T11:36:54.240Z" }
+generated: { by: "codex", at: "2026-11-04T20:22:03.096Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-02T14:26:25.232Z
+    at: 2026-11-04T20:22:03.096Z
 ---
 
 # 自動マージの選択・検証・公開
 
-自動マージは一つのRepoのlocal targetに採用commitを反映する製品操作である。専用Issue・Workspace・Sessionを作り、同じCodex会話が候補作成、競合修復、検証判断、有効なWiki更新を担当する。hostは実行証拠の保存とwriter収束後の正確なGit公開を担当する。旧mechanical engine、競合だけの子job、解消承認gate、checkpoint adoptionは撤去済みである。[現行設計](../../docs/development/conversation-auto-merge.md)・[実行契約](../../assets/skills/auto-merge/SKILL.md)
+自動マージは一つのRepoのlocal targetに採用commitを反映する製品操作である。専用Issue・Workspace・Sessionを作り、同じCodex会話が候補作成、競合修復、検証判断、有効なWiki更新を担当する。hostは実行証拠の保存とwriter収束後の正確なGit公開を担当する。旧mechanical engine、競合だけの子job、解消承認gate、checkpoint adoptionは撤去済みである。[会話と公開の実装](../../crates/server/src/routes/integrations/conversation.rs)・[実行契約](../../assets/skills/auto-merge/SKILL.md)
 
 ## 選択するのは commit
 
@@ -135,7 +133,7 @@ Wiki有効時の公開済みevent receiptと鮮度は既存Memory storeへ保存
 
 ## 名称と互換境界
 
-利用者向け名称は自動マージ / Auto-merge。現行のstart/get/cancel_integrationとAPI/DB識別子は維持する一方、旧approve_integration・decision/intervene/adopt-checkpointの実行経路は撤去済みである。名称互換を理由に旧executorを再配送しない。[現行契約](../../docs/development/conversation-auto-merge.md)
+利用者向け名称は自動マージ / Auto-merge。現行のstart/get/cancel_integrationとAPI/DB識別子は維持する一方、旧approve_integration・decision/intervene/adopt-checkpointの実行経路は撤去済みである。名称互換を理由に旧executorを再配送しない。[受付と候補の実装](../../crates/server/src/routes/integrations/admission.rs)
 
 ## 同じ会話でWiki更新を再開する
 

@@ -5,7 +5,7 @@ description: AgentRun を独立プロセスで実行し、Native Audit から永
 tags: [agent-runtime, audit, persistence, recovery]
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-02T23:50:54.203Z
+    at: 2026-11-04T20:37:49.832Z
 sources:
   - id: openwiki-source-b85c3dc0eaacdffedf4e68ee
     resource: repo://crates/db/migrations/20261026180000_agent_starting_recovery.sql
@@ -43,6 +43,10 @@ sources:
     resource: repo://crates/local-deployment/src/process_host/journal.rs
   - id: openwiki-source-8a1832c7fd24c1e7222a8d0a
     resource: repo://crates/local-deployment/src/pty.rs
+  - id: openwiki-source-5720d865d1c837f0e6b7dab7
+    resource: repo://crates/server/src/routes/integrations/conversation.rs
+  - id: openwiki-source-ecfa47de2e3842c785820c9b
+    resource: repo://crates/server/src/routes/integrations/mod.rs
   - id: openwiki-source-15fe6957ffd50a6292794c19
     resource: repo://crates/server/src/routes/workspaces/archive.rs
   - id: openwiki-source-7151ac14cb4570c5c04781dd
@@ -63,15 +67,9 @@ sources:
     resource: repo://crates/utils/src/process/owned_group.rs
   - id: openwiki-source-965b490de6f8364cb7695944
     resource: repo://crates/workspace-manager/src/workspace_manager.rs
-  - id: openwiki-source-11be03870aae85a259cab5c1
-    resource: repo://docs/future/agent-runtime/architecture.md
-  - id: openwiki-source-bb8ec0d0f300d3d2dd8edfc6
-    resource: repo://docs/future/agent-runtime/data-planes-and-recovery.md
-  - id: openwiki-source-37db6fa2c961da1810d195e7
-    resource: repo://docs/future/agent-runtime/README.md
   - id: openwiki-source-141584dac09cf0f93be6bff5
     resource: repo://tests/codex-process-cleanup/README.md
-generated: { by: "codex", at: "2026-11-02T23:50:54.203Z" }
+generated: { by: "codex", at: "2026-11-04T20:37:49.832Z" }
 ---
 
 # Agent Runtime の監査・投影・回復
@@ -123,7 +121,7 @@ Host の監視 loop を離れた際は、明示 Cancel でなく EOF・crash・p
 | Canonical | SQLite の `agent_events` と `agent_run_state` | 完了メッセージ、状態遷移、制御など、製品判断用の永続記録 |
 | Snapshot | `agent_run_usage_snapshots` など | 累積使用量等の最新値。通知回数分を加算しない |
 
-この分離の記録された目的は、表示用 token delta によって SQLite を二つ目の完全監査ログにしないことである。[データ経路の設計文書](../../docs/future/agent-runtime/data-planes-and-recovery.md)は現行の batch・snapshot 実装と対応する。`future/` というディレクトリ名だけで未実装文書と判断しない。
+この分離の記録された目的は、表示用 token delta によって SQLite を二つ目の完全監査ログにしないことである。現行 adapter は一時 delta と永続 message を分け、batch と snapshot に別の保存契約を与える。[分類の実装](../../crates/executors/src/executors/provider_adapter.rs)
 
 stdout は Native Audit へ記録してから分類・投影する。Audit の書き込み失敗、解釈が必須のフレームの失敗は通知して読み取りを打ち切る。既知の audit-only 通知と任意の未知通知には canonical event を作らない。[監査優先の処理](../../crates/local-deployment/src/process_host.rs#L741-L778)、[任意通知の扱い](../../crates/executors/src/executors/provider_adapter.rs#L2041-L2050)
 
@@ -169,7 +167,7 @@ Unix の `terminal_drain_releases_control_owned_output` は、control に実 OS 
 
 耐久 command service は command を DB に enqueue してから配送するが、その記録と provider へ送った生 bytes の監査は別である。再試行時は command の状態に加えて実行状態・作業木も確認する。[command の事前保存](../../crates/services/src/services/agent_runtime.rs#L106-L145)
 
-[Runtime README](../../docs/future/agent-runtime/README.md) は「計画承認済み・実施開始待ち」、[目標設計](../../docs/future/agent-runtime/architecture.md) は Draft と明記する。そこに記録された「native input を保存してから送信する」方針は、この制御経路の現在の順序とは一致しない。設計自身も既発生の作業木変更を rollback する保証はしない。これは静的な配線確認であり、監査ディスク障害の再現試験結果ではない。[記録された順序・失敗方針](../../docs/future/agent-runtime/architecture.md#写入顺序与失败策略)
+移行した歴史的設計では Runtime 計画は「計画承認済み・実施開始待ち」、目標設計は Draft とされていた。そこに記録された「native input を保存してから送信する」方針は、この制御経路の現在の順序とは一致しない。設計自身も既発生の作業木変更を rollback する保証はしない。これは静的な配線確認であり、監査ディスク障害の再現試験結果ではない。[現行の送信後監査](../../crates/local-deployment/src/process_host.rs#L961-L1021)
 
 ## Native Audit の保全・エクスポート・寿命
 
@@ -179,7 +177,7 @@ Audit の本体は SQLite の外、`<asset_dir>/runtime/native-audit/v1/sessions
 
 読取は Complete / Recovered の manifest、連番、frame 数、checksum を検査し、open・不完全な bundle を拒否する。replay は audit schema / runtime / adapter / protocol / mapper の version を照合し、不一致をエラーにする。既存の bundle replay は、下記の将来作業である「製品 DB の完全再投影」と同じ操作ではない。[version 契約](../../crates/executors/src/runtime/native_audit.rs#L945-L964)・[比較](../../crates/executors/src/runtime/native_audit.rs#L1103-L1142)・[不一致テスト](../../crates/executors/src/runtime/native_audit.rs#L1317-L1345)
 
-[Runtime 計画の「周期 cleanup を追加しない」という保存方針](../../docs/future/agent-runtime/README.md#已确认的产品边界)と、利用者の明示削除は分ける。[Workspace 削除](../concepts/workspace.md#archive削除期限-cleanup)では Session ID 群を取得し、DB 削除後の background cleanup が各 Session の Native Audit と process log を削除する。External の作業ディレクトリ保護も、この別保存先の永久保持を意味しない。必要な監査は削除前に保全する。cleanup 失敗はログに残るため、削除 API の受付だけで消去完了とも判定しない。[削除 context](../../crates/workspace-manager/src/workspace_manager.rs#L174-L205)・[cleanup](../../crates/workspace-manager/src/workspace_manager.rs#L436-L515)・[削除と再実行のテスト](../../crates/workspace-manager/src/workspace_manager.rs#L1368-L1397)
+歴史的な Runtime 計画の「周期 cleanup を追加しない」という保存方針と、利用者の明示削除は分ける。[Workspace 削除](../concepts/workspace.md#archive削除期限-cleanup)では Session ID 群を取得し、DB 削除後の background cleanup が各 Session の Native Audit と process log を削除する。External の作業ディレクトリ保護も、この別保存先の永久保持を意味しない。必要な監査は削除前に保全する。cleanup 失敗はログに残るため、削除 API の受付だけで消去完了とも判定しない。[削除 context](../../crates/workspace-manager/src/workspace_manager.rs#L174-L205)・[cleanup](../../crates/workspace-manager/src/workspace_manager.rs#L436-L515)・[削除と再実行のテスト](../../crates/workspace-manager/src/workspace_manager.rs#L1368-L1397)
 
 ## DB の原子性と冪等性
 
@@ -221,8 +219,7 @@ Kanban 同期は単一 event と host batch の両保存経路で、reducer が 
 
 欠けた input / Running の事実を冪等に追加し、canonical history 全体を reducer で再生する。再構築後は投影状態と更新時刻以外の意味状態が以前と一致しなければ拒否する。terminal run を Running に戻したり、隔離・監査記録を消したりしない。未知の失敗、改変、未完了 tail、生存不明の process はこの回復の対象外である。[追加と再構築](../../crates/local-deployment/src/agent_run_port.rs#L1710-L1758)・[原子的な照合](../../crates/db/src/models/agent_runtime.rs#L1254-L1340)
 
-<!-- openwiki: broken internal link [../concepts/formal-integration.md#旧-run-の-checkpoint-adoption] heading anchor "旧-run-の-checkpoint-adoption" does not exist in "../concepts/formal-integration.md". Fix the href or restore the target, then delete this comment. -->
-この一般 Retry の互換処理と、[正式 Integration の限定 checkpoint adoption](../concepts/formal-integration.md#旧-run-の-checkpoint-adoption)は別である。後者は歴史的 Agent を再実行せず、承認済み Git prefix を引き継ぐ。
+この一般 Retry の互換処理は、旧 Integration の checkpoint adoption とは別である。後者は歴史的にはAgentを再実行せず承認済みGit prefixを引き継ぐ仕組みだったが、現在の自動マージでは撤去済みである。現行は同じ担当会話で候補を作成・修復し、通常のSession継続とhostの公開検査を使う。[現行の自動マージ](../concepts/formal-integration.md#競合だけを有限の-agent-job-にする)・[実行経路](../../crates/server/src/routes/integrations/conversation.rs)
 
 ## 取消と実プロセスの終了
 
@@ -242,7 +239,7 @@ host は Linux の自然終了でも group cleanup を省略しない。cleanup 
 
 `host_batch_commits_events_projection_and_cursor_atomically` は密な sequence、重複受信、内容衝突時の event・cursor・provider session の rollback を検証する。[テスト](../../crates/db/src/models/agent_runtime.rs#L2392-L2512)を、mapper や永続化単位の変更時に確認する。
 
-完全な canonical projection を Native Audit から再構築する管理操作は、[回復文書](../../docs/future/agent-runtime/data-planes-and-recovery.md#compatibility-and-future-work)では将来作業とされる。失敗台帳が存在することを自動修復の保証と解釈しない。古い mapper と履歴の互換性を含む設計意図は [Runtime 目標設計](../../docs/future/agent-runtime/architecture.md)に記録されており、個別機能の実装有無は現行 adapter と照合する。
+移行した回復設計では、完全な canonical projection を Native Audit から再構築する管理操作は将来作業として残された。失敗台帳が存在することを自動修復の保証と解釈しない。古い mapper と履歴の互換性を維持する設計意図と、個別機能の実装有無は現行 adapter と照合する。
 
 ### Codex cleanup の検証範囲
 

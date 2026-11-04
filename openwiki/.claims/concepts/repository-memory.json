@@ -1,14 +1,14 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:e8aa4e181025606bd01b63e17a3a44448095794c07a94087a2da419216977f89",
+  "pageVersion": "sha256:2a0b6601aca55e8bf726fbe233b68db22f4f5bc5f30f7f278405cee2ad29a0b2",
   "claims": [
     {
       "id": "claim_a548debefc244e29b9dab1fe86f05219",
-      "statement": "Repository Memory の規範仕様は会話、Workspace Memory、統合済み canonical OpenWiki を分け、source/tests/configuration を上位の権威とする。",
+      "statement": "Repository Memoryの注入contextはsource/tests/configurationを権威とし、Workspace固有Memoryと統合済みcanonical Wikiを区別する。",
       "evidence": [
         {
-          "resource": "repo://docs/design/openwiki-repository-memory.md#L38-L103",
-          "version": "repo-lines-v1:sha256:05764f3b308a8fd8d433cc578fb1a1427754373d4ddc2c7da04ee1d5688843b4:eyJzZWxlY3RlZExpbmVDb3VudCI6NjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc0NTAyZTViMDMyNWY1ODVjMTBiZTM2ZDIzMGJmYWJjYzUzNzIwNzlhNGJlNjlhNzIzZDgwODFiNGY4OGFjZmYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY1MmQ3MTExMDNkNTBhNDM3ODMwYzZmYmNkMDRmYjRiYWI0OWEwZjgyZjZkMjZkMWM3OTFjNmU4NDg4ZGQwOTAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJiM2VjMzFlNTIzMTczNGExZDFiNTVmZDAzYmNhNmJiMzA2YTM2NTgxYzE3NjM5MjhhNWMwNDc0OTdhMmUxZWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijg5MDA0Y2EzN2UxM2NhNzljNDlhMTgyOWE1ZDA0NmYyZDRlMzQ0OWQ2MjE5Y2VmNWZmOTAyNTYzMGQ4MTVjOGUifQ"
+          "resource": "repo://crates/utils/src/repository_memory.rs",
+          "version": "repo-file-v1:sha256:b15a1bb897530bf4d12cd079a27b2be2295061af25b0ce66c3e8ef95fd1cd47b"
         }
       ]
     },
@@ -24,11 +24,11 @@
     },
     {
       "id": "claim_00a985545d4647e79ba1eb7155383bcf",
-      "statement": "既存 .llm-wiki を保持して canonical openwiki/ を別の単一 writer として追加する判断が記録されている。",
+      "statement": "現行の旧LLM Wiki互換filterは既知生成指示だけを実行要求から除き、利用者の手書き補足・独自Skillと既存ファイルを保持する。",
       "evidence": [
         {
-          "resource": "repo://docs/design/openwiki-implementation-checkpoints.md",
-          "version": "repo-file-v1:sha256:0715d0a1ec0f3360d5b57d1e75634e73b8d57c80241d38766a0863ea3bd174db"
+          "resource": "repo://crates/executors/src/legacy_wiki.rs",
+          "version": "repo-file-v1:sha256:554ca56f62b28c1f298abeaff89ea4e288271e32f768b82eb0325557e5f82dd8"
         }
       ]
     },
@@ -319,6 +319,6 @@
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-04T19:49:13.194Z"
+    "at": "2026-11-04T20:35:55.356Z"
   }
 }

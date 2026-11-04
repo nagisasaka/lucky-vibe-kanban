@@ -18,10 +18,6 @@ sources:
     resource: repo://crates/services/src/services/parallel_context.rs
   - id: openwiki-source-1c3e0ab9fadf12dd97d8fd4f
     resource: repo://crates/services/src/services/pipelines.rs
-  - id: openwiki-source-1f99436ccc32fb0e2aed140f
-    resource: repo://docs/superpowers/specs/2026-09-09-llm-wiki-design.md
-  - id: openwiki-source-6e1b3f3856aa7fc901ac98d4
-    resource: repo://docs/workspaces/llm-wiki.mdx
   - id: openwiki-source-c0945aff6520d3600561e893
     resource: repo://packages/ui/src/components/PromptContext.tsx
   - id: openwiki-source-1d9ab14665c35291c675b104
@@ -42,10 +38,10 @@ sources:
     resource: repo://tests/chat/prompt-context.fixture.tsx
   - id: openwiki-source-7cc1d248ce00f0c5ef61c76e
     resource: repo://tests/chat/prompt-context.test.mjs
-generated: { by: "codex", at: "2026-10-27T07:04:01.883Z" }
+generated: { by: "codex", at: "2026-11-04T20:22:03.096Z" }
 verified:
-  - by: openwiki/0.5.1
-    at: 2026-10-29T08:49:34.152Z
+  - by: openwiki/0.7.2
+    at: 2026-11-04T20:22:03.096Z
 ---
 
 # Card context と並列作業の参照
@@ -94,7 +90,7 @@ DirectFolder には自動共有リンクや peer discovery がない旨を通知
 
 ## 旧 LLM Wiki からの移行境界
 
-旧 `.llm-wiki/` は作業 branch 内でコードと同じレビュー・統合に従う知識を意図していた。[旧設計](../../docs/superpowers/specs/2026-09-09-llm-wiki-design.md#architecture)はその経緯を記録するが、現行の生成・閲覧契約ではない。現在は repository 設定の OpenWiki へ統一され、既存 `.llm-wiki` とカードの保存内容を自動削除・移行しない。[廃止の案内](../../docs/workspaces/llm-wiki.mdx)
+旧 `.llm-wiki/` は作業 branch 内でコードと同じレビュー・統合に従う知識を意図していた。移行した2026-09-09の旧設計は、agentが作業branch内の知識を必要時にrecall/enrichする構想を記録したが、現行の生成・閲覧契約ではない。現在は repository 設定の OpenWiki へ統一され、既存 `.llm-wiki` とカードの保存内容を自動削除・移行しない。[保持と廃止の実装](../../crates/executors/src/legacy_wiki.rs)
 
 Pipeline loader は現在同梱定義を持たず、残存する `wikillm.toml` を表示候補から外す。他の定義は保持し、不正 TOML は警告して読み飛ばす。seed 機構も既存ファイルを上書きしない。[loader](../../crates/services/src/services/pipelines.rs#L11-L12)、[読取規則](../../crates/services/src/services/pipelines.rs#L136-L190)
 

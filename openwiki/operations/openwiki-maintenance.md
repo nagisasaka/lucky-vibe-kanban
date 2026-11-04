@@ -70,10 +70,6 @@ sources:
     resource: repo://crates/workflow/src/templates.rs
   - id: openwiki-source-bb1ebe868e35e9e500714501
     resource: repo://Dockerfile
-  - id: openwiki-source-36cac436618e11757c666971
-    resource: repo://docs/design/openwiki-bootstrap-implementation.md
-  - id: openwiki-source-a3944588bb3b08c863d66298
-    resource: repo://docs/workspaces/openwiki.mdx
   - id: openwiki-source-00110cdcfec890895b99690a
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/RemoteProjectsSettingsSection.tsx
   - id: openwiki-source-bee9097e5e4cc326bebf14ff
@@ -84,10 +80,10 @@ sources:
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/ReposSettingsSection.tsx
   - id: openwiki-source-7fd9452d5e666180c50f8cb7
     resource: repo://tests/openwiki/recovery.sh
-generated: { by: "codex", at: "2026-11-04T19:49:13.194Z" }
+generated: { by: "codex", at: "2026-11-04T20:22:03.096Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-04T19:49:13.194Z
+    at: 2026-11-04T20:22:03.096Z
 ---
 
 # OpenWiki の初期生成・同期・回復
@@ -141,7 +137,7 @@ Codex の TOML editor が project trust table を追加すると、OpenWiki の�
 | 選ばれた Project に可視 status がない | Issue なしで継続する。可視 status があれば `sort_order,id` 順の先頭を使う |
 | Workspace に既存 link がある | 付け替えない |
 
-Issue 採番と link 作成は `BEGIN IMMEDIATE` transaction 内で行い、その前後で既存 link を再確認する。過去 Workspace の起動時補完は明示 Project を持たない一意 Board の規則を保ち、定期 release monitor は利用者が解除した link を再生成しない。**すべての保守 Workspace に Issue があるという保証ではない**。これは Repo 単独・共有 Repo の既存利用を保つ互換契約として運用文書にも記録されている。[link と transaction](../../crates/services/src/services/workspace_usage/lifecycle.rs#L37-L127)・[過去補完](../../crates/services/src/services/workspace_usage.rs#L135-L149)・[運用契約](../../docs/workspaces/openwiki.mdx#understand-initial-generation)
+Issue 採番と link 作成は `BEGIN IMMEDIATE` transaction 内で行い、その前後で既存 link を再確認する。過去 Workspace の起動時補完は明示 Project を持たない一意 Board の規則を保ち、定期 release monitor は利用者が解除した link を再生成しない。**すべての保守 Workspace に Issue があるという保証ではない**。これは Repo 単独・共有 Repo の既存利用を保つ互換契約として運用文書にも記録されている。[link と transaction](../../crates/services/src/services/workspace_usage/lifecycle.rs#L37-L127)・[過去補完](../../crates/services/src/services/workspace_usage.rs#L135-L149)・[運用契約](../../crates/services/src/services/workspace_usage/lifecycle.rs)
 
 削除済み・無関連の明示 Project はエラーとなる。Project の存在と **Configure project working location** の保存済み Repo を確認する。Issue が必要なのに可視 status がない場合は、Project 設定で追加または表示してから後の実行を開始する。MCP はこれに加えて接続の Project 認可を保ち、共通受付後のエラーを安全な再実行と即断しない。[検証エラー](../../crates/server/src/routes/openwiki/project_context.rs#L6-L24)・[MCP の不確実な受付](#不確実な結果と検証の境界)
 
@@ -179,7 +175,7 @@ Issue 採番と link 作成は `BEGIN IMMEDIATE` transaction 内で行い、そ�
 
 ## Bootstrap の phase と所有権
 
-Bootstrap は repository scope の system Workflow で、Issue 専用 WorkflowAttempt と区別される。`workflow_runs.issue_id` / `attempt_id` を設定しない内部所有形式と、保守 Workspace に付く通常 Board Issue の link は別である。[予約の保存](../../crates/server/src/workflow_runtime/runner.rs#L1064-L1100)専用 Workspace と開始 source を共有し、phase ごとに新しい Session と AgentRun を使う。global template を書き換えず run の graph を予約する。[設計上の区別](../../docs/design/openwiki-bootstrap-implementation.md#compatibility-decisions)・[予約](../../crates/server/src/workflow_runtime/bootstrap.rs)・[fresh Session の検証](../../crates/server/src/workflow_runtime/bootstrap.rs)
+Bootstrap は repository scope の system Workflow で、Issue 専用 WorkflowAttempt と区別される。`workflow_runs.issue_id` / `attempt_id` を設定しない内部所有形式と、保守 Workspace に付く通常 Board Issue の link は別である。[予約の保存](../../crates/server/src/workflow_runtime/runner.rs#L1064-L1100)専用 Workspace と開始 source を共有し、phase ごとに新しい Session と AgentRun を使う。global template を書き換えず run の graph を予約する。[設計上の区別](../../crates/server/src/workflow_runtime/bootstrap.rs)・[予約](../../crates/server/src/workflow_runtime/bootstrap.rs)・[fresh Session の検証](../../crates/server/src/workflow_runtime/bootstrap.rs)
 
 ```mermaid
 flowchart LR
@@ -227,7 +223,7 @@ Bootstrap での重要な規則は次の通り。
 - page / finish の recoverable validation error は同じ active run 内で訂正できる。開始した run が未完了なら、後の成功で隠せない。
 - finish は status=complete を必要とし、sourceChanged=true を拒否する。成功した強制 update に Git diff は必須ではない。
 
-[完了必須](../../crates/services/src/services/openwiki/completion.rs)・[finish と再 begin](../../crates/services/src/services/openwiki/completion.rs)・[diff 不要の記録](../../docs/design/openwiki-bootstrap-implementation.md#phase-completion-contract)
+[完了必須](../../crates/services/src/services/openwiki/completion.rs)・[finish と再 begin](../../crates/services/src/services/openwiki/completion.rs)・[diff 不要の記録](../../crates/server/src/workflow_runtime/bootstrap.rs#L582-L607)
 
 Bootstrap writer と通常 Sync は共通の `PhaseCompletionProof` を使う。LVK は最新 attempt だけでなく、AgentRun の全 RunAttempt を順番に読み、identity、終了、audit integrity、時間的な重複を確認する。各 attempt の root thread は、その attempt 自身の thread start/resume 応答で束縛する。missing audit は「何もしなかった」の証明にはならない。[DB と audit の照合](../../crates/server/src/routes/openwiki/completion.rs)・[root の束縛](../../crates/services/src/services/openwiki/completion.rs)
 
@@ -245,7 +241,7 @@ Bootstrap writer と通常 Sync は共通の `PhaseCompletionProof` を使う。
 
 ## 独立 Review と finding の解決
 
-Review は generator の会話や upstream Workflow context を受け取らない。Codex thread は read-only、OpenWiki MCP / Skill は無効化され、共有 user 設定を変更しない。開始前の dirty worktree を内容 fingerprint として保存し、完了時に同一性を確認する。「Review 開始時に Git diff が空」であることは要求しない。[独立性の意図](../../docs/workspaces/openwiki.mdx)・[thread isolation](../../crates/executors/src/executors/codex.rs)・[baseline](../../crates/server/src/workflow_runtime/bootstrap.rs)・[変更検出](../../crates/server/src/workflow_runtime/bootstrap.rs)
+Review は generator の会話や upstream Workflow context を受け取らない。Codex thread は read-only、OpenWiki MCP / Skill は無効化され、共有 user 設定を変更しない。開始前の dirty worktree を内容 fingerprint として保存し、完了時に同一性を確認する。「Review 開始時に Git diff が空」であることは要求しない。[独立性の意図](../../crates/services/src/services/openwiki/bootstrap.rs)・[thread isolation](../../crates/executors/src/executors/codex.rs)・[baseline](../../crates/server/src/workflow_runtime/bootstrap.rs)・[変更検出](../../crates/server/src/workflow_runtime/bootstrap.rs)
 
 CoverageReview は version 1 の閉じた JSON。material finding が一つでもある場合に限り `needs_refinement` と一致させ、minor だけで Refine を起動しない。**指摘件数の quota や、通常 Workflow の12,000文字 handoff に収める制約はない**。prompt / JSON schema は件数・項目長の上限を示さず、根拠のある独立した不足を省略しないよう要求する。一方、host は資源防御として JSON 全体の1 MiB超過を parse 前に拒否する。これは執筆目標ではなく、超過時に勝手に切り詰めて PASS にする処理もない。[parse と verdict](../../crates/services/src/services/openwiki/bootstrap.rs)、[Reviewer 指示](../../crates/services/src/services/openwiki/bootstrap.rs)
 
@@ -257,7 +253,7 @@ Refine が update を行わず全 material finding を refuted / already_satisfi
 
 生成・レビュー・更新の品質基準は「重要概念・契約・通常操作の説明先が安定し、初見の読者が断片を再構成せず理解できること」。概念ページ、横断 workflow、実装 architecture は異なる問いを扱い、詳細契約の正本を一か所へ置いて本文中の意味あるリンクで結ぶ。固定ディレクトリ・最低ページ数・一名詞一ページは要求しない。Generate だけに架空製品の構成例を渡し、Review はその形への準拠ではなく開発判断に影響する不足を評価する。通常 Sync も既存の説明先と関連リンクを維持する。[共通原則](../../crates/services/src/services/openwiki.rs)、[計画例と Review](../../crates/services/src/services/openwiki/bootstrap.rs)、[Sync](../../crates/services/src/services/openwiki.rs)
 
-schema、path、operation の検査が証明するのは構造と監査上の閉包であり、推論の正しさや repository 全体の意味的網羅ではない。実装記録もこの限界を明記する。[検証の限界](../../docs/design/openwiki-bootstrap-implementation.md)
+schema、path、operation の検査が証明するのは構造と監査上の閉包であり、推論の正しさや repository 全体の意味的網羅ではない。実装記録もこの限界を明記する。[検証の限界](#文書方針の継承と移行の判定)
 
 ## 公開・復元・失敗回復
 
@@ -271,7 +267,7 @@ Sync の cleanup は所有 identity と全 attempt の終了または未起動�
 
 Sync の確定結果は Workspace owner に保存してから repository の最新 pointer と receipt を更新する。後続保守で repository state が変わっても、その実行の成功・取消・失敗、no-op、Wiki commit を履歴として確認できる。[結果保存の順序](../../crates/server/src/routes/openwiki.rs)
 
-既に durable publication checkpoint がある場合は、その Git 公開と receipt だけを回復する。途中の model phase を再実行して別成果物を重ねる回復ではない。ユーザー向けの状況確認は Repository settings と View Workflow の Canvas / Dashboard、失敗修正後は新しい Bootstrap が入口となる。[運用手順](../../docs/workspaces/openwiki.mdx)・[checkpoint 回復](../../docs/workspaces/openwiki.mdx)
+既に durable publication checkpoint がある場合は、その Git 公開と receipt だけを回復する。途中の model phase を再実行して別成果物を重ねる回復ではない。ユーザー向けの状況確認は Repository settings と View Workflow の Canvas / Dashboard、失敗修正後は新しい Bootstrap が入口となる。移行した過去の「運用手順」・移行した過去の「checkpoint 回復」
 
 ## 成功後の保守環境の解放
 
@@ -285,7 +281,7 @@ Bootstrap は同じ repository Workflow の成功、Sync は同じ AgentRun の�
 
 ## 設計文書の読み方
 
-[Bootstrap v2](../../docs/design/openwiki-bootstrap-workflow-v2.md) が基本の設計、[implementation record](../../docs/design/openwiki-bootstrap-implementation.md) が phase completion の一部を明示的に更新した記録である。後者は「最後の mode だけで判断」「Refine は必ず操作する」という旧前提を置き換える。source の PhaseCompletionProof と対応して読む。
+移行した過去の「Bootstrap v2」 が基本の設計、移行した過去の「implementation record」 が phase completion の一部を明示的に更新した記録である。後者は「最後の mode だけで判断」「Refine は必ず操作する」という旧前提を置き換える。source の PhaseCompletionProof と対応して読む。
 
 回帰検証の入口は、[全 attempt の audit を検査する test](../../crates/server/src/routes/openwiki/completion.rs) と、[Generate self-correction / 操作なし Refine の test](../../crates/server/src/routes/openwiki/completion.rs)。これらは model 呼び出しなしの protocol fixture であり、意味的 coverage の保証と混同しない。
 
@@ -303,7 +299,7 @@ writer には lifecycle 6tool に加え `openwiki_search`、`openwiki_read`、`o
 
 読取は active run の前後や lifecycle と重なってよい。成功・失敗とも writer の begin/finish、未完了operation、source drift を帳消しにしない。root/thread・call ID・引数・不整合duplicate の検査は維持し、未知toolとlifecycle相互の重なりは拒否する。未解決の読取callもwriter境界で拒否する。[監査分類](../../crates/services/src/services/openwiki/completion.rs#L196-L323)・[読取の回帰](../../crates/services/src/services/openwiki/completion.rs#L860-L997)
 
-検証は種類を分ける。`scripts/test-openwiki-host.mjs` と `--lvk-setup`（symlink / `--claude-file` / `--claude-absent`）はモデル不要で公開protocol、setup復元、source/config/INSTRUCTIONS保護、Wiki-only候補を扱う。`scripts/test-openwiki-install.mjs` は公開0.5.1/0.7.2を用意してupgrade/reinstall、共同owner、custom conflict、marker修復を確認する。`openwiki_live_fixture` は隔離した実Codexの2 turnでlinked検索・読取、owned begin再開、finishとNative Auditを確認する有料のopt-inで、DB所有・receipt・正式公開guardとは別である。[試験方法と限界](../../docs/workspaces/openwiki.mdx#verify-or-upgrade)
+検証は種類を分ける。`scripts/test-openwiki-host.mjs` と `--lvk-setup`（symlink / `--claude-file` / `--claude-absent`）はモデル不要で公開protocol、setup復元、source/config/INSTRUCTIONS保護、Wiki-only候補を扱う。`scripts/test-openwiki-install.mjs` は公開0.5.1/0.7.2を用意してupgrade/reinstall、共同owner、custom conflict、marker修復を確認する。`openwiki_live_fixture` は隔離した実Codexの2 turnでlinked検索・読取、owned begin再開、finishとNative Auditを確認する有料のopt-inで、DB所有・receipt・正式公開guardとは別である。移行した過去の「試験方法と限界」
 
 ## 文書方針の継承と移行の判定
 

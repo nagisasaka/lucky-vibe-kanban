@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:42c141123b952718ce487dbf5083ba1f29734fcad8af7b1bf10251e0f7a39a62",
+  "pageVersion": "sha256:0414b41ab20cd355827d763b81a6130f34213314a57de03cdb28cce79a3c6520",
   "claims": [
     {
       "id": "claim_12101e4e85524a9280291b25d4812f5f",
@@ -75,12 +75,8 @@
       "statement": "code SHAに結び付いた管理commandの実行証拠は要件の意味的解釈やtest網羅性を証明しない。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/integrations/conversation.rs",
-          "version": "repo-file-v1:sha256:7800dd437e2cba8bb5db17fe74877717b08e0b46d0014c5dcec697450282ccd1"
-        },
-        {
-          "resource": "repo://docs/development/conversation-auto-merge.md",
-          "version": "repo-file-v1:sha256:a7ddef189f1eae00259a67f6f6ef2679a802263169a9e1a40b8dba05fff34373"
+          "resource": "repo://crates/server/src/routes/integrations/conversation.rs#L255-L345",
+          "version": "repo-lines-v1:sha256:974ddb689e9dad860cae037b358c9e65bf59a2a5b30d2d90d2d0de78ba5f56ba:eyJzZWxlY3RlZExpbmVDb3VudCI6OTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQyOTJjNGIwYjllZjM3MGI2NzRhZGQ2NGM1Y2Q3YzY2Yzk3ZjcxODg2ZGFhNTcyOTQ3MTYxZTIxN2Q3YjdkNGQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjlmNzY5ZWU4MDU0YzhiZmM1YWRlNjg4ZjRlZjFlMmJhZTdhMGFmOWM5ZTFhOTU2NTk1Y2FjNTFhYzVjM2UxNjMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFiNjk2NDE2OWRhZjg2MjdmMjQ0ZjVkNzdhZTU3Y2ExYjY3YTkwZmU5NjZiN2M2MzA4NWI1OThiODM2YzU0YjAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQ4NTU4OTE2OGM4Y2QwM2JlMzM3Nzg1NmE1OTE3OTYxN2M5OWVkYmViODNjMmQzYTRiNTc2ZmZlNDY3MzVkNTgifQ"
         }
       ]
     },
@@ -459,6 +455,6 @@
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-02T14:26:25.232Z"
+    "at": "2026-11-04T20:22:03.096Z"
   }
 }

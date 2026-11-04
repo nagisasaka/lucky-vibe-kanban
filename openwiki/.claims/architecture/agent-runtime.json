@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:0382ca82f45675d516eb09cfa65a583342919cebd2b9771917d6b748f47ff47f",
+  "pageVersion": "sha256:3e6d612b69a112cbcbb2e43deadd9e0fcbfb0b491bbbea6a9027c5610bcc98d4",
   "claims": [
     {
       "id": "claim_73d8e11679c6457aaf2e2b1a68fb767e",
@@ -35,12 +35,12 @@
       "statement": "Runtimeは監査、Live、Canonical、Snapshotを分離し、表示用deltaを完全なSQLite履歴として保存しない設計である。",
       "evidence": [
         {
-          "resource": "repo://crates/executors/src/executors/provider_adapter.rs#L2270-L2279",
-          "version": "repo-lines-v1:sha256:5db5868143a5a97fc3eed8cc0ed46337fc81ec24c989237f7ca72369e1edf66e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJiYTI4NTA0ZjQyMWIzMGI3Y2JmOTg1NGQxZTBhMWFiNTJhMTQ1NjI1OTZiOTBjM2E3MDdhMDQ4NGUwYTNjYjEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU5YzEzNTkwNjY1NjMyM2QxYzVlYTQxNjU0ZWU2NmFmYjU4NWFjZGNmYWVhY2ExMjFkNWUzMGJmMTkzZWVkZDciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImEyY2MwZDQ0ZGRlMzkxMDE4YTQ1OWMwNmIwOTBlZWVjOGRmNTA0MTg4Mjk3MzIwMmQwYTc2NWZjOTM1NjRjYTYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImM3NmNmNTc3ZGExZjRhNDE2NjlmYTRmYzY0NjE2ZDFjZmQ1OThiMGY5MjRhODZhOTIxZjViZDMwYTU5Zjk3NDIifQ"
+          "resource": "repo://crates/executors/src/executors/provider_adapter.rs",
+          "version": "repo-file-v1:sha256:a7e57ccda524a665c0ad4466d9227408808cc52dec2a2fb0c36fc6967e857125"
         },
         {
-          "resource": "repo://docs/future/agent-runtime/data-planes-and-recovery.md#L3-L25",
-          "version": "repo-lines-v1:sha256:51ccc742d102e0350c6b2f28a49996b974f4249005b5cef1a044dd04a5034814:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk1ZjM0MWMxNmJiNjQxYzllYzg4NTE0OWY3ZDhmYzNlYjk0ODJlMzQzYjE3Zjc4OTMyNTg1YmRmYzdjZTJjNjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJiZWJlOTdhMDIzN2VmNmRkNjk2YWFhN2M2MTAxNmYwYjhkZTU1ZWQ2MmM0ZGYxMjBkODAwNDIwMTg2YzRmYTkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjoyLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQ0ZmRhYjEyZTg3ZDJhODlmN2M1ZTQyMjNmM2M5YzE1MjQ3YzQ4MDRmY2Q5NjlkNjBiOWVlN2Q1ZWM0M2EyNWEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQ5ZTI1YTAxYjViNjVjNWU5ZTIzNDgwYjM3MTk1ZTdhYTg4OGRkYjI1OWY2ODFhNzdiYjM2YzI3YjM4YTY1NDcifQ"
+          "resource": "repo://crates/local-deployment/src/process_host/journal.rs#L156-L238",
+          "version": "repo-lines-v1:sha256:aef1ae9b193fb1d8345b5a57fafe57f00cc7dd360593471705461d753efcc063:eyJzZWxlY3RlZExpbmVDb3VudCI6ODMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcxMmFmNDkwMWZjOTBiM2M5MWYxMTY2MmE1NTJkYWFiZjNiYWQxMGU5YmM1ZDMyODBiZTQ4ZWEzMTc0ODM3YzUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU3OWZhYzE4MWE1MzlmNWRkMGQ2ODgwM2I4NDg5ODVmMjU0NThhNDZhZWNhMDBjZmM3OThiMzhkZWMwNDkwMjUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFjZmZlYWU5MzEyMjBmZjc0NDBkMWFiY2RhZjQ3YTZjZTkxNjUwYThjOGRjYTRmOWYwOGIzNGUwMjUzNTIzYzgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImZlODc5ODJmZGZlNGIxNGFlNjZhNDUxNDUwOThlMmExNzM3NjQ4MTNhMTk3MmViMjdiMmE3MDljYjE4Njc1OGIifQ"
         }
       ]
     },
@@ -103,16 +103,6 @@
       ]
     },
     {
-      "id": "claim_f055580123cf46538e760a86bef9b73a",
-      "statement": "回復文書はNative Auditから完全な投影を再構築する管理操作を将来作業として記録している。",
-      "evidence": [
-        {
-          "resource": "repo://docs/future/agent-runtime/data-planes-and-recovery.md#L109-L117",
-          "version": "repo-lines-v1:sha256:19232ec8cf2a1a467a19e2c4d8ed7b687d403d3682a68508834addb77d7d3df2:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZmYzODIxODU4NjYzODMwMGQwODNmZmQwNWJlNTA5NmY1NWZlMTRhMzc3NWY0MzBmZjNiNWJjZmU0ZjU0MzFhOSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMzhjZjE4NzQ5OTNhZjM4Njk1NjNjYjkyZjkwNjQ5MGM5MWZlZTNkZjc4YjQxMWFkMjAwN2QzYjQ2NWM5NzI2NSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNDY5YzExNjY0YTBjMTk0NDkyNTRlZjYxOGRhMTExMmVlNjYxYTU4ZWY0MmQ5ZDUzYzMzM2Y0MTEwZDBlODQwZCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjAsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSJ9"
-        }
-      ]
-    },
-    {
       "id": "claim_32fe6a1ad6704e03bf8cccee23b7d962",
       "statement": "活動中のprocess host制御はproviderへの送信後に非空bytesをNative Auditへ記録し、その記録失敗でも既送信の副作用は否定できない。",
       "evidence": [
@@ -138,23 +128,11 @@
     },
     {
       "id": "claim_da9ea2a5721b495aab444cd9beffb8a1",
-      "statement": "計画承認済み・実施待ちのRuntime READMEおよびDraftの目標設計はnative inputを送信前に監査する方針を記録するが、現行制御の順序はそれと異なる。",
+      "statement": "活動中の制御はproviderへの送信後にnative inputを監査し、送信前監査という歴史的目標を現在の保証にできない。",
       "evidence": [
         {
           "resource": "repo://crates/local-deployment/src/process_host.rs#L961-L1021",
           "version": "repo-lines-v1:sha256:3ee306ffe0e35de3aee8ecc90c643dec1bed270039e43209c80ffaf8ea3d0636:eyJzZWxlY3RlZExpbmVDb3VudCI6NjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNkNDcxYWU1M2I1ZmQwNTM2ZmJiNDEwODQ0NTdlY2I4NzNlYThlMmZlNTJmNzdiMTFlYzZiNGQ3MmQ4ZDQ2NDQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhkYjMzOWMxN2Q0Y2M1NGU3MGM0ZmNmZWNiNjExYmI5ZTdkMzYzZjI1YjE4ZTA5MjNhMWQzMDZjYzk1OTI0ZTUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjU2MzI5ZDBlMWE1Zjg5ODNiNWY0MzU5YzllZjM5Y2Q0ZDc5MWZhNDZkNDhiMmY5NDc0OGQzOWQ0YTM4MDA4MzYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhjMjZjYmNiY2ZjZGJjYTYyNDMzMTM2MTcyYzc5ZjA3MWY3ZjU2NTNmNDFmZWU5YzUwNWJmYmY2ZDYxZDRjOGQifQ"
-        },
-        {
-          "resource": "repo://docs/future/agent-runtime/README.md#L1-L22",
-          "version": "repo-lines-v1:sha256:d51ca806fbe95dd33a108940c3ea7f7c50e44810acedfe9123be2d2ddde040dd:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIyNzk5NzQ2MzhkOWQ4OWZkNTFiODViNTU1YzBkNjA5YjM1YTk5MzUzZTdkNGQ5OGI3MzhhMzRmYThjYzA2YjEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjliMWZhYzkwZWE4YzkwZTMxOWM0ODEzZDExNmQ4OTdmZDY1ZmJjOGVkMzc1MWI5ZTBhNTlmMjg2NWFkMmI3N2IiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFjOTgyZDQ0NDQyOWZkMmFjY2I5ODJjZTQyYzg1Y2Y2OTRkMTgzMGQ2MWMwZTA3ZmRhMzI0ODNjMDQ4Yjg2ZWYifQ"
-        },
-        {
-          "resource": "repo://docs/future/agent-runtime/architecture.md#L1-L5",
-          "version": "repo-lines-v1:sha256:a72dcd30cc515a242422999bb6e09ac9e64b9374715a478f8352fcbdd204c8a9:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDMzMDNlZjI1MTg2ZWFhZGNmMjVmNDIwOTBmZjM3MGExODE1MzM4OTU4N2Q0ODAyMGZjNDFjMjFhZjZjMGUzMCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZTRlY2I0MzhhMzI2MjRhNTAxYWU4NTBiNmQ4M2YxNDdjZGI4Y2E5ZmM1NTMwZDY4ZmNlZmExMjNjOGE2MGJiZiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjAsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNzQ1YWJiMzhhNWE1MTkyNDA3MDRkMzI0NzNjN2MyZDc5YzQ2MDc5NjJhZDc5ODBkYzA3ZWZhZGE2ZGYzYjgxYyJ9"
-        },
-        {
-          "resource": "repo://docs/future/agent-runtime/architecture.md#L553-L563",
-          "version": "repo-lines-v1:sha256:11a7aca05bd5256eadc61c273056fee3689b64b42d2945da6459800c5e5918cf:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImMzZGM3ZTJiMjViZjA1NTUyODViZDZlMmM3Yjc2MTE1YzNmODc5MGYzZGRhMDU1Y2Q2YTU5MDcyMTc5Y2ViYmUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE3NTdiOWQ0NDA5MjBjYTBiNTFlZWY1NmU3OGFmMTZhNmI4MDBkYmJhNTU5YWFlMzQwOWNjN2QzZmVlYjMyOWEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijg4OGNjMDMxMDY4NjJlODM3ZTQ1NGRkZTdjYWI1YWRjNjU4ZDE0MGRjNTA3NWJjZGVmMTQxMjUyYTg4OTExYzQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQ3NzVhZGY3ZjAwMmM2NWYyODc2OWRiM2E2YjMwMmY2ZDViYjA4YWE0NzgzYjIwNzU0N2E3NzA3ZTIwYTg3YWUifQ"
         }
       ]
     },
@@ -204,23 +182,15 @@
     },
     {
       "id": "claim_f67106dba2944391baf16bb367d8a78f",
-      "statement": "Workspace明示削除後のbackground cleanupは取得済みSession IDごとにNative Auditとprocess logを削除し、失敗を記録する。周期cleanupを追加しないという計画は永久保持を保証しない。",
+      "statement": "Workspace明示削除後のbackground cleanupはSessionごとにNative Auditとprocess logを削除するため、周期cleanupを追加しない歴史的方針は永久保持を保証しない。",
       "evidence": [
         {
           "resource": "repo://crates/workspace-manager/src/workspace_manager.rs#L1367-L1396",
           "version": "repo-lines-v1:sha256:0b797b19623d346ac9532e94bace2630043585da9d184d5afcdbf97ee58d232e:eyJzZWxlY3RlZExpbmVDb3VudCI6MzAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkxY2M0MDY4N2QyNDRlOWRhZjkxY2VkNDY1MjMyNjU2OWE0ZmI2ZGZjODFkMDNmYmU3MjNhNWVhM2NjYmU5ZGYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjJjZTRjYTliOWNjODhmYTQ4NWY1MjA3MWEyNzg3YzBkMTNmN2NkYmE4ODMwNDgzMmFhMTEzMmQzZWQ4Mzk4YzEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEifQ"
         },
         {
-          "resource": "repo://crates/workspace-manager/src/workspace_manager.rs#L174-L205",
-          "version": "repo-lines-v1:sha256:4e890d9ebd2de40fa4f3b0beec88f4267079272b0cac26e783484edbf78f8f96:eyJzZWxlY3RlZExpbmVDb3VudCI6MzIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImViNjhlNTNlNGU1MmYxZTI0ZTI3ZGNlZWQwYjJiN2M0NzUyNTIyMDM2NjAxOTJjOWYyMjY1ZjgxZTc1Njc2MTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY5YjE5ODJlOGRkNzQ4MTE4MTQ2YjM5YTJkMDA2MmY0MDgxZTM0Nzc5Yjg2NzVjMjM0YzRmYjEyNGRjMzkzOTAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZiMjBlNzhiOGRlMmI1ZDBlYzRlNDgwN2I0ZTNhODFmYzIyYjczMTQ4Mzg2ZWVmNzM1ZjZjYzFlMTIyYjRkZWMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjVmZWEyNmM2ZjBhZjU0N2ZhNGRmZDE5MWQwMDYwYjdhMmQ4MTJjOTFjMDliYWFhNjlmYzRkZTQ2ZjQzZjI5YjEifQ"
-        },
-        {
           "resource": "repo://crates/workspace-manager/src/workspace_manager.rs#L436-L515",
           "version": "repo-lines-v1:sha256:9dbe5c7e65cbdb6f420ea6efca3f76164e6c17cfd427f7e359ecfff4d22de1aa:eyJzZWxlY3RlZExpbmVDb3VudCI6ODAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE1YjUzNGEwNWNhMzNmNzUwZThjYjkyODFiNGNlYmUzNmZiMDRiZjAzOWEwMmM1YzBhNDA0MWQ4NGYxMzQ4ODciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJlNzBhYTI5Zjg2ZmFmOTAxZjA4NjAxNjQ4OWQ1OWIzNDUyNjhiNTU1YmJmYmFkYzE1MjViYmIzOGVlNDU5NjUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRmZTdjZGZmNmEwYTU4NjczNDQ3NTM5ZTMzMTYyNTU0ZjkwN2FjODA1MjI5ZjA4ZGNhNDJmMGU3NjQxMThlNjUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjU2MDhjZTExZjY5MjYyZTRmYjkwNGU0ZWMyOWRmMmIzODZhMmQ4Yzk3ZTU2N2YxMWE3ZjgyNzJiMjU0ODYxMmQifQ"
-        },
-        {
-          "resource": "repo://docs/future/agent-runtime/README.md#L12-L19",
-          "version": "repo-lines-v1:sha256:b0e0d3f69371128a4bfb7615882971868f4aab0b505bc9904359168928a1f2d4:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiN2VhNjcyNmRlYjFmMzAzMzg1N2RiNTY4ODY2Mzc1NmQ3OTJhMGFjNzUzMTQ2YTRiYTJiZjI3OTJhZjg1M2Q0OSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNjAzYWYzMGQxYTk2ZDI1NzkzNTA3NDMwZWRmODlhMjhkOGMxMjI1YjgwZjk1YmU4NWFhZGJlZWI2ZjllODQzZSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTMwN2UyYjUwMGRkOGM4OGFhY2E4MTA3ZjQ5YzBhYzNlM2ZkYThlYmJiY2Q3MTM2ZGVhZGQwODY5MzczZDE4OCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNWY1M2MyMzFlZDIyZDRmN2E0NDJiMTA3OTgwYmE1NjQ5NTQxZDRhMjI0OWE5Nzc5NDkwYTEyYWM0N2ExMDI2ZCJ9"
         }
       ]
     },
@@ -731,10 +701,24 @@
           "version": "repo-lines-v1:sha256:446d4d64b00bc9465db9e6df7e05f558a76c8245d6d9d29361c5ad871313c933:eyJzZWxlY3RlZExpbmVDb3VudCI6OTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhiZjJhNGYyOWI0M2U5ODMxZjhmMzAyYWIxNWVmMGYwNzE4NDQzMjA5YWU0NDA2ZjliMWNkZmY2NDM1YTg1OTQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjljODhiOWM5MjNlYTlhYmM3MTExYTI2Y2IyNmQzYmIyZDhhYjM2MWI3NmI0NjM2Zjk1MWNiZWM0NGRjOGFkMTAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJjZTViNDE3YjFmNTFiOWRjOGYyMzJlMzA2ODc2NTkxMDE1NmMyNDI1Zjk5NGI4MzFhM2Q4YmVlYTA5OTI0NDUifQ"
         }
       ]
+    },
+    {
+      "id": "claim_701bc5e8d7454478a9e5f4d53d5f9a53",
+      "statement": "一般AgentRunの証拠付きRetryと、撤去済みIntegration checkpoint adoptionは別であり、現行自動マージは同じ担当会話で候補作成・修復と公開要求を行う。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/routes/integrations/conversation.rs",
+          "version": "repo-file-v1:sha256:7800dd437e2cba8bb5db17fe74877717b08e0b46d0014c5dcec697450282ccd1"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/integrations/mod.rs",
+          "version": "repo-file-v1:sha256:e23a2fc9862688ec7082450401797c07ebca6f3e8c496c2ce5afe743eb3977e0"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-02T23:50:54.203Z"
+    "at": "2026-11-04T20:37:49.832Z"
   }
 }

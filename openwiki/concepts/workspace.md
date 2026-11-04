@@ -100,16 +100,14 @@ sources:
     resource: repo://crates/workspace-manager/src/workspace_manager.rs
   - id: openwiki-source-08b3f4dcb1a91c97b6d127f8
     resource: repo://crates/worktree-manager/src/worktree_manager.rs
-  - id: openwiki-source-1dc77f9d01b63e6f9dfd9b6b
-    resource: repo://docs/development/workspace-token-usage.md
-  - id: openwiki-source-5f6ef843ad438c4b8a15f879
-    resource: repo://docs/workspaces/managing-workspaces.mdx
   - id: openwiki-source-3c7b1a2410e6c04380babfb7
     resource: repo://packages/web-core/src/pages/workspaces/workspaceSearch.test.ts
   - id: openwiki-source-cf9a630f7915909bbd487245
     resource: repo://packages/web-core/src/pages/workspaces/workspaceSearch.ts
   - id: openwiki-source-9231a80ee56432d71077b70c
     resource: repo://packages/web-core/src/pages/workspaces/WorkspacesSidebarContainer.tsx
+  - id: openwiki-source-a909dba51885af94759527c7
+    resource: repo://packages/web-core/src/shared/components/CreateModeRepoPickerBar.tsx
   - id: openwiki-source-00110cdcfec890895b99690a
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/RemoteProjectsSettingsSection.tsx
   - id: openwiki-source-dbe2d46e94202832ad4e5e7b
@@ -126,10 +124,10 @@ sources:
     resource: repo://scripts/dev-cargo.mjs
   - id: openwiki-source-c6d955097c4a7a9e7b1873ee
     resource: repo://tests/server/specs/workspace-search.spec.ts
-generated: { by: "codex", at: "2026-11-02T14:26:25.232Z" }
+generated: { by: "codex", at: "2026-11-04T20:22:03.096Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-02T14:26:25.232Z
+    at: 2026-11-04T20:22:03.096Z
 ---
 
 # Workspace と Repository
@@ -140,7 +138,7 @@ Workspace は、エージェントの [Session](session-and-agent-run.md)、作�
 
 **Repo** は登録された source パスと、setup/cleanup/archive/dev script、copy files、target branch・working directory の既定値を持つ。**WorkspaceRepo** は登録 Repo を特定 Workspace に接続し、その実施で使う target branch を保存する。Repo の既定値と、既存 Workspace の選択を区別する。[Repo](../../crates/db/src/models/repo.rs#L36-L54)、[membership](../../crates/db/src/models/workspace_repo.rs#L11-L34)
 
-通常の追加は Repo 存在、target branch 存在、重複 attachment を検証する。managed Workspace のルート直下に Repo 名ごとの Git worktree を作り、共通の作業 branch 名を各 Repo で使用する。各 Repo の Git 履歴・target branch は独立しているため、一つの Workspace が複数 Repo をまとめていても Git の一括 transaction にはならない。[追加検証](../../crates/workspace-manager/src/workspace_manager.rs#L133-L162)、[worktree 作成](../../crates/workspace-manager/src/workspace_manager.rs#L528-L571)、[複数 Repo の利用契約](../../docs/workspaces/multi-repo-sessions.mdx)
+通常の追加は Repo 存在、target branch 存在、重複 attachment を検証する。managed Workspace のルート直下に Repo 名ごとの Git worktree を作り、共通の作業 branch 名を各 Repo で使用する。各 Repo の Git 履歴・target branch は独立しているため、一つの Workspace が複数 Repo をまとめていても Git の一括 transaction にはならない。[追加検証](../../crates/workspace-manager/src/workspace_manager.rs#L133-L162)、[worktree 作成](../../crates/workspace-manager/src/workspace_manager.rs#L528-L571)、[作成時のRepo選択](../../packages/web-core/src/shared/components/CreateModeRepoPickerBar.tsx)
 
 GitHub 認証の設定入口は Repo にあるが、token の保存 identity は Repo UUID や Workspace ではなく、instance 内の正規化した GitHub `owner/repository` である。同じ remote を使う Workspace は資格情報を共有する。対象は登録 Repo の remotes と既定 push URL から選ぶ。[PAT の管理・適用範囲](../integrations/github-review.md#リポジトリ別-pat-の所有と管理)に保存・削除・失敗時の契約を集約する。[対象の解決](../../crates/server/src/routes/github_credentials.rs#L32-L63)・[保存キー](../../crates/utils/src/github_credentials.rs#L147-L177)
 
@@ -198,7 +196,7 @@ script の例外は IntegrationValidation だけで、validating 状態・未取
 
 ## Workspace 累積トークン
 
-Workspace 累積トークンは、人や上位 AI が消費の偏りを確認するための、provider が報告した取得済み使用量である。料金・週次枠・[現在の context 占有率](session-and-agent-run.md#context-使用量の意味)や各 run の経過時間を表すものではない。操作権限を表す上記の `usage` とも別概念である。画面の確認方法は [累積値の閲覧](../operations/workspace-inspection.md#累積トークンを確認する)へ進む。[目的と範囲](../../docs/development/workspace-token-usage.md#取得できる範囲と制約)
+Workspace 累積トークンは、人や上位 AI が消費の偏りを確認するための、provider が報告した取得済み使用量である。料金・週次枠・[現在の context 占有率](session-and-agent-run.md#context-使用量の意味)や各 run の経過時間を表すものではない。操作権限を表す上記の `usage` とも別概念である。画面の確認方法は [累積値の閲覧](../operations/workspace-inspection.md#累積トークンを確認する)へ進む。[集計応答](../../crates/db/src/models/workspace_tokens.rs#L7-L25)
 
 ### 何を取得し、何を未知とするか
 
@@ -218,7 +216,7 @@ Workspace 累積トークンは、人や上位 AI が消費の偏りを確認す
 
 `providers` は保存済み報告の provider 一覧、`requested_models` は同 Workspace の attempt request にある要求モデル一覧である。実使用モデルの確定や thread 内モデル別消費の配分には使えない。[一覧の取得](../../crates/db/src/models/workspace_tokens.rs#L55-L70)
 
-[実装記録](../../docs/development/workspace-token-usage.md)は、同一 thread の resume 二重加算を避けること、意味を確認できない通知を推計しないことを設計理由としている。レビュー後には最新の置換可能 snapshot に基づく報告 attempt 数が後退し得るため、その分子・表示専用分母を削除し、everflag や履歴走査を加えなかった。現行 API にもそれらの attempt 数はない。正常 resume の外部実装根拠は記録中の特定 Codex 版についての説明であり、実アカウント精度や異常 reset の保証とは区別する。[レビュー判断](../../docs/development/workspace-token-usage.md#2026-10-21-独立レビュー後の最小修正)・[現行応答型](../../crates/db/src/models/workspace_tokens.rs#L7-L25)。fixture の分担と残る未検証範囲は [トークン集計の検証](../operations/development.md#workspace-トークン集計の検証)を参照する。
+移行した累積トークン実装記録は、同一 thread の resume 二重加算を避けること、意味を確認できない通知を推計しないことを設計理由としている。レビュー後には最新の置換可能 snapshot に基づく報告 attempt 数が後退し得るため、その分子・表示専用分母を削除し、everflag や履歴走査を加えなかった。現行 API にもそれらの attempt 数はない。正常 resume の外部実装根拠は記録中の特定 Codex 版についての説明であり、実アカウント精度や異常 reset の保証とは区別する。移行した2026-10-21のレビュー判断・[現行応答型](../../crates/db/src/models/workspace_tokens.rs#L7-L25)。fixture の分担と残る未検証範囲は [トークン集計の検証](../operations/development.md#workspace-トークン集計の検証)を参照する。
 
 ## 一覧検索と Issue 識別子
 
@@ -309,7 +307,7 @@ AgentRun が終端でも registry が `reserved` / `spawned` / `running` / `unre
 
 lock 順序は MUTATIONS → Issue → 当該 Workspace。その後、未試行かつ読取時と同じ `eligibility_revision` の場合だけ、filesystem 操作前に started intent を永続化する。script の収束待ち中は SQLite writer を保持しない。最終 `BEGIN IMMEDIATE` で revision と identity・成果・idle を再検査し、物理削除と commit まで writer 排他を保持する。[claim と transaction](../../crates/server/src/routes/local_remote/issue_archive.rs#L450-L513)
 
-手動 archive / unarchive、対象 link の変更は未試行資格も消費する。owner/path/branch の変更や別 Workspace の同じ Issue への link 変更も revision を進め、claim 中の試行を失効させる。値を元へ戻す ABA でも履歴が消えないため、最終値の一致だけに依存しない。別 Workspace の link 変更は、将来始める未試行の専用 Workspace まで一律に失格にはしない。[失効 trigger](../../crates/db/migrations/20261026010000_generated_archive.sql#L12-L39)。設計記録は、Issue の unarchive が Issue mutex を取らないため、mutex だけでは全 DB writer と ABA を防げないと説明する。[記録された理由](../../docs/development/generated-workspace-archive.md#claim後の介入と削除前の境界)
+手動 archive / unarchive、対象 link の変更は未試行資格も消費する。owner/path/branch の変更や別 Workspace の同じ Issue への link 変更も revision を進め、claim 中の試行を失効させる。値を元へ戻す ABA でも履歴が消えないため、最終値の一致だけに依存しない。別 Workspace の link 変更は、将来始める未試行の専用 Workspace まで一律に失格にはしない。[失効 trigger](../../crates/db/migrations/20261026010000_generated_archive.sql#L12-L39)。設計記録は、Issue の unarchive が Issue mutex を取らないため、mutex だけでは全 DB writer と ABA を防げないと説明する。[介入を記録するDB trigger](../../crates/db/migrations/20261026010000_generated_archive.sql#L12-L39)
 
 #### 結果と回復の限界
 
@@ -331,7 +329,7 @@ confirm は stable `request_id` と入力を永続 operation に結びつける�
 
 閲覧は archive 済みや execution-only の worktree を再生成しない。削除済みなら diff は残った Git branch の commit を使い、消えた未commit内容は復元しない。unarchive または明示的な実行準備で環境を再生成する。直接の AgentRun 予約は archive/worktree削除済みを拒否する。[受動読取と明示再開](../../crates/services/src/services/container.rs#L694-L733)・[起動の検査](../../crates/local-deployment/src/agent_run_port.rs#L734-L753)・[差分閲覧](../operations/workspace-inspection.md#差分の未取得エラー空を区別する)
 
-旧30分周期・1/72時間閾値と起動時 orphan 回収は撤去された。通常 merge・PR merge 観測・Arena 選択も自動 archive しない。経過時間、pinned、候補敗退を worktree 解放の証拠にしない。[手動操作の利用契約](../../docs/workspaces/managing-workspaces.mdx)・[merge](../../crates/server/src/routes/workspaces/git.rs#L275-L312)・[PR monitor](../../crates/services/src/services/pr_monitor.rs#L125-L159)・[Arena](arena.md)
+旧30分周期・1/72時間閾値と起動時 orphan 回収は撤去された。通常 merge・PR merge 観測・Arena 選択も自動 archive しない。経過時間、pinned、候補敗退を worktree 解放の証拠にしない。[手動archiveの手順](#archive削除期限-cleanup)・[merge](../../crates/server/src/routes/workspaces/git.rs#L275-L312)・[PR monitor](../../crates/services/src/services/pr_monitor.rs#L125-L159)・[Arena](arena.md)
 
 明示削除の DB transaction は書き込み lock を先に取得し、非終端 AgentRun または spawned/running/unreachable の process registry が残る場合に拒否する。生きた orchestration の関連も保護する。terminal の正本表示だけで実プロセス消滅を証明したことにはならない。[削除 guard](../../crates/workspace-manager/src/workspace_manager.rs#L233-L349)
 
@@ -341,7 +339,7 @@ DB 削除後、ファイル・runtime ファイル・指定時の branch cleanup
 
 変更時は `manual_archive` Rust fixture と `workspace-archive:e2e` を併せて確認する。後者は UI/API/stdio MCP、取消・確認後競合、削除失敗、未登録 process と frontend 使用、履歴/branch 保持、diff と再開を扱う。fixture は実 installer・実 Auth0・非Linux の完全保護を証明しない。[単体入口](../../crates/server/src/routes/workspaces/archive.rs#L568-L933)・[受入入口](../../tests/server/specs/workspace-archive.spec.ts)
 
-利用手順は [Multi-Repo & Sessions](../../docs/workspaces/multi-repo-sessions.mdx)、レビュー・ファイル操作の境界は [Workspace の確認と実行](../operations/workspace-inspection.md)、Git 統合までの順序は [依頼から統合まで](../workflows/task-to-integration.md) を参照。
+利用手順は [複数Repoの作成・選択](#複数-repo-の作成操作)、レビュー・ファイル操作の境界は [Workspace の確認と実行](../operations/workspace-inspection.md)、Git 統合までの順序は [依頼から統合まで](../workflows/task-to-integration.md) を参照。
 
 外部 MCP の回帰 fixture は署名 JWT → Access → HTTP `/mcp` → 共通 archive を通し、scope・member 失効・Project allowlist、呼出元／対象／Local token の取り違え、期限、確認後 busy、branch 変化、同一要求の回復、物理削除失敗と履歴保持を検査する。script-store の liveness は fixture port なので実 script の収束や実 Auth0/ChatGPT 接続を証明しない。この Sync では定義を静的に照合し、製品テストを再実行していない。[HTTP 回帰](../../crates/server/src/remote_mcp/workspace_archive/tests.rs#L1-L611)
 
@@ -352,3 +350,7 @@ DB 削除後、ファイル・runtime ファイル・指定時の branch cleanup
 ### 物理削除とcommitの不確実性
 
 archive失敗には `physical_deletion_may_have_occurred` と `archive_commit_confirmed` が付く場合がある。物理操作開始後のDB失敗、commit結果不明、確定後の読戻し失敗は単なる未実行へ戻さず、元receiptと実状態を確認する。filesystemとSQLiteは同じtransactionでrollbackできない。失敗診断の自由文を隠しても、この部分作用の事実は残す。[観測付きarchive](../../crates/server/src/routes/workspaces/archive.rs)・[外部receipt](../../crates/server/src/remote_mcp/workspace_archive.rs)
+
+## 複数 Repo の作成操作
+
+Workspace の作成画面で Project を選び、対象 Repo を追加してそれぞれの target branch を指定する。Repo ごとの Git 操作・差分・認証は独立している。会話を分ける場合は同じ Workspace で New Session を選ぶ。ファイルも分けたい場合は別 Workspace を作り、Session の追加を物理隔離の代用にしない。[Repo 選択](../../packages/web-core/src/shared/components/CreateModeRepoPickerBar.tsx)・[Session](session-and-agent-run.md)

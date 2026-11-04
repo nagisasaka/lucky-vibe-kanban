@@ -1,15 +1,11 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:7f8a94d7373d99e06bfada069686b2107ba63c6a23795d41ac25b9e6c2e862ca",
+  "pageVersion": "sha256:c6513c8026fbf21250d3227fc43c6c078072520560544e9ac7667a82854e97fe",
   "claims": [
     {
       "id": "claim_71e4432fe19d42fca4c3a1ae5f546775",
-      "statement": "Tailscale直接接続の文書はdraftだが、.ts.net許可とHost保持・WS対応のAPI proxyは現行Vite設定に存在する。",
+      "statement": ".ts.net許可とHost保持・WS対応のAPI proxyは現行Vite設定に存在する。",
       "evidence": [
-        {
-          "resource": "repo://docs/ai-mobile/tailscale-local-access.md#L1-L25",
-          "version": "repo-lines-v1:sha256:573f7d1c2b89dbd4e4b2c7020bc849ff011535c3e6cf6033dfae5ad1ee90ffc1:eyJzZWxlY3RlZExpbmVDb3VudCI6MjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ5ZTc1ZGE0YmU1NTIyOGIwNjM2YTQ1ODkzMDgyNjdlYTZiNTgxYWQ5MTEyZjk0ZTkxZGU2ZmI1NzcwMzBiNGMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ3OTg0NDEwY2QxYWRhNDExMzQ4MTJhMDExZTA4OTJmNTNjMmU4NTIxYTk5MTVkNGU4MDQ1MTgyZGY2ZTA0Y2UiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjAwMWYyZWMxNzU5M2MxMDU0ZWI0NjM2N2Q4NDUzZWYyNGExNzNjZTk2YjcxMTdkOTFmOWE2OGQ0NGZlZjhiMDEifQ"
-        },
         {
           "resource": "repo://packages/local-web/vite.config.ts#L135-L150",
           "version": "repo-lines-v1:sha256:9a834a1aa3e5b5c8a9f74556b844452aa68ca015d52e0ae0f0cadf0f1f4ba57e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUxOGMzOTIzNzdiMGViNDk5OTUwOWJkMmU3Mzg1MDY4MDU4MWViMDBiOWIxMDFjYWRhMTJhOTI5YzdlZmEwYTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM2M2Q1MzVjZTM4MDYzZDZiNGM1MWQ4YzM4NmE3ZjliM2U1ODBhMTRhMTBjMDdiMTk4ZGZhZjE5YzkzYTNiZmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI5NWVhNGI3NTA3NmUwOTZjOTk2ZDRiY2JmYjFhNGY2YzQ2NDIwNmZmMjU2NDExNWE2ZTkxYTVkNzVmOWQyNjEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjYzMzY3ZTQ0Njg2NWQ5YTE0NmU3YTYzYWRkMjZmOTMzY2E4ZmI2MjFjYTM2MmU2OGMzMzY1ZTgzODM0Yzc0YzIifQ"
@@ -485,10 +481,6 @@
         {
           "resource": "repo://crates/server/src/routes/resource_observation.rs#L9-L25",
           "version": "repo-lines-v1:sha256:18f50aa8769a6afe37c8cfcbb708d141348d4469ed1e5565cad4dbb1f5660196:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVmNWM4NmU3ZDM2YWQzYTg3NTc5MTU4YTNkZmY2ZWM0OWZmNTU3MTdmOThlMzkyNTcwZmYzYmJiZmY5Yzg5NjkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjU1YmFhMDdjYjcxNDkzNDQ4OGE3NDVhNWIxNWQ2YmEzMzNhMWYyMDVkMmRmMDRhNjQwMzk4YzBlMzZjMWY4NWIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdiYzk4ZDZiMGRjNDkyYzUwMTZkZjEwODA1YTNhNTRlYjljMTg0YTVhNjEzN2U3ZjRiZWNmYTBjMjIwNTUwZDAifQ"
-        },
-        {
-          "resource": "repo://docs/development/chatgpt-mcp.md#L480-L493",
-          "version": "repo-lines-v1:sha256:34a27cdfb24623915c55745b6bd1342f48d80c27065ab759579d99cb2ec65059:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBkMjRlZmMxZWY5OTM1ZTVlZDU3YjBmMGU0YjkxYWRiYzkwOWU5ODlkMTBjNWViZTE0NjYyODdlM2VmMmUzODciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFiNTViYWI4Y2IwMWQ5ZTk3M2Q4ODIxMTI3MDU3OTMzZTJiYTg2M2VjMDJiMzIzNTZjNzBlY2FlY2NmZThkYzgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUwZDM3NjhlMGMzMGZhMzgyOTFjNzY3NTAyNDBhZDc0YmM4NmQ4NGI3N2JiY2QwMGNhZWFkZDBhM2VhMWFhZWEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQ2OTlkZWZjYTU1MDQ5MTYxNjNjYzU5N2VkOTVmNTZhMDgyZThhMmI1YmY5NjBhMDI0MTYzMDFjYWI2OTRlMTQifQ"
         }
       ]
     },
@@ -635,10 +627,6 @@
         {
           "resource": "repo://crates/server/src/remote_mcp/workspace_archive.rs",
           "version": "repo-file-v1:sha256:647476f1866021e03192e246579d155266dd68d9914936cff5fd08160b8ae299"
-        },
-        {
-          "resource": "repo://docs/development/chatgpt-mcp-setup.md",
-          "version": "repo-file-v1:sha256:6b53b3850250de99cd36a5f6ba72392ab4604c746520ec8b3638676ecdccce71"
         }
       ]
     },
@@ -931,6 +919,6 @@
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-02T23:50:54.203Z"
+    "at": "2026-11-04T20:35:55.356Z"
   }
 }

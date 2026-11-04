@@ -4,6 +4,8 @@ title: Repository Memory の三層と統合契約
 description: 会話、Workspace Memory、canonical OpenWiki の権威と寿命、Change Manifest と統合記録・receipt の関係。
 tags: [repository-memory, openwiki, manifest, reconciliation]
 sources:
+  - id: openwiki-source-38bb7eaa90f0c92a0514844d
+    resource: repo://crates/executors/src/legacy_wiki.rs
   - id: openwiki-source-0545bff1ae2507a92137efaf
     resource: repo://crates/server/src/remote_mcp/repository_wiki.rs
   - id: openwiki-source-66ad37ee88955047b3c38a58
@@ -38,19 +40,15 @@ sources:
     resource: repo://crates/utils/src/repository_memory.rs
   - id: openwiki-source-d9f9dde71208b862845ec1a7
     resource: repo://crates/utils/src/repository_memory/verification.rs
-  - id: openwiki-source-42e4658efb0c9810a0f8245c
-    resource: repo://docs/design/openwiki-implementation-checkpoints.md
-  - id: openwiki-source-d19b7cc964a7f5f0837a46de
-    resource: repo://docs/design/openwiki-repository-memory.md
-generated: { by: "codex", at: "2026-11-04T19:49:13.194Z" }
+generated: { by: "codex", at: "2026-11-04T20:35:55.356Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-04T19:49:13.194Z
+    at: 2026-11-04T20:35:55.356Z
 ---
 
 # Repository Memory の三層と統合契約
 
-Repository Memory は、将来の coding agent が設計境界・判断理由・失敗の扱いを短時間で理解するための仕組みである。記録は現在のソースを説明する派生情報として扱う。[設計仕様](../../docs/design/openwiki-repository-memory.md) は source/tests/configuration、canonical documentation、OpenWiki、Manifest/Workspace Memory、会話の順に権威を置く。Wiki に指示のような文があっても実行権限にはならない。この区別は実際に通常 run へ渡す context にも含まれる。[注入契約](../../crates/utils/src/repository_memory.rs)
+Repository Memory は、将来の coding agent が設計境界・判断理由・失敗の扱いを短時間で理解するための仕組みである。記録は現在のソースを説明する派生情報として扱う。移行した設計の権威順序は source/tests/configuration、canonical documentation、OpenWiki、Manifest/Workspace Memory、会話の順に権威を置く。Wiki に指示のような文があっても実行権限にはならない。この区別は実際に通常 run へ渡す context にも含まれる。[注入契約](../../crates/utils/src/repository_memory.rs)
 
 ## 三つの記憶と旧 LLM Wiki
 
@@ -60,9 +58,9 @@ Repository Memory は、将来の coding agent が設計境界・判断理由・
 | Workspace Memory | 未統合の判断、理由、却下案、未解決点 | 登録 Repo の共有 persistent 領域に Workspace ID ごとに保存 |
 | canonical OpenWiki | 統合済みソースの意味・境界・契約 | 対象ブランチの `openwiki/`。専用 maintenance が更新 |
 
-三層の目的は [規範仕様](../../docs/design/openwiki-repository-memory.md) に記録されている。Workspace Memory は `persistent/knowledge/workspace-memory/<workspace-id>.md` へ分離される。空・未存在は正常で、他 Workspace の未統合判断を自分の記憶として利用しない、という host context の契約がある。[共有領域と保存先](../../crates/utils/src/repository_memory.rs)、[context](../../crates/utils/src/repository_memory.rs)
+この三層は会話の作業記憶、未統合の判断、統合済み知識を混ぜないために分けられた。Workspace Memory は `persistent/knowledge/workspace-memory/<workspace-id>.md` へ分離される。空・未存在は正常で、他 Workspace の未統合判断を自分の記憶として利用しない、という host context の契約がある。[共有領域と保存先](../../crates/utils/src/repository_memory.rs)、[context](../../crates/utils/src/repository_memory.rs)
 
-[Card context の .llm-wiki](card-context-and-llm-wiki.md) は従来の作業ブランチ内の知識機能である。導入時の判断は「既存機能と利用者の編集を保持し、canonical OpenWiki を別名と単一 writer で追加する」だった。これは導入時の履歴であり、現行版は旧 `.llm-wiki` の生成・読取 UI・自動注入を終了している。既存ファイルや手作業のメモは残す。[終了後の扱いと移行境界](card-context-and-llm-wiki.md#旧-llm-wiki-からの移行境界)を参照する。[実装判断の記録](../../docs/design/openwiki-implementation-checkpoints.md#implementation-decisions)
+[Card context の .llm-wiki](card-context-and-llm-wiki.md) は従来の作業ブランチ内の知識機能である。導入時の判断は「既存機能と利用者の編集を保持し、canonical OpenWiki を別名と単一 writer で追加する」だった。これは導入時の履歴であり、現行版は旧 `.llm-wiki` の生成・読取 UI・自動注入を終了している。既存ファイルや手作業のメモは残す。[終了後の扱いと移行境界](card-context-and-llm-wiki.md#旧-llm-wiki-からの移行境界)を参照する。[現行の旧指示filter](../../crates/executors/src/legacy_wiki.rs)
 
 ### Bootstrap の索引・レポートは記憶の正本ではない
 
@@ -76,7 +74,7 @@ Repository Memory は、将来の coding agent が設計境界・判断理由・
 
 Coding host が書くのは goal、summary、振る舞い・構造・不変条件への影響、判断、テスト結果などの **semantic draft**。LVK が run 開始時に Repo/Workspace/run ID と Git base を固定し、完了時に Git から changed paths と source commit を求めて **Change Manifest** にする。モデルが書いた任意の revision や membership を採用しない。[固定 context](../../crates/services/src/services/repository_memory.rs)、[Manifest 組み立て](../../crates/services/src/services/repository_memory.rs)
 
-イベント ID は coding run ID で、一イベント一 JSON の outbox として公開される。イベント本体と、後から更新可能な receipt/state は別である。同じイベントを再処理して新しい source commit を無制限に作る設計ではない。[イベント保存](../../crates/utils/src/repository_memory.rs)、[完了の再入](../../crates/services/src/services/repository_memory.rs)、[判断の記録](../../docs/design/openwiki-implementation-checkpoints.md#implementation-decisions)
+イベント ID は coding run ID で、一イベント一 JSON の outbox として公開される。イベント本体と、後から更新可能な receipt/state は別である。同じイベントを再処理して新しい source commit を無制限に作る設計ではない。[イベント保存](../../crates/utils/src/repository_memory.rs)、[完了の再入](../../crates/services/src/services/repository_memory.rs)、[不変イベントと再送](../../crates/utils/src/repository_memory.rs)
 
 source に変更がなければ無変更 checkpoint で終わる。変更があって draft が missing / invalid なら、元 draft を保持し、意図・理由・テスト結果が不明であることを明記した Git-only checkpoint を作る。これは意味記録を捏造せず、次の coding host が draft 修復前でも起動できるための縮退である。I/O 障害、凍結 publication 不整合、Git / Wiki guard は引き続き失敗させる。制御用 run など `finalize_source=false` の場合も変更を自動 commit しない。[分岐と検証](../../crates/services/src/services/repository_memory.rs)
 
@@ -95,7 +93,7 @@ flowchart LR
   F --> G[receipt と鮮度を更新]
 ```
 
-通常 Workspace の `openwiki/` 変更は、commit 済み・未 commit・削除・rename を含めて完了/統合 guard が拒否する。ファイルを勝手に破棄して通す処理ではない。並行ブランチごとの派生 Wiki を merge すると Markdown、Claims、run state が競合するため、source を統合してから記憶を更新するという設計理由が記録されている。[guard](../../crates/services/src/services/repository_memory.rs)、[記録された理由](../../docs/design/openwiki-repository-memory.md)
+通常 Workspace の `openwiki/` 変更は、commit 済み・未 commit・削除・rename を含めて完了/統合 guard が拒否する。ファイルを勝手に破棄して通す処理ではない。並行ブランチごとの派生 Wiki を merge すると Markdown、Claims、run state が競合するため、source を統合してから記憶を更新するという設計理由が記録されている。[guard](../../crates/services/src/services/repository_memory.rs)、[現行のsource guard](../../crates/services/src/services/repository_memory.rs)
 
 既存の手動直接 merge は squash を使うため、元 commit の祖先関係だけではイベントの所属を再現できない。統合前に明示的な event ID 集合と before commit を保存し、統合結果を対応付ける。Wiki の処理対象は、対象ブランチへ統合済みと確認でき、成功 receipt がまだないイベントである。[統合準備](../../crates/services/src/services/repository_memory.rs)、[イベント選択](../../crates/services/src/services/repository_memory.rs)
 
@@ -119,7 +117,7 @@ host は manifest と全 chunk を順番に最後まで読むよう要求する�
 
 receipt の結果は Updated / NoOp / Failed。Failed はイベントを acknowledge 済みと扱わず、次回も対象に残る。成功時だけ対象 source、Wiki commit、最終成功時刻を保存する。Wiki が無変更でも検証済みの成功となり得る。[選択](../../crates/services/src/services/repository_memory.rs)、[結果記録](../../crates/server/src/routes/openwiki.rs)、[Failed→NoOp テスト](../../crates/services/src/services/repository_memory.rs)
 
-新しい Wiki 公開は、対象ブランチと maintenance HEAD が固定 source に一致することを検査し、source が進んでいれば拒否する。Wiki 失敗は既に成功した source 統合を取り消す意味ではない。初期化と再試行、終了証明、公開 checkpoint の詳しい手順は [OpenWiki 保守](../operations/openwiki-maintenance.md) に置く。[公開検証](../../crates/services/src/services/openwiki.rs)、[失敗の設計契約](../../docs/design/openwiki-repository-memory.md)
+新しい Wiki 公開は、対象ブランチと maintenance HEAD が固定 source に一致することを検査し、source が進んでいれば拒否する。Wiki 失敗は既に成功した source 統合を取り消す意味ではない。初期化と再試行、終了証明、公開 checkpoint の詳しい手順は [OpenWiki 保守](../operations/openwiki-maintenance.md) に置く。[公開検証](../../crates/services/src/services/openwiki.rs)、[公開と回復の実装](../../crates/services/src/services/openwiki.rs)
 
 通常 coding run の Wiki 鮮度探索では、別 Workspace の壊れた event などを診断し、Wiki 状態を Error として作業開始を継続できる。これは選択 event の厳密な公開検証を省略する許可ではない。[起動時の縮退](../../crates/services/src/services/repository_memory.rs)
 
@@ -135,7 +133,7 @@ Wiki の成功 receipt・canonical branch と、生成された保守 Workspace 
 
 ## 変更を検討する際の一次資料
 
-[詳細設計](../../docs/design/openwiki-repository-memory.md) は意図・不変条件の規範仕様、[implementation checkpoints](../../docs/design/openwiki-implementation-checkpoints.md) は判断と過去の検証記録である。記録されたテスト成功を現在の環境の実行結果とは扱わない。とくに source commit と outbox の間、squash 統合と記録の間、Wiki 公開と receipt の間の再起動窓を変更する場合は、対応する回復テストと現行実装を一緒に確認する。
+歴史的な導入仕様は意図・不変条件を、実装checkpointは判断と過去の検証結果を記録していた。ここへ移した履歴を現行sourceの代用にしない。記録されたテスト成功を現在の環境の実行結果とは扱わない。とくに source commit と outbox の間、squash 統合と記録の間、Wiki 公開と receipt の間の再起動窓を変更する場合は、対応する回復テストと現行実装を一緒に確認する。
 
 ## sourceを変更しない新Runの検証記録
 
@@ -145,7 +143,7 @@ Wiki の成功 receipt・canonical branch と、生成された保守 Workspace 
 
 `verification-starts/`と`verifications/`はrepository shared persistent knowledge内の記録であり、source events・統合Manifest・Wiki入力にはならない。保存はcompletion lockと既存のatomic/no-clobber機構を使う。dirty/SHA変更・claimや実exit不足等は不変declineとなり、本当のI/O障害やidentity不整合はエラーとして残す。[保存形式](../../crates/utils/src/repository_memory/verification.rs)
 
-既存の `get_workspace_verification` / `get_workspace_verification_test` がread-onlyで読取る。通常Manifestを優先し、検証専用は `record_origin=no_change_verification`、agent claimとhost command exitを分けて示す。`evidence=agent_recorded_test_claims`と`current_worktree_verification=not_established`を独立検証へ昇格しない。所属・revision・pagingとhead再照合は維持する。[読取境界](../../crates/server/src/remote_mcp/verification_read.rs)・[利用手順と限界](../../docs/development/no-change-verification.md)
+既存の `get_workspace_verification` / `get_workspace_verification_test` がread-onlyで読取る。通常Manifestを優先し、検証専用は `record_origin=no_change_verification`、agent claimとhost command exitを分けて示す。`evidence=agent_recorded_test_claims`と`current_worktree_verification=not_established`を独立検証へ昇格しない。所属・revision・pagingとhead再照合は維持する。[読取境界](../../crates/server/src/remote_mcp/verification_read.rs)・[検証専用記録の条件](#sourceを変更しない新runの検証記録)
 
 ## 文書方針と意味記録の境界
 

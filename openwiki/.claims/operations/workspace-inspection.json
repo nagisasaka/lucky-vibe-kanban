@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:734a53ec71392c6483a53e314ccfbbea3c3581793a3a435e6b44504adc324e53",
+  "pageVersion": "sha256:839b1ccea336b2a444e398b244bf6b6a2d647dc51075df3407ffafc28a772683",
   "claims": [
     {
       "id": "claim_ef965d37641846bda42842bf4788c8cc",
@@ -589,10 +589,6 @@
         {
           "resource": "repo://crates/services/src/services/config/versions/v7.rs#L58-L69",
           "version": "repo-lines-v1:sha256:8f027a3db75bcc1b0a5f1fedab1a336bad7c09cd842ab6585cc6c46901cc5a81:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk3ZTRmZDhiYTA2MGJiMDZlOGZlMDEwMWE0YmI0Njg0Nzc0OTNmZDFjMGYyYjdhOGYxNDA1MmE4YTI3N2RmOTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg5NzdjZjIxYTU4ZGYxZTFlZWIzZjA1NDg5OTAwMDc4OWM1NjdhZDExMDMwMWRjZDI5NGM5YTJhNTMyMDE4OTgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ4ODYxMzRjMDk1YzBmNmQyYzFiMzViNDAwMTc2NjkxZTAwNDU0ZDQ0MjAxMjRiMWU4ODU2ZjM3ZjZhZjYyYTgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBkNTJhYjhhZmMwYjI5Y2MwNWRiYWRmYTdiMDkxMjIyYTQ1Y2RiMGU1MWYzZDU5NTgxMTFjZWYxMDcxNGQ1MzEifQ"
-        },
-        {
-          "resource": "repo://docs/development/external-editor-uri-validation.md",
-          "version": "repo-file-v1:sha256:0e9838cd1caf17e4ce86a43a38956b3ddd91faa66cddd629ae397cb8a5461163"
         }
       ]
     },
@@ -697,8 +693,16 @@
       "statement": "埋込みpreview proxyとHTML/script注入・handoff/cookieは撤去済みで、外部browser/tunnelまたは独立CSV routeを使う。Workspaceのfile/Markdown/diff/image previewは残る。",
       "evidence": [
         {
-          "resource": "repo://docs/browser-testing.mdx#L30-L38",
-          "version": "repo-lines-v1:sha256:ba4ae74f9d95ded085383868672b5631e9b7318b17d55163ac825baa91eb4cc2:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDcyNmYzNDZmOTlmNjRhMWIyNTA5YTQyYjQ5YjBjMjU5Y2Y0NjQ3ODE1NTU3YzM2YTZmNDVkNzRmMjVkYTQwOSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZTFmMmQxYzNmNzNjN2FiMGJiNjdhZTM0NmE0ZjliODkwY2RkNGZhYjFlN2ExNWVjMjJmNWFmMGNmNDc2NzM4MCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMDA5NWJmOWZiZjYzZDM2NTU1MWE4YzE2M2MxZTFiOGZhYjQ2NWQwZGY3Y2ExNmYyY2I5OTcwMTI2NDA4NWE1MyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjAsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSJ9"
+          "resource": "repo://crates/server/src/routes/mod.rs",
+          "version": "repo-file-v1:sha256:2430fb321010767778384090a8a52dd32af8bc251607964d251af68864e1c0c0"
+        },
+        {
+          "resource": "repo://deploy/server/server.mjs",
+          "version": "repo-file-v1:sha256:505ea6f1d243602aac21209c6b5f0e05e0e3fe9df7c17ff4e90762b04a72d0b1"
+        },
+        {
+          "resource": "repo://packages/web-core/src/pages/workspaces/GitPanelContainer.tsx",
+          "version": "repo-file-v1:sha256:cd6f1c90138fd5b581d8d821cfc1a349df2e8387a0558e790d9275e1715da0dc"
         }
       ]
     },
@@ -807,16 +811,12 @@
         {
           "resource": "repo://crates/server/src/routes/terminal.rs#L138-L233",
           "version": "repo-lines-v1:sha256:e6cdad65b13625ee17e5038df4e9b53ed6ea637a44089d5b7f4c0c3f9c4e3d45:eyJzZWxlY3RlZExpbmVDb3VudCI6OTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjlhY2RlNmM0Y2E3MTUxYjI4YThhNzVjMzEwYzdlNGRmM2JmZWI2M2E5YmE2NWU5ZDVmMmQ4OTBkMDUyZWViMWUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YjA0NDkxNDY5NzIyZTgzNjNhOTRlNDA0NDUzOGUwMTNhMmEyMTdlMzZiMWU1NjhiYTYwYWNiN2I0YzhmMmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjdmN2VmMmU2YWE1MzJhM2E5NDA3MTdiN2ZlNGEwYmU1YTgzNGNlMzhlZmE0NzdiY2RkMjVjMGQ5ODEwODE3MTQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNlNjA0NDhiNTY3MzFjOTZjMmI3ZjlhMWZkNjA1Mzk1OGIxMjU2OTVlN2U5YWFhZjMzMDc4OTljOWRmNmZlMTMifQ"
-        },
-        {
-          "resource": "repo://docs/development/project-utilities-validation.md",
-          "version": "repo-file-v1:sha256:18ed1d5f021a662efdaf3063de49c8617b4033d337cf3a51cdb6551dcb024e6f"
         }
       ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-02T23:50:54.203Z"
+    "at": "2026-11-04T20:22:03.096Z"
   }
 }

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:00ab5d2e66ae80e4c642bbdae31f5ae01c96bd0b216e033ae9f808ad135df706",
+  "pageVersion": "sha256:bb05b67face4d2a56231a80b8a20a75bc2865dd5bec3a6d91c0aa7cec115fc3a",
   "claims": [
     {
       "id": "claim_62fc79a5c9fd478cbd529ca6222d3af2",
@@ -158,11 +158,15 @@
     },
     {
       "id": "claim_b0695b210f894b84af0be4cb142f9eca",
-      "statement": "Wiki失敗でsourceを戻さず、外部squash/rebaseでancestry未証明のeventは消費せず統合local sourceをSyncする運用契約が記録される。",
+      "statement": "外部PRのmerge結果は保存済みPR monitor結果から読み、source ancestryを証明できるeventだけを対応付ける。Wiki失敗とsource統合結果は別に扱う。",
       "evidence": [
         {
-          "resource": "repo://docs/workspaces/openwiki.mdx",
-          "version": "repo-file-v1:sha256:40efc196f125b474a2a7641ecb3d346f5e84cbac46525545bc3b3030513de443"
+          "resource": "repo://crates/server/src/routes/openwiki.rs#L674-L700",
+          "version": "repo-lines-v1:sha256:4882eedb015fae978a5e95776a80e94830de100947c28aa69e95c90cf93f96a4:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4NDhlNTBlNzRjOGUyNjNhMTNhYmI5ZTA3YzcwMTRhZDM4N2NiMzYyY2UzMmNkYTYyNThkYTQzMWJlN2ZlYTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM1ZjZmNDY2ZTU5Y2ZjMzA3MDNjNDVmNzJhZjY1ZGU1NGFjMzYzZDM1NGNjMWEzMzMwMzUwYWNkNDUyNDM0YzQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjExNzBkODk0MTBlNGNkMmJkYzRhZjRlZGM4ZDVhZGEyZWM4MjBiZTYwZDI4N2EwZGQzY2RiNjY0NjNhNDA0NzQifQ"
+        },
+        {
+          "resource": "repo://crates/services/src/services/repository_memory.rs",
+          "version": "repo-file-v1:sha256:927ec950a04a64d29dc61fa2e2e2adbb31f411575cc1db8bab1030f4fb4f15da"
         }
       ]
     },
@@ -239,7 +243,7 @@
       "statement": "Wiki Viewer が読むのは選択 Workspace の現在ファイルであり、閲覧できることは Bootstrap の phase 検証や target branch への publication 成功を証明しない。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/workspaces/wiki.rs#L148-L169",
+          "resource": "repo://crates/server/src/routes/workspaces/wiki.rs#L149-L170",
           "version": "repo-lines-v1:sha256:39a418e89379f941d94b694e0979a8d16e522c089bb4a22fe2588ea50fcd134a:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcxMzkyYWE3ODVjYzJjNjA1OWUwNmFmOTUxYTBkYjcwYWIxMDY3NDZjMTNhYmJhNDg0ZWYyYzY3MWM1NmZlZWEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY4NjMwMmQ5YWU5NzhjZjI3N2Y0MWY1ZmZlOTgyNDFlZTk3Y2U1YWRhMDU0MGIzNjg0MWUxODk0MTM0NjJlNjEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
         },
         {
@@ -429,8 +433,8 @@
           "version": "repo-lines-v1:sha256:ac47fa00cd1a30b60605e53134a6897bd0c0d325e87db4578b38f75d09327389:eyJzZWxlY3RlZExpbmVDb3VudCI6MjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRmNzFlYjY0MDYyYWE0NDg0OGQwNmUwOGVlMDhjZWQyNjVkNDRhMzdhYmVlMTU2YWQ2NTFlYWY0OTBlYjYzYzQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI1Y2Y1ZmMyM2YyYTZkMjNjM2VhNTFlNzJmNWU4OTZjNzU1NWZiYWEwNWNkNWIxZWExODJiZjk2MThhOGU4MWIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZiMTQ2NDY1MmVhZTM5ZjcxNTZjMTlmOWM4NGEyYzIxN2UwNzU5YmE1NTc0OTdjZDZhODY2NmEyNjY2ZTYzNWQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijg3OWU0NWFlNThlNjllNDExNjhiMWQ1NDQ1OTc2OTc2ZmNkMWJiOWI4NTZlYTc2NGQ5Y2M0ZmZkODU0NTk1MGEifQ"
         },
         {
-          "resource": "repo://docs/development/issue-numbering.md#L1-L38",
-          "version": "repo-lines-v1:sha256:24590d7d3163a2e5160481f027b113d7ce040c8f85f7c9b46ea4b1bb8579eec2:eyJzZWxlY3RlZExpbmVDb3VudCI6MzgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNmNzhhNzE0ZWY3YzlmMDZjNGJjYThiZWU2MmYzZWI5YWYzNTI2ZWE0Zjg3YTIwZDRhZWE2MWVkZjFlMjEwMTciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkwMTQwMmFlMTdiMjJlYmFhYzFlYjM5YzIzNTYwNThjMDc1MjIwZTZmOTA1MTU4ZThiNWZlOTg0ZjU5MWI5NTkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNkNjVmYWZmZjlmNDMwNTU3MjU5YTA1MWQxNGRmYzZiNDg5Y2QxMzYzYmMxNTQxZWVjZGNlOWJiZTAwZTk0NWIifQ"
+          "resource": "repo://crates/db/src/models/issue_number_tests.rs#L176-L222",
+          "version": "repo-lines-v1:sha256:e274d658e6dcd3cbbfb144c585aa5b11782ea1983a28562d63acf52706e0e6b3:eyJzZWxlY3RlZExpbmVDb3VudCI6NDcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY4NGNiODZhZTAzNGVjZWU4YWU2NzMwOTZjOTE1MDI1YjVmNjRmOTg2ZmRkZGRiNjgyY2FkODAzY2Q2NTk5MzYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjdmZDg4ZGQ4N2VlYWQzMzBkZGRkY2ZiZmY1NTI5YTg3NTU5MDM1M2QwNGI4MGRmMmVjZTJlNTVkMzkwMGI5NmYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
         }
       ]
     },
@@ -453,18 +457,18 @@
       "statement": "自動マージは同じ候補でWikiを更新し、公開イベントやbacklog、直接main変更から別Wiki Workspace/Agentは自動起動しない。必要な単独保守は明示要求で開始する。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/openwiki.rs#L522-L550",
-          "version": "repo-lines-v1:sha256:fc7dd01199dfd7bc8e346e6c07a654540715987b702e243df92e3d399e6aeef6:eyJzZWxlY3RlZExpbmVDb3VudCI6MjksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNkMGJhYjgxZTljY2NlYTczOTk3ZTM1NzFlODgxMjgxZTBmODE3ZTY2MzU2OGRhYWQ3YTI0MzU0NzlkNDZiOTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNlZjhlMWNlZDQyODAyMWIzZWI4OWY2MThjNzBlODJlY2ZiMzUxYjZiMjVmOWU2YTZiZTdmNGMxMTM4ZjQ1YmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFlMDkxODE0YjA5ZTE2NzQ0ZTQwNjRmN2M5YmZhNjY0OTBmZTAyZjEyZTJlMWNkMzFkMDUxNzM3ZTdmNGNlMGIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE2ODBiMjY5ZTk3N2JjYzNiNWFjMGRkZTkwNTY5NTk2MWExNWJkYWZiMTc5MTc4NTcxZTMzNTkyMTFkM2UxMWEifQ"
+          "resource": "repo://crates/server/src/routes/integrations/conversation.rs",
+          "version": "repo-file-v1:sha256:7800dd437e2cba8bb5db17fe74877717b08e0b46d0014c5dcec697450282ccd1"
         },
         {
-          "resource": "repo://docs/workspaces/openwiki.mdx#L254-L262",
-          "version": "repo-lines-v1:sha256:08362542a2019d977a3ba703a9678e2a44d4743bae4718f819f7402091a12efb:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZGZiZjVmZTI5NDFkZDg2ZjYyN2QzZDQ3ZWZjYjk4M2FjZjAwNGM4NWEwNzNiZjIwYjllNjgwZDBkZDhmOTFlMCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYTM0ZDQxZDg5NDU0ZDMxZmVmNDM5ODA3MmUwYWFiMGYwM2M3ZDA0NDc1ZDVlZDRkMmMxOTIzYzYyZGYzNzMxYSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYjM0OTllYmY1ZGFmMjMwYmM5OGE2Zjk3MjVkYjg4NjY0NDAxYjY2MDk5ZWNlNTMzNjA0MDY4ZjI3MTg4NmQ4NiJ9"
+          "resource": "repo://crates/server/src/routes/openwiki.rs#L522-L550",
+          "version": "repo-lines-v1:sha256:fc7dd01199dfd7bc8e346e6c07a654540715987b702e243df92e3d399e6aeef6:eyJzZWxlY3RlZExpbmVDb3VudCI6MjksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNkMGJhYjgxZTljY2NlYTczOTk3ZTM1NzFlODgxMjgxZTBmODE3ZTY2MzU2OGRhYWQ3YTI0MzU0NzlkNDZiOTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNlZjhlMWNlZDQyODAyMWIzZWI4OWY2MThjNzBlODJlY2ZiMzUxYjZiMjVmOWU2YTZiZTdmNGMxMTM4ZjQ1YmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFlMDkxODE0YjA5ZTE2NzQ0ZTQwNjRmN2M5YmZhNjY0OTBmZTAyZjEyZTJlMWNkMzFkMDUxNzM3ZTdmNGNlMGIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE2ODBiMjY5ZTk3N2JjYzNiNWFjMGRkZTkwNTY5NTk2MWExNWJkYWZiMTc5MTc4NTcxZTMzNTkyMTFkM2UxMWEifQ"
         }
       ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-02T14:26:25.232Z"
+    "at": "2026-11-04T20:22:03.096Z"
   }
 }

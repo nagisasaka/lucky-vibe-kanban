@@ -120,18 +120,12 @@ sources:
     resource: repo://crates/utils/src/mcp_error.rs
   - id: openwiki-source-4055aa6b8c5089e24c2a9f7c
     resource: repo://crates/utils/src/reference_file.rs
-  - id: openwiki-source-74a1893f4c1e77eb654658f7
-    resource: repo://docs/ai-mobile/tailscale-local-access.md
-  - id: openwiki-source-d6e65c1c70d582aa76ba14d4
-    resource: repo://docs/development/chatgpt-mcp-setup.md
-  - id: openwiki-source-a6728d75b2bdf1a00440e8fa
-    resource: repo://docs/development/chatgpt-mcp.md
   - id: openwiki-source-3ecddc0be7b037ea6ab24381
     resource: repo://packages/local-web/vite.config.ts
-generated: { by: "codex", at: "2026-11-02T23:50:54.203Z" }
+generated: { by: "codex", at: "2026-11-04T20:35:55.356Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-02T23:50:54.203Z
+    at: 2026-11-04T20:35:55.356Z
 ---
 
 # 外部アクセス・MCP・Runner の境界
@@ -148,7 +142,7 @@ local-web は `/api` を backend へ送り、WebSocket も同じ経路を使う�
 
 公開配置は初回にロックされる。初回setup、Basic/Auth0切替、Web sessionと復旧は [サーバー認証](../concepts/server-access.md)を正本とし、ここでは外部MCPの委任範囲を扱う。
 
-Streamable HTTP `/mcp` はAuth0でMCPを有効化した場合のみ利用できる。Local/Basicでは使えない。旧 `LVK_MCP_CONFIG` と外部introspection設定は起動時に拒否し、設定画面へ移行する。metadataは `/.well-known/oauth-protected-resource/mcp`。これは stdio MCP とは独立しており、内部会話モデルを起動しない。[旧 Astra の廃止](../concepts/project-chat.md)後も外部 MCP と Workspace 質問回答は残る。[HTTP入口](../../crates/server/src/remote_mcp/mod.rs)、[認証設定](../../docs/self-hosting/authentication.mdx)。
+Streamable HTTP `/mcp` はAuth0でMCPを有効化した場合のみ利用できる。Local/Basicでは使えない。旧 `LVK_MCP_CONFIG` と外部introspection設定は起動時に拒否し、設定画面へ移行する。metadataは `/.well-known/oauth-protected-resource/mcp`。これは stdio MCP とは独立しており、内部会話モデルを起動しない。[旧 Astra の廃止](../concepts/project-chat.md)後も外部 MCP と Workspace 質問回答は残る。[HTTP入口](../../crates/server/src/remote_mcp/mod.rs)、[認証設定と復旧](../concepts/server-access.md)。
 
 共通認証はAuth0 discovery/JWKS、JWT署名、issuer、resource audience、有効期限、承認済みメンバーを検証する。全操作に `lvk:read`、Issue/Todo・設計メモ・agent起動/制御・既存Wiki同期・Workspace archiveの準備/確定などの変更に `lvk:write`、自動マージの開始・取消に `lvk:merge` を要求する。Runtime Access の観測には追加で `lvk:runtime:read`、起動・停止にはさらに `lvk:runtime:execute` が必要で、一般のwrite scopeとは独立する。HTTP入口とtool処理の両方でscopeを確認する。承認済みメンバーは全プロジェクトを使い、旧owner単独・静的Project allowlist方式ではない。[JWT検証とissuerの制限](../concepts/server-access.md#webmcp内部agentを同じ資格情報にしない)、[scope](../../crates/server/src/remote_mcp/mod.rs)、[実体の関係検証](../../crates/server/src/remote_mcp/launch.rs)。
 
@@ -200,13 +194,13 @@ quota、account summary、既存threadのusage、Workspace累積tokensは交換�
 
 認可済みの `project_id` は共通 Sync 受付へ引き継がれ、保守 Workspace の Issue 紐付けに使われる。Repo が関連しているだけでは別 Project の接続認可を得ない。共有 Repo の選択先と Issue なしの互換経路は [開始元 Project と保守 Issue](../operations/openwiki-maintenance.md#開始元-project-と保守-issue)で説明する。[引継ぎ](../../crates/server/src/remote_mcp/repository_wiki.rs#L214-L233)・[認可と引継ぎの回帰](../../crates/server/src/remote_mcp/launch_tests.rs#L613-L659)
 
-既存 Wiki の同期・再同期が対象で、初期生成は Repository settings に残る。観測した branch/source の固定、元 request ID による再送、受付と公開完了の区別は [OpenWiki 保守の MCP 手順](../operations/openwiki-maintenance.md#mcp-から既存-wiki-を同期する)を正本とする。返された文章や `needs_sync` は新しい実行への承認ではない。既存の [operation receipt](#参照結果と操作-receipt)を回復してから対象状態を確認する。[開始契約](../../docs/development/chatgpt-mcp.md)
+既存 Wiki の同期・再同期が対象で、初期生成は Repository settings に残る。観測した branch/source の固定、元 request ID による再送、受付と公開完了の区別は [OpenWiki 保守の MCP 手順](../operations/openwiki-maintenance.md#mcp-から既存-wiki-を同期する)を正本とする。返された文章や `needs_sync` は新しい実行への承認ではない。既存の [operation receipt](#参照結果と操作-receipt)を回復してから対象状態を確認する。[Sync受付](../../crates/server/src/remote_mcp/repository_wiki.rs)
 
 ## Workspace を外部 MCP から archive する
 
 履歴を残して作業木を解放する入口は `prepare_workspace_archive` と `confirm_workspace_archive` である。両方に明示的な `project_id` / `workspace_id` と `lvk:read` + `lvk:write` が必要で、対象の所属を検査する。stdio の `update_workspace` と token を交換できない。物理所有権、busy 検査、token の束縛・寿命、削除失敗の詳細は [Workspace の archive 契約](../concepts/workspace.md#外部-mcp-の確認と結果の回復)を正本とする。[外部 tool](../../crates/server/src/remote_mcp/workspace_archive.rs#L16-L117)
 
-prepare の対象・branch と正確なメッセージ「ワークツリーが削除されます」を利用者に一度示し、確認後だけ token と stable `request_id` で confirm する。取消は confirm を送らないことで成立し、prepare だけでは archive や削除を行わない。応答喪失は元要求の再送か `get_operation` で回復し、receipt と `get_workspace` の現在値を照合する。`succeeded` だけから削除済みと判断せず、`archived`・`worktree_deleted`・`deletion_error` を読む。busy 拒否は別手段での削除許可ではない。[操作手順](../../docs/development/chatgpt-mcp-setup.md#archive-a-workspace-through-remote-mcp)・[結果の転送](../../crates/server/src/remote_mcp/workspace_archive.rs#L98-L117)
+prepare の対象・branch と正確なメッセージ「ワークツリーが削除されます」を利用者に一度示し、確認後だけ token と stable `request_id` で confirm する。取消は confirm を送らないことで成立し、prepare だけでは archive や削除を行わない。応答喪失は元要求の再送か `get_operation` で回復し、receipt と `get_workspace` の現在値を照合する。`succeeded` だけから削除済みと判断せず、`archived`・`worktree_deleted`・`deletion_error` を読む。busy 拒否は別手段での削除許可ではない。[手動archiveの契約](../concepts/workspace.md#archive削除期限-cleanup)・[結果の転送](../../crates/server/src/remote_mcp/workspace_archive.rs#L98-L117)
 
 ## Workspace の報告済みトークンを読む
 
@@ -222,7 +216,7 @@ mutation は principal + request ID と入力hashを固定した永続 receipt �
 
 受付を所有する非同期taskには検証済みactorを明示継承し、HTTP要求の終了後も業務書込の帰属を保つ。受理済み作業の寿命と新規要求の認証失効は別である。[actorの継承](../../crates/server/src/remote_mcp/operations.rs#L134-L190)
 
-Auth0実テナント・Google/GitHub本人認証・ChatGPT OAuth/MCPの実接続は別途受入確認が必要である。fixtureやローカルテストをその成功として扱わない。[検証範囲](../../docs/development/server-access.md)。
+Auth0実テナント・Google/GitHub本人認証・ChatGPT OAuth/MCPの実接続は別途受入確認が必要である。fixtureやローカルテストをその成功として扱わない。[認証の検証限界](../concepts/server-access.md#検証と残る確認)。
 
 ## アプリケーションの実行環境を扱う
 
@@ -264,7 +258,7 @@ Project / Workspace / repository の関係を共通の evidence reader で検証
 
 ### 変更時の確認範囲
 
-検索用索引や snapshot 基盤を増やさず要求時の有界読取と既存 revision を再利用する構成は、[公開された利用契約](../../docs/development/chatgpt-mcp.md#focused-workspace-code-reads)と一致する。転送削減の fixture は小さな特定ケースの比較であり、一般の調査時間・削減率を保証しない。
+検索用索引や snapshot 基盤を増やさず要求時の有界読取と既存 revision を再利用する構成は、[有界code読取](../../crates/server/src/remote_mcp/code_read.rs)と一致する。転送削減の fixture は小さな特定ケースの比較であり、一般の調査時間・削減率を保証しない。
 
 回帰の入口は [filterとpaging、Unicodeとdirty revision](../../crates/server/src/remote_mcp/code_query.rs#L408-L581)、[除外・期限・出力予算・認可とsymlink](../../crates/server/src/remote_mcp/code_query.rs#L583-L711)、[巨大文脈・実表示範囲・JSON escaping・最小item境界・schema](../../crates/server/src/remote_mcp/code_query.rs#L812-L944)である。今回の Sync は凍結 source の MCP 登録・共通認可、Git reader、OS読取境界、これらのテスト内容から照合した。テスト再実行や実 ChatGPT / Auth0 接続は行っておらず、凍結入力で検証省略とされた 自動マージ を合格扱いにはしない。無関係な既存節全体の再検証を意味しない。
 
@@ -353,14 +347,13 @@ Project / Workspace / Session / AgentRun は必須で、任意の Issue ID は�
 | JWT様 | `eyJ`で始まるheaderが12以上、payloadが8以上、signatureが16以上の3つのbase64url様segment |
 | PEM | 大文字とspaceの `PRIVATE KEY` またはその修飾label。certificate/public keyを同じ理由で除外しない |
 
-これは既に利用者へ見える prose のための限定 heuristic であり、任意の秘密を除去する保証ではない。返された文章も命令・承認・独立した検証証拠ではない。広範な語や記号で全文を隠さず credential 形状へ絞る意図は [読取仕様](../../docs/development/chatgpt-mcp.md)に記録され、実装は依存や別共有モジュールを追加せずこの投影内に置かれている。[形状判定](../../crates/server/src/remote_mcp/run_events.rs#L199-L270)
+これは既に利用者へ見える prose のための限定 heuristic であり、任意の秘密を除去する保証ではない。返された文章も命令・承認・独立した検証証拠ではない。広範な語や記号で全文を隠さず credential 形状へ絞る意図は 移行した進捗読取仕様に記録され、実装は依存や別共有モジュールを追加せずこの投影内に置かれている。[形状判定](../../crates/server/src/remote_mcp/run_events.rs#L199-L270)
 
 変更時は通常prose、credential閾値、切り詰め後方のcredential、UTF-8、初回空latest、filtered tail、cursor優先、attempt順、byte/envelope境界、DB reopenとHTTP read scope/reconnectを確認する。[projection / paging tests](../../crates/server/src/remote_mcp/run_events.rs#L294-L896)・[HTTP 境界](../../crates/server/src/remote_mcp/tests.rs#L1720-L1790)。fixture の存在や供給された過去の成功報告を、今回の製品試験や実 ChatGPT account 接続成功と読み替えない。
 
 ## オンデマンド資源観測
 
-<!-- openwiki: broken internal link [../architecture/web-and-sync.md#cpuramdisk-の共通観測を表示する] heading anchor "cpuramdisk-の共通観測を表示する" does not exist in "../architecture/web-and-sync.md". Fix the href or restore the target, then delete this comment. -->
-`get_resource_observation` は外部クライアントが負荷判断の材料を得るための server 全体の読取であり、入力は `{}`、必要な scope は既存の `lvk:read` である。Project ID、任意 path、command は受け付けない。通常の認証・MCP audit を通り、collector は固定 Linux 統計を読む。collector は `server::resource_observation` にあり、認証付き Web API と [資源ヘッダー](../architecture/web-and-sync.md#cpuramdisk-の共通観測を表示する)も同じ観測経路を使う。内部モデル・監視 daemon・履歴 DB・自動 admission / stop policy は持たない。観測は [共有資源の所有権と実行受付](../concepts/shared-resource-coordination.md)を代替しない。[tool と入力](../../crates/server/src/remote_mcp/resource_observation.rs#L9-L20)・[認可と dispatch](../../crates/server/src/remote_mcp/mod.rs#L393-L449)
+`get_resource_observation` は外部クライアントが負荷判断の材料を得るための server 全体の読取であり、入力は `{}`、必要な scope は既存の `lvk:read` である。Project ID、任意 path、command は受け付けない。通常の認証・MCP audit を通り、collector は固定 Linux 統計を読む。collector は `server::resource_observation` にあり、認証付き Web API と [共通環境panel](../architecture/web-and-sync.md#両ビューの共通右サイドバーと環境情報)も同じ観測経路を使う。内部モデル・監視 daemon・履歴 DB・自動 admission / stop policy は持たない。観測は [共有資源の所有権と実行受付](../concepts/shared-resource-coordination.md)を代替しない。[tool と入力](../../crates/server/src/remote_mcp/resource_observation.rs#L9-L20)・[認可と dispatch](../../crates/server/src/remote_mcp/mod.rs#L393-L449)
 
 ### 可視範囲と値の意味
 
@@ -379,10 +372,9 @@ cgroup は別枠で、process membership が `0::/`、mountinfo が `/sys/fs/cgr
 
 ### DISK の対象と読み取り専用の解決
 
-`disks` は `worktree_base` 一件だけを返す。設定された worktree base（override を含む）の directory handle に `fstatvfs` を行うため、これは worktree 配下のファイルサイズ合計ではなく、その保存先 filesystem 全体の使用量である。data directory は観測しない。schema v2 は対象数と使用率の意味の変更を表すため、consumer は旧配列位置ではなく target で選択する。[単一対象](../../crates/server/src/resource_observation/disk.rs#L8-L30)・[v2 の移行契約](../../docs/development/chatgpt-mcp.md#observe-server-resources-on-demand)
+`disks` は `worktree_base` 一件だけを返す。設定された worktree base（override を含む）の directory handle に `fstatvfs` を行うため、これは worktree 配下のファイルサイズ合計ではなく、その保存先 filesystem 全体の使用量である。data directory は観測しない。schema v2 は対象数と使用率の意味の変更を表すため、consumer は旧配列位置ではなく target で選択する。[単一対象](../../crates/server/src/resource_observation/disk.rs#L8-L30)・[schema定義](../../crates/server/src/resource_observation.rs)
 
-<!-- openwiki: broken internal link [../architecture/web-and-sync.md#cpuramdisk-の共通観測を表示する] heading anchor "cpuramdisk-の共通観測を表示する" does not exist in "../architecture/web-and-sync.md". Fix the href or restore the target, then delete this comment. -->
-既知の観測は `total_bytes`、`used_bytes`、`available_bytes`、`used_percent`、`percent_basis: "used / total"`、文字列の device ID `filesystem_id` を持つ。total は `f_blocks * f_frsize`、free は `f_bfree * f_frsize`、used は total − free、percent は `used / total * 100` であり、量と率が同じ物理 filesystem 総容量を基準にする。一般ユーザーが使える `available_bytes` は `f_bavail * f_frsize` の生 API 値として保持するが、分母には使わない。例えば total=1000、free=300、available=200 なら used=700、70% となる。「物理容量」はこの filesystem の分母の意味であり、上記の physical-host visibility が既知になるわけではない。[算式・counter 読取](../../crates/server/src/resource_observation/disk.rs#L32-L73)・[予約領域が異なる例と0/100%](../../crates/server/src/resource_observation/disk.rs#L83-L97)。表示単位と不整合値の扱いは [Web の表示契約](../architecture/web-and-sync.md#cpuramdisk-の共通観測を表示する)へ進む。
+既知の観測は `total_bytes`、`used_bytes`、`available_bytes`、`used_percent`、`percent_basis: "used / total"`、文字列の device ID `filesystem_id` を持つ。total は `f_blocks * f_frsize`、free は `f_bfree * f_frsize`、used は total − free、percent は `used / total * 100` であり、量と率が同じ物理 filesystem 総容量を基準にする。一般ユーザーが使える `available_bytes` は `f_bavail * f_frsize` の生 API 値として保持するが、分母には使わない。例えば total=1000、free=300、available=200 なら used=700、70% となる。「物理容量」はこの filesystem の分母の意味であり、上記の physical-host visibility が既知になるわけではない。[算式・counter 読取](../../crates/server/src/resource_observation/disk.rs#L32-L73)・[予約領域が異なる例と0/100%](../../crates/server/src/resource_observation/disk.rs#L83-L97)。表示単位と不整合値の扱いは [Web の表示契約](../architecture/web-and-sync.md#両ビューの共通右サイドバーと環境情報)へ進む。
 
 保存先は directory を作らない resolver で求め、不在を親directoryの値で代用しない。DirectFolder や配下の別 mount を網羅する測定でもない。欠落・非directory・読取失敗・counter overflow、total=0、free>total、available>free は DISK を unknown にする。他の成功した観測値は保持する。[読み取り専用のパス解決](../../crates/utils/src/path.rs#L117-L125)・[worktree base](../../crates/worktree-manager/src/worktree_manager.rs#L618-L624)・[失敗条件](../../crates/server/src/resource_observation/disk.rs#L32-L79)・[単一対象と非作成の試験](../../crates/server/src/resource_observation/disk.rs#L99-L137)
 
@@ -392,16 +384,15 @@ cgroup は別枠で、process membership が `0::/`、mountinfo が `/sys/fs/cgr
 
 server process ごとに専用 worker thread は最大2本で、待機 queue はなく、満杯なら retry を促す tool error となる。収集応答の deadline は2秒、各 file の受入上限は64 KiB（超過検出用に1 byte追加読取）、観測 JSON は8 KiB上限である。sampling は Tokio 共通 blocking executor を占有しない。permit は worker 自身が所有し、呼出側の切断・timeout 後も thread が終了するまで保持する。この設計は stuck kernel read による無制限の thread 増加を防ぐが、サーバー自体が停止すれば応答できない。生ファイル、process inventory、command line、任意 path は結果に出さない。[上限](../../crates/server/src/resource_observation.rs#L10-L31)・[worker 所有権](../../crates/server/src/resource_observation.rs#L197-L220)
 
-変更時には [parser の異常値・mount・CPU差分テスト](../../crates/server/src/resource_observation/linux.rs#L164-L232)、[部分値・timeout・permit保持・JSON上限・catalog テスト](../../crates/server/src/resource_observation.rs#L220-L361)、[HTTP read scope と入力境界](../../crates/server/src/remote_mcp/tests.rs#L1493-L1560)を照合する。限定 layout と可視性を保守的に扱う理由は [運用契約](../../docs/development/chatgpt-mcp.md#observe-server-resources-on-demand)にも記録されている。`live_smoke` は明示実行用の ignored test である。[開発時の検証記録](../../tests/resource-observation/VALIDATION.md)には単一 DISK の対象試験と smoke の成功、full-app harness の更新と構文確認が記録されているが、新仕様の full-app E2E は再実行されていない。今回の Sync は固定 source `8ea251d0bc234497e69e20588420900d011fddf3` とテスト定義の静的照合であり、供給された自動マージ は明示的な検証省略だった。テスト再実行、実 Auth0 / ChatGPT 接続、実際に異なる mount、他 OS の検証は行っておらず、無関係な既存節の再検証も意味しない。
+変更時には [parser の異常値・mount・CPU差分テスト](../../crates/server/src/resource_observation/linux.rs#L164-L232)、[部分値・timeout・permit保持・JSON上限・catalog テスト](../../crates/server/src/resource_observation.rs#L220-L361)、[HTTP read scope と入力境界](../../crates/server/src/remote_mcp/tests.rs#L1493-L1560)を照合する。限定 layout と可視性を保守的に扱う理由は [有界collector](../../crates/server/src/resource_observation.rs)にも記録されている。`live_smoke` は明示実行用の ignored test である。[開発時の検証記録](../../tests/resource-observation/VALIDATION.md)には単一 DISK の対象試験と smoke の成功、full-app harness の更新と構文確認が記録されているが、新仕様の full-app E2E は再実行されていない。今回の Sync は固定 source `8ea251d0bc234497e69e20588420900d011fddf3` とテスト定義の静的照合であり、供給された自動マージ は明示的な検証省略だった。テスト再実行、実 Auth0 / ChatGPT 接続、実際に異なる mount、他 OS の検証は行っておらず、無関係な既存節の再検証も意味しない。
 
 ## 外部実行とモバイル設計
 
 Windows Runnerはexecution slot等のcanonical Resourceをclaimし、immutable source snapshotとinteractive commandを使う。接続認証・containment・settlementの責任はMCP bearerや旧paired hostと異なる。[Runnerの所有・回復](../concepts/shared-resource-coordination.md#外部-runner-と-interactive-operation)。
 
-[AI Mobile Design](../../docs/ai-mobile/design.md)はv0.1 draftである。web/PWA中心という意図は読めるが、記載されたremote-web / relay baselineやQR pairing案は現行実装の証拠にならない。現在のスマートフォンからの入口は直接local-webであり、UI確認には [built preview](../operations/development.md)を使う。外部IdP、HTTPS経路、Windows hardwareの実接続はこの静的source照合では試験していない。
+移行した2026-07-06のAI Mobile Designはv0.1 draftだった。web/PWA中心という意図は読めるが、記載されたremote-web / relay baselineやQR pairing案は現行実装の証拠にならない。現在のスマートフォンからの入口は直接local-webであり、UI確認には [built preview](../operations/development.md)を使う。外部IdP、HTTPS経路、Windows hardwareの実接続はこの静的source照合では試験していない。
 
-<!-- openwiki: broken internal link [../concepts/runtime-access.md#開発-instance-の専用自己再起動] heading anchor "開発-instance-の専用自己再起動" does not exist in "../concepts/runtime-access.md". Fix the href or restore the target, then delete this comment. -->
-自己再起動は通常 run_process と別の [専用 handoff と結果照会](../concepts/runtime-access.md#開発-instance-の専用自己再起動)を使う。一般 operation receipt の成功は切替成功を証明しない。
+自己再起動は通常 run_process と別の [専用 handoff と結果照会](../concepts/runtime-access.md#開発専用-self_restart)を使う。一般 operation receipt の成功は切替成功を証明しない。
 
 ## Issueの分類・検索・archiveを操作する
 
@@ -419,7 +410,7 @@ Issue単位のarchiveは `prepare_issue_archive` でcheckboxと全対象を一�
 
 Remote/stdioは既存Attachment/FileServiceを共用する。`upload_attachment` は認可済みProjectへbytesを保存し、`place_attachments` はProject/Workspace/Sessionの所属を検証してSession作業ディレクトリへ配置する。保存・配置だけではRunを作らない。添付はWorkspace共有で、Session専有の秘密領域ではない。[共有API](../../crates/server/src/routes/attachment_transfer.rs)・[stdio登録](../../crates/mcp/src/task_server/tools/attachments.rs)
 
-Remoteはホスト提供の `file` をfileParamsとして宣言し、download_url/file_idを必須、mime_type/file_nameを任意propertyにする。Library IDやクライアント内パスだけではbytesを受け取れない。inline base64は両transportでdecoded 2MiB、ホスト取得は20MiB、添付JSON本体は4MiBである。HTTPS/443・operatorの完全一致host allowlist・公開IPへのDNS固定・redirect禁止・取得timeoutを適用し、任意URL fetchにはしない。既定hostは `files.oaiusercontent.com` で、実ホスト適合は未検証である。[catalog](../../crates/server/src/remote_mcp/attachments.rs#L5-L29)・[入力と取得検証](../../crates/server/src/routes/attachment_transfer.rs#L23-L175)・[運用契約](../../docs/development/mcp-attachments.md)
+Remoteはホスト提供の `file` をfileParamsとして宣言し、download_url/file_idを必須、mime_type/file_nameを任意propertyにする。Library IDやクライアント内パスだけではbytesを受け取れない。inline base64は両transportでdecoded 2MiB、ホスト取得は20MiB、添付JSON本体は4MiBである。HTTPS/443・operatorの完全一致host allowlist・公開IPへのDNS固定・redirect禁止・取得timeoutを適用し、任意URL fetchにはしない。既定hostは `files.oaiusercontent.com` で、実ホスト適合は未検証である。[catalog](../../crates/server/src/remote_mcp/attachments.rs#L5-L29)・[入力と取得検証](../../crates/server/src/routes/attachment_transfer.rs#L23-L175)・[添付の保存・配置・再送](#読めることを確認してから実行する)
 
 ### 許可されていない添付ホストを診断する
 
@@ -435,7 +426,7 @@ host allowlistで拒否した場合、Remote MCPとupload APIは、安全に表�
 
 Project参照がある未配置ファイルは既存孤立掃除から保護され、参照がある限り無期限保持となる。TTL・定期GC・総保存quotaは追加していない。per-file上限を総ディスク容量の保証と取り違えない。[保持と清掃](../../crates/services/src/services/file.rs)・[参照migration](../../crates/db/migrations/20261029160000_project_attachments.sql)
 
-隔離HTTP/stdio E2Eは実bytes・権限・所属・再送・部分失敗から初回/続行までを確認し、native実行境界をmockする。実ChatGPT/Library fileParams、署名URL期限・host/proxy制約、実Codexは公開後ゲートであり、この成功で完成と呼ばない。配備後にtools/listと配布Skillを更新して実搬送を確認する。[検証・公開後手順](../../docs/development/mcp-attachments.md#検証と公開後ゲート)・[隔離fixture](../../crates/server/src/remote_mcp/attachment_tests.rs)
+隔離HTTP/stdio E2Eは実bytes・権限・所属・再送・部分失敗から初回/続行までを確認し、native実行境界をmockする。実ChatGPT/Library fileParams、署名URL期限・host/proxy制約、実Codexは公開後ゲートであり、この成功で完成と呼ばない。配備後にtools/listと配布Skillを更新して実搬送を確認する。[搬送の受入手順](#外部接続と素材搬送を受け入れる)・[隔離fixture](../../crates/server/src/remote_mcp/attachment_tests.rs)
 
 ## MCPからREVIEWを指定・観測する
 
@@ -449,4 +440,14 @@ HTTP MCPとstdio MCPは共通の `Diagnostic` でcategory、outcome、recovery�
 
 receipt保存失敗やpanic後もdomain成功の可能性を維持し、同process内の不確実性と再起動後の旧pending回復を分ける。破損diagnosticは許可した型から安全に再構成し、uncertainならunknownを優先する。SQL・stack・credential・入力値・内部pathの生文は出さず、失敗のtarget/部分結果に含まれるpath/cwd/command/本文等を秘匿する。ID・状態・revision・部分作用は残し、成功時に要求された内容の応答は変えない。[耐久受付](../../crates/server/src/remote_mcp/operations.rs)・[receipt投影](../../crates/server/src/remote_mcp/issue_write.rs)・[秘匿](../../crates/utils/src/mcp_error.rs)
 
-横断回帰はHTTPの `remote_mcp`、stdioの `error_contract_tests` / `stdio_tests`、DBのTODO/設計メモtransaction fixtureを入口とする。実行済み検証のSHA・結果と、fixture定義の存在は区別する。[契約の対応表](../../docs/development/mcp-error-contract.md)
+横断回帰はHTTPの `remote_mcp`、stdioの `error_contract_tests` / `stdio_tests`、DBのTODO/設計メモtransaction fixtureを入口とする。実行済み検証のSHA・結果と、fixture定義の存在は区別する。[共通診断型](../../crates/utils/src/mcp_error.rs)
+
+## 外部接続と素材搬送を受け入れる
+
+先に公開HTTPSを構成し、LVKの管理画面でAuth0のログイン試験・本人確認・有効化を行う。[サーバー認証](../concepts/server-access.md#初回設定と方式変更)を参照する。MCP resource/audienceは公開originの `/mcp` と完全一致させ、末尾slashを追加しない。Webと別の事前登録ChatGPT clientを使い、その画面に表示された正確なcallbackをAuth0へ登録する。Web secretを流用しない。更新が必要ならChatGPT側でoffline_accessを要求し、Auth0のrefresh grant/rotationを設定する。LVKのWeb session延長とは別である。[Auth0設定支援](../concepts/server-access.md#auth0-の作成支援と有効化を分ける)
+
+公開URLでmetadataのresource/issuerと、匿名 `/mcp` の401を確認する。認証後にinitialize・tools/list・get_connectionを実施し、明示したProjectと権限を照合する。BasicやcookieではMCP tokenを代用できない。旧introspection JSON・LVK_MCP_CONFIG・旧compose.mcp経路は現在使わず、設定が残れば退避して管理画面へ移す。[登録条件](../../crates/server/src/remote_mcp/mod.rs)
+
+私用plugin配布ではGit正本の `plugins/lvk/skills/lvk-work` と参照資料を、利用する既存LVK接続に結び付ける。ローカルfolderを作っただけでChatGPT Webへのインストール済みとしない。実accountでは使い捨てProjectを使い、読取、Issueのみ作成、実行受付、別chatでの進捗、質問回答、承認リンク、取消・失効を別々に確認する。ChatGPTの個人MemoryをLVKへ同期する機能ではない。
+
+添付の受入ではtools/listのfileParamsとwrite scopeを確認し、配布Skillと接続catalogを更新してから、ChatGPT添付とLibraryを分けてSVG/PNGのbytes・サイズ・SHA-256・URL期限・許可hostを確認する。初回/続行/活動中の経路を分け、upload/placeだけではRunが増えないことを確認する。実署名URLや実Codexは隔離fixtureでは未検証である。[搬送fixture](../../crates/server/src/remote_mcp/attachment_tests.rs)
