@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:6b67a2ff5ab150632a08deb6aee48b4454628eff40592d0ac988dd5604932e7a",
+  "pageVersion": "sha256:8a68eaf2f12d5ce63614d3bb59ef6af2dbbb5a60a59a761cf5c097eca540b426",
   "claims": [
     {
       "id": "claim_c81a205c03bd40d890dd823991c3f6bc",
@@ -297,10 +297,36 @@
           "version": "repo-file-v1:sha256:0af3be0239f1baf770ba00e4284d1c778d858f7d9523f0df172ee2da77b19697"
         }
       ]
+    },
+    {
+      "id": "claim_5b2542cf3a9e4be9a8fd084017e84f24",
+      "statement": "operator CLIは対象data directoryでsetup/recoveryキーを発行し、既存不正鍵を拒否する。欠損鍵は新規作成するが旧設定を復号できず、限定recovery sessionによる設定再入力が必要で業務APIを開放しない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server-access/src/store.rs#L28-L105",
+          "version": "repo-lines-v1:sha256:59de5c5e980f282479468ccb2e7c79cebd0905a454bc6b750ef1a9003f71ddaf:eyJzZWxlY3RlZExpbmVDb3VudCI6NzgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM3YmZkYjk1YThjNDMxMjY1YmRiNzc0OGRhMzVhNzU1Njg2MmQ0ZmE2ZDRkMTUwYzFkNzk1MjExMDY5ZDNjMjUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY1NDQ1MzIwNjQxMmRhYzFjNWUyMzZjNDUwYTY1NWYxYTUzYzNkN2FmY2U1MzFhZDRlMDE4ODMyODhiNjNlMDYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjUwMTBlYzQ4N2QzNmZmY2U1ZmM3MTU2NTI3MjgwYzM5ZTQwYTJjZDMzYTgyNWJmZGViMjBmNzBlNTc5NmZiNTYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZiMDFkYzA0NzQyZTg1ZWUwNTVmMjg2NmQ0NjQ2YmZiYjNlMTJmOTgzOGFhMTlhZDIwMDcxZmExMGQ1NzYzMGEifQ"
+        },
+        {
+          "resource": "repo://crates/server-access/src/store.rs#L408-L450",
+          "version": "repo-lines-v1:sha256:e7accf0d72d042eb847925ed1f555d805480f771944efb03b8dfbbf4477d8289:eyJzZWxlY3RlZExpbmVDb3VudCI6NDMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBmMmQ0NDY1OGY5NjhmNThiYTFiZmIwYjQyM2Q4MjgxYThlODNhZTliNTE1MTQ5MzQ2NGI4MWVkOTE0Y2UyYjMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ2MjEzNTgwM2MzNjZjNDU3MDM4YjNlMTAzNTkzZmFmYjE5ZDk3YThkYWQ0NmNiOGNjY2ZmYmQ2YjIxMWZkZTQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjIwYmUzODVlZWM3MjkwMjZhNTNlYjE3YzNkOGQ0OWFmMmY2YzFjYmIyNzFkYjdiYWE4NGYyYjVkNDA1MGIzMTAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM0ODUxYmQ5YWU2NjAxZjE0MTczN2MyN2RhMjU0NTcwZDE0ODczOGFiOWNmZDk2YWVhZDAzMTY2NjFhMDcwMmUifQ"
+        },
+        {
+          "resource": "repo://crates/server-access/src/tests.rs#L306-L350",
+          "version": "repo-lines-v1:sha256:e2110e12dc7784c3e1007dd3a5170d99ae34f3b14f875deaf65d37febd67e33a:eyJzZWxlY3RlZExpbmVDb3VudCI6NDUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImMxMDI4NzNkNGZlYzA1NTc5NTViY2NlMzU1OTI3ZDQ1NmQ0YmVkM2M3ZTAwN2NhMDhhMDhhOWEzOTg3M2NlODAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg0ZTQyMDhjZDZmZmI4YzRhMzU0N2IyZjU0YWRhMTk5NzhjM2YzNjVlNzhmOTUwMmVmNTE0NWNkZDJhYTg1NDMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjA4MzBiNDM3YTc0NDcyMDc1M2JlYmUzNjgyNWZkMGMwNTEzNzcwOGYwZDIyZjA3MjEyZTcwNDQ0YWQxMWIwMzEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjMyNWEyYWE2NmY0Njk2NjVkYjY0Y2EzZTRjOWMyYTdmOWFlYzk0YWYyMzI1ZGRjMWVjOTVhMWE1ZDc1ZThlOTcifQ"
+        },
+        {
+          "resource": "repo://crates/server-access/src/tests.rs#L464-L476",
+          "version": "repo-lines-v1:sha256:926cee33efa6d45f55d749deed82aba89623eab9759cbcee17b6277fbace7d7a:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZjMGQ0YzhlMjNkNmI0MjYzMjlhODYyZWIxZGYxOGZlZDBhMWIzZmRiYjJlNGQ0OTJmMzY4NWEyODdiMjU4ZGEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYwNDExYmQ2NDFhOTJiZWM1NzA5YmQxZGM1MzY4ODdlZTU5YjA0NjhiMmQyYTZmYjQzYmRhNzIxNDFhYjI4ZDYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQ4NTE2ZDFiMmMwY2ZjODNiNjkyZTNlNTc2MGQ1OGFlYmNhMjZhMDJlZmNlNGVjMzI0YWIwY2U4ZGY4MzdlNTgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhmOTRhM2E1MzM4YWViYzM5OTA3MDBlMTMwNWY1NmI3NDlhNGJkODZhYTMzN2JiNDk1YjM5Y2E0MTIwOTRlNWMifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/main.rs#L54-L72",
+          "version": "repo-lines-v1:sha256:ad9993eb0f077d4aac8dd5391eb9c716421e2c1845f3e99d5e1bb507e0daa094:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjlmNzE2MTc5MjM2Yjk2YzdjMjI2YmM1YzZmZDNkNTNjNDZjYzI5MjE3ZDY0NDQzNjUzNTM1M2UxNjBlZDNhOGUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI3YzZhYzI0NjdlZDBjNzY1N2RiYmNhNWU4ZGU3YmYxYzExNTNhY2YxNzUyODYzYmViNGVhMjNhYmE0Zjg0NDciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImU4MzQ4MWVjMjc2MjJhNWQwZTgyNmZmOTEyOTZmOWNjZjgxMzcxOTg1ZjM4Mzg3YjNhMDM4ZGI4MzRhOThiN2UiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImZkMzMzMDlkYzhiN2FiMWYzNDc5YzhmZGQ1YmJlNjU5ZjAwNjJlYzVjMjhkYzIwZDgzYjMwNmU3MjYwN2Q5MGYifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-02T14:26:25.232Z"
+    "at": "2026-11-04T20:06:10.920Z"
   }
 }

@@ -1,17 +1,17 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:cab216c05cbf35abdce6c8f1d13d1ce07360d74ece2c4ef7b701feb3a628344e",
+  "pageVersion": "sha256:f323241ae33bbbe6696746c5c0f1668aa3354003ff05db353c4554ccb34d9de6",
   "claims": [
     {
       "id": "claim_47f88605cb734f0e8f28726920324a17",
       "statement": "固定Organization IDは2、Local userは1だが、公開配置の新規操作とBoard roleは認証actorを使う。activeメンバーはactorのissuerで表示し、旧user IDはunattributedとして残す。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/local_remote.rs#L1228-L1358",
+          "resource": "repo://crates/server/src/routes/local_remote.rs#L1432-L1562",
           "version": "repo-lines-v1:sha256:2a2ce9c8a0c2a3701cfc28345e0f1a6d836c8b0778f61cf58d04eb07041448f2:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMxLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIwOWJhYzkxMDMwMDk5MDVlOTVlNTYyMWU4ZWM5Y2QyMWIzNDdjMWQwNzhiNjE4YTc4MWVhM2YxY2FjODhlMTdjIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJhYjNhMjU0YjZlZGY3NzA5OTQ4ZWIzMzJiZmUwYWZlMDNmYjI5ZWM0ZTE1ZGRhM2UyZmMwMjVkMjJjZTkyYzlkIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIxMjNkNTgwOTg1MTA0ZTliNmYyNzdjOWNmNWI1MjRiMjQ2MGIyOTIxNGEyNjliYWJiNWE3NzgzNzZjNzYyOGJkIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJhMjFkYmU4NGUxZmVkMTM4ODE2MGExYjg5MzAwOTc0MDAwNDNkNzExZDAxMDI5YjEzMjYxNWU3MTllMDlhOGU4In0"
         },
         {
-          "resource": "repo://crates/server/src/routes/local_remote.rs#L265-L271",
+          "resource": "repo://crates/server/src/routes/local_remote.rs#L290-L296",
           "version": "repo-lines-v1:sha256:016237df6d79a7f21c342ca9789c8438f9cc97f3a2ee4f45b7c04bc6337f5ae1:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiM2U3OGUxYTg2OTk5MmM4M2YwODUwYWYxNjk5MzJjOTBkN2E0NDI4MTM4MTEwZjdkN2MxOTAzNzFiOTdjNDllZiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiM2U2MmU0MzNkY2IwNTU4OTNjZmNjZjFlNmZiNDI4ODdjZWZjOTdiNWY5ZmFmNjQ0YzU0MDMyMjQ2YmJiYjVjMCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZGViYmVjNTBmNmNkZjExYmU3OWUxYzVhOGU5NzRmZGQ5NWU3Yzk4N2JkNzg2Y2U1YTZiZmNjMmFlZmVkNmIxYSJ9"
         }
       ]
@@ -21,7 +21,7 @@
       "statement": "Auth0メンバーはissuerとsubjectで識別し初回pendingとなる。管理者は承認・無効化できるが、transaction内で最後のactive adminの無効化・降格を拒否し対象Web sessionを失効させる。",
       "evidence": [
         {
-          "resource": "repo://crates/server-access/src/handlers.rs#L562-L619",
+          "resource": "repo://crates/server-access/src/handlers.rs#L582-L639",
           "version": "repo-lines-v1:sha256:e20b4b1b06aaad56fb61eb50b2f0858f2ab878e6769c96c89a9af52d5631d133:eyJzZWxlY3RlZExpbmVDb3VudCI6NTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM2YmVhMGUwMmYxMjI3NDUyNjhkYzRlYjI2YmNkMzJmZGY1YWE3NGE4MjhkNGI1MDgxYTM5MGZkNDk4N2E3YTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY3MWMwZGI0NzBlNmUwNGM1NTViOTU2ODk2NGU4MDFmMDQ4ZTMwYzBkYmM0N2M2YzdkNTU5MDc5NTI1NTAzYmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZkODIwODE3YmYwZDVlYTY1NjczOTQyMGNjZWRiN2QwODU3ZWQxM2ZjMDk4YzQ0NGY0NzYzYWI1NGUxZDc2ZDUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijg0NTZhMWVlNWIxNGVhNTY5NDUyZThkY2Q5ZTc1NmY4Y2I0ODdmNGY2MDg0ZWE4MTFjYTI5ZWI3ZjBmYTQ4N2IifQ"
         },
         {
@@ -29,7 +29,7 @@
           "version": "repo-lines-v1:sha256:1abd28e375cb22e007cd07ac2e02580a51968cdc7006afce2f64b87bad15ba9d:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUwNzFjNmU5MjJkNjRlM2MyZDEyZDFiNDAwODRjMzFjYzRlNzgwN2ZiNDJlN2Y3MjI5Y2M4ODYwNWU3ZmM4YjUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjllZmY1YTg1MmJiMGUwNWRmMzU3YTE5ZjNhNjVhY2E2Mzg5N2IwNTcwOWFjMmNiNzUyODVjODUyNjlhNzIzZWMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJmY2QwNTZiMzYxYmQ3OGMzZTViNDcxODg5ZjFmNzM4YjM0OTVjYzIwMWJlYjRiMTBlMDc3ZGU5ZmQ2MWNmOTIifQ"
         },
         {
-          "resource": "repo://crates/server-access/src/tests.rs#L1257-L1320",
+          "resource": "repo://crates/server-access/src/tests.rs#L1313-L1376",
           "version": "repo-lines-v1:sha256:18871f889f1efa98ae9a73e4a7ee5d203e556bcff6463b1d095a09a45b26d0c2:eyJzZWxlY3RlZExpbmVDb3VudCI6NjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk2MWY3ZTJhODRhNjExZjkyMzliMTNkM2U3MTYwODI3MzBjZGE3OTAzZWYyY2ZjYWM5ZWU1N2MwNmViNjA4MTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijc3NzJlOTI3NWNiNmEyNGZmYTg5NTJjY2E3N2U2YTRhNWEyYWRlNjNjZWQ0MzUxYzZiYzU4NjBhYWZlNTIyZDEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImM4ZTM1ZDI5MTI0ZGJiMGJlYzNhNjQ5MWY3NTZlZTM5MzExNmNjYzRkZDBjZGJhYzk1MmRlMTRjZjY2ZjBlNDEifQ"
         }
       ]
@@ -39,7 +39,7 @@
       "statement": "公開配置の本人IDをUIへ渡しても既存Workspaceの歴史的固定所有者を更新せず、共有環境の操作可否を表示上の所有者一致から分離する。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/local_remote.rs#L1170-L1237",
+          "resource": "repo://crates/server/src/routes/local_remote.rs#L1366-L1433",
           "version": "repo-lines-v1:sha256:c94433a7befd0cb8f3a132eef2c8b9859d4b04e480a599ece876722631280961:eyJzZWxlY3RlZExpbmVDb3VudCI6NjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZkNTFlZTc5NTExMDM1ZTNmNjg5OWUzYmIwNjBjOTkwOTdhZDEwMGUwZTYxMjg5ZjViOTMxNTc5MzYzOTcwZDAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImZhNGY1ZjNkNjEzMmQxZGNmM2QxODkwMzBjM2E3MGU3NjUzNDY4NDQ5NTE4OWEwYzc0NTU4OGIwNGRhMWYzNDIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImM3NTE4NGExMzEyNjc4NDQ1NGM5MTNlNTliZjAxYjBhNDc1MThkNGNlMmNiMWRlYzMxMmE4ZGU5ZDRmYWZhNTEifQ"
         },
         {
@@ -54,7 +54,7 @@
     }
   ],
   "verification": {
-    "by": "openwiki/0.5.1",
-    "at": "2026-10-24T14:58:13.588Z"
+    "by": "openwiki/0.7.2",
+    "at": "2026-11-04T20:14:29.223Z"
   }
 }

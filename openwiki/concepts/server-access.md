@@ -22,6 +22,8 @@ sources:
     resource: repo://crates/server-access/src/tests/chatgpt.rs
   - id: openwiki-source-24816571d030e7526cab74f1
     resource: repo://crates/server-access/src/tests/provisioning.rs
+  - id: openwiki-source-a13fe4db1eee073d0a7e2c4d
+    resource: repo://crates/server/src/main.rs
   - id: openwiki-source-6cb471b32e19ce921b78d86e
     resource: repo://crates/server/src/remote_mcp/environment_settings.rs
   - id: openwiki-source-d236349bbead901a9455b33c
@@ -32,15 +34,15 @@ sources:
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/SettingsAccessContext.tsx
   - id: openwiki-source-b42d4696e9f82a515195aa22
     resource: repo://tests/auth0-setup/setup.spec.ts
-generated: { by: "codex", at: "2026-11-02T14:26:25.232Z" }
+generated: { by: "codex", at: "2026-11-04T20:06:10.920Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-02T14:26:25.232Z
+    at: 2026-11-04T20:06:10.920Z
 ---
 
 # サーバー認証・設定・セッション
 
-`server-access` は一つの信頼されたチームのLVKに入るための共通境界である。Auth0がOAuth認可を担当し、LVKは設定、本人とメンバー、Webセッション、要求の受付を管理する。coding providerへのログイン、Workspaceの実行予約、OS隔離とは別である。承認済みメンバーは同じ実行環境を共有し、Projectごとのtenant隔離はない。[責任](../../crates/server-access/src/lib.rs#L1-L6)、[運用の信頼境界](../../docs/self-hosting/server-container.mdx#L6-L16)。本人と歴史的ownerの関係は [Organization・Member](organization-and-membership.md)に置く。
+`server-access` は一つの信頼されたチームのLVKに入るための共通境界である。Auth0がOAuth認可を担当し、LVKは設定、本人とメンバー、Webセッション、要求の受付を管理する。coding providerへのログイン、Workspaceの実行予約、OS隔離とは別である。承認済みメンバーは同じ実行環境を共有し、Projectごとのtenant隔離はない。[責任](../../crates/server-access/src/lib.rs#L1-L6)、[同じ OS user の配布構成](../operations/server-container.md)。本人と歴史的ownerの関係は [Organization・Member](organization-and-membership.md)に置く。
 
 ## 配置と認証方式は別の設定
 
@@ -51,7 +53,7 @@ verified:
 
 `LVK_ACCESS_DEPLOYMENT`未指定で非loopbackへbindする設定は拒否する。`LVK_AUTH_MODE`は許す方式を制限するが資格情報を作らない。公開URLは末尾slash・path・query・userinfoを許さず、Host/Originを設定済み値と照合する。旧`LVK_MCP_CONFIG`は存在すれば起動拒否となる。[環境と検査](../../crates/server-access/src/lib.rs#L240-L405)
 
-共通層はmain routerを包み、独立preview listenerには専用層を適用する。静的画面、health、access APIの入口は業務APIの認証前にも必要だが、access handler自身がsetup/管理セッションやCSRFを検査する。ログイン画面を取得できることは業務データの利用許可ではない。[要求分類](../../crates/server-access/src/lib.rs#L520-L630)、[router](../../crates/server/src/routes/mod.rs#L83-L95)
+共通層はmain routerを包む。旧preview専用listener・handoffは廃止済みで、[独立CSV route](../operations/server-container.md#独立アプリの-csv-ルート)にはLVKログインを委譲しない。静的画面、health、access APIの入口は業務APIの認証前にも必要だが、access handler自身がsetup/管理セッションやCSRFを検査する。ログイン画面を取得できることは業務データの利用許可ではない。[要求分類](../../crates/server-access/src/lib.rs#L520-L630)、[router](../../crates/server/src/routes/mod.rs#L83-L95)
 
 ## 初回設定と方式変更
 
@@ -97,10 +99,9 @@ Web cookieはHttpOnly / SameSite=Lax、公開配置ではSecureで、Domainを�
 
 ## 失効は接続と受理済み作業で異なる
 
-<!-- openwiki: broken internal link [../operations/workspace-inspection.md#公開-preview-への認可委譲] heading anchor "公開-preview-への認可委譲" does not exist in "../operations/workspace-inspection.md". Fix the href or restore the target, then delete this comment. -->
-新規要求は設定revision・期限・active membershipを照合する。継続WebSocket/SSEはleaseで2秒ごとに再検証し、logout、member無効化、期限切れ、設定変更で終了する。socket taskには資格情報を保持しない。接続終了は既に受理されたagent作業やMCP mutationの取消を意味しない。[lease](../../crates/server-access/src/lib.rs#L161-L186)、[再検証](../../crates/server-access/src/lib.rs#L406-L435)、[SSE](../../crates/server-access/src/lib.rs#L665-L680)、[実WebSocket](../../crates/server/src/middleware/websocket.rs#L43-L61)。previewの委譲も親sessionへ依存するが、別cookieを使う。[preview handoff](../operations/workspace-inspection.md#公開-preview-への認可委譲)
+新規要求は設定revision・期限・active membershipを照合する。継続WebSocket/SSEはleaseで2秒ごとに再検証し、logout、member無効化、期限切れ、設定変更で終了する。socket taskには資格情報を保持しない。接続終了は既に受理されたagent作業やMCP mutationの取消を意味しない。[lease](../../crates/server-access/src/lib.rs#L161-L186)、[再検証](../../crates/server-access/src/lib.rs#L406-L435)、[SSE](../../crates/server-access/src/lib.rs#L665-L680)、[実WebSocket](../../crates/server/src/middleware/websocket.rs#L43-L61)。旧preview handoffは廃止済みである。[外部アプリの認証境界](../operations/server-container.md#埋込みpreviewの廃止)を確認する。
 
-Auth0側のrefresh取消とLVKのmember無効化は異なる。署名済みJWTは期限まで有効な場合があり、LVKは接続単位の即時JWT失効を提供しない。一般的なprovider停止時もBasic/Localへ自動fallbackしない。[運用上の失効区分](../../docs/self-hosting/authentication.mdx#L165-L188)
+Auth0側のrefresh取消とLVKのmember無効化は異なる。署名済みJWTは期限まで有効な場合があり、LVKは接続単位の即時JWT失効を提供しない。一般的なprovider停止時もBasic/Localへ自動fallbackしない。[新規要求の再認証](../../crates/server-access/src/lib.rs#L455-L484)
 
 [Web Push の device consent](../integrations/web-push.md#通知同意と所有権)は Web session と別の寿命を持つ。`server-access` は local/basic/web actor の owner・認証 revision・用途を暗号化 envelope に固定し、配送時に membership / revision を再検証する。logout や idle expiry を越えて通知できるが、login token を保存せず API access や session 延長を認めない。内部 agent / MCP channel は登録できない。[seal/open](../../crates/server-access/src/lib.rs#L394-L436)。期限・OFF・再登録の契約は通知の説明先に置く。
 
@@ -108,7 +109,7 @@ Auth0側のrefresh取消とLVKのmember無効化は異なる。署名済みJWT�
 
 設定とOIDC中間情報はAES-256-GCMで暗号化し、32byteの`access.key`をDBと分離して保存する。Unixでは鍵がowner-onlyで、symlinkではないことを検査する。`access.configured`は設定履歴のmarkerで、設定rowの消失を未設定Localへ戻す理由にしない。破損設定・鍵不在は閉鎖状態となる。[暗号化と読取](../../crates/server-access/src/store.rs#L28-L139)、[markerと切替](../../crates/server-access/src/store.rs#L362-L395)
 
-DBと鍵・markerを整合した組で保存する。元の鍵がなければ旧暗号化設定は復元できない。operator recoveryは設定の修正用で、業務APIやメンバー一覧を無条件に開かない。具体的な退避・復旧手順は [認証運用](../../docs/self-hosting/authentication.mdx#L176-L199)、volume全体の整合性は [コンテナー回復](../operations/server-container.md)を参照する。
+DBと鍵・markerを整合した組で保存する。元の鍵がなければ旧暗号化設定は復元できない。operator recoveryは設定の修正用で、業務APIやメンバー一覧を無条件に開かない。具体的な退避・復旧手順は下記に置く。volume全体の整合性は [コンテナー回復](../operations/server-container.md#更新前のバックアップと復元検証)を参照する。
 
 監査はactor/channel/action/target/outcomeを保存し、通常要求のquery・本文・資格情報を記録しない。これを全業務操作のtransaction監査と同一視しない。要求終了時の監査書込には失敗を返さない経路もある。[監査の生成](../../crates/server-access/src/lib.rs#L643-L664)
 
@@ -116,10 +117,27 @@ OIDC callback の失敗診断は固定 reason code と許可した field / categ
 
 ## 検証と残る確認
 
-sourceには設定消失時の閉鎖、SSE失効、並行admin無効化、実socket停止、previewのbrowser/origin束縛・再利用拒否のテストがある。[失効と並行操作](../../crates/server-access/src/tests.rs#L1179-L1320)、[preview](../../crates/server-access/src/tests.rs#L1554-L1737)。これらのfixtureは実Auth0 tenant・Google/GitHub本人確認・ChatGPT OAuth/MCP接続の証明ではない。実サービスの確認項目は [受入範囲](../../docs/self-hosting/authentication.mdx#L201-L224)に残っている。
+sourceには設定消失時の閉鎖、SSE失効、並行admin無効化と実socket停止のテストがある。[認証と閉鎖](../../crates/server-access/src/tests.rs#L176-L350)、[鍵喪失](../../crates/server-access/src/tests.rs#L464-L476)。これらのfixtureは実Auth0 tenant・Google/GitHub本人確認・ChatGPT OAuth/MCP接続の証明ではない。実サービスでは、公開TLS経由の本人確認、未承認memberの拒否、MCP audience一致、scope別操作、token更新と取消、member無効化後の既存接続停止を別々に確認する。fixtureの成功を実サービスの結果と扱わない。
 
 ## 設定内のアカウントと本人情報
 
 設定のアカウント画面は接続情報・方式と既存logoutをまとめる。本人名はstatusの任意 `user.display_name` を使い、Basicは認証済みユーザー名、Auth0は既存memberの表示名となる。statusは現在のweb principalとid/issuer/subjectが一致するactive memberのみを参照し、管理用member一覧を使わない。Localは本人名を返さずLocal接続として表示する。欠落・空白・旧backendでは取得不可を示し、UUIDや仮名で代用しない。[status](../../crates/server-access/src/handlers.rs)・[表示とlogout](../../packages/local-web/src/app/auth/ServerAccessGate.tsx)・[認証回帰](../../crates/server-access/src/tests.rs)
 
 認証設定は既存管理権限で供給する別画面であり、共有設定側が権限を推定しない。組込み認証・作成支援・ChatGPT資格情報のdirty状態を設定shellへ伝え、保存済み情報の存在だけで未保存扱いにしない。認証成功の遷移は明示的にleave guardを解除して行う。[context境界](../../packages/web-core/src/shared/dialogs/settings/settings/SettingsAccessContext.tsx)・[組込み画面](../../packages/local-web/src/app/auth/ServerAccessGate.tsx)・[作成支援](../../packages/local-web/src/app/auth/Auth0Setup.tsx)
+
+## 運用者が初期設定と回復を行う
+
+前提は対象サーバーの管理権限と、その稼働binaryに対応したDB/data directoryである。標準公開Composeでは `docker compose exec lvk server setup-token` を実行し、公開HTTPS画面へ一度限りのキーを入力する。独立instanceでは同じ `LVK_INSTANCE_DIR` をCLIにも指定する。debug/releaseの既定data directoryを混同しない。キーをURL・チャット・通常ログへ貼らず、15分以内に交換する。再発行は旧キーと未完了のsetup/recovery sessionを無効にする。[CLI入口](../../crates/server/src/main.rs#L54-L72)・[発行と交換](../../crates/server-access/src/store.rs#L408-L450)
+
+Basicでは任意のユーザー名と12〜1024byteのpasswordを設定し、保存後に再ログインする。共通の初期passwordや読戻しAPIはない。Auth0では作成支援の適用後も、実ログイン試験でissuer/subjectを確認してからactivateする。MCP用clientはWeb用と分け、設定画面のresourceとJWT audienceを完全一致させる。[password検査](../../crates/server-access/src/store.rs#L390-L406)・[設定手順の状態遷移](../../crates/server-access/src/handlers.rs)
+
+Auth0停止・誤設定でログインできない場合もBasic/Localへ自動fallbackしない。次の順序で操作する。
+
+1. DB（存在するWAL/SHMを含む）、`access.key`、`access.configured`、配置設定とsecretを保全する。DBと暗号化鍵を異なる時点の組にしない。全volumeの整合した退避は [バックアップ手順](../operations/server-container.md#更新前のバックアップと復元検証)に従う。
+2. 対象のdata directoryで `server recovery-token`（標準Composeでは `docker compose exec lvk server recovery-token`）を発行し、公開URLの `/?access=recovery` を開いて入力する。
+3. 復旧sessionでBasicを設定し直す、またはAuth0の設定・実ログイン試験・本人確認・activateを行う。復旧sessionは認証設定用で、Kanban・ファイル・member一覧・MCPを開放しない。
+4. 設定変更成功後は旧sessionが失効するため、新しい方式でログインし、権限と拒否も確認する。
+
+[限定sessionの試験](../../crates/server-access/src/tests.rs#L306-L350)・[設定切替のtransaction](../../crates/server-access/src/store.rs#L311-L375)
+
+`access.key` の形式・permission不正でCLI自体が拒否する場合は、運用者がまず元ファイルとDBを保全し、破損した鍵を退避してから同じdata directoryで復旧キーを発行する。存在する不正鍵をCLIは上書きせず、鍵がない場合だけ新しい32byte鍵を作る。新しい鍵は旧暗号化設定を復号しないため、認証設定を入力し直す必要がある。元の鍵がなければ旧secretは復元できず、ChatGPT用など同じ鍵で暗号化された情報も再登録が必要になる。業務DBや `access.configured` を削除して未設定扱いへ戻さない。Unix鍵permissionは0600相当とし、backupも同等に保護する。[鍵生成と復号](../../crates/server-access/src/store.rs#L28-L105)・[再発行だけでは復号しない試験](../../crates/server-access/src/tests.rs#L464-L476)・[ChatGPT secretの暗号化](../../crates/server-access/src/chatgpt.rs)

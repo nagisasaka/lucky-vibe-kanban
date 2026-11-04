@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:bf4dd8961ece0aeb1a79bb5926e13a0cf47f894cd9667598af148e31fcf4fe49",
+  "pageVersion": "sha256:6efb06678fb1d433119479bc0c8125f6d90c737a7669310f9e147e10db8262f1",
   "claims": [
     {
       "id": "claim_040b4779a7b24b2da362496e3236ffd7",
@@ -83,8 +83,20 @@
       "statement": "単一サーバーコンテナーはlocal LVKを遠隔利用する配布でありPostgreSQL/Electric/relayを必要としない。",
       "evidence": [
         {
-          "resource": "repo://docs/self-hosting/server-container.mdx#L6-L16",
-          "version": "repo-lines-v1:sha256:df5a1c100a45a5fb2eae7b9b568436beface4d8d80f19f66a93a88efd63d8378:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhlYWM2ZDUyZmQ3MTUwMGI0ZWQ0MTczOTRlMDkzZjU5NTQ4YjdlMDk1OGMyMGE3YzkyNGExOTFlZmVhMWM2MDciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM1NTcwNDI0YmFlMTk2ODEzMzBhNWM1NTMwZTJiYjQ1M2M2NDJmOTBlZDE3Nzg3NWM1ZWM0MDI0ODM4MzY4NTciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQwZmJmNWRlNDVjY2E3NDFmNzhiMDRlZDU5MWJhZWZlYjI4Y2FjY2JhNTFjZTQzMWE2ZTdkMjM4Y2FiZjQzMjgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhlODZhYjMxNzQ3ZjUyYmFkYzQ5N2VkNzQ0YThjYTNhNjIyNGNlMjc3MTY4MzQyODEyNzdmNGZmOWYxZmI4MGUifQ"
+          "resource": "repo://Dockerfile#L215-L233",
+          "version": "repo-lines-v1:sha256:de51fa9428d7497154a8762dab1c5306c44da7dceaa64f75babc062d9d06bd07:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQyNjMyYmZlYzRmMzhlNTUzMDU4MzE3ODVjNzI2NDhlZTRkOGNiMjllMDEzNzg0NDc0OTk5YzYxYTcwYjg2ZjQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEzYTY3Y2FlYzdkZWIzYzhmZWFhMDQ2NTNiNTA5YzlkZmYyMzAxNTVkYzViYjAzYjliZGY4ODYzN2I5MGJiMjIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjBmNzU3YzQ4NzRlM2JhZTNjMjhkYjdhNzNkMTM2NDg1MDgwNjE4NmE4MzdlZThhOWQ2ZTcyZmIyNTIwMzgwOWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        },
+        {
+          "resource": "repo://crates/db/src/lib.rs#L262-L277",
+          "version": "repo-lines-v1:sha256:35ea5cadafd4a9dfbd96f8e5ee8271542caf8de1ed45e947a56058ffd79a2d5c:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU1ZjAzMDVlM2VkMGRjYzQ4YjFlMGFhZDkwZjk1M2RmMzk1MTQ2MzY2YTI3ZmIyZTAyMzczOTI1M2Y2NDZmNDUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY3ZDRkYzUyMzFiMWE5Y2UwMjUwODE2Y2E0ZDY5Nzk5ODFhOWYyNzk4MzE0YTAwMzkyMTg5ZDhjMDJjZTNkZTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImIxYmZkMmQ3NjAzMTcxMmJlZTE5NmE2MTQ4YjZkYjExZjIxNTdiMDIzYWE2MjEwZGI4MGQzMGI0NmE2MjMxNTEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImI5ZDEwNDQwNDYwNzAyOWI5NDBhMmE0M2Q1NThlOTFmYzM4NTI4N2M1OTgyZjc5YWIwMzFjMmU1M2FmOWZhOTEifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/lib.rs#L1-L9",
+          "version": "repo-lines-v1:sha256:14f5ab964f8fc0ca123da3142ed48d8642e42b5bf9c6157fbe8c46c446bfb955:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiY2UzYjM4ZTUwNmNjYmE4MjEwMmQwMGVmMDZhODNkMjVmNWNmNzc4OWEzZWQ4YWI4ZjkyMzM1ODRiMzU3Nzk5YyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYmE4M2U5ZWI3MGYzN2EzNjMyMmI4ODE0Y2JiMDE3NzJmZmM0MzdmODY2OWNkZDFhYzc3MTZkMzc5ODQyMjlkYyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjAsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYzVjOThiODk3OTNiM2IxMTg5MTlmNzcyZGU1YmQ1NGVlNGYyZDNmOTA1MGIyYmRkMjhiNjU5NTAxMWY0ZjY2NiJ9"
+        },
+        {
+          "resource": "repo://deploy/server/compose.yaml",
+          "version": "repo-file-v1:sha256:7a76715643f13463692105c518f5cfda155584da6c9de756c574910eddebdae6"
         }
       ]
     },
@@ -283,6 +295,6 @@
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-02T23:50:54.203Z"
+    "at": "2026-11-04T20:14:29.223Z"
   }
 }

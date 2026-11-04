@@ -24,8 +24,6 @@ sources:
     resource: repo://crates/server/src/routes/design_notes.rs
   - id: openwiki-source-1ffb01d1ba3953937e0771bf
     resource: repo://crates/server/src/routes/local_remote.rs
-  - id: openwiki-source-5d1b4189d87b8ac4c58a8f4c
-    resource: repo://docs/development/design-notes-validation.md
   - id: openwiki-source-6380bb3355ad242288be2e3b
     resource: repo://packages/web-core/src/features/design-notes/model/designNoteApi.ts
   - id: openwiki-source-9fba069b7c8bc13326ad6d2a
@@ -34,10 +32,10 @@ sources:
     resource: repo://packages/web-core/src/shared/lib/listSearch.ts
   - id: openwiki-source-4917ca78c6137f6aa2fe5c81
     resource: repo://tests/design-notes/markdown-editing.mjs
-generated: { by: "codex", at: "2026-11-02T01:08:30.935Z" }
+generated: { by: "codex", at: "2026-11-04T20:14:29.223Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-02T14:26:25.232Z
+    at: 2026-11-04T20:14:29.223Z
 ---
 
 # 設計メモ・本文履歴と独立追記
@@ -100,20 +98,20 @@ MCP の書込成功結果は `{note:{id,revision},addition:null|{id,revision}}` 
 
 保持は既存APIでの閲覧継続を意味しない。読取・更新・旧 request の再送は live Project を必要とし、削除後は閉鎖する。同じ Project UUID の再作成も trigger が拒否する。一方、Integration / 外部 MCP operation など他機能のFK削除制約は残るため、Project 削除はそれらにより失敗し得る。その場合、保持 identity の更新も削除とともに rollback される。[削除入口](../../crates/server/src/routes/local_remote.rs#L1589-L1608)・[live照合](../../crates/db/src/models/design_note.rs#L173-L196)・[再送の照合](../../crates/db/src/models/design_note.rs#L249-L268)・[原子性回帰](../../crates/server/src/routes/local_remote.rs#L3502-L3626)
 
-削除後の閲覧・持出し・再関連付け・保持期限は LOCAL-99 に委ねると記録されており、新しい閲覧APIや復元UIを追加した状態ではない。暫定409やCASCADE削除案を現行方針として復活させない。[採用方針と未決事項](../../docs/development/design-notes-validation.md#保存アクセスの境界)
+削除後の閲覧・持出し・再関連付け・保持期限は LOCAL-99 に委ねると記録されており、新しい閲覧APIや復元UIを追加した状態ではない。暫定409やCASCADE削除案を現行方針として復活させない。[migrationに残るアクセス方針](../../crates/db/migrations/20261023110000_retain_design_notes_on_project_delete.sql#L1-L3)
 
 ## 変更時の検証入口
 
 [DBテスト](../../crates/db/src/models/design_note_tests.rs)は初版保存、復元、独立追記、記録者と編集者、複数SQLite接続の競合、Unicode・多数件・固定版、再送receiptを検証する。[server回帰](../../crates/server/src/remote_mcp/tests.rs#L1541-L1835)は scope、Project境界、書込応答上限、legacy receipt、削除後拒否を扱う。旧DBからのmigrationと全column不変、他FK失敗時の原子性は [Project削除fixture](../../crates/server/src/routes/local_remote.rs#L3429-L3626)で確認する。[隔離ブラウザ試験](../../tests/design-notes/isolated.mjs)は本文・追記競合、下書き再適用、Markdown安全性、実stdio、狭い画面、削除成功とSQL保持を横断する。
 
-今回の Sync はこれらのソースとテスト内容を静的に照合した。開発時の試験結果は[履歴付き検証記録](../../docs/development/design-notes-validation.md)にあり、旧409受入試験は現在の受入条件ではない。今回アプリ試験を再実行した結果や、実Auth0/ChatGPT・稼働DB移行の検証とは扱わない。
+今回の Sync はこれらのソースとテスト内容を静的に照合した。移行前の開発記録では旧409試験から保持・削除後拒否の試験へ変更したとされる。現行受入条件は上記migrationと保持fixtureで確認し、旧409を復活させない。今回アプリ試験を再実行した結果や、実Auth0/ChatGPT・稼働DB移行の検証とは扱わない。
 
 
-### 生テキスト編集 Sync の検証範囲
+### 生テキスト編集の過去 Sync 記録
 
-統合済み source `39b2fe9976efeed810bad80dc38d01e4123bc4c3` と凍結 manifest・全4チャンク（SHA-256照合済み）を対象に、UI の入力・描画・フォーム state、既存の REST 直列化、DB の Unicode 検証、独立したブラウザ試験を照合した。新しい [Markdown 編集 fixture](../../tests/design-notes/markdown-editing.mjs) は既存の [隔離試験](../../tests/design-notes/isolated.mjs)から呼ばれ、4フォームの入力・貼付け、プレビュー無書込、既存文字列の無編集保存、応答消失後の同一 request 再送、検証拒否後の保持、100,000文字境界、狭い画面を扱う。既存の競合・復元・保持契約は継続し、今回の製品差分は REST/MCP/DB や共有 editor を変更していない。
+過去Syncは source `39b2fe9976efeed810bad80dc38d01e4123bc4c3` と当時の凍結 manifest・全4チャンク（SHA-256照合済み）を対象に、UI の入力・描画・フォーム state、既存の REST 直列化、DB の Unicode 検証、独立したブラウザ試験を照合した。新しい [Markdown 編集 fixture](../../tests/design-notes/markdown-editing.mjs) は既存の [隔離試験](../../tests/design-notes/isolated.mjs)から呼ばれ、4フォームの入力・貼付け、プレビュー無書込、既存文字列の無編集保存、応答消失後の同一 request 再送、検証拒否後の保持、100,000文字境界、狭い画面を扱う。既存の競合・復元・保持契約は継続し、今回の製品差分は REST/MCP/DB や共有 editor を変更していない。
 
-凍結 Change Manifest は開発時の隔離E2E成功、後続の軽量同期でのスタブ smoke と実E2E未再実行、最後の正式 Integration の install / frontend build / check / lint / backend:test 成功をそれぞれ記録している。Workspace Memory の統合前の状態を現在の統合結果へ読み替えない。この保守で行ったのはソース・試験定義・文書差分・リンクの静的照合と OpenWiki lifecycle の検証であり、製品試験、実 Auth0/ChatGPT、実機モバイルを再実行した結果ではない。無関係な過去の Wiki 全体を再検証したとは扱わない。
+当時のWikiが参照した Change Manifest は開発時の隔離E2E成功、後続の軽量同期でのスタブ smoke と実E2E未再実行、最後の正式 Integration の install / frontend build / check / lint / backend:test 成功をそれぞれ記録している。Workspace Memory の統合前の状態を現在の統合結果へ読み替えない。この保守で行ったのはソース・試験定義・文書差分・リンクの静的照合と OpenWiki lifecycle の検証であり、製品試験、実 Auth0/ChatGPT、実機モバイルを再実行した結果ではない。無関係な過去の Wiki 全体を再検証したとは扱わない。
 
 ## 一覧検索と下書きの関係
 

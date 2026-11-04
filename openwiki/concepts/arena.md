@@ -12,10 +12,10 @@ sources:
     resource: repo://crates/server/src/routes/local_remote.rs
   - id: openwiki-source-13bc408495036974093d65eb
     resource: repo://crates/server/src/workflow_runtime/arena.rs
-generated: { by: "codex", at: "2026-10-26T01:15:35.501Z" }
+generated: { by: "codex", at: "2026-11-04T20:14:29.223Z" }
 verified:
-  - by: openwiki/0.5.1
-    at: 2026-10-26T01:15:35.501Z
+  - by: openwiki/0.7.2
+    at: 2026-11-04T20:14:29.223Z
 ---
 
 # Arena による比較と選択
@@ -29,9 +29,9 @@ Arena は、一つのローカル [Issue](project-and-issue.md)について複�
 | Design（既定） | 方案を読み、追問・比較して方向を決める | Open の間は LVK の既定 commit 方針を抑制 |
 | Implementation | コードの実施候補を比較する | 従来の diff・promote 経路を利用 |
 
-[Arena v2 仕様](../../docs/future/ai-arena/spec-v2.md)は Draft 表記だが、この mode 分離は現行モデルに実装されている。仕様には「diff 統計だけでは設計判断に足りない」という記録された動機がある。そこから全提案 UI が完成済みだとは推論しない。
+v2策定時のDraftには「diff統計だけでは設計判断に足りない」という動機が記録され、自由な方案の比較・追問・反論・融合を実装に先立つ主目的としていた。この意図は履歴であり、全提案UIの完成を意味しない。現行のmode分離と既定commit抑制は [モデルの責任](../../crates/db/src/models/arena_group.rs#L25-L38)・[commit policy](../../crates/local-deployment/src/container.rs#L90-L110)で確認できる。
 
-Open Design の既定 commit 抑制は provider の任意操作を禁止する sandbox ではない。ImplementationStarted では通常方針へ戻る。[policy とテスト](../../crates/local-deployment/src/container.rs#L2082-L2109)。Design を promote する API は、その前に ImplementationStarted であることを要求する。[promote guard](../../crates/server/src/routes/local_remote.rs#L3093-L3099)
+Open Design の既定 commit 抑制は provider の任意操作を禁止する sandbox ではない。ImplementationStarted では通常方針へ戻る。[policy とテスト](../../crates/local-deployment/src/container.rs#L2200-L2230)。Design を promote する API は、その前に ImplementationStarted であることを要求する。[promote guard](../../crates/server/src/routes/local_remote.rs#L3418-L3435)
 
 ## 三種類の状態を混同しない
 
@@ -45,9 +45,9 @@ Arena の Archived は負けた候補・置き換えられた候補を示し、�
 
 通常の Arena 作成 API は 2 候補以上、project ごとの上限（2〜6 に制限）、空でない prompt、少なくとも一つの Repository、Issue と Project の整合性を検証する。同じ Issue に active group があれば拒否する。候補は順番に作成・起動するため、全候補の構築が単一 transaction で成功するわけではない。[検証と作成](../../crates/server/src/routes/local_remote.rs#L2480-L2574)
 
-message API の操作として AskAll、特定 Workspace、Challenge、Synthesize を記録できる。Start implementation は既存候補 Workspace を group の実装対象として記録し、非空の follow-up がある場合に実行を開始する。「実装開始」を新規 worktree 作成や merge と解釈しない。[操作型](../../crates/server/src/routes/local_remote.rs#L1955-L1976)、[実装開始](../../crates/server/src/routes/local_remote.rs#L2656-L2696)
+message API の操作として AskAll、特定 Workspace、Challenge、Synthesize を記録できる。Start implementation は既存候補 Workspace を group の実装対象として記録し、非空の follow-up がある場合に実行を開始する。「実装開始」を新規 worktree 作成や merge と解釈しない。[操作型](../../crates/server/src/routes/local_remote.rs#L1955-L1976)、[実装開始](../../crates/server/src/routes/local_remote.rs#L2990-L3045)
 
-通常 Arena の Promote は winner を記録し、他候補の Arena status だけを Archived にする。通常 archive flag と worktree は保持し、解放は別途 [手動 archive](workspace.md#archive削除期限-cleanup)で行う。処理内で同期的に worktree を削除せず、Git merge も行わない。選ばれた実装はその後の [レビュー・PR・統合](../workflows/task-to-integration.md)へ進む。[Promote](../../crates/server/src/routes/local_remote.rs#L3180-L3211)
+通常 Arena の Promote は winner を記録し、他候補の Arena status だけを Archived にする。通常 archive flag と worktree は保持し、解放は別途 [手動 archive](workspace.md#archive削除期限-cleanup)で行う。処理内で同期的に worktree を削除せず、Git merge も行わない。選ばれた実装はその後の [レビュー・PR・統合](../workflows/task-to-integration.md)へ進む。[Promote](../../crates/server/src/routes/local_remote.rs#L3418-L3465)
 
 ## Retry・Close・Dissolve と部分失敗
 
