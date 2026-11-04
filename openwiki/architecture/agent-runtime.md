@@ -5,7 +5,7 @@ description: AgentRun を独立プロセスで実行し、Native Audit から永
 tags: [agent-runtime, audit, persistence, recovery]
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-04T20:37:49.832Z
+    at: 2026-11-04T20:55:57.207Z
 sources:
   - id: openwiki-source-b85c3dc0eaacdffedf4e68ee
     resource: repo://crates/db/migrations/20261026180000_agent_starting_recovery.sql
@@ -31,6 +31,10 @@ sources:
     resource: repo://crates/executors/src/executors/provider_adapter.rs
   - id: openwiki-source-351583963abfe37bbf137f7e
     resource: repo://crates/executors/src/runtime/contracts.rs
+  - id: openwiki-source-19ceaa0b0195b09764cb7a9b
+    resource: repo://crates/executors/src/runtime/event.rs
+  - id: openwiki-source-3653da3109a7e3dfb85277d4
+    resource: repo://crates/executors/src/runtime/mod.rs
   - id: openwiki-source-2312e3967b9fd7f73e349d9a
     resource: repo://crates/executors/src/runtime/native_audit.rs
   - id: openwiki-source-788fa2f6f1a3d449a1a9efe4
@@ -69,7 +73,7 @@ sources:
     resource: repo://crates/workspace-manager/src/workspace_manager.rs
   - id: openwiki-source-141584dac09cf0f93be6bff5
     resource: repo://tests/codex-process-cleanup/README.md
-generated: { by: "codex", at: "2026-11-04T20:37:49.832Z" }
+generated: { by: "codex", at: "2026-11-04T20:55:57.207Z" }
 ---
 
 # Agent Runtime の監査・投影・回復
@@ -111,6 +115,14 @@ Codex の command/file approval waiter は provider と同じ process host に�
 UI の ResolveApproval は host の waiter を解決する。Codex では port 側で解決 event を先行生成せず、request handler が待機結果（timeout・取消を含む）から `approval_resolved` を出す。`approval_requested` / `approval_resolved` と未解決件数の通知を adapter が canonical に投影し、件数が残る間は AwaitingApproval、0 で Running にする。native request ID への応答と semantic control の監査記録は異なるものであり、UI の回答受付だけを native 操作の実行成功と扱わない。[制御配送](../../crates/local-deployment/src/agent_run_port.rs#L3318-L3367)・[client の結果記録](../../crates/executors/src/executors/codex/client.rs#L971-L1092)・[件数の投影](../../crates/executors/src/executors/provider_adapter.rs#L1522-L1535)
 
 Host の監視 loop を離れた際は、明示 Cancel でなく EOF・crash・protocol failure・通常終了でも cancellation token を cancel して承認 task を解放する。その後に既存 process cleanup、control 解放、出力 drain を行う。waiter の配置はアプリとの再接続を意図したものだが、この変更の fixture 試験はサーバー再起動越しの回復まで証明しない。[終了処理](../../crates/local-deployment/src/process_host.rs#L1061-L1085)・[検証の境界](../concepts/session-and-agent-run.md#承認の検証範囲)
+
+## 契約・event・Native Audit を分けた理由
+
+現行 Runtime は request/state 等の `contracts`、意味的な `event`、生の証拠を保存する `native_audit` を別のモジュールとして公開する。会話の Message は event の一種類であり、tool・承認・入力待ち・usage・終了までを一つの会話本文として扱わない。[公開境界](../../crates/executors/src/runtime/mod.rs#L1-L21)・[event の区別](../../crates/executors/src/runtime/event.rs#L7-L73)。この型の境界と、次節の保存・配信経路の分離は関連するが、同じ分類ではない。
+
+移行元の Runtime 目標設計に記録された歴史的判断では、一つの統一 Message union は、tool call・承認・plan・patch・usage・provider 固有制御の意味と項目が異なるため、大量の任意 field や `unknown` を生み、安全性と意味を失うとして退けられた。また、出力だけでは「LVK が何を要求し、adapter がどう翻訳し、provider へ何を渡したか」を説明できないため、native input も protocol 更新、回復失敗の調査、adapter 回帰の証拠として監査する理由が記録されている。これは当時の設計理由であり、現在のあらゆる入力が送信前に永続化される保証ではない。現行 host は初回の canonical input と launch payload を起動前に記録する一方、活動中の制御は送信後に記録する。[初回記録](../../crates/local-deployment/src/process_host.rs#L333-L350)・[送信後記録と失敗の限界](#制御入力の送信と監査の順序)
+
+同じ歴史的設計では、Tool Gateway に初期から全 tool を集約すると、実 worktree と native coding CLI の基盤改修に filesystem・command・MCP・permission・sandbox の適合作業が加わり、基盤改修を遅らせるため初期範囲から外した。V1 の知識基盤も、取り込み・分割・embedding・索引・検索・長期記憶が独立したデータ寿命と品質指標を持ち、同時構築では範囲が拡大するとして除外した。native MCP と外部 tool を通じた独立 Context/Tool service の接続余地を残す、という当時の理由である。これらを現在の製品全体の非目標や、後続の採否決定に読み替えない。現在の [MCP・Tool Manager](../integrations/agent-providers.md#skill-と-tool-manager) と [canonical repository memory](../concepts/repository-memory.md) はそれぞれの現行契約で判断し、その後の全意思決定の理由はここでは未確認である。
 
 ## 四つのデータ経路
 

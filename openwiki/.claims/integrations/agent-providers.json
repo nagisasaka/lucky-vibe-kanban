@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:baf6f5e49b3b3ad46e5469bbdf1ca4a27ee594f0c599c0410fe6e7a0c9122392",
+  "pageVersion": "sha256:b82c937eaf47deb06abc113eed03ccefeb0c97a16367408befd075c03b17b3e8",
   "claims": [
     {
       "id": "claim_8c3b7b704cee45f0ad83d4207da34794",
@@ -891,10 +891,34 @@
           "version": "repo-file-v1:sha256:e010676353d6b6532543000335bfd783d0d3ced99251eeaee766552843bad592"
         }
       ]
+    },
+    {
+      "id": "claim_10a3ae0ca3c54c9d94199651eb1679c9",
+      "statement": "LVKのcodex_homeは非空CODEX_HOMEを優先し未設定・空白値なら~/.codexへ戻り、解決先のconfig.tomlをnative MCP既定設定に、auth.jsonのmetadataをLoginDetected判定に使う。",
+      "evidence": [
+        {
+          "resource": "repo://crates/executors/src/executors/codex.rs#L428-L451",
+          "version": "repo-lines-v1:sha256:150a90473536bd38615bbecc6ddbebb100ff64dfc0d334cefc10ef33d545367c:eyJzZWxlY3RlZExpbmVDb3VudCI6MjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMxYTY3YWM3YWNjMjkzZjY0ZDJkMDlmYzVhZTBlOThhM2U4ODBjNDhmOTFiOTlhNjYwN2VjNTZjZGExZmUyODMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImMzNzE3Mzc5OWJlMzU4ZmU2MzU3YzM1NGU5OGMxMjgxZDNiNjNlMTE3YjQwMDg4ZWU4MDFkMGViOGM5ZDNhNDEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijg0ZTZmOWEzZGQ3NTBlOWM4NzIwNjBiZGRlMDQxYjlmYTZmMTYzZTgwNTBlNjQyMzMyZGMxZDIzZjczN2MzMDAifQ"
+        },
+        {
+          "resource": "repo://crates/executors/src/executors/codex.rs#L69-L79",
+          "version": "repo-lines-v1:sha256:e090e505403d9002130742e44e726e6399c554c23dde9179e2aa8cff25733742:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc0MmUyM2NhOTMxYTcwYzliOGFiYjhjZGU3N2VlZDZkYzZmNDI0NDEyYzZkZDMwNzgzZGMxOGQxZThlYzkzOTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMzMmQ5MWU4NTdmNWM5NzIxZmU2YjcwZmRmYmZhODUyOGFiNDVmYmQzMjcwY2VlNjhhMmIyMzgzYjEwMDYzYjAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRlNmViYjgzY2M5MjhiODM3MWM5NWIyZGRmZTRkMWVlMGQ2Nzk1OTkyNWM3NDdlZGY5MmE4MjRkMzFmYmI4NGEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijg2YTFlYmJiZDhmOTY4ZmZhNmIwZGFmN2NlMTA0ZmFlMjNiOWNkMGNiMDFlNmU5M2Y4YTQzYjE2YjQxYTQwYTgifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_8ac20f350d884f24ac5e89d3a40afa25",
+      "statement": "Claude subscriptionの認証probeはcwdとexecution envへprofile envを合成して公式CLI子プロセスへ適用し、public auth metadataを検査する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/executors/src/executors/claude/auth.rs#L78-L128",
+          "version": "repo-lines-v1:sha256:290a022c98bb9e2b131813bb38d6bb9e6a34b845245898edc958795122310c71:eyJzZWxlY3RlZExpbmVDb3VudCI6NTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQyZWNmNzI2ZmE3ZWJlYTY1YTFiMWVhOTdjZjZiNTgxOGY3NjI5NGFmNzdjOTRhMTNlODNlY2I4NjQ2OWJmMGMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQwMmUyODQxMGRjZDkzZWYwMTBlMTAwMDE3ODIzNGRiNjQxMDVmODY1YjU3ODkwN2E0YjEyNDQyNGQyODhkMTciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE2MmVlNTdlNDFhOGMyMGFlMDE2NGRmMjYxNDM5ZGNjNDk5ZDM1MjA4MzQxNTE1MTZkMDQ3ZThkZWFlOGE0NjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE1MjE2MDRiMzVmYzQwYWYwMGNiYTRlZWEyZmQ1ZTJjM2FmMTg2M2IzOTExODVkN2JmNGJiMDllNzJkMGM4YjMifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-04T20:22:03.096Z"
+    "at": "2026-11-04T20:55:57.207Z"
   }
 }

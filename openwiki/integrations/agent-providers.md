@@ -108,10 +108,10 @@ sources:
     resource: repo://tests/claude-subscription/subscription.spec.ts
   - id: openwiki-source-141584dac09cf0f93be6bff5
     resource: repo://tests/codex-process-cleanup/README.md
-generated: { by: "codex", at: "2026-11-04T20:22:03.096Z" }
+generated: { by: "codex", at: "2026-11-04T20:55:57.207Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-04T20:22:03.096Z
+    at: 2026-11-04T20:55:57.207Z
 ---
 
 # Agent provider・設定・MCP・Skill
@@ -174,6 +174,22 @@ group の識別子再利用防止、自然終了時の orphan 回収、別 sessi
 Linux の `discovery_cleanup_normal_timeout_drop_abort` は fake app-server を使い、通常・timeout・future drop・caller abort の4ケースで wrapper/native の終了、leader reap、無関係なプロセスの生存を確認する。future drop は実 WebSocket router の切断試験ではなく、公式 CLI・実 provider/model・非 Linux の動作確認でもない。[実 Rust fixture](../../crates/executors/src/executors/codex.rs#L1684-L1798)・[試験結果と限界](../../tests/codex-process-cleanup/README.md#executed-rust-validation-2026-10-25-jst)。今回の静的照合と正式 Integration の検証省略は [cleanup の検証範囲](../architecture/agent-runtime.md#codex-cleanup-の検証範囲)に記録した。
 
 MCP tool の一回限り権限要求はこの自動承認とは別で、常に明示回答と一意な tool 相関を要求する。[承認の正本](../concepts/session-and-agent-run.md#codex-の一回限り-mcp-tool-承認)を参照する。
+
+## Provider の設定場所と実行アカウントを揃える
+
+LVK のサーバー認証と provider CLI の認証は別である。標準 Compose の login コマンドと永続 home は [provider 実行アカウントの準備](../operations/server-container.md#provider-の実行アカウントを準備する)と [三つの永続 volume](../operations/server-container.md#永続化と実行の寿命)を参照する。カスタム設定場所を使う場合は、login/status より前に実行サーバー内の OS account と設定ディレクトリを決め、その同じ環境を選択 profile の次回実行にも適用する。別マシン・別 user・別 directory の login 成功を、この実行環境の認証済み状態と扱わない。資格情報をコピーしたり内容を表示したりして確認しない。
+
+### Codex: CODEX_HOME と native MCP 設定
+
+LVK の `codex_home()` は非空の `CODEX_HOME` を優先し、未設定・空文字・空白だけの値なら実行 account の `~/.codex` へ戻る。home 自体を解決できなければ設定場所を得られない。解決した directory の `config.toml` が native MCP の既定設定ファイルであり、同じ directory の `auth.json` の metadata/更新時刻を availability の LoginDetected 判定に使う。この判定は資格情報の有効性・quota・次回モデル応答の証明ではない。[home 解決](../../crates/executors/src/executors/codex.rs#L69-L79)・[MCP と availability](../../crates/executors/src/executors/codex.rs#L428-L451)
+
+通常の home を使う標準 Compose 手順と、`CODEX_HOME` を選んだ運用を混同しない。カスタム場所を選んだら、その account と同じ `CODEX_HOME` を使う CLI で `codex login --device-auth` と `codex login status` を行い、LVK サーバー側の設定探索と選択 profile の起動環境も同じ場所を参照することを確認する。profile だけの環境 override がサーバープロセス自身の `codex_home()` を変更するとは限らない。native MCP editor で保存した設定もその解決先を確認し、次の通常実行で接続と応答を確認する。標準 home 外に置く場合は、その場所の永続化・秘密保護も別途必要となる。
+
+### Claude: CLAUDE_CONFIG_DIR と認証 probe
+
+Claude CLI を使う account と設定 directory は login・status・実行で揃え、`CLAUDE_CONFIG_DIR` を選ぶなら三者に同じ値を適用する。これは移行元の Claude 導入手順に記録された運用前提であり、LVK が別 account の資格情報を移植する機能ではない。`claude auth login` と `claude auth status` は利用者がその環境で行う vendor CLI 操作である。vendor 内部の credential 格納形式や全設定優先順位は、LVK の probe 実装だけからは確定できない。
+
+Subscription profile の LVK probe は現在の cwd と execution env に profile env を合成し、その環境を `claude --settings … auth status` の子プロセスへ適用する。`CLAUDE_CONFIG_DIR` を LVK が独自に解釈して credential を読み出すのではなく、公式 CLI の public metadata を検査する。profile-policy/discovery の readiness と実 launch の完全な環境は同一保証ではないため、login/status 後に選択 profile の次の実行を同じ環境で確認する。[profile env と probe](../../crates/executors/src/executors/claude/auth.rs#L78-L128)・[実起動直前の確認](../../crates/executors/src/executors/claude.rs#L739-L775)・[scope と readiness の限界](#選択-profile-と-discovery-の一貫性)
 
 ## Claude のサブスクリプション専用 profile
 

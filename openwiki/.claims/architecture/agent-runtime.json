@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:3e6d612b69a112cbcbb2e43deadd9e0fcbfb0b491bbbea6a9027c5610bcc98d4",
+  "pageVersion": "sha256:ddecaee39eaa7ff2b8f79b2c11623349ae93da7ceb2f31dc010b4687bccc101e",
   "claims": [
     {
       "id": "claim_73d8e11679c6457aaf2e2b1a68fb767e",
@@ -715,10 +715,24 @@
           "version": "repo-file-v1:sha256:e23a2fc9862688ec7082450401797c07ebca6f3e8c496c2ce5afe743eb3977e0"
         }
       ]
+    },
+    {
+      "id": "claim_f66868a41b7c4bf2b6cdaf210e09135d",
+      "statement": "現行Runtimeはcontracts・event・native_auditを別モジュールとして公開し、Messageとtool・承認・入力待ち・usage・終了の意味的eventを区別する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/executors/src/runtime/event.rs#L7-L73",
+          "version": "repo-lines-v1:sha256:d9fbe47b7629f63b950da0e86b4b62ce30e7bc4a8a11138465f810ae29c3173e:eyJzZWxlY3RlZExpbmVDb3VudCI6NjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRhZTg0YTRhYmZkNDZkMTAwZGJhYTAxMjRhYjhhMjJhYjRjZWU5Nzc1MGI1YWFhZDk1YjljNzE2MTY5MDBjYzMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhhYjRlZWI2N2FhNjk0ZjU1ODBjYmMzMGMxYWU1NTY4NGI5NmIyYmMwZGZlYjkwNTQ5ZGExZTc5NDM0MTA5ODEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjJlMTJmMGI4Mzk5ZWEyMWUyMGEzYzI4MTM5ZDE4ZWNiMTRlNDM2ODQzNDIxMzIxOWNlYjc4YmY4M2MxZGVmM2MiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQ2YThhYjgzNGMyMmQwMDhhM2I3MjM0ZWI1NzNjMjMwNjI4OTZlYWNkNTQxYzJmNWZiZjMyZjE1ZWMwOGZlNGQifQ"
+        },
+        {
+          "resource": "repo://crates/executors/src/runtime/mod.rs#L1-L21",
+          "version": "repo-lines-v1:sha256:a5d7df0dc8018aa7ae92d18058d2af32e4110e99495dd9ad59f99dc672db3153:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMyNzY1MTE5YzU2ZTJmYzZmNjNmZTZhNmZlZTBiOWQ1NjQ3YjViNWUyYjllNmRiYzRiOTFlYTJkMzU1MDAwNDAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUxOWUzZjIxY2NlYjIwNWI3NDk2OGQ0NmU4NDg2YWU0NTlkMzdiNjE5NDk0NDM4YTI1YzFiMzI5Y2M5MGQ0ZTYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-04T20:37:49.832Z"
+    "at": "2026-11-04T20:55:57.207Z"
   }
 }
