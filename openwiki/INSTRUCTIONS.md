@@ -134,3 +134,33 @@ source/tests/configuration/README or this user-authored file, issuing commits or
 publishing independently of the LVK host, changing shared environments, or
 executing destructive recovery procedures. Preserve this file during generation.
 Respect existing read-only Review, host safety rules and source drift safeguards.
+
+
+Migration acceptance follow-up: authentication recovery ordering
+
+A content acceptance review of Wiki source 59bfe253 identified an incomplete
+sequence in concepts/server-access.md, under the operator setup and recovery
+instructions. Step 1 follows operations/server-container.md's consistent full-
+volume backup procedure, which stops LVK; step 2 then uses docker compose exec
+and the HTTPS recovery screen without first returning that same deployment to a
+running state. Resolving documentation dependencies alone does not resolve this
+acceptance finding.
+
+During this reconciliation, verify and correct that sequence through the normal
+OpenWiki page and Claims lifecycle. After the stopped backup has been verified,
+explain how to restart the recovery target with the same image/binary, Compose
+project, volumes and configuration, without an upgrade, reinitialization, or new
+agent/Runner work. Confirm the server and HTTPS recovery entry are reachable
+before issuing the recovery token against the same data directory and continuing
+with the limited recovery session. Check the relevant source, existing deployment
+commands and original authentication/backup procedures rather than inventing a
+command. Preserve locked failure behavior, DB/key/marker consistency, and the
+existing distinction between restoring the original key and configuring new
+credentials. Do not suggest deleting the DB or access.configured.
+
+Make the composed backup-to-recovery procedure self-contained and internally
+consistent. Validate the steps and cross-links after writing them, and report
+this finding separately from zero remaining docs dependencies. Preserve already
+migrated knowledge and stable page paths; do not redo unrelated pages merely to
+increase scope. Do not perform an actual shutdown, restore, key change, login or
+other live recovery action as part of this documentation correction.
