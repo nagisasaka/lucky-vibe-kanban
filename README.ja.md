@@ -1,6 +1,6 @@
 # Lucky Vibe Kanban（LVK）
 
-**看板で作業を計画し、コーディングエージェントを動かして、その変更をレビューする。**
+**カンバンで作業を計画し、コーディングエージェントを動かして、その変更をレビューする。**
 
 LVKは、Git worktree、複数Session、視覚的なエージェントWorkflow、ローカル統合、
 OpenWikiによるリポジトリの記憶を備えたセルフホストの開発環境です。
@@ -36,6 +36,9 @@ GHCRを通じてDockerイメージのみを配布し、現在の対象はLinux a
 開発時の規則は[AGENTS.md](AGENTS.md)を参照してください。
 配布設定は[deploy/server](deploy/server)、イメージの検証・公開は
 [publish-server.yml](.github/workflows/publish-server.yml)が担当します。公開と配備は別の操作です。
+
+初回のsource checkoutでは、指定ツールチェーンと`cargo-watch`を用意し、
+`pnpm install --frozen-lockfile`、`pnpm run dev`の順に実行します。
 
 READMEは人間がAIの支援を受けて保守します。運用詳細はAIが保守するOpenWikiに集約し、
 統合済みsourceと照合します。source・tests・configurationを優先します。

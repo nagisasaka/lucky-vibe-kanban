@@ -38,6 +38,9 @@ rules. Deployment configuration lives in [deploy/server](deploy/server); image
 validation and publication use [publish-server.yml](.github/workflows/publish-server.yml).
 Publishing an image does not deploy it.
 
+For an initial source checkout, install the repository toolchains and `cargo-watch`,
+then run `pnpm install --frozen-lockfile` followed by `pnpm run dev`.
+
 This README is maintained by people with AI assistance. The AI-maintained OpenWiki
 owns operational detail and is checked against integrated source. Source, tests
 and configuration take precedence. LVK maintains knowledge in the Wiki rather

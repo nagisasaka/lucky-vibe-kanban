@@ -33,6 +33,9 @@ LVK仅通过GHCR发布Docker镜像，当前平台为Linux amd64，此分支不�
 贡献者规则见[AGENTS.md](AGENTS.md)。部署配置位于[deploy/server](deploy/server)，
 镜像验证与发布由[publish-server.yml](.github/workflows/publish-server.yml)负责。发布不等于部署。
 
+首次使用源码时，先安装仓库指定的工具链和`cargo-watch`，
+然后依次执行`pnpm install --frozen-lockfile`和`pnpm run dev`。
+
 README由人类在AI协助下维护。操作细节由AI维护的OpenWiki负责，并与已整合源码核对。
 源码、测试和配置优先。LVK使用Wiki维护知识，不再建设独立文档网站。
 
