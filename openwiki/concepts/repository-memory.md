@@ -24,6 +24,8 @@ sources:
     resource: repo://crates/server/src/workflow_runtime/bootstrap.rs
   - id: openwiki-source-da8c4a13aea0bac33b3f0a35
     resource: repo://crates/services/src/services/openwiki.rs
+  - id: openwiki-source-7277adee5c65e8d79143e722
+    resource: repo://crates/services/src/services/openwiki/bootstrap.rs
   - id: openwiki-source-bef089692ac7606992050919
     resource: repo://crates/services/src/services/openwiki/bootstrap/reports.rs
   - id: openwiki-source-110c99f4b05152335c067c71
@@ -40,10 +42,10 @@ sources:
     resource: repo://docs/design/openwiki-implementation-checkpoints.md
   - id: openwiki-source-d19b7cc964a7f5f0837a46de
     resource: repo://docs/design/openwiki-repository-memory.md
-generated: { by: "codex", at: "2026-10-29T12:38:00.042Z" }
+generated: { by: "codex", at: "2026-11-04T19:49:13.194Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-02T01:08:30.935Z
+    at: 2026-11-04T19:49:13.194Z
 ---
 
 # Repository Memory の三層と統合契約
@@ -144,3 +146,9 @@ Wiki の成功 receipt・canonical branch と、生成された保守 Workspace 
 `verification-starts/`と`verifications/`はrepository shared persistent knowledge内の記録であり、source events・統合Manifest・Wiki入力にはならない。保存はcompletion lockと既存のatomic/no-clobber機構を使う。dirty/SHA変更・claimや実exit不足等は不変declineとなり、本当のI/O障害やidentity不整合はエラーとして残す。[保存形式](../../crates/utils/src/repository_memory/verification.rs)
 
 既存の `get_workspace_verification` / `get_workspace_verification_test` がread-onlyで読取る。通常Manifestを優先し、検証専用は `record_origin=no_change_verification`、agent claimとhost command exitを分けて示す。`evidence=agent_recorded_test_claims`と`current_worktree_verification=not_established`を独立検証へ昇格しない。所属・revision・pagingとhead再照合は維持する。[読取境界](../../crates/server/src/remote_mcp/verification_read.rs)・[利用手順と限界](../../docs/development/no-change-verification.md)
+
+## 文書方針と意味記録の境界
+
+共通 host prompt は、source・tests・configuration による現行動作の検証と、repository 固有の文書保守方針への従属を別々に要求する。保守される正規文書は説明とリンクを残せるが、移行対象の文書は必要な知識を Wiki 本文へ保存する。共通実装自体が全 repository に `docs/` の削除を命じるわけではない。[共通 host の文書契約](../../crates/services/src/services/openwiki.rs#L200-L216)
+
+Change Manifest の goal・判断・却下案は意図を調べる入口であり、統合済みでない Workspace Memory の案を製品契約へ昇格しない。理由は source と利用可能な Manifest で裏付け、Design Note は補助情報として扱う。現在の動作、記録された意図、過去の判断を区別し、確認できない理由は不明のまま残す。Bootstrap の全役割と通常 Sync への適用、運用手順の保存責任は [文書方針の継承](../operations/openwiki-maintenance.md#文書方針の継承と移行の判定)に置く。[Sync の調査契約](../../crates/services/src/services/openwiki.rs#L192-L216)・[Bootstrap の証拠契約](../../crates/services/src/services/openwiki/bootstrap.rs#L398-L406)

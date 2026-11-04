@@ -4,10 +4,8 @@ title: OpenWiki の初期生成・同期・回復
 description: Bootstrap の独立した Generate/Review/Refine と通常 Sync の違い、完了証拠、公開条件、失敗時に保持すべき所有権を説明する。
 tags: [openwiki, bootstrap, maintenance, recovery, validation]
 sources:
-  - id: openwiki-source-8037e2358a2c4f9b2c722a11
-    resource: repo://AGENTS.md
-  - id: openwiki-source-a2371d6362e5db4bc834ad03
-    resource: repo://CLAUDE.md
+  - id: openwiki-source-8c6a3e8eeb36684980688a9a
+    resource: repo://assets/openwiki-version
   - id: openwiki-source-3c57aab40b425fc8b5d0d5c5
     resource: repo://crates/db/migrations/20261027090000_generated_issue_status.sql
   - id: openwiki-source-4f59e07f8850eb04105d5cb8
@@ -86,10 +84,10 @@ sources:
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/ReposSettingsSection.tsx
   - id: openwiki-source-7fd9452d5e666180c50f8cb7
     resource: repo://tests/openwiki/recovery.sh
-generated: { by: "codex", at: "2026-11-02T14:26:25.232Z" }
+generated: { by: "codex", at: "2026-11-04T19:49:13.194Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-02T23:50:54.203Z
+    at: 2026-11-04T19:49:13.194Z
 ---
 
 # OpenWiki の初期生成・同期・回復
@@ -108,7 +106,7 @@ Repository settings で有効化し、統合先の **local branch** と出力言
 
 開始時の存在判定と公開時の完成条件は異なる。公開候補には finalised `openwiki/index.md` が必要であり、部分importを既存Wikiとして受け入れることは、そのまま公開可能という意味ではない。[公開条件](../../crates/services/src/services/openwiki.rs#L333-L346)
 
-利用手順と依存条件は [OpenWiki repository memory](../../docs/workspaces/openwiki.mdx) を参照する。文書は pinned OpenWiki と Node.js 22.22.0 以上、既存 Codex 認証を用いる構成を定める。LVK の version 検査は CLI の help banner を読み、固定版との完全一致を要求する。--version が exit 0 になるだけでは互換性の確認にならない。[利用条件](../../docs/workspaces/openwiki.mdx)・[version 検査](../../crates/services/src/services/openwiki.rs)
+実行環境には pinned OpenWiki と Node.js 22.22.0 以上、既存 Codex 認証を用意する。保存・開始・状態確認は [設定から保守を開始する](#設定から保守を開始する)に従う。LVK の version 検査は CLI の help banner を読み、固定版との完全一致を要求する。--version が exit 0 になるだけでは互換性の確認にならない。[配布pin](../../assets/openwiki-version)・[version 検査](../../crates/services/src/services/openwiki.rs)
 
 LVK の準備処理は public Codex integration を --force なしで準備する。変更された user 設定を上書きせず conflict とする方針が code comment に記録されている。maintenance thread は public MCP の `openwiki mcp --host codex` を必須として設定し、turn / Goal 開始前に実際の lifecycle 6tool と読取4tool の catalog を確認する。[準備境界](../../crates/services/src/services/openwiki.rs)・[thread 設定](../../crates/executors/src/executors/codex.rs)・[起動前確認](../integrations/agent-providers.md#coding-agent--外部-mcp-server)
 
@@ -128,7 +126,7 @@ Codex の TOML editor が project trust table を追加すると、OpenWiki の�
 
 通常SyncやBootstrapとは別に、自動マージではコード検証後の同じ候補branchでcanonical `openwiki/` を更新し、Wikiだけを別commitにする。コード検証SHAとWiki/公開SHAを分けて記録し、finish完了前やWiki失敗時は公開しない。専用Wiki Issueや別Workspaceへ分岐しない。[公開要求とSHAの契約](../concepts/formal-integration.md)・[担当promptと公開guard](../../crates/server/src/routes/integrations/runtime.rs)。
 
-このrepositoryのルート `CLAUDE.md` は通常ファイルの `@AGENTS.md` importで同じ開発指示を参照する。AGENTSとCLAUDEを同じ実体へ書くsymlinkへ戻さず、生成された管理blockはOpenWikiの正規setup/lifecycleに任せる。[指示の実体](../../CLAUDE.md)・[正本](../../AGENTS.md)。
+生成 setup の復元は host が終了後に行う。writer が途中で手動復元せず、元の file type・permissions・link target を保持する journal と公開 guard を使う。[setup の保存・復元](../../crates/services/src/services/openwiki/setup.rs)
 
 ## 開始元 Project と保守 Issue
 
@@ -306,3 +304,22 @@ writer には lifecycle 6tool に加え `openwiki_search`、`openwiki_read`、`o
 読取は active run の前後や lifecycle と重なってよい。成功・失敗とも writer の begin/finish、未完了operation、source drift を帳消しにしない。root/thread・call ID・引数・不整合duplicate の検査は維持し、未知toolとlifecycle相互の重なりは拒否する。未解決の読取callもwriter境界で拒否する。[監査分類](../../crates/services/src/services/openwiki/completion.rs#L196-L323)・[読取の回帰](../../crates/services/src/services/openwiki/completion.rs#L860-L997)
 
 検証は種類を分ける。`scripts/test-openwiki-host.mjs` と `--lvk-setup`（symlink / `--claude-file` / `--claude-absent`）はモデル不要で公開protocol、setup復元、source/config/INSTRUCTIONS保護、Wiki-only候補を扱う。`scripts/test-openwiki-install.mjs` は公開0.5.1/0.7.2を用意してupgrade/reinstall、共同owner、custom conflict、marker修復を確認する。`openwiki_live_fixture` は隔離した実Codexの2 turnでlinked検索・読取、owned begin再開、finishとNative Auditを確認する有料のopt-inで、DB所有・receipt・正式公開guardとは別である。[試験方法と限界](../../docs/workspaces/openwiki.mdx#verify-or-upgrade)
+
+## 文書方針の継承と移行の判定
+
+共通 host prompt は repository 固有の文書方針を要求する。Bootstrap は追加の `DOCUMENTATION_GUIDANCE` を Generate・独立 Review・Refine の全役割へ一回ずつ渡す。通常 Sync は Bootstrap 専用の指示全体を複製せず、共通 host の方針と Sync の調査契約を使う。[host と Sync](../../crates/services/src/services/openwiki.rs#L176-L220)・[全役割への配線](../../crates/services/src/services/openwiki/bootstrap.rs#L398-L455)
+
+保守される正規文書は要約と検証済みリンクで結べる。移行予定の文書は、必要な手順・制約・裏付けのある理由を Wiki 自体に保存し、読者が廃止対象の文書を開かないと運用できない状態を残さない。共通コードは全 repository の文書削除を指示しない。README など人間所有の文書の書換えと、Wiki の更新は別の権限であり、README が指す運用入口を維持する。[共通の保守境界](../../crates/services/src/services/openwiki.rs#L206-L216)
+
+Review は generator の選んだ資料や Wiki の分類だけを範囲とせず、独立した source entrypoint と高価値の文書から不足を調べる。文書の状態を current/accepted、proposed、superseded/historical、generated/transient、不明に区別する。日付や名称だけでは現行性を証明できず、コードとの不一致だけで理由の記録を捨てない。Design Note は現行契約の証拠の代わりにはせず、理由が未確認なら不明とする。[証拠と Review の契約](../../crates/services/src/services/openwiki/bootstrap.rs#L401-L429)
+
+この配線の回帰入口は `every_fresh_bootstrap_role_receives_one_shared_documentation_policy`。全三役への方針継承、移行対象の自己完結化、ignore の保全を検査する。prompt の文字列検査は実際の Wiki の意味的網羅性や docs 移行の完了を保証しない。今回の保守では試験定義を静的照合し、製品テスト・有料モデル fixture・配備を再実行していない。[回帰定義](../../crates/services/src/services/openwiki/bootstrap.rs#L487-L522)
+
+## 設定から保守を開始する
+
+1. Project の **Configure project working location** から対象 Repo の **Local execution configuration** を開く。OpenWiki の有効化、統合先 local branch、出力言語を保存する。フォームに未保存の変更がある間は開始できず、実行は保存済み値を使う。[設定と開始抑制](../../packages/web-core/src/shared/dialogs/settings/settings/RepositoryMemorySettings.tsx#L57-L139)
+2. 統合済み branch に tracked `openwiki/` がなければ初期生成、存在すれば既存 Wiki の adoption / Sync を選ぶ。全体比較か、指定 commit 以後の比較を選択する。指定 SHA は選択 branch の履歴上に必要である。部分 import を初期化し直さない。[受付と scope](../../crates/server/src/routes/openwiki.rs#L235-L285)・[scope 検査](../../crates/services/src/services/openwiki/sync_scope.rs)
+3. maintenance の状態、Bootstrap の現在 phase、**View Workflow** の Canvas / Dashboard を確認する。Current になるまで、会話の終了と公開成功を区別する。範囲限定 adoption はそれ以前の未検証範囲を残すため、全体比較の成功と同じ鮮度保証ではない。[設定画面](../../packages/web-core/src/shared/dialogs/settings/settings/RepositoryMemorySettings.tsx)・[receipt と scope の確定](../../crates/server/src/routes/openwiki.rs#L608-L650)
+4. エラー時は保存された owner・会話・tool error を確認する。preflight なら pinned CLI、実行 PATH、MCP の allow/deny と必要10toolの有無を調べる。改変した MCP block、custom 設定、曖昧な marker は `--force` で上書きせず、競合を解消して cleanup 後に明示的に再試行する。[起動前確認](../../crates/executors/src/executors/codex/client/openwiki.rs)・[非強制の準備](../../crates/services/src/services/openwiki.rs#L148-L172)
+
+取消は既存実行の Stop を使い、process exit と instructions 復元が確定するまで owner を消さない。source branch が進んだ場合は固定 source の公開を再利用せず、新しい統合状態への明示保守として判断する。durable publication がある場合はその公開と receipt の回復だけを行い、有料 phase を重ねない。[公開の固定 source 検査](../../crates/services/src/services/openwiki.rs#L321-L370)・[Bootstrap の回復](../../crates/server/src/workflow_runtime/bootstrap.rs#L674-L752)
