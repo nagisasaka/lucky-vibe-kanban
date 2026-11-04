@@ -1,4 +1,5 @@
 pub mod error;
+mod host_display_name;
 pub mod middleware;
 pub mod remote_mcp;
 mod resource_observation;

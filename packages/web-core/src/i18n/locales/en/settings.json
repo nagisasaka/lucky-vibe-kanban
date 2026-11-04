@@ -50,7 +50,8 @@
         "notifications": "Notifications",
         "execution": "Work defaults",
         "account": "Account",
-        "access": "Authentication and members"
+        "access": "Authentication and members",
+        "host-pet": "Host and pet"
       }
     },
     "hostPicker": {
@@ -622,7 +623,8 @@
       "immediate": "Information and individual actions in this panel apply separately from Save below.",
       "templates": "Task templates are stored in the instance database. Add, edit and delete apply individually here.",
       "readOnly": "Input instructions only. There is no value to save here.",
-      "onboarding": "Show onboarding again saves immediately to the instance config.json."
+      "onboarding": "Show onboarding again saves immediately to the instance config.json.",
+      "host-pet": "Display name and pet settings for this instance."
     }
   },
   "integrations": {

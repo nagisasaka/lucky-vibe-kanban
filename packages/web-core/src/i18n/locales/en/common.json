@@ -2344,5 +2344,17 @@
     "import": "Import pet ZIP",
     "fallback": "Showing LVK Rabbit because {{name}} could not be loaded. Your selection is retained.",
     "retainedAttribution": "Retained selection metadata / license (not displayed)"
+  },
+  "hostPet": {
+    "open": "Edit host and pet",
+    "name": "Display name",
+    "description": "A shared name for this instance, host or pet. Does not change the actual hostname, OS, container name or connection identity.",
+    "fallback": "Save an empty name to use the actual hostname.",
+    "validation": "Use at most 80 characters, without control characters.",
+    "unsupported": "Display-name storage is unsupported or unavailable. Retry after the backend is updated.",
+    "saveError": "Could not save. Your change has not been saved.",
+    "saved": "Display name saved.",
+    "hostname": "Actual hostname",
+    "petDescription": "Pet changes are saved immediately."
   }
 }

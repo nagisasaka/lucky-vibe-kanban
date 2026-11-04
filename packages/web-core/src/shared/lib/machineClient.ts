@@ -77,7 +77,21 @@ export type MachineTarget =
       label: string;
     };
 
+export interface HostEnvironment {
+  hostname: string | null;
+  host_display_name?: string | null;
+  container: boolean;
+  uptime_seconds: number | null;
+  running_sessions: number | null;
+  observed_at: string;
+}
+export interface HostDisplayName {
+  host_display_name: string | null;
+}
 export interface MachineClient {
+  getHostEnvironment: () => Promise<HostEnvironment>;
+  getHostDisplayName: () => Promise<HostDisplayName>;
+  saveHostDisplayName: (name: string | null) => Promise<HostDisplayName>;
   resources: ResourceCoordinationClient;
   target: MachineTarget;
   queryScopeKey: readonly ['machine', string];
@@ -227,6 +241,33 @@ export function createMachineClient(
       makeMachineRequest(runtime, target, path, init)
     ),
     queryScopeKey,
+    getHostEnvironment: async () =>
+      handleApiResponse<HostEnvironment>(
+        await makeMachineRequest(runtime, target, '/api/environment-info', {
+          cache: 'no-store',
+        })
+      ),
+    getHostDisplayName: async () =>
+      handleApiResponse<HostDisplayName>(
+        await makeMachineRequest(runtime, target, '/api/host-display-name', {
+          cache: 'no-store',
+        })
+      ),
+    saveHostDisplayName: async (host_display_name) => {
+      const value = await handleApiResponse<HostDisplayName>(
+        await makeMachineRequest(runtime, target, '/api/host-display-name', {
+          method: 'PUT',
+          body: JSON.stringify({ host_display_name }),
+        })
+      );
+      if (
+        !value ||
+        !Object.prototype.hasOwnProperty.call(value, 'host_display_name') ||
+        value.host_display_name !== host_display_name
+      )
+        throw new Error('Host display name was not saved');
+      return value;
+    },
     getConfig: async () =>
       handleApiResponse<UserSystemInfo>(
         await makeMachineRequest(runtime, target, '/api/info', {

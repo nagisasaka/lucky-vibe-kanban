@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import i18n from '../../packages/web-core/src/i18n/config';
+import { PetSettings } from '../../packages/web-core/src/features/pets/SidebarPet';
 import { ProjectUtilities } from '../../packages/web-core/src/pages/kanban/ProjectUtilities';
 import { RightSidebar } from '../../packages/web-core/src/pages/workspaces/RightSidebar';
 import { useUiPreferencesStore } from '../../packages/web-core/src/shared/stores/useUiPreferencesStore';
@@ -55,6 +56,14 @@ function App() {
           </button>
         ))}
       </nav>
+      <details
+        open
+        id="pet-settings-fixture"
+        className="fixed left-0 bottom-0 z-50 w-80 max-w-full bg-primary border max-h-[70vh] overflow-auto"
+      >
+        <summary>Host and pet fixture</summary>
+        <PetSettings />
+      </details>
       <div className="flex flex-1 min-h-0">
         <article className="hidden md:block flex-1 min-w-0 p-base">
           <h1>{screen}</h1>

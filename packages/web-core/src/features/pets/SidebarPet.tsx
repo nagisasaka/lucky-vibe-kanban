@@ -16,6 +16,12 @@ import {
 const SIDEBAR_PET_SIZE = 80;
 
 export function SidebarPet() {
+  return <PetContent />;
+}
+export function PetSettings() {
+  return <PetContent settings />;
+}
+function PetContent({ settings = false }: { settings?: boolean }) {
   const { t } = useTranslation('common');
   const raw = useUiPreferencesStore((s) => s.petPreferences);
   const save = useUiPreferencesStore((s) => s.setPetPreferences);
@@ -85,11 +91,11 @@ export function SidebarPet() {
       setBusy(false);
     }
   };
-  return (
+  const sprite = (
     <div
       className="shrink-0"
       style={{ width: SIDEBAR_PET_SIZE }}
-      data-testid="sidebar-pet"
+      data-testid={settings ? 'pet-settings-preview' : 'sidebar-pet'}
     >
       {!preferences.hidden && (
         <PetSprite
@@ -104,161 +110,156 @@ export function SidebarPet() {
           }}
         />
       )}
-      <details
-        onToggle={(event) => {
-          if (!event.currentTarget.open) setPreview('idle');
-        }}
-      >
-        <summary className="cursor-pointer text-xs text-low focus-visible:ring-2 focus-visible:ring-brand">
-          {t('pets.settings')}
-        </summary>
-        <div className="absolute z-20 mt-half w-64 max-w-[calc(100vw-2rem)] right-base rounded-sm border bg-panel p-base space-y-base shadow-lg text-xs">
-          <label className="block">
-            {t('pets.select')}
-            <select
-              className="block w-full bg-secondary border rounded-sm p-half"
-              value={preferences.selected}
-              disabled={busy}
-              onChange={(e) => {
-                void update({ ...preferences, selected: e.target.value });
-                setPreview('idle');
-                setError('');
-              }}
-            >
-              <option value={DEFAULT_PET}>LVK Rabbit</option>
-              {preferences.pets.map((p) => (
-                <option key={p.key} value={p.key}>
-                  {p.manifest.displayName}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="flex gap-half items-center">
-            <input
-              type="checkbox"
-              disabled={busy}
-              checked={!preferences.hidden}
-              onChange={(e) =>
-                void update({ ...preferences, hidden: !e.target.checked })
-              }
-            />
-            {t('pets.show')}
-          </label>
-          <label className="block">
-            {t('pets.import')}
-            <input
-              type="file"
-              accept=".zip,application/zip"
-              disabled={busy}
-              className="block w-full"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                e.target.value = '';
-                if (file) void upload(file);
-              }}
-            />
-          </label>
-          <p>{t('pets.scope')}</p>
-          <a
-            href="https://petdex.dev/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="underline"
+    </div>
+  );
+  if (!settings) return sprite;
+  return (
+    <div className="space-y-base text-sm" data-testid="pet-settings">
+      {sprite}
+      <div className="grid min-w-0 gap-4 sm:grid-cols-2 [&>p]:sm:col-span-2 [&>details]:sm:col-span-2">
+        <label className="block">
+          {t('pets.select')}
+          <select
+            className="block w-full bg-secondary border rounded-sm p-half"
+            value={preferences.selected}
+            disabled={busy}
+            onChange={(e) => {
+              void update({ ...preferences, selected: e.target.value });
+              setPreview('idle');
+              setError('');
+            }}
           >
-            {t('pets.gallery')}
-          </a>
-          <label className="block">
-            {t('pets.preview')}
-            <select
-              className="block w-full bg-secondary border rounded-sm p-half"
-              value={preview}
-              onChange={(e) => setPreview(e.target.value as PetState)}
-            >
-              {PET_STATES.map((s) => (
-                <option key={s.name} value={s.name}>
-                  {t(`pets.states.${s.name}`)}
-                </option>
-              ))}
-            </select>
-          </label>
+            <option value={DEFAULT_PET}>LVK Rabbit</option>
+            {preferences.pets.map((p) => (
+              <option key={p.key} value={p.key}>
+                {p.manifest.displayName}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="flex gap-half items-center">
+          <input
+            type="checkbox"
+            disabled={busy}
+            checked={!preferences.hidden}
+            onChange={(e) =>
+              void update({ ...preferences, hidden: !e.target.checked })
+            }
+          />
+          {t('pets.show')}
+        </label>
+        <label className="block">
+          {t('pets.import')}
+          <input
+            type="file"
+            accept=".zip,application/zip"
+            disabled={busy}
+            className="block w-full"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              e.target.value = '';
+              if (file) void upload(file);
+            }}
+          />
+        </label>
+        <p>{t('pets.scope')}</p>
+        <a
+          href="https://petdex.dev/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline"
+        >
+          {t('pets.gallery')}
+        </a>
+        <label className="block">
+          {t('pets.preview')}
+          <select
+            className="block w-full bg-secondary border rounded-sm p-half"
+            value={preview}
+            onChange={(e) => setPreview(e.target.value as PetState)}
+          >
+            {PET_STATES.map((s) => (
+              <option key={s.name} value={s.name}>
+                {t(`pets.states.${s.name}`)}
+              </option>
+            ))}
+          </select>
+        </label>
+        <button
+          type="button"
+          className="underline"
+          disabled={busy}
+          onClick={() => {
+            void update({
+              ...preferences,
+              selected: DEFAULT_PET,
+              hidden: false,
+            });
+            setPreview('idle');
+          }}
+        >
+          {t('pets.reset')}
+        </button>
+        {selected && (
           <button
             type="button"
-            className="underline"
+            className="block underline"
             disabled={busy}
             onClick={() => {
               void update({
                 ...preferences,
                 selected: DEFAULT_PET,
-                hidden: false,
+                pets: preferences.pets.filter((p) => p.key !== selected.key),
               });
               setPreview('idle');
             }}
           >
-            {t('pets.reset')}
+            {t('pets.remove')}
           </button>
-          {selected && (
-            <button
-              type="button"
-              className="block underline"
-              disabled={busy}
-              onClick={() => {
-                void update({
-                  ...preferences,
-                  selected: DEFAULT_PET,
-                  pets: preferences.pets.filter((p) => p.key !== selected.key),
-                });
-                setPreview('idle');
-              }}
-            >
-              {t('pets.remove')}
-            </button>
-          )}
-          {isFallback && (
-            <p>{t('pets.fallback', { name: selected.manifest.displayName })}</p>
-          )}
-          {selected && (
-            <details>
-              <summary>
-                {t(
-                  isFallback ? 'pets.retainedAttribution' : 'pets.attribution'
-                )}
-              </summary>
-              <p className="whitespace-pre-wrap break-words">
-                {selected.manifest.author} {selected.manifest.license}
-              </p>
-              <pre className="max-h-40 overflow-auto whitespace-pre-wrap break-words">
-                {selected.originalManifest}
-                {'\n'}
-                {selected.licenseText}
-              </pre>
-            </details>
-          )}
-          {(!selected || isFallback) && (
-            <p>
-              LVK Rabbit — Masato Fujino ·{' '}
-              <a
-                className="underline"
-                href="https://github.com/nagisasaka/lvk-rabbit/tree/v1.1.0"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                v1.1.0
-              </a>{' '}
-              ·{' '}
-              <a
-                className="underline"
-                href="https://creativecommons.org/licenses/by/4.0/"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                CC BY 4.0
-              </a>{' '}
-              · {t('pets.unmodified')}
+        )}
+        {isFallback && (
+          <p>{t('pets.fallback', { name: selected.manifest.displayName })}</p>
+        )}
+        {selected && (
+          <details>
+            <summary>
+              {t(isFallback ? 'pets.retainedAttribution' : 'pets.attribution')}
+            </summary>
+            <p className="whitespace-pre-wrap break-words">
+              {selected.manifest.author} {selected.manifest.license}
             </p>
-          )}
-          <p role="status">{busy ? t('pets.importing') : error}</p>
-        </div>
-      </details>
+            <pre className="max-h-40 overflow-auto whitespace-pre-wrap break-words">
+              {selected.originalManifest}
+              {'\n'}
+              {selected.licenseText}
+            </pre>
+          </details>
+        )}
+        {(!selected || isFallback) && (
+          <p>
+            LVK Rabbit — Masato Fujino ·{' '}
+            <a
+              className="underline"
+              href="https://github.com/nagisasaka/lvk-rabbit/tree/v1.1.0"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              v1.1.0
+            </a>{' '}
+            ·{' '}
+            <a
+              className="underline"
+              href="https://creativecommons.org/licenses/by/4.0/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              CC BY 4.0
+            </a>{' '}
+            · {t('pets.unmodified')}
+          </p>
+        )}
+        <p role="status">{busy ? t('pets.importing') : error}</p>
+      </div>
     </div>
   );
 }

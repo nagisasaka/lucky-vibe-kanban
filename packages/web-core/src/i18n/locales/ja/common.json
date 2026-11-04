@@ -2304,7 +2304,7 @@
     "resetElapsed": "再取得待ち"
   },
   "pets": {
-    "settings": "Pet",
+    "settings": "ペット",
     "select": "Petを選択",
     "show": "Petを表示",
     "scope": "固定v1アトラス（1536×1872 PNG/WebP）、最大12体。v2は未対応です。持ち込んだ素材はこのLVK内に保存されます。原著作者の利用条件に従ってください。",
@@ -2335,5 +2335,17 @@
     "import": "Pet ZIPをインポート",
     "fallback": "「{{name}}」を読み込めないためLVK Rabbitを表示しています。選択は保持されています。",
     "retainedAttribution": "保持中の選択の情報・ライセンス（現在は非表示）"
+  },
+  "hostPet": {
+    "open": "ホストとペットを編集",
+    "name": "表示名",
+    "description": "このインスタンスで共有する、ホストやペットの呼び名です。実 hostname・OS・コンテナー名や接続IDは変わりません。",
+    "fallback": "空欄で保存すると実 hostname を表示します。",
+    "validation": "80文字以内で、制御文字を含めず入力してください。",
+    "unsupported": "表示名の保存に未対応、または設定を取得できません。バックエンド更新後に再試行してください。",
+    "saveError": "保存できませんでした。変更は保存されていません。",
+    "saved": "表示名を保存しました。",
+    "hostname": "実 hostname",
+    "petDescription": "ペットの変更はすぐに保存されます。"
   }
 }

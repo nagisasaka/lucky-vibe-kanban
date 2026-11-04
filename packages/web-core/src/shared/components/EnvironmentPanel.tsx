@@ -1,7 +1,10 @@
 import { SidebarPet } from '@/features/pets/SidebarPet';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { InfoIcon } from '@phosphor-icons/react';
+import { SettingsDialog } from '@/shared/dialogs/settings/SettingsDialog';
+import { useHostId } from '@/shared/providers/HostIdProvider';
+import { HostEnvironment } from '@/shared/lib/machineClient';
+import { PencilSimpleIcon } from '@phosphor-icons/react';
 import {
   Popover,
   PopoverContent,
@@ -15,20 +18,19 @@ import { claudeQuotaView } from '@/shared/lib/claudeQuotaView';
 import { readUtility } from '@/shared/lib/projectUtilitiesApi';
 import { EnvironmentQuota } from './EnvironmentQuota';
 
-type EnvironmentInfo = {
-  hostname: string | null;
-  container: boolean;
-  uptime_seconds: number | null;
-  running_sessions: number | null;
-  observed_at: string;
-};
-
 export function EnvironmentPanel() {
   const { t, i18n } = useTranslation('common');
+  const hostId = useHostId();
+  const openHostSettings = () => {
+    void SettingsDialog.show({
+      initialSection: 'host-pet',
+      initialHostId: hostId ?? 'local',
+    });
+  };
   const resources = useResourceObservation();
   const environment = useQuery({
     queryKey: ['environment-info'],
-    queryFn: () => readUtility<EnvironmentInfo>('/api/environment-info'),
+    queryFn: () => readUtility<HostEnvironment>('/api/environment-info'),
     enabled: resources.visible,
     refetchInterval: resources.visible ? 15000 : false,
     retry: false,
@@ -78,6 +80,10 @@ export function EnvironmentPanel() {
     unreadableDestination: t('utilityPanel.diskStatus.unreadableDestination'),
     unknown: t('utilityPanel.diskStatus.unknown'),
   };
+  const displayName =
+    environment.data?.host_display_name?.trim() ||
+    environment.data?.hostname ||
+    '—';
   const metrics = [
     { label: 'CPU', value: view.cpu, used: null, total: null },
     { label: 'RAM', value: view.ram, ...view.memory },
@@ -94,12 +100,15 @@ export function EnvironmentPanel() {
       <div className="flex items-center gap-base px-base py-plusfifty">
         <SidebarPet />
         <div className="min-w-0 flex-1 space-y-half">
-          <p
-            className="break-all font-medium leading-snug text-high"
+          <button
+            type="button"
+            onClick={openHostSettings}
+            className="block w-full break-words text-left text-lg font-semibold leading-snug text-high rounded-sm focus-visible:ring-2 focus-visible:ring-brand"
+            title={displayName}
             data-testid="environment-hostname"
           >
-            {environment.data?.hostname ?? '—'}
-          </p>
+            <span className="line-clamp-2 break-all">{displayName}</span>
+          </button>
           <div className="flex flex-wrap items-center gap-x-base gap-y-half text-xs text-low">
             <span className="inline-flex items-center gap-half">
               <span
@@ -122,70 +131,14 @@ export function EnvironmentPanel() {
             </span>
           </div>
         </div>
-        <Popover>
-          <PopoverTrigger asChild>
-            <button
-              type="button"
-              aria-label={t('utilityPanel.environmentDetails')}
-              className="shrink-0 rounded-sm p-half text-low hover:bg-secondary hover:text-high focus-visible:ring-2 focus-visible:ring-brand"
-            >
-              <InfoIcon className="size-icon-sm" />
-            </button>
-          </PopoverTrigger>
-          <PopoverContent
-            align="end"
-            collisionPadding={8}
-            className="max-h-[70vh] max-w-[calc(100vw-1rem)] overflow-auto bg-primary text-xs text-normal"
-            aria-label={t('utilityPanel.environmentDetails')}
-          >
-            <h3 className="mb-base font-medium text-high">
-              {t('environment.title')}
-            </h3>
-            <dl className="space-y-base [&>div]:space-y-half [&_dt]:text-low [&_dd]:break-words">
-              <div>
-                <dt>{t('utilityPanel.status')}</dt>
-                <dd>
-                  {t(
-                    environmentFresh
-                      ? 'environment.online'
-                      : 'environment.unavailable'
-                  )}
-                </dd>
-              </div>
-              <div>
-                <dt>{t('utilityPanel.scope')}</dt>
-                <dd>
-                  {t(
-                    environment.data?.container
-                      ? 'utilityPanel.container'
-                      : 'utilityPanel.scopeUnknown'
-                  )}
-                </dd>
-              </div>
-              <div>
-                <dt>{t('environment.lastCheck')}</dt>
-                <dd>
-                  {time(observed)}
-                  {Number.isFinite(observed) &&
-                    ` (${t('environment.secondsAgo', { count: Math.max(0, Math.floor((resources.now - observed) / 1000)) })})`}
-                </dd>
-              </div>
-              <div>
-                <dt>{t('utilityPanel.uptime')}</dt>
-                <dd>
-                  {count(environment.data?.uptime_seconds)}{' '}
-                  {environmentFresh && environment.data?.uptime_seconds != null
-                    ? t('utilityPanel.seconds')
-                    : ''}
-                </dd>
-              </div>
-              <div>
-                <dt>{t('environment.sessions')}</dt>
-                <dd>{count(environment.data?.running_sessions)}</dd>
-              </div>
-            </dl>
-          </PopoverContent>
-        </Popover>
+        <button
+          type="button"
+          onClick={openHostSettings}
+          aria-label={t('hostPet.open')}
+          className="shrink-0 rounded-sm p-half text-low hover:bg-secondary hover:text-high focus-visible:ring-2 focus-visible:ring-brand"
+        >
+          <PencilSimpleIcon className="size-icon-sm" />
+        </button>
       </div>
       <div
         className="grid grid-cols-[repeat(4,auto)] gap-half px-base pb-plusfifty"

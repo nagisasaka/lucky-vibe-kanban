@@ -17,6 +17,10 @@ const errors = [],
   cases = [];
 try {
   const alias = {
+    '@/shared/dialogs/settings/SettingsDialog': path.join(
+      root,
+      'tests/pets/settings-dialog.fixture.ts'
+    ),
     'virtual:executor-schemas': path.join(
       root,
       'tests/pets/integration.schemas.fixture.ts'
@@ -228,9 +232,9 @@ try {
     'packages/public/pets/lvk-rabbit',
     zip,
   ]);
-  await page.getByTestId('sidebar-pet').locator('summary').first().click();
+
   await page
-    .getByTestId('sidebar-pet')
+    .getByTestId('pet-settings')
     .locator('input[type=file]')
     .setInputFiles(zip);
   await expect(
@@ -247,14 +251,14 @@ try {
   cases.push(
     'real v1 import through product attachment API client and shared selection survives screen switch and reload'
   );
-  await page.getByTestId('sidebar-pet').locator('summary').first().click();
-  await page.getByTestId('sidebar-pet').getByRole('checkbox').uncheck();
+
+  await page.getByTestId('pet-settings').getByRole('checkbox').uncheck();
   await expect(panel.locator('[data-pet-state]')).toHaveCount(0);
   await page.getByRole('button', { name: 'Workspace screen' }).click();
   await expect(panel.locator('[data-pet-state]')).toHaveCount(0);
-  await page.getByTestId('sidebar-pet').locator('summary').first().click();
+
   await page
-    .getByTestId('sidebar-pet')
+    .getByTestId('pet-settings')
     .getByRole('button', { name: 'Restore LVK Rabbit' })
     .click();
   await expect(pet).toBeVisible();
@@ -274,6 +278,7 @@ try {
   cases.push(
     'both screen sidebar unmounts remove pet and remount preserves it'
   );
+  await page.locator('#pet-settings-fixture > summary').click();
   for (const width of [320, 375, 768, 1000])
     for (const screen of ['Kanban', 'Workspace']) {
       await page.setViewportSize({ width, height: 800 });
@@ -282,10 +287,20 @@ try {
       const bounds = await pet.boundingBox();
       expect(bounds.width).toBe(80);
       expect(bounds.height).toBe(80);
-      const hostname = await page.getByTestId('environment-hostname').boundingBox();
-      assert.ok(bounds.x + bounds.width <= hostname.x, 'pet must not overlap hostname');
-      const metrics = await page.getByTestId('environment-metrics').boundingBox();
-      assert.ok(bounds.y + bounds.height <= metrics.y, 'pet must not overlap metrics');
+      const hostname = await page
+        .getByTestId('environment-hostname')
+        .boundingBox();
+      assert.ok(
+        bounds.x + bounds.width <= hostname.x,
+        'pet must not overlap hostname'
+      );
+      const metrics = await page
+        .getByTestId('environment-metrics')
+        .boundingBox();
+      assert.ok(
+        bounds.y + bounds.height <= metrics.y,
+        'pet must not overlap metrics'
+      );
       const geometry = await panel.evaluate((el) => ({
         right: el.getBoundingClientRect().right,
         width: document.documentElement.clientWidth,
@@ -298,38 +313,21 @@ try {
       await page.screenshot({
         path: path.join(output, `${screen}-${width}.png`),
       });
-      if (width === 320 || width === 375) {
-        await page
-          .getByTestId('sidebar-pet')
-          .locator('summary')
-          .first()
-          .click();
-        const settings = page
-          .getByTestId('sidebar-pet')
-          .locator('details > div')
-          .first();
-        await expect(settings).toBeVisible();
-        const bounds = await settings.evaluate((el) => ({
-          left: el.getBoundingClientRect().left,
-          right: el.getBoundingClientRect().right,
-          scroll: document.documentElement.scrollWidth,
-        }));
-        assert.ok(
-          bounds.left >= 0 && bounds.right <= width && bounds.scroll <= width,
-          JSON.stringify({ screen, width, ...bounds })
-        );
-        await page.screenshot({
-          path: path.join(output, `${screen}-${width}-settings.png`),
-        });
-        await page
-          .getByTestId('sidebar-pet')
-          .locator('summary')
-          .first()
-          .click();
-      }
+      await expect(
+        panel.getByTestId('sidebar-pet').locator('summary')
+      ).toHaveCount(0);
+      await panel.getByTestId('environment-hostname').click();
+      assert.equal(
+        await page.evaluate(
+          () =>
+            JSON.parse(document.documentElement.dataset.openedSettings)
+              .initialSection
+        ),
+        'host-pet'
+      );
     }
   cases.push(
-    'both actual sidebar compositions retain pet/host content without horizontal overflow at 320/375/768/1000px; settings popovers stay in viewport at 320/375px'
+    'both actual sidebar compositions retain pet/host content without horizontal overflow at 320/375/768/1000px; sidebar pet has no settings row and title opens global host/pet settings'
   );
   assert.deepEqual(errors, []);
   await writeFile(

@@ -1,10 +1,10 @@
-import { createRoot } from "react-dom/client";
-import { useState } from "react";
-import i18n from "../../packages/web-core/src/i18n/config";
-import { SidebarPet } from "../../packages/web-core/src/features/pets/SidebarPet";
-import { PetSprite } from "../../packages/web-core/src/features/pets/PetSprite";
-import { PET_STATES } from "../../packages/web-core/src/features/pets/format";
-void i18n.changeLanguage("en");
+import { createRoot } from 'react-dom/client';
+import { useState } from 'react';
+import i18n from '../../packages/web-core/src/i18n/config';
+import { PetSettings } from '../../packages/web-core/src/features/pets/SidebarPet';
+import { PetSprite } from '../../packages/web-core/src/features/pets/PetSprite';
+import { PET_STATES } from '../../packages/web-core/src/features/pets/format';
+void i18n.changeLanguage('en');
 function App() {
   const [shown, setShown] = useState(true);
   return (
@@ -16,10 +16,10 @@ function App() {
           className="relative p-double border"
           style={{ width: 320, height: 480 }}
         >
-          <SidebarPet />
+          <PetSettings />
         </section>
       )}
-      <section style={{ display: "flex", gap: 24 }}>
+      <section style={{ display: 'flex', gap: 24 }}>
         {PET_STATES.map((s) => (
           <div key={s.name}>
             <p>{s.name}</p>
@@ -34,4 +34,4 @@ function App() {
     </main>
   );
 }
-createRoot(document.getElementById("root")!).render(<App />);
+createRoot(document.getElementById('root')!).render(<App />);

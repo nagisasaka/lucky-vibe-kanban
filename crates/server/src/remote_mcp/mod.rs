@@ -535,9 +535,9 @@ impl Remote {
             "get_resource_observation" => resource_observation::call(args).await,
             "query_repository" => repository_read::call(self, args).await,
             "list_run_events" => run_events::call(self, args).await,
-            "get_connection" if args.as_object().is_some_and(|args| args.is_empty()) => Ok(
-                json!({"server":"LVK", "permissions":principal.scopes, "automatic_notifications":false, "monitoring":false}),
-            ),
+            "get_connection" if args.as_object().is_some_and(|args| args.is_empty()) => {
+                Ok(crate::host_display_name::connection_metadata(json!({"server":"LVK", "permissions":principal.scopes, "automatic_notifications":false, "monitoring":false})).await)
+            },
             name if environment::tools().iter().any(|tool| tool.name == name) => {
                 environment::call(self, principal, name, args).await
             }
