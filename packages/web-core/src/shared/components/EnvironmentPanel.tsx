@@ -1,3 +1,4 @@
+import { petStatus } from '@/features/pets/petStatus';
 import { SidebarPet } from '@/features/pets/SidebarPet';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -98,7 +99,14 @@ export function EnvironmentPanel() {
       data-testid="environment-panel"
     >
       <div className="flex items-center gap-base px-base py-plusfifty">
-        <SidebarPet />
+        <SidebarPet
+          state={petStatus(
+            resources.visible,
+            environment.isError,
+            environmentFresh,
+            environment.data?.running_sessions
+          )}
+        />
         <div className="min-w-0 flex-1 space-y-half">
           <button
             type="button"

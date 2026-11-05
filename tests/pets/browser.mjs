@@ -131,11 +131,11 @@ try {
     'sidebar body 80px; nine rows scaled consistently; default sprites stay 64px'
   );
   await pet.click();
-  await expect(pet).toHaveAttribute('data-pet-state', 'waving');
+  await expect(pet).toHaveAttribute('data-pet-state', 'jumping');
   await expect(pet).toHaveAttribute('data-pet-state', 'idle', {
     timeout: 2000,
   });
-  cases.push('click waving reaction returns to idle');
+  cases.push('click jumping reaction returns to idle');
   for (const dark of [false, true]) {
     await page.evaluate(
       (d) => document.documentElement.classList.toggle('dark', d),
@@ -456,9 +456,9 @@ try {
   );
   await expect(v2).not.toHaveAttribute('data-pet-direction');
   await v2.click();
-  await expect(v2).toHaveAttribute('data-pet-state', 'waving');
+  await expect(v2).toHaveAttribute('data-pet-state', 'jumping');
   await expect(v2).not.toHaveAttribute('data-pet-direction');
-  await expect(v2.locator('img')).toHaveCSS('top', '-240px');
+  await expect(v2.locator('img')).toHaveCSS('top', '-320px');
   await expect(v2).toHaveAttribute('data-pet-state', 'idle', { timeout: 2000 });
   await sidebar.getByLabel('Animation preview').selectOption('running');
   await page.mouse.move(bounds.x + 88, bounds.y + 40);
@@ -710,6 +710,45 @@ try {
     fullPage: true,
   });
   assert.equal(uploads, uploadsBeforeLimit);
+
+  await page.clock.install();
+  await page.reload();
+  const live = page.locator('aside [data-pet-state]');
+  await expect(live).toHaveAttribute('data-pet-state', 'idle');
+  await page.clock.fastForward(180001);
+  await expect(live).toHaveAttribute('data-pet-state', 'waiting');
+  await page.evaluate(() => document.dispatchEvent(new PointerEvent('pointerover', { pointerType: 'mouse', relatedTarget: null })));
+  await expect(live).toHaveAttribute('data-pet-state', 'idle');
+  await page.clock.fastForward(179000);
+  await page.evaluate(() => document.dispatchEvent(new PointerEvent('pointerover', { pointerType: 'mouse', relatedTarget: null })));
+  await page.clock.runFor(2000);
+  await expect(live).toHaveAttribute('data-pet-state', 'idle');
+  await page.evaluate(() => Object.defineProperty(window, 'screenX', { configurable: true, value: window.screenX + 20 }));
+  await page.clock.runFor(151);
+  await expect(live).toHaveAttribute('data-pet-state', 'running-right');
+  await page.clock.runFor(301);
+  await expect(live).toHaveAttribute('data-pet-state', 'idle');
+  await page.evaluate(() => Object.defineProperty(window, 'screenX', { configurable: true, value: window.screenX - 20 }));
+  await page.clock.runFor(151);
+  await expect(live).toHaveAttribute('data-pet-state', 'running-left');
+  await page.getByLabel('Live state').selectOption('failed');
+  await expect(live).toHaveAttribute('data-pet-state', 'failed');
+  await live.click();
+  await page.clock.runFor(500);
+  await expect(live).toHaveAttribute('data-pet-state', 'failed');
+  await page.getByLabel('Live state').selectOption('running');
+  await expect(live).toHaveAttribute('data-pet-state', 'running');
+  await live.click();
+  await expect(live).toHaveAttribute('data-pet-state', 'review');
+  await page.clock.runFor(1200);
+  await expect(live).toHaveAttribute('data-pet-state', 'running');
+  await page.getByLabel('Live state').selectOption('idle');
+  await expect(live).toHaveAttribute('data-pet-state', 'idle');
+  await page.clock.fastForward(180001);
+  await expect(live).toHaveAttribute('data-pet-state', 'waiting');
+  await page.evaluate(() => document.dispatchEvent(new PointerEvent('pointerout', { relatedTarget: null })));
+  await expect(live).toHaveAttribute('data-pet-state', 'idle');
+  cases.push('live behavior: 3min waiting, entry reset, leave idle, simulated window directions/stop, failure priority/click blocked, running review once and recovery');
 
   assert.deepEqual(errors, []);
   console.log(

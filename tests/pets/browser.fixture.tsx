@@ -12,6 +12,7 @@ void i18n.changeLanguage(
 );
 function App() {
   const [shown, setShown] = useState(true);
+  const [live, setLive] = useState<'idle' | 'running' | 'failed'>('idle');
   return (
     <main className="bg-primary text-normal p-double min-h-screen">
       <h1>Isolated pet component verification</h1>
@@ -25,7 +26,7 @@ function App() {
         </section>
       )}
       <aside style={{ width: 300, maxWidth: '100%', overflow: 'hidden' }}>
-        <SidebarPet />
+        <select aria-label="Live state" value={live} onChange={(event) => setLive(event.target.value as typeof live)}><option>idle</option><option>running</option><option>failed</option></select><SidebarPet state={live} />
       </aside>
       <section style={{ flexWrap: 'wrap', display: 'flex', gap: 24 }}>
         {PET_STATES.map((s) => (

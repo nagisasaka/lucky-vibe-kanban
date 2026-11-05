@@ -4,6 +4,7 @@ import type { JsonValue } from 'shared/types';
 import { attachmentsApi } from '@/shared/lib/api';
 import { persistPetPreferences } from '@/shared/lib/petPreferencesPersistence';
 import { useUiPreferencesStore } from '@/shared/stores/useUiPreferencesStore';
+import { usePetBehavior } from './usePetBehavior';
 import { PetSprite } from './PetSprite';
 import { PetError, PET_STATES, type PetState } from './format';
 import {
@@ -15,13 +16,24 @@ import {
 
 const SIDEBAR_PET_SIZE = 80;
 
-export function SidebarPet() {
-  return <PetContent />;
+export function SidebarPet({
+  state = 'idle',
+}: {
+  state?: 'idle' | 'running' | 'failed';
+}) {
+  return <PetContent liveState={state} />;
 }
 export function PetSettings() {
   return <PetContent settings />;
 }
-function PetContent({ settings = false }: { settings?: boolean }) {
+function PetContent({
+  settings = false,
+  liveState = 'idle',
+}: {
+  settings?: boolean;
+  liveState?: 'idle' | 'running' | 'failed';
+}) {
+  const behavior = usePetBehavior(liveState, !settings);
   const { t, i18n } = useTranslation('common');
   const raw = useUiPreferencesStore((s) => s.petPreferences);
   const save = useUiPreferencesStore((s) => s.setPetPreferences);
@@ -124,7 +136,7 @@ function PetContent({ settings = false }: { settings?: boolean }) {
           src={src}
           name={name}
           size={SIDEBAR_PET_SIZE}
-          state={preview}
+          state={settings ? preview : behavior}
           version={
             isFallback ? 1 : (selected?.manifest.spriteVersionNumber ?? 1)
           }
