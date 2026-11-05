@@ -1,5 +1,5 @@
 import { deflateRawSync } from 'node:zlib';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { crc32, MAX_ZIP, readPetZip } from './zip';
 
 type Entry = {
@@ -86,13 +86,18 @@ describe('bounded ZIP reader', () => {
     ]);
     expect(result.get('rabbit/pet.json')).toEqual(text('{}'));
   });
-  it('reads deflated entries using the native decompression stream', async () => {
+  it('reads deflated entries using fflate', async () => {
     const data = text('hello pet '.repeat(50));
-    expect(
-      (await readPetZip(zip([{ name: 'pet.json', data, method: 8 }]))).get(
-        'pet.json'
-      )
-    ).toEqual(data);
+    vi.stubGlobal('DecompressionStream', undefined);
+    try {
+      expect(
+        (await readPetZip(zip([{ name: 'pet.json', data, method: 8 }]))).get(
+          'pet.json'
+        )
+      ).toEqual(data);
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
   it.each([
     '../pet.json',

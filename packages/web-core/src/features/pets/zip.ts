@@ -1,3 +1,4 @@
+import { Unzip, UnzipInflate } from 'fflate';
 import { localPath, PetError } from './format';
 
 export const MAX_ZIP = 8 * 1024 * 1024;
@@ -10,47 +11,8 @@ export function crc32(bytes: Uint8Array): number {
   }
   return (crc ^ 0xffffffff) >>> 0;
 }
-// No filesystem extraction, external URLs, scripts, or ZIP64. Bound output while inflating.
-async function inflate(
-  bytes: Uint8Array,
-  expected: number
-): Promise<Uint8Array> {
-  let stream: DecompressionStream;
-  try {
-    stream = new DecompressionStream('deflate-raw' as CompressionFormat);
-  } catch {
-    throw new PetError('unsupported');
-  }
-  const reader = new Blob([new Uint8Array(bytes)])
-    .stream()
-    .pipeThrough(stream)
-    .getReader();
-  const chunks: Uint8Array[] = [];
-  let length = 0;
-  try {
-    for (;;) {
-      const result = await reader.read();
-      if (result.done) break;
-      length += result.value.length;
-      if (length > expected || length > MAX_TOTAL)
-        throw new PetError(
-          'expanded_size',
-          length,
-          Math.min(expected, MAX_TOTAL)
-        );
-      chunks.push(result.value);
-    }
-  } finally {
-    await reader.cancel().catch(() => undefined);
-  }
-  const output = new Uint8Array(length);
-  let offset = 0;
-  for (const chunk of chunks) {
-    output.set(chunk, offset);
-    offset += chunk.length;
-  }
-  return output;
-}
+// Keep strict package preflight below; fflate owns ZIP extraction and DEFLATE.
+// Feed bounded compressed chunks and check actual output before retaining it.
 export async function readPetZip(
   bytes: Uint8Array
 ): Promise<Map<string, Uint8Array>> {
@@ -172,13 +134,42 @@ export async function readPetZip(
           v.getUint32(q + 22, true) !== entry.size)
       )
         throw new PetError('invalid');
-      const packed = bytes.slice(start, stop);
-      const data =
-        entry.method === 0 ? packed : await inflate(packed, entry.size);
-      if (data.length !== entry.size || crc32(data) !== entry.crc)
-        throw new PetError('invalid');
-      output.set(entry.name, data);
     }
+    let actualTotal = 0;
+    const archive = new Unzip((file) => {
+      if (file.name.endsWith('/')) return;
+      const entry = entries.find((entry) => entry.name === file.name);
+      if (!entry || output.has(file.name)) throw new PetError('invalid');
+      const chunks: Uint8Array[] = [];
+      let length = 0;
+      file.ondata = (error, chunk, final) => {
+        if (error) throw error;
+        length += chunk.length;
+        actualTotal += chunk.length;
+        if (length > entry.size || actualTotal > MAX_TOTAL)
+          throw new PetError('expanded_size', length, entry.size);
+        chunks.push(chunk);
+        if (final) {
+          const data = new Uint8Array(length);
+          let offset = 0;
+          for (const chunk of chunks) {
+            data.set(chunk, offset);
+            offset += chunk.length;
+          }
+          if (length !== entry.size || crc32(data) !== entry.crc)
+            throw new PetError('invalid');
+          output.set(file.name, data);
+        }
+      };
+      file.start();
+    });
+    archive.register(UnzipInflate);
+    for (let offset = 0; offset < bytes.length; offset += 1024)
+      archive.push(
+        bytes.subarray(offset, offset + 1024),
+        offset + 1024 >= bytes.length
+      );
+    if (output.size !== entries.length) throw new PetError('invalid');
     return output;
   } catch (error) {
     if (error instanceof PetError) throw error;
