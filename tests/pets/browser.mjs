@@ -521,6 +521,73 @@ try {
   cases.push(
     'v2 settings/sidebar screenshots: en/ja, 360px dark and desktop light; no horizontal overflow'
   );
+  // Exercise actual file change event and asynchronous feedback, not just parser results.
+  await page.setViewportSize({ width: 360, height: 700 });
+  await page.goto(base + '?lang=en');
+  let releaseUpload;
+  const uploadGate = new Promise((resolve) => {
+    releaseUpload = resolve;
+  });
+  await page.route(
+    '**/fixture-upload',
+    async (route) => {
+      await uploadGate;
+      await route.continue();
+    },
+    { times: 1 }
+  );
+  const fileInput = sidebar.locator('input[type=file]');
+  const chooserReady = page.waitForEvent('filechooser');
+  await fileInput.click();
+  const chooser = await chooserReady;
+  await chooser.setFiles(path.join(scratch, 'v2-png.zip'));
+  const feedback = sidebar.getByRole('status');
+  await expect(feedback).toContainText('Importing');
+  await expect(feedback).toContainText('v2-png.zip');
+  await expect(fileInput).toBeDisabled();
+  const nearby = await feedback.evaluate((el) => {
+    const input = document.querySelector('input[type=file]');
+    return {
+      gap:
+        el.getBoundingClientRect().top - input.getBoundingClientRect().bottom,
+      described: input.getAttribute('aria-describedby') === el.id,
+    };
+  });
+  assert.ok(nearby.gap >= 0 && nearby.gap < 60);
+  assert.equal(nearby.described, true);
+  releaseUpload();
+  await expect(feedback).toContainText('Imported V2 direction fixture.');
+  await expect(fileInput).toBeEnabled();
+  await page.route(
+    '**/fixture-upload',
+    (route) => route.fulfill({ status: 500, body: 'fixture failure' }),
+    { times: 1 }
+  );
+  const selectionBeforeFailure = await sidebar
+    .locator('select')
+    .first()
+    .inputValue();
+  await fileInput.setInputFiles(path.join(scratch, 'v2-png.zip'));
+  await expect(feedback).toContainText('Could not load or save');
+  await expect(sidebar.locator('select').first()).toHaveValue(
+    selectionBeforeFailure
+  );
+  await expect(feedback).not.toContainText('Imported');
+  await expect(fileInput).toBeEnabled();
+  await fileInput.setInputFiles({
+    name: 'invalid.zip',
+    mimeType: 'application/zip',
+    buffer: Buffer.from('invalid'),
+  });
+  await expect(feedback).toContainText('Invalid or damaged');
+  await expect(feedback).toContainText('invalid.zip');
+  await page.screenshot({
+    path: path.join(output, 'zip-feedback-360.png'),
+    fullPage: true,
+  });
+  cases.push(
+    'file input change: nearby live feedback and filename during pending upload, durable success, HTTP failure and invalid ZIP; selection retained and retry enabled'
+  );
   assert.deepEqual(errors, []);
   console.log(
     JSON.stringify({ status: 'passed', cases, errors, uploads }, null, 2)

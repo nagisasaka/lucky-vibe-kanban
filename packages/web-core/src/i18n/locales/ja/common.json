@@ -2315,6 +2315,7 @@
     "attribution": "元のメタデータ・ライセンス",
     "unmodified": "素材の加工なし",
     "importing": "インポート中…",
+    "imported": "{{name}} を取り込みました。",
     "errors": {
       "invalid": "Petパッケージが不正または破損しています。",
       "size": "パッケージまたは保存件数の上限を超えています。",

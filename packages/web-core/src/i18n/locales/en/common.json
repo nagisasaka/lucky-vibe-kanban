@@ -2324,6 +2324,7 @@
     "attribution": "Original metadata / license",
     "unmodified": "Artwork unmodified",
     "importing": "Importing…",
+    "imported": "Imported {{name}}.",
     "errors": {
       "invalid": "Invalid or damaged pet package.",
       "size": "Package or collection exceeds the size limit.",

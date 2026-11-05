@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { JsonValue } from 'shared/types';
 import { attachmentsApi } from '@/shared/lib/api';
@@ -28,6 +28,9 @@ function PetContent({ settings = false }: { settings?: boolean }) {
   const preferences = restorePreferences(raw);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [fileName, setFileName] = useState('');
+  const [imported, setImported] = useState('');
+  const feedbackId = useId();
   const [failedSource, setFailedSource] = useState('');
   const [preview, setPreview] = useState<PetState>('idle');
   const selected = preferences.pets.find((p) => p.key === preferences.selected);
@@ -46,6 +49,8 @@ function PetContent({ settings = false }: { settings?: boolean }) {
     save(value);
   };
   const update = async (next: PetPreferences) => {
+    setFileName('');
+    setImported('');
     setBusy(true);
     setError('');
     try {
@@ -57,6 +62,8 @@ function PetContent({ settings = false }: { settings?: boolean }) {
     }
   };
   const upload = async (file: File) => {
+    setFileName(file.name);
+    setImported('');
     setBusy(true);
     setError('');
     try {
@@ -85,6 +92,7 @@ function PetContent({ settings = false }: { settings?: boolean }) {
       });
       setFailedSource('');
       setPreview('idle');
+      setImported(pet.manifest.displayName);
     } catch (e) {
       setError(t(`pets.errors.${e instanceof PetError ? e.code : 'storage'}`));
     } finally {
@@ -156,6 +164,7 @@ function PetContent({ settings = false }: { settings?: boolean }) {
           <input
             type="file"
             accept=".zip,application/zip"
+            aria-describedby={feedbackId}
             disabled={busy}
             className="block w-full"
             onChange={(e) => {
@@ -165,6 +174,18 @@ function PetContent({ settings = false }: { settings?: boolean }) {
             }}
           />
         </label>
+        <p
+          id={feedbackId}
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+          className={`break-words ${error ? 'text-error' : 'text-normal'}`}
+        >
+          {fileName && <span className="block text-low">{fileName}</span>}
+          {busy
+            ? t('pets.importing')
+            : error || (imported ? t('pets.imported', { name: imported }) : '')}
+        </p>
         <p>{t('pets.scope')}</p>
         <a
           href="https://petdex.dev/"
@@ -261,7 +282,6 @@ function PetContent({ settings = false }: { settings?: boolean }) {
             · {t('pets.unmodified')}
           </p>
         )}
-        <p role="status">{busy ? t('pets.importing') : error}</p>
       </div>
     </div>
   );
