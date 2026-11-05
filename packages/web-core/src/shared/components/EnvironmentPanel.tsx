@@ -1,185 +1,271 @@
+import { SidebarPet } from '@/features/pets/SidebarPet';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { resourceView } from '@vibe/ui/lib/resourceObservation';
+import { SettingsDialog } from '@/shared/dialogs/settings/SettingsDialog';
+import { useHostId } from '@/shared/providers/HostIdProvider';
+import { HostEnvironment } from '@/shared/lib/machineClient';
+import { PencilSimpleIcon } from '@phosphor-icons/react';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@vibe/ui/components/Popover';
+import { resourceTone, resourceView } from '@vibe/ui/lib/resourceObservation';
 import { quotaView } from '@vibe/ui/lib/codexQuota';
 import { useResourceObservation } from '@/shared/hooks/useResourceObservation';
 import { useCodexQuota } from '@/shared/hooks/useCodexQuota';
-import { readUtility } from '@/shared/lib/projectUtilitiesApi';
 import { claudeQuotaView } from '@/shared/lib/claudeQuotaView';
+import { readUtility } from '@/shared/lib/projectUtilitiesApi';
+import { EnvironmentQuota } from './EnvironmentQuota';
 
 export function EnvironmentPanel() {
   const { t, i18n } = useTranslation('common');
+  const hostId = useHostId();
+  const openHostSettings = () => {
+    void SettingsDialog.show({
+      initialSection: 'host-pet',
+      initialHostId: hostId ?? 'local',
+    });
+  };
   const resources = useResourceObservation();
+  const environment = useQuery({
+    queryKey: ['environment-info'],
+    queryFn: () => readUtility<HostEnvironment>('/api/environment-info'),
+    enabled: resources.visible,
+    refetchInterval: resources.visible ? 15000 : false,
+    retry: false,
+  });
+  const observed = environment.data
+    ? Date.parse(environment.data.observed_at)
+    : NaN;
+  const environmentFresh =
+    !environment.isError &&
+    resources.visible &&
+    Number.isFinite(observed) &&
+    observed <= resources.now + 5000 &&
+    resources.now - observed < 45000 &&
+    resources.now - environment.dataUpdatedAt < 45000;
   const view = resourceView(
     resources.data,
     resources.unavailable,
     resources.now
   );
-  const env = useQuery({
-    queryKey: ['environment-info'],
-    queryFn: () =>
-      readUtility<{
-        hostname: string | null;
-        container: boolean;
-        uptime_seconds: number | null;
-        running_sessions: number | null;
-        observed_at: string;
-      }>('/api/environment-info'),
-    enabled: resources.visible,
-    refetchInterval: resources.visible ? 15000 : false,
-    retry: false,
-  });
-  const envFresh =
-    !env.isError &&
-    resources.visible &&
-    resources.now - env.dataUpdatedAt < 45000;
   const codex = useCodexQuota(resources.visible);
   const claude = useCodexQuota(resources.visible, 'claude_code');
   const cv = quotaView(codex.data, codex.unavailable, resources.now);
   const cl = claudeQuotaView(claude.data, claude.unavailable, resources.now);
-  const unknown = t('environment.unknown');
-  const periods: Record<string, string> = {
-    five_hour: t('environment.five_hour'),
-    seven_day: t('environment.seven_day'),
-    seven_day_oauth_apps: t('environment.seven_day_oauth_apps'),
-    seven_day_opus: t('environment.seven_day_opus'),
-    seven_day_sonnet: t('environment.seven_day_sonnet'),
-  };
-
-  const pct = (n: number | null) =>
-    n === null ? unknown : `${Math.floor(n)}%`;
-  const bytes = (n: number | null) =>
-    n === null
-      ? unknown
-      : n === 0
+  const percent = (value: number | null) =>
+    value === null ? '—' : `${Math.floor(value)}%`;
+  const bytes = (value: number | null) =>
+    value === null
+      ? '—'
+      : value === 0
         ? '0 B'
-        : `${new Intl.NumberFormat(i18n.language, { maximumFractionDigits: 2 }).format(n / (n >= 2 ** 30 ? 2 ** 30 : 2 ** 20))} ${n >= 2 ** 30 ? 'GiB' : 'MiB'}`;
-  const time = (n: number | null) =>
-    n === null ? unknown : new Date(n).toLocaleString(i18n.language);
-  const age = env.data
-    ? Math.max(
-        0,
-        Math.floor((resources.now - Date.parse(env.data.observed_at)) / 1000)
-      )
-    : null;
+        : `${new Intl.NumberFormat(i18n.language, { maximumFractionDigits: 2 }).format(value / (value >= 2 ** 30 ? 2 ** 30 : 2 ** 20))} ${value >= 2 ** 30 ? 'GiB' : 'MiB'}`;
+  const time = (value: number) =>
+    Number.isFinite(value)
+      ? new Date(value).toLocaleString(i18n.language)
+      : '—';
+  const count = (value: number | null | undefined) =>
+    environmentFresh &&
+    typeof value === 'number' &&
+    Number.isFinite(value) &&
+    value >= 0
+      ? new Intl.NumberFormat(i18n.language).format(value)
+      : '—';
+  const diskStates: Record<string, string> = {
+    known: t('utilityPanel.diskStatus.known'),
+    unavailable: t('utilityPanel.diskStatus.unavailable'),
+    stale: t('utilityPanel.diskStatus.stale'),
+    unreadableDestination: t('utilityPanel.diskStatus.unreadableDestination'),
+    unknown: t('utilityPanel.diskStatus.unknown'),
+  };
+  const displayName =
+    environment.data?.host_display_name?.trim() ||
+    environment.data?.hostname ||
+    '—';
+  const metrics = [
+    { label: 'CPU', value: view.cpu, used: null, total: null },
+    { label: 'RAM', value: view.ram, ...view.memory },
+    { label: 'SWAP', value: view.swap.percent, ...view.swap },
+    { label: 'DISK', value: view.disk.percent, ...view.disk },
+  ];
+
   return (
     <section
       aria-label={t('environment.title')}
-      className="border-b p-base space-y-base text-sm text-normal break-words"
+      className="relative border-b bg-primary text-sm text-normal"
       data-testid="environment-panel"
     >
-      <div className="flex items-start gap-base">
-        <div
-          data-pet-placeholder
-          className="w-16 h-16 shrink-0 flex items-center justify-center"
+      <div className="flex items-center gap-base px-base py-plusfifty">
+        <SidebarPet />
+        <div className="min-w-0 flex-1 space-y-half">
+          <button
+            type="button"
+            onClick={openHostSettings}
+            className="block w-full break-words text-left text-lg font-semibold leading-snug text-high rounded-sm focus-visible:ring-2 focus-visible:ring-brand"
+            title={displayName}
+            data-testid="environment-hostname"
+          >
+            <span className="line-clamp-2 break-all">{displayName}</span>
+          </button>
+          <div className="flex flex-wrap items-center gap-x-base gap-y-half text-xs text-low">
+            <span className="inline-flex items-center gap-half">
+              <span
+                aria-hidden="true"
+                className={`size-1.5 rounded-full ${environmentFresh ? 'bg-success' : 'bg-panel'}`}
+              />
+              {t(
+                environmentFresh
+                  ? 'utilityPanel.responding'
+                  : 'utilityPanel.unconfirmed'
+              )}
+            </span>
+            <span
+              title={t('environment.sessions')}
+              data-testid="environment-sessions"
+            >
+              {t('utilityPanel.sessions', {
+                value: count(environment.data?.running_sessions),
+              })}
+            </span>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={openHostSettings}
+          aria-label={t('hostPet.open')}
+          className="shrink-0 rounded-sm p-half text-low hover:bg-secondary hover:text-high focus-visible:ring-2 focus-visible:ring-brand"
         >
-          <img src="/lvk-clover.svg" alt="LVK" className="w-12 h-12" />
-        </div>
-        <div className="min-w-0">
-          <h2 className="font-medium text-high">{t('environment.title')}</h2>
-          <p className="break-all">{env.data?.hostname ?? unknown}</p>
-          <p>
-            {t(
-              envFresh && env.data
-                ? 'environment.online'
-                : 'environment.unavailable'
-            )}
-          </p>
-        </div>
+          <PencilSimpleIcon className="size-icon-sm" />
+        </button>
       </div>
-      <p>
-        {t(
-          env.data?.container
-            ? 'environment.container'
-            : 'environment.scopeUnknown'
-        )}
-      </p>
-      <dl className="space-y-half [&>div]:grid [&>div]:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] [&>div]:gap-half">
-        <div>
-          <dt>{t('environment.lastCheck')}</dt>
-          <dd>
-            {age !== null && Number.isFinite(age)
-              ? t('environment.secondsAgo', { count: age })
-              : unknown}
-          </dd>
-        </div>
-        <div>
-          <dt>{t('environment.uptime')}</dt>
-          <dd>{unknown}</dd>
-        </div>
-        <div>
-          <dt>{t('environment.cpu')}</dt>
-          <dd>{pct(view.cpu)}</dd>
-        </div>
-        <div>
-          <dt>{t('environment.ram')}</dt>
-          <dd>
-            {bytes(view.memory.used)} / {bytes(view.memory.total)} ·{' '}
-            {pct(view.ram)}
-          </dd>
-        </div>
-        <div>
-          <dt>{t('environment.disk')}</dt>
-          <dd>
-            {bytes(view.disk.used)} / {bytes(view.disk.total)} ·{' '}
-            {pct(view.disk.percent)}
-          </dd>
-        </div>
-        <div>
-          <dt>{t('environment.swap')}</dt>
-          <dd>
-            {bytes(view.swap.used)} / {bytes(view.swap.total)} ·{' '}
-            {pct(view.swap.percent)}
-          </dd>
-        </div>
-        <div>
-          <dt>{t('environment.sessions')}</dt>
-          <dd>
-            {envFresh ? (env.data?.running_sessions ?? unknown) : unknown}
-          </dd>
-        </div>
-      </dl>
-      <p className="text-xs text-low">{t('environment.metricsScope')}</p>
-      <div className="border-t pt-base space-y-half">
-        <p>{t('environment.accountScope')}</p>
-        <p>
-          {t('environment.codex')} · {t(`codexQuota.status.${cv.status}`)}
-        </p>
-        {cv.rows.map((row, index) => (
-          <div key={index}>
-            <p>{row.name || row.id || t('codexQuota.defaultBucket')}</p>
-            {row.windows.map((w) => (
-              <p key={w.key}>
-                {t('codexQuota.window', {
-                  kind: w.key,
-                  period: w.period
-                    ? t(`codexQuota.period.${w.period.unit}`, {
-                        count: w.period.count,
-                      })
-                    : t('codexQuota.unknownPeriod'),
-                  value: pct(w.remaining),
-                  reset: time(w.reset),
+      <div
+        className="grid grid-cols-[repeat(4,auto)] gap-half px-base pb-plusfifty"
+        data-testid="environment-metrics"
+      >
+        {metrics.map((metric) => (
+          <Popover key={metric.label}>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                aria-label={t('utilityPanel.metricDetails', {
+                  metric: metric.label,
+                })}
+                title={
+                  metric.label === 'DISK'
+                    ? diskStates[view.diskStatus]
+                    : undefined
+                }
+                className="group min-w-0 rounded-sm py-half text-left hover:bg-secondary focus-visible:ring-2 focus-visible:ring-brand"
+              >
+                <span className="flex items-baseline justify-between gap-0.5 whitespace-nowrap">
+                  <span className="text-xs text-low">{metric.label}</span>
+                  <span
+                    className={`text-xs font-medium tabular-nums ${resourceTone(metric.value)}`}
+                  >
+                    {percent(metric.value)}
+                  </span>
+                </span>
+                <span
+                  aria-hidden="true"
+                  className="mt-half block h-0.5 overflow-hidden rounded-full bg-panel"
+                >
+                  {metric.value !== null && (
+                    <span
+                      className={`block h-full bg-current ${resourceTone(metric.value)}`}
+                      style={{ width: `${metric.value}%` }}
+                    />
+                  )}
+                </span>
+              </button>
+            </PopoverTrigger>
+            <PopoverContent
+              align="end"
+              collisionPadding={8}
+              className="max-w-[calc(100vw-1rem)] bg-primary text-xs text-normal"
+              aria-label={t('utilityPanel.metricDetails', {
+                metric: metric.label,
+              })}
+            >
+              <h3 className="mb-base flex items-baseline justify-between font-medium text-high">
+                <span>{metric.label}</span>
+                <span className={resourceTone(metric.value)}>
+                  {percent(metric.value)}
+                </span>
+              </h3>
+              {metric.label === 'DISK' && (
+                <p className="mb-base text-low" role="status">
+                  {diskStates[view.diskStatus]}
+                </p>
+              )}
+              {metric.label !== 'CPU' ? (
+                <dl className="space-y-half">
+                  <div className="flex justify-between gap-base">
+                    <dt className="text-low">{t('utilityPanel.used')}</dt>
+                    <dd>{bytes(metric.used)}</dd>
+                  </div>
+                  <div className="flex justify-between gap-base">
+                    <dt className="text-low">{t('utilityPanel.total')}</dt>
+                    <dd>{bytes(metric.total)}</dd>
+                  </div>
+                </dl>
+              ) : (
+                <p>
+                  {t('utilityPanel.sampleDuration', {
+                    value:
+                      !view.stale && view.duration !== null
+                        ? new Intl.NumberFormat(i18n.language).format(
+                            view.duration
+                          )
+                        : '—',
+                  })}
+                </p>
+              )}
+              <p className="mt-base text-low">
+                {t(
+                  metric.label === 'DISK'
+                    ? 'utilityPanel.diskScope'
+                    : 'utilityPanel.systemScope'
+                )}
+              </p>
+              <p className="mt-half text-low">
+                {t('utilityPanel.observed', {
+                  time:
+                    view.timestamp === 'unknown'
+                      ? '—'
+                      : time(Date.parse(view.timestamp)),
                 })}
               </p>
-            ))}
-          </div>
-        ))}
-        <p>
-          {t('environment.claude')} ·{' '}
-          {cl.fresh
-            ? t('codexQuota.status.fresh')
-            : t('environment.unavailable')}
-        </p>
-        {cl.windows.map((w) => (
-          <p key={w.key}>
-            {t('environment.quotaWindow', {
-              period: periods[w.key] ?? (w.label || unknown),
-              value: pct(w.remaining),
-              reset: time(w.reset),
-            })}
-          </p>
+            </PopoverContent>
+          </Popover>
         ))}
       </div>
+      <EnvironmentQuota
+        name="Codex"
+        status={cv.status}
+        observed={cv.observed}
+        now={resources.now}
+        {...codex}
+        rows={cv.rows}
+      />
+      <EnvironmentQuota
+        name="Claude"
+        status={cl.status}
+        observed={cl.observed}
+        now={resources.now}
+        {...claude}
+        rows={
+          cl.windows.length
+            ? [
+                {
+                  name: '',
+                  windows: cl.windows,
+                },
+              ]
+            : []
+        }
+      />
     </section>
   );
 }

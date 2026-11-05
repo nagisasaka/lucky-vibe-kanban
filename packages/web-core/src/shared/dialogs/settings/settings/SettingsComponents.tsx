@@ -45,12 +45,12 @@ export function TwoColumnPickerColumn({
   return (
     <div
       className={cn(
-        'flex-1',
+        'min-w-0 flex-1',
         isFirst && 'border-b md:border-b-0 md:border-r border-border'
       )}
     >
       <div className="h-9 px-base border-b border-border bg-secondary/50 flex items-center justify-between">
-        <span className="text-sm font-medium text-low tracking-wide">
+        <span className="block text-sm font-medium leading-snug text-normal">
           {label}
         </span>
         {headerAction}
@@ -153,17 +153,21 @@ export function SettingsCard({
   headerAction?: React.ReactNode;
 }) {
   return (
-    <div className="space-y-4 pb-6 border-b border-border last:border-b-0 last:pb-0">
-      <div className="flex items-start justify-between">
-        <div>
-          <h3 className="text-base font-medium text-high">{title}</h3>
+    <div className="min-w-0 rounded-sm border border-border bg-primary">
+      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-border px-4 py-4 md:px-5">
+        <div className="min-w-0 flex-1">
+          <h3 className="text-base font-semibold leading-snug text-high">
+            {title}
+          </h3>
           {description && (
-            <p className="text-sm text-low mt-1">{description}</p>
+            <p className="mt-2 max-w-prose text-sm leading-relaxed text-low">
+              {description}
+            </p>
           )}
         </div>
         {headerAction && <div className="shrink-0 ml-2">{headerAction}</div>}
       </div>
-      <div className="space-y-4">{children}</div>
+      <div className="space-y-5 px-4 py-5 md:px-5">{children}</div>
     </div>
   );
 }
@@ -183,16 +187,21 @@ export function SettingsField({
   children: React.ReactNode;
 }) {
   return (
-    <div className="space-y-2">
+    <div className="min-w-0 space-y-2">
       {label && (
-        <label htmlFor={htmlFor} className="text-sm font-medium text-normal">
+        <label
+          htmlFor={htmlFor}
+          className="block text-sm font-medium leading-snug text-normal"
+        >
           {label}
         </label>
       )}
       {children}
       {error && <p className="text-sm text-error">{error}</p>}
       {description && !error && (
-        <p className="text-sm text-low">{description}</p>
+        <p className="max-w-prose text-sm leading-relaxed text-low">
+          {description}
+        </p>
       )}
     </div>
   );
@@ -215,7 +224,7 @@ export function SettingsCheckbox({
   disabled?: boolean;
 }) {
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex items-start gap-3">
       <input
         type="checkbox"
         id={id}
@@ -223,7 +232,7 @@ export function SettingsCheckbox({
         onChange={(e) => onChange(e.target.checked)}
         disabled={disabled}
         className={cn(
-          'mt-0.5 h-4 w-4 rounded border-border bg-secondary text-brand focus:ring-brand focus:ring-offset-0',
+          'mt-0.5 h-4 w-4 shrink-0 rounded border-border bg-secondary text-brand focus:ring-brand focus:ring-offset-0',
           disabled && 'opacity-50 cursor-not-allowed'
         )}
       />
@@ -237,7 +246,11 @@ export function SettingsCheckbox({
         >
           {label}
         </label>
-        {description && <p className="text-sm text-low">{description}</p>}
+        {description && (
+          <p className="max-w-prose text-sm leading-relaxed text-low">
+            {description}
+          </p>
+        )}
       </div>
     </div>
   );
@@ -271,7 +284,7 @@ export function SettingsSelect<T extends string>({
         <DropdownMenuTriggerButton
           id={id}
           label={selectedOption?.label || placeholder}
-          className={cn('w-full justify-between', className)}
+          className={cn('min-h-10 w-full justify-between text-left', className)}
           disabled={disabled || !hasMenuItems}
         />
       </DropdownMenuTrigger>
@@ -324,7 +337,7 @@ export function SettingsInput({
       disabled={disabled}
       aria-invalid={error || undefined}
       className={cn(
-        'w-full bg-secondary border rounded-sm px-base py-half text-sm text-high',
+        'min-h-10 w-full bg-secondary border rounded-sm px-3 py-2 text-sm text-high',
         'placeholder:text-low placeholder:opacity-80 focus:outline-none focus:ring-1 focus:ring-brand',
         error ? 'border-error' : 'border-border',
         disabled && 'opacity-50 cursor-not-allowed'
@@ -357,10 +370,10 @@ export function SettingsTextarea({
       disabled={disabled}
       rows={rows}
       className={cn(
-        'w-full bg-secondary border border-border rounded-sm px-base py-half text-sm text-high',
+        'w-full bg-secondary border border-border rounded-sm px-3 py-2 text-sm leading-relaxed text-high',
         'placeholder:text-low placeholder:opacity-80 focus:outline-none focus:ring-1 focus:ring-brand',
         'resize-y',
-        monospace && 'font-mono',
+        monospace && 'font-ibm-plex-mono',
         disabled && 'opacity-50 cursor-not-allowed'
       )}
     />
@@ -388,7 +401,7 @@ export function SettingsSaveBar({
   }
 
   return (
-    <div className="sticky bottom-0 z-10 bg-primary border-t border-border/50 py-4 -mx-6 px-6 -mb-6">
+    <div className="sticky bottom-0 z-20 bg-primary border-t border-border py-4 -mx-4 px-4 md:-mx-6 md:px-6 -mb-6">
       <div
         className={cn(
           'flex flex-wrap gap-2 items-center',
@@ -396,11 +409,11 @@ export function SettingsSaveBar({
         )}
       >
         {onDiscard && (
-          <span className="text-sm text-low">
+          <span className="max-w-prose text-sm leading-relaxed text-low">
             {t('settings.common.unsavedChanges')}
           </span>
         )}
-        <div className="flex gap-2">
+        <div className="ml-auto flex flex-wrap gap-2">
           {onDiscard && (
             <PrimaryButton
               variant="tertiary"

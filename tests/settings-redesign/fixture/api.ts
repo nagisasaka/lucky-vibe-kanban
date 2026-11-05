@@ -50,6 +50,7 @@ export function installFixtureApi() {
       file_roots: ["/fixture"],
     },
   };
+  let loginAuthenticated = params.get("fixtureSignedIn") === "true";
   const nativeFetch = window.fetch.bind(window);
   window.fetch = async (input, init) => {
     const url = new URL(
@@ -69,19 +70,24 @@ export function installFixtureApi() {
         }),
       );
     const success = (data: unknown) => json({ success: true, data });
-    if (path === "/api/access/status")
+    if (path === "/api/access/status") {
+      if (params.get("view") === "login" && params.get("statusDelay"))
+        await new Promise(resolve => setTimeout(resolve, Number(params.get("statusDelay"))));
+      if (params.get("view") === "login" && params.get("statusFailure") === "true")
+        return json({error: "Fixture status unavailable"}, 503);
       return json({
         mode,
         deployment: mode === "local" ? "local" : "public",
         authenticated:
           mode !== "locked" &&
+          (params.get("view") !== "login" || loginAuthenticated) &&
           !sessionStorage.getItem("settings-fixture-logged-out"),
         management: role === "admin" && mode !== "locked" && mode !== "local",
         limited: false,
         csrf: "fixture-csrf",
         public_url: location.origin,
         forced_mode: null,
-        configuration_error: false,
+        configuration_error: params.get("configurationError") === "true",
         user:
           mode === "locked"
             ? null
@@ -98,6 +104,16 @@ export function installFixtureApi() {
                         : "Sample Auth0 Person",
               },
       });
+    }
+    if (params.get("view") === "login" && path === "/api/access/basic-login") {
+      await new Promise(resolve => setTimeout(resolve, 300));
+      if (params.get("loginFailure") === "true") return json({error: "Fixture sign-in rejected"}, 401);
+      loginAuthenticated = true;
+      return json({});
+    }
+    if (params.get("view") === "login" && path === "/api/access/login")
+      return json({authorize_url: "/?view=login&auth=auth0&fixtureSignedIn=true&lang=" + params.get("lang")});
+    if (params.get("view") === "login" && path === "/api/access/setup") return json({});
     if (path === "/api/access/logout" && params.get("allowLogout") === "true") {
       if (params.get("logoutFailure") === "true")
         return json({ error: "Fixture logout failed" }, 503);

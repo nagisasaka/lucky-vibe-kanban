@@ -8,6 +8,12 @@
   {
     "kind": "hardcode-markup",
     "file": "packages/local-web/src/app/auth/ServerAccessGate.tsx",
+    "value": "Lucky Vibe Kanban",
+    "reason": "Product brand name; identical in all locales."
+  },
+  {
+    "kind": "hardcode-markup",
+    "file": "packages/local-web/src/app/auth/ServerAccessGate.tsx",
     "value": "docker compose exec lvk server",
     "reason": "Literal server command; translating it would change executable syntax."
   },
@@ -82,5 +88,29 @@
     "file": "packages/ui/src/components/SearchableTagDropdown.tsx",
     "value": "&quot;",
     "reason": "Quotation entity surrounding the original user-entered tag name; create action is translated."
+  },
+  {
+    "kind": "hardcode-markup",
+    "file": "packages/web-core/src/features/pets/SidebarPet.tsx",
+    "value": "LVK Rabbit",
+    "reason": "Published pet name."
+  },
+  {
+    "kind": "hardcode-markup",
+    "file": "packages/web-core/src/features/pets/SidebarPet.tsx",
+    "value": "LVK Rabbit — Masato Fujino ·",
+    "reason": "Exact published artwork attribution; retain the author name."
+  },
+  {
+    "kind": "hardcode-markup",
+    "file": "packages/web-core/src/features/pets/SidebarPet.tsx",
+    "value": "v1.1.0",
+    "reason": "Pinned asset release version."
+  },
+  {
+    "kind": "hardcode-markup",
+    "file": "packages/web-core/src/features/pets/SidebarPet.tsx",
+    "value": "CC BY 4.0",
+    "reason": "Canonical artwork license identifier."
   }
 ]

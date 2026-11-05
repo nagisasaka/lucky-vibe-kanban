@@ -50,7 +50,7 @@ function SettingsDialogNavigation({
   const { t } = useTranslation('settings');
   const access = useSettingsAccess();
   const groups = {
-    experience: ['general', 'notifications'],
+    experience: ['host-pet', 'general', 'notifications'],
     ai: ['execution', 'agents', 'agent-tools'],
     projects: ['remote-projects', 'repos'],
     connections: [
@@ -62,10 +62,10 @@ function SettingsDialogNavigation({
     ...(access?.account ? { account: ['account'] } : {}),
   };
   return (
-    <nav className="flex-1 p-2 flex flex-col gap-1 overflow-y-auto">
+    <nav className="min-h-0 flex-1 px-3 py-3 flex flex-col gap-1 overflow-y-auto overscroll-contain">
       {Object.entries(groups).map(([group, ids]) => (
-        <div key={group} className="space-y-1 mb-3">
-          <h3 className="px-3 pt-2 text-xs font-medium text-low">
+        <div key={group} className="space-y-1 mb-3 last:mb-0">
+          <h3 className="px-3 pb-1 pt-2 text-xs font-medium leading-relaxed text-low">
             {t(`settings.groups.${group as keyof typeof groups}`)}
           </h3>
           {ids
@@ -86,14 +86,16 @@ function SettingsDialogNavigation({
                   }
                   onClick={() => onSectionSelect(section.id)}
                   className={cn(
-                    'w-full flex items-center gap-3 text-left px-3 py-3 md:py-2 rounded-sm text-sm transition-colors focus-visible:ring-2 focus-visible:ring-brand',
+                    'w-full min-w-0 flex items-center gap-3 border-l-2 text-left px-3 py-3 md:py-2 rounded-r-sm text-sm leading-snug transition-colors focus-visible:ring-2 focus-visible:ring-brand',
                     activeSection === section.id
-                      ? 'bg-brand/10 text-brand font-medium'
-                      : 'text-normal hover:bg-primary/10'
+                      ? 'border-brand bg-brand/10 text-high font-medium'
+                      : 'border-transparent text-normal hover:bg-panel/50'
                   )}
                 >
                   <Icon className="size-icon-sm shrink-0" weight="bold" />
-                  <span>{t(`settings.layout.nav.${section.id}`)}</span>
+                  <span className="min-w-0 break-words">
+                    {t(`settings.layout.nav.${section.id}`)}
+                  </span>
                 </button>
               );
             })}
@@ -284,7 +286,7 @@ function SettingsDialogContent({
     <>
       {/* Overlay */}
       <div
-        className="fixed inset-0 z-[9998] bg-black/50 animate-in fade-in-0 duration-200"
+        className="fixed inset-0 z-[9998] bg-black/50 animate-in fade-in-0 duration-200 motion-reduce:animate-none"
         onClick={handleCloseWithConfirmation}
       />
       {/* Dialog wrapper - handles positioning */}
@@ -307,11 +309,11 @@ function SettingsDialogContent({
           className={cn(
             'h-full w-full flex overflow-hidden',
             'bg-primary shadow-lg',
-            'animate-in fade-in-0 slide-in-from-bottom-4 duration-200',
+            'animate-in fade-in-0 slide-in-from-bottom-4 duration-200 motion-reduce:animate-none',
             // Mobile: full screen, no rounded corners
             'rounded-none border-0',
             // Desktop: fixed size with rounded corners
-            'md:w-[min(1120px,94vw)] md:h-[min(820px,92dvh)] md:rounded-sm md:border md:border-border/50'
+            'md:w-[min(1200px,94vw)] md:h-[min(860px,92dvh)] md:rounded-lg md:border md:border-border'
           )}
         >
           {/* Sidebar - hidden on mobile when showing content */}
@@ -322,19 +324,19 @@ function SettingsDialogContent({
               'w-full',
               mobileShowContent && 'hidden',
               // Desktop: fixed width sidebar, always visible
-              'md:w-64 md:flex shrink-0 min-h-0'
+              'md:w-[272px] md:flex shrink-0 min-h-0'
             )}
           >
             {/* Header */}
-            <div className="p-4 border-b border-border flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-high">
+            <div className="px-6 py-5 border-b border-border flex items-center justify-between">
+              <h2 className="text-xl font-semibold tracking-tight text-high">
                 {t('settings.layout.nav.title')}
               </h2>
               {/* Close button - mobile only */}
               <button
                 onClick={handleCloseWithConfirmation}
                 aria-label={t('buttons.close', { ns: 'common' })}
-                className="p-2 rounded-sm hover:bg-secondary text-low hover:text-normal md:hidden"
+                className="p-2 rounded-sm hover:bg-panel text-low hover:text-normal focus-visible:ring-2 focus-visible:ring-brand md:hidden"
               >
                 <XIcon className="size-icon-sm" weight="bold" />
               </button>
@@ -359,7 +361,7 @@ function SettingsDialogContent({
               <button
                 onClick={handleMobileBack}
                 aria-label={t('settings.layout.nav.title')}
-                className="p-2 rounded-sm hover:bg-secondary text-low hover:text-normal"
+                className="p-2 rounded-sm hover:bg-panel text-low hover:text-normal focus-visible:ring-2 focus-visible:ring-brand"
               >
                 <CaretLeftIcon className="size-icon-sm" weight="bold" />
               </button>
@@ -369,7 +371,7 @@ function SettingsDialogContent({
               <button
                 onClick={handleCloseWithConfirmation}
                 aria-label={t('buttons.close', { ns: 'common' })}
-                className="ml-auto p-2 rounded-sm hover:bg-secondary text-low hover:text-normal"
+                className="ml-auto p-2 rounded-sm hover:bg-panel text-low hover:text-normal focus-visible:ring-2 focus-visible:ring-brand"
               >
                 <XIcon className="size-icon-sm" weight="bold" />
               </button>
@@ -378,9 +380,9 @@ function SettingsDialogContent({
             <div
               ref={contentRef}
               tabIndex={-1}
-              className="min-h-0 flex-1 overflow-y-auto focus:outline-none"
+              className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-secondary/50 focus:outline-none"
             >
-              <div className="px-4 py-3 border-b border-border bg-secondary text-xs text-low space-y-1">
+              <div className="px-4 md:px-6 py-3 border-b border-border bg-primary text-xs leading-relaxed text-low space-y-1">
                 <p>{t(`settings.scope.${activeSection}`)}</p>
                 {isDirty && (
                   <p role="status" className="text-brand">
@@ -390,7 +392,7 @@ function SettingsDialogContent({
               </div>
               {activeSection === 'access' || activeSection === 'account' ? (
                 <>
-                  <div className="hidden md:flex items-center justify-between p-4 border-b border-border">
+                  <div className="hidden md:flex items-center justify-between px-6 py-5 border-b border-border bg-primary">
                     <h2 className="text-lg text-high font-semibold">
                       {t(`settings.layout.nav.${activeSection}`)}
                     </h2>

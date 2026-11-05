@@ -148,17 +148,9 @@ function ProjectKanbanLayout({ projectName }: { projectName: string }) {
     staleTime: 30000,
   });
   const api = useMemo(() => projectUtilitiesApi(projectId), [projectId]);
-  const { t } = useTranslation('common');
   const close = () => setDetail(null);
   const body = detail ? (
     <div className="h-full flex flex-col">
-      <button
-        type="button"
-        className="p-half border-b text-normal hover:bg-panel"
-        onClick={close}
-      >
-        {t('buttons.close')}
-      </button>
       <div className="flex-1 min-h-0">
         {detail === 'wiki' ? (
           <WorkspaceWikiArticle />

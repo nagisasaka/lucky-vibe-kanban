@@ -8,7 +8,6 @@ import { useUserSystem } from '@/shared/hooks/useUserSystem';
 import { ThemeProvider } from '@web/app/providers/ThemeProvider';
 import { useUiPreferencesScratch } from '@/shared/hooks/useUiPreferencesScratch';
 import { UserProvider } from '@/shared/providers/remote/UserProvider';
-import '@/app/styles/new/index.css';
 
 function RootRouteComponent() {
   const { config, machineId } = useUserSystem();

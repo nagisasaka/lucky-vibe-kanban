@@ -4,6 +4,21 @@ use sqlx::{FromRow, SqlitePool};
 use ts_rs::TS;
 use uuid::Uuid;
 
+/// Keep Pet spritesheets referenced by global UI preferences during attachment cleanup.
+/// `attachments.id` is a UUID blob; imported preferences carry its hyphenated string.
+pub const NO_PET_ATTACHMENT_REFERENCE: &str = r#"NOT EXISTS (
+    SELECT 1 FROM scratch s, json_each(
+        CASE WHEN json_valid(s.payload) THEN
+            CASE WHEN json_type(s.payload, '$.data.pet_preferences.pets') = 'array'
+                THEN json_extract(s.payload, '$.data.pet_preferences.pets') ELSE '[]' END
+            ELSE '[]' END
+    ) pet
+    WHERE s.scratch_type = 'UI_PREFERENCES'
+      AND replace(lower(CASE WHEN pet.type = 'object'
+          THEN json_extract(pet.value, '$.attachmentId') END), '-', '')
+          = lower(hex(attachments.id))
+)"#;
+
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize, TS)]
 pub struct File {
     pub id: Uuid,
@@ -143,7 +158,9 @@ impl File {
     }
 
     pub async fn find_orphaned_files(pool: &SqlitePool) -> Result<Vec<Self>, sqlx::Error> {
-        sqlx::query_as::<_, File>("SELECT i.* FROM attachments i LEFT JOIN workspace_attachments wa ON i.id=wa.attachment_id WHERE wa.workspace_id IS NULL AND NOT EXISTS (SELECT 1 FROM project_attachments pa WHERE pa.attachment_id=i.id)")
+        sqlx::query_as::<_, File>(&format!(
+            "SELECT attachments.* FROM attachments LEFT JOIN workspace_attachments wa ON attachments.id=wa.attachment_id WHERE wa.workspace_id IS NULL AND NOT EXISTS (SELECT 1 FROM project_attachments pa WHERE pa.attachment_id=attachments.id) AND {NO_PET_ATTACHMENT_REFERENCE}"
+        ))
         .fetch_all(pool)
         .await
     }

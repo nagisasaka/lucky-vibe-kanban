@@ -114,3 +114,36 @@ test('readable durations and safe public labels; account fields are not projecte
   assert.equal(v.rows[0].id.length, 120);
   assert.ok(!JSON.stringify(v).includes('private'));
 });
+
+test('absent windows are omitted; missing duration preserves an existing window', () => {
+  for (const missing of [null, undefined]) {
+    const f = fixture();
+    const bucket = f.result.quota.data.rateLimits;
+    bucket.primary = missing;
+    bucket.secondary = missing;
+    let view = quotaView(f, false, now);
+    assert.deepEqual(view.rows[0].windows, []);
+    assert.equal(view.remaining, null);
+    bucket.secondary = { usedPercent: 40 };
+    view = quotaView(f, false, now);
+    assert.deepEqual(view.rows[0].windows, [
+      { key: 'secondary', period: null, remaining: 60, reset: null },
+    ]);
+    assert.equal(view.remaining, 60);
+    bucket.primary = { usedPercent: 17, windowDurationMins: 300 };
+    bucket.secondary = missing;
+    view = quotaView(f, false, now);
+    assert.deepEqual(
+      view.rows[0].windows.map((w) => w.key),
+      ['primary']
+    );
+    assert.equal(view.remaining, 83);
+  }
+  const f = fixture();
+  f.result.quota.data.rateLimits.primary = {};
+  const view = quotaView(f, false, now);
+  assert.equal(view.rows[0].windows.length, 2);
+  assert.equal(view.rows[0].windows[0].period, null);
+  assert.equal(view.rows[0].windows[0].remaining, null);
+  assert.equal(view.remaining, null);
+});

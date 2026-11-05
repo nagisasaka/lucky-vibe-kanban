@@ -88,6 +88,15 @@ export function resourceView(data: unknown, unavailable: boolean, now: number) {
           : (swapUsed / swapTotal) * 100
         : null,
     },
+    diskStatus: unavailable
+      ? 'unavailable'
+      : stale
+        ? 'stale'
+        : validDisk
+          ? 'known'
+          : observation.error === 'unreadable_destination'
+            ? 'unreadableDestination'
+            : 'unknown',
     disk: {
       percent: validDisk ? diskPercent : null,
       used: validDisk ? diskUsed : null,

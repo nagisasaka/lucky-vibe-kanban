@@ -43,9 +43,12 @@ interface Confirmation {
   ready: boolean;
   identity?: Member;
 }
-const field = 'min-w-0 w-full rounded border bg-secondary p-base text-normal';
-const button =
-  'shrink-0 max-w-full whitespace-normal break-words rounded border bg-secondary px-double py-base text-high hover:bg-panel disabled:opacity-50';
+const field =
+  'mt-2 min-h-11 min-w-0 w-full rounded-sm border border-border bg-secondary px-3 py-2 text-high outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-50';
+const buttonBase =
+  'min-h-11 shrink-0 max-w-full whitespace-normal break-words rounded-sm border border-border px-4 py-2 font-medium focus-visible:ring-2 focus-visible:ring-brand disabled:cursor-not-allowed disabled:opacity-50';
+const button = `${buttonBase} bg-secondary text-high hover:bg-panel`;
+const primaryButton = `${buttonBase} w-full bg-brand text-on-brand hover:bg-brand-hover`;
 
 function CopyValue({ label, value }: { label: string; value: string }) {
   const { t } = useTranslation('settings');
@@ -340,33 +343,57 @@ export function ServerAccessGate({
       className={
         embedded
           ? 'new-design min-w-0 bg-primary p-base text-base text-normal'
-          : 'new-design min-h-screen overflow-auto bg-primary p-double text-base text-normal'
+          : 'new-design grid min-h-svh place-items-center overflow-auto bg-secondary px-4 py-8 text-sm leading-relaxed text-normal sm:px-6'
       }
     >
       <div
         className={
           embedded
             ? 'mx-auto max-w-2xl space-y-double p-double'
-            : 'mx-auto max-w-2xl space-y-double rounded border bg-panel p-double'
+            : `mx-auto w-full space-y-6 rounded-lg border border-border bg-primary p-6 shadow-sm sm:p-8 ${settings ? 'max-w-3xl' : 'max-w-[480px]'}`
         }
       >
-        <h1 className="text-xl text-high">
+        {!embedded && (
+          <div className="flex items-center gap-3 border-b border-border pb-6">
+            <img
+              src="/lvk-clover.svg"
+              alt=""
+              aria-hidden="true"
+              className="size-10 shrink-0"
+            />
+            <span className="text-base font-semibold tracking-tight text-high">
+              Lucky Vibe Kanban
+            </span>
+          </div>
+        )}
+        <h1 className="text-xl font-semibold leading-snug tracking-tight text-high">
           LVK{' '}
           {settings
             ? t('auth.gate.managementTitle')
             : t('auth.gate.loginTitle')}
         </h1>
         {error && (
-          <p role="alert" className="text-error">
+          <p
+            role="alert"
+            className="rounded-sm border border-error/30 bg-error/10 px-3 py-3 text-error"
+          >
             {accessErrorNotice(error)}
           </p>
         )}
-        {!status && <p>{t('auth.gate.checking')}</p>}
+        {!status && (
+          <p className="rounded-sm border border-border bg-secondary px-3 py-3 text-low">
+            {t('auth.gate.checking')}
+          </p>
+        )}
         {status?.configuration_error && (
-          <p>{t('auth.gate.configurationError')}</p>
+          <p className="rounded-sm border border-error/30 bg-error/10 px-3 py-3 text-error">
+            {t('auth.gate.configurationError')}
+          </p>
         )}
         {status?.mode === 'locked' && !status.limited && (
-          <p>{t('auth.gate.locked')}</p>
+          <p className="rounded-sm border border-border bg-secondary px-3 py-3">
+            {t('auth.gate.locked')}
+          </p>
         )}
         {(recovery ||
           (status &&
@@ -405,7 +432,10 @@ export function ServerAccessGate({
                 onChange={(e) => setKey(e.target.value)}
               />
             </label>
-            <button className={button} disabled={busy || provisioningBusy}>
+            <button
+              className={primaryButton}
+              disabled={busy || provisioningBusy}
+            >
               {t('auth.gate.startSetup')}
             </button>
             <p className="text-low">{t('auth.gate.setupSession')}</p>
@@ -457,7 +487,10 @@ export function ServerAccessGate({
                   onChange={(e) => setPassword(e.target.value)}
                 />
               </label>
-              <button className={button} disabled={busy || provisioningBusy}>
+              <button
+                className={primaryButton}
+                disabled={busy || provisioningBusy}
+              >
                 {t('auth.gate.signIn')}
               </button>
             </form>
@@ -467,15 +500,21 @@ export function ServerAccessGate({
           !recovery &&
           !status.limited && (
             <div className="space-y-base">
-              {view === 'pending' && <p>{t('auth.gate.pending')}</p>}
+              {view === 'pending' && (
+                <p className="rounded-sm border border-border bg-secondary px-3 py-3">
+                  {t('auth.gate.pending')}
+                </p>
+              )}
               <button
-                className={button}
+                className={primaryButton}
                 disabled={busy || provisioningBusy}
                 onClick={() => void login()}
               >
                 {t('auth.gate.signInAuth0')}
               </button>
-              <p>{t('auth.gate.providerHint')}</p>
+              <p className="text-sm leading-relaxed text-low">
+                {t('auth.gate.providerHint')}
+              </p>
             </div>
           )}
         {settings && configuration && status?.management && (
@@ -814,7 +853,10 @@ export function ServerAccessGate({
           </>
         )}
         {status && !status.limited && !recovery && (
-          <a className="block text-low underline" href="/?access=recovery">
+          <a
+            className="block border-t border-border pt-4 text-xs text-low underline underline-offset-4 hover:text-high focus-visible:ring-2 focus-visible:ring-brand"
+            href="/?access=recovery"
+          >
             {t('auth.gate.recover')}
           </a>
         )}

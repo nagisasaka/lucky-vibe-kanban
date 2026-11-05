@@ -81,6 +81,7 @@ pub(super) fn environment_router(d: &crate::DeploymentImpl) -> Router<crate::Dep
     Router::new()
         .route("/environment-info", get(environment))
         .with_state(d.db().pool.clone())
+        .merge(display_name_router(crate::host_display_name::path().ok()))
 }
 
 async fn running_sessions(pool: &sqlx::SqlitePool) -> Result<i64, sqlx::Error> {
@@ -92,18 +93,21 @@ async fn environment(
     axum::extract::State(pool): axum::extract::State<sqlx::SqlitePool>,
 ) -> impl IntoResponse {
     let sessions = running_sessions(&pool).await.ok();
-    let hostname = tokio::fs::read_to_string("/proc/sys/kernel/hostname")
-        .await
-        .ok()
-        .map(|s| s.trim().to_string())
-        .filter(|s| !s.is_empty());
+    let hostname = crate::host_display_name::hostname().await;
+    let display_name = match crate::host_display_name::path() {
+        Ok(path) => crate::host_display_name::load(&path)
+            .await
+            .ok()
+            .and_then(|v| v.host_display_name),
+        Err(_) => None,
+    };
     // Neither /proc/uptime nor PID 1 start time proves container creation time.
     let container = tokio::fs::try_exists("/.dockerenv").await.unwrap_or(false);
     (
         [(header::CACHE_CONTROL, "no-store")],
         Json(ApiResponse::<serde_json::Value>::success(
             serde_json::json!({
-                "hostname":hostname,"container":container,"uptime_seconds":null,
+                "hostname":hostname,"host_display_name":display_name,"container":container,"uptime_seconds":null,
                 "running_sessions":sessions,"observed_at":chrono::Utc::now()
             }),
         )),
@@ -170,5 +174,170 @@ mod environment_tests {
             .await
             .unwrap();
         assert!(running_sessions(&pool).await.is_err()); // failure never becomes zero
+    }
+}
+
+fn display_name_router<S: Clone + Send + Sync + 'static>(
+    path: Option<std::path::PathBuf>,
+) -> Router<S> {
+    Router::new()
+        .route(
+            "/host-display-name",
+            get(get_display_name).put(put_display_name),
+        )
+        .with_state(path)
+}
+async fn get_display_name(
+    axum::extract::State(path): axum::extract::State<Option<std::path::PathBuf>>,
+) -> impl IntoResponse {
+    let result = match path {
+        Some(path) => crate::host_display_name::load(&path).await,
+        None => Err(std::io::Error::other("Instance settings path unavailable")),
+    };
+    display_name_response(result)
+}
+
+async fn put_display_name(
+    axum::extract::State(path): axum::extract::State<Option<std::path::PathBuf>>,
+    Json(value): Json<crate::host_display_name::HostDisplayName>,
+) -> impl IntoResponse {
+    let value = match crate::host_display_name::normalize(value.host_display_name) {
+        Ok(value) => value,
+        Err(message) => {
+            return (
+                StatusCode::BAD_REQUEST,
+                [(header::CACHE_CONTROL, "no-store")],
+                Json(ApiResponse::error(message)),
+            );
+        }
+    };
+    let result = match path {
+        Some(path) => crate::host_display_name::save(&path, &value)
+            .await
+            .map(|_| value),
+        None => Err(std::io::Error::other("Instance settings path unavailable")),
+    };
+    display_name_response(result)
+}
+
+type DisplayNameResponse = (
+    StatusCode,
+    [(header::HeaderName, &'static str); 1],
+    Json<ApiResponse<crate::host_display_name::HostDisplayName>>,
+);
+fn display_name_response(
+    result: std::io::Result<crate::host_display_name::HostDisplayName>,
+) -> DisplayNameResponse {
+    let (status, body) = match result {
+        Ok(value) => (StatusCode::OK, ApiResponse::success(value)),
+        Err(_) => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            ApiResponse::error("Host display name unavailable"),
+        ),
+    };
+    (status, [(header::CACHE_CONTROL, "no-store")], Json(body))
+}
+
+#[cfg(test)]
+mod host_display_name_tests {
+    use axum::{
+        body::{Body, to_bytes},
+        http::Request,
+    };
+    use serde_json::{Value, json};
+    use tower::ServiceExt;
+
+    use super::*;
+    #[tokio::test]
+    async fn host_display_name_http_auth_validation_and_round_trip() {
+        let dir = tempfile::tempdir().unwrap();
+        let pool = sqlx::SqlitePool::connect("sqlite::memory:").await.unwrap();
+        let access = server_access::test_support::access(
+            pool.clone(),
+            dir.path().to_owned(),
+            json!({"keys":[]}),
+        )
+        .await;
+        let cookie = server_access::test_support::web_session(&access).await;
+        let csrf: String = sqlx::query_scalar("SELECT csrf FROM access_sessions LIMIT 1")
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+        let path = dir.path().join("host-display-name.json");
+        let app = access.layer(Router::new().nest("/api", display_name_router(Some(path.clone()))));
+        let request = |method: &str, value: Value, auth: bool| {
+            let mut r = Request::builder()
+                .method(method)
+                .uri("/api/host-display-name")
+                .header("host", "203.0.113.7:8443")
+                .header("content-type", "application/json")
+                .header("origin", "https://203.0.113.7:8443");
+            if auth {
+                r = r.header("cookie", &cookie).header("x-lvk-csrf", &csrf);
+            }
+            r.body(Body::from(value.to_string())).unwrap()
+        };
+        assert_eq!(
+            app.clone()
+                .oneshot(request("PUT", json!({"host_display_name":"No"}), false))
+                .await
+                .unwrap()
+                .status(),
+            StatusCode::UNAUTHORIZED
+        );
+        assert!(!path.exists());
+        let response = app
+            .clone()
+            .oneshot(request(
+                "PUT",
+                json!({"host_display_name":" Rabbit "}),
+                true,
+            ))
+            .await
+            .unwrap();
+        assert_eq!(response.status(), StatusCode::OK);
+        let response = app
+            .clone()
+            .oneshot(request("GET", Value::Null, true))
+            .await
+            .unwrap();
+        assert_eq!(response.headers()[header::CACHE_CONTROL], "no-store");
+        let body: Value =
+            serde_json::from_slice(&to_bytes(response.into_body(), 16384).await.unwrap()).unwrap();
+        assert_eq!(body["data"]["host_display_name"], "Rabbit");
+        assert_eq!(
+            app.clone()
+                .oneshot(request(
+                    "PUT",
+                    json!({"host_display_name":"x".repeat(81)}),
+                    true
+                ))
+                .await
+                .unwrap()
+                .status(),
+            StatusCode::BAD_REQUEST
+        );
+        assert_eq!(
+            crate::host_display_name::load(&path)
+                .await
+                .unwrap()
+                .host_display_name
+                .as_deref(),
+            Some("Rabbit")
+        );
+        assert_eq!(
+            app.oneshot(request("PUT", json!({"host_display_name":" "}), true))
+                .await
+                .unwrap()
+                .status(),
+            StatusCode::OK
+        );
+        assert!(
+            crate::host_display_name::load(&path)
+                .await
+                .unwrap()
+                .host_display_name
+                .is_none()
+        );
     }
 }

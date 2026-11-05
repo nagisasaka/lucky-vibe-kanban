@@ -1,10 +1,10 @@
 import { useUiPreferencesStore } from '@/shared/stores/useUiPreferencesStore';
-import { useState } from 'react';
+import { CaretDownIcon, FolderSimpleIcon } from '@phosphor-icons/react';
 import { useTranslation } from 'react-i18next';
 import { CollapsibleSectionHeader } from '@vibe/ui/components/CollapsibleSectionHeader';
 import { TerminalSection } from '@/shared/components/TerminalSection';
 import { UtilitySidebar } from '@/shared/components/UtilitySidebar';
-import { useTerminal } from '@/shared/hooks/useTerminal';
+import { mainTerminalRepo } from '@/shared/lib/mainTerminalRepo';
 import {
   WorkspaceFileBrowserPanel,
   type WorkspaceFilePreviewTarget,
@@ -19,7 +19,6 @@ export function ProjectUtilities({
   selectedFile,
   onFile,
   onWiki,
-  onClose,
 }: {
   projectId: string;
   repos: MainRepo[];
@@ -30,36 +29,42 @@ export function ProjectUtilities({
   onClose: () => void;
 }) {
   const { t } = useTranslation('common');
-  const [repoId, setRepoId] = useState('');
   const wikiKey = `kanban-wiki:${projectId}`;
   const wikiExpanded = useUiPreferencesStore(
     (s) => s.expanded[wikiKey] ?? false
   );
   const setExpanded = useUiPreferencesStore((s) => s.setExpanded);
-  const terminal = useTerminal();
-  const terminalOpen =
-    terminal.getTabsForWorkspace(`main:${projectId}`).length > 0;
-  const repo = repos.find((r) => r.id === repoId) ?? repos[0];
+  const repo = mainTerminalRepo(repos, error);
   return (
     <UtilitySidebar>
-      <button
-        type="button"
-        onClick={onClose}
-        className="w-full p-base border-b text-normal hover:bg-panel"
-      >
-        {t('environment.close')}
-      </button>
-      <div className="p-base text-sm text-low space-y-half">
-        {repos.map((repo) => (
-          <p key={repo.id} className="break-all">
-            {repo.name} · {t('environment.mainScope', { path: repo.path })}
-          </p>
-        ))}
-      </div>
       {error && (
         <p role="status" className="p-base text-error">
           {t('environment.unavailable')}
         </p>
+      )}
+      {repos.length > 0 && (
+        <details
+          className="group border-b px-base py-base text-xs text-normal"
+          data-testid="main-repository-details"
+        >
+          <summary className="flex cursor-pointer list-none items-center gap-half rounded-sm focus-visible:ring-2 focus-visible:ring-brand [&::-webkit-details-marker]:hidden">
+            <FolderSimpleIcon className="size-icon-xs shrink-0 text-low" />
+            <span className="flex-1 font-medium">
+              {t('utilityPanel.mainRepositories', { count: repos.length })}
+            </span>
+            <CaretDownIcon className="size-icon-2xs text-low group-open:rotate-180" />
+          </summary>
+          <dl className="mt-base space-y-base border-l pl-base">
+            {repos.map((repository) => (
+              <div key={repository.id} className="space-y-half">
+                <dt className="font-medium text-high">{repository.name}</dt>
+                <dd className="break-all font-ibm-plex-mono text-low">
+                  {repository.path}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </details>
       )}
       <CollapsibleSectionHeader
         className="!h-auto"
@@ -76,34 +81,22 @@ export function ProjectUtilities({
         </div>
       </CollapsibleSectionHeader>
       {repo && (
-        <>
-          <div className="p-base text-sm text-low">
-            <p>{t('environment.mainTerminal')}</p>
-            <select
-              aria-label={t('environment.mainTerminal')}
-              data-testid="main-terminal-repository"
-              disabled={terminalOpen}
-              className="w-full bg-primary text-normal border rounded"
-              value={repo.id}
-              onChange={(e) => setRepoId(e.target.value)}
-            >
-              {repos.map((r) => (
-                <option key={r.id} value={r.id}>
-                  {r.name}
-                </option>
-              ))}
-            </select>
-            <p className="break-all">
-              {t('environment.mainScope', { path: repo.path })}
-            </p>
-          </div>
-          <TerminalSection
-            scope={`main:${projectId}`}
-            cwd={repo.path}
-            projectId={projectId}
-            repoId={repo.id}
-          />
-        </>
+        <TerminalSection
+          scope={`main:${projectId}`}
+          cwd={repo.path}
+          projectId={projectId}
+          repoId={repo.id}
+        />
+      )}
+      {!repo && (
+        <button
+          type="button"
+          disabled
+          aria-expanded={false}
+          className="flex w-full items-center justify-between px-base py-half text-low disabled:cursor-not-allowed"
+        >
+          <span className="font-medium">{t('sections.terminal')}</span>
+        </button>
       )}
       {repos.some((r) => r.wiki_enabled === true) && (
         <CollapsibleSectionHeader

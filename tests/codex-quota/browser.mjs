@@ -51,6 +51,8 @@ try {
     [
       '-c',
       'tailwind.new.config.js',
+      '--content',
+      './src/**/*.{ts,tsx},../web-core/src/**/*.{ts,tsx},../ui/src/**/*.{ts,tsx},../../tests/codex-quota/*.tsx',
       '-i',
       '../web-core/src/app/styles/new/index.css',
       '-o',
@@ -87,8 +89,10 @@ try {
       return route.fulfill({ json: { success: true, data: fixture() } });
     requests++;
     assert.equal(route.request().method(), 'POST');
+    const provider = route.request().postDataJSON().provider;
+    assert.ok(['codex', 'claude_code'].includes(provider));
     assert.deepEqual(route.request().postDataJSON(), {
-      provider: 'codex',
+      provider,
       account_context: 'server_default',
       include_usage: false,
     });
@@ -100,7 +104,7 @@ try {
             quota: {
               status: 'fresh',
               observedAt: new Date(
-                mode === 'stale' ? observedNow - 700000 : observedNow
+                mode === 'stale' ? observedNow - 700000 : observedNow - 2000
               ).toISOString(),
               data: {
                 rateLimits: {
@@ -111,11 +115,31 @@ try {
                       Math.floor(observedNow / 1000) +
                       (mode === 'expired' ? -1 : 600),
                   },
-                  secondary: { usedPercent: 40, windowDurationMins: 10000 },
+                  secondary: {
+                    usedPercent: 40,
+                    windowDurationMins: mode === 'readable' ? 10080 : 10000,
+                  },
                 },
               },
             },
           };
+    if (
+      [
+        'both-null',
+        'primary-null',
+        'secondary-null',
+        'missing-period',
+        'missing-time',
+      ].includes(mode)
+    ) {
+      const bucket = result.quota.data.rateLimits;
+      if (mode === 'both-null' || mode === 'primary-null')
+        bucket.primary = null;
+      if (mode === 'both-null' || mode === 'secondary-null')
+        bucket.secondary = null;
+      if (mode === 'missing-period') delete bucket.primary.windowDurationMins;
+      if (mode === 'missing-time') delete bucket.primary.resetsAt;
+    }
     if (mode === 'buckets') {
       result.quota.data.rateLimits.limitId = 'standard';
       result.quota.data.rateLimitsByLimitId = {
@@ -136,6 +160,23 @@ try {
         },
       };
       result.quota.data.rateLimits = null;
+    }
+    if (provider === 'claude_code' && result.quota) {
+      const bucket = result.quota.data.rateLimits;
+      const window = (value) =>
+        value == null
+          ? null
+          : {
+              utilization: value.usedPercent,
+              resets_at:
+                value.resetsAt == null
+                  ? null
+                  : new Date(value.resetsAt * 1000).toISOString(),
+            };
+      result.quota.data = {
+        five_hour: window(bucket.primary),
+        seven_day: window(bucket.secondary),
+      };
     }
     await route.fulfill({
       status: mode === 'error' ? 503 : 200,
@@ -162,7 +203,7 @@ try {
             quotaBox.y -
             quotaBox.height / 2
         ) < 5 && quotaBox.x >= resourceBox.x + resourceBox.width,
-        'desktop resources and quota share one row'
+        `desktop resources and quota share one row: ${JSON.stringify({ resourceBox, quotaBox })}`
       );
     }
     const quotaBounds = await trigger.boundingBox();
@@ -259,6 +300,211 @@ try {
     await page.getByTestId('codex-quota').click();
     await expect(page.getByText(duration, { exact: false })).toBeVisible();
     results.cases.push(`i18n ${lang}`);
+  }
+  for (const lang of ['en', 'ja']) {
+    for (const dark of [false, true]) {
+      for (const state of [
+        'both-null',
+        'primary-null',
+        'secondary-null',
+        'missing-period',
+        'missing-time',
+        'fresh',
+      ]) {
+        mode = state;
+        await page.setViewportSize({ width: 320, height: 720 });
+        await page.goto(base + '/?sidebar&lang=' + lang);
+        await page.evaluate(
+          (dark) => document.documentElement.classList.toggle('dark', dark),
+          dark
+        );
+        const panel = page.getByTestId('environment-quota-codex');
+        await expect(panel.locator('[data-quota-window]')).toHaveCount(
+          state === 'both-null' ? 0 : state.endsWith('-null') ? 1 : 2
+        );
+        if (state !== 'both-null') {
+          await expect(
+            panel
+              .getByText(lang === 'ja' ? '利用枠の残り' : 'Quota remaining', {
+                exact: true,
+              })
+              .first()
+          ).toBeVisible();
+          await expect(
+            panel
+              .getByText(lang === 'ja' ? 'リセットまで' : 'Resets in', {
+                exact: false,
+              })
+              .first()
+          ).toBeVisible();
+          const primary = panel.locator('[data-quota-window="primary"]');
+          if (state !== 'primary-null') {
+            await expect(primary.locator('dd')).toHaveText('83%');
+            assert.equal(
+              await primary
+                .locator('[aria-hidden] > div')
+                .evaluate((el) => el.style.width),
+              '83%'
+            );
+            if (state === 'missing-period') {
+              await expect(
+                primary.getByText(
+                  lang === 'ja' ? '期間不明' : 'Unknown period',
+                  { exact: true }
+                )
+              ).toHaveCount(0);
+              await expect(panel.locator('details')).toHaveCount(0);
+            }
+            if (state === 'missing-time')
+              await expect(
+                primary.getByLabel(
+                  lang === 'ja' ? 'リセットまで: —' : 'Resets in: —',
+                  { exact: true }
+                )
+              ).toBeVisible();
+          }
+        }
+        const bounds = await panel.boundingBox();
+        assert.equal(bounds.width, 300);
+        const overflows = await panel
+          .locator('[data-quota-window]')
+          .evaluateAll(
+            (cells) =>
+              cells.filter((cell) => {
+                const b = cell.getBoundingClientRect();
+                return (
+                  cell.scrollWidth > cell.clientWidth ||
+                  [...cell.querySelectorAll('*')].some((el) => {
+                    if (el.classList.contains('sr-only')) return false;
+                    const r = el.getBoundingClientRect();
+                    return r.left < b.left - 0.5 || r.right > b.right + 0.5;
+                  })
+                );
+              }).length
+          );
+        assert.equal(overflows, 0, `${lang}/${state} cell contents fit`);
+        if (state === 'missing-period')
+          await page.screenshot({
+            path: path.join(
+              output,
+              `sidebar-${lang}-${dark ? 'dark' : 'light'}.png`
+            ),
+          });
+        results.cases.push(
+          `300px sidebar ${lang} ${dark ? 'dark' : 'light'} ${state}`
+        );
+      }
+    }
+  }
+  for (const lang of ['en', 'ja']) {
+    for (const dark of [false, true]) {
+      for (const state of ['readable', 'both-null', 'error']) {
+        mode = state;
+        const width = dark ? 280 : 300;
+        await page.setViewportSize({ width: 320, height: 720 });
+        await page.goto(`${base}/?sidebar&dual&lang=${lang}&width=${width}`);
+        await expect(
+          page.locator('[data-testid^="environment-quota-"]')
+        ).toHaveCount(2);
+        await page.evaluate(
+          (dark) => document.documentElement.classList.toggle('dark', dark),
+          dark
+        );
+        for (const provider of ['codex', 'claude']) {
+          const panel = page.getByTestId(`environment-quota-${provider}`);
+          await expect(panel.getByRole('status')).not.toBeEmpty();
+          assert.equal((await panel.boundingBox()).width, width);
+          assert.equal(
+            await panel.evaluate((el) => el.scrollWidth > el.clientWidth),
+            false
+          );
+          if (state === 'both-null')
+            await expect(panel.getByRole('status')).toHaveText(
+              lang === 'ja'
+                ? '不明 · たった今取得'
+                : 'Unknown · Fetched just now'
+            );
+          if (state === 'error')
+            await expect(panel.getByRole('status')).toHaveText(
+              lang === 'ja' ? '取得不可' : 'Unavailable'
+            );
+          if (state === 'readable') {
+            await expect(panel.locator('dd').first()).toHaveText('83%');
+            await expect(panel.getByRole('status')).toHaveText(
+              lang === 'ja' ? 'たった今取得' : 'Fetched just now'
+            );
+            const cell = panel.locator('[data-quota-window]').first();
+            const fonts = await cell.evaluate((el) =>
+              [el.querySelector('dd'), el.querySelector('p')].map((node) => {
+                const s = getComputedStyle(node);
+                return [s.fontSize, s.fontWeight];
+              })
+            );
+            assert.deepEqual(
+              fonts[0],
+              fonts[1],
+              'remaining and countdown share numeric typography'
+            );
+          }
+        }
+        await page.screenshot({
+          path: path.join(
+            output,
+            `pair-${lang}-${dark ? 'dark' : 'light'}-${state}.png`
+          ),
+        });
+        results.cases.push(
+          `paired visual ${lang} ${dark ? 'dark' : 'light'} ${state} ${width}px`
+        );
+      }
+    }
+  }
+  for (const lang of ['ja', 'en']) {
+    mode = 'readable';
+    await page.goto(`${base}/?sidebar&lang=${lang}`);
+    const compactPanel = page.getByTestId('environment-quota-codex');
+    const period = lang === 'ja' ? '7日' : '7 days';
+    await expect(
+      compactPanel.getByText(period, { exact: false })
+    ).not.toBeVisible();
+    const compactBounds = await compactPanel.boundingBox();
+    results.cases.push(
+      `compact ${lang}: ${compactBounds.width}px wide, ${compactBounds.height}px high (2 windows)`
+    );
+    await page.screenshot({ path: path.join(output, `compact-${lang}.png`) });
+    await expect(compactPanel.locator('details,summary')).toHaveCount(0);
+    mode = 'fresh';
+    for (const [age, ja, en] of [
+      ['0', 'たった今取得', 'Fetched just now'],
+      ['59999', 'たった今取得', 'Fetched just now'],
+      ['60000', '1分前に取得', 'Fetched 1 min ago'],
+      ['3599999', '59分前に取得', 'Fetched 59 min ago'],
+      ['3600000', '1時間前に取得', 'Fetched 1 hr ago'],
+      ['7200000', '2時間前に取得', 'Fetched 2 hr ago'],
+      ['missing', '取得時刻不明', 'Fetch time unknown'],
+      ['invalid', '取得時刻不明', 'Fetch time unknown'],
+      ['-60000', '取得時刻不明', 'Fetch time unknown'],
+    ]) {
+      await page.goto(`${base}/?sidebar&lang=${lang}&age=${age}`);
+      const panel = page.getByTestId('environment-quota-codex');
+      await expect(panel.getByRole('status')).toHaveText(
+        lang === 'ja' ? ja : en
+      );
+    }
+    for (const [state, expected] of [
+      ['stale', lang === 'ja' ? '期限切れ' : 'Stale'],
+      ['error', lang === 'ja' ? '取得不可' : 'Unavailable'],
+    ]) {
+      await page.goto(`${base}/?sidebar&lang=${lang}&age=60000&state=${state}`);
+      await expect(
+        page.getByTestId('environment-quota-codex').getByRole('status')
+      ).toHaveText(
+        `${expected} · ${lang === 'ja' ? '1分前に取得' : 'Fetched 1 min ago'}`
+      );
+    }
+    results.cases.push(
+      `relative observation boundaries and stale/error ${lang}`
+    );
   }
   mode = 'fresh';
   await page.goto(base);

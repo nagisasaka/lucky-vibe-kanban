@@ -8,7 +8,8 @@ export function claudeQuotaView(
   unavailable: boolean,
   now: number
 ) {
-  const quota = record(record(record(data).result).quota);
+  const result = record(record(data).result);
+  const quota = record(result.quota);
   const observed =
     typeof quota.observedAt === 'string' ? Date.parse(quota.observedAt) : NaN;
   const fresh =
@@ -56,5 +57,21 @@ export function claudeQuotaView(
           : null,
     };
   });
-  return { fresh, windows };
+  const status = unavailable
+    ? 'error'
+    : !data
+      ? 'pending'
+      : result.status === 'unsupported' || quota.status === 'unsupported'
+        ? 'unsupported'
+        : !fresh
+          ? 'stale'
+          : windows.some((window) => window.remaining !== null)
+            ? 'fresh'
+            : 'unknown';
+  return {
+    fresh,
+    windows,
+    status,
+    observed: Number.isFinite(observed) ? observed : null,
+  } as const;
 }

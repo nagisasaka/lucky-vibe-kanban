@@ -10,6 +10,11 @@ import {
 } from '@phosphor-icons/react';
 import type { Icon } from '@phosphor-icons/react';
 
+const HostPetSettingsSection = lazy(() =>
+  import('./HostPetSettingsSection').then((module) => ({
+    default: module.HostPetSettingsSection,
+  }))
+);
 const GeneralSettingsSection = lazy(() =>
   import('./GeneralSettingsSection').then((module) => ({
     default: module.GeneralSettingsSection,
@@ -53,6 +58,7 @@ const RuntimeAccessSettingsSection = lazy(() =>
 );
 
 export type SettingsSectionType =
+  | 'host-pet'
   | 'general'
   | 'execution'
   | 'notifications'
@@ -69,6 +75,7 @@ export type SettingsSectionType =
 export type SettingsSectionGroup = 'host' | 'universal';
 
 export type SettingsSectionInitialState = {
+  'host-pet': undefined;
   general: undefined;
   execution: undefined;
   notifications: undefined;
@@ -93,6 +100,7 @@ export interface SettingsSectionDefinition {
 }
 
 export const SETTINGS_SECTION_DEFINITIONS: SettingsSectionDefinition[] = [
+  { id: 'host-pet', icon: BuildingsIcon, group: 'host' },
   { id: 'general', icon: GearIcon, group: 'host' },
   { id: 'notifications', icon: GearIcon, group: 'host' },
   { id: 'execution', icon: CpuIcon, group: 'host' },
@@ -132,6 +140,8 @@ export function renderSettingsSection(
     case 'execution':
     case 'notifications':
       return <GeneralSettingsSection key={type} category={type} />;
+    case 'host-pet':
+      return <HostPetSettingsSection />;
     case 'general':
       return <GeneralSettingsSection />;
     case 'repos':

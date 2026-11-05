@@ -9,6 +9,10 @@ void i18n.use(initReactI18next).init({
   initImmediate: false,
   interpolation: { escapeValue: false },
 });
+import { EnvironmentQuota } from '../../packages/web-core/src/shared/components/EnvironmentQuota';
+import { claudeQuotaView } from '../../packages/web-core/src/shared/lib/claudeQuotaView';
+import { quotaView } from '../../packages/ui/src/lib/codexQuota';
+import { useTranslation } from 'react-i18next';
 import { CodexQuota } from '../../packages/ui/src/components/CodexQuota';
 import { useCodexQuota } from '../../packages/web-core/src/shared/hooks/useCodexQuota';
 import { createRoot } from 'react-dom/client';
@@ -23,9 +27,79 @@ function DuplicateSubscriber() {
   useCodexQuota(true);
   return null;
 }
+function ClaudeFixture({ now }: { now: number }) {
+  const quota = useCodexQuota(true, 'claude_code');
+  const view = claudeQuotaView(quota.data, quota.unavailable, now);
+  const { t } = useTranslation('common');
+  return (
+    <EnvironmentQuota
+      name="Claude"
+      {...quota}
+      {...view}
+      now={now}
+      rows={
+        view.windows.length
+          ? [
+              {
+                name: '',
+                windows: view.windows.map((w) => ({
+                  ...w,
+                  label:
+                    w.key === 'five_hour'
+                      ? t('codexQuota.period.hours', { count: 5 })
+                      : t('codexQuota.period.days', { count: 7 }),
+                })),
+              },
+            ]
+          : []
+      }
+    />
+  );
+}
 function App() {
   const resources = useResourceObservation();
   const quota = useCodexQuota(resources.visible);
+  const { t } = useTranslation('common');
+  const params = new URLSearchParams(location.search);
+  const testAge = params.get('age');
+  const view = quotaView(quota.data, quota.unavailable, resources.now);
+  if (new URLSearchParams(location.search).has('sidebar'))
+    return (
+      <div
+        className="overflow-hidden bg-primary text-normal"
+        style={{ width: Number(params.get('width') || 300) }}
+      >
+        <EnvironmentQuota
+          name="Codex"
+          {...quota}
+          {...view}
+          now={resources.now}
+          observed={
+            testAge === null
+              ? view.observed
+              : testAge === 'missing'
+                ? null
+                : testAge === 'invalid'
+                  ? NaN
+                  : resources.now - Number(testAge)
+          }
+          status={(params.get('state') as typeof view.status) || view.status}
+          rows={view.rows.map((row) => ({
+            ...row,
+            name: row.name,
+            windows: row.windows.map((w) => ({
+              ...w,
+              label: w.period
+                ? t(`codexQuota.period.${w.period.unit}`, {
+                    count: w.period.count,
+                  })
+                : t('codexQuota.unknownPeriod'),
+            })),
+          }))}
+        />
+        {params.has('dual') && <ClaudeFixture now={resources.now} />}
+      </div>
+    );
   return (
     <>
       <Navbar
