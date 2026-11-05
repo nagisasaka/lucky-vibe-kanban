@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:0eb2d2bb98410cf36d5984a9f376145d010ab1524c1eca2cc974b291600e1647",
+  "pageVersion": "sha256:fa9835ebc66faab83c003bb6c1b080bb0cbf34668a4fb4febe5e2889d203da08",
   "claims": [
     {
       "id": "claim_94623b4df5d444f5b2804c9e2c2025c7",
@@ -337,8 +337,8 @@
       "statement": "Workspace累積トークンは取得済みprovider報告の軽量ガイドであり、料金、週次枠、context占有率、各run時間ではない。",
       "evidence": [
         {
-          "resource": "repo://docs/development/workspace-token-usage.md#L1-L24",
-          "version": "repo-lines-v1:sha256:d1bf989b1f2ab67e67904993eea11a55ac8a9dd5fd2671e52a5b1578ab5b9072:eyJzZWxlY3RlZExpbmVDb3VudCI6MjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk0YmIxYTBiZWI4NzI5ZjkxZTA0OGI3NDZiZjNjMWE4MTRjMzM2ZTBlZWQxZDVmY2RkNWI1ZDUzNjRkNmQzYWUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFkY2UyZjBlNWViYmFjODJjN2I2YjMwODY2ZWQ2ZDdjOWY4NDUxYzM2NGI0ZDdkM2I0OTljY2QyZjM1NWUwMmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjIxMzBhMTg0NDVlOGRkMDk0MmY4NDFkZWJlMzE4YWQ5ZjU2NzlhNmY2MWFmZTJkYjU4NWYzNGIxMjFjN2NmNjkifQ"
+          "resource": "repo://crates/db/src/models/workspace_tokens.rs",
+          "version": "repo-file-v1:sha256:4654220b9f838bc9c816844d1b2a84e70387e0767a45bcad8b253eb263106642"
         }
       ]
     },
@@ -424,15 +424,11 @@
     },
     {
       "id": "claim_30f1d9baa10b46ad912192413023ac7b",
-      "statement": "実装記録は最新snapshotによる報告attempt数の後退を理由に分子・表示専用分母を削除し、everflagや履歴走査を追加しなかったと記録し、現行応答型にもattempt数はない。",
+      "statement": "現行Workspace累積トークン応答は報告attempt数の分子・表示専用分母を持たず、欠落を0や推計値と扱わない。",
       "evidence": [
         {
-          "resource": "repo://crates/db/src/models/workspace_tokens.rs#L7-L25",
-          "version": "repo-lines-v1:sha256:5951c4f03e878090f58d44eeec49229089f2cb5b1bc7803b2d958e0c5e6f4639:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc3MjgzMTc2OGQ3ZWViZThjMjU2NWRjOWRlMTg3NzYwNWMyY2FjNDExMzgwM2ZiZGFkNTM1NmRmZTc4NmFhOTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU1NjQ1YzI0OGRhNmE2Nzc3YTAyZmM0ZjJlMWY3NGI0MjhmY2VlZDg5ZmYzZTM0MTVmNzFmOTdmYjAzNmM1ZTIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRlOGUyNWRjNWM2YWZhNDYxNzVhN2JmYzE2N2VkYTc0Nzg1MDkxYWNjNDE4ZjIwMDY1NmNkZWMwYmZhMzhiMmQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjRjNGJmNzljYThhYTkwMTg5NjAwZDA0ODEyOGEzOTkxMmFlYmNiYTVkNzU2YWRhM2UyMjAwZTBkMWUyOWE5NmMifQ"
-        },
-        {
-          "resource": "repo://docs/development/workspace-token-usage.md#L107-L113",
-          "version": "repo-lines-v1:sha256:5989da07bbf240e5f466c7806b65f7ab80e095c1c6cce8f67d0d24336f185015:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNTYxNmFhYTE0MjM1NzRiOGI1MTA2NzliNTI0MTVhYjI5OGQ5ZTc5MTczZTkzYzY4NzRhYzMzYTM3NjY0OTNkYyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiM2YwMTk2MWVmYThkYTE4ZjU3NjFhMGQ2ZmU4MzdmNDAyMTFmNjhjODYyNzNjOTNkZWExZmYxMzVjMzdjM2FkOSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYjY0YTlkZjVhNmQ3NjRmZjljMmUwMjRmZGNmMTM2NDAzN2E4OTEwMDVkODJlZTdjMDVmNGNlMmU2N2JlNzEyNiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYjk5MDE2NjIwM2M5YTdhNWM3MTIyOGMyMTFkNjNlNmUxMjAzZmE0MTU1MmMxYzk2Nzg2YmY3ZTU4OTg0YjI4ZiJ9"
+          "resource": "repo://crates/db/src/models/workspace_tokens.rs",
+          "version": "repo-file-v1:sha256:4654220b9f838bc9c816844d1b2a84e70387e0767a45bcad8b253eb263106642"
         }
       ]
     },
@@ -458,7 +454,7 @@
     },
     {
       "id": "claim_2ceb48b03b364de4a268707a58d845c2",
-      "statement": "期限worktree cleanupと起動時orphan回収、通常merge・PR監視・Arenaの自動archiveは廃止され、既存archived/orphanの一括削除も行わない。",
+      "statement": "通常merge・PR merge観測は自動archiveを行わず、時間経過や終了からworktree解放を推定しない。",
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/workspaces/git.rs#L275-L312",
@@ -467,10 +463,6 @@
         {
           "resource": "repo://crates/services/src/services/pr_monitor.rs#L125-L159",
           "version": "repo-lines-v1:sha256:5c741acf17263ce3a4361e6286119dd90b4b8dbf09211e776f7f47887bebcc4b:eyJzZWxlY3RlZExpbmVDb3VudCI6MzUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIzNGM3OWRiNGU2MTNhMGJhMGZlM2I0ZWExODM3NWRmNmE0MmM4M2RkMTUzYjJlYmRkZmVjNGNhMDIwZmQyMDQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImYyYjc4ZjljZjQ1YjI1ZWZhNDZjNzkyZDY4ZWNmYjk2ZTliZDFhNjQ4MTRiYWVkZjNmMjE1NjY2MTlmMzFmYTQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
-        },
-        {
-          "resource": "repo://docs/workspaces/managing-workspaces.mdx",
-          "version": "repo-file-v1:sha256:cbf2f47ff563ab3463ba53f35b7d79cdf720b7c2984aa55ea982a1129c4f609f"
         }
       ]
     },
@@ -829,10 +821,20 @@
           "version": "repo-file-v1:sha256:a3564462989d0203d83df600da93583679164bda7432c849d51964421b04981a"
         }
       ]
+    },
+    {
+      "id": "claim_bd021b0b4311482683976dbb142d30ff",
+      "statement": "Workspace作成時にはProject内の複数Repoとそれぞれのtarget branchを選択できる。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/shared/components/CreateModeRepoPickerBar.tsx",
+          "version": "repo-file-v1:sha256:28a6938290d5c4575f16b2ca78e1c1436ccd9a98941cf1b50d672ad04606eec7"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-02T14:26:25.232Z"
+    "at": "2026-11-04T20:22:03.096Z"
   }
 }

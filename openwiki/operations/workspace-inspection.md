@@ -70,12 +70,8 @@ sources:
     resource: repo://crates/services/src/services/workspace_usage.rs
   - id: openwiki-source-965b490de6f8364cb7695944
     resource: repo://crates/workspace-manager/src/workspace_manager.rs
-  - id: openwiki-source-e8e69428539ea9d66bf7633a
-    resource: repo://docs/browser-testing.mdx
-  - id: openwiki-source-8c7998811f24db89c5190835
-    resource: repo://docs/development/external-editor-uri-validation.md
-  - id: openwiki-source-3af1f69ccb22cf9c9e5261fc
-    resource: repo://docs/development/project-utilities-validation.md
+  - id: openwiki-source-89d0fb22262f0a0ac1df7d1e
+    resource: repo://deploy/server/server.mjs
   - id: openwiki-source-5e4c1802d2c1ee81cad7ac45
     resource: repo://packages/ui/src/components/IssueWorkspaceCard.tsx
   - id: openwiki-source-bb23b715172e6051c10e1afc
@@ -116,6 +112,8 @@ sources:
     resource: repo://packages/web-core/src/pages/kanban/ProjectUtilities.tsx
   - id: openwiki-source-9b9697ea8eafb71c1ca35e40
     resource: repo://packages/web-core/src/pages/workspaces/ChangesPanelContainer.tsx
+  - id: openwiki-source-36ce95fe7094b2e05ad44d39
+    resource: repo://packages/web-core/src/pages/workspaces/GitPanelContainer.tsx
   - id: openwiki-source-39d390b46b89f38f831e363e
     resource: repo://packages/web-core/src/pages/workspaces/WorkspaceFilesSurfaceContainer.tsx
   - id: openwiki-source-0894249b732085a9800940bd
@@ -134,6 +132,8 @@ sources:
     resource: repo://packages/web-core/src/shared/hooks/useWorkspaces.ts
   - id: openwiki-source-ea8e692dfd4142379f167b66
     resource: repo://packages/web-core/src/shared/lib/externalEditors.ts
+  - id: openwiki-source-4fb8a1b1995ea82c4cf31ea2
+    resource: repo://packages/web-core/src/shared/lib/mainTerminalRepo.ts
   - id: openwiki-source-09147e83e2e70cb032ece9e7
     resource: repo://packages/web-core/src/shared/providers/TerminalProvider.tsx
   - id: openwiki-source-3b6f5885b9d50925c82267dd
@@ -148,21 +148,23 @@ sources:
     resource: repo://tests/chat/file-links.native.mjs
   - id: openwiki-source-d70e2f551bdb141bf2cd79a6
     resource: repo://tests/chat/mobile-navigation.native.mjs
+  - id: openwiki-source-f806f5d600e6f619c7c88371
+    resource: repo://tests/pets/integration.mjs
   - id: openwiki-source-be2dcdcefb33abee0a49e75a
     resource: repo://tests/server-access/preview-static.mjs
   - id: openwiki-source-c6d955097c4a7a9e7b1873ee
     resource: repo://tests/server/specs/workspace-search.spec.ts
   - id: openwiki-source-dcac74ef871fd02e6315fa93
     resource: repo://tests/workflow/specs/diff-tree.spec.ts
-generated: { by: "codex", at: "2026-11-02T23:50:54.203Z" }
+generated: { by: "codex", at: "2026-11-05T07:15:08.684Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-02T23:50:54.203Z
+    at: 2026-11-05T07:15:08.684Z
 ---
 
 # ファイル・差分・プレビュー・端末の境界
 
-これらの機能は同じ [Workspace](../concepts/workspace.md) の成果物を扱うが、実ファイルの閲覧、Git との差分、アプリの実行、shell の操作は別の経路である。画面の操作方法は [Reviewing Code](../../docs/reviewing-code.mdx) と [Browser Testing](../../docs/browser-testing.mdx) に譲り、ここでは実装変更に関わる契約を整理する。
+これらの機能は同じ [Workspace](../concepts/workspace.md) の成果物を扱うが、実ファイルの閲覧、Git との差分、アプリの実行、shell の操作は別の経路である。画面の操作手順と、その操作が成立する実装契約を以下にまとめる。
 
 ## Issue 番号から Workspace を探す
 
@@ -208,7 +210,7 @@ raw は streaming 応答で no-store と nosniff を付ける。明示された 
 
 Content-Disposition は inline 画像にも attachment にも、正規化された basename の ASCII `filename` fallback と正確な UTF-8 `filename*` を付ける。大文字小文字・拡張子・日本語・空白をURL末尾の raw に置き換えず保存名へ伝える。fallbackでは非ASCII・quote・backslash・percent等を安全な文字に置換し、UTF-8側はspaceを%20、asteriskを%2Aにencodeする。stream本体とMIME/認証/所属/path境界は変えない。[応答の組立て](../../crates/server/src/routes/workspaces/files.rs#L247-L301)・[header生成](../../crates/server/src/routes/workspaces/files.rs#L656-L679)
 
-実file fixtureはpreview上限超のbinary bytes、NUL/CRLF、不正UTF-8、画像/HTML/SVGとheader injection、認証・symlinkを検査する。browserの保存ダイアログや元の報告再現は未確認で、headerの正しさを実browser測定と混同しない。[raw回帰](../../crates/server/src/routes/workspaces/files.rs#L922-L1080)・[調査記録](../../docs/development/workspace-file-download.md)
+実file fixtureはpreview上限超のbinary bytes、NUL/CRLF、不正UTF-8、画像/HTML/SVGとheader injection、認証・symlinkを検査する。browserの保存ダイアログや元の報告再現は未確認で、headerの正しさを実browser測定と混同しない。[raw回帰](../../crates/server/src/routes/workspaces/files.rs#L922-L1080)・[raw応答と保存名](../../crates/server/src/routes/workspaces/files.rs)
 
 raw URL は local のものをそのまま使い、退役した remote host ID または host-scoped URL は拒否する。host ID なしの外部 URL は保持する。[URL test](../../packages/web-core/src/features/workspace-files/model/workspaceFileRawUrl.test.ts)
 
@@ -317,13 +319,13 @@ statusは観測のみで、各Repo scriptの最新recordに古いrunningを加�
 
 応答の accepted / requested_action / target_state_observed と現在statusを読み分ける。外部MCPの耐久receipt成功だけで起動完了とせず、応答喪失やuncertainでは元operationと現在statusを確認する。stdioは同じmanagerへの直接HTTP adapterで、外部のrequest_id receiptと同じ形ではない。[外部MCPの認可・回復](../integrations/remote-access.md#managed-devserver-を操作する)・[応答](../../crates/server/src/routes/workspaces/dev_server.rs#L299-L305)・[stdio](../../crates/mcp/src/task_server/tools/dev_server.rs#L50-L79)
 
-変更時はregistry非修復、並行/重複start、無関係process保全、両transportの認可/receiptとUI共有状態を確認する。[隔離fixtureと実承認待ちの限界](../../docs/development/managed-dev-server-mcp.md)は、実agentの承認待ち到達・取消と、人の承認後のtool成功を区別する。[検証入口](development.md#起動回復受動参照mcp-操作を変更するとき)を参照する。
+変更時はregistry非修復、並行/重複start、無関係process保全、両transportの認可/receiptとUI共有状態を確認する。[隔離DevServer runner](../../tests/server/run-managed-dev-server.mjs)は、実agentの承認待ち到達・取消と、人の承認後のtool成功を区別する。[検証入口](development.md#起動回復受動参照mcp-操作を変更するとき)を参照する。
 
 Dev server の稼働だけではチャット送信をブロックしない。専用停止と他 script の活動判定は [Session の入力契約](../concepts/session-and-agent-run.md#会話表示と入力)を参照する。
 
-この script 実行は [coding AgentRun](../concepts/session-and-agent-run.md) とは別の ExecutionProcess 経路である。通常の設定とログ上の URL 検出の説明は [Browser Testing](../../docs/browser-testing.mdx) を参照する。
+この script 実行は [coding AgentRun](../concepts/session-and-agent-run.md) とは別の ExecutionProcess 経路である。Settings → Repositories の Dev Server Script、またはWorkspace Logsの編集操作でscriptを設定する。Dev Server操作は開始時にLogsを開き、Repo別のlogと検出URLを表示する。Runningはprocess状態なので、外部browserでapp readinessを別に確認する。
 
-旧subdomain/API preview proxy、HTML検査script/Eruda注入、公開handoffと専用cookieは撤去済みである。外部ブラウザーとprivate tunnel、またはアプリ自身の認証を備えた独立CSVルートを使う。旧preview設定は警告して無視する。[移行手順](../../docs/browser-testing.mdx)・[公開配置の廃止契約](../../docs/self-hosting/server-container.mdx#retired-embedded-previews)。
+旧subdomain/API preview proxy、HTML検査script/Eruda注入、公開handoffと専用cookieは撤去済みである。外部ブラウザーとprivate tunnel、またはアプリ自身の認証を備えた独立CSVルートを使う。旧preview設定は警告して無視する。[外部browserで確認する](#差分レビューと外部アプリの確認)・[公開配置の廃止契約](server-container.md#埋込みpreviewの廃止)。
 
 ビルド済みVite previewを起動する[静的配信fixture](../../tests/server-access/preview-static.mjs)は、`/@fs` と `/@vite/client` で非公開ファイルや開発endpointが露出しないことをHTTP fetchで検査する。これは撤去済みhandoffや実Auth0接続の成功を意味しない。
 
@@ -335,13 +337,18 @@ Wiki は対象 repo の OpenWiki が有効な場合だけ入口を表示し、�
 
 ## Terminal と editor
 
+Kanbanのファイル見出しは「ファイル」で、file-treeの複数repository選択とmain repoの詳細表示は維持する。terminal専用のrepository selectorとそのmenu領域は削除済みで、API順で最初の有効pathを持つmain repo rootを既定cwdにする。取得error・空一覧・空pathしかない場合はterminalを無効表示し、暗黙cwdでshellを起動しない。mountやrepo表示だけでは開始しない。Kanban右panelの重複した「閉じる」ボタンも削除し、既存のpreview × は残る。[既定rootの規則](../../packages/web-core/src/shared/lib/mainTerminalRepo.ts)・[ファイルとterminalの配置](../../packages/web-core/src/pages/kanban/ProjectUtilities.tsx)・[既存×の開閉試験](../../tests/kanban/utility-close.mjs)
+
+最上部の装飾Petとタイトル/鉛筆の設定導線は [Petの形式・保存・帰属](../concepts/pets.md) を参照する。これらの変更のfixture検証は実PTYや公開認証後画面の確認を意味しない。
+
+
 端末は両ビューで単一。Workspace は interactive 用途・非archive・非削除を要求し、Repo が一つならその worktree、複数なら Workspace root を初期 cwd とする。Kanban は登録 main repo を起動前に選び、稼働中は対象を固定する。input/output は base64、resize は別 command で、会話 Session の resume ではない。[route](../../crates/server/src/routes/terminal.rs)・[main 選択](../../packages/web-core/src/pages/kanban/ProjectUtilities.tsx)
 
 項目の明示展開だけで新規接続を作り、項目そのものの折畳みで所有 shell/job/child を停止する。確認・警告・tooltip・別終了ボタン・複数タブはない。sidebar 全体の開閉、狭幅でのファイル/Wiki 選択や component unmount は停止意思ではない。exit と検出した通信断は無言で折畳み、自動再接続/再生成せず、次の明示展開だけが一つの新規端末を作る。[表示と所有](../../packages/web-core/src/shared/components/TerminalSection.tsx)・[provider](../../packages/web-core/src/shared/providers/TerminalProvider.tsx)
 
 Linux は未回収 shell の pidfd identity を anchor に POSIX session と捕捉可能な子孫を停止し、wait と reader join 成功後だけ map を解放する。他端末・同 cwd の別実行を推測で kill しない。archive guard は所有端末解放後にも他プロセスを検査する。[PTY cleanup と実プロセス試験](../../crates/local-deployment/src/pty.rs)・[owned session](../../crates/utils/src/process/owned_group.rs)
 
-通信断検出は両端45秒監視と tick 待ちが目安で即時保証ではない。client の close は到達不能serverの停止証明ではなく、通常の明示終了はserverのcleanup後に exit を返す。停止不能kernel、server強制終了、捕捉前に再親化したdaemonの完全回収、非Linuxの同等session cleanupは保証しない。[検証と限界](../../docs/development/project-utilities-validation.md)・[heartbeat](../../crates/server/src/routes/terminal.rs#L138-L233)
+通信断検出は両端45秒監視と tick 待ちが目安で即時保証ではない。client の close は到達不能serverの停止証明ではなく、通常の明示終了はserverのcleanup後に exit を返す。停止不能kernel、server強制終了、捕捉前に再親化したdaemonの完全回収、非Linuxの同等session cleanupは保証しない。[実PTYの検証入口](../../tests/server-access/workspace-wiki.mjs)・[heartbeat](../../crates/server/src/routes/terminal.rs#L138-L233)
 
 ## 外部エディターの URI 連携
 
@@ -380,10 +387,18 @@ Workspace API は `inspection_root` を使い、削除済み・未準備・不�
 
 ### 旧設定と検証限界
 
-旧 editor type / custom command / SSH 欄は deserialize 時に無視し、実行や URI への自動変換をしない。entries がなければ上記の通常初期化へ進む。ただし全体 Config の v7 移行入口は v6 を直接 deserialize するため、v5 以前から現行版への全設定移行まで保証しない。この既存制限を editor schema の互換読込と混同しない。[旧値の扱い](../../crates/services/src/services/config/editor/mod.rs#L18-L25)・[全体移行入口](../../crates/services/src/services/config/versions/v7.rs#L58-L69)・[記録された制限](../../docs/development/external-editor-uri-validation.md#途中で判明した制限)
+旧 editor type / custom command / SSH 欄は deserialize 時に無視し、実行や URI への自動変換をしない。entries がなければ上記の通常初期化へ進む。ただし全体 Config の v7 移行入口は v6 を直接 deserialize するため、v5 以前から現行版への全設定移行まで保証しない。この既存制限を editor schema の互換読込と混同しない。[旧値の扱い](../../crates/services/src/services/config/editor/mod.rs#L18-L25)・[全体移行入口](../../crates/services/src/services/config/versions/v7.rs#L58-L69)・[v7移行の入口](../../crates/services/src/services/config/versions/v7.rs#L58-L69)
 
 変更時は [URI・パス・browser fixture の検証境界](development.md#外部エディター-uri-連携の検証)を参照する。実 IDE / WSL / SSH 認証、Docker Attach、ネストした Dev Containers URI は未検証である。この Sync はソースと試験定義の照合であり、実機接続や自動マージ の検証成功を意味しない。
 
 ## 実行履歴を調査・保全する
 
 画面の会話履歴や process logs だけでは provider の元フレームをすべて保持した証拠にならない。[Native Audit の保存先・version 照合・bundle エクスポート](../architecture/agent-runtime.md#native-audit-の保全エクスポート寿命) は再現調査の一次説明である。Workspace の明示削除は Session の Audit ファイルも background 削除するので、保全の判断は [Workspace の削除 lifecycle](../concepts/workspace.md#archive削除期限-cleanup) と合わせて行う。[削除対象](../../crates/workspace-manager/src/workspace_manager.rs)
+
+## 差分レビューと外部アプリの確認
+
+Workspaceを選び、Changes/Git panelのfile treeから対象fileを開く。比較base・未commit変更・未追跡fileを確認し、必要に応じてinline/split表示とwrapを選ぶ。行コメントはfeedbackとしてまとめてagentへ送り、送信は新しい作業指示になるため、読むだけのreviewと分ける。空diffや取得失敗の意味は [差分の状態](#差分の未取得エラー空を区別する)で確認する。[Git panel](../../packages/web-core/src/pages/workspaces/GitPanelContainer.tsx)
+
+Dev ServerのlogからURL/portを確認し、LVKと同じbrowser環境から到達できる外部URLを開く。private appには `ssh -N -L LOCAL_PORT:127.0.0.1:APP_PORT USER@SERVER` のような運用者のtunnelを使い、browserで `http://127.0.0.1:LOCAL_PORT` を開く。APP_PORTはSSH接続先のnetwork namespaceで解決される。container内loopbackのappは、SSH接続先から到達する別経路を先に用意する。LVKのloginはappの認証にならない。独立CSV経路を公開する場合は [証明書・認証・再作成の手順](server-container.md#独立アプリの-csv-ルート)に従う。
+
+Playwright/CDPで開く場合も明示されたURLを使い、console/network・画面・resize・reloadを確認する。browser選択やMCP serverの設定は [provider側のMCP設定](../integrations/agent-providers.md#保存した-profile-と-mcp-接続の操作)で行う。旧iframe注入・Eruda・DevTools URL設定は復活させず、file/Markdown/image/diffの内部previewとは区別する。

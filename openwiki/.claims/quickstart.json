@@ -1,14 +1,14 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:bacd7a6be24087883cfacea3066321b45394a2cf2fd53325df6422cb7c222143",
+  "pageVersion": "sha256:980ae7011682f87d8079cd359ca0a2a12938a05636992c7abea5fccbd2a3f6ad",
   "claims": [
     {
       "id": "claim_edf1b78d3c7a4d978a6d8debcee4edd2",
-      "statement": "READMEはIssue/Workspace/agent実行・review・Git統合を製品機能、計画と出力レビューの効率化を目的、graph Workflowを主要機能と記録する。",
+      "statement": "READMEはカンバンでの計画・coding agent実行・変更レビューを目的とし、Git worktree・複数Session・visual agent workflow・local integration・OpenWikiを紹介する。",
       "evidence": [
         {
           "resource": "repo://README.md",
-          "version": "repo-file-v1:sha256:092835dc3849c3273921ba936f31941819d866cad70421e3eb4ea94682c3c235"
+          "version": "repo-file-v1:sha256:656689d7e3b831feeddd5409ce339761e75c69a766bb7e63eaaf74dbaa4bd133"
         }
       ]
     },
@@ -18,7 +18,7 @@
       "evidence": [
         {
           "resource": "repo://README.md",
-          "version": "repo-file-v1:sha256:092835dc3849c3273921ba936f31941819d866cad70421e3eb4ea94682c3c235"
+          "version": "repo-file-v1:sha256:656689d7e3b831feeddd5409ce339761e75c69a766bb7e63eaaf74dbaa4bd133"
         }
       ]
     },
@@ -31,8 +31,8 @@
           "version": "repo-lines-v1:sha256:b3b19b1261de55d1d6d7273e764d4c957158a9b61a3cabcaa060b43028e9580b:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdkNDM1N2NiNDRkNTI0NTA4YzQ0OWJjZmVjMDg3NDZhNjg1NzY0Y2VlZmIzYTI5MmIxNzRhYjQ5NTA3ODI1ZTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk5OTdiZmY3ZmMwZjNlNWNmYmRmNWRkNDdlNTVjYzdkY2ZhMTE5OGMzYWZhNmJlOWZmMzNkNGIxMzUyNWQ1NjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjU0NWZkNjk2NWViODdhY2UwOTI4Yjk5MWFiNjk3NDI0ZDVmYjhhYzZmOWRlZWJjNDM3YjJiZmFlYTIwZDcxYWMifQ"
         },
         {
-          "resource": "repo://packages/local-web/src/app/entry/Bootstrap.tsx#L45-L67",
-          "version": "repo-lines-v1:sha256:a55acdc39099224be45c3477739d617283190a891bbd68aa2338a3d8da395149:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFiNjRkZTg1ZTEzZWFhMDhjY2JjMzdhMDc2YjZiMGMxYjNiYzM5OTY4NDAyZTBiN2Y5YWYxNjE5ODE2MGUxMjIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgwNWUxMjBjMGE0MGE2NDNmMDMyMjNhMjg4OTM3YTRlYTQwYWUwZjAzYzViNjFkNDg2ZTY4Y2Y1Nzc0MDFjZTkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjA5NGZjMGMxNzNkMWVjM2ZjNTAxZDdkZmE5Mjg1NTAxYzUyN2NmYjQ3MTI1ODNkYTNjYzM2MTgwNTY2YjRiZTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQ5OTY3ZWMxZWQzODM2ZjhlYjE3YWZmMTcyYjViZmVmN2RlNjA0ODVhNDM5YzZjYTExYzU5MWUxNzU1NzM5YWUifQ"
+          "resource": "repo://packages/local-web/src/app/entry/Bootstrap.tsx#L36-L66",
+          "version": "repo-lines-v1:sha256:afbeb29d815e5a41793b21f5154bc9306bc9d29045cc57d1ba14a286d06cc401:eyJzZWxlY3RlZExpbmVDb3VudCI6MzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFiNjRkZTg1ZTEzZWFhMDhjY2JjMzdhMDc2YjZiMGMxYjNiYzM5OTY4NDAyZTBiN2Y5YWYxNjE5ODE2MGUxMjIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgwNWUxMjBjMGE0MGE2NDNmMDMyMjNhMjg4OTM3YTRlYTQwYWUwZjAzYzViNjFkNDg2ZTY4Y2Y1Nzc0MDFjZTkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjA5NGZjMGMxNzNkMWVjM2ZjNTAxZDdkZmE5Mjg1NTAxYzUyN2NmYjQ3MTI1ODNkYTNjYzM2MTgwNTY2YjRiZTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQ5OTY3ZWMxZWQzODM2ZjhlYjE3YWZmMTcyYjViZmVmN2RlNjA0ODVhNDM5YzZjYTExYzU5MWUxNzU1NzM5YWUifQ"
         },
         {
           "resource": "repo://packages/web-core/src/shared/lib/localIdentity.ts",
@@ -46,7 +46,7 @@
     },
     {
       "id": "claim_6ca1116cc3ee46fab76b8d002b677f17",
-      "statement": "Prompt用Tagはtag_name/content、分類Tagはproject_id/name/color、IssueTagはIssueとTagの関係を保持する別モデルで、snippet挿入操作はCreating Tagsに記録される。",
+      "statement": "Prompt用Tagはtag_name/content、分類Tagはproject_id/name/color、IssueTagはIssueとTagの関係を保持する別モデルで、promptの候補選択でcontentを挿入する。",
       "evidence": [
         {
           "resource": "repo://crates/api-types/src/issue_tag.rs#L5-L19",
@@ -61,18 +61,8 @@
           "version": "repo-lines-v1:sha256:289695c9cf00c015fe915dead8db6af541e612073674a706e87016b3849e0140:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdiNDMxYmJmN2YxYmRkM2VhMWI5YzU5M2IxMjYwZjM3ZDY2ZWM5MWM0MDRhYzRlYTg5NWNhNGJjYThlZjA3NmMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhZDVhZjgzYTNiOGE0YWY3ODk5YzIwYzc2NzQ4NTEyZDcyZjZiNjE5Mzk2ZjRlNWUwNWIwY2UzZjIwOTFkZmEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRlOGUyNWRjNWM2YWZhNDYxNzVhN2JmYzE2N2VkYTc0Nzg1MDkxYWNjNDE4ZjIwMDY1NmNkZWMwYmZhMzhiMmQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImU0MDU4NzkwYTI5YWM5NDFiYWM2N2Q2OWQ4YjZlMWViYzU5ODY4NDM5YTFiYTJiMWVjNWRkNzAzZDJkNDM2NzYifQ"
         },
         {
-          "resource": "repo://docs/settings/creating-task-tags.mdx#L6-L16",
-          "version": "repo-lines-v1:sha256:990b9ffd5e58f2c5bd55c92fd02e68f30454b6b1e53f94cdccd3bb5cca8346f9:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU1Mzk0ZDg0ZTA3YTI4YmNhY2E5MDI1YzcyZGQ5MGVhMjRjMGM1YmMzZGUwYWU3YzE5MjQwYTBhZjNmMDhjNGUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImViNmU4M2Y0YjZhNjBjOTVjZGQwYjdkN2VlNmI5NzRlNzRlZGYwOWZiODAxZDA5NGZjMzRiNTU3MTRjYWJiZGQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ2NWNjMWI2ZGZjMzlkZWE2NTI4NzZjN2UwZWFhNjQ5NzhhNzg3ZmZkMjBiYjA4NjM2OTE1M2RmYzhjMDk0NDEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImRmNTFiNDViNjYxNzdlNzBjNDczMmMxMGRjZDNkNDUwZmM5OTU0OGYxZTEyMzY5YTEwMmI5M2YwM2FlNjUyYjkifQ"
-        }
-      ]
-    },
-    {
-      "id": "claim_bfe67b6dcfad410083a2a4575a82558e",
-      "statement": "文書navigationはWorkspace、Boards and issues、Settingsとagent別操作の原典への入口を持つ。",
-      "evidence": [
-        {
-          "resource": "repo://docs/docs.json",
-          "version": "repo-file-v1:sha256:3ae978339740f342cba4dcfed71143a8b10c0fea5f97c6d4d757c356481ee15b"
+          "resource": "repo://packages/ui/src/components/FileTagTypeaheadPlugin.tsx#L387-L411",
+          "version": "repo-lines-v1:sha256:9f078b2aac8d8dbf37359b02485a5745b287d395ecd4bdc1cad0f74a69e19d05:eyJzZWxlY3RlZExpbmVDb3VudCI6MjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjEzOWViMTUxNWU4MjE1NGY5MjdkMDlkNzNkNjkzYzUyMjM5MmMzOTFlYzAwMmVhZGI3ZmY0ZGRmNjM1Y2YyZDIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZiODFlNDU2M2EzN2FhZDc1ZjY3NjQ3NGRlNTk3YTExMjNlYTdhNGFjNDI2ZmYyMmFjMTkwYWIwM2I3OTAyY2YiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFmNmNjNjkzNDY4YWQ3ZTY2ZTc3MTc3OWEyMDJlNTRlMGY2Nzc0MTNjZDFlNGQ4ZGFkN2I1OGQxZjc2MTMwMTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdkM2NkM2Y3ZGE3MzYyZjZlOWQxNzJkNDkxMTJkN2NlMGJiMGZlMGU5Nzk3MGE3MTQ2MjNmYWIyMDIyZjBkNzQifQ"
         }
       ]
     },
@@ -82,11 +72,11 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/integrations/conversation.rs",
-          "version": "repo-file-v1:sha256:7800dd437e2cba8bb5db17fe74877717b08e0b46d0014c5dcec697450282ccd1"
+          "version": "repo-file-v1:sha256:3f4281d139b82a9d7ec33408f5ee1addd7d7733cb873ec3842bb9f6f36442dee"
         },
         {
           "resource": "repo://crates/server/src/routes/integrations/runtime.rs",
-          "version": "repo-file-v1:sha256:8f1749902f3f28211d6b4f3a8c656a10a125e86d7927907ff7ff886333aed86a"
+          "version": "repo-file-v1:sha256:f4cd12ba17fe9c6f92997db0172a7278a02b494d372170f4abf3d8cece1e0490"
         }
       ]
     },
@@ -115,10 +105,6 @@
         {
           "resource": "repo://deploy/server/compose.yaml",
           "version": "repo-file-v1:sha256:7a76715643f13463692105c518f5cfda155584da6c9de756c574910eddebdae6"
-        },
-        {
-          "resource": "repo://docs/self-hosting/server-container.mdx",
-          "version": "repo-file-v1:sha256:251d0f50f2998cc9e10a457cf64b76d2dac7482c3e3091a4a0562f39b6bb126b"
         }
       ]
     },
@@ -132,7 +118,7 @@
         },
         {
           "resource": "repo://crates/server/src/remote_mcp/mod.rs",
-          "version": "repo-file-v1:sha256:130e1a6c6990766a97fa1899d81c91a259f759ea41efadcb5a4b902874fa7c9d"
+          "version": "repo-file-v1:sha256:67cac8ff9c8596f81d5b2f786c3f81b800750b500d8807b6f1f4435e9b62ec7b"
         },
         {
           "resource": "repo://crates/server/src/routes/sessions/questions.rs",
@@ -199,24 +185,24 @@
         {
           "resource": "repo://crates/db/src/models/design_note.rs",
           "version": "repo-file-v1:sha256:a7fc18c43563e718163662d9c540a7fbd6374fbfee6be9bb6690098dd5a2b415"
-        },
-        {
-          "resource": "repo://docs/development/design-notes-validation.md",
-          "version": "repo-file-v1:sha256:75f3e71b3f9c70b7046312b6290baa8aeb0649045a64f9f64c469289831f2305"
         }
       ]
     },
     {
       "id": "claim_62b548f9bb5248749b6a8f6e5a1bc37f",
-      "statement": "旧 LVK npx launcher と Tauri desktop shell は撤去済みで、server guide はブラウザー経由の Docker/source Web と直接 binary/外部 HTTP MCP への移行を案内する。",
+      "statement": "LVKはDocker imageのみを配布し、ブラウザー経由のDocker/source Webを使う。直接buildしたMCP binaryは既存backendへ接続する。",
       "evidence": [
         {
-          "resource": "repo://README.md#L24-L30",
-          "version": "repo-lines-v1:sha256:5e4cd0b892f5825ddb27b1c068aeaca5abcfbc1a7ec42068f72b46db429d52e3:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMmExOTUyNTIyOTA5ZTBhOTUyMmJkYmI1OWRmOGM3NjM3ZjFhOGVmZDliMTUzZTUxNjQ3ODBmYzYwZmYxYTFmZSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZWI4ZTJkZDBkMDRjMzY2ZmVmZWJiODEzMjZjMTk5MWVmMzMyMGRhNTg4MGZmZWNlODE5M2JiMDk3MTU3M2ZiNCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMGMxZGFhM2M1ODg1OTlkOTBiN2ViMDMyNWIwMDc0ODJhNGFmNzk4ZDEyYWE1ODhiOGY1OThlZTIzZGI1NTg4ZSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOWE3MTVhZTUyMjNiNGFlNzczYjI0NzRhY2Y1ZTRlMTA5ZTU0MDZhYzA2YWVhZGU3MTc1Y2JiYTQ5OTNhMmZkNiJ9"
+          "resource": "repo://README.md#L14-L23",
+          "version": "repo-lines-v1:sha256:88dea9e56868b943324627d06e2c623d80c8ccea9fa7698c44b474102012f1a7:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZkYWU0M2YwZjg5MjAxNTE5NmFhNGVhZmI1MGFiZjUxN2M4MWRmZTRmNjhhMTJiMGY1NjUxNzA0YzVhOGRjYzEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImYwYzczNmYyMzEyOWZmMjExNjE1YWFkMzM0YTQ3MTk1MTU1ZjY2YjRhOWU4ODE3ZTJmY2JiMWRjNmNhMDM4MzIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImIwYTJhNmE4NzYyNGI4YmM1YzIyNGE5OGVkYWQ0ZjdlZjczYjM0YjIwZTFlZjhkMzdlMTgxNjgxZDM2NDkyNmEifQ"
         },
         {
-          "resource": "repo://docs/self-hosting/server-container.mdx#L378-L399",
-          "version": "repo-lines-v1:sha256:1e1e9e4947c4603a40c8cfc339e0bd604408aa1fa795421d5e581af9b890989d:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhmOWViMjNlN2IyMGM2N2ZlODdmZjg3MmNkNTlkM2Q1NDIwZjQ1NDg4ZjI0MDk4NmZmNmNlZmY4Nzc2MzZlZjkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg5MzExNWEwNjMyYTczODg3ZmY2ZjEwNGU0YWQ0YzAwNWQ1OTgwOThkYmI1YTA4YmUzMTM0MzMwMTMwYjY0MDgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRmZjdhN2EzMGNhYTJkYmIzNGE3MDMyZGZhMjVkYWQ4ZmE1YTJlODQxYzA0YTQzMDRiM2ZjZWMxNWEyNWQ4N2YiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdmMDg2MTAxMTc0MGE1N2RiMjU4MmNlOTNhODllMDY3ZmRmMzRjNDhhNjEzYTllYmM3NjVlZGZlNWJjNDA0MTEifQ"
+          "resource": "repo://crates/mcp/src/bin/vibe_kanban_mcp.rs",
+          "version": "repo-file-v1:sha256:fb4ee0c2f237f52f0c6f37c3b572a844c283ee41d5cbbfb2dcbc95c4942fc625"
+        },
+        {
+          "resource": "repo://package.json",
+          "version": "repo-file-v1:sha256:cc3070549e81e8662a4aada790054129f502ebabf009f5993e9482113cf48240"
         }
       ]
     },
@@ -241,10 +227,6 @@
         {
           "resource": "repo://deploy/server/server.mjs",
           "version": "repo-file-v1:sha256:505ea6f1d243602aac21209c6b5f0e05e0e3fe9df7c17ff4e90762b04a72d0b1"
-        },
-        {
-          "resource": "repo://docs/self-hosting/server-container.mdx#L217-L231",
-          "version": "repo-lines-v1:sha256:99cf4623932c8d3a31739b7340e5dbb8bef0172016962bb638fc75e6c5a25086:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdkZDExMGVhYjIwNGEyNTk0OGMyMDllMTM0M2VmZTYwMDc1NGVlY2Q3YmFmM2ViZDViYmU4YmVjZGNhODE5NDgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ3NmM2MTBmNjhkN2EyMzMwNDMwZTI5MjE5NDBlMWNiYTM2NWY2ZDg4NzU0YTViNDM3Y2YyMDkxOWRkNGM1MmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjY2YTMzM2MzNWM5Y2ZmYzk4MTQzNDMzMDRmYjJiODljM2VhZDk5YjRiYjNkM2IzNjQxNzc0NmNmMjkxMGNiNDIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImZlYTJjY2M0OWM2NGQ1MWYxMTMwYTJhNDM0MWNkYmJiYTVjMjE1OWFhODg1YTJhYzg0NTg2MjIzMjY1YjZjNTQifQ"
         }
       ]
     },
@@ -268,7 +250,7 @@
       "evidence": [
         {
           "resource": "repo://packages/web-core/src/pages/kanban/ProjectUtilities.tsx",
-          "version": "repo-file-v1:sha256:5ee4e729725b88c6aa5ebcc39da9a5628f879bf4291465bc0fbfde1eb4fe596c"
+          "version": "repo-file-v1:sha256:2a1a84fcf0c68a5ae838b58e7872a450122ed92f5c1b7906cc5f1b44866941c5"
         },
         {
           "resource": "repo://packages/web-core/src/shared/components/TerminalSection.tsx",
@@ -289,10 +271,24 @@
           "version": "repo-lines-v1:sha256:4454bde15c7f429d97b8d51c7c38305ed2c7e238f13593a01ad4d642d8cbe8dd:eyJzZWxlY3RlZExpbmVDb3VudCI6MTY4LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI5MWYzNTk1NTkwOGRkMmExMjQ4ODJiNWFiMTRkZWY5YWQzM2M1NTZhMDY3Y2YxYTAzMzhlYmJlYjM3ODVkNGM3IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIwNzVkYmVjMmU3NjdjYzMyMTg1NTY5ZjVlNWZkMzE2MWExMGNmZjE1ZWQyYmUxYTVmOGYwYzc1ZDRjY2U5NTM1IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MCwicHJlY2VkaW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiIwMDFhYzkwZGI0MjNiN2FkNTRmMGRjNzZlODEyYzRkOGU4MTNhNmRiOTY1ODNhYzM5ZDEyMjU5MWI5MWFhNzM4In0"
         }
       ]
+    },
+    {
+      "id": "claim_152e78e7fc00431e95a24a698df2bda3",
+      "statement": "Pet形式・ZIP安全・保存と帰属の正本はconcepts/petsで、両sidebarのhost-pet設定に接続する。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/features/pets/SidebarPet.tsx#L17-L39",
+          "version": "repo-lines-v1:sha256:f46e4fedd6b46177f8ca6e8bb210e8bd2f3db9d1062408dea65da449bb17adf4:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVkMzY4MGViNTlkOGUxMTNmOWI0NThjY2MyNzgwZDg2NDM5NjRmZmU1Nzk5NzNhYjZiMWIzYTFiOGQ4NmJiMjYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZkN2Y3MzI1YzQ0ZjBiZDQ0OGU2Mzc0ZjEyNzk4MDJmMGVlNzMxMTc5NzUyMWMyZDk3ZmVkOTk1YzRkYTE0NmYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJmMGFhOTFjZDY5Y2QxYmFhNDI5MTdlZTY1MGFjN2Q4Y2I1N2EwNjk3NmQ1YTU3MDc5MmM1YWYxZDhlODFjMzQifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/components/EnvironmentPanel.tsx#L21-L29",
+          "version": "repo-lines-v1:sha256:cbe94044dd4aa2a0bc63fa1312f5005fdb62863ec71f2d1a5e6886ba2d10416b:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMzg1ZjZlYmFjOWVlMDE3NDVjZjUzMmQ3NTYwMjJiYmQwZmQzZWExZWIzOGFhZDU0NmQ2MzM3ZWI1MWU1YzIxMyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDJhMmNiMjVhMTIyYjQ0MjIxYTYyMzRlYzY2MGE3YjVmYjdmOWJkZTdiM2I5ZTJiM2M1NTlhMGQ5NmZhYzczOSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMzlkODM5MWE0M2I2MjZkMmU1YWFmYjgxOWNiMjhmNGFiYzcwZjVhNzExZDVhMDk1MGY3NmZlYjlmM2IzMzUxNSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMWRmYjk5MzY3NDFlM2FhMTc3NWQxOWVhMGEyOWViNThjMzc4NDI5YmJhNWQ4ZTIzMGRlYTgwMDQwMzQzZDE0ZSJ9"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-02T23:50:54.203Z"
+    "at": "2026-11-05T07:15:08.684Z"
   }
 }

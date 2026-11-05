@@ -10,6 +10,10 @@ sources:
     resource: repo://crates/db/src/models/agent_runtime.rs
   - id: openwiki-source-788fa2f6f1a3d449a1a9efe4
     resource: repo://crates/local-deployment/src/agent_run_port.rs
+  - id: openwiki-source-7083ce2acf66599ca4b7a3c8
+    resource: repo://crates/server/src/host_display_name.rs
+  - id: openwiki-source-71f837a8aa36443ad9688945
+    resource: repo://crates/server/src/remote_mcp/mod.rs
   - id: openwiki-source-162bcfe1ee47c1047ccf7d52
     resource: repo://crates/server/src/routes/agent_runs.rs
   - id: openwiki-source-4f90d37fb90b7f5198b7b293
@@ -138,6 +142,8 @@ sources:
     resource: repo://packages/web-core/src/shared/components/CreateChatBoxContainer.tsx
   - id: openwiki-source-235a3eb75f22fdecdbd66a8f
     resource: repo://packages/web-core/src/shared/components/EnvironmentPanel.tsx
+  - id: openwiki-source-44823e238660c0c3c02d5a53
+    resource: repo://packages/web-core/src/shared/components/EnvironmentQuota.tsx
   - id: openwiki-source-a7cac6e6f3abafbcf9390ddf
     resource: repo://packages/web-core/src/shared/components/RouteLoadState.tsx
   - id: openwiki-source-867b74d482ff6cc365176503
@@ -236,10 +242,10 @@ sources:
     resource: repo://tests/workspace-navigation/run-isolated.py
   - id: openwiki-source-b87e3253bd1458a0091f8587
     resource: repo://tests/workspace-navigation/workspace-navigation.spec.ts
-generated: { by: "codex", at: "2026-11-02T23:50:54.203Z" }
+generated: { by: "codex", at: "2026-11-05T07:15:08.684Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-02T23:50:54.203Z
+    at: 2026-11-05T07:15:08.684Z
 ---
 
 # Web の実行環境と同期
@@ -248,7 +254,7 @@ verified:
 
 Local App は TanStack Router と Hotkeys、設定、ローカル identity を組み立てる。Tauri の通知クリック・更新 listener と native 通知 bridge は撤去済みである。共有画面と hooks は web-core にある。Remote Web shell は削除済みである。[Local App](../../packages/local-web/src/app/entry/App.tsx)
 
-UI package は既に Kanban や chat、preview などの再利用部品を持つ。[Kanban の例](../../packages/ui/src/components/KanbanBoard.tsx#L1-L58)。`packages/ui/README.md` の「initial scaffold」と [抽出前の監査](../../docs/frontend-ui-library-refactor-audit.md)は現行配置の全体図ではない。監査は責任分割の経緯を知る資料として読み、古い `local-web/src/components` の位置を変更先にしない。
+UI package は既に Kanban や chat、preview などの再利用部品を持つ。[Kanban の例](../../packages/ui/src/components/KanbanBoard.tsx#L1-L58)。`packages/ui/README.md` の「initial scaffold」と 2026-02-21 の抽出前監査は現行配置の全体図ではない。当時の監査は汎用primitiveを先に分離し、domain containerとfeature dialogをアプリ側へ残す方針だった。古い `local-web/src/components` の位置を変更先にしない。
 
 ## ブラウザー操作と廃止された native bridge
 
@@ -278,7 +284,9 @@ query key は Workspace・Repo・file・editor 設定を含む。再取得中と
 
 `SharedAppLayout` は Project 一覧、Workspace への遷移、モバイル drawer と外部 GitHub 件数の取得を接続し、UI package の `AppBar` は渡された値と callback を描画する。単独の `Local` 見出し、Project navbar の Organization 名、モバイル drawer の Organization 名は表示しない。ただし Project 一覧は引き続き選択 Organization ID で取得し、Workspace 入口と Project の選択・作成を維持する。Workspace navbar はパス、または `direct-folder` 以外のブランチ名を表示する。[一覧の scope](../../packages/web-core/src/shared/components/ui-new/containers/SharedAppLayout.tsx#L87-L127)・[drawer の遷移](../../packages/web-core/src/shared/components/ui-new/containers/SharedAppLayout.tsx#L337-L412)・[Workspace 見出し](../../packages/web-core/src/shared/components/ui-new/containers/NavbarContainer.tsx#L243-L260)・[AppBar の入口](../../packages/ui/src/components/AppBar.tsx#L148-L180)。見出しの整理は [Organization の identity・権限](../concepts/organization-and-membership.md)や [Workspace の実行単位](../concepts/workspace.md)の廃止を意味しない。
 
-外部リンクと stars API は `packages/ui/src/lib/repository.ts` の公式リポジトリ `nagisasaka/lucky-vibe-kanban` を共通参照する。AppBar と LandingPage の GitHub リンク、web-core の `useGitHubStars` の API URL と query key が同じ identity を使う。定数のコメントは README / README.ja.md と origin を選定根拠として記録し、両 README の source link も一致する。[共通定義](../../packages/ui/src/lib/repository.ts#L1-L3)・[AppBar](../../packages/ui/src/components/AppBar.tsx#L321-L337)・[LandingPage](../../packages/web-core/src/features/onboarding/ui/LandingPage.tsx#L88-L101)・[英語 README](../../README.md)・[日本語 README](../../README.ja.md)
+外部リンクと stars API は `packages/ui/src/lib/repository.ts` の公式リポジトリ `nagisasaka/lucky-vibe-kanban` を共通参照する。AppBar と LandingPage の GitHub リンク、web-core の `useGitHubStars` の API URL と query key が同じ identity を使う。定数のコメントは README / README.ja.md と origin を選定根拠として記録し、両 README の source link も一致する。[共通定義](../../packages/ui/src/lib/repository.ts#L1-L3)・[AppBar](../../packages/ui/src/components/AppBar.tsx#L321-L337)・[LandingPage](../../packages/web-core/src/features/onboarding/ui/LandingPage.tsx#L77-L88)・[英語 README](../../README.md)・[日本語 README](../../README.ja.md)
+
+LandingPage の文書リンクは公開リポジトリの `openwiki/quickstart.md`、safety リンクは `openwiki/operations/server-container.md` を指す。退役した文書サイトを初回利用の前提にしない。[入口](../../packages/web-core/src/features/onboarding/ui/LandingPage.tsx#L77-L88)・[安全説明](../../packages/web-core/src/features/onboarding/ui/LandingPage.tsx#L315-L325)
 
 stars はブラウザーから GitHub API を直接 `cache: 'no-store'` で読み、非負の safe integer だけを採用する。HTTP エラー、通信・JSON 解析失敗、欠落・不正値は `null` にする。初回 loading や `null` ではバッジを出さず、実数 `0` は表示する。リンク自体は件数取得に依存しない。query はリポジトリ単位で、stale time と定期再取得は10分、retry と mount 時の再取得は無効である。[取得・query lifecycle](../../packages/web-core/src/shared/hooks/useGitHubStars.ts#L1-L41)・[バッジの条件](../../packages/ui/src/components/AppBar.tsx#L325-L336)・[リンクとバッジの描画](../../packages/ui/src/components/AppBarSocialLink.tsx#L18-L46)。この表示用 API は Board の snapshot 同期や [GitHub 認証・PR 操作](../integrations/github-review.md)とは別の経路である。
 
@@ -286,7 +294,7 @@ stars はブラウザーから GitHub API を直接 `cache: 'no-store'` で読�
 
 ### 両ビューの共通右サイドバーと環境情報
 
-Kanban と Workspace は `UtilitySidebar` の最上部に折りたたまない `EnvironmentPanel` を置く。ヘッダーから CPU/RAM/DISK とアカウント利用枠を移し、サイドバーを閉じてもヘッダーへ戻さない。クローバー領域は将来の Pet 用プレイスホルダーである。[共通 panel](../../packages/web-core/src/shared/components/EnvironmentPanel.tsx)・[sidebar](../../packages/web-core/src/shared/components/UtilitySidebar.tsx)
+Kanban と Workspace は `UtilitySidebar` の最上部に折りたたまない `EnvironmentPanel` を置く。ヘッダーから CPU/RAM/DISK とアカウント利用枠を移し、サイドバーを閉じてもヘッダーへ戻さない。最上部には80pxの装飾Petを表示し、ホスト表示タイトルと鉛筆は全体設定の「ホストとペット」を開く。別の Pet 展開行はない。[Pet の形式・取込・保存と帰属](../concepts/pets.md)を参照する。[共通 panel](../../packages/web-core/src/shared/components/EnvironmentPanel.tsx)・[sidebar](../../packages/web-core/src/shared/components/UtilitySidebar.tsx)
 
 認証付き HTTP の資源観測は MCP と同じ collector を使い、visible 時15秒周期で取得する。失敗・非表示・45秒以上古い値は未知にし、RAM は available 基準、CPU/RAM/SWAP は Linux 可視共有値、DISK は worktree 配置先 filesystem と明示する。DISK は一件の known worktree_base の正の total、0以上total以下の used、有効 percent と比率の整合性を検査し、不整合なら三値を未知にする。他の正常項目は保持する。現 panel の容量表示は GiB/MiB、色は70/80%が境界である。[値の検査](../../packages/ui/src/lib/resourceObservation.ts)・[collector 接続](../../crates/server/src/routes/resource_observation.rs)
 
@@ -300,7 +308,17 @@ Kanban と Workspace は `UtilitySidebar` の最上部に折りたたまない `
 
 代表は API が返す既定 bucket のみで、追加 bucket を合算せず同じ limitId を除外する。既定 bucket がなければ代表値は不明。健全な usedPercent から `100 − usedPercent` を計算し、既定 bucket の存在する window がすべて既知の場合だけその最小値を代表にする。期間は実際の分数を分・時間・日に変換し、5時間/週に固定しない。欠損、不正値、取得失敗、非対応、10分以上古い観測、reset 経過は0/100%に補完せず未知表示となる。unlimited credits は通常枠と分ける。[表示モデル](../../packages/ui/src/lib/codexQuota.ts)
 
-`tests/codex-quota/model.test.mjs` は境界値を、`browser.mjs` は320/390/768/1280px、popover の操作、bucket、英日、dark、非表示時抑制・手動更新・5分周期を検証する。これらは隔離 component/API fixture であり、実認証・実アカウント・物理スマホの互換性証明ではない。[試験](../../tests/codex-quota/browser.mjs)・[fixture の境界](../../tests/codex-quota/README.md)
+主表示は両providerで「利用枠の残り」と「リセットまで」を二列に揃える。集計期間の行と詳細リンク・展開内容は削除済みで、複数windowは番号で区別する。null/非objectのwindowは表示せず、存在する空objectは未知の枠として残す。期間の変換は上記モデル内の情報であり、期間欠落を枠の不存在と扱わない。取得時刻は observedAt から「たった今」「○分前」「○時間前」を出し、未来・欠損・不正値は不明にする。stale/error等の状態は相対時刻と併記する。[共通描画](../../packages/web-core/src/shared/components/EnvironmentQuota.tsx)・[windowの存在判定](../../packages/ui/src/lib/codexQuota.ts)
+
+`tests/codex-quota/model.test.mjs` は境界値を、`browser.mjs` は狭幅280/300pxの英日・明暗・複数枠・null/期間欠落・相対時刻・状態保持・更新周期を検証する。これらは隔離component/API fixtureであり、実認証・実アカウント・物理スマホの互換性証明ではない。[試験](../../tests/codex-quota/browser.mjs)
+
+### ホスト表示名と設定導線
+
+タイトルは `host_display_name`、未設定なら実hostnameを使う。「ホストとペット」で表示名を保存し、Petの選択・表示・取込は即時保存として維持する。実hostname、container判定、Session数、最終確認等は同じ設定画面で確認する。表示名はOS/Docker/接続identityを変えず、同じinstanceの利用者が共有する。[設定](../../packages/web-core/src/shared/dialogs/settings/settings/HostPetSettingsSection.tsx)・[入口](../../packages/web-core/src/shared/components/EnvironmentPanel.tsx)
+
+認証済みの `GET/PUT /api/host-display-name` は instance asset directory の `host-display-name.json` を読み書きし、PUTには共通のCSRF境界が適用される。前後空白を除去し、空値はnull、80文字超・制御文字・bidi制御は拒否する。一時siblingへの書込とrenameでJSONを置換し、読取/保存失敗を正常値に偽装しない。環境APIとMCP `get_connection` に表示名を追加するが、MCPの既存応答fieldは維持し、実hostnameと `host_display_name_available` を独立して返す。[保存と正規化](../../crates/server/src/host_display_name.rs)・[HTTP境界](../../crates/server/src/routes/resource_observation.rs#L180-L249)・[MCP](../../crates/server/src/remote_mcp/mod.rs#L538-L541)
+
+ホスト設定は `node tests/host-pet/browser.mjs`、Rustの `host_display_name` filterで保存/分離/認証/CSRF/互換を確認する。設定・ログインの見た目と操作は `tests/settings-redesign` のfixtureを使う。今回の候補 `7bcd5db39419d50ad265592e288264c63906e1da` は型・i18n・重点unit/browser・production buildと対象Rust/Clippyを実行した。全workspace試験と公開認証後画面・実Auth0/provider・ユーザー実物v2画像は未検証で、source開発時の実API証拠とは区別する。Agentationのpreview2試験はこの製品候補から依存・呼出し・lockfile・専用試験を除外し、元previewや注釈データは変更していない。
 
 ### 稼働バイナリのビルド情報を表示する
 
@@ -338,7 +356,7 @@ Workspace 一覧の検索は、ローカル一覧に `UserProvider` の既存関
 
 ## 認証が製品画面より先に確定する
 
-Bootstrap は `installAccessFetch` を登録し、`ServerAccessGate` 内に App を置く。gate が access status を取得して本人IDを設定してから製品の providers を mount する。認証不成立や初期設定中は製品画面を表示しない。[初期化順](../../packages/local-web/src/app/entry/Bootstrap.tsx#L45-L68)、[gate](../../packages/local-web/src/app/auth/ServerAccessGate.tsx#L88-L148)
+Bootstrap は `installAccessFetch` を登録し、`ServerAccessGate` 内に App を置く。Appはlazy importで、認証前には製品router/画面一式を読み込まない。CSSはBootstrapで読み、router依存のSentry初期化はApp moduleへ移しているため認証前の収集範囲は従来と異なる。gate が access status を取得して本人IDを設定してから製品の providers を mount する。認証不成立や初期設定中は製品画面を表示しない。[初期化順](../../packages/local-web/src/app/entry/Bootstrap.tsx#L45-L68)、[gate](../../packages/local-web/src/app/auth/ServerAccessGate.tsx#L88-L148)
 
 fetch wrapper は同じ origin の `/api/` への変更要求だけに CSRF を補う。業務APIの401/423では状態再取得イベントを送り、外部URLへCSRFを転送しない。これはWebの接続補助で、backendが最終認証を行う。セッション・失効・配置の詳細は [共通認証](../concepts/server-access.md)、歴史的ownerと現在actorの区別は [メンバー](../concepts/organization-and-membership.md)を参照する。[wrapper](../../packages/local-web/src/app/auth/serverAccess.ts#L17-L74)
 
@@ -448,7 +466,7 @@ anchor は React 更新後だけでなく、末尾 lock がないときの同じ
 
 変更時は layout の Chromium fixture で prepend・遅い initial・DOM の遅延 resize 後の同一行座標と scope 切替を確認し、canonical projection の unit test で live と replay の `before → steer → after`、重複、Run identity を確認する。順序 assertion は user / assistant message を対象にし、時間 footer を会話本文と混同しない。[layout 試験](../../tests/chat/conversation-layout.test.mjs#L87-L172)・[順序試験](../../packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.test.ts#L100-L166)。composer の試験対象は [送信 snapshot の保護](../concepts/session-and-agent-run.md#送信中の編集と-markdown-正規化)を参照する。
 
-built-app の隔離試験は、実 backend と合成履歴、実 Scratch と制御した follow-up 応答、実 Codex steering の3経路を区別する。[試験定義](../../tests/chat/isolated.spec.ts)と [再実行手順・過去の結果](../../docs/development/chat-stability-local21.md)を参照し、component fixture の成功を provider 全体の保証にしない。特に遅延 DOM resize の追加検証は実画像ダウンロードや全体 E2E の再実行ではない。
+built-app の隔離試験は、実 backend と合成履歴、実 Scratch と制御した follow-up 応答、実 Codex steering の3経路を区別する。[試験定義](../../tests/chat/isolated.spec.ts)と [再実行手順と試験範囲](../operations/development.md#チャット表示と入力の再検証)を参照し、component fixture の成功を provider 全体の保証にしない。特に遅延 DOM resize の追加検証は実画像ダウンロードや全体 E2E の再実行ではない。
 
 今回の Sync は凍結 source `a044769b1dfdf1972c6e10937fa0dfb98faf31db` のチャット変更を、購読・投影・backend の steering 保存・リスト・editor・試験定義という独立した入口で静的に照合した。凍結入力の正式 Integration は検証省略であり、開発時の成功記録を統合後の成功証拠へ読み替えない。この Sync で製品テストを再実行したことや、無関係な過去の Wiki 全体を再検証したことは意味しない。
 
@@ -506,7 +524,7 @@ Workspace の Wiki アイコンは有効な Wiki 項目を展開して右サイ�
 
 ### Wiki・端末の検証境界
 
-`workspace-wiki.mjs` は build 済み frontend/server と専用一時 instance の実 file/Wiki/PTY API を使い、両ビュー・狭幅・下書き保持、終了時の実 PID、他ブラウザー/同 cwd 別実行の非干渉、archive guard を検査する。account quota は stub、資源失敗は注入で、実 AI/provider・Auth0・物理回線の保証ではない。source SHA の開発時成功と統合候補上の試験は別に扱う。[検証手順と限界](../../docs/development/project-utilities-validation.md)・[試験](../../tests/server-access/workspace-wiki.mjs)
+`workspace-wiki.mjs` は build 済み frontend/server と専用一時 instance の実 file/Wiki/PTY API を使い、両ビュー・狭幅・下書き保持、終了時の実 PID、他ブラウザー/同 cwd 別実行の非干渉、archive guard を検査する。account quota は stub、資源失敗は注入で、実 AI/provider・Auth0・物理回線の保証ではない。source SHA の開発時成功と統合候補上の試験は別に扱う。[端末の運用と検証限界](../operations/workspace-inspection.md#terminal-と-editor)・[試験](../../tests/server-access/workspace-wiki.mjs)
 
 ## 統一一覧と実行予約
 
@@ -524,7 +542,7 @@ Session 一覧の再取得では利用者が選んだ古いログや new-session
 
 モバイル shell は `visualViewport.height` を CSS 変数 `--app-vh` に反映する。キーボード表示時の composer 隠れを避け、重い shell を viewport のたびに React render しない意図がコードに記録されている。[実装と理由](../../packages/web-core/src/shared/hooks/useVisualViewportHeightVar.ts#L3-L50)
 
-[モバイル設計](../../docs/ai-mobile/design.md)は draft、[390px 監査](../../docs/ai-mobile/audit-2026-07-07.md)は過去時点のギャップ調査である。QR、PWA、native shell の構想を現行保証へ置き換えず、実画面・hooks・transport の実装を確認する。画布の見た目や操作設計は [Workflow UI 設計](../../docs/future/ai-workflow/spec-ui.md)に委ね、実行順序の意味は [Workflow Attempt](../concepts/workflow-attempt.md)で確認する。
+2026-07-06 のモバイル設計は web/PWA 優先の draft、翌日の390px監査は承認への到達・キーボード遮蔽・dialog収まりなどの過去時点のギャップ調査だった。QR、PWA、native shell の構想を現行保証へ置き換えず、実画面・hooks・transport の実装を確認する。歴史的な画布UI設計ではedgeを実行順序とし、状態が分かる節度ある動き・対象に近い操作・色以外の状態表現を意図していた。これは全項目の実装保証ではなく、現在の画布は [WorkflowCanvas](../../packages/web-core/src/features/workflow/ui/WorkflowCanvas.tsx)で確認する。実行順序の意味は [Workflow Attempt](../concepts/workflow-attempt.md)で確認する。
 
 ### 操作のプレビューと provider の説明
 

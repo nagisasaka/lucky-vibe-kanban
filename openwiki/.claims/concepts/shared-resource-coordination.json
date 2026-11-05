@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:f5c67842067685cf81bc76685eda652b294649b17e2017bf7052173d671262e3",
+  "pageVersion": "sha256:e894be3ac6f5d1c26a2218552b3fa64924edc6e9c630b200de6d90227211c92a",
   "claims": [
     {
       "id": "claim_b19b76396a064309bf7402c5c74e707d",
@@ -16,7 +16,7 @@
         },
         {
           "resource": "repo://crates/services/src/services/resource_coordination.rs",
-          "version": "repo-file-v1:sha256:8f1c393b6f1f44c531dbf4f7bd5bddf8aa9c908c969707ed112ed0a4b98bca0d"
+          "version": "repo-file-v1:sha256:174dbf36bd937039ad4134f58aa4d90d7b906bdbbc5a5ad51b71508cbee9f332"
         }
       ]
     },
@@ -25,8 +25,8 @@
       "statement": "調停contextはstdio MCPの自動認証とraw loopback専用内部tokenを案内し、control.pyも内部tokenの送信先をloopback HTTPに限定してredirectを追わない。",
       "evidence": [
         {
-          "resource": "repo://crates/services/src/services/resource_coordination.rs#L87-L99",
-          "version": "repo-lines-v1:sha256:f5771f5bbbf630c8d64dae714dfb3aed9826993882b53c6e8c3a63d617114f65:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk0YjgxNjQ1OTRkM2UyMzc3Mjg3ZmI0YWI0ZTFlZWFhNTJjNGI2ODk1MWFkZGQ3Mzc1ZDIwNmI5MmZhMzAyZTgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM1ZjZmNDY2ZTU5Y2ZjMzA3MDNjNDVmNzJhZjY1ZGU1NGFjMzYzZDM1NGNjMWEzMzMwMzUwYWNkNDUyNDM0YzQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+          "resource": "repo://crates/services/src/services/resource_coordination.rs#L80-L98",
+          "version": "repo-lines-v1:sha256:f5b309b29b484c81af3a219c115a9e026b3a0dd5a8fc0243e17e47120698c783:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAwMzUzODM0MWFlYjRjNzQ4MDZiZDZiY2UyYTI1YjNjNjUxMGFlZjg4YzI0YjRhNWFiNWU1MDI0YjlkNTljZDciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMwYzFmMTg4ZjE0MmVkN2E4MjQ2ODBiMjA3MTcyYzU1MTliYzYxNGE0OGZkYTdjZjE2N2VkYjhkZGY3OTk1NmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjVlZWYxZjZiYWY2MWI0NGE2YmRhN2Y4ZDIwY2VmZDY4MWEyYmMwMTc5N2JlZDg0YWMzYmRjNTI1YzU5MmZlZDIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEifQ"
         },
         {
           "resource": "repo://scripts/local-runner/control.py#L43-L67",
@@ -51,10 +51,46 @@
           "version": "repo-lines-v1:sha256:9276632d3e7471fce5f1510641c7fb220a93de6a537dc803f2742244a019eb5c:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU1YThjZTIwMTJjYjVmYjM0ZWVjZDQ0NThjZjBlNjE5MGI3OWExNjJkNGU4NWRiNjFkZGVkZjEwNjVjNjEyMmYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQ5MGU3OTVhNTU1OGFiMWIzMzI3YTBmMmQzMmNjZjI5MGY1N2Y3ZThhOTc3NWMzZDU1Njc5OGQwNjY5MmViOGQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjMyNjgwNDhjMjhhMTQyYzZmNGQ0MzNjYTYwMGNkN2U5MjQ3ZDdhOGE3YjkzZDg0ZmFmMjlkZTE0YTU3Zjg1NjgifQ"
         }
       ]
+    },
+    {
+      "id": "claim_9e46be1160d9463da359741561b35565",
+      "statement": "Runnerはdata rootのidentity.jsonとjournal.sqlite3にauthority/installationとcommand受付・結果を保存し、受付済み結果不明のcommandを自動再実行しない。同じrootで再接続してWindows Jobを停止確認し、全command receiptとsettlementの後にoperatorの外部状態確認・全資源回復を要求する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/routes/execution_bridge/mod.rs#L404-L419",
+          "version": "repo-lines-v1:sha256:cc2eab1370609d149ef854e4fb8daef4ad34c29b67b44845e4e68945508edad9:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJiYTE0YzgzYmJkNzFhMjM4ZWYzNDY1Nzk2ZWU3MzFlZjAyZjgyYjlmMWUxODAwZWNmYWUzNWJjNDUwNjNiZDYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ4OTc3MWZlMWI2NjI4ODc1YWEyM2U3ZGJlNGFhNzE0NjFkMDBjZGZiNjZkZGYxMWI5ZDgyMGFjNTg5N2ZkZjYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjU1YWI3YjZkOWI2ZTE5NTY1M2ZjOGI1NWY2M2YzNjQ2MDY4NTVjNDU0ZmM1NjU4NTFmMzFhMmYwOTQ1ZGE3NDIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQ0YTFkODUzNTRlNTFiNzlhMWE1MjIxNzhjZWE4NWZjMWVhZGNiNDU4ODBjOTU5NjYyMmVmZmZiNzQ2M2QwNGUifQ"
+        },
+        {
+          "resource": "repo://scripts/local-runner/runner.py#L109-L165",
+          "version": "repo-lines-v1:sha256:83cef9e04e8ab22e15dd0bde2098c22cda0cf6d37de8320c1fa434fa340d3de9:eyJzZWxlY3RlZExpbmVDb3VudCI6NTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg3NmJkOTEwYjdhNjBkNjNjZWY3MTk4OTg3MTdlMDBmYmQyNjk0Njg3ODE2YzFhZTY1M2M2OGIwNWQ1ZTI3MmQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNhMDA5YjM2MGFiYzUzYjU3MmRiNmZlMTUwYzA1NDU4ZWNjOWEzOTE5MTRmYmY3Zjk0MjIyZWQzYTIzMWI0N2EiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjkyYzFhMDhiZjBjNTU3N2VmZjFiYTgzMDc5N2EzOTdhMWI4NjU1NzFkYjdkY2NhNzg4MzNhM2FkY2RiYzQ3MjMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQxMGYxYTFiOTgyNjM2YjA1NzBkYmE0MDAyM2IyYmIxYTkxM2QxNTE5ZTlhYmIxOTc1YWNhMzQyMTI2N2Y2ZjkifQ"
+        },
+        {
+          "resource": "repo://scripts/local-runner/runner.py#L207-L218",
+          "version": "repo-lines-v1:sha256:7475fe628d40a406f11612ab251258aecffa4140e8b085b55a0950fb76c27439:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI1ZDY4MDVjOWU1Mzk3NGUzZWRiYWI3NWE5Zjg4ZmU3NWNiNTEwZDYzNDk1ZDM1M2U5NmFmYTU2MTdiNmEzMTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE5N2I0N2JiODFjZTkzY2JhNjdhZmMwODY5OGE4MGNmYTA5M2E4NjY3ZTljOWY5NjUzMzc4MThkNjU3OGQxODUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImM2ZTliY2U0ZmMwMzE5YjNkMWJhODZiZDEzMTMyYTZjNTBmMTY1MDUyNzljNDcxYjQ0MDJiNGI4MzFiNjZmODAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQ0Yjc1NGQ3ZjQxMDg4YmQ4NzFjZjgwZDViNjRmZThjZTNhMjFjNTkwZGRmMGU1Y2UzYWQ0MGU0MmM4ZThiNWMifQ"
+        },
+        {
+          "resource": "repo://scripts/local-runner/runner.py#L385-L453",
+          "version": "repo-lines-v1:sha256:cdeb61a88c4a83bafd39f09b1c93c9ac62cdc161c01f88b0ec8e42ef3d4e9d9b:eyJzZWxlY3RlZExpbmVDb3VudCI6NjksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhYWE4YjM1ZDRlM2JhNzNiNWZkY2RkMjg0MmU4NjI4NjA1MTZkMDhhYzVhN2Y4YjAzN2I5ZWJkZmRkOWZiYWUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM0YjJhZDYyZDBmNzM5MGM2ODA1MGM2MGMyMTYzNDMyMTdjZWZkZjU2ZTY4ZDEwZWEzZjQ0NDIyNjc3ZjIzY2MiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhkY2VhZDBkNjg1ZDI2MzlkZGI4ZTBjNjQ4YzZkNzg4ZmMzOTMyNTkwNTdmNDkxYjEyMjJiMGUwZGQzZWM2MzMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE5YzZmMWEyM2I0NmU3OGY4MzM2NWUyYjI4YjMyYWI0YzFkOWE4MjFmNzUyZDg4NjIyMmFmYjRjNmM5ZmFjYzkifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_63fc1bdafdd446758a0973750b730d7c",
+      "statement": "control CLIはsnapshot/capture/submit/status/step/finish/downloadを既存RESTに対応させ、stepとfinishに安定UUIDを要求する。Windows scriptはcommandごとのPowerShell processで、finishはcleanup後に既存Jobメンバーを止め、verification後にもJobを閉じる。",
+      "evidence": [
+        {
+          "resource": "repo://scripts/local-runner/control.py#L15-L114",
+          "version": "repo-lines-v1:sha256:2ffd2819379e45ba20a36299f54393e259bd893ab6137b10d33de379d312594f:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAwLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI2OGU5NjFlOTU0ZGM1ZTQ1NWM3MDBmNmQ4MjFmNGJiNjg4ZDViNmUyODc4NTY4ZTYwMDFhZjA5MDY2N2UzZGU5IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIxOGU5OTIzMmNkM2EzMDlmNTBjYmQ2ZjY2MjEyN2VlYWFmY2UxZjczNjI5MmRlZmIxMTNkOTgxYTIwYzdkODUyIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI4OTNiZDY2ZTJiYjcxZjNiOGE5MjQwNjRiYmY3YjA3YzU5MDNhNzczZmE0ZjhjMzU0NjA2MDM4NjY3MWQzYTczIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MCwiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1In0"
+        },
+        {
+          "resource": "repo://scripts/local-runner/runner.py#L232-L319",
+          "version": "repo-lines-v1:sha256:69c9062106590945c06f53e6b6c71dfe6acf0b861644ab459b220f0e4ddfaf53:eyJzZWxlY3RlZExpbmVDb3VudCI6ODgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRjZWEzZTAwNjg1ZWI3ZjQyN2ZlN2NmZmZiMTg1NjdiMjRmNzcyMWYzZjA4NWRhMTExYWY4ZDBkYzNiODg5ZTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQyNmVhNTU0NzA4NzViNmU0OThlZjkwNDFkZjdhYjAyNTI2N2E5NGU2Yjg0NzJmYjY0YzE1N2MwOWQyOWYwZGUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImM4YmQ3NDUyNTg3MTMyZWM3YmU4MjhkMGMzOWYzMjg5NjFkNTM5MTc2ZjBkNmU3ODI5OGY4NGZkMzg5OGFkOTEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImU3ZDBlYTQzOTBkYTQxNjQ4MTg0MDUwMjUyMjFmYmY1Y2U4NDI1NmQyOTE3NjY4NTM1ZjA4OGE4ZjA2ZmQxMDcifQ"
+        }
+      ]
     }
   ],
   "verification": {
-    "by": "openwiki/0.5.1",
-    "at": "2026-10-24T14:51:11.908Z"
+    "by": "openwiki/0.7.2",
+    "at": "2026-11-05T04:35:28.799Z"
   }
 }

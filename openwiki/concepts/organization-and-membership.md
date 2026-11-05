@@ -16,10 +16,10 @@ sources:
     resource: repo://packages/ui/src/components/IssueWorkspacesSection.tsx
   - id: openwiki-source-ab4a5800fcfc16d8494e494a
     resource: repo://packages/web-core/src/shared/lib/localIdentity.ts
-generated: { by: "codex", at: "2026-10-16T14:34:12.007Z" }
+generated: { by: "codex", at: "2026-11-04T20:14:29.223Z" }
 verified:
-  - by: openwiki/0.5.1
-    at: 2026-10-24T14:58:13.588Z
+  - by: openwiki/0.7.2
+    at: 2026-11-04T20:14:29.223Z
 ---
 
 # Organization・Member・Invitation
@@ -28,12 +28,12 @@ CloudサービスのOrganization/Invitationは撤去されている。local Boar
 
 Localモードのuserは `Uuid::from_u128(1)`。Basic/Auth0では認証されたactorのIDを使用し、UIもaccess gateが取得した本人IDを用いる。過去のWorkspaceの固定所有者IDを現在の利用者へ書き換えず、共有Workspaceとして表示・操作する。[local identity](../../packages/web-core/src/shared/lib/localIdentity.ts)、[Workspace UI](../../packages/ui/src/components/IssueWorkspaceCard.tsx)。
 
-Auth0の本人はissuerとsubjectで識別し、外部ログインしただけの利用者は承認待ちとなる。管理者が「認証・メンバー」で承認し、最後の有効な管理者は無効化・降格できない。全有効メンバーが全プロジェクトを使う。旧Cloudの招待・組織単位の隔離・同一メールによるアカウント統合は復活しない。[設定とメンバー管理](../../docs/self-hosting/authentication.mdx)、[handlers](../../crates/server-access/src/handlers.rs)。
+Auth0の本人はissuerとsubjectで識別し、外部ログインしただけの利用者は承認待ちとなる。管理者が「認証・メンバー」で承認し、最後の有効な管理者は無効化・降格できない。全有効メンバーが全プロジェクトを使う。旧Cloudの招待・組織単位の隔離・同一メールによるアカウント統合は復活しない。[初期設定と管理session](server-access.md#初回設定と方式変更)、[handlers](../../crates/server-access/src/handlers.rs)。
 
 Boardのメンバー表示は現在actorのissuerに属するactiveメンバーを読み、Organizationのroleもactorから返す。users snapshotには過去の固定IDを「Legacy local user (unattributed)」として残す。固定Organizationはtenant境界や全員Adminの証明ではない。[表示の組立て](../../crates/server/src/routes/local_remote.rs#L1228-L1358)
 
 メンバー無効化・session失効は新規API要求と継続接続の認証を失わせる。WebSocketは共通LocalWsUpgradeで認証leaseを保持し、失効後に終了する。既に受理したagent作業を自動取消する契約ではない。同じOSユーザーとしてのファイル・エージェント権限は引き続き共有される。[WebSocket](../../crates/server/src/middleware/websocket.rs)、[運用境界](../operations/server-container.md)。
 
-実Auth0・ChatGPTアカウントでの受入確認はコンポーネント検証と区別する。[検証範囲](../../docs/development/server-access.md)。
+実Auth0・ChatGPTアカウントでの受入確認はコンポーネント検証と区別する。[fixtureと実サービスの確認](server-access.md#検証と残る確認)。
 
 設定の初回有効化、session寿命、暗号化・復旧と内部agentの権限は [サーバー認証](server-access.md)に集約する。メンバーの承認はagent providerへのログインを代行しない。

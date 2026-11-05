@@ -60,8 +60,6 @@ sources:
     resource: repo://crates/server/src/routes/workspaces/links.rs
   - id: openwiki-source-04d5adb51b5929dacce999bc
     resource: repo://crates/server/src/workflow_runtime/bootstrap.rs
-  - id: openwiki-source-15dea6acc3c44eb46d7d11d9
-    resource: repo://docs/development/issue-numbering.md
   - id: openwiki-source-5e4c1802d2c1ee81cad7ac45
     resource: repo://packages/ui/src/components/IssueWorkspaceCard.tsx
   - id: openwiki-source-ff91ec3e5a5f406a698e52e6
@@ -82,10 +80,10 @@ sources:
     resource: repo://packages/web-core/src/shared/stores/useKanbanDisplayStore.ts
   - id: openwiki-source-5ef837b2bc54d286b3dedd8f
     resource: repo://packages/web-core/src/shared/stores/useUiPreferencesStore.ts
-generated: { by: "codex", at: "2026-10-29T08:49:34.152Z" }
+generated: { by: "codex", at: "2026-11-04T20:22:03.096Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-02T14:26:25.232Z
+    at: 2026-11-05T07:15:08.684Z
 ---
 
 # Project・Issue と実施の関係
@@ -130,7 +128,7 @@ Issue の分類と関係はそれぞれ別の意味を持つ。
 
 allocator は caller の `BEGIN IMMEDIATE` 内で `UPDATE … RETURNING` し、Issue INSERT・Tag 等と一緒に commit する。予約だけを commit したり、未 commit 番号を外部公開したりしない。失敗時は transaction 全体を rollback するので、未公開予約は次の作成で使用できる。上限は i32::MAX であり、到達後は明示エラーとなる。通常作成 API は BadRequest、DB-only caller は既存 SQLx エラー境界へ変換し、wrap や現存 MAX への fallback はしない。[予約とエラー](../../crates/db/src/models/issue_number.rs#L4-L46)・[通常作成の変換](../../crates/server/src/routes/local_remote.rs#L797-L817)・[並列・rollback・上限の回帰](../../crates/db/src/models/issue_number_tests.rs#L126-L173)
 
-migration は archive を含む現存最大値（空なら0）を初期値にし、既存 Issue の識別子を変更しない。導入前に削除済みの最大番号は、番号を持たない remote create receipt や不完全な audit から復元できないため、過去全体の非再利用は保証しない。導入時は Project UUID と対応する信頼できる保持履歴を確認し、必要なら確認済み最大値以上の floor を計画する。履歴不足なら初期値・根拠・保証不能期間を記録する。今回の実装は live DB 修復や既存番号の付替えを行わない。[運用上の根拠と未解決条件](../../docs/development/issue-numbering.md#migration-と過去履歴の限界)・[履歴不足を含む移行回帰](../../crates/db/src/models/issue_number_tests.rs#L176-L222)
+migration は archive を含む現存最大値（空なら0）を初期値にし、既存 Issue の識別子を変更しない。導入前に削除済みの最大番号は、番号を持たない remote create receipt や不完全な audit から復元できないため、過去全体の非再利用は保証しない。導入時は Project UUID と対応する信頼できる保持履歴を確認し、必要なら確認済み最大値以上の floor を計画する。履歴不足なら初期値・根拠・保証不能期間を記録する。今回の実装は live DB 修復や既存番号の付替えを行わない。[導入前履歴の不足とfloorの回帰](../../crates/db/src/models/issue_number_tests.rs#L176-L222)・[履歴不足を含む移行回帰](../../crates/db/src/models/issue_number_tests.rs#L176-L222)
 
 ## Kanban と実行の同期契約
 

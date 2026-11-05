@@ -9,7 +9,7 @@ on:
       - "Dockerfile"
       - ".dockerignore"
       - ".github/workflows/*server*"
-      - "docs/self-hosting/server-container.mdx"
+      - "openwiki/operations/server-container.md"
       - "package.json"
       - "pnpm-lock.yaml"
   push:
@@ -22,7 +22,7 @@ on:
       - "Dockerfile"
       - ".dockerignore"
       - ".github/workflows/*server*"
-      - "docs/self-hosting/server-container.mdx"
+      - "openwiki/operations/server-container.md"
       - "package.json"
       - "pnpm-lock.yaml"
 permissions:

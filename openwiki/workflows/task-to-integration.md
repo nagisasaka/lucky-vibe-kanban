@@ -4,6 +4,8 @@ title: Issue から実行・レビュー・統合まで
 description: 通常作業をまたぐ作成、Setup gate、会話、レビュー、Git/PR、Issue 状態と repository memory の更新順序を説明する。
 tags: [workflow, setup, review, git, pull-requests, scheduling]
 sources:
+  - id: openwiki-source-124913f65e422092e3ffbd4a
+    resource: repo://assets/skills/auto-merge/SKILL.md
   - id: openwiki-source-3c57aab40b425fc8b5d0d5c5
     resource: repo://crates/db/migrations/20261027090000_generated_issue_status.sql
   - id: openwiki-source-9bc71fe4f6cbbaa6fa9168e1
@@ -12,6 +14,8 @@ sources:
     resource: repo://crates/db/src/models/agent_runtime_kanban.rs
   - id: openwiki-source-c01fa644be961cb7ee12d2b5
     resource: repo://crates/db/src/models/integration.rs
+  - id: openwiki-source-2e4f4c7654ac4a8e4d26283a
+    resource: repo://crates/db/src/models/issue_number_tests.rs
   - id: openwiki-source-6fe5fbd6df406f973641b771
     resource: repo://crates/db/src/models/issue_number.rs
   - id: openwiki-source-29ff4fcd8f66b24767de429c
@@ -64,14 +68,12 @@ sources:
     resource: repo://crates/services/src/services/pr_monitor.rs
   - id: openwiki-source-9c5d335ecd1178e88c47c0a8
     resource: repo://crates/services/src/services/queued_message.rs
+  - id: openwiki-source-6067be8d6f85caa8ac03638f
+    resource: repo://crates/services/src/services/repository_memory.rs
   - id: openwiki-source-6043692809cbf72f253c5631
     resource: repo://crates/services/src/services/workspace_usage/lifecycle.rs
   - id: openwiki-source-08b3f4dcb1a91c97b6d127f8
     resource: repo://crates/worktree-manager/src/worktree_manager.rs
-  - id: openwiki-source-15dea6acc3c44eb46d7d11d9
-    resource: repo://docs/development/issue-numbering.md
-  - id: openwiki-source-a3944588bb3b08c863d66298
-    resource: repo://docs/workspaces/openwiki.mdx
   - id: openwiki-source-db035046d01e3f24722812c8
     resource: repo://packages/web-core/src/features/kanban/ui/IntegrationPanel.tsx
   - id: openwiki-source-bfe4f914c0604a66edc02213
@@ -82,10 +84,10 @@ sources:
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/ReposSettingsSection.tsx
   - id: openwiki-source-ffc55e6e31e6ce477ca57329
     resource: repo://packages/web-core/src/shared/hooks/useWorkflowRun.ts
-generated: { by: "codex", at: "2026-10-29T17:57:38.430Z" }
+generated: { by: "codex", at: "2026-11-05T04:35:28.799Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-02T14:26:25.232Z
+    at: 2026-11-05T04:35:28.799Z
 ---
 
 # Issue から実行・レビュー・統合まで
@@ -122,7 +124,7 @@ completion event を取りこぼした watcher は DB の gate から追いつ�
 
 実行中の approval/input、steer、cancel、terminal 後の retry は [Session と AgentRun](../concepts/session-and-agent-run.md) の契約に従う。同じ Workspace に別 Session を作ってもファイルは共有される。follow-up は Session ごとのメモリー内 FIFO であり、失敗後は一時停止して明示再開を待つ。再起動で残る永続 task queue ではない。詳細と成功後の source checkpoint は同概念ページを参照する。
 
-差分・実ファイル・動作確認には [Workspace inspection](../operations/workspace-inspection.md) を使う。人の inline comment から Agent に修正を依頼する操作は [Reviewing Code](../../docs/reviewing-code.mdx) にまとまっている。
+差分・実ファイル・動作確認には [Workspace inspection](../operations/workspace-inspection.md) を使う。人の inline comment から Agent に修正を依頼する操作は [差分レビューの操作](../operations/workspace-inspection.md#差分レビューと外部アプリの確認) にまとまっている。
 
 Agent の review API は Workspace 内に active AgentRun があれば拒否する。use_all_workspace_commits は Repo ごとの fork point を review context に使い、intent=Review、selected_skills なしで起動する。OpenWiki の independent Review と同じ隔離プロトコルではない。[review の起動](../../crates/server/src/routes/sessions/review.rs)
 
@@ -141,6 +143,8 @@ API が作るのは base からの detached worktree と固定 peer 一覧であ
 検証コマンドを変更する場合は、先に Settings → Repositories の「自動マージの検証」を開き、表示された登録 checkout の path・branch・HEAD を確認する。順序付きの複数行コマンドを編集して保存し、読戻し成功を確認する。不正な既存 JSON は修復欄から直せる。保存は未コミットのファイル更新なので、差分を確認して `.lvk/integration-validation.json` を通常の Git 手順で目的の target branch に反映してから、新規 自動マージ を開始する。保存だけではコマンドを実行せず、既存 run にも反映しない。[UI の反映案内](../../packages/web-core/src/i18n/locales/ja/settings.json#L3-L19)・[受付の固定](../../crates/server/src/routes/integrations/admission.rs#L242-L262)。競合時の下書き保持、再読込、外部編集との排他限界は [検証コマンドの編集と反映](../concepts/formal-integration.md#検証コマンドの編集と反映)を確認する。
 
 local Boardの **自動マージ** では、Repo・local target・各Cardの採用WorkspaceとCode設定を選び、同じrequest ID/入力で再送する。受付はsource SHA、base SHA、要件、検証方針を固定する。開始時のtarget変更は停止条件であり、後から受付baseを直接書き換えない。[受付](../../crates/server/src/routes/integrations/admission.rs)・[選択UI](../../packages/web-core/src/features/kanban/ui/IntegrationPanel.tsx)。
+
+Wiki有効時はコード検証後、最初のbegin前に `prepare_wiki(expected_commit=code SHA)` の成功を確認する。同じ候補でWikiのみ別commitにし、生成AGENTS/CLAUDE差分は未stageで残す。code/Wiki/final SHAを固定してpublish要求後にRunを終了し、hostがwriter収束・完了proof・原本からの限定復元・clean・公開guardを確認する。復元途中のprepare拒否をbegin許可と解釈しない。[準備と回復の手順](../operations/openwiki-maintenance.md#自動マージ担当が更新する場合)・[実行契約](../../assets/skills/auto-merge/SKILL.md#L10-L11)
 
 担当は専用Issue / Workspace / Sessionの一つの会話で、候補作成→必要な検証または根拠付き省略→有効時のWiki更新→公開要求まで進める。質問、追加指示、失敗後の修復も同じ会話で続け、旧host merge / 競合だけの有限job / gate承認方式を使わない。既存コード検証を再利用する場合はtested SHAと新候補との差分・理由・残リスクを記録し、失敗や未実行をpassへ変更しない。[担当契約](../../crates/server/src/routes/integrations/runtime.rs)・[同じ会話の進行](../../crates/server/src/routes/integrations/conversation.rs)。
 
@@ -172,7 +176,7 @@ Push と PR 作成は、外部公開より前に未完了の source checkpoint �
 
 push は既定 remote の push URL を尊重し、PR base は target branch の remote、解決できなければ既定 fetch remote を使う。fork へ push する設定だけで PR base も fork に変わるわけではない。GitHub の登録 PAT と system 認証の選択、接続確認の限界は [GitHub 認証と push/base の契約](../integrations/github-review.md)を確認する。[remote 解決](../../crates/server/src/routes/workspaces/pr.rs#L236-L254)
 
-GitHostService の現行 provider は GitHub と Azure DevOps。未知 URL は UnsupportedProvider である。[provider 境界](../../crates/git-host/src/lib.rs) provider 固有の CLI 認証や使い方は [GitHub integration](../../docs/integrations/github-integration.mdx) と [Azure Repos integration](../../docs/integrations/azure-repos-integration.mdx) を参照する。
+GitHostService の現行 provider は GitHub と Azure DevOps。未知 URL は UnsupportedProvider である。[provider 境界](../../crates/git-host/src/lib.rs) provider 固有の CLI 認証や使い方は [GitHub認証とPR](../integrations/github-review.md) と [Azure CLIの準備](#azure-repos-で-pr-を作る前に) を参照する。
 
 PR の外部作成成功後、local PR record の保存エラーはログに残し、ブラウザー起動と任意の description follow-up の失敗は警告して成功応答を返す。「PR が作成された」と「全ての付随処理が成功した」を区別して診断する。[作成後の部分失敗](../../crates/server/src/routes/workspaces/pr.rs)
 
@@ -190,13 +194,13 @@ Direct merge の成功と PR の merged 観測では、通常の作業 Workspace
 
 ## 7. 統合後に canonical memory を更新する
 
-自動マージでは同じ担当がコード検証後の候補でWikiを更新し、Wikiだけを別commitにして公開要求する。公開後イベントやbacklogから別Wiki Workspace/Agentは起動しない。mainを直接変更した場合も自動同期せず、必要に応じて手動更新・再同期を明示的に開始する。再起動と定期回復は保存済みownerを回収する。[受付と回復の境界](../operations/openwiki-maintenance.md#開始条件と通常-sync)・[現行運用](../../docs/workspaces/openwiki.mdx#manifest-guided-updates)
+自動マージでは同じ担当がコード検証後の候補でWikiを更新し、Wikiだけを別commitにして公開要求する。公開後イベントやbacklogから別Wiki Workspace/Agentは起動しない。mainを直接変更した場合も自動同期せず、必要に応じて手動更新・再同期を明示的に開始する。再起動と定期回復は保存済みownerを回収する。[受付と回復の境界](../operations/openwiki-maintenance.md#開始条件と通常-sync)・[現行の回復monitor](../../crates/server/src/routes/openwiki.rs#L522-L550)
 
 [Repository memory](../concepts/repository-memory.md) が有効な場合、成功した coding run の semantic draft と Git 証拠から Change Manifest を作り、統合された event を maintenance の入力にする。source merge の成功と Wiki 更新の成功は別であり、Wiki 失敗は source を巻き戻さない。
 
-LVK 自身の手動 direct squash と自動マージ はそれぞれ明示的な event ID を記録できる。外部 PR の squash/rebase は元 commit の ancestry を証明できない場合があり、Workspace ID や時刻だけで event を消費しない。統合先 local branch を準備し、必要なら [Sync Wiki](../operations/openwiki-maintenance.md) で実 source を再確認する。[記録された運用契約](../../docs/workspaces/openwiki.mdx)・[外部 PR の制約](../../docs/workspaces/openwiki.mdx)
+LVK 自身の手動 direct squash と自動マージ はそれぞれ明示的な event ID を記録できる。外部 PR の squash/rebase は元 commit の ancestry を証明できない場合があり、Workspace ID や時刻だけで event を消費しない。統合先 local branch を準備し、必要なら [Sync Wiki](../operations/openwiki-maintenance.md) で実 source を再確認する。[外部mergeの観測](../../crates/server/src/routes/openwiki.rs#L674-L700)・[sourceとWikiの統合契約](../concepts/repository-memory.md#source-統合と-wiki-反映を分ける)
 
-Project 設定から手動同期すると、開始元 Project が保守 Issue の紐付け先として渡される。Repo 単独設定からの明示開始では Issue なしの互換経路もあるため、Card の有無だけで起動失敗と判断せず maintenance の状態を確認する。選択先の検証と status 不在時の対処は [開始元 Project と保守 Issue](../operations/openwiki-maintenance.md#開始元-project-と保守-issue)を参照する。[共通受付](../../crates/server/src/routes/openwiki.rs#L170-L202)・[運用契約](../../docs/workspaces/openwiki.mdx#understand-initial-generation)
+Project 設定から手動同期すると、開始元 Project が保守 Issue の紐付け先として渡される。Repo 単独設定からの明示開始では Issue なしの互換経路もあるため、Card の有無だけで起動失敗と判断せず maintenance の状態を確認する。選択先の検証と status 不在時の対処は [開始元 Project と保守 Issue](../operations/openwiki-maintenance.md#開始元-project-と保守-issue)を参照する。[共通受付](../../crates/server/src/routes/openwiki.rs#L170-L202)・[保守Issueの所属](../operations/openwiki-maintenance.md#開始元-project-と保守-issue)
 
 Wiki 保守 Card も Agent 終了と host 公開を分けて読み、検証済み no-op を含む公開成功で Done になる。成功した新規内部生成 Wiki 保守環境も、公開・owner 解放後に専用 Workspace と条件を満たす専用 Issue が archive され得る。未公開・失敗・取消の残存や手動で復元した環境は自動再試行で消さない。[保守環境の解放](../operations/openwiki-maintenance.md#成功後の保守環境の解放)を参照し、canonical branch と実行履歴で成果を確認する。
 
@@ -220,7 +224,7 @@ IssueのActive/Archived/Allで仕事を探し、Kanban/Listは独立して選ぶ
 
 Issueの表示番号は作成時に固定したProject keyを使い、priority/tagは仕事の分類として設定する。systemはLVK生成Cardの分類であり、採用・実行・公開を承認するものではない。[識別と分類](../concepts/project-and-issue.md#仕事の識別と分類)。
 
-通常作成と生成 Card は Project UUID ごとの永続高水位を共有し、commit 済み番号を削除後に再利用しない。移行前に消えた番号の履歴は自動復元せず、初期 floor の確認と rollback 可能な未公開予約の区別は [採番の寿命と移行の限界](../concepts/project-and-issue.md#採番の寿命と移行の限界)を参照する。[allocator](../../crates/db/src/models/issue_number.rs#L23-L46)・[導入契約](../../docs/development/issue-numbering.md)
+通常作成と生成 Card は Project UUID ごとの永続高水位を共有し、commit 済み番号を削除後に再利用しない。移行前に消えた番号の履歴は自動復元せず、初期 floor の確認と rollback 可能な未公開予約の区別は [採番の寿命と移行の限界](../concepts/project-and-issue.md#採番の寿命と移行の限界)を参照する。[allocator](../../crates/db/src/models/issue_number.rs#L23-L46)・[履歴不足のmigration回帰](../../crates/db/src/models/issue_number_tests.rs#L176-L222)
 
 ## 調査modeと素材、Wiki再開を引き継ぐ
 
@@ -229,3 +233,9 @@ Issueの表示番号は作成時に固定したProject keyを使い、priority/t
 素材はMCPの保存と配置を分け、ID・サイズ・SHA-256を確認してから初回/続行にattachment_idsを渡す。保存受付は配置や実行受付の成功ではない。再送で取得元が失効した場合は元request_idのreceiptを読む。実ChatGPT/Libraryや実Codexの適合確認は隔離fixture成功と分ける。[MCP搬送](../integrations/remote-access.md#mcpで素材ファイルを渡す)
 
 自動マージのWikiがRun途中で止まった場合は、同じ会話を明示再開してOpenWikiの正規beginを使う。所有済みactive ID/modeの連続監査がある場合だけ後続writerのresumeを認め、別依頼や欠損証拠を引き継がない。standalone保守の閉鎖条件とは別であり、仕組みの詳細は [同じ会話でWiki更新を再開する](../concepts/formal-integration.md#同じ会話でwiki更新を再開する)を参照する。
+
+## Azure Repos で PR を作る前に
+
+LVKを実行するaccountの環境へAzure CLIを用意し、`az extension add --name azure-devops` と `az login` を行う。必要に応じて組織・Projectの既定値を設定し、対象remoteと同じ権限でアクセスできることを確認する。LVKは `az repos` を実行し、CLI欠落・認証失敗・対象不存在を区別する。[Azure wrapper](../../crates/git-host/src/azure/cli.rs)
+
+WorkspaceのPR作成画面で対象Repo、head/base、title・descriptionを確認して作成する。URLが返ってもlocal記録まで成功したかを確認し、応答不明時は同branchの既存PRを調べてから再試行する。GitHub用PATの保存をAzure認証に流用しない。[共通PR経路](../../crates/server/src/routes/workspaces/pr.rs)

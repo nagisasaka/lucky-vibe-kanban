@@ -1,4 +1,4 @@
-// Petdex native timing, pinned source and compatibility scope in docs/development/pets.md.
+// Petdex native timing, pinned source and compatibility scope in openwiki/concepts/pets.md.
 export const PET_STATES = [
   { name: 'idle', durations: [280, 110, 110, 140, 140, 320] },
   {

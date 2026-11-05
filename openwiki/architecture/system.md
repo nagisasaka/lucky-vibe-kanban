@@ -44,8 +44,10 @@ sources:
     resource: repo://crates/server/src/startup.rs
   - id: openwiki-source-d6a1d8f43efecefbff88fc22
     resource: repo://crates/utils/Cargo.toml
-  - id: openwiki-source-2e1d91f21691cd271afffb6f
-    resource: repo://docs/self-hosting/server-container.mdx
+  - id: openwiki-source-df6b7819295f53fc2381f23d
+    resource: repo://deploy/server/compose.yaml
+  - id: openwiki-source-bb1ebe868e35e9e500714501
+    resource: repo://Dockerfile
   - id: openwiki-source-5b54a58d1b51cd490b0e7162
     resource: repo://package.json
   - id: openwiki-source-e0c2de9e01617a8949b78360
@@ -54,10 +56,10 @@ sources:
     resource: repo://README.md
   - id: openwiki-source-8ea6c46d63953a7104f5dd97
     resource: repo://scripts/dev-cargo.mjs
-generated: { by: "codex", at: "2026-10-29T17:57:38.430Z" }
+generated: { by: "codex", at: "2026-11-04T20:14:29.223Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-02T23:50:54.203Z
+    at: 2026-11-05T07:15:08.684Z
 ---
 
 # システム境界と起動順序
@@ -83,7 +85,7 @@ flowchart LR
 | --- | --- |
 | `server` | HTTP/WS の入力検証、製品操作、Workflow と Repository Memory の接続 |
 | `server-access` | 配置別の認証、設定切替、メンバーとWebセッション、継続接続の失効 |
-| `deployment` / `local-deployment` | 共通サービスの要求面と、ローカルの DB・実行・Git・preview の組み立て |
+| `deployment` / `local-deployment` | 共通サービスの要求面と、ローカルの DB・実行・Git の組み立て |
 | `executors` / process host | provider 固有通信と、実行・監査の仕組み |
 | `workflow` / server runtime | グラフの純粋な検証・計画と、永続状態・外部効果を伴う実行 |
 | local Board API | SQLite 上の Project・Issue と関連情報。Web と stdio MCP へ異なる応答契約を提供 |
@@ -101,7 +103,7 @@ Board の Web は `/api/local`、stdio MCP は `/api/board` を使い、同じ�
 
 Git の作業木、Native Audit、Repository Memory は SQLite と別の永続状態を持つ。復旧で DB の状態だけを正しいと決めず、[実行ホスト](agent-runtime.md)や [記憶の統合状態](../concepts/repository-memory.md)の証拠も確認する。
 
-新しい [単一サーバーコンテナー](../operations/server-container.md)は、この local application を Linux サーバーで動かす配布形態である。PostgreSQL / Electric / relay に依存しない。backend の認証と nginx の HTTPS ingress・preview origin、実行環境と永続 volume の境界は同ページに置く。[配布の適用範囲](../../docs/self-hosting/server-container.mdx#what-the-image-contains)
+新しい [単一サーバーコンテナー](../operations/server-container.md)は、この local application を Linux サーバーで動かす配布形態である。PostgreSQL / Electric / relay に依存しない。backend の認証と nginx の HTTPS ingress・独立アプリroute、実行環境と永続 volume の境界は同ページに置く。[配布binaryとvolume](../operations/server-container.md#配布-binary-と開発-checkout)
 
 standalone と embedded は共通の `Access` を組み立て、main router に適用する。独立した組込み preview listener は廃止され、開発アプリは外部ブラウザーで開く。認証の責任は [サーバー認証](../concepts/server-access.md)を参照する。[main の配線](../../crates/server/src/main.rs#L180-L210)・[embedded](../../crates/server/src/startup.rs#L50-L64)
 
@@ -133,6 +135,6 @@ API 型は Rust から TypeScript へ生成するため、Rust と Web の変更
 
 外部からの接続は一種類ではない。[認証付き MCP](../integrations/remote-access.md)は既存 LVK 操作を公開し、[Execution Bridge](../concepts/shared-resource-coordination.md)は資源束を所有したまま明示登録 Runner で処理を実行する。両者は削除済み relay と独立している。内部 Astra は廃止され、Project は Board を直接表示し、同じ Project の [Todo メモ](../concepts/project-todos.md)と[設計メモ](../concepts/design-notes.md)へ切り替えられる。設計メモの本文・追記履歴は SQLite が正本で、UI REST と両 MCP は同じ保存状態へ異なる応答形式を提供する。外部 MCP は内部会話モデルを起動しない。[廃止と共有機能の移行境界](../concepts/project-chat.md)を確認する。
 
-外部 HTTP MCP の [Runtime Access](../concepts/runtime-access.md) は、管理者が許可した Linux 領域で既存プログラムを直接動かす別の経路である。`remote_mcp` が共有する process registry は AgentRun を作らず、起動・停止は既存 operation receipt を使う。設定は SQLite、出力と寿命監視はプロセス内にあり、AgentRun の再接続・回復契約を流用できない。[結線](../../crates/server/src/remote_mcp/mod.rs#L55-L72)・[registry と監視](../../crates/server/src/remote_mcp/environment_process.rs#L1-L34)・[実行と receipt](../../crates/server/src/remote_mcp/environment_process.rs)
+外部 HTTP MCP の [Runtime Access](../concepts/runtime-access.md) は、管理者が許可した Linux 上で既存プログラムを直接動かす。file rootsは直接file APIだけを制限し、実行programのアクセス先を閉じ込めない別の経路である。`remote_mcp` が共有する process registry は AgentRun を作らず、起動・停止は既存 operation receipt を使う。設定は SQLite、出力と寿命監視はプロセス内にあり、AgentRun の再接続・回復契約を流用できない。[結線](../../crates/server/src/remote_mcp/mod.rs#L55-L72)・[registry と監視](../../crates/server/src/remote_mcp/environment_process.rs#L1-L34)・[実行と receipt](../../crates/server/src/remote_mcp/environment_process.rs)
 
 `server runtime-payload` は通常の DB・認証・listener 初期化前に終了し、frontend・sounds・scripts の実埋込み bytes の hash を調べる専用 probe である。`developer-runtime` feature は debug でもそれらを埋め込む。これは通常起動の回復を実行するコマンドではなく、[開発bundle切替](../operations/development.md#開発用成果物切替と復旧)の停止前検査に使う。[早期分岐](../../crates/server/src/main.rs#L45-L52)・[payload検査](../../crates/server/src/runtime_payload.rs#L9-L34)・[feature](../../crates/server/Cargo.toml#L72-L76)

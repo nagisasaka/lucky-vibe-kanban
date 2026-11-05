@@ -324,7 +324,8 @@ pub(super) async fn publish(
         .lock()
         .await;
     let pool = &deployment.db().pool;
-    let (repo, _, _, root) = context(deployment, &run).await?;
+    let (repo, workspace, _, root) = context(deployment, &run).await?;
+    super::support::require_private_branch(&root, &workspace.branch, &run.target_ref)?;
     admission::verify_sources(deployment, &run).await?;
     admission::idle(deployment, run.workspace_id.unwrap()).await?;
     super::conversation::verify_evidence(pool, &run).await?;
@@ -347,11 +348,26 @@ pub(super) async fn publish(
     run.payload.base_commit = Some(current);
     let base = run.payload.base_commit.clone().context("Missing B")?;
     let result = run.payload.result_commit.clone().context("Missing R")?;
-    deployment.git().require_clean_source(&root, &result)?;
     let (targets, target_writers) = managed_targets(&deployment.db().pool, &repo, &run).await?;
     for ws in &target_writers {
         admission::idle(deployment, *ws).await?;
     }
+    if run.payload.wiki_enabled {
+        let request = run
+            .payload
+            .publication_request
+            .as_ref()
+            .context("Missing publication request")?;
+        let store = RepositoryMemoryStore::existing_for_repository(&repo.name, repo.id)?
+            .context("Missing setup journal store")?;
+        super::conversation::validate_prepared_wiki_proof(pool, &run, &store).await?;
+        services::services::openwiki::setup::integration::restore(
+            &store,
+            &super::conversation::wiki_setup_identity(&run, &root, &request.code_commit)?,
+            &result,
+        )?;
+    }
+    deployment.git().require_clean_source(&root, &result)?;
     ensure!(
         deployment
             .git()

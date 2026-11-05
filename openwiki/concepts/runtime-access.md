@@ -28,15 +28,15 @@ sources:
     resource: repo://deploy/developer/switch/start_binary.py
   - id: openwiki-source-688a3a970a72f7fa2b5dbc1c
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/RuntimeAccessSettingsSection.tsx
-generated: { by: "codex", at: "2026-11-02T01:08:30.935Z" }
+generated: { by: "codex", at: "2026-11-04T20:06:10.920Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-02T01:08:30.935Z
+    at: 2026-11-04T20:06:10.920Z
 ---
 
 # 実行環境へのアクセス
 
-Runtime Accessは認証された外部MCP clientがLVKのOS user権限でファイルを扱い、既存プログラムを直接起動・観測・停止する機能である。AgentRunを作らず、OS sandboxでもない。内容・出力は参照データであり承認ではない。[利用契約](../../docs/self-hosting/runtime-access.mdx)・[process所有](../../crates/server/src/remote_mcp/environment_process.rs)
+Runtime Accessは認証された外部MCP clientがLVKのOS user権限でファイルを扱い、既存プログラムを直接起動・観測・停止する機能である。AgentRunを作らず、OS sandboxでもない。内容・出力は参照データであり承認ではない。[runtime API の契約](../../crates/server/src/remote_mcp/environment.rs#L119-L183)・[process所有](../../crates/server/src/remote_mcp/environment_process.rs)
 
 ## Grant と権限の重なり
 
@@ -66,7 +66,7 @@ writeは既存parent内に最大512KiB UTF-8の通常fileを作成/原子的置�
 
 `run_process`は絶対executable/cwdを要求し、起動時のpinned cwdがWorkspace自身/子であれば拒否する。Workspace祖先や別siblingは許可するが、起動後のcwd監視は行わない。command語の検閲やexecutable配置制限はなく、programはcwd/file roots外にもアクセス可能である。既存Workspaceをprogram経由で直接編集する許可にはならない。
 
-子の環境はclearし、固定PATH/LANGだけを渡す。有限寿命は1〜3600秒、serviceは1〜86400秒。timeoutはTERM後5秒で必要ならKILLする。pidfdを使いexactな一PIDを対象とし、PID1・LVK自身・祖先を保護する。子孫やprocess groupの停止保証ではない。stop receiptは終了証明でなく、再観測が必要である。
+子の環境はclearし、`PATH=/usr/local/bin:/usr/bin:/bin` と `LANG=C.UTF-8` だけを渡す。serverのHOME、provider資格情報、Cargo/NVM/virtualenv設定を継承する前提で実行しない。必要な実行accountの設定は明示した絶対pathや信頼できるwrapperで準備する。有限寿命は1〜3600秒、serviceは1〜86400秒。timeoutはTERM後5秒で必要ならKILLする。pidfdを使いexactな一PIDを対象とし、PID1・LVK自身・祖先を保護する。子孫やprocess groupの停止保証ではない。stop receiptは終了証明でなく、再観測が必要である。
 
 ## 出力・receipt・再起動
 

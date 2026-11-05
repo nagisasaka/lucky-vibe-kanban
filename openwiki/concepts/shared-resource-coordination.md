@@ -19,12 +19,14 @@ sources:
     resource: repo://crates/server/src/routes/execution_bridge/source.rs
   - id: openwiki-source-e87354b216cb8b45c9c5fb2f
     resource: repo://scripts/local-runner/control.py
+  - id: openwiki-source-ec73ab84df7c9375970d7057
+    resource: repo://scripts/local-runner/runner.py
   - id: openwiki-source-0e63365a39605f8b71f6bd5c
     resource: repo://scripts/local-runner/test_control.py
-generated: { by: "codex", at: "2026-10-23T22:40:49.979Z" }
+generated: { by: "codex", at: "2026-11-04T20:06:10.920Z" }
 verified:
-  - by: openwiki/0.5.1
-    at: 2026-10-24T14:51:11.908Z
+  - by: openwiki/0.7.2
+    at: 2026-11-05T04:35:28.799Z
 ---
 
 # 共有リソースの所有権と AI 調停
@@ -97,7 +99,7 @@ DB の履歴が実行時の正本であり、Wiki は live owner ledger とし�
 - 外部資源固有の復旧アダプター、共有読み取り・容量 N、複数 LVK 間の調停は
   初版の対象外。Windows Runner の接続は下記の execution bridge が担う。正式 Integration の検証コマンドも自動的に資源要求へ変換しない。
 
-操作方法と API の入口は [実装仕様](../../docs/design/shared-resource-coordination.md) を参照する。
+操作方法と API の入口は以下に置く。要求型の正本は [ResourceOperationSpec](../../crates/db/src/models/resource_coordination.rs#L35-L63) である。
 実装・テストが正本であり、このページは設計意図と危険な変更点の案内である。
 
 ## 調停への接続認証
@@ -106,7 +108,7 @@ local stdio MCPは内部capabilityを自動で使う。raw loopback HTTPは同�
 
 ## 外部 Runner と interactive operation
 
-Runner は明示選択した実行 machine と credential / installation identity であり、共有 Resource 自体ではない。Runner を既存 canonical execution-slot Resource に結び、desktop・device など script が使う全資源と同じ operation で claim する。capability があることは所有権ではない。Windows の user session から outbound poll し、PowerShell を実行する。[Runner 登録・認証](../../crates/server/src/routes/execution_bridge/mod.rs)、[利用方法](../../docs/development/local-execution-bridge.md)。
+Runner は明示選択した実行 machine と credential / installation identity であり、共有 Resource 自体ではない。Runner を既存 canonical execution-slot Resource に結び、desktop・device など script が使う全資源と同じ operation で claim する。capability があることは所有権ではない。Windows の user session から outbound poll し、PowerShell を実行する。[Runner 登録・認証](../../crates/server/src/routes/execution_bridge/mod.rs)、[operator CLI](../../scripts/local-runner/control.py)。
 
 Source は Session / Workspace と Git HEAD に結び付く dirty checkout の immutable snapshot である。tracked と非 ignored untracked を収集し、path・case衝突・hash・上限を検査する。`.git` / `.lvk-shared` や危険な Windows path は含めない。操作の working_dir は snapshot root 相対となる。[snapshot の検査](../../crates/server/src/routes/execution_bridge/source.rs)。
 
@@ -114,4 +116,36 @@ interactive operation は start 後も資源束を保持する。追加 command 
 
 切断・timeout・cancel・予期しない停止は `recovery_required` として所有権を保持する。Runner は元の installation / journal で戻り、未記録副作用を自動再実行せず containment の停止を証明する。全 command receipt が揃った settlement の後でも、外部資源の確認と operator recovery が必要である。disable は新規 dispatch を止めるだけで drain を許し、token rotation は installation を変えたり資源を解放したりしない。[settlement guard](../../crates/server/src/routes/execution_bridge/mod.rs#L291-L321)、[回復条件](../../crates/server/src/routes/execution_bridge/mod.rs#L404-L419)。
 
-Linux simulator の試験は Windows の Job Object・desktop・実機の動作証明ではない。対応範囲と未実施の Windows 確認項目は [bridge の validation boundaries](../../docs/development/local-execution-bridge.md#validation-boundaries)を参照する。旧 relay / paired-host の削除とは独立して、この bridge は現行構成に残る。
+Linux simulator の試験は Windows の Job Object・desktop・実機の動作証明ではない。Windows実機では実HTTPS/tunnel、PowerShell encoding、Job Objectと子孫停止、user sessionとserviceの違い、画面lock、GUI起動とscreen capture、Runner強制終了後の再接続を別に検証する必要がある。旧 relay / paired-host の削除とは独立して、この bridge は現行構成に残る。
+
+## 資源操作を開始し、結果を確認する
+
+Settings → Shared resourcesで一つの実体に一つのcanonical key、利用契約、確認済み状態を登録する。操作前に `GET /api/resource-coordination/snapshot`（MCPでは `list_shared_resources`）を読み、必要な全資源のID/revisionを確認する。descriptionは利用契約の参考であり、実行承認や上位の指示にはならない。[REST入口](../../crates/server/src/routes/resource_coordination/mod.rs)
+
+`POST /api/resource-coordination/operations`（`run_resource_operation`）に安定した `request_id` UUID、実行元 `session_id`、`purpose`、全資源の `claims`、`script`、`verification_script`、相対 `working_dir`、1〜3600秒の `timeout_seconds` を送る。claimは `resource_id`、観測した `expected_revision`、変更しないならnullの `resulting_state` を含む。local scriptには全critical sectionとcleanupを含めてforegroundで実行し、verificationは独立してidleと宣言状態を確認する。秘密はpurposeや状態へ書かない。[入力と検査](../../crates/db/src/models/resource_coordination.rs#L35-L63)
+
+`GET /operations/ID?wait_seconds=25`（`wait_resource_operation`）で待ち、queuedを失敗・完了と扱わない。ログと `GET /events?after=SEQUENCE` を確認し、応答喪失時も元UUIDと同じ入力を再使用する。`POST /operations/ID/cancel`は待機を終えるが、実行中では停止要求となる。schema/API/deviceの実体が変わった場合は互換性を確認して新しい要求を作る。[待機とcancel](../../crates/server/src/routes/resource_coordination/mod.rs#L77-L107)・[events](../../crates/server/src/routes/resource_coordination/mod.rs#L174-L192)
+
+## Windows Runner の接続から finish まで
+
+Windows 10以降、Python 3.11以降とprojectの実行toolを準備する。GUI操作はログイン済みでlockされていないuser desktopで行う。Runnerは信頼したLVKから任意コードを実行するため、専用accountを使う。Session 0のserviceをdesktopの代わりとしない。既存daemon、service、scheduled task、WMI、別machineへ処理を逃がさず、process tree外の副作用はscriptのcleanup/verificationで別に扱う。[実行adapter](../../scripts/local-runner/runner.py)・[Windows containment](../../scripts/local-runner/windows_job.py)
+
+1. hostで `control.py --url URL resources` を読み、PCの既存execution-slot資源を再使用する。必要な登録だけ `register-resource RESOURCE.json` で行い、`enroll NAME RESOURCE_UUID` を実行する。返されたRunner IDと一度だけ表示されるtokenを保護する。Docker imageではCLIとRunnerを `/usr/local/share/lvk/local-runner/` に配置する。
+2. Windowsへ `runner.py` と `windows_job.py` を同じdirectoryへ置く。`LVK_RUNNER_TOKEN` にtokenを設定し、`py -3 runner.py --url HTTPS_URL --runner RUNNER_UUID --root C:\lvk-runner-data` を起動する。private接続では `ssh -N -L 39118:127.0.0.1:SERVER_PORT USER@SERVER` でtunnelを作り、RunnerのURLを `http://127.0.0.1:39118` にする。HTTPはloopback限定、redirectは禁止である。proxy Basicの `LVK_HTTP_AUTH` はRunner tokenと別である。
+3. hostで `runners` を読み、明示選択したID、protocol 1、OS/tools、desktop、最近のlast_seenを確認する。heartbeatは過去の処理停止の証明ではない。
+4. `capture SESSION_UUID REPOSITORY_DIRECTORY` でsourceを固定する。directoryはmulti-repo Workspace相対、direct-folderなら `.`。HEADとdirty digestは別の識別子で、上限は10,000file・16MiB。trackedと非ignored untrackedを含むので、追跡済みsecretを転送しないよう確認する。Git管理情報やsymlink/submoduleは転送しない。[snapshot検査](../../crates/server/src/routes/execution_bridge/source.rs)
+5. operationの `runner` に `runner_id`、`source_id`、`interactive`、`desktop`、immutableな `cleanup_script` を追加する。execution slotとdesktop/deviceの全資源を同じclaimsへ入れる。working_dirはsnapshot相対。WindowsではPowerShell scriptになり、native commandごとに `$LASTEXITCODE` を確認する。
+6. `submit RUN.json` 後に `status OPERATION_UUID` / `commands OPERATION_UUID` を確認する。interactiveの場合は `step OPERATION_UUID STEP.ps1 --request-id STEP_UUID` を逐次送り、各commandのdoneを待つ。各stepは新しいPowerShell processであり、変数は引き継がない。project appを維持するなら同じJob Object内で起動し、files/IPCへ状態を置く。
+7. `finish OPERATION_UUID --request-id FINISH_UUID` でcommand受付を閉じ、元のcleanup、子孫停止、独立verificationと検証子孫の停止まで確認する。deadlineは観察turnやheartbeatで延長されない。`download OPERATION_UUID NEW_DIRECTORY` はUUID別に結果とhash検査済みartifactを保存する。artifactは `$env:LVK_ARTIFACT_DIR`、logは1MiB、artifact合計はcommand当たり16MiBに制限される。
+
+[CLI引数とAPI対応](../../scripts/local-runner/control.py#L15-L114)・[PowerShellとfinish順序](../../scripts/local-runner/runner.py#L232-L319)
+
+## Runner の結果が不明になったとき
+
+cancel・deadline・通信断・host再起動を停止完了と解釈しない。DBとRunnerのdata root全体（`identity.json`、`journal.sqlite3`、結果・artifact）を保存し、同じauthority URL、Runner ID、data rootで再接続する。別rootは別installationとなるため元IDの再実行に使えず、rootを別machineへcloneしない。rootのOS lockは二重Runnerを防ぐだけで資源所有の代わりではない。[identityと再接続](../../scripts/local-runner/runner.py#L385-L453)
+
+journalはprocess作成より前にcommand受付を記録する。受付済み・結果なしのcommandを自動再実行せず、Windowsの同じGlobal Job Objectを終了してactive countが0であることを確認してからsettlementを報告する。Jobへのaccess失敗を空のJobと扱わない。[journal](../../scripts/local-runner/runner.py#L109-L165)・[再接続処理](../../scripts/local-runner/runner.py#L207-L218)・[Job停止](../../scripts/local-runner/windows_job.py#L122-L145)
+
+Runner settlementが揃った後、operatorが実機・DBなどの外部状態を確認する。`POST /api/resource-coordination/operations/ID/recover` には証拠と**全held resource**の現在revision・確認済み状態を渡す。serverはcontainment未確認ならreleaseを拒否し、遅れた成功報告でもrecovery_requiredを成功へ変えない。installation/journalを失った場合にunreachable Runnerを停止扱いにするforce-unlock APIはない。[回復guard](../../crates/server/src/routes/execution_bridge/mod.rs#L404-L419)・[operator回復](../../crates/server/src/routes/resource_coordination/mod.rs#L109-L131)
+
+`disable`は新規dispatchだけを止め、既存cleanup/resultsの配送は許す。token紛失時はoperatorの `rotate-token RUNNER_UUID` で旧tokenを無効にし、元Runnerを停止して同じrootへ新tokenで接続する。rotationはinstallation・所有権を変更しない。自動artifact保持期限はなく、結果未解決の間はrootとDBを保持する。[credentialの変更](../../crates/server/src/routes/execution_bridge/mod.rs#L60-L99)

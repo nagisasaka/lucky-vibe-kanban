@@ -1,0 +1,130 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:0a5a55b51b0b245cfebcf4520a05b220a53f6e4e8ed3c329af7624a17a5e2301",
+  "claims": [
+    {
+      "id": "claim_75127f59a68c4e87a0aea23798401adb",
+      "statement": "Petは両sidebar共通の装飾一体で、Session活動から独立し、80px描画と全体host-pet設定の操作を持つ。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/features/pets/SidebarPet.tsx#L17-L39",
+          "version": "repo-lines-v1:sha256:f46e4fedd6b46177f8ca6e8bb210e8bd2f3db9d1062408dea65da449bb17adf4:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVkMzY4MGViNTlkOGUxMTNmOWI0NThjY2MyNzgwZDg2NDM5NjRmZmU1Nzk5NzNhYjZiMWIzYTFiOGQ4NmJiMjYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZkN2Y3MzI1YzQ0ZjBiZDQ0OGU2Mzc0ZjEyNzk4MDJmMGVlNzMxMTc5NzUyMWMyZDk3ZmVkOTk1YzRkYTE0NmYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJmMGFhOTFjZDY5Y2QxYmFhNDI5MTdlZTY1MGFjN2Q4Y2I1N2EwNjk3NmQ1YTU3MDc5MmM1YWYxZDhlODFjMzQifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/components/EnvironmentPanel.tsx#L99-L143",
+          "version": "repo-lines-v1:sha256:39a95fc214a8e0c0000f4f8eac62077b1ac069b544263d1656729d7fa673c713:eyJzZWxlY3RlZExpbmVDb3VudCI6NDUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY5MDZjODEyZWRhMDE3ZWUwMzcwNmNmZjQ0N2NmMjg2YmYzMTlkOGMzYTE4ZTBlNzhlNzI4MmFjNjY3Mzk4MTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI2MjdlZjQxYjhkNTMyMjgyOWViYjllNjUwNzg5NTFmNWYxZGU3MDNiNDA1MzYxNzllNzhmZTJhMjlhNDlkZmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjljNWQ1ZTNkMGU4YWUwM2ZlYzI4YzNlMzFlNmMwMGZiODg4ZGIwNjU3OWJjNTA2NmQyMTA0MThmMTQ5Yjc2NDAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjIyMmQzYmVkNjU5YmFiZDY2MDI2Mjc4NmEwOWQ5MDdmM2QwMmYxODAzYTJkYmM3ODFiMWFlNmE4N2E3OTNmZWMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_b6282e37ef554e0f8b9ea067c415f914",
+      "statement": "manifest省略/1はv1の1536x1872、2はv2の1536x2288を受け、v2だけ使用73セル/透明尾部15セルを検査しv1の歴史的dimension/decode互換を守る。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/features/pets/format.ts",
+          "version": "repo-file-v1:sha256:90458ef65971f1644e20e69e27581c89ef37f1212fae03c35633a499ed5fd1b1"
+        }
+      ]
+    },
+    {
+      "id": "claim_515a2f8a665b45c9b6c536e6894e3fec",
+      "statement": "v2はidle時のmouse位置を16静止方向へ丸め、非idle/click優先、中心/leave/blur/touch/reduced-motionで通常idleへ戻りhidden時は更新を止める。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/features/pets/PetSprite.tsx",
+          "version": "repo-file-v1:sha256:6f80008f7962e11603eee130d5bb8f6aca72f956c224c01baadd89fbad4e6a04"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/pets/format.ts#L229-L246",
+          "version": "repo-lines-v1:sha256:b6e705a99b45f6d5004081212ffe4c0e4ddf9a7414989a06ac42dccbbc6a401d:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImViMWYxNjE1YjRlMjQ4MDFhMTc1NzQxN2FmNjhhYzAzZWJlYmNlNzM1ZDY5YTFiOWY5N2M4OTQwMTIwNjE0YTEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAyNzhmOWE2MmE3ODYxNTUzZmUyMjA3Mzg2NTdjZjkzNzdlNjBhNGQ1OGRkZGRmZTdmZTU2NjM1MzU1ZTg0NzgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk1YmNjNTBlYWE1NjJkYjBkZDE4NDBjNTM3NDZkYjY5MGYxNzJiYTE3NTVlNjk4YzQ5NGZiNDc1MDUwY2I5ZDciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNmOTk3ZjM2ODZjMDc2YTY0YTQ0YTgwZDVmYjVlOTI0MzMwNTA0Njk4NzFkZWM1N2I0MGRhOWZlNDQ4YTQ5NWYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_28c78b2d8bf1435c9b30b69bfd578132",
+      "statement": "ZIP取込は出力量/entry/path/CRC/画像chunk/manifestを検証し、filesystem抽出・URL取得・コード実行なしで検証後の画像だけを既存attachmentsへ保存する。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/features/pets/SidebarPet.tsx#L74-L116",
+          "version": "repo-lines-v1:sha256:8901f16fe024fdd3dd02c43a2ebd8372162ae5fb3bbff88907d4c33cda4ec93a:eyJzZWxlY3RlZExpbmVDb3VudCI6NDMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjlmNDU2Mjc5ZTZkMWM3NThiOTZiNWQ3YjM0YzIzMTY4MTk1ODdjZWQ4MDU0N2FhNzI2YjYxZWQ1YmI1MDExNTciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUwNTYzMDRiMGVlYWJkODhhZDRjYmRkNjBiZGY0NjY1MWFkODU3YWQxZTAxMDRlNDJhYmZmNmIwNDNhZThlYTAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjIzZjUwMzU0OGUzZmY0NDFkZDg0MzJmYWJhNjdhZDVkYjdlYTRkMmJlYzZmMDcyZGU3NDRiMzc2Y2ExMjhjNWYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNlZDg1NjRkY2RjNzE0MmFiY2ZmYjJiNzkyZTAxNThjOGUxY2U5NGE1YTE5ZmM5OWQ4NmYxZjI0NTQ1NzA0YWQifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/pets/library.ts#L64-L110",
+          "version": "repo-lines-v1:sha256:d715a88a274e9b7a4ee16e840dc47df23540054f928f23b52d54f702259cf4d6:eyJzZWxlY3RlZExpbmVDb3VudCI6NDcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNmNzcwNTRmYTFlMjkxMmY0YzRmYTU2NWRmYWE0MWNlNTkwNGQwMzAwYjNlZGQ3OWE3ZDI5N2U3OGYxOTBlYWUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjcwYTgzMTRmMWU5ZmZkM2JkNjRmNWU4OWMxMTZlMjMxN2VjYjJmNzM4ZDEwZWRiYWMwODhlMjYxZGY2NDUwMWIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/pets/zip.ts",
+          "version": "repo-file-v1:sha256:c4f7b01c28a8b9bd3802cbfca873dd6abe67c9cfd1b88ba6a795342bcc69194f"
+        }
+      ]
+    },
+    {
+      "id": "claim_37c12cfd13994c1799dddb4c2ba240bc",
+      "statement": "Pet設定はinstance共有scratch writerの保存成功後に確定し、orphan取得と削除の両方がPet参照を保持する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/db/src/models/file.rs#L7-L23",
+          "version": "repo-lines-v1:sha256:6e7586130dd0028414bbd79bf62a60439039694a2946ee7de1fe218160aca474:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVjZGNiMDA5ZmZjNjlhY2MyMDU2Y2I0MjEzNGQ5MzgwYWRiMTM5ZDE1M2JiMDVhMTAwYjNiNzE3YzYzYjAwNzkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgzMTg2YTI3NDY0OGNjNDMzOGI0MjFkZWFjOTc0MDY4OWQ2YjYxMzc1MzRmNmIwZjc0MTE5YWM2MmQzYmQ5ZGUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRlOGUyNWRjNWM2YWZhNDYxNzVhN2JmYzE2N2VkYTc0Nzg1MDkxYWNjNDE4ZjIwMDY1NmNkZWMwYmZhMzhiMmQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQ3M2JhNmMyYzA4YzhhYjk4M2NmODUyMzliZjFmM2U1MTU4ODAyZDc1ZmZhY2JmYWJkNTI0NGRiNzU2ZTI4MjQifQ"
+        },
+        {
+          "resource": "repo://crates/services/src/services/file.rs#L208-L228",
+          "version": "repo-lines-v1:sha256:b94edb005454a4a3f0891e0fd76d4a90f5d82e6cf5a0566aa306aebca15a6e1b:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YjA0NDkxNDY5NzIyZTgzNjNhOTRlNDA0NDUzOGUwMTNhMmEyMTdlMzZiMWU1NjhiYTYwYWNiN2I0YzhmMmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ0YjAyNWJiNWE0ODg5MTMyMjQyYWM2MWFlMDA1MzA1NWE3MDMyYmE4OTc3NzhkMzYyOGZkNTMwNTdmYjNmY2YiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjA4ODU4MjU5NDc5YmI1ZmYzY2Y0YjE2MDhjNTA0MzYzNzM5NThhMWQ3NWY2NDZlMDZiNGUyOWQ5MzVkNGMzN2MifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/pets/SidebarPet.tsx#L55-L73",
+          "version": "repo-lines-v1:sha256:4e2d01db5926eef44cb45c0b5911485323841ab5132f12ccdddf455e185f0b7e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJmNWEyNjAyYzdiOGYzMDZjNTYwZDUyMTY0MjI5NzgxZTczODFkMWFmZDM0NjRkMDMzNWYwZGMwMGRkYWE5YzAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFmZDA3OTMzMmNhMGM2YWU1Yjc0YzNmOWUyY2RlZDhlNTdjYjE3YTI1NDA4YzVhMThmNjdkMmYzNzM4MTdiZjYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQyMWQ1MWE4MTViODNmOTRjNjYzMzA2ZWU2NTY4YjY1MzcxNGQwMzU3MzczNDg0ZTVlYWY5ZmI5N2JlYWMzYzciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQ2YmJhYzJkNTdkMjQxNDk1N2ZmOWQwM2RiZDlhM2JkN2UzYWY2OWVmZTY0NjRhN2RhYTVlZTFlMWY0Njc2NWMifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/hooks/useUiPreferencesScratch.ts#L311-L333",
+          "version": "repo-lines-v1:sha256:c620fdd80dae0fe31c2389b5defc232cac1c1496bde63f705da13d2c8dd2221d:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVjYTNhMDFkOTg5Y2M5ZjEzMTA2NTM4ZjQwZjg5MTIzYjUyMWY5M2JmYWI3Y2QyMzU3NjI0ZDViMmE4MTAxZmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjBjZmI1MGVmMmY1Mzk3NzQ4NGEzYzc3NmIxMjU3ODczNDI4NGQyNmJhZjFmZWFmYzRjZWU3NGYzZDhhOGRmMjUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImYyN2MxNTZlOTExZjU1NTUyOTE0YWM1M2Q5Zjk2Yzc2NzJjMjE1ZGFlODdiNjliODI0MjhlNzhiNTk4MjIwYzIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_c341e79962ae47369c252eae41d65515",
+      "statement": "画像fallbackはRabbitの表示名と帰属に切り替え、選択metadataを保持し、素材削除でdeduplicated attachmentを直接消さない。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/features/pets/SidebarPet.tsx",
+          "version": "repo-file-v1:sha256:7af1bae650d745e861aed60595347da801dd5a4870f69b2f360825ff9e59474d"
+        }
+      ]
+    },
+    {
+      "id": "claim_83cb18e555c24405a6c8b7e435f76a78",
+      "statement": "同梱Rabbitは固定commitのMasato Fujino作v1.1.0を無改変で保持し、CC BY4.0全文と来歴/検収境界をATTRIBUTIONに保持する。取込素材は同梱再配布の対象ではない。",
+      "evidence": [
+        {
+          "resource": "repo://packages/public/pets/lvk-rabbit/ATTRIBUTION.md",
+          "version": "repo-file-v1:sha256:cd99e6c411d5c4c2159cc581bd61dcadf57c1ddbce0e30ed15cdfcd7aa851b97"
+        },
+        {
+          "resource": "repo://packages/public/pets/lvk-rabbit/LICENSE",
+          "version": "repo-file-v1:sha256:9ba9550ad48438d0836ddab3da480b3b69ffa0aac7b7878b5a0039e7ab429411"
+        }
+      ]
+    },
+    {
+      "id": "claim_32556288e23d41ffaceec73b9dc7a726",
+      "statement": "Pet browser/integration試験は隔離transport/writerと生成v2画像で実componentを検証し、full router/live認可/実ユーザーv2素材の検証とは区別する。",
+      "evidence": [
+        {
+          "resource": "repo://tests/pets/README.md",
+          "version": "repo-file-v1:sha256:c60f5b244dbed0108cd4562387f5015984b90023116b02d2c16001207039196e"
+        },
+        {
+          "resource": "repo://tests/pets/browser.mjs",
+          "version": "repo-file-v1:sha256:0c5f891a2f4806486ab562d4e8ccfe524e6c1cd5639f1788f8752521f8442b87"
+        },
+        {
+          "resource": "repo://tests/pets/integration.mjs",
+          "version": "repo-file-v1:sha256:14a2694994c171cabaa4b3ec4551264b569ed7d7479e690115f88c0dd6301474"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.7.2",
+    "at": "2026-11-05T07:15:08.684Z"
+  }
+}

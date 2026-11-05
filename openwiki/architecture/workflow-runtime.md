@@ -30,18 +30,14 @@ sources:
     resource: repo://crates/services/src/services/orchestration_dispatch_tests.rs
   - id: openwiki-source-b19d02455156008b43c210c8
     resource: repo://crates/services/src/services/orchestration.rs
-  - id: openwiki-source-e33d67a243cd5977ddd88a37
-    resource: repo://docs/development/integration-dispatch-recovery.md
-  - id: openwiki-source-45838aa0b8eb7ea92723e949
-    resource: repo://docs/future/ai-workflow/spec-product.md
   - id: openwiki-source-ffc55e6e31e6ce477ca57329
     resource: repo://packages/web-core/src/shared/hooks/useWorkflowRun.ts
   - id: openwiki-source-23775c3de52f3ab95a13cb8b
     resource: repo://README.md
-generated: { by: "codex", at: "2026-10-29T08:49:34.152Z" }
+generated: { by: "codex", at: "2026-11-04T20:35:55.356Z" }
 verified:
-  - by: openwiki/0.5.1
-    at: 2026-10-29T08:49:34.152Z
+  - by: openwiki/0.7.2
+    at: 2026-11-05T07:15:08.684Z
 ---
 
 # Workflow の実行と耐久オーケストレーション
@@ -83,7 +79,7 @@ Workflow dispatch は enqueue が返した outbox ID を `deliver_create` に渡
 
 受理された AgentRun が Pending でも Started は返り得るため、これは provider の準備完了・仕事完了の通知ではない。同一配送の replay は既存 identity を使い、配送中に親が取消された場合は Started を返さず、受理済み Agent は取消照合用に残す。[競合・再送・取消テスト](../../crates/services/src/services/orchestration_dispatch_tests.rs#L145-L247)・[途中取消](../../crates/services/src/services/orchestration_dispatch_tests.rs#L357-L376)
 
-Orchestration event 保存と製品 node 完了は、それぞれ読み取り前に `BEGIN IMMEDIATE` で SQLite writer を予約する。deferred read-to-write upgrade の競合を避ける局所変更であり、全 DB の journal mode 変更ではない。[event と完了の transaction](../../crates/db/src/models/orchestration.rs#L277-L352)。隔離 DB の競合回帰テストはこの境界を検証するが、過去の稼働環境の lock holder は未特定である。[調査記録](../../docs/development/integration-dispatch-recovery.md#historical-evidence-not-executable-instructions)
+Orchestration event 保存と製品 node 完了は、それぞれ読み取り前に `BEGIN IMMEDIATE` で SQLite writer を予約する。deferred read-to-write upgrade の競合を避ける局所変更であり、全 DB の journal mode 変更ではない。[event と完了の transaction](../../crates/db/src/models/orchestration.rs#L277-L352)。隔離 DB の競合回帰テストはこの境界を検証するが、過去の稼働環境の lock holder は未特定である。歴史的調査では Create 受付と thread readiness の混同、attempt 間 input ID 衝突、Starting 保存失敗後の起動が別々の問題として記録された。過去環境の instance 固有 hash や旧 cutover 命令は現在の復旧手順ではない。
 
 ## 実行の前進と待機
 
@@ -106,7 +102,7 @@ Tauri shell は廃止されたが `server::startup` は公開 API として残�
 
 したがって Run の取得は純粋な表示読み取りではない。画面経由では前進しても、standalone を画面なしで動かす場合に同じ継続駆動を保証する根拠にはならない。ScheduledTask loop は定時の起動を担い、完了後の全ノード連鎖を監視する watcher の代わりではない。[定時実行の skip 条件](../workflows/task-to-integration.md#定時に-workflow-を起動する)と併せて、起動に成功した run が進行し続けるかを別に確認する。
 
-[製品設計の確認稿](../../docs/future/ai-workflow/spec-product.md)は「ノード完了後に自動で後続を起動する」という意図を記録する。上表は現行呼出し経路の適用差であり、無人運転での停止を再現した試験結果ではない。起動形態を問わない保証へ変更する意図や時期は、この証拠からは確定できない。
+移行した2026-05-16の製品設計確認稿は「ノード完了後に自動で後続を起動する」という意図を記録する。上表は現行呼出し経路の適用差であり、無人運転での停止を再現した試験結果ではない。起動形態を問わない保証へ変更する意図や時期は、この証拠からは確定できない。
 
 ## Condition と人の判断
 
@@ -136,4 +132,4 @@ system Condition はこの検証済み verdict から `pass` / `refine` を決�
 
 ## 検証の入口
 
-[outbox と lease の再起動テスト](../../crates/db/src/models/orchestration.rs#L2189-L2241)は配送中コマンドの回収を確認する。グラフ凍結、重複 dispatch、親取消、router 不正出力、bootstrap の製品検証を、それぞれの境界で確認する。過去の [Workflow V1 設計](../../docs/superpowers/specs/2026-05-08-ai-workflow-v1-design.md)にある仕組みは設計経緯であり、現行 runtime の保証を代用しない。
+[outbox と lease の再起動テスト](../../crates/db/src/models/orchestration.rs#L2189-L2241)は配送中コマンドの回収を確認する。グラフ凍結、重複 dispatch、親取消、router 不正出力、bootstrap の製品検証を、それぞれの境界で確認する。過去の 2026-05-08 の承認済み Workflow V1 draftにある仕組みは設計経緯であり、現行 runtime の保証を代用しない。

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:993e36de892142734473c9eddfdac96ca7a755e8a598f5d36bdbde71579aea89",
+  "pageVersion": "sha256:3dd5b3cf90f4e58fb64159e070d0deab6d6bb31a32237834146a365c7a630d7c",
   "claims": [
     {
       "id": "claim_82c340b0bbd240889908ea6c2c5be423",
@@ -46,7 +46,7 @@
       "evidence": [
         {
           "resource": "repo://crates/local-deployment/src/agent_run_port.rs",
-          "version": "repo-file-v1:sha256:ce52cdc7b45cfbeab915e398889f1355e9cfbdddb41edd5e3dd78cbd3569cd3e"
+          "version": "repo-file-v1:sha256:6240db53da38f7bfab8eb0e9da63046d243af949596b5bf108a37097fce962c6"
         }
       ]
     },
@@ -446,11 +446,11 @@
       "evidence": [
         {
           "resource": "repo://crates/local-deployment/src/agent_run_port.rs",
-          "version": "repo-file-v1:sha256:ce52cdc7b45cfbeab915e398889f1355e9cfbdddb41edd5e3dd78cbd3569cd3e"
+          "version": "repo-file-v1:sha256:6240db53da38f7bfab8eb0e9da63046d243af949596b5bf108a37097fce962c6"
         },
         {
           "resource": "repo://crates/server/src/routes/integrations/conversation.rs",
-          "version": "repo-file-v1:sha256:7800dd437e2cba8bb5db17fe74877717b08e0b46d0014c5dcec697450282ccd1"
+          "version": "repo-file-v1:sha256:3f4281d139b82a9d7ec33408f5ee1addd7d7733cb873ec3842bb9f6f36442dee"
         }
       ]
     },
@@ -815,12 +815,8 @@
       "statement": "Supervised 隔離試験は実 backend/host/UI と protocol fixture を使い、native model/sandbox、Windows、サーバー再起動越し回復を検証しない。runner は checkout の host binary を明示固定する。",
       "evidence": [
         {
-          "resource": "repo://docs/development/supervised-approval-change-manifest.md#L100-L103",
-          "version": "repo-lines-v1:sha256:5271c0b3d0b6143e2ee1a169d86885b5e21e267482db5823b3a72c501b5b3088:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYzc0MGVkMGZhZjQ3NjM4NDI4ODU1MWQ3NmM2MTE3ZTlhOWJhZjc3MDJlZWYwZDFjNzU2ZTRlNzI3ZGMzOTcyNSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMTM2MDVhMGY5ODU1Y2FlODRlNjI5MTQ3ZWUyZmVjZTcyZmJiN2E2NmNmN2U3NWU1MGMyMGY3OTllM2E0ODZiNyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNmVkMDdlZmVjN2IzYjNkOTY4MDY4M2YyMzRkMjhjZDcxNDNmNTdlMTMxMzUxMTRjZDZmNGNkOTAxZmE4OWQwZSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiODJlMzIxMWZlNDI0Y2VmOGE0Y2U2OWZjYzQ0MmYzMjgzZWZhMWIyNzZhY2NkMzhkYzc2MGVkNGNhNWExZWNhYSJ9"
-        },
-        {
           "resource": "repo://tests/supervised/README.md",
-          "version": "repo-file-v1:sha256:9e93f2fc550d13fe902e927ad2e9a95965f75b6e684889d5e4ba8844b8e8ce80"
+          "version": "repo-file-v1:sha256:b4d4ed13ebe64ee1e98dca918d78770518af53ef5535e321a3ccdd4a31a26cd5"
         },
         {
           "resource": "repo://tests/supervised/run_isolated.py#L45-L79",
@@ -970,11 +966,11 @@
       "evidence": [
         {
           "resource": "repo://crates/local-deployment/src/agent_run_port.rs",
-          "version": "repo-file-v1:sha256:ce52cdc7b45cfbeab915e398889f1355e9cfbdddb41edd5e3dd78cbd3569cd3e"
+          "version": "repo-file-v1:sha256:6240db53da38f7bfab8eb0e9da63046d243af949596b5bf108a37097fce962c6"
         },
         {
           "resource": "repo://crates/server/src/routes/integrations/conversation.rs",
-          "version": "repo-file-v1:sha256:7800dd437e2cba8bb5db17fe74877717b08e0b46d0014c5dcec697450282ccd1"
+          "version": "repo-file-v1:sha256:3f4281d139b82a9d7ec33408f5ee1addd7d7733cb873ec3842bb9f6f36442dee"
         }
       ]
     },
@@ -1121,6 +1117,6 @@
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-02T23:50:54.203Z"
+    "at": "2026-11-05T04:35:28.799Z"
   }
 }

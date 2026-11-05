@@ -42,10 +42,10 @@ sources:
     resource: repo://tests/server/run-issue-comments.mjs
   - id: openwiki-source-24d832f3cec15712d984861e
     resource: repo://tests/server/specs/issue-comment-reviews.spec.ts
-generated: { by: "codex", at: "2026-11-02T01:08:30.935Z" }
+generated: { by: "codex", at: "2026-11-04T20:22:03.096Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-02T14:26:25.232Z
+    at: 2026-11-05T04:35:28.799Z
 ---
 
 # Issue のコメント・レビュー・添付・通知
@@ -99,7 +99,7 @@ Comment は Issue・現在の認証actor・任意の parent・message を保存�
 
 全文は `get_issue_comment` の offset 0 から取得し、`next_offset` と初回の `comment_revision` を次回の `expected_comment_revision` に渡す。limit は1–16,000、既定8,000。offset は UTF-8 bytes、UTF-16 units、書記素ではなく Unicode scalar 数で、結合文字も別に数える。プレビューを全文ページへ前置しない。revision 不一致ならその応答の本文を得ず、0から読み直す。終端と同じ offset は空ページ、終端超過はエラーで、保存済み空本文も読める。[取得契約](../../crates/server/src/remote_mcp/issue_comments.rs#L296-L375)・[decoder と境界テスト](../../crates/server/src/remote_mcp/issue_comment_text.rs#L16-L116)
 
-各本文 request は一つの read transaction 内で全本文を16 KiBの BLOB chunk として走査し、Issue/comment ID・編集時刻・全本文から SHA-256 を計算する。SQLite の text 関数が NUL で切れるため byte chunk を使い、同時刻・同じ長さの編集も検出する。保持メモリと返却本文量は制限されるが、各ページの仕事量は全文サイズに比例する。旧来の長い UI コメントを拒否したり、新しい全文履歴を作ったりはしない。[走査と hash](../../crates/server/src/remote_mcp/issue_comments.rs#L315-L375)・[記録された設計理由](../../docs/development/chatgpt-mcp.md#share-issue-specification-reviews)
+各本文 request は一つの read transaction 内で全本文を16 KiBの BLOB chunk として走査し、Issue/comment ID・編集時刻・全本文から SHA-256 を計算する。SQLite の text 関数が NUL で切れるため byte chunk を使い、同時刻・同じ長さの編集も検出する。保持メモリと返却本文量は制限されるが、各ページの仕事量は全文サイズに比例する。旧来の長い UI コメントを拒否したり、新しい全文履歴を作ったりはしない。[走査と hash](../../crates/server/src/remote_mcp/issue_comments.rs#L315-L375)・[BLOB読取とrevision計算](../../crates/server/src/remote_mcp/issue_comments.rs#L315-L375)
 
 ### 変更時の検証入口
 
@@ -107,7 +107,7 @@ Comment は Issue・現在の認証actor・任意の parent・message を保存�
 
 隔離 E2E の入口は `node tests/server/run-issue-comments.mjs`。この checkout の型生成、server / frontend build と server library test の準備後に使う。専用 instance、loopback port、環境 allowlist と終了待機を持ち、test-only JWT bridge が実認証 middleware / MCP handler から UI と同じ disposable DB へ投稿する。Chromium spec は二つの独立投稿、再送、長い通常コメントの全文取得、古い対象表示、編集後の来歴保持を検査する。実 Auth0 / ChatGPT 相互運用はこの fixture の保証外である。[runner](../../tests/server/run-issue-comments.mjs)・[bridge](../../crates/server/src/remote_mcp/issue_comments_browser.rs#L1-L101)・[spec](../../tests/server/specs/issue-comment-reviews.spec.ts)
 
-レビュー本文は参照データであり、モデル名、新しさ、同意数で採用権限を得ない。実装・再レビュー・要求変更はそれぞれ明示された操作として扱う。[公開契約](../../docs/development/chatgpt-mcp.md#share-issue-specification-reviews)
+レビュー本文は参照データであり、モデル名、新しさ、同意数で採用権限を得ない。実装・再レビュー・要求変更はそれぞれ明示された操作として扱う。[来歴と対象の保存](../../crates/server/src/remote_mcp/issue_comments.rs)
 
 ## 添付の現在の境界
 
@@ -119,6 +119,6 @@ Comment は Issue・現在の認証actor・任意の parent・message を保存�
 
 Linux の既定 notifier は `notify-rust` を使う。services の依存であり、lockfile 内の推移依存 `tauri-winrt-notification` という名前だけを根拠に desktop 専用と判断して削除しない。ブラウザーの音再生・native bridge 撤去は [Web の操作境界](../architecture/web-and-sync.md#通知音エディターの接続先)を参照する。[OS notifier](../../crates/services/src/services/notification.rs#L170-L195)・[依存宣言](../../crates/services/Cargo.toml#L35-L35)・[lockfile の依存辺](../../Cargo.lock#L4726-L4737)
 
-通知を調べる際は、まず実際の呼出し元、sound / push 設定、実行 OS の notifier を確認する。[General settings](../../docs/settings/general.mdx#notifications)はこの実行上の注意喚起の操作文書として読み、旧 Cloud の受信者規則として使わない。
+通知を調べる際は、まず実際の呼出し元、sound / push 設定、実行 OS の notifier を確認する。Settings の通知項目で音とOS通知の対象eventを選ぶ。OS通知の受信先はserverの実行環境に依存し、browserの配送は別途Web Pushで登録する。旧 Cloud の受信者規則を適用しない。[設定UI](../../packages/web-core/src/shared/dialogs/settings/settings/GeneralSettingsSection.tsx)
 
 認証された利用者が browser と Project を明示登録する [Web Push](../integrations/web-push.md)は、上記 OS notifier / Follower と別経路である。Codex の canonical blocking input・approval と Run 終端を DB trigger で配送待ちにするため、Issue の担当・コメント・購読変更そのものからは通知を作らない。登録・同意失効・再送と通知からの会話復帰はリンク先を一次説明とする。[admission trigger](../../crates/db/migrations/20261018180000_web_push.sql)

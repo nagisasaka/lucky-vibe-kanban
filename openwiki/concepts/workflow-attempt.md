@@ -22,16 +22,14 @@ sources:
     resource: repo://crates/workflow/src/transform.rs
   - id: openwiki-source-bfc7d8936f7f60c78ed7b911
     resource: repo://crates/workflow/src/validation.rs
-  - id: openwiki-source-45838aa0b8eb7ea92723e949
-    resource: repo://docs/future/ai-workflow/spec-product.md
   - id: openwiki-source-93c75609d9ddc0e57a09830f
     resource: repo://packages/web-core/src/features/workflow/model/useWorkflowEditorDraft.ts
   - id: openwiki-source-49c27e78a2601ac597269802
     resource: repo://packages/web-core/src/features/workflow/model/workflowEditorDraft.ts
-generated: { by: "codex", at: "2026-10-26T01:15:35.501Z" }
+generated: { by: "codex", at: "2026-11-04T20:22:03.096Z" }
 verified:
-  - by: openwiki/0.5.1
-    at: 2026-10-29T08:49:34.152Z
+  - by: openwiki/0.7.2
+    at: 2026-11-04T20:22:03.096Z
 ---
 
 # Workflow Attempt とグラフの契約
@@ -73,7 +71,7 @@ Undo/Redo は graph とメタデータのローカル編集履歴であり、既
 
 [実行ノード型](../../crates/workflow/src/graph.rs#L105-L125)、[構造・待機 handler](../../crates/workflow/src/handlers.rs#L136-L158)、[Transform](../../crates/workflow/src/transform.rs#L28-L74)。StickyNote / StageGroup は canvas object であり、実行ノードに追加する種類ではない。[canvas 型](../../crates/workflow/src/graph.rs#L89-L94)
 
-[Arena](arena.md) の候補は別 Workspace に隔離される例外で、勝者の変更を main Workspace に適用してから後続へ進む。通常の Agent ノード間は同じ作業ファイルを共有する。このため、並行 Agent の編集競合はグラフ表示だけでは解消されない。[共有モデルの記録](../../docs/future/ai-workflow/spec-product.md#1-核心结论)、[勝者適用](../../crates/server/src/workflow_runtime/arena.rs#L712-L793)
+[Arena](arena.md) の候補は別 Workspace に隔離される例外で、勝者の変更を main Workspace に適用してから後続へ進む。通常の Agent ノード間は同じ作業ファイルを共有する。このため、並行 Agent の編集競合はグラフ表示だけでは解消されない。[主WorkspaceとSessionの確保](../../crates/server/src/workflow_runtime/runner.rs)、[勝者適用](../../crates/server/src/workflow_runtime/arena.rs#L712-L793)
 
 ## 辺・分岐・合流
 
@@ -105,7 +103,7 @@ Run/Attempt の Canceled と NodeExecution の Cancelled はシリアライズ�
 
 ## 文書との照合と未確定点
 
-[2026-05-16 の製品設計](../../docs/future/ai-workflow/spec-product.md) は合意された製品意図として有用だが、「上流出力を prompt に入れない」という記述は現在の template 展開・context 構築より狭い。また同文書の ExecutionProcess による agent 実行モデルは、現在の [AgentRun](session-and-agent-run.md) に読み替える必要がある。
+移行した2026-05-16の製品設計確認稿 は合意された製品意図として有用だが、「上流出力を prompt に入れない」という記述は現在の template 展開・context 構築より狭い。また同文書の ExecutionProcess による agent 実行モデルは、現在の [AgentRun](session-and-agent-run.md) に読み替える必要がある。
 
 現在の validation は循環を受け付けない。記録から将来の loop 支援時期や、現行 fan-in を全入力待ちへ変更する意図は確定できない。グラフやテンプレートの変更では、README の図だけでなく planner・validation のテストを判断基準にする。
 

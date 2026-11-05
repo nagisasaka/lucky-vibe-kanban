@@ -88,16 +88,12 @@ sources:
     resource: repo://deploy/server/release.test.mjs
   - id: openwiki-source-bb1ebe868e35e9e500714501
     resource: repo://Dockerfile
-  - id: openwiki-source-416673f852b62093837a9a91
-    resource: repo://docs/agents/claude-code.mdx
-  - id: openwiki-source-459fb9f29be1bc52c827e706
-    resource: repo://docs/development/codex-compatibility.md
-  - id: openwiki-source-bd8b8c5ef2cd6ade70bfa3e5
-    resource: repo://docs/future/agent-runtime/delegated-agent-display.md
   - id: openwiki-source-223410809ba8bde718d60d3b
     resource: repo://packages/ui/src/components/ModelList.tsx
   - id: openwiki-source-f2fdb07edb2a73ea40538a98
     resource: repo://packages/web-core/src/shared/components/ModelSelectorContainer.tsx
+  - id: openwiki-source-b2a122f28fa4470dd2111bb4
+    resource: repo://packages/web-core/src/shared/dialogs/settings/settings/McpSettingsSection.tsx
   - id: openwiki-source-71c7c94338c94576d4db90b5
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/settingsRegistry.tsx
   - id: openwiki-source-f66eb76c24833219ccd50c84
@@ -112,10 +108,10 @@ sources:
     resource: repo://tests/claude-subscription/subscription.spec.ts
   - id: openwiki-source-141584dac09cf0f93be6bff5
     resource: repo://tests/codex-process-cleanup/README.md
-generated: { by: "codex", at: "2026-11-02T23:50:54.203Z" }
+generated: { by: "codex", at: "2026-11-04T20:55:57.207Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-02T23:50:54.203Z
+    at: 2026-11-05T07:15:08.684Z
 ---
 
 # Agent provider・設定・MCP・Skill
@@ -124,7 +120,7 @@ LVK は provider ごとの通信を adapter で解釈し、共通の [AgentRun](
 
 ## Profile と実行能力
 
-Profile は保存した provider 設定の variant であり、個々の実行では model、agent、reasoning、permission、execution mode、budget、subagent concurrency の override を適用できる。Code / Plan / Goal と PermissionPolicy は別軸である。旧 `PlanWithGoal` は保存・API 互換値として残るが新規起動では Plan となる。設定画面の操作は [Agent Configurations](../../docs/settings/agent-configurations.mdx)、実行中の変更・Goal の寿命は [Session と AgentRun](../concepts/session-and-agent-run.md) を参照する。[型と override](../../crates/executors/src/profile.rs#L21-L37)・[override の項目](../../crates/executors/src/profile.rs#L141-L176)
+Profile は保存した provider 設定の variant であり、個々の実行では model、agent、reasoning、permission、execution mode、budget、subagent concurrency の override を適用できる。Code / Plan / Goal と PermissionPolicy は別軸である。旧 `PlanWithGoal` は保存・API 互換値として残るが新規起動では Plan となる。設定画面の操作は [保存したprofileを管理する](#保存した-profile-と-mcp-接続の操作)、実行中の変更・Goal の寿命は [Session と AgentRun](../concepts/session-and-agent-run.md) を参照する。[型と override](../../crates/executors/src/profile.rs#L21-L37)・[override の項目](../../crates/executors/src/profile.rs#L141-L176)
 
 Profile は既定値と user の profiles.json を合成して読み、保存時は既定値との差分を正規化・検証して書く。読み込みの parse 失敗はログを残して既定値へ戻るため、画面に選択肢があるだけでは保存した設定の適用を確認できない。[読み書き](../../crates/executors/src/profile.rs#L351-L410)
 
@@ -155,7 +151,7 @@ resume は同一 native thread を使い、start / resume config には完全な
 
 縮小を許すのは、owned app-server の初回 load、通常履歴、Unix、確認対象 version metadata（0.144.1 / 0.163.0）の条件が揃う場合だけである。metadata-only `thread/read(include_turns=false)` で当該 thread の path を得て、resume 前後の同じ canonical regular JSONL を各最大16 MiB・2秒で読む。directory 走査や他の履歴・sidecar は使わず、symlink・非通常ファイル・部分行・identity不一致・未知形式・compaction・rollback・fork/history_base があれば全文へ戻す。prefix と inode の連続性を照合し、resume が追加する既知の settings / warning event だけを suffix に許す。[履歴判定](../../crates/executors/src/executors/codex/client/resume_instructions.rs#L47-L157)・[有界読取と前後照合](../../crates/executors/src/executors/codex/client/resume_instructions.rs#L159-L290)
 
-通常 initialize だけが user_agent を保存し、後述の passive initialize は版観測・resume state に入らない。未知版や非Unixでも通常 resume を拒否せず、指示縮小だけを無効にする。sidecarの過去ACKでは compaction 後の保持を証明できないという判断が実装に記録される。これは履歴追加の削減であって、Memory checkpoint/restore の追加 turn や Workflow を変更するものではない。[initialize の分離](../../crates/executors/src/executors/codex/client.rs#L239-L275)・[記録された判断と合成試験](../../docs/development/codex-resume-instructions.md)。実binaryの厳密Git revision、effective prompt、token/cache/課金削減量は未測定である。
+通常 initialize だけが user_agent を保存し、後述の passive initialize は版観測・resume state に入らない。未知版や非Unixでも通常 resume を拒否せず、指示縮小だけを無効にする。sidecarの過去ACKでは compaction 後の保持を証明できないという判断が実装に記録される。これは履歴追加の削減であって、Memory checkpoint/restore の追加 turn や Workflow を変更するものではない。[initialize の分離](../../crates/executors/src/executors/codex/client.rs#L239-L275)・[resume指示の検証実装](../../crates/executors/src/executors/codex/client.rs)。実binaryの厳密Git revision、effective prompt、token/cache/課金削減量は未測定である。
 
 ### Discovery と手動 override の境界
 
@@ -179,11 +175,27 @@ Linux の `discovery_cleanup_normal_timeout_drop_abort` は fake app-server を�
 
 MCP tool の一回限り権限要求はこの自動承認とは別で、常に明示回答と一意な tool 相関を要求する。[承認の正本](../concepts/session-and-agent-run.md#codex-の一回限り-mcp-tool-承認)を参照する。
 
+## Provider の設定場所と実行アカウントを揃える
+
+LVK のサーバー認証と provider CLI の認証は別である。標準 Compose の login コマンドと永続 home は [provider 実行アカウントの準備](../operations/server-container.md#provider-の実行アカウントを準備する)と [三つの永続 volume](../operations/server-container.md#永続化と実行の寿命)を参照する。カスタム設定場所を使う場合は、login/status より前に実行サーバー内の OS account と設定ディレクトリを決め、その同じ環境を選択 profile の次回実行にも適用する。別マシン・別 user・別 directory の login 成功を、この実行環境の認証済み状態と扱わない。資格情報をコピーしたり内容を表示したりして確認しない。
+
+### Codex: CODEX_HOME と native MCP 設定
+
+LVK の `codex_home()` は非空の `CODEX_HOME` を優先し、未設定・空文字・空白だけの値なら実行 account の `~/.codex` へ戻る。home 自体を解決できなければ設定場所を得られない。解決した directory の `config.toml` が native MCP の既定設定ファイルであり、同じ directory の `auth.json` の metadata/更新時刻を availability の LoginDetected 判定に使う。この判定は資格情報の有効性・quota・次回モデル応答の証明ではない。[home 解決](../../crates/executors/src/executors/codex.rs#L69-L79)・[MCP と availability](../../crates/executors/src/executors/codex.rs#L428-L451)
+
+通常の home を使う標準 Compose 手順と、`CODEX_HOME` を選んだ運用を混同しない。カスタム場所を選んだら、その account と同じ `CODEX_HOME` を使う CLI で `codex login --device-auth` と `codex login status` を行い、LVK サーバー側の設定探索と選択 profile の起動環境も同じ場所を参照することを確認する。profile だけの環境 override がサーバープロセス自身の `codex_home()` を変更するとは限らない。native MCP editor で保存した設定もその解決先を確認し、次の通常実行で接続と応答を確認する。標準 home 外に置く場合は、その場所の永続化・秘密保護も別途必要となる。
+
+### Claude: CLAUDE_CONFIG_DIR と認証 probe
+
+Claude CLI を使う account と設定 directory は login・status・実行で揃え、`CLAUDE_CONFIG_DIR` を選ぶなら三者に同じ値を適用する。これは移行元の Claude 導入手順に記録された運用前提であり、LVK が別 account の資格情報を移植する機能ではない。`claude auth login` と `claude auth status` は利用者がその環境で行う vendor CLI 操作である。vendor 内部の credential 格納形式や全設定優先順位は、LVK の probe 実装だけからは確定できない。
+
+Subscription profile の LVK probe は現在の cwd と execution env に profile env を合成し、その環境を `claude --settings … auth status` の子プロセスへ適用する。`CLAUDE_CONFIG_DIR` を LVK が独自に解釈して credential を読み出すのではなく、公式 CLI の public metadata を検査する。profile-policy/discovery の readiness と実 launch の完全な環境は同一保証ではないため、login/status 後に選択 profile の次の実行を同じ環境で確認する。[profile env と probe](../../crates/executors/src/executors/claude/auth.rs#L78-L128)・[実起動直前の確認](../../crates/executors/src/executors/claude.rs#L739-L775)・[scope と readiness の限界](#選択-profile-と-discovery-の一貫性)
+
 ## Claude のサブスクリプション専用 profile
 
 `SUBSCRIPTION` は通常 Issue → Workspace → Session で公式 `claude` CLI の subscription login を使うための任意 preset で、`require_subscription_login: true` と `approvals: true` を持つ。DEFAULT の置換でも新しい provider / scheduler でもない。既存の stream-json、native resume、取消 adapter を使い、Claude native Goal や Arena の追加対応を意味しない。`approvals: true` だけで人の待機 UI が配線されるわけではなく、上記の host approval 境界を引き続き確認する。[preset](../../crates/executors/default_profiles.json#L3-L15)・[direct launch](../../crates/executors/src/executors/claude.rs#L215-L237)・[command adapter](../../crates/executors/src/executors/claude/command_adapter.rs#L33-L115)
 
-利用者は **LVK の実行環境内の同じ account と設定ディレクトリ**で CLI を準備し、`claude auth login` / `claude auth status` を行ってから Subscription preset を選ぶ。別マシンでの login を server の設定と取り違えない。導入・同意・実アカウント確認の手順は [Claude Code 操作文書](../../docs/agents/claude-code.mdx)に置く。LVK は credential file を読み取って SDK へ転用せず、public auth metadata を確認する。[auth probe](../../crates/executors/src/executors/claude/auth.rs#L1-L128)
+利用者は **LVK の実行環境内の同じ account と設定ディレクトリ**で CLI を準備し、`claude auth login` / `claude auth status` を行ってから Subscription preset を選ぶ。別マシンでの login を server の設定と取り違えない。image内では `docker compose exec lvk claude auth login` を使い、CLIのbrowser案内に従って本人が同意する。次に `claude auth status` を同じaccountで確認する。[公式認証案内](https://code.claude.com/docs/en/authentication)を参照する。LVK は credential file を読み取って SDK へ転用せず、public auth metadata を確認する。[auth probe](../../crates/executors/src/executors/claude/auth.rs#L1-L128)
 
 ### 認証の確認と拒否条件
 
@@ -218,7 +230,7 @@ Codex の selected_skills は name/path の参照であり、渡し方は実行�
 
 [起動分岐](../../crates/executors/src/executors/codex.rs)、[chat 入力](../../crates/executors/src/executors/codex.rs)、[Goal context と resume への継承](../../crates/executors/src/executors/codex.rs)、[resume 変換](../../crates/executors/src/executors/codex.rs)
 
-この区別の理由は、Goal activation に UserInput 配列がないこと、余分な推論 turn を発生させず、永続する 4,000 文字上限の objective を Skill 参照で膨らませないことである。これはソースコメントと [Control and skills の設計説明](../../docs/future/agent-runtime/delegated-agent-display.md#control-and-skills) に記録された理由である。同文書は明示的な承認・廃止ステータスを持たず Validation plan も含むが、この Skill の節は現行コードおよび [通常 chat の順序テスト](../../crates/executors/src/executors/codex.rs)、[Goal の初回・再開・既存指示保持テスト](../../crates/executors/src/executors/codex.rs) と整合する。文書内の将来の再投影構想まで実装済みとは扱わない。
+この区別の理由は、Goal activation に UserInput 配列がないこと、余分な推論 turn を発生させず、永続する 4,000 文字上限の objective を Skill 参照で膨らませないことである。これはソースコメントと 移行したControl and skillsの設計説明 に記録された理由である。同文書は明示的な承認・廃止ステータスを持たず Validation plan も含むが、この Skill の節は現行コードおよび [通常 chat の順序テスト](../../crates/executors/src/executors/codex.rs)、[Goal の初回・再開・既存指示保持テスト](../../crates/executors/src/executors/codex.rs) と整合する。文書内の将来の再投影構想まで実装済みとは扱わない。
 
 両経路とも、旧 LVK 同梱 `skills/llm-wiki` 配下の参照を除外する。同じ名前でも利用者が別の場所に置いた Skill は残し、既存ファイルを削除しない。旧 Pipeline の互換処理は [Card context と LLM Wiki の終了](../concepts/card-context-and-llm-wiki.md)に置く。[選択のフィルター](../../crates/executors/src/legacy_wiki.rs#L101-L119)
 
@@ -242,13 +254,13 @@ Host を切り替えた後に古い応答を反映しないことも、この機
 
 adapter は provider の nested message / tool block も解釈するが、raw frame は引き続き Audit に残す。現行 Codex mapper は v7、Claude の mixed-content mapper は v4、その他は v3 である。補正を古い Audit replay へ遡及適用せず、選んだ version の意味で再生する。Claude の一つの envelope 内の text/tool の展開も adapter 内で行い、UI に provider 固有解析を持ち込まない。[version 選択](../../crates/executors/src/executors/provider_adapter.rs)、[mixed content](../../crates/executors/src/executors/provider_adapter.rs)
 
-配布 image の CLI pin は `0.163.0`、Rust の `codex-protocol` / `codex-app-server-protocol` は `rust-v0.144.1` のままである。CLI version と消費する wire 型の version は一致を要求しない。[Docker pin](../../Dockerfile#L147-L150)・[依存](../../crates/executors/Cargo.toml#L42-L43)。[互換性の判断記録](../../docs/development/codex-compatibility.md#wire-types-and-upgrade-boundary)は、より新しい protocol crate の rollout/otel/state と SQLite link 依存の衝突を理由に wire subset を維持したと説明する。これは記録された判断であり、この Sync で依存 upgrade を再実験した結果ではない。
+配布 image の CLI pin は `0.163.0`、Rust の `codex-protocol` / `codex-app-server-protocol` は `rust-v0.144.1` のままである。CLI version と消費する wire 型の version は一致を要求しない。[Docker pin](../../Dockerfile#L147-L150)・[依存](../../crates/executors/Cargo.toml#L42-L43)。移行した互換性判断の履歴は、より新しい protocol crate の rollout/otel/state と SQLite link 依存の衝突を理由に wire subset を維持したと説明する。これは記録された判断であり、この Sync で依存 upgrade を再実験した結果ではない。
 
-保持 fixture を Rust 型へ decode するテストと Docker pin / fixture version の一致検査がある。実 CLI を使う offline smoke は一時 Codex home と local mock Responses で Plan/Default、resume、steering、Goal を検査する。[wire test](../../crates/executors/src/executors/codex/client.rs#L2013-L2039)・[pin test](../../deploy/server/release.test.mjs#L78-L95)・[smoke](../../scripts/test-codex-app-server.py)。これらは使用 RPC の互換確認であり、live model 品質・browser・配布済み実行環境の更新を証明しない。操作手順と過去の検証結果は [互換記録](../../docs/development/codex-compatibility.md)を参照する。v5 の context / 子観測と v4 replay の維持は [runtime 投影](../architecture/agent-runtime.md#context-と子観測の投影)で説明する。
+保持 fixture を Rust 型へ decode するテストと Docker pin / fixture version の一致検査がある。実 CLI を使う offline smoke は一時 Codex home と local mock Responses で Plan/Default、resume、steering、Goal を検査する。[wire test](../../crates/executors/src/executors/codex/client.rs#L2013-L2039)・[pin test](../../deploy/server/release.test.mjs#L78-L95)・[smoke](../../scripts/test-codex-app-server.py)。これらは使用 RPC の互換確認であり、live model 品質・browser・配布済み実行環境の更新を証明しない。再検証は `python3 scripts/test-codex-app-server.py npx --yes @openai/codex@0.163.0` と `node scripts/dev-cargo.mjs test -p executors codex --lib` を入口とする。fixture更新時は `LVK_CODEX_SMOKE_FIXTURE=crates/executors/fixtures/codex-app-server-0.163.0.json` を明示し、fixture・Docker pin・release testを一緒にレビューする。v5 の context / 子観測と v4 replay の維持は [runtime 投影](../architecture/agent-runtime.md#context-と子観測の投影)で説明する。
 
 ## 受動的な account quota/usage 参照
 
-`read_provider_usage` は Codex / Claude Code の公式CLI control接続から必要時に quota と任意の usage snapshot を読む。モデル turn、Issue・Workspace・Session・AgentRun を新規作成せず、thread開始/再開、slash command、rollout/transcript走査で欠損を補わない。Workspace の [報告済み累積トークン](../concepts/workspace.md#workspace-累積トークン)とは別の値で、そこへ加算しない。認証は既存公式CLIに任せ、独自 credential 取得・新loginを行わない。[共通read境界](../../crates/server/src/provider_usage.rs#L1-L43)・[provider契約](../../docs/development/provider-usage.md)
+`read_provider_usage` は Codex / Claude Code の公式CLI control接続から必要時に quota と任意の usage snapshot を読む。モデル turn、Issue・Workspace・Session・AgentRun を新規作成せず、thread開始/再開、slash command、rollout/transcript走査で欠損を補わない。Workspace の [報告済み累積トークン](../concepts/workspace.md#workspace-累積トークン)とは別の値で、そこへ加算しない。認証は既存公式CLIに任せ、独自 credential 取得・新loginを行わない。[共通read境界](../../crates/server/src/provider_usage.rs#L1-L43)・[受動readの実装](../../crates/executors/src/account_usage.rs)
 
 ### Account context と既存 Session の境界
 
@@ -274,7 +286,7 @@ quota/usageは別々に fresh / partial / unsupported / unavailable 等の理由
 
 LVK の設定操作は agent の native config を更新する。Codex は TOML の mcp_servers、他の現行 provider は JSON の mcpServers を用いる。advanced editor は明示的な機密読取確認と expected_revision を要し、既存 enclosing config の対象 server map を置換する。同じ provider を LVK 外で使う場合にも設定が及ぶ。[config 形式](../../crates/executors/src/executors/mod.rs#L139-L171)・[書き込み](../../crates/server/src/routes/config.rs#L363-L443)
 
-接続例と通常の設定手順は [Connecting MCP Servers](../../docs/integrations/mcp-server-configuration.mdx) を参照する。そこに示す JSON 例を Codex の保存形式そのものと解釈しない。
+接続操作は [profile と MCP 接続の操作](#保存した-profile-と-mcp-接続の操作)に置く。そこに示す JSON 例を Codex の保存形式そのものと解釈しない。
 
 OpenWiki maintenance writer は例外的に、登録 MCP が実行の前提である。LVK は該当 thread だけに `openwiki mcp --host codex` を設定し、`enabled=true` / `required=true` と60秒の startup timeout を指定する。thread/start・resume の RPC 待機は required OpenWiki writer の場合75秒に延長し、通常は30秒である。thread 登録後、通常 turn / Goal activation の前に、その thread の MCP catalog で六つの lifecycle tool と検索・読取・workspace/Wiki一覧の四toolが揃うことを確認する。server 名や ready 状態だけでは十分としない。欠落・不正な pagination・15 秒の preflight timeout は writer 起動失敗として返し、この確認自体では Wiki run を開始しない。[thread 設定](../../crates/executors/src/executors/codex.rs)、[起動順](../../crates/executors/src/executors/codex.rs)、[tool 検査](../../crates/executors/src/executors/codex/client/openwiki.rs)
 
@@ -290,7 +302,7 @@ LVK のローカル MCP server は stdio で動き、HTTP backend に要求を�
 
 両 stdio router は `get_workspace_tokens` を公開する。Workspace ID を省略すると現在 context を使い、context がなければ明示 ID が必要になる。Orchestrator は別 Workspace を拒否し、既存 `/api/workspaces/{id}/tokens` の読取へ転送する。欠損を補う AgentRun は起動しない。[tool](../../crates/mcp/src/task_server/tools/workspaces.rs#L99-L130)・[scope](../../crates/mcp/src/task_server/tools/mod.rs#L182-L208)。値の契約は [Workspace 累積トークン](../concepts/workspace.md#workspace-累積トークン)、認証付き HTTP MCP の別入口は [get_workspace の集計](remote-access.md#workspace-の報告済みトークンを読む)にまとめる。
 
-backend の解決は VIBE_BACKEND_URL が優先され、続いて host/port の環境変数と port file を用いる。したがって「stdio client で接続する」ことと「backend が必ず localhost に固定される」ことは別である。導入例は [Vibe Kanban MCP Server](../../docs/integrations/vibe-kanban-mcp-server.mdx) を参照する。[backend URL の解決](../../crates/mcp/src/bin/vibe_kanban_mcp.rs#L100-L133)
+backend の解決は VIBE_BACKEND_URL が優先され、続いて host/port の環境変数と port file を用いる。したがって「stdio client で接続する」ことと「backend が必ず localhost に固定される」ことは別である。設定するclientには直接buildした `vibe-kanban-mcp --mode global` の絶対pathを指定する。binaryはbackendを起動しないため、意図したinstanceのURLとdata directoryを先に揃える。[binaryの準備](../operations/server-container.md#旧-npx-ランチャーの撤去と移行)を参照する。[backend URL の解決](../../crates/mcp/src/bin/vibe_kanban_mcp.rs#L100-L133)
 
 loopback HTTPを選んだ場合だけ、stdio clientは同じdata directoryの`access-internal.token`を内部ヘッダーへ読み込む。外部backendへは送らず、HTTP redirectは追わない。任意backendを指定できることは、内部認証を外部へ委譲することではない。[client](../../crates/mcp/src/task_server/mod.rs#L247-L274)、[共通認証](../concepts/server-access.md#webmcp内部agentを同じ資格情報にしない)
 
@@ -325,3 +337,9 @@ maintenance thread は利用者が指定した `OPENWIKI_CONFIG_DIR` を MCP へ
 host に束縛された自動マージ worker は、既存の `integration_action` と資源 snapshot 読取の `list_shared_resources` の2 tool にだけ `approval_mode=approve` を明示する。実 executable と AgentRun の thread-local 設定は start/resume に伝播し、通常 Workspace の MCP 権限や全 tool の既定値へ広げない。OpenWiki writer 用 allowlist や第三者 tool の一回限り承認を流用しない。[生成と限定設定](../../crates/executors/src/executors/codex.rs#L1110-L1170)・[正確な許可集合の回帰](../../crates/executors/src/executors/codex.rs#L2605-L2681)
 
 設定回帰は profile 保持、通常 Workspace との分離、resume 用設定を検査する。過去に承認待ちになった稼働 Run の最終 native 設定や live model/stdio の再現を証明するものではない。明示承認 adapter の単発束縛・拒否/取消/timeout は別の protocol 回帰に従う。[単発承認](../concepts/session-and-agent-run.md#codex-の一回限り-mcp-tool-承認)
+
+## 保存した profile と MCP 接続の操作
+
+Settings の agent 設定でproviderを選び、既存profileを選択して変更を保存する。新規profileは名前を付けて作成し、必要なら既存値を複製する。削除や既定値変更は実行中Runの設定変更とは分け、実行の保存値・overrideの解決を上記で確認する。[設定panel](../../packages/web-core/src/shared/dialogs/settings/settings/AgentConfigurationSettingsPanel.tsx)
+
+外部MCPをcoding agentへ渡す場合は、agent用MCP設定editorで対象agentを選び、presetまたはcommand/args等を編集して保存する。接続ログと次の実行で確認し、保存成功を接続成功と扱わない。設定はproviderのnative global設定に作用するため、他のserver定義を保持する。CodexのTOML変換・設定探索とJSON editorを混同しない。LVKを外部から操作するruntime設定とは別である。[native設定editor](../../packages/web-core/src/shared/dialogs/settings/settings/McpSettingsSection.tsx)

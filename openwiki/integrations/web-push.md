@@ -22,8 +22,6 @@ sources:
     resource: repo://crates/services/src/services/notification.rs
   - id: openwiki-source-594b913429eca2d438775192
     resource: repo://crates/services/src/services/notification/text.rs
-  - id: openwiki-source-67674da85aa6dbcd2c2a493d
-    resource: repo://docs/development/web-push.md
   - id: openwiki-source-64f4b24262714ff553327284
     resource: repo://packages/local-web/index.html
   - id: openwiki-source-555aad5cd76b2126b533c7d0
@@ -50,10 +48,10 @@ sources:
     resource: repo://tests/consultation-removal/README.md
   - id: openwiki-source-e47452003bca7e3daaa27a36
     resource: repo://tests/settings-redesign/settings.spec.ts
-generated: { by: "codex", at: "2026-11-02T14:26:25.232Z" }
+generated: { by: "codex", at: "2026-11-04T20:22:03.096Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-02T14:26:25.232Z
+    at: 2026-11-05T07:15:08.684Z
 ---
 
 # Web Push・通知同意・会話への復帰
@@ -113,15 +111,15 @@ Session の「ChatGPTに相談 — 依頼文をコピー」「ChatGPTを開く�
 
 通知の `icon` は `/apple-touch-icon.png?v=white-1` を参照する。HTMLのfaviconはlight/dark共通の `lvk-app-icon-white.svg`、Apple touchとmanifestの通常192/512px・maskable 512pxは白背景主版で、MCPカタログのアイコンも白版SVGを使う。manifestの名前・起動URL・scopeや画面内テーマを切り替える変更ではない。[worker](../../packages/public/lvk-push-sw.js)・[HTML](../../packages/local-web/index.html#L6-L14)・[manifest](../../packages/public/site.webmanifest)・[MCPカタログ](../../crates/executors/default_mcp.json)
 
-Aの背景なし四葉とBの深緑角丸背景SVGはSHA-256を照合する不変の正本である。白SVGはBの背景fillだけを置換し、四葉の形状・隙間・色・配置を保持する。Apple touchとmaskableは四葉を動かさず背景を全面へ延長する。深緑PNGも別バリエーションとして残し、`generate-clover-icons.mjs --check` で両版の再生成一致を検査できる。[生成契約](../../scripts/generate-clover-icons.mjs#L6-L76)・[運用説明](../../docs/development/clover-icons.md)
+Aの背景なし四葉とBの深緑角丸背景SVGはSHA-256を照合する不変の正本である。白SVGはBの背景fillだけを置換し、四葉の形状・隙間・色・配置を保持する。Apple touchとmaskableは四葉を動かさず背景を全面へ延長する。深緑PNGも別バリエーションとして残し、`generate-clover-icons.mjs --check` で両版の再生成一致を検査できる。[生成契約](../../scripts/generate-clover-icons.mjs#L6-L76)・[生成・検査script](../../scripts/generate-clover-icons.mjs)
 
-新しいSVG URLとPNGの `v=white-1` は旧主版キャッシュと区別するが、インストール済みホーム画面のOSキャッシュ更新までは保証しない。[Chromium試験](../../tests/server/run-clover-icons.mjs)はHTTP/MIME・素材SHA・背景以外の四葉一致・16/32pxのlight/dark・丸形とmaskable安全域を確認する。実機の追加・切り抜き・通知配送、人間の小サイズ視認性は別途確認が必要である。承認色の緑/白の低コントラストを独断で変えない。[キャッシュと限界](../../docs/development/clover-icons.md#キャッシュ更新)
+新しいSVG URLとPNGの `v=white-1` は旧主版キャッシュと区別するが、インストール済みホーム画面のOSキャッシュ更新までは保証しない。[Chromium試験](../../tests/server/run-clover-icons.mjs)はHTTP/MIME・素材SHA・背景以外の四葉一致・16/32pxのlight/dark・丸形とmaskable安全域を確認する。実機の追加・切り抜き・通知配送、人間の小サイズ視認性は別途確認が必要である。承認色の緑/白の低コントラストを独断で変えない。再読込で変わらなければsite cacheを確認し、既存ホーム画面shortcutの削除・再追加を試す。OS側cacheの挙動は実機で確認する。
 
-server は `LVK_WEB_PUSH_PRIVATE_KEY_FILE` の PEM と `LVK_WEB_PUSH_SUBJECT`（mailto または HTTPS）から VAPID を構成する。欠損・不正設定では登録が unavailable になり、配送を行わない。公開鍵だけを browser へ渡し、秘密鍵を restart 後も維持する。key rotation 後は browser で再登録する。[設定読取](../../crates/server/src/routes/web_push.rs#L68-L81)・[運用手順](../../docs/development/web-push.md#server-configuration)
+server は `LVK_WEB_PUSH_PRIVATE_KEY_FILE` の PEM と `LVK_WEB_PUSH_SUBJECT`（mailto または HTTPS）から VAPID を構成する。欠損・不正設定では登録が unavailable になり、配送を行わない。公開鍵だけを browser へ渡し、秘密鍵を restart 後も維持する。key rotation 後は browser で再登録する。[設定読取](../../crates/server/src/routes/web_push.rs#L68-L81)・[VAPIDの準備と受入](#vapid-鍵の準備と配送の受入)
 
 変更時は trigger の rollback/dedup、Project fanout、古い待機・retry、owner/CSRF と同意失効、Service Worker の URL/重複、通知対象 Run と login 復帰のテストを照合する。[server tests](../../crates/server/src/routes/web_push.rs#L640-L775)・[consent tests](../../crates/server-access/src/tests.rs#L1797-L1797)・[browser tests](../../tests/web-push/service-worker.test.mjs)・[login 復帰 tests](../../packages/web-core/src/shared/components/web-push/pushReturn.test.ts)
 
-実 OS/browser の配送と HTTPS deployment は fixture や source 調査では確定しない。OS の休止・通知権限・network policy により遅延や未着があり、完全停止した browser の起動を保証しない。[手動受入項目](../../docs/development/web-push.md#manual-acceptance-checks)を別に実施する。実装記録の過去 test 件数を、この統合 checkout の acceptance 成功と読み替えない。
+実 OS/browser の配送と HTTPS deployment は fixture や source 調査では確定しない。OS の休止・通知権限・network policy により遅延や未着があり、完全停止した browser の起動を保証しない。[配送の手動受入](#vapid-鍵の準備と配送の受入)を別に実施する。実装記録の過去 test 件数を、この統合 checkout の acceptance 成功と読み替えない。
 
 ### 相談導線削除の回帰と限界
 
@@ -144,3 +142,9 @@ Web Pushは登録ごとに `event_mask` を保存する。質問待ち=1、承�
 Web Pushは登録時とowner限定の `/web-push/{id}/locale` で封印済みsubscriptionの `lvk_locale` を保存する。現在のbrowser subscriptionのendpoint hashに一致する登録だけを更新し、locale変更・online・再表示を契機に直列同期する。新しい言語更新は古いin-flight要求がsettleするまで待つ。日本語以外と旧登録のlocale欠落は英語になり、lock screenの汎用本文という境界は維持する。[登録と更新](../../crates/server/src/routes/web_push.rs)・[browser同期](../../packages/web-core/src/shared/components/web-push/useWebPushLocale.ts)
 
 OS通知は共有configの明示言語を優先し、BROWSERでは保存時に取得した任意の `notification_browser_language` を使う。旧clientがhintを省略した保存では既存hintを保持する。未保存の画面言語だけで全利用者の通知を変えない。`OwnedNotification`は送信直前のconfigでEN/JAを描画し、他言語は英語fallback、workspace・branch・tool等の原文は保持する。[設定解決](../../crates/services/src/services/config/versions/v9.rs)・[送信直前の参照](../../crates/services/src/services/notification.rs)・[文面](../../crates/services/src/services/notification/text.rs)
+
+## VAPID 鍵の準備と配送の受入
+
+運用者が保護した設定directoryで `umask 077` を適用し、未使用の出力先に `openssl ecparam -name prime256v1 -genkey -noout -out web-push-private.pem` で専用P-256鍵を作る。既存鍵を上書きしない。secret mountの読取可能pathを `LVK_WEB_PUSH_PRIVATE_KEY_FILE`、連絡先を `LVK_WEB_PUSH_SUBJECT=mailto:admin@example.com` のようにserverへ設定し、承認された通常deployment手順で再起動する。HTTPSとpush serviceへのoutbound HTTPSが必要で、source変更だけでは稼働設定へ反映されない。[設定読取](../../crates/server/src/routes/web_push.rs#L68-L81)
+
+利用者はSettingsのWeb PushでProjectと現在browserをONにし、OS/browserの通知許可を確認する。別browser/別account、閉じたtab、logout、通知から正しいSession/Runへの復帰、回答済み待機の抑制、OFF、member無効化、鍵変更後の再登録を実機で個別に確認する。全event OFFと購読解除は別であり、既にOSへ届いた通知は消せない。実行成功通知をtestや公開の成功と解釈しない。[登録と選択](../../packages/web-core/src/shared/components/web-push/WebPushSettings.tsx)

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:734a53ec71392c6483a53e314ccfbbea3c3581793a3a435e6b44504adc324e53",
+  "pageVersion": "sha256:cf626d91839ea9fc1abefe7e1821528de1f393ea55120cbe9d225d7fc11783e2",
   "claims": [
     {
       "id": "claim_ef965d37641846bda42842bf4788c8cc",
@@ -215,7 +215,7 @@
           "version": "repo-lines-v1:sha256:251d872b3162f6038e8ac1e61c50bb5cebe4bdc32a16328f343328174016fdf1:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIyOWRlZjA5MDcxOTM4MGY2Yjg3NTg5NTI4ODk4NmJlZWEwODZmMjZhZDFkOTdkMjk4NDcwMzE2MmRmZWU5YmYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFmOWRiYzdmMmYyNGI1Mjg0MzU3Zjk4NjMwNmZlZjA0MTdjYzZmODFhODNhMDJiZjgxNTBmNzExMmY4ODNiMDkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk1NDZmZGFmZTFjNzNiYzRkMjc0ZmI4MWYxOWQ4OWFjOGE1ZTE0Mzc5MDc4MDMyNGIzODMwODIzNDRjZWE1ZTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjVjNTFhNDY1ZDQ5NjZjYjI1YmM5MDVkZGEwNjJjMTgzMDhlODQwOWFjOTBlNDdjM2Q5YWQ0NmNiM2RiNDMxNzIifQ"
         },
         {
-          "resource": "repo://packages/web-core/src/shared/stores/useUiPreferencesStore.ts#L563-L609",
+          "resource": "repo://packages/web-core/src/shared/stores/useUiPreferencesStore.ts#L568-L614",
           "version": "repo-lines-v1:sha256:e56cf6bfb7233c71b4802ed396d68918fdc91a93b654dd63536a2992a9119d70:eyJzZWxlY3RlZExpbmVDb3VudCI6NDcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZmYTg5ZWU5NGMyMGM2ZWM3MmM1ZTBmYmIyYzFkNDdhNzdiNmIzN2RhMDQyNWUwODhkNWM1MTkxNjMxYWI0OTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRkNWNkMmZiNGYzZGY4ODQ1MTUyNTViMzk1MjNmMmY4YjU0NzJiZWVhOWY1NjZmZmNhMjA0ZGI4MDI1NjEwNDEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImE5MGE3MzhhZTAxZTYyY2Q5NDc2NzViNmRjMmZjODEzMGJlNzczMTE3ODdiYzlhZDJmZDNmYzNiNmNmYjY4MTYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhmZWYxOTJkMWIzNzNmOGVkNjA0ODdiM2I3NDI2MWVhYTdmOWE0ODIyMTdkZDllYzFlNjNlZTgwZDIxZWI5YTUifQ"
         }
       ]
@@ -226,7 +226,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/integrations/runtime.rs",
-          "version": "repo-file-v1:sha256:8f1749902f3f28211d6b4f3a8c656a10a125e86d7927907ff7ff886333aed86a"
+          "version": "repo-file-v1:sha256:f4cd12ba17fe9c6f92997db0172a7278a02b494d372170f4abf3d8cece1e0490"
         },
         {
           "resource": "repo://packages/web-core/src/features/workspace-chat/ui/ExecutionInspectionPanel.tsx",
@@ -589,10 +589,6 @@
         {
           "resource": "repo://crates/services/src/services/config/versions/v7.rs#L58-L69",
           "version": "repo-lines-v1:sha256:8f027a3db75bcc1b0a5f1fedab1a336bad7c09cd842ab6585cc6c46901cc5a81:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk3ZTRmZDhiYTA2MGJiMDZlOGZlMDEwMWE0YmI0Njg0Nzc0OTNmZDFjMGYyYjdhOGYxNDA1MmE4YTI3N2RmOTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg5NzdjZjIxYTU4ZGYxZTFlZWIzZjA1NDg5OTAwMDc4OWM1NjdhZDExMDMwMWRjZDI5NGM5YTJhNTMyMDE4OTgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ4ODYxMzRjMDk1YzBmNmQyYzFiMzViNDAwMTc2NjkxZTAwNDU0ZDQ0MjAxMjRiMWU4ODU2ZjM3ZjZhZjYyYTgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBkNTJhYjhhZmMwYjI5Y2MwNWRiYWRmYTdiMDkxMjIyYTQ1Y2RiMGU1MWYzZDU5NTgxMTFjZWYxMDcxNGQ1MzEifQ"
-        },
-        {
-          "resource": "repo://docs/development/external-editor-uri-validation.md",
-          "version": "repo-file-v1:sha256:0e9838cd1caf17e4ce86a43a38956b3ddd91faa66cddd629ae397cb8a5461163"
         }
       ]
     },
@@ -697,8 +693,16 @@
       "statement": "埋込みpreview proxyとHTML/script注入・handoff/cookieは撤去済みで、外部browser/tunnelまたは独立CSV routeを使う。Workspaceのfile/Markdown/diff/image previewは残る。",
       "evidence": [
         {
-          "resource": "repo://docs/browser-testing.mdx#L30-L38",
-          "version": "repo-lines-v1:sha256:ba4ae74f9d95ded085383868672b5631e9b7318b17d55163ac825baa91eb4cc2:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDcyNmYzNDZmOTlmNjRhMWIyNTA5YTQyYjQ5YjBjMjU5Y2Y0NjQ3ODE1NTU3YzM2YTZmNDVkNzRmMjVkYTQwOSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZTFmMmQxYzNmNzNjN2FiMGJiNjdhZTM0NmE0ZjliODkwY2RkNGZhYjFlN2ExNWVjMjJmNWFmMGNmNDc2NzM4MCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMDA5NWJmOWZiZjYzZDM2NTU1MWE4YzE2M2MxZTFiOGZhYjQ2NWQwZGY3Y2ExNmYyY2I5OTcwMTI2NDA4NWE1MyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjAsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSJ9"
+          "resource": "repo://crates/server/src/routes/mod.rs",
+          "version": "repo-file-v1:sha256:2430fb321010767778384090a8a52dd32af8bc251607964d251af68864e1c0c0"
+        },
+        {
+          "resource": "repo://deploy/server/server.mjs",
+          "version": "repo-file-v1:sha256:505ea6f1d243602aac21209c6b5f0e05e0e3fe9df7c17ff4e90762b04a72d0b1"
+        },
+        {
+          "resource": "repo://packages/web-core/src/pages/workspaces/GitPanelContainer.tsx",
+          "version": "repo-file-v1:sha256:cd6f1c90138fd5b581d8d821cfc1a349df2e8387a0558e790d9275e1715da0dc"
         }
       ]
     },
@@ -749,7 +753,7 @@
       "statement": "FileServiceの配置は未知ID・欠損・改変・symlinkを拒否し、保存元と既存先のサイズ/SHA-256を照合して、既存改変先を上書きせず新規先をno-clobberで公開する。",
       "evidence": [
         {
-          "resource": "repo://crates/services/src/services/file.rs#L256-L380",
+          "resource": "repo://crates/services/src/services/file.rs#L259-L383",
           "version": "repo-lines-v1:sha256:c9a9116f58d117dd8541922d589d638858f31a2634017aa2a9ed44a70829750b:eyJzZWxlY3RlZExpbmVDb3VudCI6MTI1LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIwZDRiMWJjNmI3YThjOGVhMjc0NjVlNmJlMTczNzE3ZWIwZTZkYjU4ODQ0Zjk1ZWI3YWVhYzRiMTBmNGJmZTY3IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJlNmIwNDQ5MTQ2OTcyMmU4MzYzYTk0ZTQwNDQ1MzhlMDEzYTJhMjE3ZTM2YjFlNTY4YmE2MGFjYjdiNGM4ZjJlIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIxNjJlZTU3ZTQxYThjMjBhZTAxNjRkZjI2MTQzOWRjYzQ5OWQzNTIwODM0MTUxNTE2ZDA0N2U4ZGVhZThhNDY2IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiIxNjJlZTU3ZTQxYThjMjBhZTAxNjRkZjI2MTQzOWRjYzQ5OWQzNTIwODM0MTUxNTE2ZDA0N2U4ZGVhZThhNDY2In0"
         }
       ]
@@ -774,11 +778,11 @@
         },
         {
           "resource": "repo://packages/web-core/src/pages/kanban/ProjectKanban.tsx",
-          "version": "repo-file-v1:sha256:fab0f3e648cdcbb6428e5283b1b47c113127d9e7c9fa63c4686b3331e29b7c2d"
+          "version": "repo-file-v1:sha256:1a39cedb6aec97732ffb6d4cb27c893667ced760c28ca6bff587d27b026b46c9"
         },
         {
           "resource": "repo://packages/web-core/src/pages/kanban/ProjectUtilities.tsx",
-          "version": "repo-file-v1:sha256:5ee4e729725b88c6aa5ebcc39da9a5628f879bf4291465bc0fbfde1eb4fe596c"
+          "version": "repo-file-v1:sha256:2a1a84fcf0c68a5ae838b58e7872a450122ed92f5c1b7906cc5f1b44866941c5"
         }
       ]
     },
@@ -807,16 +811,30 @@
         {
           "resource": "repo://crates/server/src/routes/terminal.rs#L138-L233",
           "version": "repo-lines-v1:sha256:e6cdad65b13625ee17e5038df4e9b53ed6ea637a44089d5b7f4c0c3f9c4e3d45:eyJzZWxlY3RlZExpbmVDb3VudCI6OTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjlhY2RlNmM0Y2E3MTUxYjI4YThhNzVjMzEwYzdlNGRmM2JmZWI2M2E5YmE2NWU5ZDVmMmQ4OTBkMDUyZWViMWUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YjA0NDkxNDY5NzIyZTgzNjNhOTRlNDA0NDUzOGUwMTNhMmEyMTdlMzZiMWU1NjhiYTYwYWNiN2I0YzhmMmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjdmN2VmMmU2YWE1MzJhM2E5NDA3MTdiN2ZlNGEwYmU1YTgzNGNlMzhlZmE0NzdiY2RkMjVjMGQ5ODEwODE3MTQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNlNjA0NDhiNTY3MzFjOTZjMmI3ZjlhMWZkNjA1Mzk1OGIxMjU2OTVlN2U5YWFhZjMzMDc4OTljOWRmNmZlMTMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_c81525ba5125469a84dae95cfbf9cb24",
+      "statement": "Kanbanはterminal専用repo選択UIを持たず、API順の最初の有効pathを既定cwdにし、取得error/空repoでは起動不可とする。file-treeの複数repo選択を維持しmount時にshellを起動しない。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/pages/kanban/ProjectUtilities.tsx",
+          "version": "repo-file-v1:sha256:2a1a84fcf0c68a5ae838b58e7872a450122ed92f5c1b7906cc5f1b44866941c5"
         },
         {
-          "resource": "repo://docs/development/project-utilities-validation.md",
-          "version": "repo-file-v1:sha256:18ed1d5f021a662efdaf3063de49c8617b4033d337cf3a51cdb6551dcb024e6f"
+          "resource": "repo://packages/web-core/src/shared/lib/mainTerminalRepo.ts",
+          "version": "repo-file-v1:sha256:574a9f8ed13ffbdd05fab55ca76757c9f3ad1507be72864277f784096af0ee28"
+        },
+        {
+          "resource": "repo://tests/pets/integration.mjs",
+          "version": "repo-file-v1:sha256:14a2694994c171cabaa4b3ec4551264b569ed7d7479e690115f88c0dd6301474"
         }
       ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-02T23:50:54.203Z"
+    "at": "2026-11-05T07:15:08.684Z"
   }
 }

@@ -14,6 +14,11 @@ use utils::repository_memory::{
 };
 use uuid::Uuid;
 
+pub mod integration;
+
+#[cfg(test)]
+mod openwiki_compatibility_tests;
+
 const INSTRUCTION_PATHS: [&str; 2] = ["AGENTS.md", "CLAUDE.md"];
 const MAX_INSTRUCTION_BYTES: u64 = 32 * 1024;
 const MAX_PAGE_BYTES: u64 = 2 * 1024 * 1024;
@@ -139,6 +144,20 @@ pub fn restore(
         super::git_text(root, &["rev-parse", "HEAD"])? == source_commit,
         "Maintenance Git history changed; instruction restoration refused"
     );
+    restore_checkpoint(
+        root,
+        &mut checkpoint,
+        validate_generated_change,
+        |checkpoint| store.save_wiki_setup(checkpoint).map_err(Into::into),
+    )
+}
+
+fn restore_checkpoint(
+    root: &Path,
+    checkpoint: &mut WikiSetupCheckpoint,
+    validate_change: impl Fn(&WikiSetupEntry, &WikiSetupFile) -> anyhow::Result<()>,
+    mut save: impl FnMut(&WikiSetupCheckpoint) -> anyhow::Result<()>,
+) -> anyhow::Result<()> {
     if checkpoint.phase == WikiSetupPhase::Restored {
         for entry in &checkpoint.files {
             ensure!(
@@ -152,13 +171,13 @@ pub fn restore(
     if checkpoint.phase != WikiSetupPhase::Restoring {
         for entry in &mut checkpoint.files {
             let current = read_entry(&root.join(&entry.path))?;
-            validate_generated_change(entry, &current)?;
+            validate_change(entry, &current)?;
             entry.restoring_from = Some(current);
         }
         checkpoint.phase = WikiSetupPhase::Restoring;
         // Durability point: a restarted server can distinguish an already
         // restored file from a later edit, without parsing the new edit away.
-        store.save_wiki_setup(&checkpoint)?;
+        save(checkpoint)?;
     }
     for entry in &checkpoint.files {
         let current = read_entry(&root.join(&entry.path))?;
@@ -179,7 +198,7 @@ pub fn restore(
         )?;
     }
     checkpoint.phase = WikiSetupPhase::Restored;
-    store.save_wiki_setup(&checkpoint)?;
+    save(checkpoint)?;
     Ok(())
 }
 

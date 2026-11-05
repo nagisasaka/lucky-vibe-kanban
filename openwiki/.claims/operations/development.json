@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:791797f88a6f1f2358ea5e84facb0c1a44fa4ecca64b23cdfb6d40617299e841",
+  "pageVersion": "sha256:35e7b71bb7f6b1094d83e60e1553a8b17051826dbda88346ed10478c10860660",
   "claims": [
     {
       "id": "claim_1640e4eaeac94676a84eb3b9d9970d30",
@@ -389,10 +389,6 @@
       "statement": "旧 npx-cli/local-build.sh と npm 用 scripts に続いて Tauri shell と tauri:* コマンドも撤去され、ブラウザーと Docker server または source Web 開発を使う。既存 desktop data の自動削除・移行はしない。",
       "evidence": [
         {
-          "resource": "repo://docs/self-hosting/server-container.mdx#L351-L376",
-          "version": "repo-lines-v1:sha256:53421a0098843b1f725a5d5e4f59f2321253b4ca0f181821520f7fb271894a23:eyJzZWxlY3RlZExpbmVDb3VudCI6MjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFiZjZlOGM5NzE2NjVkYTY2NDBkMjgyMmUzNjlmNGQ5N2ExOTVhNmQ5MTBiMjU4YTk0MzczZDRkYWQ1YTE2MzkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRlYjBiMzliZmI3Y2ExMTEwYjQwM2NjYjY0N2Y0MmNhNDg5YTY2MTRlYjk5YWJiOTlmM2M4NmM3M2UwNmYxYTUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijg4YTVlMjJhZjhjOWUwYjRhYTg4Y2U2ZGIzZDYwODEzMDFkMDllOWE5ODMzMjM5NWE1OTEyM2E1NDUzN2E0NjEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjYwZjY0MGFlNjE1Y2E3YzAxNGI0ZDFlNWNmNWIwM2M4ZmVjMGEzY2ZhOWQxY2M2NTU0NDNlYmMwYmQwMjcyYTQifQ"
-        },
-        {
           "resource": "repo://package.json",
           "version": "repo-file-v1:sha256:cc3070549e81e8662a4aada790054129f502ebabf009f5993e9482113cf48240"
         }
@@ -593,10 +589,6 @@
         {
           "resource": "repo://deploy/developer/switch/test_real_server.py#L188-L250",
           "version": "repo-lines-v1:sha256:619f071aec4e81e97c997c58e1c2ac7083fed37d71026a43eca8fb33a33cb96f:eyJzZWxlY3RlZExpbmVDb3VudCI6NjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA4Nzg5MjllYzAxNjJjNmY1M2I0MTIyYmU0YjI4M2E5ZDVhYWRhOTY1NjQ1ZGFmMGQwOTA2MmI3MzU2MTQxYjYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkxNzZlNjg5ODZjMGQzNjA1MzQxMzU2M2QzY2RhNmNiNzZiY2NlNGZjODE3MGIwMWUxMDQ0OWM0MzE5ZWVkMDIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjgwYzFjZTBmMGIwZDEzZjk3YmNhYmFmMzhkMGYzNThlN2ZjNzg5ZDNiNjhkN2YxMTJhMmE0NWViMGU0NWMxM2EiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE3Y2Q4NTZlNDkwMjFlMjUyNzdiZDc0MzRlNzQzMjUyMWEwNWY0NGNmMzk1NWFmYThhNTU1YTI3ZDQ4MGNiMTgifQ"
-        },
-        {
-          "resource": "repo://docs/development/dev-switch-bundle-validation.md#L63-L76",
-          "version": "repo-lines-v1:sha256:ff15b6f2c351e0f80043206a659a340335cd15c9c42a93e026d66f16ca285e75:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNlZTFjNTk5Yjc4MjFmYjM2ZWEzNDZjMjM3YWM1MmMwMDNlYTkxMWJkNzcyMDI3ZGEzNzI0Y2ZjYzgxY2FhNjMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjIxNTBlNzRhOWM0ZTY1NDIwYjFiNGI4NzhiNmY4N2E2OWJiNTE3YzQ1Njk0ZmM4NGViNTg4OTk1N2RhMWRiZmEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijk3NmE0MzhjZWI5MTA0ZGYxYjEyZmE3YjQ0OWU1NGVhOTIyYTM2M2U4MGRlNDMwMmQ2NmVkZTI1YjU1ZjZlYjQifQ"
         }
       ]
     },
@@ -797,20 +789,6 @@
         {
           "resource": "repo://deploy/developer/switch/bundle.py#L11-L43",
           "version": "repo-lines-v1:sha256:04454e7d72db06203a9958baf05aed99aa6ebf041ce53afa5caf3aebccf7ffe9:eyJzZWxlY3RlZExpbmVDb3VudCI6MzMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdkN2ZhNWI1MDVlYTNlNWFiMTc0YjU4MDg2M2FkODlmYWNkYzIyMTM4NGY2NTBjZmZlNmJmMTFiOWM5MDI5ZjciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjMwMWNhMzAzNWJjYWFlOGY3MWUzZWJmZWVkNzRlODI2YTA1MDU0MTk0NzI1OTQ3MTBhNzY0NDllOTE1ZGQzYzEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNkNDEzNDBjYzIzOWExNTljZTliNjAyMmU5ZjYzMjI4MzJlMmVhZDc2Y2FlOWU0NzU0ZDIxMGViOGZiNmQ1ZTgifQ"
-        },
-        {
-          "resource": "repo://docs/development/cargo-cache.md#L17-L39",
-          "version": "repo-lines-v1:sha256:4c1eb11b90ed0890489e1ba64cba679df293be1263b3cdfa4442ffbca9763a05:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE0NjkxMWI2ZWVhZjYwODNiODdlNzBhODUzNWU0N2IzZWZjNDU3ZTZlNmQ4ZTI4MzQzYmNlODE4ZjA5MGI2NDgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZhZjY4M2E0YjYzNjZkZTVkN2JlMTk0Mjg5ZGNkZTc2NmEyOThlYjgzM2E2NmU5ZmJhOGE3MTA1MTU3MjAxZTQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImEwNTU3MmE4MTk1MzNmODNmMDZmMGM3NTliNmQ1NWZkMmFmNzAwZDQyMzQ3ZWRjMDU2NWQ2ZjI0YjVjM2M4NTEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjA5YjlhZjVmOWIwODMyYWE2NjA3ZGU1NzRiODdhNzVjMmM5ZjM5ZGExZWVjM2Q4YzA1M2U3ZGUwYTJiMjZkM2UifQ"
-        }
-      ]
-    },
-    {
-      "id": "claim_c0a87302f7ee48a8b4dfa2555ad4ce6b",
-      "statement": "cargo-cache開発文書はLOCAL-197の局所4件成功とreal-sccache smoke省略を歴史的記録として保持し、現在のfixtureと実LVK性能・配置後受入を区別する。",
-      "evidence": [
-        {
-          "resource": "repo://docs/development/cargo-cache.md",
-          "version": "repo-file-v1:sha256:073ddb7e73b4a8a4afed349a8e0dc953095e7abdc21cf298d08ff7a1462c633d"
         }
       ]
     },
@@ -837,16 +815,6 @@
         {
           "resource": "repo://tests/server/run-managed-dev-server.mjs",
           "version": "repo-file-v1:sha256:c1765240c251a060d47e123f21ee2981fda287703e8639e6923f1868780520d3"
-        }
-      ]
-    },
-    {
-      "id": "claim_ca10cb93eb5c45cea676f97dd31b04cf",
-      "statement": "7source候補の開発記録は局所検証成功と未実施のfull formal suite/live認証・人間承認後実tool実行・本番DB/Windows/配布artifactの境界を分けている。",
-      "evidence": [
-        {
-          "resource": "repo://docs/development/seven-source-candidate.md#L35-L76",
-          "version": "repo-lines-v1:sha256:20923dccdb3cb5059a7bdc776cc4ce41fe0badb2af7899a0000dd3e810301bf0:eyJzZWxlY3RlZExpbmVDb3VudCI6NDIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY1YjkxZDMxYWFhZWE0MzIyMDM5YWZhMjdjNzZiMTBiMDZmZWI2MzlmZmU2ZWJjM2I4MTBlZDk5ZjJjYWNjMmQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNjZTVlNTA2YWM4ZmMzMGJlMjUwYmU2M2E0M2FmOWY4ZDJmNDI2MzIwMTRiYjEwYzkwOTliOGVhM2VkY2IwMGQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRlODBmOTUzZGU5MTEwMTVjZGRiMjE1NTZlZTMyNzNiMjk5MjBlYzExNzM2ODliOWNlODJhYTkyMmRiM2FkYjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
         }
       ]
     },
@@ -890,12 +858,8 @@
     },
     {
       "id": "claim_3694cd797d144a5bbb54cdae565a93e9",
-      "statement": "LOCAL-224の記録ではorchestration Skillをdev plugin v1.0.33へ全文同期し、以前の限定同期を履歴として扱う。lvk-workは別責務の操作Skillで全文置換対象ではない。",
+      "statement": "lvk-workは接続済みLVKの作業操作を担い、orchestrationの対話・設計・調整Skillとは別責務である。",
       "evidence": [
-        {
-          "resource": "repo://docs/development/auto-merge-naming.md#L25-L46",
-          "version": "repo-lines-v1:sha256:4a8f3b9fc0cb4d2327201a8efa6287e59f1604fba2446054319c648c95a654e6:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgxODNiM2VkNzAxY2Q2MzUyNTYzOGY0ZjEwYjczODVjMmZiNTA1M2IwNTkzM2YwMmIyMzJmZjI5YTU5NWZkYzQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdhODE4YjUzYzNhZmI5MTM2MTU2OTU1ODJiYWY1NDQ3MGYwYTI3N2E3MzdhNmYzMGJhZjdhNjAyZDhmODU5YzQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImZiZGQ1MDNhMTFjNDBiYTZlODdlZTE0OGI0MDliZThkNjdlNTI4Y2VmNjBmYmVkNzUwYTcxMzc0YTk4ZDYwN2EiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImM5YjZkMTkwMDg5YTYwYTY0ODc1OTZlZjQ5MWRjODNmYTY1ZmQ5ZWM2YmU0ZDNiZDFiNjM0NmMyZGViYWUzNGQifQ"
-        },
         {
           "resource": "repo://plugins/lvk/skills/lvk-work/SKILL.md#L1-L43",
           "version": "repo-lines-v1:sha256:62f94584831de6fe66c54e5197858b182a51c21e90f5e11f714a249e4d1bd4d9:eyJzZWxlY3RlZExpbmVDb3VudCI6NDMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY1MmQ3MTExMDNkNTBhNDM3ODMwYzZmYmNkMDRmYjRiYWI0OWEwZjgyZjZkMjZkMWM3OTFjNmU4NDg4ZGQwOTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJjYmZkNjVjMTE3YTNjY2NhYmM3Y2YzNmFjOTdiN2M1NzBmM2JhMTc1Y2Q0ZDY2NDc2ODdkZDg1NWRkMTUzMzQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY1ZjgyYzYzNDU0NjZhOWUyZDlhNWEzM2UxNDFlYmM3MWE5MTkwOTBmNjc2NTA4Y2RkNDc2NjMyMTA0Y2RkYjgifQ"
@@ -1029,10 +993,6 @@
       "statement": "共通orchestration SkillはGit正本の薄いルートと条件付き7参照資料で構成し、操作用lvk-workと担当実行auto-merge Skillを別責務として維持する。",
       "evidence": [
         {
-          "resource": "repo://docs/development/orchestration-skill-distribution.md#L1-L9",
-          "version": "repo-lines-v1:sha256:98a7b83e244a8b1438b5d7ee1cb7354482f62604dbee8317a8cfbd7cd9ac3604:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYTJmNjZlM2EzODBjNzEwNWFiMjBhODhhNjVlZDEwOWY4MmE1OTBlODExMWI5YmFkYzYzMGYxYzk1OTAwNGVmZiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYzEzNTAxZDk1YzY5ZjQ2NDAwNjJlOWRlNzM0MzdjODM2NTg4NDZhMjdkYWI3MGRmYzkzYWFiZTdkMGVjNzVmYSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjAsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMzdmMTRlNWY4MTg4Y2FhMjNlZWQ2YjZiZmFkOGY5ZjQ2NzBiNGYxNzRjMzViM2U4NTFmYTFiNTcwMWUwZGNlZiJ9"
-        },
-        {
           "resource": "repo://skills/lvk-orchestration/SKILL.md",
           "version": "repo-file-v1:sha256:7770b39a370c8757b1bb9063d25ad50c8d2f977abd57fb61f508fa4e7c8317d3"
         }
@@ -1071,6 +1031,6 @@
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-02T23:50:54.203Z"
+    "at": "2026-11-04T20:35:55.356Z"
   }
 }

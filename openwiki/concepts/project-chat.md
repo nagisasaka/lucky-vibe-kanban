@@ -18,10 +18,10 @@ sources:
     resource: repo://crates/server/src/routes/sessions/questions.rs
   - id: openwiki-source-e0c2de9e01617a8949b78360
     resource: repo://packages/web-core/src/features/kanban/ui/KanbanContainer.tsx
-generated: { by: "codex", at: "2026-10-17T03:50:48.298Z" }
+generated: { by: "codex", at: "2026-11-04T20:14:29.223Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-02T23:50:54.203Z
+    at: 2026-11-04T20:14:29.223Z
 ---
 
 # Astra 廃止と共有機能の移行境界
@@ -42,4 +42,4 @@ Workspace UI と外部 MCP は同じ質問受付を利用する。質問回答�
 
 外部 MCP の request receipt は [外部操作の寿命と不確実な結果](../integrations/remote-access.md#参照結果と操作-receipt)を持つ。実行状態は [AgentRun](session-and-agent-run.md)、統合・検証は [正式 Integration](formal-integration.md)、知識の公開は [Repository memory](repository-memory.md)が所有する。廃止された Astra の会話 checkpoint を、それらの完了証拠として復活させない。
 
-[ChatGPT MCP の実装記録](../../docs/development/chatgpt-mcp.md)にある Astra と過去 test 件数は廃止前の記録と明記されている。外部アカウント接続の成功や、過去の設定ファイルの実在・消去は、この source 照合では確認していない。
+廃止前の履歴で言及されるAstraと当時のtest件数を現行内部assistantの存在証明にしない。移行後の契約は [専用表を削除し共有状態を残す試験](../../crates/db/tests/retire_project_chat.rs)で確認する。外部アカウント接続の成功や、過去の設定ファイルの実在・消去は、この source 照合では確認していない。

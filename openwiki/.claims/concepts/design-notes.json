@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:da1c66edc414f3dfcdf5956404d039de7ce987bd43e2928a7d6b4c0f499b65af",
+  "pageVersion": "sha256:168a747272b9ebff73d747ad28b9a9f7e42ead97dc48f114bfd0f4ce1d3b4ac8",
   "claims": [
     {
       "id": "claim_4e9b35333650431290516aff5f98065c",
@@ -155,8 +155,8 @@
       "statement": "削除後の閲覧・持出し・再関連付け・保持期限はLOCAL-99の未決事項として記録されている。",
       "evidence": [
         {
-          "resource": "repo://docs/development/design-notes-validation.md#L5-L19",
-          "version": "repo-lines-v1:sha256:1a3390853a72c8425b718555ca29710c00ac17472df38db09ca8e3664abd1df9:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI1NmM3YTJkYjFjN2NkMjg0MTRlMmNjMzNkZGE2MzZjM2MxZmQwMGIwM2NkNTNkZjdhMDRjYTE1YmRlNTk0MTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJkMDJhNTk1NWRiZDc2M2I0MzRkYjhkNmExN2NkODY5ZmRkYjI3ODVhOTE3Y2U5ZmI1MmEyNjYzNjk3ZWVjOTIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjdmZDk0N2M2YWMxNjhjYjA1NDA4Zjg0M2U2MjBlZWU1OTg1YmU4NWViN2Q0ZmJjOTE3NTBlZGE3NDI3MzhjODUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjVmYTM1Y2QyZjAyMzgyYjc2MjliYmUwNjIxOGZkZGQ2ZGZhMTJjM2QwNTUyOTg0ZTI1YWM3YTRkNGNlMmYwOGQifQ"
+          "resource": "repo://crates/db/migrations/20261023110000_retain_design_notes_on_project_delete.sql#L1-L3",
+          "version": "repo-lines-v1:sha256:332db3b3e2125893084872d02be08cea177d848cf4abcfdbd59094b58024768d:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYzgzMzE3YWMzY2YyZTc5Nzk0OGZmOWViNDE2MGJhNmYyNzA0NTY3ODc3YmQzMGRhNzQxYjBlMDRhNDE5MDIyMSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMjZiNjgxNzU0ZjUxZjQzZmE3NGQxODBiZGIxZjc0NDc1ODI2NGI4MjcwNjU1Zjg4MmViOWYxZjcxN2FmOTA4MSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjAsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiM2QxZDFkNjI1ZWRkM2JmODRhMWIyN2JmY2Q0MzFhOWM3ZWVhYzI2YTYxZDM2MThmMzViYmU0NDEyZTM0ZGE3MSJ9"
         }
       ]
     },
@@ -249,6 +249,6 @@
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-02T14:26:25.232Z"
+    "at": "2026-11-04T20:14:29.223Z"
   }
 }

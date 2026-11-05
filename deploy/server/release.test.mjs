@@ -83,11 +83,13 @@ test("shell examples and CI smoke script parse", async () => {
     "utf8",
   );
   assert.equal(spawnSync("bash", ["-n"], { input: script }).status, 0);
-  const docs = await readFile(
-    new URL("docs/self-hosting/server-container.mdx", root),
+  const guide = await readFile(
+    new URL("openwiki/operations/server-container.md", root),
     "utf8",
   );
-  for (const match of docs.matchAll(/```bash\n([\s\S]*?)```/g)) {
+  const examples = [...guide.matchAll(/```bash\n([\s\S]*?)```/g)];
+  assert(examples.length > 0, "server guide must retain shell examples");
+  for (const match of examples) {
     const checked = spawnSync("bash", ["-n"], {
       input: match[1],
       encoding: "utf8",

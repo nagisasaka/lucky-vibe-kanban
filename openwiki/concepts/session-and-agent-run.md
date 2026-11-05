@@ -82,8 +82,6 @@ sources:
     resource: repo://crates/services/src/services/approvals/executor_approvals.rs
   - id: openwiki-source-9c5d335ecd1178e88c47c0a8
     resource: repo://crates/services/src/services/queued_message.rs
-  - id: openwiki-source-a1d892c714d0a8077eb963fd
-    resource: repo://docs/development/supervised-approval-change-manifest.md
   - id: openwiki-source-e4d0ff0d72ea9774e1af777c
     resource: repo://packages/ui/src/components/ChatElapsedTime.tsx
   - id: openwiki-source-a38f11830547e0c1d7e425e5
@@ -172,15 +170,15 @@ sources:
     resource: repo://tests/supervised/README.md
   - id: openwiki-source-5184ef612e83b7ab35d62e7b
     resource: repo://tests/supervised/run_isolated.py
-generated: { by: "codex", at: "2026-11-02T23:50:54.203Z" }
+generated: { by: "codex", at: "2026-11-04T20:22:03.096Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-02T23:50:54.203Z
+    at: 2026-11-05T04:35:28.799Z
 ---
 
 # Session・AgentRun・RunAttempt
 
-**Session** は [Workspace](workspace.md) 内の会話単位である。同じ Workspace の Session はファイルを共有する一方、会話履歴は別である。**AgentRun** は一つの実行依頼の正本、**RunAttempt** はその依頼を provider で実行する一回の試行を表す。Session 自体を OS プロセスの寿命と同一視しない。[Session の意図](../../docs/workspaces/sessions.mdx)、[保存モデル](../../crates/db/src/models/agent_runtime.rs#L47-L108)
+**Session** は [Workspace](workspace.md) 内の会話単位である。同じ Workspace の Session はファイルを共有する一方、会話履歴は別である。**AgentRun** は一つの実行依頼の正本、**RunAttempt** はその依頼を provider で実行する一回の試行を表す。Session 自体を OS プロセスの寿命と同一視しない。[Session保存モデル](../../crates/db/src/models/session.rs)、[保存モデル](../../crates/db/src/models/agent_runtime.rs#L47-L108)
 
 Git commit の著者・committer は Session / provider の identity と別である。launch は Repo ごとの Git identity 案内を追加する。不足時は調査・編集を続けられるが、agent が本人に代わって設定や旧 identity の承認を行わない。[設定と host の停止契約](workspace.md#git-commit-identity)・[launch の結線](../../crates/local-deployment/src/agent_run_port.rs#L859-L865)・[案内](../../crates/git/src/identity.rs#L109-L119)
 
@@ -244,7 +242,7 @@ Session composer は executor に加え selected variant と Workspace / Session
 
 ## Follow-up と retry
 
-通常 follow-up 経路は Session に非終端の AgentRun があれば拒否し、queue の使用を案内する。別 Session の会話は分離できても、同じ Workspace のファイルは共有されるので、Session を増やすだけで作業ファイルは隔離されない。[起動 guard](../../crates/server/src/routes/sessions/mod.rs#L367-L381)、[共有の契約](../../docs/workspaces/sessions.mdx)
+通常 follow-up 経路は Session に非終端の AgentRun があれば拒否し、queue の使用を案内する。別 Session の会話は分離できても、同じ Workspace のファイルは共有されるので、Session を増やすだけで作業ファイルは隔離されない。[起動 guard](../../crates/server/src/routes/sessions/mod.rs#L367-L381)、[Workspaceの物理所有](workspace.md#操作用途と実行所有者)
 
 - **Follow-up** は同じ Session に新しい AgentRun を作る。保存された provider session があれば FollowUp intent、なければ通常は Initial になる。ただし保存 Goal の `/goal resume` は binding 不在を拒否する（[再開契約](#保存-goal-の再開)）。明示的な native resume 指定は Resume mode、通常の続きは Launch mode でも provider session 参照を渡す。
 - **Retry** は終端になった既存 AgentRun の同じ turn を維持し、新しい attempt ID と増加した試行番号で再起動する。mode は Resume または Restart。Resume は対応 capability と観測済み provider session を要求し、Restart はその参照を持ち越さない。
@@ -329,7 +327,7 @@ Codex の空 form schema を使う単一 MCP tool-call 権限要求は、既存�
 
 service が発行した approval ID を待ち、元 native request ID へ一度だけ回答する。`auto_approve` や Noop は承認を代行せず、明示 Approved でも現在の call が変わった／取消済みなら Accept しない。拒否は Decline、timeout・service不在等は Cancel。返却 content/meta は常に None で session / always grant を保存しない。[応答](../../crates/executors/src/executors/codex/client/mcp_approval.rs#L136-L205)・[待機](../../crates/executors/src/executors/codex/client/mcp_approval.rs#L238-L305)
 
-approval requested/resolved に加え pending 件数を通知し、canonical AwaitingApproval と既存 UI 操作を成立させる。これは [managed DevServer](../operations/workspace-inspection.md#preview-と開発サーバー)を含む MCP 呼出しの一回の判断で、tool の scope・対象認可や実行成功を置き換えない。[protocol fixture](../../crates/executors/src/executors/codex/client/mcp_approval/tests.rs)・[offline UI fixture](../../tests/chat/mcp-approval.mjs)。開発時には実 Codex が承認待ちへ到達して取消された記録があるが、人の承認後の実 tool 成功と live Auth0 / ChatGPT は未検証である。[検証の境界](../../docs/development/managed-dev-server-mcp.md)
+approval requested/resolved に加え pending 件数を通知し、canonical AwaitingApproval と既存 UI 操作を成立させる。これは [managed DevServer](../operations/workspace-inspection.md#preview-と開発サーバー)を含む MCP 呼出しの一回の判断で、tool の scope・対象認可や実行成功を置き換えない。[protocol fixture](../../crates/executors/src/executors/codex/client/mcp_approval/tests.rs)・[offline UI fixture](../../tests/chat/mcp-approval.mjs)。開発時には実 Codex が承認待ちへ到達して取消された記録があるが、人の承認後の実 tool 成功と live Auth0 / ChatGPT は未検証である。[protocol試験の入口](../../crates/executors/src/executors/codex/client/mcp_approval/tests.rs)
 
 ### 操作その場の詳細と判断の確定
 
@@ -341,7 +339,7 @@ UI と MCP は同じ domain の ResolveApproval を使い、Session lock 下で�
 
 Plan と一般質問はこの command/file 修正の対象外である。wrapper は Plan の tool approval を Noop に委譲し即 Approved、質問の待機は ServiceUnavailable のままにする。client は質問待機エラーを TimedOut として記録し、Plan 承認後は Default の実装 turn を始める。汎用 DirectControl の Input は引き続き Unsupported だが、Approve は host waiter に接続済みである。[wrapper](../../crates/local-deployment/src/process_host/approvals.rs#L26-L82)・[質問と Plan](../../crates/executors/src/executors/codex/client.rs#L1104-L1243)・[Input の制限](../../crates/executors/src/executors/codex/client.rs#L441-L465)
 
-したがって [chat-interface の計画レビュー手順](../../docs/workspaces/chat-interface.mdx)を現在の人による Plan 停止点の証拠にはできない。[Workflow の HumanGate](workflow-attempt.md)と[非同期の仕様質問](#非同期質問への回答と配送証拠)も、それぞれ別の停止・回答契約である。
+したがって 旧chat操作文書の計画レビュー手順を現在の人による Plan 停止点の証拠にはできない。[Workflow の HumanGate](workflow-attempt.md)と[非同期の仕様質問](#非同期質問への回答と配送証拠)も、それぞれ別の停止・回答契約である。
 
 ### 承認の検証範囲
 
@@ -349,7 +347,7 @@ Plan と一般質問はこの command/file 修正の対象外である。wrapper
 
 [隔離 browser 試験](../../tests/supervised/approval.spec.ts)は実 backend/host/API/WebSocket/UI と Python protocol peer をつなぎ、待機中 reload、並行2要求の残件、操作詳細、元 native ID、監査参照/checksum を検査する。runner はこの checkout の server と agent-process-host を明示固定し、継承した host override による別 binary の混入を避ける。[実行手順と限界](../../tests/supervised/README.md)・[隔離 runner](../../tests/supervised/run_isolated.py)
 
-[開発時の検証記録](../../docs/development/supervised-approval-change-manifest.md)には初期失敗と最終成功があるが、実モデル・native sandbox 判定、Windows、サーバー再起動越し回復は未検証である。今回の通常 Sync は凍結 source `456fb0215c06e4c1a403275c83f7f69170cb5434` の host/client/bridge、UI 投影・集約、試験定義を静的に照合した。製品テストは再実行しておらず、凍結入力の自動マージ も検証省略である。過去の成功記録を統合候補の合格や無関係な Wiki 全体の再検証へ読み替えない。
+移行したSupervised開発時検証の履歴には初期失敗と最終成功があるが、実モデル・native sandbox 判定、Windows、サーバー再起動越し回復は未検証である。今回の通常 Sync は凍結 source `456fb0215c06e4c1a403275c83f7f69170cb5434` の host/client/bridge、UI 投影・集約、試験定義を静的に照合した。製品テストは再実行しておらず、凍結入力の自動マージ も検証省略である。過去の成功記録を統合候補の合格や無関係な Wiki 全体の再検証へ読み替えない。
 
 ## 非同期質問への回答と配送証拠
 
@@ -427,7 +425,7 @@ Goal の subagent 上限は spawned agent の制約で、0 は無効化、未指
 
 ### 操作と達成を区別する
 
-Goal の pause / resume は状態更新であり、objective・budget・会計を置き換えない。pause は現在 turn の停止証拠ではなく、resume は blocked の原因や使用量・予算上限を解消する操作でもない。Cancel は AgentRun の取消、Clear Goal は Goal 管理の解除、`complete` は達成報告であり、それぞれ別の結果である。外部 MCP に `finish_goal` や自動承認は設けていない。曖昧な「終了」を達成宣言にしないという理由も[設計記録](../../docs/development/goal-mcp-controls.md#既存goalのmcp操作)に明記される。[command への対応](../../crates/server/src/remote_mcp/goals.rs#L47-L111)
+Goal の pause / resume は状態更新であり、objective・budget・会計を置き換えない。pause は現在 turn の停止証拠ではなく、resume は blocked の原因や使用量・予算上限を解消する操作でもない。Cancel は AgentRun の取消、Clear Goal は Goal 管理の解除、`complete` は達成報告であり、それぞれ別の結果である。外部 MCP に `finish_goal` や自動承認は設けていない。曖昧な「終了」を達成宣言にしないという理由も移行したGoal操作の設計記録に明記される。[command への対応](../../crates/server/src/remote_mcp/goals.rs#L47-L111)
 
 ### 保存 Goal の再開
 
@@ -441,15 +439,15 @@ Goal の pause / resume は状態更新であり、objective・budget・会計�
 
 [adapter fixture](../../crates/server/src/remote_mcp/goals/tests.rs#L25-L227)は状態行列、再送、古い対象、再開競合、配送後の不確実な結果を確認する。[実共有経路の単独 fixture](../../crates/server/src/remote_mcp/goals/tests.rs#L299-L406)は実 Deployment から binding 欠落の拒否まで進み、lock 再取得、新 Run・attempt・command・process 未生成、元 Goal の保持を検査する。instance-global 設定を使う opt-in 試験で、Codex を起動しない専用隔離環境が必要となる。実 provider 成功を証明するものではない。
 
-今回の Sync は凍結 source `044e94ff111f3594cbe864f5bb981f1b794a0602` の MCP、Session 共通受付、UI の要求生成、provider 再開と試験定義を静的に照合した。[開発時の試験記録](../../docs/development/goal-mcp-controls.md#候補1bの追検証2026-10-24-jst)と、検証省略の自動マージ は別である。製品テストの再実行、実 Codex・Auth0 接続、無関係な既存説明全体の再検証は行っていない。
+今回の Sync は凍結 source `044e94ff111f3594cbe864f5bb981f1b794a0602` の MCP、Session 共通受付、UI の要求生成、provider 再開と試験定義を静的に照合した。過去のGoal操作開発時試験と、検証省略の自動マージ は別である。製品テストの再実行、実 Codex・Auth0 接続、無関係な既存説明全体の再検証は行っていない。
 
 ## Native subagent と旧実行モデル
 
-Provider が内部で起動する子 agent の活動は AgentActivity として記録される。子の完了を親の terminal output、status、Goal に適用しない。LVK が所有する [Workflow ノード](workflow-attempt.md) の別 AgentRun と区別する。[reducer と回帰テスト](../../crates/executors/src/runtime/reducer.rs#L278-L298)。表示と互換性の文書は [delegated-agent-display](../../docs/future/agent-runtime/delegated-agent-display.md) を参照し、将来の Audit 再投影構想を現在の自動修復と読まない。
+Provider が内部で起動する子 agent の活動は AgentActivity として記録される。子の完了を親の terminal output、status、Goal に適用しない。LVK が所有する [Workflow ノード](workflow-attempt.md) の別 AgentRun と区別する。[reducer と回帰テスト](../../crates/executors/src/runtime/reducer.rs#L278-L298)。表示と互換性の文書は [Runtimeのscopeと投影](../architecture/agent-runtime.md#context-と子観測の投影) を参照し、将来の Audit 再投影構想を現在の自動修復と読まない。
 
 Codex の spawn 観測だけが直接の親子関係を確定し、send/wait 等の相互作用から親を推測しない。観測された子はその Run の折り畳み task card に現れ、利用可能な prompt / message と lifecycle を別に保持する。tool 完了や interrupt 要求は子の終端証拠ではなく、状態のない再開・入力送信は以前の完了を unknown に戻す。親終了後の未完了観測も active 表示を続けず、最後に観測した状態付き unknown になる。[scope](../../crates/executors/src/executors/codex/agent_scope.rs#L58-L178)・[表示](../../packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts#L240-L310)。永続イベントから再構成するため、観測のなかった古い Run に子を補完しない。mapper 互換性は [runtime 投影](../architecture/agent-runtime.md#context-と子観測の投影)を参照する。
 
-親が成功しようとすると client は観測済み全子の終端証拠を要求する。running / pending / unknown が残れば Failure にし、無期限待機や独自継続 scheduler は作らない。子の failed / interrupted / shutdown も終端証拠にはなるため、親が対処済みの子失敗だけで親を失敗にしない。Goal / Plan の成功出口にも同じ guard が掛かる。[成功 guard](../../crates/executors/src/executors/codex/client.rs#L1542-L1662)・[Plan 出口](../../crates/executors/src/executors/codex/client.rs#L1819-L1840)。通知されなかった子は検出できず、terminal 通知のない provider では有用な成果があっても安全側に失敗し得る。[記録された設計と限界](../../docs/development/codex-execution-observations.md#completion-and-integration)。これは [自動マージ](formal-integration.md)の成功条件や明示 commit 採用を代替しない。
+親が成功しようとすると client は観測済み全子の終端証拠を要求する。running / pending / unknown が残れば Failure にし、無期限待機や独自継続 scheduler は作らない。子の failed / interrupted / shutdown も終端証拠にはなるため、親が対処済みの子失敗だけで親を失敗にしない。Goal / Plan の成功出口にも同じ guard が掛かる。[成功 guard](../../crates/executors/src/executors/codex/client.rs#L1542-L1662)・[Plan 出口](../../crates/executors/src/executors/codex/client.rs#L1819-L1840)。通知されなかった子は検出できず、terminal 通知のない provider では有用な成果があっても安全側に失敗し得る。[観測済み子の終端guard](../../crates/executors/src/executors/codex/client.rs)。これは [自動マージ](formal-integration.md)の成功条件や明示 commit 採用を代替しない。
 
 旧 ExecutionProcess は script 実行などに残るが、coding-agent action は明示的に拒否される。現行 coding agent の活動判定・停止・履歴の正本は AgentRun を追う。[旧入口の拒否](../../crates/local-deployment/src/container.rs)、[活動判定のテスト](../../crates/server/src/routes/sessions/agent_run.rs#L873-L905)
 
