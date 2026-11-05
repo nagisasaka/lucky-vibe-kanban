@@ -13,7 +13,7 @@ use super::McpServer;
 #[serde(deny_unknown_fields)]
 struct IntegrationAction {
     request_id: Uuid,
-    /// inspect, verify (managed command), skip (reason/risk), publish (deferred until writer settlement).
+    /// inspect, verify (managed command), skip (reason/risk), prepare_wiki (journal before begin), publish (deferred until writer settlement).
     action: String,
     expected_commit: Option<String>,
     code_commit: Option<String>,
@@ -30,7 +30,7 @@ struct IntegrationAction {
 #[tool_router(router = integration_tools_router, vis = "pub")]
 impl McpServer {
     #[tool(
-        description = "Worker-only Auto-merge operation in the current Workspace. inspect reads frozen targets/evidence; verify executes a command on expected clean SHA; skip records reason and remaining risk; publish saves a request for host execution AFTER this Run and all children settle. Never use shell to update the target. Reuse request_id and identical input after uncertainty; inspect existing receipt/process, never blindly rerun. Publication acceptance is not publication success. Wiki-enabled work supplies code_commit and wiki_commit separately. Ordinary commands/skip decisions need no repeated approval."
+        description = "Worker-only Auto-merge operation in the current Workspace. inspect reads frozen targets/evidence; verify executes a command on expected clean SHA; skip records reason and remaining risk; prepare_wiki durably journals original setup files on the evidenced clean code SHA BEFORE any OpenWiki begin (retain originals on resume; a fresh request opens a new writer phase only after restoration is complete; unfinished restoration refuses begin); publish saves a request for host execution AFTER this Run and all children settle. Never use shell to update the target. Reuse request_id and identical input after uncertainty; inspect existing receipt/process, never blindly rerun. Publication acceptance is not publication success. Leave generated AGENTS.md/CLAUDE.md changes unstaged: host restores only known setup changes after writer exit. Wiki-enabled work supplies code_commit and wiki_commit separately. Ordinary commands/skip decisions need no repeated approval."
     )]
     async fn integration_action(
         &self,

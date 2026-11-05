@@ -43,17 +43,29 @@ async fn exercise(deployment: &DeploymentImpl, instance: &std::path::Path) -> an
         "drift",
         "wiki-error",
         "wiki-resume",
+        "wiki-restored-resume",
+        "wiki-success",
+        "wiki-noop",
+        "wiki-unsettled",
+        "wiki-missing-journal",
+        "wiki-tampered-journal",
+        "wiki-before-journal",
+        "wiki-receipt-crash",
         "cancel",
+        "wiki-cancel",
         "intent-crash",
         "receipt-crash",
     ]
     .into_iter()
     .enumerate()
     {
+        eprintln!("isolated integration scenario: {mode}");
         let drift = mode == "drift";
         let wiki_error = mode == "wiki-error";
         let wiki_resume = mode == "wiki-resume";
-        let cancel = mode == "cancel";
+        let restored_resume = mode == "wiki-restored-resume";
+        let cancel = mode.ends_with("cancel");
+        let wiki = mode.starts_with("wiki-");
         let pool = &deployment.db().pool;
         let root = instance.join(mode);
         std::fs::create_dir_all(&root)?;
@@ -62,6 +74,8 @@ async fn exercise(deployment: &DeploymentImpl, instance: &std::path::Path) -> an
         git(&["config", "user.name", "Fixture"])?;
         git(&["config", "user.email", "fixture@example.invalid"])?;
         std::fs::write(root.join("code"), "base")?;
+        std::fs::write(root.join("AGENTS.md"), "# User rules\n")?;
+        std::fs::write(root.join("CLAUDE.md"), "@AGENTS.md\n")?;
         git(&["add", "."])?;
         git(&["commit", "-m", "base"])?;
         let base = git(&["rev-parse", "HEAD"])?;
@@ -213,28 +227,116 @@ async fn exercise(deployment: &DeploymentImpl, instance: &std::path::Path) -> an
             git(&["merge", "--ff-only", &source])?;
         }
         let code_candidate = candidate.clone();
-        let candidate = if wiki_error || wiki_resume {
+        if wiki {
+            let mut configured = IntegrationRun::find(pool, id).await?;
+            configured.payload.wiki_enabled = true;
+            configured.save(pool).await?;
+            // Fixture provisioning only: no live repository or DB is used.
+            let persistent =
+                utils::path::shared_resources_dir(&repo.name, repo.id).join("persistent");
+            std::fs::create_dir_all(&persistent)?;
+            let store = RepositoryMemoryStore::at_persistent(&persistent)?;
+            store.save_state(&store.state()?)?;
+            if mode == "wiki-before-journal" {
+                record_wiki_audit(
+                    pool,
+                    &request,
+                    &attempt,
+                    &checkout,
+                    Uuid::new_v4(),
+                    false,
+                    true,
+                    false,
+                )
+                .await?;
+            }
+            // Neither a failed old code SHA nor a later Wiki HEAD is an origin.
+            let rejected = call(Uuid::new_v4(), "prepare_wiki", &source, None);
+            ensure!(action(deployment, rejected).await.is_err());
+            ensure!(store.integration_wiki_setup(id)?.is_none());
+            let prepare = call(Uuid::new_v4(), "prepare_wiki", &code_candidate, None);
+            if mode != "wiki-missing-journal" {
+                action(deployment, prepare.clone()).await?;
+                if mode == "wiki-success" {
+                    // Crash after durable journal, before acknowledgement: retry
+                    // resumes the same receipt without recapturing originals.
+                    let mut interrupted = IntegrationRun::find(pool, id).await?;
+                    interrupted
+                        .payload
+                        .history
+                        .iter_mut()
+                        .find(|v| v["request_id"] == prepare.request_id.to_string())
+                        .unwrap()["state"] = serde_json::json!("accepted");
+                    interrupted.save(pool).await?;
+                }
+                action(deployment, prepare).await?;
+            }
+            let snippet =
+                include_str!("../../../../services/src/services/openwiki/setup/agents-0.7.2.txt");
+            std::fs::write(
+                checkout.join("AGENTS.md"),
+                format!("# User rules\n\n{snippet}\n"),
+            )?;
+        }
+        let mut candidate = if wiki && mode != "wiki-noop" {
             std::fs::create_dir_all(checkout.join("openwiki"))?;
             std::fs::write(checkout.join("openwiki/index.md"), "fixture Wiki")?;
             support::git(&checkout, &["add", "openwiki"])?;
             support::git(&checkout, &["commit", "-m", "Wiki only"])?;
-            let mut configured = IntegrationRun::find(pool, id).await?;
-            configured.payload.wiki_enabled = true;
-            configured.save(pool).await?;
             support::git(&checkout, &["rev-parse", "HEAD"])?
         } else {
             candidate
         };
         let mut publish = call(Uuid::new_v4(), "publish", &candidate, None);
         publish.code_commit = Some(code_candidate.clone());
-        if wiki_error || wiki_resume {
+        if wiki {
             publish.wiki_commit = Some(candidate.clone());
         }
+        if mode == "wiki-missing-journal" {
+            ensure!(action(deployment, publish).await.is_err());
+            ensure!(
+                std::fs::read_to_string(checkout.join("AGENTS.md"))?.contains("OPENWIKI:START")
+            );
+            ensure!(git(&["rev-parse", "main"])? == base);
+            // This reserved, unlaunched fixture agent is settled below as well.
+            sqlx::query("UPDATE agent_runs SET status='failed' WHERE id=?")
+                .bind(agent)
+                .execute(pool)
+                .await?;
+            sqlx::query("UPDATE agent_run_attempts SET status='failed' WHERE agent_run_id=?")
+                .bind(agent)
+                .execute(pool)
+                .await?;
+            sqlx::query("UPDATE agent_process_registry SET registry_status='not_started' WHERE run_attempt_id=?").bind(attempt.run_attempt_id).execute(pool).await?;
+            continue;
+        }
         if !wiki_resume {
+            if mode == "wiki-success" {
+                // Crash between the initial receipt and complete publication
+                // request: replay must finish admission, without a second entry.
+                let mut interrupted = IntegrationRun::find(pool, id).await?;
+                interrupted.payload.history.push(serde_json::json!({"request_id":publish.request_id,"input":publish,"state":"accepted","candidate_commit":candidate}));
+                interrupted.payload.result_commit = Some(candidate.clone());
+                interrupted.save(pool).await?;
+            }
             action(deployment, publish.clone()).await?;
+            ensure!(
+                IntegrationRun::find(pool, id)
+                    .await?
+                    .payload
+                    .publication_request
+                    .is_some()
+            );
             action(deployment, publish).await?;
         }
         ensure!(git(&["rev-parse", "main"])? != candidate); // acceptance never publishes while worker lives
+        if mode == "wiki-unsettled" {
+            advance(deployment, IntegrationRun::find(pool, id).await?).await?;
+            ensure!(
+                std::fs::read_to_string(checkout.join("AGENTS.md"))?.contains("OPENWIKI:START")
+            );
+            ensure!(!IntegrationRun::find(pool, id).await?.payload.published);
+        }
         if cancel {
             crate::remote_mcp::integration_write_tests::exercise_cancel(
                 deployment,
@@ -277,11 +379,126 @@ async fn exercise(deployment: &DeploymentImpl, instance: &std::path::Path) -> an
             )
             .await?;
         }
-        sqlx::query("UPDATE agent_process_registry SET registry_status='exited',pid=999999997,process_started_at=datetime('now','subsec'),observed_exited_at=datetime('now','subsec') WHERE run_attempt_id IN (SELECT id FROM agent_run_attempts WHERE agent_run_id=?)").bind(agent).execute(pool).await?;
-        if wiki_resume {
-            let wiki_id = Uuid::new_v4();
-            record_wiki_audit(pool, &request, &attempt, &checkout, wiki_id, false).await?;
+        if mode == "wiki-unsettled" {
+            sqlx::query("UPDATE agent_process_registry SET registry_status='running',pid=999999997,process_started_at=datetime('now','subsec') WHERE run_attempt_id=?").bind(attempt.run_attempt_id).execute(pool).await?;
             advance(deployment, IntegrationRun::find(pool, id).await?).await?;
+            ensure!(
+                std::fs::read_to_string(checkout.join("AGENTS.md"))?.contains("OPENWIKI:START")
+            );
+            ensure!(!IntegrationRun::find(pool, id).await?.payload.published);
+        }
+        sqlx::query("UPDATE agent_process_registry SET registry_status='exited',pid=999999997,process_started_at=datetime('now','subsec'),observed_exited_at=datetime('now','subsec') WHERE run_attempt_id IN (SELECT id FROM agent_run_attempts WHERE agent_run_id=?)").bind(agent).execute(pool).await?;
+        if wiki_resume || restored_resume {
+            let wiki_id = Uuid::new_v4();
+            record_wiki_audit(
+                pool,
+                &request,
+                &attempt,
+                &checkout,
+                wiki_id,
+                false,
+                restored_resume,
+                false,
+            )
+            .await?;
+            if restored_resume {
+                // A crash/guard failure after restoration but before durable
+                // publication intent must not consume permission to resume Wiki.
+                sqlx::query(&format!("CREATE TRIGGER fixture_intent_failure BEFORE UPDATE ON integration_runs WHEN NEW.id=X'{}' AND json_extract(NEW.payload,'$.publication_intent')=1 BEGIN SELECT RAISE(FAIL,'injected before publication intent'); END",id.simple())).execute(pool).await?;
+                ensure!(
+                    advance(deployment, IntegrationRun::find(pool, id).await?)
+                        .await
+                        .is_err()
+                );
+                sqlx::query("DROP TRIGGER fixture_intent_failure")
+                    .execute(pool)
+                    .await?;
+                let store =
+                    RepositoryMemoryStore::existing_for_repository(&repo.name, repo.id)?.unwrap();
+                let restored = store.integration_wiki_setup(id)?.unwrap();
+                ensure!(
+                    restored.checkpoint.phase == utils::repository_memory::WikiSetupPhase::Restored
+                );
+                ensure!(
+                    !IntegrationRun::find(pool, id)
+                        .await?
+                        .payload
+                        .publication_intent
+                );
+                deployment
+                    .git()
+                    .require_clean_source(&checkout, &candidate)?;
+                // A target writer appears between attempts. Exercise the real
+                // target-workspace idle guard while the candidate is restored.
+                use db::models::{
+                    execution_process::CreateExecutionProcess,
+                    workspace::CreateWorkspace,
+                    workspace_repo::{CreateWorkspaceRepo, WorkspaceRepo},
+                };
+                let target_ws = Workspace::create_direct_folder(
+                    pool,
+                    &CreateWorkspace {
+                        branch: "main".into(),
+                        name: None,
+                    },
+                    Uuid::new_v4(),
+                    root.to_str().unwrap(),
+                )
+                .await?;
+                WorkspaceRepo::create_many(
+                    pool,
+                    target_ws.id,
+                    &[CreateWorkspaceRepo {
+                        repo_id: repo.id,
+                        target_branch: "main".into(),
+                    }],
+                )
+                .await?;
+                let target_session = Session::create(
+                    pool,
+                    &CreateSession {
+                        executor: None,
+                        name: None,
+                    },
+                    Uuid::new_v4(),
+                    target_ws.id,
+                )
+                .await?;
+                let target_writer = ExecutionProcess::create(
+                    pool,
+                    &CreateExecutionProcess {
+                        session_id: target_session.id,
+                        executor_action: ExecutorAction::new(
+                            ExecutorActionType::ScriptRequest(ScriptRequest {
+                                script: "fixture writer (not launched)".into(),
+                                language: ScriptRequestLanguage::Bash,
+                                context: ScriptContext::IntegrationValidation,
+                                working_dir: None,
+                            }),
+                            None,
+                        ),
+                        run_reason: ExecutionProcessRunReason::IntegrationValidation,
+                    },
+                    Uuid::new_v4(),
+                    &[],
+                )
+                .await?;
+                let error = advance(deployment, IntegrationRun::find(pool, id).await?)
+                    .await
+                    .unwrap_err();
+                ensure!(format!("{error:#}").contains("active or unconfirmed writer"));
+                ensure!(store.integration_wiki_setup(id)?.unwrap() == restored);
+                ensure!(git(&["rev-parse", "main"])? == base);
+                sqlx::query("UPDATE execution_processes SET status='completed',exit_code=0,completed_at=datetime('now','subsec') WHERE id=?").bind(target_writer.id).execute(pool).await?;
+                stop(
+                    deployment,
+                    IntegrationRun::find(pool, id).await?,
+                    "target writer guard after restored candidate".into(),
+                )
+                .await?;
+            } else {
+                advance(deployment, IntegrationRun::find(pool, id).await?).await?;
+            }
             let mut stopped = IntegrationRun::find(pool, id).await?;
             ensure!(stopped.status == "blocked" && !stopped.payload.published);
             resume(deployment, &mut stopped).await?;
@@ -304,6 +521,47 @@ async fn exercise(deployment: &DeploymentImpl, instance: &std::path::Path) -> an
                 .agent_run_port()
                 .reserve(followup.clone(), followup_attempt.clone())
                 .await?;
+            let mut continued_prepare = call(Uuid::new_v4(), "prepare_wiki", &code_candidate, None);
+            continued_prepare.agent_run_id = followup.agent_run_id;
+            action(deployment, continued_prepare.clone()).await?;
+            action(deployment, continued_prepare).await?;
+            if restored_resume {
+                let store =
+                    RepositoryMemoryStore::existing_for_repository(&repo.name, repo.id)?.unwrap();
+                let reopened = store.integration_wiki_setup(id)?.unwrap();
+                ensure!(
+                    reopened.checkpoint.phase == utils::repository_memory::WikiSetupPhase::Prepared
+                        && reopened.final_commit.is_none()
+                );
+                ensure!(reopened.previous_final_commits == vec![candidate.clone()]);
+                let digest =
+                    services::services::openwiki::setup::integration::original_digest(&reopened)?;
+                ensure!(
+                    IntegrationRun::find(pool, id)
+                        .await?
+                        .payload
+                        .history
+                        .iter()
+                        .filter(|entry| entry["setup_original_digest"].as_str()
+                            == Some(digest.as_str()))
+                        .count()
+                        >= 2
+                );
+                let snippet = include_str!(
+                    "../../../../services/src/services/openwiki/setup/agents-0.7.2.txt"
+                );
+                std::fs::write(
+                    checkout.join("AGENTS.md"),
+                    format!("# User rules\n\n{snippet}\n"),
+                )?;
+                std::fs::write(
+                    checkout.join("openwiki/continued.md"),
+                    "new writer phase Wiki content",
+                )?;
+                support::git(&checkout, &["add", "openwiki"])?;
+                support::git(&checkout, &["commit", "-m", "continued Wiki phase"])?;
+                candidate = support::git(&checkout, &["rev-parse", "HEAD"])?;
+            }
             let mut publish = call(Uuid::new_v4(), "publish", &candidate, None);
             publish.agent_run_id = followup.agent_run_id;
             publish.code_commit = Some(code_candidate.clone());
@@ -318,7 +576,47 @@ async fn exercise(deployment: &DeploymentImpl, instance: &std::path::Path) -> an
                 .execute(pool)
                 .await?;
             sqlx::query("UPDATE agent_process_registry SET registry_status='exited',pid=999999997,process_started_at=datetime('now','subsec'),observed_exited_at=datetime('now','subsec') WHERE run_attempt_id=?").bind(followup_attempt.run_attempt_id).execute(pool).await?;
-            record_wiki_audit(pool, &followup, &followup_attempt, &checkout, wiki_id, true).await?;
+            record_wiki_audit(
+                pool,
+                &followup,
+                &followup_attempt,
+                &checkout,
+                if restored_resume {
+                    Uuid::new_v4()
+                } else {
+                    wiki_id
+                },
+                !restored_resume,
+                true,
+                false,
+            )
+            .await?;
+        }
+        if wiki
+            && !wiki_error
+            && !wiki_resume
+            && !restored_resume
+            && !cancel
+            && mode != "wiki-before-journal"
+        {
+            record_wiki_audit(
+                pool,
+                &request,
+                &attempt,
+                &checkout,
+                Uuid::new_v4(),
+                false,
+                true,
+                mode == "wiki-noop",
+            )
+            .await?;
+            if mode == "wiki-tampered-journal" {
+                let store =
+                    RepositoryMemoryStore::existing_for_repository(&repo.name, repo.id)?.unwrap();
+                let mut journal = store.integration_wiki_setup(id)?.unwrap();
+                journal.prepared_at = chrono::Utc::now() + chrono::Duration::seconds(1);
+                store.save_integration_wiki_setup(&journal)?;
+            }
         }
         let mut next = IntegrationRun::find(pool, id).await?;
         if mode == "intent-crash" {
@@ -339,11 +637,11 @@ async fn exercise(deployment: &DeploymentImpl, instance: &std::path::Path) -> an
             ensure!(git(&["rev-parse", "main"])? == base);
             continue;
         }
-        if mode == "receipt-crash" {
+        if mode.ends_with("receipt-crash") {
             sqlx::query(&format!("CREATE TRIGGER fixture_receipt_failure BEFORE UPDATE ON integration_runs WHEN NEW.id=X'{}' AND json_extract(NEW.payload,'$.published')=1 BEGIN SELECT RAISE(FAIL,'injected receipt failure'); END",id.simple())).execute(pool).await?;
         }
         let result = advance(deployment, next).await;
-        if mode == "receipt-crash" {
+        if mode.ends_with("receipt-crash") {
             ensure!(result.is_err() && git(&["rev-parse", "main"])? == candidate);
             let uncertain = IntegrationRun::find(pool, id).await?;
             ensure!(uncertain.payload.publication_intent && !uncertain.payload.published);
@@ -351,7 +649,10 @@ async fn exercise(deployment: &DeploymentImpl, instance: &std::path::Path) -> an
                 .execute(pool)
                 .await?;
             runtime::recover_publication(deployment, uncertain).await?;
-        } else if drift || wiki_error {
+        } else if drift
+            || wiki_error
+            || matches!(mode, "wiki-tampered-journal" | "wiki-before-journal")
+        {
             ensure!(result.is_err());
             stop(
                 deployment,
@@ -364,7 +665,7 @@ async fn exercise(deployment: &DeploymentImpl, instance: &std::path::Path) -> an
         }
         let end = IntegrationRun::find(pool, id).await?;
         ensure!(end.payload.evidence[0].result == "failed");
-        if drift || wiki_error {
+        if drift || wiki_error || matches!(mode, "wiki-tampered-journal" | "wiki-before-journal") {
             ensure!(
                 end.status == "blocked"
                     && !end.payload.published
@@ -373,6 +674,17 @@ async fn exercise(deployment: &DeploymentImpl, instance: &std::path::Path) -> an
             let ws = Workspace::find_by_id(pool, workspace).await?.unwrap();
             ensure!(!ws.archived);
         } else if cancel {
+            if wiki {
+                ensure!(
+                    std::fs::read_to_string(checkout.join("AGENTS.md"))?.contains("OPENWIKI:START")
+                );
+                let store =
+                    RepositoryMemoryStore::existing_for_repository(&repo.name, repo.id)?.unwrap();
+                ensure!(
+                    store.integration_wiki_setup(id)?.unwrap().checkpoint.phase
+                        == utils::repository_memory::WikiSetupPhase::Prepared
+                );
+            }
             ensure!(
                 end.status == "cancelled"
                     && !end.payload.published
@@ -399,6 +711,10 @@ async fn exercise(deployment: &DeploymentImpl, instance: &std::path::Path) -> an
                 "Resume admission must not automatically create another Run"
             );
         } else {
+            if wiki {
+                ensure!(std::fs::read_to_string(root.join("AGENTS.md"))? == "# User rules\n");
+                deployment.git().require_clean_source(&root, &candidate)?;
+            }
             ensure!(
                 end.status == "succeeded"
                     && end.payload.published
@@ -418,6 +734,7 @@ async fn exercise(deployment: &DeploymentImpl, instance: &std::path::Path) -> an
 }
 
 /// Audits belong to the isolated instance and are removed with that instance.
+#[allow(clippy::too_many_arguments)]
 async fn record_wiki_audit(
     pool: &sqlx::SqlitePool,
     request: &executors::runtime::AgentRunRequestEnvelope,
@@ -425,6 +742,8 @@ async fn record_wiki_audit(
     root: &std::path::Path,
     wiki_id: Uuid,
     resumed: bool,
+    finished: bool,
+    noop: bool,
 ) -> anyhow::Result<()> {
     use executors::runtime::*;
     use serde_json::json;
@@ -462,10 +781,14 @@ async fn record_wiki_audit(
         (
             "openwiki_begin",
             json!({"root":root,"mode":"update"}),
-            json!({"root":root,"mode":"update","runId":wiki_id,"status":"active","resumed":resumed}),
+            if noop {
+                json!({"root":root,"mode":"update","status":"noop"})
+            } else {
+                json!({"root":root,"mode":"update","runId":wiki_id,"status":"active","resumed":resumed})
+            },
         ),
     ];
-    if resumed {
+    if finished && !noop {
         calls.push((
             "openwiki_finish",
             json!({"runId":wiki_id}),

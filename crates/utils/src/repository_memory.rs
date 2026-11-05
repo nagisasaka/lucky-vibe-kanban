@@ -14,6 +14,8 @@ use ts_rs::TS;
 use uuid::Uuid;
 
 const MAX_RECORD_BYTES: u64 = 128 * 1024;
+// Two bounded instruction files, with original/prepared/restoring JSON copies.
+const MAX_INTEGRATION_SETUP_BYTES: u64 = 1024 * 1024;
 /// Resource guard for full Bootstrap reports, independent of Workflow handoffs.
 pub const MAX_BOOTSTRAP_REPORT_BYTES: usize = 1024 * 1024;
 
@@ -414,6 +416,23 @@ pub enum WikiSetupFile {
     Symlink { target: PathBuf },
 }
 
+/// Auto-merge setup is bound to the owning integration and validated code tree.
+/// Separate from standalone journals: a missing journal is never reconstructed.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct IntegrationWikiSetup {
+    pub version: u32,
+    pub integration_id: Uuid,
+    pub repository_id: Uuid,
+    pub session_id: Uuid,
+    pub storage_identity: String,
+    pub prepared_at: DateTime<Utc>,
+    pub final_commit: Option<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub previous_final_commits: Vec<String>,
+    pub checkpoint: WikiSetupCheckpoint,
+}
+
 /// Frozen before committing source. The manifest's source_commit is the
 /// pre-publication HEAD until the verified Git result replaces it. Keeping the
 /// semantic draft and expected tree here prevents a retry from attributing a
@@ -556,6 +575,7 @@ impl RepositoryMemoryStore {
             "publications",
             "source-publications",
             "wiki-setups",
+            "integration-wiki-setups",
             "document-inventories",
             "bootstrap-reports",
             "sync-inputs",
@@ -676,6 +696,31 @@ impl RepositoryMemoryStore {
                 .join(format!("{}.json", checkpoint.workspace_id)),
             checkpoint,
             true,
+        )
+    }
+
+    pub fn integration_wiki_setup(&self, id: Uuid) -> io::Result<Option<IntegrationWikiSetup>> {
+        self.read_optional_limited(
+            &self
+                .root
+                .join("integration-wiki-setups")
+                .join(format!("{id}.json")),
+            MAX_INTEGRATION_SETUP_BYTES,
+        )?
+        .map(|bytes| serde_json::from_slice(&bytes).map_err(invalid))
+        .transpose()
+    }
+
+    /// Caller holds the workspace completion lock; atomic, synced journal replacement.
+    pub fn save_integration_wiki_setup(&self, setup: &IntegrationWikiSetup) -> io::Result<()> {
+        self.publish_limited(
+            &self
+                .root
+                .join("integration-wiki-setups")
+                .join(format!("{}.json", setup.integration_id)),
+            setup,
+            true,
+            MAX_INTEGRATION_SETUP_BYTES,
         )
     }
 

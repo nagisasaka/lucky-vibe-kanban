@@ -33,7 +33,7 @@ pub(crate) struct WorkerRequest {
     pub workspace_id: Uuid,
     pub agent_run_id: Uuid,
     pub request_id: Uuid,
-    /// inspect, verify, skip, or publish. No progress planner lives here.
+    /// inspect, verify, skip, prepare_wiki, or publish. No progress planner lives here.
     pub action: String,
     pub expected_commit: Option<String>,
     pub code_commit: Option<String>,
@@ -87,6 +87,7 @@ pub(crate) async fn action(
     );
     // Immutable request receipt in existing history, persisted before any process side effect.
     let input = serde_json::to_value(&request)?;
+    let mut resume_publication = false;
     if let Some(old) = run
         .payload
         .history
@@ -95,6 +96,25 @@ pub(crate) async fn action(
     {
         ensure!(old["input"] == input, "Idempotency conflict");
         let receipt = old.clone();
+        if request.action == "prepare_wiki" && receipt["state"] == "accepted" {
+            let digest = prepare_wiki(deployment, &run, &request).await?;
+            let entry = run
+                .payload
+                .history
+                .iter_mut()
+                .find(|v| v["request_id"] == request.request_id.to_string())
+                .unwrap();
+            entry["state"] = serde_json::json!("recorded");
+            entry["setup_original_digest"] = serde_json::json!(digest);
+            run.save(pool).await?;
+            return Ok(run
+                .payload
+                .history
+                .iter()
+                .find(|v| v["request_id"] == request.request_id.to_string())
+                .cloned()
+                .unwrap_or(receipt));
+        }
         if request.action == "verify"
             && !run
                 .payload
@@ -169,7 +189,24 @@ pub(crate) async fn action(
             };
             return Ok(serde_json::json!({"operation":receipt,"evidence":evidence,"logs":logs}));
         }
-        return Ok(receipt);
+        if request.action == "publish"
+            && receipt["state"] == "accepted"
+            && run.payload.publication_request.is_none()
+            && !run.payload.publication_intent
+        {
+            // The first receipt save may survive a crash before the complete
+            // publication request. Re-run admission, never return a phantom ACK.
+            ensure!(
+                run.payload
+                    .history
+                    .last()
+                    .is_some_and(|entry| entry["request_id"] == request.request_id.to_string()),
+                "Incomplete publication receipt was superseded; inspect retained history"
+            );
+            resume_publication = true;
+        } else {
+            return Ok(receipt);
+        }
     }
     ensure!(
         !agent.status.is_terminal()
@@ -193,7 +230,19 @@ pub(crate) async fn action(
         .expected_commit
         .as_deref()
         .context("expected_commit required")?;
-    deployment.git().require_clean_source(&root, expected)?;
+    if run.payload.wiki_enabled && request.action == "publish" {
+        let code = request
+            .code_commit
+            .as_deref()
+            .context("code_commit required")?;
+        validate_wiki_setup(&repo, &run, &root, code, expected)?;
+    } else if request.action == "prepare_wiki" {
+        // Repeated preparation may resume the same journal after Wiki commits.
+        // A new journal still requires the exact clean, evidenced code HEAD.
+        ensure!(run.payload.wiki_enabled, "OpenWiki is disabled");
+    } else {
+        deployment.git().require_clean_source(&root, expected)?;
+    }
     ensure!(
         deployment
             .git()
@@ -216,12 +265,19 @@ pub(crate) async fn action(
             &run.payload.observed_target,
         )?;
     }
-    let receipt = serde_json::json!({"request_id":request.request_id,"input":input,"state":"accepted","candidate_commit":expected});
+    let mut receipt = serde_json::json!({"request_id":request.request_id,"input":input,"state":"accepted","candidate_commit":expected});
+    if request.action == "prepare_wiki" {
+        receipt["setup_phase_base_commit"] =
+            serde_json::json!(support::git(&root, &["rev-parse", "HEAD"])?);
+    }
     ensure!(
-        matches!(request.action.as_str(), "verify" | "skip" | "publish"),
+        matches!(
+            request.action.as_str(),
+            "verify" | "skip" | "prepare_wiki" | "publish"
+        ),
         "Unknown worker action"
     );
-    if request.action != "publish" {
+    if matches!(request.action.as_str(), "verify" | "skip") {
         ensure!(
             !request.reason.trim().is_empty(),
             "Record the verification/skip reason"
@@ -249,10 +305,17 @@ pub(crate) async fn action(
             );
         }
     }
-    run.payload.history.push(receipt);
+    if !resume_publication {
+        run.payload.history.push(receipt);
+    }
     run.payload.result_commit = Some(expected.into());
     run.save(pool).await?;
     match request.action.as_str() {
+        "prepare_wiki" => {
+            let digest = prepare_wiki(deployment, &run, &request).await?;
+            run.payload.history.last_mut().unwrap()["setup_original_digest"] =
+                serde_json::json!(digest);
+        }
         "verify" => {
             let command = request.command.clone().unwrap();
             let action = ExecutorAction::new(
@@ -424,6 +487,222 @@ pub(crate) async fn action(
     Ok(
         serde_json::json!({"logs":logs,"operation":run.payload.history.last(),"evidence":run.payload.evidence.last(),"instruction":if request.action == "publish" { "公開要求を保存しました。追加の質問を残さず、このRunを終了してください。Run/child/writer収束後にLVKが公開し、結果を会話に記録します。" } else { "結果を確認し、必要なら同じ会話で修復してください。" }}),
     )
+}
+
+pub(super) fn wiki_setup_identity<'a>(
+    run: &'a IntegrationRun,
+    root: &'a std::path::Path,
+    code: &'a str,
+) -> anyhow::Result<services::services::openwiki::setup::integration::Identity<'a>> {
+    Ok(services::services::openwiki::setup::integration::Identity {
+        integration_id: run.id,
+        repository_id: run.repository_id,
+        session_id: run.session_id.context("Missing integration Session")?,
+        workspace_id: run.workspace_id.context("Missing integration Workspace")?,
+        storage_identity: &run.storage_identity,
+        root,
+        code_commit: code,
+    })
+}
+
+fn validate_wiki_setup(
+    repo: &Repo,
+    run: &IntegrationRun,
+    root: &std::path::Path,
+    code: &str,
+    final_commit: &str,
+) -> anyhow::Result<()> {
+    let store = RepositoryMemoryStore::existing_for_repository(&repo.name, repo.id)?
+        .context("Missing setup journal store")?;
+    services::services::openwiki::setup::integration::validate(
+        &store,
+        &wiki_setup_identity(run, root, code)?,
+        final_commit,
+    )?;
+    Ok(())
+}
+
+async fn prepare_wiki(
+    deployment: &DeploymentImpl,
+    run: &IntegrationRun,
+    request: &WorkerRequest,
+) -> anyhow::Result<String> {
+    ensure!(
+        run.payload.wiki_enabled
+            && run.status == "integrating"
+            && !run.cancel_requested
+            && !run.payload.publication_intent
+            && run.payload.publication_request.is_none(),
+        "Integration cannot prepare OpenWiki"
+    );
+    let agent = AgentRunRecord::find(&deployment.db().pool, request.agent_run_id)
+        .await?
+        .context("Worker missing")?;
+    ensure!(
+        !agent.status.is_terminal(),
+        "Setup preparation worker has exited"
+    );
+    let other_writers: bool = sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM agent_runs WHERE workspace_id=? AND id!=? AND status NOT IN ('succeeded','failed','cancelled','crashed','audit_failed')) OR EXISTS(SELECT 1 FROM agent_process_registry p JOIN agent_run_attempts a ON a.id=p.run_attempt_id JOIN agent_runs r ON r.id=a.agent_run_id WHERE r.workspace_id=? AND r.id!=? AND (p.registry_status IN ('spawned','running','unreachable') OR (p.registry_status='reserved' AND (p.host_endpoint IS NOT NULL OR p.host_token IS NOT NULL OR p.host_pid IS NOT NULL OR p.pid IS NOT NULL))))")
+        .bind(request.workspace_id).bind(request.agent_run_id).bind(request.workspace_id).bind(request.agent_run_id).fetch_one(&deployment.db().pool).await?;
+    ensure!(!other_writers, "Another writer owns this setup preparation");
+    let code = request
+        .expected_commit
+        .as_deref()
+        .context("Missing code SHA")?;
+    // Reuse the publication evidence verifier, including unresolved failures and
+    // process/SHA/command provenance. This does not create a publication request.
+    let mut evidence = run.clone();
+    evidence.payload.result_commit = Some(code.into());
+    evidence.payload.publication_request = Some(IntegrationPublicationRequest {
+        request_id: request.request_id,
+        agent_run_id: request.agent_run_id,
+        code_commit: code.into(),
+        wiki_commit: None,
+        candidate_commit: code.into(),
+    });
+    verify_evidence(&deployment.db().pool, &evidence).await?;
+    ensure!(
+        deployment
+            .container()
+            .scripts_settled(request.workspace_id)
+            .await?,
+        "Verification writers have not settled"
+    );
+    let (repo, workspace, _, root) = runtime::context(deployment, run).await?;
+    support::require_private_branch(&root, &workspace.branch, &run.target_ref)?;
+    let store = RepositoryMemoryStore::existing_for_repository(&repo.name, repo.id)?
+        .context("Missing setup journal store")?;
+    let phase_base = run
+        .payload
+        .history
+        .iter()
+        .find(|receipt| receipt["request_id"] == request.request_id.to_string())
+        .and_then(|receipt| receipt["setup_phase_base_commit"].as_str())
+        .context("Missing writer-phase base receipt")?;
+    let head = support::git(&root, &["rev-parse", "HEAD"])?;
+    ensure!(
+        deployment.git().is_ancestor(&root, phase_base, &head)?,
+        "Writer phase lost its admitted Wiki base"
+    );
+    if let Some(journal) = store.integration_wiki_setup(run.id)?
+        && validate_setup_origin_receipt(run, &journal).is_err()
+    {
+        // The first journal save can precede its acknowledgement. Only the
+        // same pending request on the original clean code can complete it.
+        ensure!(
+            run.payload
+                .history
+                .iter()
+                .any(
+                    |receipt| receipt["request_id"] == request.request_id.to_string()
+                        && receipt["state"] == "accepted"
+                        && receipt["input"]["action"] == "prepare_wiki"
+                )
+                && !run
+                    .payload
+                    .history
+                    .iter()
+                    .any(|receipt| receipt["input"]["action"] == "prepare_wiki"
+                        && receipt["state"] == "recorded")
+                && journal.previous_final_commits.is_empty()
+                && journal.final_commit.is_none()
+                && journal.checkpoint.phase == utils::repository_memory::WikiSetupPhase::Prepared,
+            "Original setup receipt is missing or changed"
+        );
+        deployment.git().require_clean_source(&root, code)?;
+    }
+    services::services::openwiki::setup::integration::prepare(
+        &store,
+        &wiki_setup_identity(run, &root, code)?,
+    )?;
+    services::services::openwiki::setup::integration::original_digest(
+        &store
+            .integration_wiki_setup(run.id)?
+            .context("Missing prepared setup journal")?,
+    )
+}
+
+fn validate_setup_origin_receipt(
+    run: &IntegrationRun,
+    journal: &utils::repository_memory::IntegrationWikiSetup,
+) -> anyhow::Result<()> {
+    let digest = services::services::openwiki::setup::integration::original_digest(journal)?;
+    ensure!(
+        run.payload
+            .history
+            .iter()
+            .any(|receipt| receipt["input"]["action"] == "prepare_wiki"
+                && receipt["state"] == "recorded"
+                && receipt["setup_original_digest"].as_str() == Some(digest.as_str())),
+        "Setup original journal differs from its durable host receipt"
+    );
+    Ok(())
+}
+
+/// Completion proof remains authoritative; this additional check prevents a
+/// clean/noop begin before preparation from being laundered into a later journal.
+pub(super) async fn validate_prepared_wiki_proof(
+    pool: &sqlx::SqlitePool,
+    run: &IntegrationRun,
+    store: &RepositoryMemoryStore,
+) -> anyhow::Result<()> {
+    let journal = store
+        .integration_wiki_setup(run.id)?
+        .context("Missing setup journal")?;
+    validate_setup_origin_receipt(run, &journal)?;
+    let final_commit = run
+        .payload
+        .publication_request
+        .as_ref()
+        .context("Missing publication request")?
+        .candidate_commit
+        .as_str();
+    for receipt in run.payload.history.iter().filter(|receipt| {
+        receipt["input"]["action"] == "prepare_wiki" && receipt["state"] == "recorded"
+    }) {
+        let base = receipt["setup_phase_base_commit"]
+            .as_str()
+            .context("Missing writer-phase base receipt")?;
+        ensure!(
+            git::GitService::new().is_ancestor(
+                &journal.checkpoint.repository_path,
+                base,
+                final_commit
+            )?,
+            "Final Wiki candidate lost a previously admitted writer phase"
+        );
+    }
+    let streams: Vec<db::models::agent_runtime::NativeAuditStreamRecord> =
+        sqlx::query_as("SELECT * FROM native_audit_streams WHERE session_id=?")
+            .bind(run.session_id)
+            .fetch_all(pool)
+            .await?;
+    for stream in streams {
+        let path = utils::assets::asset_dir().join(&stream.manifest_relative_path);
+        let audit = executors::runtime::NativeAuditReader::read(
+            path.parent().context("Invalid audit path")?,
+        )?;
+        for frame in audit.frames() {
+            if frame.channel != executors::runtime::NativeAuditChannel::Stdout {
+                continue;
+            }
+            let Ok(value) = serde_json::from_slice::<serde_json::Value>(&frame.payload_bytes()?)
+            else {
+                continue;
+            };
+            let item = &value["params"]["item"];
+            if item["type"] == "mcpToolCall"
+                && item["server"] == "openwiki"
+                && item["tool"] == "openwiki_begin"
+            {
+                ensure!(
+                    frame.timestamp >= journal.prepared_at,
+                    "OpenWiki begin preceded original setup journal; candidate preserved"
+                );
+            }
+        }
+    }
+    Ok(())
 }
 
 pub(super) async fn advance(
