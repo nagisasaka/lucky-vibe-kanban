@@ -9,6 +9,16 @@ const require = createRequire(
 const ts = require('typescript');
 const baseline = '43774ca91388b9b4b0f2b78f23e3099f1eea6825';
 const root = 'packages/web-core/src/shared/dialogs/settings/';
+// The approved host/pet feature adds navigation and host identity wiring.
+// Preserve that integrated contract for those two files; keep the original
+// pre-redesign comparison for all other settings and authentication behavior.
+const hostPetBaseline = 'e143c73861dbcfc56b95cc73a9e13e81c897854f';
+function baselineFor(file) {
+  return file === root + 'SettingsDialog.tsx' ||
+    file === root + 'settings/settingsRegistry.tsx'
+    ? hostPetBaseline
+    : baseline;
+}
 // Ignore presentation attributes and JSX formatting, retaining text, attributes,
 // control flow and handlers. This redesign must not remove settings or semantics.
 function semantics(source) {
@@ -51,7 +61,7 @@ for (const path of [
 ]) {
   test(`${path}: all content, controls, guards and handlers survive presentation changes`, () => {
     const file = root + path;
-    const before = execFileSync('git', ['show', `${baseline}:${file}`], {
+    const before = execFileSync('git', ['show', `${baselineFor(file)}:${file}`], {
       encoding: 'utf8',
     });
     assert.deepEqual(semantics(readFileSync(file, 'utf8')), semantics(before));
@@ -74,7 +84,7 @@ test('all section implementations and registry retain their baseline content', (
   for (const file of files)
     assert.equal(
       readFileSync(file, 'utf8'),
-      execFileSync('git', ['show', `${baseline}:${file}`], {
+      execFileSync('git', ['show', `${baselineFor(file)}:${file}`], {
         encoding: 'utf8',
       }),
       file
