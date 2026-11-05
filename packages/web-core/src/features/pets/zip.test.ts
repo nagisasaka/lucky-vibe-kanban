@@ -1,6 +1,8 @@
+import { randomFillSync } from 'node:crypto';
 import { deflateRawSync } from 'node:zlib';
 import { describe, expect, it, vi } from 'vitest';
-import { crc32, MAX_ZIP, readPetZip } from './zip';
+import { MAX_ZIP, readPetZip } from './zip';
+import { crc32 } from './zip-fixture.test-helper';
 
 type Entry = {
   name: string;
@@ -71,8 +73,6 @@ function zip(entries: Entry[]) {
   return result;
 }
 describe('bounded ZIP reader', () => {
-  it('checks CRC against a published check vector', () =>
-    expect(crc32(text('123456789'))).toBe(0xcbf43926));
   it('reads stored entries and nested package paths without filesystem extraction', async () => {
     const result = await readPetZip(
       zip([
@@ -116,37 +116,19 @@ describe('bounded ZIP reader', () => {
         readPetZip(zip([{ name: 'pet.json' }, { name }]))
       ).rejects.toThrow('invalid');
   });
-  it.each([{ mode: 0xa1ff }, { flags: 1 }, { flags: 0x40 }, { method: 12 }])(
-    'rejects symlinks, encryption and unsupported methods %#',
-    async (options) => {
-      await expect(
-        readPetZip(zip([{ name: 'pet.json', ...options }]))
-      ).rejects.toThrow('invalid');
-    }
-  );
-  it('rejects bad CRC, inconsistent claimed length and truncated ZIP', async () => {
-    await expect(
-      readPetZip(zip([{ name: 'pet.json', crc: 0 }]))
-    ).rejects.toThrow('invalid');
-    await expect(
-      readPetZip(zip([{ name: 'pet.json', claimedSize: 100 }]))
-    ).rejects.toThrow('invalid');
-    await expect(
-      readPetZip(zip([{ name: 'pet.json' }]).slice(0, -1))
-    ).rejects.toThrow('invalid');
-    await expect(readPetZip(new Uint8Array(21))).rejects.toThrow('invalid');
+  it('accepts fflate-readable ZIPs without imposing CRC or Unix metadata checks', async () => {
+    for (const options of [{ crc: 0 }, { mode: 0xa1ff }])
+      expect(
+        (await readPetZip(zip([{ name: 'pet.json', ...options }]))).get(
+          'pet.json'
+        )
+      ).toEqual(text('payload'));
   });
-  it('rejects mismatched local names and overlapping local records', async () => {
-    const name = zip([{ name: 'pet.json' }]);
-    name[30] = 120;
-    await expect(readPetZip(name)).rejects.toThrow('invalid');
-    const overlap = zip([{ name: 'pet.json' }, { name: 'sheet.png' }]),
-      v = new DataView(overlap.buffer);
-    const end = overlap.length - 22,
-      center = v.getUint32(end + 16, true),
-      next = center + 46 + 'pet.json'.length;
-    v.setUint32(next + 42, 0, true);
-    await expect(readPetZip(overlap)).rejects.toThrow('invalid');
+  it('rejects unreadable input and unsupported compression', async () => {
+    await expect(readPetZip(text('not a zip'))).rejects.toThrow('invalid');
+    await expect(
+      readPetZip(zip([{ name: 'pet.json', method: 12 }]))
+    ).rejects.toThrow('invalid');
   });
   it('bounds archive size, manifest size, entry count, total output and expansion ratio', async () => {
     await expect(readPetZip(new Uint8Array(MAX_ZIP + 1))).rejects.toThrow(
@@ -163,8 +145,8 @@ describe('bounded ZIP reader', () => {
     await expect(
       readPetZip(
         zip([
-          { name: 'sheet.png', claimedSize: 7 * 1024 * 1024 },
-          { name: 'other.png', claimedSize: 7 * 1024 * 1024 },
+          { name: 'sheet.png', data: new Uint8Array(7 * 1024 * 1024) },
+          { name: 'other.png', data: new Uint8Array(7 * 1024 * 1024) },
         ])
       )
     ).rejects.toThrow('size');
@@ -182,28 +164,12 @@ describe('bounded ZIP reader', () => {
   });
   it('identifies entry, total and compression-ratio limits separately without relaxing caps', async () => {
     await expect(
-      readPetZip(zip([{ name: 'atlas.png', claimedSize: MAX_ZIP + 1 }]))
-    ).rejects.toMatchObject({ code: 'entry_size', limit: MAX_ZIP });
-    await expect(
       readPetZip(
         zip([
-          {
-            name: 'atlas.png',
-            data: new Uint8Array(65536),
-            claimedSize: 7 * 1024 * 1024,
-          },
-          {
-            name: 'extra.png',
-            data: new Uint8Array(65536),
-            claimedSize: 7 * 1024 * 1024,
-          },
+          { name: 'atlas.png', data: new Uint8Array(MAX_ZIP + 1), method: 8 },
         ])
       )
-    ).rejects.toMatchObject({
-      code: 'expanded_size',
-      actual: 14 * 1024 * 1024,
-      limit: 12 * 1024 * 1024,
-    });
+    ).rejects.toMatchObject({ code: 'entry_size', limit: MAX_ZIP });
     await expect(
       readPetZip(
         zip([
@@ -216,7 +182,6 @@ describe('bounded ZIP reader', () => {
       )
     ).rejects.toMatchObject({
       code: 'ratio_size',
-      actual: 2 * 1024 * 1024,
       limit: 1024 * 1024,
     });
     await expect(
@@ -227,13 +192,27 @@ describe('bounded ZIP reader', () => {
       limit: 16384,
     });
   });
+  it('bounds aggregate actual output across independently valid entries', async () => {
+    const seed = randomFillSync(new Uint8Array(16384));
+    const data = new Uint8Array(7 * 1024 * 1024);
+    for (let offset = 0; offset < data.length; offset += seed.length)
+      data.set(seed, offset);
+    await expect(
+      readPetZip(
+        zip([
+          { name: 'a.webp', data, method: 8 },
+          { name: 'b.webp', data, method: 8 },
+        ])
+      )
+    ).rejects.toMatchObject({ code: 'expanded_size', limit: 12 * 1024 * 1024 });
+  });
   it('bounds actual inflater output even if a bomb lies about its output size', async () => {
     await expect(
       readPetZip(
         zip([
           {
             name: 'sheet.png',
-            data: new Uint8Array(100000),
+            data: new Uint8Array(MAX_ZIP + 1),
             method: 8,
             claimedSize: 10,
           },

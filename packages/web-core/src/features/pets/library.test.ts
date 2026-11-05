@@ -5,7 +5,8 @@ import {
   importPet,
   restorePreferences,
 } from './library';
-import { crc32, MAX_ZIP } from './zip';
+import { MAX_ZIP } from './zip';
+import { crc32 } from './zip-fixture.test-helper';
 
 const encode = (s: string) => new TextEncoder().encode(s);
 const manifest = {
