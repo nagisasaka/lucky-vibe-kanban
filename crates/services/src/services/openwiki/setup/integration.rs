@@ -39,7 +39,9 @@ pub fn prepare(store: &RepositoryMemoryStore, id: &Identity<'_>) -> anyhow::Resu
         let head = super::super::git_text(id.root, &["rev-parse", "HEAD"])?;
         let mut journal = validate(store, id, &head)?;
         ensure!(
-            journal.checkpoint.phase != WikiSetupPhase::Restoring,
+            journal.checkpoint.phase != WikiSetupPhase::Restoring
+                && (journal.final_commit.is_none()
+                    || journal.checkpoint.phase == WikiSetupPhase::Restored),
             "Host restoration is unfinished; republish the same final SHA without begin and let the host settle restoration first"
         );
         if journal.checkpoint.phase == WikiSetupPhase::Restored {
@@ -839,6 +841,54 @@ mod tests {
             .require_clean_source(&f.root, &second)
             .unwrap();
         assert!(f.root.join("openwiki/reopened.md").is_file());
+    }
+
+    #[test]
+    fn integration_prepare_refuses_crash_after_final_sha_pin_before_restoring() {
+        let f = Fixture::new();
+        f.prepare();
+        f.generate();
+        let first = f.wiki_commit();
+        let mut pinned = validate(&f.store, &f.id(), &first).unwrap();
+        let origin = original_digest(&pinned).unwrap();
+        // Exact first durable save in restore(), before restore_checkpoint saves
+        // Restoring or records replacement bytes. No instruction was replaced.
+        pinned.final_commit = Some(first.clone());
+        f.store.save_integration_wiki_setup(&pinned).unwrap();
+        assert_eq!(pinned.checkpoint.phase, WikiSetupPhase::Prepared);
+        let generated = fs::read(f.root.join("AGENTS.md")).unwrap();
+        for _ in 0..2 {
+            let error = prepare(&f.store, &f.id()).unwrap_err();
+            assert!(error.to_string().contains("republish the same final SHA"));
+            assert_eq!(
+                pinned,
+                f.store.integration_wiki_setup(f.owner).unwrap().unwrap()
+            );
+            assert_eq!(generated, fs::read(f.root.join("AGENTS.md")).unwrap());
+        }
+        // The original final SHA can finish restoration; only then does an
+        // explicit prepare admit begin and a new Wiki commit, retaining origin.
+        restore(&f.store, &f.id(), &first).unwrap();
+        git::GitService::new()
+            .require_clean_source(&f.root, &first)
+            .unwrap();
+        f.prepare();
+        let reopened = f.store.integration_wiki_setup(f.owner).unwrap().unwrap();
+        assert_eq!(origin, original_digest(&reopened).unwrap());
+        assert_eq!(reopened.previous_final_commits, vec![first]);
+        assert!(reopened.final_commit.is_none());
+        f.generate();
+        fs::write(f.root.join("openwiki/after-pin-crash.md"), "continued Wiki").unwrap();
+        let second = f.wiki_commit();
+        restore(&f.store, &f.id(), &second).unwrap();
+        git::GitService::new()
+            .require_clean_source(&f.root, &second)
+            .unwrap();
+        assert_eq!(
+            origin,
+            original_digest(&f.store.integration_wiki_setup(f.owner).unwrap().unwrap()).unwrap()
+        );
+        assert!(f.root.join("openwiki/after-pin-crash.md").is_file());
     }
 
     #[test]
