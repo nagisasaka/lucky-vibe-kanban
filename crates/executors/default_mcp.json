@@ -44,7 +44,7 @@
     "vibe_kanban": {
       "name": "Vibe Kanban",
       "description": "Create, update and delete Vibe Kanban tasks",
-      "url": "https://www.vibekanban.com/docs/integrations/vibe-kanban-mcp-server",
+      "url": "https://github.com/nagisasaka/lucky-vibe-kanban/blob/main/openwiki/integrations/agent-providers.md",
       "icon": "lvk-app-icon-white.svg"
     },
     "context7": {

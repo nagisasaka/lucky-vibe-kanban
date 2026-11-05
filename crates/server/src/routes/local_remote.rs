@@ -255,7 +255,7 @@ pub fn router(deployment: &DeploymentImpl) -> Router<DeploymentImpl> {
             delete(delete_issue_comment_reaction),
         )
         // ── AI Arena (race mode) ────────────────────────────────────────
-        // see docs/future/ai-arena/spec.md §4 + plan.md Step 1.3
+        // see openwiki/concepts/arena.md for the current ownership contract
         .route("/v1/fallback/arena_groups", get(fallback_arena_groups))
         .route(
             "/v1/issues/{issue_id}/workspaces",
@@ -2204,7 +2204,7 @@ async fn delete_issue_comment_reaction(
 //
 // One arena_group represents N parallel attempts at a single local
 // kanban issue, each running in its own workspace + worktree under a
-// different executor. See docs/future/ai-arena/spec.md for the full
+// different executor. See openwiki/concepts/arena.md for the full
 // design. Arena outcomes do not archive or delete Workspace worktrees.
 // ─────────────────────────────────────────────────────────────────────
 
@@ -3604,10 +3604,8 @@ async fn list_issue_workspaces(
     State(deployment): State<DeploymentImpl>,
     Path(issue_id): Path<Uuid>,
 ) -> Result<ResponseJson<Vec<DbWorkspace>>, ApiError> {
-    // Fixes the dead-code `?task_id=` pattern noted in
-    // docs/future/ai-arena/notes-step0.md §3.5: list every workspace
-    // that the local kanban issue links to (regardless of arena
-    // membership).
+    // List every workspace linked to the local kanban issue, regardless
+    // of arena membership.
     let pool = &deployment.db().pool;
     // Use runtime-checked query (matches other `local_workspace_links`
     // queries in this file) so this handler does not require a refreshed

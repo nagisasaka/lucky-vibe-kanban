@@ -68,7 +68,7 @@ pub enum ArenaGroupError {
 }
 
 /// A single AI Arena group: N workspace-backed attempts for one local
-/// kanban issue. See `docs/future/ai-arena/spec-v2.md`.
+/// kanban issue. See `openwiki/concepts/arena.md`.
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize, TS)]
 pub struct ArenaGroup {
     pub id: Uuid,

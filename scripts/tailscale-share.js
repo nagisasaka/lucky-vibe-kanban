@@ -10,7 +10,7 @@
  *
  * Prereqs: `pnpm run dev` is already running, Tailscale is installed and signed
  * in, and MagicDNS + HTTPS certs are enabled in the Tailscale admin console.
- * See docs/ai-mobile/tailscale-local-access.md for the full design/setup.
+ * See openwiki/integrations/remote-access.md for the full design/setup.
  */
 
 const fs = require("fs");

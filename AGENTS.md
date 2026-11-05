@@ -8,11 +8,11 @@
 - `packages/ui/`: Reusable UI components and utilities.
 - `shared/`: Generated TypeScript types (`types.ts`, `remote-types.ts`) and agent tool schemas (`schemas/`). Do not edit generated files directly.
 - `assets/`, `dev_assets_seed/`, `dev_assets/`: Packaged and local development assets.
-- `scripts/`: Development helpers; `deploy/`: server distribution and contributor tooling; `docs/`: documentation.
+- `scripts/`: Development helpers; `deploy/`: server distribution and contributor tooling; `openwiki/`: repository knowledge.
 
 ### Task-specific guides
 
-- For documentation changes, read [`docs/AGENTS.md`](docs/AGENTS.md).
+- README is human-maintained with AI assistance; operational detail belongs in OpenWiki. Check source, configuration and tests before describing behaviour; distinguish current behaviour, proposals and historical validation. Keep procedures complete with prerequisites, ordered steps, outcomes and recovery limits. Preserve stable README-linked Wiki paths.
 - For frontend changes in `packages/local-web`, `packages/web-core` or `packages/ui`, read the shared UI guidance in [`packages/local-web/AGENTS.md`](packages/local-web/AGENTS.md).
 - Read `openwiki/quickstart.md` and relevant pages when present, and verify important claims against source, tests and configuration. Canonical `openwiki/` is read-only during normal development; only authorised maintenance updates it. The generated `.llm-wiki` Pipeline and knowledge-recall/enrich integration are retired: preserve existing files and do not initialise, update or run the legacy stages.
 
@@ -71,7 +71,7 @@ Run commands from the repository root. Use the toolchain in `rust-toolchain.toml
   Expect extra checksum reads and possible server rebuilds. This is not a safety
   guarantee for external build scripts or compile-time source/asset paths; retain
   debug asset source paths and their archive deletion protection. See the
-  [freshness guardrails](docs/development/cargo-cache.md#freshness-guardrails-local-250-follow-up-2026-10-28).
+  [freshness guardrails](openwiki/operations/development.md#保存先と-runtime-の境界).
 - Cargo locks both output directories; concurrent builds sharing an intermediate
   directory may wait on its normal build lock. Waiting is expected and does not
   require a separate locking service. Do not symlink deps or share final targets.
@@ -91,8 +91,8 @@ Run commands from the repository root. Use the toolchain in `rust-toolchain.toml
   the configured build-dir and invalidates other workspaces' intermediates;
   the entry rejects clean. Shared retention needs coordinated maintenance.
 - Small regression fixtures: `node --test scripts/dev-cargo.test.mjs`.
-  The deferred full-workspace measurement plan is in
-  [the development cache notes](docs/development/cargo-cache.md).
+  The validation scope and measurement limits are in
+  [the development cache notes](openwiki/operations/development.md).
 
 ### Build resources, disk usage and temporary artifacts
 
@@ -201,7 +201,7 @@ Use the relevant guidance when working on distribution, deployment or isolated i
 
 - Rust: follow `rustfmt.toml`; snake_case modules, PascalCase types.
 - TypeScript/React: follow package ESLint/Prettier configuration and nearby naming conventions. Reuse existing components and keep functions focused.
-- Public deployments start locked. Follow [`docs/self-hosting/authentication.mdx`](docs/self-hosting/authentication.mdx) for `server setup-token` and HTTPS Basic/Auth0 setup. Legacy nginx Basic is an optional migration layer, not the backend authentication configuration.
+- Public deployments start locked. Follow [`openwiki/concepts/server-access.md`](openwiki/concepts/server-access.md) for `server setup-token` and HTTPS Basic/Auth0 setup. Legacy nginx Basic is an optional migration layer, not the backend authentication configuration.
 - Mock IdP/JWKS and browser fixtures do not prove real Auth0 or ChatGPT interoperability. Report live account validation separately.
 - Use `.env` for local overrides; never commit secrets. Development ports and assets are managed by `scripts/setup-dev-environment.js`; key variables include `FRONTEND_PORT`, `BACKEND_PORT` and `HOST`.
 
@@ -214,6 +214,6 @@ This repository has a generated `openwiki/` evidence index. It is optional just-
 - Treat source code and tests as authoritative. A brief's unknowns and review items are verification gaps, not automatic requirements.
 - Prefer the narrowest quiet validation that proves the changed behavior. Preserve complete failure output.
 
-The scheduled OpenWiki GitHub Actions workflow refreshes the repository wiki. Do not hand-edit generated OpenWiki pages unless explicitly asked; prefer updating source code/docs and letting OpenWiki regenerate.
+Only authorised maintenance updates canonical OpenWiki through its normal lifecycle against integrated source. Ordinary coding workspaces must not edit its pages, Claims, metadata or user-owned INSTRUCTIONS. Do not install a scheduled updater. README links to stable Wiki operational entry points; the Wiki may link back to README for the human-maintained overview.
 
 <!-- OPENWIKI:END -->

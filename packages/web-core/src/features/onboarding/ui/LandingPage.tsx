@@ -82,7 +82,7 @@ const SOCIAL_LINKS = [
   },
   {
     label: (t: (key: string) => string) => t('onboarding.docs'),
-    href: 'https://www.vibekanban.com/docs',
+    href: 'https://github.com/nagisasaka/lucky-vibe-kanban/blob/main/openwiki/quickstart.md',
     icon: BookOpenIcon,
   },
 ];
@@ -316,7 +316,7 @@ export function LandingPage() {
                 <code>--dangerously-skip-permissions</code> /{' '}
                 <code>--yolo</code> {t('onboarding.safetyAfter')}{' '}
                 <a
-                  href="https://www.vibekanban.com/docs/getting-started#safety-notice"
+                  href="https://github.com/nagisasaka/lucky-vibe-kanban/blob/main/openwiki/operations/server-container.md"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-brand hover:underline"

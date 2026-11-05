@@ -39,5 +39,5 @@ answers and cancellation; bridge tests cover timeout and cancellation races.
 The browser checks pending command/diff visibility, reload while waiting,
 accept/deny/stop, two simultaneous requests and full access. It also checks
 canonical native references/checksums and the original native response IDs.
-See [Change Manifest](../../docs/development/supervised-approval-change-manifest.md)
+See [Approval validation scope](../../openwiki/concepts/session-and-agent-run.md#承認の検証範囲)
 for actual runs, initial failures and verification limits.
