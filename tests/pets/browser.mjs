@@ -588,6 +588,75 @@ try {
   cases.push(
     'file input change: nearby live feedback and filename during pending upload, durable success, HTTP failure and invalid ZIP; selection retained and retry enabled'
   );
+  const uploadsBeforeLimit = uploads;
+  await fileInput.setInputFiles({
+    name: 'lvk-rabbit-depth-b-v2-delivery.zip',
+    mimeType: 'application/zip',
+    buffer: Buffer.alloc(14512968),
+  });
+  await expect(feedback).toContainText('ZIP is too large');
+  await expect(feedback).toContainText('14,512,968');
+  await expect(feedback).toContainText('8,388,608');
+  assert.equal(uploads, uploadsBeforeLimit);
+  await page.screenshot({
+    path: path.join(output, 'zip-size-limit-360.png'),
+    fullPage: true,
+  });
+  await page.evaluate(() => {
+    const p = JSON.parse(localStorage.getItem('pet-fixture'));
+    const source = p.pets.find((pet) => pet.manifest.spriteVersionNumber === 2);
+    p.pets = Array.from({ length: 12 }, () => ({
+      ...source,
+      key: crypto.randomUUID(),
+    }));
+    p.selected = p.pets[0].key;
+    localStorage.setItem('pet-fixture', JSON.stringify(p));
+  });
+  await page.reload();
+  await sidebar.locator('input[type=file]').setInputFiles({
+    name: 'attempt.zip',
+    mimeType: 'application/zip',
+    buffer: Buffer.from('not read when collection full'),
+  });
+  await expect(sidebar.getByRole('status')).toContainText(
+    'collection is full (12 of 12 pets)'
+  );
+  await expect(sidebar.getByRole('status')).not.toContainText(
+    'ZIP is too large'
+  );
+  assert.equal(uploads, uploadsBeforeLimit);
+  cases.push(
+    'reported 14,512,968-byte metadata reproduces pre-read ZIP size refusal with numeric limit; isolated 12-pet collection gives a separate error and neither uploads'
+  );
+  await page.goto(base + '?lang=ja');
+  await sidebar
+    .locator('input[type=file]')
+    .setInputFiles({
+      name: 'attempt.zip',
+      mimeType: 'application/zip',
+      buffer: Buffer.from('not read'),
+    });
+  await expect(sidebar.getByRole('status')).toContainText('保存済みPetが上限');
+  await page.evaluate(() => localStorage.removeItem('pet-fixture'));
+  await page.reload();
+  await sidebar
+    .locator('input[type=file]')
+    .setInputFiles({
+      name: 'lvk-rabbit-depth-b-v2-delivery.zip',
+      mimeType: 'application/zip',
+      buffer: Buffer.alloc(14512968),
+    });
+  await expect(sidebar.getByRole('status')).toContainText(
+    'ZIPファイルが大きすぎます'
+  );
+  await expect(sidebar.getByRole('status')).toContainText('14,512,968');
+  await expect(sidebar.getByRole('status')).toContainText('8,388,608');
+  await page.screenshot({
+    path: path.join(output, 'zip-size-limit-ja-360.png'),
+    fullPage: true,
+  });
+  assert.equal(uploads, uploadsBeforeLimit);
+
   assert.deepEqual(errors, []);
   console.log(
     JSON.stringify({ status: 'passed', cases, errors, uploads }, null, 2)

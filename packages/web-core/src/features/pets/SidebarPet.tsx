@@ -22,7 +22,7 @@ export function PetSettings() {
   return <PetContent settings />;
 }
 function PetContent({ settings = false }: { settings?: boolean }) {
-  const { t } = useTranslation('common');
+  const { t, i18n } = useTranslation('common');
   const raw = useUiPreferencesStore((s) => s.petPreferences);
   const save = useUiPreferencesStore((s) => s.setPetPreferences);
   const preferences = restorePreferences(raw);
@@ -67,14 +67,16 @@ function PetContent({ settings = false }: { settings?: boolean }) {
     setBusy(true);
     setError('');
     try {
-      if (preferences.pets.length >= 12) throw new PetError('size');
+      if (preferences.pets.length >= 12)
+        throw new PetError('collection_size', preferences.pets.length, 12);
       const pet = await importPet(file);
       const attachment = await attachmentsApi.upload(pet.image);
       // Read latest preferences after the asynchronous import; never lose a concurrent selection.
       const current = restorePreferences(
         useUiPreferencesStore.getState().petPreferences
       );
-      if (current.pets.length >= 12) throw new PetError('size');
+      if (current.pets.length >= 12)
+        throw new PetError('collection_size', current.pets.length, 12);
       const key = crypto.randomUUID();
       await commit({
         selected: key,
@@ -94,7 +96,18 @@ function PetContent({ settings = false }: { settings?: boolean }) {
       setPreview('idle');
       setImported(pet.manifest.displayName);
     } catch (e) {
-      setError(t(`pets.errors.${e instanceof PetError ? e.code : 'storage'}`));
+      setError(
+        t(`pets.errors.${e instanceof PetError ? e.code : 'storage'}`, {
+          actual:
+            e instanceof PetError
+              ? e.actual?.toLocaleString(i18n.language)
+              : undefined,
+          limit:
+            e instanceof PetError
+              ? e.limit?.toLocaleString(i18n.language)
+              : undefined,
+        })
+      );
     } finally {
       setBusy(false);
     }

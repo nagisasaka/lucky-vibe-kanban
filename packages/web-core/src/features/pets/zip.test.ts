@@ -154,7 +154,7 @@ describe('bounded ZIP reader', () => {
       readPetZip(
         zip(Array.from({ length: 33 }, (_, i) => ({ name: `file${i}` })))
       )
-    ).rejects.toThrow('invalid');
+    ).rejects.toMatchObject({ code: 'entry_count', actual: 33, limit: 32 });
     await expect(
       readPetZip(
         zip([
@@ -174,6 +174,53 @@ describe('bounded ZIP reader', () => {
         ])
       )
     ).rejects.toThrow('size');
+  });
+  it('identifies entry, total and compression-ratio limits separately without relaxing caps', async () => {
+    await expect(
+      readPetZip(zip([{ name: 'atlas.png', claimedSize: MAX_ZIP + 1 }]))
+    ).rejects.toMatchObject({ code: 'entry_size', limit: MAX_ZIP });
+    await expect(
+      readPetZip(
+        zip([
+          {
+            name: 'atlas.png',
+            data: new Uint8Array(65536),
+            claimedSize: 7 * 1024 * 1024,
+          },
+          {
+            name: 'extra.png',
+            data: new Uint8Array(65536),
+            claimedSize: 7 * 1024 * 1024,
+          },
+        ])
+      )
+    ).rejects.toMatchObject({
+      code: 'expanded_size',
+      actual: 14 * 1024 * 1024,
+      limit: 12 * 1024 * 1024,
+    });
+    await expect(
+      readPetZip(
+        zip([
+          {
+            name: 'atlas.png',
+            data: new Uint8Array(2 * 1024 * 1024),
+            method: 8,
+          },
+        ])
+      )
+    ).rejects.toMatchObject({
+      code: 'ratio_size',
+      actual: 2 * 1024 * 1024,
+      limit: 1024 * 1024,
+    });
+    await expect(
+      readPetZip(zip([{ name: 'pet.json', data: new Uint8Array(16385) }]))
+    ).rejects.toMatchObject({
+      code: 'manifest_size',
+      actual: 16385,
+      limit: 16384,
+    });
   });
   it('bounds actual inflater output even if a bomb lies about its output size', async () => {
     await expect(

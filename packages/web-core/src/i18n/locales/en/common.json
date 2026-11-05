@@ -2327,7 +2327,14 @@
     "imported": "Imported {{name}}.",
     "errors": {
       "invalid": "Invalid or damaged pet package.",
-      "size": "Package or collection exceeds the size limit.",
+      "zip_size": "ZIP is too large: {{actual}} bytes; ZIP limit is {{limit}} bytes.",
+      "expanded_size": "ZIP expanded size exceeds its safe limit: {{actual}} bytes; limit {{limit}} bytes.",
+      "entry_size": "A file inside the ZIP is too large: {{actual}} bytes; per-file limit {{limit}} bytes.",
+      "manifest_size": "pet.json is too large: {{actual}} bytes; limit {{limit}} bytes.",
+      "license_size": "License text is too large: {{actual}} bytes; limit {{limit}} bytes.",
+      "ratio_size": "A ZIP entry expands beyond its safe compression-ratio limit: {{actual}} bytes; limit {{limit}} bytes.",
+      "collection_size": "The saved pet collection is full ({{actual}} of {{limit}} pets). The ZIP has not been read.",
+      "entry_count": "ZIP contains too many entries: {{actual}}; limit {{limit}}.",
       "unsupported": "Unsupported pet format. Use a v1 1536×1872 or v2 1536×2288 atlas.",
       "storage": "Could not load or save the pet. Check the connection and try again."
     },

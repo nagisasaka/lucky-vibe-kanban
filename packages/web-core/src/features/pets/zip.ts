@@ -32,7 +32,12 @@ async function inflate(
       const result = await reader.read();
       if (result.done) break;
       length += result.value.length;
-      if (length > expected || length > MAX_TOTAL) throw new PetError('size');
+      if (length > expected || length > MAX_TOTAL)
+        throw new PetError(
+          'expanded_size',
+          length,
+          Math.min(expected, MAX_TOTAL)
+        );
       chunks.push(result.value);
     }
   } finally {
@@ -49,7 +54,8 @@ async function inflate(
 export async function readPetZip(
   bytes: Uint8Array
 ): Promise<Map<string, Uint8Array>> {
-  if (bytes.length > MAX_ZIP) throw new PetError('size');
+  if (bytes.length > MAX_ZIP)
+    throw new PetError('zip_size', bytes.length, MAX_ZIP);
   if (bytes.length < 22) throw new PetError('invalid');
   try {
     const v = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
@@ -72,11 +78,11 @@ export async function readPetZip(
       v.getUint16(end + 4, true) ||
       v.getUint16(end + 6, true) ||
       v.getUint16(end + 8, true) !== count ||
-      count > 32 ||
       count === 0 ||
       central + centralSize !== end
     )
       throw new PetError('invalid');
+    if (count > 32) throw new PetError('entry_count', count, 32);
     const entries: {
       name: string;
       offset: number;
@@ -115,13 +121,13 @@ export async function readPetZip(
         throw new PetError('invalid');
       names.add(name.toLowerCase());
       total += size;
-      if (
-        total > MAX_TOTAL ||
-        size > MAX_ZIP ||
-        (name.endsWith('pet.json') && size > 16384) ||
-        size > Math.max(1024 * 1024, packed * 200)
-      )
-        throw new PetError('size');
+      if (total > MAX_TOTAL)
+        throw new PetError('expanded_size', total, MAX_TOTAL);
+      if (size > MAX_ZIP) throw new PetError('entry_size', size, MAX_ZIP);
+      if (name.endsWith('pet.json') && size > 16384)
+        throw new PetError('manifest_size', size, 16384);
+      const ratioLimit = Math.max(1024 * 1024, packed * 200);
+      if (size > ratioLimit) throw new PetError('ratio_size', size, ratioLimit);
       if (!isDir)
         entries.push({
           name,

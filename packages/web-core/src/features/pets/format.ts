@@ -24,7 +24,22 @@ export type PetManifest = {
   license?: string;
 };
 export class PetError extends Error {
-  constructor(public code: 'invalid' | 'size' | 'unsupported' | 'storage') {
+  constructor(
+    public code:
+      | 'invalid'
+      | 'unsupported'
+      | 'storage'
+      | 'zip_size'
+      | 'expanded_size'
+      | 'entry_size'
+      | 'manifest_size'
+      | 'license_size'
+      | 'ratio_size'
+      | 'collection_size'
+      | 'entry_count',
+    public actual?: number,
+    public limit?: number
+  ) {
     super(code);
   }
 }
@@ -37,7 +52,8 @@ export function localPath(path: string): boolean {
   );
 }
 export function parseManifest(bytes: Uint8Array): PetManifest {
-  if (bytes.length > 16384) throw new PetError('size');
+  if (bytes.length > 16384)
+    throw new PetError('manifest_size', bytes.length, 16384);
   let value: unknown;
   try {
     value = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes));

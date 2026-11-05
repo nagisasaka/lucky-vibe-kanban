@@ -2318,7 +2318,14 @@
     "imported": "{{name}} を取り込みました。",
     "errors": {
       "invalid": "Petパッケージが不正または破損しています。",
-      "size": "パッケージまたは保存件数の上限を超えています。",
+      "zip_size": "ZIPファイルが大きすぎます（{{actual}} bytes）。ZIPの上限は {{limit}} bytes です。",
+      "expanded_size": "ZIPの展開サイズが安全上限を超えています（{{actual}} bytes／上限 {{limit}} bytes）。",
+      "entry_size": "ZIP内のファイルが大きすぎます（{{actual}} bytes／1ファイルの上限 {{limit}} bytes）。",
+      "manifest_size": "pet.json が大きすぎます（{{actual}} bytes／上限 {{limit}} bytes）。",
+      "license_size": "ライセンス文が大きすぎます（{{actual}} bytes／上限 {{limit}} bytes）。",
+      "ratio_size": "ZIP内のファイルが展開率の安全上限を超えています（{{actual}} bytes／上限 {{limit}} bytes）。",
+      "collection_size": "保存済みPetが上限に達しています（{{actual}}／{{limit}}体）。ZIPはまだ読み込んでいません。",
+      "entry_count": "ZIP内のエントリー数が多すぎます（{{actual}}／上限 {{limit}}件）。",
       "unsupported": "未対応のPet形式です。v1（1536×1872）またはv2（1536×2288）を使用してください。",
       "storage": "Petの読込・保存に失敗しました。接続を確認して再試行してください。"
     },
