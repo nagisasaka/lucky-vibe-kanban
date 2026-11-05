@@ -30,6 +30,8 @@ sources:
     resource: repo://crates/services/src/services/openwiki/bootstrap.rs
   - id: openwiki-source-bef089692ac7606992050919
     resource: repo://crates/services/src/services/openwiki/bootstrap/reports.rs
+  - id: openwiki-source-c4df16e7e579927d462857d7
+    resource: repo://crates/services/src/services/openwiki/setup/integration.rs
   - id: openwiki-source-110c99f4b05152335c067c71
     resource: repo://crates/services/src/services/openwiki/sync_input.rs
   - id: openwiki-source-6067be8d6f85caa8ac03638f
@@ -40,10 +42,10 @@ sources:
     resource: repo://crates/utils/src/repository_memory.rs
   - id: openwiki-source-d9f9dde71208b862845ec1a7
     resource: repo://crates/utils/src/repository_memory/verification.rs
-generated: { by: "codex", at: "2026-11-04T20:35:55.356Z" }
+generated: { by: "codex", at: "2026-11-05T04:35:28.799Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-04T20:35:55.356Z
+    at: 2026-11-05T04:35:28.799Z
 ---
 
 # Repository Memory の三層と統合契約
@@ -150,3 +152,7 @@ Wiki の成功 receipt・canonical branch と、生成された保守 Workspace 
 共通 host prompt は、source・tests・configuration による現行動作の検証と、repository 固有の文書保守方針への従属を別々に要求する。保守される正規文書は説明とリンクを残せるが、移行対象の文書は必要な知識を Wiki 本文へ保存する。共通実装自体が全 repository に `docs/` の削除を命じるわけではない。[共通 host の文書契約](../../crates/services/src/services/openwiki.rs#L200-L216)
 
 Change Manifest の goal・判断・却下案は意図を調べる入口であり、統合済みでない Workspace Memory の案を製品契約へ昇格しない。理由は source と利用可能な Manifest で裏付け、Design Note は補助情報として扱う。現在の動作、記録された意図、過去の判断を区別し、確認できない理由は不明のまま残す。Bootstrap の全役割と通常 Sync への適用、運用手順の保存責任は [文書方針の継承](../operations/openwiki-maintenance.md#文書方針の継承と移行の判定)に置く。[Sync の調査契約](../../crates/services/src/services/openwiki.rs#L192-L216)・[Bootstrap の証拠契約](../../crates/services/src/services/openwiki/bootstrap.rs#L398-L406)
+
+## 自動マージの setup 原本は公開記憶と別の証拠
+
+repository shared storage の `integration-wiki-setups/<integration UUID>.json` は、begin前の原本とowner/code identity、復元phase、過去と最終Wiki SHAを保持する。公開ManifestやWiki本文の代わりではなく、host receiptの原本digestとcode treeに照合する復元用journalである。通常Workspace MemoryやBootstrap索引をこの原本として流用しない。準備・writer収束・限定復元の順序と再開時の拒否境界は [自動マージ](formal-integration.md#begin-前の原本準備と-host-の限定復元)を参照する。[保存先](../../crates/utils/src/repository_memory.rs#L702-L725)・[identityと原本検証](../../crates/services/src/services/openwiki/setup/integration.rs#L259-L334)

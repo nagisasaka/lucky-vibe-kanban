@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:c6513c8026fbf21250d3227fc43c6c078072520560544e9ac7667a82854e97fe",
+  "pageVersion": "sha256:7a14cb57947bf11b3f72aa16b6b2ee03a8b2fdc58cac2006877a9a250023718f",
   "claims": [
     {
       "id": "claim_71e4432fe19d42fca4c3a1ae5f546775",
@@ -8,7 +8,7 @@
       "evidence": [
         {
           "resource": "repo://packages/local-web/vite.config.ts#L135-L150",
-          "version": "repo-lines-v1:sha256:9a834a1aa3e5b5c8a9f74556b844452aa68ca015d52e0ae0f0cadf0f1f4ba57e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUxOGMzOTIzNzdiMGViNDk5OTUwOWJkMmU3Mzg1MDY4MDU4MWViMDBiOWIxMDFjYWRhMTJhOTI5YzdlZmEwYTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM2M2Q1MzVjZTM4MDYzZDZiNGM1MWQ4YzM4NmE3ZjliM2U1ODBhMTRhMTBjMDdiMTk4ZGZhZjE5YzkzYTNiZmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI5NWVhNGI3NTA3NmUwOTZjOTk2ZDRiY2JmYjFhNGY2YzQ2NDIwNmZmMjU2NDExNWE2ZTkxYTVkNzVmOWQyNjEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjYzMzY3ZTQ0Njg2NWQ5YTE0NmU3YTYzYWRkMjZmOTMzY2E4ZmI2MjFjYTM2MmU2OGMzMzY1ZTgzODM0Yzc0YzIifQ"
+          "version": "repo-lines-v1:sha256:6f16025851176da83cc3fabc1c857dd0d5d24d08b161e8c079afc40503e0920c:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUxOGMzOTIzNzdiMGViNDk5OTUwOWJkMmU3Mzg1MDY4MDU4MWViMDBiOWIxMDFjYWRhMTJhOTI5YzdlZmEwYTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM2M2Q1MzVjZTM4MDYzZDZiNGM1MWQ4YzM4NmE3ZjliM2U1ODBhMTRhMTBjMDdiMTk4ZGZhZjE5YzkzYTNiZmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI5NWVhNGI3NTA3NmUwOTZjOTk2ZDRiY2JmYjFhNGY2YzQ2NDIwNmZmMjU2NDExNWE2ZTkxYTVkNzVmOWQyNjEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjYzMzY3ZTQ0Njg2NWQ5YTE0NmU3YTYzYWRkMjZmOTMzY2E4ZmI2MjFjYTM2MmU2OGMzMzY1ZTgzODM0Yzc0YzIifQ"
         }
       ]
     },
@@ -170,7 +170,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/integrations/runtime.rs",
-          "version": "repo-file-v1:sha256:8f1749902f3f28211d6b4f3a8c656a10a125e86d7927907ff7ff886333aed86a"
+          "version": "repo-file-v1:sha256:f4cd12ba17fe9c6f92997db0172a7278a02b494d372170f4abf3d8cece1e0490"
         }
       ]
     },
@@ -919,6 +919,6 @@
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-04T20:35:55.356Z"
+    "at": "2026-11-05T04:35:28.799Z"
   }
 }

@@ -1,14 +1,14 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:1af02b07f2e9dc87d3a1b8436624b4d500e93b0bf44195ed455722a2eaab85fb",
+  "pageVersion": "sha256:0e67e22f4c0b540353991d7aec960e4c90c281e3a4504f7671cf934db7e2401a",
   "claims": [
     {
       "id": "claim_edf1b78d3c7a4d978a6d8debcee4edd2",
-      "statement": "READMEはIssue/Workspace/agent実行・review・Git統合を製品機能、計画と出力レビューの効率化を目的、graph Workflowを主要機能と記録する。",
+      "statement": "READMEはカンバンでの計画・coding agent実行・変更レビューを目的とし、Git worktree・複数Session・visual agent workflow・local integration・OpenWikiを紹介する。",
       "evidence": [
         {
           "resource": "repo://README.md",
-          "version": "repo-file-v1:sha256:092835dc3849c3273921ba936f31941819d866cad70421e3eb4ea94682c3c235"
+          "version": "repo-file-v1:sha256:656689d7e3b831feeddd5409ce339761e75c69a766bb7e63eaaf74dbaa4bd133"
         }
       ]
     },
@@ -18,7 +18,7 @@
       "evidence": [
         {
           "resource": "repo://README.md",
-          "version": "repo-file-v1:sha256:092835dc3849c3273921ba936f31941819d866cad70421e3eb4ea94682c3c235"
+          "version": "repo-file-v1:sha256:656689d7e3b831feeddd5409ce339761e75c69a766bb7e63eaaf74dbaa4bd133"
         }
       ]
     },
@@ -72,11 +72,11 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/integrations/conversation.rs",
-          "version": "repo-file-v1:sha256:7800dd437e2cba8bb5db17fe74877717b08e0b46d0014c5dcec697450282ccd1"
+          "version": "repo-file-v1:sha256:3f4281d139b82a9d7ec33408f5ee1addd7d7733cb873ec3842bb9f6f36442dee"
         },
         {
           "resource": "repo://crates/server/src/routes/integrations/runtime.rs",
-          "version": "repo-file-v1:sha256:8f1749902f3f28211d6b4f3a8c656a10a125e86d7927907ff7ff886333aed86a"
+          "version": "repo-file-v1:sha256:f4cd12ba17fe9c6f92997db0172a7278a02b494d372170f4abf3d8cece1e0490"
         }
       ]
     },
@@ -193,8 +193,8 @@
       "statement": "LVKはDocker imageのみを配布し、ブラウザー経由のDocker/source Webを使う。直接buildしたMCP binaryは既存backendへ接続する。",
       "evidence": [
         {
-          "resource": "repo://README.md#L24-L30",
-          "version": "repo-lines-v1:sha256:5e4cd0b892f5825ddb27b1c068aeaca5abcfbc1a7ec42068f72b46db429d52e3:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMmExOTUyNTIyOTA5ZTBhOTUyMmJkYmI1OWRmOGM3NjM3ZjFhOGVmZDliMTUzZTUxNjQ3ODBmYzYwZmYxYTFmZSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZWI4ZTJkZDBkMDRjMzY2ZmVmZWJiODEzMjZjMTk5MWVmMzMyMGRhNTg4MGZmZWNlODE5M2JiMDk3MTU3M2ZiNCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMGMxZGFhM2M1ODg1OTlkOTBiN2ViMDMyNWIwMDc0ODJhNGFmNzk4ZDEyYWE1ODhiOGY1OThlZTIzZGI1NTg4ZSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOWE3MTVhZTUyMjNiNGFlNzczYjI0NzRhY2Y1ZTRlMTA5ZTU0MDZhYzA2YWVhZGU3MTc1Y2JiYTQ5OTNhMmZkNiJ9"
+          "resource": "repo://README.md#L14-L23",
+          "version": "repo-lines-v1:sha256:88dea9e56868b943324627d06e2c623d80c8ccea9fa7698c44b474102012f1a7:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZkYWU0M2YwZjg5MjAxNTE5NmFhNGVhZmI1MGFiZjUxN2M4MWRmZTRmNjhhMTJiMGY1NjUxNzA0YzVhOGRjYzEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImYwYzczNmYyMzEyOWZmMjExNjE1YWFkMzM0YTQ3MTk1MTU1ZjY2YjRhOWU4ODE3ZTJmY2JiMWRjNmNhMDM4MzIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImIwYTJhNmE4NzYyNGI4YmM1YzIyNGE5OGVkYWQ0ZjdlZjczYjM0YjIwZTFlZjhkMzdlMTgxNjgxZDM2NDkyNmEifQ"
         },
         {
           "resource": "repo://crates/mcp/src/bin/vibe_kanban_mcp.rs",
@@ -275,6 +275,6 @@
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-04T20:22:03.096Z"
+    "at": "2026-11-05T04:35:28.799Z"
   }
 }

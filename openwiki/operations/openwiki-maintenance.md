@@ -6,6 +6,8 @@ tags: [openwiki, bootstrap, maintenance, recovery, validation]
 sources:
   - id: openwiki-source-8c6a3e8eeb36684980688a9a
     resource: repo://assets/openwiki-version
+  - id: openwiki-source-124913f65e422092e3ffbd4a
+    resource: repo://assets/skills/auto-merge/SKILL.md
   - id: openwiki-source-3c57aab40b425fc8b5d0d5c5
     resource: repo://crates/db/migrations/20261027090000_generated_issue_status.sql
   - id: openwiki-source-4f59e07f8850eb04105d5cb8
@@ -22,6 +24,8 @@ sources:
     resource: repo://crates/server/src/remote_mcp/operations.rs
   - id: openwiki-source-0545bff1ae2507a92137efaf
     resource: repo://crates/server/src/remote_mcp/repository_wiki.rs
+  - id: openwiki-source-5720d865d1c837f0e6b7dab7
+    resource: repo://crates/server/src/routes/integrations/conversation.rs
   - id: openwiki-source-ecfa47de2e3842c785820c9b
     resource: repo://crates/server/src/routes/integrations/mod.rs
   - id: openwiki-source-b393e75029374eaf9cba5f7d
@@ -60,6 +64,8 @@ sources:
     resource: repo://crates/services/src/services/openwiki/inventory.rs
   - id: openwiki-source-7697e6a6b8314cf855c61c00
     resource: repo://crates/services/src/services/openwiki/setup.rs
+  - id: openwiki-source-c4df16e7e579927d462857d7
+    resource: repo://crates/services/src/services/openwiki/setup/integration.rs
   - id: openwiki-source-8769f7f91e6dd954b9b6bf58
     resource: repo://crates/services/src/services/openwiki/sync_scope.rs
   - id: openwiki-source-c128bdfa7a156621b004df06
@@ -80,10 +86,10 @@ sources:
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/ReposSettingsSection.tsx
   - id: openwiki-source-7fd9452d5e666180c50f8cb7
     resource: repo://tests/openwiki/recovery.sh
-generated: { by: "codex", at: "2026-11-04T20:22:03.096Z" }
+generated: { by: "codex", at: "2026-11-05T04:35:28.799Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-04T20:22:03.096Z
+    at: 2026-11-05T04:35:28.799Z
 ---
 
 # OpenWiki の初期生成・同期・回復
@@ -122,7 +128,19 @@ Codex の TOML editor が project trust table を追加すると、OpenWiki の�
 
 通常SyncやBootstrapとは別に、自動マージではコード検証後の同じ候補branchでcanonical `openwiki/` を更新し、Wikiだけを別commitにする。コード検証SHAとWiki/公開SHAを分けて記録し、finish完了前やWiki失敗時は公開しない。専用Wiki Issueや別Workspaceへ分岐しない。[公開要求とSHAの契約](../concepts/formal-integration.md)・[担当promptと公開guard](../../crates/server/src/routes/integrations/runtime.rs)。
 
-生成 setup の復元は host が終了後に行う。writer が途中で手動復元せず、元の file type・permissions・link target を保持する journal と公開 guard を使う。[setup の保存・復元](../../crates/services/src/services/openwiki/setup.rs)
+自動マージの手順は次の順序を守る。
+
+1. cleanなcode候補SHAで必要な検証・理由付き省略を記録する。
+2. 最初のbeginより前に `integration_action prepare_wiki` へそのSHAを渡し、原本journalとdigestの保存成功を確認する。begin-noopや再開でも後付けを許さない。
+3. 同じ候補branchで正規begin → plan/page → finishを完了し、Wikiのみ別commitにする。source・README・ユーザーINSTRUCTIONSを変更せず、生成AGENTS/CLAUDE差分は未stageで残す。
+4. code_commit、wiki_commit、expected_commitを分離して正式publish要求を保存し、全子processを収束させ担当Runを終了する。受付はGit公開の成功ではない。
+5. hostが担当/target writerの終了とNative Audit完了proofを確認し、正確な既知setup差分だけをjournalから限定復元してclean検査・既存公開guardへ進む。
+
+[prepareと証拠](../../crates/server/src/routes/integrations/conversation.rs#L526-L713)・[公開の順序](../../crates/server/src/routes/integrations/runtime.rs#L319-L410)・[setup限定検査](../../crates/services/src/services/openwiki/setup/integration.rs#L105-L258)
+
+原本はintegration/repository/storage/Session/Workspace/root/code SHAに束縛される。journalの欠損・改変、未知のdirtyや管理節内外の後編集、index/HEAD不一致、symlink/hardlinkを推測で復元しない。standalone/bootstrapの既存setup journalと自動マージ専用journalを混同しない。自動マージは各Wiki commitのsourceとユーザーINSTRUCTIONS不変も検査する。[identityと原本](../../crates/services/src/services/openwiki/setup/integration.rs#L259-L334)・[事前検査](../../crates/services/src/services/openwiki/setup.rs)
+
+復元済み候補で新writer phaseを始める場合だけ、新request IDのprepareを成功させる。同じ原本と元code SHA、過去Wiki SHA/phase baseを保持し、再snapshotしない。最終SHA固定後のPrepared crash窓やRestoringでprepareが拒否されたらbeginせず、同じ最終SHAを再publishしてhostの復元収束へ渡す。欠損journalを手動作成したりAGENTSをstage/restoreして拒否を回避しない。[phase再開](../../crates/services/src/services/openwiki/setup/integration.rs#L35-L65)・[詳しい自動マージ契約](../concepts/formal-integration.md#begin-前の原本準備と-host-の限定復元)
 
 ## 開始元 Project と保守 Issue
 
@@ -257,7 +275,7 @@ schema、path、operation の検査が証明するのは構造と監査上の閉
 
 ## 公開・復元・失敗回復
 
-agent phase は source HEAD を動かさない。LVK は phase 境界で setup journal から元の instructions を復元する。復元前後に予期しない編集を検出すると、その内容を保全して失敗する。journal がない場合に元内容を推測して再生成しない。[復元](../../crates/services/src/services/openwiki/setup.rs)
+単独Sync/Bootstrapのagent phase は source HEAD を動かさない。自動マージのcode/Wiki commitと復元phaseは上記の専用契約に従う。LVK は phase 境界で setup journal から元の instructions を復元する。復元前後に予期しない編集を検出すると、その内容を保全して失敗する。journal がない場合に元内容を推測して再生成しない。[復元](../../crates/services/src/services/openwiki/setup.rs)
 
 公開候補は user-authored openwiki/INSTRUCTIONS.md の一致を検証し、upstream setup byproduct を除外、canonical Wiki 以外の変更を拒否する。AGENTS.md / CLAUDE.md の生成 setup を writer が途中で手動復元する運用ではなく、host 終了後の LVK の責務である。[公開候補の検査](../../crates/services/src/services/openwiki.rs) 公開 checkpoint と source drift の詳細は [Repository memory の統合・公開](../concepts/repository-memory.md) を参照する。
 

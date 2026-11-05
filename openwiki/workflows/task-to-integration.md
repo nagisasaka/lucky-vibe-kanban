@@ -4,6 +4,8 @@ title: Issue から実行・レビュー・統合まで
 description: 通常作業をまたぐ作成、Setup gate、会話、レビュー、Git/PR、Issue 状態と repository memory の更新順序を説明する。
 tags: [workflow, setup, review, git, pull-requests, scheduling]
 sources:
+  - id: openwiki-source-124913f65e422092e3ffbd4a
+    resource: repo://assets/skills/auto-merge/SKILL.md
   - id: openwiki-source-3c57aab40b425fc8b5d0d5c5
     resource: repo://crates/db/migrations/20261027090000_generated_issue_status.sql
   - id: openwiki-source-9bc71fe4f6cbbaa6fa9168e1
@@ -82,10 +84,10 @@ sources:
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/ReposSettingsSection.tsx
   - id: openwiki-source-ffc55e6e31e6ce477ca57329
     resource: repo://packages/web-core/src/shared/hooks/useWorkflowRun.ts
-generated: { by: "codex", at: "2026-11-04T20:22:03.096Z" }
+generated: { by: "codex", at: "2026-11-05T04:35:28.799Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-04T20:22:03.096Z
+    at: 2026-11-05T04:35:28.799Z
 ---
 
 # Issue から実行・レビュー・統合まで
@@ -141,6 +143,8 @@ API が作るのは base からの detached worktree と固定 peer 一覧であ
 検証コマンドを変更する場合は、先に Settings → Repositories の「自動マージの検証」を開き、表示された登録 checkout の path・branch・HEAD を確認する。順序付きの複数行コマンドを編集して保存し、読戻し成功を確認する。不正な既存 JSON は修復欄から直せる。保存は未コミットのファイル更新なので、差分を確認して `.lvk/integration-validation.json` を通常の Git 手順で目的の target branch に反映してから、新規 自動マージ を開始する。保存だけではコマンドを実行せず、既存 run にも反映しない。[UI の反映案内](../../packages/web-core/src/i18n/locales/ja/settings.json#L3-L19)・[受付の固定](../../crates/server/src/routes/integrations/admission.rs#L242-L262)。競合時の下書き保持、再読込、外部編集との排他限界は [検証コマンドの編集と反映](../concepts/formal-integration.md#検証コマンドの編集と反映)を確認する。
 
 local Boardの **自動マージ** では、Repo・local target・各Cardの採用WorkspaceとCode設定を選び、同じrequest ID/入力で再送する。受付はsource SHA、base SHA、要件、検証方針を固定する。開始時のtarget変更は停止条件であり、後から受付baseを直接書き換えない。[受付](../../crates/server/src/routes/integrations/admission.rs)・[選択UI](../../packages/web-core/src/features/kanban/ui/IntegrationPanel.tsx)。
+
+Wiki有効時はコード検証後、最初のbegin前に `prepare_wiki(expected_commit=code SHA)` の成功を確認する。同じ候補でWikiのみ別commitにし、生成AGENTS/CLAUDE差分は未stageで残す。code/Wiki/final SHAを固定してpublish要求後にRunを終了し、hostがwriter収束・完了proof・原本からの限定復元・clean・公開guardを確認する。復元途中のprepare拒否をbegin許可と解釈しない。[準備と回復の手順](../operations/openwiki-maintenance.md#自動マージ担当が更新する場合)・[実行契約](../../assets/skills/auto-merge/SKILL.md#L10-L11)
 
 担当は専用Issue / Workspace / Sessionの一つの会話で、候補作成→必要な検証または根拠付き省略→有効時のWiki更新→公開要求まで進める。質問、追加指示、失敗後の修復も同じ会話で続け、旧host merge / 競合だけの有限job / gate承認方式を使わない。既存コード検証を再利用する場合はtested SHAと新候補との差分・理由・残リスクを記録し、失敗や未実行をpassへ変更しない。[担当契約](../../crates/server/src/routes/integrations/runtime.rs)・[同じ会話の進行](../../crates/server/src/routes/integrations/conversation.rs)。
 

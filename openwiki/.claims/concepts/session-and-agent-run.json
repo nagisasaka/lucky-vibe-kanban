@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:94a6841624e0af2954cac69bafaf7bef7d1613277bca4f86c774d3f41be3c874",
+  "pageVersion": "sha256:3dd5b3cf90f4e58fb64159e070d0deab6d6bb31a32237834146a365c7a630d7c",
   "claims": [
     {
       "id": "claim_82c340b0bbd240889908ea6c2c5be423",
@@ -46,7 +46,7 @@
       "evidence": [
         {
           "resource": "repo://crates/local-deployment/src/agent_run_port.rs",
-          "version": "repo-file-v1:sha256:ce52cdc7b45cfbeab915e398889f1355e9cfbdddb41edd5e3dd78cbd3569cd3e"
+          "version": "repo-file-v1:sha256:6240db53da38f7bfab8eb0e9da63046d243af949596b5bf108a37097fce962c6"
         }
       ]
     },
@@ -446,11 +446,11 @@
       "evidence": [
         {
           "resource": "repo://crates/local-deployment/src/agent_run_port.rs",
-          "version": "repo-file-v1:sha256:ce52cdc7b45cfbeab915e398889f1355e9cfbdddb41edd5e3dd78cbd3569cd3e"
+          "version": "repo-file-v1:sha256:6240db53da38f7bfab8eb0e9da63046d243af949596b5bf108a37097fce962c6"
         },
         {
           "resource": "repo://crates/server/src/routes/integrations/conversation.rs",
-          "version": "repo-file-v1:sha256:7800dd437e2cba8bb5db17fe74877717b08e0b46d0014c5dcec697450282ccd1"
+          "version": "repo-file-v1:sha256:3f4281d139b82a9d7ec33408f5ee1addd7d7733cb873ec3842bb9f6f36442dee"
         }
       ]
     },
@@ -816,7 +816,7 @@
       "evidence": [
         {
           "resource": "repo://tests/supervised/README.md",
-          "version": "repo-file-v1:sha256:9e93f2fc550d13fe902e927ad2e9a95965f75b6e684889d5e4ba8844b8e8ce80"
+          "version": "repo-file-v1:sha256:b4d4ed13ebe64ee1e98dca918d78770518af53ef5535e321a3ccdd4a31a26cd5"
         },
         {
           "resource": "repo://tests/supervised/run_isolated.py#L45-L79",
@@ -966,11 +966,11 @@
       "evidence": [
         {
           "resource": "repo://crates/local-deployment/src/agent_run_port.rs",
-          "version": "repo-file-v1:sha256:ce52cdc7b45cfbeab915e398889f1355e9cfbdddb41edd5e3dd78cbd3569cd3e"
+          "version": "repo-file-v1:sha256:6240db53da38f7bfab8eb0e9da63046d243af949596b5bf108a37097fce962c6"
         },
         {
           "resource": "repo://crates/server/src/routes/integrations/conversation.rs",
-          "version": "repo-file-v1:sha256:7800dd437e2cba8bb5db17fe74877717b08e0b46d0014c5dcec697450282ccd1"
+          "version": "repo-file-v1:sha256:3f4281d139b82a9d7ec33408f5ee1addd7d7733cb873ec3842bb9f6f36442dee"
         }
       ]
     },
@@ -1117,6 +1117,6 @@
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-04T20:22:03.096Z"
+    "at": "2026-11-05T04:35:28.799Z"
   }
 }

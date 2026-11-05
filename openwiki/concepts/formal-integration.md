@@ -48,14 +48,16 @@ sources:
     resource: repo://crates/server/src/routes/repo.rs
   - id: openwiki-source-fa966dc92e5b940e2e3155e3
     resource: repo://crates/services/src/services/openwiki/completion.rs
+  - id: openwiki-source-c4df16e7e579927d462857d7
+    resource: repo://crates/services/src/services/openwiki/setup/integration.rs
   - id: openwiki-source-dbaab3d3ce907e13656fcbed
     resource: repo://packages/web-core/src/features/workspace-chat/ui/IntegrationFacts.tsx
   - id: openwiki-source-344aff2e68b53276f6be4e40
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/IntegrationValidationSettings.tsx
-generated: { by: "codex", at: "2026-11-04T20:22:03.096Z" }
+generated: { by: "codex", at: "2026-11-05T04:35:28.799Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-04T20:22:03.096Z
+    at: 2026-11-05T04:35:28.799Z
 ---
 
 # 自動マージの選択・検証・公開
@@ -70,7 +72,7 @@ Cardごとに採用Workspaceとexpected commitを指定し、Projectとの関連
 
 ## B から一件ずつ R を検証する
 
-受付targetと固定sourceは保持し、候補はprivate branchで作る。`integration_action`は現在runtimeへ束縛され、候補に受付baseと全sourceが祖先として残ること、expected SHAとcleanな作業木を確認する。新commitはrepositoryの有効なGit identityを使い、元sourceの著者を改変しない。[worker guard](../../crates/server/src/routes/integrations/conversation.rs#L170-L222)・[Git identity](workspace.md#git-commit-identity)
+受付targetと固定sourceは保持し、候補はprivate branchで作る。`integration_action`は現在runtimeへ束縛され、候補に受付baseと全sourceが祖先として残ること、expected SHAとcleanな作業木を確認する。Wiki有効時の公開受付だけは、真正journalと一致する既知の未stage setup生成差分を許す。新commitはrepositoryの有効なGit identityを使い、元sourceの著者を改変しない。[worker guard](../../crates/server/src/routes/integrations/conversation.rs#L170-L222)・[Git identity](workspace.md#git-commit-identity)
 
 ### 競合だけを有限の Agent job にする
 
@@ -114,6 +116,16 @@ revision は branch・HEAD・ファイルの存在と正確な内容の組から
 ## 公開・Done・Wiki は別の結果
 
 Wiki有効時はコード検証後、同じ候補branchでOpenWikiの正規ライフサイクルを完了しWikiだけを別commitにする。公開要求はcode_commit・wiki_commit・final candidateを別々に固定する。codeからfinalまでWiki以外が変わっていれば拒否する。Wikiだけの後続commitをコード試験済みと偽らない。別の後続Wiki Workspaceは作らない。[公開入力](../../crates/server/src/routes/integrations/conversation.rs#L346-L402)
+
+### begin 前の原本準備と host の限定復元
+
+コード検証・省略の証拠を確定後、最初の `openwiki_begin` より前に `integration_action prepare_wiki(expected_commit=code SHA)` を成功させる。host は証拠とwriter収束を照合し、integration/repository/storage/Session/Workspace/root/code SHAに結び付く原本journalとdigest receiptを保存する。begin-noopでも事前準備は必要で、後から作ったjournalで先行beginを正当化できない。[準備](../../crates/server/src/routes/integrations/conversation.rs#L526-L627)・[監査との順序照合](../../crates/server/src/routes/integrations/conversation.rs#L644-L713)
+
+同じ候補branchでWikiだけを別commitにし、ユーザー所有 `openwiki/INSTRUCTIONS.md` とsourceは変更しない。生成されたAGENTS.md/CLAUDE.mdをstage・commit・手動restoreしない。公開受付はjournalの原本かOpenWiki 0.7.2の既知の正確な変換だけを認める。履歴の各commit/parent、index、Git操作状態も検査し、後で取り消したsource編集や別parent、管理節内外の後編集、リンク、不明なdirtyを拒否する。[履歴と作業木](../../crates/services/src/services/openwiki/setup/integration.rs#L105-L227)・[限定変換](../../crates/services/src/services/openwiki/setup/integration.rs#L336-L395)
+
+担当Runと全writer終了・Wiki完了proofの確認後、hostはtarget writerもidleであることを確かめ、journalに最終Wiki SHAを固定する。Prepared → Restoring → Restoredを永続化して既知setup差分だけを原状へ戻し、cleanを検査してから既存公開guardへ進む。原本欠損・改変・identity不一致では候補を保全して停止する。[復元](../../crates/services/src/services/openwiki/setup/integration.rs#L230-L258)・[公開順](../../crates/server/src/routes/integrations/runtime.rs#L319-L410)
+
+中断・複数beginは同じ原本を使う。復元済み候補から新writer phaseへ進むときだけ、新request IDのprepareを成功させ、元code SHAと過去Wiki SHA・phase baseの祖先関係を保持する。最終SHA固定後の未復元状態（Preparedのcrash窓を含む）やRestoringでprepareが拒否されたらbeginせず、同じ最終SHAを正式に再publishしてhostへ収束を渡す。原本の後付けやguard回避で回復しない。[phase再開](../../crates/services/src/services/openwiki/setup/integration.rs#L35-L65)・[receipt照合](../../crates/server/src/routes/integrations/conversation.rs#L575-L681)
 
 `publish`の受付はGit適用ではない。担当Runを終え、hostがRun・process registry・scriptsの収束とNative Audit上のWiki完了証拠を確認してから公開する。targetが進んでも候補作業は中断せず、公開時に実targetが完成候補の祖先なら候補を変更せずCASで反映する。祖先でなければ候補・証拠を保持して未公開In Reviewに止め、自動merge/rebase・追従連鎖を行わない。[公開](../../crates/server/src/routes/integrations/runtime.rs#L319-L415)
 

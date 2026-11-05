@@ -59,7 +59,7 @@ sources:
 generated: { by: "codex", at: "2026-11-04T20:14:29.223Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-04T20:14:29.223Z
+    at: 2026-11-05T04:35:28.799Z
 ---
 
 # システム境界と起動順序

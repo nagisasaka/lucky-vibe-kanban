@@ -236,10 +236,10 @@ sources:
     resource: repo://tests/workspace-navigation/run-isolated.py
   - id: openwiki-source-b87e3253bd1458a0091f8587
     resource: repo://tests/workspace-navigation/workspace-navigation.spec.ts
-generated: { by: "codex", at: "2026-11-04T20:35:55.356Z" }
+generated: { by: "codex", at: "2026-11-05T04:35:28.799Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-04T20:35:55.356Z
+    at: 2026-11-05T04:35:28.799Z
 ---
 
 # Web の実行環境と同期
@@ -278,7 +278,9 @@ query key は Workspace・Repo・file・editor 設定を含む。再取得中と
 
 `SharedAppLayout` は Project 一覧、Workspace への遷移、モバイル drawer と外部 GitHub 件数の取得を接続し、UI package の `AppBar` は渡された値と callback を描画する。単独の `Local` 見出し、Project navbar の Organization 名、モバイル drawer の Organization 名は表示しない。ただし Project 一覧は引き続き選択 Organization ID で取得し、Workspace 入口と Project の選択・作成を維持する。Workspace navbar はパス、または `direct-folder` 以外のブランチ名を表示する。[一覧の scope](../../packages/web-core/src/shared/components/ui-new/containers/SharedAppLayout.tsx#L87-L127)・[drawer の遷移](../../packages/web-core/src/shared/components/ui-new/containers/SharedAppLayout.tsx#L337-L412)・[Workspace 見出し](../../packages/web-core/src/shared/components/ui-new/containers/NavbarContainer.tsx#L243-L260)・[AppBar の入口](../../packages/ui/src/components/AppBar.tsx#L148-L180)。見出しの整理は [Organization の identity・権限](../concepts/organization-and-membership.md)や [Workspace の実行単位](../concepts/workspace.md)の廃止を意味しない。
 
-外部リンクと stars API は `packages/ui/src/lib/repository.ts` の公式リポジトリ `nagisasaka/lucky-vibe-kanban` を共通参照する。AppBar と LandingPage の GitHub リンク、web-core の `useGitHubStars` の API URL と query key が同じ identity を使う。定数のコメントは README / README.ja.md と origin を選定根拠として記録し、両 README の source link も一致する。[共通定義](../../packages/ui/src/lib/repository.ts#L1-L3)・[AppBar](../../packages/ui/src/components/AppBar.tsx#L321-L337)・[LandingPage](../../packages/web-core/src/features/onboarding/ui/LandingPage.tsx#L88-L101)・[英語 README](../../README.md)・[日本語 README](../../README.ja.md)
+外部リンクと stars API は `packages/ui/src/lib/repository.ts` の公式リポジトリ `nagisasaka/lucky-vibe-kanban` を共通参照する。AppBar と LandingPage の GitHub リンク、web-core の `useGitHubStars` の API URL と query key が同じ identity を使う。定数のコメントは README / README.ja.md と origin を選定根拠として記録し、両 README の source link も一致する。[共通定義](../../packages/ui/src/lib/repository.ts#L1-L3)・[AppBar](../../packages/ui/src/components/AppBar.tsx#L321-L337)・[LandingPage](../../packages/web-core/src/features/onboarding/ui/LandingPage.tsx#L77-L88)・[英語 README](../../README.md)・[日本語 README](../../README.ja.md)
+
+LandingPage の文書リンクは公開リポジトリの `openwiki/quickstart.md`、safety リンクは `openwiki/operations/server-container.md` を指す。退役した文書サイトを初回利用の前提にしない。[入口](../../packages/web-core/src/features/onboarding/ui/LandingPage.tsx#L77-L88)・[安全説明](../../packages/web-core/src/features/onboarding/ui/LandingPage.tsx#L315-L325)
 
 stars はブラウザーから GitHub API を直接 `cache: 'no-store'` で読み、非負の safe integer だけを採用する。HTTP エラー、通信・JSON 解析失敗、欠落・不正値は `null` にする。初回 loading や `null` ではバッジを出さず、実数 `0` は表示する。リンク自体は件数取得に依存しない。query はリポジトリ単位で、stale time と定期再取得は10分、retry と mount 時の再取得は無効である。[取得・query lifecycle](../../packages/web-core/src/shared/hooks/useGitHubStars.ts#L1-L41)・[バッジの条件](../../packages/ui/src/components/AppBar.tsx#L325-L336)・[リンクとバッジの描画](../../packages/ui/src/components/AppBarSocialLink.tsx#L18-L46)。この表示用 API は Board の snapshot 同期や [GitHub 認証・PR 操作](../integrations/github-review.md)とは別の経路である。
 
