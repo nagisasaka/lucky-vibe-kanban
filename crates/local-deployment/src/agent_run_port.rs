@@ -858,7 +858,7 @@ impl LocalAgentRunPort {
             memory_instructions.push(format!("自動マージ担当: {}。同一Sessionで作業を継続し、integration_actionで候補・検証/省略・公開要求を記録する。公開要求後はRunを終了しhostの収束確認に引き渡す。通常codingの自動commitやread-only Wiki指示はこの専用担当には適用しない。Wiki有効: {}。", product.id, product.payload.wiki_enabled));
             if product.payload.wiki_enabled {
                 openwiki_maintenance = true;
-                memory_instructions.push("この統合のコード検証後、最初のopenwiki_beginより前にintegration_action prepare_wiki(expected_commit=コード検証SHA)を成功させる。再開・複数beginでも同じ原本journalを使い、後付けしない。同じ候補branchでcanonical openwiki/を更新しWikiだけを別commitにする。AGENTS.md/CLAUDE.md等のsetup生成差分はstage/commit/手動復元せず残す。hostが公開要求後の全writer終了を確認して限定復元する。OpenWiki skillは ~/.agents/skills/openwiki/SKILL.md（projectに配置済みならそちら）を読む。Wiki専用Issue/Workspaceは作らない。コード検証SHAとWiki/公開SHAを区別する。".into());
+                memory_instructions.push("この統合のコード検証後、最初のopenwiki_beginより前にintegration_action prepare_wiki(expected_commit=コード検証SHA)を成功させる。再開・複数beginでも同じ原本journalを使い、後付けしない。復元済み候補から新writer phaseへ進む際は新request_idでprepare_wikiを成功させる。復元途中のprepare拒否はbegin許可ではない。同じ最終SHAを再publishしhostで復元を収束させる。同じ候補branchでcanonical openwiki/を更新しWikiだけを別commitにする。AGENTS.md/CLAUDE.md等のsetup生成差分はstage/commit/手動復元せず残す。hostが公開要求後の全writer終了を確認して限定復元する。OpenWiki skillは ~/.agents/skills/openwiki/SKILL.md（projectに配置済みならそちら）を読む。Wiki専用Issue/Workspaceは作らない。コード検証SHAとWiki/公開SHAを区別する。".into());
             }
         }
         let source_completion_allowed = !workspace.is_execution_only()

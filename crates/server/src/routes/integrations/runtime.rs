@@ -348,6 +348,10 @@ pub(super) async fn publish(
     run.payload.base_commit = Some(current);
     let base = run.payload.base_commit.clone().context("Missing B")?;
     let result = run.payload.result_commit.clone().context("Missing R")?;
+    let (targets, target_writers) = managed_targets(&deployment.db().pool, &repo, &run).await?;
+    for ws in &target_writers {
+        admission::idle(deployment, *ws).await?;
+    }
     if run.payload.wiki_enabled {
         let request = run
             .payload
@@ -364,10 +368,6 @@ pub(super) async fn publish(
         )?;
     }
     deployment.git().require_clean_source(&root, &result)?;
-    let (targets, target_writers) = managed_targets(&deployment.db().pool, &repo, &run).await?;
-    for ws in &target_writers {
-        admission::idle(deployment, *ws).await?;
-    }
     ensure!(
         deployment
             .git()

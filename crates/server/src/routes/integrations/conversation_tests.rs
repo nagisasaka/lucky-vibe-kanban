@@ -43,6 +43,7 @@ async fn exercise(deployment: &DeploymentImpl, instance: &std::path::Path) -> an
         "drift",
         "wiki-error",
         "wiki-resume",
+        "wiki-restored-resume",
         "wiki-success",
         "wiki-noop",
         "wiki-unsettled",
@@ -62,6 +63,7 @@ async fn exercise(deployment: &DeploymentImpl, instance: &std::path::Path) -> an
         let drift = mode == "drift";
         let wiki_error = mode == "wiki-error";
         let wiki_resume = mode == "wiki-resume";
+        let restored_resume = mode == "wiki-restored-resume";
         let cancel = mode.ends_with("cancel");
         let wiki = mode.starts_with("wiki-");
         let pool = &deployment.db().pool;
@@ -276,7 +278,7 @@ async fn exercise(deployment: &DeploymentImpl, instance: &std::path::Path) -> an
                 format!("# User rules\n\n{snippet}\n"),
             )?;
         }
-        let candidate = if wiki && mode != "wiki-noop" {
+        let mut candidate = if wiki && mode != "wiki-noop" {
             std::fs::create_dir_all(checkout.join("openwiki"))?;
             std::fs::write(checkout.join("openwiki/index.md"), "fixture Wiki")?;
             support::git(&checkout, &["add", "openwiki"])?;
@@ -386,13 +388,117 @@ async fn exercise(deployment: &DeploymentImpl, instance: &std::path::Path) -> an
             ensure!(!IntegrationRun::find(pool, id).await?.payload.published);
         }
         sqlx::query("UPDATE agent_process_registry SET registry_status='exited',pid=999999997,process_started_at=datetime('now','subsec'),observed_exited_at=datetime('now','subsec') WHERE run_attempt_id IN (SELECT id FROM agent_run_attempts WHERE agent_run_id=?)").bind(agent).execute(pool).await?;
-        if wiki_resume {
+        if wiki_resume || restored_resume {
             let wiki_id = Uuid::new_v4();
             record_wiki_audit(
-                pool, &request, &attempt, &checkout, wiki_id, false, false, false,
+                pool,
+                &request,
+                &attempt,
+                &checkout,
+                wiki_id,
+                false,
+                restored_resume,
+                false,
             )
             .await?;
-            advance(deployment, IntegrationRun::find(pool, id).await?).await?;
+            if restored_resume {
+                // A crash/guard failure after restoration but before durable
+                // publication intent must not consume permission to resume Wiki.
+                sqlx::query(&format!("CREATE TRIGGER fixture_intent_failure BEFORE UPDATE ON integration_runs WHEN NEW.id=X'{}' AND json_extract(NEW.payload,'$.publication_intent')=1 BEGIN SELECT RAISE(FAIL,'injected before publication intent'); END",id.simple())).execute(pool).await?;
+                ensure!(
+                    advance(deployment, IntegrationRun::find(pool, id).await?)
+                        .await
+                        .is_err()
+                );
+                sqlx::query("DROP TRIGGER fixture_intent_failure")
+                    .execute(pool)
+                    .await?;
+                let store =
+                    RepositoryMemoryStore::existing_for_repository(&repo.name, repo.id)?.unwrap();
+                let restored = store.integration_wiki_setup(id)?.unwrap();
+                ensure!(
+                    restored.checkpoint.phase == utils::repository_memory::WikiSetupPhase::Restored
+                );
+                ensure!(
+                    !IntegrationRun::find(pool, id)
+                        .await?
+                        .payload
+                        .publication_intent
+                );
+                deployment
+                    .git()
+                    .require_clean_source(&checkout, &candidate)?;
+                // A target writer appears between attempts. Exercise the real
+                // target-workspace idle guard while the candidate is restored.
+                use db::models::{
+                    execution_process::CreateExecutionProcess,
+                    workspace::CreateWorkspace,
+                    workspace_repo::{CreateWorkspaceRepo, WorkspaceRepo},
+                };
+                let target_ws = Workspace::create_direct_folder(
+                    pool,
+                    &CreateWorkspace {
+                        branch: "main".into(),
+                        name: None,
+                    },
+                    Uuid::new_v4(),
+                    root.to_str().unwrap(),
+                )
+                .await?;
+                WorkspaceRepo::create_many(
+                    pool,
+                    target_ws.id,
+                    &[CreateWorkspaceRepo {
+                        repo_id: repo.id,
+                        target_branch: "main".into(),
+                    }],
+                )
+                .await?;
+                let target_session = Session::create(
+                    pool,
+                    &CreateSession {
+                        executor: None,
+                        name: None,
+                    },
+                    Uuid::new_v4(),
+                    target_ws.id,
+                )
+                .await?;
+                let target_writer = ExecutionProcess::create(
+                    pool,
+                    &CreateExecutionProcess {
+                        session_id: target_session.id,
+                        executor_action: ExecutorAction::new(
+                            ExecutorActionType::ScriptRequest(ScriptRequest {
+                                script: "fixture writer (not launched)".into(),
+                                language: ScriptRequestLanguage::Bash,
+                                context: ScriptContext::IntegrationValidation,
+                                working_dir: None,
+                            }),
+                            None,
+                        ),
+                        run_reason: ExecutionProcessRunReason::IntegrationValidation,
+                    },
+                    Uuid::new_v4(),
+                    &[],
+                )
+                .await?;
+                let error = advance(deployment, IntegrationRun::find(pool, id).await?)
+                    .await
+                    .unwrap_err();
+                ensure!(format!("{error:#}").contains("active or unconfirmed writer"));
+                ensure!(store.integration_wiki_setup(id)?.unwrap() == restored);
+                ensure!(git(&["rev-parse", "main"])? == base);
+                sqlx::query("UPDATE execution_processes SET status='completed',exit_code=0,completed_at=datetime('now','subsec') WHERE id=?").bind(target_writer.id).execute(pool).await?;
+                stop(
+                    deployment,
+                    IntegrationRun::find(pool, id).await?,
+                    "target writer guard after restored candidate".into(),
+                )
+                .await?;
+            } else {
+                advance(deployment, IntegrationRun::find(pool, id).await?).await?;
+            }
             let mut stopped = IntegrationRun::find(pool, id).await?;
             ensure!(stopped.status == "blocked" && !stopped.payload.published);
             resume(deployment, &mut stopped).await?;
@@ -417,7 +523,45 @@ async fn exercise(deployment: &DeploymentImpl, instance: &std::path::Path) -> an
                 .await?;
             let mut continued_prepare = call(Uuid::new_v4(), "prepare_wiki", &code_candidate, None);
             continued_prepare.agent_run_id = followup.agent_run_id;
+            action(deployment, continued_prepare.clone()).await?;
             action(deployment, continued_prepare).await?;
+            if restored_resume {
+                let store =
+                    RepositoryMemoryStore::existing_for_repository(&repo.name, repo.id)?.unwrap();
+                let reopened = store.integration_wiki_setup(id)?.unwrap();
+                ensure!(
+                    reopened.checkpoint.phase == utils::repository_memory::WikiSetupPhase::Prepared
+                        && reopened.final_commit.is_none()
+                );
+                ensure!(reopened.previous_final_commits == vec![candidate.clone()]);
+                let digest =
+                    services::services::openwiki::setup::integration::original_digest(&reopened)?;
+                ensure!(
+                    IntegrationRun::find(pool, id)
+                        .await?
+                        .payload
+                        .history
+                        .iter()
+                        .filter(|entry| entry["setup_original_digest"].as_str()
+                            == Some(digest.as_str()))
+                        .count()
+                        >= 2
+                );
+                let snippet = include_str!(
+                    "../../../../services/src/services/openwiki/setup/agents-0.7.2.txt"
+                );
+                std::fs::write(
+                    checkout.join("AGENTS.md"),
+                    format!("# User rules\n\n{snippet}\n"),
+                )?;
+                std::fs::write(
+                    checkout.join("openwiki/continued.md"),
+                    "new writer phase Wiki content",
+                )?;
+                support::git(&checkout, &["add", "openwiki"])?;
+                support::git(&checkout, &["commit", "-m", "continued Wiki phase"])?;
+                candidate = support::git(&checkout, &["rev-parse", "HEAD"])?;
+            }
             let mut publish = call(Uuid::new_v4(), "publish", &candidate, None);
             publish.agent_run_id = followup.agent_run_id;
             publish.code_commit = Some(code_candidate.clone());
@@ -437,14 +581,24 @@ async fn exercise(deployment: &DeploymentImpl, instance: &std::path::Path) -> an
                 &followup,
                 &followup_attempt,
                 &checkout,
-                wiki_id,
-                true,
+                if restored_resume {
+                    Uuid::new_v4()
+                } else {
+                    wiki_id
+                },
+                !restored_resume,
                 true,
                 false,
             )
             .await?;
         }
-        if wiki && !wiki_error && !wiki_resume && !cancel && mode != "wiki-before-journal" {
+        if wiki
+            && !wiki_error
+            && !wiki_resume
+            && !restored_resume
+            && !cancel
+            && mode != "wiki-before-journal"
+        {
             record_wiki_audit(
                 pool,
                 &request,

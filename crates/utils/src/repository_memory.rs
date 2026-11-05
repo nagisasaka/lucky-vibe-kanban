@@ -428,6 +428,8 @@ pub struct IntegrationWikiSetup {
     pub storage_identity: String,
     pub prepared_at: DateTime<Utc>,
     pub final_commit: Option<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub previous_final_commits: Vec<String>,
     pub checkpoint: WikiSetupCheckpoint,
 }
 

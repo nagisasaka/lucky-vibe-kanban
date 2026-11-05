@@ -20,6 +20,7 @@ pub struct Identity<'a> {
 pub fn original_digest(journal: &IntegrationWikiSetup) -> anyhow::Result<String> {
     let mut original = journal.clone();
     original.final_commit = None;
+    original.previous_final_commits.clear();
     original.checkpoint.phase = WikiSetupPhase::Prepared;
     for entry in &mut original.checkpoint.files {
         entry.restoring_from = None;
@@ -36,7 +37,27 @@ pub fn prepare(store: &RepositoryMemoryStore, id: &Identity<'_>) -> anyhow::Resu
     let _lock = store.try_workspace_completion_lock(id.workspace_id)?;
     if store.integration_wiki_setup(id.integration_id)?.is_some() {
         let head = super::super::git_text(id.root, &["rev-parse", "HEAD"])?;
-        validate(store, id, &head)?;
+        let mut journal = validate(store, id, &head)?;
+        ensure!(
+            journal.checkpoint.phase != WikiSetupPhase::Restoring,
+            "Host restoration is unfinished; republish the same final SHA without begin and let the host settle restoration first"
+        );
+        if journal.checkpoint.phase == WikiSetupPhase::Restored {
+            // A new explicit writer phase, never a new original snapshot. The
+            // caller has checked the original host receipt and other writers.
+            git::GitService::new().require_clean_source(id.root, &head)?;
+            journal.previous_final_commits.push(
+                journal
+                    .final_commit
+                    .take()
+                    .context("Missing restored Wiki SHA")?,
+            );
+            journal.checkpoint.phase = WikiSetupPhase::Prepared;
+            for entry in &mut journal.checkpoint.files {
+                entry.restoring_from = None;
+            }
+            store.save_integration_wiki_setup(&journal)?;
+        }
         return Ok(());
     }
     git::GitService::new().require_clean_source(id.root, id.code_commit)?;
@@ -63,6 +84,7 @@ pub fn prepare(store: &RepositoryMemoryStore, id: &Identity<'_>) -> anyhow::Resu
         storage_identity: id.storage_identity.into(),
         prepared_at: chrono::Utc::now(),
         final_commit: None,
+        previous_final_commits: Vec::new(),
         checkpoint: WikiSetupCheckpoint {
             version: 1,
             workspace_id: id.workspace_id,
@@ -103,6 +125,15 @@ pub fn validate(
         git::GitService::new().is_ancestor(id.root, id.code_commit, final_commit)?,
         "Wiki candidate lost code ancestry"
     );
+    let mut previous = id.code_commit;
+    for phase in &journal.previous_final_commits {
+        ensure!(
+            git::GitService::new().is_ancestor(id.root, previous, phase)?
+                && git::GitService::new().is_ancestor(id.root, phase, final_commit)?,
+            "Wiki writer phase lost a previous finalized candidate"
+        );
+        previous = phase;
+    }
     // Inspect every commit, so temporary source edits later reverted cannot be
     // hidden by a net Wiki-only diff. Merge parents must all descend from code.
     let commits = raw_git(
@@ -764,6 +795,53 @@ mod tests {
     }
 
     #[test]
+    fn integration_reopens_restored_writer_phase_without_recapturing_originals() {
+        let f = Fixture::new();
+        f.prepare();
+        f.generate();
+        let first = f.wiki_commit();
+        restore(&f.store, &f.id(), &first).unwrap();
+        let original = f.store.integration_wiki_setup(f.owner).unwrap().unwrap();
+        f.prepare();
+        let reopened = f.store.integration_wiki_setup(f.owner).unwrap().unwrap();
+        assert_eq!(reopened.previous_final_commits, vec![first.clone()]);
+        assert!(reopened.final_commit.is_none());
+        assert_eq!(reopened.checkpoint.phase, WikiSetupPhase::Prepared);
+        assert_eq!(
+            original_digest(&original).unwrap(),
+            original_digest(&reopened).unwrap()
+        );
+        assert!(
+            reopened
+                .checkpoint
+                .files
+                .iter()
+                .all(|entry| entry.restoring_from.is_none())
+        );
+        f.prepare(); // crash/retry of the reopening does not duplicate history
+        assert_eq!(
+            reopened,
+            f.store.integration_wiki_setup(f.owner).unwrap().unwrap()
+        );
+        f.generate();
+        fs::write(f.root.join("openwiki/reopened.md"), "continued Wiki").unwrap();
+        let second = f.wiki_commit();
+        assert_ne!(first, second);
+        restore(&f.store, &f.id(), &second).unwrap();
+        let finished = f.store.integration_wiki_setup(f.owner).unwrap().unwrap();
+        assert_eq!(finished.previous_final_commits, vec![first]);
+        assert_eq!(finished.final_commit.as_deref(), Some(second.as_str()));
+        assert_eq!(
+            original_digest(&original).unwrap(),
+            original_digest(&finished).unwrap()
+        );
+        git::GitService::new()
+            .require_clean_source(&f.root, &second)
+            .unwrap();
+        assert!(f.root.join("openwiki/reopened.md").is_file());
+    }
+
+    #[test]
     fn integration_partial_restoration_pins_final_sha_and_preserves_later_edits() {
         for edit in [false, true] {
             let f = Fixture::new();
@@ -777,6 +855,11 @@ mod tests {
                 entry.restoring_from = Some(read_entry(&f.root.join(&entry.path)).unwrap());
             }
             f.store.save_integration_wiki_setup(&journal).unwrap();
+            assert!(prepare(&f.store, &f.id()).is_err()); // no false begin permission mid-restore
+            assert_eq!(
+                journal,
+                f.store.integration_wiki_setup(f.owner).unwrap().unwrap()
+            );
             let entry = &journal.checkpoint.files[0];
             replace_if_expected(
                 &f.root.join(&entry.path),

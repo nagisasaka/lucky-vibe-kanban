@@ -16,6 +16,9 @@ use uuid::Uuid;
 
 pub mod integration;
 
+#[cfg(test)]
+mod openwiki_compatibility_tests;
+
 const INSTRUCTION_PATHS: [&str; 2] = ["AGENTS.md", "CLAUDE.md"];
 const MAX_INSTRUCTION_BYTES: u64 = 32 * 1024;
 const MAX_PAGE_BYTES: u64 = 2 * 1024 * 1024;
