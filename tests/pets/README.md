@@ -16,3 +16,5 @@ Playwright Chromium を使用する。必要なら既存の `LVK_E2E_CHROMIUM` �
 Terminal / Logs / Wiki の provider hooks は inert mock。環境情報・リソース・quota・attachment upload/file は専用 HTTP fixture response。Git / Files / Notes などは実折畳み header のまま閉じ、子機能を実行しない。未使用の executor virtual schema は空 fixture を与える。実画面全体の router、Kanban board、Workspace layout、モバイル sheet、drag/drop、端末起動、live backend・scratch transport の永続化や attachment 認可は検証していない。幅300px・overflow-hidden の shell は本文を隠して sidebar を置く検証用構成であり、製品のモバイル画面全体を再現したものではない。
 
 スクリーンショットは静止画の検収、timer / frame assertions は自動再生挙動の検証である。人間が連続再生を目視したことを意味しない。
+
+V2 producer互換として、0行6列のneutral補助セルは空でも非空でも受理する。idleの再生は従来の6フレームのまま、視線0度は上向きのままである。21,582画素を持つ生成neutralセルでimport/reloadを検証し、0行7列など他の未使用セルと必須セルの検証は維持する。このfixtureは実Rabbitの受領・実物検証を代替しない。

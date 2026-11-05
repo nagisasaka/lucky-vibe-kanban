@@ -260,8 +260,9 @@ export function lookDirection(
 }
 
 // v1 retains its historical dimension/decode-only acceptance. For v2 all
-// required cells have content and unused tails are transparent. This checks
-// structure, not artistic pose semantics.
+// required cells have content and unused tails are transparent, except the
+// optional producer neutral pose at row 0, column 6. It is not an idle frame
+// or look direction 0. This checks structure, not artistic pose semantics.
 export function validateAtlas(
   image: CanvasImageSource,
   width: number,
@@ -292,7 +293,9 @@ export function validateAtlas(
           }
         }
         const required = col < count;
-        if (occupied !== required) throw new PetError('invalid');
+        const optionalNeutral = row === 0 && col === 6;
+        if (!optionalNeutral && occupied !== required)
+          throw new PetError('invalid');
       }
     }
   } finally {

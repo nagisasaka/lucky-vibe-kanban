@@ -327,7 +327,11 @@ describe('v2 compatibility and static look poses', () => {
       else
         expect(() => validateAtlas(image, 1536, height, version)).not.toThrow();
       pixels[(100 * 1536 + 96) * 4 + 3] = 255;
+      // Producer v2's neutral pose is optional, not the seventh idle frame.
       pixels[(100 * 1536 + 6 * 192 + 96) * 4 + 3] = 1;
+      expect(() => validateAtlas(image, 1536, height, version)).not.toThrow();
+      expect(PET_STATES[0].durations).toHaveLength(6);
+      pixels[(100 * 1536 + 7 * 192 + 96) * 4 + 3] = 1;
       if (version === 2)
         expect(() => validateAtlas(image, 1536, height, version)).toThrow(
           'invalid'

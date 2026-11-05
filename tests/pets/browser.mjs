@@ -276,7 +276,7 @@ try {
           }
         if (paintedTail) {
           ctx.fillStyle = '#ff0000';
-          ctx.fillRect(6 * 192, 0, 1, 1);
+          ctx.fillRect(7 * 192, 0, 1, 1);
         }
         return canvas.toDataURL(mime, 1);
       },
@@ -312,7 +312,7 @@ try {
     const ctx = c.getContext('2d');
     ctx.fillStyle = '#e47c29';
     ctx.fillRect(60, 50, 72, 100);
-    ctx.fillRect(6 * 192, 0, 1, 1);
+    ctx.fillRect(7 * 192, 0, 1, 1);
     return c.toDataURL('image/png');
   });
   const legacyManifest = {
@@ -342,6 +342,64 @@ try {
   assert.equal(restoredVersion, undefined);
   cases.push(
     'legacy saved v1 without version: empty required cells and painted tail remain accepted after import and reload, no Rabbit fallback'
+  );
+  // Exact producer occupancy count in the optional neutral cell, with safe
+  // geometric content only. 192*112 + 78 = 21,582 nontransparent pixels.
+  const neutralPng = await page.evaluate(
+    async (source) => {
+      const image = await createImageBitmap(await (await fetch(source)).blob());
+      const canvas = document.createElement('canvas');
+      canvas.width = 1536;
+      canvas.height = 2288;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(image, 0, 0);
+      image.close();
+      ctx.fillStyle = '#2877cc';
+      ctx.fillRect(6 * 192, 0, 192, 112);
+      ctx.fillRect(6 * 192, 112, 78, 1);
+      return canvas.toDataURL('image/png');
+    },
+    await makeAtlas()
+  );
+  for (const encoding of ['png', 'webp']) {
+    const data =
+      encoding === 'png'
+        ? neutralPng
+        : await page.evaluate(async (source) => {
+            const image = await createImageBitmap(
+              await (await fetch(source)).blob()
+            );
+            const canvas = document.createElement('canvas');
+            canvas.width = 1536;
+            canvas.height = 2288;
+            canvas.getContext('2d').drawImage(image, 0, 0);
+            image.close();
+            return canvas.toDataURL('image/webp', 1);
+          }, neutralPng);
+    const name = `V2 neutral ${encoding} fixture`;
+    await sidebar
+      .locator('input[type=file]')
+      .setInputFiles(
+        await packAtlas(
+          `v2-neutral-${encoding}`,
+          {
+            ...v2Manifest,
+            displayName: name,
+            spritesheetPath: `sheet.${encoding}`,
+          },
+          data
+        )
+      );
+    await expect(
+      sidebar.getByRole('button', { name, exact: true })
+    ).toHaveAttribute('data-pet-version', '2');
+    await page.reload();
+    await expect(
+      sidebar.getByRole('button', { name, exact: true })
+    ).toHaveAttribute('data-pet-version', '2');
+  }
+  cases.push(
+    'producer-style v2 optional neutral cell row0/col6 with21,582 occupied pixels imports and restores as PNG/WebP; idle keeps six frames, other tails still rejected'
   );
   const v2Png = await makeAtlas();
   await sidebar
@@ -629,23 +687,19 @@ try {
     'reported 14,512,968-byte metadata reproduces pre-read ZIP size refusal with numeric limit; isolated 12-pet collection gives a separate error and neither uploads'
   );
   await page.goto(base + '?lang=ja');
-  await sidebar
-    .locator('input[type=file]')
-    .setInputFiles({
-      name: 'attempt.zip',
-      mimeType: 'application/zip',
-      buffer: Buffer.from('not read'),
-    });
+  await sidebar.locator('input[type=file]').setInputFiles({
+    name: 'attempt.zip',
+    mimeType: 'application/zip',
+    buffer: Buffer.from('not read'),
+  });
   await expect(sidebar.getByRole('status')).toContainText('保存済みPetが上限');
   await page.evaluate(() => localStorage.removeItem('pet-fixture'));
   await page.reload();
-  await sidebar
-    .locator('input[type=file]')
-    .setInputFiles({
-      name: 'lvk-rabbit-depth-b-v2-delivery.zip',
-      mimeType: 'application/zip',
-      buffer: Buffer.alloc(14512968),
-    });
+  await sidebar.locator('input[type=file]').setInputFiles({
+    name: 'lvk-rabbit-depth-b-v2-delivery.zip',
+    mimeType: 'application/zip',
+    buffer: Buffer.alloc(14512968),
+  });
   await expect(sidebar.getByRole('status')).toContainText(
     'ZIPファイルが大きすぎます'
   );
