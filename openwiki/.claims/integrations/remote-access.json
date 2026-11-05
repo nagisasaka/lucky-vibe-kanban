@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:7a14cb57947bf11b3f72aa16b6b2ee03a8b2fdc58cac2006877a9a250023718f",
+  "pageVersion": "sha256:4eba4ecea7daac9d3d983494e6e4b27cae6ec773b3d17cc7b37eb6754a86c65e",
   "claims": [
     {
       "id": "claim_71e4432fe19d42fca4c3a1ae5f546775",
@@ -36,7 +36,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/remote_mcp/mod.rs",
-          "version": "repo-file-v1:sha256:130e1a6c6990766a97fa1899d81c91a259f759ea41efadcb5a4b902874fa7c9d"
+          "version": "repo-file-v1:sha256:67cac8ff9c8596f81d5b2f786c3f81b800750b500d8807b6f1f4435e9b62ec7b"
         }
       ]
     },
@@ -66,7 +66,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/remote_mcp/mod.rs",
-          "version": "repo-file-v1:sha256:130e1a6c6990766a97fa1899d81c91a259f759ea41efadcb5a4b902874fa7c9d"
+          "version": "repo-file-v1:sha256:67cac8ff9c8596f81d5b2f786c3f81b800750b500d8807b6f1f4435e9b62ec7b"
         },
         {
           "resource": "repo://crates/server/src/remote_mcp/questions.rs",
@@ -84,7 +84,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/remote_mcp/mod.rs",
-          "version": "repo-file-v1:sha256:130e1a6c6990766a97fa1899d81c91a259f759ea41efadcb5a4b902874fa7c9d"
+          "version": "repo-file-v1:sha256:67cac8ff9c8596f81d5b2f786c3f81b800750b500d8807b6f1f4435e9b62ec7b"
         },
         {
           "resource": "repo://crates/server/src/remote_mcp/run_events.rs",
@@ -190,7 +190,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/remote_mcp/mod.rs",
-          "version": "repo-file-v1:sha256:130e1a6c6990766a97fa1899d81c91a259f759ea41efadcb5a4b902874fa7c9d"
+          "version": "repo-file-v1:sha256:67cac8ff9c8596f81d5b2f786c3f81b800750b500d8807b6f1f4435e9b62ec7b"
         },
         {
           "resource": "repo://crates/server/src/remote_mcp/resource_observation.rs",
@@ -548,7 +548,7 @@
         },
         {
           "resource": "repo://crates/server/src/remote_mcp/mod.rs",
-          "version": "repo-file-v1:sha256:130e1a6c6990766a97fa1899d81c91a259f759ea41efadcb5a4b902874fa7c9d"
+          "version": "repo-file-v1:sha256:67cac8ff9c8596f81d5b2f786c3f81b800750b500d8807b6f1f4435e9b62ec7b"
         },
         {
           "resource": "repo://crates/server/src/remote_mcp/runtime_write.rs",
@@ -816,7 +816,7 @@
         },
         {
           "resource": "repo://crates/services/src/services/file.rs",
-          "version": "repo-file-v1:sha256:e875a1180d1811bb2a6149df079b3acb5d650b2a3be7fc99e3c1a41e19fd4d9e"
+          "version": "repo-file-v1:sha256:c00a17899631a707ec27559227bcc85d7d43b35de33d6dc7564b53b4d4809eea"
         }
       ]
     },
@@ -848,7 +848,7 @@
         },
         {
           "resource": "repo://crates/server/src/remote_mcp/mod.rs",
-          "version": "repo-file-v1:sha256:130e1a6c6990766a97fa1899d81c91a259f759ea41efadcb5a4b902874fa7c9d"
+          "version": "repo-file-v1:sha256:67cac8ff9c8596f81d5b2f786c3f81b800750b500d8807b6f1f4435e9b62ec7b"
         },
         {
           "resource": "repo://crates/utils/src/mcp_error.rs",
@@ -915,10 +915,24 @@
           "version": "repo-lines-v1:sha256:ced213ab83bb388976dccbebb80c73d7696d4f014f35040cffd75c06f7bda569:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIxLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIyNjQ4NTljNWZkNTU2NGNkOTBlNzYyMjIwMzVmYWE4Mjk4NWE4MGJjMDQwNjU5ZjcyYzc5OGI0OGJkOGE0ZTA2IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIwNzVkYmVjMmU3NjdjYzMyMTg1NTY5ZjVlNWZkMzE2MWExMGNmZjE1ZWQyYmUxYTVmOGYwYzc1ZDRjY2U5NTM1IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI5ZGI5ZmQ1OTI2NGFjOTBmZjgyYTZjOGY5YzU4YjgwYjFmYjYzYzRiZGUxODBhZWU0YzVhNDQ5YzA3NDJjZDdiIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiIwMDFhYzkwZGI0MjNiN2FkNTRmMGRjNzZlODEyYzRkOGU4MTNhNmRiOTY1ODNhYzM5ZDEyMjU5MWI5MWFhNzM4In0"
         }
       ]
+    },
+    {
+      "id": "claim_7db5a3f7b25b4947baece52ffbe538f0",
+      "statement": "get_connectionは旧fieldを維持し装飾表示名・実hostname・表示名読取可用性を独立追加し、認証identityや設定保存を変更しない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/host_display_name.rs#L79-L103",
+          "version": "repo-lines-v1:sha256:122505232d18414c37f0a81c9df566cd36a5562e9321f3cdf818f7d31e128be1:eyJzZWxlY3RlZExpbmVDb3VudCI6MjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImMxMDM2MmExMTZiMjkyNDljOGUzYmM1OTk2ZjZmNDVlNWZkMjYzNDkxZTA1ZGRmOWZlOWVhY2VlYjVlYjI0NmUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc2MzhjYTJiNjM4OGJjNmEzNjBjZDU3NjkxZTA0ZTcwYTlhMGZlMWQxZDljMjJiYTg4ZTllMzM1NzQ2ZWJlM2YiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjU4NjA0MGY0ZDNkZDc2ZmQwYmJjMDZkM2ZiZTg3ZGU1Y2EzYjBjZjVlZGFmMDQzOTljZDBjMDgzYmZhZDJiNjMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijg1OWEwMTgwYjEzMWU1ZGFmYzAzOTMxOWNhMDgxZWE1Zjc2NDEwNGY4OTUzMjM3ZWE5NDNmYzNkZjY5YzI0YTQifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/remote_mcp/mod.rs#L538-L541",
+          "version": "repo-lines-v1:sha256:d2da0a3a0382b837b01bef8e99df1fa81cfde7178cd424085338a25c947a4a4a:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDI1NGFmMDRhOGM3NjI5NTcyMTAwYTg5YzZhZDcxNjM2OWVmYTM2YjhkZjBkZjBhNDE4NDkzYWEwMTIxM2IyYyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZTE1ZTVlNDRiYTdjODAyMGE1NGY1OTA1ZGRmZDg1MzkxMWUxOTBkNWVmZjRhMDdmMmM0MTQyYTk1MDAxYzNhMSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYjE5MjA2ZTE5N2U0N2E3Yzc2ZmU0YmYzYjQ0NWUxNGU3YTZlMDUyMTExM2VkMWI3ZjM1NmVhYThjNjVlYTM4NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTI3NzljOWVhMTFmZTFjZGFjYmY1OTc5OGNkY2EyNTFlMzE3N2JiNTQzZDRmMDMyYWI4ZjUyNGJiMWVkZjdhZCJ9"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-05T04:35:28.799Z"
+    "at": "2026-11-05T07:15:08.684Z"
   }
 }

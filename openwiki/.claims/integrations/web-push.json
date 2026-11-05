@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:17759fa2df32789cbbc8fb08fa375fd993aeab4d7b0dc58a1cd2b2c70b85fb74",
+  "pageVersion": "sha256:7cfc0feb15c370a1939ef6576a552b4ac831df4ef75b2459c1aa0a9d7d556b63",
   "claims": [
     {
       "id": "claim_12d9a2cd77a84b53a677021c3e9d8057",
@@ -258,7 +258,7 @@
       "evidence": [
         {
           "resource": "repo://packages/web-core/src/shared/dialogs/settings/SettingsDialog.tsx",
-          "version": "repo-file-v1:sha256:65b03e40eb7f9b45963af271302512a9f49c21580489a19d9ce593bd5822297e"
+          "version": "repo-file-v1:sha256:939c0101659d26254d9e644655410b7c11f653ad70190a40db7f7551b1d3378b"
         },
         {
           "resource": "repo://packages/web-core/src/shared/dialogs/settings/settings/GeneralSettingsSection.tsx",
@@ -305,6 +305,6 @@
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-05T04:35:28.799Z"
+    "at": "2026-11-05T07:15:08.684Z"
   }
 }

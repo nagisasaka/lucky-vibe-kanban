@@ -37,7 +37,7 @@ sources:
 generated: { by: "codex", at: "2026-11-04T20:35:55.356Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-05T04:35:28.799Z
+    at: 2026-11-05T07:15:08.684Z
 ---
 
 # Workflow の実行と耐久オーケストレーション

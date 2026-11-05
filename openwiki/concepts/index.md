@@ -6,6 +6,7 @@
 - [自動マージの選択・検証・公開](formal-integration.md) - local Board で採用した Card と Workspace の変更を固定し、固定候補を受付時の検証方針に従って公開する契約。予約、取消、条件付き Done、Wiki と回復の境界。
 - [Issue のコメント・レビュー・添付・通知](issue-collaboration.md) - Issue の共有レビューと通常コメントの来歴、対象 revision、再送・全文読取・編集の契約、および購読・添付・通知との境界。
 - [Organization・Member・Invitation](organization-and-membership.md) - 固定Organizationと認証actor、承認制メンバー、過去の所有者IDを区別する。
+- [Pet の形式・安全な取込・保存と帰属](pets.md) - Kanban と Workspace に共通の装飾Pet、v1/v2 atlas互換、ZIP取込と添付保持、帰属および検証の限界を説明する。
 - [Project・Issue と実施の関係](project-and-issue.md) - ボード上の仕事と実行環境を結ぶ Project・Issue の意味、ローカル保存、旧 Task との境界。
 - [Astra 廃止と共有機能の移行境界](project-chat.md) - 内蔵 Project Chat の廃止、専用履歴を削除する migration、外部 MCP と Workspace 質問回答に残る契約を説明する。
 - [Project Todo の共有メモ](project-todos.md) - Project に保存する Todo と Issue・実行の違い、Web と二つの MCP の共有データ、競合・再送・表示の契約。

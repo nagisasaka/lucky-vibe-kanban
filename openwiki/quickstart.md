@@ -62,10 +62,14 @@ sources:
     resource: repo://packages/local-web/src/app/entry/Bootstrap.tsx
   - id: openwiki-source-8e332afc7e2a06fab23f3226
     resource: repo://packages/ui/src/components/FileTagTypeaheadPlugin.tsx
+  - id: openwiki-source-cbfe71b82135aa5496989f7e
+    resource: repo://packages/web-core/src/features/pets/SidebarPet.tsx
   - id: openwiki-source-ddf0f7c06298de76526a4f7c
     resource: repo://packages/web-core/src/features/pipeline/model/cardContext.ts
   - id: openwiki-source-5b956d3d9d7f17c236d42ebb
     resource: repo://packages/web-core/src/pages/kanban/ProjectUtilities.tsx
+  - id: openwiki-source-235a3eb75f22fdecdbd66a8f
+    resource: repo://packages/web-core/src/shared/components/EnvironmentPanel.tsx
   - id: openwiki-source-867b74d482ff6cc365176503
     resource: repo://packages/web-core/src/shared/components/TerminalSection.tsx
   - id: openwiki-source-7e0da77c31130e66a4b635a5
@@ -78,10 +82,10 @@ sources:
     resource: repo://packages/web-core/src/shared/providers/TerminalProvider.tsx
   - id: openwiki-source-23775c3de52f3ab95a13cb8b
     resource: repo://README.md
-generated: { by: "codex", at: "2026-11-05T04:35:28.799Z" }
+generated: { by: "codex", at: "2026-11-05T07:15:08.684Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-05T04:35:28.799Z
+    at: 2026-11-05T07:15:08.684Z
 ---
 
 # クイックスタートと調査案内
@@ -108,6 +112,7 @@ lucky-vibe-kanban（LVK）は、Issue で仕事を整理し、Workspace 内で c
 | local Board の identity と Organization は何か | [Organization・Member・Invitation](concepts/organization-and-membership.md)。固定Organization、承認制メンバー、現在actorと過去ownerの区別 |
 | LVKへ入る認証と設定の寿命は何か | [サーバー認証・設定・セッション](concepts/server-access.md)。Local/Public、初回setup、Basic/Auth0切替、失効、内部agentと回復 |
 | 何を作るか、誰の仕事か、status や親子関係は何か | [Project・Issue](concepts/project-and-issue.md)。ボード表示と共有 status の差、Workspace との link と旧 Task の違いもここ |
+| Pet の版・ZIP・保存・帰属を調べる | [装飾Pet](concepts/pets.md)。v1/v2、16方向視線、取込安全境界、添付保持、素材帰属、fixtureと実環境の区別 |
 | 小さな作業メモと Card の要求をどう使い分けるか | [Project Todo](concepts/project-todos.md)。Project 所属、任意の Card link、完了・削除、revision 競合と操作 receipt |
 | 設計意図と判断の変遷をどう残すか | [設計メモ](concepts/design-notes.md)。本文と独立追記、初版・復元、出典、競合、MCPの固定版読取、Project削除後の保持 |
 | Issue の担当者・コメント・file 参照はどう保存するか | [Issue の共同作業](concepts/issue-collaboration.md)。共有レビューの来歴・対象版・全文読取、local コメント・reaction・follower と通知の実装範囲 |
@@ -338,3 +343,9 @@ LOCAL-281/282の固定sourceを同じ候補へ競合なく統合した。TODOの
 Kanban / Workspace の右サイドバーは共通環境 panel とファイル・単一端末・条件付き Wiki を持つ。Kanban は登録 main repo、Workspace は作業 worktree を対象にし、本文を既存分割ペインで読む。端末項目の明示折畳みは所有 process を終了するが、sidebar 非表示は停止意思ではない。exit/検出した通信断では無言で折畳み、自動再生成しない。[対象・寿命・検出限界](operations/workspace-inspection.md#kanban-の-main-と-workspace-の対象を区別する)
 
 実行承認の対象・引数・一回限り scope は承認 UI 内で確認する。外部 MCP の読取は `get_question(kind=approval)`、明示判断は read/write の外部認証済み member に限定した `decide_execution_approval`、読戻しは `get_execution_approval` を使う。内部 Agent の自己承認、仕様回答、恒久許可、自動マージ公開へ転用しない。[認可・receipt・判断確定の境界](integrations/remote-access.md#実行承認を読み単発の判断を送る)
+
+### LOCAL-300 の製品UI・Pet統合
+
+今回の保守はコード検証SHA `7bcd5db39419d50ad265592e288264c63906e1da` の製品候補を対象にする。[Pet仕様と安全境界](concepts/pets.md)、[ホスト表示名と設定導線](architecture/web-and-sync.md#ホスト表示名と設定導線)、[利用枠の共通表示](architecture/web-and-sync.md#codex--claude-のアカウント利用枠)、[ファイルとterminalの対象](operations/workspace-inspection.md#terminal-と-editor)を入口とする。docs/は復活させず、Rabbitの製品LICENSE/ATTRIBUTIONを保持する。Agentation試験はpreview2側の開発用途に残し、製品候補の導入・依存・lockfile・専用テストを除外した。元Workspace、DevServer、DB、認証と注釈データは変更していない。
+
+候補で重点unit/browser、型・i18n・対象lint、production build、Rustの表示名/旧scratch/Pet添付保持とClippyを確認した。全workspace反復は担当判断で省略し、公開認証後画面・実Auth0/provider・ユーザー実物v2画像は未検証である。source開発時検証、今回のコード検証、Wiki完了とhostによるmain反映をそれぞれ区別する。今回のClaim照合は変更された参照を持つ関連ページに限定し、無関係なWiki全体の再検証ではない。

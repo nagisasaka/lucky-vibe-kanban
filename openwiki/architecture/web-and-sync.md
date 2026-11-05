@@ -10,6 +10,10 @@ sources:
     resource: repo://crates/db/src/models/agent_runtime.rs
   - id: openwiki-source-788fa2f6f1a3d449a1a9efe4
     resource: repo://crates/local-deployment/src/agent_run_port.rs
+  - id: openwiki-source-7083ce2acf66599ca4b7a3c8
+    resource: repo://crates/server/src/host_display_name.rs
+  - id: openwiki-source-71f837a8aa36443ad9688945
+    resource: repo://crates/server/src/remote_mcp/mod.rs
   - id: openwiki-source-162bcfe1ee47c1047ccf7d52
     resource: repo://crates/server/src/routes/agent_runs.rs
   - id: openwiki-source-4f90d37fb90b7f5198b7b293
@@ -138,6 +142,8 @@ sources:
     resource: repo://packages/web-core/src/shared/components/CreateChatBoxContainer.tsx
   - id: openwiki-source-235a3eb75f22fdecdbd66a8f
     resource: repo://packages/web-core/src/shared/components/EnvironmentPanel.tsx
+  - id: openwiki-source-44823e238660c0c3c02d5a53
+    resource: repo://packages/web-core/src/shared/components/EnvironmentQuota.tsx
   - id: openwiki-source-a7cac6e6f3abafbcf9390ddf
     resource: repo://packages/web-core/src/shared/components/RouteLoadState.tsx
   - id: openwiki-source-867b74d482ff6cc365176503
@@ -236,10 +242,10 @@ sources:
     resource: repo://tests/workspace-navigation/run-isolated.py
   - id: openwiki-source-b87e3253bd1458a0091f8587
     resource: repo://tests/workspace-navigation/workspace-navigation.spec.ts
-generated: { by: "codex", at: "2026-11-05T04:35:28.799Z" }
+generated: { by: "codex", at: "2026-11-05T07:15:08.684Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-05T04:35:28.799Z
+    at: 2026-11-05T07:15:08.684Z
 ---
 
 # Web の実行環境と同期
@@ -288,7 +294,7 @@ stars はブラウザーから GitHub API を直接 `cache: 'no-store'` で読�
 
 ### 両ビューの共通右サイドバーと環境情報
 
-Kanban と Workspace は `UtilitySidebar` の最上部に折りたたまない `EnvironmentPanel` を置く。ヘッダーから CPU/RAM/DISK とアカウント利用枠を移し、サイドバーを閉じてもヘッダーへ戻さない。クローバー領域は将来の Pet 用プレイスホルダーである。[共通 panel](../../packages/web-core/src/shared/components/EnvironmentPanel.tsx)・[sidebar](../../packages/web-core/src/shared/components/UtilitySidebar.tsx)
+Kanban と Workspace は `UtilitySidebar` の最上部に折りたたまない `EnvironmentPanel` を置く。ヘッダーから CPU/RAM/DISK とアカウント利用枠を移し、サイドバーを閉じてもヘッダーへ戻さない。最上部には80pxの装飾Petを表示し、ホスト表示タイトルと鉛筆は全体設定の「ホストとペット」を開く。別の Pet 展開行はない。[Pet の形式・取込・保存と帰属](../concepts/pets.md)を参照する。[共通 panel](../../packages/web-core/src/shared/components/EnvironmentPanel.tsx)・[sidebar](../../packages/web-core/src/shared/components/UtilitySidebar.tsx)
 
 認証付き HTTP の資源観測は MCP と同じ collector を使い、visible 時15秒周期で取得する。失敗・非表示・45秒以上古い値は未知にし、RAM は available 基準、CPU/RAM/SWAP は Linux 可視共有値、DISK は worktree 配置先 filesystem と明示する。DISK は一件の known worktree_base の正の total、0以上total以下の used、有効 percent と比率の整合性を検査し、不整合なら三値を未知にする。他の正常項目は保持する。現 panel の容量表示は GiB/MiB、色は70/80%が境界である。[値の検査](../../packages/ui/src/lib/resourceObservation.ts)・[collector 接続](../../crates/server/src/routes/resource_observation.rs)
 
@@ -302,7 +308,17 @@ Kanban と Workspace は `UtilitySidebar` の最上部に折りたたまない `
 
 代表は API が返す既定 bucket のみで、追加 bucket を合算せず同じ limitId を除外する。既定 bucket がなければ代表値は不明。健全な usedPercent から `100 − usedPercent` を計算し、既定 bucket の存在する window がすべて既知の場合だけその最小値を代表にする。期間は実際の分数を分・時間・日に変換し、5時間/週に固定しない。欠損、不正値、取得失敗、非対応、10分以上古い観測、reset 経過は0/100%に補完せず未知表示となる。unlimited credits は通常枠と分ける。[表示モデル](../../packages/ui/src/lib/codexQuota.ts)
 
-`tests/codex-quota/model.test.mjs` は境界値を、`browser.mjs` は320/390/768/1280px、popover の操作、bucket、英日、dark、非表示時抑制・手動更新・5分周期を検証する。これらは隔離 component/API fixture であり、実認証・実アカウント・物理スマホの互換性証明ではない。[試験](../../tests/codex-quota/browser.mjs)・[fixture の境界](../../tests/codex-quota/README.md)
+主表示は両providerで「利用枠の残り」と「リセットまで」を二列に揃える。集計期間の行と詳細リンク・展開内容は削除済みで、複数windowは番号で区別する。null/非objectのwindowは表示せず、存在する空objectは未知の枠として残す。期間の変換は上記モデル内の情報であり、期間欠落を枠の不存在と扱わない。取得時刻は observedAt から「たった今」「○分前」「○時間前」を出し、未来・欠損・不正値は不明にする。stale/error等の状態は相対時刻と併記する。[共通描画](../../packages/web-core/src/shared/components/EnvironmentQuota.tsx)・[windowの存在判定](../../packages/ui/src/lib/codexQuota.ts)
+
+`tests/codex-quota/model.test.mjs` は境界値を、`browser.mjs` は狭幅280/300pxの英日・明暗・複数枠・null/期間欠落・相対時刻・状態保持・更新周期を検証する。これらは隔離component/API fixtureであり、実認証・実アカウント・物理スマホの互換性証明ではない。[試験](../../tests/codex-quota/browser.mjs)
+
+### ホスト表示名と設定導線
+
+タイトルは `host_display_name`、未設定なら実hostnameを使う。「ホストとペット」で表示名を保存し、Petの選択・表示・取込は即時保存として維持する。実hostname、container判定、Session数、最終確認等は同じ設定画面で確認する。表示名はOS/Docker/接続identityを変えず、同じinstanceの利用者が共有する。[設定](../../packages/web-core/src/shared/dialogs/settings/settings/HostPetSettingsSection.tsx)・[入口](../../packages/web-core/src/shared/components/EnvironmentPanel.tsx)
+
+認証済みの `GET/PUT /api/host-display-name` は instance asset directory の `host-display-name.json` を読み書きし、PUTには共通のCSRF境界が適用される。前後空白を除去し、空値はnull、80文字超・制御文字・bidi制御は拒否する。一時siblingへの書込とrenameでJSONを置換し、読取/保存失敗を正常値に偽装しない。環境APIとMCP `get_connection` に表示名を追加するが、MCPの既存応答fieldは維持し、実hostnameと `host_display_name_available` を独立して返す。[保存と正規化](../../crates/server/src/host_display_name.rs)・[HTTP境界](../../crates/server/src/routes/resource_observation.rs#L180-L249)・[MCP](../../crates/server/src/remote_mcp/mod.rs#L538-L541)
+
+ホスト設定は `node tests/host-pet/browser.mjs`、Rustの `host_display_name` filterで保存/分離/認証/CSRF/互換を確認する。設定・ログインの見た目と操作は `tests/settings-redesign` のfixtureを使う。今回の候補 `7bcd5db39419d50ad265592e288264c63906e1da` は型・i18n・重点unit/browser・production buildと対象Rust/Clippyを実行した。全workspace試験と公開認証後画面・実Auth0/provider・ユーザー実物v2画像は未検証で、source開発時の実API証拠とは区別する。Agentationのpreview2試験はこの製品候補から依存・呼出し・lockfile・専用試験を除外し、元previewや注釈データは変更していない。
 
 ### 稼働バイナリのビルド情報を表示する
 
@@ -340,7 +356,7 @@ Workspace 一覧の検索は、ローカル一覧に `UserProvider` の既存関
 
 ## 認証が製品画面より先に確定する
 
-Bootstrap は `installAccessFetch` を登録し、`ServerAccessGate` 内に App を置く。gate が access status を取得して本人IDを設定してから製品の providers を mount する。認証不成立や初期設定中は製品画面を表示しない。[初期化順](../../packages/local-web/src/app/entry/Bootstrap.tsx#L45-L68)、[gate](../../packages/local-web/src/app/auth/ServerAccessGate.tsx#L88-L148)
+Bootstrap は `installAccessFetch` を登録し、`ServerAccessGate` 内に App を置く。Appはlazy importで、認証前には製品router/画面一式を読み込まない。CSSはBootstrapで読み、router依存のSentry初期化はApp moduleへ移しているため認証前の収集範囲は従来と異なる。gate が access status を取得して本人IDを設定してから製品の providers を mount する。認証不成立や初期設定中は製品画面を表示しない。[初期化順](../../packages/local-web/src/app/entry/Bootstrap.tsx#L45-L68)、[gate](../../packages/local-web/src/app/auth/ServerAccessGate.tsx#L88-L148)
 
 fetch wrapper は同じ origin の `/api/` への変更要求だけに CSRF を補う。業務APIの401/423では状態再取得イベントを送り、外部URLへCSRFを転送しない。これはWebの接続補助で、backendが最終認証を行う。セッション・失効・配置の詳細は [共通認証](../concepts/server-access.md)、歴史的ownerと現在actorの区別は [メンバー](../concepts/organization-and-membership.md)を参照する。[wrapper](../../packages/local-web/src/app/auth/serverAccess.ts#L17-L74)
 

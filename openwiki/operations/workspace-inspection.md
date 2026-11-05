@@ -132,6 +132,8 @@ sources:
     resource: repo://packages/web-core/src/shared/hooks/useWorkspaces.ts
   - id: openwiki-source-ea8e692dfd4142379f167b66
     resource: repo://packages/web-core/src/shared/lib/externalEditors.ts
+  - id: openwiki-source-4fb8a1b1995ea82c4cf31ea2
+    resource: repo://packages/web-core/src/shared/lib/mainTerminalRepo.ts
   - id: openwiki-source-09147e83e2e70cb032ece9e7
     resource: repo://packages/web-core/src/shared/providers/TerminalProvider.tsx
   - id: openwiki-source-3b6f5885b9d50925c82267dd
@@ -146,16 +148,18 @@ sources:
     resource: repo://tests/chat/file-links.native.mjs
   - id: openwiki-source-d70e2f551bdb141bf2cd79a6
     resource: repo://tests/chat/mobile-navigation.native.mjs
+  - id: openwiki-source-f806f5d600e6f619c7c88371
+    resource: repo://tests/pets/integration.mjs
   - id: openwiki-source-be2dcdcefb33abee0a49e75a
     resource: repo://tests/server-access/preview-static.mjs
   - id: openwiki-source-c6d955097c4a7a9e7b1873ee
     resource: repo://tests/server/specs/workspace-search.spec.ts
   - id: openwiki-source-dcac74ef871fd02e6315fa93
     resource: repo://tests/workflow/specs/diff-tree.spec.ts
-generated: { by: "codex", at: "2026-11-04T20:22:03.096Z" }
+generated: { by: "codex", at: "2026-11-05T07:15:08.684Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-05T04:35:28.799Z
+    at: 2026-11-05T07:15:08.684Z
 ---
 
 # ファイル・差分・プレビュー・端末の境界
@@ -332,6 +336,11 @@ Dev server の稼働だけではチャット送信をブロックしない。専
 Wiki は対象 repo の OpenWiki が有効な場合だけ入口を表示し、展開しても Git/端末等を消さない。main snapshot の source は main_repository、Workspace は既存の未公開変更を含む snapshot である。再読込は生成/Sync の開始ではない。[Wiki provider](../../packages/web-core/src/features/wiki/ui/WorkspaceWikiProvider.tsx)・[main snapshot](../../crates/server/src/routes/project_utilities.rs)
 
 ## Terminal と editor
+
+Kanbanのファイル見出しは「ファイル」で、file-treeの複数repository選択とmain repoの詳細表示は維持する。terminal専用のrepository selectorとそのmenu領域は削除済みで、API順で最初の有効pathを持つmain repo rootを既定cwdにする。取得error・空一覧・空pathしかない場合はterminalを無効表示し、暗黙cwdでshellを起動しない。mountやrepo表示だけでは開始しない。Kanban右panelの重複した「閉じる」ボタンも削除し、既存のpreview × は残る。[既定rootの規則](../../packages/web-core/src/shared/lib/mainTerminalRepo.ts)・[ファイルとterminalの配置](../../packages/web-core/src/pages/kanban/ProjectUtilities.tsx)・[既存×の開閉試験](../../tests/kanban/utility-close.mjs)
+
+最上部の装飾Petとタイトル/鉛筆の設定導線は [Petの形式・保存・帰属](../concepts/pets.md) を参照する。これらの変更のfixture検証は実PTYや公開認証後画面の確認を意味しない。
+
 
 端末は両ビューで単一。Workspace は interactive 用途・非archive・非削除を要求し、Repo が一つならその worktree、複数なら Workspace root を初期 cwd とする。Kanban は登録 main repo を起動前に選び、稼働中は対象を固定する。input/output は base64、resize は別 command で、会話 Session の resume ではない。[route](../../crates/server/src/routes/terminal.rs)・[main 選択](../../packages/web-core/src/pages/kanban/ProjectUtilities.tsx)
 

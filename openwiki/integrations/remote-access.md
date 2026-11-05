@@ -24,6 +24,8 @@ sources:
     resource: repo://crates/mcp/src/task_server/tools/mod.rs
   - id: openwiki-source-28437ab4b181623345af79bc
     resource: repo://crates/mcp/src/task_server/tools/stdio_tests.rs
+  - id: openwiki-source-7083ce2acf66599ca4b7a3c8
+    resource: repo://crates/server/src/host_display_name.rs
   - id: openwiki-source-c2eaddb5c69f49c5ee934a63
     resource: repo://crates/server/src/middleware/origin.rs
   - id: openwiki-source-e1757d002aa325145a915b38
@@ -122,15 +124,17 @@ sources:
     resource: repo://crates/utils/src/reference_file.rs
   - id: openwiki-source-3ecddc0be7b037ea6ab24381
     resource: repo://packages/local-web/vite.config.ts
-generated: { by: "codex", at: "2026-11-04T20:35:55.356Z" }
+generated: { by: "codex", at: "2026-11-05T07:15:08.684Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-05T04:35:28.799Z
+    at: 2026-11-05T07:15:08.684Z
 ---
 
 # 外部アクセス・MCP・Runner の境界
 
 現行製品は local self-host の Board と Workspace を使う。旧 remote-server・PostgreSQL / Electric・Cloud AuthSession・SPAKE2 pairing・relay署名・WebRTC fallback・remote-web は撤去された。旧 token の寿命や paired-host refresh を現行の接続契約として適用しない。[現行構成](../../Cargo.toml)、[server router](../../crates/server/src/routes/mod.rs)。認証付き外部 MCP と execution bridge は別の機能として残る。
+
+`get_connection` は旧field（server、permissions、automatic_notifications、monitoring）を保持し、instanceの `host_display_name`、実 `hostname`、`host_display_name_available` を独立fieldとして追加する。表示名は装飾用で認証や接続先identityを変えない。未設定と読取不能は可用性fieldで区別する。表示名保存は認証済みWeb APIの責任で、この読取toolは保存操作ではない。[metadata追加](../../crates/server/src/host_display_name.rs#L79-L103)・[dispatch](../../crates/server/src/remote_mcp/mod.rs#L538-L541)・[ホストとPet](../architecture/web-and-sync.md#ホスト表示名と設定導線)
 
 ## UI の直接アクセス
 

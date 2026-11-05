@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:0e67e22f4c0b540353991d7aec960e4c90c281e3a4504f7671cf934db7e2401a",
+  "pageVersion": "sha256:980ae7011682f87d8079cd359ca0a2a12938a05636992c7abea5fccbd2a3f6ad",
   "claims": [
     {
       "id": "claim_edf1b78d3c7a4d978a6d8debcee4edd2",
@@ -31,8 +31,8 @@
           "version": "repo-lines-v1:sha256:b3b19b1261de55d1d6d7273e764d4c957158a9b61a3cabcaa060b43028e9580b:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdkNDM1N2NiNDRkNTI0NTA4YzQ0OWJjZmVjMDg3NDZhNjg1NzY0Y2VlZmIzYTI5MmIxNzRhYjQ5NTA3ODI1ZTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk5OTdiZmY3ZmMwZjNlNWNmYmRmNWRkNDdlNTVjYzdkY2ZhMTE5OGMzYWZhNmJlOWZmMzNkNGIxMzUyNWQ1NjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjU0NWZkNjk2NWViODdhY2UwOTI4Yjk5MWFiNjk3NDI0ZDVmYjhhYzZmOWRlZWJjNDM3YjJiZmFlYTIwZDcxYWMifQ"
         },
         {
-          "resource": "repo://packages/local-web/src/app/entry/Bootstrap.tsx#L45-L67",
-          "version": "repo-lines-v1:sha256:a55acdc39099224be45c3477739d617283190a891bbd68aa2338a3d8da395149:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFiNjRkZTg1ZTEzZWFhMDhjY2JjMzdhMDc2YjZiMGMxYjNiYzM5OTY4NDAyZTBiN2Y5YWYxNjE5ODE2MGUxMjIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgwNWUxMjBjMGE0MGE2NDNmMDMyMjNhMjg4OTM3YTRlYTQwYWUwZjAzYzViNjFkNDg2ZTY4Y2Y1Nzc0MDFjZTkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjA5NGZjMGMxNzNkMWVjM2ZjNTAxZDdkZmE5Mjg1NTAxYzUyN2NmYjQ3MTI1ODNkYTNjYzM2MTgwNTY2YjRiZTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQ5OTY3ZWMxZWQzODM2ZjhlYjE3YWZmMTcyYjViZmVmN2RlNjA0ODVhNDM5YzZjYTExYzU5MWUxNzU1NzM5YWUifQ"
+          "resource": "repo://packages/local-web/src/app/entry/Bootstrap.tsx#L36-L66",
+          "version": "repo-lines-v1:sha256:afbeb29d815e5a41793b21f5154bc9306bc9d29045cc57d1ba14a286d06cc401:eyJzZWxlY3RlZExpbmVDb3VudCI6MzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFiNjRkZTg1ZTEzZWFhMDhjY2JjMzdhMDc2YjZiMGMxYjNiYzM5OTY4NDAyZTBiN2Y5YWYxNjE5ODE2MGUxMjIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgwNWUxMjBjMGE0MGE2NDNmMDMyMjNhMjg4OTM3YTRlYTQwYWUwZjAzYzViNjFkNDg2ZTY4Y2Y1Nzc0MDFjZTkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjA5NGZjMGMxNzNkMWVjM2ZjNTAxZDdkZmE5Mjg1NTAxYzUyN2NmYjQ3MTI1ODNkYTNjYzM2MTgwNTY2YjRiZTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQ5OTY3ZWMxZWQzODM2ZjhlYjE3YWZmMTcyYjViZmVmN2RlNjA0ODVhNDM5YzZjYTExYzU5MWUxNzU1NzM5YWUifQ"
         },
         {
           "resource": "repo://packages/web-core/src/shared/lib/localIdentity.ts",
@@ -118,7 +118,7 @@
         },
         {
           "resource": "repo://crates/server/src/remote_mcp/mod.rs",
-          "version": "repo-file-v1:sha256:130e1a6c6990766a97fa1899d81c91a259f759ea41efadcb5a4b902874fa7c9d"
+          "version": "repo-file-v1:sha256:67cac8ff9c8596f81d5b2f786c3f81b800750b500d8807b6f1f4435e9b62ec7b"
         },
         {
           "resource": "repo://crates/server/src/routes/sessions/questions.rs",
@@ -250,7 +250,7 @@
       "evidence": [
         {
           "resource": "repo://packages/web-core/src/pages/kanban/ProjectUtilities.tsx",
-          "version": "repo-file-v1:sha256:5ee4e729725b88c6aa5ebcc39da9a5628f879bf4291465bc0fbfde1eb4fe596c"
+          "version": "repo-file-v1:sha256:2a1a84fcf0c68a5ae838b58e7872a450122ed92f5c1b7906cc5f1b44866941c5"
         },
         {
           "resource": "repo://packages/web-core/src/shared/components/TerminalSection.tsx",
@@ -271,10 +271,24 @@
           "version": "repo-lines-v1:sha256:4454bde15c7f429d97b8d51c7c38305ed2c7e238f13593a01ad4d642d8cbe8dd:eyJzZWxlY3RlZExpbmVDb3VudCI6MTY4LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI5MWYzNTk1NTkwOGRkMmExMjQ4ODJiNWFiMTRkZWY5YWQzM2M1NTZhMDY3Y2YxYTAzMzhlYmJlYjM3ODVkNGM3IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIwNzVkYmVjMmU3NjdjYzMyMTg1NTY5ZjVlNWZkMzE2MWExMGNmZjE1ZWQyYmUxYTVmOGYwYzc1ZDRjY2U5NTM1IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MCwicHJlY2VkaW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiIwMDFhYzkwZGI0MjNiN2FkNTRmMGRjNzZlODEyYzRkOGU4MTNhNmRiOTY1ODNhYzM5ZDEyMjU5MWI5MWFhNzM4In0"
         }
       ]
+    },
+    {
+      "id": "claim_152e78e7fc00431e95a24a698df2bda3",
+      "statement": "Pet形式・ZIP安全・保存と帰属の正本はconcepts/petsで、両sidebarのhost-pet設定に接続する。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/features/pets/SidebarPet.tsx#L17-L39",
+          "version": "repo-lines-v1:sha256:f46e4fedd6b46177f8ca6e8bb210e8bd2f3db9d1062408dea65da449bb17adf4:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVkMzY4MGViNTlkOGUxMTNmOWI0NThjY2MyNzgwZDg2NDM5NjRmZmU1Nzk5NzNhYjZiMWIzYTFiOGQ4NmJiMjYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZkN2Y3MzI1YzQ0ZjBiZDQ0OGU2Mzc0ZjEyNzk4MDJmMGVlNzMxMTc5NzUyMWMyZDk3ZmVkOTk1YzRkYTE0NmYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJmMGFhOTFjZDY5Y2QxYmFhNDI5MTdlZTY1MGFjN2Q4Y2I1N2EwNjk3NmQ1YTU3MDc5MmM1YWYxZDhlODFjMzQifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/components/EnvironmentPanel.tsx#L21-L29",
+          "version": "repo-lines-v1:sha256:cbe94044dd4aa2a0bc63fa1312f5005fdb62863ec71f2d1a5e6886ba2d10416b:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMzg1ZjZlYmFjOWVlMDE3NDVjZjUzMmQ3NTYwMjJiYmQwZmQzZWExZWIzOGFhZDU0NmQ2MzM3ZWI1MWU1YzIxMyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDJhMmNiMjVhMTIyYjQ0MjIxYTYyMzRlYzY2MGE3YjVmYjdmOWJkZTdiM2I5ZTJiM2M1NTlhMGQ5NmZhYzczOSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMzlkODM5MWE0M2I2MjZkMmU1YWFmYjgxOWNiMjhmNGFiYzcwZjVhNzExZDVhMDk1MGY3NmZlYjlmM2IzMzUxNSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMWRmYjk5MzY3NDFlM2FhMTc3NWQxOWVhMGEyOWViNThjMzc4NDI5YmJhNWQ4ZTIzMGRlYTgwMDQwMzQzZDE0ZSJ9"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-05T04:35:28.799Z"
+    "at": "2026-11-05T07:15:08.684Z"
   }
 }
