@@ -36,7 +36,7 @@ export function ProjectUtilities({
   const setExpanded = useUiPreferencesStore((s) => s.setExpanded);
   const repo = mainTerminalRepo(repos, error);
   return (
-    <UtilitySidebar>
+    <UtilitySidebar repoIds={repos.map((repo) => repo.id)}>
       {error && (
         <p role="status" className="p-base text-error">
           {t('environment.unavailable')}

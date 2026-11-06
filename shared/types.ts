@@ -4,6 +4,12 @@
 
 // If you are an AI, and you absolutely have to edit this file, please confirm with the user first.
 
+export type SharedStorageKind = "cache" | "tmp";
+
+export type SharedStorageSize = { bytes: number | null, error: string | null, };
+
+export type SharedStorageUsage = { cache: SharedStorageSize, tmp: SharedStorageSize, };
+
 export type RuntimeAccessSettings = { files_enabled: boolean, execution_enabled: boolean, file_roots: Array<string>, };
 
 export type RuntimeAccessView = { revision: number, source: string, settings: RuntimeAccessSettings, };

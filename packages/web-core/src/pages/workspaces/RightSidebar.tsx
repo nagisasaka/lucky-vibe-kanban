@@ -205,7 +205,7 @@ export const RightSidebar = memo(function RightSidebar({
   ]);
 
   return (
-    <UtilitySidebar>
+    <UtilitySidebar repoIds={repos.map((repo) => repo.id)}>
       {wiki.repositoryOptions.length > 0 && (
         <CollapsibleSectionHeader
           className="!h-auto !min-h-fit has-[>div>button[aria-expanded=true]]:flex-1"

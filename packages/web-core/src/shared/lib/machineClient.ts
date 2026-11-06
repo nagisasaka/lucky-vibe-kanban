@@ -1,3 +1,4 @@
+import type { SharedStorageUsage, SharedStorageKind } from 'shared/types';
 import { detectBrowserNotificationLanguage } from '@/i18n/config';
 import type {
   IntegrationValidationSettings,
@@ -98,6 +99,11 @@ export interface MachineClient {
   getConfig: () => Promise<UserSystemInfo>;
   saveConfig: (config: Config) => Promise<Config>;
   listRepos: () => Promise<Repo[]>;
+  getSharedStorage: (repoId: string) => Promise<SharedStorageUsage>;
+  clearSharedStorage: (
+    repoId: string,
+    kind: SharedStorageKind
+  ) => Promise<SharedStorageUsage>;
   getGithubCredentials: (repoId: string) => Promise<GithubCredentialStatus[]>;
   saveGithubCredential: (
     repoId: string,
@@ -287,6 +293,24 @@ export function createMachineClient(
     listRepos: async () =>
       handleApiResponse<Repo[]>(
         await makeMachineRequest(runtime, target, '/api/repos')
+      ),
+    getSharedStorage: async (repoId) =>
+      handleApiResponse<SharedStorageUsage>(
+        await makeMachineRequest(
+          runtime,
+          target,
+          `/api/repos/${repoId}/shared-storage`,
+          { cache: 'no-store' }
+        )
+      ),
+    clearSharedStorage: async (repoId, kind) =>
+      handleApiResponse<SharedStorageUsage>(
+        await makeMachineRequest(
+          runtime,
+          target,
+          `/api/repos/${repoId}/shared-storage/${kind}`,
+          { method: 'DELETE' }
+        )
       ),
     getGithubCredentials: async (repoId) =>
       handleApiResponse<GithubCredentialStatus[]>(
