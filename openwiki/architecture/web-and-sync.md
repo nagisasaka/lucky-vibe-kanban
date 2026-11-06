@@ -18,6 +18,8 @@ sources:
     resource: repo://crates/server/src/routes/agent_runs.rs
   - id: openwiki-source-4f90d37fb90b7f5198b7b293
     resource: repo://crates/server/src/routes/frontend.rs
+  - id: openwiki-source-1ffb01d1ba3953937e0771bf
+    resource: repo://crates/server/src/routes/local_remote.rs
   - id: openwiki-source-d8c782d4a4246db71e503283
     resource: repo://crates/server/src/routes/resource_observation.rs
   - id: openwiki-source-42c7cffe07ec2d2c0ed4cc9d
@@ -242,10 +244,10 @@ sources:
     resource: repo://tests/workspace-navigation/run-isolated.py
   - id: openwiki-source-b87e3253bd1458a0091f8587
     resource: repo://tests/workspace-navigation/workspace-navigation.spec.ts
-generated: { by: "codex", at: "2026-11-05T07:15:08.684Z" }
+generated: { by: "codex", at: "2026-11-06T03:09:15.108Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-05T07:15:08.684Z
+    at: 2026-11-06T03:09:15.108Z
 ---
 
 # Web の実行環境と同期
@@ -374,9 +376,13 @@ API の未定義 path が SPA の `index.html` を成功応答として返すと
 
 ## Issue データの読み取りと書き込み
 
-[Project・Issue](../concepts/project-and-issue.md)の collection はローカル REST snapshot を取得する。`electric/collections.ts` という名前でも Electric transport は使わない。cached snapshot を表示した後に再取得し、30秒周期でも更新する。取得エラーでは初回 Ready を解除する経路があるため、Ready は取得成功の証明ではない。[snapshot の処理](../../packages/web-core/src/shared/lib/electric/collections.ts#L295-L382)
+[Project・Issue](../concepts/project-and-issue.md)の collection はローカル REST snapshot を取得する。`electric/collections.ts` という名前でも Electric transport は使わない。通常の collection は cached snapshot を表示した後に再取得し、購読者がいる間は30秒周期でも更新する。購読者ゼロでは5分の GC 猶予中も周期取得を止め、ゼロからの再購読時に取得する。進行中の要求と明示 mutation refresh は無購読でも完了を待つ。取得エラーでは初回 Ready を解除する経路があるため、Ready は取得成功の証明ではない。[snapshot の処理](../../packages/web-core/src/shared/lib/electric/collections.ts#L289-L415)
 
 mutation は REST 成功後に cache を破棄し、進行中の古い取得を待ってから**mutation 後に開始した新しい snapshot**を待つ。これにより楽観更新を古い snapshot で巻き戻さない。txid を Electric へ渡す契約はなくなった。[refresh と mutation](../../packages/web-core/src/shared/lib/electric/collections.ts#L345-L434)・[競合回帰テスト](../../packages/web-core/src/shared/lib/electric/collections.test.ts)
+
+`pull_requests`・`pull_request_issues`・`notifications` は、table と `/v1/fallback/<table>` が完全一致する場合だけ、HTTP・周期 timer を作らず空 snapshot で Ready にする。backend の互換 endpoint も定数空である。実 PR と Web Push は別経路であり、この shortcut の対象ではない。将来互換 endpoint を非空へ変更する際はこの条件も更新する。[shortcut](../../packages/web-core/src/shared/lib/electric/collections.ts#L289-L305)・[互換 endpoint](../../crates/server/src/routes/local_remote.rs#L1652-L1689)
+
+既存の [collection 回帰](../../packages/web-core/src/shared/lib/electric/collections.test.ts#L112-L191)は無購読停止、GC 前後の復帰取得、3つの定数空 source の要求省略を扱う。316-B 統合では検証済み source と候補の tree 一致・差分検査を実行し、既存7テスト・型チェック等の再実行は省略した。ライブ認証・実 PR・承認・質問・Web Push と性能実測は未実施であり、通信削減は実装と fixture に基づく。
 
 ### コンパクト Kanban の操作と保存の境界
 

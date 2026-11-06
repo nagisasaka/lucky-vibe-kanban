@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:3709149ee52b723c31b805d6d9ea8296eef19848da70dfe9febde3fb8c427041",
+  "pageVersion": "sha256:9cd26abee7e20724851ffae3f9783230f3ff38ca1afda3ebd2171bfd767bb2cb",
   "claims": [
     {
       "id": "claim_cd547b65737e432fb2cf718c4992aa97",
@@ -37,18 +37,18 @@
       "statement": "collection mutationはREST後にcacheを破棄し、古い進行中取得の終了後に開始するsnapshot取得を待って楽観更新を収束させる。",
       "evidence": [
         {
-          "resource": "repo://packages/web-core/src/shared/lib/electric/collections.ts#L354-L443",
-          "version": "repo-lines-v1:sha256:d5e78183f79601be06da8958ef9e19bab061205c423db8f357fab9fcbb1f8520:eyJzZWxlY3RlZExpbmVDb3VudCI6OTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI0NWJiNzY0NDA2ZmI1OTRjZDNiN2UzOTdiZTBhZDUyYmIxMGUyY2M5YjYwNTBhMjg4YzlhNmI1ZDAzOGVjOGYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg1MjJhMzY1YTU1ODNkOTM4MGMxNDRlMWE3NWI3ZjMwNDI4ZTVlYTM1MGMzNGZiZTQ2OGYzM2Y0YTlmODQyNjQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjViOTY2YzQ5OGYxZmJjNDFkYzM5OTYwYWNkZjVkNzEyMDY1MzBjNDRkMjFkYTNmZWZlNTcwODE4OWRkZDI1OTQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE2YWI0NDljN2NhNTc1OWMwZGY4ZjQzNjg2ZTU5OGYzNGViNjFkZDc3YWQ1ZjBiMTk4YmQ4NmIyZDJkMDUyNzMifQ"
+          "resource": "repo://packages/web-core/src/shared/lib/electric/collections.ts#L374-L483",
+          "version": "repo-lines-v1:sha256:755213d2292e882ac29420117dfcb8c94a1bd3a27ad2ec5559635d7719f04282:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEwLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJlZmQ3YzUzYTI2MTg5MTM1NTkzMzkzM2E3N2YzNDI2Y2FhMjc2ZDljMzFiYWJmMjExYTg5OTZkOGQwMzM5Nzk0IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI4NTIyYTM2NWE1NTgzZDkzODBjMTQ0ZTFhNzViN2YzMDQyOGU1ZWEzNTBjMzRmYmU0NjhmMzNmNGE5Zjg0MjY0IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI1Yjk2NmM0OThmMWZiYzQxZGMzOTk2MGFjZGY1ZDcxMjA2NTMwYzQ0ZDIxZGEzZmVmZTU3MDgxODlkZGQyNTk0IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiIxNmFiNDQ5YzdjYTU3NTljMGRmOGY0MzY4NmU1OThmMzRlYjYxZGQ3N2FkNWYwYjE5OGJkODZiMmQyZDA1MjczIn0"
         }
       ]
     },
     {
       "id": "claim_6a98bfc73f7f4d0e9da3c9a9324bf974",
-      "statement": "collectionはローカルsnapshotを初回と30秒周期で取得し、初回取得失敗でもReadyを解除するためReadyは成功保証ではない。",
+      "statement": "通常のcollectionは初回と購読中の30秒周期でsnapshotを取得し、無購読時はGC猶予中も周期取得を止め、再購読時に取得する。初回失敗でもReadyになるため成功保証ではない。",
       "evidence": [
         {
-          "resource": "repo://packages/web-core/src/shared/lib/electric/collections.ts#L301-L391",
-          "version": "repo-lines-v1:sha256:4d0bbb15fd8ef53506a160239eb8c47fcc1efed2ff4aba9e32eab0fca01330c8:eyJzZWxlY3RlZExpbmVDb3VudCI6OTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU0N2Y2YWIzZWY4M2QxYzEwN2Q1NjBiZjFmOWI3OGM3ZGE4YWViMzI3MWY5MDllMTg0ZGJkYjA1Yzk4N2M0MWYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU2YjRlZTFlZjc5OTFhMjBhZjMwYjA4NTI4NDhhY2QxYWI5OWQ3YWMyNDBlYzFjZWM2NWEzNTMxYjE3MjE5MmEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk5OGYxMTkyMDgwOWM0NzFhNzc2OTE2NGVhY2QxNzM4MGY3YjlhMWQ2ZGNhNmZkYWIxMjhhMzU2NDRhMTFmODIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBlZjgxYzdhNjc0MmE3MTUyNjEzNTc4ZTVlOTg1MTE1YTU1MjRmNzQ4MmZmYzVlNzY4YjYyMDI0MjIzYzFjYjIifQ"
+          "resource": "repo://packages/web-core/src/shared/lib/electric/collections.ts#L307-L415",
+          "version": "repo-lines-v1:sha256:d4dc9a6ac87fe5d36f6a51b2c07c57e3a4df77ea7c60ff035e522666770daa1a:eyJzZWxlY3RlZExpbmVDb3VudCI6MTA5LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI4NDg1ODNjNzZjMTIwNTU4NjI3YWNmNmUzZGFmYjdkNjJiZDc4MGEwNWQ4MDJjYzNkMzZjYjlhOTE1YjY1ZWVmIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIwMWJhNDcxOWM4MGI2ZmU5MTFiMDkxYTdjMDUxMjRiNjRlZWVjZTk2NGUwOWMwNThlZjhmOTgwNWRhY2E1NDZiIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI3ZDlmZWRhMzc5YzRjNTI4OTQ2NzYzNTAyNzc1YTVjNzczOGNmM2EwZmU4NzIyNTg5NmQ3MDc4OTc0OWNiMmEyIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJmNzkwMDY2MzJlYjI0MTY5ODRkMjIxNDdmYmFhZWFhN2MyMTM4Y2Q0OTRjOGFlZjI1N2Y3OTk1ZWNkMTVjZmI0In0"
         }
       ]
     },
@@ -1437,10 +1437,24 @@
           "version": "repo-file-v1:sha256:b1279b45851ffc7405e278ea2ad384099454372e9e99708896cda96e3f017abf"
         }
       ]
+    },
+    {
+      "id": "claim_42e6fabcb266404a8a5baa3a0a0c7966",
+      "statement": "pull_requests・pull_request_issues・notificationsはtableと既定fallback URLが完全一致するとHTTPと周期timerなしで空snapshotを適用する。互換backendも定数空である。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/routes/local_remote.rs#L1652-L1689",
+          "version": "repo-lines-v1:sha256:b2610c76c1d646efed39ffbe2bcea988367cfc73057cfb698c0156f0cb352191:eyJzZWxlY3RlZExpbmVDb3VudCI6MzgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFkYzU2MmQwNDJiYWI0YzllYjY5ZDM0ZjE1NmQ3NTRkMDBkODBhYjAyMmJiMWU1MTE3MDNjNmZmNDBlNDE5Y2MiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjgzZTlkYWU1NDA4YzZhYWZjM2IzMGFjNzUwMGFjY2QzOTIxYTVhZmM4MjMyZWI3OWI2ZDY0MWNjOTBlODRmOTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBjYzc4MWY3ODIxYjk2Yjk4ZTcwMjM4ZDQ4OWM4NjRiMWFjYWIzOGJmZGJhMjhlMzRmMWU4NWU1NDNlNzdlN2UifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/lib/electric/collections.ts#L289-L305",
+          "version": "repo-lines-v1:sha256:f873b152536efa8501e9ddb1c41ebaeb612d7539a28f2a16384364eff757338b:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY5M2E3ZDM5NzMxZTcwMmM0ZDAyYzQ3NTFjM2Y1Mzg4ZTIyYjY5Y2NmYTk3NmZjY2ZiNjYxMGMwMmNlNmQxYjciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM5MWQwY2UyNzI1MWE3ZGMzOTc2NDgxZTMxNjdjZmZlYjFkYzc2Yzk5Zjk2MzZjYjVlMzkzMDMyY2QzZGU4ZGIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk4MmUwMThiZGMxOWZkMDZhNTQ1MTFlYTIzNTZmOTlmOWNjMTU0Y2MyNTVkNTE0ZGRmYzJkNDc3YTY1YmRkYjAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImVjZDZkMWI5ZDZkMmZkMjBmYTE3Nzg5Nzc2NzQ5NTMzM2M5YzRlZDJjYjA0NjU5M2EyYWVhODM1NGFlOTYzMWEifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-05T07:15:08.684Z"
+    "at": "2026-11-06T03:09:15.108Z"
   }
 }

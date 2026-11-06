@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:fa9835ebc66faab83c003bb6c1b080bb0cbf34668a4fb4febe5e2889d203da08",
+  "pageVersion": "sha256:4642cbb422516d63f41a6f10af94aeb7d3cb28526bc6c6a54694c6c1ae927653",
   "claims": [
     {
       "id": "claim_94623b4df5d444f5b2804c9e2c2025c7",
@@ -556,7 +556,7 @@
     },
     {
       "id": "claim_5f2734ac9e714ab68af229b8d7f3ed51",
-      "statement": "識別子関連情報がない場合も名前・branchの検索は継続し、既存snapshotは取得失敗では空に置換されず、30秒間隔の通常再取得で成功した関連情報が検索に反映される。",
+      "statement": "識別子関連情報がない場合も名前・branchの検索は継続し、既存snapshotは取得失敗では空に置換されない。購読中の30秒周期または再購読時の取得で成功した関連情報が検索に反映され、無購読中は周期取得を止める。",
       "evidence": [
         {
           "resource": "repo://packages/web-core/src/pages/workspaces/WorkspacesSidebarContainer.tsx#L438-L457",
@@ -567,12 +567,8 @@
           "version": "repo-lines-v1:sha256:10bf9cb0dea3cb1811962df438d4be5715054b6c0a445bf8dfc59581a08204bc:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNGM5NWExZDBjNDM0ZGMxYTc0ZTA1MDdkZmIwNTkyYWU3Y2YyY2Q2OTYyMGY1OTIwZDQ1MTBkOTk3YThmNWVkOCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOTVlZjAxYmMwOGRiYzNiNjNlNGU3NWVhM2QyNmE1Yjk0MTg5MTg3N2UyN2FkODkxMzI5Yzg0MTFkN2Q4ZGM0ZCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiN2Q0MDZmNmU4NmJmYWUxNTU4MGM4NjQwN2M3YmQ4YTc0Y2Y0NjhlNThlODQ1ZWI4YzAwZDI5Mjc1Yzc1ZDk3YyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjEsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNDEyY2EzNDVjY2Y3NWJmOWMwODA2YmNlNjk1YmU4ZGU4MDhiNzk5ODQyNTFhN2E1NGQyMDJjZjYxMDFkZDQ1MSJ9"
         },
         {
-          "resource": "repo://packages/web-core/src/shared/lib/electric/collections.ts#L279-L366",
-          "version": "repo-lines-v1:sha256:fd01c4f2f62941b3a9b1fdff7e87d3fe42aefabb4f96f60fb99cdd38ce266f79:eyJzZWxlY3RlZExpbmVDb3VudCI6ODgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU3ZTU5NjVmNGYzZThhODRlOTZiOTc2YzYwNjQ2Yzg2ODdiYTE3MDk0NjlkM2M2ZDYxNDc2MTM5NjZiNjA3ZGUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQyYTJjYjI1YTEyMmI0NDIyMWE2MjM0ZWM2NjBhN2I1ZmI3ZjliZGU3YjNiOWUyYjNjNTU5YTBkOTZmYWM3MzkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZkMDE5MzY4MjU5NDMzY2YxOTE5MzY0NDk0YWZkNGE4MmIxODU2YjFkNmY4YjgwZDdkZTY1NjA3YjEwNjMxMzQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijk0OTEwYWZkNzRlZGYyY2ZiZGUyMTQyZDc1M2E2NzNiNjA5MzIwZTcwOGEyNWQ3ZWFhZTc5OTY5YzIxZGVlZmIifQ"
-        },
-        {
-          "resource": "repo://packages/web-core/src/shared/lib/electric/collections.ts#L54-L54",
-          "version": "repo-lines-v1:sha256:5ee9445c4f9faca386a2f1ecacac4605e436ec31caa3f3aa32f40bbb2fe686d2:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNWVlOTQ0NWM0ZjlmYWNhMzg2YTJmMWVjYWNhYzQ2MDVlNDM2ZWMzMWNhYTNmM2FhMzJmNDBiYmIyZmU2ODZkMiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNWVlOTQ0NWM0ZjlmYWNhMzg2YTJmMWVjYWNhYzQ2MDVlNDM2ZWMzMWNhYTNmM2FhMzJmNDBiYmIyZmU2ODZkMiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMWJlNjRjYzczYWU4ZDFmZjhlZTUwMjM3ZmY4NmFhNzM1MTlhMjAzMzhhNjgwMWI0YWY2Y2FiNTRkOGE5ZDdjNyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZmQ3ZTZlZTU1M2YzYTE1ZjJjY2E3YTUzNTU2ZWYzMzQ5ZGE3YTEzMzMzMjE0NTkyY2E4NDk5NjY4NTUzYTIzYSJ9"
+          "resource": "repo://packages/web-core/src/shared/lib/electric/collections.ts#L307-L415",
+          "version": "repo-lines-v1:sha256:d4dc9a6ac87fe5d36f6a51b2c07c57e3a4df77ea7c60ff035e522666770daa1a:eyJzZWxlY3RlZExpbmVDb3VudCI6MTA5LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI4NDg1ODNjNzZjMTIwNTU4NjI3YWNmNmUzZGFmYjdkNjJiZDc4MGEwNWQ4MDJjYzNkMzZjYjlhOTE1YjY1ZWVmIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIwMWJhNDcxOWM4MGI2ZmU5MTFiMDkxYTdjMDUxMjRiNjRlZWVjZTk2NGUwOWMwNThlZjhmOTgwNWRhY2E1NDZiIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI3ZDlmZWRhMzc5YzRjNTI4OTQ2NzYzNTAyNzc1YTVjNzczOGNmM2EwZmU4NzIyNTg5NmQ3MDc4OTc0OWNiMmEyIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJmNzkwMDY2MzJlYjI0MTY5ODRkMjIxNDdmYmFhZWFhN2MyMTM4Y2Q0OTRjOGFlZjI1N2Y3OTk1ZWNkMTVjZmI0In0"
         }
       ]
     },
@@ -609,7 +605,7 @@
       "statement": "Workspace検索の回帰は比較unit、両一覧のRust SQLite fixture、専用instanceの実UI/API Chromium specで分担し、browser specは失敗から通常pollingでの回復、filter、50件境界、識別子更新を扱う。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/local_remote.rs#L4704-L4774",
+          "resource": "repo://crates/server/src/routes/local_remote.rs#L4702-L4772",
           "version": "repo-lines-v1:sha256:cf1cb807c6806e7d401ad8f3a65814e84ff37df16aaf9fd1a417125ede6325bf:eyJzZWxlY3RlZExpbmVDb3VudCI6NzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjljNmZmZWY4YjFkNGI2NDYwMzU1OWRlYmRiNDA2MTNmNzUzOThiZGRmOGEwYjRlMmUwMDRkMTU3MjI0MmY2ZTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk1OThlYmY3NjA3MzFkMTc1ZDE2OTg3MzY2MThiMDUwMjMyY2U5MmRmZGJiYzgwOWYxOGRmNzA1YWY5ZjQ1M2QiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUwZWRmNmY1ZmY2Y2QyYmUyYjQwMzY5NTU5YmE3NzRmYmVhMDUwYTY0OWY4MjYyODI1ZjUzYmZjYTY3ODVhNTciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImM5ODQ2N2Q0YzBiNTc1MWQ4MGM3NmVkZDM3OTlmYTRkMzdjNTg1NDg0NzhjODEzMmMzOGRlYjE3N2VlYTRmMDYifQ"
         },
         {
@@ -835,6 +831,6 @@
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-04T20:22:03.096Z"
+    "at": "2026-11-06T03:09:15.108Z"
   }
 }

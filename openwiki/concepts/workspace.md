@@ -124,10 +124,10 @@ sources:
     resource: repo://scripts/dev-cargo.mjs
   - id: openwiki-source-c6d955097c4a7a9e7b1873ee
     resource: repo://tests/server/specs/workspace-search.spec.ts
-generated: { by: "codex", at: "2026-11-04T20:22:03.096Z" }
+generated: { by: "codex", at: "2026-11-06T03:09:15.108Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-04T20:22:03.096Z
+    at: 2026-11-06T03:09:15.108Z
 ---
 
 # Workspace と Repository
@@ -224,7 +224,7 @@ Workspace sidebar の検索は作業環境を探すための表示絞り込み�
 
 識別子の正本は `local_issues.simple_id`。既存の user / project Workspace 関連情報 API が `workspaces` → `local_workspace_links` → `local_issues` の JOIN から毎回取得し、API 型は nullable な `issue_simple_id` を持つ。未リンク Workspace はこの関連情報一覧に入らないが、通常のローカル Workspace 一覧から消えるわけではない。sidebar は既存 `UserProvider` の関連情報を `local_workspace_id` で重ねる。検索のために全 Issue を別取得したり Workspace ごとに問い合わせたりしない。[取得と JOIN](../../crates/server/src/routes/local_remote.rs#L1170-L1237)・[API 型](../../crates/api-types/src/workspace.rs#L6-L22)・[結合](../../packages/web-core/src/pages/workspaces/WorkspacesSidebarContainer.tsx#L306-L333)
 
-関連情報の初回未取得・取得失敗・識別子欠落では、利用可能な名前・branch の照合を続ける。識別子で見つからないことを Issue 未関連の証明にはしない。既存 snapshot は取得失敗で空に置き換えられず、既報の関連情報が残る場合もある。通常の30秒間隔の再取得で成功した snapshot が届くと照合結果を更新する。これは厳密な反映期限ではなく、ローカル一覧と関連情報の原子的 snapshot でもない。[取得・失敗・再取得](../../packages/web-core/src/shared/lib/electric/collections.ts#L275-L357)・[周期](../../packages/web-core/src/shared/lib/electric/collections.ts#L53-L53)・[fallback 比較](../../packages/web-core/src/pages/workspaces/workspaceSearch.ts#L6-L11)。同期経路の全体は [Web の snapshot 同期](../architecture/web-and-sync.md#issue-データの読み取りと書き込み)を参照する。
+関連情報の初回未取得・取得失敗・識別子欠落では、利用可能な名前・branch の照合を続ける。識別子で見つからないことを Issue 未関連の証明にはしない。既存 snapshot は取得失敗で空に置き換えられず、既報の関連情報が残る場合もある。購読中は通常30秒間隔の再取得で成功した snapshot が届くと照合結果を更新する。無購読時は周期取得を停止し、再購読時に取得する。これは厳密な反映期限ではなく、ローカル一覧と関連情報の原子的 snapshot でもない。[取得・失敗・再取得](../../packages/web-core/src/shared/lib/electric/collections.ts#L307-L415)・[周期](../../packages/web-core/src/shared/lib/electric/collections.ts#L53-L53)・[fallback 比較](../../packages/web-core/src/pages/workspaces/workspaceSearch.ts#L6-L11)。同期経路の全体は [Web の snapshot 同期](../architecture/web-and-sync.md#issue-データの読み取りと書き込み)を参照する。
 
 Project / PR filter を先に適用し、Active / Archived の区分を保ったまま検索する。空白だけの入力は検索なしで、通常は50件ずつ表示する。検索中は取得済み一覧の一致分を表示件数で切らずに示すため、通常の最初の50件にない Workspace も見つかる。権限を拡張する検索ではなく、user 関連情報 API は明示された別 user ID に空一覧を返す既存境界を持つ。[filter と検索](../../packages/web-core/src/pages/workspaces/WorkspacesSidebarContainer.tsx#L400-L495)・[表示件数](../../packages/web-core/src/pages/workspaces/WorkspacesSidebarContainer.tsx#L541-L567)・[ページ単位](../../packages/web-core/src/pages/workspaces/WorkspacesSidebarContainer.tsx#L62-L62)・[API の対象境界](../../crates/server/src/routes/local_remote.rs#L1464-L1489)。探し方は [対象 Workspace の確認](../operations/workspace-inspection.md#issue-番号から-workspace-を探す)へ進む。
 
