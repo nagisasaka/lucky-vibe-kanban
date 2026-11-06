@@ -185,7 +185,18 @@ export function useWorkspaces(): UseWorkspacesResult {
       queryFn: () => fetchWorkspaceSummariesByArchived(true, hostId),
       enabled: archivedIsInitialized,
       staleTime: 1000,
-      refetchInterval: 15000,
+      refetchInterval: (query) => {
+        // Keep known execution/approval activity fresh, including metadata that
+        // arrived before the next summary. A stale positive is conservative.
+        const needsFastRefresh =
+          Object.values(archivedData?.workspaces ?? {}).some(
+            (workspace) => workspace.is_running
+          ) ||
+          Array.from(query.state.data?.values() ?? []).some(
+            (summary) => summary.is_running || summary.has_pending_approval
+          );
+        return needsFastRefresh ? 15000 : 60000;
+      },
       refetchOnWindowFocus: false,
       refetchOnMount: 'always',
       placeholderData: keepPreviousData,

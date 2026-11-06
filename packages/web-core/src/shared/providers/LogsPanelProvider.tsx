@@ -6,6 +6,8 @@ import {
   useRef,
   type ReactNode,
 } from 'react';
+import { useHostId } from '@/shared/providers/HostIdProvider';
+import { useLogStream } from '@/shared/hooks/useLogStream';
 import type { LogsPanelContent } from '@/shared/types/actions';
 import {
   useWorkspacePanelState,
@@ -28,8 +30,29 @@ export function LogsPanelProvider({ children }: LogsPanelProviderProps) {
   );
   const rightMainPanelModeRef = useRef(rightMainPanelMode);
   rightMainPanelModeRef.current = rightMainPanelMode;
-  const [logsPanelContent, setLogsPanelContent] =
-    useState<LogsPanelContent | null>(null);
+  const hostId = useHostId();
+  const scope = JSON.stringify([hostId, workspaceId, isCreateMode]);
+  const [selection, setSelection] = useState<{
+    scope: string;
+    content: LogsPanelContent | null;
+  }>({ scope, content: null });
+  const logsPanelContent = selection.scope === scope ? selection.content : null;
+  const setLogsPanelContent = useCallback(
+    (content: LogsPanelContent | null) => setSelection({ scope, content }),
+    [scope]
+  );
+  useEffect(() => {
+    setSelection((previous) =>
+      previous.scope === scope ? previous : { scope, content: null }
+    );
+  }, [scope]);
+  const processId =
+    rightMainPanelMode === RIGHT_MAIN_PANEL_MODES.LOGS &&
+    logsPanelContent?.type === 'process'
+      ? logsPanelContent.processId
+      : '';
+  const { logs: processLogs, error: processLogsError } =
+    useLogStream(processId);
   const [logSearchQuery, setLogSearchQuery] = useState('');
   const [logMatchIndices, setLogMatchIndices] = useState<number[]>([]);
   const [logCurrentMatchIdx, setLogCurrentMatchIdx] = useState(0);
@@ -46,7 +69,8 @@ export function LogsPanelProvider({ children }: LogsPanelProviderProps) {
   useEffect(() => {
     setLogSearchQuery('');
     setLogCurrentMatchIdx(0);
-  }, [logContentId]);
+    setLogMatchIndices([]);
+  }, [logContentId, scope]);
 
   useEffect(() => {
     setLogCurrentMatchIdx(0);
@@ -60,7 +84,7 @@ export function LogsPanelProvider({ children }: LogsPanelProviderProps) {
     ) {
       setLogsPanelContent(null);
     }
-  }, [rightMainPanelMode, isTerminalExpanded]);
+  }, [rightMainPanelMode, isTerminalExpanded, setLogsPanelContent]);
 
   const handleLogPrevMatch = useCallback(() => {
     if (logMatchIndices.length === 0) return;
@@ -83,7 +107,7 @@ export function LogsPanelProvider({ children }: LogsPanelProviderProps) {
       }
       setLogsPanelContent({ type: 'process', processId });
     },
-    [setRightMainPanelMode]
+    [setRightMainPanelMode, setLogsPanelContent]
   );
 
   const viewToolContentInPanel = useCallback(
@@ -93,7 +117,7 @@ export function LogsPanelProvider({ children }: LogsPanelProviderProps) {
       }
       setLogsPanelContent({ type: 'tool', toolName, content, command });
     },
-    [setRightMainPanelMode]
+    [setRightMainPanelMode, setLogsPanelContent]
   );
 
   const expandTerminal = useCallback(() => {
@@ -101,11 +125,11 @@ export function LogsPanelProvider({ children }: LogsPanelProviderProps) {
       setRightMainPanelMode(RIGHT_MAIN_PANEL_MODES.LOGS);
     }
     setLogsPanelContent({ type: 'terminal' });
-  }, [setRightMainPanelMode]);
+  }, [setRightMainPanelMode, setLogsPanelContent]);
 
   const collapseTerminal = useCallback(() => {
     setLogsPanelContent(null);
-  }, []);
+  }, [setLogsPanelContent]);
 
   const actionsValue = useMemo(
     () => ({
@@ -125,6 +149,8 @@ export function LogsPanelProvider({ children }: LogsPanelProviderProps) {
   const value = useMemo(
     () => ({
       logsPanelContent,
+      processLogs,
+      processLogsError,
       logSearchQuery,
       logMatchIndices,
       logCurrentMatchIdx,
@@ -140,6 +166,8 @@ export function LogsPanelProvider({ children }: LogsPanelProviderProps) {
     }),
     [
       logsPanelContent,
+      processLogs,
+      processLogsError,
       logSearchQuery,
       logMatchIndices,
       logCurrentMatchIdx,

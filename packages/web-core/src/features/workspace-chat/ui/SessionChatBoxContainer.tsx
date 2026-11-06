@@ -1,3 +1,4 @@
+import { useExecutorDiscovery } from '@/shared/hooks/useExecutorDiscovery';
 import { getSessionRunStatusLabel } from '@vibe/ui/lib/sessionRuntimeLabels';
 import { ExecutionApprovalDetails } from '@vibe/ui/components/ExecutionApprovalDetails';
 import { UserContext } from '@/shared/hooks/useUserContext';
@@ -597,6 +598,11 @@ function InteractiveSessionChatBox(props: SessionChatBoxContainerProps) {
     configExecutorProfile: config?.executor_profile,
     hiddenAgents: config?.hidden_agents,
     onPersist: (cfg) => void saveToScratch(localMessageRef.current, cfg),
+  });
+  const discovery = useExecutorDiscovery(effectiveExecutor, {
+    variant: selectedVariant,
+    workspaceId,
+    sessionId,
   });
   const providerPolicy = useAgentProviderPolicy(
     effectiveExecutor,
@@ -1347,6 +1353,7 @@ function InteractiveSessionChatBox(props: SessionChatBoxContainerProps) {
         className="min-h-double max-h-[50vh] overflow-y-auto"
         repoIds={repoIds}
         executor={executor}
+        discovery={discovery}
         executorVariant={selectedVariant}
         selectedSkills={selectedSkills}
         onSelectedSkillsChange={setSelectedSkills}
@@ -1358,7 +1365,7 @@ function InteractiveSessionChatBox(props: SessionChatBoxContainerProps) {
         sendShortcut="Enter"
       />
     ),
-    [selectedSkills, selectedVariant, sessionId, workspaceId]
+    [discovery, selectedSkills, selectedVariant, sessionId, workspaceId]
   );
 
   const resumePickerNode =
@@ -1377,6 +1384,7 @@ function InteractiveSessionChatBox(props: SessionChatBoxContainerProps) {
       <>
         {effectiveExecutor && (
           <ModelSelectorContainer
+            discovery={discovery}
             agent={effectiveExecutor}
             workspaceId={workspaceId}
             sessionId={sessionId}

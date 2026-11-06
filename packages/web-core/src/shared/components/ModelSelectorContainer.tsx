@@ -36,7 +36,10 @@ import {
 import { profilesApi } from '@/shared/lib/api';
 import { useUserSystem } from '@/shared/hooks/useUserSystem';
 import { getResolvedTheme, useTheme } from '@/shared/hooks/useTheme';
-import { useModelSelectorConfig } from '@/shared/hooks/useExecutorDiscovery';
+import {
+  useModelSelectorConfig,
+  type ExecutorDiscoverySnapshot,
+} from '@/shared/hooks/useExecutorDiscovery';
 import { ModelSelectorPopover } from '@vibe/ui/components/ModelSelectorPopover';
 import {
   DropdownMenu,
@@ -48,6 +51,7 @@ import {
 } from '@vibe/ui/components/Dropdown';
 
 interface ModelSelectorContainerProps {
+  discovery?: ExecutorDiscoverySnapshot;
   agent: BaseCodingAgent | null;
   workspaceId: string | undefined;
   sessionId?: string;
@@ -67,6 +71,7 @@ type PendingReasoningSelection = {
 };
 
 export function ModelSelectorContainer({
+  discovery,
   agent,
   workspaceId,
   sessionId,
@@ -114,11 +119,16 @@ export function ModelSelectorContainer({
     config: streamConfig,
     loadingModels,
     error: streamError,
-  } = useModelSelectorConfig(agent, {
-    variant: resolvedPreset,
-    workspaceId: agent === 'CLAUDE_CODE' || sessionId ? workspaceId : undefined,
-    sessionId,
-  });
+  } = useModelSelectorConfig(
+    agent,
+    {
+      variant: resolvedPreset,
+      workspaceId:
+        agent === 'CLAUDE_CODE' || sessionId ? workspaceId : undefined,
+      sessionId,
+    },
+    discovery
+  );
 
   useEffect(() => {
     if (streamError) {

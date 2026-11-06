@@ -1,9 +1,11 @@
 import { useTranslation } from 'react-i18next';
 import { useEffect, useState, useRef } from 'react';
+import { useHostId } from '@/shared/providers/HostIdProvider';
 import type { PatchType } from 'shared/types';
 import { openLocalApiWebSocket } from '@/shared/lib/localApiTransport';
 
 type LogEntry = Extract<PatchType, { type: 'STDOUT' } | { type: 'STDERR' }>;
+const EMPTY_LOGS: LogEntry[] = [];
 
 interface UseLogStreamResult {
   logs: LogEntry[];
@@ -12,6 +14,9 @@ interface UseLogStreamResult {
 
 export const useLogStream = (processId: string): UseLogStreamResult => {
   const { t } = useTranslation('common');
+  const hostId = useHostId();
+  const scope = JSON.stringify([hostId, processId]);
+  const [loadedScope, setLoadedScope] = useState<string | null>(null);
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [error, setError] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
@@ -24,18 +29,17 @@ export const useLogStream = (processId: string): UseLogStreamResult => {
   const currentProcessIdRef = useRef<string>(processId);
 
   useEffect(() => {
+    currentProcessIdRef.current = processId;
+    setLoadedScope(scope);
+    setLogs([]);
+    setError(false);
+    retryCountRef.current = 0;
     if (!processId) {
       return;
     }
 
     let cancelled = false;
 
-    // Update the ref to track the current processId
-    currentProcessIdRef.current = processId;
-
-    // Clear logs when process changes
-    setLogs([]);
-    setError(false);
     finishedRef.current = false;
 
     const open = () => {
@@ -49,7 +53,8 @@ export const useLogStream = (processId: string): UseLogStreamResult => {
       void (async () => {
         try {
           const ws = await openLocalApiWebSocket(
-            `/api/execution-processes/${processId}/raw-logs/ws`
+            `/api/execution-processes/${processId}/raw-logs/ws`,
+            { hostScope: 'explicit', hostId }
           );
 
           if (cancelled || currentProcessIdRef.current !== capturedProcessId) {
@@ -102,6 +107,8 @@ export const useLogStream = (processId: string): UseLogStreamResult => {
 
           // Handle WebSocket messages
           ws.onmessage = (event) => {
+            if (cancelled || currentProcessIdRef.current !== capturedProcessId)
+              return;
             try {
               const data = JSON.parse(event.data);
 
@@ -188,7 +195,11 @@ export const useLogStream = (processId: string): UseLogStreamResult => {
         retryTimerRef.current = null;
       }
     };
-  }, [processId]);
+  }, [processId, hostId, scope]);
 
-  return { logs, error: error ? t('streams.logsUnavailable') : null };
+  const isCurrent = !!processId && loadedScope === scope;
+  return {
+    logs: isCurrent ? logs : EMPTY_LOGS,
+    error: isCurrent && error ? t('streams.logsUnavailable') : null,
+  };
 };

@@ -35,7 +35,6 @@ import { UserContext } from '@/shared/hooks/useUserContext';
 import { ProjectContext } from '@/shared/hooks/useProjectContext';
 import { useDevServer } from '@/shared/hooks/useDevServer';
 import { useLogsPanel } from '@/shared/hooks/useLogsPanel';
-import { useLogStream } from '@/shared/hooks/useLogStream';
 import { ActionsContext } from '@/shared/hooks/useActions';
 import { useAppNavigation } from '@/shared/hooks/useAppNavigation';
 import { useAppRuntime } from '@/shared/hooks/useAppRuntime';
@@ -94,11 +93,7 @@ export function ActionsProvider({ children }: ActionsProviderProps) {
     [projectId, hostId]
   );
 
-  // Get logs panel state
-  const { logsPanelContent } = useLogsPanel();
-  const processId =
-    logsPanelContent?.type === 'process' ? logsPanelContent.processId : '';
-  const { logs: processLogs } = useLogStream(processId);
+  const { logsPanelContent, processLogs } = useLogsPanel();
 
   // Compute currentLogs based on content type
   const currentLogs = useMemo(() => {

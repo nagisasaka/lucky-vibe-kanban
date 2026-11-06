@@ -1,6 +1,9 @@
+import { useQueryClient } from '@tanstack/react-query';
+import { useHostId } from '@/shared/providers/HostIdProvider';
+import { workspaceSummaryKeys } from '@/shared/hooks/workspaceSummaryKeys';
 import { errorDiagnostic } from '@/shared/lib/errorDiagnostic';
 import i18n from '@/i18n/config';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import type { WorkflowTemplateResponse } from 'shared/types';
@@ -52,6 +55,13 @@ export function IssueTaskAttemptsSectionContainer({
   issueDescription,
 }: IssueTaskAttemptsSectionContainerProps) {
   const { t } = useTranslation('common');
+  const queryClient = useQueryClient();
+  const hostId = useHostId();
+  useEffect(() => {
+    void queryClient.invalidateQueries({
+      queryKey: workspaceSummaryKeys.byArchived(true, hostId),
+    });
+  }, [issueId, hostId, queryClient]);
   const { projectId } = useParams({ strict: false });
   const appNavigation = useAppNavigation();
   const routeState = useCurrentKanbanRouteState();

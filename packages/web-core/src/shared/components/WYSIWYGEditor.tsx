@@ -79,7 +79,10 @@ import { TablePlugin } from '@lexical/react/LexicalTablePlugin';
 import { type EditorState, type LexicalEditor } from 'lexical';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { useDiffPaths } from '@/shared/stores/useWorkspaceDiffStore';
-import { useExecutorTooling } from '@/shared/hooks/useExecutorDiscovery';
+import {
+  useExecutorTooling,
+  type ExecutorDiscoverySnapshot,
+} from '@/shared/hooks/useExecutorDiscovery';
 import { useUiPreferencesStore } from '@/shared/stores/useUiPreferencesStore';
 import { cn } from '@/shared/lib/utils';
 import { repoApi } from '@/shared/lib/api';
@@ -105,6 +108,7 @@ import type { BaseCodingAgent, SelectedSkill } from 'shared/types';
 export type SerializedEditorState = string;
 
 type WysiwygProps = {
+  discovery?: ExecutorDiscoverySnapshot;
   /** Literal chat input; display-only Markdown consumers keep rich rendering. */
   plainText?: boolean;
   placeholder?: string;
@@ -300,6 +304,7 @@ const WYSIWYGEditor = forwardRef<WYSIWYGEditorRef, WysiwygProps>(
       repoIds,
       executor = null,
       executorVariant,
+      discovery,
       selectedSkills = [],
       onSelectedSkillsChange,
       onCmdEnter,
@@ -364,12 +369,16 @@ const WYSIWYGEditor = forwardRef<WYSIWYGEditorRef, WysiwygProps>(
     const setFileSearchRepo = useUiPreferencesStore(
       (state) => state.setFileSearchRepo
     );
-    const executorTooling = useExecutorTooling(executor, {
-      variant: executorVariant,
-      workspaceId,
-      sessionId,
-      repoId,
-    });
+    const executorTooling = useExecutorTooling(
+      executor,
+      {
+        variant: executorVariant,
+        workspaceId,
+        sessionId,
+        repoId,
+      },
+      discovery
+    );
 
     const syncSelectedSkillsFromMarkdown = useCallback(
       (markdown: string) => {

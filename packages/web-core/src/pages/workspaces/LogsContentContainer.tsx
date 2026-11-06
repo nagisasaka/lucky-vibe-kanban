@@ -6,7 +6,6 @@ import {
   type LogEntry,
   VirtualizedProcessLogs,
 } from '@/shared/components/VirtualizedProcessLogs';
-import { useLogStream } from '@/shared/hooks/useLogStream';
 import { useLogsPanel } from '@/shared/hooks/useLogsPanel';
 import { TerminalPanelContainer } from '@/shared/components/TerminalPanelContainer';
 import { ArrowsInSimpleIcon } from '@phosphor-icons/react';
@@ -43,11 +42,12 @@ function ProcessLogsContent({ className }: LogsContentContainerProps) {
     logCurrentMatchIdx: currentMatchIndex,
     setLogMatchIndices: onMatchIndicesChange,
     collapseTerminal,
+    processLogs: logs,
+    processLogsError: error,
   } = useLogsPanel();
   const { t } = useTranslation('common');
   // Get logs for process content (only when type is 'process')
   const processId = content?.type === 'process' ? content.processId : '';
-  const { logs, error } = useLogStream(processId);
 
   // Get the current logs based on content type
   const currentLogs = useMemo(() => {

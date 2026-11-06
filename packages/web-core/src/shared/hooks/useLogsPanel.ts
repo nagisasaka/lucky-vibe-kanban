@@ -1,9 +1,12 @@
 import { useContext } from 'react';
 import { createHmrContext } from '@/shared/lib/hmrContext';
+import type { PatchType } from 'shared/types';
 import type { LogsPanelContent } from '@/shared/types/actions';
 
 export interface LogsPanelContextValue {
   logsPanelContent: LogsPanelContent | null;
+  processLogs: Extract<PatchType, { type: 'STDOUT' } | { type: 'STDERR' }>[];
+  processLogsError: string | null;
   logSearchQuery: string;
   logMatchIndices: number[];
   logCurrentMatchIdx: number;
@@ -35,6 +38,8 @@ export interface LogsPanelActionsContextValue {
 
 const defaultValue: LogsPanelContextValue = {
   logsPanelContent: null,
+  processLogs: [],
+  processLogsError: null,
   logSearchQuery: '',
   logMatchIndices: [],
   logCurrentMatchIdx: 0,
