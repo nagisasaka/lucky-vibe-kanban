@@ -1,60 +1,64 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:0a5a55b51b0b245cfebcf4520a05b220a53f6e4e8ed3c329af7624a17a5e2301",
+  "pageVersion": "sha256:23aa7276ec911194f9488960e5856e470547b43e880b5d949541cb6d21f2b513",
   "claims": [
     {
       "id": "claim_75127f59a68c4e87a0aea23798401adb",
-      "statement": "Petは両sidebar共通の装飾一体で、Session活動から独立し、80px描画と全体host-pet設定の操作を持つ。",
+      "statement": "両sidebar共通の80px Petは全体host-pet設定を維持し、freshな稼働Session観測でrunning、visible時のHTTP query失敗でfailed、それ以外でidleとなる。",
       "evidence": [
         {
-          "resource": "repo://packages/web-core/src/features/pets/SidebarPet.tsx#L17-L39",
-          "version": "repo-lines-v1:sha256:f46e4fedd6b46177f8ca6e8bb210e8bd2f3db9d1062408dea65da449bb17adf4:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVkMzY4MGViNTlkOGUxMTNmOWI0NThjY2MyNzgwZDg2NDM5NjRmZmU1Nzk5NzNhYjZiMWIzYTFiOGQ4NmJiMjYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZkN2Y3MzI1YzQ0ZjBiZDQ0OGU2Mzc0ZjEyNzk4MDJmMGVlNzMxMTc5NzUyMWMyZDk3ZmVkOTk1YzRkYTE0NmYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJmMGFhOTFjZDY5Y2QxYmFhNDI5MTdlZTY1MGFjN2Q4Y2I1N2EwNjk3NmQ1YTU3MDc5MmM1YWYxZDhlODFjMzQifQ"
+          "resource": "repo://packages/web-core/src/features/pets/SidebarPet.tsx#L17-L40",
+          "version": "repo-lines-v1:sha256:359e91b1e12eab7da9e608e9308cd360d46282e291f4ab3e12f7ff1698baae16:eyJzZWxlY3RlZExpbmVDb3VudCI6MjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg3OGY5OTE5OTIxNDUwNWVmOTA0OWRiZjI0MjE2N2Q0NTgwNGU0M2JmZjljZmFlMjRmMWI4N2ZhMGJhYTAzMGEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNlNDVhZWQ4Mzg0OGEyNGU2NjlhNDY4M2UyMDM0Nzk2NThjZTEyMTlhMzNlNzgzODNlMzc4M2RiNTY0M2JlN2UiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY1NTU2MDhmODg0YmE4ZGNmYzUzOWU1Y2Q2YTY3NWI3MDEwMzFkODUxYWY0ZDg1NDg4YjVkZTNjMzc2OTBmMjkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjEyOTJiZTg1YjEyYWFlNmMxMWEyOGE4ZjJlY2UzNzVjOTdjNTBmOGI1ZWM0NDlkMzJlODg2NGFjNzg2MjA0MmIifQ"
         },
         {
-          "resource": "repo://packages/web-core/src/shared/components/EnvironmentPanel.tsx#L99-L143",
-          "version": "repo-lines-v1:sha256:39a95fc214a8e0c0000f4f8eac62077b1ac069b544263d1656729d7fa673c713:eyJzZWxlY3RlZExpbmVDb3VudCI6NDUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY5MDZjODEyZWRhMDE3ZWUwMzcwNmNmZjQ0N2NmMjg2YmYzMTlkOGMzYTE4ZTBlNzhlNzI4MmFjNjY3Mzk4MTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI2MjdlZjQxYjhkNTMyMjgyOWViYjllNjUwNzg5NTFmNWYxZGU3MDNiNDA1MzYxNzllNzhmZTJhMjlhNDlkZmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjljNWQ1ZTNkMGU4YWUwM2ZlYzI4YzNlMzFlNmMwMGZiODg4ZGIwNjU3OWJjNTA2NmQyMTA0MThmMTQ5Yjc2NDAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjIyMmQzYmVkNjU5YmFiZDY2MDI2Mjc4NmEwOWQ5MDdmM2QwMmYxODAzYTJkYmM3ODFiMWFlNmE4N2E3OTNmZWMifQ"
+          "resource": "repo://packages/web-core/src/features/pets/petStatus.ts",
+          "version": "repo-file-v1:sha256:a41f1023d0d64d2b22def147d88a571330d84448c7e165703f4c7b5a577aca2c"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/components/EnvironmentPanel.tsx#L103-L109",
+          "version": "repo-lines-v1:sha256:621450df243bf7da0b115e8f581dfd6e9022fae35b4620642058857a5683a2b7:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMzUyZWRmN2Y1ZWIwMjVkNGU1YjNhYzBlN2I4NzkxMDFiMGE4MzUzNzQ3MmM2MGY4YjgxZmM1NTYxYmI0N2RhNSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNmRhNTkzZWI4M2M3OWZlOWM2ZDI2OGQxYzFiODc4N2EwOTI4MTA4NjJiMjFmZThhMWQxNjJmNGYxZDFmMzExYSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMWY4ZjAwYmNiMmQyNTczYmE3NWUxNzMyYmQ4ODQ3ZWFlYzMyZDM4NzI3YzBlMzgwZWYxMGI5MjM3NWJiYTNlZCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTIzMDAwMWYzZWExYmMwM2FhZDM4MGZhNjdlMGU1ZjVhODQ4ZWVjN2Q0ZTc1NTc0MjBkOWQ4YjBlYzA3OGJjNyJ9"
         }
       ]
     },
     {
       "id": "claim_b6282e37ef554e0f8b9ea067c415f914",
-      "statement": "manifest省略/1はv1の1536x1872、2はv2の1536x2288を受け、v2だけ使用73セル/透明尾部15セルを検査しv1の歴史的dimension/decode互換を守る。",
+      "statement": "manifest省略/1はv1の1536x1872、2はv2の1536x2288を受け、v2の73必須セルと14透明尾部を検査する。0行6列は空/非空の任意neutralとして受け、v1のdimension/decode互換とidle6frameを保持する。",
       "evidence": [
         {
           "resource": "repo://packages/web-core/src/features/pets/format.ts",
-          "version": "repo-file-v1:sha256:90458ef65971f1644e20e69e27581c89ef37f1212fae03c35633a499ed5fd1b1"
+          "version": "repo-file-v1:sha256:dd62eeff8e8d0381709840dbbe21828c2543d01b849130054d09b936e10d92ef"
         }
       ]
     },
     {
       "id": "claim_515a2f8a665b45c9b6c536e6894e3fec",
-      "statement": "v2はidle時のmouse位置を16静止方向へ丸め、非idle/click優先、中心/leave/blur/touch/reduced-motionで通常idleへ戻りhidden時は更新を止める。",
+      "statement": "v2のidle/waitingはmouse位置を16静止方向へ丸め、running/failedやクリック反応を優先する。中心/leave/blur/touchで通常状態へ戻り、hidden/reduced-motionでは追従とframe更新を停止する。",
       "evidence": [
         {
           "resource": "repo://packages/web-core/src/features/pets/PetSprite.tsx",
-          "version": "repo-file-v1:sha256:6f80008f7962e11603eee130d5bb8f6aca72f956c224c01baadd89fbad4e6a04"
+          "version": "repo-file-v1:sha256:9a93f59e23feacdf2a7339868a812ff6c3df743d1850d5a3e08a7be8d88d7cbf"
         },
         {
-          "resource": "repo://packages/web-core/src/features/pets/format.ts#L229-L246",
-          "version": "repo-lines-v1:sha256:b6e705a99b45f6d5004081212ffe4c0e4ddf9a7414989a06ac42dccbbc6a401d:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImViMWYxNjE1YjRlMjQ4MDFhMTc1NzQxN2FmNjhhYzAzZWJlYmNlNzM1ZDY5YTFiOWY5N2M4OTQwMTIwNjE0YTEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAyNzhmOWE2MmE3ODYxNTUzZmUyMjA3Mzg2NTdjZjkzNzdlNjBhNGQ1OGRkZGRmZTdmZTU2NjM1MzU1ZTg0NzgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk1YmNjNTBlYWE1NjJkYjBkZDE4NDBjNTM3NDZkYjY5MGYxNzJiYTE3NTVlNjk4YzQ5NGZiNDc1MDUwY2I5ZDciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNmOTk3ZjM2ODZjMDc2YTY0YTQ0YTgwZDVmYjVlOTI0MzMwNTA0Njk4NzFkZWM1N2I0MGRhOWZlNDQ4YTQ5NWYifQ"
+          "resource": "repo://packages/web-core/src/features/pets/format.ts#L245-L260",
+          "version": "repo-lines-v1:sha256:454099d595cdf766ef7de28baab8fa20e1056ad6e67440d098a44a0d07d3e3cf:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImViMWYxNjE1YjRlMjQ4MDFhMTc1NzQxN2FmNjhhYzAzZWJlYmNlNzM1ZDY5YTFiOWY5N2M4OTQwMTIwNjE0YTEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk1YmNjNTBlYWE1NjJkYjBkZDE4NDBjNTM3NDZkYjY5MGYxNzJiYTE3NTVlNjk4YzQ5NGZiNDc1MDUwY2I5ZDciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY3MDBmNTE3NzQzNzRkYWUxMzkyZDBmZDcxM2Y4NzAxYzc4YTA5NzVhMWIyNGMyZTUyNWUxMWY2ZGZmYTkwY2IifQ"
         }
       ]
     },
     {
       "id": "claim_28c78b2d8bf1435c9b30b69bfd578132",
-      "statement": "ZIP取込は出力量/entry/path/CRC/画像chunk/manifestを検証し、filesystem抽出・URL取得・コード実行なしで検証後の画像だけを既存attachmentsへ保存する。",
+      "statement": "ZIP解釈/展開はfflateが担当し、製品独自のCRC/Unix属性/header整合検査を持たない。実出力量/entry/path/画像chunk/manifest等を検査し、filesystem抽出・URL取得・コード実行なしで検証後の画像だけをattachmentsへ保存する。",
       "evidence": [
         {
-          "resource": "repo://packages/web-core/src/features/pets/SidebarPet.tsx#L74-L116",
-          "version": "repo-lines-v1:sha256:8901f16fe024fdd3dd02c43a2ebd8372162ae5fb3bbff88907d4c33cda4ec93a:eyJzZWxlY3RlZExpbmVDb3VudCI6NDMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjlmNDU2Mjc5ZTZkMWM3NThiOTZiNWQ3YjM0YzIzMTY4MTk1ODdjZWQ4MDU0N2FhNzI2YjYxZWQ1YmI1MDExNTciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUwNTYzMDRiMGVlYWJkODhhZDRjYmRkNjBiZGY0NjY1MWFkODU3YWQxZTAxMDRlNDJhYmZmNmIwNDNhZThlYTAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjIzZjUwMzU0OGUzZmY0NDFkZDg0MzJmYWJhNjdhZDVkYjdlYTRkMmJlYzZmMDcyZGU3NDRiMzc2Y2ExMjhjNWYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNlZDg1NjRkY2RjNzE0MmFiY2ZmYjJiNzkyZTAxNThjOGUxY2U5NGE1YTE5ZmM5OWQ4NmYxZjI0NTQ1NzA0YWQifQ"
+          "resource": "repo://packages/web-core/src/features/pets/SidebarPet.tsx#L76-L127",
+          "version": "repo-lines-v1:sha256:e4987b54b4bb55314d1fcfc4be57ab8476e2b100942648909fcf5ce4750772b8:eyJzZWxlY3RlZExpbmVDb3VudCI6NTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM4MjE4MGMyYTkwMDkyNTExM2NmNTgxMDZmMzFmMjQ4MmQxZTM2ZDdiZTBlMGQxOGUxYjM4NTE3NjA3MDY3ZTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg1MDFkNWM4OGJhYmU4ODc4ZmE1ODA4NWZkYmNiNTAyYzQ0YjQyZDFiNzM2MWI4NjI4M2FlODE1YTUyYTk3YjIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFhMzM0YTM5YjYxMGIyZDY3OGQ4ZjczNWRmNzQ1NDgxYjE3NWVjZjJmZTA3YTkyOGRiNDBiMDM2ZmM0ZjQ4MjciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJlM2JiOTIzYWZlODU4Zjk4Njk5MWRlOTRiYjI2NzIwYTJmZDQ3Y2U3ODY4ZTcyOTEwMDEyZDNhYTc1MDBiYjIifQ"
         },
         {
-          "resource": "repo://packages/web-core/src/features/pets/library.ts#L64-L110",
-          "version": "repo-lines-v1:sha256:d715a88a274e9b7a4ee16e840dc47df23540054f928f23b52d54f702259cf4d6:eyJzZWxlY3RlZExpbmVDb3VudCI6NDcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNmNzcwNTRmYTFlMjkxMmY0YzRmYTU2NWRmYWE0MWNlNTkwNGQwMzAwYjNlZGQ3OWE3ZDI5N2U3OGYxOTBlYWUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjcwYTgzMTRmMWU5ZmZkM2JkNjRmNWU4OWMxMTZlMjMxN2VjYjJmNzM4ZDEwZWRiYWMwODhlMjYxZGY2NDUwMWIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+          "resource": "repo://packages/web-core/src/features/pets/library.ts",
+          "version": "repo-file-v1:sha256:015d26c659e43abd55ea242c98d5d00c1f9bbedcff04cf515a6364f63be0028b"
         },
         {
           "resource": "repo://packages/web-core/src/features/pets/zip.ts",
-          "version": "repo-file-v1:sha256:c4f7b01c28a8b9bd3802cbfca873dd6abe67c9cfd1b88ba6a795342bcc69194f"
+          "version": "repo-file-v1:sha256:7a365c37c35299d75956ee75cc81780651d1e22ca07535e2de4e2e869823522f"
         }
       ]
     },
@@ -71,8 +75,8 @@
           "version": "repo-lines-v1:sha256:b94edb005454a4a3f0891e0fd76d4a90f5d82e6cf5a0566aa306aebca15a6e1b:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YjA0NDkxNDY5NzIyZTgzNjNhOTRlNDA0NDUzOGUwMTNhMmEyMTdlMzZiMWU1NjhiYTYwYWNiN2I0YzhmMmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ0YjAyNWJiNWE0ODg5MTMyMjQyYWM2MWFlMDA1MzA1NWE3MDMyYmE4OTc3NzhkMzYyOGZkNTMwNTdmYjNmY2YiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjA4ODU4MjU5NDc5YmI1ZmYzY2Y0YjE2MDhjNTA0MzYzNzM5NThhMWQ3NWY2NDZlMDZiNGUyOWQ5MzVkNGMzN2MifQ"
         },
         {
-          "resource": "repo://packages/web-core/src/features/pets/SidebarPet.tsx#L55-L73",
-          "version": "repo-lines-v1:sha256:4e2d01db5926eef44cb45c0b5911485323841ab5132f12ccdddf455e185f0b7e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJmNWEyNjAyYzdiOGYzMDZjNTYwZDUyMTY0MjI5NzgxZTczODFkMWFmZDM0NjRkMDMzNWYwZGMwMGRkYWE5YzAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFmZDA3OTMzMmNhMGM2YWU1Yjc0YzNmOWUyY2RlZDhlNTdjYjE3YTI1NDA4YzVhMThmNjdkMmYzNzM4MTdiZjYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQyMWQ1MWE4MTViODNmOTRjNjYzMzA2ZWU2NTY4YjY1MzcxNGQwMzU3MzczNDg0ZTVlYWY5ZmI5N2JlYWMzYzciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQ2YmJhYzJkNTdkMjQxNDk1N2ZmOWQwM2RiZDlhM2JkN2UzYWY2OWVmZTY0NjRhN2RhYTVlZTFlMWY0Njc2NWMifQ"
+          "resource": "repo://packages/web-core/src/features/pets/SidebarPet.tsx#L72-L94",
+          "version": "repo-lines-v1:sha256:b78a9bf001e68cfbae952c7b8c2397c9ca88562cacc94e04353dd354a5bd118f:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJmNWEyNjAyYzdiOGYzMDZjNTYwZDUyMTY0MjI5NzgxZTczODFkMWFmZDM0NjRkMDMzNWYwZGMwMGRkYWE5YzAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFmZDA3OTMzMmNhMGM2YWU1Yjc0YzNmOWUyY2RlZDhlNTdjYjE3YTI1NDA4YzVhMThmNjdkMmYzNzM4MTdiZjYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQyMWQ1MWE4MTViODNmOTRjNjYzMzA2ZWU2NTY4YjY1MzcxNGQwMzU3MzczNDg0ZTVlYWY5ZmI5N2JlYWMzYzciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQ2YmJhYzJkNTdkMjQxNDk1N2ZmOWQwM2RiZDlhM2JkN2UzYWY2OWVmZTY0NjRhN2RhYTVlZTFlMWY0Njc2NWMifQ"
         },
         {
           "resource": "repo://packages/web-core/src/shared/hooks/useUiPreferencesScratch.ts#L311-L333",
@@ -86,7 +90,7 @@
       "evidence": [
         {
           "resource": "repo://packages/web-core/src/features/pets/SidebarPet.tsx",
-          "version": "repo-file-v1:sha256:7af1bae650d745e861aed60595347da801dd5a4870f69b2f360825ff9e59474d"
+          "version": "repo-file-v1:sha256:c4a2b64c3ca5d70d4b39e1e9c9776ff14bce0bc29a7e622759d8b92fb7228b7f"
         }
       ]
     },
@@ -110,21 +114,55 @@
       "evidence": [
         {
           "resource": "repo://tests/pets/README.md",
-          "version": "repo-file-v1:sha256:c60f5b244dbed0108cd4562387f5015984b90023116b02d2c16001207039196e"
+          "version": "repo-file-v1:sha256:14b184783e75bf57bdc759d8dc07541dbdd51de526ed90ea37387cf56536e9bc"
         },
         {
           "resource": "repo://tests/pets/browser.mjs",
-          "version": "repo-file-v1:sha256:0c5f891a2f4806486ab562d4e8ccfe524e6c1cd5639f1788f8752521f8442b87"
+          "version": "repo-file-v1:sha256:c52aa30f0dcae55bf4d1325719d1e7ceb7d299861d0ea8e7f1626704fd0be64a"
         },
         {
           "resource": "repo://tests/pets/integration.mjs",
           "version": "repo-file-v1:sha256:14a2694994c171cabaa4b3ec4551264b569ed7d7479e690115f88c0dd6301474"
         }
       ]
+    },
+    {
+      "id": "claim_0693e830a6b34397aaa8fcf370299594",
+      "statement": "sidebarのidleは180秒でwaitingとなり、windowへのmouse進入と座標移動停止でidleと3分timerをリセットする。idle/waiting時に150msごとに座標観測し左右runningを選び、300ms停止後にidleへ戻す。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/features/pets/usePetBehavior.ts",
+          "version": "repo-file-v1:sha256:82c8c697964fda54f6d15568c045059a1ff76cac9f18894c1f09926a5a708041"
+        }
+      ]
+    },
+    {
+      "id": "claim_b66be66681124d11bb3d73ec8a10d8f6",
+      "statement": "idleクリックはjumping、runningクリックはreviewを一回再生し元状態に戻る。failedは反応より優先してクリックを無効化し、通常sidebarではwavingを使わない。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/features/pets/PetSprite.tsx",
+          "version": "repo-file-v1:sha256:9a93f59e23feacdf2a7339868a812ff6c3df743d1850d5a3e08a7be8d88d7cbf"
+        }
+      ]
+    },
+    {
+      "id": "claim_7734a8c25a934302bda69c6e4b7918a8",
+      "statement": "Pet取込は選択file直下のlive regionへfile名と処理中/完了/失敗を表示し、容量種別を分けた英日数値エラーを返す。完了は保存応答後のみで、失敗時の既存選択を保持する。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/features/pets/SidebarPet.tsx#L189-L216",
+          "version": "repo-lines-v1:sha256:abec5d40fa5beef1ceb8cbecc838508116bf141e77d0b10af0a4d0d6d55e867f:eyJzZWxlY3RlZExpbmVDb3VudCI6MjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY0ZjZlZmYyNmRiOThkNmRiM2YxYTQyYjc1ZjZlZDRkZTNiZmRjOTNjZTNjOGNjN2Q2NmIxYmZlOTIyZjE0YzIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA0YjZlMmRkYTU3Mjg4NDBhZjQwYzdhMTZiZGEyOGMzOGFiNTg0NDI5OGM0YmE5MzMxYTIwZjM0NzQ2ZTMxY2MiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjJiYjdiYjgxZmFiNWY2OGUzNTUzNjdlODRjNTRhMGZmMjQxNTBhZWQyMTZhMDVjMTU4NmEwYjM5YjM4NTVhYTEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImU0NjlmOGZiN2I5NWFkNDc4NTMxOWVmODg2ZDYwNmZhNmYyODRhOGI0OTNjYjYxZTUzNjhiNmUzMjUyZTU1ODUifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/pets/SidebarPet.tsx#L76-L127",
+          "version": "repo-lines-v1:sha256:e4987b54b4bb55314d1fcfc4be57ab8476e2b100942648909fcf5ce4750772b8:eyJzZWxlY3RlZExpbmVDb3VudCI6NTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM4MjE4MGMyYTkwMDkyNTExM2NmNTgxMDZmMzFmMjQ4MmQxZTM2ZDdiZTBlMGQxOGUxYjM4NTE3NjA3MDY3ZTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg1MDFkNWM4OGJhYmU4ODc4ZmE1ODA4NWZkYmNiNTAyYzQ0YjQyZDFiNzM2MWI4NjI4M2FlODE1YTUyYTk3YjIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFhMzM0YTM5YjYxMGIyZDY3OGQ4ZjczNWRmNzQ1NDgxYjE3NWVjZjJmZTA3YTkyOGRiNDBiMDM2ZmM0ZjQ4MjciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJlM2JiOTIzYWZlODU4Zjk4Njk5MWRlOTRiYjI2NzIwYTJmZDQ3Y2U3ODY4ZTcyOTEwMDEyZDNhYTc1MDBiYjIifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-05T07:15:08.684Z"
+    "at": "2026-11-06T07:27:44.761Z"
   }
 }

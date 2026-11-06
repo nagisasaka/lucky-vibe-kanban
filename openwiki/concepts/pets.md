@@ -3,9 +3,6 @@ type: concept
 title: Pet の形式・安全な取込・保存と帰属
 description: Kanban と Workspace に共通の装飾Pet、v1/v2 atlas互換、ZIP取込と添付保持、帰属および検証の限界を説明する。
 tags: [pets, sprites, security, persistence, attribution]
-verified:
-  - by: openwiki/0.7.2
-    at: 2026-11-05T07:15:08.684Z
 sources:
   - id: openwiki-source-a72a7581cf97c90cae7862d3
     resource: repo://crates/db/src/models/file.rs
@@ -21,8 +18,12 @@ sources:
     resource: repo://packages/web-core/src/features/pets/library.ts
   - id: openwiki-source-b917b710d762eaf81a4328c9
     resource: repo://packages/web-core/src/features/pets/PetSprite.tsx
+  - id: openwiki-source-1cb6e3b0fea9779fa26bc534
+    resource: repo://packages/web-core/src/features/pets/petStatus.ts
   - id: openwiki-source-cbfe71b82135aa5496989f7e
     resource: repo://packages/web-core/src/features/pets/SidebarPet.tsx
+  - id: openwiki-source-d612e5e44d1035480871716c
+    resource: repo://packages/web-core/src/features/pets/usePetBehavior.ts
   - id: openwiki-source-6a174a6648f527d717aac5b8
     resource: repo://packages/web-core/src/features/pets/zip.ts
   - id: openwiki-source-235a3eb75f22fdecdbd66a8f
@@ -35,12 +36,15 @@ sources:
     resource: repo://tests/pets/integration.mjs
   - id: openwiki-source-5ba29f36fe30fd762731147c
     resource: repo://tests/pets/README.md
-generated: { by: "codex", at: "2026-11-05T07:15:08.684Z" }
+generated: { by: "codex", at: "2026-11-06T07:27:44.761Z" }
+verified:
+  - by: openwiki/0.7.2
+    at: 2026-11-06T07:27:44.761Z
 ---
 
 # Pet の形式・安全な取込・保存と帰属
 
-Kanban と Workspace は共通の `EnvironmentPanel` から `SidebarPet` を表示する。既定では装飾Pet一体を80pxで表示し、Sessionの数や活動はPetを増やしたり状態を制御したりしない。クリックは一回の waving を再生する。ホスト表示タイトルと鉛筆から全体設定の「ホストとペット」を開き、選択・非表示・取込・標準復帰・九状態のプレビューを操作する。別の Pet 展開行はない。ホスト表示名と実identityの区別は [Web と環境情報](../architecture/web-and-sync.md#ホスト表示名と設定導線)を参照する。[描画と操作](../../packages/web-core/src/features/pets/SidebarPet.tsx)・[共通入口](../../packages/web-core/src/shared/components/EnvironmentPanel.tsx)
+Kanban と Workspace は共通の `EnvironmentPanel` から `SidebarPet` を表示する。既定では装飾Pet一体を80pxで表示し、Session数はPetの数を増やさず、freshな稼働Session観測は状態をrunningへ切り替える。idleクリックはjumping、runningクリックはreviewを一回再生する。ホスト表示タイトルと鉛筆から全体設定の「ホストとペット」を開き、選択・非表示・取込・標準復帰・九状態のプレビューを操作する。別の Pet 展開行はない。ホスト表示名と実identityの区別は [Web と環境情報](../architecture/web-and-sync.md#ホスト表示名と設定導線)を参照する。[描画と操作](../../packages/web-core/src/features/pets/SidebarPet.tsx)・[共通入口](../../packages/web-core/src/shared/components/EnvironmentPanel.tsx)
 
 ## 同梱素材と帰属
 
@@ -57,7 +61,7 @@ LVK Rabbit v1.1.0 は作者 **Masato Fujino** の素材で、commit `c8436fcc5ec
 | v1 | 省略または1 | 1536×1872px | 8×9 | 192×208px |
 | v2 | 明示2 | 1536×2288px | 8×11 | 192×208px |
 
-画像は静止PNG/WebPのみで、headerの実寸法を先に確認し、browser decode後も版の寸法と一致を要求する。保存manifestは版を保持し、過去の版番号なしはv1のまま復元する。v2では73使用セルすべてに画素があり、未使用の尾部15セルが完全透明であることを取込時と復元画像load時に確認する。v1は従来の寸法/decode基準を保持し、空セルや不透明尾部だけを理由に過去の有効素材を拒否しない。セルの構造検査は絵の意味の検収ではない。[alpha検証と互換](../../packages/web-core/src/features/pets/format.ts#L225-L286)・[load時の検査](../../packages/web-core/src/features/pets/PetSprite.tsx#L130-L152)
+画像は静止PNG/WebPのみで、headerの実寸法を先に確認し、browser decode後も版の寸法と一致を要求する。保存manifestは版を保持し、過去の版番号なしはv1のまま復元する。v2では73使用セルすべてに画素があり、尾部のうち0行6列の任意neutral補助セルを除く14セルが完全透明であることを取込時と復元画像load時に確認する。v1は従来の寸法/decode基準を保持し、空セルや不透明尾部だけを理由に過去の有効素材を拒否しない。セルの構造検査は絵の意味の検収ではない。[alpha検証と互換](../../packages/web-core/src/features/pets/format.ts#L225-L286)・[load時の検査](../../packages/web-core/src/features/pets/PetSprite.tsx#L130-L152)
 
 ### 九状態の再生とv2視線
 
@@ -77,7 +81,15 @@ LVK Rabbit v1.1.0 は作者 **Masato Fujino** の素材で、commit `c8436fcc5ec
 
 Rabbitのrunning素材はタイピング、左右runningは移動、failed/waiting/reviewは別の表現である。取込素材の絵柄の意味はその作者の素材に依存する。
 
-v2の行9は0〜157.5度、行10は180〜337.5度の、各22.5度刻みの**静止視線**であり追加animation loopではない。画面座標の上=0、右=90、下=180、左=270、時計回りである。0度は上向きでneutralではない。idle中だけPet中心からのmouse位置を最も近い方向に丸め、描画sizeの20%以内は通常idleに戻す。画面外へのpointer退出、blur、cancel、mouse以外の入力も復帰条件で、touch追従はしない。クリック反応と明示的な非idle状態が優先する。非表示tabとreduced motionでは追従とframe更新を停止し、視線pose保持にanimation timerは追加しない。v1には方向行を使わない。[方向変換](../../packages/web-core/src/features/pets/format.ts#L229-L246)・[状態優先度とcleanup](../../packages/web-core/src/features/pets/PetSprite.tsx)
+v2の行9は0〜157.5度、行10は180〜337.5度の、各22.5度刻みの**静止視線**であり追加animation loopではない。画面座標の上=0、右=90、下=180、左=270、時計回りである。0度は上向きでneutralではない。idle/waiting中にPet中心からのmouse位置を最も近い方向に丸め、描画sizeの20%以内は通常の状態animationに戻す。画面外へのpointer退出、blur、cancel、mouse以外の入力も復帰条件で、touch追従はしない。クリック反応とrunning/failedなどの活動状態が優先する。非表示tabとreduced motionでは追従とframe更新を停止し、視線pose保持にanimation timerは追加しない。v1には方向行を使わない。[方向変換](../../packages/web-core/src/features/pets/format.ts#L229-L246)・[状態優先度とcleanup](../../packages/web-core/src/features/pets/PetSprite.tsx)
+
+## Sidebarの活動状態と操作
+
+既存 `EnvironmentPanel` のHTTP queryを使い、visibleで取得失敗ならfailedを最優先する。成功かつ観測・cacheの両方が45秒未満で、`running_sessions` が正のsafe integerならrunning。それ以外はidleであり、非表示・古い・欠損は通信断を意味しない。復旧後も同じ条件で再判定する。新しい接続監視やnetwork pollingは追加しない。[状態投影](../../packages/web-core/src/features/pets/petStatus.ts)・[既存query](../../packages/web-core/src/shared/components/EnvironmentPanel.tsx#L32-L48)
+
+idleから180秒でwaitingを継続する。mouseがwindowへ入るとidleへ戻し3分をリセットし、waiting中の退出はidleとなる。idle/waiting中だけ150msごとにscreenX/screenYを調べ、左右移動はrunning-left/right、停止300ms後はidleへ戻して3分を再計測する。ブラウザーにportableなwindow移動eventがないため座標を用い、実OSの挙動はplatform依存である。[timerとcleanup](../../packages/web-core/src/features/pets/usePetBehavior.ts)
+
+running中は視線追従せず、クリックはreviewを一回再生してrunningへ戻る。idleクリックはjumpingを一回再生する。failedは移動と反応より優先し、追従・クリック反応を止める。wavingは状態一覧と設定previewには残るが通常sidebarの動作には使わない。v1の再生とreduced-motionのframe停止を保持する。[描画優先度](../../packages/web-core/src/features/pets/PetSprite.tsx)
 
 ## ローカルZIP取込の安全境界
 
@@ -86,7 +98,9 @@ v2の行9は0〜157.5度、行10は180〜337.5度の、各22.5度刻みの**静�
 3. 画像だけを既存attachments APIへ保存し、選択・表示・添付ID・元manifest・package rootのLICENSE/LICENCE/COPYINGを既存UI preferencesへ保存する。
 4. scratch writerの応答成功後に画面の選択を確定する。失敗時は最後の選択を保持してエラーを表示する。
 
-ZIPは8MiB、32 entries、宣言展開総量12MiB、単一file8MiB、manifest16KiB、保持license64KiB、保存Pet最大12体に制限する。inflate中も出力量を制限しCRCを検査する。絶対path、traversal、backslash、URL、case-insensitive重複名、symlink、暗号化・multipart・ZIP64、未対応圧縮は拒否する。storeとdeflateを扱うが、browserの `DecompressionStream('deflate-raw')` が使えなければ安全に失敗する。余分なarchive entryも検証するがfilesystemへ抽出しない。manifest URLを取得したりコードを実行したりしない。[ZIP境界](../../packages/web-core/src/features/pets/zip.ts)・[取込](../../packages/web-core/src/features/pets/library.ts#L64-L110)
+ZIPは8MiB、32 entries、実展開総量12MiB、単一file8MiB、manifest16KiB、保持license64KiB、保存Pet最大12体に制限する。`fflate` 0.8.2のstreaming `Unzip` / `UnzipInflate` がZIPの解釈・展開を担当し、製品側の独自CRC・Unix属性・header整合検査は行わない。`DecompressionStream` は不要である。アプリは実出力量を逐次加算し、利用できる圧縮sizeに対してmax(1MiB,200倍)も検査する。絶対path、traversal、backslash、URL、case-insensitive重複名を拒否し、filesystem抽出・manifest URL取得・コード実行はしない。ZIP形式ごとの受理はfflateの意味論であり、旧parserのsymlink属性・ZIP64等の独立拒否を保証しない。[ZIP境界](../../packages/web-core/src/features/pets/zip.ts)・[取込](../../packages/web-core/src/features/pets/library.ts)
+
+ファイル選択直下には選択ZIP名、処理中、保存完了またはエラーをlive regionで表示する。ZIP bytes・展開量・file・manifest/license・比率・entry数・collection容量の超過は英日で別の数値付きエラーになる。保存成功を確認するまで完了とせず、失敗後も元の選択を保持して再試行できる。[入力とfeedback](../../packages/web-core/src/features/pets/SidebarPet.tsx#L189-L216)
 
 画像はPNGのacTL/fcTL/fdATとWebPのANIM/ANMFを有界chunk走査で拒否し、虚偽のanimation flagだけを信頼しない。browser decode自体が利用できない場合も失敗する。元manifest/license文字列はtextとして表示し、HTMLや取込hyperlinkを実行しない。[画像chunk検査](../../packages/web-core/src/features/pets/format.ts#L112-L224)・[帰属表示](../../packages/web-core/src/features/pets/SidebarPet.tsx)
 
@@ -115,3 +129,7 @@ browser試験は実PNG/WebP decodeとZIP import、保存reload、v1互換、16�
 integration試験は実Kanban `ProjectUtilities` とWorkspace `RightSidebar`、共通環境panel、preference store、attachment clientを組み合わせるが、HTTP応答とwriter保存先は隔離fixtureである。0/1/複数repo、決定的なterminal既定root、file-tree選択、sidebar開閉と320/375/768/1000pxを扱う。full router/board/mobile sheet、実PTY、live scratch/attachment認可、実providerは検証しない。専用loopback originだけを使い、共有DB・既存ユーザー設定・previewには触れない。終了時にbrowser/HTTP serverを停止し、一時ZIP/CSS/bundleを削除する。スクリーンショットと結果はGit外の `test-results/pets/` と `test-results/pets-integration/` に残る。
 
 今回のコード検証は `7bcd5db39419d50ad265592e288264c63906e1da` 上の重点試験である。source `f8610053323fb06336eb4cd2e376b4cfb1537db0` の開発時には隔離実API保存検証も記録されているが、それを候補での再実行や公開認証後の実画面の検証と読み替えない。Wiki commitとmainへの公開成立も別の結果として確認する。
+
+### LOCAL-316/319上への追加統合の検証
+
+コードSHA `4e84a6fe1770ccc5aa4fe1086f828fafb2849c68` で、Pet単体、生成画像browser、実sidebar組合せ、frontend三packageの型、変更production source/consumer lint、i18n、production buildとAgentation不在検査が成功した。既存の通信transportを変更せず、非表示/古い/不明とHTTP失敗の区別、復旧、3分waitingと座標模擬移動を検証した。実認証後UI・実OS window移動・ユーザー原物ZIPのnative decode/保存は未検証。変更のない全Rust suiteの反復はagent判断で省略し、先行sourceの結果を今回のpassへ付け替えていない。元preview2と注釈データは変更していない。

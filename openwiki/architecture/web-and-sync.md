@@ -104,6 +104,8 @@ sources:
     resource: repo://packages/web-core/src/features/kanban/ui/KanbanServerMotion.tsx
   - id: openwiki-source-f6872c1e7e07221eda6db545
     resource: repo://packages/web-core/src/features/onboarding/ui/LandingPage.tsx
+  - id: openwiki-source-1cb6e3b0fea9779fa26bc534
+    resource: repo://packages/web-core/src/features/pets/petStatus.ts
   - id: openwiki-source-71d9a385f4b03b8ca71765b0
     resource: repo://packages/web-core/src/features/wiki/model/wikiViewerController.ts
   - id: openwiki-source-202a77c218ffbc8ac2871a04
@@ -278,10 +280,10 @@ sources:
     resource: repo://tests/workspace-navigation/run-isolated.py
   - id: openwiki-source-b87e3253bd1458a0091f8587
     resource: repo://tests/workspace-navigation/workspace-navigation.spec.ts
-generated: { by: "codex", at: "2026-11-06T07:16:44.917Z" }
+generated: { by: "codex", at: "2026-11-06T07:27:44.761Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-06T07:16:44.917Z
+    at: 2026-11-06T07:27:44.761Z
 ---
 
 # Web の実行環境と同期
@@ -335,6 +337,8 @@ Kanban と Workspace は `UtilitySidebar` の最上部に折りたたまない `
 認証付き HTTP の資源観測は MCP と同じ collector を使い、visible 時15秒周期で取得する。失敗・非表示・45秒以上古い値は未知にし、RAM は available 基準、CPU/RAM/SWAP は Linux 可視共有値、DISK は worktree 配置先 filesystem と明示する。DISK は一件の known worktree_base の正の total、0以上total以下の used、有効 percent と比率の整合性を検査し、不整合なら三値を未知にする。他の正常項目は保持する。現 panel の容量表示は GiB/MiB、色は70/80%が境界である。[値の検査](../../packages/ui/src/lib/resourceObservation.ts)・[collector 接続](../../crates/server/src/routes/resource_observation.rs)
 
 環境情報は hostname、状態、最終確認からの経過、稼働中 Session 数を返す。Session は current/running の Run と現在 attempt の running process registry で distinct 集計し、待機やカード数を代用しない。コンテナ開始を証明できない uptime は不明とし、ホスト OS 更新・再起動の判断はしない。[環境 API](../../crates/server/src/routes/resource_observation.rs)
+
+共通panelは既存の `/api/environment-info` HTTP queryの結果をPetへ渡す。visibleかつquery失敗ならfailedを優先し、成功後のfreshな正の整数 `running_sessions` ならrunning、それ以外はidleを選ぶ。非表示・古い・不明を通信断とせず、新たな監視経路は追加しない。3分waiting・視線・移動・クリックの詳細は [Petの動作](../concepts/pets.md#sidebarの活動状態と操作)に置く。[状態投影](../../packages/web-core/src/features/pets/petStatus.ts)・[queryと鮮度](../../packages/web-core/src/shared/components/EnvironmentPanel.tsx#L32-L48)
 
 ### Codex / Claude のアカウント利用枠
 

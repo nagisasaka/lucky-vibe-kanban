@@ -82,10 +82,10 @@ sources:
     resource: repo://packages/web-core/src/shared/providers/TerminalProvider.tsx
   - id: openwiki-source-23775c3de52f3ab95a13cb8b
     resource: repo://README.md
-generated: { by: "codex", at: "2026-11-05T07:15:08.684Z" }
+generated: { by: "codex", at: "2026-11-06T07:27:44.761Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-05T07:15:08.684Z
+    at: 2026-11-06T07:27:44.761Z
 ---
 
 # クイックスタートと調査案内
@@ -349,3 +349,9 @@ Kanban / Workspace の右サイドバーは共通環境 panel とファイル・
 今回の保守はコード検証SHA `7bcd5db39419d50ad265592e288264c63906e1da` の製品候補を対象にする。[Pet仕様と安全境界](concepts/pets.md)、[ホスト表示名と設定導線](architecture/web-and-sync.md#ホスト表示名と設定導線)、[利用枠の共通表示](architecture/web-and-sync.md#codex--claude-のアカウント利用枠)、[ファイルとterminalの対象](operations/workspace-inspection.md#terminal-と-editor)を入口とする。docs/は復活させず、Rabbitの製品LICENSE/ATTRIBUTIONを保持する。Agentation試験はpreview2側の開発用途に残し、製品候補の導入・依存・lockfile・専用テストを除外した。元Workspace、DevServer、DB、認証と注釈データは変更していない。
 
 候補で重点unit/browser、型・i18n・対象lint、production build、Rustの表示名/旧scratch/Pet添付保持とClippyを確認した。全workspace反復は担当判断で省略し、公開認証後画面・実Auth0/provider・ユーザー実物v2画像は未検証である。source開発時検証、今回のコード検証、Wiki完了とhostによるmain反映をそれぞれ区別する。今回のClaim照合は変更された参照を持つ関連ページに限定し、無関係なWiki全体の再検証ではない。
+
+### LOCAL-316/319後のPet動作・取込更新
+
+固定base `e9712fe96fbdc65dfad7c6b9f327bcfc76d95ba0` へLOCAL-300 source `ebc230edc6ec7d13c1704874237f3d7d8cc5a6da` を競合なく統合した。コード検証SHAは `4e84a6fe1770ccc5aa4fe1086f828fafb2849c68`。既存デザイン・ホスト表示名・利用枠・Pet v1/v2を保ち、[Petの活動状態と操作](concepts/pets.md#sidebarの活動状態と操作)、fflate ZIP、任意neutralセルと取込feedbackを更新した。LOCAL-316/319の既存HTTP transportと空表示を維持し、新たな通信監視は追加しない。
+
+隔離候補だけでAgentationのBootstrap呼出し・wrapper・package/lock依存・専用testsを削除し、preview起動補助を固定baseへ戻した。元LOCAL-300 Workspace/branch、preview2・Agentation注釈・サーバー・実データ・共有設定は変更していない。コード候補ではlocked offline install、Pet単体/生成browser/sidebar統合、frontend三package型、consumer/変更production source lint、i18n、production build、成果物とsource/lockのAgentation不在が成功した。無関係の全backend検査はagent判断で省略し、実認証後UI・実OS window移動・ユーザー原物ZIPのnative decode/保存は未検証である。Wikiはコード検証後の別commit、main公開成立はRun終了後のhost receiptで確認する。

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:f5c24c8304676e88a4fc57564a4ad6517a9187fd56d193557cfa2007d34171db",
+  "pageVersion": "sha256:60aee1915b19770b8ee8897b53be4afece324a8174170f6cb909c9ff1f663b64",
   "claims": [
     {
       "id": "claim_cd547b65737e432fb2cf718c4992aa97",
@@ -984,7 +984,7 @@
         },
         {
           "resource": "repo://packages/web-core/src/shared/components/EnvironmentPanel.tsx",
-          "version": "repo-file-v1:sha256:8178efca7f83a1bda600480a85bd06a53b5680498934d22f94fd02bf40e538cb"
+          "version": "repo-file-v1:sha256:85e83802ca207189288b99914f007987361b9f3a1c42578df2180a382da14424"
         },
         {
           "resource": "repo://packages/web-core/src/shared/hooks/useResourceObservation.ts",
@@ -1256,7 +1256,7 @@
       "evidence": [
         {
           "resource": "repo://packages/web-core/src/shared/components/EnvironmentPanel.tsx",
-          "version": "repo-file-v1:sha256:8178efca7f83a1bda600480a85bd06a53b5680498934d22f94fd02bf40e538cb"
+          "version": "repo-file-v1:sha256:85e83802ca207189288b99914f007987361b9f3a1c42578df2180a382da14424"
         },
         {
           "resource": "repo://packages/web-core/src/shared/lib/claudeQuotaView.ts",
@@ -1373,12 +1373,12 @@
       "statement": "共通右sidebarのPetと表示名タイトル/鉛筆は全体のhost-pet設定に接続し、表示名は実hostnameにfallbackする。",
       "evidence": [
         {
-          "resource": "repo://packages/web-core/src/shared/components/EnvironmentPanel.tsx#L21-L29",
+          "resource": "repo://packages/web-core/src/shared/components/EnvironmentPanel.tsx#L22-L30",
           "version": "repo-lines-v1:sha256:cbe94044dd4aa2a0bc63fa1312f5005fdb62863ec71f2d1a5e6886ba2d10416b:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMzg1ZjZlYmFjOWVlMDE3NDVjZjUzMmQ3NTYwMjJiYmQwZmQzZWExZWIzOGFhZDU0NmQ2MzM3ZWI1MWU1YzIxMyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDJhMmNiMjVhMTIyYjQ0MjIxYTYyMzRlYzY2MGE3YjVmYjdmOWJkZTdiM2I5ZTJiM2M1NTlhMGQ5NmZhYzczOSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMzlkODM5MWE0M2I2MjZkMmU1YWFmYjgxOWNiMjhmNGFiYzcwZjVhNzExZDVhMDk1MGY3NmZlYjlmM2IzMzUxNSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMWRmYjk5MzY3NDFlM2FhMTc3NWQxOWVhMGEyOWViNThjMzc4NDI5YmJhNWQ4ZTIzMGRlYTgwMDQwMzQzZDE0ZSJ9"
         },
         {
-          "resource": "repo://packages/web-core/src/shared/components/EnvironmentPanel.tsx#L83-L142",
-          "version": "repo-lines-v1:sha256:fed3dcb053e7e03ce5cde9085e9a22098f67efab384bb535f0d8d628512728a6:eyJzZWxlY3RlZExpbmVDb3VudCI6NjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImMzNGQ1ZGEwMGZiMWExM2E2MmI5MzhlYjNkNTI4MzBkNmZiZDQ3MDEzMjVjODRhYTliMmJkYWNjYzljMmY1ZTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgyZjNjZmQxMWRhNjE1MDE5N2FjZWVkMDg0MDZhYzY0YjA1MDM0MGRlN2JjMDQxMjRhNGNiN2VmYTY3MTM0MGIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjkwMzYwODc5NGI5ZGE4NjVmNjNkNTczMGM2OGRjNTcxOGU0Zjk0NWY3N2Y5NTVkM2UwMmM1NzY3YjMzOTUyMTEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImU2NDM5MmY2ZGQxNGFlMGM5YzY0ZGViZDM5MWI3OTNmYzJhMTBjY2M4YTA1ZDVmYzU5OThiYmYzMThhNzU0M2UifQ"
+          "resource": "repo://packages/web-core/src/shared/components/EnvironmentPanel.tsx#L84-L150",
+          "version": "repo-lines-v1:sha256:90e16ad5a72eecb129b5b203155c26db5767bbd13390483c0daf0589dbb43c68:eyJzZWxlY3RlZExpbmVDb3VudCI6NjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImMzNGQ1ZGEwMGZiMWExM2E2MmI5MzhlYjNkNTI4MzBkNmZiZDQ3MDEzMjVjODRhYTliMmJkYWNjYzljMmY1ZTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgyZjNjZmQxMWRhNjE1MDE5N2FjZWVkMDg0MDZhYzY0YjA1MDM0MGRlN2JjMDQxMjRhNGNiN2VmYTY3MTM0MGIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjkwMzYwODc5NGI5ZGE4NjVmNjNkNTczMGM2OGRjNTcxOGU0Zjk0NWY3N2Y5NTVkM2UwMmM1NzY3YjMzOTUyMTEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImU2NDM5MmY2ZGQxNGFlMGM5YzY0ZGViZDM5MWI3OTNmYzJhMTBjY2M4YTA1ZDVmYzU5OThiYmYzMThhNzU0M2UifQ"
         }
       ]
     },
@@ -1595,10 +1595,28 @@
           "version": "repo-lines-v1:sha256:7cf5b18f578584e1f01d5b39d78fff277f88345c579673bbb0d37c96b1fd4776:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNWZmZWMwM2FlMGMzMmYxYWE1YzI4M2VhOWUyZjNhNzI3YTVkNTI1N2YxNzA3MGViNGIzMWZlNmY5N2Q4MzIzYyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYjIyODkyZTIwYjcwMGZjMjI1YWM0OTFjY2M2YjcyOTdiZDE2YWNlMGE3ZjkxYjYwYTNiNjcyMTFhMzhkNDQ3MCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNDE2NzFmOWM5NjgzODAwNWY0YTdmZjQxZDFlZGMxOWNhYzNiNDZhMTIxMjQ0OTNiNGEzMDVmNjIxZmZlMjQxMyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZmVmYmJhZGQwNWVjMjVmM2Q5MTEyNTQxY2FhYjlmN2RhMmNjMzhmZjU2ZDkyMjgxY2E3ZDllNzE2NzM0NDgyOSJ9"
         }
       ]
+    },
+    {
+      "id": "claim_72613ba064df4638a912d0602fed31c5",
+      "statement": "共通環境panelの既存HTTP query失敗はvisible時のみPetのfailedへ投影し、freshな正の整数running_sessionsだけをrunningとする。非表示・古い・不明はidleとなり新たな監視経路は追加しない。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/features/pets/petStatus.ts",
+          "version": "repo-file-v1:sha256:a41f1023d0d64d2b22def147d88a571330d84448c7e165703f4c7b5a577aca2c"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/components/EnvironmentPanel.tsx#L103-L109",
+          "version": "repo-lines-v1:sha256:621450df243bf7da0b115e8f581dfd6e9022fae35b4620642058857a5683a2b7:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMzUyZWRmN2Y1ZWIwMjVkNGU1YjNhYzBlN2I4NzkxMDFiMGE4MzUzNzQ3MmM2MGY4YjgxZmM1NTYxYmI0N2RhNSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNmRhNTkzZWI4M2M3OWZlOWM2ZDI2OGQxYzFiODc4N2EwOTI4MTA4NjJiMjFmZThhMWQxNjJmNGYxZDFmMzExYSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMWY4ZjAwYmNiMmQyNTczYmE3NWUxNzMyYmQ4ODQ3ZWFlYzMyZDM4NzI3YzBlMzgwZWYxMGI5MjM3NWJiYTNlZCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTIzMDAwMWYzZWExYmMwM2FhZDM4MGZhNjdlMGU1ZjVhODQ4ZWVjN2Q0ZTc1NTc0MjBkOWQ4YjBlYzA3OGJjNyJ9"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/components/EnvironmentPanel.tsx#L32-L48",
+          "version": "repo-lines-v1:sha256:07dab22526b88899c205985f779cfcf8393ff32002d13cc3cd833b501b17fba3:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdlMjA4MDZmMjFjNjk4NzA5ZWU1ODE3M2JkZjcyNzJiZDM3MDJhNzg3Y2VjZTAzNjIwM2I3NmE1ZmU3Y2JmYjciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU0MWI2YTFhYjIzMDA1NTliNjJlYjVmNTM4MjViZmY4NzViNjlmMGNiNjM0OTQ0ZTkzOGE5YWUyODJhZTllMTAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM5NDY4Y2NmOTY2MWU0YWFhNTFmY2ZlZDE1NDhmNmRhZTFlYmJhY2U3OWM1ZTA4NGQxZTgwMmIyOGY1Y2IwMDkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjEwMDg5Nzc3MzczZTU2OTUxMzlmOGFiZDgxOWVkZmZjZmFkNDJmYTg1N2JkNmY1MTI3ZjQ2M2E4OWYxMDFiMDMifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-06T07:16:44.917Z"
+    "at": "2026-11-06T07:27:44.761Z"
   }
 }

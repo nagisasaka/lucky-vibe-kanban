@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:980ae7011682f87d8079cd359ca0a2a12938a05636992c7abea5fccbd2a3f6ad",
+  "pageVersion": "sha256:4397c87d6e24789c056044378e95893c24dbd7f82c2ab3a294a9ff2adef3ad98",
   "claims": [
     {
       "id": "claim_edf1b78d3c7a4d978a6d8debcee4edd2",
@@ -277,11 +277,11 @@
       "statement": "Pet形式・ZIP安全・保存と帰属の正本はconcepts/petsで、両sidebarのhost-pet設定に接続する。",
       "evidence": [
         {
-          "resource": "repo://packages/web-core/src/features/pets/SidebarPet.tsx#L17-L39",
-          "version": "repo-lines-v1:sha256:f46e4fedd6b46177f8ca6e8bb210e8bd2f3db9d1062408dea65da449bb17adf4:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVkMzY4MGViNTlkOGUxMTNmOWI0NThjY2MyNzgwZDg2NDM5NjRmZmU1Nzk5NzNhYjZiMWIzYTFiOGQ4NmJiMjYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZkN2Y3MzI1YzQ0ZjBiZDQ0OGU2Mzc0ZjEyNzk4MDJmMGVlNzMxMTc5NzUyMWMyZDk3ZmVkOTk1YzRkYTE0NmYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJmMGFhOTFjZDY5Y2QxYmFhNDI5MTdlZTY1MGFjN2Q4Y2I1N2EwNjk3NmQ1YTU3MDc5MmM1YWYxZDhlODFjMzQifQ"
+          "resource": "repo://packages/web-core/src/features/pets/SidebarPet.tsx#L18-L54",
+          "version": "repo-lines-v1:sha256:2cf37f3d9a2c1967c668fe3f73768d881f4c80667c5557f170bb249fea372bd2:eyJzZWxlY3RlZExpbmVDb3VudCI6MzcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVkMzY4MGViNTlkOGUxMTNmOWI0NThjY2MyNzgwZDg2NDM5NjRmZmU1Nzk5NzNhYjZiMWIzYTFiOGQ4NmJiMjYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZkN2Y3MzI1YzQ0ZjBiZDQ0OGU2Mzc0ZjEyNzk4MDJmMGVlNzMxMTc5NzUyMWMyZDk3ZmVkOTk1YzRkYTE0NmYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJmMGFhOTFjZDY5Y2QxYmFhNDI5MTdlZTY1MGFjN2Q4Y2I1N2EwNjk3NmQ1YTU3MDc5MmM1YWYxZDhlODFjMzQifQ"
         },
         {
-          "resource": "repo://packages/web-core/src/shared/components/EnvironmentPanel.tsx#L21-L29",
+          "resource": "repo://packages/web-core/src/shared/components/EnvironmentPanel.tsx#L22-L30",
           "version": "repo-lines-v1:sha256:cbe94044dd4aa2a0bc63fa1312f5005fdb62863ec71f2d1a5e6886ba2d10416b:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMzg1ZjZlYmFjOWVlMDE3NDVjZjUzMmQ3NTYwMjJiYmQwZmQzZWExZWIzOGFhZDU0NmQ2MzM3ZWI1MWU1YzIxMyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDJhMmNiMjVhMTIyYjQ0MjIxYTYyMzRlYzY2MGE3YjVmYjdmOWJkZTdiM2I5ZTJiM2M1NTlhMGQ5NmZhYzczOSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMzlkODM5MWE0M2I2MjZkMmU1YWFmYjgxOWNiMjhmNGFiYzcwZjVhNzExZDVhMDk1MGY3NmZlYjlmM2IzMzUxNSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMWRmYjk5MzY3NDFlM2FhMTc3NWQxOWVhMGEyOWViNThjMzc4NDI5YmJhNWQ4ZTIzMGRlYTgwMDQwMzQzZDE0ZSJ9"
         }
       ]
@@ -289,6 +289,6 @@
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-05T07:15:08.684Z"
+    "at": "2026-11-06T07:27:44.761Z"
   }
 }
