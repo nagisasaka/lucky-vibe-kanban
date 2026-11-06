@@ -144,6 +144,8 @@ struct McpRelationshipSummary {
     related_simple_id: String,
     #[schemars(description = "Relationship type: blocking, related, or has_duplicate")]
     relationship_type: String,
+    /// This Issue is the source or target of the stored relationship.
+    direction: String,
 }
 
 #[derive(Debug, Serialize, schemars::JsonSchema)]
@@ -223,9 +225,10 @@ struct McpUpdateIssueRequest {
     )]
     priority: Option<String>,
     #[schemars(
-        description = "Parent issue ID to set this as a subissue. Pass null to un-nest from parent."
+        description = "Set/replace the parent Issue. Omitted or null preserves it; clear_parent:true explicitly detaches."
     )]
-    parent_issue_id: Option<Option<Uuid>>,
+    parent_issue_id: Option<Uuid>,
+    clear_parent: Option<bool>,
 }
 
 #[derive(Debug, Serialize, schemars::JsonSchema)]
@@ -530,12 +533,15 @@ impl McpServer {
         };
 
         let pull_requests = self.fetch_pull_requests(issue_id).await;
-        let details = self.issue_to_details(&issue, pull_requests).await;
+        let details = match self.issue_to_details(&issue, pull_requests).await {
+            Ok(details) => details,
+            Err(e) => return Ok(Self::tool_error(e)),
+        };
         McpServer::success(&McpGetIssueResponse { issue: details })
     }
 
     #[tool(
-        description = "Update an existing issue's title, description, or status. `issue_id` is required. `title`, `description`, and `status` are optional."
+        description = "Update an Issue without starting implementation. Omitted fields and null parent IDs preserve existing values. parent_issue_id sets/replaces the parent; clear_parent:true explicitly removes only that link. Read get_issue before/after. Parent cycles are rejected."
     )]
     async fn update_issue(
         &self,
@@ -546,8 +552,12 @@ impl McpServer {
             status,
             priority,
             parent_issue_id,
+            clear_parent,
         }): Parameters<McpUpdateIssueRequest>,
     ) -> Result<CallToolResult, ErrorData> {
+        if parent_issue_id.is_some() && clear_parent == Some(true) {
+            return Self::err("Specify a parent or clear_parent, not both", None);
+        }
         // First get the issue to know its project_id for status resolution
         let get_url = self.url(&format!("/api/board/issues/{}", issue_id));
         let existing_issue: Issue = match self.send_json(self.client.get(&get_url)).await {
@@ -592,7 +602,11 @@ impl McpServer {
             target_date: None,
             completed_at: None,
             sort_order: None,
-            parent_issue_id,
+            parent_issue_id: if clear_parent == Some(true) {
+                Some(None)
+            } else {
+                parent_issue_id.map(Some)
+            },
             parent_issue_sort_order: None,
             extension_metadata: None,
         };
@@ -605,7 +619,15 @@ impl McpServer {
             };
 
         let pull_requests = self.fetch_pull_requests(issue_id).await;
-        let details = self.issue_to_details(&response.data, pull_requests).await;
+        let details = match self.issue_to_details(&response.data, pull_requests).await {
+            Ok(details) => details,
+            Err(mut e) => {
+                // The PATCH completed; a subsequent relation read failure does
+                // not prove that the update failed.
+                e.diagnostic.outcome = utils::mcp_error::Outcome::Unknown;
+                return Ok(Self::tool_error(e));
+            }
+        };
         McpServer::success(&McpUpdateIssueResponse { issue: details })
     }
 
@@ -702,7 +724,7 @@ impl McpServer {
         &self,
         issue: &Issue,
         pull_requests: ListPullRequestsResponse,
-    ) -> IssueDetails {
+    ) -> Result<IssueDetails, ToolError> {
         let status = self
             .resolve_status_name(issue.project_id, issue.status_id)
             .await;
@@ -713,11 +735,11 @@ impl McpServer {
 
         let relationships = self
             .fetch_issue_relationships_resolved(issue.project_id, issue.id)
-            .await;
+            .await?;
 
         let sub_issues = self.fetch_sub_issues(issue.project_id, issue.id).await;
 
-        IssueDetails {
+        Ok(IssueDetails {
             id: issue.id.to_string(),
             title: issue.title.clone(),
             simple_id: issue.simple_id.clone(),
@@ -749,7 +771,7 @@ impl McpServer {
             tags,
             relationships,
             sub_issues,
-        }
+        })
     }
 
     async fn fetch_pull_requests(&self, issue_id: Uuid) -> ListPullRequestsResponse {
@@ -799,62 +821,42 @@ impl McpServer {
             .collect()
     }
 
-    /// Fetches relationships for an issue, resolving related issue simple_ids.
+    /// Resolve both endpoints without hiding transport failures or partial lists.
     async fn fetch_issue_relationships_resolved(
         &self,
-        project_id: Uuid,
+        _project_id: Uuid,
         issue_id: Uuid,
-    ) -> Vec<McpRelationshipSummary> {
+    ) -> Result<Vec<McpRelationshipSummary>, ToolError> {
         let rel_url = self.url(&format!(
             "/api/board/issue-relationships?issue_id={}",
             issue_id
         ));
         let response: ListIssueRelationshipsResponse =
-            match self.send_json(self.client.get(&rel_url)).await {
-                Ok(r) => r,
-                Err(_) => return Vec::new(),
+            self.send_read_json(self.client.get(&rel_url)).await?;
+        let mut result = Vec::new();
+        for r in response.issue_relationships {
+            let source = r.issue_id == issue_id;
+            let other = if source {
+                r.related_issue_id
+            } else {
+                r.issue_id
             };
-
-        if response.issue_relationships.is_empty() {
-            return Vec::new();
-        }
-
-        let issues_url = self.url(&format!("/api/board/issues?project_id={}", project_id));
-        let issues_response: api_types::ListIssuesResponse = self
-            .send_json(self.client.get(&issues_url))
-            .await
-            .unwrap_or(api_types::ListIssuesResponse {
-                issues: Vec::new(),
-                total_count: 0,
-                limit: 0,
-                offset: 0,
-            });
-        let simple_id_map: HashMap<Uuid, &str> = issues_response
-            .issues
-            .iter()
-            .map(|i| (i.id, i.simple_id.as_str()))
-            .collect();
-
-        response
-            .issue_relationships
-            .into_iter()
-            .map(|r| {
-                let related_simple_id = simple_id_map
-                    .get(&r.related_issue_id)
-                    .unwrap_or(&"")
-                    .to_string();
-                McpRelationshipSummary {
-                    id: r.id.to_string(),
-                    related_issue_id: r.related_issue_id.to_string(),
-                    related_simple_id,
-                    relationship_type: match r.relationship_type {
-                        IssueRelationshipType::Blocking => "blocking".to_string(),
-                        IssueRelationshipType::Related => "related".to_string(),
-                        IssueRelationshipType::HasDuplicate => "has_duplicate".to_string(),
-                    },
+            let url = self.url(&format!("/api/board/issues/{}", other));
+            let other_issue: Issue = self.send_read_json(self.client.get(&url)).await?;
+            result.push(McpRelationshipSummary {
+                id: r.id.to_string(),
+                related_issue_id: other.to_string(),
+                related_simple_id: other_issue.simple_id,
+                relationship_type: match r.relationship_type {
+                    IssueRelationshipType::Blocking => "blocking",
+                    IssueRelationshipType::Related => "related",
+                    IssueRelationshipType::HasDuplicate => "has_duplicate",
                 }
-            })
-            .collect()
+                .into(),
+                direction: if source { "source" } else { "target" }.into(),
+            });
+        }
+        Ok(result)
     }
 
     /// Fetches sub-issues for a given parent issue.
@@ -926,6 +928,79 @@ impl McpServer {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[tokio::test]
+    async fn stdio_relationship_reads_resolve_incoming_and_propagate_failure() {
+        use serde_json::json;
+        use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
+        super::super::tests::install_rustls_provider();
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let address = listener.local_addr().unwrap();
+        let project = Uuid::new_v4();
+        let source = Uuid::new_v4();
+        let target = Uuid::new_v4();
+        let relationship = Uuid::new_v4();
+        let backend = tokio::spawn(async move {
+            let issue = json!({"id":source,"project_id":project,"issue_number":1,"simple_id":"TEST-1","status_id":Uuid::new_v4(),"title":"blocker","description":null,"priority":null,"start_date":null,"target_date":null,"completed_at":null,"sort_order":0.0,"parent_issue_id":null,"parent_issue_sort_order":null,"extension_metadata":{},"creator_user_id":null,"created_at":"2026-11-06T00:00:00Z","updated_at":"2026-11-06T00:00:00Z"});
+            for (path, status, data) in [
+                (
+                    format!("/api/board/issue-relationships?issue_id={target}"),
+                    200,
+                    json!({"issue_relationships":[{"id":relationship,"issue_id":source,"related_issue_id":target,"relationship_type":"blocking","created_at":"2026-11-06T00:00:00Z"}]}),
+                ),
+                (format!("/api/board/issues/{source}"), 200, issue),
+                (
+                    format!("/api/board/issue-relationships?issue_id={target}"),
+                    503,
+                    json!(null),
+                ),
+                (
+                    format!("/api/board/issue-relationships?issue_id={target}"),
+                    200,
+                    json!({"issue_relationships":[]}),
+                ),
+            ] {
+                let (socket, _) = listener.accept().await.unwrap();
+                let mut socket = BufReader::new(socket);
+                let mut first = String::new();
+                socket.read_line(&mut first).await.unwrap();
+                assert!(first.starts_with(&format!("GET {path} HTTP/")), "{first}");
+                loop {
+                    let mut header = String::new();
+                    socket.read_line(&mut header).await.unwrap();
+                    if header == "\r\n" {
+                        break;
+                    }
+                }
+                let body = json!({"success":true,"data":data}).to_string();
+                socket.write_all(format!("HTTP/1.1 {status} Fixture\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",body.len()).as_bytes()).await.unwrap();
+            }
+        });
+        let server = McpServer::new_global(&format!("http://{address}"));
+        let rows = server
+            .fetch_issue_relationships_resolved(project, target)
+            .await
+            .unwrap();
+        assert_eq!(rows.len(), 1);
+        assert_eq!(rows[0].related_issue_id, source.to_string());
+        assert_eq!(rows[0].related_simple_id, "TEST-1");
+        assert_eq!(rows[0].direction, "target");
+        assert_eq!(rows[0].id, relationship.to_string());
+        assert!(
+            server
+                .fetch_issue_relationships_resolved(project, target)
+                .await
+                .is_err()
+        );
+        assert!(
+            server
+                .fetch_issue_relationships_resolved(project, target)
+                .await
+                .unwrap()
+                .is_empty()
+        );
+        backend.await.unwrap();
+    }
 
     #[tokio::test]
     async fn stdio_archive_filters_preserve_offset_count_contract() {

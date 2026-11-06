@@ -472,5 +472,59 @@
       "lvk:read",
       "lvk:write"
     ]
+  },
+  {
+    "tool": "list_issue_relationships",
+    "arguments": {
+      "project_id": "00000000-0000-0000-0000-000000000001",
+      "issue_id": "00000000-0000-0000-0000-000000000002",
+      "limit": 50
+    },
+    "scopes": [
+      "lvk:read"
+    ]
+  },
+  {
+    "tool": "create_issue_relationship",
+    "arguments": {
+      "project_id": "00000000-0000-0000-0000-000000000001",
+      "issue_id": "00000000-0000-0000-0000-000000000002",
+      "related_issue_id": "00000000-0000-0000-0000-000000000003",
+      "relationship_type": "blocking",
+      "expected_revision": "2026-11-06 00:00:00.000",
+      "request_id": "00000000-0000-0000-0000-000000000004"
+    },
+    "scopes": [
+      "lvk:read",
+      "lvk:write"
+    ]
+  },
+  {
+    "tool": "delete_issue_relationship",
+    "arguments": {
+      "project_id": "00000000-0000-0000-0000-000000000001",
+      "issue_id": "00000000-0000-0000-0000-000000000002",
+      "relationship_id": "00000000-0000-0000-0000-000000000003",
+      "expected_revision": "2026-11-06 00:00:00.000",
+      "request_id": "00000000-0000-0000-0000-000000000004"
+    },
+    "scopes": [
+      "lvk:read",
+      "lvk:write"
+    ]
+  },
+  {
+    "tool": "update_issue",
+    "arguments": {
+      "project_id": "00000000-0000-0000-0000-000000000001",
+      "issue_id": "00000000-0000-0000-0000-000000000002",
+      "clear_parent": true,
+      "expected_revision": "2026-11-06 00:00:00.000",
+      "request_id": "00000000-0000-0000-0000-000000000004"
+    },
+    "scopes": [
+      "lvk:read",
+      "lvk:write"
+    ]
   }
 ]

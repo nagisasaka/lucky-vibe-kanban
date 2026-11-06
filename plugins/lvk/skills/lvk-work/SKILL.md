@@ -216,3 +216,36 @@ for ordinary follow-up work when its engine and constraints remain appropriate.
 REVIEW uses the existing Code execution path for bounded investigation, reporting
 and stopping. Switching Review to Code is not authorization to adopt product
 changes, merge, publish or alter permissions; retain the user's authorization scope.
+
+## Issue parents, related Issues and blocking
+
+Use parents for agreed decomposition of a purpose, `related` for association, and
+`blocking` for a directed blocker. Do not require decomposition on every task or
+infer relationships merely because another Issue appears in the body. Preserve
+reasons and responsibilities in prose where useful; a URL in prose is not a
+registered relationship. Do not replace related with parent/dependency/duplicate
+without the user's intent.
+
+Read `get_issue` and all `list_issue_relationships` pages before changing a
+relationship. A failed or incomplete read does not mean no relationship exists.
+`get_issue.parent_issue_id: null` means no parent after a successful read.
+`create_issue(parent_issue_id=...)` creates a child; `update_issue` with
+`parent_issue_id` sets/replaces the parent and `clear_parent:true` explicitly
+removes only that link. Omitted/null parent IDs preserve an existing parent;
+never combine a parent ID with clear_parent. Parent cycles are rejected.
+
+For “A blocks B” or “B is blocked by A”, call `create_issue_relationship` once
+with `issue_id=A`, `related_issue_id=B`, `relationship_type=blocking`. Both
+views refer to this one row: source on A, target on B. Do not insert a reverse
+row just to display blocked_by. Intentional blocking cycles between different
+Issues are allowed. `related` is undirected; do not add its reverse either.
+Read the source's `get_issue` revision for creation. To remove a specified link,
+use its returned `id` as `relationship_id` with either endpoint's current
+`get_issue` revision. Preserve all other links; do not replace the full set.
+Use stable request IDs and inspect operation receipts after uncertain writes.
+Read the parent and both relationship endpoints again to verify the result.
+None of these operations creates a Workspace or starts implementation.
+
+If the connected public MCP does not expose these operations, report the relation
+as unregistered/unverified. Another MCP's implementation does not prove the
+connected service registered it. Do not bulk-link or migrate existing prose.
