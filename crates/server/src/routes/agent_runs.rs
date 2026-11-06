@@ -27,7 +27,8 @@ use crate::{
     middleware::websocket::{LocalWebSocket, LocalWsUpgrade},
 };
 
-const LIVE_POLL_INTERVAL: Duration = Duration::from_millis(250);
+// Commit notifications drive normal delivery; this only repairs missed hints.
+const LIVE_POLL_INTERVAL: Duration = Duration::from_secs(5);
 const STREAM_PAGE_SIZE: u32 = 500;
 
 #[derive(Debug, Clone, Deserialize, TS)]
@@ -679,7 +680,10 @@ async fn handle_agent_run_events_ws(
         tokio::task::yield_now().await;
     };
 
-    let mut interval = tokio::time::interval(LIVE_POLL_INTERVAL);
+    let mut interval = tokio::time::interval_at(
+        tokio::time::Instant::now() + LIVE_POLL_INTERVAL,
+        LIVE_POLL_INTERVAL,
+    );
     interval.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
     let mut draining_history = false;
     let mut live_open = true;
@@ -738,6 +742,16 @@ async fn handle_agent_run_events_ws(
                 // page must still correct State; a partial page must not put a
                 // terminal state ahead of the remaining history.
                 if should_send_stream_state(had_events, page.has_more, page.state != last_state) {
+                    // Live delivery can race with durable terminal delivery. Replay
+                    // persisted usage before consumers release a completed stream.
+                    if page.state.status.is_terminal() {
+                        for event in AgentEventRecord::usage_snapshots_for_run(
+                            &deployment.db().pool,
+                            agent_run_id,
+                        ).await? {
+                            send_stream_message(&mut socket, &AgentRunStreamMessage::Live { event }).await?;
+                        }
+                    }
                     last_state = page.state.clone();
                     send_stream_message(
                         &mut socket,
