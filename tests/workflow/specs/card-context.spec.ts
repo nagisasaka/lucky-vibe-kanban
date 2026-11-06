@@ -29,6 +29,8 @@ test("context is collapsed, read-only and independent of the task description", 
   await expect(shared).toBeChecked();
   await expect(preview).toHaveValue(/\.lvk\/shared\/cache/);
   await expect(preview).toHaveValue(/\.lvk\/shared\/persistent/);
+  await expect(preview).toHaveValue(/\.lvk\/shared\/tmp/);
+  await expect(preview).toHaveValue(/Run completion does not delete tmp contents/);
   await expect(preview).not.toHaveValue(/\.lvk\/integration-validation\.json/);
   await shared.uncheck();
   await expect(preview).not.toHaveValue(/\.lvk\/shared\/persistent/);

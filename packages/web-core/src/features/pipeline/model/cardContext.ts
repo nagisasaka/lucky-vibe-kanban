@@ -13,7 +13,10 @@ export const SHARED_DIRECTORIES_CONTEXT = `<!-- lvk:shared-directories:start -->
 
 LVK provides Git-untracked shared directories in each attached repository:
 - .lvk/shared/persistent/: local files retained across workspaces until explicitly deleted.
-- .lvk/shared/cache/: reproducible build outputs and caches.
+- .lvk/shared/cache/: reproducible reusable data, including build outputs and caches.
+- .lvk/shared/tmp/: temporary handoffs of artifacts or information between Workspaces of the same registered repository.
+
+Run completion does not delete tmp contents: a recipient may read them later. Clean up only after the handoff is complete and the contents are no longer needed or in use; never delete pending handoffs or active data from another task. Humans may bulk-clean unneeded tmp contents under the same conditions. There is no automatic Run-end cleanup, TTL or periodic cleanup. tmp is not durable storage; preserve required results in an appropriate retained destination. These paths are relative to each repository, not necessarily the agent working directory; different repositories have separate storage.
 
 These directories are shared by workspaces of the same repository. Changes affect other workspaces; avoid conflicting writes and do not clear a cache while another process uses it. Workspace deletion does not delete their contents. Use them when relevant, never commit their contents, and do not expose secrets. Tool-specific cache configuration is not automatic. Direct-folder workspaces may not provide these paths; check that they exist before using them.
 

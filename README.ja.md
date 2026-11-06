@@ -54,6 +54,10 @@ LVK独自のrepo内管理ファイルは `.lvk/` に配置します。`integrati
 `.gitignore`、LVK自体の開発用 `preview/` はGit共有できる設定です。ローカルの
 `shared/` リンクと `attachments/` コピーだけを `.lvk/.gitignore` で除外し、
 このignoreファイル自身は自己除外しません。既存の記述を保持し、必要な実行時除外を追記します。
+`shared/tmp/` は同じ登録repositoryのWorkspace間の一時受け渡し、`cache/` は再生成可能な
+再利用データ、`persistent/` は継続保存する共有データ用です。tmpはRun終了で消しません。
+受け渡しが完了し、不要かつ利用中でなくなってから整理します。人間による一括整理も同条件です。
+TTLや自動掃除は設けず、必要な成果は適切な保存先に残してください。
 repository外の共有実体と中央添付キャッシュは移動しません。添付の基準はSessionの
 agent作業ディレクトリ（未指定時はWorkspace root）、sharedはrepository単位です。
 必須のLVKブロックを含む `AGENTS.md`、`CLAUDE.md`、`openwiki/`、`.openwikiignore`、

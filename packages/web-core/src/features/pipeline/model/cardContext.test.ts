@@ -46,6 +46,10 @@ describe('card context', () => {
     expect(prompt).toBe(`Feature\n\n${stored}`);
     expect(hasWikiLlmPipeline(prompt!)).toBe(false);
     expect(prompt).toContain(SHARED_DIRECTORIES_CONTEXT);
+    expect(prompt).toContain('.lvk/shared/tmp/');
+    expect(prompt).toContain('Run completion does not delete tmp contents');
+    expect(prompt).toContain('never delete pending handoffs or active data');
+    expect(prompt).toContain('appropriate retained destination');
     expect(
       splitCardContext(JSON.parse(JSON.stringify(stored))).description
     ).toBe('Implement CRUD');

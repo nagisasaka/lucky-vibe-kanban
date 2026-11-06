@@ -54,6 +54,12 @@ and native binary names remain unchanged.
 
 LVK-specific repository files live under `.lvk/`: shareable configuration includes
 `integration-validation.json`, `.gitignore`, and LVK's own development `preview/`.
+Within `shared/`, `tmp/` is for temporary handoffs between Workspaces of the same
+registered repository, `cache/` for reproducible reusable data, and `persistent/`
+for retained shared data. Run completion does not delete `tmp/`; clean up only
+completed handoffs that are no longer needed or in use. Humans may bulk-clean
+unneeded contents under the same conditions. There is no TTL or automatic cleanup;
+keep required results in an appropriate retained destination.
 Local `shared/` links and `attachments/` copies are excluded by `.lvk/.gitignore`;
 that file is shareable and does not ignore itself. Existing rules are preserved and
 runtime rules are appended when needed. Shared storage and the attachment cache

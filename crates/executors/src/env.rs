@@ -38,6 +38,21 @@ impl ExecutionEnv {
             .unwrap_or_default()
     }
 
+    /// Shared storage usage is current host guidance, independent of saved Card context.
+    pub fn repository_memory_instructions(&self) -> Option<String> {
+        let mut parts = Vec::new();
+        if let Some(memory) = self.get("LVK_REPOSITORY_MEMORY_INSTRUCTIONS") {
+            parts.push(memory.as_str());
+        }
+        if !self.shared_resource_roots().is_empty()
+            && !self.contains_key("LVK_OPENWIKI_REVIEWER")
+            && !self.contains_key("LVK_RESOURCE_MEDIATOR")
+        {
+            parts.push(workspace_utils::path::SHARED_RESOURCE_GUIDANCE);
+        }
+        (!parts.is_empty()).then(|| parts.join("\n\n"))
+    }
+
     pub fn new(repo_context: RepoContext) -> Self {
         Self {
             vars: HashMap::new(),

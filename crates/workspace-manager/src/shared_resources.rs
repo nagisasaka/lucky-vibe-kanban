@@ -10,7 +10,7 @@ use git::GitService;
 use uuid::Uuid;
 
 static PROVISION_LOCK: Mutex<()> = Mutex::new(());
-const KINDS: [&str; 2] = ["persistent", "cache"];
+const KINDS: [&str; 3] = ["persistent", "cache", "tmp"];
 
 pub fn ensure(repo_root: &Path, repo_name: &str, repo_id: Uuid) -> io::Result<()> {
     ensure_at(
@@ -162,6 +162,10 @@ fn create_directory_link(target: &Path, link: &Path) -> io::Result<()> {
 /// parent containing other repositories.
 pub fn writable_roots(repo_name: &str, repo_id: Uuid) -> Vec<PathBuf> {
     let root = utils::path::shared_resources_dir(repo_name, repo_id);
+    writable_roots_at(&root)
+}
+
+fn writable_roots_at(root: &Path) -> Vec<PathBuf> {
     KINDS
         .into_iter()
         .filter_map(|kind| fs::canonicalize(root.join(kind)).ok())
@@ -218,6 +222,23 @@ mod tests {
         ensure_at(&repo, &shared).unwrap();
         ensure_at(&tree, &shared).unwrap();
         ensure_at(&tree, &shared).unwrap();
+        // A producer process may finish before another Workspace consumes its handoff.
+        assert!(
+            Command::new("sh")
+                .args(["-c", "printf 'handoff' > .lvk/shared/tmp/result"])
+                .current_dir(&repo)
+                .status()
+                .unwrap()
+                .success()
+        );
+        assert_eq!(
+            fs::read_to_string(tree.join(".lvk/shared/tmp/result")).unwrap(),
+            "handoff"
+        );
+        assert_eq!(
+            writable_roots_at(&shared),
+            KINDS.map(|kind| shared.join(kind))
+        );
         fs::write(repo.join(".lvk/shared/persistent/data"), "retained").unwrap();
         assert_eq!(
             fs::read_to_string(tree.join(".lvk/shared/persistent/data")).unwrap(),
@@ -251,6 +272,10 @@ mod tests {
             fs::read_to_string(shared.join("persistent/data")).unwrap(),
             "retained"
         );
+        assert_eq!(
+            fs::read_to_string(shared.join("tmp/result")).unwrap(),
+            "handoff"
+        );
     }
 
     #[test]
@@ -267,6 +292,8 @@ mod tests {
             let shared = tmp.path().join("shared").join(name);
             ensure_at(&repo, &shared).unwrap();
             fs::write(repo.join(".lvk/shared/persistent/data"), name).unwrap();
+            fs::write(repo.join(".lvk/shared/tmp/result"), name).unwrap();
+            assert!(writable_roots_at(&shared).contains(&shared.join("tmp")));
             assert_eq!(
                 fs::read_to_string(repo.join(".lvk/integration-validation.json")).unwrap(),
                 "{}"
@@ -287,7 +314,70 @@ mod tests {
                     .unwrap(),
                 name
             );
+            assert_eq!(
+                fs::read_to_string(tmp.path().join(name).join(".lvk/shared/tmp/result")).unwrap(),
+                name
+            );
         }
+    }
+
+    #[test]
+    fn tmp_conflicts_preserve_existing_storage_and_links() {
+        let tmp = tempdir().unwrap();
+        let repo = tmp.path().join("repo");
+        fs::create_dir(&repo).unwrap();
+        git(&repo, &["init"]);
+        let shared = tmp.path().join("shared/repo-id");
+        ensure_at(&repo, &shared).unwrap();
+        fs::write(shared.join("persistent/data"), "retained").unwrap();
+        fs::write(shared.join("cache/data"), "reusable").unwrap();
+        // Provisioning a newly added kind must leave earlier persistent/cache data intact.
+        fs::remove_file(repo.join(".lvk/shared/tmp")).unwrap();
+        fs::remove_dir(shared.join("tmp")).unwrap();
+        ensure_at(&repo, &shared).unwrap();
+        assert!(shared.join("tmp").is_dir());
+        fs::remove_file(repo.join(".lvk/shared/tmp")).unwrap();
+        fs::write(repo.join(".lvk/shared/tmp"), "user file").unwrap();
+        assert!(ensure_at(&repo, &shared).is_err());
+        assert_eq!(
+            fs::read_to_string(repo.join(".lvk/shared/tmp")).unwrap(),
+            "user file"
+        );
+        fs::remove_file(repo.join(".lvk/shared/tmp")).unwrap();
+        let other = tmp.path().join("other");
+        fs::create_dir(&other).unwrap();
+        create_directory_link(&other, &repo.join(".lvk/shared/tmp")).unwrap();
+        assert!(ensure_at(&repo, &shared).is_err());
+        assert_eq!(
+            fs::canonicalize(repo.join(".lvk/shared/tmp")).unwrap(),
+            other
+        );
+        for kind in ["persistent", "cache"] {
+            assert_eq!(
+                fs::canonicalize(repo.join(".lvk/shared").join(kind)).unwrap(),
+                shared.join(kind)
+            );
+        }
+        assert_eq!(
+            fs::read_to_string(shared.join("persistent/data")).unwrap(),
+            "retained"
+        );
+        assert_eq!(
+            fs::read_to_string(shared.join("cache/data")).unwrap(),
+            "reusable"
+        );
+        assert!(fs::read_dir(&other).unwrap().next().is_none());
+        // Conflicting repository-external tmp storage is also never replaced.
+        fs::remove_file(repo.join(".lvk/shared/tmp")).unwrap();
+        fs::remove_dir(shared.join("tmp")).unwrap();
+        create_directory_link(&other, &shared.join("tmp")).unwrap();
+        assert!(ensure_at(&repo, &shared).is_err());
+        assert!(
+            fs::symlink_metadata(shared.join("tmp"))
+                .unwrap()
+                .file_type()
+                .is_symlink()
+        );
     }
 
     #[test]

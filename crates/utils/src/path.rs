@@ -36,6 +36,9 @@ pub fn should_skip_path(path: &Path) -> bool {
         })
 }
 
+/// Core storage guidance accompanies the host-provided writable roots, including resumes.
+pub const SHARED_RESOURCE_GUIDANCE: &str = "LVK repository-scoped shared storage: when present and permitted, use .lvk/shared/tmp/ for temporary handoffs of artifacts or information between Workspaces of the same registered repository; .lvk/shared/cache/ for reproducible reusable data; and .lvk/shared/persistent/ for shared data that must be retained. Paths are relative to each attached repository, not necessarily the agent working directory. Different repositories have separate storage. These entries link to repository-scoped storage outside the Workspace. Never commit their contents or expose secrets. tmp contents are not durable records: preserve required results in an appropriate retained destination. Run completion does not delete tmp contents, because a recipient may read them later. Clean up only after the handoff is complete and the contents are no longer needed or in use; never delete another task's pending handoff or active data. Humans may bulk-clean unneeded tmp contents under the same conditions. There is no automatic Run-end cleanup, TTL or periodic cleanup. Check availability before use; direct-folder workspaces may not provide these links.";
+
 /// Convert absolute paths to relative paths based on worktree path
 /// This is a robust implementation that handles symlinks and edge cases
 pub fn make_path_relative(path: &str, worktree_path: &str) -> String {
