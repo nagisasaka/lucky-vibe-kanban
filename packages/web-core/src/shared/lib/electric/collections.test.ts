@@ -153,30 +153,3 @@ it('stops polling with no subscribers during GC grace and fetches on resubscript
     vi.useRealTimers();
   }
 });
-
-it.each(['pull_requests', 'pull_request_issues', 'notifications'])(
-  'resolves constant empty %s without requests or poll timers',
-  async (table) => {
-    vi.useFakeTimers();
-    try {
-      const shape = {
-        table,
-        params: [],
-        fallbackUrl: `/v1/fallback/${table}`,
-      } as ShapeDefinition<Row>;
-      const params = { project_id: 'empty-compatibility', user_id: 'user' };
-      const collection = createShapeCollection(shape, params);
-      collections.push(collection);
-      const subscription = collection.subscribeChanges(() => {});
-      await collection.preload();
-      refreshShapeFallback(shape, params);
-      await vi.advanceTimersByTimeAsync(60_000);
-      expect(collection.size).toBe(0);
-      expect(collection.isReady()).toBe(true);
-      expect(request).not.toHaveBeenCalled();
-      subscription.unsubscribe();
-    } finally {
-      vi.useRealTimers();
-    }
-  }
-);

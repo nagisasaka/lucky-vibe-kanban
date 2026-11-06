@@ -7,7 +7,7 @@ use api_types::{
     ListIssuesResponse, MemberRole, Notification, NotificationGroupKind, NotificationPayload,
     NotificationType, OrganizationMember, Project, ProjectStatus, PullRequest, PullRequestIssue,
     PullRequestStatus, SearchIssuesRequest, SortDirection, Tag, UpdateIssueCommentReactionRequest,
-    UpdateIssueCommentRequest, UpdateIssueRequest, UpdateNotificationRequest, UpdateProjectRequest,
+    UpdateIssueCommentRequest, UpdateIssueRequest, UpdateProjectRequest,
     UpdateProjectStatusRequest, UpdateTagRequest, User, UserData, Workspace,
 };
 mod contracts;
@@ -59,7 +59,6 @@ pub fn export_shapes() -> String {
         // Mutation request types
         CreateProjectRequest::decl(),
         UpdateProjectRequest::decl(),
-        UpdateNotificationRequest::decl(),
         CreateTagRequest::decl(),
         UpdateTagRequest::decl(),
         CreateProjectStatusRequest::decl(),

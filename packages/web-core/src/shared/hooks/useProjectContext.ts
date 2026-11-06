@@ -36,8 +36,7 @@ import type {
  * - IssueFollowers (data + mutations)
  * - IssueTags (data + mutations)
  * - IssueRelationships (data + mutations)
- * - PullRequests (data only)
- * - PullRequestIssues (data + mutations)
+ * - PullRequests / PullRequestIssues (empty local UI values; no collection)
  * - Workspaces (data only)
  */
 export interface ProjectContextValue {

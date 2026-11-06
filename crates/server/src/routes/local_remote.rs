@@ -174,11 +174,6 @@ pub fn router(deployment: &DeploymentImpl) -> Router<DeploymentImpl> {
             "/v1/fallback/issue_relationships",
             get(fallback_issue_relationships),
         )
-        .route("/v1/fallback/pull_requests", get(fallback_pull_requests))
-        .route(
-            "/v1/fallback/pull_request_issues",
-            get(fallback_pull_request_issues),
-        )
         .route(
             "/v1/fallback/project_workspaces",
             get(fallback_project_workspaces),
@@ -187,7 +182,6 @@ pub fn router(deployment: &DeploymentImpl) -> Router<DeploymentImpl> {
             "/v1/fallback/user_workspaces",
             get(fallback_user_workspaces),
         )
-        .route("/v1/fallback/notifications", get(fallback_notifications))
         .route("/v1/fallback/issue_comments", get(fallback_issue_comments))
         .route(
             "/v1/fallback/issue_comment_reactions",
@@ -1649,14 +1643,6 @@ async fn fallback_issue_relationships(
     ))
 }
 
-async fn fallback_pull_requests() -> ResponseJson<Value> {
-    empty_rows("pull_requests")
-}
-
-async fn fallback_pull_request_issues() -> ResponseJson<Value> {
-    empty_rows("pull_request_issues")
-}
-
 async fn fallback_project_workspaces(
     State(deployment): State<DeploymentImpl>,
     Query(query): Query<ProjectQuery>,
@@ -1682,10 +1668,6 @@ async fn fallback_user_workspaces(
 
     let workspaces = list_user_workspaces(&deployment.db().pool).await?;
     Ok(ResponseJson(json!({ "workspaces": workspaces })))
-}
-
-async fn fallback_notifications() -> ResponseJson<Value> {
-    empty_rows("notifications")
 }
 
 async fn fallback_issue_comments(

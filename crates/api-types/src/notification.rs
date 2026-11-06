@@ -4,7 +4,7 @@ use sqlx::Type;
 use ts_rs::TS;
 use uuid::Uuid;
 
-use crate::{IssuePriority, some_if_present};
+use crate::IssuePriority;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Type, TS)]
 #[serde(rename_all = "snake_case")]
@@ -78,10 +78,4 @@ pub struct NotificationPayload {
     pub assignee_user_id: Option<Uuid>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub emoji: Option<String>,
-}
-
-#[derive(Debug, Clone, Deserialize, TS)]
-pub struct UpdateNotificationRequest {
-    #[serde(default, deserialize_with = "some_if_present")]
-    pub seen: Option<bool>,
 }

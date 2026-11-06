@@ -289,18 +289,6 @@ function createFallbackSync(args: {
   reportError: (error: SyncError) => void;
 }) {
   return (syncParams: SyncParams): SyncResult => {
-    // These local compatibility endpoints always return empty rows. Real PR
-    // data and Web Push use separate APIs; keep their requests untouched.
-    if (
-      ['pull_requests', 'pull_request_issues', 'notifications'].includes(
-        args.shape.table
-      ) &&
-      args.shape.fallbackUrl === `/v1/fallback/${args.shape.table}`
-    ) {
-      applySnapshot(syncParams, []);
-      return;
-    }
-
     let isCleanedUp = false;
     let refreshPromise: Promise<void> | null = null;
 

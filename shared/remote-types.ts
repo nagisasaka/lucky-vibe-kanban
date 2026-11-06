@@ -83,8 +83,6 @@ id?: string, organization_id: string, name: string, key: string, color: string, 
 
 export type UpdateProjectRequest = { name: string | null, color: string | null, sort_order: number | null, };
 
-export type UpdateNotificationRequest = { seen: boolean | null, };
-
 export type CreateTagRequest = {
 /**
  * Optional client-generated ID. If not provided, server generates one.
@@ -182,12 +180,6 @@ export const PROJECTS_SHAPE = defineShape<Project>(
   '/v1/fallback/projects'
 );
 
-export const NOTIFICATIONS_SHAPE = defineShape<Notification>(
-  'notifications',
-  ['user_id'] as const,
-  '/v1/fallback/notifications'
-);
-
 export const ORGANIZATION_MEMBERS_SHAPE = defineShape<OrganizationMember>(
   'organization_member_metadata',
   ['organization_id'] as const,
@@ -254,18 +246,6 @@ export const PROJECT_ISSUE_RELATIONSHIPS_SHAPE = defineShape<IssueRelationship>(
   '/v1/fallback/issue_relationships'
 );
 
-export const PROJECT_PULL_REQUESTS_SHAPE = defineShape<PullRequest>(
-  'pull_requests',
-  ['project_id'] as const,
-  '/v1/fallback/pull_requests'
-);
-
-export const PROJECT_PULL_REQUEST_ISSUES_SHAPE = defineShape<PullRequestIssue>(
-  'pull_request_issues',
-  ['project_id'] as const,
-  '/v1/fallback/pull_request_issues'
-);
-
 export const ISSUE_COMMENTS_SHAPE = defineShape<IssueComment>(
   'issue_comments',
   ['issue_id'] as const,
@@ -303,11 +283,6 @@ function defineMutation<TRow, TCreate, TUpdate>(
 export const PROJECT_MUTATION = defineMutation<Project, CreateProjectRequest, UpdateProjectRequest>(
   'Project',
   '/v1/projects'
-);
-
-export const NOTIFICATION_MUTATION = defineMutation<Notification, unknown, UpdateNotificationRequest>(
-  'Notification',
-  '/v1/notifications'
 );
 
 export const TAG_MUTATION = defineMutation<Tag, CreateTagRequest, UpdateTagRequest>(

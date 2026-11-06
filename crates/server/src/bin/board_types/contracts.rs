@@ -50,12 +50,6 @@ pub fn all_shape_routes() -> Vec<ShapeRoute> {
             &["organization_id"],
             "/fallback/projects",
         ),
-        shape::<Notification>(
-            "NOTIFICATIONS_SHAPE",
-            "notifications",
-            &["user_id"],
-            "/fallback/notifications",
-        ),
         shape::<OrganizationMember>(
             "ORGANIZATION_MEMBERS_SHAPE",
             "organization_member_metadata",
@@ -122,18 +116,6 @@ pub fn all_shape_routes() -> Vec<ShapeRoute> {
             &["project_id"],
             "/fallback/issue_relationships",
         ),
-        shape::<PullRequest>(
-            "PROJECT_PULL_REQUESTS_SHAPE",
-            "pull_requests",
-            &["project_id"],
-            "/fallback/pull_requests",
-        ),
-        shape::<PullRequestIssue>(
-            "PROJECT_PULL_REQUEST_ISSUES_SHAPE",
-            "pull_request_issues",
-            &["project_id"],
-            "/fallback/pull_request_issues",
-        ),
         shape::<IssueComment>(
             "ISSUE_COMMENTS_SHAPE",
             "issue_comments",
@@ -161,12 +143,6 @@ pub fn all_mutation_definitions() -> Vec<MutationDefinition> {
             row_type: Project::name(),
             create_type: Some(CreateProjectRequest::name()),
             update_type: Some(UpdateProjectRequest::name()),
-        },
-        MutationDefinition {
-            table: "notifications",
-            row_type: Notification::name(),
-            create_type: None,
-            update_type: Some(UpdateNotificationRequest::name()),
         },
         MutationDefinition {
             table: "tags",

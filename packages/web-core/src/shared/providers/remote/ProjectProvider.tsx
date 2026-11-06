@@ -8,8 +8,6 @@ import {
   PROJECT_ISSUE_FOLLOWERS_SHAPE,
   PROJECT_ISSUE_TAGS_SHAPE,
   PROJECT_ISSUE_RELATIONSHIPS_SHAPE,
-  PROJECT_PULL_REQUESTS_SHAPE,
-  PROJECT_PULL_REQUEST_ISSUES_SHAPE,
   PROJECT_WORKSPACES_SHAPE,
   ISSUE_MUTATION,
   PROJECT_STATUS_MUTATION,
@@ -18,6 +16,8 @@ import {
   ISSUE_FOLLOWER_MUTATION,
   ISSUE_TAG_MUTATION,
   ISSUE_RELATIONSHIP_MUTATION,
+  type PullRequest,
+  type PullRequestIssue,
   type Issue,
   type ProjectStatus,
   type Tag,
@@ -26,6 +26,12 @@ import {
   ProjectContext,
   type ProjectContextValue,
 } from '@/shared/hooks/useProjectContext';
+
+// Local Board has no project-wide PR collection; actual PRs use workspace APIs.
+const EMPTY_PULL_REQUESTS: PullRequest[] = [];
+const EMPTY_PULL_REQUEST_ISSUES: PullRequestIssue[] = [];
+const getPullRequestsForIssue: ProjectContextValue['getPullRequestsForIssue'] =
+  () => EMPTY_PULL_REQUESTS;
 
 interface ProjectProviderProps {
   projectId: string;
@@ -66,14 +72,6 @@ export function ProjectProvider({ projectId, children }: ProjectProviderProps) {
     params,
     { enabled, mutation: ISSUE_RELATIONSHIP_MUTATION }
   );
-  const pullRequestsResult = useShape(PROJECT_PULL_REQUESTS_SHAPE, params, {
-    enabled,
-  });
-  const pullRequestIssuesResult = useShape(
-    PROJECT_PULL_REQUEST_ISSUES_SHAPE,
-    params,
-    { enabled }
-  );
   const workspacesResult = useShape(PROJECT_WORKSPACES_SHAPE, params, {
     enabled,
   });
@@ -91,8 +89,6 @@ export function ProjectProvider({ projectId, children }: ProjectProviderProps) {
     issueFollowersResult.error ||
     issueTagsResult.error ||
     issueRelationshipsResult.error ||
-    pullRequestsResult.error ||
-    pullRequestIssuesResult.error ||
     workspacesResult.error ||
     null;
 
@@ -105,8 +101,6 @@ export function ProjectProvider({ projectId, children }: ProjectProviderProps) {
     issueFollowersResult.retry();
     issueTagsResult.retry();
     issueRelationshipsResult.retry();
-    pullRequestsResult.retry();
-    pullRequestIssuesResult.retry();
     workspacesResult.retry();
   }, [
     issuesResult,
@@ -116,8 +110,6 @@ export function ProjectProvider({ projectId, children }: ProjectProviderProps) {
     issueFollowersResult,
     issueTagsResult,
     issueRelationshipsResult,
-    pullRequestsResult,
-    pullRequestIssuesResult,
     workspacesResult,
   ]);
 
@@ -206,17 +198,6 @@ export function ProjectProvider({ projectId, children }: ProjectProviderProps) {
     [tagsById]
   );
 
-  const getPullRequestsForIssue = useCallback(
-    (issueId: string) => {
-      const prIds = pullRequestIssuesResult.data
-        .filter((link) => link.issue_id === issueId)
-        .map((link) => link.pull_request_id);
-      const prIdSet = new Set(prIds);
-      return pullRequestsResult.data.filter((pr) => prIdSet.has(pr.id));
-    },
-    [pullRequestIssuesResult.data, pullRequestsResult.data]
-  );
-
   const getWorkspacesForIssue = useCallback(
     (issueId: string) =>
       workspacesResult.data.filter((w) => w.issue_id === issueId),
@@ -235,8 +216,8 @@ export function ProjectProvider({ projectId, children }: ProjectProviderProps) {
       issueFollowers: issueFollowersResult.data,
       issueTags: issueTagsResult.data,
       issueRelationships: issueRelationshipsResult.data,
-      pullRequests: pullRequestsResult.data,
-      pullRequestIssues: pullRequestIssuesResult.data,
+      pullRequests: EMPTY_PULL_REQUESTS,
+      pullRequestIssues: EMPTY_PULL_REQUEST_ISSUES,
       workspaces: workspacesResult.data,
 
       // Loading/error
@@ -275,8 +256,6 @@ export function ProjectProvider({ projectId, children }: ProjectProviderProps) {
       insertIssueRelationship: issueRelationshipsResult.insert,
       removeIssueRelationship: issueRelationshipsResult.remove,
 
-      // PullRequestIssue mutations
-
       // Lookup helpers
       getIssue,
       getIssuesForStatus,
@@ -304,8 +283,6 @@ export function ProjectProvider({ projectId, children }: ProjectProviderProps) {
       issueFollowersResult,
       issueTagsResult,
       issueRelationshipsResult,
-      pullRequestsResult,
-      pullRequestIssuesResult,
       workspacesResult,
       isLoading,
       error,
@@ -319,7 +296,6 @@ export function ProjectProvider({ projectId, children }: ProjectProviderProps) {
       getRelationshipsForIssue,
       getStatus,
       getTag,
-      getPullRequestsForIssue,
       getWorkspacesForIssue,
       issuesById,
       statusesById,

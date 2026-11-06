@@ -74,7 +74,7 @@ export interface UseShapeOptions<
  *
  * @example
  * // Read-only:
- * const { data, isLoading } = useShape(PROJECT_PULL_REQUESTS_SHAPE, { project_id });
+ * const { data, isLoading } = useShape(PROJECT_TAGS_SHAPE, { project_id });
  *
  * // With mutations:
  * const { data, insert, update, remove } = useShape(
