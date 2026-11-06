@@ -107,3 +107,76 @@ it('reports actual request freshness and failures independently of row changes',
   );
   expect(collection.get('a')?.title).toBe('unchanged');
 });
+
+it('stops polling with no subscribers during GC grace and fetches on resubscription', async () => {
+  vi.useFakeTimers();
+  try {
+    const shape = {
+      table: 'issues',
+      params: [],
+      fallbackUrl: '/v1/fallback/issues',
+    } as ShapeDefinition<Row>;
+    const params = { project_id: 'subscriber-lifecycle' };
+    let title = 'Before';
+    request.mockImplementation(() =>
+      Promise.resolve(Response.json({ issues: [{ id: 'issue', title }] }))
+    );
+    const collection = createShapeCollection(shape, params);
+    collections.push(collection);
+    const first = collection.subscribeChanges(() => {});
+    await collection.preload();
+    const second = collection.subscribeChanges(() => {});
+    first.unsubscribe();
+    await vi.advanceTimersByTimeAsync(30_000);
+    expect(request).toHaveBeenCalledTimes(2);
+    second.unsubscribe();
+    await vi.advanceTimersByTimeAsync(60_000);
+    expect(request).toHaveBeenCalledTimes(2);
+    title = 'After';
+    const resumed = collection.subscribeChanges(() => {});
+    await vi.advanceTimersByTimeAsync(0);
+    expect(request).toHaveBeenCalledTimes(3);
+    expect(collection.get('issue')?.title).toBe('After');
+    resumed.unsubscribe();
+    await vi.advanceTimersByTimeAsync(300_000);
+    expect(request).toHaveBeenCalledTimes(3);
+    title = 'After GC';
+    const afterGC = collection.subscribeChanges(() => {});
+    await vi.advanceTimersByTimeAsync(0);
+    expect(request).toHaveBeenCalledTimes(4);
+    expect(collection.get('issue')?.title).toBe('After GC');
+    afterGC.unsubscribe();
+    await collection.cleanup();
+    await vi.advanceTimersByTimeAsync(30_000);
+    expect(request).toHaveBeenCalledTimes(4);
+  } finally {
+    vi.useRealTimers();
+  }
+});
+
+it.each(['pull_requests', 'pull_request_issues', 'notifications'])(
+  'resolves constant empty %s without requests or poll timers',
+  async (table) => {
+    vi.useFakeTimers();
+    try {
+      const shape = {
+        table,
+        params: [],
+        fallbackUrl: `/v1/fallback/${table}`,
+      } as ShapeDefinition<Row>;
+      const params = { project_id: 'empty-compatibility', user_id: 'user' };
+      const collection = createShapeCollection(shape, params);
+      collections.push(collection);
+      const subscription = collection.subscribeChanges(() => {});
+      await collection.preload();
+      refreshShapeFallback(shape, params);
+      await vi.advanceTimersByTimeAsync(60_000);
+      expect(collection.size).toBe(0);
+      expect(collection.isReady()).toBe(true);
+      expect(request).not.toHaveBeenCalled();
+      subscription.unsubscribe();
+    } finally {
+      vi.useRealTimers();
+    }
+  }
+);
