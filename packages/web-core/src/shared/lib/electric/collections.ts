@@ -24,6 +24,14 @@ type MutationFnParams = {
 
 type SyncParams = {
   collection: {
+    readonly subscriberCount: number;
+    on: (
+      event: 'subscribers:change',
+      callback: (event: {
+        subscriberCount: number;
+        previousSubscriberCount: number;
+      }) => void
+    ) => () => void;
     isReady: () => boolean;
     onFirstReady: (callback: () => void) => void;
   };
@@ -281,6 +289,18 @@ function createFallbackSync(args: {
   reportError: (error: SyncError) => void;
 }) {
   return (syncParams: SyncParams): SyncResult => {
+    // These local compatibility endpoints always return empty rows. Real PR
+    // data and Web Push use separate APIs; keep their requests untouched.
+    if (
+      ['pull_requests', 'pull_request_issues', 'notifications'].includes(
+        args.shape.table
+      ) &&
+      args.shape.fallbackUrl === `/v1/fallback/${args.shape.table}`
+    ) {
+      applySnapshot(syncParams, []);
+      return;
+    }
+
     let isCleanedUp = false;
     let refreshPromise: Promise<void> | null = null;
 
@@ -351,14 +371,34 @@ function createFallbackSync(args: {
 
     void refreshNow();
 
-    const intervalId = globalThis.setInterval(() => {
-      void refreshNow();
-    }, FALLBACK_REFRESH_INTERVAL_MS);
+    let intervalId: ReturnType<typeof globalThis.setInterval> | undefined;
+    const updatePolling = () => {
+      if (intervalId !== undefined) globalThis.clearInterval(intervalId);
+      intervalId = undefined;
+      if (syncParams.collection.subscriberCount > 0) {
+        intervalId = globalThis.setInterval(() => {
+          void refreshNow();
+        }, FALLBACK_REFRESH_INTERVAL_MS);
+      }
+    };
+    const unsubscribe = syncParams.collection.on(
+      'subscribers:change',
+      ({ subscriberCount, previousSubscriberCount }) => {
+        if (subscriberCount === 0 || previousSubscriberCount === 0) {
+          updatePolling();
+        }
+        if (subscriberCount > 0 && previousSubscriberCount === 0) {
+          void refreshNow();
+        }
+      }
+    );
+    updatePolling();
 
     return {
       cleanup: () => {
         isCleanedUp = true;
         globalThis.clearInterval(intervalId);
+        unsubscribe();
         unregisterRefresher();
       },
       loadSubset: () => true,
