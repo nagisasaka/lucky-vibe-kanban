@@ -16,11 +16,11 @@
       "completedRunId": "a88095ec-9603-48a5-9d7d-a85a799911f9"
     },
     "/openwiki/architecture/web-and-sync.md": {
-      "pageVersion": "sha256:70945d4cbc23abaff823990e5a3b3cd74f711a8fb1190e0be277791f8cae9f7f",
+      "pageVersion": "sha256:f5c24c8304676e88a4fc57564a4ad6517a9187fd56d193557cfa2007d34171db",
       "completedBy": "codex",
-      "completedRunId": "7447da7c-3a07-4d6b-a9d3-189560c7e308",
-      "gitHead": "3ba4f21d5d1563ec53485d7889ed9551e8af4c79",
-      "sourceFingerprint": "sha256:cb7d89f1d73d28dffb6755c9b3812da9d83b139389875250c1f90d743b414a27"
+      "completedRunId": "aced5156-570f-435c-8320-1e7917120bf8",
+      "gitHead": "6a693b9b0d9822ac4b6943a7a89250425f447031",
+      "sourceFingerprint": "sha256:3c61089375e69e59f90d54b72f044b554ff7818dd3a82ea68feeee5bc921eb2b"
     },
     "/openwiki/architecture/workflow-runtime.md": {
       "gitHead": "3b77f5dad09fe5f7ee0efafc0b85671fc866a8de",
@@ -58,11 +58,11 @@
       "completedRunId": "afcf7a27-6804-450e-aa6c-16db4d97936c"
     },
     "/openwiki/concepts/issue-collaboration.md": {
-      "gitHead": "fbdc61b521b104758fb27cc4599101683864e1a3",
-      "sourceFingerprint": "sha256:81745a491a8aed078110969c9ed6422aaee8efddbd40f02c748633218240fe1f",
-      "pageVersion": "sha256:d0cc9d32e01875934bce1602d02a191bdf19b44d0dbcc2e0a6d77cb9a96b52da",
+      "pageVersion": "sha256:116c263e8dc1601ac4a7f409df30cd168ac1230291b04e965db6d011c15b4819",
       "completedBy": "codex",
-      "completedRunId": "31f3ef62-3bb5-4d1b-b901-1382adbe9038"
+      "completedRunId": "aced5156-570f-435c-8320-1e7917120bf8",
+      "gitHead": "6a693b9b0d9822ac4b6943a7a89250425f447031",
+      "sourceFingerprint": "sha256:3c61089375e69e59f90d54b72f044b554ff7818dd3a82ea68feeee5bc921eb2b"
     },
     "/openwiki/concepts/organization-and-membership.md": {
       "gitHead": "1559b37168baea066d9c1c89284464882ae4c92f",
@@ -79,11 +79,11 @@
       "completedRunId": "a88095ec-9603-48a5-9d7d-a85a799911f9"
     },
     "/openwiki/concepts/project-and-issue.md": {
-      "gitHead": "7bcd5db39419d50ad265592e288264c63906e1da",
-      "sourceFingerprint": "sha256:caecaf49ef63a64bf55902a1f15394d70cef01dda84209a009f53a56046f604b",
-      "pageVersion": "sha256:08d477db168d3a9c4ac7e93c04d8b148bd32ef425bec4a3b79bdb06f68665643",
+      "pageVersion": "sha256:6537619ea894574538e2f04ce3846c6e6319adca9389c6fc5230e5469b7fa2f5",
       "completedBy": "codex",
-      "completedRunId": "a88095ec-9603-48a5-9d7d-a85a799911f9"
+      "completedRunId": "aced5156-570f-435c-8320-1e7917120bf8",
+      "gitHead": "6a693b9b0d9822ac4b6943a7a89250425f447031",
+      "sourceFingerprint": "sha256:3c61089375e69e59f90d54b72f044b554ff7818dd3a82ea68feeee5bc921eb2b"
     },
     "/openwiki/concepts/project-chat.md": {
       "gitHead": "1559b37168baea066d9c1c89284464882ae4c92f",
@@ -121,11 +121,11 @@
       "completedRunId": "8c5a1633-b011-4601-a6a8-a3f614d65a07"
     },
     "/openwiki/concepts/session-and-agent-run.md": {
+      "gitHead": "3ba4f21d5d1563ec53485d7889ed9551e8af4c79",
+      "sourceFingerprint": "sha256:cb7d89f1d73d28dffb6755c9b3812da9d83b139389875250c1f90d743b414a27",
       "pageVersion": "sha256:70357e9864808ac9a941097dbd5d9b66d6fcda63010ca2c9f6b7017e61897fbf",
       "completedBy": "codex",
-      "completedRunId": "7447da7c-3a07-4d6b-a9d3-189560c7e308",
-      "gitHead": "3ba4f21d5d1563ec53485d7889ed9551e8af4c79",
-      "sourceFingerprint": "sha256:cb7d89f1d73d28dffb6755c9b3812da9d83b139389875250c1f90d743b414a27"
+      "completedRunId": "7447da7c-3a07-4d6b-a9d3-189560c7e308"
     },
     "/openwiki/concepts/shared-resource-coordination.md": {
       "gitHead": "fbdc61b521b104758fb27cc4599101683864e1a3",

@@ -1,28 +1,24 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:d0cc9d32e01875934bce1602d02a191bdf19b44d0dbcc2e0a6d77cb9a96b52da",
+  "pageVersion": "sha256:116c263e8dc1601ac4a7f409df30cd168ac1230291b04e965db6d011c15b4819",
   "claims": [
     {
       "id": "claim_03c1cc7bf36a458cbd38b13499335f6b",
-      "statement": "local互換APIの通知一覧は空で、設定に従う音・OS pushのNotificationServiceはCloud subscriber通知とは別経路である。",
+      "statement": "旧定数空の通知fallback APIと購読は削除され、local通知inboxはUIが空状態を返す。設定に従う音・OS pushのNotificationServiceはこのinboxやCloud subscriber配送とは別経路である。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/local_remote.rs",
-          "version": "repo-file-v1:sha256:9675aee2461d71bc5b7e5e8840aa142c9cae87d5fdaa912c6396da4c6ff234ff"
+          "resource": "repo://crates/services/src/services/notification.rs#L81-L140",
+          "version": "repo-lines-v1:sha256:38006127268978ee3b332eb92b7815086115297a04497d8079e68cc805ba8c5e:eyJzZWxlY3RlZExpbmVDb3VudCI6NjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc5MTc0ZjM5NmJmNTg0ZjQ1Mzk1NjhiZTRkMDc3ZDQzNDg5MTM0NWE3NWQ5NWE5MjU4YTJjYjYwZWJkYTI3YTgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE5ZTc2MzU1Y2YxMTk5NDgwYzNmOTk4MzZiMTQ4NmM4NDFkODkxZmFhZDkwNGM2MDhlMDkzMDIyZDM3NTdhZWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdlY2YwYjI5OGQyYTU0MzlmODc2OWU1YzhmNmM0MjcxNGI1NDgyZTM0ZjM4YWM2ZmEwYzJlNzE4YjI4MmIzNGYifQ"
         },
         {
-          "resource": "repo://crates/services/src/services/container.rs",
-          "version": "repo-file-v1:sha256:4e8b84e42a773b59cd6afe4bbf9b498f4fc15e84115a2b2e358f5708a8dac7e4"
-        },
-        {
-          "resource": "repo://crates/services/src/services/notification.rs",
-          "version": "repo-file-v1:sha256:4d1e4367060f3608b87f054cc8c6f2d0e9eeb5b93ffdfc9abc4b54400aea1586"
+          "resource": "repo://packages/web-core/src/shared/hooks/useNotifications.ts#L1-L27",
+          "version": "repo-lines-v1:sha256:37fa8085ab106aeea622779cbbe29564b4eb44b86cbc0a760eabd51a181d6f2c:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg0ZmQzN2EzMWMxY2Y3MjA5NGVlOTNiOTM4ZmU5ZDMyZWQ4ZDc2NDE0MmFlOGQ5Nzg0NmZmODMxZWU2ZWFhYTIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
         }
       ]
     },
     {
       "id": "claim_03982371f9d34bdc9e1cc904bfef9f81",
-      "statement": "現行local Board はAssignee・Follower・Comment・reactionをSQLiteへ保存し、通知一覧は空を返す。旧Cloud Azure Attachmentは現行構成にない。",
+      "statement": "現行local BoardはAssignee・Follower・Comment・reactionをSQLiteへ保存する。通知inboxは明示的な空UIで、旧Cloud Azure Attachmentは現行構成にない。",
       "evidence": [
         {
           "resource": "repo://Cargo.toml",
@@ -30,7 +26,11 @@
         },
         {
           "resource": "repo://crates/server/src/routes/local_remote.rs",
-          "version": "repo-file-v1:sha256:9675aee2461d71bc5b7e5e8840aa142c9cae87d5fdaa912c6396da4c6ff234ff"
+          "version": "repo-file-v1:sha256:f3db0ec082baaf96e8dbb302020cdfbde1dc293edf0c5033af58accfbf597f6f"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/hooks/useNotifications.ts#L1-L27",
+          "version": "repo-lines-v1:sha256:37fa8085ab106aeea622779cbbe29564b4eb44b86cbc0a760eabd51a181d6f2c:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg0ZmQzN2EzMWMxY2Y3MjA5NGVlOTNiOTM4ZmU5ZDMyZWQ4ZDc2NDE0MmFlOGQ5Nzg0NmZmODMxZWU2ZWFhYTIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
         }
       ]
     },
@@ -39,11 +39,11 @@
       "statement": "新規Commentとreactionの帰属にはserver_access::actor_idが使われ、公開配置では現在の認証actorを記録する。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/local_remote.rs#L2107-L2206",
+          "resource": "repo://crates/server/src/routes/local_remote.rs#L2089-L2188",
           "version": "repo-lines-v1:sha256:656b37fbd0a6b549a3b72ca06ed1ef1bdd3d8fd059aa9026400f7218b252ae47:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAwLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIyYTFkZmFlN2VmZGY0ZDI1YTY0MTY5YzNlNTcyMzU1NmQ5ZDZhYWU4NGYwMDI0NDUxZTFlMDc2N2IxMmM2MDE5IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJjYTQwNmJjNjM5MGM3MDNiNDFjM2M0OGEzMGE0N2NmYmJhMmU1ZDQ4MmUzZmNkMTRjM2QzNWQwYzVkMTEwNWE2IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJiMmFhNmUzNDc1MjgxMjEyN2JmNmIzYjhkZjcwZDhjYzNkZTRlNzI4MmQ3ZjlmNWM4MTJkYTg1NzdhMWY2Nzk0IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJiNWJjZWViYzIyMzFkZWFjZWM0N2Q0NWQ1OWRkYjJlM2NhNTE2YzczOTZhMTVlYjQxMDIyOTEwNDk5NGQ0NDU5In0"
         },
         {
-          "resource": "repo://crates/server/src/routes/local_remote.rs#L291-L294",
+          "resource": "repo://crates/server/src/routes/local_remote.rs#L285-L288",
           "version": "repo-lines-v1:sha256:6734a10a5419a5228fcce5992f7ef198ed05bf3284bd021378cfe3498c4f220b:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNmEzYmRmYjBmODhmNjk5OTQwZmVmM2IwNDNiYTRiMDAyOWJiNjdlZWMwZGI0OGEyOGJkMjM4MTdlOGM3ZTNmNyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZDQ0OTMwZTliNGQzMzE3MGFjMzZjMmU5ZGQ3ZjJiNTg2MjlmNmY3NWM2ZDFjYmQxMDE2M2FmZDNhNmM0ZWVjOSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMGE2MWJhOWJhZjVhODUwODUwYmFhMTdiYzA4YTM1MzZiM2FkNjZiY2YyOThhMjQ0Yzc5N2EyNWE3Y2U2NmNlZiJ9"
         }
       ]
@@ -91,7 +91,7 @@
           "version": "repo-lines-v1:sha256:2511b5bf88338b70a5e7934c260530566502d02d2d1bb99560ab091f2c17d4e8:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ3MWQzZWZiMTI2YWU4NzU3NzZjYzgxZWVlZDMyNGZkNzQ5OGQzOWMxMDZiYzY0MzgwMzZhMjcwZTBiODQ3MTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk0NjkxMDg4MDJlM2I2YmFkMzdiMTFiM2RhYWQ1ODM0NThkYmYyZjNkMzMyYzIwMDQyNWVlODA3ZjFhMjZjNmEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjA2YWIzOTQxNzcyNTM4ZGFjM2JmZTU1NjI3MDBiMDJjMmM0OGZjYjE3MTFmY2MyYmViZGI5YzlhM2ZhNzVhZDMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjIzZWJhMzg0OTllMDg3NzNiMGExMzcxOTIxMzNhMmMxYTUxYzRhOTQ1MWE5ZDUzZmQ5MDZjMjJjZTUwNGYwYTUifQ"
         },
         {
-          "resource": "repo://crates/server/src/routes/local_remote.rs#L2130-L2172",
+          "resource": "repo://crates/server/src/routes/local_remote.rs#L2112-L2154",
           "version": "repo-lines-v1:sha256:26f82275acaa1f00287200e50d381983c791601e9031f07b321ede29dd480103:eyJzZWxlY3RlZExpbmVDb3VudCI6NDMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg3ZmQ0MzQ3YmJlOGM0ZDczMWE4Yjg4ODNjMDI3MGE2MjgyYTg4YmIyMDg5N2RjZDJjOTU4MTYyNzk0ZmZhMzEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImViNjcwM2E5OTdhODI1Zjg0OWZkOTA4NTRkOTdkZmE3NGVmYTU5YTg2OGU2NzlmOTYyOGE4NTc5N2JkZGNkYzkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZlM2VhYWM2MjhkNGU1MGI2MTM5OTIwZWU0NWNjZTQzODUzZGQxNDcxY2VhZjZiNGUzZDg4ZDczNDExZmY2MzEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQwMWNlMzE3OTQ0MjcxMGY3Y2YxNDE3ZjQ2ZmUzNWU0Yjg0NzMyMThiMDQ5MjYzMmYxNjAwOWQzYzZjNjg1YzIifQ"
         },
         {
@@ -237,6 +237,6 @@
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-05T04:35:28.799Z"
+    "at": "2026-11-06T07:16:44.917Z"
   }
 }

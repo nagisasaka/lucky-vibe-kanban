@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:70945d4cbc23abaff823990e5a3b3cd74f711a8fb1190e0be277791f8cae9f7f",
+  "pageVersion": "sha256:f5c24c8304676e88a4fc57564a4ad6517a9187fd56d193557cfa2007d34171db",
   "claims": [
     {
       "id": "claim_cd547b65737e432fb2cf718c4992aa97",
@@ -37,7 +37,7 @@
       "statement": "collection mutationはREST後にcacheを破棄し、古い進行中取得の終了後に開始するsnapshot取得を待って楽観更新を収束させる。",
       "evidence": [
         {
-          "resource": "repo://packages/web-core/src/shared/lib/electric/collections.ts#L374-L483",
+          "resource": "repo://packages/web-core/src/shared/lib/electric/collections.ts#L362-L471",
           "version": "repo-lines-v1:sha256:755213d2292e882ac29420117dfcb8c94a1bd3a27ad2ec5559635d7719f04282:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEwLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJlZmQ3YzUzYTI2MTg5MTM1NTkzMzkzM2E3N2YzNDI2Y2FhMjc2ZDljMzFiYWJmMjExYTg5OTZkOGQwMzM5Nzk0IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI4NTIyYTM2NWE1NTgzZDkzODBjMTQ0ZTFhNzViN2YzMDQyOGU1ZWEzNTBjMzRmYmU0NjhmMzNmNGE5Zjg0MjY0IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI1Yjk2NmM0OThmMWZiYzQxZGMzOTk2MGFjZGY1ZDcxMjA2NTMwYzQ0ZDIxZGEzZmVmZTU3MDgxODlkZGQyNTk0IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiIxNmFiNDQ5YzdjYTU3NTljMGRmOGY0MzY4NmU1OThmMzRlYjYxZGQ3N2FkNWYwYjE5OGJkODZiMmQyZDA1MjczIn0"
         }
       ]
@@ -47,7 +47,7 @@
       "statement": "通常のcollectionは初回と購読中の30秒周期でsnapshotを取得し、無購読時はGC猶予中も周期取得を止め、再購読時に取得する。初回失敗でもReadyになるため成功保証ではない。",
       "evidence": [
         {
-          "resource": "repo://packages/web-core/src/shared/lib/electric/collections.ts#L307-L415",
+          "resource": "repo://packages/web-core/src/shared/lib/electric/collections.ts#L295-L403",
           "version": "repo-lines-v1:sha256:d4dc9a6ac87fe5d36f6a51b2c07c57e3a4df77ea7c60ff035e522666770daa1a:eyJzZWxlY3RlZExpbmVDb3VudCI6MTA5LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI4NDg1ODNjNzZjMTIwNTU4NjI3YWNmNmUzZGFmYjdkNjJiZDc4MGEwNWQ4MDJjYzNkMzZjYjlhOTE1YjY1ZWVmIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIwMWJhNDcxOWM4MGI2ZmU5MTFiMDkxYTdjMDUxMjRiNjRlZWVjZTk2NGUwOWMwNThlZjhmOTgwNWRhY2E1NDZiIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI3ZDlmZWRhMzc5YzRjNTI4OTQ2NzYzNTAyNzc1YTVjNzczOGNmM2EwZmU4NzIyNTg5NmQ3MDc4OTc0OWNiMmEyIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJmNzkwMDY2MzJlYjI0MTY5ODRkMjIxNDdmYmFhZWFhN2MyMTM4Y2Q0OTRjOGFlZjI1N2Y3OTk1ZWNkMTVjZmI0In0"
         }
       ]
@@ -1435,20 +1435,6 @@
       ]
     },
     {
-      "id": "claim_42e6fabcb266404a8a5baa3a0a0c7966",
-      "statement": "pull_requests・pull_request_issues・notificationsはtableと既定fallback URLが完全一致するとHTTPと周期timerなしで空snapshotを適用する。互換backendも定数空である。",
-      "evidence": [
-        {
-          "resource": "repo://crates/server/src/routes/local_remote.rs#L1652-L1689",
-          "version": "repo-lines-v1:sha256:b2610c76c1d646efed39ffbe2bcea988367cfc73057cfb698c0156f0cb352191:eyJzZWxlY3RlZExpbmVDb3VudCI6MzgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFkYzU2MmQwNDJiYWI0YzllYjY5ZDM0ZjE1NmQ3NTRkMDBkODBhYjAyMmJiMWU1MTE3MDNjNmZmNDBlNDE5Y2MiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjgzZTlkYWU1NDA4YzZhYWZjM2IzMGFjNzUwMGFjY2QzOTIxYTVhZmM4MjMyZWI3OWI2ZDY0MWNjOTBlODRmOTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBjYzc4MWY3ODIxYjk2Yjk4ZTcwMjM4ZDQ4OWM4NjRiMWFjYWIzOGJmZGJhMjhlMzRmMWU4NWU1NDNlNzdlN2UifQ"
-        },
-        {
-          "resource": "repo://packages/web-core/src/shared/lib/electric/collections.ts#L289-L305",
-          "version": "repo-lines-v1:sha256:f873b152536efa8501e9ddb1c41ebaeb612d7539a28f2a16384364eff757338b:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY5M2E3ZDM5NzMxZTcwMmM0ZDAyYzQ3NTFjM2Y1Mzg4ZTIyYjY5Y2NmYTk3NmZjY2ZiNjYxMGMwMmNlNmQxYjciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM5MWQwY2UyNzI1MWE3ZGMzOTc2NDgxZTMxNjdjZmZlYjFkYzc2Yzk5Zjk2MzZjYjVlMzkzMDMyY2QzZGU4ZGIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk4MmUwMThiZGMxOWZkMDZhNTQ1MTFlYTIzNTZmOTlmOWNjMTU0Y2MyNTVkNTE0ZGRmYzJkNDc3YTY1YmRkYjAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImVjZDZkMWI5ZDZkMmZkMjBmYTE3Nzg5Nzc2NzQ5NTMzM2M5YzRlZDJjYjA0NjU5M2EyYWVhODM1NGFlOTYzMWEifQ"
-        }
-      ]
-    },
-    {
       "id": "claim_d631aebe497049cf975459ac1a3b7da0",
       "statement": "Session会話は初期化済みterminal snapshotが一覧のattempt・event sequence・updated_atに追いつくとstreamを解放し、既存2秒周期の一覧discoveryで新しい更新を検出すると再購読する。",
       "evidence": [
@@ -1579,10 +1565,40 @@
           "version": "repo-lines-v1:sha256:9ab746f44d02d932aee56fc77fe51146ac185b72e27dd97d0c8c5573d008b60e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYxYjZlYTU3NmFkYWQ1MzI0NzE5ZGU0YmU2MTBjZDJkODI0NTY2Y2YyMWIzYmNiMjBiZjA2ZjIwYmNhZDA2MWEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhlOWNjZWFiODU3OTBiZDMwNTc1NzcyYjEwNTk4YWE5ZDI5YmQ0ZmFhYjNjZjgzZTMyMTFiN2IyN2ExOGMwNjQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQ1ZWI2ZDBhNTgxMGM3Y2Q3ODAxMjI3Y2NmYmVhMTk0ODNlODliNjY0ODk0NWNjMmFhYTExMmFjMTAzNzkyZjEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM2NTI0MTA5NzIyNjFkNzIzYzY5NTU3YmRkOTU2N2RmMDM5NDQ3ODdkMzQ4NTQ5ZWZlM2ZiNTIxNTJiMWU3MWEifQ"
         }
       ]
+    },
+    {
+      "id": "claim_cf3354991ad84038a812071ad2ddf2f2",
+      "statement": "旧定数空のpull_requests・pull_request_issues・notificationsのfallback routeと専用shape、collection shortcutは削除され、ProjectProviderとuseNotificationsは購読やHTTPを使わず明示的な空UI値を返す。通知retryと既読更新も通信しない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/bin/board_types/contracts.rs",
+          "version": "repo-file-v1:sha256:f63972ace937624cb8b448234a0ba062eb1aa274ac283fadca408f07a0c7947f"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/local_remote.rs#L155-L195",
+          "version": "repo-lines-v1:sha256:8548a2ff911200831b54b7c254cf94bde2f7adfb68a7baf5f56c8fa59484e668:eyJzZWxlY3RlZExpbmVDb3VudCI6NDEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU5MDlhNTNhNjE4ZDAyOGUxZDMwMDBjMGE3YWJjZWVjYmU1ZmIzN2Y0ZTUxMWVmZTQ2NjQzZmFkNmU2Njg3MmYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU5MDlhNTNhNjE4ZDAyOGUxZDMwMDBjMGE3YWJjZWVjYmU1ZmIzN2Y0ZTUxMWVmZTQ2NjQzZmFkNmU2Njg3MmYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImMxYzQ1N2VhMGE5YWU1NWU3ZmRhOTM0YjcwYWM0OTU1YjFmMjMwNmZmN2IzZjA0NTk5Y2ZlN2RjYzUyNDNjM2UiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjU2ZDkwMmU1NTVjZDE5NjFhNWNiZjJlZDkzOTE4MTNkZTI0MzY0ZTI1ODZkNjYzNzUzYWI0MmYyZDNmN2EzNjkifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/hooks/useNotifications.ts#L1-L27",
+          "version": "repo-lines-v1:sha256:37fa8085ab106aeea622779cbbe29564b4eb44b86cbc0a760eabd51a181d6f2c:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg0ZmQzN2EzMWMxY2Y3MjA5NGVlOTNiOTM4ZmU5ZDMyZWQ4ZDc2NDE0MmFlOGQ5Nzg0NmZmODMxZWU2ZWFhYTIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/lib/electric/collections.ts#L285-L395",
+          "version": "repo-lines-v1:sha256:92e945f14c4a33bd33f62c14ea75824702dd1542f52dff768a1dea65c6a3c225:eyJzZWxlY3RlZExpbmVDb3VudCI6MTExLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJlYzhiNjc4NjVjMzkyYTY1NTE4NTMwMzE2NWIwNjMwN2ZjYTVmZDEyMWY5NDZmOGM0ZDRmOTNhOWI2MGI1N2ZmIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI0MTJjYTM0NWNjZjc1YmY5YzA4MDZiY2U2OTViZThkZTgwOGI3OTk4NDI1MWE3YTU0ZDIwMmNmNjEwMWRkNDUxIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJmYjU4MGU5NjRmODNhNDczZjQzZDQ0Mzg0NjI5NDlkNjhiNTYwMGZkYTc4N2YxNjM3NDVkMDBkZTg5Y2JmMzZhIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJjMjc0ODM4Y2U4NTJkYjJhYzhmZGNjZTgxZjFlZjIyYjI3Y2JlZTFlNjI3NmE3OGIzYWNhMGVjNGQxZGE2YTcwIn0"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/providers/remote/ProjectProvider.tsx#L210-L230",
+          "version": "repo-lines-v1:sha256:265524d74c4db2463934429f798f2c3f09946341e478f62a96441a7ca1c782aa:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVmZjE3OGM3ZTJlNTAzMTAyNTNmNTM2MGIwNWY2MGE0MzYyYjQ3MGQzYmUzNjgyZDQ4ZGIzYmJiNjhmNDJkOTkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjY3YTI3ZDM2NGE2MmZhN2QwNTE3NmUzMTZmOThkMDMxNWE4YWM2ZjJjMmE0OWEyMmYxNTEzZWVhZDczOGUxZDQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjIzODMxMjExMzNhZDNmOWU0ZDVkOGFkOGMxYTc3NWQ1MmFjMTAxNWFkZjE4ZDQ3ZDkxMjQ3YTA1YzJkOTY1YTQifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/providers/remote/ProjectProvider.tsx#L30-L34",
+          "version": "repo-lines-v1:sha256:7cf5b18f578584e1f01d5b39d78fff277f88345c579673bbb0d37c96b1fd4776:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNWZmZWMwM2FlMGMzMmYxYWE1YzI4M2VhOWUyZjNhNzI3YTVkNTI1N2YxNzA3MGViNGIzMWZlNmY5N2Q4MzIzYyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYjIyODkyZTIwYjcwMGZjMjI1YWM0OTFjY2M2YjcyOTdiZDE2YWNlMGE3ZjkxYjYwYTNiNjcyMTFhMzhkNDQ3MCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNDE2NzFmOWM5NjgzODAwNWY0YTdmZjQxZDFlZGMxOWNhYzNiNDZhMTIxMjQ0OTNiNGEzMDVmNjIxZmZlMjQxMyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZmVmYmJhZGQwNWVjMjVmM2Q5MTEyNTQxY2FhYjlmN2RhMmNjMzhmZjU2ZDkyMjgxY2E3ZDllNzE2NzM0NDgyOSJ9"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-06T04:42:23.113Z"
+    "at": "2026-11-06T07:16:44.917Z"
   }
 }

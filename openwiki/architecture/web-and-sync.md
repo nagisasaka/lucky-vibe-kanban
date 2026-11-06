@@ -10,6 +10,8 @@ sources:
     resource: repo://crates/db/src/models/agent_runtime.rs
   - id: openwiki-source-788fa2f6f1a3d449a1a9efe4
     resource: repo://crates/local-deployment/src/agent_run_port.rs
+  - id: openwiki-source-364569e05540b1c862fb1f65
+    resource: repo://crates/server/src/bin/board_types/contracts.rs
   - id: openwiki-source-7083ce2acf66599ca4b7a3c8
     resource: repo://crates/server/src/host_display_name.rs
   - id: openwiki-source-71f837a8aa36443ad9688945
@@ -186,6 +188,8 @@ sources:
     resource: repo://packages/web-core/src/shared/hooks/useJsonPatchWsStream.ts
   - id: openwiki-source-dd033ed16fc4890fc3bf77a7
     resource: repo://packages/web-core/src/shared/hooks/useLogStream.ts
+  - id: openwiki-source-2bc4d71db2cf73c3210b9268
+    resource: repo://packages/web-core/src/shared/hooks/useNotifications.ts
   - id: openwiki-source-145474ecb854b8600d49f7f8
     resource: repo://packages/web-core/src/shared/hooks/useOpenInEditor.ts
   - id: openwiki-source-03db0ba02433b52c9bfe6db3
@@ -234,6 +238,8 @@ sources:
     resource: repo://packages/web-core/src/shared/providers/ActionsProvider.tsx
   - id: openwiki-source-51549d4e96b211530610fb1d
     resource: repo://packages/web-core/src/shared/providers/LogsPanelProvider.tsx
+  - id: openwiki-source-d8f00c11851f6c7290b971b1
+    resource: repo://packages/web-core/src/shared/providers/remote/ProjectProvider.tsx
   - id: openwiki-source-f19e845a46caccf16c347093
     resource: repo://packages/web-core/src/shared/providers/remote/UserProvider.tsx
   - id: openwiki-source-09147e83e2e70cb032ece9e7
@@ -272,10 +278,10 @@ sources:
     resource: repo://tests/workspace-navigation/run-isolated.py
   - id: openwiki-source-b87e3253bd1458a0091f8587
     resource: repo://tests/workspace-navigation/workspace-navigation.spec.ts
-generated: { by: "codex", at: "2026-11-06T04:42:23.113Z" }
+generated: { by: "codex", at: "2026-11-06T07:16:44.917Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-06T04:42:23.113Z
+    at: 2026-11-06T07:16:44.917Z
 ---
 
 # Web の実行環境と同期
@@ -408,9 +414,11 @@ API の未定義 path が SPA の `index.html` を成功応答として返すと
 
 mutation は REST 成功後に cache を破棄し、進行中の古い取得を待ってから**mutation 後に開始した新しい snapshot**を待つ。これにより楽観更新を古い snapshot で巻き戻さない。txid を Electric へ渡す契約はなくなった。[refresh と mutation](../../packages/web-core/src/shared/lib/electric/collections.ts#L345-L434)・[競合回帰テスト](../../packages/web-core/src/shared/lib/electric/collections.test.ts)
 
-`pull_requests`・`pull_request_issues`・`notifications` は、table と `/v1/fallback/<table>` が完全一致する場合だけ、HTTP・周期 timer を作らず空 snapshot で Ready にする。backend の互換 endpoint も定数空である。実 PR と Web Push は別経路であり、この shortcut の対象ではない。将来互換 endpoint を非空へ変更する際はこの条件も更新する。[shortcut](../../packages/web-core/src/shared/lib/electric/collections.ts#L289-L305)・[互換 endpoint](../../crates/server/src/routes/local_remote.rs#L1652-L1689)
+旧定数空の `/v1/fallback/pull_requests`・`/v1/fallback/pull_request_issues`・`/v1/fallback/notifications` は route・handler と専用 shape ごと削除した。互換 endpoint や collection の定数空 shortcut は残さない。`ProjectProvider` は PR と PR–Issue 関連を明示的な空配列で返し、`useNotifications` は空 inbox・未読0・loadingなしを返す。これらのための購読・HTTP・周期 timer は作らず、通知 retry と既読更新も通信しない。共通の PR / Notification 表示型は維持する。[route](../../crates/server/src/routes/local_remote.rs#L155-L195)・[PR の空値](../../packages/web-core/src/shared/providers/remote/ProjectProvider.tsx#L30-L34)・[通知の空状態](../../packages/web-core/src/shared/hooks/useNotifications.ts#L1-L27)・[生成元](../../crates/server/src/bin/board_types/contracts.rs)
 
-既存の [collection 回帰](../../packages/web-core/src/shared/lib/electric/collections.test.ts#L112-L191)は無購読停止、GC 前後の復帰取得、3つの定数空 source の要求省略を扱う。316-B 統合では検証済み source と候補の tree 一致・差分検査を実行し、既存7テスト・型チェック等の再実行は省略した。ライブ認証・実 PR・承認・質問・Web Push と性能実測は未実施であり、通信削減は実装と fixture に基づく。
+実 PR は Workspace / Board の API、Run の承認・質問と Web Push はそれぞれ独立経路であり、今回の削除対象ではない。既存 UI の空状態契約と auth / scope 境界は維持する。削除した3経路を使う未知の外部 caller への互換応答はない。
+
+既存の [collection 回帰](../../packages/web-core/src/shared/lib/electric/collections.test.ts)は mutation 後 snapshot の順序、取得の鮮度・失敗、無購読停止と GC 前後の復帰取得を扱う。旧3定数空 source の shortcut テストは実装とともに削除した。LOCAL-319 のコード候補 `6a693b9b` は検証済み source と同一で、競合なしの fast-forward。今回実行したのは候補一致・祖先関係・差分の空白検査であり、同 SHA の既存 Rust 19件、フロント38件、型生成・整合、型チェック、最終 lint 成功を活用し、ユーザー指定に従って再実行を省略した。ライブ HTTP / browser・認証・実 PR・承認・質問・Web Push と性能実測は未実施であり、通信削減はコードと既存 fixture に基づく。
 
 ### コンパクト Kanban の操作と保存の境界
 

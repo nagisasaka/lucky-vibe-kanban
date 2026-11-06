@@ -80,10 +80,10 @@ sources:
     resource: repo://packages/web-core/src/shared/stores/useKanbanDisplayStore.ts
   - id: openwiki-source-5ef837b2bc54d286b3dedd8f
     resource: repo://packages/web-core/src/shared/stores/useUiPreferencesStore.ts
-generated: { by: "codex", at: "2026-11-04T20:22:03.096Z" }
+generated: { by: "codex", at: "2026-11-06T07:16:44.917Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-05T07:15:08.684Z
+    at: 2026-11-06T07:16:44.917Z
 ---
 
 # Project・Issue と実施の関係
@@ -232,7 +232,7 @@ UI/stdio/外部HTTPは共通primitiveと耐久receiptを使う。応答喪失・
 
 ## Issue の共同作業
 
-担当・Follower・Comment / reaction の保存と、空の local 通知一覧、OS 向け実行通知は [Issue の共同作業](issue-collaboration.md)に集約する。旧 Cloud Attachment の保存・配送契約は現行構成にはない。
+担当・Follower・Comment / reaction の保存と、明示的な空 UI を返す local 通知 inbox、OS 向け実行通知は [Issue の共同作業](issue-collaboration.md)に集約する。旧 Cloud Attachment の保存・配送契約は現行構成にはない。
 
 外部 AI の仕様レビューも同じコメントに追記する。レビュー対象の Issue revision を保持するが、投稿自体で要求・status を更新したり実装を始めたりはしない。来歴と編集、全文取得の契約は [共有レビュー](issue-collaboration.md#共有レビューは通常コメントとして残す)を参照する。[投稿処理](../../crates/server/src/remote_mcp/issue_comments.rs#L135-L153)
 
