@@ -111,6 +111,22 @@ struct Chunk {
     entries: Vec<DocumentEntry>,
 }
 
+// Same blank/comment handling as pinned OpenWiki OpenWikiIgnore.parse. This
+// only detects rules; actual exclusion matching remains upstream's responsibility.
+fn has_additional_ignore_rules(bytes: &[u8]) -> anyhow::Result<bool> {
+    let text = std::str::from_utf8(bytes)?;
+    Ok(text.split('\n').any(|line| {
+        let line = line.trim_matches(|c| {
+            matches!(c,
+                '\u{0009}'..='\u{000d}' | '\u{0020}' | '\u{00a0}' | '\u{1680}' |
+                '\u{2000}'..='\u{200a}' | '\u{2028}' | '\u{2029}' | '\u{202f}' |
+                '\u{205f}' | '\u{3000}' | '\u{feff}'
+            )
+        });
+        !line.is_empty() && !line.starts_with('#')
+    }))
+}
+
 impl DocumentInventory {
     pub fn identity(&self) -> &InventoryIdentity {
         match self {
@@ -147,7 +163,9 @@ impl DocumentInventory {
                     read_regular(&ignore_path, MAX_SOURCE_BYTES)? == bytes,
                     "Snapshot/worktree ignore policy mismatch"
                 );
-                return Ok(Self::UnavailableIgnorePolicy { identity });
+                if has_additional_ignore_rules(&bytes)? {
+                    return Ok(Self::UnavailableIgnorePolicy { identity });
+                }
             }
             _ => bail!("Cannot establish matching snapshot/worktree ignore policy"),
         }
@@ -271,7 +289,7 @@ impl DocumentInventory {
     /// Return no document contents, only the host-computed path and fixed guidance.
     pub fn prompt(&self, store: &RepositoryMemoryStore, reviewer: bool) -> String {
         match self {
-            Self::UnavailableIgnorePolicy { .. } => "\nDocument inventory unavailable: this snapshot has .openwikiignore and the pinned OpenWiki exposes no compatible public path selector. Candidates were not enumerated; count is unknown, not zero. Continue the existing independent source/document exploration and respect ignore rules. No inventory read is required.\n".into(),
+            Self::UnavailableIgnorePolicy { .. } => "\nDocument inventory unavailable: this snapshot has additional .openwikiignore rules and the pinned OpenWiki exposes no compatible public path selector. Candidates were not enumerated; count is unknown, not zero. Continue the existing independent source/document exploration and respect ignore rules. No inventory read is required.\n".into(),
             Self::Available { identity, counts, .. } => {
                 let path = serde_json::to_string(&store.document_inventory_path(identity.run_id, None)).expect("inventory path");
                 let role = if reviewer {

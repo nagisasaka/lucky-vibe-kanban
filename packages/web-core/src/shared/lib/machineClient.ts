@@ -37,6 +37,10 @@ import type {
   ProfileCopyPreviewView as ProfileCopyPreview,
   Repo,
   RepositoryMemoryState,
+  RepositoryWikiFiles,
+  SaveRepositoryWikiFile,
+  DeleteRepositoryWiki,
+  RebuildRepositoryWiki,
   ConfigureRepositoryMemory,
   SyncRepositoryMemory,
   WriteConfigProfileRequest as SaveConfigProfileRequest,
@@ -119,6 +123,20 @@ export interface MachineClient {
     data: SaveIntegrationValidationSettings
   ) => Promise<IntegrationValidationSettings>;
   getRepositoryMemory: (repoId: string) => Promise<RepositoryMemoryState>;
+  getRepositoryWikiFiles: (repoId: string) => Promise<RepositoryWikiFiles>;
+  saveRepositoryWikiFile: (
+    repoId: string,
+    data: SaveRepositoryWikiFile
+  ) => Promise<RepositoryWikiFiles>;
+  deleteRepositoryWiki: (
+    repoId: string,
+    data: DeleteRepositoryWiki
+  ) => Promise<RepositoryMemoryState>;
+  rebuildRepositoryWiki: (
+    repoId: string,
+    data: RebuildRepositoryWiki
+  ) => Promise<RepositoryMemoryState>;
+
   configureRepositoryMemory: (
     repoId: string,
     data: ConfigureRepositoryMemory
@@ -341,6 +359,41 @@ export function createMachineClient(
             method: 'PUT',
             body: JSON.stringify(data),
           }
+        )
+      ),
+    getRepositoryWikiFiles: async (repoId) =>
+      handleApiResponse<RepositoryWikiFiles>(
+        await makeMachineRequest(
+          runtime,
+          target,
+          `/api/repos/${repoId}/memory/files`
+        )
+      ),
+    saveRepositoryWikiFile: async (repoId, data) =>
+      handleApiResponse<RepositoryWikiFiles>(
+        await makeMachineRequest(
+          runtime,
+          target,
+          `/api/repos/${repoId}/memory/files`,
+          { method: 'PUT', body: JSON.stringify(data) }
+        )
+      ),
+    deleteRepositoryWiki: async (repoId, data) =>
+      handleApiResponse<RepositoryMemoryState>(
+        await makeMachineRequest(
+          runtime,
+          target,
+          `/api/repos/${repoId}/memory/delete`,
+          { method: 'POST', body: JSON.stringify(data) }
+        )
+      ),
+    rebuildRepositoryWiki: async (repoId, data) =>
+      handleApiResponse<RepositoryMemoryState>(
+        await makeMachineRequest(
+          runtime,
+          target,
+          `/api/repos/${repoId}/memory/rebuild`,
+          { method: 'POST', body: JSON.stringify(data) }
         )
       ),
     getRepositoryMemory: async (repoId) =>

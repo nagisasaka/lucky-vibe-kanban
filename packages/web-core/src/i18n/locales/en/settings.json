@@ -1102,7 +1102,22 @@
       "publishing": "Publishing",
       "cleaningUp": "Cleaning up"
     },
-    "invalidCommit": "Enter a 4–40 character hexadecimal commit SHA from this branch."
+    "invalidCommit": "Enter a 4–40 character hexadecimal commit SHA from this branch.",
+    "files": {
+      "existing": "Saved repository file",
+      "defaultValue": "File not created — showing the LVK default",
+      "edit": "Edit",
+      "reset": "Restore LVK default in editor",
+      "target": "Repository: {{repository}} · Branch: {{branch}}",
+      "saveHint": "Save writes the complete file to this repository. It applies to future generation and sync; saving alone does not update pages or start reconstruction. Restore default loads the editor first; save to apply it.",
+      "ignoreHint": "Additional ignore rules change discovery to agent exploration. Missing, empty or comment-only rules allow the document inventory.",
+      "danger": "Danger Zone",
+      "rebuild": "Rebuild using existing Wiki",
+      "rebuildHint": "Uses saved instructions, exclusions and a fixed previous Wiki as reference. Reconsiders structure against current source and documents. The current Wiki stays published until review and publication succeed. Save edits before starting.",
+      "delete": "Delete generated Wiki",
+      "deleteHint": "Delete generated pages and OpenWiki-managed guidance on {{repository}} / {{branch}}. Instructions, ignore rules, human-managed documents and Git history remain. This does not delete the repository or erase history, and does not start regeneration. Automatic Wiki generation stays off until you explicitly initialize again.",
+      "confirm": "Type {{target}} exactly to delete"
+    }
   },
   "schemaForm": {
     "environment": {

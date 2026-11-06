@@ -131,7 +131,27 @@ wiki_exists: boolean, active_sync_scope: RepositoryWikiSyncScope,
  * A scoped adoption did not verify older Wiki content. Automatic updates
  * do not erase that limitation; a full reconciliation can clear it.
  */
-unverified_before: string | null, };
+unverified_before: string | null,
+/**
+ * Saved repository-file maintenance uses the same publication checkpoint.
+ */
+file_operation?: RepositoryWikiFileOperation, rebuild_reference?: string,
+/**
+ * Explicit deletion suppresses automatic integrations until explicit init.
+ */
+generation_suppressed: boolean, };
+
+export type RepositoryWikiFileOperation = { id: string, workspace_id: string, source: string, branch: string, paths: Array<string>, delete: boolean, };
+
+export type RepositoryWikiFile = { path: string, content: string, default_content: string, exists: boolean, };
+
+export type RepositoryWikiFiles = { repository_id: string, branch: string, source: string, files: Array<RepositoryWikiFile>, };
+
+export type SaveRepositoryWikiFile = { branch: string, source: string, path: string, content: string, };
+
+export type DeleteRepositoryWiki = { branch: string, source: string, confirmation: string, };
+
+export type RebuildRepositoryWiki = { branch: string, source: string, project_id?: string, };
 
 export type RepositoryWikiSyncScope = { "type": "pending_changes" } | { "type": "current_source" } | { "type": "since_commit", base_commit: string, };
 
@@ -220,7 +240,11 @@ project_id?: string,
  * Review changes after this commit through the frozen integrated head.
  * Omit to reconcile against the complete current source.
  */
-from_commit: string | null, };
+from_commit: string | null,
+/**
+ * Explicit Initialize action; required to regenerate after user deletion.
+ */
+initialize?: boolean, };
 
 export type Project = { id: string, name: string, key: string, default_agent_working_dir: string | null, remote_project_id: string | null, created_at: Date, updated_at: Date, };
 

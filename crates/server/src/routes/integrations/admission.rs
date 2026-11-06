@@ -299,7 +299,16 @@ pub(super) async fn submit_with_expected_target(
     )
     .await?
     {
-        Some(store) => store.state().await?.enabled,
+        Some(store) => {
+            let state = store.state().await?;
+            ensure!(
+                state.file_operation.is_none()
+                    && state.active_run_id.is_none()
+                    && state.bootstrap.is_none(),
+                "Repository Wiki maintenance is active"
+            );
+            state.enabled && !state.generation_suppressed
+        }
         None => false,
     };
     let run = IntegrationRun {

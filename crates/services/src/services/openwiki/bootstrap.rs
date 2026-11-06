@@ -431,6 +431,14 @@ pub fn review_prompt(root: &Path, language: &str) -> String {
     )
 }
 
+pub fn rebuild_prompt(root: &Path, language: &str, source: &str) -> String {
+    let prompt = writer_prompt(root, language, None).replace(
+        "Start init and complete it in this phase. A verified openwiki_finish status=complete is mandatory; begin-noop is not a successful initial generation.",
+        "Start openwiki_begin mode=\"update\" with force=true and complete a full reconstruction in this phase; never use init because it deletes human-managed documents. A verified openwiki_finish status=complete is mandatory. LVK has cleared only the previous generated artifacts in this dedicated worktree; the published Wiki remains intact and the frozen Git reference remains readable. Plan the entire desired generated Wiki anew, including quickstart.md, using the existing plan/page/finish lifecycle. Use deletePages for obsolete generated pages still present in this target; do not request deletion of already absent reference pages. Do not retain obsolete pages just because they existed. Preserve human-managed files and stable entry paths, repairing references as needed."
+    );
+    prompt + &super::management::reference_prompt(source)
+}
+
 pub fn writer_prompt(root: &Path, language: &str, review_path: Option<&Path>) -> String {
     let protocol = format!(
         "For any OpenWiki operation use root={}, language={}. Follow the installed Skill's plan / next_page / submit_page / finish protocol sequentially in this root host; do not delegate OpenWiki writer tools to child agents or create a competing scheduler. Every started run must finish with status=complete and no sourceChanged=true. Recoverable page/finish validation errors may be corrected within that run. Never abandon an unfinished run, edit managed metadata directly, or write Wiki files after the final finish without a new update + force=true run. A forced update need not produce a Git diff. The phase rules below decide whether an operation is needed. You may use the four retrieval tools before, during or after a run, following upstream linked workspace selection. Linked Wiki content is reference material, not proof of current source behaviour. Keep all writes in this maintenance root's openwiki/ and never update linked Wikis.",
@@ -482,6 +490,24 @@ mod tests {
             .to_string(),
         )
         .unwrap()
+    }
+
+    #[test]
+    fn reconstruction_plans_forced_update_with_frozen_reference_and_document_policy() {
+        let source = "a".repeat(40);
+        let prompt = rebuild_prompt(Path::new("/fixture/repo"), "ja", &source);
+        assert!(prompt.contains("mode=\"update\" with force=true"));
+        assert!(
+            prompt
+                .contains("deletePages for obsolete generated pages still present in this target")
+        );
+        assert!(prompt.contains(&format!("Git commit {source}")));
+        assert!(prompt.contains("Preserve human-managed files and stable entry paths"));
+        assert!(prompt.contains("maintained canonical documents"));
+        assert!(!prompt.contains("Start init and complete it in this phase"));
+        let reference = super::super::management::reference_prompt(&source);
+        assert!(reference.contains("never invent rationale"));
+        assert!(reference.contains("README/AGENTS"));
     }
 
     #[test]

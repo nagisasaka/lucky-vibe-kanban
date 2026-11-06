@@ -7,6 +7,7 @@ import type {
   OpenWikiBootstrapPhase,
 } from 'shared/types';
 import type { MachineClient } from '@/shared/lib/machineClient';
+import { RepositoryWikiFilesSettings } from './RepositoryWikiFilesSettings';
 import { WorkspaceWorkflowLink } from '@/shared/components/WorkspaceWorkflowLink';
 import { PrimaryButton } from '@vibe/ui/components/PrimaryButton';
 import {
@@ -64,6 +65,7 @@ export function RepositoryMemorySettings({
   );
   const [language, setLanguage] = useState(query.data?.output_language ?? 'en');
   const [busy, setBusy] = useState(false);
+  const [filesDirty, setFilesDirty] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [scope, setScope] = useState<'current' | 'since'>('current');
   const [fromCommit, setFromCommit] = useState('');
@@ -85,7 +87,10 @@ export function RepositoryMemorySettings({
     repo.default_target_branch,
   ]);
 
-  const active = state?.active_run_id != null || state?.bootstrap != null;
+  const active =
+    state?.active_run_id != null ||
+    state?.bootstrap != null ||
+    state?.file_operation != null;
   const unsaved =
     state != null &&
     (enabled !== state.enabled ||
@@ -100,6 +105,7 @@ export function RepositoryMemorySettings({
     active ||
     !state?.enabled ||
     unsaved ||
+    filesDirty ||
     query.isError ||
     invalidCommit;
   const perform = async (sync: boolean) => {
@@ -112,6 +118,7 @@ export function RepositoryMemorySettings({
         await client.syncRepositoryMemory(repo.id, {
           ...(projectId ? { project_id: projectId } : {}),
           from_commit: needsCommit ? fromCommit.trim() : null,
+          ...(!state?.wiki_exists ? { initialize: true } : {}),
         });
       else
         await client.configureRepositoryMemory(repo.id, {
@@ -149,7 +156,7 @@ export function RepositoryMemorySettings({
         label={t('repositoryMemory.enabled')}
         checked={enabled}
         onChange={setEnabled}
-        disabled={busy || active}
+        disabled={busy || active || filesDirty}
       />
       <SettingsField
         label={t('repositoryMemory.targetBranch')}
@@ -159,7 +166,7 @@ export function RepositoryMemorySettings({
           id={`openwiki-branch-${repo.id}`}
           value={branch}
           onChange={setBranch}
-          disabled={busy || active}
+          disabled={busy || active || filesDirty}
         />
       </SettingsField>
       <SettingsField
@@ -171,7 +178,7 @@ export function RepositoryMemorySettings({
           value={language}
           onChange={setLanguage}
           placeholder="en, ja, fr, zh-Hans"
-          disabled={busy || active}
+          disabled={busy || active || filesDirty}
         />
       </SettingsField>
       {state?.wiki_exists && (
@@ -189,7 +196,7 @@ export function RepositoryMemorySettings({
               id={`openwiki-scope-${repo.id}`}
               value={scope}
               onChange={setScope}
-              disabled={busy || active}
+              disabled={busy || active || filesDirty}
               options={[
                 {
                   value: 'current',
@@ -214,7 +221,7 @@ export function RepositoryMemorySettings({
                 value={fromCommit}
                 onChange={setFromCommit}
                 placeholder={t('repositoryMemory.commitPlaceholder')}
-                disabled={busy || active}
+                disabled={busy || active || filesDirty}
               />
             </SettingsField>
           )}
@@ -238,6 +245,18 @@ export function RepositoryMemorySettings({
           onClick={() => void perform(true)}
         />
       </div>
+      <RepositoryWikiFilesSettings
+        key={`${repo.id}/${state?.target_branch}`}
+        repo={repo}
+        client={client}
+        disabled={busy || active || unsaved || !state}
+        wikiExists={state?.wiki_exists ?? false}
+        enabled={state?.enabled ?? false}
+        branch={state?.target_branch}
+        projectId={projectId}
+        onDirtyChange={setFilesDirty}
+        refresh={() => query.refetch()}
+      />
       {!state?.last_success && (
         <p className="text-sm text-low">{t('repositoryMemory.startHint')}</p>
       )}

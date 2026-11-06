@@ -1,3 +1,4 @@
+import { RepositoryWikiHarness } from "./RepositoryWikiHarness";
 import { GithubCredentialsHarness } from "./GithubCredentialsHarness";
 import { useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
@@ -550,7 +551,9 @@ Object.assign(window, {
 const mode = new URLSearchParams(window.location.search).get("mode");
 
 createRoot(document.getElementById("root")!).render(
-  mode === "github-credentials" ? (
+  mode === "repository-wiki" ? (
+    <RepositoryWikiHarness />
+  ) : mode === "github-credentials" ? (
     <GithubCredentialsHarness />
   ) : mode === "diff-tree" ? (
     <DiffTreeHarness />
