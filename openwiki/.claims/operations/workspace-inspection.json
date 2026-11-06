@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:6a4bde1056a834cc0846da6bb5d29bd81c7f513afe5a013224627e0212513484",
+  "pageVersion": "sha256:3794428c6bf1791aa0beae43266782489ffd7c965919df623f1a567f4b9ae94e",
   "claims": [
     {
       "id": "claim_ef965d37641846bda42842bf4788c8cc",
@@ -142,7 +142,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/mod.rs",
-          "version": "repo-file-v1:sha256:2430fb321010767778384090a8a52dd32af8bc251607964d251af68864e1c0c0"
+          "version": "repo-file-v1:sha256:d9bad8a1d40f6bfa901395d8c3104c01afa8c7437b9a2da6fa5ff1e2ad988773"
         }
       ]
     },
@@ -285,7 +285,7 @@
       "statement": "WorkspaceProvider は Workspace / host の切替と unmount で共有差分 store をリセットし、前の対象の snapshot・error・初期化状態を残さない。",
       "evidence": [
         {
-          "resource": "repo://packages/web-core/src/shared/providers/WorkspaceProvider.tsx#L174-L181",
+          "resource": "repo://packages/web-core/src/shared/providers/WorkspaceProvider.tsx#L186-L193",
           "version": "repo-lines-v1:sha256:b6effa454709329d2360beb4d47a0f62f9f6678796ff455712edaa0cd3badcdd:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOWIzYTdiZWU0ZDY1NDVlYjk2M2E2NDcxZTA4MDRmNmMyODQ3YTQzYjM1NWJlZjk0YmZkM2ZhZTIzY2M3NDFlNSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMGNkZDU2NGZkZDQwYzA4ZGFjNzQ3MWMxNmIyYWE2YTJlZjNmZjA5NzAzOTU5ZGI1YTY1MjQ5ZjNjNGEwYWRlNCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNDM5ZjY0MjJhNTFmYjYxMzQxNDdiYzZlMGEwZjk5ZjkxMjJiNmQ3NWVlNGMyNTdjMDJmN2M2NDQ5Y2EyYTgwYyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNjUzYWQ1ZjUzMjE2NTMwNDU4MWNlOTlkMzcyZDE5MjQ2YzBjM2VhNjc0N2QxZDRlYWJhN2YzZjFjNDk4ZDBlYyJ9"
         },
         {
@@ -331,7 +331,7 @@
           "version": "repo-lines-v1:sha256:704db221c5720f0416deeb8968069de1cafddfbf9174b31d73b5b3d6610d02b8:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJhZTYzYWI0NjQ2NWE5YmQyOTE3OWZkYmE2MzgyNTA5MjIwYjY0N2E0OTc3ZmMwN2M4NjM2ZGE3ZTAzYmI4Y2IiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI3ZTU3ODhkNWQ5ZDczZDI0YTgxZGJjMGE1YTc0YmZhODJjOWMzYjNhZjk5ZTUyYWY3OTZlOTBiNDY4YThhM2QiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk2MDcwN2M0NmY0NzhhY2E4OGY4ZDBjNjEyZThjOTM2OTFjYzA2YzdhYzg4YmU1ODRiMDA3ODIyYmIwNDBkYjciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY2Y2Y2NTAyYjIwMmEzMzM4NjYwNWRjNjc4ZDNiNWE4Njk2YmUzYjBmMzhmMGFhZTBjNjFkZWE0YmE0ZDE0YjIifQ"
         },
         {
-          "resource": "repo://packages/web-core/src/shared/components/WYSIWYGEditor.tsx#L565-L584",
+          "resource": "repo://packages/web-core/src/shared/components/WYSIWYGEditor.tsx#L574-L593",
           "version": "repo-lines-v1:sha256:53b9617642c89efea35dd070b9fb105086e474071cf563f17907f57c9660a5a1:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc5YmYxNWM1NmU2YzdlMmQ5YzNkZTRhZmIwMjYwZTcxNDU2MGYzOGI0NjRiZjY4NWM1NzE2NTUyMDY5Mjc3MjUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg0ZTQyMDhjZDZmZmI4YzRhMzU0N2IyZjU0YWRhMTk5NzhjM2YzNjVlNzhmOTUwMmVmNTE0NWNkZDJhYTg1NDMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY4MDQ5Y2ZkYWJmYWY2NTU4MjcyYTgwMTFhMzRlYzJlNDUzYmY0NDdmZjBlMzdkMTRhZDAzOTRkMTMzYWZkNGYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE5ODI5ZGM0YjQ4NGY0YzVhMjE0ZDczNTdiMWNiMjBhZTRhNzY2MTU5M2E3MjJlYzFhYmY5NmRhNDNkMTlmNmMifQ"
         }
       ]
@@ -439,7 +439,7 @@
       "statement": "Workspace一覧ではIssue番号・識別子でも検索でき、結果はActive/ArchivedとProject/PR filterに従い、同じ識別子の複数Workspaceや別Projectの結果も現れる。",
       "evidence": [
         {
-          "resource": "repo://packages/web-core/src/pages/workspaces/WorkspacesSidebarContainer.tsx#L408-L495",
+          "resource": "repo://packages/web-core/src/pages/workspaces/WorkspacesSidebarContainer.tsx#L420-L507",
           "version": "repo-lines-v1:sha256:96b21782fc5066f97719f3ae446479ed28b3e28efa2055c9dd7e185a96bbc843:eyJzZWxlY3RlZExpbmVDb3VudCI6ODgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUxMjE1YTUxNzU0ZWEyNDQ1YjE2OTQ3NWRjZWQ2Yjg4MTYzMjY1MzA1YTgxNzMyYzJmNzNjMThjMGRiMzZlNGUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFmOWRiYzdmMmYyNGI1Mjg0MzU3Zjk4NjMwNmZlZjA0MTdjYzZmODFhODNhMDJiZjgxNTBmNzExMmY4ODNiMDkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImVjZWJiYzI4OGQzYzNkNTI3NjI3Mzg0MTZhZTlmNzU5ODI0NjExZDk4NmNkZDc3ODY5ZmUxZTdkMTI2M2NjM2YiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE3MWZlZGRiODhhNjk0ZjAxZjQ4OTgyNzAxZjU3NWUyM2E4ODZmYTQ2ZTgzYjZlODA1NmY1MTY2NGVjNTQ0N2QifQ"
         },
         {
@@ -694,7 +694,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/mod.rs",
-          "version": "repo-file-v1:sha256:2430fb321010767778384090a8a52dd32af8bc251607964d251af68864e1c0c0"
+          "version": "repo-file-v1:sha256:d9bad8a1d40f6bfa901395d8c3104c01afa8c7437b9a2da6fa5ff1e2ad988773"
         },
         {
           "resource": "repo://deploy/server/server.mjs",
@@ -835,6 +835,6 @@
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-06T03:28:31.315Z"
+    "at": "2026-11-06T08:11:13.571Z"
   }
 }

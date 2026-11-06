@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:4642cbb422516d63f41a6f10af94aeb7d3cb28526bc6c6a54694c6c1ae927653",
+  "pageVersion": "sha256:ec9c3fdb6f8d71f544b717b6a21b93b43df8b591b97414afa8f907f3e23fc951",
   "claims": [
     {
       "id": "claim_94623b4df5d444f5b2804c9e2c2025c7",
@@ -500,7 +500,7 @@
         },
         {
           "resource": "repo://crates/server/src/remote_mcp/runtime_read.rs",
-          "version": "repo-file-v1:sha256:a580ab5279340f707aed016721b15ed9d0a593e6712b7d9dc52f0474863ccf82"
+          "version": "repo-file-v1:sha256:011b349bfe757831717fbb8b19b1fd9811cc5942d8e71829ffea7d6dc98e2a9b"
         },
         {
           "resource": "repo://crates/server/src/remote_mcp/workspace_archive.rs",
@@ -523,7 +523,7 @@
       "statement": "Workspace sidebar は Active/Archived とも trim・小文字化した入力を名前・branch・関連Issue識別子のOR部分一致で照合し、106やlocal-106はLOCAL-1060にも一致する。",
       "evidence": [
         {
-          "resource": "repo://packages/web-core/src/pages/workspaces/WorkspacesSidebarContainer.tsx#L408-L495",
+          "resource": "repo://packages/web-core/src/pages/workspaces/WorkspacesSidebarContainer.tsx#L420-L507",
           "version": "repo-lines-v1:sha256:96b21782fc5066f97719f3ae446479ed28b3e28efa2055c9dd7e185a96bbc843:eyJzZWxlY3RlZExpbmVDb3VudCI6ODgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUxMjE1YTUxNzU0ZWEyNDQ1YjE2OTQ3NWRjZWQ2Yjg4MTYzMjY1MzA1YTgxNzMyYzJmNzNjMThjMGRiMzZlNGUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFmOWRiYzdmMmYyNGI1Mjg0MzU3Zjk4NjMwNmZlZjA0MTdjYzZmODFhODNhMDJiZjgxNTBmNzExMmY4ODNiMDkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImVjZWJiYzI4OGQzYzNkNTI3NjI3Mzg0MTZhZTlmNzU5ODI0NjExZDk4NmNkZDc3ODY5ZmUxZTdkMTI2M2NjM2YiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE3MWZlZGRiODhhNjk0ZjAxZjQ4OTgyNzAxZjU3NWUyM2E4ODZmYTQ2ZTgzYjZlODA1NmY1MTY2NGVjNTQ0N2QifQ"
         },
         {
@@ -545,11 +545,11 @@
           "version": "repo-lines-v1:sha256:55f28c67b1e147ecf2e9a7f88e4bd390bdcd20305ea83de2ff09e39c3164ee9f:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZhNzRiMTgyODZkNDIzOWU4MjExOGYyZTU5MTc4MTIzMDIzZjNlZTM4MWYwMmE3NTljODdiODE4NTcxNzAwNmUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRlOGUyNWRjNWM2YWZhNDYxNzVhN2JmYzE2N2VkYTc0Nzg1MDkxYWNjNDE4ZjIwMDY1NmNkZWMwYmZhMzhiMmQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
         },
         {
-          "resource": "repo://crates/server/src/routes/local_remote.rs#L1366-L1433",
+          "resource": "repo://crates/server/src/routes/local_remote.rs#L1360-L1427",
           "version": "repo-lines-v1:sha256:c94433a7befd0cb8f3a132eef2c8b9859d4b04e480a599ece876722631280961:eyJzZWxlY3RlZExpbmVDb3VudCI6NjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZkNTFlZTc5NTExMDM1ZTNmNjg5OWUzYmIwNjBjOTkwOTdhZDEwMGUwZTYxMjg5ZjViOTMxNTc5MzYzOTcwZDAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImZhNGY1ZjNkNjEzMmQxZGNmM2QxODkwMzBjM2E3MGU3NjUzNDY4NDQ5NTE4OWEwYzc0NTU4OGIwNGRhMWYzNDIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImM3NTE4NGExMzEyNjc4NDQ1NGM5MTNlNTliZjAxYjBhNDc1MThkNGNlMmNiMWRlYzMxMmE4ZGU5ZDRmYWZhNTEifQ"
         },
         {
-          "resource": "repo://packages/web-core/src/pages/workspaces/WorkspacesSidebarContainer.tsx#L306-L333",
+          "resource": "repo://packages/web-core/src/pages/workspaces/WorkspacesSidebarContainer.tsx#L318-L345",
           "version": "repo-lines-v1:sha256:24b0b9d7162e55a69bf9db28e356a9c931dfc2f93a8a8d7ab74cd959fc04e85b:eyJzZWxlY3RlZExpbmVDb3VudCI6MjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZjZWRmNzFiYzAwYmZkODJhNWFjNDFjYmZiNDk2ZjEwYjc3MDc0NTIxZGIyMzc5MTlkZTY0NWY1NjBkMzkwNjAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImYzNTQxMjFmM2I1MGU3MTA3MGRlNTZmYTc4ODMyNTZiNDY2ZTc4YzdiMjdhOWM1MzRiNzFmMzAyMDY3NThhZTIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY4NzE0NDFmOGYzMDE4Y2FjNzkxNjgzZGIxYzkzOWRhZjIxODE5NTJmNjJiZDU3MGJlMjEwNGM1OTJmYjZhZDUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFmNDg0MmI4OTkzY2IwZjBjYzExOGExMmVmODg5ZjRkNzU1NmMwMGVjNGE5MTVkNDA1OWJmODVhZmVhYWQzMDkifQ"
         }
       ]
@@ -559,7 +559,7 @@
       "statement": "識別子関連情報がない場合も名前・branchの検索は継続し、既存snapshotは取得失敗では空に置換されない。購読中の30秒周期または再購読時の取得で成功した関連情報が検索に反映され、無購読中は周期取得を止める。",
       "evidence": [
         {
-          "resource": "repo://packages/web-core/src/pages/workspaces/WorkspacesSidebarContainer.tsx#L438-L457",
+          "resource": "repo://packages/web-core/src/pages/workspaces/WorkspacesSidebarContainer.tsx#L450-L469",
           "version": "repo-lines-v1:sha256:80635cf018930583eb11be495412ff2c30343409d4d3b13a40a168363d2965b1:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkyMTk5ZjYzZGRmYzhhZDRiOTZlZjMxYzRkNzgyZmM0ZmNmZmM0ZWM3MzUyNzQ3YWVhMTQyNWJmOTBkZmRjOGMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVkYzJkNjllZjFkZTliZTRlZjBmMjBlYjM3YTc0YmY4ODYyNzQxYmMxYzA1MjVmM2VlZWJlMTM2MGIwMTJmNTYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM0Y2Q5ZWE3Yjg5NWE0ZTM3ZDc4NWY1ODE0OTVmYzBmZTdjZjA0NTBmNjBiNjgyNzZjYmU2Njg4NDYzM2JlOGEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjIwZjcxYzkzMjgyMDNkNWJmODgwMDFhYzA0Y2QwZjVkZjFmYzYzYmMxNDI4ZTllZjcyMDg5ZjYxNDczNWVlYzkifQ"
         },
         {
@@ -567,7 +567,7 @@
           "version": "repo-lines-v1:sha256:10bf9cb0dea3cb1811962df438d4be5715054b6c0a445bf8dfc59581a08204bc:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNGM5NWExZDBjNDM0ZGMxYTc0ZTA1MDdkZmIwNTkyYWU3Y2YyY2Q2OTYyMGY1OTIwZDQ1MTBkOTk3YThmNWVkOCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOTVlZjAxYmMwOGRiYzNiNjNlNGU3NWVhM2QyNmE1Yjk0MTg5MTg3N2UyN2FkODkxMzI5Yzg0MTFkN2Q4ZGM0ZCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiN2Q0MDZmNmU4NmJmYWUxNTU4MGM4NjQwN2M3YmQ4YTc0Y2Y0NjhlNThlODQ1ZWI4YzAwZDI5Mjc1Yzc1ZDk3YyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjEsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNDEyY2EzNDVjY2Y3NWJmOWMwODA2YmNlNjk1YmU4ZGU4MDhiNzk5ODQyNTFhN2E1NGQyMDJjZjYxMDFkZDQ1MSJ9"
         },
         {
-          "resource": "repo://packages/web-core/src/shared/lib/electric/collections.ts#L307-L415",
+          "resource": "repo://packages/web-core/src/shared/lib/electric/collections.ts#L295-L403",
           "version": "repo-lines-v1:sha256:d4dc9a6ac87fe5d36f6a51b2c07c57e3a4df77ea7c60ff035e522666770daa1a:eyJzZWxlY3RlZExpbmVDb3VudCI6MTA5LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI4NDg1ODNjNzZjMTIwNTU4NjI3YWNmNmUzZGFmYjdkNjJiZDc4MGEwNWQ4MDJjYzNkMzZjYjlhOTE1YjY1ZWVmIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIwMWJhNDcxOWM4MGI2ZmU5MTFiMDkxYTdjMDUxMjRiNjRlZWVjZTk2NGUwOWMwNThlZjhmOTgwNWRhY2E1NDZiIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI3ZDlmZWRhMzc5YzRjNTI4OTQ2NzYzNTAyNzc1YTVjNzczOGNmM2EwZmU4NzIyNTg5NmQ3MDc4OTc0OWNiMmEyIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJmNzkwMDY2MzJlYjI0MTY5ODRkMjIxNDdmYmFhZWFhN2MyMTM4Y2Q0OTRjOGFlZjI1N2Y3OTk1ZWNkMTVjZmI0In0"
         }
       ]
@@ -577,15 +577,15 @@
       "statement": "Workspace検索はProject/PR filterとarchive区分を保持し、空白だけなら通常の50件単位表示、検索中なら一致する取得済み一覧を表示件数で切らずに表示する。",
       "evidence": [
         {
-          "resource": "repo://packages/web-core/src/pages/workspaces/WorkspacesSidebarContainer.tsx#L400-L495",
+          "resource": "repo://packages/web-core/src/pages/workspaces/WorkspacesSidebarContainer.tsx#L412-L507",
           "version": "repo-lines-v1:sha256:4b5d30ac68f2675bfb237f349ef7bc3490539cb291a2204c077cef7bc6a3b1a2:eyJzZWxlY3RlZExpbmVDb3VudCI6OTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU5MWFmZjViYjIzY2RkMTM4ZTU0MTQ2NzliMGFmZGQ3Nzg4N2UyMDFmYTRjZTQ4ZWVhOGMxNjE0NDM4ZTU5OGQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFmOWRiYzdmMmYyNGI1Mjg0MzU3Zjk4NjMwNmZlZjA0MTdjYzZmODFhODNhMDJiZjgxNTBmNzExMmY4ODNiMDkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImIwYTE1NzcyZGU1NzYxOWIyNDNiMGQyOTBlMjc3NGU4NjBkZGM1MjdkOTU5MGFiNmUwNjU1NDkwNGU4ZjNlNjkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE3MWZlZGRiODhhNjk0ZjAxZjQ4OTgyNzAxZjU3NWUyM2E4ODZmYTQ2ZTgzYjZlODA1NmY1MTY2NGVjNTQ0N2QifQ"
         },
         {
-          "resource": "repo://packages/web-core/src/pages/workspaces/WorkspacesSidebarContainer.tsx#L541-L567",
+          "resource": "repo://packages/web-core/src/pages/workspaces/WorkspacesSidebarContainer.tsx#L553-L579",
           "version": "repo-lines-v1:sha256:6038b0db92bbecef3943b025db35687981eb388da6d8b070dae768a69a989c01:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjczMjUwMmM0NWUzZjBiYzM2ZjM0NmJmNDVmNGZhNDcyYjZjYjI2Nzk2YzI1OTMzODQ4NzBkY2UwODNiMjkxZDUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU5MzRmMTE1M2JmYWUyNTRmMjFiYTMzOTBjZWVjMjlhZGM5MDA2MWQ0MjQ0NTA0Y2I5MDllYTI1MjBmMDE2ZWIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjJjNjllODlkZWNhYjY0MDlkYTJjYmExZDYyOGI2YzQ2ZDIzYzQ4YzNhNTM1MjU1YjY0ZWNjYTQ0MjM1YTQ4OTYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM2OWRlNmJiNjE1YzA5YjNjNGI5YWJjZDJiOTRhNTMxN2EwMzQ1OTBmYTk3YTdjMTMzZWJjM2E0MGQwNjg4NjEifQ"
         },
         {
-          "resource": "repo://packages/web-core/src/pages/workspaces/WorkspacesSidebarContainer.tsx#L62-L62",
+          "resource": "repo://packages/web-core/src/pages/workspaces/WorkspacesSidebarContainer.tsx#L65-L65",
           "version": "repo-lines-v1:sha256:64840849cadf7b740bfeb1b9c81ded19ed89e3932fc58ddbbce467b3a4b4fb7f:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNjQ4NDA4NDljYWRmN2I3NDBiZmViMWI5YzgxZGVkMTllZDg5ZTM5MzJmYzU4ZGRiYmNlNDY3YjNhNGI0ZmI3ZiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNjQ4NDA4NDljYWRmN2I3NDBiZmViMWI5YzgxZGVkMTllZDg5ZTM5MzJmYzU4ZGRiYmNlNDY3YjNhNGI0ZmI3ZiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMDJlN2Y0NDM4ZGRlZGI5NmVmYjVmOTE4YjBhYmE3ZjRkNTAwZjZhZjhhYTZiZGMwZGQyZmVjMWY5NjgxYjk2NyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYjhmNDU3MmMzZjM4MTA4NzA4ZmE2OTIwZDQ3ZjRlMzNkZWFiYzY1MGU5NzBmZmYzYWZiOGFlYWZmZThlYzQzNSJ9"
         }
       ]
@@ -595,7 +595,7 @@
       "statement": "user Workspace関連情報APIは明示されたuser_idが現在actorと異なる場合に空一覧を返し、検索はこの取得境界を変更しない。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/local_remote.rs#L1672-L1685",
+          "resource": "repo://crates/server/src/routes/local_remote.rs#L1658-L1671",
           "version": "repo-lines-v1:sha256:ad5bdf029163fbfd092ed6f5a8f5daaafeac60eb699471366f03b3bc1c6eeac5:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU0N2FmZjg5M2U1OTIwOWJhMWJkMzc5M2ZlZjM5NDk1YmFhY2Q1ZTAxNTRjNjlmNmFkZjc0OTMyZDNmYmExNWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjIyZGRmNDAzNDg1MTczMDE2MmU1YjVmZDgxZWU5YjljNWJmMWU3YzJkNDNiOTc4YTIyYjE1ZGMyZTk4MzAxYjkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImExMjRkNThhZmIzMzJmZjczODU4MDA5OGUyYTQ4MjUzZTI1YjAzMmZjYTE0NjhkMDQ4ODIxZjliY2JhZjUyNjEifQ"
         }
       ]
@@ -605,7 +605,7 @@
       "statement": "Workspace検索の回帰は比較unit、両一覧のRust SQLite fixture、専用instanceの実UI/API Chromium specで分担し、browser specは失敗から通常pollingでの回復、filter、50件境界、識別子更新を扱う。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/local_remote.rs#L4702-L4772",
+          "resource": "repo://crates/server/src/routes/local_remote.rs#L4684-L4754",
           "version": "repo-lines-v1:sha256:cf1cb807c6806e7d401ad8f3a65814e84ff37df16aaf9fd1a417125ede6325bf:eyJzZWxlY3RlZExpbmVDb3VudCI6NzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjljNmZmZWY4YjFkNGI2NDYwMzU1OWRlYmRiNDA2MTNmNzUzOThiZGRmOGEwYjRlMmUwMDRkMTU3MjI0MmY2ZTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk1OThlYmY3NjA3MzFkMTc1ZDE2OTg3MzY2MThiMDUwMjMyY2U5MmRmZGJiYzgwOWYxOGRmNzA1YWY5ZjQ1M2QiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUwZWRmNmY1ZmY2Y2QyYmUyYjQwMzY5NTU5YmE3NzRmYmVhMDUwYTY0OWY4MjYyODI1ZjUzYmZjYTY3ODVhNTciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImM5ODQ2N2Q0YzBiNTc1MWQ4MGM3NmVkZDM3OTlmYTRkMzdjNTg1NDg0NzhjODEzMmMzOGRlYjE3N2VlYTRmMDYifQ"
         },
         {
@@ -831,6 +831,6 @@
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-06T03:09:15.108Z"
+    "at": "2026-11-06T08:11:13.571Z"
   }
 }

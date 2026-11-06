@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:70357e9864808ac9a941097dbd5d9b66d6fcda63010ca2c9f6b7017e61897fbf",
+  "pageVersion": "sha256:32ae3a79c66b6d382644119bd4ccfca14de223c943fd7828e18d21a275012538",
   "claims": [
     {
       "id": "claim_82c340b0bbd240889908ea6c2c5be423",
@@ -131,11 +131,11 @@
       "statement": "Goalのsubagent上限は0で無効化、未指定でCodex既定となる。",
       "evidence": [
         {
-          "resource": "repo://crates/executors/src/executors/codex.rs#L2140-L2159",
+          "resource": "repo://crates/executors/src/executors/codex.rs#L2184-L2203",
           "version": "repo-lines-v1:sha256:1d1f66bc0a94f686110e92e25bc67a3492adae0c9dd2dfd19e6552b2c523d9ee:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkyYjVlZGY1OTQ5Y2ZlYTY3ODIyY2Y2OTExMzIzNjNkNjhkNmYxZTE2OWY1ZTBkNGY3YzE0ZTVmYTFlNmQ0ZTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFlNzVjNzBkOTQ2MzYyNWUxMDc5ZmQ4ZmM4ZWU2MmFkMmU5MmM0MmJlYWFiZmQ4NWI3OGQ4ZTBhNDk3OWI5NGEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImYyZDgyOGEwMzdhYzFjODE1MzViMWQ1NTAwODMyMzIzYmZiYjg2NmEzYTNmODdlN2E2OGMxM2EyYmFlNTZmZmYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImEwMGRiMDQwZjI5MDliZjk3OGZmMGE5NTZhNTVlODNjNjUzNDE4ZGU2YmI2OGY4MDQxZGE5NzZmOGQzZDIyNzAifQ"
         },
         {
-          "resource": "repo://crates/executors/src/profile.rs#L171-L177",
+          "resource": "repo://crates/executors/src/profile.rs#L213-L219",
           "version": "repo-lines-v1:sha256:15d956774bc01b8571e520eb4c022d312848c5a3994e0960c9d752dc8ed19276:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNzJlMTdjMjBmYWY5NzY5OGNjYjc0OGNhZWRmNDM3YTQ0MzdlZTI1OTZkMmQzMDZkMGIwOGE1NzdkYWZhYjRiNCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiM2IyZGY1YTY3OTJjMzkyYWJmMWNmOWVhMjdiODc1MmNmYWY5NGU5OWE1NzgxZjU0NTg1NDRmNjUwYzk3ZDAyNCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZGY4NzMzNTIyZjg4NzZlYWNjMWFhY2IwOTk0OTc3ZWVlNTRmYzZkNThlZGExYzI1MDY0ZWUwOWZhYTcwMjk5OSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNmY3YTk0OTE4MGEwMzBhMjA5YmIxM2IyOWRmMWEzMjNjZDM1N2IyMTUzZmE2OTU0Mjc3NGJjZWExMjg5MjM2ZSJ9"
         }
       ]
@@ -212,7 +212,7 @@
         },
         {
           "resource": "repo://crates/server/src/routes/sessions/mod.rs",
-          "version": "repo-file-v1:sha256:b4f08ced58d2ed797f101efc49e08be2dfd55f7fdc7a52603bc80bdd80ac397e"
+          "version": "repo-file-v1:sha256:52675a5cd4ab669c1614831749a8480b7f3d416fac8670a9533a91f0e61a3de8"
         }
       ]
     },
@@ -270,7 +270,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/sessions/executor_config.rs",
-          "version": "repo-file-v1:sha256:008f161b25c5ab9475026e7c09606d08e6991f90660bf9429d4603fb78abbf55"
+          "version": "repo-file-v1:sha256:f8f653f37fbc584ae6d1a7c2c5801981e1962f2d952268727b5b1716a9df7933"
         }
       ]
     },
@@ -701,7 +701,7 @@
       "statement": "executor/variant のみの Scratch は preset 選択として fallback を許すが、override キーを含む Scratch は省略された reasoning を null に復元して以前の effort を遮断する。Rust は None を省略するため、過去の identity-only データから元のクリア意図は識別できない。",
       "evidence": [
         {
-          "resource": "repo://crates/executors/src/profile.rs#L150-L177",
+          "resource": "repo://crates/executors/src/profile.rs#L192-L219",
           "version": "repo-lines-v1:sha256:b7a624c2b42d823fcc9aa25f7b5ce10106c16a83f9dcb9e2aff81bd62041d3bf:eyJzZWxlY3RlZExpbmVDb3VudCI6MjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIwNzFmNjAzNDEyY2E2MjlhOTc3ODAwMTZjZTk0OTZiZmUxM2M2MjBlNzE4YzRjNWYxMWMxZjZlNWJkNDkxYWYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNiMmRmNWE2NzkyYzM5MmFiZjFjZjllYTI3Yjg3NTJjZmFmOTRlOTlhNTc4MWY1NDU4NTQ0ZjY1MGM5N2QwMjQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM5MGEwODU4NTJmMzcxNmFmNjVmYWE1MWY3MWNlNTdhNWE3NDRkMjRjMGE4YjhmNmMyMGNmYTg0MDMwNmRjODEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZmN2E5NDkxODBhMDMwYTIwOWJiMTNiMjlkZjFhMzIzY2QzNTdiMjE1M2ZhNjk1NDI3NzRiY2VhMTI4OTIzNmUifQ"
         },
         {
@@ -1073,12 +1073,12 @@
       "statement": "REVIEW execution_modeは通常会話の調査・報告意図を既存executor設定に保存し、stdio続行と添付付き続行はSessionの保存済み設定を復元する。Remoteの実行読取は指定Runのattemptからmodeを返す。",
       "evidence": [
         {
-          "resource": "repo://crates/mcp/src/task_server/tools/sessions.rs#L270-L324",
-          "version": "repo-lines-v1:sha256:b8356667b9cde972dbfa9ce5c0223cc65e1d69f6e2c84c34ec68d7d0832a036b:eyJzZWxlY3RlZExpbmVDb3VudCI6NTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YjA0NDkxNDY5NzIyZTgzNjNhOTRlNDA0NDUzOGUwMTNhMmEyMTdlMzZiMWU1NjhiYTYwYWNiN2I0YzhmMmUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYwOTI1MTUzNjFmZjNkMDQyOTgyMDY5MThlNWMxY2Y3ZGQxMjdhZjg4YTliNWVmZDVlOTZhMzk5MjYxYjM4M2YiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImU4YWIwNDQ1YzQ0NzU0YmJkNzI4MmUwYjVmNjRkMjJmNGY0YmUyMzdjY2JiOTFmZWJkOGMzNTc1ZWVkMGUxZWIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE1OGEwMDJkZGFlOWJiM2Y4ZTg3NjA3YTBlODk3MTZjOTZjOGEzYzAwMmJjMmRiNmQ4MGRiYTc5NTQwMmZjOTcifQ"
+          "resource": "repo://crates/mcp/src/task_server/tools/sessions.rs#L330-L378",
+          "version": "repo-lines-v1:sha256:5caf481964c5ea439cbb6771b5f0fc2784b120b4d3dd78406ac41ac1fbbff522:eyJzZWxlY3RlZExpbmVDb3VudCI6NDksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIwZWY0ZDE1ODU3OTc0MDc4Y2YzYTBhNDY4M2M4N2Y1ZDMzZjc5YmMyYThjYWViZjk4NTg4NTM1NDJiMmJkNTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZmODcwZTgwMDYxYmUwOWRjODdhMzEzYjk4OTZhYzgyMzNkZGU2OTA5Y2VjNzFkNTNiNjM2NzJkZmIzZTk0ZjYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImE4ZGY3MTkzNDQ3MDM5ZDlhODgzMmE1NDZjZDEzOTY4MjZiNDAxZWQ3MzNhMmQxZTYyYmMxZGExNWIxMGNmMzIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFkY2E0MWVjNTIzZWI0NjU1YmJkY2M4N2YxNWI2ZGZhNzk2Njk4NjQ0MGEwNDRhMjdlMTNkNjAyYmJiZTc1OGQifQ"
         },
         {
-          "resource": "repo://crates/server/src/remote_mcp/runtime_read.rs#L146-L198",
-          "version": "repo-lines-v1:sha256:3f84ed1322e91184cf5f6df2408494e45d2b4026d7a0ff611cd8be341fdf7d91:eyJzZWxlY3RlZExpbmVDb3VudCI6NTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJjNDBiZWQ5ZjUyMTIwYWQyODRlNjk4ZDBkNGEwNWQ1NjI5ZWY3OTE4MTQ3YzhmZTc2ZTg2ZmUzYjQwYzVhMmMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdjNWUyOTEwOWE5YmJiZjBiODZkZjU3ZTNhOTViYTkxMjlkNmRjYTE4ODY0NmY1OTdlYmUxZjRjMmQ2MzE5ODAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjJjNzQyMWI0ODAwYTcwMTMzMjk0MjI0YjU3YTk2Y2U5N2NjYjljZWJiODQyNGM4MTg0YTQyZTk0YTA2MzhiNzEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijk0Yjk0NThhYTVlZTU1MjNmMjVkYWY5MzBmZDZmZjMxYTI5MWQ0NjllMGFhNTkwYTI5NjRlZjUzYzQ5YTgyMDUifQ"
+          "resource": "repo://crates/server/src/remote_mcp/runtime_read.rs#L180-L191",
+          "version": "repo-lines-v1:sha256:f2e17a2e1b7de8856669d04ea94609b34d4c719fe7bf1d4572e2098525b3f791:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM1Y2RlZjgwODVhZTc0YWI2MzZkNjQ1OWY1YzZkNWZiZmIwZGIyNjRmMWIwZDc1YmFjNTE5YzliM2Y2NzE3YWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU3NjBkYTI1YWYwZjUxYjc1MDk1YTI3Y2YwNDg5NWUzYjAwZjNjMGEzNDQyOWExNjRmYzYxMzlkOGE0ZTkzZjIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImVhMmU2YTgyMzE1NjQ0NTc0YWVkYTc2YWUyYjY5YTNhZTc2MmIzZWEzZTE3NjFmNzI1MDc1NDhmZmM0MGU1YzQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImZlYmFlNzQ1ODEwZDJkNDZiNzVhNzc4YmJiNjcwNWRlZDU2MjBiMDA0M2VlZGY4YjRlMzNjZThiN2NjMzA4OWUifQ"
         },
         {
           "resource": "repo://crates/server/src/routes/attachment_transfer.rs#L380-L410",
@@ -1149,10 +1149,56 @@
           "version": "repo-lines-v1:sha256:e3840b266bb305d4bd94d5811259d7a3de7051c15359507165fa2588e449382c:eyJzZWxlY3RlZExpbmVDb3VudCI6ODQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM1YmY4NDljOTUwZjk3N2JkNGE2ZTY2OWU3OWY0OWM4Y2JiZDI4MWU5NjFmOTBiNGM0MjViNDAwMzVlNTRkN2QiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImM1Y2QwMzE2YmZlNTQ5YWVlMWEyNTFmY2Q2MWNiMjliZWM1YzZkZjRlY2UxYzY2YjVhZGQyZTI3MjRmMmZkNTQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijk1YWZjYmZiYjQyOTFhNzAyYzA0M2RjMThjNWMyODM4NTI4MjI3YTViZmU1MmJhZDIzYmFmMTM3NGVjMGEzMWIifQ"
         }
       ]
+    },
+    {
+      "id": "claim_4b244b7eacea426e91db864a809a7e8a",
+      "statement": "MCPのchecked continuationは最新終了済みRunの次Runだけにtagged set/resetを適用し、省略を保持、nullを拒否し、Goal以外へのmode変更時にGoal専用設定を消す。",
+      "evidence": [
+        {
+          "resource": "repo://crates/executors/src/profile.rs",
+          "version": "repo-file-v1:sha256:ac7ca50cf97a4f09ae7f88eb6335426925ee4daed64d9d9f39b1a08dd1c218cf"
+        },
+        {
+          "resource": "repo://crates/server/src/remote_mcp/runtime_write.rs",
+          "version": "repo-file-v1:sha256:a46c8ebaff5253f346a8c56521d3c1628662e9a94e691fcc7ab0c66142f2087f"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/sessions/executor_config.rs",
+          "version": "repo-file-v1:sha256:f8f653f37fbc584ae6d1a7c2c5801981e1962f2d952268727b5b1716a9df7933"
+        }
+      ]
+    },
+    {
+      "id": "claim_97a12dce8c3e47a3a46898212758b621",
+      "statement": "両MCPのexecution settings読取はnative bindingと変更制約、provider/model/CLI能力を示すがprovider_settings_verifiedはfalseであり、モデル未指定Codex reasoningは全advertised model共通値だけを許す。",
+      "evidence": [
+        {
+          "resource": "repo://crates/executors/src/executors/codex.rs",
+          "version": "repo-file-v1:sha256:63ad7f21db06a6fc19b279059a4c5e5ead8f9ad18c4398f44f8b38c5970bd7e1"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/sessions/executor_config.rs",
+          "version": "repo-file-v1:sha256:f8f653f37fbc584ae6d1a7c2c5801981e1962f2d952268727b5b1716a9df7933"
+        }
+      ]
+    },
+    {
+      "id": "claim_8ab8591139f6428081271e4008728111",
+      "statement": "engine変更はRemote start_session.engineまたはstdio create_session.executorによる同Workspaceの新Sessionで行い、コードは共有するが別providerのnative会話は移植しない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/mcp/src/task_server/tools/sessions.rs",
+          "version": "repo-file-v1:sha256:b55cb89ba797da1a588dead74910715854bc39c01bcde62f03ab218ec0dc92a0"
+        },
+        {
+          "resource": "repo://crates/server/src/remote_mcp/launch.rs",
+          "version": "repo-file-v1:sha256:19626c9af62fd0b8e7745d2382775f7ecd6f05e9be30e743b078b3eb4c7a7817"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-06T04:42:23.113Z"
+    "at": "2026-11-06T08:11:13.571Z"
   }
 }

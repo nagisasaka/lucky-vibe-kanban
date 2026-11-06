@@ -54,10 +54,14 @@ sources:
     resource: repo://crates/server/src/remote_mcp/goals.rs
   - id: openwiki-source-0a439773e44e2649541571be
     resource: repo://crates/server/src/remote_mcp/goals/tests.rs
+  - id: openwiki-source-b5eef61c63c11d3fe10b3ccf
+    resource: repo://crates/server/src/remote_mcp/launch.rs
   - id: openwiki-source-9d3b3180c15d3125ddbb2675
     resource: repo://crates/server/src/remote_mcp/questions.rs
   - id: openwiki-source-3651b7ce4535b584634e8bc8
     resource: repo://crates/server/src/remote_mcp/runtime_read.rs
+  - id: openwiki-source-b8d968c49ef2f35fc1a18cce
+    resource: repo://crates/server/src/remote_mcp/runtime_write.rs
   - id: openwiki-source-162bcfe1ee47c1047ccf7d52
     resource: repo://crates/server/src/routes/agent_runs.rs
   - id: openwiki-source-a98b89b4828bd8f76e2ca9bf
@@ -174,10 +178,10 @@ sources:
     resource: repo://tests/supervised/README.md
   - id: openwiki-source-5184ef612e83b7ab35d62e7b
     resource: repo://tests/supervised/run_isolated.py
-generated: { by: "codex", at: "2026-11-06T04:42:23.113Z" }
+generated: { by: "codex", at: "2026-11-06T08:11:13.571Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-06T04:42:23.113Z
+    at: 2026-11-06T08:11:13.571Z
 ---
 
 # Session・AgentRun・RunAttempt
@@ -208,6 +212,18 @@ Attempt 検証は run/turn/Session/correlation の一致だけでなく、provid
 profile 比較では variant 省略と正確な `DEFAULT` だけを同一視する。保存済み ID の表記は変更せず、`PLAN`・小文字の `default`・異なる provider は混同しない。既存履歴を migration で書き換えるのではなく、binding と request の比較境界で共通規則を使う。[identity](../../crates/executors/src/profile/runtime_identity.rs#L1-L13)
 
 Session の設定復元は最新 RunAttempt の immutable launch request を読み、現在の可変 preset や script 実行から推測しない。起動前の native adoption では保存済み binding を使う。最新の保存値が壊れていたらエラーであり、古い run や別 Session の設定へ黙って戻さない。モデル・reasoning・mode・Goal budget 等の保存値と、provider が実行時に解決した既定値は区別する。[復元](../../crates/server/src/routes/sessions/executor_config.rs)、[順序・破損テスト](../../crates/server/src/routes/sessions/executor_config.rs)
+
+### MCP で次 Run の設定を指定する
+
+Remote `continue_execution` と stdio `run_session_prompt` の checked continuation は、最新の終了済み `agent_run_id` を対象に `overrides` を受ける。stdio は `project_id` と stable `request_id` も必須である。`execution_mode` / `reasoning_id` は `{"action":"set","value":...}` で指定し、`{"action":"reset"}` でその保存 override だけを外して preset/provider 既定へ戻す。項目の省略は保存値を保持し、`null` と reset の余分な value は拒否する。モデル・preset・権限など無関係な設定を初期化しない。Goal 以外への mode set または reset は Goal 専用 budget / agent 数を消す。[入力型](../../crates/executors/src/profile.rs)・[設定適用と保存読戻し試験](../../crates/server/src/routes/sessions/executor_config.rs)
+
+実行中・古い Run・queue 存在・対象所属の不一致は拒否し、共通 `follow_up_checked` と既存 receipt を使う。同じ LVK Session の会話を継続し、実行中への steer は文章だけを追加する。応答不明時は元の request ID と同じ全入力で receipt を回収し、別 ID で二重起動しない。受理応答の `executor_config` は LVK が次 Run に渡す値で、provider 内部で採用された値の保証ではない。[継続](../../crates/server/src/remote_mcp/runtime_write.rs)・[stdio adapter](../../crates/mcp/src/task_server/tools/sessions.rs)
+
+両 MCP の `get_session_execution_settings` は保存設定、native binding、次 Run 能力、変更不可理由と `provider_settings_verified: false` を返す。mode は Codex のみ、reasoning set は provider/model/CLI discovery で検証する。Codex のモデル未指定時は native resume のモデルを推測せず、live discovery の全 advertised model に共通する値だけを許し、`reasoning_scope: all_advertised_models` とする。空・失敗は許可扱いにしない。Claude は CLI の `--effort` 対応と有効モデルを確認する。native_adopted の設定・selected_skills fingerprint と provider/runtime identity の固定制約を回避しない。[能力と検証](../../crates/server/src/routes/sessions/executor_config.rs)・[Codex discovery](../../crates/executors/src/executors/codex.rs)
+
+engine を変えるなら同 Workspace の新 Session を作る。Remote は `start_session.engine`、stdio は `create_session.executor` を使い、前者は開始 prompt も受け、後者は作成後に初回 prompt を送る。Remote `start_workspace.engine` は任意、stdio の同名 tool は既存の必須 `executor` を維持する。新 Session はコード状態を共有するが別 provider の native 会話は引き継がない。目的・判断・残件を prompt に含め、新しい Session ID と継続を区別する。通常の追作業は適切な既存実装 Session を優先する。[新規開始](../../crates/server/src/remote_mcp/launch.rs)・[stdio Session](../../crates/mcp/src/task_server/tools/sessions.rs)
+
+LOCAL-303 の統合は source `a34f7da5` と同一 tree のコード候補 `290aac60` に対し、ユーザー指定でコード試験の再実行を省略した。公開 Memory の Session 40件、runtime write 6件、stdio 26件と provider 境界・全 target qa-mode Clippy の成功を既存証拠として利用した。実 provider の native 会話継続・設定採用と認証後 UI は未検証で、fixture 成功を実接続成功としない。Review→Code は製品変更・merge・公開の追加許可を意味せず、権限境界は既存どおりである。[境界 fixture](../../crates/server/src/remote_mcp/runtime_write_tests.rs)・[保存 fixture](../../crates/server/src/routes/sessions/executor_config.rs)
 
 ### REVIEW は通常会話で報告して止まる
 

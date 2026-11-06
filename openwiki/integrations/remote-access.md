@@ -22,6 +22,8 @@ sources:
     resource: repo://crates/mcp/src/task_server/tools/dev_server.rs
   - id: openwiki-source-4c00e6ad62d940e70c2ebbb3
     resource: repo://crates/mcp/src/task_server/tools/mod.rs
+  - id: openwiki-source-c6b92f5dd86f9cc046935fa4
+    resource: repo://crates/mcp/src/task_server/tools/sessions.rs
   - id: openwiki-source-28437ab4b181623345af79bc
     resource: repo://crates/mcp/src/task_server/tools/stdio_tests.rs
   - id: openwiki-source-7083ce2acf66599ca4b7a3c8
@@ -110,6 +112,8 @@ sources:
     resource: repo://crates/server/src/routes/mod.rs
   - id: openwiki-source-d8c782d4a4246db71e503283
     resource: repo://crates/server/src/routes/resource_observation.rs
+  - id: openwiki-source-a74a882889154c2549e88f41
+    resource: repo://crates/server/src/routes/sessions/executor_config.rs
   - id: openwiki-source-4d617b0e2fa188c6ad63ae56
     resource: repo://crates/server/src/routes/sessions/questions.rs
   - id: openwiki-source-af328071d51bff75b5246d3b
@@ -124,10 +128,10 @@ sources:
     resource: repo://crates/utils/src/reference_file.rs
   - id: openwiki-source-3ecddc0be7b037ea6ab24381
     resource: repo://packages/local-web/vite.config.ts
-generated: { by: "codex", at: "2026-11-05T07:15:08.684Z" }
+generated: { by: "codex", at: "2026-11-06T08:11:13.571Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-05T07:15:08.684Z
+    at: 2026-11-06T08:11:13.571Z
 ---
 
 # 外部アクセス・MCP・Runner の境界
@@ -432,9 +436,25 @@ Project参照がある未配置ファイルは既存孤立掃除から保護さ�
 
 隔離HTTP/stdio E2Eは実bytes・権限・所属・再送・部分失敗から初回/続行までを確認し、native実行境界をmockする。実ChatGPT/Library fileParams、署名URL期限・host/proxy制約、実Codexは公開後ゲートであり、この成功で完成と呼ばない。配備後にtools/listと配布Skillを更新して実搬送を確認する。[搬送の受入手順](#外部接続と素材搬送を受け入れる)・[隔離fixture](../../crates/server/src/remote_mcp/attachment_tests.rs)
 
-## MCPからREVIEWを指定・観測する
+## MCPから次Run設定とengineを選ぶ
 
-Codexのstart_workspaceは `execution_mode: review` を受け取り、続行では保存済みmodeと権限を維持する。Remoteのget_executionは指定Runのattemptのmodeを返す。REVIEWは会話で調査結果を返して止まり、製品実装への別指示を必要とする。承認回避や外部承認改善を保証するmodeではない。[開始](../../crates/server/src/remote_mcp/launch.rs#L336-L348)・[読取](../../crates/server/src/remote_mcp/runtime_read.rs#L137-L183)・[実行境界](agent-providers.md#review-の実行境界)
+Remote `continue_execution.overrides` は明示した最新の終了済み Run に対する次 Run 設定である。`execution_mode` / `reasoning_id` の各項目を `{"action":"set","value":...}` または `{"action":"reset"}` にし、省略は保存値を保つ。`null` は拒否する。reset はその override だけを取り除いて preset/provider 既定へ戻し、mode を Goal 以外へ変えると Goal 専用項目も消す。stdio は `run_session_prompt` の `agent_run_id`・`project_id`・stable `request_id` を揃えた checked continuation で同じ共通経路へ入る。通常の旧 stdio 続行と明示 checked 続行は区別する。[設定の正本](../concepts/session-and-agent-run.md#mcp-で次-run-の設定を指定する)・[共通受付](../../crates/server/src/remote_mcp/runtime_write.rs)・[stdio](../../crates/mcp/src/task_server/tools/sessions.rs)
+
+active Run・古い Run・queue・所属不一致を自動停止や別 Session 転送で解決しない。steer は実行中への文章追加だけである。設定変更も元 request ID と同じ全入力の receipt を回復し、応答不明で新 ID を発行しない。受理結果は `conversation: existing_session` と次 Run の `executor_config` を返すが、`provider_settings_verified: false` である。[状態検証・受理値](../../crates/server/src/remote_mcp/runtime_write.rs)
+
+両 MCP の `get_session_execution_settings` で保存設定・native binding・次 Run の能力と変更不可理由を読む。Codex mode、モデルごとの reasoning、Claude CLI の `--effort` 対応を検証し、非対応を黙って無視しない。Codex のモデル未指定時は `all_advertised_models` の共通 effort だけを許し、native resume のモデルを推測しない。native_adopted の設定/skills fingerprint は固定のままで、新 Session が必要な理由を返す。[能力読取と適用](../../crates/server/src/routes/sessions/executor_config.rs)
+
+| 入口 | engine と会話の扱い |
+| --- | --- |
+| Remote `start_workspace` | 任意 `engine`。省略は既存既定選択を維持し、新 Workspace / Session を開始 |
+| Remote `start_session` | 明示 Workspace のコードを使い、任意 `engine` と prompt で新 Session を開始。`new_session: true` / `native_conversation_inherited: false` と新 ID を返す |
+| stdio `start_workspace` | 従来の必須 `executor` を維持 |
+| stdio `create_session` | 既存 Workspace へ任意 `executor` で Session を作成し、その後初回 prompt を送る |
+| 既存 Session 続行 | engine を書き換えず、同じ会話を継続 |
+
+別 provider の native 会話は移植しない。引継ぐ目的・判断・残件を新 prompt に含め、不要な新 Workspace を作らない。[Remote 新規開始](../../crates/server/src/remote_mcp/launch.rs)・[stdio Session](../../crates/mcp/src/task_server/tools/sessions.rs)
+
+Codex `execution_mode: review` は Code 経路で調査結果を会話へ返して停止する意図で、sandbox/permission とは別である。Review→Code を製品変更・merge・公開の追加承認に読み替えない。Remote `get_execution` は指定 Run の attempt の mode を返す。LOCAL-303 の実 provider 会話継続・設定採用と認証後 UI は未検証で、保存読戻し・provider 引数 fixture と区別する。[実行境界](agent-providers.md#review-の実行境界)・[Run読取](../../crates/server/src/remote_mcp/runtime_read.rs)
 
 ## 全MCP共通の失敗・結果不明・復旧契約
 

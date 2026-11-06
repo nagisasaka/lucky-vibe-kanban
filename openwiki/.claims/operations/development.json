@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:35e7b71bb7f6b1094d83e60e1553a8b17051826dbda88346ed10478c10860660",
+  "pageVersion": "sha256:eeb49f7c0f7131f46187897ddb7eae4d66744b6e24bb97520bd2fed75419d5c3",
   "claims": [
     {
       "id": "claim_1640e4eaeac94676a84eb3b9d9970d30",
@@ -63,7 +63,7 @@
       "statement": "web-core の test:wiki は Pipeline model と Wiki feature の Vitest を実行する。",
       "evidence": [
         {
-          "resource": "repo://packages/web-core/package.json#L97-L101",
+          "resource": "repo://packages/web-core/package.json#L98-L102",
           "version": "repo-lines-v1:sha256:3cb786eb044ff42785e1c77d614f88d54233f33b94171f9116864aba99f49d68:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMzQ4MzNkNTk0OWMwM2E0MGNhOTUyNDkxNjEwYTY2NTk2NDRiM2FhNDY2MzYyZjc5OTAyMGRiZjE5ODE1NDdkYiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiM2RkOWU2YjU4ZTc0NDU2OWMxNmVkMjUzZWU0ZjM5MzJiMzRlOTY4Mzk0NDU0MWUxM2ZjYmFhZGI3YzMxYzNjMiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNWQzOWM4Mzg0NjE2MDk3OTNjMzlmZjE4OWI4MTQxYTQ5NmQwZWIxMjY3MWFmZmUyZGQzMGQ4NTE0YTA4YmJhYyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNDgyZWRlYmU2ZGU3ZDExNzU0N2YzMzY1MGMyMDc4ZGUwNGFkODdjNmJiOGE2NDUzYTE4MmUxYTE1NmMzYjJlNSJ9"
         }
       ]
@@ -359,7 +359,7 @@
           "version": "repo-lines-v1:sha256:5377562ce246ed709750232b58a1e9e33fb4b79353aac1d76089a4b8df7816ec:eyJzZWxlY3RlZExpbmVDb3VudCI6NjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZmNTA0NGI0NTFkOWUxMjE0M2E3ZTExYmNlYzVlYmFjY2U1NWM3ODM3ZDBjY2I5YTY3OGI4N2U3ZDY0MTNiYzUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk1MjY2OWMwYzQzN2I5NzJhMDI4MWI5OThiZWFmODhlMDg1YjdmYmIxMjg2MWI3MTkwZGM2NzkyMDJmMWMxNGUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE3YTU4MDA3MGY1NTVjNGE5NWI4M2E2ZTA0NTk1NzVkODg1NGQ1YzEzODQ1MGJkNDMwZjE5NmM2NzcwNTcyYTkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNjZDE3Y2Y0YjI1YjBlN2NhYjI0NjIzZGUwZDEwNTBiNDgyN2MyMjA2Yzk0ZmNmNTZjOTQ4MmJiNzBiYjExODMifQ"
         },
         {
-          "resource": "repo://crates/server/src/remote_mcp/runtime_read.rs#L314-L352",
+          "resource": "repo://crates/server/src/remote_mcp/runtime_read.rs#L346-L384",
           "version": "repo-lines-v1:sha256:3411c83881248f3b5c1963f8ffa0a52714af885d1af1b3b3637f5b6e37709226:eyJzZWxlY3RlZExpbmVDb3VudCI6MzksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImExODBhZjk4M2I3ZmIwM2Q3NjNiMWRlMWI3Mjg4OWQwMzdhZTdlYWJlOTUyNzk4NTU1OTkyYTg0OGNiNDcwYjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
         }
       ]
@@ -934,7 +934,7 @@
       "evidence": [
         {
           "resource": "repo://crates/mcp/src/task_server/tools/sessions.rs",
-          "version": "repo-file-v1:sha256:98e7f75f020b96d2bd240a2ed378985060754d1e29f0621da965a9d8c98e2fef"
+          "version": "repo-file-v1:sha256:b55cb89ba797da1a588dead74910715854bc39c01bcde62f03ab218ec0dc92a0"
         },
         {
           "resource": "repo://crates/server/src/remote_mcp/attachment_tests.rs",
@@ -1031,6 +1031,6 @@
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-04T20:35:55.356Z"
+    "at": "2026-11-06T08:11:13.571Z"
   }
 }
