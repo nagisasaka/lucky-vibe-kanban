@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:60aee1915b19770b8ee8897b53be4afece324a8174170f6cb909c9ff1f663b64",
+  "pageVersion": "sha256:f7a925b59bb8de123aedd1ea574aeeb77058e9364eccd5622624d7c7346d84fb",
   "claims": [
     {
       "id": "claim_cd547b65737e432fb2cf718c4992aa97",
@@ -331,7 +331,7 @@
       "statement": "会話の永続イベントはattempt番号とcanonical sequenceで並べ、native audit番号と混在ソートしない。Steerはprovider制御送信後にcommand IDのUser messageをnative refsなしで保存する。",
       "evidence": [
         {
-          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L3637-L3677",
+          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L3652-L3692",
           "version": "repo-lines-v1:sha256:0483a7451e1e4251ef8a95cad6bb5e0051fbf2e94e7608a0b95176329ab1df76:eyJzZWxlY3RlZExpbmVDb3VudCI6NDEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQzYTE5ZmRiZjJmMjFiMmMxOTg3MzgwNjE0NWM3ZjU4ZjlmOGFmYWYyNGUxNDQ0M2Y2NDBiOTkwMzIwYzI2NzciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU1MjJjNDJjZDE5YzZkMDNkODA4YzQ1MjcyMDU1MjgyNWI3ZWExYzViNDkxYjIxODUxMWNhYzc0MTVjZjlkOWIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjA3NjJhMTcwOGRiNjllNzlhMDMwNmVkNTEwOWVlYWY4ZTg2MjM5OTdmZTRmMTE4MTQ0MjUyY2E3MTE3MjU3YmMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjVlMmEyOWE4MGY1MGIxNjI4ZGNjNTM0MzA1MWE3MTVhM2I0MWJiNmUzYjI5ZDgzZmFmZWUzZDYyMjdkZDc1M2UifQ"
         },
         {
@@ -756,7 +756,7 @@
       "evidence": [
         {
           "resource": "repo://packages/web-core/src/pages/workspaces/RightSidebar.tsx",
-          "version": "repo-file-v1:sha256:ef69a0588a7175253c444c9cd932614c7d31e86dffc9e2aaab875ac5c0785896"
+          "version": "repo-file-v1:sha256:0d19ac94524fbd28d9db4801229563fc1ac2f2d3c1f201909cb32d0e76b37714"
         },
         {
           "resource": "repo://packages/web-core/src/shared/actions/index.ts#L732-L790",
@@ -1041,7 +1041,7 @@
       "statement": "browser の playSound は HTMLAudioElement.play を await し、設定の試聴呼出元は失敗を catch してログに記録する。",
       "evidence": [
         {
-          "resource": "repo://packages/web-core/src/shared/dialogs/settings/settings/GeneralSettingsSection.tsx#L178-L188",
+          "resource": "repo://packages/web-core/src/shared/dialogs/settings/settings/GeneralSettingsSection.tsx#L177-L187",
           "version": "repo-lines-v1:sha256:adbc163e87e1952a1f53eb71758a3e5eb21b76ba621b0159be7d80f38301dd34:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBkMjBmZWM3YzY2ZWI5ZDFmN2E3NzA1YTJiZGNjYTI1ZGY0NTMyZWI1YmU4OWY2NGQ1MzZkY2IxZDk3NWVkNTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE1ZTM0NTQwZTJhOTk0YjQwMWVmYzYyMjBkZDNkOThkYjc4NGYyMjI0ODE3OTI4NDlmODhhMjJkOWM0N2IyZGYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImYxNzdiOGMxNTU2ZDNiZTE0YmM1N2FiNzhjNWJhMTY0MjY4YjljNjdmM2VmOWQ1OGQyMTk5OGQ3NzY4YTUyMTIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQ0Njg0Y2FmYjg5MjJlYzQ1MDY0OGUyNmZlYmEzMmExZWYyZjNkMWUxNGQwZDZjMWE0ZTFkN2JjNjNmMTMwMDMifQ"
         },
         {
@@ -1391,7 +1391,7 @@
           "version": "repo-lines-v1:sha256:023ff2aa24f35cf812dd0dfe590949c1d806ad3ca7736d6327e66ac241659674:eyJzZWxlY3RlZExpbmVDb3VudCI6OTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc2MzhjYTJiNjM4OGJjNmEzNjBjZDU3NjkxZTA0ZTcwYTlhMGZlMWQxZDljMjJiYTg4ZTllMzM1NzQ2ZWJlM2YiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjBlMmU5YmVjNzYyMTgwNTBiYjNiNGM2YTA3MGRhMGZmMGI3MTE0YjA2YWNhMTJhZGVjZjZjODIxMWRmNDVkZjgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijg1OWEwMTgwYjEzMWU1ZGFmYzAzOTMxOWNhMDgxZWE1Zjc2NDEwNGY4OTUzMjM3ZWE5NDNmYzNkZjY5YzI0YTQifQ"
         },
         {
-          "resource": "repo://crates/server/src/remote_mcp/mod.rs#L538-L541",
+          "resource": "repo://crates/server/src/remote_mcp/mod.rs#L589-L592",
           "version": "repo-lines-v1:sha256:d2da0a3a0382b837b01bef8e99df1fa81cfde7178cd424085338a25c947a4a4a:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDI1NGFmMDRhOGM3NjI5NTcyMTAwYTg5YzZhZDcxNjM2OWVmYTM2YjhkZjBkZjBhNDE4NDkzYWEwMTIxM2IyYyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZTE1ZTVlNDRiYTdjODAyMGE1NGY1OTA1ZGRmZDg1MzkxMWUxOTBkNWVmZjRhMDdmMmM0MTQyYTk1MDAxYzNhMSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYjE5MjA2ZTE5N2U0N2E3Yzc2ZmU0YmYzYjQ0NWUxNGU3YTZlMDUyMTExM2VkMWI3ZjM1NmVhYThjNjVlYTM4NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTI3NzljOWVhMTFmZTFjZGFjYmY1OTc5OGNkY2EyNTFlMzE3N2JiNTQzZDRmMDMyYWI4ZjUyNGJiMWVkZjdhZCJ9"
         },
         {
@@ -1613,10 +1613,32 @@
           "version": "repo-lines-v1:sha256:07dab22526b88899c205985f779cfcf8393ff32002d13cc3cd833b501b17fba3:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdlMjA4MDZmMjFjNjk4NzA5ZWU1ODE3M2JkZjcyNzJiZDM3MDJhNzg3Y2VjZTAzNjIwM2I3NmE1ZmU3Y2JmYjciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU0MWI2YTFhYjIzMDA1NTliNjJlYjVmNTM4MjViZmY4NzViNjlmMGNiNjM0OTQ0ZTkzOGE5YWUyODJhZTllMTAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM5NDY4Y2NmOTY2MWU0YWFhNTFmY2ZlZDE1NDhmNmRhZTFlYmJhY2U3OWM1ZTA4NGQxZTgwMmIyOGY1Y2IwMDkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjEwMDg5Nzc3MzczZTU2OTUxMzlmOGFiZDgxOWVkZmZjZmFkNDJmYTg1N2JkNmY1MTI3ZjQ2M2E4OWYxMDFiMDMifQ"
         }
       ]
+    },
+    {
+      "id": "claim_50a57c558bb14794925f65ad03376b4c",
+      "statement": "Kanban/WorkspaceのWiki項目は展開中だけ共通縦flex sidebarの残り高さを使い、navのsize containmentと1lh最小高で操作欄を保ち内部スクロールする。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/features/wiki/ui/WorkspaceWikiPanel.tsx#L40-L116",
+          "version": "repo-lines-v1:sha256:75272706300b304451173ddc424af08eb5b78d93a952666a4784074f6f7dfeaf:eyJzZWxlY3RlZExpbmVDb3VudCI6NzcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU0N2JkZWZkYjEyMTRlOThkY2Q1YWUwZmVlMDI5MDlmNDAzOGZjYTczNmY3MzJlNjQ5YjE2MTdjZmMzMmVlZDEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNiZWQ3NWY4YjY1NmFjZDkzNDI2Y2FhOGM0N2UxMDhjNGU0ODljMDg1ODI3YWI2MThlZWI3MDUwOTA3Mzg2ZjAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQ2NmViY2FlZDhhMTA3ZmQ3YjgwY2YxNTU2M2VlNjc1NmJmZmVhMzQ4MzdlMTJmZWY3ODFmZDdiMWQ5MzQyZmIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImRjZjA5YWI0ZTFiNDE2MzM4MzljZmYwYjZmMTNhM2IxMGQ5ZWI2MDcyYjViNmI3NTRhMDQzNmI2MWYxNmRiNmIifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/pages/kanban/ProjectUtilities.tsx#L101-L116",
+          "version": "repo-lines-v1:sha256:bc7ee20f28ad5608bc511d3d6145ab32db00c9ec9266787e154c3494cbf83082:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM1NDZkZmMzZTZjODExNmI2NGZmNTQ2MTE2NzBlYWI2ZGRjYTFlM2VlY2IyMTM0MzJmNTlmMDVlMzc5YjE3MTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk1ZWYwMWJjMDhkYmMzYjYzZTRlNzVlYTNkMjZhNWI5NDE4OTE4NzdlMjdhZDg5MTMyOWM4NDExZDdkOGRjNGQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjMzZGQxZWY4OTY5YjcxODJiYmYzZmE5MDI3NTI3YjE0M2M2NDU1YWIwMDg2OGY2Njk0YjFlZjExMzMwNWUxZDAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/pages/workspaces/RightSidebar.tsx#L207-L230",
+          "version": "repo-lines-v1:sha256:36137d0163fdd50965001f17b4a9166549476743fc37c82255b7647a3e73461c:eyJzZWxlY3RlZExpbmVDb3VudCI6MjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU3MjE2ZThlOWMwYTFhNjhkMDZjMmZiYWE1ZmQyMTM5NDgyYjhlZmQwYTE5MzE1YjkxNWU2Y2NlODQ5ZDg5ZGMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNiM2EzYjMxN2E0OTEwZjc2MTEyNTFmZDBkOGYwZjdkODVhZWI3ODExMTBiMTFiYmM4YzE0ZTRlNGU2ODVlZTIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjVkZDNkYjI0YTllOWIxODNjZmEzNjc2ZDU0YTFkZjlhMjA4Mjk0MGNlNjI2NDA1NWUzOGNmYjBkNGUzYmM0MTQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjMyODUzMjM3M2Y4MGJmZTkxOGNmNjk3MmZkZjVkMTA5ZTE4MWZiODFkZGNjMTQxZjg0ZjcxMjAwMDRiZjg5ODIifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/components/UtilitySidebar.tsx",
+          "version": "repo-file-v1:sha256:bed1741f8e8bc24ba276b8aff419593388945bca886dff6ab8973374b94b1fe4"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-06T07:27:44.761Z"
+    "at": "2026-11-06T17:36:48.866Z"
   }
 }

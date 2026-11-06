@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:a7b4695ac28609fe9fff7ee32fc35c06076925dde9d83f4853daef7f731a4bda",
+  "pageVersion": "sha256:8ad230f66933c8269ffe1fefb72102fd1e7798719c10ad015bc1e35af4ddc355",
   "claims": [
     {
       "id": "claim_edf1b78d3c7a4d978a6d8debcee4edd2",
@@ -250,7 +250,7 @@
       "evidence": [
         {
           "resource": "repo://packages/web-core/src/pages/kanban/ProjectUtilities.tsx",
-          "version": "repo-file-v1:sha256:2a1a84fcf0c68a5ae838b58e7872a450122ed92f5c1b7906cc5f1b44866941c5"
+          "version": "repo-file-v1:sha256:989c51e8aef56fa122ff938f4581de86ff6968c85b55792dfba7c95864c5abb0"
         },
         {
           "resource": "repo://packages/web-core/src/shared/components/TerminalSection.tsx",
@@ -292,7 +292,7 @@
       "evidence": [
         {
           "resource": "repo://crates/db/src/models/repository_state.rs",
-          "version": "repo-file-v1:sha256:c7477c45b466cdbfb0883e658777fc867708781aeabf15eefa4852784b1fce08"
+          "version": "repo-file-v1:sha256:af26082d9ac17b6bc4457091b622d8125ff6d8a0cf51fbcce187b0f5b5670009"
         },
         {
           "resource": "repo://crates/services/src/services/config/versions/v9.rs#L50-L61",
@@ -304,13 +304,13 @@
         },
         {
           "resource": "repo://deploy/developer/repository-state-migration.md",
-          "version": "repo-file-v1:sha256:544d3f1c41e3c6cd9b192b52b01e6576ac79738a75a1a82e10bd64ade5993434"
+          "version": "repo-file-v1:sha256:bc8b338d80847a024236679bba25a5854d7ac951a95744b704b44db724f65a0a"
         }
       ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-06T15:15:40.431Z"
+    "at": "2026-11-06T17:36:48.866Z"
   }
 }

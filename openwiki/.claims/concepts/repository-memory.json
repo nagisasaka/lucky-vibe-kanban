@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:5d1d6c8aaeb64c09ba958df403b93979037f5f35ef95880b41f7be0a6bae5658",
+  "pageVersion": "sha256:2773b3e71dc8363594b8282416041b5ea8f7d62a555621428d886f2b0dd5f8dd",
   "claims": [
     {
       "id": "claim_00a985545d4647e79ba1eb7155383bcf",
@@ -334,15 +334,15 @@
     },
     {
       "id": "claim_37098050465b4a87a2aeaaa9dc0d36f8",
-      "statement": "一度限りのoffline開発importは単一登録Repoとidleを検査し、旧運用記録をID/Git対応のまま一transactionで取り込む。成功後はDBを保持し再importせず、旧ファイルを削除しない。",
+      "statement": "一度限りのoffline開発importは単一登録Repoと旧Wiki owner不在を検査し、旧運用記録をID/Git対応のまま一transactionで取り込む。writer停止は運用前提で、履歴Run状態や予約を生存判定に使わない。成功後はDBを保持し旧ファイルを再import・削除しない。",
       "evidence": [
         {
-          "resource": "repo://crates/db/src/models/repository_state.rs#L329-L435",
-          "version": "repo-lines-v1:sha256:8a4da509a510cd5d3af8597f328b6bc63287b9f72dd7b1ad34fe6ed27356318f:eyJzZWxlY3RlZExpbmVDb3VudCI6MTA3LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJiMjg0MmYyYzBjMGJiNTAwNGIzYzcwNDAzZGU5ZTlkMmZhNThiOTdhMDZiNTk0ZTRlNGRhNzc0MDQ1NDk1YzU0IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIwMWJhNDcxOWM4MGI2ZmU5MTFiMDkxYTdjMDUxMjRiNjRlZWVjZTk2NGUwOWMwNThlZjhmOTgwNWRhY2E1NDZiIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI3NWE2OTViNWE2YWMwODdlNThlNzdjYmQyNzRhZGY4Y2JmZmE5OTViYTIxYzcwOTFjMjRmZTEzMzM0YzczZTk2IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJkMTM2MGU3ODkzNzI3NDkwNzY5YWMzOGU2MTI0YTc2YTBiMjhmZGRiYmYxZWEzNWQyYjk5ODA2MzIzYjFmYzg1In0"
+          "resource": "repo://crates/db/src/models/repository_state.rs#L324-L438",
+          "version": "repo-lines-v1:sha256:689f6233fa81a99fba6ea36f5f006ee4fa05514789cae6c670af6d24140efb8f:eyJzZWxlY3RlZExpbmVDb3VudCI6MTE1LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIwMWJhNDcxOWM4MGI2ZmU5MTFiMDkxYTdjMDUxMjRiNjRlZWVjZTk2NGUwOWMwNThlZjhmOTgwNWRhY2E1NDZiIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJkZGE1OTcwNTQ2MTU3OGIyMTVkM2YxMGE0NjNhY2NhYTNhOTQ0ZjU5ZmNkN2U2ODMzZWM2NjgxM2I3MmE3MTZjIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI5Yjk2NmNjYmI0OGRkM2RkNDJiNWNmYWU4YWY0MjcwYzUzZjU0OGZlMzZjMzE4Nzc3Y2JlYmU2ZDcyYTU4NjU3IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI0NTkwZWFhYzc2MmMyNWJjNjUyMjc1OTZmYTJkYjM3YzBlMzBiOGMyY2NiZjQzNGE4OGMyZmYwMGZmNDIwZjNiIn0"
         },
         {
           "resource": "repo://deploy/developer/repository-state-migration.md",
-          "version": "repo-file-v1:sha256:544d3f1c41e3c6cd9b192b52b01e6576ac79738a75a1a82e10bd64ade5993434"
+          "version": "repo-file-v1:sha256:bc8b338d80847a024236679bba25a5854d7ac951a95744b704b44db724f65a0a"
         }
       ]
     },
@@ -359,6 +359,6 @@
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-06T15:24:11.469Z"
+    "at": "2026-11-06T17:36:48.866Z"
   }
 }

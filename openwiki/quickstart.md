@@ -90,10 +90,10 @@ sources:
     resource: repo://packages/web-core/src/shared/providers/TerminalProvider.tsx
   - id: openwiki-source-23775c3de52f3ab95a13cb8b
     resource: repo://README.md
-generated: { by: "codex", at: "2026-11-06T15:15:40.431Z" }
+generated: { by: "codex", at: "2026-11-06T17:36:48.866Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-06T15:15:40.431Z
+    at: 2026-11-06T17:36:48.866Z
 ---
 
 # クイックスタートと調査案内
@@ -372,3 +372,10 @@ Kanban / Workspace の右サイドバーは共通環境 panel とファイル・
 可変なWiki state・receipt・publication・source integration対応はinstance DBへ集約し、Manifest・固定sync-inputs・source-publication・setup原本journalはファイルとして保持する。移行は開発中の単一登録LVK Repoへ明示offlineコマンドで一度実施する設計であり、恒久監査ゲートではない。[停止・backup・import・復旧手順](concepts/repository-memory.md#運用状態のdb集約と一度限りの開発移行)
 
 今回のコード候補 `41c1bae500bcec05bffe4002cf61b5413b51a524` は最終source `289373ec23493c0a21247a87da63c04bd4dbea3d` と同一treeで、競合・追加修復なし。tree一致・差分空白・clean確認を管理実行し、source各段階の既存SHA対応検証を再利用して包括suiteの再実行を省略した。省略を今回の試験合格と呼ばない。Wiki保守はsource・試験定義・Manifestの静的照合とlifecycle処理であり、liveDB移行・旧共有ファイル削除・停止/再起動・push・main build/bundle・実provider/外部認証を検証していない。過去のWorkspace Memory記述は過去の供給履歴であり、現行の生成/参照経路ではない。
+
+
+### LOCAL-341: Wikiツリーの可変高
+
+右サイドバーのWikiが利用可能な残り高さを使う仕組みは [高さ配分](architecture/web-and-sync.md#wikiツリーの高さ配分)、操作は [Wiki高さ](operations/workspace-inspection.md#右サイドバーのwiki高さ)を参照する。本文幅や検索・選択の状態管理は今回の変更範囲外である。
+
+コード候補 `a3fab8acc31037cef9d3739efcb6c254217c2cd7` は固定base `c04a57308a8a97ee357359c35201fd7b7145854c` からsourceを競合なく採用した。source Run終了のChange Manifest（event `3961223f-d7dd-4b68-bb8a-85d6a310b6d0`）から目的・設計判断・検証要約を読み、ユーザー指定で型・対象lint・整形・Chromium簡易レイアウト24条件の既存証拠を再利用した。管理commandで候補とbaseの同じWikiテストを比較し、双方18成功・同じQueryClientProvider不足2失敗を確認した。比較判定は成功だが全テスト成功ではない。実アプリの認証後UIは未確認である。Wikiはコード検証後の別commitであり、main公開はRun終了後のhost適用receiptで別に確認する。無関係な過去のWiki全体を再検証したとは扱わず、既存の要確認Claimだけを照合した。

@@ -92,10 +92,10 @@ sources:
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/ReposSettingsSection.tsx
   - id: openwiki-source-7fd9452d5e666180c50f8cb7
     resource: repo://tests/openwiki/recovery.sh
-generated: { by: "codex", at: "2026-11-06T15:15:40.431Z" }
+generated: { by: "codex", at: "2026-11-06T17:36:48.866Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-06T15:15:40.431Z
+    at: 2026-11-06T17:36:48.866Z
 ---
 
 # OpenWiki の初期生成・同期・回復
@@ -354,6 +354,6 @@ Wikiの可変state・receipt・publicationとsource integration対応は、既�
 
 Syncは統合済みsourceと該当するファイルManifestを固定入力にし、可変Workspace Memoryをsnapshotしない。Manifest・固定sync-inputs・source-publications・Run checkpoint・setup原本/復元journal・Bootstrap索引/reportは別責務でファイルに残る。WikiをOFFにしても通常coding Runのsource自動commitとManifest確定は止まらない。[固定入力](../../crates/services/src/services/openwiki/sync_input.rs#L30-L92)・[Runの責務](../concepts/repository-memory.md)
 
-リリース前の単一登録Repoに対する旧運用ファイルの取込は、一度限りの明示offlineコマンドで行う。稼働Runからlive DBへ実行せず、旧版で全owner/予約を収束し停止、DB・persistent・必要鍵/設定を整合backupしてから新版binaryの `server migrate-repository-state <repository-uuid>` を使う。失敗原因を修正して再実行し、成功後は旧ファイルを再読込しない。旧binaryへ戻すときはschema migration済みDBをそのまま使わず、対応backupを復元する。旧ファイルの削除は別途確認と許可が必要でありknowledge全体を削除しない。完全な順序・保持対象・rollback限界は[一度限りの開発移行](../concepts/repository-memory.md#運用状態のdb集約と一度限りの開発移行)を参照する。[実装runbook](../../deploy/developer/repository-state-migration.md)
+リリース前の単一登録Repoに対する旧運用ファイルの取込は、一度限りの明示offlineコマンドで行う。稼働Runからlive DBへ実行せず、旧版で進行中のWiki保守を完了し全writerを停止、履歴Run/統合状態や永続予約を生存writerと見なして取消・解放せず、DB・persistent・必要鍵/設定を整合backupしてから新版binaryの `server migrate-repository-state <repository-uuid>` を使う。失敗原因を修正して再実行し、成功後は旧ファイルを再読込しない。旧binaryへ戻すときはschema migration済みDBをそのまま使わず、対応backupを復元する。旧ファイルの削除は別途確認と許可が必要でありknowledge全体を削除しない。完全な順序・保持対象・rollback限界は[一度限りの開発移行](../concepts/repository-memory.md#運用状態のdb集約と一度限りの開発移行)を参照する。[実装runbook](../../deploy/developer/repository-state-migration.md)
 
 今回の保守は統合sourceの説明更新であり、live import・旧共有ファイル削除・dev停止/再起動・稼働環境適用の成功を主張しない。

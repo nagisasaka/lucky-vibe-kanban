@@ -108,6 +108,8 @@ sources:
     resource: repo://packages/web-core/src/features/pets/petStatus.ts
   - id: openwiki-source-71d9a385f4b03b8ca71765b0
     resource: repo://packages/web-core/src/features/wiki/model/wikiViewerController.ts
+  - id: openwiki-source-0cd94f38cc1a16e284fe2b1c
+    resource: repo://packages/web-core/src/features/wiki/ui/WorkspaceWikiPanel.tsx
   - id: openwiki-source-202a77c218ffbc8ac2871a04
     resource: repo://packages/web-core/src/features/wiki/ui/WorkspaceWikiProvider.tsx
   - id: openwiki-source-5ff018fe0b1ec29d9745aca4
@@ -140,6 +142,8 @@ sources:
     resource: repo://packages/web-core/src/i18n/languages.ts
   - id: openwiki-source-efd2346cc808d71c75e004b0
     resource: repo://packages/web-core/src/pages/kanban/IssueTaskAttemptsSectionContainer.tsx
+  - id: openwiki-source-5b956d3d9d7f17c236d42ebb
+    resource: repo://packages/web-core/src/pages/kanban/ProjectUtilities.tsx
   - id: openwiki-source-89a716f39968e2030cf296c0
     resource: repo://packages/web-core/src/pages/root/RootRedirectPage.tsx
   - id: openwiki-source-30d78241069faef9f22fd862
@@ -172,6 +176,8 @@ sources:
     resource: repo://packages/web-core/src/shared/components/ui-new/containers/NavbarContainer.tsx
   - id: openwiki-source-4f5acbe99dd0d72515b7e82b
     resource: repo://packages/web-core/src/shared/components/ui-new/containers/SharedAppLayout.tsx
+  - id: openwiki-source-93851bff2ebf05ba57ca3277
+    resource: repo://packages/web-core/src/shared/components/UtilitySidebar.tsx
   - id: openwiki-source-10caf2340da819f813f5ea62
     resource: repo://packages/web-core/src/shared/components/WYSIWYGEditor.tsx
   - id: openwiki-source-7e0da77c31130e66a4b635a5
@@ -280,10 +286,10 @@ sources:
     resource: repo://tests/workspace-navigation/run-isolated.py
   - id: openwiki-source-b87e3253bd1458a0091f8587
     resource: repo://tests/workspace-navigation/workspace-navigation.spec.ts
-generated: { by: "codex", at: "2026-11-06T07:27:44.761Z" }
+generated: { by: "codex", at: "2026-11-06T17:36:48.866Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-06T07:27:44.761Z
+    at: 2026-11-06T17:36:48.866Z
 ---
 
 # Web の実行環境と同期
@@ -646,3 +652,8 @@ DevServer URL 検出は独立 useLogStream を維持し、ログ未選択や別 
 archive 欄表示、archive 対象への遷移、Issue の Workspace 一覧表示は host 付きの既存 summary query を invalidate する。操作後の既存無効化と metadata WS、active summary は維持する。未検知の activity や PR/diff/badge は通常60秒周期まで遅れ得る。古い肯定情報で15秒が続く保守的な挙動を許容する。[一覧](../../packages/web-core/src/pages/workspaces/WorkspacesSidebarContainer.tsx)・[対象遷移](../../packages/web-core/src/shared/providers/WorkspaceProvider.tsx)・[Issue](../../packages/web-core/src/pages/kanban/IssueTaskAttemptsSectionContainer.tsx)・[周期の既存試験](../../packages/web-core/src/shared/hooks/useWorkspaces.test.ts)
 
 コード候補 `3ba4f21d5d1563ec53485d7889ed9551e8af4c79` は修正済み source `ef4d5a97` と tree が完全一致し競合・追加修復はない。候補で source 一致・固定base祖先性・差分空白を実行確認した。公開 memory の前段両frontend型/lint/14既存試験/隔離Chromium、修正後の web-core 型/対象lint/未選択URL・対象分離・ログ寿命・最終ログ/再接続 Chromium 成功報告を採用し、重複suiteと全域build/backendはagent判断で省略した。Chromium は mock transport の隔離fixtureで、実製品画面・実provider・稼働DevServer/PTY・認証・性能は未検証である。Wiki完了・公開要求・targetへの反映成功は別の状態である。
+
+
+### Wikiツリーの高さ配分
+
+KanbanとWorkspaceの共通 `UtilitySidebar` は縦flexで、各項目を縮めず外側の縦スクロールを維持する。Wiki項目は展開ボタンの `aria-expanded=true` に対応するCSSで残り高さを使い、固定 `h-80` を持たない。Wiki内navはsize containmentと `1lh` の最小高で長いツリーの内容高を親の最小高から除外し、操作欄と最低1行を残して内部スクロールする。小さい画面で全項目が収まらない場合は外側スクロールで到達する。[共通配置](../../packages/web-core/src/shared/components/UtilitySidebar.tsx)・[Kanban](../../packages/web-core/src/pages/kanban/ProjectUtilities.tsx)・[Workspace](../../packages/web-core/src/pages/workspaces/RightSidebar.tsx)

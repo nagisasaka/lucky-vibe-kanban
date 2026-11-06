@@ -44,10 +44,10 @@ sources:
     resource: repo://crates/utils/src/repository_memory.rs
   - id: openwiki-source-a92e4b434b1dadd20662f90d
     resource: repo://deploy/developer/repository-state-migration.md
-generated: { by: "codex", at: "2026-11-06T15:24:11.469Z" }
+generated: { by: "codex", at: "2026-11-06T17:36:48.866Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-06T15:24:11.469Z
+    at: 2026-11-06T17:36:48.866Z
 ---
 
 # Change Manifest・Run完了とWikiの責務
@@ -153,8 +153,8 @@ Manifest（events）、会話、固定sync-inputs、source-publications、Run id
 
 移行対象はリリース前の登録LVK Repo一件。恒久的な全Repo起動監査・隔離ゲートではなく、以下の明示的offline操作を用いる。[実装と保持境界](../../crates/db/src/models/repository_state.rs#L329-L435)・[開発runbook](../../deploy/developer/repository-state-migration.md)
 
-1. 切替の実行許可を得て、旧版でRun・Wiki・統合・予約を収束させる。[既存switch手順](../../deploy/developer/switch/README.md)に従い旧serverを停止し、旧binaryと整合したinstance DB・persistent・必要な鍵/設定をbackupする。新旧writerを重ねない。
-2. 停止中instanceと同じ `LVK_INSTANCE_DIR`・storage設定で、新binaryの `server migrate-repository-state <repository-uuid>` を実行する。通常schema migration後、旧 `knowledge/state.json`、`integrations/*.json`、`publications/*.json`、`receipts/*.json` を元ID/Git対応のまま一transactionで取込む。想定外のRepo集合・未収束owner・active Run/統合/予約は拒否する。旧ファイルは変更・削除しない。
+1. 切替の実行許可を得て、旧版で進行中のWiki保守を完了し、全writerを停止する。履歴上のRun/統合状態や永続予約は生存writerの証拠ではなく、移行のために取消・解放しない。[既存switch手順](../../deploy/developer/switch/README.md)に従い旧serverを停止し、旧binaryと整合したinstance DB・persistent・必要な鍵/設定をbackupする。新旧writerを重ねない。
+2. 停止中instanceと同じ `LVK_INSTANCE_DIR`・storage設定で、新binaryの `server migrate-repository-state <repository-uuid>` を実行する。通常schema migration後、旧 `knowledge/state.json`、`integrations/*.json`、`publications/*.json`、`receipts/*.json` を元ID/Git対応のまま一transactionで取込む。想定外のRepo集合と旧Wikiのactive_run_id/bootstrapは拒否する。writer停止は運用上の前提であり、Run/統合statusや予約行から推定しない。旧ファイルは変更・削除しない。
 3. 失敗時は旧ファイルを保ち、診断原因を修正して同コマンドを再実行する。運用取込はrollbackするがschema migrationは既に適用され得る。旧binaryへ戻す場合は事前DB backupを復元し、新版がartifactを書いた場合は対応persistent snapshotも戻す。後続データは別途保持し、旧backupへ混在させない。
 4. 成功後、認可されたswitch手順で新版を起動しhealthとWiki/統合完了・復旧を確認する。再実行はDBを保持し旧ファイルを再読込しない。四運用群と廃止済みWorkspace Memory・専用検証群の削除は別途確認・許可して行う。Manifest等の保持群を巻き込まない。
 5. 実移行とrollback期間終了後に一時importer・legacy decoder・未移行guardをまとめて撤去する。前進SQL migrationと通常DB modelは保持する。

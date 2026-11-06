@@ -114,6 +114,8 @@ sources:
     resource: repo://packages/web-core/src/pages/workspaces/ChangesPanelContainer.tsx
   - id: openwiki-source-36ce95fe7094b2e05ad44d39
     resource: repo://packages/web-core/src/pages/workspaces/GitPanelContainer.tsx
+  - id: openwiki-source-6559800b59b62e086689d27d
+    resource: repo://packages/web-core/src/pages/workspaces/RightSidebar.tsx
   - id: openwiki-source-39d390b46b89f38f831e363e
     resource: repo://packages/web-core/src/pages/workspaces/WorkspaceFilesSurfaceContainer.tsx
   - id: openwiki-source-0894249b732085a9800940bd
@@ -122,6 +124,8 @@ sources:
     resource: repo://packages/web-core/src/pages/workspaces/WorkspacesSidebarContainer.tsx
   - id: openwiki-source-867b74d482ff6cc365176503
     resource: repo://packages/web-core/src/shared/components/TerminalSection.tsx
+  - id: openwiki-source-93851bff2ebf05ba57ca3277
+    resource: repo://packages/web-core/src/shared/components/UtilitySidebar.tsx
   - id: openwiki-source-10caf2340da819f813f5ea62
     resource: repo://packages/web-core/src/shared/components/WYSIWYGEditor.tsx
   - id: openwiki-source-6d0dfae3c1582e1af83405d4
@@ -156,10 +160,10 @@ sources:
     resource: repo://tests/server/specs/workspace-search.spec.ts
   - id: openwiki-source-dcac74ef871fd02e6315fa93
     resource: repo://tests/workflow/specs/diff-tree.spec.ts
-generated: { by: "codex", at: "2026-11-06T03:28:31.315Z" }
+generated: { by: "codex", at: "2026-11-06T17:36:48.866Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-06T15:15:40.431Z
+    at: 2026-11-06T17:36:48.866Z
 ---
 
 # ファイル・差分・プレビュー・端末の境界
@@ -402,3 +406,8 @@ Workspaceを選び、Changes/Git panelのfile treeから対象fileを開く。�
 Dev ServerのlogからURL/portを確認し、LVKと同じbrowser環境から到達できる外部URLを開く。private appには `ssh -N -L LOCAL_PORT:127.0.0.1:APP_PORT USER@SERVER` のような運用者のtunnelを使い、browserで `http://127.0.0.1:LOCAL_PORT` を開く。APP_PORTはSSH接続先のnetwork namespaceで解決される。container内loopbackのappは、SSH接続先から到達する別経路を先に用意する。LVKのloginはappの認証にならない。独立CSV経路を公開する場合は [証明書・認証・再作成の手順](server-container.md#独立アプリの-csv-ルート)に従う。
 
 Playwright/CDPで開く場合も明示されたURLを使い、console/network・画面・resize・reloadを確認する。browser選択やMCP serverの設定は [provider側のMCP設定](../integrations/agent-providers.md#保存した-profile-と-mcp-接続の操作)で行う。旧iframe注入・Eruda・DevTools URL設定は復活させず、file/Markdown/image/diffの内部previewとは区別する。
+
+
+### 右サイドバーのWiki高さ
+
+Kanban/Workspaceでは展開したWikiが他の項目を除く残り高さを使う。長いツリーは内部スクロールし、小画面では操作欄と最低1行を保ってサイドバー全体も縦スクロールする。固定高さを増やす変更ではない。検索・repository選択・ページ選択・開閉の処理は従来通りである。[高さ配分の構造](../architecture/web-and-sync.md#wikiツリーの高さ配分)・[Kanbanの配置](../../packages/web-core/src/pages/kanban/ProjectUtilities.tsx)・[Workspaceの配置](../../packages/web-core/src/pages/workspaces/RightSidebar.tsx)

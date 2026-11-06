@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:6ed109210ebc80514f3f738ed70fcbda26b4d2eaf41936361507b8c74d407de7",
+  "pageVersion": "sha256:1216583a1b86684a58490886600c663df4bc3e8eed39620d68b54cb41ae941eb",
   "claims": [
     {
       "id": "claim_7239e619508e4a2785f62b8f23fd0a74",
@@ -859,8 +859,8 @@
       "statement": "Wiki運用状態はinstance DBを正本とし、Sync入力は固定Manifestだけを含み可変Workspace Memoryをsnapshotしない。旧運用ファイルは明示offline import後も削除せず、Manifest・固定入力・復元journalは保持する。",
       "evidence": [
         {
-          "resource": "repo://crates/db/src/models/repository_state.rs#L329-L435",
-          "version": "repo-lines-v1:sha256:8a4da509a510cd5d3af8597f328b6bc63287b9f72dd7b1ad34fe6ed27356318f:eyJzZWxlY3RlZExpbmVDb3VudCI6MTA3LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJiMjg0MmYyYzBjMGJiNTAwNGIzYzcwNDAzZGU5ZTlkMmZhNThiOTdhMDZiNTk0ZTRlNGRhNzc0MDQ1NDk1YzU0IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIwMWJhNDcxOWM4MGI2ZmU5MTFiMDkxYTdjMDUxMjRiNjRlZWVjZTk2NGUwOWMwNThlZjhmOTgwNWRhY2E1NDZiIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI3NWE2OTViNWE2YWMwODdlNThlNzdjYmQyNzRhZGY4Y2JmZmE5OTViYTIxYzcwOTFjMjRmZTEzMzM0YzczZTk2IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJkMTM2MGU3ODkzNzI3NDkwNzY5YWMzOGU2MTI0YTc2YTBiMjhmZGRiYmYxZWEzNWQyYjk5ODA2MzIzYjFmYzg1In0"
+          "resource": "repo://crates/db/src/models/repository_state.rs#L324-L438",
+          "version": "repo-lines-v1:sha256:689f6233fa81a99fba6ea36f5f006ee4fa05514789cae6c670af6d24140efb8f:eyJzZWxlY3RlZExpbmVDb3VudCI6MTE1LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIwMWJhNDcxOWM4MGI2ZmU5MTFiMDkxYTdjMDUxMjRiNjRlZWVjZTk2NGUwOWMwNThlZjhmOTgwNWRhY2E1NDZiIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJkZGE1OTcwNTQ2MTU3OGIyMTVkM2YxMGE0NjNhY2NhYTNhOTQ0ZjU5ZmNkN2U2ODMzZWM2NjgxM2I3MmE3MTZjIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI5Yjk2NmNjYmI0OGRkM2RkNDJiNWNmYWU4YWY0MjcwYzUzZjU0OGZlMzZjMzE4Nzc3Y2JlYmU2ZDcyYTU4NjU3IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI0NTkwZWFhYzc2MmMyNWJjNjUyMjc1OTZmYTJkYjM3YzBlMzBiOGMyY2NiZjQzNGE4OGMyZmYwMGZmNDIwZjNiIn0"
         },
         {
           "resource": "repo://crates/services/src/services/openwiki/sync_input.rs#L30-L92",
@@ -868,13 +868,13 @@
         },
         {
           "resource": "repo://deploy/developer/repository-state-migration.md",
-          "version": "repo-file-v1:sha256:544d3f1c41e3c6cd9b192b52b01e6576ac79738a75a1a82e10bd64ade5993434"
+          "version": "repo-file-v1:sha256:bc8b338d80847a024236679bba25a5854d7ac951a95744b704b44db724f65a0a"
         }
       ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-06T15:15:40.431Z"
+    "at": "2026-11-06T17:36:48.866Z"
   }
 }
