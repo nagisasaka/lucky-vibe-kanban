@@ -1,4 +1,5 @@
 //! Real recovery entry with isolated Git/SQLite/filesystem state. No model calls.
+use db::models::repository_state::RepositoryMemoryStore;
 use utils::repository_memory::{ChangeManifest, MemoryIntegration, SemanticChanges};
 
 use super::*;
@@ -73,8 +74,10 @@ async fn exercise(deployment: &DeploymentImpl, instance: &FsPath) -> anyhow::Res
         git(&root, &["commit", "-m", "source change"])?;
         let source = git(&root, &["rev-parse", "HEAD"])?;
         let repo = Repo::find_or_create(&deployment.db().pool, &root, scenario).await?;
-        workspace_manager::shared_resources::ensure_repository_memory(&repo)?;
-        let store = RepositoryMemoryStore::for_repository(&repo.name, repo.id)?;
+        workspace_manager::shared_resources::ensure_repository_memory(&deployment.db().pool, &repo)
+            .await?;
+        let store =
+            RepositoryMemoryStore::for_repository(&deployment.db().pool, &repo.name, repo.id)?;
         let state = RepositoryMemoryState {
             status: RepositoryWikiStatus::Current,
             source_commit: Some(if scenario == "publication" {
@@ -90,7 +93,7 @@ async fn exercise(deployment: &DeploymentImpl, instance: &FsPath) -> anyhow::Res
             last_success: Some(chrono::Utc::now()),
             ..RepositoryMemoryState::enabled_defaults(Some("main".into()))
         };
-        store.save_state(&state)?;
+        store.save_state(&state).await?;
         let mut event_ids = vec![];
         if scenario != "direct-main" {
             // Publication acknowledges its own event, leaving an unrelated
@@ -114,37 +117,45 @@ async fn exercise(deployment: &DeploymentImpl, instance: &FsPath) -> anyhow::Res
                     },
                 };
                 store.publish_event(&event)?;
-                store.save_integration(&MemoryIntegration {
-                    id: Uuid::new_v4(),
-                    event_ids: vec![event.event_id],
-                    target_branch: "main".into(),
-                    before_commit: base.clone(),
-                    integrated_commit: Some(source.clone()),
-                    source_error: None,
-                })?;
+                store
+                    .save_integration(&MemoryIntegration {
+                        id: Uuid::new_v4(),
+                        event_ids: vec![event.event_id],
+                        target_branch: "main".into(),
+                        before_commit: base.clone(),
+                        integrated_commit: Some(source.clone()),
+                        source_error: None,
+                    })
+                    .await?;
                 if scenario == "publication" && index == 0 {
-                    store.acknowledge(&WikiReconciliationReceipt {
-                        event_id: event.event_id,
-                        reconciled_at: chrono::Utc::now(),
-                        target_commit: source.clone(),
-                        wiki_commit: Some(source.clone()),
-                        result: ReconciliationResult::Updated,
-                        error: None,
-                    })?;
+                    store
+                        .acknowledge(&WikiReconciliationReceipt {
+                            event_id: event.event_id,
+                            reconciled_at: chrono::Utc::now(),
+                            target_commit: source.clone(),
+                            wiki_commit: Some(source.clone()),
+                            result: ReconciliationResult::Updated,
+                            error: None,
+                        })
+                        .await?;
                 } else {
                     event_ids.push(event.event_id);
                 }
             }
         }
-        let saved = serde_json::to_value(store.state()?)?;
+        let saved = serde_json::to_value(store.state().await?)?;
         // Each call reopens persisted state, as startup and periodic recovery do.
         for _ in 0..3 {
             recover_repository(deployment, &repo).await?;
-            assert_eq!(serde_json::to_value(store.state()?)?, saved, "{scenario}");
-            assert_eq!(pending_events(&store, "main")?.len(), event_ids.len());
+            assert_eq!(
+                serde_json::to_value(store.state().await?)?,
+                saved,
+                "{scenario}"
+            );
+            assert_eq!(pending_events(&store, "main").await?.len(), event_ids.len());
             for id in &event_ids {
                 assert!(
-                    store.receipt(*id)?.is_none(),
+                    store.receipt(*id).await?.is_none(),
                     "backlog must not be force-acknowledged"
                 );
             }

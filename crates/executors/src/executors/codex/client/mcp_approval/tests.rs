@@ -131,9 +131,6 @@ async fn run_mcp_approval_scenarios(mode: ExecutionMode) {
             mode,
             None,
             None,
-            Default::default(),
-            false,
-            String::new(),
             cancel.clone(),
         );
         *client.thread_id.lock().await = Some("root".into());

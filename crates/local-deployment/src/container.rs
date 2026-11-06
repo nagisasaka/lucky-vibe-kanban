@@ -44,7 +44,7 @@ use git::GitService;
 use services::services::{
     analytics::AnalyticsContext,
     approvals::Approvals,
-    config::{Config, DEFAULT_COMMIT_REMINDER_PROMPT},
+    config::Config,
     container::{ContainerError, ContainerRef, ContainerService},
     diff_stream::{self, DiffStreamHandle},
     execution_process::{ExecutionCompletedEvent, publish_execution_completed},
@@ -463,29 +463,28 @@ impl LocalContainerService {
             WorkspaceRepo::find_repos_for_workspace(&self.db.pool, session.workspace_id).await?;
         for repo in repos {
             let Some(store) =
-                utils::repository_memory::RepositoryMemoryStore::existing_for_repository(
-                    &repo.name, repo.id,
-                )?
+                db::models::repository_state::RepositoryMemoryStore::existing_for_repository(
+                    &self.db.pool,
+                    &repo.name,
+                    repo.id,
+                )
+                .await?
             else {
                 continue;
             };
             if let Some(run) = store.run(run_id)? {
                 let (owned_store, owned_run) = (store.clone(), run.clone());
-                let source = tokio::task::spawn_blocking(move || {
-                    services::services::repository_memory::complete_coding_run(
-                        &owned_store,
-                        &owned_run,
+                let include_manifest = self.config.read().await.manifest_in_commit_body;
+                tokio::task::spawn_blocking(move || {
+                    tokio::runtime::Handle::current().block_on(
+                        services::services::repository_memory::complete_coding_run(
+                            &owned_store,
+                            &owned_run,
+                            include_manifest,
+                        ),
                     )
                 })
                 .await??;
-                if source.is_none() && self.scripts_settled_inner(session.workspace_id).await? {
-                    services::services::repository_memory::verification::complete(
-                        &self.db.pool,
-                        &store,
-                        &run,
-                    )
-                    .await.map_err(|error| anyhow!("No-change verification recording failed; source completion was preserved: {error:#}"))?;
-                }
             }
         }
         Ok(())
@@ -1559,21 +1558,7 @@ impl ContainerService for LocalContainerService {
         let repo_names: Vec<String> = repos.iter().map(|r| r.name.clone()).collect();
         let repo_context = RepoContext::new(current_dir.clone(), repo_names);
 
-        let design_arena_no_commit =
-            should_disable_default_commit_for_workspace(&self.db.pool, workspace.id).await?;
-
-        let config = self.config.read().await;
-        let commit_reminder_enabled = config.commit_reminder_enabled && !design_arena_no_commit;
-        let commit_reminder_prompt = config
-            .commit_reminder_prompt
-            .clone()
-            .unwrap_or_else(|| DEFAULT_COMMIT_REMINDER_PROMPT.to_string());
-        drop(config);
-        let mut env = ExecutionEnv::new(
-            repo_context,
-            commit_reminder_enabled,
-            commit_reminder_prompt,
-        );
+        let mut env = ExecutionEnv::new(repo_context);
 
         // Always inject workspace/session context
         env.insert("VK_WORKSPACE_ID", workspace.id.to_string());

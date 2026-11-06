@@ -900,7 +900,7 @@ impl Codex {
             .env("RUST_LOG", "error")
             .args(&args);
 
-        ExecutionEnv::new(RepoContext::default(), false, String::new())
+        ExecutionEnv::new(RepoContext::default())
             .with_profile(&self.cmd)
             .apply_to_command(&mut process);
 
@@ -954,11 +954,7 @@ impl Codex {
                     ExecutionMode::Code,
                     None,
                     None,
-                    RepoContext::default(),
-                    false,
-                    String::new(),
-                    cancel.clone(),
-                );
+                    cancel.clone());
                 let callbacks: Arc<dyn jsonrpc::JsonRpcCallbacks> = if passive {
                     Arc::new(account_read::PassiveCallbacks)
                 } else {
@@ -1497,9 +1493,6 @@ impl Codex {
             .as_ref()
             .map(ReasoningEffort::to_protocol);
         let approvals = self.approvals.clone();
-        let repo_context = env.repo_context.clone();
-        let commit_reminder = env.commit_reminder;
-        let commit_reminder_prompt = env.commit_reminder_prompt.clone();
         let cancel_for_task = cancel.clone();
         let client_slot = Arc::new(OnceLock::new());
         let control = Arc::new(DeferredCodexControl {
@@ -1519,9 +1512,6 @@ impl Codex {
                 execution_mode,
                 goal_token_budget,
                 reasoning_effort,
-                repo_context,
-                commit_reminder,
-                commit_reminder_prompt,
                 cancel_for_task.clone(),
             );
             let rpc_peer = JsonRpcPeer::spawn(
@@ -2299,7 +2289,7 @@ mod tests {
     fn resource_mediator_overrides_interactive_tools_and_write_access() {
         use crate::env::{ExecutionEnv, RepoContext};
 
-        let mut env = ExecutionEnv::new(RepoContext::default(), false, String::new());
+        let mut env = ExecutionEnv::new(RepoContext::default());
         env.insert("LVK_RESOURCE_MEDIATOR", "1");
         env.insert("LVK_SHARED_RESOURCE_ROOTS", r#"["/tmp/shared"]"#);
         let params = test_executor()
@@ -2331,7 +2321,7 @@ mod tests {
 
         let cwd = std::env::current_dir().unwrap();
         let shared = cwd.join("shared-test/persistent");
-        let mut env = ExecutionEnv::new(RepoContext::default(), false, String::new());
+        let mut env = ExecutionEnv::new(RepoContext::default());
         let mut executor = test_executor();
         assert!(
             executor
@@ -2548,12 +2538,12 @@ mod goal_skill_tests {
     fn bootstrap_reviewer_overrides_writer_profile_without_shared_config_writes() {
         let codex: Codex =
             serde_json::from_value(serde_json::json!({"sandbox":"danger-full-access"})).unwrap();
-        let mut env = ExecutionEnv::new(RepoContext::default(), false, String::new());
+        let mut env = ExecutionEnv::new(RepoContext::default());
         env.insert("LVK_OPENWIKI_REVIEWER", "1");
         env.insert("LVK_OPENWIKI_MAINTENANCE", "1");
         env.insert(
             "LVK_REPOSITORY_MEMORY_INSTRUCTIONS",
-            "previous task memory must not leak",
+            "previous task context must not leak",
         );
         env.insert("LVK_SHARED_RESOURCE_ROOTS", r#"["/shared/writable"]"#);
         let params = codex.build_thread_start_params_with_resources(Path::new("/workspace"), &env);
@@ -2576,10 +2566,10 @@ mod goal_skill_tests {
     }
 
     #[test]
-    fn repository_memory_is_persistent_for_initial_and_resumed_threads() {
+    fn manifest_guidance_is_persistent_for_initial_and_resumed_threads() {
         let codex: Codex = serde_json::from_value(serde_json::json!({})).unwrap();
-        let mut env = ExecutionEnv::new(RepoContext::default(), false, String::new());
-        env.insert("LVK_REPOSITORY_MEMORY_INSTRUCTIONS", "Read the workspace-specific memory after context compaction. Canonical openwiki/ is read-only.");
+        let mut env = ExecutionEnv::new(RepoContext::default());
+        env.insert("LVK_REPOSITORY_MEMORY_INSTRUCTIONS", "Re-read repository instructions after context compaction. Write the current source Change Manifest draft; canonical openwiki/ is read-only.");
         let params = codex.build_thread_start_params_with_resources(Path::new("/workspace"), &env);
         assert!(
             params
@@ -2654,7 +2644,7 @@ mod integration_worker_tests {
             "profile": "worker-profile"
         }))
         .unwrap();
-        let mut env = ExecutionEnv::new(RepoContext::default(), false, String::new());
+        let mut env = ExecutionEnv::new(RepoContext::default());
         env.insert("VK_AGENT_RUN_ID", "worker");
         let normal = codex.build_thread_start_params_with_resources(Path::new("/workspace"), &env);
         assert!(

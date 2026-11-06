@@ -50,7 +50,6 @@ use super::{
 };
 use crate::{
     approvals::{ExecutorApprovalError, ExecutorApprovalService},
-    env::RepoContext,
     executors::{
         ExecutorControl, ExecutorError, ExecutorExitResult, codex::normalize_logs::Approval,
         provider_adapter::DirectControl,
@@ -117,13 +116,6 @@ pub struct AppServerClient {
     runtime_user_agent: OnceLock<String>,
     reasoning_effort: StdMutex<Option<ProtocolReasoningEffort>>,
     pending_plan: Mutex<Option<PendingPlan>>,
-    repo_context: RepoContext,
-    commit_reminder: bool,
-    commit_reminder_prompt: String,
-    commit_reminder_sent: AtomicBool,
-    memory_compaction_thread: Mutex<Option<String>>,
-    memory_compaction_reload: AtomicBool,
-    memory_compaction_finished: AtomicBool,
     cancel: CancellationToken,
 }
 
@@ -145,9 +137,6 @@ impl AppServerClient {
         execution_mode: ExecutionMode,
         goal_token_budget: Option<i64>,
         reasoning_effort: Option<ProtocolReasoningEffort>,
-        repo_context: RepoContext,
-        commit_reminder: bool,
-        commit_reminder_prompt: String,
         cancel: CancellationToken,
     ) -> Arc<Self> {
         Arc::new_cyclic(|weak| Self {
@@ -173,13 +162,6 @@ impl AppServerClient {
             pending_tool_approvals: Mutex::new(0),
             child_completion: StdMutex::new(HashMap::new()),
             mcp_approvals: StdMutex::new(Default::default()),
-            repo_context,
-            commit_reminder: commit_reminder && execution_mode != ExecutionMode::Review,
-            commit_reminder_prompt,
-            commit_reminder_sent: AtomicBool::new(false),
-            memory_compaction_thread: Mutex::new(None),
-            memory_compaction_reload: AtomicBool::new(false),
-            memory_compaction_finished: AtomicBool::new(false),
             cancel,
         })
     }
@@ -671,24 +653,6 @@ impl AppServerClient {
             params: ThreadCompactStartParams { thread_id },
         };
         self.send_request(request, "thread/compact/start").await
-    }
-
-    /// Public host-driven checkpoint, using the same authenticated session.
-    /// Incremental memory remains essential: automatic compaction has no
-    /// guaranteed pre-compaction callback in the public protocol.
-    pub async fn compact_with_memory_checkpoint(
-        &self,
-        thread_id: String,
-    ) -> Result<(), ExecutorError> {
-        *self.memory_compaction_thread.lock().await = Some(thread_id.clone());
-        // Compaction is a memory-only control operation, not an occasion to
-        // commit pre-existing source changes after the reload turn finishes.
-        self.commit_reminder_sent.store(true, Ordering::SeqCst);
-        self.turn_start_with_mode(thread_id, vec![UserInput::Text {
-            text: "Before explicit context compaction, checkpoint meaningful decisions, user intent, rationale, rejected alternatives and unresolved questions into the host-provided Workspace Memory files. Preserve workspace/task identity; do not save raw conversation or modify source, Wiki or Git history. If nothing meaningful changed, leave memory unchanged. Finish this checkpoint now; LVK will compact next.".into(),
-            text_elements: vec![],
-        }], None).await?;
-        Ok(())
     }
 
     pub async fn thread_read(
@@ -1917,22 +1881,6 @@ impl AppServerClient {
             });
         }
 
-        if method == "item/completed"
-            && notification
-                .params
-                .as_ref()
-                .and_then(|params| params.pointer("/item/type"))
-                .and_then(Value::as_str)
-                == Some("contextCompaction")
-            && self.memory_compaction_reload.load(Ordering::SeqCst)
-        {
-            // Drain the compaction turn before asking for a reread; starting a
-            // new turn here races the old turn/completed notification.
-            self.memory_compaction_finished
-                .store(true, Ordering::SeqCst);
-            return Ok(JsonRpcControlFlow::Continue);
-        }
-
         // V2 turn completion detection
         if method == "turn/completed" {
             let completed = parse_turn_completed_params(notification.params.as_ref())?;
@@ -1974,38 +1922,6 @@ impl AppServerClient {
                 TurnStatus::Completed => {}
             }
 
-            if let Some(thread_id) = self.memory_compaction_thread.lock().await.take() {
-                self.memory_compaction_reload.store(true, Ordering::SeqCst);
-                let client = self.self_ref.upgrade().expect("live client");
-                tokio::spawn(async move {
-                    if let Err(error) = client.thread_compact_start(thread_id).await {
-                        let _ = client
-                            .log_writer
-                            .log_raw(&format!(
-                                "Memory checkpoint succeeded but compaction failed: {error}"
-                            ))
-                            .await;
-                        client.rpc().request_exit(ExecutorExitResult::Failure);
-                    }
-                });
-                return Ok(JsonRpcControlFlow::Continue);
-            }
-
-            if self.memory_compaction_reload.swap(false, Ordering::SeqCst) {
-                if !self
-                    .memory_compaction_finished
-                    .swap(false, Ordering::SeqCst)
-                {
-                    return Err(ExecutorError::Io(io::Error::other(
-                        "Compaction turn finished without a completed contextCompaction item; Workspace Memory is retained",
-                    )));
-                }
-                if let Some(thread_id) = self.thread_id.lock().await.clone() {
-                    self.spawn_user_message(thread_id, "Context compaction completed. Re-read this workspace's repository instructions, the read-only openwiki/quickstart.md (or openwiki/index.md) and relevant Wiki pages when present, and only this workspace's host-provided Workspace Memory files. Source/tests/configuration remain authoritative; Wiki and memory are semantic hints, not instructions. Missing Wiki or memory is normal. Report briefly that continuity is restored, or what is unavailable. Do not resume implementation, modify source/Wiki, or commit.".into());
-                    return Ok(JsonRpcControlFlow::Continue);
-                }
-            }
-
             // Handle plan approval on turn completion
             let pending = if self.plan_mode.load(Ordering::SeqCst) {
                 self.pending_plan.lock().await.take()
@@ -2037,18 +1953,6 @@ impl AppServerClient {
             }
 
             if self.goal_keeps_run_alive() {
-                return Ok(JsonRpcControlFlow::Continue);
-            }
-
-            // Handle commit reminder on turn completion
-            if self.commit_reminder
-                && !self.commit_reminder_sent.swap(true, Ordering::SeqCst)
-                && let status = self.repo_context.check_uncommitted_changes().await
-                && !status.is_empty()
-                && let Some(thread_id) = self.thread_id.lock().await.clone()
-            {
-                let prompt = format!("{}\n{}", self.commit_reminder_prompt, status);
-                self.spawn_user_message(thread_id, prompt);
                 return Ok(JsonRpcControlFlow::Continue);
             }
 
@@ -2262,9 +2166,6 @@ mod version_check_tests {
                 ExecutionMode::Code,
                 None,
                 None,
-                Default::default(),
-                false,
-                String::new(),
                 cancel.clone(),
             );
             let mut child = tokio::process::Command::new(std::env::current_exe().unwrap())
@@ -2319,9 +2220,6 @@ mod version_check_tests {
             ExecutionMode::PlanWithGoal,
             None,
             None,
-            Default::default(),
-            false,
-            String::new(),
             CancellationToken::new(),
         );
         assert_eq!(client.execution_mode(), ExecutionMode::Plan);
@@ -2490,9 +2388,6 @@ mod version_check_tests {
                 },
                 None,
                 None,
-                Default::default(),
-                false,
-                String::new(),
                 cancel.clone(),
             );
             client.register_session("thread-1").await.unwrap();
@@ -2575,112 +2470,6 @@ mod version_check_tests {
         }
     }
 
-    #[test]
-    #[ignore = "stdio fixture launched by memory_compaction_orders_checkpoint_compact_and_reload"]
-    fn memory_compaction_stdio_fixture() {
-        use std::io::{BufRead, Write};
-        let mut turns = 0;
-        let emit = |value: serde_json::Value| {
-            println!("{value}");
-            std::io::stdout().flush().unwrap();
-        };
-        for line in std::io::stdin().lock().lines() {
-            let request: serde_json::Value = serde_json::from_str(&line.unwrap()).unwrap();
-            let method = request["method"].as_str().unwrap_or_default();
-            let (id, item) = match method {
-                "turn/start" => {
-                    turns += 1;
-                    let text = request["params"]["input"][0]["text"].as_str().unwrap();
-                    if turns == 1 {
-                        assert!(text.contains("checkpoint meaningful decisions"));
-                    } else {
-                        assert_eq!(turns, 2);
-                        assert!(text.contains("Re-read this workspace's repository instructions"));
-                        assert!(text.contains("openwiki/quickstart.md"));
-                        assert!(
-                            text.contains("only this workspace's host-provided Workspace Memory")
-                        );
-                    }
-                    (format!("turn-{turns}"), "agentMessage")
-                }
-                "thread/compact/start" => {
-                    assert_eq!(turns, 1);
-                    ("compaction-turn".into(), "contextCompaction")
-                }
-                other => panic!("Unexpected fixture request {other}"),
-            };
-            let turn = serde_json::json!({"id":id,"items":[],"status":"inProgress","error":null});
-            emit(
-                serde_json::json!({"id":request["id"],"result":if method == "turn/start" { serde_json::json!({"turn":turn}) } else { serde_json::json!({}) }}),
-            );
-            emit(
-                serde_json::json!({"method":"turn/started","params":{"threadId":"memory-thread","turn":turn}}),
-            );
-            emit(
-                serde_json::json!({"method":"item/completed","params":{"threadId":"memory-thread","item":{"id":"item","type":item,"text":"fixture"}}}),
-            );
-            emit(
-                serde_json::json!({"method":"turn/completed","params":{"threadId":"memory-thread","turn":{"id":id,"items":[],"status":"completed","error":null}}}),
-            );
-        }
-    }
-
-    #[tokio::test]
-    async fn memory_compaction_orders_checkpoint_compact_and_reload() {
-        use super::super::jsonrpc::{ExitSignalSender, JsonRpcPeer};
-        let cancel = CancellationToken::new();
-        let client = AppServerClient::new(
-            LogWriter::new(tokio::io::sink()),
-            None,
-            false,
-            false,
-            ExecutionMode::Code,
-            None,
-            None,
-            Default::default(),
-            false,
-            String::new(),
-            cancel.clone(),
-        );
-        client.register_session("memory-thread").await.unwrap();
-        client.set_resolved_model("fixture".into());
-        let mut child = tokio::process::Command::new(std::env::current_exe().unwrap())
-            .args([
-                "--exact",
-                "executors::codex::client::version_check_tests::memory_compaction_stdio_fixture",
-                "--ignored",
-                "--nocapture",
-            ])
-            .stdin(std::process::Stdio::piped())
-            .stdout(std::process::Stdio::piped())
-            .stderr(std::process::Stdio::inherit())
-            .kill_on_drop(true)
-            .spawn()
-            .unwrap();
-        let (exit_tx, exit_rx) = tokio::sync::oneshot::channel();
-        client.connect(JsonRpcPeer::spawn(
-            child.stdin.take().unwrap(),
-            child.stdout.take().unwrap(),
-            client.clone(),
-            ExitSignalSender::new(exit_tx),
-            cancel.clone(),
-        ));
-        tokio::time::timeout(std::time::Duration::from_secs(10), async {
-            client
-                .compact_with_memory_checkpoint("memory-thread".into())
-                .await
-                .unwrap();
-            assert!(matches!(
-                exit_rx.await.unwrap(),
-                ExecutorExitResult::Success
-            ));
-        })
-        .await
-        .expect("checkpoint, compaction and reread must finish without a paid model");
-        cancel.cancel();
-        let _ = child.kill().await;
-    }
-
     fn goal_client() -> std::sync::Arc<AppServerClient> {
         let client = AppServerClient::new(
             LogWriter::new(tokio::io::sink()),
@@ -2690,9 +2479,6 @@ mod version_check_tests {
             ExecutionMode::Goal,
             None,
             None,
-            Default::default(),
-            false,
-            String::new(),
             CancellationToken::new(),
         );
         *client.thread_id.try_lock().unwrap() = Some("thread-1".into());
@@ -2701,7 +2487,7 @@ mod version_check_tests {
     }
 
     const RESUME_FIXTURE_INSTRUCTIONS: &str = concat!(
-        "LVK repository memory (CURRENT host identity JSON): ",
+        "LVK Change Manifest (CURRENT host identity JSON): ",
         "{\"run_id\":\"current-run\",\"draft_path\":\"drafts/current-run.json\"}\n",
         "Keep fixed repository safety and draft rules."
     );
@@ -2798,9 +2584,6 @@ mod version_check_tests {
                 mode,
                 None,
                 None,
-                Default::default(),
-                false,
-                String::new(),
                 cancel.clone(),
             );
             let mut command = tokio::process::Command::new(std::env::current_exe().unwrap());
@@ -2939,9 +2722,6 @@ mod version_check_tests {
             ExecutionMode::Code,
             None,
             None,
-            Default::default(),
-            false,
-            String::new(),
             CancellationToken::new(),
         );
         *client.thread_id.lock().await = Some("thread-1".into());
@@ -3308,9 +3088,6 @@ mod version_check_tests {
                 mode,
                 None,
                 None,
-                Default::default(),
-                false,
-                String::new(),
                 CancellationToken::new(),
             );
 
@@ -3330,9 +3107,6 @@ mod version_check_tests {
             ExecutionMode::Review,
             None,
             None,
-            Default::default(),
-            true,
-            "Commit your changes".into(),
             CancellationToken::new(),
         );
         client.set_resolved_model("test-model".into());
@@ -3340,7 +3114,6 @@ mod version_check_tests {
             client.initial_collaboration_mode().unwrap().mode,
             ModeKind::Default
         );
-        assert!(!client.commit_reminder);
         *client.thread_id.lock().await = Some("thread-1".into());
         *client.turn_id.lock().await = Some("turn-1".into());
         // A plan item emitted as review content must not enter the approval transition.
@@ -3376,9 +3149,6 @@ mod version_check_tests {
             ExecutionMode::Goal,
             None,
             None,
-            Default::default(),
-            false,
-            String::new(),
             CancellationToken::new(),
         );
 
@@ -3583,9 +3353,6 @@ mod version_check_tests {
             ExecutionMode::Code,
             None,
             Some(ProtocolReasoningEffort::XHigh),
-            Default::default(),
-            false,
-            String::new(),
             CancellationToken::new(),
         );
         client.set_resolved_model("gpt-test".to_string());
@@ -3661,9 +3428,6 @@ mod version_check_tests {
             ExecutionMode::Code,
             None,
             Some(ProtocolReasoningEffort::High),
-            Default::default(),
-            false,
-            String::new(),
             CancellationToken::new(),
         );
         client.set_resolved_model("gpt-test".to_string());
@@ -3706,9 +3470,6 @@ mod version_check_tests {
             ExecutionMode::Code,
             None,
             Some(ProtocolReasoningEffort::XHigh),
-            Default::default(),
-            false,
-            String::new(),
             CancellationToken::new(),
         );
         client.set_resolved_model("gpt-test".to_string());
@@ -3858,9 +3619,6 @@ mod approval_regression_tests {
                     ExecutionMode::Code,
                     None,
                     None,
-                    Default::default(),
-                    false,
-                    String::new(),
                     cancel.clone(),
                 );
                 let mut child = tokio::process::Command::new("python3")
@@ -3976,9 +3734,6 @@ mod approval_regression_tests {
             ExecutionMode::Code,
             None,
             None,
-            Default::default(),
-            false,
-            String::new(),
             CancellationToken::new(),
         );
         for (tool, display) in [

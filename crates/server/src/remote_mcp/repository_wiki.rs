@@ -4,16 +4,14 @@ use anyhow::ensure;
 use db::models::{
     agent_runtime::AgentRunRecord,
     repo::Repo,
+    repository_state::RepositoryMemoryStore,
     workspace::Workspace,
     workspace_usage::{OPENWIKI_SYNC, WorkspaceExecutionTerminalStatus},
 };
 use schemars::JsonSchema;
 use serde::Deserialize;
 use serde_json::{Value, json};
-use utils::{
-    mcp_error::Category,
-    repository_memory::{RepositoryMemoryStore, RepositoryWikiStatus},
-};
+use utils::{mcp_error::Category, repository_memory::RepositoryWikiStatus};
 use uuid::Uuid;
 
 use super::{
@@ -325,21 +323,26 @@ async fn execution_result(
     let repo = Repo::find_by_id(&remote.pool, repository)
         .await?
         .ok_or_else(|| super::errors::rejection(Category::NotFound))?;
-    let store = RepositoryMemoryStore::read_only_configured_for_repository(&repo.name, repository)?
-        .ok_or_else(|| super::errors::rejection(Category::Unavailable))?;
-    let mut value = execution_evidence(&store, run_id, run.status, owner.result.as_ref())?;
+    let store = RepositoryMemoryStore::read_only_configured_for_repository(
+        &remote.pool,
+        &repo.name,
+        repository,
+    )
+    .await?
+    .ok_or_else(|| super::errors::rejection(Category::Unavailable))?;
+    let mut value = execution_evidence(&store, run_id, run.status, owner.result.as_ref()).await?;
     value["workspace_id"] = json!(workspace);
     Ok(value)
 }
 
-fn execution_evidence(
+async fn execution_evidence(
     store: &RepositoryMemoryStore,
     run_id: Uuid,
     agent_status: executors::runtime::AgentRunStatus,
     result: Option<&db::models::workspace_usage::WorkspaceExecutionResult>,
 ) -> anyhow::Result<Value> {
-    let state = store.state()?;
-    let publication = store.publication(run_id)?;
+    let state = store.state().await?;
+    let publication = store.publication(run_id).await?;
     let finalizing = state.active_run_id == Some(run_id);
     let complete = agent_status == executors::runtime::AgentRunStatus::Succeeded
         && !finalizing
@@ -362,8 +365,8 @@ mod tests {
 
     use super::*;
 
-    #[test]
-    fn wiki_result_requires_publication_and_settled_reconciliation_not_agent_success() {
+    #[tokio::test]
+    async fn wiki_result_requires_publication_and_settled_reconciliation_not_agent_success() {
         let temp = tempfile::tempdir().unwrap();
         let store = RepositoryMemoryStore::at_persistent(temp.path()).unwrap();
         let run = Uuid::new_v4();
@@ -372,11 +375,16 @@ mod tests {
             active_source_commit: Some("a".repeat(40)),
             ..RepositoryMemoryState::enabled_defaults(Some("main".into()))
         };
-        store.save_state(&state).unwrap();
-        let read = |result: Option<&WorkspaceExecutionResult>| {
-            execution_evidence(&store, run, AgentRunStatus::Succeeded, result).unwrap()
+        store.save_state(&state).await.unwrap();
+        let read = |result: Option<WorkspaceExecutionResult>| {
+            let store = store.clone();
+            async move {
+                execution_evidence(&store, run, AgentRunStatus::Succeeded, result.as_ref())
+                    .await
+                    .unwrap()
+            }
         };
-        assert_eq!(read(None)["wiki_complete"], false);
+        assert_eq!(read(None).await["wiki_complete"], false);
         // A publication journal is intent, not proof that the target was committed.
         store
             .save_publication(&WikiPublication {
@@ -386,6 +394,7 @@ mod tests {
                 maintenance_commit: Some("b".repeat(40)),
                 no_op: false,
             })
+            .await
             .unwrap();
         let mut result = WorkspaceExecutionResult {
             status: WorkspaceExecutionTerminalStatus::Failed,
@@ -403,18 +412,22 @@ mod tests {
                 "Integrated source advanced before Wiki publication"
             )),
         )
+        .await
         .unwrap();
         let failed_result = result.clone();
-        let failed = read(Some(&result));
+        let failed = read(Some(result.clone())).await;
         assert_eq!(failed["wiki_complete"], false);
         assert_eq!(failed["error_code"], "source_validation_failed");
         assert!(!failed.to_string().contains("/private/secret"));
-        assert_eq!(store.state().unwrap().status, RepositoryWikiStatus::Error);
+        assert_eq!(
+            store.state().await.unwrap().status,
+            RepositoryWikiStatus::Error
+        );
         // A later legitimate retry gets a new run; the old run remains failed.
         let retry = Uuid::new_v4();
         state.active_run_id = Some(retry);
         state.active_source_commit = Some("c".repeat(40));
-        store.save_state(&state).unwrap();
+        store.save_state(&state).await.unwrap();
         store
             .save_publication(&WikiPublication {
                 run_id: retry,
@@ -423,13 +436,16 @@ mod tests {
                 maintenance_commit: None,
                 no_op: true,
             })
+            .await
             .unwrap();
         result.status = WorkspaceExecutionTerminalStatus::Succeeded;
         result.error = None;
         result.wiki_commit = Some("c".repeat(40));
         result.no_op = true;
         assert_eq!(
-            execution_evidence(&store, retry, AgentRunStatus::Succeeded, Some(&result)).unwrap()["wiki_complete"],
+            execution_evidence(&store, retry, AgentRunStatus::Succeeded, Some(&result))
+                .await
+                .unwrap()["wiki_complete"],
             false
         );
         openwiki::record_reconciliation_result(
@@ -437,18 +453,26 @@ mod tests {
             &mut state,
             Ok((Some("c".repeat(40)), true)),
         )
+        .await
         .unwrap();
         assert_eq!(
-            execution_evidence(&store, retry, AgentRunStatus::Succeeded, Some(&result)).unwrap()["wiki_complete"],
+            execution_evidence(&store, retry, AgentRunStatus::Succeeded, Some(&result))
+                .await
+                .unwrap()["wiki_complete"],
             true
         );
-        assert_eq!(read(Some(&failed_result))["wiki_complete"], false);
         assert_eq!(
-            read(Some(&failed_result))["reconciliation_status"],
+            read(Some(failed_result.clone())).await["wiki_complete"],
+            false
+        );
+        assert_eq!(
+            read(Some(failed_result.clone())).await["reconciliation_status"],
             "failed"
         );
         assert_eq!(
-            execution_evidence(&store, retry, AgentRunStatus::Failed, Some(&result)).unwrap()["wiki_complete"],
+            execution_evidence(&store, retry, AgentRunStatus::Failed, Some(&result))
+                .await
+                .unwrap()["wiki_complete"],
             false
         );
         assert_eq!(
@@ -458,6 +482,7 @@ mod tests {
                 AgentRunStatus::Succeeded,
                 Some(&result)
             )
+            .await
             .unwrap()["wiki_complete"],
             false
         );

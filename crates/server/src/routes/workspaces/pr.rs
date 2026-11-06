@@ -278,6 +278,7 @@ pub async fn create_pr(
         &workspace,
         &worktree_path,
         &workspace_repo.target_branch,
+        deployment.config().read().await.manifest_in_commit_body,
     )
     .await
     .map_err(|error| ApiError::BadRequest(error.to_string()))?;

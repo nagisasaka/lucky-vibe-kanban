@@ -1,5 +1,6 @@
 //! Repository maintenance uses ordinary LVK workspace/session/AgentRun owners.
 //! The shared durable pointer and OS lock fence writers across server restarts.
+use db::models::repository_state::RepositoryMemoryStore;
 pub(crate) mod completion;
 pub(crate) mod preparation;
 mod project_context;
@@ -33,8 +34,8 @@ use services::services::{
 use ts_rs::TS;
 use utils::{
     repository_memory::{
-        ReconciliationResult, RepositoryMemoryState, RepositoryMemoryStore, RepositoryWikiStatus,
-        RepositoryWikiSyncScope, WikiReconciliationReceipt, reject_symlinks,
+        ReconciliationResult, RepositoryMemoryState, RepositoryWikiStatus, RepositoryWikiSyncScope,
+        WikiReconciliationReceipt, reject_symlinks,
     },
     response::ApiResponse,
 };
@@ -85,9 +86,14 @@ pub(crate) async fn status_snapshot(
     id: Uuid,
 ) -> Result<(RepositoryMemoryState, Option<String>), ApiError> {
     let repo = repo(deployment, id).await?;
-    let store = RepositoryMemoryStore::read_only_configured_for_repository(&repo.name, id)?;
+    let store = RepositoryMemoryStore::read_only_configured_for_repository(
+        &deployment.db().pool,
+        &repo.name,
+        id,
+    )
+    .await?;
     let mut state = match &store {
-        Some(store) => store.state()?,
+        Some(store) => store.state().await?,
         None => RepositoryMemoryState::enabled_defaults(
             workspace_manager::shared_resources::default_memory_target_branch(&repo),
         ),
@@ -100,8 +106,11 @@ pub(crate) async fn status_snapshot(
         let head = deployment.git().get_branch_oid(&repo.path, branch)?;
         let pending = match &store {
             Some(store) => {
-                unresolved_integration(store).map_err(api_error)?
-                    || !pending_events(store, branch).map_err(api_error)?.is_empty()
+                unresolved_integration(store).await.map_err(api_error)?
+                    || !pending_events(store, branch)
+                        .await
+                        .map_err(api_error)?
+                        .is_empty()
             }
             None => false,
         };
@@ -132,9 +141,9 @@ pub async fn configure(
         return Err(api_error("Use a valid BCP 47 language code"));
     }
     workspace_manager::shared_resources::ensure(&repo.path, &repo.name, repo.id)?;
-    let store = RepositoryMemoryStore::for_repository(&repo.name, repo.id)?;
+    let store = RepositoryMemoryStore::for_repository(&deployment.db().pool, &repo.name, repo.id)?;
     let _lock = store.try_lock()?;
-    let mut state = store.state()?;
+    let mut state = store.state().await?;
     if state.active_run_id.is_some() || state.bootstrap.is_some() {
         return Err(api_error(
             "Repository maintenance is active; stop or finish that AgentRun before changing configuration",
@@ -161,7 +170,7 @@ pub async fn configure(
     if state.status != RepositoryWikiStatus::Error {
         state.error = None;
     }
-    store.save_state(&state)?;
+    store.save_state(&state).await?;
     drop(_lock);
     get_status(State(deployment), Path(id)).await
 }
@@ -203,7 +212,7 @@ pub(crate) async fn sync_checked(
 
 fn check_sync_available(state: &RepositoryMemoryState) -> anyhow::Result<()> {
     if !state.enabled {
-        bail!("Enable OpenWiki repository memory first");
+        bail!("Enable OpenWiki first");
     }
     if state.active_run_id.is_some() || state.bootstrap.is_some() {
         bail!(
@@ -241,7 +250,8 @@ async fn start_reconciliation_request(
     let repo = repo(deployment, id).await?;
     let project_id = request.project_id;
     project_context::validate(&deployment.db().pool, id, project_id).await?;
-    workspace_manager::shared_resources::ensure_repository_memory(&repo)?;
+    workspace_manager::shared_resources::ensure_repository_memory(&deployment.db().pool, &repo)
+        .await?;
     let storage = deployment
         .git()
         .storage_identity(&repo.path)?
@@ -254,11 +264,11 @@ async fn start_reconciliation_request(
             "Auto-merge publication/semantic outbox is still being reconciled; source is retained"
         );
     }
-    let store = RepositoryMemoryStore::for_repository(&repo.name, id)?;
+    let store = RepositoryMemoryStore::for_repository(&deployment.db().pool, &repo.name, id)?;
     let _lock = store
         .try_lock()
         .context("Another repository maintainer is starting or publishing")?;
-    let mut state = store.state()?;
+    let mut state = store.state().await?;
     check_sync_available(&state)?;
     // Validate user input before reserving a writer or changing error/freshness state.
     let branch = state
@@ -283,16 +293,16 @@ async fn start_reconciliation_request(
     )
     .await;
     if let Err(error) = result {
-        state = store.state()?;
+        state = store.state().await?;
         state.status = RepositoryWikiStatus::Error;
         state.error = Some(format!("{error:#}"));
         if let Some(owner) = &mut state.bootstrap {
             owner.phase = utils::repository_memory::OpenWikiBootstrapPhase::CleaningUp;
         }
-        store.save_state(&state)?;
+        store.save_state(&state).await?;
         return Err(error);
     }
-    Ok(store.state()?)
+    Ok(store.state().await?)
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -310,8 +320,8 @@ async fn prepare_run(
         .target_branch
         .clone()
         .context("Choose an integration branch")?;
-    recover_integrations(store, &repo.path)?;
-    if unresolved_integration(store)? {
+    recover_integrations(store, &repo.path).await?;
+    if unresolved_integration(store).await? {
         bail!(
             "A source integration has no confirmed outcome. Finish/retry that source merge before Wiki reconciliation; its semantic events have not been acknowledged."
         );
@@ -321,18 +331,24 @@ async fn prepare_run(
     }
     let source = source.to_owned();
     for integration in store
-        .integrations()?
+        .integrations()
+        .await?
         .into_iter()
         .filter(|record| record.target_branch == branch)
     {
+        let mut has_pending = false;
+        for id in &integration.event_ids {
+            if store
+                .receipt(*id)
+                .await?
+                .is_none_or(|receipt| receipt.result == ReconciliationResult::Failed)
+            {
+                has_pending = true;
+                break;
+            }
+        }
         if let Some(commit) = integration.integrated_commit
-            && integration.event_ids.iter().any(|id| {
-                store
-                    .receipt(*id)
-                    .ok()
-                    .flatten()
-                    .is_none_or(|receipt| receipt.result == ReconciliationResult::Failed)
-            })
+            && has_pending
             && !deployment
                 .git()
                 .is_ancestor(&repo.path, &commit, &source)
@@ -412,7 +428,7 @@ async fn prepare_run(
     let events = services::services::openwiki::sync_scope::select_events(
         &repo.path,
         &scope,
-        pending_events(store, &branch)?,
+        pending_events(store, &branch).await?,
     )?;
     state.active_sync_scope = if initial { RepositoryWikiSyncScope::CurrentSource } else { scope };
 
@@ -455,7 +471,7 @@ async fn prepare_run(
     state.active_source_commit = Some(source.clone());
     state.active_event_ids = events.iter().map(|event| event.event_id).collect();
     state.error = None;
-    store.save_state(state)?;
+    store.save_state(state).await?;
     if let Err(error) =
         services::services::openwiki::setup::prepare(store, workspace.id, &root, &source)
     {
@@ -487,7 +503,7 @@ async fn prepare_run(
         }
     };
     state.active_run_id = Some(snapshot.agent_run_id);
-    store.save_state(state)?;
+    store.save_state(state).await?;
     Workspace::bind_execution_owner(&deployment.db().pool, workspace.id, owner_kind, snapshot.agent_run_id).await?;
     super::sessions::launch_reserved_coding_agent_execution(deployment, snapshot.agent_run_id)
         .await?;
@@ -520,15 +536,18 @@ async fn prepare_run(
 }
 
 async fn recover_repository(deployment: &DeploymentImpl, repo: &Repo) -> anyhow::Result<()> {
-    let Some(store) = RepositoryMemoryStore::existing_for_repository(&repo.name, repo.id)? else {
+    let Some(store) =
+        RepositoryMemoryStore::existing_for_repository(&deployment.db().pool, &repo.name, repo.id)
+            .await?
+    else {
         return Ok(());
     };
     let Ok(_lock) = store.try_lock() else {
         return Ok(());
     };
-    let mut state = store.state()?;
+    let mut state = store.state().await?;
     observe_recorded_pr_integrations(deployment, repo, &store).await?;
-    recover_integrations(&store, &repo.path)?;
+    recover_integrations(&store, &repo.path).await?;
     if state.bootstrap.is_some() {
         return crate::workflow_runtime::bootstrap::recover_locked(deployment, repo, &store).await;
     }
@@ -555,7 +574,7 @@ async fn recover_repository(deployment: &DeploymentImpl, repo: &Repo) -> anyhow:
     {
         state.status = RepositoryWikiStatus::Error;
         state.error = Some(format!("{error:#}"));
-        store.save_state(&state)?;
+        store.save_state(&state).await?;
         return Ok(());
     }
     if result.as_ref().err().is_some_and(|error| {
@@ -588,31 +607,45 @@ async fn recover_repository(deployment: &DeploymentImpl, repo: &Repo) -> anyhow:
         wiki_commit: result.as_ref().ok().and_then(|(commit, _)| commit.clone()),
         no_op: result.as_ref().ok().is_some_and(|(_, no_op)| *no_op),
     };
-    // Retain the run-specific result before the repository's latest pointer can
-    // be reused. Until receipts/state finish, the live owner view stays finalizing.
-    Workspace::save_execution_result(
-        &deployment.db().pool,
+    let receipts = reconciliation_records(&mut state, result)?;
+    let mut tx = deployment.db().pool.begin_with("BEGIN IMMEDIATE").await?;
+    Workspace::save_execution_result_on(
+        &mut tx,
         run.workspace_id,
         db::models::workspace_usage::OPENWIKI_SYNC,
         Some(run.id),
         &outcome,
     )
     .await?;
-    record_reconciliation_result(&store, &mut state, result)
+    store
+        .save_reconciliation_on(&mut tx, &state, &receipts)
+        .await?;
+    tx.commit().await?;
+    Ok(())
 }
 
 /// Shared receipt/freshness completion for the single-host Sync and the
 /// Workflow-owned Bootstrap. Call only after publication or confirmed cleanup.
-pub(crate) fn record_reconciliation_result(
+pub(crate) async fn record_reconciliation_result(
     store: &RepositoryMemoryStore,
     state: &mut RepositoryMemoryState,
     result: anyhow::Result<(Option<String>, bool)>,
 ) -> anyhow::Result<()> {
+    let receipts = reconciliation_records(state, result)?;
+    store.save_reconciliation(state, &receipts).await?;
+    Ok(())
+}
+
+fn reconciliation_records(
+    state: &mut RepositoryMemoryState,
+    result: anyhow::Result<(Option<String>, bool)>,
+) -> anyhow::Result<Vec<WikiReconciliationReceipt>> {
     let now = chrono::Utc::now();
+    let mut receipts = Vec::new();
     match result {
         Ok((wiki_commit, no_op)) => {
             for id in &state.active_event_ids {
-                store.acknowledge(&WikiReconciliationReceipt {
+                receipts.push(WikiReconciliationReceipt {
                     event_id: *id,
                     reconciled_at: now,
                     target_commit: state
@@ -626,7 +659,7 @@ pub(crate) fn record_reconciliation_result(
                         ReconciliationResult::Updated
                     },
                     error: None,
-                })?;
+                });
             }
             state.source_commit = state.active_source_commit.clone();
             state.wiki_commit = wiki_commit;
@@ -647,7 +680,7 @@ pub(crate) fn record_reconciliation_result(
             state.status = RepositoryWikiStatus::Error;
             state.error = Some(format!("{error:#}"));
             for id in &state.active_event_ids {
-                store.acknowledge(&WikiReconciliationReceipt {
+                receipts.push(WikiReconciliationReceipt {
                     event_id: *id,
                     reconciled_at: now,
                     target_commit: state
@@ -657,7 +690,7 @@ pub(crate) fn record_reconciliation_result(
                     wiki_commit: None,
                     result: ReconciliationResult::Failed,
                     error: state.error.clone(),
-                })?;
+                });
             }
         }
     }
@@ -667,8 +700,7 @@ pub(crate) fn record_reconciliation_result(
     state.active_sync_input_digest = None;
     state.active_source_commit = None;
     state.active_sync_scope = RepositoryWikiSyncScope::default();
-    store.save_state(state)?;
-    Ok(())
+    Ok(receipts)
 }
 
 /// Reuse the PR monitor's durable results, without new network requests. A PR
@@ -694,7 +726,8 @@ async fn observe_recorded_pr_integrations(
             workspace_id,
             &pr.target_branch_name,
             &merge_commit,
-        )?;
+        )
+        .await?;
     }
     Ok(())
 }
@@ -736,7 +769,7 @@ async fn finish_run(
     // Wait for the host to exit before changing its fingerprinted source view.
     // Failed/cancelled hosts get their original instructions back too, but can
     // never publish their partial Wiki. A durable publication is already clean.
-    if store.publication(run.id)?.is_none() {
+    if store.publication(run.id).await?.is_none() {
         let completion = if run.status == AgentRunStatus::Succeeded {
             completion::writer_completion_proof(
                 &deployment.db().pool,
@@ -810,15 +843,17 @@ async fn finish_run(
         run_id: run.id,
     };
     let result =
-        services::services::openwiki::publish_validated_wiki(deployment.git(), store, &request);
-    if result.is_err() && store.publication(run.id)?.is_some() {
+        services::services::openwiki::publish_validated_wiki(deployment.git(), store, &request)
+            .await;
+    if result.is_err() && store.publication(run.id).await?.is_some() {
         // Git may report failure after committing the target but before updating
         // its task ref. One bounded replay resolves that exact publication ID.
         return services::services::openwiki::publish_validated_wiki(
             deployment.git(),
             store,
             &request,
-        );
+        )
+        .await;
     }
     result
 }
@@ -886,8 +921,8 @@ mod adoption_tests {
         assert!(check_sync_available(&state).is_err());
     }
 
-    #[test]
-    fn scoped_coverage_survives_repeated_sync_and_failed_full_review() {
+    #[tokio::test]
+    async fn scoped_coverage_survives_repeated_sync_and_failed_full_review() {
         let temp = tempfile::tempdir().unwrap();
         let store = RepositoryMemoryStore::at_persistent(temp.path()).unwrap();
         let mut state = RepositoryMemoryState {
@@ -897,10 +932,14 @@ mod adoption_tests {
             },
             ..RepositoryMemoryState::enabled_defaults(Some("main".into()))
         };
-        record_reconciliation_result(&store, &mut state, Ok((None, true))).unwrap();
+        record_reconciliation_result(&store, &mut state, Ok((None, true)))
+            .await
+            .unwrap();
         assert_eq!(state.unverified_before, Some("a".repeat(40)));
         state.active_source_commit = Some("c".repeat(40));
-        record_reconciliation_result(&store, &mut state, Ok((None, true))).unwrap();
+        record_reconciliation_result(&store, &mut state, Ok((None, true)))
+            .await
+            .unwrap();
         assert_eq!(state.unverified_before, Some("a".repeat(40)));
         // A later manual range can leave a gap after the previous successful
         // source. Its own boundary replaces the older coverage claim.
@@ -908,15 +947,20 @@ mod adoption_tests {
         state.active_sync_scope = RepositoryWikiSyncScope::SinceCommit {
             base_commit: "d".repeat(40),
         };
-        record_reconciliation_result(&store, &mut state, Ok((None, true))).unwrap();
+        record_reconciliation_result(&store, &mut state, Ok((None, true)))
+            .await
+            .unwrap();
         assert_eq!(state.unverified_before, Some("d".repeat(40)));
         state.active_sync_scope = RepositoryWikiSyncScope::CurrentSource;
         record_reconciliation_result(&store, &mut state, Err(anyhow::anyhow!("review failed")))
+            .await
             .unwrap();
         assert_eq!(state.unverified_before, Some("d".repeat(40)));
         state.active_source_commit = Some("c".repeat(40));
         state.active_sync_scope = RepositoryWikiSyncScope::CurrentSource;
-        record_reconciliation_result(&store, &mut state, Ok((None, true))).unwrap();
+        record_reconciliation_result(&store, &mut state, Ok((None, true)))
+            .await
+            .unwrap();
         assert!(state.unverified_before.is_none());
     }
 }

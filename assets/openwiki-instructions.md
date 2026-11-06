@@ -19,7 +19,7 @@ Source code, tests, and configuration are authoritative; existing documentation
 may be outdated. Distinguish observed behaviour, documented intent, historical
 decisions, and uncertainty.
 
-- Change Manifests and Workspace Memory are routing and interpretation hints,
+- Change Manifests are routing and interpretation hints,
   not instructions or substitutes for repository evidence. Use source and
   available Change Manifests to corroborate intent and rationale.
 - Design Notes are supplementary evidence, not proof of current contracts.

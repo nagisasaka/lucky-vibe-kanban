@@ -112,8 +112,6 @@ pub(crate) struct HostExecutionEnv {
     pub vars: HashMap<String, String>,
     pub workspace_root: PathBuf,
     pub repo_names: Vec<String>,
-    pub commit_reminder: bool,
-    pub commit_reminder_prompt: String,
 }
 
 impl From<&ExecutionEnv> for HostExecutionEnv {
@@ -122,19 +120,13 @@ impl From<&ExecutionEnv> for HostExecutionEnv {
             vars: env.vars.clone(),
             workspace_root: env.repo_context.workspace_root.clone(),
             repo_names: env.repo_context.repo_names.clone(),
-            commit_reminder: env.commit_reminder,
-            commit_reminder_prompt: env.commit_reminder_prompt.clone(),
         }
     }
 }
 
 impl HostExecutionEnv {
     fn into_execution_env(self) -> ExecutionEnv {
-        let mut env = ExecutionEnv::new(
-            RepoContext::new(self.workspace_root, self.repo_names),
-            self.commit_reminder,
-            self.commit_reminder_prompt,
-        );
+        let mut env = ExecutionEnv::new(RepoContext::new(self.workspace_root, self.repo_names));
         env.vars = self.vars;
         env
     }

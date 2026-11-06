@@ -127,6 +127,13 @@
           "dialogDescription": "Choisissez un répertoire. Les espaces de travail seront créés dans un sous-répertoire .vibe-kanban-workspaces à l'intérieur."
         }
       },
+      "commits": {
+        "title": "Commits de code",
+        "manifestBody": {
+          "label": "Inclure les intentions du Change Manifest dans les messages de commit",
+          "helper": "Ajoute le but, les changements, les décisions de conception et les résumés de vérification aux commits de code ordinaires créés par LVK. Les messages sont partagés par push/clone Git. Le fichier Manifest reste la référence. Les commits existants, de fusion automatique ou de réparation, Wiki et squash sont exclus. Après le début de la publication, les nouvelles tentatives conservent le message figé."
+        }
+      },
       "pullRequests": {
         "title": "Pull Requests",
         "description": "Configurez le comportement de création des PR",
@@ -137,18 +144,6 @@
         "customPrompt": {
           "useCustom": "Utiliser un prompt personnalisé",
           "helper": "Prompt personnalisé pour l'agent IA lors de la génération des descriptions de PR. Utilisez {pr_number} et {pr_url} comme variables."
-        }
-      },
-      "commits": {
-        "title": "Commits",
-        "description": "Configurez le comportement de commit pour les tentatives de tâches",
-        "reminder": {
-          "label": "Rappel de commit",
-          "helper": "Demander aux agents compatibles de commiter les modifications avant de s'arrêter."
-        },
-        "customPrompt": {
-          "useCustom": "Utiliser un prompt personnalisé",
-          "helper": "Prompt personnalisé pour le rappel de commit. Le statut git sera ajouté automatiquement."
         }
       },
       "notifications": {

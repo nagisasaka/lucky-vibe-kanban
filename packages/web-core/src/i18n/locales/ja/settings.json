@@ -126,6 +126,13 @@
           "dialogDescription": "ディレクトリを選択してください。ワークスペースはその中の .vibe-kanban-workspaces サブディレクトリに作成されます。"
         }
       },
+      "commits": {
+        "title": "ソースコミット",
+        "manifestBody": {
+          "label": "Change Manifestの意味情報をコミット本文に併記",
+          "helper": "LVKが通常Runで作るソースコミットに、目的・変更内容・設計判断と理由・検証要約などを併記します。本文はGitのpush・clone等で共有されます。ファイルManifestが正本です。既存コミット、自動マージ・修復、Wiki、直接squashは対象外です。公開処理を開始した後の再試行では、固定済みの本文を使います。"
+        }
+      },
       "pullRequests": {
         "title": "プルリクエスト",
         "description": "PR作成の動作を設定",
@@ -136,18 +143,6 @@
         "customPrompt": {
           "useCustom": "カスタムプロンプトを使用",
           "helper": "PR説明生成時のAIエージェント用カスタムプロンプト。{pr_number}と{pr_url}をプレースホルダーとして使用できます。"
-        }
-      },
-      "commits": {
-        "title": "コミット",
-        "description": "タスク試行のコミット動作を設定",
-        "reminder": {
-          "label": "コミットリマインダー",
-          "helper": "対応エージェントに停止前の変更コミットを促します。"
-        },
-        "customPrompt": {
-          "useCustom": "カスタムプロンプトを使用",
-          "helper": "コミットリマインダー用のカスタムプロンプト。gitステータスは自動的に追加されます。"
         }
       },
       "notifications": {
@@ -1058,9 +1053,9 @@
     "forbidden": "GitHub認証情報の変更・接続確認には認証管理の権限が必要です。"
   },
   "repositoryMemory": {
-    "title": "OpenWikiのリポジトリメモリ",
-    "description": "自動マージは統合候補内のopenwiki/を更新します。単独の更新と初期生成には明示的な依頼が必要で、専用ワークスペースを使用します。公開や未反映の変更だけで自動的に開始されることはありません。初期生成では、公開前に独立した読み取り専用レビューと、必要に応じた改善を行います。コーディング用ワークスペースはWikiを参照し、それぞれのワークスペースメモリを保持します。",
-    "enabled": "リポジトリメモリを有効化",
+    "title": "OpenWiki",
+    "description": "自動マージは統合候補内のopenwiki/を更新します。単独の更新と初期生成には明示的な依頼が必要で、専用ワークスペースを使用します。公開や未反映の変更だけで自動的に開始されることはありません。初期生成では、公開前に独立した読み取り専用レビューと、必要に応じた改善を行います。正常終了したコーディングRunのソース変更は自動コミットされ、Change Manifestを保存します。OpenWikiが無効でも有効です。",
+    "enabled": "OpenWikiを有効化",
     "targetBranch": "統合先のローカルブランチ",
     "outputLanguage": "出力言語（BCP 47）",
     "scope": "同期の対象範囲",

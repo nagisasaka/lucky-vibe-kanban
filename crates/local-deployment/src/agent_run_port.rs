@@ -96,6 +96,7 @@ pub(crate) struct AgentRunTerminalEvent {
 #[derive(Clone)]
 pub struct LocalAgentRunPort {
     db: DBService,
+    config: Arc<RwLock<services::services::config::Config>>,
     process_registry: AgentProcessRegistry,
     children: Arc<RwLock<HashMap<Uuid, SharedChild>>>,
     launching_attempts: Arc<Mutex<HashSet<Uuid>>>,
@@ -141,8 +142,6 @@ struct AuditedExecutionEnv<'a> {
     vars: &'a HashMap<String, String>,
     workspace_root: &'a Path,
     repo_names: &'a [String],
-    commit_reminder: bool,
-    commit_reminder_prompt: &'a str,
 }
 
 impl FrozenDirectProviderLaunchSpec {
@@ -209,8 +208,6 @@ impl FrozenDirectProviderLaunchSpec {
                 vars: &self.env.vars,
                 workspace_root: &self.env.repo_context.workspace_root,
                 repo_names: &self.env.repo_context.repo_names,
-                commit_reminder: self.env.commit_reminder,
-                commit_reminder_prompt: &self.env.commit_reminder_prompt,
             },
         })
     }
@@ -231,10 +228,22 @@ fn direct_intent(intent: AgentRunIntent, mode: RunAttemptMode) -> DirectIntent {
 }
 
 impl LocalAgentRunPort {
-    pub(crate) fn new(db: DBService) -> Self {
+    #[cfg(test)]
+    fn new(db: DBService) -> Self {
+        Self::with_config(
+            db,
+            Arc::new(RwLock::new(services::services::config::Config::default())),
+        )
+    }
+
+    pub(crate) fn with_config(
+        db: DBService,
+        config: Arc<RwLock<services::services::config::Config>>,
+    ) -> Self {
         let (terminal_event_sender, _) = broadcast::channel(TERMINAL_EVENT_CHANNEL_CAPACITY);
         Self {
             db,
+            config,
             process_registry: AgentProcessRegistry::default(),
             children: Arc::new(RwLock::new(HashMap::new())),
             launching_attempts: Arc::new(Mutex::new(HashSet::new())),
@@ -877,17 +886,22 @@ impl LocalAgentRunPort {
                     .map_err(|error| AgentRunPortError::Rejected(error.to_string()))?,
             );
             if !workspace.is_execution_only() {
-                workspace_manager::shared_resources::ensure_repository_memory(repo)
+                workspace_manager::shared_resources::ensure_repository_memory(&self.db.pool, repo)
+                    .await
                     .map_err(|error| AgentRunPortError::Rejected(error.to_string()))?;
             }
             if let Some(store) =
-                utils::repository_memory::RepositoryMemoryStore::existing_for_repository(
-                    &repo.name, repo.id,
+                db::models::repository_state::RepositoryMemoryStore::existing_for_repository(
+                    &self.db.pool,
+                    &repo.name,
+                    repo.id,
                 )
+                .await
                 .map_err(|error| AgentRunPortError::Rejected(error.to_string()))?
             {
                 let state = store
                     .state()
+                    .await
                     .map_err(|error| AgentRunPortError::Rejected(error.to_string()))?;
                 if workspace.is_execution_only()
                     && state.maintenance_workspace_id == Some(workspace.id)
@@ -925,8 +939,7 @@ impl LocalAgentRunPort {
                             })?;
                         openwiki_maintenance = true;
                     }
-                } else if state.enabled
-                    && source_completion_allowed
+                } else if source_completion_allowed
                     && !crate::container::should_disable_default_commit_for_workspace(
                         &self.db.pool,
                         workspace.id,
@@ -939,6 +952,7 @@ impl LocalAgentRunPort {
                         &store,
                         workspace.id,
                         Some(request.agent_run_id),
+                        self.config.read().await.manifest_in_commit_body,
                     )
                     .await
                     .map_err(|error| {
@@ -967,6 +981,7 @@ impl LocalAgentRunPort {
                 && let Some(membership) = membership
             {
                 let context = services::services::repository_memory::begin_coding_run(
+                    &self.db.pool,
                     repo,
                     workspace,
                     request.agent_run_id,
@@ -974,6 +989,7 @@ impl LocalAgentRunPort {
                     &membership.target_branch,
                     source_completion_allowed,
                 )
+                .await
                 .map_err(|error| {
                     AgentRunPortError::Rejected(format!("Repository memory: {error:#}"))
                 })?;
@@ -983,11 +999,10 @@ impl LocalAgentRunPort {
             }
         }
         let repo_names = repos.into_iter().map(|repo| repo.name).collect();
-        let mut env = ExecutionEnv::new(
-            RepoContext::new(PathBuf::from(&request.workspace.path), repo_names),
-            false,
-            String::new(),
-        );
+        let mut env = ExecutionEnv::new(RepoContext::new(
+            PathBuf::from(&request.workspace.path),
+            repo_names,
+        ));
         env.insert("VK_WORKSPACE_ID", workspace.id.to_string());
         env.insert("VK_WORKSPACE_BRANCH", &workspace.branch);
         env.insert("VK_AGENT_RUN_ID", request.agent_run_id.to_string());
@@ -4207,14 +4222,10 @@ mod tests {
     }
 
     fn test_execution_env(workspace_path: &str) -> ExecutionEnv {
-        let mut env = ExecutionEnv::new(
-            RepoContext::new(
-                PathBuf::from(workspace_path),
-                vec!["repository".to_string()],
-            ),
-            false,
-            String::new(),
-        );
+        let mut env = ExecutionEnv::new(RepoContext::new(
+            PathBuf::from(workspace_path),
+            vec!["repository".to_string()],
+        ));
         env.insert("VK_AGENT_RUN_ID", "frozen-run");
         env
     }

@@ -20,12 +20,16 @@ pub fn ensure(repo_root: &Path, repo_name: &str, repo_id: Uuid) -> io::Result<()
     )
 }
 
-/// Registration and the first coding run opt new repositories into memory.
-/// This provisions storage only; paid Wiki maintenance still starts explicitly.
-pub fn ensure_repository_memory(repo: &db::models::repo::Repo) -> io::Result<()> {
-    if utils::repository_memory::RepositoryMemoryStore::existing_for_repository(
-        &repo.name, repo.id,
-    )?
+/// Provision source publication/Change Manifest storage for registered repositories.
+/// Source completion is unconditional; paid Wiki maintenance starts explicitly.
+pub async fn ensure_repository_memory(
+    pool: &sqlx::SqlitePool,
+    repo: &db::models::repo::Repo,
+) -> io::Result<()> {
+    if db::models::repository_state::RepositoryMemoryStore::existing_for_repository(
+        pool, &repo.name, repo.id,
+    )
+    .await?
     .is_some()
     {
         return Ok(());
@@ -38,8 +42,9 @@ pub fn ensure_repository_memory(repo: &db::models::repo::Repo) -> io::Result<()>
             .map_err(|_| io::Error::other("shared resource lock poisoned"))?;
         ensure_storage(&utils::path::shared_resources_dir(&repo.name, repo.id))?;
     }
-    utils::repository_memory::RepositoryMemoryStore::for_repository(&repo.name, repo.id)?
+    db::models::repository_state::RepositoryMemoryStore::for_repository(pool, &repo.name, repo.id)?
         .initialize_defaults(default_memory_target_branch(repo))
+        .await
 }
 
 pub fn default_memory_target_branch(repo: &db::models::repo::Repo) -> Option<String> {

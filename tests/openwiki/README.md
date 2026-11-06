@@ -32,7 +32,8 @@ Remaining admission and recovery boundaries:
   before publication. `record_wiki_result` records only that candidate's source
   event receipts. No separate maintenance workspace is admitted by publication.
 
-PR observation, semantic integration recovery, event selection, frozen inputs and
-Workspace Memory remain available for explicit maintenance and existing owners.
-They do not grant admission. Repository-memory enablement still governs memory
-and enabled candidate maintenance; it is not an event auto-sync setting.
+PR observation, semantic integration recovery, event selection and frozen inputs
+remain available for explicit maintenance and existing owners. They do not grant
+admission. OpenWiki enablement governs Wiki maintenance, not source auto-commit
+or Change Manifest publication for normal successful coding Runs. It is not an
+event auto-sync setting.

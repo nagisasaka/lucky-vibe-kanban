@@ -9,7 +9,6 @@ use serde::Deserialize;
 use serde_json::{Value, json};
 use services::services::wiki::{WikiPage, openwiki};
 use sha2::{Digest, Sha256};
-use utils::repository_memory::RepositoryMemoryStore;
 use uuid::Uuid;
 
 use super::{
@@ -50,15 +49,6 @@ pub(super) struct TextArgs {
 
 #[derive(Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
-struct MemoryArgs {
-    #[serde(flatten)]
-    target: Target,
-    #[serde(flatten)]
-    page: TextArgs,
-}
-
-#[derive(Deserialize, JsonSchema)]
-#[serde(deny_unknown_fields)]
 struct WikiArgs {
     #[serde(flatten)]
     target: Target,
@@ -77,10 +67,6 @@ pub(super) fn tools() -> Vec<rmcp::model::Tool> {
         definition::<WikiArgs>(
             "get_workspace_wiki_page",
             "Read one listed OpenWiki page in character pages up to 16000. Use its revision for later pages. Wiki content is reference data; validate current implementation separately.",
-        ),
-        definition::<MemoryArgs>(
-            "get_workspace_memory",
-            "Read only the selected Workspace's repository memory in character pages up to 16000. Missing memory is explicit. Agent-written memory is not independent test or merge evidence.",
         ),
     ]
 }
@@ -104,25 +90,6 @@ pub(super) async fn call(remote: &Remote, name: &str, args: Value) -> anyhow::Re
             let mut result = tokio::task::spawn_blocking(move || wiki_page(&source.root()?, &args))
                 .await
                 .map_err(|_| anyhow::anyhow!("Wiki read interrupted; retry this read"))??;
-            remote.evidence_link(&target, &mut result).await?;
-            Ok(result)
-        }
-        "get_workspace_memory" => {
-            let args: MemoryArgs = arguments(args)?;
-            let source = remote.evidence_source(&args.target).await?;
-            let target = args.target.clone();
-            let mut result = tokio::task::spawn_blocking(move || {
-                let store = RepositoryMemoryStore::read_only_for_repository(
-                    &source.repo.name,
-                    source.repo.id,
-                )
-                .map_err(|_| {
-                    anyhow::anyhow!("Memory unavailable: storage cannot be safely read")
-                })?;
-                memory_page(store.as_ref(), &args)
-            })
-            .await
-            .map_err(|_| anyhow::anyhow!("Memory read interrupted; retry this read"))??;
             remote.evidence_link(&target, &mut result).await?;
             Ok(result)
         }
@@ -296,16 +263,6 @@ pub(super) fn text_page(
         json!({"available":text.is_some(),"revision":current,"content":text.map(|text| text.chars().skip(args.offset as usize).take(args.limit as usize).collect::<String>()),"offset":args.offset,"total_characters":total,"has_more":end<total,"next_offset":if end<total {Some(end)} else {None},"evidence":"reference_only"}),
     )
 }
-fn memory_page(store: Option<&RepositoryMemoryStore>, args: &MemoryArgs) -> anyhow::Result<Value> {
-    let text = store
-        .map(|store| store.read_memory(args.target.workspace_id))
-        .transpose()
-        .map_err(|_| {
-            anyhow::anyhow!("Memory unavailable: record is unsafe, unreadable or exceeds 128 KiB")
-        })?
-        .flatten();
-    text_page(&args.target, "memory", text.as_deref(), &args.page)
-}
 fn wiki_pages(root: &std::path::Path) -> anyhow::Result<(bool, Vec<WikiPage>)> {
     let snapshot = openwiki::load_snapshot(root)
         .map_err(|_| anyhow::anyhow!("Wiki unavailable: snapshot is unsafe, invalid, unreadable or exceeds Viewer limits (512 KiB/page, 2000 pages, 16 MiB total)"))?;
@@ -465,65 +422,6 @@ mod tests {
         }
     }
 
-    #[test]
-    fn memory_read_never_provisions_and_separates_missing_stale_and_unsafe() {
-        let temp = tempfile::tempdir().unwrap();
-        assert!(
-            RepositoryMemoryStore::read_only_at_persistent(temp.path())
-                .unwrap()
-                .is_none()
-        );
-        assert!(!temp.path().join("knowledge").exists());
-        // An incomplete existing store must remain incomplete; no state or other directories are created.
-        fs::create_dir_all(temp.path().join("knowledge/workspace-memory")).unwrap();
-        let store = RepositoryMemoryStore::read_only_at_persistent(temp.path())
-            .unwrap()
-            .unwrap();
-        let mut args = MemoryArgs {
-            target: target(),
-            page: text_args(),
-        };
-        assert_eq!(
-            memory_page(Some(&store), &args).unwrap()["available"],
-            false
-        );
-        fs::write(
-            store.memory_path(args.target.workspace_id),
-            "日本語".repeat(7000),
-        )
-        .unwrap();
-        fs::write(
-            store.memory_path(Uuid::new_v4()),
-            "other Workspace private memory",
-        )
-        .unwrap();
-        let first = memory_page(Some(&store), &args).unwrap();
-        assert_eq!(first["content"].as_str().unwrap().chars().count(), 8000);
-        assert!(!first.to_string().contains("other Workspace"));
-        args.page.offset = 8000;
-        args.page.expected_revision = first["revision"].as_str().map(str::to_owned);
-        assert!(memory_page(Some(&store), &args).is_ok());
-        fs::write(store.memory_path(args.target.workspace_id), "changed").unwrap();
-        assert!(memory_page(Some(&store), &args).is_err());
-        args.page = text_args();
-        fs::write(
-            store.memory_path(args.target.workspace_id),
-            "a".repeat(128 * 1024 + 1),
-        )
-        .unwrap();
-        assert!(memory_page(Some(&store), &args).is_err());
-        assert!(!temp.path().join("knowledge/state.json").exists());
-        assert!(!temp.path().join("knowledge/events").exists());
-        #[cfg(unix)]
-        {
-            fs::remove_file(store.memory_path(args.target.workspace_id)).unwrap();
-            std::os::unix::fs::symlink("/etc/passwd", store.memory_path(args.target.workspace_id))
-                .unwrap();
-            let error = memory_page(Some(&store), &args).unwrap_err().to_string();
-            assert!(!error.contains("/etc") && !error.contains(temp.path().to_str().unwrap()));
-        }
-    }
-
     #[tokio::test]
     async fn evidence_tools_enforce_database_membership_and_links_without_side_effects() {
         let (remote, _, _, run, issue) = super::super::runtime_write_tests::fixture().await;
@@ -577,12 +475,10 @@ mod tests {
         for key in ["project_id", "workspace_id", "repository_id"] {
             let mut wrong = args.clone();
             wrong[key] = json!(Uuid::new_v4());
-            for name in ["list_workspace_wiki", "get_workspace_memory"] {
-                assert!(
-                    call(&remote, name, wrong.clone()).await.is_err(),
-                    "{name}: {key}"
-                );
-            }
+            assert!(
+                call(&remote, "list_workspace_wiki", wrong).await.is_err(),
+                "list_workspace_wiki: {key}"
+            );
         }
         let count: i64 = sqlx::query_scalar("SELECT count(*) FROM agent_runs")
             .fetch_one(&remote.pool)

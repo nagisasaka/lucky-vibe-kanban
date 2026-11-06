@@ -60,7 +60,6 @@ test("real approval UI and backend wait, accept, deny, cancel, and preserve full
       onboarding_acknowledged: true,
       analytics_enabled: false,
       show_release_notes: false,
-      commit_reminder_enabled: false,
     },
     "PUT",
   );

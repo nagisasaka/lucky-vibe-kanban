@@ -787,11 +787,7 @@ async fn get_agent_profile_policy(
             Some(path) => path,
             None => std::env::current_dir()?,
         };
-        let env = executors::env::ExecutionEnv::new(
-            executors::env::RepoContext::default(),
-            false,
-            String::new(),
-        );
+        let env = executors::env::ExecutionEnv::new(executors::env::RepoContext::default());
         policy.require_authentication(claude.check_subscription_login(&current_dir, &env).await);
     }
     Ok(ResponseJson(ApiResponse::success(policy)))

@@ -159,7 +159,7 @@ impl ClaudeCode {
                 .stdout(std::process::Stdio::piped())
                 .stderr(std::process::Stdio::null())
                 .kill_on_drop(true);
-            ExecutionEnv::new(RepoContext::default(), false, String::new())
+            ExecutionEnv::new(RepoContext::default())
                 .with_profile(&self.cmd)
                 .apply_to_command(&mut command);
             command

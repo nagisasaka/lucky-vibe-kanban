@@ -68,7 +68,6 @@ test("subscription preflight, real runtime lifecycle and browser output", async 
       language: "EN",
       analytics_enabled: false,
       show_release_notes: false,
-      commit_reminder_enabled: false,
       showcases: { seen_features: ["workspaces-guide"] },
     },
     "PUT",

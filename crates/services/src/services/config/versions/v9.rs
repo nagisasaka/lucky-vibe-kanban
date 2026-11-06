@@ -17,10 +17,6 @@ fn default_pr_auto_description_enabled() -> bool {
     true
 }
 
-fn default_commit_reminder_enabled() -> bool {
-    false
-}
-
 fn default_hidden_agents() -> Vec<BaseCodingAgent> {
     vec![
         #[cfg(feature = "qa-mode")]
@@ -57,10 +53,9 @@ pub struct Config {
     pub pr_auto_description_enabled: bool,
     #[serde(default)]
     pub pr_auto_description_prompt: Option<String>,
-    #[serde(default = "default_commit_reminder_enabled")]
-    pub commit_reminder_enabled: bool,
+    /// Include semantic intent in normal LVK-created source commits (shared through Git).
     #[serde(default)]
-    pub commit_reminder_prompt: Option<String>,
+    pub manifest_in_commit_body: bool,
     #[serde(default)]
     pub send_message_shortcut: SendMessageShortcut,
     #[serde(default = "default_hidden_agents")]
@@ -110,8 +105,7 @@ impl Config {
             showcases: old_config.showcases,
             pr_auto_description_enabled: old_config.pr_auto_description_enabled,
             pr_auto_description_prompt: old_config.pr_auto_description_prompt,
-            commit_reminder_enabled: false,
-            commit_reminder_prompt: old_config.commit_reminder_prompt,
+            manifest_in_commit_body: false,
             send_message_shortcut: old_config.send_message_shortcut,
             // Provider visibility is rebuilt from the V1 registry; removed
             // provider entries are intentionally not carried across config
@@ -169,8 +163,7 @@ impl Default for Config {
             showcases: ShowcaseState::default(),
             pr_auto_description_enabled: true,
             pr_auto_description_prompt: None,
-            commit_reminder_enabled: false,
-            commit_reminder_prompt: None,
+            manifest_in_commit_body: false,
             send_message_shortcut: SendMessageShortcut::default(),
             hidden_agents: default_hidden_agents(),
             integration_skip_validation: false,
@@ -267,6 +260,25 @@ mod tests {
     }
 
     #[test]
+    fn manifest_body_setting_defaults_off_and_survives_config_round_trip() {
+        assert!(!Config::default().manifest_in_commit_body);
+        let mut old = serde_json::to_value(Config::default()).unwrap();
+        old.as_object_mut()
+            .unwrap()
+            .remove("manifest_in_commit_body");
+        assert!(!Config::from(old.to_string()).manifest_in_commit_body);
+        let enabled = Config {
+            manifest_in_commit_body: true,
+            ..Default::default()
+        };
+        assert!(Config::from(serde_json::to_string(&enabled).unwrap()).manifest_in_commit_body);
+        assert!(
+            !Config::from(serde_json::to_string(&v8::Config::default()).unwrap())
+                .manifest_in_commit_body
+        );
+    }
+
+    #[test]
     fn retired_cloud_fields_do_not_reset_local_settings() {
         let mut value = serde_json::to_value(Config::default()).unwrap();
         value["relay_enabled"] = serde_json::json!(true);
@@ -274,44 +286,26 @@ mod tests {
         value["remote_onboarding_acknowledged"] = serde_json::json!(true);
         value["git_branch_prefix"] = serde_json::json!("retained");
         value["commit_reminder_enabled"] = serde_json::json!(true);
+        value["commit_reminder_prompt"] = serde_json::json!("old reminder");
         let config: Config = serde_json::from_value(value).unwrap();
         assert_eq!(config.git_branch_prefix, "retained");
-        assert!(config.commit_reminder_enabled);
         let saved = serde_json::to_value(config).unwrap();
+        assert!(saved.get("commit_reminder_enabled").is_none());
+        assert!(saved.get("commit_reminder_prompt").is_none());
         assert!(saved.get("relay_enabled").is_none());
         assert!(saved.get("host_nickname").is_none());
-    }
-
-    #[test]
-    fn default_config_disables_commit_reminder() {
-        assert!(!Config::default().commit_reminder_enabled);
-    }
-
-    #[test]
-    fn v8_migration_disables_commit_reminder() {
-        let old_config = v8::Config {
-            commit_reminder_enabled: true,
-            ..Default::default()
-        };
-        let raw_config = serde_json::to_string(&old_config).unwrap();
-
-        let config = Config::from(raw_config);
-
-        assert_eq!(config.config_version, "v9");
-        assert!(!config.commit_reminder_enabled);
-    }
-
-    #[test]
-    fn v9_round_trip_preserves_explicit_enable() {
-        let config = Config {
-            commit_reminder_enabled: true,
-            ..Default::default()
-        };
-        let raw_config = serde_json::to_string(&config).unwrap();
-
-        let config = Config::from(raw_config);
-
-        assert!(config.commit_reminder_enabled);
+        let mut old = serde_json::to_value(v8::Config::default()).unwrap();
+        old["git_branch_prefix"] = serde_json::json!("retained-v8");
+        old["commit_reminder_enabled"] = serde_json::json!(true);
+        old["commit_reminder_prompt"] = serde_json::json!("old reminder");
+        let migrated = Config::from(old.to_string());
+        assert_eq!(migrated.git_branch_prefix, "retained-v8");
+        assert!(
+            serde_json::to_value(migrated)
+                .unwrap()
+                .get("commit_reminder_enabled")
+                .is_none()
+        );
     }
 
     #[test]

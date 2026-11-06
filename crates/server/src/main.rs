@@ -46,6 +46,43 @@ async fn main() -> Result<(), VibeKanbanError> {
         println!("{}", server::runtime_payload::inspect()?);
         return Ok(());
     }
+    // One-time development import, explicitly invoked while the old server is stopped.
+    // No listeners, workers or automatic migration audit are started here.
+    if std::env::args().nth(1).as_deref() == Some("migrate-repository-state") {
+        use anyhow::Context;
+        let id: uuid::Uuid = std::env::args().nth(2)
+            .context("usage: server migrate-repository-state <repository UUID> (offline; back up DB and persistent first)")?
+            .parse().context("Invalid repository UUID")?;
+        if std::env::args().count() != 3 {
+            return Err(anyhow::anyhow!("Unexpected migration arguments").into());
+        }
+        if !utils::assets::asset_dir_path()?
+            .join("db.v2.sqlite")
+            .is_file()
+        {
+            return Err(anyhow::anyhow!(
+                "Existing instance DB is missing; check LVK_INSTANCE_DIR before migration"
+            )
+            .into());
+        }
+        let database = db::DBService::new().await?;
+        let repo = db::models::repo::Repo::find_by_id(&database.pool, id)
+            .await?
+            .context("Selected Repo is not registered")?;
+        let persistent = utils::path::shared_resources_dir(&repo.name, id).join("persistent");
+        let result = db::models::repository_state::import_legacy_operations(&database.pool, id, &persistent).await
+            .context("Operational import failed; old files are preserved. Fix the reported cause and rerun this command. Before reverting to the old binary, restore the pre-command DB backup as schema migrations may already have applied")?;
+        match result {
+            Some([integrations, publications, receipts]) => println!(
+                "Imported {integrations} integration mappings, {publications} Wiki publications, {receipts} receipts and Wiki state. DB is authoritative; old files were retained."
+            ),
+            None => println!(
+                "Already imported; DB state was preserved and legacy files were not reread."
+            ),
+        }
+        database.pool.close().await;
+        return Ok(());
+    }
     // Install rustls crypto provider before any TLS operations
     rustls::crypto::aws_lc_rs::default_provider()
         .install_default()

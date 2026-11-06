@@ -223,18 +223,19 @@ pub async fn merge_workspace(
     let vk_id = resolve_vibe_kanban_identifier(&deployment, workspace.id).await;
     let commit_message = format!("{} (vibe-kanban {})", workspace_label, vk_id);
 
-    let memory = utils::repository_memory::RepositoryMemoryStore::existing_for_repository(
-        &repo.name, repo.id,
-    )?;
+    let memory = db::models::repository_state::RepositoryMemoryStore::existing_for_repository(
+        &deployment.db().pool,
+        &repo.name,
+        repo.id,
+    )
+    .await?;
     let _integration_lock = memory
         .as_ref()
         .map(|store| store.try_integration_lock())
         .transpose()?;
     let mut memory_integration = None;
     let mut semantic_message = None;
-    if let Some(store) = &memory
-        && store.state()?.enabled
-    {
+    if let Some(store) = &memory {
         semantic_message = services::services::repository_memory::prepare_workspace_source(
             pool,
             deployment.git(),
@@ -242,6 +243,7 @@ pub async fn merge_workspace(
             &workspace,
             &worktree_path,
             &workspace_repo.target_branch,
+            deployment.config().read().await.manifest_in_commit_body,
         )
         .await
         .map_err(|error| ApiError::BadRequest(error.to_string()))?;
@@ -254,6 +256,7 @@ pub async fn merge_workspace(
                     .git()
                     .get_branch_oid(&repo.path, &workspace_repo.target_branch)?,
             )
+            .await
             .map_err(|error| ApiError::BadRequest(error.to_string()))?,
         );
     }
@@ -274,7 +277,7 @@ pub async fn merge_workspace(
         Err(error) => {
             if let (Some(store), Some(integration)) = (&memory, &mut memory_integration) {
                 integration.source_error = Some(error.to_string());
-                store.save_integration(integration)?;
+                store.save_integration(integration).await?;
             }
             return Err(error.into());
         }
@@ -282,7 +285,7 @@ pub async fn merge_workspace(
 
     if let (Some(store), Some(integration)) = (&memory, &mut memory_integration) {
         integration.integrated_commit = Some(merge_commit_id.clone());
-        store.save_integration(integration)?;
+        store.save_integration(integration).await?;
     }
 
     Merge::create_direct(
@@ -336,6 +339,7 @@ pub async fn push_workspace_branch(
         &workspace,
         &worktree_path,
         &workspace_repo.target_branch,
+        deployment.config().read().await.manifest_in_commit_body,
     )
     .await
     .map_err(|error| ApiError::BadRequest(error.to_string()))?;
@@ -382,6 +386,7 @@ pub async fn force_push_workspace_branch(
         &workspace,
         &worktree_path,
         &workspace_repo.target_branch,
+        deployment.config().read().await.manifest_in_commit_body,
     )
     .await
     .map_err(|error| ApiError::BadRequest(error.to_string()))?;

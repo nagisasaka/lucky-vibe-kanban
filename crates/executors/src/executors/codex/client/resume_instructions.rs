@@ -8,7 +8,7 @@ use tokio::io::AsyncReadExt;
 
 #[cfg(unix)]
 const MAX_ROLLOUT_BYTES: u64 = 16 * 1024 * 1024;
-const MEMORY_IDENTITY: &str = "LVK repository memory (CURRENT host identity JSON): ";
+const MANIFEST_IDENTITY: &str = "LVK Change Manifest (CURRENT host identity JSON): ";
 const PARALLEL_IDENTITY: &str =
     "LVK parallel context v1 (CURRENT identity and read-only discovery): ";
 
@@ -21,7 +21,7 @@ fn split(instructions: &str) -> Option<(String, String)> {
     let mut memory = false;
     for line in instructions.split_inclusive('\n') {
         let text = line.trim_end_matches('\n');
-        if let Some((prefix, json)) = [MEMORY_IDENTITY, PARALLEL_IDENTITY]
+        if let Some((prefix, json)) = [MANIFEST_IDENTITY, PARALLEL_IDENTITY]
             .into_iter()
             .find_map(|prefix| text.strip_prefix(prefix).map(|json| (prefix, json)))
         {
@@ -29,7 +29,7 @@ fn split(instructions: &str) -> Option<(String, String)> {
             if !identity.is_object() {
                 return None;
             }
-            if prefix == MEMORY_IDENTITY {
+            if prefix == MANIFEST_IDENTITY {
                 if !identity["run_id"].is_string() || !identity["draft_path"].is_string() {
                     return None;
                 }
@@ -303,7 +303,7 @@ mod tests {
 
     fn instructions(run: &str, policy: &str) -> String {
         format!(
-            "{MEMORY_IDENTITY}{{\"run_id\":\"{run}\",\"draft_path\":\"drafts/{run}.json\"}}\n{policy}"
+            "{MANIFEST_IDENTITY}{{\"run_id\":\"{run}\",\"draft_path\":\"drafts/{run}.json\"}}\n{policy}"
         )
     }
 

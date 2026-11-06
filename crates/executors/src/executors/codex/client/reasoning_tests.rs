@@ -84,9 +84,6 @@ async fn resolved_reasoning_survives_start_resume_and_mode_selection() {
                         mode,
                         None,
                         explicit.clone(),
-                        Default::default(),
-                        false,
-                        String::new(),
                         cancel.clone(),
                     );
                     let mut child = tokio::process::Command::new(std::env::current_exe().unwrap())
@@ -203,9 +200,6 @@ fn resolved_default_replaces_stale_explicit_effort() {
         ExecutionMode::Code,
         None,
         Some(ProtocolReasoningEffort::XHigh),
-        Default::default(),
-        false,
-        String::new(),
         CancellationToken::new(),
     );
     client.adopt_thread_settings("gpt-6-astra".into(), None);

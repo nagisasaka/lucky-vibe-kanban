@@ -7,13 +7,15 @@ use std::{
 };
 
 use axum::{Extension, Json, extract::State};
-use db::models::{workspace::Workspace, workspace_repo::WorkspaceRepo};
+use db::models::{
+    repository_state::RepositoryMemoryStore, workspace::Workspace, workspace_repo::WorkspaceRepo,
+};
 use deployment::Deployment;
 use serde::{Deserialize, Serialize};
 use services::services::container::ContainerService;
 use sqlx::{SqliteConnection, SqlitePool};
 use tokio::sync::Mutex;
-use utils::{repository_memory::RepositoryMemoryStore, response::ApiResponse};
+use utils::response::ApiResponse;
 use uuid::Uuid;
 use workspace_manager::WorkspaceManager;
 
@@ -54,19 +56,6 @@ pub struct ArchiveResult {
 // admission barrier. Persisted unfinished host work also counts as busy after
 // its AgentRun ends; usage alone never determines whether work is active.
 pub(crate) async fn check_idle(conn: &mut SqliteConnection, id: Uuid) -> Result<(), ApiError> {
-    check_idle_with_memory(
-        conn,
-        id,
-        RepositoryMemoryStore::read_only_configured_for_repository,
-    )
-    .await
-}
-
-async fn check_idle_with_memory(
-    conn: &mut SqliteConnection,
-    id: Uuid,
-    memory: impl FnOnce(&str, Uuid) -> std::io::Result<Option<RepositoryMemoryStore>>,
-) -> Result<(), ApiError> {
     if crate::routes::openwiki::preparation::is_active(id) {
         return Err(ApiError::Conflict(
             "使用中のWorkspaceはarchiveできません。".into(),
@@ -97,10 +86,23 @@ async fn check_idle_with_memory(
             .bind(repo_id)
             .fetch_optional(&mut *conn)
             .await?
-        && let Some(store) = memory(&name, repo_id)?
     {
-        let state = store.state()?;
-        if state.maintenance_workspace_id == Some(id)
+        let state = RepositoryMemoryStore::state_on(conn, repo_id).await?;
+        if state.is_none() {
+            let persistent = utils::path::shared_resources_dir(&name, repo_id).join("persistent");
+            if let Some(files) =
+                utils::repository_memory::RepositoryMemoryStore::read_only_at_persistent(
+                    &persistent,
+                )?
+                && files.has_legacy_operational_state()?
+            {
+                return Err(ApiError::Io(std::io::Error::other(
+                    "Legacy operational state requires one-time migration before archive",
+                )));
+            }
+        }
+        if let Some(state) = state
+            && state.maintenance_workspace_id == Some(id)
             && (state.active_run_id.is_some() || state.bootstrap.is_some())
         {
             return Err(ApiError::Conflict(
@@ -656,7 +658,12 @@ pub(crate) mod tests {
             let (root, pool, ws, repo, _session) = fixture().await;
             let persistent = root.path().join("isolated-memory");
             std::fs::create_dir(&persistent).unwrap();
-            let store = RepositoryMemoryStore::at_persistent(&persistent).unwrap();
+            let store = RepositoryMemoryStore::with_artifacts(
+                &pool,
+                repo.id,
+                utils::repository_memory::RepositoryMemoryStore::at_persistent(&persistent)
+                    .unwrap(),
+            );
             let owner = db::models::workspace_usage::WorkspaceExecutionOwner::new(
                 kind,
                 repo.id,
@@ -671,19 +678,8 @@ pub(crate) mod tests {
             .await
             .unwrap();
             let mut state = RepositoryMemoryState::default();
-            let save = |state: &RepositoryMemoryState| {
-                let _lock = store.try_lock().unwrap();
-                store.save_state(state).unwrap();
-            };
-            // Inject only the read-only store location. The real DB+memory idle
-            // predicate is shared by prepare and the final deletion transaction.
-            let resolve = |name: &str, id: Uuid| {
-                assert_eq!(name, repo.name);
-                assert_eq!(id, repo.id);
-                RepositoryMemoryStore::read_only_at_persistent(&persistent)
-            };
-            save(&state);
-            check_idle_with_memory(&mut pool.acquire().await.unwrap(), ws.id, resolve)
+            store.save_state(&state).await.unwrap();
+            check_idle(&mut pool.acquire().await.unwrap(), ws.id)
                 .await
                 .unwrap();
             state.maintenance_workspace_id = Some(ws.id);
@@ -698,16 +694,16 @@ pub(crate) mod tests {
                     review_fingerprint: None,
                 });
             }
-            save(&state);
+            store.save_state(&state).await.unwrap();
             // No live Agent/process exists. Host finalization alone must reject
             // both a fresh prepare and a recheck after an earlier idle result.
             assert!(matches!(
-                check_idle_with_memory(&mut pool.acquire().await.unwrap(), ws.id, resolve).await,
+                check_idle(&mut pool.acquire().await.unwrap(), ws.id).await,
                 Err(ApiError::Conflict(_))
             ));
             let mut tx = pool.begin_with("BEGIN IMMEDIATE").await.unwrap();
             assert!(matches!(
-                check_idle_with_memory(&mut tx, ws.id, resolve).await,
+                check_idle(&mut tx, ws.id).await,
                 Err(ApiError::Conflict(_))
             ));
             tx.rollback().await.unwrap();
@@ -721,22 +717,28 @@ pub(crate) mod tests {
             assert!(Path::new(ws.container_ref.as_ref().unwrap()).exists());
             // An unrelated maintenance workspace does not block this one.
             state.maintenance_workspace_id = Some(Uuid::new_v4());
-            save(&state);
-            check_idle_with_memory(&mut pool.acquire().await.unwrap(), ws.id, resolve)
+            store.save_state(&state).await.unwrap();
+            check_idle(&mut pool.acquire().await.unwrap(), ws.id)
                 .await
                 .unwrap();
             // Historical attribution and execution-only usage are not busy.
             state.maintenance_workspace_id = Some(ws.id);
             state.active_run_id = None;
             state.bootstrap = None;
-            save(&state);
-            check_idle_with_memory(&mut pool.acquire().await.unwrap(), ws.id, resolve)
+            store.save_state(&state).await.unwrap();
+            check_idle(&mut pool.acquire().await.unwrap(), ws.id)
                 .await
                 .unwrap();
             // A damaged known ownership record cannot authorize deletion.
-            std::fs::write(persistent.join("knowledge/state.json"), "invalid").unwrap();
+            sqlx::query(
+                "UPDATE repository_wiki_state SET payload='\"invalid\"' WHERE repository_id=?",
+            )
+            .bind(repo.id)
+            .execute(&pool)
+            .await
+            .unwrap();
             assert!(matches!(
-                check_idle_with_memory(&mut pool.acquire().await.unwrap(), ws.id, resolve).await,
+                check_idle(&mut pool.acquire().await.unwrap(), ws.id).await,
                 Err(ApiError::Io(_))
             ));
         }

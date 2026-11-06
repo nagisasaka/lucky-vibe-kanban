@@ -78,7 +78,7 @@ impl RepoService {
         let display_name = display_name.unwrap_or(&name);
 
         let repo = RepoModel::find_or_create(pool, &normalized_path, display_name).await?;
-        workspace_manager::shared_resources::ensure_repository_memory(&repo)?;
+        workspace_manager::shared_resources::ensure_repository_memory(pool, &repo).await?;
         Ok(repo)
     }
 
@@ -129,7 +129,7 @@ impl RepoService {
         git.initialize_repo_with_main_branch(&repo_path)?;
 
         let repo = RepoModel::find_or_create(pool, &repo_path, folder_name).await?;
-        workspace_manager::shared_resources::ensure_repository_memory(&repo)?;
+        workspace_manager::shared_resources::ensure_repository_memory(pool, &repo).await?;
         Ok(repo)
     }
 

@@ -5,6 +5,7 @@ use std::{
     sync::atomic::{AtomicUsize, Ordering},
 };
 
+use db::models::repository_state::RepositoryMemoryStore;
 use services::services::openwiki::{
     self,
     bootstrap::{
@@ -13,7 +14,7 @@ use services::services::openwiki::{
     },
     inventory::{DocumentInventory, InventoryIdentity},
 };
-use utils::repository_memory::{BootstrapReportKind, RepositoryMemoryStore};
+use utils::repository_memory::BootstrapReportKind;
 
 use super::*;
 
@@ -68,7 +69,8 @@ impl Fixture {
         );
         let persistent = temp.path().join("persistent");
         std::fs::create_dir(&persistent).unwrap();
-        let store = RepositoryMemoryStore::at_persistent(&persistent).unwrap();
+        let files =
+            utils::repository_memory::RepositoryMemoryStore::at_persistent(&persistent).unwrap();
         let pool = sqlx::sqlite::SqlitePoolOptions::new()
             .max_connections(1)
             .connect("sqlite::memory:")
@@ -76,6 +78,7 @@ impl Fixture {
             .unwrap();
         sqlx::migrate!("../db/migrations").run(&pool).await.unwrap();
         let repository_id = Uuid::new_v4();
+        let store = RepositoryMemoryStore::with_artifacts(&pool, repository_id, files);
         let workspace_id = Uuid::new_v4();
         sqlx::query(
             "INSERT INTO repos (id, path, name, display_name) VALUES (?, ?, 'repo', 'Fixture')",
@@ -430,6 +433,7 @@ impl WorkflowAgentExecutor for FakeBootstrap<'_> {
                 run_id,
             },
         )
+        .await
         .map_err(orchestration_api_error)?;
         assert!(
             !result.1,
@@ -555,7 +559,7 @@ async fn inventory_preprocessing_failure_before_reservation_releases_owner() {
         }),
         ..Default::default()
     };
-    f.store.save_state(&state).unwrap();
+    f.store.save_state(&state).await.unwrap();
     let repo = db::models::repo::Repo::find_by_id(&f.pool, f.repository_id)
         .await
         .unwrap()
@@ -564,7 +568,7 @@ async fn inventory_preprocessing_failure_before_reservation_releases_owner() {
     super::super::bootstrap::cleanup_with_service(&f.pool, &repo, &f.store, &service)
         .await
         .unwrap();
-    let state = f.store.state().unwrap();
+    let state = f.store.state().await.unwrap();
     assert!(
         state.bootstrap.is_none()
             && state.active_run_id.is_none()
@@ -577,7 +581,7 @@ async fn inventory_preprocessing_failure_before_reservation_releases_owner() {
         .await
         .unwrap();
     assert_eq!(runs, 0);
-    assert!(f.store.publication(run_id).unwrap().is_none());
+    assert!(f.store.publication(run_id).await.unwrap().is_none());
     assert_eq!(git(&f.root, &["rev-parse", "main"]), f.source);
     assert!(f.store.try_lock().is_ok());
 }
@@ -626,7 +630,7 @@ async fn check_bootstrap_cleanup_result(cancelled: bool) {
         error: Some("fixture failure".into()),
         ..Default::default()
     };
-    f.store.save_state(&state).unwrap();
+    f.store.save_state(&state).await.unwrap();
     openwiki::setup::prepare(&f.store, f.workspace_id, &f.maintenance, &f.source).unwrap();
     // An unlinked host is still sufficient to prevent instruction restoration.
     let session: Uuid =
@@ -711,7 +715,7 @@ async fn check_bootstrap_cleanup_result(cancelled: bool) {
             .await
             .is_err()
     );
-    assert!(f.store.state().unwrap().bootstrap.is_some());
+    assert!(f.store.state().await.unwrap().bootstrap.is_some());
     assert_eq!(
         f.store.wiki_setup(f.workspace_id).unwrap().unwrap().phase,
         utils::repository_memory::WikiSetupPhase::Prepared
@@ -724,7 +728,7 @@ async fn check_bootstrap_cleanup_result(cancelled: bool) {
         .await
         .unwrap();
     assert!(
-        f.store.state().unwrap().bootstrap.is_some(),
+        f.store.state().await.unwrap().bootstrap.is_some(),
         "Terminal projection alone must not release ownership"
     );
     assert_eq!(
@@ -741,7 +745,7 @@ async fn check_bootstrap_cleanup_result(cancelled: bool) {
     super::super::bootstrap::cleanup_with_service(&f.pool, &repo, &f.store, &service)
         .await
         .unwrap();
-    let result = f.store.state().unwrap();
+    let result = f.store.state().await.unwrap();
     assert!(result.bootstrap.is_none() && result.active_run_id.is_none());
     assert_eq!(result.status, RepositoryWikiStatus::Error);
     assert_eq!(
@@ -761,7 +765,7 @@ async fn check_bootstrap_cleanup_result(cancelled: bool) {
             WorkflowRunStatus::Failed
         }
     );
-    assert!(f.store.publication(run_id).unwrap().is_none());
+    assert!(f.store.publication(run_id).await.unwrap().is_none());
 }
 
 #[tokio::test]
@@ -1118,7 +1122,7 @@ async fn report_tampering_blocks_refine_or_publication_without_touching_target()
         let run = get_workflow_run_response(&f.pool, run_id).await.unwrap();
         assert_ne!(run.status, WorkflowRunStatus::Succeeded, "{fail}");
         assert_eq!(executor.publications.load(Ordering::SeqCst), 0, "{fail}");
-        assert!(f.store.publication(run_id).unwrap().is_none());
+        assert!(f.store.publication(run_id).await.unwrap().is_none());
         assert_eq!(git(&f.root, &["rev-parse", "main"]), f.source);
         if fail == "tamper_review_report" {
             assert!(
@@ -1259,7 +1263,7 @@ async fn inventory_host_input_identity_and_tampering_fail_before_dispatch() {
         let _ = drive_repository_workflow(&f.pool, run_id, &executor).await;
         assert!(executor.calls.lock().unwrap().is_empty());
         assert_eq!(executor.publications.load(Ordering::SeqCst), 0);
-        assert!(f.store.publication(run_id).unwrap().is_none());
+        assert!(f.store.publication(run_id).await.unwrap().is_none());
         assert_eq!(git(&f.root, &["rev-parse", "main"]), f.source);
         assert_eq!(inventory.identity().run_id, run_id);
     }

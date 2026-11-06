@@ -142,7 +142,8 @@ impl Deployment for LocalDeployment {
             analytics_service: s.clone(),
         });
         let workspace_manager = WorkspaceManager::new(db.clone());
-        let agent_run_port = agent_run_port::LocalAgentRunPort::new(db.clone());
+        let agent_run_port =
+            agent_run_port::LocalAgentRunPort::with_config(db.clone(), config.clone());
         let container = LocalContainerService::new(
             db.clone(),
             agent_run_port.clone(),
