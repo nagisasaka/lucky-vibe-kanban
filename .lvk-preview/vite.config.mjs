@@ -12,8 +12,8 @@ if (!loaded) throw Error("Existing Vite configuration missing");
 export default {
   ...loaded.config,
   root: web,
-  envDir: path.join(repo, ".build/design-preview/empty-env"),
-  cacheDir: path.join(web, "node_modules/.vite-design-preview"),
+  envDir: path.join(repo, ".build/ui4-preview/empty-env"),
+  cacheDir: path.join(web, "node_modules/.vite-ui4-preview"),
   server: {
     ...loaded.config.server,
     host: "127.0.0.1",
@@ -38,7 +38,6 @@ export default {
       strict: true,
       allow: [
         "packages/local-web/index.html",
-        "packages/public",
         "packages/local-web/src",
         "packages/web-core/src",
         "packages/ui/src",

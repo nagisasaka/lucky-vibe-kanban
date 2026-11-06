@@ -13,8 +13,6 @@ import { installAccessFetch } from '@web/app/auth/serverAccess';
 import '@/shared/types/modals';
 import { queryClient } from '@/shared/lib/queryClient';
 
-import { DevAgentation } from './DevAgentation';
-
 const App = lazy(() => import('@web/app/entry/App'));
 
 if (
@@ -60,7 +58,6 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
               }
             >
               <App />
-              <DevAgentation />
             </Suspense>
           </ServerAccessGate>
         </Sentry.ErrorBoundary>
