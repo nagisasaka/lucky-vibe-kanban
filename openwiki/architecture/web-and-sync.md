@@ -134,8 +134,12 @@ sources:
     resource: repo://packages/web-core/src/i18n/config.ts
   - id: openwiki-source-b15ed7e04d56f51df1b6a6ea
     resource: repo://packages/web-core/src/i18n/languages.ts
+  - id: openwiki-source-efd2346cc808d71c75e004b0
+    resource: repo://packages/web-core/src/pages/kanban/IssueTaskAttemptsSectionContainer.tsx
   - id: openwiki-source-89a716f39968e2030cf296c0
     resource: repo://packages/web-core/src/pages/root/RootRedirectPage.tsx
+  - id: openwiki-source-30d78241069faef9f22fd862
+    resource: repo://packages/web-core/src/pages/workspaces/DevServerControlsContainer.tsx
   - id: openwiki-source-2fb74c0fc81d817149606557
     resource: repo://packages/web-core/src/pages/workspaces/PreservedChatPanel.tsx
   - id: openwiki-source-6559800b59b62e086689d27d
@@ -180,6 +184,8 @@ sources:
     resource: repo://packages/web-core/src/shared/hooks/useGitHubStars.ts
   - id: openwiki-source-70a9c5225d8ef0472482d401
     resource: repo://packages/web-core/src/shared/hooks/useJsonPatchWsStream.ts
+  - id: openwiki-source-dd033ed16fc4890fc3bf77a7
+    resource: repo://packages/web-core/src/shared/hooks/useLogStream.ts
   - id: openwiki-source-145474ecb854b8600d49f7f8
     resource: repo://packages/web-core/src/shared/hooks/useOpenInEditor.ts
   - id: openwiki-source-03db0ba02433b52c9bfe6db3
@@ -224,6 +230,10 @@ sources:
     resource: repo://packages/web-core/src/shared/lib/remoteApi.ts
   - id: openwiki-source-01d821b4d50944c26f066eb1
     resource: repo://packages/web-core/src/shared/lib/utils.ts
+  - id: openwiki-source-1b867fe5d3dbc2c06b4f33c3
+    resource: repo://packages/web-core/src/shared/providers/ActionsProvider.tsx
+  - id: openwiki-source-51549d4e96b211530610fb1d
+    resource: repo://packages/web-core/src/shared/providers/LogsPanelProvider.tsx
   - id: openwiki-source-f19e845a46caccf16c347093
     resource: repo://packages/web-core/src/shared/providers/remote/UserProvider.tsx
   - id: openwiki-source-09147e83e2e70cb032ece9e7
@@ -262,10 +272,10 @@ sources:
     resource: repo://tests/workspace-navigation/run-isolated.py
   - id: openwiki-source-b87e3253bd1458a0091f8587
     resource: repo://tests/workspace-navigation/workspace-navigation.spec.ts
-generated: { by: "codex", at: "2026-11-06T03:26:16.411Z" }
+generated: { by: "codex", at: "2026-11-06T04:42:23.113Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-06T03:26:16.411Z
+    at: 2026-11-06T04:42:23.113Z
 ---
 
 # Web の実行環境と同期
@@ -464,7 +474,7 @@ Live delta はまず整列済みの永続列へ挿入位置を求める。同じ
 
 Board の Workspace summary は、Workspace ごとに作成日時と ID の降順で選んだ最新 AgentRun について、その全 attempt の registry にある最初の実 process 開始時刻を `latest_process_started_at` に返す。未起動なら null であり、受理時刻 `created_at` で補わない。`latest_process_completed_at` はその Run が終端のときだけ現在 attempt の保存済み `finished_at` を返す。`latest_process_*` という互換名は旧 ExecutionProcess の時計を意味しない。[最新 Run の選択](../../crates/db/src/models/agent_runtime.rs#L324-L359)・[API の組立て](../../crates/server/src/routes/workspaces/workspace_summary.rs#L170-L192)
 
-`useWorkspaces` は一覧 stream に summary を重ね、初期化後に15秒周期でも再取得する。Kanban と Issue の Workspace / task-attempt 一覧は同じ時刻を `IssueWorkspaceCard` へ渡す。pending / starting は Preparing を表示し実行時計を出さない。時計の active 判定は最新 Run の status を使い、Workspace 全体の `is_running` 集計とは別である。別 Run・script・Integration が活動中でも、最新 Run の時計が止まっている場合がある。時計は summary の到着に依存するため、Board と chat の確定表示が同時に切り替わる保証ではない。[summary の合成と poll](../../packages/web-core/src/shared/hooks/useWorkspaces.ts#L56-L89)・[周期取得](../../packages/web-core/src/shared/hooks/useWorkspaces.ts#L168-L194)・[カード](../../packages/ui/src/components/IssueWorkspaceCard.tsx#L249-L275)
+`useWorkspaces` は一覧 stream に summary を重ね、初期化後に active summary は15秒、archive summary は通常60秒で再取得する。archive metadata の実行中、または summary の実行中・承認待ちが一件でも既知なら archive 一覧全体を15秒にする。Kanban と Issue の Workspace / task-attempt 一覧は同じ時刻を `IssueWorkspaceCard` へ渡す。pending / starting は Preparing を表示し実行時計を出さない。時計の active 判定は最新 Run の status を使い、Workspace 全体の `is_running` 集計とは別である。別 Run・script・Integration が活動中でも、最新 Run の時計が止まっている場合がある。時計は summary の到着に依存するため、Board と chat の確定表示が同時に切り替わる保証ではない。[summary の合成と poll](../../packages/web-core/src/shared/hooks/useWorkspaces.ts#L56-L89)・[周期取得](../../packages/web-core/src/shared/hooks/useWorkspaces.ts#L168-L194)・[カード](../../packages/ui/src/components/IssueWorkspaceCard.tsx#L249-L275)
 
 Session 側は Run 一覧の `completed_at` を受け、会話 projection が Run ごとに一つの `runTiming` footer を生成し、`ConversationListContainer` が `ChatRunFooter` を描画する。footer は共通 `ChatElapsedTime` と、保存済みの有効な終了日時を表示する。Goal 専用表示に依存しない。[Run 一覧](../../crates/services/src/services/agent_runtime.rs#L201-L237)・[footer](../../packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts#L648-L679)・[描画](../../packages/web-core/src/features/workspace-chat/ui/ConversationListContainer.tsx#L76-L82)。待機・retry、終了根拠の欠損、再接続時の新旧比較、Goal 会計との違いは [Run の経過時間](../concepts/session-and-agent-run.md#run-の経過時間と-goal-会計)を正本とする。表示のための新旧比較を、stream cursor や実行制御の変更と混同しない。
 
@@ -613,3 +623,14 @@ useWorkspaceExecution は process 一覧と stop を維持し、consumer のな�
 局所 poll は token 集計・Workspace→TODO Project が30秒、TODO・設計メモ・branch status・Repository memory が15秒、queue・Integration一覧・Facts・owner が5秒、activities・資源設定が10秒。初回取得と操作後の無効化、draft/revision 保護を維持し、Facts は未公開の終端・再開可能状態でも取得を継続する。全域query既定値と非同期質問3秒は変更しない。[Facts](../../packages/web-core/src/features/workspace-chat/ui/IntegrationFacts.tsx)・[queue](../../packages/web-core/src/features/workspace-chat/model/hooks/useSessionQueueInteraction.ts)
 
 source ffc6a4a6 の公開記録には両frontend型check・変更production lint/整形・既存15試験成功がある。統合コード候補 9edfcf2f では16変更ファイルのsource一致・削除参照不存在・差分空白と既存取得条件を限定確認した。ユーザーの最小検証指定に従い重複suite・全域検証は省略。実WS本数、実timer/E2E・性能は未実測であり、削減効果はコード推定、通常5〜30秒周期の鮮度低下を許容する。
+
+
+## 選択ログ共有と archive の鮮度（316-CD後続）
+
+既存 LogsPanelProvider が LOGS 表示中の選択 process の raw log stream を一つ所有し、表示・検索とコピーへ同じ配列を渡す。LOGS 離脱で購読を閉じ、復帰で履歴を取り直す。Host / Workspace / create mode の切替は選択と結果を分離し、useLogStream は旧接続の遅延 message・finished を無視する。finished 後の最終ログは保持し再接続を停止する。[所有者](../../packages/web-core/src/shared/providers/LogsPanelProvider.tsx)・[stream](../../packages/web-core/src/shared/hooks/useLogStream.ts)・[コピー](../../packages/web-core/src/shared/providers/ActionsProvider.tsx)
+
+DevServer URL 検出は独立 useLogStream を維持し、ログ未選択や別 process 選択時も自動検出する。PTY / DevServer 自体の start/stop をログパネル離脱と結び付けない。同 process の表示・コピー・URL は従来3購読から2購読になるというコード上の推定であり、実負荷測定ではない。[URL取得](../../packages/web-core/src/pages/workspaces/DevServerControlsContainer.tsx)
+
+archive 欄表示、archive 対象への遷移、Issue の Workspace 一覧表示は host 付きの既存 summary query を invalidate する。操作後の既存無効化と metadata WS、active summary は維持する。未検知の activity や PR/diff/badge は通常60秒周期まで遅れ得る。古い肯定情報で15秒が続く保守的な挙動を許容する。[一覧](../../packages/web-core/src/pages/workspaces/WorkspacesSidebarContainer.tsx)・[対象遷移](../../packages/web-core/src/shared/providers/WorkspaceProvider.tsx)・[Issue](../../packages/web-core/src/pages/kanban/IssueTaskAttemptsSectionContainer.tsx)・[周期の既存試験](../../packages/web-core/src/shared/hooks/useWorkspaces.test.ts)
+
+コード候補 `3ba4f21d5d1563ec53485d7889ed9551e8af4c79` は修正済み source `ef4d5a97` と tree が完全一致し競合・追加修復はない。候補で source 一致・固定base祖先性・差分空白を実行確認した。公開 memory の前段両frontend型/lint/14既存試験/隔離Chromium、修正後の web-core 型/対象lint/未選択URL・対象分離・ログ寿命・最終ログ/再接続 Chromium 成功報告を採用し、重複suiteと全域build/backendはagent判断で省略した。Chromium は mock transport の隔離fixtureで、実製品画面・実provider・稼働DevServer/PTY・認証・性能は未検証である。Wiki完了・公開要求・targetへの反映成功は別の状態である。

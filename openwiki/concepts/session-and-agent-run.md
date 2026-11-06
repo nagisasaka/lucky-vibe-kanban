@@ -142,6 +142,8 @@ sources:
     resource: repo://packages/web-core/src/shared/hooks/useAgentProviderPolicy.ts
   - id: openwiki-source-8e74802914b6f2f7c720c935
     resource: repo://packages/web-core/src/shared/hooks/useExecutorConfig.ts
+  - id: openwiki-source-145913da02d27af00458d95d
+    resource: repo://packages/web-core/src/shared/hooks/useExecutorDiscovery.ts
   - id: openwiki-source-43d7a2f6bd06c556e7d48e3c
     resource: repo://packages/web-core/src/shared/hooks/useScratch.ts
   - id: openwiki-source-2e251355ae5f41eedc1e63cc
@@ -172,10 +174,10 @@ sources:
     resource: repo://tests/supervised/README.md
   - id: openwiki-source-5184ef612e83b7ab35d62e7b
     resource: repo://tests/supervised/run_isolated.py
-generated: { by: "codex", at: "2026-11-06T03:26:16.411Z" }
+generated: { by: "codex", at: "2026-11-06T04:42:23.113Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-06T03:26:16.411Z
+    at: 2026-11-06T04:42:23.113Z
 ---
 
 # Session・AgentRun・RunAttempt
@@ -473,3 +475,10 @@ thinking / tool の表示は会話 timeline の一部であり、表示用の経
 ### 局所取得周期
 
 Workspace累積tokenの表示は30秒周期、Session queue状態は5秒周期で再取得する。query keyのWorkspace/host/Session分離とqueue操作後の無効化を維持する。非同期質問の3秒周期は変更しない。[token](../../packages/web-core/src/features/workspace-chat/ui/WorkspaceTokenSummary.tsx)・[queue](../../packages/web-core/src/features/workspace-chat/model/hooks/useSessionQueueInteraction.ts)
+
+
+### composer 内の discovery 共有（316-CD後続）
+
+InteractiveSessionChatBox が discovery snapshot を一度取得し、ModelSelector と editor へ渡す。hook は agent / variant / Workspace / Session / Repo / Host がすべて厳密一致した場合だけ snapshot を再利用し、異なる場合は従来の独立取得へ戻る。undefined と null や異なる variant を同一視しない。新規作成画面の global selector と Repo 付き editor は別 scope のままで、未使用 useSlashCommands wrapper は削除された。[親](../../packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx#L599-L607)・[一致条件と fallback](../../packages/web-core/src/shared/hooks/useExecutorDiscovery.ts#L29-L112)・[selector](../../packages/web-core/src/shared/components/ModelSelectorContainer.tsx#L118-L134)・[editor](../../packages/web-core/src/shared/components/WYSIWYGEditor.tsx#L372-L383)
+
+同 scope の2 consumer は親の1購読を利用するというコード上の削減であり性能実測ではない。統合候補と既存検証証拠、隔離Chromiumと実providerの区別は [同期の検証記録](../architecture/web-and-sync.md#選択ログ共有と-archive-の鮮度316-cd後続)を参照する。
