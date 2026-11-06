@@ -104,6 +104,8 @@ sources:
     resource: repo://packages/web-core/src/features/wiki/ui/WorkspaceWikiProvider.tsx
   - id: openwiki-source-5ff018fe0b1ec29d9745aca4
     resource: repo://packages/web-core/src/features/wiki/ui/WorkspaceWikiSurfaces.test.tsx
+  - id: openwiki-source-886d46158b33599d038c5bfa
+    resource: repo://packages/web-core/src/features/workflow/ui/WorkflowRunPage.tsx
   - id: openwiki-source-b58899ddf6c6173903fabe61
     resource: repo://packages/web-core/src/features/workspace-chat/model/contexts/ApprovalFeedbackContext.tsx
   - id: openwiki-source-952ab4470659b6dc518fab38
@@ -180,8 +182,12 @@ sources:
     resource: repo://packages/web-core/src/shared/hooks/useUserSystemController.ts
   - id: openwiki-source-ffa337e3881da0103a10e223
     resource: repo://packages/web-core/src/shared/hooks/useVisualViewportHeightVar.ts
+  - id: openwiki-source-ffc55e6e31e6ce477ca57329
+    resource: repo://packages/web-core/src/shared/hooks/useWorkflowRun.ts
   - id: openwiki-source-012d640135a03bd20065dc93
     resource: repo://packages/web-core/src/shared/hooks/useWorkspaceOwner.ts
+  - id: openwiki-source-106370df067778d69654e845
+    resource: repo://packages/web-core/src/shared/hooks/useWorkspaceRepositoryWorkflow.ts
   - id: openwiki-source-97cd8794805cef30e1c2f047
     resource: repo://packages/web-core/src/shared/hooks/useWorkspaces.ts
   - id: openwiki-source-8860c99d38e029d2bcc112c2
@@ -244,10 +250,10 @@ sources:
     resource: repo://tests/workspace-navigation/run-isolated.py
   - id: openwiki-source-b87e3253bd1458a0091f8587
     resource: repo://tests/workspace-navigation/workspace-navigation.spec.ts
-generated: { by: "codex", at: "2026-11-06T03:12:23.427Z" }
+generated: { by: "codex", at: "2026-11-06T03:22:40.407Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-06T03:12:23.427Z
+    at: 2026-11-06T03:22:40.407Z
 ---
 
 # Web の実行環境と同期
@@ -573,3 +579,14 @@ drag開始前に自動演出を止め、手動drag中は同期配置を割り込
 共有i18nextはEN/JAと既存5言語の辞書を読み、欠落・空値は英語へfallbackする。ブラウザー検出はnavigator→HTML langで、キャッシュは作らず既存configのBROWSER/明示言語に従う。regional localeは共通resolverで正規化し、表示言語変更時にHTML langも更新する。日時・数値は表示localeを使い、識別子やprovider原文は翻訳しない。[設定とfallback](../../packages/web-core/src/i18n/config.ts)・[locale正規化](../../packages/web-core/src/i18n/languages.ts)
 
 通常のエラー表示は翻訳した文脈と元の診断詳細を併記する。`errorDiagnostic`は外側messageを保持し、既知の構造化診断fieldを加えて重複を除く。診断はReactのテキストとして描画し、翻訳keyやHTMLにしない。表示言語変更は結果不明の状態を失敗へ変えたり再送を起こす理由にはならない。[診断抽出](../../packages/web-core/src/shared/lib/errorDiagnostic.ts)・[Wikiの両surface](../../packages/web-core/src/features/wiki/ui/WorkspaceWikiSurfaces.test.tsx)・[File preview](../../packages/web-core/src/features/workspace-files/ui/WorkspaceFileInspection.test.tsx)
+
+
+## Workflow の重複購読と旧 UI の整理（316-EF）
+
+`WorkflowRunPage` は SSE クライアントを購読せず、`useWorkflowRun` の GET によって状態を取得する。活動中は既定4秒周期、終端では周期取得を停止し、操作成功後の cache 更新・無効化を維持する。表示や人待ち検知には通常4秒程度の遅延を許容する。backend の公開 SSE route と event bus は残り、GET による reconciliation も継続する。[画面](../../packages/web-core/src/features/workflow/ui/WorkflowRunPage.tsx)・[取得と操作](../../packages/web-core/src/shared/hooks/useWorkflowRun.ts)・[runtime の前進契機](workflow-runtime.md#起動形態と前進の契機)
+
+Workspace と Repository Workflow の関連付け探索は detail の照合とは別である。関連付け未発見時は30秒周期、活動中の関連付け発見後は5秒周期、終端では停止する。host を含む query key と `hostId === null` の取得条件を維持する。[探索 hook](../../packages/web-core/src/shared/hooks/useWorkspaceRepositoryWorkflow.ts)・[リンクの対象分離試験](../../packages/web-core/src/shared/components/WorkspaceWorkflowLink.test.tsx)
+
+316-EF では参照のない旧 frontend の `useTaskWorkspaces`、`useDiscordOnlineCount`、旧承認・retry UI、旧 process dialog/log viewer、未接続の ElectricTestPage を削除した。現行の承認・質問・feedback・retry、Logs/ScriptFixer、backend 旧 API は変更対象外である。孤立コード削除の量を実通信削減に換算しない。
+
+コード候補は source と同じ `3b77f5dad09fe5f7ee0efafc0b85671fc866a8de`。source の公開記録には両 frontend 型check、production の変更3ファイル lint、既存4ファイル32試験成功がある。今回の統合では競合なしの同一SHAと参照到達性・維持契約を確認し、差分空白と固定baseの祖先関係を実行確認した。重複suiteと全域build/backend試験はagent判断で省略した。実ブラウザでの状態遷移・runId切替・通信断復旧は未検証で、性能削減もコード上の推定であり実測ではない。

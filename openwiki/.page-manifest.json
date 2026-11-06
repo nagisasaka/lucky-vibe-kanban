@@ -16,18 +16,18 @@
       "completedRunId": "a88095ec-9603-48a5-9d7d-a85a799911f9"
     },
     "/openwiki/architecture/web-and-sync.md": {
-      "pageVersion": "sha256:32486a03f16a8a46e81a087d1e278811611935ad6a61b0271bedcfe55d709d2b",
+      "pageVersion": "sha256:98e88d2583b1767258f55de902f437dce9f8c38082883d1713c010b788aeba2f",
       "completedBy": "codex",
-      "completedRunId": "f631e512-a0e5-47ce-a1ce-c2097755a597",
-      "gitHead": "f1efa2f13bc5f91cc1d4ad23a19f7c2325a0c324",
-      "sourceFingerprint": "sha256:7c138ef43407b1b141f891d48b8ac9f05701718287e075d795ba235df48d5223"
+      "completedRunId": "54f9104f-a8e1-492d-817c-a540c34f8083",
+      "gitHead": "3b77f5dad09fe5f7ee0efafc0b85671fc866a8de",
+      "sourceFingerprint": "sha256:4c39d8976b8d4316a456015640dbdf65547c5dbf01ac829296da02af5cbf4b01"
     },
     "/openwiki/architecture/workflow-runtime.md": {
-      "gitHead": "7bcd5db39419d50ad265592e288264c63906e1da",
-      "sourceFingerprint": "sha256:caecaf49ef63a64bf55902a1f15394d70cef01dda84209a009f53a56046f604b",
-      "pageVersion": "sha256:af64e7c39816e2806dcac679aff95399290bc874e415c5cf31f635a683a9392f",
+      "pageVersion": "sha256:0b7b6e3fe3caec7f942280bc5ebb07512cc38daf2c2c5c5de46ed67e86c6ffa6",
       "completedBy": "codex",
-      "completedRunId": "a88095ec-9603-48a5-9d7d-a85a799911f9"
+      "completedRunId": "54f9104f-a8e1-492d-817c-a540c34f8083",
+      "gitHead": "3b77f5dad09fe5f7ee0efafc0b85671fc866a8de",
+      "sourceFingerprint": "sha256:4c39d8976b8d4316a456015640dbdf65547c5dbf01ac829296da02af5cbf4b01"
     },
     "/openwiki/concepts/arena.md": {
       "gitHead": "fbdc61b521b104758fb27cc4599101683864e1a3",

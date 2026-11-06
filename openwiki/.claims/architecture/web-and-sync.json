@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:32486a03f16a8a46e81a087d1e278811611935ad6a61b0271bedcfe55d709d2b",
+  "pageVersion": "sha256:98e88d2583b1767258f55de902f437dce9f8c38082883d1713c010b788aeba2f",
   "claims": [
     {
       "id": "claim_cd547b65737e432fb2cf718c4992aa97",
@@ -1483,10 +1483,34 @@
           "version": "repo-lines-v1:sha256:064bb870c7f2d9728c9eba1c5ba88496f33291497817d564eded317a6df78a7b:eyJzZWxlY3RlZExpbmVDb3VudCI6MjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImViMmU3MWM3YzAyMTQwZjU3ODNjZmNkYTk3ZmVkMjQxMDYzODE4YWE3YzcwNWJkM2UyYjA3YTBiNWU2NWNlYWEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU1MjJjNDJjZDE5YzZkMDNkODA4YzQ1MjcyMDU1MjgyNWI3ZWExYzViNDkxYjIxODUxMWNhYzc0MTVjZjlkOWIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImE3ZWRjNjNjNDZjYzQ0YzVlOTQ3N2VmYzlhZDgxYjIwOGU3NGNjYzYzYjc4NTdlMDc3M2JkODFhMzA1YWIwMmEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBkYzdkN2YyNDhjM2E1ZjllYWVlZWMwYzQ3YzBiOTg0NzUwMDEzZWJhM2U2OTI1N2EyZmE1ZjZmNTEwMDJiMzQifQ"
         }
       ]
+    },
+    {
+      "id": "claim_74e4f158583c4b7d9999c574f4dfda49",
+      "statement": "WorkflowRunPageはSSE購読を行わずuseWorkflowRunで取得し、活動中の既定4秒pollと終端停止、操作後cache更新・無効化を維持する。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/features/workflow/ui/WorkflowRunPage.tsx",
+          "version": "repo-file-v1:sha256:c1227ef5925674af1ad2e16c0d12096c9199567b5560b57d49d9716207eabe92"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/hooks/useWorkflowRun.ts",
+          "version": "repo-file-v1:sha256:95fb06cde9d0b0a5ff73a9e8fea7cb1cddb11a805b753c60601c91f56fd51b34"
+        }
+      ]
+    },
+    {
+      "id": "claim_b329575e0d7b4e3c802891d60ce30547",
+      "statement": "WorkspaceのRepository Workflow関連付け探索は未発見時30秒、活動中5秒、終端停止で、hostを含むキーとlocal host取得条件を持つ。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/shared/hooks/useWorkspaceRepositoryWorkflow.ts",
+          "version": "repo-file-v1:sha256:e23a86dcd4029f7313b28d452a8f7c1181bf38f5e649a5f281f8d0cd01886ce4"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-06T03:12:23.427Z"
+    "at": "2026-11-06T03:22:40.407Z"
   }
 }

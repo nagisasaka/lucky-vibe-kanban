@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:af64e7c39816e2806dcac679aff95399290bc874e415c5cf31f635a683a9392f",
+  "pageVersion": "sha256:0b7b6e3fe3caec7f942280bc5ebb07512cc38daf2c2c5c5de46ed67e86c6ffa6",
   "claims": [
     {
       "id": "claim_82dcbc35b88a441daa22355016e0d3f8",
@@ -285,10 +285,38 @@
           "version": "repo-lines-v1:sha256:734b6fdab7d7bc239746e0ec0d0fac1d78c0b54235bddb67682e703e27703021:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjliMjEzMTFhMjI1MDU4Y2MxODdlNjg4ZmFmZTkzMTU4NmY0Y2NmYzY2MWRiNDY4ZTU5MDFiZDlhYjdhYWY4MTEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE1NmJlMmVlMTcwMDQwNjhjMTg2YmU4MjNlMzJjYzUxMWM0OWE4MDc1ZWYxYWQwMDI5MjJkZTBjNTk5OGMzMTQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjBkOTRhMmVjMGY1NDM4MWM1OGVmN2Q1YzM3ODE4MDk4OTkzNTY4ZTJiZTFjOTFkNzQ3OWYwOTA5MmI0YjM1MzMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImZjNzhlNTM5NTdiOTFiM2E4YTM4MmQwNTc5MTU2ZjJiNWFmODkxOWMzMWVhOWY1M2ZjMjY0MjgxZjljOTBjZjUifQ"
         }
       ]
+    },
+    {
+      "id": "claim_8370c4521b8e4647a577facd172acc2d",
+      "statement": "WorkflowRunPageはSSEを購読せずGET hookに依存するが、backendのGETおよび公開SSE接続時のreconciliationは維持されている。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/routes/workflows.rs#L2088-L2160",
+          "version": "repo-lines-v1:sha256:189e3cc1f580745985ddce92c1f89eec12874bf33e5530d7de814e90478ecc56:eyJzZWxlY3RlZExpbmVDb3VudCI6NzMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgzMThkYzM2OWI4MTdkMDZlZmZmZmNmMGU0YjVjM2NmNTVhZWMxOGZiYzc5ZjIxNzMyNjE4ZmZjMDEzYmYyNTciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVlOTA2YzE2NjkzN2JkODhhYmFkNzU1ZTZhOTIwNDlkYTlkYWJjYWM4NzAyMmIwZGRmNTFhZDBmN2QzNzE3NjQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImVmZjNjNjM3MWNmMDA5MjM1NDAyNmI0ZGVhNTM1MWViNmRhZmI3NjZjMzg5Mzg3Y2ExZjk4M2FkMGE5NmE3ZTYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFkZGFhYTMxNjBkMGVlNDM5YTEzZjYwZmVkZjRjZjI4MGJiMDI5YzlkMTYyM2MzM2IyOWMwN2JjM2I1MWE5NTkifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/workflow/ui/WorkflowRunPage.tsx",
+          "version": "repo-file-v1:sha256:c1227ef5925674af1ad2e16c0d12096c9199567b5560b57d49d9716207eabe92"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/hooks/useWorkflowRun.ts#L26-L57",
+          "version": "repo-lines-v1:sha256:f07b84af939c49c4e1284a3b9769b7cdcbb885a269626b5ede9c58218a160318:eyJzZWxlY3RlZExpbmVDb3VudCI6MzIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVkYmVjYmNkYWFiNzdhZjIxZTNiN2Q0YmEzZGUyZjQ3MTUxNzZiZmQ3M2MxNDY2M2I5MDNjNDFjN2Q0MDNjMWQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY3OTA3MTUxYWMxNzY1MTUxM2I4YTY3M2YwMmI3OTljMzQ2ZTZhMjU2ZGU5YzU1N2MwOGM4MTU0ZTc4NmZhYWEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQwMDhkMzA4NjI4ZWRjNGQzNGY0NTM0NzFlYzMwM2FlZTE3NWU5YWZhMGEwMDAzYjM3OTYyYTZkYTEyYzZhOTYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_c607b9bee8fb487da494068bc970fe1e",
+      "statement": "WorkspaceのRepository Workflow関連付け探索はdetail pollと独立し、未発見30秒、活動中5秒、終端停止、local host限定で取得する。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/shared/hooks/useWorkspaceRepositoryWorkflow.ts",
+          "version": "repo-file-v1:sha256:e23a86dcd4029f7313b28d452a8f7c1181bf38f5e649a5f281f8d0cd01886ce4"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-05T07:15:08.684Z"
+    "at": "2026-11-06T03:22:40.407Z"
   }
 }

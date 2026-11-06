@@ -30,14 +30,18 @@ sources:
     resource: repo://crates/services/src/services/orchestration_dispatch_tests.rs
   - id: openwiki-source-b19d02455156008b43c210c8
     resource: repo://crates/services/src/services/orchestration.rs
+  - id: openwiki-source-886d46158b33599d038c5bfa
+    resource: repo://packages/web-core/src/features/workflow/ui/WorkflowRunPage.tsx
   - id: openwiki-source-ffc55e6e31e6ce477ca57329
     resource: repo://packages/web-core/src/shared/hooks/useWorkflowRun.ts
+  - id: openwiki-source-106370df067778d69654e845
+    resource: repo://packages/web-core/src/shared/hooks/useWorkspaceRepositoryWorkflow.ts
   - id: openwiki-source-23775c3de52f3ab95a13cb8b
     resource: repo://README.md
-generated: { by: "codex", at: "2026-11-04T20:35:55.356Z" }
+generated: { by: "codex", at: "2026-11-06T03:22:40.407Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-05T07:15:08.684Z
+    at: 2026-11-06T03:22:40.407Z
 ---
 
 # Workflow の実行と耐久オーケストレーション
@@ -99,6 +103,10 @@ Tauri shell は廃止されたが `server::startup` は公開 API として残�
 | 活動中の Run を表示する UI | `useWorkflowRun` は既定4秒ごとに GET する。設定で停止・変更可能 |
 
 [startup の結線](../../crates/server/src/startup.rs#L214-L231)・[standalone の回復と定時 loop](../../crates/server/src/main.rs#L87-L141)・[GET](../../crates/server/src/routes/workflows.rs#L2028-L2045)・[SSE 接続時](../../crates/server/src/routes/workflows.rs#L2066-L2085)・[UI polling](../../packages/web-core/src/shared/hooks/useWorkflowRun.ts#L26-L56)
+
+316-EF 以降、`WorkflowRunPage` の重複 SSE 購読は削除され、画面の通常更新と人待ち検知は `useWorkflowRun` の GET に依存する。活動中の既定4秒 poll、終端での停止、操作成功後の cache 更新・無効化は維持する。backend 公開 SSE route と event bus は残っているため、上表の SSE 接続時の reconciliation は外部クライアントにも適用される契約であり、この画面が接続するという意味ではない。[画面](../../packages/web-core/src/features/workflow/ui/WorkflowRunPage.tsx)・[取得と操作](../../packages/web-core/src/shared/hooks/useWorkflowRun.ts)・[GET と SSE](../../crates/server/src/routes/workflows.rs#L2088-L2160)
+
+Workspace の Repository Workflow 関連付け探索は別 hook が所有する。未発見時30秒、活動中の関連付けがあるとき5秒、終端では停止し、remote host への local DB 取得を禁止する。detail の4秒 reconcile 周期とは混同しない。[関連付け探索](../../packages/web-core/src/shared/hooks/useWorkspaceRepositoryWorkflow.ts)・[通信削減と検証限界](web-and-sync.md#workflow-の重複購読と旧-ui-の整理316-ef)
 
 したがって Run の取得は純粋な表示読み取りではない。画面経由では前進しても、standalone を画面なしで動かす場合に同じ継続駆動を保証する根拠にはならない。ScheduledTask loop は定時の起動を担い、完了後の全ノード連鎖を監視する watcher の代わりではない。[定時実行の skip 条件](../workflows/task-to-integration.md#定時に-workflow-を起動する)と併せて、起動に成功した run が進行し続けるかを別に確認する。
 
