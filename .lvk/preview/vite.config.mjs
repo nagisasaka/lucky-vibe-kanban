@@ -1,7 +1,7 @@
-import { loadConfigFromFile } from "../packages/local-web/node_modules/vite/dist/node/index.js";
+import { loadConfigFromFile } from "../../packages/local-web/node_modules/vite/dist/node/index.js";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
-const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const web = path.join(repo, "packages/local-web");
 const loaded = await loadConfigFromFile(
   { command: "serve", mode: "development" },
@@ -49,7 +49,7 @@ export default {
       ].map((p) => path.join(repo, p)),
       deny: [
         "**/.build/**",
-        "**/.lvk-preview/**",
+        "**/.lvk/preview/**",
         "**/.git/**",
         "**/.env*",
         "**/*.{pem,crt,key,sqlite,sqlite3,db,token}",

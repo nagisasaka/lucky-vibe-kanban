@@ -2494,7 +2494,7 @@ pub fn prompt_with_repository_memory(
 ) -> String {
     if provider != DirectProvider::Codex
         && !prompt.trim_start().starts_with('/')
-        && let Some(instructions) = env.get("LVK_REPOSITORY_MEMORY_INSTRUCTIONS")
+        && let Some(instructions) = env.repository_memory_instructions()
     {
         return format!(
             "{prompt}\n\n{}\n\n## LVK Change Manifest context\n{instructions}",
@@ -2603,6 +2603,39 @@ mod tests {
                 .unwrap()
                 .durable_events
                 .is_empty()
+        );
+    }
+
+    #[test]
+    fn shared_storage_guidance_reaches_non_codex_prompts_without_saved_card_context() {
+        let mut env = crate::env::ExecutionEnv::new(crate::env::RepoContext::default());
+        env.insert("LVK_SHARED_RESOURCE_ROOTS", r#"["/shared/repo/tmp"]"#);
+        for prompt in ["Initial task", "Continue the task"] {
+            let actual = prompt_with_repository_memory(DirectProvider::ClaudeCode, prompt, &env);
+            assert!(actual.starts_with(prompt));
+            assert!(actual.contains(".lvk/shared/tmp/"));
+            assert!(actual.contains("Run completion does not delete tmp contents"));
+            assert!(actual.contains("appropriate retained destination"));
+        }
+        assert_eq!(
+            prompt_with_repository_memory(DirectProvider::ClaudeCode, "/compact", &env),
+            "/compact"
+        );
+        assert_eq!(
+            prompt_with_repository_memory(DirectProvider::Codex, "task", &env),
+            "task"
+        );
+        env.insert(
+            "LVK_REPOSITORY_MEMORY_INSTRUCTIONS",
+            "CURRENT Manifest identity",
+        );
+        let actual = prompt_with_repository_memory(DirectProvider::ClaudeCode, "task", &env);
+        assert!(actual.contains("CURRENT Manifest identity"));
+        assert!(actual.contains(".lvk/shared/tmp/"));
+        env.insert("LVK_OPENWIKI_REVIEWER", "1");
+        assert!(
+            !prompt_with_repository_memory(DirectProvider::ClaudeCode, "review", &env)
+                .contains(".lvk/shared/tmp/")
         );
     }
 

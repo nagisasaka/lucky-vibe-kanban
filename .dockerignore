@@ -56,7 +56,8 @@ Dockerfile*
 !**/.env.example
 **/secrets/
 **/backups/
-**/.lvk-shared/
+**/.lvk/shared/
+**/.lvk/attachments/
 **/.codex/
 **/.ssh/
 **/.agents/

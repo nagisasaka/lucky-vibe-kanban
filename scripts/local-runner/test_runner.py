@@ -139,8 +139,10 @@ class RunnerTest(unittest.TestCase):
         self.assertEqual((first.source / 'app.txt').read_text(), 'dirty')
 
     def test_unsafe_paths_hashes_and_artifact_symlinks(self):
-        for path in ('../escape', '/etc/file', 'C:file', 'NUL.txt', 'a\\b', '.git/config', 'a.', 'a:ads'):
+        for path in ('../escape', '/etc/file', 'C:file', 'NUL.txt', 'a\\b', '.git/config', '.lvk/shared/cache/a', 'repo/.LVK/Attachments/a', 'a.', 'a:ads'):
             with self.assertRaises(ValueError, msg=path): safe_path(path)
+        for path in ('.lvk/integration-validation.json', '.lvk/preview/vite.config.mjs', 'src/shared/a'):
+            self.assertEqual(safe_path(path), path)
         data = delivery()['source']
         data['files'][0]['content'] = base64.b64encode(b'tampered').decode()
         with self.assertRaises(ValueError): materialize(data, self.root / 'tampered')

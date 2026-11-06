@@ -47,7 +47,7 @@ for sig in (signal.SIGINT, signal.SIGTERM):
     signal.signal(sig, request_stop)
 try:
     children.append(subprocess.Popen([str(server)], cwd=repo, env=env))
-    children.append(subprocess.Popen(['node', 'node_modules/vite/bin/vite.js', '--config', str(repo / '.lvk-preview/vite.config.mjs')], cwd=repo / 'packages/local-web', env=env))
+    children.append(subprocess.Popen(['node', 'node_modules/vite/bin/vite.js', '--config', str(repo / '.lvk/preview/vite.config.mjs')], cwd=repo / 'packages/local-web', env=env))
     while not stop and all(p.poll() is None for p in children):
         time.sleep(0.2)
 finally:

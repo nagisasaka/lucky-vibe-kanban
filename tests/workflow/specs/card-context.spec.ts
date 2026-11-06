@@ -23,15 +23,17 @@ test("context is collapsed, read-only and independent of the task description", 
   // select this fixture's optional Pipeline before testing independent toggles.
   await page.getByRole("checkbox", { name: "LLM Wiki", exact: true }).check();
   const shared = page.getByRole("checkbox", {
-    name: "Shared directories",
+    name: "Shared directory guidance",
     exact: true,
   });
   await expect(shared).toBeChecked();
-  await expect(preview).toHaveValue(/\.lvk-shared\/cache/);
-  await expect(preview).toHaveValue(/\.lvk-shared\/persistent/);
-  await expect(preview).not.toHaveValue(/\.lvk\//);
+  await expect(preview).toHaveValue(/\.lvk\/shared\/cache/);
+  await expect(preview).toHaveValue(/\.lvk\/shared\/persistent/);
+  await expect(preview).toHaveValue(/\.lvk\/shared\/tmp/);
+  await expect(preview).toHaveValue(/Run completion does not delete tmp contents/);
+  await expect(preview).not.toHaveValue(/\.lvk\/integration-validation\.json/);
   await shared.uncheck();
-  await expect(preview).not.toHaveValue(/\.lvk-shared\/persistent/);
+  await expect(preview).not.toHaveValue(/\.lvk\/shared\/persistent/);
   await expect(preview).toHaveValue(/Consult prior knowledge/);
   await page
     .getByRole("textbox", { name: "Task description" })
@@ -58,7 +60,7 @@ test("legacy Wiki instructions are displayed separately without changing stored 
     page.getByRole("checkbox", { name: "LLM Wiki", exact: true }),
   ).toBeChecked();
   await expect(
-    page.getByRole("checkbox", { name: "Shared directories", exact: true }),
+    page.getByRole("checkbox", { name: "Shared directory guidance", exact: true }),
   ).not.toBeChecked();
   await expect(page.getByTestId("stored-description")).toHaveText(stored!);
 });

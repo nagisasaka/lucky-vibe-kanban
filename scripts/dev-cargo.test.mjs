@@ -23,7 +23,7 @@ test('development policy, shared intermediates, runtime boundary, lock and clean
       const cwd = join(dir, name); mkdirSync(join(cwd, 'src'), { recursive: true });
       mkdirSync(join(cwd, 'scripts'));
       cpSync(join(scripts, 'dev-cargo.mjs'), join(cwd, 'scripts/dev-cargo.mjs'));
-      if (share) { mkdirSync(join(cwd, '.lvk-shared')); symlinkSync(shared, join(cwd, '.lvk-shared/cache')); }
+      if (share) { mkdirSync(join(cwd, '.lvk/shared'), { recursive: true }); symlinkSync(shared, join(cwd, '.lvk/shared/cache')); }
       writeFileSync(join(cwd, 'Cargo.toml'), '[package]\nname="probe"\nversion="0.1.0"\nedition="2021"\n[profile.release]\ndebug=1\nstrip=true\nsplit-debuginfo="packed"\n');
       writeFileSync(join(cwd, 'src/main.rs'), `fn main() { for key in ["SCCACHE_DIR", "CARGO_BUILD_BUILD_DIR", "CARGO_PROFILE_DEV_DEBUG", "CARGO_INCREMENTAL", "CARGO_UNSTABLE_CHECKSUM_FRESHNESS", "RUSTC_WRAPPER"] { println!("{}={}", key, std::env::var(key).unwrap_or_default()); } if let Some(path) = std::env::args().nth(1) { let child = std::process::Command::new("cargo").args(["-Z", "unstable-options", "config", "get", "build.build-dir"]).current_dir(path).output().unwrap(); println!("child-config={}", child.status.success()); } }`);
       return cwd;
@@ -166,7 +166,7 @@ test('specialised validation runner does not auto-configure a compiler cache or 
     const called = join(dir, 'sccache-called');
     writeFileSync(join(dir, 'sccache'), `#!${process.execPath}\nrequire('node:fs').writeFileSync(${JSON.stringify(called)}, 'called'); process.exit(99);`, { mode: 0o755 });
     // Reproduce the old shared-cache discovery precondition without real shared data.
-    mkdirSync(join(dir, '.lvk-shared/cache'), { recursive: true });
+    mkdirSync(join(dir, '.lvk/shared/cache'), { recursive: true });
     const env = { ...process.env, PATH: `${dir}${delimiter}${process.env.PATH}` };
     for (const key of Object.keys(env)) if (/^(RUSTC_WRAPPER|SCCACHE_)/.test(key)) delete env[key];
     const inspect = (extra) => {

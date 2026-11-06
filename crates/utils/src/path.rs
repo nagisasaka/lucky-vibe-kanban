@@ -3,11 +3,41 @@ use std::path::{Path, PathBuf};
 use crate::assets::asset_dir;
 
 /// Directory name for storing attachments in worktrees
-pub const VIBE_ATTACHMENTS_DIR: &str = ".vibe-attachments";
+pub const LVK_ATTACHMENTS_DIR: &str = ".lvk/attachments";
 
 /// Directories that should always be skipped regardless of gitignore.
 /// .git is not in .gitignore but should never be watched.
-pub const ALWAYS_SKIP_DIRS: &[&str] = &[".git", "node_modules", ".lvk-shared"];
+pub const ALWAYS_SKIP_DIRS: &[&str] = &[".git", "node_modules"];
+
+/// Runtime subtrees, relative to an agent/repository root. Never exclude all of .lvk.
+pub const LVK_RUNTIME_DIRS: &[&str] = &[".lvk/shared", ".lvk/attachments"];
+
+/// Match complete path components; ordinary shared/attachments directories remain visible.
+pub fn is_lvk_runtime_path(path: &Path) -> bool {
+    let parts: Vec<_> = path
+        .components()
+        .filter_map(|c| match c {
+            std::path::Component::Normal(p) => p.to_str(),
+            _ => None,
+        })
+        .collect();
+    parts
+        .windows(2)
+        .any(|pair| pair[0] == ".lvk" && matches!(pair[1], "shared" | "attachments"))
+}
+
+pub fn should_skip_path(path: &Path) -> bool {
+    is_lvk_runtime_path(path)
+        || path.components().any(|c| match c {
+            std::path::Component::Normal(p) => {
+                p.to_str().is_some_and(|p| ALWAYS_SKIP_DIRS.contains(&p))
+            }
+            _ => false,
+        })
+}
+
+/// Core storage guidance accompanies the host-provided writable roots, including resumes.
+pub const SHARED_RESOURCE_GUIDANCE: &str = "LVK repository-scoped shared storage: when present and permitted, use .lvk/shared/tmp/ for temporary handoffs of artifacts or information between Workspaces of the same registered repository; .lvk/shared/cache/ for reproducible reusable data; and .lvk/shared/persistent/ for shared data that must be retained. Paths are relative to each attached repository, not necessarily the agent working directory. Different repositories have separate storage. These entries link to repository-scoped storage outside the Workspace. Never commit their contents or expose secrets. tmp contents are not durable records: preserve required results in an appropriate retained destination. Run completion does not delete tmp contents, because a recipient may read them later. Clean up only after the handoff is complete and the contents are no longer needed or in use; never delete another task's pending handoff or active data. Humans may bulk-clean unneeded tmp contents under the same conditions. There is no automatic Run-end cleanup, TTL or periodic cleanup. Check availability before use; direct-folder workspaces may not provide these links.";
 
 /// Convert absolute paths to relative paths based on worktree path
 /// This is a robust implementation that handles symlinks and edge cases
@@ -179,6 +209,28 @@ pub fn expand_tilde(path_str: &str) -> std::path::PathBuf {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn runtime_paths_match_only_the_lvk_children() {
+        for path in [
+            ".lvk/shared",
+            ".lvk/attachments/a.png",
+            "repo/.lvk/shared/cache/a",
+        ] {
+            assert!(is_lvk_runtime_path(Path::new(path)), "{path}");
+        }
+        for path in [
+            ".lvk",
+            ".lvk/.gitignore",
+            ".lvk/integration-validation.json",
+            ".lvk/preview/vite.config.mjs",
+            "src/shared/a",
+            "attachments/a",
+            ".lvk/shared-config.json",
+        ] {
+            assert!(!should_skip_path(Path::new(path)), "{path}");
+        }
+    }
 
     #[test]
     fn shared_resources_name_is_readable_and_uses_the_full_repo_id() {

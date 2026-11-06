@@ -95,7 +95,7 @@ function useAttachmentMetadata(
   src: string,
   localAttachments: LocalAttachmentMetadata[]
 ) {
-  const isWorkspaceAttachment = src.startsWith('.vibe-attachments/');
+  const isWorkspaceAttachment = src.startsWith('.lvk/attachments/');
 
   const localAttachment = useMemo(
     () => localAttachments.find((attachment) => attachment.path === src),
@@ -166,7 +166,7 @@ export function createAttachmentNode(options: CreateAttachmentNodeOptions) {
     const localAttachments = useLocalAttachments();
     const [editor] = useLexicalComposerContext();
 
-    const isWorkspaceAttachment = src.startsWith('.vibe-attachments/');
+    const isWorkspaceAttachment = src.startsWith('.lvk/attachments/');
     const isPendingAttachment = src.startsWith('pending-attachment://');
     const isAttachment = isPendingAttachment || src.startsWith('attachment://');
     const attachmentId =
@@ -318,7 +318,7 @@ export function createAttachmentNode(options: CreateAttachmentNodeOptions) {
     serialization: {
       format: 'inline',
       pattern:
-        /(?<!!)\[([^\]]+)\]\((attachment:\/\/[^)]+|pending-attachment:\/\/[^)]+|\.vibe-attachments\/[^)]+)\)/,
+        /(?<!!)\[([^\]]+)\]\((attachment:\/\/[^)]+|pending-attachment:\/\/[^)]+|\.lvk\/attachments\/[^)]+)\)/,
       trigger: ')',
       serialize: (data) => `[${data.label}](${data.src})`,
       deserialize: (match) => ({ src: match[2], label: match[1] }),

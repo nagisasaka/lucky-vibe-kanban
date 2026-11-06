@@ -1057,6 +1057,7 @@ impl GitCli {
     fn get_default_pathspec_excludes() -> Vec<OsString> {
         ALWAYS_SKIP_DIRS
             .iter()
+            .chain(utils::path::LVK_RUNTIME_DIRS.iter())
             .map(|d| OsString::from(format!(":(glob,exclude)**/{d}/")))
             .collect()
     }

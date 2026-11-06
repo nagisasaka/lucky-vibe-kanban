@@ -126,7 +126,7 @@ function useImageMetadata(
   src: string,
   localAttachments: LocalAttachmentMetadata[]
 ) {
-  const isVibeImage = src.startsWith('.vibe-attachments/');
+  const isVibeImage = src.startsWith('.lvk/attachments/');
 
   const localImage = useMemo(
     () => localAttachments.find((attachment) => attachment.path === src),
@@ -199,7 +199,7 @@ export function createImageNode(options: CreateImageNodeOptions) {
     const localAttachments = useLocalAttachments();
     const [editor] = useLexicalComposerContext();
 
-    const isVibeImage = src.startsWith('.vibe-attachments/');
+    const isVibeImage = src.startsWith('.lvk/attachments/');
     const isPendingAttachment = src.startsWith('pending-attachment://');
     const isAttachment = isPendingAttachment || src.startsWith('attachment://');
     const attachmentId =

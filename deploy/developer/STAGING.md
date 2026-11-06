@@ -19,7 +19,7 @@ Preview builds use `node scripts/dev-cargo.mjs build`: opt-level=0,
 line-tables-only, strip=none, split-debuginfo=off and incremental=true
 (release remains false).
 Final targets are source-checkout-local; intermediates share the official Cargo
-build-dir only when that checkout has `.lvk-shared/cache`. Missing shared storage
+build-dir only when that checkout has `.lvk/shared/cache`. Missing shared storage
 uses the entry's reported fallback; no compiler cache daemon is required.
 
 Staging describes an environment, not a Cargo profile. This kit uses debug
