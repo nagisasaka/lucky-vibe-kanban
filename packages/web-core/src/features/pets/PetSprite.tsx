@@ -26,17 +26,21 @@ export function PetSprite({
   const button = useRef<HTMLButtonElement>(null);
   const [direction, setDirection] = useState<number | null>(null);
   const [loaded, setLoaded] = useState(false);
-  const [reaction, setReaction] = useState(false);
+  const [reaction, setReaction] = useState<PetState | null>(null);
   const [frame, setFrame] = useState(0);
   const [visible, setVisible] = useState(!document.hidden);
   const [reduced, setReduced] = useState(
     () => matchMedia('(prefers-reduced-motion: reduce)').matches
   );
   const reactionTimer = useRef<ReturnType<typeof setTimeout>>();
-  const active = reaction ? 'waving' : state;
+  const active = state === 'failed' ? 'failed' : (reaction ?? state);
   const animationRow = PET_STATES.findIndex((s) => s.name === active);
   const following =
-    version === 2 && active === 'idle' && visible && !reduced && loaded;
+    version === 2 &&
+    (active === 'idle' || active === 'waiting') &&
+    visible &&
+    !reduced &&
+    loaded;
   const looking = following ? direction : null;
   const row = looking === null ? animationRow : 9 + Math.floor(looking / 8);
   const column =
@@ -107,9 +111,15 @@ export function PetSprite({
   }, [active, animationRow, src, visible, reduced, looking]);
   useEffect(() => () => clearTimeout(reactionTimer.current), []);
   const react = () => {
-    setReaction(true);
+    if (state !== 'idle' && state !== 'running') return;
+    const next = state === 'running' ? 'review' : 'jumping';
+    setReaction(next);
     clearTimeout(reactionTimer.current);
-    reactionTimer.current = setTimeout(() => setReaction(false), 700);
+    const duration = PET_STATES.find((s) => s.name === next)!.durations.reduce(
+      (a, b) => a + b,
+      0
+    );
+    reactionTimer.current = setTimeout(() => setReaction(null), duration);
   };
   // Real <img> keeps source handling out of CSS; only numeric transforms vary.
   return (

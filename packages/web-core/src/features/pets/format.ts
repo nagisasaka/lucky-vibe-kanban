@@ -24,7 +24,22 @@ export type PetManifest = {
   license?: string;
 };
 export class PetError extends Error {
-  constructor(public code: 'invalid' | 'size' | 'unsupported' | 'storage') {
+  constructor(
+    public code:
+      | 'invalid'
+      | 'unsupported'
+      | 'storage'
+      | 'zip_size'
+      | 'expanded_size'
+      | 'entry_size'
+      | 'manifest_size'
+      | 'license_size'
+      | 'ratio_size'
+      | 'collection_size'
+      | 'entry_count',
+    public actual?: number,
+    public limit?: number
+  ) {
     super(code);
   }
 }
@@ -37,7 +52,8 @@ export function localPath(path: string): boolean {
   );
 }
 export function parseManifest(bytes: Uint8Array): PetManifest {
-  if (bytes.length > 16384) throw new PetError('size');
+  if (bytes.length > 16384)
+    throw new PetError('manifest_size', bytes.length, 16384);
   let value: unknown;
   try {
     value = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes));
@@ -244,8 +260,9 @@ export function lookDirection(
 }
 
 // v1 retains its historical dimension/decode-only acceptance. For v2 all
-// required cells have content and unused tails are transparent. This checks
-// structure, not artistic pose semantics.
+// required cells have content and unused tails are transparent, except the
+// optional producer neutral pose at row 0, column 6. It is not an idle frame
+// or look direction 0. This checks structure, not artistic pose semantics.
 export function validateAtlas(
   image: CanvasImageSource,
   width: number,
@@ -276,7 +293,9 @@ export function validateAtlas(
           }
         }
         const required = col < count;
-        if (occupied !== required) throw new PetError('invalid');
+        const optionalNeutral = row === 0 && col === 6;
+        if (!optionalNeutral && occupied !== required)
+          throw new PetError('invalid');
       }
     }
   } finally {

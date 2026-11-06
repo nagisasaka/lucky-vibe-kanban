@@ -5,7 +5,8 @@ import {
   importPet,
   restorePreferences,
 } from './library';
-import { crc32, MAX_ZIP } from './zip';
+import { MAX_ZIP } from './zip';
+import { crc32 } from './zip-fixture.test-helper';
 
 const encode = (s: string) => new TextEncoder().encode(s);
 const manifest = {
@@ -154,6 +155,16 @@ describe('isolated local pet import', () => {
     vi.stubGlobal('createImageBitmap', decode);
     return { close, decode };
   }
+  it('rejects the reported delivery ZIP size before reading or decoding its contents', async () => {
+    const arrayBuffer = vi.fn();
+    const file = { size: 14512968, arrayBuffer } as unknown as File;
+    await expect(importPet(file)).rejects.toMatchObject({
+      code: 'zip_size',
+      actual: 14512968,
+      limit: 8388608,
+    });
+    expect(arrayBuffer).not.toHaveBeenCalled();
+  });
   it('imports nested packages and preserves exact original manifest and license text', async () => {
     const { close, decode } = decoder(),
       root = 'rabbit/';

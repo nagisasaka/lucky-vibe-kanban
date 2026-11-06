@@ -1,6 +1,7 @@
 export const attachmentsApi = {
   upload: async (image: File) => {
-    await fetch("/fixture-upload", { method: "POST", body: image });
+    const response = await fetch("/fixture-upload", { method: "POST", body: image });
+    if (!response.ok) throw new Error("Fixture upload failure");
     const data = await new Promise<string>((resolve) => {
       const reader = new FileReader();
       reader.onload = () => resolve(String(reader.result));

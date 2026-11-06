@@ -131,11 +131,11 @@ try {
     'sidebar body 80px; nine rows scaled consistently; default sprites stay 64px'
   );
   await pet.click();
-  await expect(pet).toHaveAttribute('data-pet-state', 'waving');
+  await expect(pet).toHaveAttribute('data-pet-state', 'jumping');
   await expect(pet).toHaveAttribute('data-pet-state', 'idle', {
     timeout: 2000,
   });
-  cases.push('click waving reaction returns to idle');
+  cases.push('click jumping reaction returns to idle');
   for (const dark of [false, true]) {
     await page.evaluate(
       (d) => document.documentElement.classList.toggle('dark', d),
@@ -276,7 +276,7 @@ try {
           }
         if (paintedTail) {
           ctx.fillStyle = '#ff0000';
-          ctx.fillRect(6 * 192, 0, 1, 1);
+          ctx.fillRect(7 * 192, 0, 1, 1);
         }
         return canvas.toDataURL(mime, 1);
       },
@@ -312,7 +312,7 @@ try {
     const ctx = c.getContext('2d');
     ctx.fillStyle = '#e47c29';
     ctx.fillRect(60, 50, 72, 100);
-    ctx.fillRect(6 * 192, 0, 1, 1);
+    ctx.fillRect(7 * 192, 0, 1, 1);
     return c.toDataURL('image/png');
   });
   const legacyManifest = {
@@ -342,6 +342,64 @@ try {
   assert.equal(restoredVersion, undefined);
   cases.push(
     'legacy saved v1 without version: empty required cells and painted tail remain accepted after import and reload, no Rabbit fallback'
+  );
+  // Exact producer occupancy count in the optional neutral cell, with safe
+  // geometric content only. 192*112 + 78 = 21,582 nontransparent pixels.
+  const neutralPng = await page.evaluate(
+    async (source) => {
+      const image = await createImageBitmap(await (await fetch(source)).blob());
+      const canvas = document.createElement('canvas');
+      canvas.width = 1536;
+      canvas.height = 2288;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(image, 0, 0);
+      image.close();
+      ctx.fillStyle = '#2877cc';
+      ctx.fillRect(6 * 192, 0, 192, 112);
+      ctx.fillRect(6 * 192, 112, 78, 1);
+      return canvas.toDataURL('image/png');
+    },
+    await makeAtlas()
+  );
+  for (const encoding of ['png', 'webp']) {
+    const data =
+      encoding === 'png'
+        ? neutralPng
+        : await page.evaluate(async (source) => {
+            const image = await createImageBitmap(
+              await (await fetch(source)).blob()
+            );
+            const canvas = document.createElement('canvas');
+            canvas.width = 1536;
+            canvas.height = 2288;
+            canvas.getContext('2d').drawImage(image, 0, 0);
+            image.close();
+            return canvas.toDataURL('image/webp', 1);
+          }, neutralPng);
+    const name = `V2 neutral ${encoding} fixture`;
+    await sidebar
+      .locator('input[type=file]')
+      .setInputFiles(
+        await packAtlas(
+          `v2-neutral-${encoding}`,
+          {
+            ...v2Manifest,
+            displayName: name,
+            spritesheetPath: `sheet.${encoding}`,
+          },
+          data
+        )
+      );
+    await expect(
+      sidebar.getByRole('button', { name, exact: true })
+    ).toHaveAttribute('data-pet-version', '2');
+    await page.reload();
+    await expect(
+      sidebar.getByRole('button', { name, exact: true })
+    ).toHaveAttribute('data-pet-version', '2');
+  }
+  cases.push(
+    'producer-style v2 optional neutral cell row0/col6 with21,582 occupied pixels imports and restores as PNG/WebP; idle keeps six frames, other tails still rejected'
   );
   const v2Png = await makeAtlas();
   await sidebar
@@ -398,9 +456,9 @@ try {
   );
   await expect(v2).not.toHaveAttribute('data-pet-direction');
   await v2.click();
-  await expect(v2).toHaveAttribute('data-pet-state', 'waving');
+  await expect(v2).toHaveAttribute('data-pet-state', 'jumping');
   await expect(v2).not.toHaveAttribute('data-pet-direction');
-  await expect(v2.locator('img')).toHaveCSS('top', '-240px');
+  await expect(v2.locator('img')).toHaveCSS('top', '-320px');
   await expect(v2).toHaveAttribute('data-pet-state', 'idle', { timeout: 2000 });
   await sidebar.getByLabel('Animation preview').selectOption('running');
   await page.mouse.move(bounds.x + 88, bounds.y + 40);
@@ -521,6 +579,177 @@ try {
   cases.push(
     'v2 settings/sidebar screenshots: en/ja, 360px dark and desktop light; no horizontal overflow'
   );
+  // Exercise actual file change event and asynchronous feedback, not just parser results.
+  await page.setViewportSize({ width: 360, height: 700 });
+  await page.goto(base + '?lang=en');
+  let releaseUpload;
+  const uploadGate = new Promise((resolve) => {
+    releaseUpload = resolve;
+  });
+  await page.route(
+    '**/fixture-upload',
+    async (route) => {
+      await uploadGate;
+      await route.continue();
+    },
+    { times: 1 }
+  );
+  const fileInput = sidebar.locator('input[type=file]');
+  const chooserReady = page.waitForEvent('filechooser');
+  await fileInput.click();
+  const chooser = await chooserReady;
+  await chooser.setFiles(path.join(scratch, 'v2-png.zip'));
+  const feedback = sidebar.getByRole('status');
+  await expect(feedback).toContainText('Importing');
+  await expect(feedback).toContainText('v2-png.zip');
+  await expect(fileInput).toBeDisabled();
+  const nearby = await feedback.evaluate((el) => {
+    const input = document.querySelector('input[type=file]');
+    return {
+      gap:
+        el.getBoundingClientRect().top - input.getBoundingClientRect().bottom,
+      described: input.getAttribute('aria-describedby') === el.id,
+    };
+  });
+  assert.ok(nearby.gap >= 0 && nearby.gap < 60);
+  assert.equal(nearby.described, true);
+  releaseUpload();
+  await expect(feedback).toContainText('Imported V2 direction fixture.');
+  await expect(fileInput).toBeEnabled();
+  await page.route(
+    '**/fixture-upload',
+    (route) => route.fulfill({ status: 500, body: 'fixture failure' }),
+    { times: 1 }
+  );
+  const selectionBeforeFailure = await sidebar
+    .locator('select')
+    .first()
+    .inputValue();
+  await fileInput.setInputFiles(path.join(scratch, 'v2-png.zip'));
+  await expect(feedback).toContainText('Could not load or save');
+  await expect(sidebar.locator('select').first()).toHaveValue(
+    selectionBeforeFailure
+  );
+  await expect(feedback).not.toContainText('Imported');
+  await expect(fileInput).toBeEnabled();
+  await fileInput.setInputFiles({
+    name: 'invalid.zip',
+    mimeType: 'application/zip',
+    buffer: Buffer.from('invalid'),
+  });
+  await expect(feedback).toContainText('Invalid or damaged');
+  await expect(feedback).toContainText('invalid.zip');
+  await page.screenshot({
+    path: path.join(output, 'zip-feedback-360.png'),
+    fullPage: true,
+  });
+  cases.push(
+    'file input change: nearby live feedback and filename during pending upload, durable success, HTTP failure and invalid ZIP; selection retained and retry enabled'
+  );
+  const uploadsBeforeLimit = uploads;
+  await fileInput.setInputFiles({
+    name: 'lvk-rabbit-depth-b-v2-delivery.zip',
+    mimeType: 'application/zip',
+    buffer: Buffer.alloc(14512968),
+  });
+  await expect(feedback).toContainText('ZIP is too large');
+  await expect(feedback).toContainText('14,512,968');
+  await expect(feedback).toContainText('8,388,608');
+  assert.equal(uploads, uploadsBeforeLimit);
+  await page.screenshot({
+    path: path.join(output, 'zip-size-limit-360.png'),
+    fullPage: true,
+  });
+  await page.evaluate(() => {
+    const p = JSON.parse(localStorage.getItem('pet-fixture'));
+    const source = p.pets.find((pet) => pet.manifest.spriteVersionNumber === 2);
+    p.pets = Array.from({ length: 12 }, () => ({
+      ...source,
+      key: crypto.randomUUID(),
+    }));
+    p.selected = p.pets[0].key;
+    localStorage.setItem('pet-fixture', JSON.stringify(p));
+  });
+  await page.reload();
+  await sidebar.locator('input[type=file]').setInputFiles({
+    name: 'attempt.zip',
+    mimeType: 'application/zip',
+    buffer: Buffer.from('not read when collection full'),
+  });
+  await expect(sidebar.getByRole('status')).toContainText(
+    'collection is full (12 of 12 pets)'
+  );
+  await expect(sidebar.getByRole('status')).not.toContainText(
+    'ZIP is too large'
+  );
+  assert.equal(uploads, uploadsBeforeLimit);
+  cases.push(
+    'reported 14,512,968-byte metadata reproduces pre-read ZIP size refusal with numeric limit; isolated 12-pet collection gives a separate error and neither uploads'
+  );
+  await page.goto(base + '?lang=ja');
+  await sidebar.locator('input[type=file]').setInputFiles({
+    name: 'attempt.zip',
+    mimeType: 'application/zip',
+    buffer: Buffer.from('not read'),
+  });
+  await expect(sidebar.getByRole('status')).toContainText('保存済みPetが上限');
+  await page.evaluate(() => localStorage.removeItem('pet-fixture'));
+  await page.reload();
+  await sidebar.locator('input[type=file]').setInputFiles({
+    name: 'lvk-rabbit-depth-b-v2-delivery.zip',
+    mimeType: 'application/zip',
+    buffer: Buffer.alloc(14512968),
+  });
+  await expect(sidebar.getByRole('status')).toContainText(
+    'ZIPファイルが大きすぎます'
+  );
+  await expect(sidebar.getByRole('status')).toContainText('14,512,968');
+  await expect(sidebar.getByRole('status')).toContainText('8,388,608');
+  await page.screenshot({
+    path: path.join(output, 'zip-size-limit-ja-360.png'),
+    fullPage: true,
+  });
+  assert.equal(uploads, uploadsBeforeLimit);
+
+  await page.clock.install();
+  await page.reload();
+  const live = page.locator('aside [data-pet-state]');
+  await expect(live).toHaveAttribute('data-pet-state', 'idle');
+  await page.clock.fastForward(180001);
+  await expect(live).toHaveAttribute('data-pet-state', 'waiting');
+  await page.evaluate(() => document.dispatchEvent(new PointerEvent('pointerover', { pointerType: 'mouse', relatedTarget: null })));
+  await expect(live).toHaveAttribute('data-pet-state', 'idle');
+  await page.clock.fastForward(179000);
+  await page.evaluate(() => document.dispatchEvent(new PointerEvent('pointerover', { pointerType: 'mouse', relatedTarget: null })));
+  await page.clock.runFor(2000);
+  await expect(live).toHaveAttribute('data-pet-state', 'idle');
+  await page.evaluate(() => Object.defineProperty(window, 'screenX', { configurable: true, value: window.screenX + 20 }));
+  await page.clock.runFor(151);
+  await expect(live).toHaveAttribute('data-pet-state', 'running-right');
+  await page.clock.runFor(301);
+  await expect(live).toHaveAttribute('data-pet-state', 'idle');
+  await page.evaluate(() => Object.defineProperty(window, 'screenX', { configurable: true, value: window.screenX - 20 }));
+  await page.clock.runFor(151);
+  await expect(live).toHaveAttribute('data-pet-state', 'running-left');
+  await page.getByLabel('Live state').selectOption('failed');
+  await expect(live).toHaveAttribute('data-pet-state', 'failed');
+  await live.click();
+  await page.clock.runFor(500);
+  await expect(live).toHaveAttribute('data-pet-state', 'failed');
+  await page.getByLabel('Live state').selectOption('running');
+  await expect(live).toHaveAttribute('data-pet-state', 'running');
+  await live.click();
+  await expect(live).toHaveAttribute('data-pet-state', 'review');
+  await page.clock.runFor(1200);
+  await expect(live).toHaveAttribute('data-pet-state', 'running');
+  await page.getByLabel('Live state').selectOption('idle');
+  await expect(live).toHaveAttribute('data-pet-state', 'idle');
+  await page.clock.fastForward(180001);
+  await expect(live).toHaveAttribute('data-pet-state', 'waiting');
+  await page.evaluate(() => document.dispatchEvent(new PointerEvent('pointerout', { relatedTarget: null })));
+  await expect(live).toHaveAttribute('data-pet-state', 'idle');
+  cases.push('live behavior: 3min waiting, entry reset, leave idle, simulated window directions/stop, failure priority/click blocked, running review once and recovery');
+
   assert.deepEqual(errors, []);
   console.log(
     JSON.stringify({ status: 'passed', cases, errors, uploads }, null, 2)

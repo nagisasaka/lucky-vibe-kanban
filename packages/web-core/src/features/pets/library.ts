@@ -66,7 +66,7 @@ export async function importPet(file: File): Promise<{
   licenseText: string;
   image: File;
 }> {
-  if (file.size > MAX_ZIP) throw new PetError('size');
+  if (file.size > MAX_ZIP) throw new PetError('zip_size', file.size, MAX_ZIP);
   const entries = await readPetZip(new Uint8Array(await file.arrayBuffer()));
   const manifests = [...entries.keys()].filter(
     (name) => name === 'pet.json' || name.endsWith('/pet.json')
@@ -98,7 +98,8 @@ export async function importPet(file: File): Promise<{
         name.slice(root.length)
       ) && name.startsWith(root)
   );
-  if (license && license[1].length > 65536) throw new PetError('size');
+  if (license && license[1].length > 65536)
+    throw new PetError('license_size', license[1].length, 65536);
   return {
     manifest,
     originalManifest: new TextDecoder().decode(raw),

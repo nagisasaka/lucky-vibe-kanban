@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { JsonValue } from 'shared/types';
 import { attachmentsApi } from '@/shared/lib/api';
 import { persistPetPreferences } from '@/shared/lib/petPreferencesPersistence';
 import { useUiPreferencesStore } from '@/shared/stores/useUiPreferencesStore';
+import { usePetBehavior } from './usePetBehavior';
 import { PetSprite } from './PetSprite';
 import { PetError, PET_STATES, type PetState } from './format';
 import {
@@ -15,19 +16,33 @@ import {
 
 const SIDEBAR_PET_SIZE = 80;
 
-export function SidebarPet() {
-  return <PetContent />;
+export function SidebarPet({
+  state = 'idle',
+}: {
+  state?: 'idle' | 'running' | 'failed';
+}) {
+  return <PetContent liveState={state} />;
 }
 export function PetSettings() {
   return <PetContent settings />;
 }
-function PetContent({ settings = false }: { settings?: boolean }) {
-  const { t } = useTranslation('common');
+function PetContent({
+  settings = false,
+  liveState = 'idle',
+}: {
+  settings?: boolean;
+  liveState?: 'idle' | 'running' | 'failed';
+}) {
+  const behavior = usePetBehavior(liveState, !settings);
+  const { t, i18n } = useTranslation('common');
   const raw = useUiPreferencesStore((s) => s.petPreferences);
   const save = useUiPreferencesStore((s) => s.setPetPreferences);
   const preferences = restorePreferences(raw);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [fileName, setFileName] = useState('');
+  const [imported, setImported] = useState('');
+  const feedbackId = useId();
   const [failedSource, setFailedSource] = useState('');
   const [preview, setPreview] = useState<PetState>('idle');
   const selected = preferences.pets.find((p) => p.key === preferences.selected);
@@ -46,6 +61,8 @@ function PetContent({ settings = false }: { settings?: boolean }) {
     save(value);
   };
   const update = async (next: PetPreferences) => {
+    setFileName('');
+    setImported('');
     setBusy(true);
     setError('');
     try {
@@ -57,17 +74,21 @@ function PetContent({ settings = false }: { settings?: boolean }) {
     }
   };
   const upload = async (file: File) => {
+    setFileName(file.name);
+    setImported('');
     setBusy(true);
     setError('');
     try {
-      if (preferences.pets.length >= 12) throw new PetError('size');
+      if (preferences.pets.length >= 12)
+        throw new PetError('collection_size', preferences.pets.length, 12);
       const pet = await importPet(file);
       const attachment = await attachmentsApi.upload(pet.image);
       // Read latest preferences after the asynchronous import; never lose a concurrent selection.
       const current = restorePreferences(
         useUiPreferencesStore.getState().petPreferences
       );
-      if (current.pets.length >= 12) throw new PetError('size');
+      if (current.pets.length >= 12)
+        throw new PetError('collection_size', current.pets.length, 12);
       const key = crypto.randomUUID();
       await commit({
         selected: key,
@@ -85,8 +106,20 @@ function PetContent({ settings = false }: { settings?: boolean }) {
       });
       setFailedSource('');
       setPreview('idle');
+      setImported(pet.manifest.displayName);
     } catch (e) {
-      setError(t(`pets.errors.${e instanceof PetError ? e.code : 'storage'}`));
+      setError(
+        t(`pets.errors.${e instanceof PetError ? e.code : 'storage'}`, {
+          actual:
+            e instanceof PetError
+              ? e.actual?.toLocaleString(i18n.language)
+              : undefined,
+          limit:
+            e instanceof PetError
+              ? e.limit?.toLocaleString(i18n.language)
+              : undefined,
+        })
+      );
     } finally {
       setBusy(false);
     }
@@ -103,7 +136,7 @@ function PetContent({ settings = false }: { settings?: boolean }) {
           src={src}
           name={name}
           size={SIDEBAR_PET_SIZE}
-          state={preview}
+          state={settings ? preview : behavior}
           version={
             isFallback ? 1 : (selected?.manifest.spriteVersionNumber ?? 1)
           }
@@ -156,6 +189,7 @@ function PetContent({ settings = false }: { settings?: boolean }) {
           <input
             type="file"
             accept=".zip,application/zip"
+            aria-describedby={feedbackId}
             disabled={busy}
             className="block w-full"
             onChange={(e) => {
@@ -165,6 +199,18 @@ function PetContent({ settings = false }: { settings?: boolean }) {
             }}
           />
         </label>
+        <p
+          id={feedbackId}
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+          className={`break-words ${error ? 'text-error' : 'text-normal'}`}
+        >
+          {fileName && <span className="block text-low">{fileName}</span>}
+          {busy
+            ? t('pets.importing')
+            : error || (imported ? t('pets.imported', { name: imported }) : '')}
+        </p>
         <p>{t('pets.scope')}</p>
         <a
           href="https://petdex.dev/"
@@ -261,7 +307,6 @@ function PetContent({ settings = false }: { settings?: boolean }) {
             · {t('pets.unmodified')}
           </p>
         )}
-        <p role="status">{busy ? t('pets.importing') : error}</p>
       </div>
     </div>
   );
