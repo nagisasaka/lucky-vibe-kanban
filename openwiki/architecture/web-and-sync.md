@@ -244,10 +244,10 @@ sources:
     resource: repo://tests/workspace-navigation/run-isolated.py
   - id: openwiki-source-b87e3253bd1458a0091f8587
     resource: repo://tests/workspace-navigation/workspace-navigation.spec.ts
-generated: { by: "codex", at: "2026-11-06T03:09:15.108Z" }
+generated: { by: "codex", at: "2026-11-06T03:12:23.427Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-06T03:09:15.108Z
+    at: 2026-11-06T03:12:23.427Z
 ---
 
 # Web の実行環境と同期
@@ -452,7 +452,7 @@ Session 側は Run 一覧の `completed_at` を受け、会話 projection が Ru
 
 ### 最近の会話を先に表示する
 
-Session の購読は新しい2件と全 active run を foreground とし、その初期化を待って会話を公開する。残る履歴は foreground の準備後、前 batch の初期化またはエラーを待って3件ずつ追加する。既に開始した stream は新しい run の到着でも保持し、Session が変わると keyed component ごとに状態をリセットする。`isLoadingHistory` は初期表示の loading と別であり、古いログの遅延だけで最近の会話や制御を待たせない。[購読と公開](../../packages/web-core/src/features/agent-runtime/model/AgentRunSessionContext.tsx#L80-L278)、[遅延履歴・active run・Session 分離のテスト](../../tests/integration-skip/history.spec.ts)
+Session の購読は新しい2件と全 active run を foreground とし、その初期化を待って会話を公開する。残る履歴は foreground の準備後、前 batch の初期化またはエラーを待って3件ずつ追加する。開始済み stream は履歴 window から外れても保持するが、最終履歴まで初期化済みの terminal snapshot が一覧の attempt・event sequence・updated_at に追いつけば購読を解放する。snapshot は保持し、既存の2秒周期の一覧 discovery が retry や新しい更新を見つけると再購読する。active stream の切断は従来の再接続に任せ、Session が変わると keyed component ごとに状態をリセットする。`isLoadingHistory` は初期表示の loading と別であり、古いログの遅延だけで最近の会話や制御を待たせない。[購読と公開](../../packages/web-core/src/features/agent-runtime/model/AgentRunSessionContext.tsx#L80-L310)、[遅延履歴・active run・Session 分離・終了解放とretryのテスト](../../tests/integration-skip/history.spec.ts)
 
 Project Todo は Board collection や会話 stream とは別の REST query を使う。Project と Workspace の表示は同じ Project のメモを参照し、保存と競合、画面内 draft の寿命は [Todo の契約](../concepts/project-todos.md)にまとめる。
 
@@ -500,9 +500,11 @@ built-app の隔離試験は、実 backend と合成履歴、実 Scratch と制�
 
 通常 layout の bridge は解決済み target を `openTarget` へ渡し、right main panel を `FILES` へ切り替える。これにより会話からも既存の file selection / viewer を使う。ファイル名の形式、行指定、曖昧さと拒否、backend の最終検査は [チャットから Repo 内ファイルを開く契約](../operations/workspace-inspection.md#チャットから-repo-内ファイルを開く)を正本とする。[panel への接続](../../packages/web-core/src/pages/workspaces/WorkspacesLayout.tsx#L629-L656)
 
+316-A 統合ではコード候補 `f1efa2f13bc5f91cc1d4ad23a19f7c2325a0c324` と検証済み source の対象3ファイル一致・固定baseの祖先関係・差分空白を確認し、sourceで報告済みのブラウザ3件、unit10件、Rust2件等の重複実行は省略した。通信削減は購読解放と250msから5秒への定数変更に基づくコード上の推定であり、実DB性能は未測定。実provider・実ネットワーク断の検証も未実施で、retry discovery の約2秒、通知漏れ回復の最大約5秒の遅延を許容する。
+
 ## State と履歴を同期させる際の注意
 
-AgentRun stream は新しい event がゼロでも State が変われば送信する。履歴が複数ページに跨る場合は、残りの event より先に terminal State を表示させない。DB commit 後の通知は再読取のヒントであり、取りこぼしは周期 poll で補う。catch-up を有界ページで進めて Live と切断処理を挟み、WebSocket の送信にも有限 timeout を設ける。[履歴と State](../../crates/server/src/routes/agent_runs.rs#L450-L585)
+AgentRun stream は新しい event がゼロでも State が変われば送信する。履歴が複数ページに跨る場合は、残りの event より先に terminal State を表示させない。DB commit 後の通知は再読取のヒントであり、取りこぼしは5秒周期の補完 poll で補う。replay 直後の即時 tick はなく、最初の tick は5秒後となる。terminal State の直前には永続 usage snapshot を再送して、終了 stream 解放と Live 配送の競合を補う。catch-up を有界ページで進めて Live と切断処理を挟み、WebSocket の送信にも有限 timeout を設ける。[履歴と State](../../crates/server/src/routes/agent_runs.rs#L607-L797)
 
 JSON Patch stream は接続成立と初回 snapshot の Ready を分ける。再接続時は空 accumulator へ replay しつつ同じ endpoint の最後の表示を保持し、別 endpoint へ切り替えた場合は引き継がない。接続失敗を「保存済み draft は空」の証明に使わない。[snapshot の境界](../../packages/web-core/src/shared/hooks/useJsonPatchWsStream.ts#L90-L166)
 

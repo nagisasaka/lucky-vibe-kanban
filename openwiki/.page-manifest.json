@@ -16,11 +16,11 @@
       "completedRunId": "a88095ec-9603-48a5-9d7d-a85a799911f9"
     },
     "/openwiki/architecture/web-and-sync.md": {
-      "pageVersion": "sha256:9cd26abee7e20724851ffae3f9783230f3ff38ca1afda3ebd2171bfd767bb2cb",
+      "pageVersion": "sha256:32486a03f16a8a46e81a087d1e278811611935ad6a61b0271bedcfe55d709d2b",
       "completedBy": "codex",
-      "completedRunId": "035dd546-8f91-42b0-9906-60a32e49e093",
-      "gitHead": "d82ea1479e615bbc80e7735e6d39db7069c81c33",
-      "sourceFingerprint": "sha256:7db853475e00815acbc81182a12e1f765bbf5215b0b94f2fec6ceb2639e65320"
+      "completedRunId": "f631e512-a0e5-47ce-a1ce-c2097755a597",
+      "gitHead": "f1efa2f13bc5f91cc1d4ad23a19f7c2325a0c324",
+      "sourceFingerprint": "sha256:7c138ef43407b1b141f891d48b8ac9f05701718287e075d795ba235df48d5223"
     },
     "/openwiki/architecture/workflow-runtime.md": {
       "gitHead": "7bcd5db39419d50ad265592e288264c63906e1da",
@@ -142,11 +142,11 @@
       "completedRunId": "d00b4925-b7e7-42c8-aef7-9815c30059c4"
     },
     "/openwiki/concepts/workspace.md": {
+      "gitHead": "d82ea1479e615bbc80e7735e6d39db7069c81c33",
+      "sourceFingerprint": "sha256:7db853475e00815acbc81182a12e1f765bbf5215b0b94f2fec6ceb2639e65320",
       "pageVersion": "sha256:4642cbb422516d63f41a6f10af94aeb7d3cb28526bc6c6a54694c6c1ae927653",
       "completedBy": "codex",
-      "completedRunId": "035dd546-8f91-42b0-9906-60a32e49e093",
-      "gitHead": "d82ea1479e615bbc80e7735e6d39db7069c81c33",
-      "sourceFingerprint": "sha256:7db853475e00815acbc81182a12e1f765bbf5215b0b94f2fec6ceb2639e65320"
+      "completedRunId": "035dd546-8f91-42b0-9906-60a32e49e093"
     },
     "/openwiki/integrations/agent-providers.md": {
       "gitHead": "7bcd5db39419d50ad265592e288264c63906e1da",

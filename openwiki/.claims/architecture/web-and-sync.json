@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:9cd26abee7e20724851ffae3f9783230f3ff38ca1afda3ebd2171bfd767bb2cb",
+  "pageVersion": "sha256:32486a03f16a8a46e81a087d1e278811611935ad6a61b0271bedcfe55d709d2b",
   "claims": [
     {
       "id": "claim_cd547b65737e432fb2cf718c4992aa97",
@@ -57,7 +57,7 @@
       "statement": "AgentRun WebSocketはLive購読後に永続履歴をreplayし、Liveは永続cursorに影響せず最新usage snapshotも再送する。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/agent_runs.rs#L607-L679",
+          "resource": "repo://crates/server/src/routes/agent_runs.rs#L608-L680",
           "version": "repo-lines-v1:sha256:222adf548f63a92e0d624da597ca05a7c21ed3694b406d9a99cd1f2df8e48a7e:eyJzZWxlY3RlZExpbmVDb3VudCI6NzMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdhMTMzMjYzNGE0ZjNkMWM0YWE3NWRhYWVkNTUxOWIyOTczM2RjOTc0MDFlODY4Njc5YjhmOGRkMzQwMjFkMWYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE2OGNjOGMxZjliNzkwY2E0ZTYyMTJlY2EzYmJhZmRmMjk4NjIzZDFmNGVmZTdiMWQ3OTdlYWQ4NzA2ZTM3MjMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI3MDliOGY1ZDg0NzJmMmZlNjU5ZmRkZTkxOWUxZTA2ZjNmZmZjNDVjNTA3Y2E5ZWEyNzdiZWFmMDdmODNiNWEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjgxMDE1MjE0ODNjZjlmMDIzMDBlMGZiZTY4ZjQ3N2Y2ODg3ZGIwNGNmNjI3NDhhYThiNDJmMWJlMWE3ZmVjM2QifQ"
         }
       ]
@@ -175,8 +175,8 @@
       "statement": "AgentRun WebSocket は event が空でも変更された State を修復し、未配信履歴がある間は terminal State を先行送信しない。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/agent_runs.rs#L716-L765",
-          "version": "repo-lines-v1:sha256:ad8f4e68745010786511315867339141e53be751135f2fe46f5abad8e113d517:eyJzZWxlY3RlZExpbmVDb3VudCI6NTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYxMGVmMTQzZTYyMTFhYTM1Zjc1MzczZjFmNTRjMGZiZTA5YWJhNzk1MjlmYjE3YzgyMTEzZGYyNGE2OTU3NDIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM1ODc2OWU2ZmZjMDI1NTU1ZTZiNjUxMzA4ODA1MWRkZDA5ZmVkZjU0ODFmZmVjNDdiMzU5MzkwYTIzZWM1NGYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjdlODk5NTdkNTRjZDgyM2E1Mjg3NmUxYjk2OGU0NTVmZDJlZWYzMTExNGZmMDY4MjZkNGZjYjI5YWE4OTgzN2EiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjY1YWM5ODE0MDkzZmEwODExMWVmZmE2NGI0ZDJiNGNkMzgxZjZmYTUzYTdlNTEyZmEzNDA0YjljM2MyZjE4ZmUifQ"
+          "resource": "repo://crates/server/src/routes/agent_runs.rs#L720-L779",
+          "version": "repo-lines-v1:sha256:ace64703b26baa417a22de0f7e2f556631b90e1793245e10f4fef4832f2aaec0:eyJzZWxlY3RlZExpbmVDb3VudCI6NjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYxMGVmMTQzZTYyMTFhYTM1Zjc1MzczZjFmNTRjMGZiZTA5YWJhNzk1MjlmYjE3YzgyMTEzZGYyNGE2OTU3NDIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM1ODc2OWU2ZmZjMDI1NTU1ZTZiNjUxMzA4ODA1MWRkZDA5ZmVkZjU0ODFmZmVjNDdiMzU5MzkwYTIzZWM1NGYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjdlODk5NTdkNTRjZDgyM2E1Mjg3NmUxYjk2OGU0NTVmZDJlZWYzMTExNGZmMDY4MjZkNGZjYjI5YWE4OTgzN2EiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjY1YWM5ODE0MDkzZmEwODExMWVmZmE2NGI0ZDJiNGNkMzgxZjZmYTUzYTdlNTEyZmEzNDA0YjljM2MyZjE4ZmUifQ"
         }
       ]
     },
@@ -247,12 +247,12 @@
       "statement": "Session会話は新しい2件と全active runを先に購読して初期表示し、残りの履歴は初期化またはエラーを待つ3件ずつのbatchで追加する。Session変更で購読状態をリセットする。",
       "evidence": [
         {
-          "resource": "repo://packages/web-core/src/features/agent-runtime/model/AgentRunSessionContext.tsx#L80-L278",
-          "version": "repo-lines-v1:sha256:dc350e226495d4f666c3a9d058a790d52827517916799668132fbcdd48d25dfb:eyJzZWxlY3RlZExpbmVDb3VudCI6MTk5LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJmNTc0ZTUyMWE0OWJmMzhmNzA5NzgwMGQ2N2Q1MzYyZjkzZTU3YThjNTQwNWFjZGYzOWEyMmE1NTNmZjhjNjZjIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI0MTJjYTM0NWNjZjc1YmY5YzA4MDZiY2U2OTViZThkZTgwOGI3OTk4NDI1MWE3YTU0ZDIwMmNmNjEwMWRkNDUxIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIwOWIyN2ZhYmQzMjU5NmYzMzQ4ZDNhYTZmZWI5NDM2MzlmNDhiMjBmNDdkNTJjNjQ3NmViMjE0NjNlZGE5MzYxIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiIyNGU5ZTEzMWY3ODgyMGJjYTM1ZDRhNGUyMGVkMTI0YzUxNTA1Y2ZhYTJmZjg5NTJlNWUyNTQwY2I3ZDc0N2QwIn0"
+          "resource": "repo://packages/web-core/src/features/agent-runtime/model/AgentRunSessionContext.tsx",
+          "version": "repo-file-v1:sha256:56849d78673b6d3b2f159217d4345203077916f714bcab2f02a92a6cc5201e05"
         },
         {
           "resource": "repo://tests/integration-skip/history.spec.ts",
-          "version": "repo-file-v1:sha256:4a348230b99bfa2a84c436f077785b48290bc1a6bbe3f9888bc11ac2a6dfd532"
+          "version": "repo-file-v1:sha256:62963c633d95e64cde5d0a46b1a49989244f206a9a43948f95a8cd07aa9a10e4"
         }
       ]
     },
@@ -1451,10 +1451,42 @@
           "version": "repo-lines-v1:sha256:f873b152536efa8501e9ddb1c41ebaeb612d7539a28f2a16384364eff757338b:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY5M2E3ZDM5NzMxZTcwMmM0ZDAyYzQ3NTFjM2Y1Mzg4ZTIyYjY5Y2NmYTk3NmZjY2ZiNjYxMGMwMmNlNmQxYjciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM5MWQwY2UyNzI1MWE3ZGMzOTc2NDgxZTMxNjdjZmZlYjFkYzc2Yzk5Zjk2MzZjYjVlMzkzMDMyY2QzZGU4ZGIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk4MmUwMThiZGMxOWZkMDZhNTQ1MTFlYTIzNTZmOTlmOWNjMTU0Y2MyNTVkNTE0ZGRmYzJkNDc3YTY1YmRkYjAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImVjZDZkMWI5ZDZkMmZkMjBmYTE3Nzg5Nzc2NzQ5NTMzM2M5YzRlZDJjYjA0NjU5M2EyYWVhODM1NGFlOTYzMWEifQ"
         }
       ]
+    },
+    {
+      "id": "claim_d631aebe497049cf975459ac1a3b7da0",
+      "statement": "Session会話は初期化済みterminal snapshotが一覧のattempt・event sequence・updated_atに追いつくとstreamを解放し、既存2秒周期の一覧discoveryで新しい更新を検出すると再購読する。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/features/agent-runtime/model/AgentRunSessionContext.tsx#L178-L211",
+          "version": "repo-lines-v1:sha256:b66fa379dd76f8c371eaff74fe2f48bb0d0c81087221ac84307203256e0e3cf5:eyJzZWxlY3RlZExpbmVDb3VudCI6MzQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhZWI4ZmFiYjJhNmM3M2Y4NmU5YmYzMjRkN2YxODc0N2FkZTdhMTI0Y2FiZjhkZTQzMWI5NWZhOGU2MGYxMGEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU3NzlhNjJhYjlhZDFlOTdkZmZjYTVmNjlkNDhlY2JhNWFiNjdhM2E5NjljNDA5ZDI0YjRhNjc2NzAxOWY0ZmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZjYzIyZWNmMTBhOWRkOTQ1YmQ2ZmMyMzczZjE1NTBlMDI0ODViN2JhMmUwYTBlMTQxNzJkOWU4Mzk2YmJmNmUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY2NTZmY2Q0Nzc4YWY0ZGE2NTNiZWM2MjVhNmQyNmQ4NjgwNThmZDk2ZTBmYjQ5NmM4YjdhNDQ2ZTQ0MGJmNDYifQ"
+        },
+        {
+          "resource": "repo://tests/integration-skip/history.spec.ts#L132-L193",
+          "version": "repo-lines-v1:sha256:a9c439c5e2209a9647df308f244791a84263c9ad8ca9d0935f51d436fe85a099:eyJzZWxlY3RlZExpbmVDb3VudCI6NjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk2M2E1OTgwMWU5YjI3NjRiOGZmNzU2MDZmNGM1YjU5YTAxYWQwMTUzMzNjMmJiOGFmM2M5N2ZkOTc5ODA3Y2QiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY2ZjViNDBiMTU4NDU3ZDE3ODY0ZjIxNzkwNzg2ZGQ1YTJlY2RiNjRiNjZhNjUxZjc4OGQ0ZTI1Y2QzMzAzZDIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjA0NjZiYWRiMzc2YWU1YjMzYTU3NDY3M2I4ODg4YjlhZjNmMmQyNjRhNzU3OGU3N2ZhYmI4YWIzM2M0NjMzNDIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_3a1c59455f004043b4ae63e840bc17ab",
+      "statement": "AgentRun WebSocketの補完pollは5秒周期でreplay直後の即時tickを避け、terminal State送信前に永続usage snapshotを再送する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/routes/agent_runs.rs#L30-L31",
+          "version": "repo-lines-v1:sha256:df4c0aac31079b0387c20c25d2851562bf537639860bf7a9651e1254e5ee85c1:eyJzZWxlY3RlZExpbmVDb3VudCI6MiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYWI0YWM1ZTAzOTZiZWYyMjMyNDc3OWFmZTc1YTFjNGQxMjhiYTMwNjIyNDM4NTdiNDY0NDM4OGE4ODMyMTgwOCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOGQ1ZGNlOTI3NzdiODA3NWI3YTQyOTFlZmNhNTQ4NzdkMWYwN2JlZDYyMmVhZjIwZjc4NDFiN2JmZmY5ODNiMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMzRmODE4MjA0ZmY0YzE1ZmVjZmE5MDkxYTI1NzYwZTIwNTBmMzQ4M2NjNWNlM2U0ZTEwZTU3OTZiNmE1ZDAxMCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiM2MyZjI5ODRlMGUzZDZiOTVhYWFmODljMDIyNjM2NTI3OTVjMTU4OTI1MjdkZDM1ZDRjYWEwM2QzZGY3MmJmMSJ9"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/agent_runs.rs#L683-L689",
+          "version": "repo-lines-v1:sha256:3bebf15b51c4baf94aba3274ed79a74934bb5e21436d69891a0a95fb5041cce1:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMGMyODViOGM2YTdiNjQ5MTE5NzU4ZGY3YjY2ODcxMTBjNzdkZTc5NjU5NTAxNDAxMjk0YTBiOGNlMjFjMDBmZSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYTE4ODM1NDU4NzU4M2U2ZGY1ZGY1NDMxNmE1OTkxNmJjMDAwNTA3NmZmNGIxMGY2MWI2NmRmZWViN2ZlZmQ5YSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMTQ1ZDhjZTVkNGViMzY5Zjk5OTIwNDgxZmNkYzk1ZGY5MjNlNWExOThiMGMxY2M5NzQ1NDI1NjUyN2UwMDVjOSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZjY1MTg0ZjBkZWM3Njg4NzI4Y2I2M2RjMzlhYjhjNmFiYTYwZmI4MTQ3NTk2MDQxMDBiODJmYjZjNjlkYTc5OSJ9"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/agent_runs.rs#L742-L765",
+          "version": "repo-lines-v1:sha256:064bb870c7f2d9728c9eba1c5ba88496f33291497817d564eded317a6df78a7b:eyJzZWxlY3RlZExpbmVDb3VudCI6MjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImViMmU3MWM3YzAyMTQwZjU3ODNjZmNkYTk3ZmVkMjQxMDYzODE4YWE3YzcwNWJkM2UyYjA3YTBiNWU2NWNlYWEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU1MjJjNDJjZDE5YzZkMDNkODA4YzQ1MjcyMDU1MjgyNWI3ZWExYzViNDkxYjIxODUxMWNhYzc0MTVjZjlkOWIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImE3ZWRjNjNjNDZjYzQ0YzVlOTQ3N2VmYzlhZDgxYjIwOGU3NGNjYzYzYjc4NTdlMDc3M2JkODFhMzA1YWIwMmEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBkYzdkN2YyNDhjM2E1ZjllYWVlZWMwYzQ3YzBiOTg0NzUwMDEzZWJhM2U2OTI1N2EyZmE1ZjZmNTEwMDJiMzQifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-06T03:09:15.108Z"
+    "at": "2026-11-06T03:12:23.427Z"
   }
 }
