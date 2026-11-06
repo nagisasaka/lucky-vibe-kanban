@@ -50,14 +50,16 @@ sources:
     resource: repo://crates/services/src/services/openwiki/completion.rs
   - id: openwiki-source-c4df16e7e579927d462857d7
     resource: repo://crates/services/src/services/openwiki/setup/integration.rs
+  - id: openwiki-source-9734052c014ed77357487607
+    resource: repo://packages/web-core/src/features/workspace-chat/ui/IntegrationFacts.test.tsx
   - id: openwiki-source-dbaab3d3ce907e13656fcbed
     resource: repo://packages/web-core/src/features/workspace-chat/ui/IntegrationFacts.tsx
   - id: openwiki-source-344aff2e68b53276f6be4e40
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/IntegrationValidationSettings.tsx
-generated: { by: "codex", at: "2026-11-05T04:35:28.799Z" }
+generated: { by: "codex", at: "2026-11-06T03:26:16.411Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-05T04:35:28.799Z
+    at: 2026-11-06T03:26:16.411Z
 ---
 
 # 自動マージの選択・検証・公開
@@ -156,3 +158,8 @@ OpenWikiの永続runとCodexのAgentRunは別の寿命を持つ。自動マー�
 ### 検索・読取と operation の閉鎖
 
 maintenance writer は OpenWiki 0.7.2 の検索・読取・workspace/Wiki一覧を利用できる。読取は lifecycle の前後・重なりを許すが、成功も失敗も active run を閉じず、未完了 writer を隠さない。root/thread・call ID・引数・duplicate の監査は維持され、lifecycle 同士の重なりと未知 tool は拒否する。横断参照先の情報は参考資料であり、書込み先はこの候補の canonical Wiki に限る。[監査分類](../../crates/services/src/services/openwiki/completion.rs#L196-L323)・[保守の正本](../operations/openwiki-maintenance.md)
+
+
+## 公開事実の継続取得
+
+IntegrationFacts は対象IDがある間5秒周期で取得する。succeeded・blocked・recovery_required でも未公開/収束待ちを表示し、終端statusのみで取得を止めない。公開受付と実Git適用の区別を維持する。[表示](../../packages/web-core/src/features/workspace-chat/ui/IntegrationFacts.tsx)・[既存試験](../../packages/web-core/src/features/workspace-chat/ui/IntegrationFacts.test.tsx)

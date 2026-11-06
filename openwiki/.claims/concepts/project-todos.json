@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:0fb28a3abe140abe112efedca6d209674822a0734c1c07c8dc5a80abc4b90c86",
+  "pageVersion": "sha256:3b7e39bdc6e65fe0ea62bad15722d2bbb614241cc278525145564d33814febf5",
   "claims": [
     {
       "id": "claim_ffe4663e40c94017ac81d224a196ad07",
@@ -46,7 +46,7 @@
     },
     {
       "id": "claim_0a649f6f941a4e389e2c29982d11c46b",
-      "statement": "Todo一覧は作成時刻降順・ID順のoffset paginationで、Webは完了を含め全ページを読み5秒ごとに更新する。WorkspaceはlinkのProjectを優先し未関連なら選択を使う。",
+      "statement": "Todo一覧は作成時刻降順・ID順のoffset paginationで、Webは完了を含め全ページを読み15秒ごとに更新する。Workspaceは30秒周期でProjectを取得しlinkのProjectを優先、未関連なら選択を使う。",
       "evidence": [
         {
           "resource": "repo://crates/db/src/models/todo.rs#L201-L237",
@@ -58,11 +58,11 @@
         },
         {
           "resource": "repo://packages/web-core/src/features/todos/ui/TodoPanel.tsx#L37-L100",
-          "version": "repo-lines-v1:sha256:856a98caa7713888808fbeda6f2c2c5287e2e86e016265af97d13ace5f7dff21:eyJzZWxlY3RlZExpbmVDb3VudCI6NjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAzNThmNTc5N2RkYWZmMzQ3YWIzNzQxOGRjYjI0Mzg0ODExZmUyN2VlZWNiYzkwYzM3NjQzZDVlZGY4MGM3NmEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU3ZWYzYTBlMjNmNjdjZWRhMDY1OWM4NGQzMTQwZDBmYTU0NDkwNGRlYjAyMTQ5M2UxYjY3MGYwYjI0Y2EwMTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjlmNDhlMDUyMTBiOWJkMWJhYzM2N2E4MWE3OGRjOGE2YTEzZGIwMDc1YjI3ZWRhNGE5Yjg5ZDQ4ODE5YWUzMTEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQ4ZTk0OTcyNTIyNDRkOTU4OTk2MGQ4NWJjYmZhZGY2OGJjMzdiNGMxNTgyYTlhMWU1NmNhZjlmYWY4NWVlOWEifQ"
+          "version": "repo-lines-v1:sha256:17d42d3b34a26f63d1358aa420e2e6f5e2f6f11f18fade4fd0a7622987968ffa:eyJzZWxlY3RlZExpbmVDb3VudCI6NjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAzNThmNTc5N2RkYWZmMzQ3YWIzNzQxOGRjYjI0Mzg0ODExZmUyN2VlZWNiYzkwYzM3NjQzZDVlZGY4MGM3NmEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU3ZWYzYTBlMjNmNjdjZWRhMDY1OWM4NGQzMTQwZDBmYTU0NDkwNGRlYjAyMTQ5M2UxYjY3MGYwYjI0Y2EwMTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjlmNDhlMDUyMTBiOWJkMWJhYzM2N2E4MWE3OGRjOGE2YTEzZGIwMDc1YjI3ZWRhNGE5Yjg5ZDQ4ODE5YWUzMTEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQ4ZTk0OTcyNTIyNDRkOTU4OTk2MGQ4NWJjYmZhZGY2OGJjMzdiNGMxNTgyYTlhMWU1NmNhZjlmYWY4NWVlOWEifQ"
         },
         {
           "resource": "repo://packages/web-core/src/features/todos/ui/WorkspaceTodoPanel.tsx",
-          "version": "repo-file-v1:sha256:f45b3383930bf39ddc465388a2535d5351c8353884a2baf2929a7261c5b03c86"
+          "version": "repo-file-v1:sha256:06f8b5c3f84e0ad27e3a9f93e59f2b0e2fba4595c2b98b7b3cdbfaddaf605a52"
         }
       ]
     },
@@ -242,7 +242,7 @@
         },
         {
           "resource": "repo://packages/web-core/src/features/todos/ui/TodoPanel.tsx",
-          "version": "repo-file-v1:sha256:75b67c1e3b2c217760b8305792fdd17c54196ce2cb4be6bc3e817ca6c77a222a"
+          "version": "repo-file-v1:sha256:bc0209a51c9d23a8a650aa89eab99a68d23280d5e4f5adbc3aaa87f109c91bb1"
         },
         {
           "resource": "repo://packages/web-core/src/i18n/locales/ja/common.json",
@@ -424,7 +424,7 @@
         },
         {
           "resource": "repo://packages/web-core/src/features/todos/ui/TodoPanel.tsx",
-          "version": "repo-file-v1:sha256:75b67c1e3b2c217760b8305792fdd17c54196ce2cb4be6bc3e817ca6c77a222a"
+          "version": "repo-file-v1:sha256:bc0209a51c9d23a8a650aa89eab99a68d23280d5e4f5adbc3aaa87f109c91bb1"
         }
       ]
     },
@@ -464,7 +464,7 @@
         },
         {
           "resource": "repo://packages/web-core/src/features/todos/ui/TodoPanel.tsx",
-          "version": "repo-file-v1:sha256:75b67c1e3b2c217760b8305792fdd17c54196ce2cb4be6bc3e817ca6c77a222a"
+          "version": "repo-file-v1:sha256:bc0209a51c9d23a8a650aa89eab99a68d23280d5e4f5adbc3aaa87f109c91bb1"
         }
       ]
     },
@@ -489,6 +489,6 @@
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-05T07:15:08.684Z"
+    "at": "2026-11-06T03:26:16.411Z"
   }
 }

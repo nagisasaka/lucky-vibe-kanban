@@ -32,10 +32,10 @@ sources:
     resource: repo://packages/web-core/src/shared/lib/listSearch.ts
   - id: openwiki-source-4917ca78c6137f6aa2fe5c81
     resource: repo://tests/design-notes/markdown-editing.mjs
-generated: { by: "codex", at: "2026-11-04T20:14:29.223Z" }
+generated: { by: "codex", at: "2026-11-06T03:28:31.315Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-04T20:14:29.223Z
+    at: 2026-11-06T03:28:31.315Z
 ---
 
 # 設計メモ・本文履歴と独立追記
@@ -65,7 +65,7 @@ DB は transaction の最初に request 行への書込を行い、SQLite の競
 
 REST は対象なしを404、revision / request ID 競合を409、不正入力を400へ対応させる。本文は最大100,000 Unicode文字、title / heading は300文字、source / speaker と quote / reason は2,000文字である。[検証](../../crates/db/src/models/design_note.rs#L143-L170)・[HTTPエラー](../../crates/server/src/error.rs#L204-L215)
 
-UI は5秒ごとの再取得を行うが、編集中の版と下書きを勝手に更新しない。失敗時は下書きを残し現在版を取得し、比較後の「再適用」を明示操作にする。同じ操作の応答を失ったときは同じ request ID を保持する。これはマウント中の React state による保持であり、ページ再読込後の設計メモ下書き永続化を保証しない。[保存と再取得](../../packages/web-core/src/features/design-notes/ui/DesignNotePanel.tsx#L32-L80)・[本文競合](../../packages/web-core/src/features/design-notes/ui/DesignNotePanel.tsx#L266-L320)・[追記競合](../../packages/web-core/src/features/design-notes/ui/DesignNotePanel.tsx#L552-L591)
+UI は15秒ごとの再取得を行うが、編集中の版と下書きを勝手に更新しない。失敗時は下書きを残し現在版を取得し、比較後の「再適用」を明示操作にする。同じ操作の応答を失ったときは同じ request ID を保持する。これはマウント中の React state による保持であり、ページ再読込後の設計メモ下書き永続化を保証しない。[保存と再取得](../../packages/web-core/src/features/design-notes/ui/DesignNotePanel.tsx#L32-L80)・[本文競合](../../packages/web-core/src/features/design-notes/ui/DesignNotePanel.tsx#L266-L320)・[追記競合](../../packages/web-core/src/features/design-notes/ui/DesignNotePanel.tsx#L552-L591)
 
 ## 生テキスト編集と保存前プレビュー
 
@@ -118,3 +118,8 @@ MCP の書込成功結果は `{note:{id,revision},addition:null|{id,revision}}` 
 ブラウザー一覧は取得済みの title/body を trim・小文字化した部分一致で絞る。検索で選択中メモが一覧から消えても、detail と未保存入力を解除しない。追記本文を検索対象へ含める処理ではない。両 MCP の `list_design_notes.search` は同じ保存済み title/body を検索するが、空白は literal に保持し、Unicode 小文字化後の部分一致で `%` や `_` を wildcard にしない。検索条件を固定して UUID cursor を進める。[画面](../../packages/web-core/src/features/design-notes/ui/DesignNotePanel.tsx#L119-L200)・[ブラウザー述語](../../packages/web-core/src/shared/lib/listSearch.ts#L1-L8)・[MCP検索](../../crates/db/src/models/design_note_read.rs#L80-L108)・[共有述語](../../crates/db/src/models/text_search.rs#L1-L10)。
 
 変更時は DB の search fixture と `tests/search/isolated.mjs` の選択・下書き保持を確認する。今回の統合では旧 contenteditable を textarea へ追従させた fixture も含まれ、製品の保存・版管理契約を緩和した変更ではない。
+
+
+## 一覧・詳細の再取得周期
+
+一覧と選択中の詳細は15秒周期で再取得する。書込み直後の再取得と既存の下書き・版・競合保護は維持する。[UI](../../packages/web-core/src/features/design-notes/ui/DesignNotePanel.tsx#L131-L181)

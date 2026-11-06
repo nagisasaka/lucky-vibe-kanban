@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:e52822bf67cd8a478bedb712f666505d88534ccb7589678ac5b9cdac15b9a0d9",
+  "pageVersion": "sha256:76a9d727d45b469d531134e453e1e9719172ea67e58374aacee783e01d0087f4",
   "claims": [
     {
       "id": "claim_62fc79a5c9fd478cbd529ca6222d3af2",
@@ -276,7 +276,7 @@
         },
         {
           "resource": "repo://packages/web-core/src/features/kanban/ui/IntegrationPanel.tsx",
-          "version": "repo-file-v1:sha256:13fbb04d0cb497f72516c6e42281425e016be4e208028a2fa2fc85b24804016d"
+          "version": "repo-file-v1:sha256:c7ec14a6bc15d20826c02ec51586c1dd8269abe942a641abc8ac1e449a4c87d9"
         }
       ]
     },
@@ -479,10 +479,20 @@
           "version": "repo-lines-v1:sha256:5cf433727cbcc40726d0ade081dd1d6e072d9d805485a60babc355219522b70e:eyJzZWxlY3RlZExpbmVDb3VudCI6OTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjEzN2UyNDI2NDgzZTE0NGYzMmE2M2NhZTNlY2RjNDU1ZDA4ODA3N2VkOWZiNmY0NGJiZWRlODA0NTg0M2U2MjIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE3OWI4MzJlN2JjYWNjYjVkMDhkNTY4ZjI4MWZhYjRmNzFmYWY5NzA4ZTU3Zjg0NjZjNjRjOGQ2ZTlmZjE4NGIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY0MDg4ZjA1ZTZmOGQxMjIxNGI1Y2FmYjdmOTA5ZmJmMzY0NDBlMWJkZjkxYzdjYWFiZDFmMjBmNzAwZDA0NTQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImIwMGE1ODBlNzdkMTU1ODA2MDU3ZmZkYzZiZDIxZTllMzQ4M2YxMzAxZDI4MzA3YTdiMDMzNzNjNDk1MjNlZjgifQ"
         }
       ]
+    },
+    {
+      "id": "claim_52bb5877bafa4944a6c11d3576e0a074",
+      "statement": "IntegrationPanelはopen時に統合一覧を5秒、repository activitiesを10秒周期で取得する。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/features/kanban/ui/IntegrationPanel.tsx#L119-L135",
+          "version": "repo-lines-v1:sha256:3ae7d02b4cf69b13dfc572f30ce428ba990c7cc8e97acf9eed568eca3069e679:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJiNDc2NWJjMjI0YmE4ZDYxZWVhOTAwZjIzM2RmMDcyM2E3NzljMjk4YzA2Y2ZiOTljY2ZiN2M3YTM2NmY1ZDgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRhNjRhN2Q4ZmIyNzc3Njg2MzZmZjU3YjcxODBmZTYwNWQwYmY3OWQ4N2FjNTgwOGMxNWY1YWZmYTU5NGFmNWMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImVlZDRmODdjNzM3Y2EzMjM4MjEyYTU5YTUwNTc3YzZjZDExMDBlZGY2ZjcxNGU2MzkxNDRjNWMyYWI5ODhlOWEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJhZjliNDMwNDQ3OWQwNzk0NmU0MTE0ZWUwNmVjMzYwNmNiZTM1YmUwOWIyMzcxOTIxNmVjMjNhYWNlNDEwZDYifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-05T04:35:28.799Z"
+    "at": "2026-11-06T03:26:16.411Z"
   }
 }

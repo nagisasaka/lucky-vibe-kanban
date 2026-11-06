@@ -156,10 +156,10 @@ sources:
     resource: repo://tests/server/specs/workspace-search.spec.ts
   - id: openwiki-source-dcac74ef871fd02e6315fa93
     resource: repo://tests/workflow/specs/diff-tree.spec.ts
-generated: { by: "codex", at: "2026-11-05T07:15:08.684Z" }
+generated: { by: "codex", at: "2026-11-06T03:28:31.315Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-05T07:15:08.684Z
+    at: 2026-11-06T03:28:31.315Z
 ---
 
 # ファイル・差分・プレビュー・端末の境界
@@ -188,7 +188,7 @@ Stop は 自動マージ の cancel、Bootstrap の所有フロー、Sync の監
 
 チャット末尾の「Workspace累積トークン」を開くと、入力・出力、入力の内数であるキャッシュ、出力の内数である推論、内訳取得 thread 数、最終更新を読める。対象は選択 Session だけでなく Workspace 全体であり、各 run の既存時間表示は別に残る。[末尾への配置](../../packages/web-core/src/features/workspace-chat/ui/ConversationListContainer.tsx#L1027-L1031)・[表示](../../packages/web-core/src/features/workspace-chat/ui/WorkspaceTokenSummary.tsx#L25-L63)
 
-React Query は Workspace ID を key に `/api/workspaces/{id}/tokens` を5秒間隔で再取得する。未取得は「不明」、取得済みでも `partial` は「一部のみ」と表示する。取得エラー時は「取得失敗」を出し、保持済み data があっても詳細内訳を表示しない。0 は不明に置換しない。[取得と分岐](../../packages/web-core/src/features/workspace-chat/ui/WorkspaceTokenSummary.tsx#L12-L60)・[日本語](../../packages/web-core/src/i18n/locales/ja/common.json#L1714-L1726)
+React Query は Workspace ID を key に `/api/workspaces/{id}/tokens` を30秒間隔で再取得する。未取得は「不明」、取得済みでも `partial` は「一部のみ」と表示する。取得エラー時は「取得失敗」を出し、保持済み data があっても詳細内訳を表示しない。0 は不明に置換しない。[取得と分岐](../../packages/web-core/src/features/workspace-chat/ui/WorkspaceTokenSummary.tsx#L12-L60)・[日本語](../../packages/web-core/src/i18n/locales/ja/common.json#L1714-L1726)
 
 `/tokens` は保存済み集計の読取で、同じファイルに実装される `/usage` の実行所有者 inspection / Stop とは別機能である。欠損を補うために AgentRun を起動せず、UI・stdio MCP・外部 MCP は共通集計を使う。[読取 handler](../../crates/server/src/routes/workspaces/usage.rs#L319-L328)。取得範囲と最大値の寿命、未報告の子 thread や料金推定の限界は [Workspace 累積トークン](../concepts/workspace.md#workspace-累積トークン)、操作入口は [stdio](../integrations/agent-providers.md#外部-mcp-client--lvk)と [外部 MCP](../integrations/remote-access.md#workspace-の報告済みトークンを読む)で確認する。
 

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:3dd5b3cf90f4e58fb64159e070d0deab6d6bb31a32237834146a365c7a630d7c",
+  "pageVersion": "sha256:6912c7b8cea8a262cec0f84b95c694a3b2e02770600578dba534ac4e88386c66",
   "claims": [
     {
       "id": "claim_82c340b0bbd240889908ea6c2c5be423",
@@ -852,7 +852,7 @@
         },
         {
           "resource": "repo://packages/web-core/src/features/workspace-chat/ui/WorkspaceTokenSummary.tsx#L5-L18",
-          "version": "repo-lines-v1:sha256:4cab489ed5a9ff395e048abbc16b06d19b8049e4f7b90c97af78bfcc4baec046:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE4M2I1M2ZkMWJlNTkzMzkyYzEwMzA3ZGY2MDQ4Yjc0YjRiYWU0OWYwN2QyNjMyMTQxMThhYWUzMTNkZTJhNWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJkNjFmNjdkNjc2OWQxOGFkMDgzMDU1YjEyNDU0YTcxYzU0ZjY0YzJlMzZmYzdhZjNjYjZhOGY5OTA4M2I3MWIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImM1NjA0ZTRjZmFlZjRmMGRmZjIwOGQzZTk0NzBlOTQ2M2Y5MWQ4ZTU5N2ZlOTQyMjQ4YzAwNTc3MDc1MDhiZTAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE2YTZhMjhmNzM2NzUzMjMwOWQ2YWZkYmJhMWE4ZTY0OTYwMGQ4ODdhZmNhNDdlNzM0ZDQxZjNhY2I3MThmYjQifQ"
+          "version": "repo-lines-v1:sha256:11817d498cb3d828dc48f0ced8c2daf8b289b0204ec91eddb7bdbdedd7816ec5:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE4M2I1M2ZkMWJlNTkzMzkyYzEwMzA3ZGY2MDQ4Yjc0YjRiYWU0OWYwN2QyNjMyMTQxMThhYWUzMTNkZTJhNWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJkNjFmNjdkNjc2OWQxOGFkMDgzMDU1YjEyNDU0YTcxYzU0ZjY0YzJlMzZmYzdhZjNjYjZhOGY5OTA4M2I3MWIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImM1NjA0ZTRjZmFlZjRmMGRmZjIwOGQzZTk0NzBlOTQ2M2Y5MWQ4ZTU5N2ZlOTQyMjQ4YzAwNTc3MDc1MDhiZTAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE2YTZhMjhmNzM2NzUzMjMwOWQ2YWZkYmJhMWE4ZTY0OTYwMGQ4ODdhZmNhNDdlNzM0ZDQxZjNhY2I3MThmYjQifQ"
         }
       ]
     },
@@ -1109,14 +1109,28 @@
           "version": "repo-file-v1:sha256:eac533a4366d839065d760ad053194bf85bb3f71cae15469b937bccd708af784"
         },
         {
-          "resource": "repo://crates/server/src/routes/agent_runs.rs#L490-L565",
+          "resource": "repo://crates/server/src/routes/agent_runs.rs#L491-L566",
           "version": "repo-lines-v1:sha256:20281b9f841f86405ebeb2ab19d0d07f7b5d93003080617b95708865832d6c5e:eyJzZWxlY3RlZExpbmVDb3VudCI6NzYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFmMTQxMjc0MTM5YzQ5ZWMwYTc5NDA4Nzg1MWUzZDdhNzBiMGM2M2Y4ZGQxNjcxYmJjYTc1MWYwNjgzZWFlNjUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjczYzA1N2ZiMjg2MDQyMzY3N2M5ZjY2MjdhODkzMGE2NTUwZjRmODBmMWIzZTM2YTQ4OTI0ZmFjYzJjZjcwM2QiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjNhNzQ4OGE5NDY4ZGYxMTZhNDdhMGQ1NmE3ZTNhYTc5N2E3YTYwNTc4MWQyODBlOGUxNTBhNTIxYzA3OGU2MWQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImU3MzQ4ZmIwZjI1MWFhOTIyOGRkMjkyYTFjN2ZlZDhjY2VhZDBiZDkzM2VjZmI2YTY2NmIzYTkwMWEzNzgxODMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_889b50d8e89645d3ab9e8dd0f2c6255a",
+      "statement": "Workspace累積token表示は30秒周期、Session queue状態はhost/Sessionを含むkeyで5秒周期取得し操作後に無効化する。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/features/workspace-chat/model/hooks/useSessionQueueInteraction.ts",
+          "version": "repo-file-v1:sha256:8b457613d703d050e8267d667796953a5f0a05e79c21c045960c3e3097171473"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/WorkspaceTokenSummary.tsx",
+          "version": "repo-file-v1:sha256:b4a315dfd994f04ea4c9fce8a59677aea79c2b21c40ccce4e7b39dd06aa3f90b"
         }
       ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-05T04:35:28.799Z"
+    "at": "2026-11-06T03:26:16.411Z"
   }
 }

@@ -108,6 +108,8 @@ sources:
     resource: repo://packages/web-core/src/features/workspace-chat/model/goalElapsed.ts
   - id: openwiki-source-14cc0373faba797a6e4d1fdd
     resource: repo://packages/web-core/src/features/workspace-chat/model/hooks/useSessionMessageEditor.ts
+  - id: openwiki-source-f6be11f5fae29193d7c2615c
+    resource: repo://packages/web-core/src/features/workspace-chat/model/hooks/useSessionQueueInteraction.ts
   - id: openwiki-source-08c30c5f079994cddbe25a3b
     resource: repo://packages/web-core/src/features/workspace-chat/model/hooks/useSessionSend.ts
   - id: openwiki-source-713e0401e69764a879935acf
@@ -170,10 +172,10 @@ sources:
     resource: repo://tests/supervised/README.md
   - id: openwiki-source-5184ef612e83b7ab35d62e7b
     resource: repo://tests/supervised/run_isolated.py
-generated: { by: "codex", at: "2026-11-04T20:22:03.096Z" }
+generated: { by: "codex", at: "2026-11-06T03:26:16.411Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-05T04:35:28.799Z
+    at: 2026-11-06T03:26:16.411Z
 ---
 
 # Session・AgentRun・RunAttempt
@@ -466,3 +468,8 @@ thinking / tool の表示は会話 timeline の一部であり、表示用の経
 チャットを塞ぐ script 判定は活動中の ScriptRequest のうち `devserver` を除く。Preview server は turn 間にも稼働し専用 Stop を持つため、その存在だけで送信を待たせない。setup や IntegrationValidation 等の活動判定は残る。これは UI の送信可否であり、backend の実行所有・予約 guard を解除するものではない。[判定](../../packages/web-core/src/shared/lib/executionProcessRuntime.ts#L45-L58)、[利用箇所](../../packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx)、[回帰テスト](../../packages/web-core/src/shared/lib/executionProcessRuntime.test.ts)
 
 長い Session は最新の会話と活動中 run を先に表示し、古い履歴の読込中も別の状態として示す。購読 batch と Session 切替時の分離は [Web の履歴同期](../architecture/web-and-sync.md#最近の会話を先に表示する)で説明する。
+
+
+### 局所取得周期
+
+Workspace累積tokenの表示は30秒周期、Session queue状態は5秒周期で再取得する。query keyのWorkspace/host/Session分離とqueue操作後の無効化を維持する。非同期質問の3秒周期は変更しない。[token](../../packages/web-core/src/features/workspace-chat/ui/WorkspaceTokenSummary.tsx)・[queue](../../packages/web-core/src/features/workspace-chat/model/hooks/useSessionQueueInteraction.ts)

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:168a747272b9ebff73d747ad28b9a9f7e42ead97dc48f114bfd0f4ce1d3b4ac8",
+  "pageVersion": "sha256:c236438a46576430641ab60de55c0b1059a09d073bca699059322fd1eeaa8a1d",
   "claims": [
     {
       "id": "claim_4e9b35333650431290516aff5f98065c",
@@ -74,7 +74,7 @@
       "evidence": [
         {
           "resource": "repo://packages/web-core/src/features/design-notes/ui/DesignNotePanel.tsx#L124-L181",
-          "version": "repo-lines-v1:sha256:7243f62d5ba4365ee3b0a60f158d80b5d822b0569eb02e980dc8ad3eeb7ff8bb:eyJzZWxlY3RlZExpbmVDb3VudCI6NTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJhMzA2MzQwODkwNWNkNmM5OTBjMTc4YTBjZjlmODA4MGUwNTQyMmJiOWQ3MDI3YmM1YWE4MzI5NjU4ZTkyYmMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNlY2Q5Mzc5YTVhY2RmMDc0MTg2NDI4YjY1MDQ2OWIxM2I5NDFlOGMzMDIyNzY2ZDRmYzNjOTY4OWRjMjM4YWIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE0MjcwODVlY2FhY2U2OWE0MzIyMWQyMTMxMGZkZTlmYWIxYWZmMjAzZjlkOTNkMjdlODc1NjM2MTMzNDJkYjEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFkZjZiMDdiMTk1N2ExNGVhMWRmNGYzMDY5Yjk1MzVmNzM2YjIyM2E2MGJjN2MwMmQ3MTg1YThiOTU1NDNlMmEifQ"
+          "version": "repo-lines-v1:sha256:ec3152c5553971e3d1a77eba863793c5095aa935df0beac0cf432e2593743b70:eyJzZWxlY3RlZExpbmVDb3VudCI6NTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJhMzA2MzQwODkwNWNkNmM5OTBjMTc4YTBjZjlmODA4MGUwNTQyMmJiOWQ3MDI3YmM1YWE4MzI5NjU4ZTkyYmMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNlY2Q5Mzc5YTVhY2RmMDc0MTg2NDI4YjY1MDQ2OWIxM2I5NDFlOGMzMDIyNzY2ZDRmYzNjOTY4OWRjMjM4YWIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE0MjcwODVlY2FhY2U2OWE0MzIyMWQyMTMxMGZkZTlmYWIxYWZmMjAzZjlkOTNkMjdlODc1NjM2MTMzNDJkYjEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFkZjZiMDdiMTk1N2ExNGVhMWRmNGYzMDY5Yjk1MzVmNzM2YjIyM2E2MGJjN2MwMmQ3MTg1YThiOTU1NDNlMmEifQ"
         },
         {
           "resource": "repo://packages/web-core/src/features/design-notes/ui/DesignNotePanel.tsx#L395-L452",
@@ -145,7 +145,7 @@
           "version": "repo-lines-v1:sha256:bba2950c21dce0fd47db19f1af9aaa994d27342d7c842ca8b4376c46b445e9f7:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4N2FhOTgzZThiOGQ5M2JhZDgyZjhlYjNiNjVhZDEwMWFlNGU0ZGViZmFmYTFkZWJmYjkyYzQzMWVhYTQyMDkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkwYTVkZjc4NzFlMDRhMzI5Yzk2YmRiZjZkNzA5ODMyYjkxNDU1NGUxZmIwZjNmNTkxMzE4YjE3ZTdhOTYwYTQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjkyNGRjNzhlZWU5OTBjOWI4OWU0ZmUyODhiYTllYmM1YzMyZGRiM2MwZTk1NDQ3MDcwNGIyNjcxMmQ5OTdiMWYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM3NzMyODRjODM3MTQ4ZjVhZDhmNDg4MDQxM2EwNzc1NGY3MTI0NDk5YWIyNzlhYjIxZmZjYTc2MjY1MjRjZmMifQ"
         },
         {
-          "resource": "repo://crates/server/src/routes/local_remote.rs#L3930-L4063",
+          "resource": "repo://crates/server/src/routes/local_remote.rs#L3928-L4061",
           "version": "repo-lines-v1:sha256:7ca05db95f395b65dabb4649318bc9a0cd317e1fa32f33f8f1d68a3c347ba491:eyJzZWxlY3RlZExpbmVDb3VudCI6MTM0LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI4Yjc5MjNmY2VjMTkwMDAxYjhjNDMxNzg4NjY5NWZkODIwZGE0ZTdlNzE3ZGRmZTJlNTYyMGY5ZmYzYzRiZGFmIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI0ODkzZjQwZTM3ODFlYjg5NmM4MmQwNDZhMDgwNjdhMTFlMzVjZGYyZjFkZmFmMjZmZWE5MGI4ZGI2Njc2NDEzIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI1NTZhZDZhMjliOGJlYWExZDMwMDU2YmMzZDE3MmY2OWY1YWNjNDYyNmY3NWRiNmYxNGJhZWEwN2JkYjg2OGU4IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiIwNTgzNDk2YzVjN2VhZjgwZWQ0ZWJlZmI3NWE3Y2ZjNmY2YTkxZDNhODRlM2IxMTY1MmRiMTAyZDdkZDVhMWQxIn0"
         }
       ]
@@ -202,7 +202,7 @@
         },
         {
           "resource": "repo://packages/web-core/src/features/design-notes/ui/DesignNotePanel.tsx",
-          "version": "repo-file-v1:sha256:47ba1c0b481a272892fe85ab901cd8bd0daedeffbdf65575c3c040128bb05062"
+          "version": "repo-file-v1:sha256:ef52d0c42e0a94c3be69db2d5b1846d6243db8b56d04e53d73270f0452b8bbc9"
         },
         {
           "resource": "repo://tests/design-notes/markdown-editing.mjs",
@@ -224,7 +224,7 @@
         },
         {
           "resource": "repo://packages/web-core/src/features/design-notes/ui/DesignNotePanel.tsx#L131-L223",
-          "version": "repo-lines-v1:sha256:98900020cc371503da75a2313cd9cab5e3c4af45370250e1001fcdf3aab1e005:eyJzZWxlY3RlZExpbmVDb3VudCI6OTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYzYTZjMWViNTdmZWRhNjQ3OTQ0NGZmODg4Njg2ZjljYzQ3MGFjMDVkOGY3OWVlMzcwYTkxMjRjZGU1YzA4ZjUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNkYzg0Mzg2OWNkODFlMTViNmQzMDhlMTg5NjNlMzUzNTk2NzJiZTk2NGQwMjViNDM0YWY4ZTFmY2YxMjI4MjUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjBmNzhmZGU1NDdhZTA5OWRlMTkxMzRlY2ExN2FkYWMyNzgzMTViNWM1YTI1Yjc4YzRhNjk2ZjJlYWYxZmY5ZjQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImI1ODhiODU5OWUwOWQ4OTIyOTcyNjE4MjJjOWYxNDI0NzI5YjRjYjlkZDBlMjJlNWQ3OGE4MDMwYmNmZTEyMmIifQ"
+          "version": "repo-lines-v1:sha256:b143100d8e8aba45bb07eef2cb16879777bf1a07c408facb2fc81438fcdf4c2f:eyJzZWxlY3RlZExpbmVDb3VudCI6OTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYzYTZjMWViNTdmZWRhNjQ3OTQ0NGZmODg4Njg2ZjljYzQ3MGFjMDVkOGY3OWVlMzcwYTkxMjRjZGU1YzA4ZjUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNkYzg0Mzg2OWNkODFlMTViNmQzMDhlMTg5NjNlMzUzNTk2NzJiZTk2NGQwMjViNDM0YWY4ZTFmY2YxMjI4MjUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjBmNzhmZGU1NDdhZTA5OWRlMTkxMzRlY2ExN2FkYWMyNzgzMTViNWM1YTI1Yjc4YzRhNjk2ZjJlYWYxZmY5ZjQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImI1ODhiODU5OWUwOWQ4OTIyOTcyNjE4MjJjOWYxNDI0NzI5YjRjYjlkZDBlMjJlNWQ3OGE4MDMwYmNmZTEyMmIifQ"
         },
         {
           "resource": "repo://packages/web-core/src/shared/lib/listSearch.ts#L1-L8",
@@ -245,10 +245,20 @@
           "version": "repo-lines-v1:sha256:ccc1e30286dcf1dbe2f65573de034f13de129ef509c759874b4ff7d3b6498c31:eyJzZWxlY3RlZExpbmVDb3VudCI6MjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZiNTVkODU3OTgxMGQyNDI3MmM5MDI2MzQ2ODBjZDk3NjNiY2ZjODI0NDk4YTEyOTZiZGI4YWNiM2IxNzBkZTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE1MGJhZjkxMDc4YjZmZDdmZmI2ZWQwZDgwZDg3ZmQzMjE5ZDJmNzA2ZGExMzljMmVjNjk3NmU5MzNiMGMyNzgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRlNmZiNjk4OWUwODI2M2VmNGIwNDY0NWYzZGY5ODdmMzc5MTdhYWE2YjNhZDlmOGM1ZWQ1NTdhZmUyZWE3NTYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjRiZWRhNWVlOTY1Y2UyZGI2M2ZkNzczNzUzZTdjZWM4NjU1YzVmM2FiY2Y4ZTBiMWZlNDdmMWQ2NWExMDc4OWIifQ"
         }
       ]
+    },
+    {
+      "id": "claim_3f59283ed31148c1a184edc285e8a4f2",
+      "statement": "設計メモの一覧と選択中詳細は15秒周期で再取得し、書込み後の再取得を維持する。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/features/design-notes/ui/DesignNotePanel.tsx#L131-L181",
+          "version": "repo-lines-v1:sha256:6a0ffcdd63c39e8c361815188172982e090b89ae1dd68ffe5d60229a16c0e2eb:eyJzZWxlY3RlZExpbmVDb3VudCI6NTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYzYTZjMWViNTdmZWRhNjQ3OTQ0NGZmODg4Njg2ZjljYzQ3MGFjMDVkOGY3OWVlMzcwYTkxMjRjZGU1YzA4ZjUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNlY2Q5Mzc5YTVhY2RmMDc0MTg2NDI4YjY1MDQ2OWIxM2I5NDFlOGMzMDIyNzY2ZDRmYzNjOTY4OWRjMjM4YWIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjBmNzhmZGU1NDdhZTA5OWRlMTkxMzRlY2ExN2FkYWMyNzgzMTViNWM1YTI1Yjc4YzRhNjk2ZjJlYWYxZmY5ZjQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFkZjZiMDdiMTk1N2ExNGVhMWRmNGYzMDY5Yjk1MzVmNzM2YjIyM2E2MGJjN2MwMmQ3MTg1YThiOTU1NDNlMmEifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-04T20:14:29.223Z"
+    "at": "2026-11-06T03:28:31.315Z"
   }
 }

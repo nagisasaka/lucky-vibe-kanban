@@ -86,10 +86,10 @@ sources:
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/ReposSettingsSection.tsx
   - id: openwiki-source-7fd9452d5e666180c50f8cb7
     resource: repo://tests/openwiki/recovery.sh
-generated: { by: "codex", at: "2026-11-05T04:35:28.799Z" }
+generated: { by: "codex", at: "2026-11-06T03:26:16.411Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-05T04:35:28.799Z
+    at: 2026-11-06T03:26:16.411Z
 ---
 
 # OpenWiki の初期生成・同期・回復
@@ -337,3 +337,6 @@ Review は generator の選んだ資料や Wiki の分類だけを範囲とせ�
 4. エラー時は保存された owner・会話・tool error を確認する。preflight なら pinned CLI、実行 PATH、MCP の allow/deny と必要10toolの有無を調べる。改変した MCP block、custom 設定、曖昧な marker は `--force` で上書きせず、競合を解消して cleanup 後に明示的に再試行する。[起動前確認](../../crates/executors/src/executors/codex/client/openwiki.rs)・[非強制の準備](../../crates/services/src/services/openwiki.rs#L148-L172)
 
 取消は既存実行の Stop を使い、process exit と instructions 復元が確定するまで owner を消さない。source branch が進んだ場合は固定 source の公開を再利用せず、新しい統合状態への明示保守として判断する。durable publication がある場合はその公開と receipt の回復だけを行い、有料 phase を重ねない。[公開の固定 source 検査](../../crates/services/src/services/openwiki.rs#L321-L370)・[Bootstrap の回復](../../crates/server/src/workflow_runtime/bootstrap.rs#L674-L752)
+
+
+Repository memory設定の状態取得は15秒周期である。保存済みbranch/言語、未保存変更、active owner、query失敗等による開始抑制と、操作後の再取得を維持する。[設定UI](../../packages/web-core/src/shared/dialogs/settings/settings/RepositoryMemorySettings.tsx#L50-L139)

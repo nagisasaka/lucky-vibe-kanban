@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:e84bf724d5a324edd8e20f7251ea434016dd872d59e3ddde8f827e04fd91c11e",
+  "pageVersion": "sha256:2bfb485492e2fa85aea81aa1e427c263426799309fac835cdb87a585a73f6f8b",
   "claims": [
     {
       "id": "claim_12101e4e85524a9280291b25d4812f5f",
@@ -208,7 +208,7 @@
         },
         {
           "resource": "repo://packages/web-core/src/features/workspace-chat/ui/IntegrationFacts.tsx",
-          "version": "repo-file-v1:sha256:8301013cfae92c169570a24b6d7cc6c94d0520a69f6eb283465b5514348b7eb1"
+          "version": "repo-file-v1:sha256:4b5975676e5669e3cbe32b3398510a30dcf2ce3127e839407e33af819a5b9f1d"
         }
       ]
     },
@@ -507,10 +507,24 @@
           "version": "repo-lines-v1:sha256:b6a1e5962220e941dfdc3f3b901a62c36a73423e915b68b0a2c8a606d06dd7bb:eyJzZWxlY3RlZExpbmVDb3VudCI6MzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhjODI1OWRkZDg0NTRmODJiMWFjNTIyOWE2ZjcyZmI0OTIwNDhhZGQwMGY0MzMxYjVmYjgyNzI2NDYxNzUzYmQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBhYjZlN2FjOGFiNWEyNzliYzQwYjc5YTY0NGRlZWUwZDZhMDEyOGY2N2RiMDBjNWQ4NGE5ZmMxMTkxYjQ2MjUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRiOWI4NjJiYzE1NWRlOWU1MWQ5ZWQyNzcwMDkyNTA4MzQ3OTI0YmVhYjk0MmU0NTM4NzMzNWQ4NzU2YzE1NmMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImU5MWU2NzBlNGU3ZDEwZWM3ZmQ0OWJjMzFjN2EyYzNhMjE5MzA4MzUwZDA1ODZhZTQ4MWZlNWI0YTY1MTg2NjIifQ"
         }
       ]
+    },
+    {
+      "id": "claim_d3b65cc42c234f1880d9746cff1dab19",
+      "statement": "IntegrationFactsは対象IDがある間5秒周期で取得し、未公開の終端・再開可能状態でも周期取得を停止しない。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/IntegrationFacts.test.tsx",
+          "version": "repo-file-v1:sha256:ce7891488b122d3add265d4423eb21a216b36a3b24b6761b15edda4c4157c73c"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/IntegrationFacts.tsx",
+          "version": "repo-file-v1:sha256:4b5975676e5669e3cbe32b3398510a30dcf2ce3127e839407e33af819a5b9f1d"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-05T04:35:28.799Z"
+    "at": "2026-11-06T03:26:16.411Z"
   }
 }

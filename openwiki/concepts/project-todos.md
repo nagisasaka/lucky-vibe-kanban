@@ -58,10 +58,10 @@ sources:
     resource: repo://tests/todos/layout.mjs
   - id: openwiki-source-39e16c61b69c47aba760577d
     resource: repo://tests/todos/README.md
-generated: { by: "codex", at: "2026-11-02T01:08:30.935Z" }
+generated: { by: "codex", at: "2026-11-06T03:26:16.411Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-05T07:15:08.684Z
+    at: 2026-11-06T03:26:16.411Z
 ---
 
 # Project Todo の共有メモ
@@ -119,7 +119,7 @@ REST は不在を404、競合を409、不正入力を400、DB故障を内部エ�
 
 Project の Board / Todos 切替と Workspace の Todo panel は同じ Project のメモを使う。Workspace は現在の Card link の Project を優先し、未関連なら利用者が Project を選ぶ。Project 判定の取得失敗を「未関連」の成功へ変換しない。[Workspace の解決](../../crates/server/src/routes/todos.rs#L74-L91)、[選択 UI](../../packages/web-core/src/features/todos/ui/WorkspaceTodoPanel.tsx)
 
-一覧は作成時刻降順・ID順の offset pagination。REST は既定100・最大200件、MCP は100件ずつ、`next_offset` が null になるまで読む。これは固定 snapshot の cursor ではないので、並行追加中の全ページが同時点の集合である保証はない。Web は完了済みも含め200件ずつ読み、画面側でカテゴリーと完了表示を分け、5秒ごとに再取得する。[一覧](../../crates/db/src/models/todo.rs#L127-L142)、[Web 取得](../../packages/web-core/src/features/todos/model/todoApi.ts#L13-L25)、[表示](../../packages/web-core/src/features/todos/ui/TodoPanel.tsx#L33-L82)
+一覧は作成時刻降順・ID順の offset pagination。REST は既定100・最大200件、MCP は100件ずつ、`next_offset` が null になるまで読む。これは固定 snapshot の cursor ではないので、並行追加中の全ページが同時点の集合である保証はない。Web は完了済みも含め200件ずつ読み、画面側でカテゴリーと完了表示を分け、15秒ごとに再取得する。[一覧](../../crates/db/src/models/todo.rs#L127-L142)、[Web 取得](../../packages/web-core/src/features/todos/model/todoApi.ts#L13-L25)、[表示](../../packages/web-core/src/features/todos/ui/TodoPanel.tsx#L33-L82)
 
 追加 draft と表示先は Zustand のメモリ上に保持し、pane 切替では残るが、DB に保存した Todo と同じ永続性は持たない。編集は開始時 revision を保持し、競合で再取得しても入力を自動上書きせずエラーを示す。追加失敗でも draft の ID を保持する。[画面状態](../../packages/web-core/src/features/todos/model/todoViewStore.ts)、[追加と編集](../../packages/web-core/src/features/todos/ui/TodoPanel.tsx#L41-L68)、[編集 revision](../../packages/web-core/src/features/todos/ui/TodoPanel.tsx#L276-L315)
 
@@ -186,3 +186,6 @@ Project と Workspace のTodo検索は、取得済み本文/カテゴリーを t
 ## 未完了項目からのカテゴリー候補
 
 入力候補は検索・完了表示フィルターとは独立して、取得済みProject snapshotの未完了項目から空でないカテゴリーを重複除去・ソートして作る。最後の未完了項目の完了・削除・カテゴリー変更で候補から消え、再開で戻る。保存済み値は変更せず自由入力も維持する。[導出](../../packages/web-core/src/features/todos/model/todoCategories.ts)・[接続](../../packages/web-core/src/features/todos/ui/TodoPanel.tsx)・[回帰](../../packages/web-core/src/features/todos/model/todoCategories.test.ts)
+
+
+WorkspaceからTODO Projectを解決する取得は30秒周期、Todo一覧は15秒周期である。link優先・未関連時の選択と操作後の無効化は維持する。[scope](../../packages/web-core/src/features/todos/ui/WorkspaceTodoPanel.tsx)・[一覧](../../packages/web-core/src/features/todos/ui/TodoPanel.tsx)

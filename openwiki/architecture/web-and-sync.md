@@ -84,6 +84,10 @@ sources:
     resource: repo://packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts
   - id: openwiki-source-fe9d810dccb0b777dfcb7ae4
     resource: repo://packages/web-core/src/features/agent-runtime/model/canonicalAgentTimeline.ts
+  - id: openwiki-source-540d9101351d47e89b2062b1
+    resource: repo://packages/web-core/src/features/create-mode/model/CreateModeProvider.tsx
+  - id: openwiki-source-db035046d01e3f24722812c8
+    resource: repo://packages/web-core/src/features/kanban/ui/IntegrationPanel.tsx
   - id: openwiki-source-b39952c69795059582eecfdf
     resource: repo://packages/web-core/src/features/kanban/ui/KanbanCardDetails.tsx
   - id: openwiki-source-e0c2de9e01617a8949b78360
@@ -118,6 +122,10 @@ sources:
     resource: repo://packages/web-core/src/features/workspace-chat/ui/DisplayConversationEntry.tsx
   - id: openwiki-source-a045ed78b54878edd07211c7
     resource: repo://packages/web-core/src/features/workspace-chat/ui/ExecutionInspectionPanel.tsx
+  - id: openwiki-source-dbaab3d3ce907e13656fcbed
+    resource: repo://packages/web-core/src/features/workspace-chat/ui/IntegrationFacts.tsx
+  - id: openwiki-source-3f4f76b473cff31732d54424
+    resource: repo://packages/web-core/src/features/workspace-chat/ui/WorkspaceTokenSummary.tsx
   - id: openwiki-source-b20f21ce6e1fdbde2fcde6ed
     resource: repo://packages/web-core/src/features/workspace-files/model/useChatFileLink.ts
   - id: openwiki-source-4244260c062f6502d542a077
@@ -160,6 +168,8 @@ sources:
     resource: repo://packages/web-core/src/shared/components/WYSIWYGEditor.tsx
   - id: openwiki-source-7e0da77c31130e66a4b635a5
     resource: repo://packages/web-core/src/shared/dialogs/command-bar/EditorSelectionDialog.tsx
+  - id: openwiki-source-392591fce6f2a06cf78a67cd
+    resource: repo://packages/web-core/src/shared/dialogs/command-bar/RebaseDialog.tsx
   - id: openwiki-source-6d0dfae3c1582e1af83405d4
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/GeneralSettingsSection.tsx
   - id: openwiki-source-a1a870cf32aedb317f9ea946
@@ -184,6 +194,8 @@ sources:
     resource: repo://packages/web-core/src/shared/hooks/useVisualViewportHeightVar.ts
   - id: openwiki-source-ffc55e6e31e6ce477ca57329
     resource: repo://packages/web-core/src/shared/hooks/useWorkflowRun.ts
+  - id: openwiki-source-078f75b71b8ec5b62a4d5026
+    resource: repo://packages/web-core/src/shared/hooks/useWorkspaceExecution.ts
   - id: openwiki-source-012d640135a03bd20065dc93
     resource: repo://packages/web-core/src/shared/hooks/useWorkspaceOwner.ts
   - id: openwiki-source-106370df067778d69654e845
@@ -250,10 +262,10 @@ sources:
     resource: repo://tests/workspace-navigation/run-isolated.py
   - id: openwiki-source-b87e3253bd1458a0091f8587
     resource: repo://tests/workspace-navigation/workspace-navigation.spec.ts
-generated: { by: "codex", at: "2026-11-06T03:22:40.407Z" }
+generated: { by: "codex", at: "2026-11-06T03:26:16.411Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-06T03:22:40.407Z
+    at: 2026-11-06T03:26:16.411Z
 ---
 
 # Web の実行環境と同期
@@ -590,3 +602,14 @@ Workspace と Repository Workflow の関連付け探索は detail の照合と�
 316-EF では参照のない旧 frontend の `useTaskWorkspaces`、`useDiscordOnlineCount`、旧承認・retry UI、旧 process dialog/log viewer、未接続の ElectricTestPage を削除した。現行の承認・質問・feedback・retry、Logs/ScriptFixer、backend 旧 API は変更対象外である。孤立コード削除の量を実通信削減に換算しない。
 
 コード候補は source と同じ `3b77f5dad09fe5f7ee0efafc0b85671fc866a8de`。source の公開記録には両 frontend 型check、production の変更3ファイル lint、既存4ファイル32試験成功がある。今回の統合では競合なしの同一SHAと参照到達性・維持契約を確認し、差分空白と固定baseの祖先関係を実行確認した。重複suiteと全域build/backend試験はagent判断で省略した。実ブラウザでの状態遷移・runId切替・通信断復旧は未検証で、性能削減もコード上の推定であり実測ではない。
+
+
+## Workspace 購読再利用と局所 poll（316-CD）
+
+CreateModeProvider と RebaseDialog は既存 WorkspaceContext の一覧を再利用する。通常 route と VS Code route の WorkspaceProvider 配置の下で動作し、新しい共有 store を追加しない。archive metadata WS と active/archive summary の既存条件は維持する。[作成](../../packages/web-core/src/features/create-mode/model/CreateModeProvider.tsx)・[rebase](../../packages/web-core/src/shared/dialogs/command-bar/RebaseDialog.tsx)・[一覧](../../packages/web-core/src/shared/hooks/useWorkspaces.ts)
+
+useWorkspaceExecution は process 一覧と stop を維持し、consumer のない setup 詳細取得と runningProcessDetails を削除する。attemptData.processes は残る。[実行 hook](../../packages/web-core/src/shared/hooks/useWorkspaceExecution.ts)
+
+局所 poll は token 集計・Workspace→TODO Project が30秒、TODO・設計メモ・branch status・Repository memory が15秒、queue・Integration一覧・Facts・owner が5秒、activities・資源設定が10秒。初回取得と操作後の無効化、draft/revision 保護を維持し、Facts は未公開の終端・再開可能状態でも取得を継続する。全域query既定値と非同期質問3秒は変更しない。[Facts](../../packages/web-core/src/features/workspace-chat/ui/IntegrationFacts.tsx)・[queue](../../packages/web-core/src/features/workspace-chat/model/hooks/useSessionQueueInteraction.ts)
+
+source ffc6a4a6 の公開記録には両frontend型check・変更production lint/整形・既存15試験成功がある。統合コード候補 9edfcf2f では16変更ファイルのsource一致・削除参照不存在・差分空白と既存取得条件を限定確認した。ユーザーの最小検証指定に従い重複suite・全域検証は省略。実WS本数、実timer/E2E・性能は未実測であり、削減効果はコード推定、通常5〜30秒周期の鮮度低下を許容する。

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:cf626d91839ea9fc1abefe7e1821528de1f393ea55120cbe9d225d7fc11783e2",
+  "pageVersion": "sha256:6a4bde1056a834cc0846da6bb5d29bd81c7f513afe5a013224627e0212513484",
   "claims": [
     {
       "id": "claim_ef965d37641846bda42842bf4788c8cc",
@@ -394,7 +394,7 @@
     },
     {
       "id": "claim_e9c8698e6aa4430ca1d928dc9dd094af",
-      "statement": "チャット末尾のWorkspaceTokenSummaryはWorkspace単位に5秒で再取得し、総量・内訳・取得thread数・更新時刻を表示する。nullは不明、partialは一部のみ、取得失敗時は詳細を隠しエラー表示する。",
+      "statement": "チャット末尾のWorkspaceTokenSummaryはWorkspace単位に30秒で再取得し、総量・内訳・取得thread数・更新時刻を表示する。nullは不明、partialは一部のみ、取得失敗時は詳細を隠しエラー表示する。",
       "evidence": [
         {
           "resource": "repo://packages/web-core/src/features/workspace-chat/ui/ConversationListContainer.tsx",
@@ -402,7 +402,7 @@
         },
         {
           "resource": "repo://packages/web-core/src/features/workspace-chat/ui/WorkspaceTokenSummary.tsx",
-          "version": "repo-file-v1:sha256:75dff0ca29953ff28c18c98b9f56693f455301d31c0c1d2d2ddaa4c101320dc9"
+          "version": "repo-file-v1:sha256:b4a315dfd994f04ea4c9fce8a59677aea79c2b21c40ccce4e7b39dd06aa3f90b"
         }
       ]
     },
@@ -835,6 +835,6 @@
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-05T07:15:08.684Z"
+    "at": "2026-11-06T03:28:31.315Z"
   }
 }

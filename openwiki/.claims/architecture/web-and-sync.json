@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:98e88d2583b1767258f55de902f437dce9f8c38082883d1713c010b788aeba2f",
+  "pageVersion": "sha256:fd7c8de312ef6c47353d8c68767f649b4134a2f8c179205e679171181b8c9042",
   "claims": [
     {
       "id": "claim_cd547b65737e432fb2cf718c4992aa97",
@@ -148,7 +148,7 @@
         },
         {
           "resource": "repo://packages/web-core/src/shared/hooks/useWorkspaceOwner.ts",
-          "version": "repo-file-v1:sha256:5c961e8100b37d57594398a1e9daa488bf7fd55192f68e68ab9eb47d9b94bd76"
+          "version": "repo-file-v1:sha256:eda5730cbad470b2d48ac2479aec15773e4d8e08a01a67eadcd6479144a68ca6"
         }
       ]
     },
@@ -1507,10 +1507,46 @@
           "version": "repo-file-v1:sha256:e23a86dcd4029f7313b28d452a8f7c1181bf38f5e649a5f281f8d0cd01886ce4"
         }
       ]
+    },
+    {
+      "id": "claim_6d2c252508b94bb58dcb7d6784a42981",
+      "statement": "CreateModeProvider と RebaseDialog は既存WorkspaceContextの一覧を再利用し、useWorkspaceExecutionはprocess一覧とstopを残してsetup詳細取得を行わない。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/features/create-mode/model/CreateModeProvider.tsx",
+          "version": "repo-file-v1:sha256:d356ca90b0d944327ada9df12cd7c8811b08e49790e5860d98c348a33b86cad0"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/dialogs/command-bar/RebaseDialog.tsx",
+          "version": "repo-file-v1:sha256:41da246387ac10cad0075227315ee1f80cb72581936013674abb794ea4fc1f80"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/hooks/useWorkspaceExecution.ts",
+          "version": "repo-file-v1:sha256:f59345b97e89648601ceba1ce1e690b6eda1f10a1bae63313a7b40e296638f25"
+        }
+      ]
+    },
+    {
+      "id": "claim_f67d92bbc9ba4889954797a2afdd9d86",
+      "statement": "局所pollは用途に応じ5〜30秒へ緩和し、IntegrationFactsはidがある限り5秒周期を維持する。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/features/kanban/ui/IntegrationPanel.tsx",
+          "version": "repo-file-v1:sha256:c7ec14a6bc15d20826c02ec51586c1dd8269abe942a641abc8ac1e449a4c87d9"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/IntegrationFacts.tsx",
+          "version": "repo-file-v1:sha256:4b5975676e5669e3cbe32b3398510a30dcf2ce3127e839407e33af819a5b9f1d"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/WorkspaceTokenSummary.tsx",
+          "version": "repo-file-v1:sha256:b4a315dfd994f04ea4c9fce8a59677aea79c2b21c40ccce4e7b39dd06aa3f90b"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-06T03:22:40.407Z"
+    "at": "2026-11-06T03:26:16.411Z"
   }
 }

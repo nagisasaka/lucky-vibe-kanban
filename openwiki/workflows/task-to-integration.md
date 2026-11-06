@@ -84,10 +84,10 @@ sources:
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/ReposSettingsSection.tsx
   - id: openwiki-source-ffc55e6e31e6ce477ca57329
     resource: repo://packages/web-core/src/shared/hooks/useWorkflowRun.ts
-generated: { by: "codex", at: "2026-11-05T04:35:28.799Z" }
+generated: { by: "codex", at: "2026-11-06T03:26:16.411Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-05T04:35:28.799Z
+    at: 2026-11-06T03:26:16.411Z
 ---
 
 # Issue から実行・レビュー・統合まで
@@ -239,3 +239,6 @@ Issueの表示番号は作成時に固定したProject keyを使い、priority/t
 LVKを実行するaccountの環境へAzure CLIを用意し、`az extension add --name azure-devops` と `az login` を行う。必要に応じて組織・Projectの既定値を設定し、対象remoteと同じ権限でアクセスできることを確認する。LVKは `az repos` を実行し、CLI欠落・認証失敗・対象不存在を区別する。[Azure wrapper](../../crates/git-host/src/azure/cli.rs)
 
 WorkspaceのPR作成画面で対象Repo、head/base、title・descriptionを確認して作成する。URLが返ってもlocal記録まで成功したかを確認し、応答不明時は同branchの既存PRを調べてから再試行する。GitHub用PATの保存をAzure認証に流用しない。[共通PR経路](../../crates/server/src/routes/workspaces/pr.rs)
+
+
+自動マージpanelを開いている間、統合一覧は5秒、repository activitiesは10秒周期で取得する。初回取得・操作後の無効化と固定requestによる再送は維持する。[panel](../../packages/web-core/src/features/kanban/ui/IntegrationPanel.tsx#L100-L180)
