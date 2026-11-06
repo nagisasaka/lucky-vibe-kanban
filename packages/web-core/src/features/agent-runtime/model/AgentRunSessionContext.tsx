@@ -14,6 +14,7 @@ import { agentRunsApi } from '@/shared/lib/agentRunApi';
 import {
   buildCanonicalAgentSessionTimeline,
   isCanonicalRunActive,
+  isCanonicalRunTerminal,
   type CanonicalAgentSessionTimeline,
 } from './canonicalAgentSessionTimeline';
 import type { CanonicalAgentTimeline } from './canonicalAgentTimeline';
@@ -177,12 +178,33 @@ function AgentRunSessionContent({
   const historyIds = new Set(
     history.slice(0, historyLimit).map((run) => run.agent_run_id)
   );
-  // Keep started streams mounted when a new run shifts the recent window.
+  // Ready/State is sent only after the last history page. Keep that snapshot,
+  // but release terminal streams. Discovery reopens them for retry/new events.
+  const isSettled = useCallback(
+    (agentRunId: string) => {
+      const saved = timelines.get(agentRunId)?.state;
+      const summary = summaries.find((run) => run.agent_run_id === agentRunId);
+      return Boolean(
+        connections.get(agentRunId)?.initialized &&
+          saved &&
+          isCanonicalRunTerminal(saved) &&
+          summary &&
+          summary.state.last_run_attempt_number <=
+            saved.last_run_attempt_number &&
+          (summary.state.last_run_attempt_number <
+            saved.last_run_attempt_number ||
+            summary.state.last_event_sequence <= saved.last_event_sequence) &&
+          summary.state.updated_at <= saved.updated_at
+      );
+    },
+    [connections, timelines, summaries]
+  );
   const subscribed = ordered.filter(
     (run) =>
-      foregroundIds.has(run.agent_run_id) ||
-      historyIds.has(run.agent_run_id) ||
-      connections.has(run.agent_run_id)
+      !isSettled(run.agent_run_id) &&
+      (foregroundIds.has(run.agent_run_id) ||
+        historyIds.has(run.agent_run_id) ||
+        connections.has(run.agent_run_id))
   );
   const streamsInitialized = foreground.every(
     (summary) =>
@@ -243,7 +265,9 @@ function AgentRunSessionContent({
       isConnected:
         summaries.length === 0 ||
         foreground.every(
-          (summary) => connections.get(summary.agent_run_id)?.connected
+          (summary) =>
+            isSettled(summary.agent_run_id) ||
+            connections.get(summary.agent_run_id)?.connected
         ),
       error:
         streamErrors[0] ??
@@ -251,6 +275,7 @@ function AgentRunSessionContent({
     }),
     [
       connections,
+      isSettled,
       runsQuery.error,
       conversation,
       isLoading,
