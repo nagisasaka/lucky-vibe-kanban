@@ -209,9 +209,6 @@ impl Harness {
             mode,
             None,
             None,
-            RepoContext::default(),
-            false,
-            String::new(),
             cancel.clone(),
         );
         let mut child = tokio::process::Command::new(std::env::current_exe().unwrap())
@@ -247,7 +244,7 @@ impl Harness {
 
     async fn launch(&self, case: &str, resume: bool) -> Result<(), ExecutorError> {
         let codex: Codex = serde_json::from_value(json!({"sandbox":"danger-full-access"})).unwrap();
-        let mut env = ExecutionEnv::new(RepoContext::default(), false, String::new());
+        let mut env = ExecutionEnv::new(RepoContext::default());
         if case != "ordinary" {
             env.insert("LVK_OPENWIKI_MAINTENANCE", "1");
         }
@@ -443,7 +440,7 @@ async fn preflight_cannot_fall_back_to_global_mcp_inventory() {
 async fn installed_openwiki_mcp_preflight() {
     let temp = tempfile::tempdir().unwrap();
     let codex: Codex = serde_json::from_value(json!({"sandbox":"read-only"})).unwrap();
-    let mut env = ExecutionEnv::new(RepoContext::default(), false, String::new());
+    let mut env = ExecutionEnv::new(RepoContext::default());
     env.insert("LVK_OPENWIKI_MAINTENANCE", "1");
     let mut params = codex.build_thread_start_params_with_resources(temp.path(), &env);
     params.ephemeral = Some(true);

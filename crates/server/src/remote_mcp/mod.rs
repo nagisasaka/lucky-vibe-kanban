@@ -49,7 +49,6 @@ mod run_events;
 mod runtime_read;
 mod runtime_write;
 mod todos;
-mod verification_read;
 mod workspace_archive;
 
 use std::sync::Arc;
@@ -456,7 +455,6 @@ fn tools() -> Vec<Tool> {
     tools.extend(provider_usage::tools());
     tools.extend(merge_read::tools());
     tools.extend(evidence_read::tools());
-    tools.extend(verification_read::tools());
     tools.extend(code_read::tools());
     tools.extend(repository_read::tools());
     tools.extend(issue_write::tools());
@@ -630,12 +628,6 @@ impl Remote {
             }
             name if code_read::tools().iter().any(|tool| tool.name == name) => {
                 code_read::call(self, name, args).await
-            }
-            name if verification_read::tools()
-                .iter()
-                .any(|tool| tool.name == name) =>
-            {
-                verification_read::call(self, name, args).await
             }
             name if evidence_read::tools().iter().any(|tool| tool.name == name) => {
                 evidence_read::call(self, name, args).await

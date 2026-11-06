@@ -3,7 +3,7 @@
 **Plan work on a kanban board, run coding agents, and review their changes.**
 
 LVK is a self-hosted development workspace with Git worktrees, multiple sessions,
-visual agent workflows, local integration and OpenWiki repository memory. Run it
+visual agent workflows, local integration and OpenWiki. Run it
 locally or on your own server so agent work can continue while your laptop is
 disconnected. Agent accounts, provider subscriptions and model usage are separate.
 
@@ -28,7 +28,7 @@ promise automatic resumption of interrupted processes.
 - [Initial authentication, members and recovery](openwiki/concepts/server-access.md)
 - [Provider login, profiles and MCP settings](openwiki/integrations/agent-providers.md)
 - [From an issue to integration](openwiki/workflows/task-to-integration.md) and [Auto-merge](openwiki/concepts/formal-integration.md)
-- [Repository memory and authorised Wiki maintenance](openwiki/operations/openwiki-maintenance.md)
+- [Change Manifests and authorised Wiki maintenance](openwiki/operations/openwiki-maintenance.md)
 
 ## Develop LVK
 

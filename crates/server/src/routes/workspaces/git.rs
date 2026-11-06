@@ -232,9 +232,7 @@ pub async fn merge_workspace(
         .transpose()?;
     let mut memory_integration = None;
     let mut semantic_message = None;
-    if let Some(store) = &memory
-        && store.state()?.enabled
-    {
+    if let Some(store) = &memory {
         semantic_message = services::services::repository_memory::prepare_workspace_source(
             pool,
             deployment.git(),

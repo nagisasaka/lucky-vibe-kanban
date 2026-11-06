@@ -13,8 +13,6 @@ use utils::repository_memory::{
 };
 use uuid::Uuid;
 
-pub mod verification;
-
 pub fn begin_coding_run(
     repo: &Repo,
     workspace: &Workspace,
@@ -27,9 +25,7 @@ pub fn begin_coding_run(
         return Ok(None);
     };
     let state = store.state()?;
-    if !state.enabled
-        || (workspace.is_execution_only() && state.maintenance_workspace_id == Some(workspace.id))
-    {
+    if workspace.is_execution_only() && state.maintenance_workspace_id == Some(workspace.id) {
         return Ok(None);
     }
     if let Some(existing) = store.run(run_id)? {
@@ -65,16 +61,11 @@ pub fn begin_coding_run(
         base_commit,
         target_branch: target_branch.into(),
         repository_path: root.into(),
-        memory_path: store.memory_path(workspace.id),
         draft_path: store.draft_path(run_id),
         wiki_status,
         finalize_source,
     };
     store.save_run(&run)?;
-    // Missing start evidence fails closed without changing ordinary source completion.
-    if let Err(error) = verification::capture_start(&store, &run) {
-        tracing::warn!(run_id=%run.run_id, %error, "No-change verification start unavailable");
-    }
     Ok(Some(run))
 }
 
@@ -483,9 +474,6 @@ pub async fn prepare_workspace_source(
     let Some(store) = RepositoryMemoryStore::existing_for_repository(&repo.name, repo.id)? else {
         return Ok(None);
     };
-    if !store.state()?.enabled {
-        return Ok(None);
-    }
     let base = git.get_base_commit(root, &workspace.branch, target_branch)?;
     guard_normal_workspace(git, root, &base.to_string())?;
     let active: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM agent_runs WHERE workspace_id = ? AND status IN ('pending','starting','running','awaiting_input','awaiting_approval','cancelling')")
@@ -633,7 +621,6 @@ mod tests {
             base_commit: GitService::new().get_head_info(root).unwrap().oid,
             target_branch: "main".into(),
             repository_path: root.into(),
-            memory_path: store.memory_path(workspace_id),
             draft_path: store.draft_path(run_id),
             wiki_status: utils::repository_memory::RepositoryWikiStatus::Current,
             finalize_source: true,
@@ -889,6 +876,50 @@ mod tests {
     }
 
     #[test]
+    fn wiki_disabled_source_completion_preserves_intent_and_existing_commits() {
+        let temp = tempfile::tempdir().unwrap();
+        let root = temp.path().join("repo");
+        repository(&root);
+        let store = RepositoryMemoryStore::at_persistent(temp.path()).unwrap();
+        assert!(!store.state().unwrap().enabled);
+        let semantics = SemanticChanges {
+            goal: "Keep LVK thin; development context belongs to the coding session".into(),
+            summary: "Remove duplicated development memory".into(),
+            decisions: vec![utils::repository_memory::MemoryDecision {
+                decision: "Retain file Manifests independently of Wiki".into(),
+                rationale: Some("Auto-merge needs confirmed design intent beyond the diff".into()),
+            }],
+            rejected_alternatives: vec![utils::repository_memory::RejectedAlternative {
+                alternative: "Replace memory with another handoff store".into(),
+                reason: Some("It would retain the maintenance cost being removed".into()),
+            }],
+            ..Default::default()
+        };
+        for already_committed in [false, true] {
+            let context = run(&store, &root);
+            std::fs::write(root.join("source.txt"), format!("{already_committed}\n")).unwrap();
+            std::fs::write(&context.draft_path, serde_json::to_vec(&semantics).unwrap()).unwrap();
+            let existing = already_committed.then(|| {
+                git_command(&root, &["add", "source.txt"]);
+                git_command(&root, &["commit", "-m", "Agent-authored source commit"]);
+                git_command(&root, &["rev-parse", "HEAD"])
+            });
+            let event = complete_coding_run(&store, &context).unwrap().unwrap();
+            assert_eq!(event.semantics, semantics);
+            assert_eq!(event.base_commit, context.base_commit);
+            assert_eq!(
+                event.source_commit,
+                git_command(&root, &["rev-parse", "HEAD"])
+            );
+            if let Some(existing) = existing {
+                assert_eq!(event.source_commit, existing);
+            }
+            assert_eq!(store.event(context.run_id).unwrap(), Some(event.clone()));
+            assert_eq!(complete_coding_run(&store, &context).unwrap(), Some(event));
+        }
+    }
+
+    #[test]
     fn control_run_does_not_commit_existing_dirty_source_or_require_a_draft() {
         let temp = tempfile::tempdir().unwrap();
         let root = temp.path().join("repo");
@@ -1071,6 +1102,10 @@ mod tests {
         let store = RepositoryMemoryStore::at_persistent(temp.path()).unwrap();
         let a = run(&store, &root);
         assert!(complete_coding_run(&store, &a).unwrap().is_none());
+        assert!(store.events().unwrap().is_empty());
+        assert!(!temp.path().join("knowledge/verification-starts").exists());
+        assert!(!temp.path().join("knowledge/verifications").exists());
+        assert!(!temp.path().join("knowledge/workspace-memory").exists());
         std::fs::write(root.join("next-task.txt"), "not the previous run").unwrap();
         assert!(complete_coding_run(&store, &a).unwrap().is_none());
         let b = run(&store, &root);

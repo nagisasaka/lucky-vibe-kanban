@@ -120,7 +120,7 @@ async fn isolated_validation_settings_http_and_executor() -> anyhow::Result<()> 
         std::fs::write(root.join(".lvk/integration-validation.json"), "invalid working copy")?;
         ensure!(support::validation_suggestions(&root, &frozen)?[0].command == command);
         std::fs::write(root.join(".lvk/integration-validation.json"), &content)?;
-        let mut env = ExecutionEnv::new(RepoContext::default(), false, String::new());
+        let mut env = ExecutionEnv::new(RepoContext::default());
         env.insert("LVK_VALIDATION_MARKER", marker.to_string_lossy());
         let action = ScriptRequest {
             script: plan[0].command.clone(),

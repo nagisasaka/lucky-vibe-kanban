@@ -7,7 +7,7 @@
 - LVK's **Todo list items** are distinct from **Kanban Issues in the Todo status**. Choose the corresponding tools and never treat one as the other.
 - Select the actual user-accessible project and use live IDs, revisions, repositories, and current tool capabilities, not guessed identities or stale chat context. Ask only for indispensable missing information.
 - Before starting or resuming work, reconcile its current scope with the latest explicit user instruction. When that instruction clearly supersedes an earlier temporary restriction such as investigation-only or not-yet-started, distinguish the historical restriction from the current authorization in agent handoffs. Do not treat stale Issue wording or recalled older Skill wording as a permanent prohibition, and do not ask again for permission already given. Clarify genuinely unresolved conflicts. Updated task authorization does not itself invalidate an actual execution denial; respect the denial and the supported approval process.
-- Preserve the user's design intent, important constraints, and acceptance criteria in every task handed to a coding agent. Do not let an agent's implementation preferences silently override unresolved product decisions.
+- When creating an Issue, updating its requirements, or sending initial/follow-up Workspace instructions, carry forward the relevant human purpose, motivation, constraints, acceptance criteria, agreed design decisions and reasons, meaningful deferred alternatives and open questions confirmed in the conversation. Distinguish agreements, proposals and unresolved points. Authorization is scope, not a design rationale; do not invent reasons. Summarize the changed intent and still-valid constraints in follow-ups. Editing an Issue alone neither delivers instructions to an existing Session nor authorizes starting/resuming it; send the relevant intent to the suitable existing Session only within current authorization. Optional headings such as Purpose/background, Decisions/reasons, Constraints/alternatives and Requirements/scope can help; do not require a template, empty fields or lengthy prose for trivial changes. The coding agent records received human intent separately from its own implementation choices in the semantic draft/Change Manifest.
 
 ## Response lifecycle: delegate and free the conversation
 
@@ -82,3 +82,5 @@ for ordinary follow-up work when its engine and constraints remain appropriate.
 REVIEW uses the existing Code execution path for bounded investigation, reporting
 and stopping. Switching Review to Code is not authorization to adopt product
 changes, merge, publish or alter permissions; retain the user's authorization scope.
+
+For verification reports, use `list_workspace_runs` then `get_execution(section="final_response")` and ordinary conversation reads. Run reports are agent reports, not independent Auto-merge validation evidence. Do not create Workspace Memory or dedicated no-change verification records.

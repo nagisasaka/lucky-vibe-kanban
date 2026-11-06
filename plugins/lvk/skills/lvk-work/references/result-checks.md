@@ -1,11 +1,9 @@
 # Check results when asked
 
-Read the selected run's `get_execution` result; choose `input`, `goal` or
-`final_response` and follow its revision pages. A finished turn is not proof that
+Use `list_workspace_runs` to select a Run, then read its `get_execution` result;
+choose `input`, `goal` or `final_response` and follow its revision pages. A finished turn is not proof that
 all requirements or tests passed.
 
-Use `get_workspace_memory` for the selected repository and Workspace's recorded
-context. Treat it as agent-authored evidence, not an independent success receipt.
 For an independent re-review, use `query_repository` with explicit reviewed/new
 full SHAs and `comparison:"direct"` to exclude current dirty changes. Use
 `comparison:"merge_base"` only when intended; merge commits require explicit
@@ -16,11 +14,6 @@ Binary, oversized or unreadable content is not an empty diff. Renames are shown
 as separate source/destination paths. `list_workspace_wiki` and
 `get_workspace_wiki_page` read the selected checkout; they do not prove that the
 canonical Wiki has been published. Fetch only the relevant paths/pages.
-
-Use `get_workspace_verification` for the selected run's recorded test counts and
-`get_workspace_verification_test` for a complete test command/result/summary.
-These are Change Manifest claims for the returned source commit. Missing records,
-head mismatches and unverified working-tree changes do not establish a pass.
 
 Use `list_project_merge_status` to locate outstanding or unknown Workspace/repository
 changes and `get_workspace_merge_status` for a selected pair. Counts refer to

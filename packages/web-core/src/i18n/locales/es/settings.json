@@ -139,18 +139,6 @@
           "helper": "Prompt personalizado para el agente de IA al generar descripciones de PR. Usa {pr_number} y {pr_url} como marcadores de posición."
         }
       },
-      "commits": {
-        "title": "Commits",
-        "description": "Configura el comportamiento de commits para los intentos de tareas",
-        "reminder": {
-          "label": "Recordatorio de commit",
-          "helper": "Solicitar a los agentes compatibles que confirmen los cambios antes de detenerse."
-        },
-        "customPrompt": {
-          "useCustom": "Usar prompt personalizado",
-          "helper": "Prompt personalizado para el recordatorio de commit. El estado de git se añadirá automáticamente."
-        }
-      },
       "notifications": {
         "title": "Notificaciones",
         "description": "Controla cuándo y cómo recibes notificaciones.",

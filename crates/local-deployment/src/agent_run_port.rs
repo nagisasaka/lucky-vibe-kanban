@@ -141,8 +141,6 @@ struct AuditedExecutionEnv<'a> {
     vars: &'a HashMap<String, String>,
     workspace_root: &'a Path,
     repo_names: &'a [String],
-    commit_reminder: bool,
-    commit_reminder_prompt: &'a str,
 }
 
 impl FrozenDirectProviderLaunchSpec {
@@ -209,8 +207,6 @@ impl FrozenDirectProviderLaunchSpec {
                 vars: &self.env.vars,
                 workspace_root: &self.env.repo_context.workspace_root,
                 repo_names: &self.env.repo_context.repo_names,
-                commit_reminder: self.env.commit_reminder,
-                commit_reminder_prompt: &self.env.commit_reminder_prompt,
             },
         })
     }
@@ -925,8 +921,7 @@ impl LocalAgentRunPort {
                             })?;
                         openwiki_maintenance = true;
                     }
-                } else if state.enabled
-                    && source_completion_allowed
+                } else if source_completion_allowed
                     && !crate::container::should_disable_default_commit_for_workspace(
                         &self.db.pool,
                         workspace.id,
@@ -983,11 +978,10 @@ impl LocalAgentRunPort {
             }
         }
         let repo_names = repos.into_iter().map(|repo| repo.name).collect();
-        let mut env = ExecutionEnv::new(
-            RepoContext::new(PathBuf::from(&request.workspace.path), repo_names),
-            false,
-            String::new(),
-        );
+        let mut env = ExecutionEnv::new(RepoContext::new(
+            PathBuf::from(&request.workspace.path),
+            repo_names,
+        ));
         env.insert("VK_WORKSPACE_ID", workspace.id.to_string());
         env.insert("VK_WORKSPACE_BRANCH", &workspace.branch);
         env.insert("VK_AGENT_RUN_ID", request.agent_run_id.to_string());
@@ -4207,14 +4201,10 @@ mod tests {
     }
 
     fn test_execution_env(workspace_path: &str) -> ExecutionEnv {
-        let mut env = ExecutionEnv::new(
-            RepoContext::new(
-                PathBuf::from(workspace_path),
-                vec!["repository".to_string()],
-            ),
-            false,
-            String::new(),
-        );
+        let mut env = ExecutionEnv::new(RepoContext::new(
+            PathBuf::from(workspace_path),
+            vec!["repository".to_string()],
+        ));
         env.insert("VK_AGENT_RUN_ID", "frozen-run");
         env
     }

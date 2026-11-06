@@ -20,8 +20,8 @@ pub fn ensure(repo_root: &Path, repo_name: &str, repo_id: Uuid) -> io::Result<()
     )
 }
 
-/// Registration and the first coding run opt new repositories into memory.
-/// This provisions storage only; paid Wiki maintenance still starts explicitly.
+/// Provision source publication/Change Manifest storage for registered repositories.
+/// Source completion is unconditional; paid Wiki maintenance starts explicitly.
 pub fn ensure_repository_memory(repo: &db::models::repo::Repo) -> io::Result<()> {
     if utils::repository_memory::RepositoryMemoryStore::existing_for_repository(
         &repo.name, repo.id,

@@ -73,7 +73,7 @@ async fn main() -> anyhow::Result<()> {
     let mut linked_searches = HashSet::new();
     for number in 1..=2 {
         let wire = evidence.join(format!("wire-{number}.jsonl"));
-        let mut env = ExecutionEnv::new(RepoContext::default(), false, String::new());
+        let mut env = ExecutionEnv::new(RepoContext::default());
         env.insert("LVK_OPENWIKI_MAINTENANCE", "1");
         env.insert("LVK_FIXTURE_WIRE", wire.to_str().unwrap());
         let prompt = if number == 1 {

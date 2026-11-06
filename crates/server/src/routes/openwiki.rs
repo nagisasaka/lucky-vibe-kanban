@@ -203,7 +203,7 @@ pub(crate) async fn sync_checked(
 
 fn check_sync_available(state: &RepositoryMemoryState) -> anyhow::Result<()> {
     if !state.enabled {
-        bail!("Enable OpenWiki repository memory first");
+        bail!("Enable OpenWiki first");
     }
     if state.active_run_id.is_some() || state.bootstrap.is_some() {
         bail!(

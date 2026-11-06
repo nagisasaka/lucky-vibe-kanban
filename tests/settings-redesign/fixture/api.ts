@@ -35,8 +35,6 @@ export function installFixtureApi() {
     hidden_agents: [],
     pr_auto_description_enabled: true,
     pr_auto_description_prompt: null,
-    commit_reminder_enabled: true,
-    commit_reminder_prompt: null,
     showcases: {},
     send_message_shortcut: "ModifierEnter",
     integration_skip_validation: false,

@@ -2484,7 +2484,7 @@ pub fn encode_stdio_rpc(request: &Value) -> Result<Vec<u8>, serde_json::Error> {
     Ok(bytes)
 }
 
-/// Provider-neutral repository memory guidance. Codex receives this through
+/// Provider-neutral Change Manifest and read-only Wiki guidance. Codex receives this through
 /// persistent developer instructions; other providers receive a self-contained
 /// prompt suffix. Do not change slash-command parsing or Codex Goal objectives.
 pub fn prompt_with_repository_memory(
@@ -2497,7 +2497,7 @@ pub fn prompt_with_repository_memory(
         && let Some(instructions) = env.get("LVK_REPOSITORY_MEMORY_INSTRUCTIONS")
     {
         return format!(
-            "{prompt}\n\n{}\n\n## LVK repository memory context\n{instructions}",
+            "{prompt}\n\n{}\n\n## LVK Change Manifest context\n{instructions}",
             crate::legacy_wiki::RETIREMENT_NOTICE
         );
     }
@@ -2723,11 +2723,7 @@ mod tests {
     }
 
     fn launch_env() -> ExecutionEnv {
-        ExecutionEnv::new(
-            RepoContext::new(".".into(), Vec::new()),
-            false,
-            String::new(),
-        )
+        ExecutionEnv::new(RepoContext::new(".".into(), Vec::new()))
     }
 
     fn provider_session(

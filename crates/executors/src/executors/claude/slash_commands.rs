@@ -240,11 +240,8 @@ impl ClaudeCode {
         &self,
         current_dir: &Path,
     ) -> Result<DiscoveredCommands, ExecutorError> {
-        self.check_subscription_login(
-            current_dir,
-            &ExecutionEnv::new(RepoContext::default(), false, String::new()),
-        )
-        .await?;
+        self.check_subscription_login(current_dir, &ExecutionEnv::new(RepoContext::default()))
+            .await?;
         let command_builder = self
             .build_slash_commands_discovery_command_builder()
             .await?;
@@ -260,7 +257,7 @@ impl ClaudeCode {
             .current_dir(current_dir)
             .args(&args);
 
-        ExecutionEnv::new(RepoContext::default(), false, String::new())
+        ExecutionEnv::new(RepoContext::default())
             .with_profile(&self.cmd)
             .apply_to_command(&mut command);
 

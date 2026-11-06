@@ -137,7 +137,7 @@ mod tests {
     }
 
     fn clean_env() -> ExecutionEnv {
-        let mut env = ExecutionEnv::new(crate::env::RepoContext::default(), false, String::new());
+        let mut env = ExecutionEnv::new(crate::env::RepoContext::default());
         for key in CONFLICTING_ENV {
             env.insert(*key, "");
         }
