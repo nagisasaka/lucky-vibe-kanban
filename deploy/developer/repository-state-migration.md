@@ -6,8 +6,11 @@ ongoing migration service. Do not run it from a normal coding task against share
 instance data.
 
 1. Obtain cutover approval and coordinate the instance using the existing
-   [switch procedure](switch/README.md). Settle Runs, Wiki maintenance,
-   integrations and reservations with the old version, then stop the old server.
+   [switch procedure](switch/README.md). Finish any active legacy Wiki maintenance
+   with the old version, then stop the old server and all other writers.
+   Historical Run/integration statuses and durable reservations do not prove a
+   writer is alive; do not cancel blocked candidates or release reservations just
+   to pass this import.
    Retain the old binary and a consistent backup of the instance DB and persistent
    folder using that procedure. Do not let old/new writers overlap.
 2. With the same `LVK_INSTANCE_DIR` and storage configuration as the stopped
@@ -20,7 +23,10 @@ instance data.
    This applies ordinary schema migrations, then imports `knowledge/state.json`,
    `integrations/*.json`, `publications/*.json` and `receipts/*.json` in one DB
    transaction, keeping original IDs and Git bindings. It refuses unexpected
-   registered Repos, unfinished owners and active Runs/integrations/reservations.
+   registered Repos and unfinished legacy Wiki owners (active_run_id or
+   bootstrap). Writer shutdown is an operational prerequisite, not inferred
+   from Run/integration statuses or reservation rows. Those records, including
+   blocked candidates and their resumption relationships, remain unchanged.
    No file is deleted or rewritten.
 3. On error, keep the old files and fix the reported cause, then rerun the same
    command. Failed operational imports roll back; normal access refuses an empty

@@ -324,6 +324,8 @@ impl RepositoryMemoryStore {
 
 /// Explicit offline, one-time development import. It does not run at startup,
 /// audit other Repos, remove files, or create a permanent migration manager.
+/// Operators must stop all writers; historical Run statuses and durable
+/// integration reservations are preserved and are not evidence of live writers.
 /// Fix any reported cause and retry; the state row commits with every imported
 /// record, so a failed import cannot expose an empty or partial cutover.
 pub async fn import_legacy_operations(
@@ -343,11 +345,6 @@ pub async fn import_legacy_operations(
     ensure!(
         repos == vec![repository_id],
         "One-time development import expects exactly the selected registered Repo; inspect the actual Repo set before proceeding"
-    );
-    let active: i64 = sqlx::query_scalar("SELECT (SELECT COUNT(*) FROM agent_runs WHERE status IN ('pending','starting','running','awaiting_input','awaiting_approval','cancelling')) + (SELECT COUNT(*) FROM integration_runs WHERE status NOT IN ('succeeded','failed','cancelled')) + (SELECT COUNT(*) FROM integration_reservations)").fetch_one(&mut *tx).await?;
-    ensure!(
-        active == 0,
-        "Settle active Runs/integrations and reservations with the old version before the offline import"
     );
     if RepositoryMemoryStore::state_on(&mut tx, repository_id)
         .await?
@@ -461,6 +458,115 @@ mod tests {
         let state = store.state().await.unwrap();
         assert!(!state.enabled);
         assert_eq!(state.target_branch.as_deref(), Some("custom"));
+    }
+
+    #[tokio::test]
+    async fn offline_import_preserves_blocked_candidates_runs_and_reservations() {
+        use crate::models::integration::{
+            IntegrationPublicationRequest, IntegrationRun, tests::fixture,
+        };
+
+        let temp = tempfile::tempdir().unwrap();
+        files::RepositoryMemoryStore::at_persistent(temp.path()).unwrap();
+        let state_path = temp.path().join("knowledge/state.json");
+        let old_state = serde_json::to_vec(&RepositoryMemoryState::enabled_defaults(Some(
+            "main".into(),
+        )))
+        .unwrap();
+        std::fs::write(&state_path, &old_state).unwrap();
+        let (pool, mut run, _) = fixture().await;
+        let workspace = run.payload.sources[0].selection.workspace_id;
+        let session: Uuid = sqlx::query_scalar("SELECT id FROM sessions WHERE workspace_id=?")
+            .bind(workspace)
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+        let mut agent = Uuid::nil();
+        // Historical statuses remain even though no writer runs in this fixture.
+        for status in [
+            "pending",
+            "starting",
+            "running",
+            "awaiting_input",
+            "awaiting_approval",
+            "cancelling",
+        ] {
+            agent = Uuid::new_v4();
+            sqlx::query("INSERT INTO agent_runs(id,session_id,workspace_id,request_id,idempotency_key,correlation_id,schema_version,payload_version,runtime_profile_id,provider_id,workspace_mode,workspace_path,status,request_envelope) VALUES(?,?,?,?,?,?,1,1,'fixture','codex','shared_workspace','/fixture',?,'{}')")
+                .bind(agent).bind(session).bind(workspace).bind(agent)
+                .bind(agent.to_string()).bind(run.id).bind(status)
+                .execute(&pool).await.unwrap();
+        }
+        run.status = "blocked".into();
+        run.workspace_id = Some(workspace);
+        run.session_id = Some(session);
+        run.agent_run_id = Some(agent);
+        run.error = Some("retained stop reason".into());
+        run.payload.result_commit = Some("b".repeat(40));
+        run.payload.publication_request = Some(IntegrationPublicationRequest {
+            request_id: Uuid::new_v4(),
+            agent_run_id: agent,
+            code_commit: "b".repeat(40),
+            wiki_commit: Some("c".repeat(40)),
+            candidate_commit: "c".repeat(40),
+        });
+        run.payload.history.push(serde_json::json!({
+            "status": "blocked", "candidate_commit": "c".repeat(40)
+        }));
+        run.save(&pool).await.unwrap();
+        let other = Uuid::new_v4();
+        sqlx::query("INSERT INTO integration_runs(id,request_key,project_id,repository_id,storage_identity,target_ref,status,workspace_id,session_id,agent_run_id,payload,error) SELECT ?,?,project_id,repository_id,storage_identity,target_ref,status,workspace_id,session_id,agent_run_id,payload,error FROM integration_runs WHERE id=?")
+            .bind(other).bind(other.to_string()).bind(run.id)
+            .execute(&pool).await.unwrap();
+
+        let mut before = Vec::new();
+        for id in [run.id, other] {
+            before.push(
+                serde_json::to_value(IntegrationRun::find(&pool, id).await.unwrap()).unwrap(),
+            );
+        }
+        let agents_query = "SELECT id,session_id,workspace_id,correlation_id,status,request_envelope FROM agent_runs ORDER BY id";
+        let agents = sqlx::query_as::<_, (Uuid, Uuid, Uuid, Uuid, String, String)>(agents_query)
+            .fetch_all(&pool)
+            .await
+            .unwrap();
+        let reservations_query = "SELECT resource_kind,resource_key,run_id FROM integration_reservations ORDER BY resource_kind,resource_key";
+        let reservations = sqlx::query_as::<_, (String, String, Uuid)>(reservations_query)
+            .fetch_all(&pool)
+            .await
+            .unwrap();
+        assert!(!reservations.is_empty());
+
+        for expected in [Some([0, 0, 0]), None] {
+            assert_eq!(
+                import_legacy_operations(&pool, run.repository_id, temp.path())
+                    .await
+                    .unwrap(),
+                expected
+            );
+            for (index, id) in [run.id, other].into_iter().enumerate() {
+                assert_eq!(
+                    serde_json::to_value(IntegrationRun::find(&pool, id).await.unwrap()).unwrap(),
+                    before[index]
+                );
+            }
+            assert_eq!(
+                sqlx::query_as::<_, (Uuid, Uuid, Uuid, Uuid, String, String)>(agents_query)
+                    .fetch_all(&pool)
+                    .await
+                    .unwrap(),
+                agents
+            );
+            assert_eq!(
+                sqlx::query_as::<_, (String, String, Uuid)>(reservations_query)
+                    .fetch_all(&pool)
+                    .await
+                    .unwrap(),
+                reservations
+            );
+            assert_eq!(std::fs::read(&state_path).unwrap(), old_state);
+        }
+        pool.close().await;
     }
 
     #[tokio::test]
@@ -623,10 +729,9 @@ mod tests {
                 .unwrap(),
             Some([1, 1, 1])
         );
-        assert!(
-            store.integrations().await.unwrap()[0]
-                .integrated_commit
-                .is_none()
+        assert_eq!(
+            serde_json::to_value(&store.integrations().await.unwrap()[0]).unwrap(),
+            serde_json::to_value(&integration).unwrap()
         );
         assert_eq!(
             store
