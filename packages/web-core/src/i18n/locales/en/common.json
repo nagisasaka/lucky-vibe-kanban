@@ -337,6 +337,8 @@
     "configureShort": "Configure"
   },
   "attempts": {
+    "workflowDescription": "Work through a sequence of steps",
+    "singleAgentDescription": "Work with one agent in a conversation",
     "title": "Task Attempts",
     "loading": "Loading attempts...",
     "empty": "No task attempts yet.",

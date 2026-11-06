@@ -121,3 +121,27 @@ visible displaced peers can still animate. Column crossings use an inert,
 aria-hidden visual copy, clipped below board headers; the real card retains
 focus and the copy does not contribute to column counts. Scroll, resize, input,
 reduced motion and unmount synchronously remove automatic animation effects.
+
+## Issue detail and split conversation reading surfaces
+
+```sh
+PLAYWRIGHT_BROWSERS_PATH=/opt/lvk-browsers node tests/kanban/issue-detail.mjs
+```
+
+This renders the production Issue panel, sections, Markdown editor, chat Markdown
+and composer with inert fixture data, without a backend or provider. The split
+conversation shell mirrors ProjectRightSidebarContainer; it does not mount the
+live ConversationList or SessionChatBoxContainer. Outputs in `.build/issue-layout/`
+cover 320/390/720/960/1200 CSS-pixel panes in light/dark themes, long code/tables,
+multiple authors, relationships/sub-issues, keyboard method selection, comment
+reply and the unchanged standalone/create width defaults. Screenshots and geometry
+are component evidence, not authenticated app, physical mobile or VSCode-host E2E.
+
+The retained section layout uses one Issue inset (`clamp(1rem, 3cqi, 2rem)`) inside
+an outer 64rem cap. Split conversation/composer surfaces use the same gutter rule
+with a 64rem surface cap; their Markdown's separate 800px cap is disabled only in
+that scope. The header remains full width. Creation and standalone chat retain
+their existing defaults. Existing palette/typeface tokens remain in use; the main
+Issue title is 1.5rem to distinguish it from Markdown section headings. Workflow,
+single agent and Arena share a responsive choice grid and explanatory copy,
+while their existing handlers and Card context are preserved.

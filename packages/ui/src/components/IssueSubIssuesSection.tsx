@@ -48,6 +48,7 @@ export function IssueSubIssuesSection({
 
   return (
     <CollapsibleSectionHeader
+      className="issue-detail-section"
       title={t('kanban.subIssues', 'Sub-issues')}
       persistKey="kanban-issue-sub-issues"
       defaultExpanded={true}
@@ -58,7 +59,7 @@ export function IssueSubIssuesSection({
           <div
             ref={provided.innerRef}
             {...provided.droppableProps}
-            className="p-base flex flex-col relative border-t"
+            className="issue-section-inset p-base flex flex-col relative border-t [&>div]:border-b [&>div]:py-base [&>div:last-child]:border-b-0"
           >
             {isReordering && (
               <div className="absolute inset-0 bg-background/50 flex items-center justify-center z-10">

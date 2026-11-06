@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   CollapsibleSectionHeader,
@@ -10,6 +11,7 @@ import {
 
 export interface IssueTaskAttemptsSectionProps {
   attempts: IssueTaskAttemptCardData[];
+  arenaOption?: ReactNode;
   isLoading?: boolean;
   createDisabledReason?: string;
   actions?: SectionAction[];
@@ -23,6 +25,7 @@ export interface IssueTaskAttemptsSectionProps {
 
 export function IssueTaskAttemptsSection({
   attempts,
+  arenaOption,
   isLoading,
   createDisabledReason,
   actions = [],
@@ -35,10 +38,11 @@ export function IssueTaskAttemptsSection({
 }: IssueTaskAttemptsSectionProps) {
   const { t } = useTranslation('common');
   const hasCreateActions =
-    !!onCreateWorkflowAttempt || !!onCreateSingleAgentAttempt;
+    !!onCreateWorkflowAttempt || !!onCreateSingleAgentAttempt || !!arenaOption;
 
   return (
     <CollapsibleSectionHeader
+      className="issue-detail-section"
       title={t('attempts.title', 'Task Attempts')}
       persistKey="kanban-issue-task-attempts"
       defaultExpanded={true}
@@ -47,7 +51,7 @@ export function IssueTaskAttemptsSection({
       {createDisabledReason && (
         <p className="text-low px-base">{createDisabledReason}</p>
       )}
-      <div className="flex flex-col gap-base border-t p-base px-base">
+      <div className="flex flex-col gap-base border-t issue-section-inset p-base px-base">
         {isLoading ? (
           <p className="py-half text-low">
             {t('attempts.loading', 'Loading attempts...')}
@@ -55,29 +59,24 @@ export function IssueTaskAttemptsSection({
         ) : (
           <>
             {hasCreateActions && (
-              <div className="grid gap-half sm:grid-cols-2">
+              <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,16rem),1fr))] gap-base">
                 {onCreateWorkflowAttempt && (
-                  <button
-                    type="button"
-                    disabled={!!createDisabledReason}
-                    title={createDisabledReason}
+                  <IssueAttemptOption
+                    title={t('attempts.newWorkflow')}
+                    description={t('attempts.workflowDescription')}
+                    disabledReason={createDisabledReason}
                     onClick={onCreateWorkflowAttempt}
-                    className="disabled:opacity-50 disabled:cursor-not-allowed rounded-sm border border-brand/50 bg-brand/10 px-base py-half text-center text-xs font-medium text-high transition-colors hover:bg-brand/15 focus:outline-none focus:ring-1 focus:ring-brand"
-                  >
-                    {t('attempts.newWorkflow', 'New workflow attempt')}
-                  </button>
+                  />
                 )}
                 {onCreateSingleAgentAttempt && (
-                  <button
-                    type="button"
-                    disabled={!!createDisabledReason}
-                    title={createDisabledReason}
+                  <IssueAttemptOption
+                    title={t('attempts.newSingleAgent')}
+                    description={t('attempts.singleAgentDescription')}
+                    disabledReason={createDisabledReason}
                     onClick={onCreateSingleAgentAttempt}
-                    className="disabled:opacity-50 disabled:cursor-not-allowed rounded-sm border border-secondary bg-primary px-base py-half text-center text-xs font-medium text-normal transition-colors hover:border-border hover:text-high focus:outline-none focus:ring-1 focus:ring-border"
-                  >
-                    {t('attempts.newSingleAgent', 'New single-agent attempt')}
-                  </button>
+                  />
                 )}
+                {arenaOption}
               </div>
             )}
             {attempts.length === 0 ? (
@@ -110,5 +109,31 @@ export function IssueTaskAttemptsSection({
         )}
       </div>
     </CollapsibleSectionHeader>
+  );
+}
+
+/** The three ways of approaching an Issue share one visual and interaction level. */
+export function IssueAttemptOption({
+  title,
+  description,
+  disabledReason,
+  onClick,
+}: {
+  title: string;
+  description: string;
+  disabledReason?: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      disabled={!!disabledReason}
+      title={disabledReason}
+      onClick={onClick}
+      className="flex min-w-0 flex-col gap-half rounded-sm border border-border bg-secondary/40 p-plusfifty text-left transition-colors hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-50 disabled:cursor-not-allowed"
+    >
+      <span className="text-sm font-medium text-high">{title}</span>
+      <span className="text-sm leading-relaxed text-low">{description}</span>
+    </button>
   );
 }

@@ -282,6 +282,8 @@
     "linkError": "Failed to link workspace"
   },
   "attempts": {
+    "workflowDescription": "Avancez en suivant plusieurs étapes",
+    "singleAgentDescription": "Travaillez avec un agent dans une conversation",
     "title": "Task Attempts",
     "loading": "Loading attempts...",
     "empty": "No task attempts yet.",

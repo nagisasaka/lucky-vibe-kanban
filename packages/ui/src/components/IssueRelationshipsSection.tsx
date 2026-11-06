@@ -34,12 +34,13 @@ export function IssueRelationshipsSection({
 
   return (
     <CollapsibleSectionHeader
+      className="issue-detail-section"
       title={t('kanban.relationships', 'Relationships')}
       persistKey="kanban-issue-relationships"
       defaultExpanded={true}
       headerExtra={headerExtra}
     >
-      <div className="p-base flex flex-col gap-half border-t">
+      <div className="issue-section-inset p-base flex flex-col gap-half border-t">
         {isLoading ? (
           <p className="text-low py-half">{t('states.loading')}</p>
         ) : relationships.length === 0 ? (
@@ -50,9 +51,10 @@ export function IssueRelationshipsSection({
           relationships.map((rel) => (
             <div
               key={rel.relationshipId}
-              className="flex items-center justify-between group"
+              className="flex min-w-0 items-center justify-between gap-base border-b py-base last:border-b-0 group"
             >
               <RelationshipBadge
+                className="min-w-0 h-auto whitespace-normal break-words py-half"
                 displayType={rel.displayType}
                 relatedIssueDisplayId={rel.relatedIssueDisplayId}
                 onClick={(e) => {
@@ -67,7 +69,7 @@ export function IssueRelationshipsSection({
                     e.stopPropagation();
                     onRemoveRelationship(rel.relationshipId);
                   }}
-                  className="p-half rounded-sm text-low hover:text-error hover:bg-error/10 transition-colors opacity-0 group-hover:opacity-100"
+                  className="p-half rounded-sm text-low hover:text-error hover:bg-error/10 transition-colors opacity-60 group-hover:opacity-100 focus:opacity-100"
                   aria-label={t('kanban.removeRelationship')}
                 >
                   <XIcon className="size-icon-2xs" weight="bold" />

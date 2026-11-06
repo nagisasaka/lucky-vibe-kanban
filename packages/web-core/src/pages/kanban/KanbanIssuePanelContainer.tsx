@@ -28,7 +28,6 @@ import { ProjectWorkspaceDefaultContext } from '@/shared/components/ProjectWorks
 import { IssueCommentsSectionContainer } from './IssueCommentsSectionContainer';
 import { IssueSubIssuesSectionContainer } from './IssueSubIssuesSectionContainer';
 import { IssueRelationshipsSectionContainer } from './IssueRelationshipsSectionContainer';
-import { IssueArenaSectionContainer } from './IssueArenaSectionContainer';
 import { IssueTaskAttemptsSectionContainer } from './IssueTaskAttemptsSectionContainer';
 import {
   KanbanIssuePanel,
@@ -947,7 +946,6 @@ export function KanbanIssuePanelContainer({
             issueTitle={displayData.title}
             issueDescription={displayData.description}
           />
-          <IssueArenaSectionContainer issueId={issueId} />
         </>
       )}
       renderRelationshipsSection={(issueId) => (

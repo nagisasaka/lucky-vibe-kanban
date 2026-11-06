@@ -7,7 +7,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import type { WorkflowTemplateResponse } from 'shared/types';
-import { GitBranchIcon, LinkIcon, PlusIcon } from '@phosphor-icons/react';
+import { LinkIcon } from '@phosphor-icons/react';
 import { useProjectContext } from '@/shared/hooks/useProjectContext';
 import { useAuth } from '@/shared/hooks/auth/useAuth';
 import { useOrgContext } from '@/shared/hooks/useOrgContext';
@@ -41,6 +41,7 @@ import { DeleteWorkspaceDialog } from '@vibe/ui/components/DeleteWorkspaceDialog
 import type { IssueTaskAttemptCardData } from '@vibe/ui/components/IssueTaskAttemptCard';
 import { IssueTaskAttemptsSection } from '@vibe/ui/components/IssueTaskAttemptsSection';
 import type { SectionAction } from '@vibe/ui/components/CollapsibleSectionHeader';
+import { IssueArenaSectionContainer } from './IssueArenaSectionContainer';
 import type { WorkspaceWithStats } from '@vibe/ui/components/IssueWorkspaceCard';
 
 interface IssueTaskAttemptsSectionContainerProps {
@@ -411,38 +412,19 @@ export function IssueTaskAttemptsSectionContainer({
       {
         disabled: issueArchived,
         title: issueArchived ? t('kanban.restoreToUse') : undefined,
-        icon: GitBranchIcon,
-        onClick: handleCreateWorkflowAttempt,
-        label: t('attempts.newWorkflow', 'New workflow attempt'),
-      },
-      {
-        disabled: issueArchived,
-        title: issueArchived ? t('kanban.restoreToUse') : undefined,
-        icon: PlusIcon,
-        onClick: handleAddWorkspace,
-        label: t('attempts.newSingleAgent', 'New single-agent attempt'),
-      },
-      {
-        disabled: issueArchived,
-        title: issueArchived ? t('kanban.restoreToUse') : undefined,
         icon: LinkIcon,
         onClick: handleLinkWorkspace,
         label: t('kanban.linkWorkspace', 'Link workspace'),
       },
     ],
-    [
-      handleCreateWorkflowAttempt,
-      handleAddWorkspace,
-      handleLinkWorkspace,
-      t,
-      issueArchived,
-    ]
+    [handleLinkWorkspace, t, issueArchived]
   );
 
   return (
     <div>
       <IssueTaskAttemptsSection
         attempts={attempts}
+        arenaOption={<IssueArenaSectionContainer issueId={issueId} />}
         isLoading={projectLoading || orgLoading || workflowAttemptsLoading}
         actions={actions}
         onOpenAttempt={handleOpenAttempt}

@@ -2,7 +2,7 @@ import { useProjectContext } from '@/shared/hooks/useProjectContext';
 import { useNavigate, useParams } from '@tanstack/react-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { ArrowRight, Sparkles } from 'lucide-react';
+import { IssueAttemptOption } from '@vibe/ui/components/IssueTaskAttemptsSection';
 import {
   arenaQueryKeys,
   useActiveArenaForIssue,
@@ -78,10 +78,6 @@ export function IssueArenaSectionContainer({
     }
   };
 
-  if (isLoading) {
-    return null;
-  }
-
   if (activeArena && activeArena.workspaces.length > 0) {
     const total = activeArena.workspaces.length;
     const running = activeArena.workspaces.filter((ws) =>
@@ -92,63 +88,30 @@ export function IssueArenaSectionContainer({
         ? t('arena.modes.design')
         : t('arena.modes.implementation');
     return (
-      <div className="my-half">
-        <button
-          type="button"
-          onClick={() => goToArena(activeArena.id)}
-          className="group flex w-full items-center gap-base rounded-sm border border-brand/35 bg-brand/5 px-base py-half text-left text-sm transition-colors hover:bg-brand/10"
-          aria-label={t('arena.aria.openArena')}
-        >
-          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-sm bg-brand/10 text-brand">
-            <Sparkles className="h-4 w-4" aria-hidden="true" />
-          </span>
-          <span className="min-w-0 flex-1">
-            <span className="block truncate font-medium text-high">
-              {t('arena.title')}
-            </span>
-            <span className="block truncate text-xs text-low">
-              {t('arena.issueSection.activeSummary', {
-                mode: modeLabel,
-                total,
-                running,
-              })}
-            </span>
-          </span>
-          <span className="inline-flex shrink-0 items-center gap-1 text-xs text-low group-hover:text-high">
-            {t('arena.actions.open')}
-            <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
-          </span>
-        </button>
-      </div>
+      <IssueAttemptOption
+        title={`${t('arena.title')} — ${t('arena.actions.open')}`}
+        description={t('arena.issueSection.activeSummary', {
+          mode: modeLabel,
+          total,
+          running,
+        })}
+        onClick={() => goToArena(activeArena.id)}
+      />
     );
   }
 
   return (
-    <div className="my-half">
-      <button
-        type="button"
-        disabled={issueArchived}
-        title={issueArchived ? t('kanban.restoreToUse') : undefined}
-        onClick={() => void handleStart()}
-        className="disabled:opacity-50 disabled:cursor-not-allowed group flex w-full items-center gap-base rounded-sm border border-brand/25 bg-secondary/60 px-base py-half text-left text-sm transition-colors hover:border-brand/40 hover:bg-brand/5"
-        aria-label={t('arena.aria.startArena')}
-      >
-        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-sm bg-brand/10 text-brand">
-          <Sparkles className="h-4 w-4" aria-hidden="true" />
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className="block truncate font-medium text-high">
-            {t('arena.title')}
-          </span>
-          <span className="block truncate text-xs text-low">
-            {t('arena.issueSection.startSubtitle')}
-          </span>
-        </span>
-        <span className="inline-flex shrink-0 items-center gap-1 text-xs text-low group-hover:text-high">
-          {t('arena.actions.startArena')}
-          <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
-        </span>
-      </button>
-    </div>
+    <IssueAttemptOption
+      title={t('arena.actions.startArena')}
+      description={t('arena.issueSection.startSubtitle')}
+      disabledReason={
+        isLoading
+          ? t('states.loading')
+          : issueArchived
+            ? t('kanban.restoreToUse')
+            : undefined
+      }
+      onClick={() => void handleStart()}
+    />
   );
 }

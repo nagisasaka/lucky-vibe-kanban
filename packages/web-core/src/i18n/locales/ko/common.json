@@ -282,6 +282,8 @@
     "linkError": "Failed to link workspace"
   },
   "attempts": {
+    "workflowDescription": "여러 단계를 조합하여 진행",
+    "singleAgentDescription": "한 에이전트와 대화하며 진행",
     "title": "Task Attempts",
     "loading": "Loading attempts...",
     "empty": "No task attempts yet.",

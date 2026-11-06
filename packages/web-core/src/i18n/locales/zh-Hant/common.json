@@ -283,6 +283,8 @@
     "linkError": "關聯工作區失敗"
   },
   "attempts": {
+    "workflowDescription": "組合多個步驟來處理任務",
+    "singleAgentDescription": "與一個代理對話並推進任務",
     "title": "任務執行",
     "loading": "正在載入任務執行...",
     "empty": "暫無任務執行。",

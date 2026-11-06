@@ -1553,7 +1553,7 @@ function InteractiveSessionChatBox(props: SessionChatBoxContainerProps) {
   );
 
   return (
-    <div className="flex w-chat max-w-full flex-col">
+    <div className="flex w-[var(--kanban-chat-width,48rem)] max-w-full flex-col">
       <FollowUpQueue
         key={JSON.stringify([hostId, sessionId])}
         messages={queuedMessages}
