@@ -100,13 +100,14 @@ export function ProjectUtilities({
       )}
       {repos.some((r) => r.wiki_enabled === true) && (
         <CollapsibleSectionHeader
-          className="!h-auto"
+          className="!h-auto !min-h-fit has-[>div>button[aria-expanded=true]]:flex-1"
           title={t('environment.wiki')}
           persistKey={wikiKey}
           expanded={wikiExpanded}
           onExpandedChange={(value) => setExpanded(wikiKey, value)}
         >
-          <div className="h-80">
+          {/* Keep tree content out of intrinsic sizing while preserving controls and a scrollable row. */}
+          <div className="flex flex-1 flex-col [&_nav]:[contain:size] [&_nav]:min-h-[1lh]">
             <WorkspaceWikiNavigation onSelectPage={onWiki} />
           </div>
         </CollapsibleSectionHeader>

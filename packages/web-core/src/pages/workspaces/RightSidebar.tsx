@@ -208,13 +208,14 @@ export const RightSidebar = memo(function RightSidebar({
     <UtilitySidebar>
       {wiki.repositoryOptions.length > 0 && (
         <CollapsibleSectionHeader
-          className="!h-auto"
+          className="!h-auto !min-h-fit has-[>div>button[aria-expanded=true]]:flex-1"
           title={t('common:environment.wiki')}
           persistKey="workspace-wiki"
           defaultExpanded={false}
           forceExpanded={rightMainPanelMode === RIGHT_MAIN_PANEL_MODES.WIKI}
         >
-          <div className="h-80 min-h-0">
+          {/* Keep tree content out of intrinsic sizing while preserving controls and a scrollable row. */}
+          <div className="flex flex-1 flex-col [&_nav]:[contain:size] [&_nav]:min-h-[1lh]">
             <WorkspaceWikiNavigation
               onSelectPage={() => {
                 if (selectedWorkspace)
