@@ -29,37 +29,6 @@ export type RunWorkflowAttemptPayload = RunWorkflowAttemptRequest & {
   repos?: DraftWorkspaceRepo[];
 };
 
-export type WorkflowEventKind =
-  | 'run_status'
-  | 'node_status'
-  | 'node_output'
-  | 'node_error'
-  | 'node_waiting_human'
-  | 'node_waiting_arena';
-
-export interface WorkflowRuntimeEvent {
-  sequence: number;
-  run_id: string;
-  node_id: string | null;
-  kind: WorkflowEventKind;
-  status: string | null;
-  payload: unknown;
-}
-
-export function parseWorkflowEvent(
-  event: MessageEvent
-): WorkflowRuntimeEvent | null {
-  try {
-    const data = JSON.parse(event.data);
-    if (data && typeof data === 'object' && 'kind' in data) {
-      return data as WorkflowRuntimeEvent;
-    }
-  } catch {
-    // Ignore parse errors
-  }
-  return null;
-}
-
 async function localFetch(
   path: string,
   init: RequestInit = {}
@@ -356,9 +325,5 @@ export const workflowApi = {
       ),
       'Failed to select condition branch'
     );
-  },
-
-  eventsUrl(runId: string): string {
-    return `${LOCAL_BASE}/workflow-runs/${runId}/events`;
   },
 };

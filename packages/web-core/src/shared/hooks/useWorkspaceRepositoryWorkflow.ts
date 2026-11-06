@@ -16,9 +16,10 @@ export function useWorkspaceRepositoryWorkflow(
     queryKey: workspaceRepositoryWorkflowKey(workspaceId, hostId),
     queryFn: () => workflowApi.getRepositoryRunForWorkspace(workspaceId!),
     enabled: !!workspaceId && hostId === null,
-    refetchInterval: (query) =>
-      !query.state.data ||
-      [
+    refetchInterval: (query) => {
+      // This lookup discovers the association; run detail polling reconciles it.
+      if (!query.state.data) return 30000;
+      return [
         'pending',
         'running',
         'cancelling',
@@ -26,6 +27,7 @@ export function useWorkspaceRepositoryWorkflow(
         'awaiting_arena',
       ].includes(query.state.data.status)
         ? 5000
-        : false,
+        : false;
+    },
   });
 }

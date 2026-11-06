@@ -6,6 +6,12 @@ import { WorkspaceWorkflowLink } from './WorkspaceWorkflowLink';
 import { workspaceRepositoryWorkflowKey } from '@/shared/hooks/useWorkspaceRepositoryWorkflow';
 import { workflowApi } from '@/shared/lib/workflowApi';
 
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string, options?: { status?: string }) => options?.status ?? key,
+  }),
+}));
+
 function render(
   status: string | null,
   hostId: string | null = null,

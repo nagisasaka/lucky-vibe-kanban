@@ -2,7 +2,6 @@ import { getWorkflowRunStatusLabel } from '../model/workflowRunView';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useWorkflowRun } from '@/shared/hooks/useWorkflowRun';
-import { useWorkflowRunEvents } from '@/shared/hooks/useWorkflowRunEvents';
 import { WorkflowRunCanvasTab } from './WorkflowRunCanvasTab';
 import { WorkflowRunDashboardTab } from './WorkflowRunDashboardTab';
 import { Activity, LayoutDashboard, Workflow } from 'lucide-react';
@@ -18,17 +17,6 @@ export function WorkflowRunPage({ projectId, runId }: WorkflowRunPageProps) {
   const { t } = useTranslation('common');
   const { data: run, isLoading, error } = useWorkflowRun(runId);
   const [activeTab, setActiveTab] = useState<'canvas' | 'dashboard'>('canvas');
-  const shouldStreamEvents =
-    !!run &&
-    (run.status === 'pending' ||
-      run.status === 'running' ||
-      run.status === 'awaiting_human' ||
-      run.status === 'awaiting_arena');
-
-  useWorkflowRunEvents(runId, {
-    enabled: shouldStreamEvents,
-  });
-
   if (isLoading) {
     return (
       <div className="flex h-full items-center justify-center text-low">
