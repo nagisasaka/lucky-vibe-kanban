@@ -5,7 +5,7 @@ description: AgentRun を独立プロセスで実行し、Native Audit から永
 tags: [agent-runtime, audit, persistence, recovery]
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-06T15:15:40.431Z
+    at: 2026-11-06T19:18:22.957Z
 sources:
   - id: openwiki-source-b85c3dc0eaacdffedf4e68ee
     resource: repo://crates/db/migrations/20261026180000_agent_starting_recovery.sql

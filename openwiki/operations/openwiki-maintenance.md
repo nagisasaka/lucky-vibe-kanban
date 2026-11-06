@@ -18,6 +18,8 @@ sources:
     resource: repo://crates/executors/src/executors/codex.rs
   - id: openwiki-source-38fc795b99b30483be700b71
     resource: repo://crates/executors/src/executors/codex/client/openwiki.rs
+  - id: openwiki-source-a13fe4db1eee073d0a7e2c4d
+    resource: repo://crates/server/src/main.rs
   - id: openwiki-source-8e100846c63b4921192f2eb4
     resource: repo://crates/server/src/remote_mcp/errors.rs
   - id: openwiki-source-83d25ea893da220229c11f8b
@@ -78,8 +80,6 @@ sources:
     resource: repo://crates/services/src/services/workspace_usage/lifecycle.rs
   - id: openwiki-source-2e2c90b28d3bcaf7a890d88a
     resource: repo://crates/workflow/src/templates.rs
-  - id: openwiki-source-a92e4b434b1dadd20662f90d
-    resource: repo://deploy/developer/repository-state-migration.md
   - id: openwiki-source-bb1ebe868e35e9e500714501
     resource: repo://Dockerfile
   - id: openwiki-source-00110cdcfec890895b99690a
@@ -92,10 +92,10 @@ sources:
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/ReposSettingsSection.tsx
   - id: openwiki-source-7fd9452d5e666180c50f8cb7
     resource: repo://tests/openwiki/recovery.sh
-generated: { by: "codex", at: "2026-11-06T17:36:48.866Z" }
+generated: { by: "codex", at: "2026-11-06T19:18:22.957Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-06T17:36:48.866Z
+    at: 2026-11-06T19:18:22.957Z
 ---
 
 # OpenWiki の初期生成・同期・回復
@@ -354,6 +354,8 @@ Wikiの可変state・receipt・publicationとsource integration対応は、既�
 
 Syncは統合済みsourceと該当するファイルManifestを固定入力にし、可変Workspace Memoryをsnapshotしない。Manifest・固定sync-inputs・source-publications・Run checkpoint・setup原本/復元journal・Bootstrap索引/reportは別責務でファイルに残る。WikiをOFFにしても通常coding Runのsource自動commitとManifest確定は止まらない。[固定入力](../../crates/services/src/services/openwiki/sync_input.rs#L30-L92)・[Runの責務](../concepts/repository-memory.md)
 
-リリース前の単一登録Repoに対する旧運用ファイルの取込は、一度限りの明示offlineコマンドで行う。稼働Runからlive DBへ実行せず、旧版で進行中のWiki保守を完了し全writerを停止、履歴Run/統合状態や永続予約を生存writerと見なして取消・解放せず、DB・persistent・必要鍵/設定を整合backupしてから新版binaryの `server migrate-repository-state <repository-uuid>` を使う。失敗原因を修正して再実行し、成功後は旧ファイルを再読込しない。旧binaryへ戻すときはschema migration済みDBをそのまま使わず、対応backupを復元する。旧ファイルの削除は別途確認と許可が必要でありknowledge全体を削除しない。完全な順序・保持対象・rollback限界は[一度限りの開発移行](../concepts/repository-memory.md#運用状態のdb集約と一度限りの開発移行)を参照する。[実装runbook](../../deploy/developer/repository-state-migration.md)
+LOCAL-336で一度限りの移行CLI・importer・旧JSON decoder・未移行互換guardと専用runbookは撤去済みである。現行版には旧運用ファイルを再取込する操作はなく、通常DB modelとforward SQL migrationを維持する。残った旧ファイルを運用正本として読み戻さない。[現行起動入口](../../crates/server/src/main.rs#L42-L70)・[DB opener](../../crates/db/src/models/repository_state.rs#L32-L77)
+
+旧運用ファイルと廃止済みWorkspace Memory・専用検証記録の物理削除は別途、具体的な対象を確認して許可を得る。Manifest・固定sync-inputs・source-publications・setup原本/復元journal等を保持し、knowledge全体やbackupを一括削除しない。保存先と撤去境界は[Repository Memory](../concepts/repository-memory.md#運用状態のdb集約と一度限りの開発移行)、切替・復旧は[既存switch手順](../../deploy/developer/switch/README.md)を参照する。
 
 今回の保守は統合sourceの説明更新であり、live import・旧共有ファイル削除・dev停止/再起動・稼働環境適用の成功を主張しない。

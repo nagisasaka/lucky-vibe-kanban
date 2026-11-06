@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:8ad230f66933c8269ffe1fefb72102fd1e7798719c10ad015bc1e35af4ddc355",
+  "pageVersion": "sha256:9ea878bc35d4ba9a8281d97e0e204e902520d5b0e8b97934229c8dd01d055be0",
   "claims": [
     {
       "id": "claim_edf1b78d3c7a4d978a6d8debcee4edd2",
@@ -72,7 +72,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/integrations/conversation.rs",
-          "version": "repo-file-v1:sha256:a9f62cb8e613bb63d7e2340ceeb2fafe8f9eb65f579481d151ae20f7c735d1bd"
+          "version": "repo-file-v1:sha256:c17207df331faae95e3abb7cafebff1dd1b128260e05838bf658a755ade24cf9"
         },
         {
           "resource": "repo://crates/server/src/routes/integrations/runtime.rs",
@@ -292,7 +292,7 @@
       "evidence": [
         {
           "resource": "repo://crates/db/src/models/repository_state.rs",
-          "version": "repo-file-v1:sha256:af26082d9ac17b6bc4457091b622d8125ff6d8a0cf51fbcce187b0f5b5670009"
+          "version": "repo-file-v1:sha256:1221bc8055b2b44de5fed856da8aa7204c48821336a7deb78f575aa53c4bdeb4"
         },
         {
           "resource": "repo://crates/services/src/services/config/versions/v9.rs#L50-L61",
@@ -301,16 +301,12 @@
         {
           "resource": "repo://crates/services/src/services/repository_memory.rs#L185-L365",
           "version": "repo-lines-v1:sha256:bab95b9f357b8d710949f373b8e5985449de52d2bd297ec986f23dc9f0b4e127:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgxLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIxMGViNzY2ODJhYTRlYWUwOWEwZWVkNzFlMjdlZGQ3OGY2ZGM1Njc5OTEwMjhhM2VlNjQ5ZGEyMDc5NzA5MTczIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIwMWJhNDcxOWM4MGI2ZmU5MTFiMDkxYTdjMDUxMjRiNjRlZWVjZTk2NGUwOWMwNThlZjhmOTgwNWRhY2E1NDZiIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIxMWY1YjhjNThhMTQ1Nzg5ODM5ODY1NDQxMmM0ZjEzZjAzNWE2MzliYmEzOWViMmY5NTJhYWJjZDE2YWYxZTEyIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJiMTgzY2EyMDAxMThkMzlhY2QxMDMwMjc4NzNiMGE4ZTQ3ZmQ4MDcxNmExMTcxMjRjMWFkMjVkNGU1Nzk4YTQ5In0"
-        },
-        {
-          "resource": "repo://deploy/developer/repository-state-migration.md",
-          "version": "repo-file-v1:sha256:bc8b338d80847a024236679bba25a5854d7ac951a95744b704b44db724f65a0a"
         }
       ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-06T17:36:48.866Z"
+    "at": "2026-11-06T19:18:22.957Z"
   }
 }

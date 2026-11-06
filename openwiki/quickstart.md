@@ -56,8 +56,6 @@ sources:
     resource: repo://crates/services/src/services/config/versions/v9.rs
   - id: openwiki-source-6067be8d6f85caa8ac03638f
     resource: repo://crates/services/src/services/repository_memory.rs
-  - id: openwiki-source-a92e4b434b1dadd20662f90d
-    resource: repo://deploy/developer/repository-state-migration.md
   - id: openwiki-source-df6b7819295f53fc2381f23d
     resource: repo://deploy/server/compose.yaml
   - id: openwiki-source-89d0fb22262f0a0ac1df7d1e
@@ -90,10 +88,10 @@ sources:
     resource: repo://packages/web-core/src/shared/providers/TerminalProvider.tsx
   - id: openwiki-source-23775c3de52f3ab95a13cb8b
     resource: repo://README.md
-generated: { by: "codex", at: "2026-11-06T17:36:48.866Z" }
+generated: { by: "codex", at: "2026-11-06T19:18:22.957Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-06T17:36:48.866Z
+    at: 2026-11-06T19:18:22.957Z
 ---
 
 # クイックスタートと調査案内
@@ -369,7 +367,7 @@ Kanban / Workspace の右サイドバーは共通環境 panel とファイル・
 
 開発中の文脈はproviderのSessionが扱い、Workspace Memory・no-change専用検証記録・commit reminderは撤去された。通常成功coding Runのsource自動commitとファイルManifestはWiki無効でも有効。`manifest_in_commit_body` は既定OFFの選択肢で、ONは通常LVK source commitへ意図と判断理由を人間可読に併記する。Gitで共有される本文からManifestを復元する二重管理は行わない。[責務と設定の詳細](concepts/repository-memory.md)・[通常Runの最終報告](integrations/remote-access.md#専用検証mcpの廃止と通常run報告)
 
-可変なWiki state・receipt・publication・source integration対応はinstance DBへ集約し、Manifest・固定sync-inputs・source-publication・setup原本journalはファイルとして保持する。移行は開発中の単一登録LVK Repoへ明示offlineコマンドで一度実施する設計であり、恒久監査ゲートではない。[停止・backup・import・復旧手順](concepts/repository-memory.md#運用状態のdb集約と一度限りの開発移行)
+可変なWiki state・receipt・publication・source integration対応はinstance DBへ集約し、Manifest・固定sync-inputs・source-publication・setup原本journalはファイルとして保持する。一度限りの移行CLI・importer・旧JSON decoder・互換guardとrunbookはLOCAL-336で撤去済みであり、現行版で再importしない。[現行のDB正本と撤去・保持境界](concepts/repository-memory.md#運用状態のdb集約と一度限りの開発移行)
 
 今回のコード候補 `41c1bae500bcec05bffe4002cf61b5413b51a524` は最終source `289373ec23493c0a21247a87da63c04bd4dbea3d` と同一treeで、競合・追加修復なし。tree一致・差分空白・clean確認を管理実行し、source各段階の既存SHA対応検証を再利用して包括suiteの再実行を省略した。省略を今回の試験合格と呼ばない。Wiki保守はsource・試験定義・Manifestの静的照合とlifecycle処理であり、liveDB移行・旧共有ファイル削除・停止/再起動・push・main build/bundle・実provider/外部認証を検証していない。過去のWorkspace Memory記述は過去の供給履歴であり、現行の生成/参照経路ではない。
 
@@ -379,3 +377,10 @@ Kanban / Workspace の右サイドバーは共通環境 panel とファイル・
 右サイドバーのWikiが利用可能な残り高さを使う仕組みは [高さ配分](architecture/web-and-sync.md#wikiツリーの高さ配分)、操作は [Wiki高さ](operations/workspace-inspection.md#右サイドバーのwiki高さ)を参照する。本文幅や検索・選択の状態管理は今回の変更範囲外である。
 
 コード候補 `a3fab8acc31037cef9d3739efcb6c254217c2cd7` は固定base `c04a57308a8a97ee357359c35201fd7b7145854c` からsourceを競合なく採用した。source Run終了のChange Manifest（event `3961223f-d7dd-4b68-bb8a-85d6a310b6d0`）から目的・設計判断・検証要約を読み、ユーザー指定で型・対象lint・整形・Chromium簡易レイアウト24条件の既存証拠を再利用した。管理commandで候補とbaseの同じWikiテストを比較し、双方18成功・同じQueryClientProvider不足2失敗を確認した。比較判定は成功だが全テスト成功ではない。実アプリの認証後UIは未確認である。Wikiはコード検証後の別commitであり、main公開はRun終了後のhost適用receiptで別に確認する。無関係な過去のWiki全体を再検証したとは扱わず、既存の要確認Claimだけを照合した。
+
+
+### LOCAL-336: 移行完了後の一時コード撤去
+
+固定base `68160407e0de38d9363796ee33b4c9ea7e189caf` からLOCAL-336 source `ed6ac2deec100263a49aec3883e6dff85dadc1bb` を競合なく採用し、コード検証SHAも同じである。338/339の未マージ差分は含めない。一度限りのCLI・importer・decoder・未移行guardと手順書を撤去し、通常DB model・forward migration・Manifest・固定sync-inputs・Git復旧情報を保持する。[保存先と境界](concepts/repository-memory.md#運用状態のdb集約と一度限りの開発移行)・[保守運用](operations/openwiki-maintenance.md#local-332以降の保存先と移行境界)
+
+候補SHAで差分空白・固定baseの祖先関係・撤去参照の不在を管理commandで確認した。実装ManifestのDB 2件・utils 14件・server全targetコンパイル・fmt成功を参照し、同一sourceで追加修復がないため同じsuiteと包括検証の再実行をagent判断で省略した。これは今回の試験実行passではない。Wikiのみを後続commitにし、target publicationはRun終了後のhost receiptで別に確認する。devのビルド・再起動・切替、実DB・backup・release・旧共有データの変更や削除は実施していない。336/332の旧データ残件の完了をコード公開から推定しない。

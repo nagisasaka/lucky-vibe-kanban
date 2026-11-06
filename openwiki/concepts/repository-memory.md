@@ -1,7 +1,7 @@
 ---
 type: concept
 title: Change Manifest・Run完了とWikiの責務
-description: Session文脈、ファイルManifest、正常Run自動commit、任意の本文併記、DB運用状態と一度限り移行の境界。
+description: Session文脈、ファイルManifest、正常Run自動commit、任意の本文併記、DB運用状態と移行完了後の保持・撤去境界。
 tags: [repository-memory, openwiki, manifest, reconciliation]
 sources:
   - id: openwiki-source-3e2ba788feaa0a7d24385a17
@@ -10,6 +10,8 @@ sources:
     resource: repo://crates/db/src/models/repository_state.rs
   - id: openwiki-source-38bb7eaa90f0c92a0514844d
     resource: repo://crates/executors/src/legacy_wiki.rs
+  - id: openwiki-source-a13fe4db1eee073d0a7e2c4d
+    resource: repo://crates/server/src/main.rs
   - id: openwiki-source-0545bff1ae2507a92137efaf
     resource: repo://crates/server/src/remote_mcp/repository_wiki.rs
   - id: openwiki-source-5720d865d1c837f0e6b7dab7
@@ -42,12 +44,10 @@ sources:
     resource: repo://crates/services/src/services/repository_memory.rs
   - id: openwiki-source-a171e1a170f941fa2a4ba003
     resource: repo://crates/utils/src/repository_memory.rs
-  - id: openwiki-source-a92e4b434b1dadd20662f90d
-    resource: repo://deploy/developer/repository-state-migration.md
-generated: { by: "codex", at: "2026-11-06T17:36:48.866Z" }
+generated: { by: "codex", at: "2026-11-06T19:18:22.957Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-06T17:36:48.866Z
+    at: 2026-11-06T19:18:22.957Z
 ---
 
 # Change Manifest・Run完了とWikiの責務
@@ -149,17 +149,13 @@ no-change Run は `verification-starts` / `verifications` の専用記録を生�
 
 instance DB の `repository_wiki_state`、`repository_wiki_receipts`、`repository_wiki_publications`、`repository_integrations` が可変運用状態の正本である。通常Syncはreceipt・state・Workspace実行結果、自動マージはreceipt・state・integration結果を同じDB transactionで確定する。Gitとは一括transactionではないため、操作前のintentと実SHA・parent/tree・markerによる回復は維持する。[DB層](../../crates/db/src/models/repository_state.rs)・[Sync確定](../../crates/server/src/routes/openwiki.rs#L604-L629)・[統合確定](../../crates/server/src/routes/integrations/runtime.rs#L503-L540)
 
-Manifest（events）、会話、固定sync-inputs、source-publications、Run identity/完了checkpoint、setup原本/復元journal、Bootstrap索引/reportは別責務のファイルとして保持する。運用状態をDBへ寄せることを理由にknowledge全体を削除しない。read-only observerはディレクトリ/stateを作らず、未設定と未移行の旧状態を区別する。旧状態があるのに空DBへ暗黙fallbackしない。[DB opener](../../crates/db/src/models/repository_state.rs#L41-L84)
+Manifest（events）、会話、固定sync-inputs、source-publications、Run identity/完了checkpoint、setup原本/復元journal、Bootstrap索引/reportは別責務のファイルとして保持する。運用状態をDBへ寄せることを理由にknowledge全体を削除しない。read-only observerはディレクトリ/stateを作らず、DBの設定行がなければ未設定として返す。設定済みなのにartifactディレクトリが欠けている場合はエラーになる。[DB opener](../../crates/db/src/models/repository_state.rs#L32-L77)
 
-移行対象はリリース前の登録LVK Repo一件。恒久的な全Repo起動監査・隔離ゲートではなく、以下の明示的offline操作を用いる。[実装と保持境界](../../crates/db/src/models/repository_state.rs#L329-L435)・[開発runbook](../../deploy/developer/repository-state-migration.md)
+一度限りの開発移行は履歴上の作業であり、LOCAL-336で移行CLI・importer・旧運用JSON decoder・未移行互換guard・専用runbookを撤去した。現行版で旧ファイルを取り込むコマンドは提供しない。前進SQL migrationと通常DB modelは保持する。[現行起動入口](../../crates/server/src/main.rs#L42-L70)・[運用modelと通常fixture](../../crates/db/src/models/repository_state.rs)
 
-1. 切替の実行許可を得て、旧版で進行中のWiki保守を完了し、全writerを停止する。履歴上のRun/統合状態や永続予約は生存writerの証拠ではなく、移行のために取消・解放しない。[既存switch手順](../../deploy/developer/switch/README.md)に従い旧serverを停止し、旧binaryと整合したinstance DB・persistent・必要な鍵/設定をbackupする。新旧writerを重ねない。
-2. 停止中instanceと同じ `LVK_INSTANCE_DIR`・storage設定で、新binaryの `server migrate-repository-state <repository-uuid>` を実行する。通常schema migration後、旧 `knowledge/state.json`、`integrations/*.json`、`publications/*.json`、`receipts/*.json` を元ID/Git対応のまま一transactionで取込む。想定外のRepo集合と旧Wikiのactive_run_id/bootstrapは拒否する。writer停止は運用上の前提であり、Run/統合statusや予約行から推定しない。旧ファイルは変更・削除しない。
-3. 失敗時は旧ファイルを保ち、診断原因を修正して同コマンドを再実行する。運用取込はrollbackするがschema migrationは既に適用され得る。旧binaryへ戻す場合は事前DB backupを復元し、新版がartifactを書いた場合は対応persistent snapshotも戻す。後続データは別途保持し、旧backupへ混在させない。
-4. 成功後、認可されたswitch手順で新版を起動しhealthとWiki/統合完了・復旧を確認する。再実行はDBを保持し旧ファイルを再読込しない。四運用群と廃止済みWorkspace Memory・専用検証群の削除は別途確認・許可して行う。Manifest等の保持群を巻き込まない。
-5. 実移行とrollback期間終了後に一時importer・legacy decoder・未移行guardをまとめて撤去する。前進SQL migrationと通常DB modelは保持する。
+旧 `knowledge/state.json`、`integrations/*.json`、`publications/*.json`、`receipts/*.json`、廃止済みWorkspace Memory・専用検証記録の物理削除はコード撤去と別である。残存対象と現役artifactを個別に確認し、対象を明示した許可を得てから扱う。knowledge全体、backup、現役のGit復旧情報を一括削除しない。旧binaryへの復帰を、schema migration済みDBで安全と推定しない。[切替と復旧の手順](../../deploy/developer/switch/README.md)
 
-この統合でliveDB移行・旧共有ファイル削除・dev停止/再起動・稼働版適用は実施していない。コードと隔離fixtureの検証履歴を、実環境移行成功へ読み替えない。
+この保守ではlive DB・旧共有ファイル・backup・releaseを変更せず、devのビルド・停止・再起動・切替も実施していない。実装ManifestのDB 2件・utils 14件・server全targetコンパイル成功はsource SHAに結び付く既存記録であり、今回の再実行結果ではない。
 
 ## 文書方針と意味記録の境界
 

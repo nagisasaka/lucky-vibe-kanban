@@ -10,7 +10,7 @@
 - [Project・Issue と実施の関係](project-and-issue.md) - ボード上の仕事と実行環境を結ぶ Project・Issue の意味、ローカル保存、旧 Task との境界。
 - [Astra 廃止と共有機能の移行境界](project-chat.md) - 内蔵 Project Chat の廃止、専用履歴を削除する migration、外部 MCP と Workspace 質問回答に残る契約を説明する。
 - [Project Todo の共有メモ](project-todos.md) - Project に保存する Todo と Issue・実行の違い、Web と二つの MCP の共有データ、競合・再送・表示の契約。
-- [Change Manifest・Run完了とWikiの責務](repository-memory.md) - Session文脈、ファイルManifest、正常Run自動commit、任意の本文併記、DB運用状態と一度限り移行の境界。
+- [Change Manifest・Run完了とWikiの責務](repository-memory.md) - Session文脈、ファイルManifest、正常Run自動commit、任意の本文併記、DB運用状態と移行完了後の保持・撤去境界。
 - [実行環境へのアクセス](runtime-access.md) - 外部 HTTP MCP の Linux runtime grant、管理設定、ファイル・プロセス観測と直接実行の境界、取消・再起動・不確実な結果を説明する。
 - [サーバー認証・設定・セッション](server-access.md) - Local/Public配置、Basic/Auth0の有効化、Webセッションと内部capability、設定破損時の閉鎖と復旧の契約。
 - [Session・AgentRun・RunAttempt](session-and-agent-run.md) - 会話・依頼・実行試行の識別、継続と retry、provider binding、Goal と停止の契約。

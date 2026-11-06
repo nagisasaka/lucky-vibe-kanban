@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:3174f59eaa09968d3164618269d8ab9caecf4f985d77aa077bc5be27b5db53e7",
+  "pageVersion": "sha256:2c1b305ccf4cf2cf8662d1f71aa6e358d0182fb9ff5f2ca5bb91f9595217b620",
   "claims": [
     {
       "id": "claim_12101e4e85524a9280291b25d4812f5f",
@@ -8,7 +8,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/integrations/conversation.rs",
-          "version": "repo-file-v1:sha256:a9f62cb8e613bb63d7e2340ceeb2fafe8f9eb65f579481d151ae20f7c735d1bd"
+          "version": "repo-file-v1:sha256:c17207df331faae95e3abb7cafebff1dd1b128260e05838bf658a755ade24cf9"
         }
       ]
     },
@@ -52,7 +52,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/integrations/conversation.rs",
-          "version": "repo-file-v1:sha256:a9f62cb8e613bb63d7e2340ceeb2fafe8f9eb65f579481d151ae20f7c735d1bd"
+          "version": "repo-file-v1:sha256:c17207df331faae95e3abb7cafebff1dd1b128260e05838bf658a755ade24cf9"
         },
         {
           "resource": "repo://crates/server/src/routes/integrations/runtime.rs",
@@ -66,7 +66,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/integrations/conversation.rs",
-          "version": "repo-file-v1:sha256:a9f62cb8e613bb63d7e2340ceeb2fafe8f9eb65f579481d151ae20f7c735d1bd"
+          "version": "repo-file-v1:sha256:c17207df331faae95e3abb7cafebff1dd1b128260e05838bf658a755ade24cf9"
         }
       ]
     },
@@ -119,8 +119,8 @@
       "statement": "Wiki有効時はコード検証後に同じ候補でWikiを別commitにし、公開後にevent receipt・鮮度state・integrationのWiki結果を同じinstance DB transactionで確定する。後処理失敗はGit適用を取り消さない。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/integrations/conversation.rs#L1048-L1100",
-          "version": "repo-lines-v1:sha256:715413b3b0b73850790d3ccb7f3fd91571d8df953bc21077d8cbe54cdc3895a1:eyJzZWxlY3RlZExpbmVDb3VudCI6NTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMwZjRkMzNmZmJmODY5YTYwYjYwOTdmOGY1ZWJkOWI4OTQ4YTI1YTEwYTUxNGM1YjdlMzQ5ODU2YjA4MmY2MmEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZkYzc5OGYyZDNhYTg4ZjU2MTM1NzQyYWE1YTYxYmNmY2Y4Mzg1OTg3NDVjOWFjNmFlNzI5ODVmZGMwMzZlYjMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjEyYjkzNjhjMGYwNGRjNDgxNjZiOTJkODUzMTUxNDkwNDUzMWIyNTIwMThkMWFjMWQwOGZhOTJhMDUwMTI3MzgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhjZTIxYzM4NmQxOTAwZDE3MzAwY2Q5NThkNzdkMTYyZWE4Y2YxNTUyMDM5ZmEzOWU5NWU5YzdhMzgxOTdiNjkifQ"
+          "resource": "repo://crates/server/src/routes/integrations/conversation.rs#L1048-L1102",
+          "version": "repo-lines-v1:sha256:a72837bdbb8a451340f4d745aceb709ae92456db8596be281618ea278db59d09:eyJzZWxlY3RlZExpbmVDb3VudCI6NTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMwZjRkMzNmZmJmODY5YTYwYjYwOTdmOGY1ZWJkOWI4OTQ4YTI1YTEwYTUxNGM1YjdlMzQ5ODU2YjA4MmY2MmEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZkYzc5OGYyZDNhYTg4ZjU2MTM1NzQyYWE1YTYxYmNmY2Y4Mzg1OTg3NDVjOWFjNmFlNzI5ODVmZGMwMzZlYjMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjEyYjkzNjhjMGYwNGRjNDgxNjZiOTJkODUzMTUxNDkwNDUzMWIyNTIwMThkMWFjMWQwOGZhOTJhMDUwMTI3MzgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhjZTIxYzM4NmQxOTAwZDE3MzAwY2Q5NThkNzdkMTYyZWE4Y2YxNTUyMDM5ZmEzOWU5NWU5YzdhMzgxOTdiNjkifQ"
         },
         {
           "resource": "repo://crates/server/src/routes/integrations/runtime.rs#L503-L540",
@@ -236,7 +236,7 @@
         },
         {
           "resource": "repo://crates/server/src/routes/integrations/conversation.rs",
-          "version": "repo-file-v1:sha256:a9f62cb8e613bb63d7e2340ceeb2fafe8f9eb65f579481d151ae20f7c735d1bd"
+          "version": "repo-file-v1:sha256:c17207df331faae95e3abb7cafebff1dd1b128260e05838bf658a755ade24cf9"
         },
         {
           "resource": "repo://crates/server/src/routes/integrations/support.rs",
@@ -376,7 +376,7 @@
         },
         {
           "resource": "repo://crates/server/src/routes/integrations/conversation.rs",
-          "version": "repo-file-v1:sha256:a9f62cb8e613bb63d7e2340ceeb2fafe8f9eb65f579481d151ae20f7c735d1bd"
+          "version": "repo-file-v1:sha256:c17207df331faae95e3abb7cafebff1dd1b128260e05838bf658a755ade24cf9"
         }
       ]
     },
@@ -414,7 +414,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/integrations/conversation.rs",
-          "version": "repo-file-v1:sha256:a9f62cb8e613bb63d7e2340ceeb2fafe8f9eb65f579481d151ae20f7c735d1bd"
+          "version": "repo-file-v1:sha256:c17207df331faae95e3abb7cafebff1dd1b128260e05838bf658a755ade24cf9"
         }
       ]
     },
@@ -525,6 +525,6 @@
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-06T15:24:11.469Z"
+    "at": "2026-11-06T19:18:22.957Z"
   }
 }
