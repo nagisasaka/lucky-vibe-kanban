@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:7cfc0feb15c370a1939ef6576a552b4ac831df4ef75b2459c1aa0a9d7d556b63",
+  "pageVersion": "sha256:cab8215962b1b2797674a5568889d3f8489d1abd8626740a7b554b714dc17dce",
   "claims": [
     {
       "id": "claim_12d9a2cd77a84b53a677021c3e9d8057",
@@ -129,11 +129,11 @@
       "statement": "composerは通知対象Runを最新Runと区別して表示し、見つからなければSession IDと履歴の確認を案内する。相談コピー・外部ChatGPTリンク・fallback textareaは削除済みで、通知対象表示は残る。",
       "evidence": [
         {
-          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx#L1565-L1598",
+          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx#L1573-L1606",
           "version": "repo-lines-v1:sha256:5980b5f67f55d475e9464929ca4585e6bf95dba85d46c227631f3ed954e3ba36:eyJzZWxlY3RlZExpbmVDb3VudCI6MzQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBmNjVkYTM5NzQ2NjJmZmMyY2ZjYTAwZGE0MjAwYmEzNzBiNmQ2OTFmNmI2N2ZhMzcyYjYxMzMwMDRiNzk5MjIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIzMDFiZWM4MjA0NjlhYjM1N2JiMzhmZjE5MjhjMzA4Y2Q0NDM0OGEzMDBiYWUwY2E5YTE1Yzk1OTZjMzhjODEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImNkZTgwOWUxNGI1MTlkOTgwYWYyMDIwYjIyYWU4Yzg3NTdkMTgwMmI0NDkzNmI2ZGRhYWQ2ZTg1YmIzY2I0NjkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZjYTVkZWZmYjllZmRlZWQyYTc1MjM3MTcwNzZkOTE3NzlkYmQxZTg5ZWY5Zjk4NzIzZjQxOGI3YTZjY2E4NzgifQ"
         },
         {
-          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx#L333-L338",
+          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx#L334-L339",
           "version": "repo-lines-v1:sha256:7b2d9ed1c9aed4623885831839646eb04ce166acf42fc9dff99a3f77376c461f:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiM2ZkYTJjNTQyN2FkNDlhNmI2OWU5MTdmZGYyYzQyOTJhZjExNjZmOTFjYWZlYjMyNDJjZGIzMjU2ZjdjNjU2MiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOTVlZjAxYmMwOGRiYzNiNjNlNGU3NWVhM2QyNmE1Yjk0MTg5MTg3N2UyN2FkODkxMzI5Yzg0MTFkN2Q4ZGM0ZCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZGM3MGRlNDgzNTNiYTkwNGI2YWE1NWZkZjUyYjZhYWRhY2JlZWNmNDQxZTJkOGRlZWUzYzY0NDFiMTY2MzBlZCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiODRmZWJiN2Y5MTYyZTFkZjgzMTU3ZDNkZmY1ZmMwYzlhYTQ1MmRiMWIwOWUyOTA2MDMyNTYwMDRhM2U4MDVlNCJ9"
         },
         {
@@ -262,7 +262,7 @@
         },
         {
           "resource": "repo://packages/web-core/src/shared/dialogs/settings/settings/GeneralSettingsSection.tsx",
-          "version": "repo-file-v1:sha256:26367902e4c0932ce630cb05cd88cad214e94d5a08218da9df5199b1fd6c0cfd"
+          "version": "repo-file-v1:sha256:f7d738cfca03994d135b955a7ec1c93ee7b7fd6bc2a63d3911f6eacd3447250b"
         },
         {
           "resource": "repo://tests/settings-redesign/settings.spec.ts",
@@ -290,7 +290,7 @@
       "evidence": [
         {
           "resource": "repo://crates/services/src/services/config/versions/v9.rs",
-          "version": "repo-file-v1:sha256:4dfe0d03adc4fb2487a4a2d1617e85358be7929b0ce79545ae7c44c0edacff8a"
+          "version": "repo-file-v1:sha256:f0d3aa9271b7f3c8e849c2b57e9a082a1bfbebb74b8d69de29a6a8d55b194d39"
         },
         {
           "resource": "repo://crates/services/src/services/notification.rs#L105-L141",
@@ -305,6 +305,6 @@
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-05T07:15:08.684Z"
+    "at": "2026-11-06T15:15:40.431Z"
   }
 }

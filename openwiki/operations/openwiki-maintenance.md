@@ -10,6 +10,8 @@ sources:
     resource: repo://assets/skills/auto-merge/SKILL.md
   - id: openwiki-source-3c57aab40b425fc8b5d0d5c5
     resource: repo://crates/db/migrations/20261027090000_generated_issue_status.sql
+  - id: openwiki-source-5144fccee237bf35dd134ccb
+    resource: repo://crates/db/src/models/repository_state.rs
   - id: openwiki-source-4f59e07f8850eb04105d5cb8
     resource: repo://crates/db/tests/generated_issue_status.rs
   - id: openwiki-source-22b82518475034ade38104e6
@@ -66,6 +68,8 @@ sources:
     resource: repo://crates/services/src/services/openwiki/setup.rs
   - id: openwiki-source-c4df16e7e579927d462857d7
     resource: repo://crates/services/src/services/openwiki/setup/integration.rs
+  - id: openwiki-source-110c99f4b05152335c067c71
+    resource: repo://crates/services/src/services/openwiki/sync_input.rs
   - id: openwiki-source-8769f7f91e6dd954b9b6bf58
     resource: repo://crates/services/src/services/openwiki/sync_scope.rs
   - id: openwiki-source-c128bdfa7a156621b004df06
@@ -74,6 +78,8 @@ sources:
     resource: repo://crates/services/src/services/workspace_usage/lifecycle.rs
   - id: openwiki-source-2e2c90b28d3bcaf7a890d88a
     resource: repo://crates/workflow/src/templates.rs
+  - id: openwiki-source-a92e4b434b1dadd20662f90d
+    resource: repo://deploy/developer/repository-state-migration.md
   - id: openwiki-source-bb1ebe868e35e9e500714501
     resource: repo://Dockerfile
   - id: openwiki-source-00110cdcfec890895b99690a
@@ -86,10 +92,10 @@ sources:
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/ReposSettingsSection.tsx
   - id: openwiki-source-7fd9452d5e666180c50f8cb7
     resource: repo://tests/openwiki/recovery.sh
-generated: { by: "codex", at: "2026-11-06T03:26:16.411Z" }
+generated: { by: "codex", at: "2026-11-06T15:15:40.431Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-06T08:11:13.571Z
+    at: 2026-11-06T15:15:40.431Z
 ---
 
 # OpenWiki の初期生成・同期・回復
@@ -100,7 +106,7 @@ OpenWiki maintenance は、統合済みソースから canonical Wiki を更新�
 
 単独保守の新規受付は、UIまたは認可済みMCPからの明示要求に限定する。公開イベント、新規pending、既存backlog、main直接変更、再起動・定期回復から別のWiki Workspace/Agentを自動生成しない。自動マージはコード検証後の同じ候補内で更新する。[受付](../../crates/server/src/routes/openwiki.rs#L170-L202)・[回復](../../crates/server/src/routes/openwiki.rs#L522-L550)
 
-5秒monitorは保存済みBootstrap/AgentRunの回収、公開・失敗cleanupのために残る。未処理イベントを強制ackして隠す処理はなく、Manifest・Memory・凍結入力は明示保守と既存ownerのために保持する。[monitor](../../crates/server/src/routes/openwiki.rs#L826-L843)
+5秒monitorは保存済みBootstrap/AgentRunの回収、公開・失敗cleanupのために残る。未処理イベントを強制ackして隠す処理はなく、Manifest・凍結入力は明示保守と既存ownerのために保持する。[monitor](../../crates/server/src/routes/openwiki.rs#L826-L843)
 
 Repository settings で有効化し、統合先の **local branch** と出力言語を選ぶ。開始処理は未解決の source integration を拒否し、未処理 event の統合 commit が選択 branch に入っていることを確認する。remote branch 自体を公開先にはできない。必要な source が未取得なら model を開始せずエラーにする。[開始前の検証](../../crates/server/src/routes/openwiki.rs)
 
@@ -118,7 +124,7 @@ Codex の TOML editor が project trust table を追加すると、OpenWiki の�
 
 開始時は同じ Git storage の自動マージが publishing / post_processing / recovery_required にあれば拒否する。source が見えていても、その公開結果や semantic outbox が未確定の間に Wiki を先へ進めない。[自動マージとの境界](../../crates/server/src/routes/openwiki.rs)
 
-両経路とも [実行専用 Workspace](../concepts/workspace.md#操作用途と実行所有者)を作り、起動前に owner を保存する。通常 Sync は選択 event と Memory の凍結入力を作り、その digest/source/event 集合を host state に保存してから AgentRun を予約・所有者へ bind する。[準備と起動の順序](../../crates/server/src/routes/openwiki.rs)、[Sync の入力と予約](../../crates/server/src/routes/openwiki.rs)。全 manifest/chunk の読取、未統合 Memory の権威、空入力の意味は [凍結入力の契約](../concepts/repository-memory.md#sync-の入力は統合済み-source-に結び付く凍結-snapshot)を参照する。
+両経路とも [実行専用 Workspace](../concepts/workspace.md#操作用途と実行所有者)を作り、起動前に owner を保存する。通常 Sync は選択 event のChange Manifest凍結入力を作り、その digest/source/event 集合を host state に保存してから AgentRun を予約・所有者へ bind する。[準備と起動の順序](../../crates/server/src/routes/openwiki.rs)、[Sync の入力と予約](../../crates/server/src/routes/openwiki.rs)。全 manifest/chunk の読取、Manifestの権威、空入力の意味は [凍結入力の契約](../concepts/repository-memory.md#sync-の入力は統合済み-source-に結び付く凍結-snapshot)を参照する。
 
 明示 Sync の対象は現在の統合ソース全体、または指定 SHA からの範囲である。SHA は選択 branch の祖先である必要があり、初期生成に開始 SHA は指定できない。範囲外 event の扱いと未確認領域は [Repository memory](../concepts/repository-memory.md) の契約に従う。[scope 解決](../../crates/services/src/services/openwiki/sync_scope.rs)
 
@@ -179,7 +185,7 @@ Issue 採番と link 作成は `BEGIN IMMEDIATE` transaction 内で行い、そ�
 
 `get_repository_wiki_sync` は `admission`、`execution`、最新の `repository` を分けて返す。これは三者全体の atomic snapshot ではない。受付 `succeeded` は実行が受理されたことだけを意味し、返る `execution_accepted:true` と `wiki_complete:false` を混同しない。[応答の組立](../../crates/server/src/remote_mcp/repository_wiki.rs#L151-L231)
 
-`execution.wiki_complete` は、receipt の Workspace owner が対象 Repo / Run の `OPENWIKI_SYNC` と一致し、AgentRun が同じ Workspace に所属したうえで、AgentRun succeeded、publication checkpoint 存在、保存された owner result succeeded、repository の active_run_id が当該 run ではない、という条件をすべて要求する。checkpoint だけでは公開 intent、AgentRun 成功だけでは host の照合前である。host は run 固有結果を owner に保存してから receipt・最新 pointer を確定するため、その間は `host_finalizing:true` のままになる。[所有 identity と完了条件](../../crates/server/src/remote_mcp/repository_wiki.rs#L250-L305)・[保存順](../../crates/server/src/routes/openwiki.rs#L624-L647)
+`execution.wiki_complete` は、receipt の Workspace owner が対象 Repo / Run の `OPENWIKI_SYNC` と一致し、AgentRun が同じ Workspace に所属したうえで、AgentRun succeeded、publication checkpoint 存在、保存された owner result succeeded、repository の active_run_id が当該 run ではない、という条件をすべて要求する。checkpoint だけでは公開 intent、AgentRun 成功だけでは host の照合前である。host はrun固有のowner結果・receipt・最新stateを同じinstance DB transactionで確定する。確定前は `host_finalizing:true` として扱う。[所有 identity と完了条件](../../crates/server/src/remote_mcp/repository_wiki.rs#L250-L305)・[保存順](../../crates/server/src/routes/openwiki.rs#L624-L647)
 
 過去の実行完了は現在の freshness を保証しない。`repository.status`、現在 source と成功時 source / Wiki commit、active owner、範囲限定の `unverified_before` を併せて確認する。`needs_sync` は Stale / Error の補助値で、直ちに再起動してよいという判定ではない。詳細は [Repository Memory の鮮度と receipt](../concepts/repository-memory.md#並行性receipt失敗)を参照する。[現在状態の応答](../../crates/server/src/remote_mcp/repository_wiki.rs#L199-L211)
 
@@ -283,7 +289,7 @@ schema、path、operation の検査が証明するのは構造と監査上の閉
 
 Sync の cleanup は所有 identity と全 attempt の終了または未起動の証拠を先に確認する。非成功の terminal attempt が `reserved` または `not_started` で endpoint/token/host PID/provider PID を一切持たない場合は、未 spawn または開始失敗後の cleanup として instructions の復元を許す。`not_started` への遷移・履歴予約の扱いは [Runtime の未起動予約の契約](../architecture/agent-runtime.md#未起動予約の終端と-not_started)に従う。これは成功 writer の証明ではなく、publication の proof は全 attempt に `exited`・終了時刻・整合する Native Audit と操作証明を引き続き要求する。missing registry、unreachable、古い未終了 attempt、復元失敗は `MaintenanceFenced` とし、Error 診断と active owner を残す。最新終了記録の短い待機だけは `CompletionPending` として再観測する。[終了と fence](../../crates/server/src/routes/openwiki/completion.rs)、[所有を保った回復](../../crates/server/src/routes/openwiki.rs)
 
-Sync の確定結果は Workspace owner に保存してから repository の最新 pointer と receipt を更新する。後続保守で repository state が変わっても、その実行の成功・取消・失敗、no-op、Wiki commit を履歴として確認できる。[結果保存の順序](../../crates/server/src/routes/openwiki.rs)
+Sync の確定結果は Workspace owner・repository の最新state・receiptを同じinstance DB transactionで保存する。後続保守で repository state が変わっても、その実行の成功・取消・失敗、no-op、Wiki commit を履歴として確認できる。[結果保存の順序](../../crates/server/src/routes/openwiki.rs)
 
 既に durable publication checkpoint がある場合は、その Git 公開と receipt だけを回復する。途中の model phase を再実行して別成果物を重ねる回復ではない。ユーザー向けの状況確認は Repository settings と View Workflow の Canvas / Dashboard、失敗修正後は新しい Bootstrap が入口となる。移行した過去の「運用手順」・移行した過去の「checkpoint 回復」
 
@@ -340,3 +346,14 @@ Review は generator の選んだ資料や Wiki の分類だけを範囲とせ�
 
 
 Repository memory設定の状態取得は15秒周期である。保存済みbranch/言語、未保存変更、active owner、query失敗等による開始抑制と、操作後の再取得を維持する。[設定UI](../../packages/web-core/src/shared/dialogs/settings/settings/RepositoryMemorySettings.tsx#L50-L139)
+
+
+## LOCAL-332以降の保存先と移行境界
+
+Wikiの可変state・receipt・publicationとsource integration対応は、既存instance DBのrepository運用modelが正本である。通常Syncのowner結果・receipt・stateは同じtransactionで確定し、自動マージのreceipt・state・integration結果も一括確定する。GitはDBと同じtransactionにはならず、Git操作前のpublication intentと実SHA/tree/markerを照合して途中停止を回復する。復旧のためだけに別の恒久監査基盤を追加しない。[運用model](../../crates/db/src/models/repository_state.rs)・[Sync確定](../../crates/server/src/routes/openwiki.rs#L604-L629)・[統合確定](../../crates/server/src/routes/integrations/runtime.rs#L503-L540)
+
+Syncは統合済みsourceと該当するファイルManifestを固定入力にし、可変Workspace Memoryをsnapshotしない。Manifest・固定sync-inputs・source-publications・Run checkpoint・setup原本/復元journal・Bootstrap索引/reportは別責務でファイルに残る。WikiをOFFにしても通常coding Runのsource自動commitとManifest確定は止まらない。[固定入力](../../crates/services/src/services/openwiki/sync_input.rs#L30-L92)・[Runの責務](../concepts/repository-memory.md)
+
+リリース前の単一登録Repoに対する旧運用ファイルの取込は、一度限りの明示offlineコマンドで行う。稼働Runからlive DBへ実行せず、旧版で全owner/予約を収束し停止、DB・persistent・必要鍵/設定を整合backupしてから新版binaryの `server migrate-repository-state <repository-uuid>` を使う。失敗原因を修正して再実行し、成功後は旧ファイルを再読込しない。旧binaryへ戻すときはschema migration済みDBをそのまま使わず、対応backupを復元する。旧ファイルの削除は別途確認と許可が必要でありknowledge全体を削除しない。完全な順序・保持対象・rollback限界は[一度限りの開発移行](../concepts/repository-memory.md#運用状態のdb集約と一度限りの開発移行)を参照する。[実装runbook](../../deploy/developer/repository-state-migration.md)
+
+今回の保守は統合sourceの説明更新であり、live import・旧共有ファイル削除・dev停止/再起動・稼働環境適用の成功を主張しない。

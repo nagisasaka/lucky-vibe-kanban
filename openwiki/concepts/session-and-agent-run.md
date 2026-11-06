@@ -178,10 +178,10 @@ sources:
     resource: repo://tests/supervised/README.md
   - id: openwiki-source-5184ef612e83b7ab35d62e7b
     resource: repo://tests/supervised/run_isolated.py
-generated: { by: "codex", at: "2026-11-06T08:11:13.571Z" }
+generated: { by: "codex", at: "2026-11-06T15:15:40.431Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-06T08:11:13.571Z
+    at: 2026-11-06T15:15:40.431Z
 ---
 
 # Session・AgentRun・RunAttempt
@@ -229,7 +229,7 @@ LOCAL-303 の統合は source `a34f7da5` と同一 tree のコード候補 `290a
 
 `execution_mode: "review"` はCODE基盤の調査・レビュー意図を保存する。UIのモード選択から既存executor設定へ入り、最新immutable attemptから復元される。stdioの新規開始もmodeを指定でき、通常・添付付き続行は保存済み設定を読む。外部HTTPの実行読取は指定したRunのattemptからmodeを返し、後の別Runの設定で上書きしない。[UI](../../packages/web-core/src/shared/components/ModelSelectorContainer.tsx)・[stdio続行](../../crates/mcp/src/task_server/tools/sessions.rs)・[添付付き続行](../../crates/server/src/routes/attachment_transfer.rs#L345-L375)・[Run単位の読取](../../crates/server/src/remote_mcp/runtime_read.rs)
 
-REVIEWは通常の会話turnを使い、所見・証拠・リスク・未検証を会話に返して停止する指示を追加する。必要なWorkspace内の再現・テスト書込は許すが、製品変更の採用・公開や共有環境変更の許可にはならない。CODEと同じsandbox/approval方針を維持し、commit reminderと自動source finalisationを抑制する。PLANの承認後実装やGoal継続へ自動移行しない。ここでいうExecutionModeは、上記契約のnative Review intentや `/review` RPCとは別である。[providerの実行境界](../integrations/agent-providers.md#review-の実行境界)を参照する。
+REVIEWは通常の会話turnを使い、所見・証拠・リスク・未検証を会話に返して停止する指示を追加する。必要なWorkspace内の再現・テスト書込は許すが、製品変更の採用・公開や共有環境変更の許可にはならない。CODEと同じsandbox/approval方針を維持し、自動source finalisationを抑制する。commit reminder機能自体は全モードで廃止された。PLANの承認後実装やGoal継続へ自動移行しない。ここでいうExecutionModeは、上記契約のnative Review intentや `/review` RPCとは別である。[providerの実行境界](../integrations/agent-providers.md#review-の実行境界)を参照する。
 
 ### Composer の手動推論設定と復元
 
@@ -315,7 +315,7 @@ Codex の resume は同じ native thread ID を要求し、fork しない。再�
 
 Cancel は終端 run には無操作で、活動中なら Cancelling を保存して実プロセス側を止める。InterruptTurn は provider の現在 turn への中断要求であり、終端 run には送れない。Steer は活動中の run に空でない追加指示を渡す。projection が degraded の間は通常制御を拒否し、Cancel と既知の startup collision を証拠検証する明示 Retry だけが回復経路を持つ。詳細な対象・拒否条件は [Runtime の限定回復](../architecture/agent-runtime.md#明示-retry-に限る-startup-collision-の回復)に置く。[停止境界](../../crates/local-deployment/src/agent_run_port.rs)、[steer](../../crates/local-deployment/src/agent_run_port.rs)
 
-通常 interactive Workspace の送信待ち queue は **Session ごとのメモリ内 FIFO**。各項目は ID・本文・設定を持ち、本文編集、個別削除、全 ID の正確な並べ替えを Session lock 下で行う。受理済み項目と composer の新しい draft は別物である。成功した最新 run の [Repository Memory](repository-memory.md)完了後に先頭を起動する。元 run の失敗・取消、memory 完了失敗では queue を保持して pause し、次の起動失敗では先頭へ戻して pause する。古い terminal 通知は最新 run の queue を消費しない。[保存](../../crates/services/src/services/queued_message.rs)、[終端処理](../../crates/local-deployment/src/container.rs)。
+通常 interactive Workspace の送信待ち queue は **Session ごとのメモリ内 FIFO**。各項目は ID・本文・設定を持ち、本文編集、個別削除、全 ID の正確な並べ替えを Session lock 下で行う。受理済み項目と composer の新しい draft は別物である。成功した最新 run の [source commit / Manifest](repository-memory.md)の確定後に先頭を起動する。元 run の失敗・取消、source / Manifest 完了失敗では queue を保持して pause し、次の起動失敗では先頭へ戻して pause する。古い terminal 通知は最新 run の queue を消費しない。[保存](../../crates/services/src/services/queued_message.rs)、[終端処理](../../crates/local-deployment/src/container.rs)。
 
 resume は active run 不在・maintenance / 自動マージ guard を確認して先頭から再開する。古い cancel endpoint は全 queue を消すので、個別 remove と区別する。server restart では失われ、[Workflow outbox](../architecture/workflow-runtime.md)の耐久性は持たない。[queue API](../../crates/server/src/routes/sessions/queue.rs)。
 
@@ -498,3 +498,8 @@ Workspace累積tokenの表示は30秒周期、Session queue状態は5秒周期�
 InteractiveSessionChatBox が discovery snapshot を一度取得し、ModelSelector と editor へ渡す。hook は agent / variant / Workspace / Session / Repo / Host がすべて厳密一致した場合だけ snapshot を再利用し、異なる場合は従来の独立取得へ戻る。undefined と null や異なる variant を同一視しない。新規作成画面の global selector と Repo 付き editor は別 scope のままで、未使用 useSlashCommands wrapper は削除された。[親](../../packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx#L599-L607)・[一致条件と fallback](../../packages/web-core/src/shared/hooks/useExecutorDiscovery.ts#L29-L112)・[selector](../../packages/web-core/src/shared/components/ModelSelectorContainer.tsx#L118-L134)・[editor](../../packages/web-core/src/shared/components/WYSIWYGEditor.tsx#L372-L383)
 
 同 scope の2 consumer は親の1購読を利用するというコード上の削減であり性能実測ではない。統合候補と既存検証証拠、隔離Chromiumと実providerの区別は [同期の検証記録](../architecture/web-and-sync.md#選択ログ共有と-archive-の鮮度316-cd後続)を参照する。
+
+
+### 通常Runの成果確定とWikiの独立性
+
+通常成功coding Runのsource自動commitとファイルManifestはWiki無効でも有効で、既存HEADが全変更を含む場合は再利用する。変更なしRunは専用検証記録を作らず通常の最終報告で検証を伝える。失敗・取消・REVIEW・制御・自動マージ担当・Design Arena等の適用除外は維持する。人間の目的・動機・判断理由はIssue・追加指示・直接会話からsemantic draftへ渡し、承認を技術理由の代用にしない。[Run完了と意図の契約](repository-memory.md#sessionmanifest統合済みwiki)・[完了host](../../crates/local-deployment/src/container.rs#L450-L493)・[source適用条件](../../crates/local-deployment/src/agent_run_port.rs#L939-L998)

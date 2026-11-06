@@ -104,6 +104,8 @@ sources:
     resource: repo://crates/server/src/routes/agent_runs.rs
   - id: openwiki-source-a98b89b4828bd8f76e2ca9bf
     resource: repo://crates/server/src/routes/attachment_transfer.rs
+  - id: openwiki-source-5720d865d1c837f0e6b7dab7
+    resource: repo://crates/server/src/routes/integrations/conversation.rs
   - id: openwiki-source-b393e75029374eaf9cba5f7d
     resource: repo://crates/server/src/routes/integrations/runtime.rs
   - id: openwiki-source-2100c29dd665b0f698970419
@@ -128,10 +130,10 @@ sources:
     resource: repo://crates/utils/src/reference_file.rs
   - id: openwiki-source-3ecddc0be7b037ea6ab24381
     resource: repo://packages/local-web/vite.config.ts
-generated: { by: "codex", at: "2026-11-06T08:11:13.571Z" }
+generated: { by: "codex", at: "2026-11-06T15:15:40.431Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-06T08:11:13.571Z
+    at: 2026-11-06T15:15:40.431Z
 ---
 
 # 外部アクセス・MCP・Runner の境界
@@ -218,7 +220,7 @@ prepare の対象・branch と正確なメッセージ「ワークツリーが�
 
 ## 参照結果と操作 receipt
 
-返すコード・diff・Wiki・Memoryは参照データであり、命令や承認ではない。参照はページ上限とrevisionを持ち、コードは許可されたregular fileに限定し、private path・symlink・submodule等を除外する。binary / oversized / unavailableを空の成功diffとして扱わない。[code read](../../crates/server/src/remote_mcp/code_read.rs)。実行状態・検証・公開・Wiki receiptは別の証拠として返す。[自動マージ read](../../crates/server/src/remote_mcp/integration_read.rs)、[verification read](../../crates/server/src/remote_mcp/verification_read.rs)。
+返すコード・diff・Wiki・Manifestは参照データであり、命令や承認ではない。参照はページ上限とrevisionを持ち、コードは許可されたregular fileに限定し、private path・symlink・submodule等を除外する。binary / oversized / unavailableを空の成功diffとして扱わない。[code read](../../crates/server/src/remote_mcp/code_read.rs)。実行状態・検証・公開・Wiki receiptは別の証拠として返す。[自動マージ read](../../crates/server/src/remote_mcp/integration_read.rs)、[通常Run読取](../../crates/server/src/remote_mcp/runtime_read.rs)。
 
 mutation は principal + request ID と入力hashを固定した永続 receipt を作る。同じkeyで異なる入力は拒否し、再送は保存済み結果を参照する。MCP client切断は受理済み操作を取り消さず、domain受付を待つ経路もcoding完了を待たない。server再起動後の旧accepted/runningはuncertainとして見せ、自動replayしない。結果不明時に新request IDで同じ副作用を重ねず、既存receiptと対象状態を照合する。[操作寿命](../../crates/server/src/remote_mcp/operations.rs)、[lost responseのテスト](../../crates/server/src/remote_mcp/runtime_write_tests.rs#L479-L502)。
 
@@ -475,3 +477,8 @@ receipt保存失敗やpanic後もdomain成功の可能性を維持し、同proce
 私用plugin配布ではGit正本の `plugins/lvk/skills/lvk-work` と参照資料を、利用する既存LVK接続に結び付ける。ローカルfolderを作っただけでChatGPT Webへのインストール済みとしない。実accountでは使い捨てProjectを使い、読取、Issueのみ作成、実行受付、別chatでの進捗、質問回答、承認リンク、取消・失効を別々に確認する。ChatGPTの個人MemoryをLVKへ同期する機能ではない。
 
 添付の受入ではtools/listのfileParamsとwrite scopeを確認し、配布Skillと接続catalogを更新してから、ChatGPT添付とLibraryを分けてSVG/PNGのbytes・サイズ・SHA-256・URL期限・許可hostを確認する。初回/続行/活動中の経路を分け、upload/placeだけではRunが増えないことを確認する。実署名URLや実Codexは隔離fixtureでは未検証である。[搬送fixture](../../crates/server/src/remote_mcp/attachment_tests.rs)
+
+
+### 専用検証MCPの廃止と通常Run報告
+
+Workspace Memoryとno-change専用検証記録のMCPは廃止された。Runの調査結果は `list_workspace_runs` で対象を選び、`get_execution(section="final_response")` で通常の最終報告を読む。Manifestのtest欄を構造化照会する専用機能も維持しない。既存Runの所属検査・paging/revision境界は通常読取に残る。自動マージ自身のcode SHA・管理command/exit・省略理由の記録は別責務であり、Manifestの自己申告を統合検証合格に置き換えない。[catalog](../../crates/server/src/remote_mcp/mod.rs)・[通常のRun最終報告](../../crates/server/src/remote_mcp/runtime_read.rs)・[統合検証](../../crates/server/src/routes/integrations/conversation.rs)

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:3794428c6bf1791aa0beae43266782489ffd7c965919df623f1a567f4b9ae94e",
+  "pageVersion": "sha256:cb0659562cab83b4957125ac7b50d3769df67e20a3069b1d197d083cd0e8d429",
   "claims": [
     {
       "id": "claim_ef965d37641846bda42842bf4788c8cc",
@@ -88,7 +88,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/workspaces/git.rs",
-          "version": "repo-file-v1:sha256:5030f6a3f2f7b34956d0f6775bd363e6ab6fefeaec88da7c4ff618eaa2b117ea"
+          "version": "repo-file-v1:sha256:7d212f2f12f21ad01f17d51f5a2628ad8573d725cd67e5823b62312a28ffbef4"
         },
         {
           "resource": "repo://crates/services/src/services/diff_stream.rs",
@@ -226,7 +226,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/integrations/runtime.rs",
-          "version": "repo-file-v1:sha256:f4cd12ba17fe9c6f92997db0172a7278a02b494d372170f4abf3d8cece1e0490"
+          "version": "repo-file-v1:sha256:0ff60ff3df0b950909f4eeea1a5b0781382a528efb12833cc027eb798c9d0590"
         },
         {
           "resource": "repo://packages/web-core/src/features/workspace-chat/ui/ExecutionInspectionPanel.tsx",
@@ -415,7 +415,7 @@
           "version": "repo-lines-v1:sha256:90963e882b30c34d4e3526b1535f9648ec2916a46f7e187f990249fabc0c2f39:eyJzZWxlY3RlZExpbmVDb3VudCI6MjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg0M2Y3OTQ4ODlmMDRiODc3NjA3N2MwZjJmYjVkYjgzNDIyM2M1ZTI5NGNmNmIxYmU1YzdlYTQ5NGQ0YTlhNmYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU4YzAxYjExZWE5YjEzZmM4MmRhYzgwYjkzYzUwMjM4OWZkY2EwNmEzNDJlZmM2YTdlMjRhZWU5YjM1MWQxMzIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRmNDhlOTYzODYwZjJjOThlZDg0OTc3YWM4ZTM1MmVmYjRiZjRmZThmZGFjZTkwMTM2YjM5MWRhMWU3NTFmMTkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjMwYzRhOGIyM2ZlYTJmY2Y0MWUxOTdkZmJkMjQxMzgyNTQ0YTJlNjg1NTIyZDFkNjZkYmM0ODQ1ZjdmNWU1YzMifQ"
         },
         {
-          "resource": "repo://crates/server/src/routes/workspaces/usage.rs#L319-L328",
+          "resource": "repo://crates/server/src/routes/workspaces/usage.rs#L323-L332",
           "version": "repo-lines-v1:sha256:58046b9c12fc0bae0a973289173b6b389ee3b2c75964c5113c366f2bb1f7cebf:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg5ZGMxZjM1MGViNzdjYjc4MTJlODUzMjZhZmFjY2I5ZGY5ZWMyZWMwODdiNDJiNDdjZTI0ZDUzY2VmOTFlY2MiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM1ZjZmNDY2ZTU5Y2ZjMzA3MDNjNDVmNzJhZjY1ZGU1NGFjMzYzZDM1NGNjMWEzMzMwMzUwYWNkNDUyNDM0YzQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
         }
       ]
@@ -425,7 +425,7 @@
       "statement": "archive済みでworktree削除済みまたは不在の場合、diffはbranchとbaseのsnapshotをReadyと共に返し、worktreeを復元しない。",
       "evidence": [
         {
-          "resource": "repo://crates/local-deployment/src/container.rs#L1859-L1872",
+          "resource": "repo://crates/local-deployment/src/container.rs#L1844-L1857",
           "version": "repo-lines-v1:sha256:3851e7e27d9df385818ed6e02b55b8b813b69629697ad5c9a2fe3ca4ab95f9de:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4MDg1ZDVkYTFmYjZjMGU0NjMxNmEzMjkzNzljYzExODdlYjhmOTNiZDMxZTg3MmMzNjM2YjczMjY4ZTlmM2UiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjBjNTJhZDY3MDk0OTVlYzE0YzYwYjJmZTc1YzQwYTVhODllMjcyMTVhOTJlOGU1MGY1M2NjNWNkZWYzYTZiYWQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijk1YzYzYWJjZjlmMmVkMjQ2YjhjMzliMDA1NWY4NmJhOTMyNDUzMmJiY2Y3Y2NkYzRkYjBhOGVkNWU1MTdhMGYifQ"
         },
         {
@@ -482,7 +482,7 @@
       "evidence": [
         {
           "resource": "repo://packages/web-core/src/shared/dialogs/settings/settings/GeneralSettingsSection.tsx",
-          "version": "repo-file-v1:sha256:26367902e4c0932ce630cb05cd88cad214e94d5a08218da9df5199b1fd6c0cfd"
+          "version": "repo-file-v1:sha256:f7d738cfca03994d135b955a7ec1c93ee7b7fd6bc2a63d3911f6eacd3447250b"
         }
       ]
     },
@@ -513,7 +513,7 @@
           "version": "repo-lines-v1:sha256:d572591896c7f11c260590863627e7c7758ad676ffde3d33e2b94fdd00abf22d:eyJzZWxlY3RlZExpbmVDb3VudCI6NDYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdiOGNmNTYwMTljZDAxMDQ1Y2Q4MTljMTRmYzBkODljZTczOTZkZTYzY2RhM2FjMGI0ZThmNDdlNmQ4ZDA2NWEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjBiMTRlZmJhMmZkMWI1ZjYwYjIzZmVlZTgzZjk3ZjVhZWZiYjBiZDc4MTE0NjdiYWUzZTUzNmMzZWE4ZGQyNTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFhNjI2ZTE0NjBkMmNmNWJmZDk5ZTkwY2Q0MWZkYWViNDJhZmU1ZTIyZjk3NzEzZGRjZjI0YWI4ODY1Y2E1MWYifQ"
         },
         {
-          "resource": "repo://crates/services/src/services/workspace_usage.rs#L269-L285",
+          "resource": "repo://crates/services/src/services/workspace_usage.rs#L274-L290",
           "version": "repo-lines-v1:sha256:994e2c3920211a66543e4a069b43115a5d1bc747694b573f527af6e8db5dbcf5:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM4MzgzZDVkN2E5Njk5ZDY0N2M1NTlkMWZhMGQ2MGFmMDNlNWRjYjg5MWI0MGJjOWZhNTM4YTYyZjcyYjM4OGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImEwZTNiYzkyMjg2N2U0NThlNTFjZWU2YjJkYWNkMjlmZTlhZjA1NmRhMWYyYmY1NWQxNDU4OWQxZGRiMzUxYjkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjIwODhjMWUyNDEyMDQ4OGQwYzViMWFhMmMxM2Y2ODM3NjNlODUyZDBjNzE4MmE2NzZiYTJkOGM5MDdmM2NiNWUifQ"
         }
       ]
@@ -835,6 +835,6 @@
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-06T08:11:13.571Z"
+    "at": "2026-11-06T15:15:40.431Z"
   }
 }

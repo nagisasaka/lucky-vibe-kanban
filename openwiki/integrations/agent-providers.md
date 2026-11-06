@@ -82,6 +82,8 @@ sources:
     resource: repo://crates/services/src/services/container.rs
   - id: openwiki-source-605a3efdc11efae80ada92b1
     resource: repo://crates/utils/src/mcp_error.rs
+  - id: openwiki-source-a171e1a170f941fa2a4ba003
+    resource: repo://crates/utils/src/repository_memory.rs
   - id: openwiki-source-dd14ba47f6d5e604d8574f1d
     resource: repo://crates/utils/src/shell.rs
   - id: openwiki-source-c5de8230bc8ac4c0c0000287
@@ -108,10 +110,10 @@ sources:
     resource: repo://tests/claude-subscription/subscription.spec.ts
   - id: openwiki-source-141584dac09cf0f93be6bff5
     resource: repo://tests/codex-process-cleanup/README.md
-generated: { by: "codex", at: "2026-11-04T20:55:57.207Z" }
+generated: { by: "codex", at: "2026-11-06T15:24:11.469Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-06T08:11:13.571Z
+    at: 2026-11-06T15:24:11.469Z
 ---
 
 # Agent provider・設定・MCP・Skill
@@ -147,11 +149,11 @@ LVK の profile/実行 override が空でも、app-server は利用者・project
 
 ### Codex resume の固定指示と現在 identity
 
-resume は同一 native thread を使い、start / resume config には完全な developer instructions を渡す。履歴への inject では、repository-memory の現在 run/draft identity と parallel context の JSON 行だけを分離できる場合がある。それ以外の固定文は空白まで完全一致で比較する。必要指示の保持を証明できないときは従来の全文 append に戻り、inject 失敗なら次の実行を開始しない。[順序と fallback](../../crates/executors/src/executors/codex/client.rs#L290-L388)・[分離と一致](../../crates/executors/src/executors/codex/client/resume_instructions.rs#L1-L157)
+resume は同一 native thread を使い、start / resume config には完全な developer instructions を渡す。履歴への inject では、Change Manifest の現在 run/draft identity と parallel context の JSON 行だけを分離できる場合がある。それ以外の固定文は空白まで完全一致で比較する。必要指示の保持を証明できないときは従来の全文 append に戻り、inject 失敗なら次の実行を開始しない。[順序と fallback](../../crates/executors/src/executors/codex/client.rs#L290-L388)・[分離と一致](../../crates/executors/src/executors/codex/client/resume_instructions.rs#L1-L157)
 
 縮小を許すのは、owned app-server の初回 load、通常履歴、Unix、確認対象 version metadata（0.144.1 / 0.163.0）の条件が揃う場合だけである。metadata-only `thread/read(include_turns=false)` で当該 thread の path を得て、resume 前後の同じ canonical regular JSONL を各最大16 MiB・2秒で読む。directory 走査や他の履歴・sidecar は使わず、symlink・非通常ファイル・部分行・identity不一致・未知形式・compaction・rollback・fork/history_base があれば全文へ戻す。prefix と inode の連続性を照合し、resume が追加する既知の settings / warning event だけを suffix に許す。[履歴判定](../../crates/executors/src/executors/codex/client/resume_instructions.rs#L47-L157)・[有界読取と前後照合](../../crates/executors/src/executors/codex/client/resume_instructions.rs#L159-L290)
 
-通常 initialize だけが user_agent を保存し、後述の passive initialize は版観測・resume state に入らない。未知版や非Unixでも通常 resume を拒否せず、指示縮小だけを無効にする。sidecarの過去ACKでは compaction 後の保持を証明できないという判断が実装に記録される。これは履歴追加の削減であって、Memory checkpoint/restore の追加 turn や Workflow を変更するものではない。[initialize の分離](../../crates/executors/src/executors/codex/client.rs#L239-L275)・[resume指示の検証実装](../../crates/executors/src/executors/codex/client.rs)。実binaryの厳密Git revision、effective prompt、token/cache/課金削減量は未測定である。
+通常 initialize だけが user_agent を保存し、後述の passive initialize は版観測・resume state に入らない。未知版や非Unixでも通常 resume を拒否せず、指示縮小だけを無効にする。sidecarの過去ACKでは compaction 後の保持を証明できないという判断が実装に記録される。これは履歴追加の削減であり、native compactやWorkflowの実行契約とは別である。Workspace Memory checkpoint/restoreの追加turnは廃止済みである。[initialize の分離](../../crates/executors/src/executors/codex/client.rs#L239-L275)・[resume指示の検証実装](../../crates/executors/src/executors/codex/client.rs)。実binaryの厳密Git revision、effective prompt、token/cache/課金削減量は未測定である。
 
 ### Discovery と手動 override の境界
 
@@ -326,7 +328,7 @@ RepoのClaude指示入口はsymlinkではなく通常fileの `@AGENTS.md` import
 
 Codexの `execution_mode: review` はCODEと同じ通常会話経路にレビュー・調査のdeveloper instructionsを追加する薄いmodeである。対象・範囲・報告内容に従って会話に所見と証拠、リスク、未検証事項を返し停止し、製品実装へ移るには別の明示指示を必要とする。PLANの承認から実装への遷移、Goal継続、native `/review` RPCや重いレビューworkflowを流用しない。明示REVIEWはlegacy Plan presetより優先される。[modeの解決](../../crates/executors/src/executors/codex.rs#L470-L480)・[指示](../../crates/executors/src/executors/codex.rs#L1-L9)・[通常collaboration](../../crates/executors/src/executors/codex/client.rs#L550-L605)
 
-REVIEWはCODEのsandbox/approval policyを維持する。調査に必要なWorkspace内の再現コード・fixture・テスト書込を許す一方、製品変更の採用・merge・公開、共有環境や実データ変更をmodeだけで許可しない。commit reminderと自動repository source finalisationを抑制し、調査用変更を自動採用しない。Issueコメント自動投稿や新しい必須成果物形式も追加しない。[thread指示](../../crates/executors/src/executors/codex.rs#L1208-L1230)・[reminder](../../crates/executors/src/executors/codex/client.rs#L165-L180)・[source完了境界](../../crates/executors/src/executors/provider_adapter.rs#L2510-L2540)
+REVIEWはCODEのsandbox/approval policyを維持する。調査に必要なWorkspace内の再現コード・fixture・テスト書込を許す一方、製品変更の採用・merge・公開、共有環境や実データ変更をmodeだけで許可しない。自動repository source finalisationを抑制し、調査用変更を自動採用しない。Issueコメント自動投稿や新しい必須成果物形式も追加しない。[thread指示](../../crates/executors/src/executors/codex.rs#L1208-L1230)・[source完了境界](../../crates/executors/src/executors/provider_adapter.rs#L2510-L2540)
 
 UI選択・保存・再表示・通常続行は [SessionのREVIEW](../concepts/session-and-agent-run.md#review-は通常会話で報告して止まる)に従う。fixtureはpermission parity、通常turn、Goal RPCなし、source完了抑制を確認するが、実モデルの指示遵守や外部承認の改善は保証しない。実ChatGPT/Library・実Codexの適合確認は公開後の別ゲートである。[fixtureと限界](../../tests/review-mode/README.md)・[providerテスト](../../crates/executors/src/executors/provider_adapter.rs#L2654-L2685)
 
@@ -343,3 +345,8 @@ host に束縛された自動マージ worker は、既存の `integration_actio
 Settings の agent 設定でproviderを選び、既存profileを選択して変更を保存する。新規profileは名前を付けて作成し、必要なら既存値を複製する。削除や既定値変更は実行中Runの設定変更とは分け、実行の保存値・overrideの解決を上記で確認する。[設定panel](../../packages/web-core/src/shared/dialogs/settings/settings/AgentConfigurationSettingsPanel.tsx)
 
 外部MCPをcoding agentへ渡す場合は、agent用MCP設定editorで対象agentを選び、presetまたはcommand/args等を編集して保存する。接続ログと次の実行で確認し、保存成功を接続成功と扱わない。設定はproviderのnative global設定に作用するため、他のserver定義を保持する。CodexのTOML変換・設定探索とJSON editorを混同しない。LVKを外部から操作するruntime設定とは別である。[native設定editor](../../packages/web-core/src/shared/dialogs/settings/settings/McpSettingsSection.tsx)
+
+
+### LOCAL-332のManifest指示とcompact
+
+Workspace Memoryのcheckpoint / reload連鎖とcommit reminderは撤去済みである。Codexの明示compactはnative `thread/compact/start` を使い、独自記憶の保存・再注入へ置き換えない。Codexのpersistent developer instructionsと他providerへのprompt suffixは、source変更時のsemantic draftとcanonical Wikiのread-only境界を伝える。人間の目的・動機・判断理由を自分の実装判断と区別し、承認を設計理由に置換しない。変更なしならdraftや専用検証記録を作らず通常の最終報告へ返す。[native compact](../../crates/executors/src/executors/codex/client.rs)・[共通prompt](../../crates/executors/src/executors/provider_adapter.rs#L2487-L2545)・[Manifest契約](../../crates/utils/src/repository_memory.rs#L575-L589)

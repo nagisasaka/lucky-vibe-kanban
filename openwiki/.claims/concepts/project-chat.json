@@ -1,18 +1,18 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:7b578d91f225fed71811ab5e52ecea6f254f1fc948b684fa9e5601d0bc120370",
+  "pageVersion": "sha256:03b07ad76b0f3d67be62a567d01481e9903eec754e169831f6efcbe52100511d",
   "claims": [
     {
       "id": "claim_1495b4d9643b448e950a8c2c04ce2168",
       "statement": "内部Project ChatのAPI・workerと専用推論は廃止され、ProjectはBoardを表示し、外部MCPは内部会話モデルを作らず既存操作を公開する。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/main.rs#L102-L153",
+          "resource": "repo://crates/server/src/main.rs#L139-L190",
           "version": "repo-lines-v1:sha256:186332ae5301a38785fbbf7e8d79c2997e460ad0f30bc4e72ecd011fbecb33fc:eyJzZWxlY3RlZExpbmVDb3VudCI6NTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk4ZjdmMWY1OTYzOWExOWY3ZDQ2MTYyNjMwNTUzZWE3YTExYWQ0MTIyNmU4MTAyMjcxOTQwZGFkYWU4YTRiZjMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE1NmJlMmVlMTcwMDQwNjhjMTg2YmU4MjNlMzJjYzUxMWM0OWE4MDc1ZWYxYWQwMDI5MjJkZTBjNTk5OGMzMTQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImEwZDM0ZGM0Y2I0ZDc2NzY3MDBmMTg2Mzc1MTI2ZDg1ZjZkNmVhZDMzZTk2M2FhN2M3YTM2M2YwMzdkOWRhNTIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImZjNzhlNTM5NTdiOTFiM2E4YTM4MmQwNTc5MTU2ZjJiNWFmODkxOWMzMWVhOWY1M2ZjMjY0MjgxZjljOTBjZjUifQ"
         },
         {
-          "resource": "repo://crates/server/src/remote_mcp/mod.rs#L1-L150",
-          "version": "repo-lines-v1:sha256:2c5fec579f98bb086570907fdc4d5a2afef673a08932767753da1af899af9dd4:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUwLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI3OTI1YWJmNmVjNWFiMmI1N2IwMDBiYzQ0Y2YzYTE1YzQ2NmU0NWQ1NzkyMWMyOGU0NGQ3M2Q4MTBhZDdhY2E2IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIwZjBiMzNiYzU0Y2U2OWFiNTA0NDY3MjRkNzU2ZGNmN2ZiYTRmYjRkNjM3ZTJiOWM0M2Y3YTYwOTdlMzRmZTY0IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MCwicHJlY2VkaW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJhZjhlODU1YTEwYWFhODNmMjBmNzZlMjMwZjRiYzFkNjljMzcwNTFkNDJkMDRjMzRlZDcwNWU4NDFhODFhMWFjIn0"
+          "resource": "repo://crates/server/src/remote_mcp/mod.rs#L1-L149",
+          "version": "repo-lines-v1:sha256:31b236e47554522351f199cf49413d575023474774080f86167e09898f8177ee:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQ5LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI3OTI1YWJmNmVjNWFiMmI1N2IwMDBiYzQ0Y2YzYTE1YzQ2NmU0NWQ1NzkyMWMyOGU0NGQ3M2Q4MTBhZDdhY2E2IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIwZjBiMzNiYzU0Y2U2OWFiNTA0NDY3MjRkNzU2ZGNmN2ZiYTRmYjRkNjM3ZTJiOWM0M2Y3YTYwOTdlMzRmZTY0IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MCwicHJlY2VkaW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJhZjhlODU1YTEwYWFhODNmMjBmNzZlMjMwZjRiYzFkNjljMzcwNTFkNDJkMDRjMzRlZDcwNWU4NDFhODFhMWFjIn0"
         },
         {
           "resource": "repo://crates/server/src/routes/mod.rs#L56-L98",
@@ -51,6 +51,6 @@
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-06T08:11:13.571Z"
+    "at": "2026-11-06T15:15:40.431Z"
   }
 }

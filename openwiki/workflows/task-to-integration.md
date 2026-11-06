@@ -84,10 +84,10 @@ sources:
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/ReposSettingsSection.tsx
   - id: openwiki-source-ffc55e6e31e6ce477ca57329
     resource: repo://packages/web-core/src/shared/hooks/useWorkflowRun.ts
-generated: { by: "codex", at: "2026-11-06T03:26:16.411Z" }
+generated: { by: "codex", at: "2026-11-06T15:24:11.469Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-06T08:11:13.571Z
+    at: 2026-11-06T15:24:11.469Z
 ---
 
 # Issue から実行・レビュー・統合まで
@@ -134,7 +134,7 @@ Agent の review API は Workspace 内に active AgentRun があれば拒否す�
 
 ## 並列変更を試してから正式統合する
 
-他 Card の文脈や branch を調べるときは、[Shared dirs と並列 context](../concepts/card-context-and-llm-wiki.md)で関係を発見し、採用する commit を固定する。発見された最新 HEAD や他 Workspace の未統合 Memory を、既に統合済みの仕様として扱わない。
+他 Card の文脈や branch を調べるときは、[Shared dirs と並列 context](../concepts/card-context-and-llm-wiki.md)で関係を発見し、採用する commit を固定する。発見された最新 HEAD や他 Workspace の未統合の私的文脈 を、既に統合済みの仕様として扱わない。
 
 組合せ試験には `POST /api/workspaces/<id>/integration/preview` がある。自分の base commit と peer の commit を明示し、Repo membership、各 commit がその Workspace branch に帰属する祖先であること、自分の checkout が指定 base に一致して clean なことを確認する。古い固定 commit は許すが、自動的に新 HEAD へ追従しない。自分を含む source は最大100件である。[preview の受付](../../crates/server/src/routes/parallel_context.rs)
 
@@ -168,7 +168,7 @@ Git safety tests は通常の untracked file の保存、tracked dirty change �
 
 checkout 済み base の staged changes は拒否する。専用 test は staged file を残したまま merge が失敗することを検証する。[test](../../crates/git/tests/git_ops_safety.rs)
 
-memory 有効時は source checkpoint と明示 event の integration 記録を準備してから Git を実行し、成功した commit を保存する。その後で local Merge record を保存する。Workspace は自動 archive しない。Git 成功と後段の記録保存は一つの transaction ではない。[統合順序](../../crates/server/src/routes/workspaces/git.rs)
+Wiki有効化と独立しては source checkpoint と明示 event の integration 記録を準備してから Git を実行し、成功した commit を保存する。その後で local Merge record を保存する。Workspace は自動 archive しない。Git 成功と後段の記録保存は一つの transaction ではない。[統合順序](../../crates/server/src/routes/workspaces/git.rs)
 
 ## 5. Push と Pull Request
 
@@ -196,7 +196,7 @@ Direct merge の成功と PR の merged 観測では、通常の作業 Workspace
 
 自動マージでは同じ担当がコード検証後の候補でWikiを更新し、Wikiだけを別commitにして公開要求する。公開後イベントやbacklogから別Wiki Workspace/Agentは起動しない。mainを直接変更した場合も自動同期せず、必要に応じて手動更新・再同期を明示的に開始する。再起動と定期回復は保存済みownerを回収する。[受付と回復の境界](../operations/openwiki-maintenance.md#開始条件と通常-sync)・[現行の回復monitor](../../crates/server/src/routes/openwiki.rs#L522-L550)
 
-[Repository memory](../concepts/repository-memory.md) が有効な場合、成功した coding run の semantic draft と Git 証拠から Change Manifest を作り、統合された event を maintenance の入力にする。source merge の成功と Wiki 更新の成功は別であり、Wiki 失敗は source を巻き戻さない。
+通常成功coding RunはWiki有効化と独立してsemantic draftとGit証拠からファイルChange Manifestを作る。Wiki有効時は統合されたeventをmaintenanceの入力にする。source merge の成功と Wiki 更新の成功は別であり、Wiki 失敗は source を巻き戻さない。
 
 LVK 自身の手動 direct squash と自動マージ はそれぞれ明示的な event ID を記録できる。外部 PR の squash/rebase は元 commit の ancestry を証明できない場合があり、Workspace ID や時刻だけで event を消費しない。統合先 local branch を準備し、必要なら [Sync Wiki](../operations/openwiki-maintenance.md) で実 source を再確認する。[外部mergeの観測](../../crates/server/src/routes/openwiki.rs#L674-L700)・[sourceとWikiの統合契約](../concepts/repository-memory.md#source-統合と-wiki-反映を分ける)
 
@@ -242,3 +242,10 @@ WorkspaceのPR作成画面で対象Repo、head/base、title・descriptionを確�
 
 
 自動マージpanelを開いている間、統合一覧は5秒、repository activitiesは10秒周期で取得する。初回取得・操作後の無効化と固定requestによる再送は維持する。[panel](../../packages/web-core/src/features/kanban/ui/IntegrationPanel.tsx#L100-L180)
+
+
+### LOCAL-332のRun成果と運用状態
+
+通常成功coding Runのsource commitとファイルManifestはWiki無効でも確定する。既存HEADを再利用し、変更なしRunには空Manifest・余分なcommit・専用検証記録を作らない。検証報告は通常Runの最終報告で参照する。上位AIはIssue化や既存Sessionへの追加指示に確認済みの動機・制約・判断理由を含め、coding agentは人間の意図と実装判断を区別してsemantic draftへ残す。承認は技術的理由の代用にしない。[Manifestの契約](../concepts/repository-memory.md)
+
+source checkpoint / integration準備、Git、integration結果、local Mergeは一transactionではない。Wiki receipt・state・publicationとsource integration対応はinstance DBへ集約し、Gitの実SHA/treeを照合する回復を維持する。live移行と旧共有ファイル削除はコード統合と別の実行許可が必要である。[保存先と一度限り移行](../concepts/repository-memory.md#運用状態のdb集約と一度限りの開発移行)・[直接merge](../../crates/server/src/routes/workspaces/git.rs#L223-L310)

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:877338a5edabecf93d75e4c5b9390433eb3e8f39f99a2f674f3d4dd64c0deddc",
+  "pageVersion": "sha256:a7b4695ac28609fe9fff7ee32fc35c06076925dde9d83f4853daef7f731a4bda",
   "claims": [
     {
       "id": "claim_edf1b78d3c7a4d978a6d8debcee4edd2",
@@ -8,7 +8,7 @@
       "evidence": [
         {
           "resource": "repo://README.md",
-          "version": "repo-file-v1:sha256:656689d7e3b831feeddd5409ce339761e75c69a766bb7e63eaaf74dbaa4bd133"
+          "version": "repo-file-v1:sha256:0c6e02757a9383c301e932a4ff7b61cd3172117c8bf8ab23079eef17c7b112fc"
         }
       ]
     },
@@ -18,7 +18,7 @@
       "evidence": [
         {
           "resource": "repo://README.md",
-          "version": "repo-file-v1:sha256:656689d7e3b831feeddd5409ce339761e75c69a766bb7e63eaaf74dbaa4bd133"
+          "version": "repo-file-v1:sha256:0c6e02757a9383c301e932a4ff7b61cd3172117c8bf8ab23079eef17c7b112fc"
         }
       ]
     },
@@ -72,17 +72,17 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/integrations/conversation.rs",
-          "version": "repo-file-v1:sha256:3f4281d139b82a9d7ec33408f5ee1addd7d7733cb873ec3842bb9f6f36442dee"
+          "version": "repo-file-v1:sha256:a9f62cb8e613bb63d7e2340ceeb2fafe8f9eb65f579481d151ae20f7c735d1bd"
         },
         {
           "resource": "repo://crates/server/src/routes/integrations/runtime.rs",
-          "version": "repo-file-v1:sha256:f4cd12ba17fe9c6f92997db0172a7278a02b494d372170f4abf3d8cece1e0490"
+          "version": "repo-file-v1:sha256:0ff60ff3df0b950909f4eeea1a5b0781382a528efb12833cc027eb798c9d0590"
         }
       ]
     },
     {
       "id": "claim_dc14b6ee71ec4e5ca9d247e3f05519b7",
-      "statement": "新規 Card の Shared directories 既定 context と Repo 単位 Memory は独立し、旧 LLM Wiki 自動生成は終了して reader は OpenWiki のみを読む。",
+      "statement": "新規CardのShared directories案内はManifest生成・Wiki読取専用規則と独立し、旧LLM Wiki自動生成は終了してreaderはOpenWikiのみを読む。",
       "evidence": [
         {
           "resource": "repo://crates/executors/src/legacy_wiki.rs",
@@ -94,7 +94,7 @@
         },
         {
           "resource": "repo://packages/web-core/src/features/pipeline/model/cardContext.ts",
-          "version": "repo-file-v1:sha256:b033f815e7d1e5eda59eeeda2544c8830a7227752777e1bc029b6a8c34a09ff7"
+          "version": "repo-file-v1:sha256:4ffc4d1143a33c3bb49c775c58316c86460798a516361f9d3a95ffce9f2367a8"
         }
       ]
     },
@@ -118,7 +118,7 @@
         },
         {
           "resource": "repo://crates/server/src/remote_mcp/mod.rs",
-          "version": "repo-file-v1:sha256:783acd5e221d119e53fb08d3fb833bab98d7f4756b53e8e123d58cbc06d1c0e3"
+          "version": "repo-file-v1:sha256:03ec34385e59f14a71cbd45a8602fad0fab69dd79063b1f11faa5926986ba524"
         },
         {
           "resource": "repo://crates/server/src/routes/sessions/questions.rs",
@@ -212,11 +212,11 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/remote_mcp/repository_wiki.rs",
-          "version": "repo-file-v1:sha256:5f83b0e46c31300a6d9042cd77fa138b377a552c7a7757c766ff7ed96589fc94"
+          "version": "repo-file-v1:sha256:ff556c7e0f5bf3f9c56e5fa343f17ec8a8bd4dbda8d4070ac1e2c529c790f073"
         },
         {
           "resource": "repo://crates/server/src/routes/openwiki.rs",
-          "version": "repo-file-v1:sha256:fdc5de2437d957bb6487994b682e9fd6532991599f6642a24e320de3de190a9e"
+          "version": "repo-file-v1:sha256:c7e0c5c2c753ff4372d89e8d0c6ad629df1f5cae8f1a0f0b059ed923d9f105d7"
         }
       ]
     },
@@ -285,10 +285,32 @@
           "version": "repo-lines-v1:sha256:cbe94044dd4aa2a0bc63fa1312f5005fdb62863ec71f2d1a5e6886ba2d10416b:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMzg1ZjZlYmFjOWVlMDE3NDVjZjUzMmQ3NTYwMjJiYmQwZmQzZWExZWIzOGFhZDU0NmQ2MzM3ZWI1MWU1YzIxMyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDJhMmNiMjVhMTIyYjQ0MjIxYTYyMzRlYzY2MGE3YjVmYjdmOWJkZTdiM2I5ZTJiM2M1NTlhMGQ5NmZhYzczOSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMzlkODM5MWE0M2I2MjZkMmU1YWFmYjgxOWNiMjhmNGFiYzcwZjVhNzExZDVhMDk1MGY3NmZlYjlmM2IzMzUxNSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMWRmYjk5MzY3NDFlM2FhMTc3NWQxOWVhMGEyOWViNThjMzc4NDI5YmJhNWQ4ZTIzMGRlYTgwMDQwMzQzZDE0ZSJ9"
         }
       ]
+    },
+    {
+      "id": "claim_54ce9777c0714618882ccd3e60ad885f",
+      "statement": "通常成功coding Runのsource自動commitとファイルManifestはWiki無効でも有効で、本文併記設定は既定OFF。Wiki運用状態はDBへ集約し、固定入力・source publication・原本復元journalはファイルに残る。",
+      "evidence": [
+        {
+          "resource": "repo://crates/db/src/models/repository_state.rs",
+          "version": "repo-file-v1:sha256:c7477c45b466cdbfb0883e658777fc867708781aeabf15eefa4852784b1fce08"
+        },
+        {
+          "resource": "repo://crates/services/src/services/config/versions/v9.rs#L50-L61",
+          "version": "repo-lines-v1:sha256:b747c783e2eb9ed24769ffa631858c23a77d12f23b7bb4395718d40d3d6e740a:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM5YzJkMmZmZDYzNjc2YmU3ODc2NzBlNzMyYWRhMmY0N2E0NWU4MDVjYTdhN2YzMDkyZTFiNTM3ZmMyYWUxODIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk1NDVhNzViYWNiNjdiOGVkZDBkYzJhNDY0ODEwZGFkMWRiY2M0ZDk4OTNhYTFiM2U3OWUzZThhY2Y2ZmZiOTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImZhZTc4NjFkNjZiZjQ3ZjZkYmU5Y2IzYjVkMTM0YmYzMzg1M2ViNDNiODdkMmI4NDBhMDRlNmZiY2E3ZmI2NDMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjMyMTkzMmZkM2M0NTllMDUwNzI1ZjY2NWQ3OTNmZGZmNDEyOGI0NGI4NDcyMGQ4MzU4ODg4YjAxNDg4ZmFiYTQifQ"
+        },
+        {
+          "resource": "repo://crates/services/src/services/repository_memory.rs#L185-L365",
+          "version": "repo-lines-v1:sha256:bab95b9f357b8d710949f373b8e5985449de52d2bd297ec986f23dc9f0b4e127:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgxLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIxMGViNzY2ODJhYTRlYWUwOWEwZWVkNzFlMjdlZGQ3OGY2ZGM1Njc5OTEwMjhhM2VlNjQ5ZGEyMDc5NzA5MTczIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIwMWJhNDcxOWM4MGI2ZmU5MTFiMDkxYTdjMDUxMjRiNjRlZWVjZTk2NGUwOWMwNThlZjhmOTgwNWRhY2E1NDZiIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIxMWY1YjhjNThhMTQ1Nzg5ODM5ODY1NDQxMmM0ZjEzZjAzNWE2MzliYmEzOWViMmY5NTJhYWJjZDE2YWYxZTEyIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJiMTgzY2EyMDAxMThkMzlhY2QxMDMwMjc4NzNiMGE4ZTQ3ZmQ4MDcxNmExMTcxMjRjMWFkMjVkNGU1Nzk4YTQ5In0"
+        },
+        {
+          "resource": "repo://deploy/developer/repository-state-migration.md",
+          "version": "repo-file-v1:sha256:544d3f1c41e3c6cd9b192b52b01e6576ac79738a75a1a82e10bd64ade5993434"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-06T08:11:13.571Z"
+    "at": "2026-11-06T15:15:40.431Z"
   }
 }

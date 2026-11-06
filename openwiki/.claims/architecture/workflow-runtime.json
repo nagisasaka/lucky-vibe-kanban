@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:0b7b6e3fe3caec7f942280bc5ebb07512cc38daf2c2c5c5de46ed67e86c6ffa6",
+  "pageVersion": "sha256:775831bdb67abb5eb026b0971a9c329179fb06ba204f42dcfee15d6293f11a79",
   "claims": [
     {
       "id": "claim_82dcbc35b88a441daa22355016e0d3f8",
@@ -112,7 +112,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/main.rs",
-          "version": "repo-file-v1:sha256:eb2c1c4c310ab0d9fe1fecd5ab95439d432cee67af88661cc6d373cfb8308dbe"
+          "version": "repo-file-v1:sha256:0cfdd7669f6ee9145b2d73a9f2b708841c62d2a641d91ffd182fd64c6ebf30cf"
         },
         {
           "resource": "repo://crates/server/src/startup.rs#L228-L241",
@@ -144,7 +144,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/main.rs",
-          "version": "repo-file-v1:sha256:eb2c1c4c310ab0d9fe1fecd5ab95439d432cee67af88661cc6d373cfb8308dbe"
+          "version": "repo-file-v1:sha256:0cfdd7669f6ee9145b2d73a9f2b708841c62d2a641d91ffd182fd64c6ebf30cf"
         },
         {
           "resource": "repo://crates/server/src/startup.rs#L232-L240",
@@ -157,11 +157,11 @@
       "statement": "OpenWiki Bootstrap は検証済み Review 全文を shared storage に保存し、node output には identity・digest・verdict 等の参照だけを保持して、Refine の実 dispatch にファイル参照を渡す。通常 LLM Condition ではなく検証済み verdict で分岐する。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/workflow_runtime/bootstrap.rs#L328-L340",
+          "resource": "repo://crates/server/src/workflow_runtime/bootstrap.rs#L329-L341",
           "version": "repo-lines-v1:sha256:d31dc68bbe27da51db2d41e216413180737b720fee589d8be9af518a4bb3a500:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ1NGYyYmM5M2RjOTBmZjlkYzM5ODI3NGM4NmRkZDEyNWI4NTJhOTU2ZDYyMjY4NWMwZTJiYjJjYjVjMTUyOTgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhkMTdkMzJhYmJkNDZkZGMwYzU3ZTNhZjU0MGNhNzQ0Y2I2YTVlOTlkMDk1YTNmOTI0ZjVjNjc3YTE0MjRjOWQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFjN2JjNjdkZmMxY2FkYjRjZWMxOWQ2YzNlODhhMDI4NjhiODgzODk0ZWFjYjljMmEyOTkzNDUwMWE1Y2JkNzMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBhODVkZThiOTg4ZTJlMmNhOGM1MjUzZDBlYmViNDUyZDYxMTQ5OWE2NjQxMzg1MTQ3N2U2OGJjM2Q2M2YyYTQifQ"
         },
         {
-          "resource": "repo://crates/server/src/workflow_runtime/bootstrap.rs#L512-L541",
+          "resource": "repo://crates/server/src/workflow_runtime/bootstrap.rs#L513-L542",
           "version": "repo-lines-v1:sha256:f0d783f57365904ff5d2d998572305503b892b0188ab7b34d149e233cb7b80d6:eyJzZWxlY3RlZExpbmVDb3VudCI6MzAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY3OThiNDFlMmE3NDg0NWM3YjIxNTgwMWI4MGUyYmVjODBiOGJhODNhYTE1NTY2YTM1ZjlhMDU4ZWFmNTc1MmEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRlOTQxMmZlMjY2MTc1MjAwY2Q5ZTg0Y2JlOThmZDMzZmYwNzRmOWU3NzQ1YzJmZmZiNjRjZGQxOWQyZTUxYzciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFhZGJmY2U2MzVlOWU2OGNlN2RjODZmZWRiY2VmMzAzYzRmNmE4MDM4Nzc2N2E3NmRhMjgwMzkwOGRiYTFmMDAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFkNGI2NDcyMGUxNzRmYmE4YWFjNDhmMmJjYTQ3ZDdmNjFmM2IwMmIwNzhlZTc5ZTg5YWQ3MjNlMzEyYTJlMTYifQ"
         },
         {
@@ -189,12 +189,12 @@
           "version": "repo-lines-v1:sha256:1b9dd4886a3678fb2da1814583c0806d11f78bb112555a28a5a460ae915f7599:eyJzZWxlY3RlZExpbmVDb3VudCI6NDUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBlZTI2N2M5OThkNWU2MDdiZTVjM2FlZjIxZjRlNjA2YzA5NzllZjMxNzUxOGEzNjM1ZDE1ZTk4ZjAyODg0MzkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImExMTdmYzAyMWZkNzM0ZGExY2EyMTE4MzY2NWM0MDUxNzUyNjMyZWJkMDhlODQ2YzAzOWU2ZDU0YmM0ZmVlYTUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ4ODU5MjEwZWJjYjEyY2Y2OGM2MTYyMjJmYzU2MGMxZjY4ZTJmYTMxZjYzMDQ5M2RmODA5NTg4ODdkNTdhZjkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNkZTU5ZjBmODRmYmNmNjhhOTM2YmFhYjg1M2IxYjdmOTY1NjY4NWMwMWZiYWUzZWJmODIyMGJiNDNmYTA2ZjkifQ"
         },
         {
-          "resource": "repo://crates/server/src/workflow_runtime/bootstrap.rs#L360-L380",
-          "version": "repo-lines-v1:sha256:57a00c5c2a0400b65f1c4e4d8fa58b3674efef15487eee2fdf014448256a39c5:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAyYWUwY2FlMTc5YzYyODAzYmUzMTQ1YjkzOGI3YWE2MGI2YjBkMmFjN2U3MmRhNTU5MTJjNzcxN2Y4MDkzMjkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMzMjkyNzJjYzgwOTMxMDQwZTRjZTJiYTUxZDNjYWFlOTBkYjJlN2U5ZjcxOWE0MmM3ZmZlNTM2ODk0MjllYWMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE0NDQyYThmOTMzMjk1YTRhNmMyYTBiMjlhNzdkMzVlZjZiNjhmZjBhZWU3YjE4MDM5Njg4OWRjZjNlOGNjYmUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjMxZTIwNzg3NzZmOTdlNGJmMTRkZDg2NGExMTZhMDQwOTAwZmU1YzNkMjM1ZmMwODY0NjkxYmMxMWI3ODk0ZGIifQ"
+          "resource": "repo://crates/server/src/workflow_runtime/bootstrap.rs#L361-L381",
+          "version": "repo-lines-v1:sha256:3cda5c22300de015eb4eedca4cdca9b7563addc305356d2295a848d224394a33:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAyYWUwY2FlMTc5YzYyODAzYmUzMTQ1YjkzOGI3YWE2MGI2YjBkMmFjN2U3MmRhNTU5MTJjNzcxN2Y4MDkzMjkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMzMjkyNzJjYzgwOTMxMDQwZTRjZTJiYTUxZDNjYWFlOTBkYjJlN2U5ZjcxOWE0MmM3ZmZlNTM2ODk0MjllYWMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE0NDQyYThmOTMzMjk1YTRhNmMyYTBiMjlhNzdkMzVlZjZiNjhmZjBhZWU3YjE4MDM5Njg4OWRjZjNlOGNjYmUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjMxZTIwNzg3NzZmOTdlNGJmMTRkZDg2NGExMTZhMDQwOTAwZmU1YzNkMjM1ZmMwODY0NjkxYmMxMWI3ODk0ZGIifQ"
         },
         {
-          "resource": "repo://crates/server/src/workflow_runtime/bootstrap.rs#L96-L124",
-          "version": "repo-lines-v1:sha256:6a43ee9ecefffad93c14192cb9f2ff3c895871e07fcacab725ca077c48a590c7:eyJzZWxlY3RlZExpbmVDb3VudCI6MjksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU5N2Y5NTM5MzE0ZGNhOTU3NWQ5NDc4OTk4MTFlMGEwM2ViYjI3YmZkODc0M2NmOTMzOThjZTQ3MWM5OGExOTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ5Yjg1YmIzYzBhMzM3YWVjYzVmYzNlOTczMTY0ZTU1MjdiNjI3NzY5N2IwMDBiZDY4NWM5MjdjZmQ4MTk1MWQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE5ZTc2MzU1Y2YxMTk5NDgwYzNmOTk4MzZiMTQ4NmM4NDFkODkxZmFhZDkwNGM2MDhlMDkzMDIyZDM3NTdhZWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdmN2Y1YTZmODY2NWNhZjdkZjM2Yzk0YjZjNzM2ZjY4Y2UxM2NjZTZiZWE5MTQ5MGYyODgyNzkwYjVlODc1NTgifQ"
+          "resource": "repo://crates/server/src/workflow_runtime/bootstrap.rs#L97-L125",
+          "version": "repo-lines-v1:sha256:4201be6d3ef822ae70de119ee32a8cd9645b89d7cd315c8020691072f20f73f4:eyJzZWxlY3RlZExpbmVDb3VudCI6MjksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU5N2Y5NTM5MzE0ZGNhOTU3NWQ5NDc4OTk4MTFlMGEwM2ViYjI3YmZkODc0M2NmOTMzOThjZTQ3MWM5OGExOTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZmZDUxOWI0OGQ2ZmJmZmVmNWE2MGI5OGM1NjNiMDdiNGZkZGE5ZDAyNWU2OTIwZjUxODgwYzcyMjRhMDAxM2MiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE5ZTc2MzU1Y2YxMTk5NDgwYzNmOTk4MzZiMTQ4NmM4NDFkODkxZmFhZDkwNGM2MDhlMDkzMDIyZDM3NTdhZWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdmN2Y1YTZmODY2NWNhZjdkZjM2Yzk0YjZjNzM2ZjY4Y2UxM2NjZTZiZWE5MTQ5MGYyODgyNzkwYjVlODc1NTgifQ"
         }
       ]
     },
@@ -259,8 +259,8 @@
       "statement": "新規自動マージは専用会話のAgentRunを直接dispatchし、専用Orchestration nodeを作らない。orchestration startupはproduct_kind=integrationを通常回復対象から外す。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/integrations/conversation.rs#L749-L809",
-          "version": "repo-lines-v1:sha256:cac280c4019e13be2cf245a5ec651f535e185e370a238f9a95c3d5b90f09d906:eyJzZWxlY3RlZExpbmVDb3VudCI6NjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMwOGVhNThhYTI3ZTg0MDk1ODk5MzQ0ZDI2Njc1NWNkMjQ1ZDk0ZGViMDg0ZjNhZjY2YTllY2JmZWFiYTNjMzgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY3YjNiMTVmZjZhZjViYWFiYTAyOTMzZGIwYmQwYWM2NGJjMDRjMDMxNzQ4N2M5ZWNiMThiNzMxZGVkZTQ3NmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjNlZGVhNWZmOGE2NjBmMDEwM2IwNGM0NmIwNjBjNzRkOTgyMDFjMWI3NjkwNjY5OTZmMWUwNTQxOTU4MjdlZGIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUwYzdjZDZiNDRiNGMzYjQ0Y2Y3Y2Q0ZGY2ODQ5OTk0NTVkYTFiYzI2Mzg4NTUwM2U4OGU3M2VmMzUxMDUyMDkifQ"
+          "resource": "repo://crates/server/src/routes/integrations/conversation.rs#L755-L820",
+          "version": "repo-lines-v1:sha256:dbad4e5bf38d940c18c2fa69c12c5b31203bd9f22986d05ea48d8bed598f5ee6:eyJzZWxlY3RlZExpbmVDb3VudCI6NjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMwOGVhNThhYTI3ZTg0MDk1ODk5MzQ0ZDI2Njc1NWNkMjQ1ZDk0ZGViMDg0ZjNhZjY2YTllY2JmZWFiYTNjMzgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY3YjNiMTVmZjZhZjViYWFiYTAyOTMzZGIwYmQwYWM2NGJjMDRjMDMxNzQ4N2M5ZWNiMThiNzMxZGVkZTQ3NmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjNlZGVhNWZmOGE2NjBmMDEwM2IwNGM0NmIwNjBjNzRkOTgyMDFjMWI3NjkwNjY5OTZmMWUwNTQxOTU4MjdlZGIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUwYzdjZDZiNDRiNGMzYjQ0Y2Y3Y2Q0ZGY2ODQ5OTk0NTVkYTFiYzI2Mzg4NTUwM2U4OGU3M2VmMzUxMDUyMDkifQ"
         },
         {
           "resource": "repo://crates/services/src/services/orchestration.rs#L1148-L1163",
@@ -317,6 +317,6 @@
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-06T03:22:40.407Z"
+    "at": "2026-11-06T15:15:40.431Z"
   }
 }

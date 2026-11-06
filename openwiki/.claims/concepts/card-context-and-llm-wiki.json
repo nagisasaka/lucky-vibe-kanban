@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:9025105335a85f1b972defaed7bbaea205208c88a2bae00c813d727935923d0a",
+  "pageVersion": "sha256:d6b1e04df3074f5e3e9867bfdfb73278923bd5b8faff6126f2ff96e8dce8a802",
   "claims": [
     {
       "id": "claim_fe336fda43dd4a7087db9ff239381b34",
@@ -41,16 +41,16 @@
       "statement": "初回 Workspace request は保存済み Card context を含み、fresh Session は現在関連する Card の保存済み Shared directories policy を継承する。continuation は保存文面を再コピーせず現在の identity と参照案内を得る。",
       "evidence": [
         {
-          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L949-L960",
-          "version": "repo-lines-v1:sha256:d34b4ce42dabc88b87cbb3de077175c9511b6781803580d99a46b64d62a92abe:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUwNzUwYzcyNzYxNWViMDYzY2RmYzA1OTAzNTJhOTQ0YzNiMTY2MzUxMjVmNDBlZDI5NmE4N2RhNmY5YmMzYTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdlNGE0NWY4ZThlMzMzY2M2NzUyZTMxY2ZlNjczNjU5MmQ4NjEyODhhMjdmZTg2YzlkMTRlNmJlYTA1NjBjZmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjkzZTA2ZGY2ZTQxZjE3YzE2ZjQ2ZjYxMWU3OTYzMDI4MzVlNmM3OWJmNjIwNWU2ZWQwN2U5OTU3YjBmYmE3ZDciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjcwMTA4NjFiMmI1MzFkZTAwNDRhYzM1NDY1MGEyNzE4MTAxMGI1YTEyMTRiMDMyZWQ1YTIxNmM4ZGU2ZjQ2ZDkifQ"
+          "resource": "repo://crates/local-deployment/src/agent_run_port.rs",
+          "version": "repo-file-v1:sha256:ee93be67ad118f400c4fd7dbfe66050a32cec1800e72c74865b28ec097b1a5dc"
         },
         {
-          "resource": "repo://crates/services/src/services/parallel_context.rs#L136-L200",
-          "version": "repo-lines-v1:sha256:b0ec263c7a39a3ba12dc6c202d169798e0f47fe59a91646c71cbdf3154561b31:eyJzZWxlY3RlZExpbmVDb3VudCI6NjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJkNzVmM2Q5NjlmYzZmMDdlOTkwM2YxZTA3NmMzOGE4ZDY3ZWU2MzA1MGRmMzlmMGZlZWYyN2RmNmQxZWM4MGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY3YzYyZDhhZTM5MTdlOGM3MjM3YWRmNjljMGRhMzcxMzAzYWU2Zjg2YjE5NGYxZDE4YmQwNWVjMzAxYjNhODMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjlhOTU0M2ZlMDc3MzMxMzY0NTcyZGNhYmI1MDc4YzFlM2IyNzI5ZmU0NTUzNTExOTRiNGUwMmM5NTc5MzM3ZWMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImU5NmY4Y2IwODNmYTgwMGE0ZGNkMjk2OTcyMmQ3YjkyNjg2YWRkOWViZTM2NTU0OTJmYTY3MmIxYTdjZWQyNDIifQ"
+          "resource": "repo://crates/services/src/services/parallel_context.rs",
+          "version": "repo-file-v1:sha256:0fd3ce81d1a054dbb96fb670c4fca7754ee4c0708a7ced38f21c5531785ee7de"
         },
         {
-          "resource": "repo://packages/web-core/src/features/pipeline/model/cardContext.test.ts#L43-L52",
-          "version": "repo-lines-v1:sha256:3d2daea2bba1966078cf72204cbd82a8ef0436a9bddc744fbf247ffb1bbdc731:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdhY2RmMWZiYzIxNWQwMjQ2NWViZDVhZWJkNzBiZTEyNjU4ZWUzMmNmNDkzNmE0OTZhYmZlOTNkOTdlNGU0NjUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNhM2U0NmY5NDI3NmI2ZjZmNGVkMWYwMmFmNzhiZWY2YTJlZTFjNDM5ZGQ1NTg0Yjk3Mzk0ODMxMzIxNGQyYjciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImEwOTgzOTUyZTcxNTE3NzZlNTUwZGEwZjllNDRhYWM4NDQyZWNiNWZlOTVkNThmZTg3M2JhY2E5NzlhODc4ZTYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImEyNzU1ZTMzZmY5MWUxZDUzZGU5MGMwYzRmZjgyYjFhOGRiODFiODJkMDZmODk5ZTgwOThhM2Y0NTM4NzYzMDAifQ"
+          "resource": "repo://packages/web-core/src/features/pipeline/model/cardContext.test.ts",
+          "version": "repo-file-v1:sha256:69c8503db6fb446d946f80407ea5c5e9e332761d81648b435fcdfeb835e48f00"
         }
       ]
     },
@@ -80,11 +80,11 @@
     },
     {
       "id": "claim_b49f5aac7e9f4c91b56cada2a8110ae5",
-      "statement": "新規 Card context の既定値は Shared directories のみで、OFF は Repository Memory や canonical Wiki の読取専用規則を無効化しない。",
+      "statement": "新規 Card context の既定値は Shared directories のみで、OFF は Change Manifest の生成や canonical Wiki の読取専用規則を無効化しない。",
       "evidence": [
         {
           "resource": "repo://packages/web-core/src/features/pipeline/model/cardContext.ts",
-          "version": "repo-file-v1:sha256:b033f815e7d1e5eda59eeeda2544c8830a7227752777e1bc029b6a8c34a09ff7"
+          "version": "repo-file-v1:sha256:4ffc4d1143a33c3bb49c775c58316c86460798a516361f9d3a95ffce9f2367a8"
         }
       ]
     },
@@ -93,8 +93,8 @@
       "statement": "並列 discovery は interactive Workspace の機械的な活動と Manifest を独立にページングし、peer checkout を復元せず branch を観測する。memory の障害は error として返し、活動ゼロと同一視しない。",
       "evidence": [
         {
-          "resource": "repo://crates/services/src/services/parallel_context.rs#L63-L133",
-          "version": "repo-lines-v1:sha256:dc8d2ab05be8f326724f1e3f9fe83055d13a9b79dc85181c4655a668f26bd08b:eyJzZWxlY3RlZExpbmVDb3VudCI6NzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4M2M2YmZjMjEwZDA5MTI0ODRiYTc5MTgyODNmZmMwMzI2ZTk1NjBjMTY2YTE2MTU2MWQwYjA4OTc1MzczNGYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjlmZjYxOTRjYzhjYTAxNzNmMzJjNmJjMzA2YmNmZmYzOTgzMGUzZGRhODRkNjU5MTAwOTQ5NDUzYjRjNzNjMDciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijg4NDJmNWUwZjEwYzA1NjIzMzFhMTMxNmUyZGQ2ODFlYjUyOTFmYzExY2M0NjNkYjVhMzQyNDI3NjczNjFkZDUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjI4ZDg0M2I2MDg0YWE4NzdjY2FiMWRmMTdlMTA2NzUxNjVmNjU5MWU3MjVhZDM4MWYwMGQ1NjM3NzMwZDVlNTcifQ"
+          "resource": "repo://crates/services/src/services/parallel_context.rs",
+          "version": "repo-file-v1:sha256:0fd3ce81d1a054dbb96fb670c4fca7754ee4c0708a7ced38f21c5531785ee7de"
         }
       ]
     },
@@ -215,14 +215,14 @@
       "statement": "RepoごとのGit commit identity案内は保存済みShared directories policyの有無と独立してlaunchへ追加される。",
       "evidence": [
         {
-          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L876-L884",
-          "version": "repo-lines-v1:sha256:c7cce1e1684e2d788a0dd39c8ccbb3c8f9969292e551f29582cbf08dee89f097:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNzAwODFlYzczYTA1MjliYzNlNGE0MmMwODYxMTZiYzA2NTliMzY2ODlkMTdkYzJhYTI4NzNjODY1NDRkMTlhOSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMWQ3NzhkZDliMTRjMTVjZTFlNTQ1MDYwMGVjYmFhYjEzZjNhYzUwOTE5N2UzMmQ2MzlhYjhkMzEyZWY5MTM3NCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOTk3YWEyNzQ5M2RkNWE1NGRkZTBmMjFlZDE1NTYzNjg1OWU4NTY4YjU5OTY4YjAyOTBmYWNkYzM4ZDNmY2NlNCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNzExNjQyY2Y5ZWViYmU1NDk4NGQ5ZTE3OGFhYjg1MTEzOWE1NTVkZGM1NDRlYTAyYTUyM2E5YjhmYzQ3MjRhYyJ9"
+          "resource": "repo://crates/local-deployment/src/agent_run_port.rs",
+          "version": "repo-file-v1:sha256:ee93be67ad118f400c4fd7dbfe66050a32cec1800e72c74865b28ec097b1a5dc"
         }
       ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-04T20:22:03.096Z"
+    "at": "2026-11-06T15:24:11.469Z"
   }
 }

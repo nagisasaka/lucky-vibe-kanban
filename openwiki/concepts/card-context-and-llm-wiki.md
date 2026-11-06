@@ -38,10 +38,10 @@ sources:
     resource: repo://tests/chat/prompt-context.fixture.tsx
   - id: openwiki-source-7cc1d248ce00f0c5ef61c76e
     resource: repo://tests/chat/prompt-context.test.mjs
-generated: { by: "codex", at: "2026-11-04T20:22:03.096Z" }
+generated: { by: "codex", at: "2026-11-06T15:24:11.469Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-04T20:22:03.096Z
+    at: 2026-11-06T15:24:11.469Z
 ---
 
 # Card context と並列作業の参照
@@ -50,7 +50,7 @@ Card context は [Issue](project-and-issue.md) の依頼本文と一緒に保存
 
 ## 保存と fresh Session への継承
 
-新規カードの既定値は **Shared directories のみ**。保存済み Card context、旧 Pipeline、空ブロックによる明示的な無効化は保持し、依頼本文の編集で preset を再生成しない。共有 preset の ON/OFF は案内の編集であり、[共有ファイル](workspace.md#共有ディレクトリの意味)の削除や [Repository Memory](repository-memory.md) の無効化ではない。[保存と既定値](../../packages/web-core/src/features/pipeline/model/cardContext.ts#L24-L85)、[回帰テスト](../../packages/web-core/src/features/pipeline/model/cardContext.test.ts#L65-L121)
+新規カードの既定値は **Shared directories のみ**。保存済み Card context、旧 Pipeline、空ブロックによる明示的な無効化は保持し、依頼本文の編集で preset を再生成しない。共有 preset の ON/OFF は案内の編集であり、[共有ファイル](workspace.md#共有ディレクトリの意味)の削除や [Manifest生成・Wiki契約](repository-memory.md)の無効化ではない。[保存と既定値](../../packages/web-core/src/features/pipeline/model/cardContext.ts#L24-L85)、[回帰テスト](../../packages/web-core/src/features/pipeline/model/cardContext.test.ts#L65-L121)
 
 `lvk:card-context` と `vk:pipeline` の独立行 marker がブロック境界になる。Pipeline の再構成は最後の完全なブロックを置換し、周囲の本文と手書き補足を保持する。安定した pipeline/stage ID で生成行を区別する。[再構成](../../packages/web-core/src/features/pipeline/model/cardPipeline.ts#L19-L109)
 
@@ -58,11 +58,11 @@ Card context は [Issue](project-and-issue.md) の依頼本文と一緒に保存
 
 実際の launch は選択された Repo ごとに policy を読み、存在するときだけ並列参照 context を追加する。provider の再開と現在 run の identity は [Session](session-and-agent-run.md) および [Codex 接続](../integrations/agent-providers.md)が扱う。[launch の結線](../../crates/local-deployment/src/agent_run_port.rs#L758-L775)、[追加条件](../../crates/local-deployment/src/agent_run_port.rs#L848-L865)
 
-Repo ごとの Git commit identity 案内は Shared directories policy の有無と独立して launch に追加される。ここでいう repository-memory の現在 identity は Git の著者情報ではない。commit の設定・停止条件は [Repo の Git identity](workspace.md#git-commit-identity)を参照する。[独立した注入](../../crates/local-deployment/src/agent_run_port.rs#L859-L865)
+Repo ごとの Git commit identity 案内は Shared directories policy の有無と独立して launch に追加される。ここでいう Change Manifest の現在 identity は Git の著者情報ではない。commit の設定・停止条件は [Repo の Git identity](workspace.md#git-commit-identity)を参照する。[独立した注入](../../crates/local-deployment/src/agent_run_port.rs#L859-L865)
 
 ## チャットの補助情報と元の全文
 
-設定画面の「共有ディレクトリの補助案内」（英語では `Shared directory guidance`）は、ONで案内を追加し、OFFでも共有領域と Repository Memory を無効にしないことを明示する。checkbox は `toggleSharedDirectories` → `withCardContext` → `onDescriptionChange` で保存対象の文脈を更新する。[設定の接続](../../packages/web-core/src/features/pipeline/ui/CardContextSection.tsx#L33-L44)・[checkbox と説明](../../packages/web-core/src/features/pipeline/ui/CardContextSection.tsx#L96-L109)・[日本語文言](../../packages/web-core/src/i18n/locales/ja/common.json#L11-L17)。この設定と、以下のチャット内の開閉は別の操作である。
+設定画面の「共有ディレクトリの補助案内」（英語では `Shared directory guidance`）は、ONで案内を追加し、OFFでも共有領域と Repository Memory（UI上の旧称。現行のManifest/Wiki責務）を無効にしないことを明示する。checkbox は `toggleSharedDirectories` → `withCardContext` → `onDescriptionChange` で保存対象の文脈を更新する。[設定の接続](../../packages/web-core/src/features/pipeline/ui/CardContextSection.tsx#L33-L44)・[checkbox と説明](../../packages/web-core/src/features/pipeline/ui/CardContextSection.tsx#L96-L109)・[日本語文言](../../packages/web-core/src/i18n/locales/ja/common.json#L11-L17)。この設定と、以下のチャット内の開閉は別の操作である。
 
 user message の `PromptContext` は、完全な既知 marker ブロックを既定で閉じた「補助情報」にし、通常本文は従来の Markdown renderer に渡す。認識対象は `<!-- lvk:card-context:start -->` / `end`、`lvk:shared-directories`、`vk:pipeline` の三種類だけである。marker は行頭から単独行で一致する必要があり、末尾の空白・tab は許す。見出し、文中の単語、marker のない runtime 案内から補助情報を推定しない。[表示の分岐](../../packages/ui/src/components/PromptContext.tsx#L16-L34)・[marker の判定](../../packages/ui/src/lib/splitPromptContext.ts#L15-L37)。実際の呼出側との責任分界は [Web の user message 表示](../architecture/web-and-sync.md#user-message-の補助情報を表示時だけ折り畳む)を参照する。
 
@@ -70,7 +70,7 @@ parser は backtick / tilde の fenced code 内の marker を無視する。引�
 
 分割結果は元の文字列を `slice` したもので、marker や CRLF を正規化しない。補助情報を展開すると marker を含む plain text が見え、「元の全文を表示」も元の `content` を `pre` へ渡す。「元の全文をコピー」は表示 DOM や Markdown のコピー処理を経ず `navigator.clipboard.writeText(content)` を呼び、失敗時は成功扱いにせず全文展開によるコピーを案内する。折畳み対象が一つもなければ、この追加の全文表示・コピー操作は出さず従来 renderer のみになる。[文字列の保持](../../packages/ui/src/lib/splitPromptContext.ts#L42-L61)・[全文表示とコピー](../../packages/ui/src/components/PromptContext.tsx#L16-L61)・[失敗時の文言](../../packages/web-core/src/i18n/locales/ja/tasks.json#L375-L381)
 
-これは表示量を減らす仕組みであり、送信 token の削減、保存 prompt の書換え、権限や Wiki 消費の切替ではない。表示用 parser を Card の保存・編集 parser と取り違えない。元の保存文脈を継承する条件は上記の [fresh Session 契約](#保存と-fresh-session-への継承)に従い、backend では並列案内の条件分岐と Repository Memory の注入を別々に扱う。[独立した注入境界](../../crates/local-deployment/src/agent_run_port.rs#L908-L941)
+これは表示量を減らす仕組みであり、送信 token の削減、保存 prompt の書換え、権限や Wiki 消費の切替ではない。表示用 parser を Card の保存・編集 parser と取り違えない。元の保存文脈を継承する条件は上記の [fresh Session 契約](#保存と-fresh-session-への継承)に従い、backend では並列案内の条件分岐と Change Manifest のhost指示を別々に扱う。[独立した注入境界](../../crates/local-deployment/src/agent_run_port.rs#L908-L941)
 
 ### 表示変更の検証範囲
 
@@ -82,11 +82,11 @@ parser は backtick / tilde の fenced code 内の marker を無視する。引�
 
 `/api/repos/{id}/parallel-context` は登録 Repo の interactive Workspace、現在の Card link、実行数、観測時の branch HEAD と immutable Manifest の参照を返す。peer の checkout を復元せず common repository の branch を読む。活動と Manifest は別 snapshot であり、Manifest がないことは活動ゼロ、現在の Card link は過去 event の帰属、という意味にはならない。[discovery](../../crates/services/src/services/parallel_context.rs#L63-L131)
 
-Workspace と Manifest は独立した cursor でページングする。既定25・最大100件で、memory 読取失敗は `memory_error` として残す。空結果と情報源の故障を区別し、他 Workspace の私的 Memory や raw conversation を参照する仕組みにしない。Wiki の target / source / publication commit は maintenance の観測情報であり、今の作業木へ最新 Wiki を配達した証拠ではない。[情報の解釈契約](../../crates/services/src/services/parallel_context.rs#L192-L198)
+Workspace と Manifest は独立した cursor でページングする。既定25・最大100件で、memory 読取失敗は `memory_error` として残す。空結果と情報源の故障を区別し、他 Workspace の私的文脈や raw conversation を参照する仕組みにしない。Wiki の target / source / publication commit は maintenance の観測情報であり、今の作業木へ最新 Wiki を配達した証拠ではない。[情報の解釈契約](../../crates/services/src/services/parallel_context.rs#L192-L198)
 
 `/api/repos/{id}/snapshot` は指定 commit の Git object を読む。path 未指定なら一覧を100件ずつ返し、本文は通常ファイルの UTF-8・128 KiB以内に限定する。symlink / submodule を辿らず、大きな blob は理由を返して同じ固定 object の分割読取へ案内する。[snapshot API](../../crates/server/src/routes/parallel_context.rs#L43-L79)。組合せを試すときは [detached preview の操作](../workflows/task-to-integration.md#並列変更を試してから正式統合する)を使い、peer の作業木や target を変えない。
 
-DirectFolder には自動共有リンクや peer discovery がない旨を通知する。一方、現在の repository-memory identity と Wiki 読取専用規則は別に適用する。[DirectFolder 分岐](../../crates/services/src/services/parallel_context.rs#L168-L170)
+DirectFolder には自動共有リンクや peer discovery がない旨を通知する。一方、現在の Change Manifest identity と Wiki 読取専用規則は別に適用する。[DirectFolder 分岐](../../crates/services/src/services/parallel_context.rs#L168-L170)
 
 ## 旧 LLM Wiki からの移行境界
 

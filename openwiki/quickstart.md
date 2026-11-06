@@ -16,6 +16,8 @@ sources:
     resource: repo://crates/db/migrations/20261023110000_retain_design_notes_on_project_delete.sql
   - id: openwiki-source-830e28055c4ae6f5464df312
     resource: repo://crates/db/src/models/design_note.rs
+  - id: openwiki-source-5144fccee237bf35dd134ccb
+    resource: repo://crates/db/src/models/repository_state.rs
   - id: openwiki-source-0ba09128382dd913fe9a4c4a
     resource: repo://crates/db/src/models/tag.rs
   - id: openwiki-source-c30cc36c4bbe315c59b8e38f
@@ -50,6 +52,12 @@ sources:
     resource: repo://crates/server/src/routes/workspaces/integration.rs
   - id: openwiki-source-5590f47e4cee001a35a42117
     resource: repo://crates/server/src/routes/workspaces/wiki.rs
+  - id: openwiki-source-ae8c631b5b4385c934e47d60
+    resource: repo://crates/services/src/services/config/versions/v9.rs
+  - id: openwiki-source-6067be8d6f85caa8ac03638f
+    resource: repo://crates/services/src/services/repository_memory.rs
+  - id: openwiki-source-a92e4b434b1dadd20662f90d
+    resource: repo://deploy/developer/repository-state-migration.md
   - id: openwiki-source-df6b7819295f53fc2381f23d
     resource: repo://deploy/server/compose.yaml
   - id: openwiki-source-89d0fb22262f0a0ac1df7d1e
@@ -82,10 +90,10 @@ sources:
     resource: repo://packages/web-core/src/shared/providers/TerminalProvider.tsx
   - id: openwiki-source-23775c3de52f3ab95a13cb8b
     resource: repo://README.md
-generated: { by: "codex", at: "2026-11-06T07:27:44.761Z" }
+generated: { by: "codex", at: "2026-11-06T15:15:40.431Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-06T08:11:13.571Z
+    at: 2026-11-06T15:15:40.431Z
 ---
 
 # クイックスタートと調査案内
@@ -125,7 +133,7 @@ lucky-vibe-kanban（LVK）は、Issue で仕事を整理し、Workspace 内で c
 | 候補をどう比較し、採用後の実装へ移るか | [Arena](concepts/arena.md)。Design / Implementation、候補、promotion と Workflow 内の選択 |
 | prompt の再利用文脈と並列 source をどう扱うか | [Card context・Shared dirs・旧 LLM Wiki](concepts/card-context-and-llm-wiki.md)。fresh 会話への保存文脈、固定 snapshot と移行境界 |
 | 採用した並列成果を安全に local target へ反映するには | [自動マージ](concepts/formal-integration.md)。固定source/base、同じ会話の候補・検証/省略・Wiki、hostの公開と取消 |
-| 並列作業の知識を統合済み repository にどう反映するか | [Repository memory](concepts/repository-memory.md)。canonical Wiki、Change Manifest、Workspace Memory、source checkpoint と receipt |
+| 並列作業の知識を統合済み repository にどう反映するか | [Repository memory](concepts/repository-memory.md)。canonical Wiki、ファイルChange Manifest、正常Run自動commit、DB運用状態とsource checkpoint |
 
 名称だけを確認する場合は [自動マージの名称と互換境界](concepts/formal-integration.md#名称と互換境界)を読む。API・tool の識別子と画面名を区別し、マージ済みコードと候補内Wikiの完了と公開の結果を別々に確認する。
 
@@ -355,3 +363,12 @@ Kanban / Workspace の右サイドバーは共通環境 panel とファイル・
 固定base `e9712fe96fbdc65dfad7c6b9f327bcfc76d95ba0` へLOCAL-300 source `ebc230edc6ec7d13c1704874237f3d7d8cc5a6da` を競合なく統合した。コード検証SHAは `4e84a6fe1770ccc5aa4fe1086f828fafb2849c68`。既存デザイン・ホスト表示名・利用枠・Pet v1/v2を保ち、[Petの活動状態と操作](concepts/pets.md#sidebarの活動状態と操作)、fflate ZIP、任意neutralセルと取込feedbackを更新した。LOCAL-316/319の既存HTTP transportと空表示を維持し、新たな通信監視は追加しない。
 
 隔離候補だけでAgentationのBootstrap呼出し・wrapper・package/lock依存・専用testsを削除し、preview起動補助を固定baseへ戻した。元LOCAL-300 Workspace/branch、preview2・Agentation注釈・サーバー・実データ・共有設定は変更していない。コード候補ではlocked offline install、Pet単体/生成browser/sidebar統合、frontend三package型、consumer/変更production source lint、i18n、production build、成果物とsource/lockのAgentation不在が成功した。無関係の全backend検査はagent判断で省略し、実認証後UI・実OS window移動・ユーザー原物ZIPのnative decode/保存は未検証である。Wikiはコード検証後の別commit、main公開成立はRun終了後のhost receiptで確認する。
+
+
+## LOCAL-332: Run成果とWiki運用状態の整理
+
+開発中の文脈はproviderのSessionが扱い、Workspace Memory・no-change専用検証記録・commit reminderは撤去された。通常成功coding Runのsource自動commitとファイルManifestはWiki無効でも有効。`manifest_in_commit_body` は既定OFFの選択肢で、ONは通常LVK source commitへ意図と判断理由を人間可読に併記する。Gitで共有される本文からManifestを復元する二重管理は行わない。[責務と設定の詳細](concepts/repository-memory.md)・[通常Runの最終報告](integrations/remote-access.md#専用検証mcpの廃止と通常run報告)
+
+可変なWiki state・receipt・publication・source integration対応はinstance DBへ集約し、Manifest・固定sync-inputs・source-publication・setup原本journalはファイルとして保持する。移行は開発中の単一登録LVK Repoへ明示offlineコマンドで一度実施する設計であり、恒久監査ゲートではない。[停止・backup・import・復旧手順](concepts/repository-memory.md#運用状態のdb集約と一度限りの開発移行)
+
+今回のコード候補 `41c1bae500bcec05bffe4002cf61b5413b51a524` は最終source `289373ec23493c0a21247a87da63c04bd4dbea3d` と同一treeで、競合・追加修復なし。tree一致・差分空白・clean確認を管理実行し、source各段階の既存SHA対応検証を再利用して包括suiteの再実行を省略した。省略を今回の試験合格と呼ばない。Wiki保守はsource・試験定義・Manifestの静的照合とlifecycle処理であり、liveDB移行・旧共有ファイル削除・停止/再起動・push・main build/bundle・実provider/外部認証を検証していない。過去のWorkspace Memory記述は過去の供給履歴であり、現行の生成/参照経路ではない。

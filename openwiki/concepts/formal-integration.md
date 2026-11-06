@@ -56,10 +56,10 @@ sources:
     resource: repo://packages/web-core/src/features/workspace-chat/ui/IntegrationFacts.tsx
   - id: openwiki-source-344aff2e68b53276f6be4e40
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/IntegrationValidationSettings.tsx
-generated: { by: "codex", at: "2026-11-06T03:26:16.411Z" }
+generated: { by: "codex", at: "2026-11-06T15:24:11.469Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-06T08:11:13.571Z
+    at: 2026-11-06T15:24:11.469Z
 ---
 
 # 自動マージの選択・検証・公開
@@ -135,7 +135,7 @@ Wiki有効時はコード検証後、同じ候補branchでOpenWikiの正規ラ�
 
 公開後は採用元CardのDone処理とreceiptを記録する。Cancelledや公開後の再オープン、他run予約は上書きしない。新しい実開始によるDoneからの再着手に、旧receiptを再適用しない。生成Issueは進行/再開でIn Progress、停止でIn Review、公開済みでDoneへ投影する。成功後の専用Issue/Workspaceは通常archive契約に従い、採用元Workspaceを削除対象にしない。[完了](../../crates/db/src/models/integration.rs)・[生成状態](../../crates/db/migrations/20261027090000_generated_issue_status.sql)・[archive guard](../../crates/server/src/routes/local_remote/issue_archive.rs)
 
-Wiki有効時の公開済みevent receiptと鮮度は既存Memory storeへ保存する。Git適用後のreceipt失敗は `Wiki receipt pending` として回復し、既に適用したGitを取り消さず、Card完了やarchiveを巻き戻さない。[後処理](../../crates/server/src/routes/integrations/runtime.rs#L480-L520)・[Wiki receipt](../../crates/server/src/routes/integrations/conversation.rs#L765-L838)
+Wiki有効時の公開済みevent receiptと鮮度はinstance DB の repository_wiki_receipts / repository_wiki_state へ保存する。receipt・鮮度stateとintegrationのWiki結果は同じDB transactionで確定する。Manifestファイルとsetup原本journalは引き続きファイルで保持する。Git適用後のreceipt失敗は `Wiki receipt pending` として回復し、既に適用したGitを取り消さず、Card完了やarchiveを巻き戻さない。[後処理](../../crates/server/src/routes/integrations/runtime.rs#L480-L520)・[Wiki receipt](../../crates/server/src/routes/integrations/conversation.rs#L1048-L1100)
 
 ## 中断・介入・回復
 
