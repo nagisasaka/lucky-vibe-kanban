@@ -127,6 +127,13 @@
           "dialogDescription": "选择一个目录。工作区将在其中的 .vibe-kanban-workspaces 子目录中创建。"
         }
       },
+      "commits": {
+        "title": "源码提交",
+        "manifestBody": {
+          "label": "在提交消息中包含 Change Manifest 的意图",
+          "helper": "在 LVK 为普通 Run 创建的源码提交中附加目的、变更、设计决策和验证摘要等信息。消息会通过 Git push/clone 共享。Manifest 文件仍是权威来源。不适用于已有提交、自动合并或修复、Wiki 及直接 squash 提交。发布开始后，重试使用已固定的消息。"
+        }
+      },
       "pullRequests": {
         "title": "拉取请求",
         "description": "配置PR创建行为",

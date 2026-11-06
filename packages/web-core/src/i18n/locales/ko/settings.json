@@ -127,6 +127,13 @@
           "dialogDescription": "디렉토리를 선택하세요. 워크스페이스는 해당 디렉토리 내의 .vibe-kanban-workspaces 하위 디렉토리에 생성됩니다."
         }
       },
+      "commits": {
+        "title": "소스 커밋",
+        "manifestBody": {
+          "label": "커밋 메시지에 Change Manifest의 의도 포함",
+          "helper": "LVK가 일반 Run에서 생성하는 소스 커밋에 목적, 변경 내용, 설계 결정과 검증 요약 등을 포함합니다. 메시지는 Git push/clone으로 공유됩니다. 파일 Manifest가 원본입니다. 기존 커밋, 자동 병합·복구, Wiki 및 직접 squash는 제외됩니다. 게시가 시작되면 재시도는 고정된 메시지를 유지합니다."
+        }
+      },
       "pullRequests": {
         "title": "풀 리퀘스트",
         "description": "PR 생성 동작 구성",

@@ -127,6 +127,13 @@
           "dialogDescription": "Elija un directorio. Los espacios de trabajo se crearán en un subdirectorio .vibe-kanban-workspaces dentro de él."
         }
       },
+      "commits": {
+        "title": "Commits de código",
+        "manifestBody": {
+          "label": "Incluir la intención del Change Manifest en el mensaje del commit",
+          "helper": "Añade propósito, cambios, decisiones de diseño y resúmenes de verificación a los commits de código normales creados por LVK. Los mensajes se comparten mediante push/clone de Git. El archivo Manifest sigue siendo la fuente de referencia. No se aplica a commits existentes, fusión automática o reparación, Wiki ni squash. Una vez iniciada la publicación, los reintentos conservan el mensaje fijado."
+        }
+      },
       "pullRequests": {
         "title": "Pull Requests",
         "description": "Configura el comportamiento de creación de PR",

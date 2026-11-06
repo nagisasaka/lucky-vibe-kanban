@@ -96,6 +96,7 @@ pub(crate) struct AgentRunTerminalEvent {
 #[derive(Clone)]
 pub struct LocalAgentRunPort {
     db: DBService,
+    config: Arc<RwLock<services::services::config::Config>>,
     process_registry: AgentProcessRegistry,
     children: Arc<RwLock<HashMap<Uuid, SharedChild>>>,
     launching_attempts: Arc<Mutex<HashSet<Uuid>>>,
@@ -227,10 +228,22 @@ fn direct_intent(intent: AgentRunIntent, mode: RunAttemptMode) -> DirectIntent {
 }
 
 impl LocalAgentRunPort {
-    pub(crate) fn new(db: DBService) -> Self {
+    #[cfg(test)]
+    fn new(db: DBService) -> Self {
+        Self::with_config(
+            db,
+            Arc::new(RwLock::new(services::services::config::Config::default())),
+        )
+    }
+
+    pub(crate) fn with_config(
+        db: DBService,
+        config: Arc<RwLock<services::services::config::Config>>,
+    ) -> Self {
         let (terminal_event_sender, _) = broadcast::channel(TERMINAL_EVENT_CHANNEL_CAPACITY);
         Self {
             db,
+            config,
             process_registry: AgentProcessRegistry::default(),
             children: Arc::new(RwLock::new(HashMap::new())),
             launching_attempts: Arc::new(Mutex::new(HashSet::new())),
@@ -934,6 +947,7 @@ impl LocalAgentRunPort {
                         &store,
                         workspace.id,
                         Some(request.agent_run_id),
+                        self.config.read().await.manifest_in_commit_body,
                     )
                     .await
                     .map_err(|error| {

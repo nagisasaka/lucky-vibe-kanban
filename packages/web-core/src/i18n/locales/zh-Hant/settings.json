@@ -127,6 +127,13 @@
           "dialogDescription": "選擇一個目錄。工作區將在其中的 .vibe-kanban-workspaces 子目錄中建立。"
         }
       },
+      "commits": {
+        "title": "原始碼提交",
+        "manifestBody": {
+          "label": "在提交訊息中包含 Change Manifest 的意圖",
+          "helper": "在 LVK 為一般 Run 建立的原始碼提交中附加目的、變更、設計決策和驗證摘要等資訊。訊息會透過 Git push/clone 分享。Manifest 檔案仍是權威來源。不適用於既有提交、自動合併或修復、Wiki 及直接 squash 提交。發布開始後，重試使用已固定的訊息。"
+        }
+      },
       "pullRequests": {
         "title": "PR",
         "description": "設定 PR 建立行為",

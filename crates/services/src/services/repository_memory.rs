@@ -104,9 +104,10 @@ pub fn guard_normal_workspace(
 pub fn complete_coding_run(
     store: &RepositoryMemoryStore,
     run: &RepositoryMemoryRun,
+    include_manifest: bool,
 ) -> anyhow::Result<Option<ChangeManifest>> {
     let _lock = store.try_workspace_completion_lock(run.workspace_id)?;
-    let result = complete_coding_run_inner(store, run);
+    let result = complete_coding_run_inner(store, run, include_manifest);
     store.record_coding_result(run, result.as_ref().err().map(|error| format!("{error:#}")))?;
     result
 }
@@ -120,6 +121,7 @@ pub async fn complete_successful_coding_runs(
     store: &RepositoryMemoryStore,
     workspace_id: Uuid,
     next_run_id: Option<Uuid>,
+    include_manifest: bool,
 ) -> anyhow::Result<Option<String>> {
     let succeeded: HashSet<Uuid> = sqlx::query_scalar(
         "SELECT id FROM agent_runs WHERE workspace_id = ? AND status = 'succeeded'",
@@ -145,8 +147,10 @@ pub async fn complete_successful_coding_runs(
         // bounded wait avoids making normal immediate follow-ups fail on it.
         for attempt in 0..3 {
             let (store, context) = (store.clone(), run.clone());
-            let result =
-                tokio::task::spawn_blocking(move || complete_coding_run(&store, &context)).await?;
+            let result = tokio::task::spawn_blocking(move || {
+                complete_coding_run(&store, &context, include_manifest)
+            })
+            .await?;
             match result {
                 Ok(event) => {
                     if let Some(event) = event {
@@ -171,6 +175,7 @@ pub async fn complete_successful_coding_runs(
 fn complete_coding_run_inner(
     store: &RepositoryMemoryStore,
     run: &RepositoryMemoryRun,
+    include_manifest: bool,
 ) -> anyhow::Result<Option<ChangeManifest>> {
     if let Some(existing) = store.event(run.run_id)? {
         observe_already_integrated_source(store, run, &existing)?;
@@ -258,6 +263,11 @@ fn complete_coding_run_inner(
         semantics,
     };
     let publication = SourcePublication {
+        commit_message: Some(
+            event
+                .semantics
+                .source_commit_message(run.run_id, include_manifest),
+        ),
         manifest: event,
         staged_tree: git.stage_source_snapshot(&run.repository_path)?,
     };
@@ -310,7 +320,9 @@ fn finish_source_publication(
         let commit = match matches.as_slice() {
             [commit] => (*commit).to_string(),
             [] => {
-                let message = format!("{}\n\n{marker}", event.semantics.commit_message());
+                let message = publication
+                    .commit_message
+                    .unwrap_or_else(|| event.semantics.source_commit_message(run.run_id, false));
                 GitService::new().commit_staged_snapshot(
                     root,
                     &message,
@@ -470,6 +482,7 @@ pub async fn prepare_workspace_source(
     workspace: &Workspace,
     root: &Path,
     target_branch: &str,
+    include_manifest: bool,
 ) -> anyhow::Result<Option<String>> {
     let Some(store) = RepositoryMemoryStore::existing_for_repository(&repo.name, repo.id)? else {
         return Ok(None);
@@ -481,7 +494,7 @@ pub async fn prepare_workspace_source(
     if active > 0 {
         bail!("Finish the active coding run before integrating source and its semantic manifest");
     }
-    complete_successful_coding_runs(pool, &store, workspace.id, None).await
+    complete_successful_coding_runs(pool, &store, workspace.id, None, include_manifest).await
 }
 
 /// Recover the Git/filesystem crash window through an explicit commit trailer,
@@ -662,8 +675,8 @@ mod tests {
             .unwrap();
         }
         std::thread::scope(|scope| {
-            scope.spawn(|| complete_coding_run(&store, &a).unwrap());
-            scope.spawn(|| complete_coding_run(&store, &b).unwrap());
+            scope.spawn(|| complete_coding_run(&store, &a, false).unwrap());
+            scope.spawn(|| complete_coding_run(&store, &b, false).unwrap());
         });
         assert_eq!(store.events().unwrap().len(), 2);
         assert!(pending_events(&store, "main").unwrap().is_empty());
@@ -721,7 +734,10 @@ mod tests {
         assert_eq!(pending_events(&store, "main").unwrap().len(), 1);
         // Event replay never re-commits the now-integrated task branch.
         assert_eq!(
-            complete_coding_run(&store, &a).unwrap().unwrap().event_id,
+            complete_coding_run(&store, &a, false)
+                .unwrap()
+                .unwrap()
+                .event_id,
             a.run_id
         );
     }
@@ -765,7 +781,7 @@ mod tests {
         std::thread::scope(|scope| {
             for (_, context) in &runs {
                 let store = &store;
-                scope.spawn(move || complete_coding_run(store, context).unwrap());
+                scope.spawn(move || complete_coding_run(store, context, false).unwrap());
             }
         });
         let original_b = store.event(runs[1].1.run_id).unwrap().unwrap();
@@ -895,17 +911,33 @@ mod tests {
             }],
             ..Default::default()
         };
-        for already_committed in [false, true] {
+        for (already_committed, include_manifest) in [(false, false), (false, true), (true, true)] {
             let context = run(&store, &root);
-            std::fs::write(root.join("source.txt"), format!("{already_committed}\n")).unwrap();
+            std::fs::write(
+                root.join("source.txt"),
+                format!("{already_committed} {include_manifest}\n"),
+            )
+            .unwrap();
             std::fs::write(&context.draft_path, serde_json::to_vec(&semantics).unwrap()).unwrap();
             let existing = already_committed.then(|| {
                 git_command(&root, &["add", "source.txt"]);
                 git_command(&root, &["commit", "-m", "Agent-authored source commit"]);
                 git_command(&root, &["rev-parse", "HEAD"])
             });
-            let event = complete_coding_run(&store, &context).unwrap().unwrap();
+            let event = complete_coding_run(&store, &context, include_manifest)
+                .unwrap()
+                .unwrap();
             assert_eq!(event.semantics, semantics);
+            let message = git_command(&root, &["log", "-1", "--format=%B"]);
+            if already_committed {
+                assert_eq!(message, "Agent-authored source commit");
+            } else {
+                assert_eq!(
+                    message,
+                    semantics.source_commit_message(context.run_id, include_manifest)
+                );
+                assert!(!message.contains(&event.source_commit));
+            }
             assert_eq!(event.base_commit, context.base_commit);
             assert_eq!(
                 event.source_commit,
@@ -915,7 +947,10 @@ mod tests {
                 assert_eq!(event.source_commit, existing);
             }
             assert_eq!(store.event(context.run_id).unwrap(), Some(event.clone()));
-            assert_eq!(complete_coding_run(&store, &context).unwrap(), Some(event));
+            assert_eq!(
+                complete_coding_run(&store, &context, include_manifest).unwrap(),
+                Some(event)
+            );
         }
     }
 
@@ -930,7 +965,11 @@ mod tests {
         let mut context = run(&store, &root);
         context.finalize_source = false;
         std::fs::write(root.join("source.txt"), "uncommitted work").unwrap();
-        assert!(complete_coding_run(&store, &context).unwrap().is_none());
+        assert!(
+            complete_coding_run(&store, &context, false)
+                .unwrap()
+                .is_none()
+        );
         assert_eq!(
             git_command(&root, &["rev-parse", "HEAD"]),
             context.base_commit
@@ -953,7 +992,9 @@ mod tests {
         store
             .record_coding_result(&context, Some("Missing semantic draft".into()))
             .unwrap();
-        let event = complete_coding_run(&store, &context).unwrap().unwrap();
+        let event = complete_coding_run(&store, &context, false)
+            .unwrap()
+            .unwrap();
         assert!(!context.draft_path.exists());
         assert_eq!(event.changed_paths, vec!["source.txt"]);
         assert!(event.semantics.summary.contains("semantic draft missing"));
@@ -963,7 +1004,7 @@ mod tests {
         assert!(event.semantics.decisions.is_empty());
         // Replayed completion returns the same immutable evidence.
         assert_eq!(
-            complete_coding_run(&store, &context).unwrap(),
+            complete_coding_run(&store, &context, false).unwrap(),
             Some(event.clone())
         );
         assert!(store.coding_errors().unwrap().is_empty());
@@ -995,13 +1036,18 @@ mod tests {
             let context = run(&store, &root);
             std::fs::write(root.join("source.txt"), "updated source").unwrap();
             std::fs::write(&context.draft_path, draft).unwrap();
-            let event = complete_coding_run(&store, &context).unwrap().unwrap();
+            let event = complete_coding_run(&store, &context, false)
+                .unwrap()
+                .unwrap();
             assert_eq!(std::fs::read_to_string(&context.draft_path).unwrap(), draft);
             assert_eq!(event.changed_paths, vec!["source.txt"]);
             assert!(event.semantics.summary.contains("semantic draft invalid"));
             assert!(event.semantics.tests.is_empty());
             assert!(event.semantics.decisions.is_empty());
-            assert_eq!(complete_coding_run(&store, &context).unwrap(), Some(event));
+            assert_eq!(
+                complete_coding_run(&store, &context, false).unwrap(),
+                Some(event)
+            );
             assert!(store.coding_errors().unwrap().is_empty());
         }
     }
@@ -1017,7 +1063,7 @@ mod tests {
         let context = run(&store, &root);
         std::fs::write(root.join("openwiki/index.md"), "unexpected edit").unwrap();
         git_command(&root, &["commit", "-am", "unexpected wiki change"]);
-        assert!(complete_coding_run(&store, &context).is_err());
+        assert!(complete_coding_run(&store, &context, false).is_err());
         assert!(store.events().unwrap().is_empty());
     }
 
@@ -1059,7 +1105,9 @@ mod tests {
             .unwrap(),
         )
         .unwrap();
-        let event = complete_coding_run(&store, &context).unwrap().unwrap();
+        let event = complete_coding_run(&store, &context, false)
+            .unwrap()
+            .unwrap();
         assert_eq!(event.changed_paths, vec!["b.txt"]);
         assert_eq!(
             std::fs::read_to_string(b_path.join("openwiki/index.md")).unwrap(),
@@ -1101,17 +1149,17 @@ mod tests {
         repository(&root);
         let store = RepositoryMemoryStore::at_persistent(temp.path()).unwrap();
         let a = run(&store, &root);
-        assert!(complete_coding_run(&store, &a).unwrap().is_none());
+        assert!(complete_coding_run(&store, &a, false).unwrap().is_none());
         assert!(store.events().unwrap().is_empty());
         assert!(!temp.path().join("knowledge/verification-starts").exists());
         assert!(!temp.path().join("knowledge/verifications").exists());
         assert!(!temp.path().join("knowledge/workspace-memory").exists());
         std::fs::write(root.join("next-task.txt"), "not the previous run").unwrap();
-        assert!(complete_coding_run(&store, &a).unwrap().is_none());
+        assert!(complete_coding_run(&store, &a, false).unwrap().is_none());
         let b = run(&store, &root);
         git_command(&root, &["mv", "openwiki/index.md", "moved.md"]);
         assert!(
-            complete_coding_run(&store, &b)
+            complete_coding_run(&store, &b, false)
                 .unwrap_err()
                 .to_string()
                 .contains("canonical openwiki")
@@ -1132,6 +1180,7 @@ mod tests {
         let context = run(&store, &root);
         std::fs::write(root.join("source.txt"), "first task\n").unwrap();
         let publication = SourcePublication {
+            commit_message: None,
             manifest: ChangeManifest {
                 version: 1,
                 event_id: context.run_id,
@@ -1169,63 +1218,85 @@ mod tests {
         git_command(&root, &["commit", "-m", "second task"]);
         let second_commit = git_command(&root, &["rev-parse", "HEAD"]);
         std::fs::write(&context.draft_path, "not even valid JSON").unwrap();
-        let event = complete_coding_run(&store, &context).unwrap().unwrap();
+        let event = complete_coding_run(&store, &context, true)
+            .unwrap()
+            .unwrap();
         assert_eq!(event.source_commit, first_commit);
         assert_eq!(event.changed_paths, vec!["source.txt"]);
         assert_eq!(event.semantics.summary, "fix: first task");
         assert_eq!(event.created_at, context.created_at);
         assert_eq!(git_command(&root, &["rev-parse", "HEAD"]), second_commit);
-        assert_eq!(complete_coding_run(&store, &context).unwrap(), Some(event));
+        assert_eq!(
+            complete_coding_run(&store, &context, true).unwrap(),
+            Some(event)
+        );
         assert_eq!(store.events().unwrap().len(), 1);
     }
 
     #[test]
     fn source_publication_retry_commits_only_frozen_index_and_keeps_later_edits() {
-        let temp = tempfile::tempdir().unwrap();
-        let root = temp.path().join("repo");
-        repository(&root);
-        git_command(&root, &["checkout", "-b", "feature"]);
-        let store = RepositoryMemoryStore::at_persistent(temp.path()).unwrap();
-        let context = run(&store, &root);
-        std::fs::write(root.join("source.txt"), "frozen result\n").unwrap();
-        let publication = SourcePublication {
-            manifest: ChangeManifest {
-                version: 1,
-                event_id: context.run_id,
-                repository_id: context.repository_id,
-                workspace_id: context.workspace_id,
-                task_id: context.task_id,
-                created_at: context.created_at,
-                base_commit: context.base_commit.clone(),
-                source_commit: context.base_commit.clone(),
-                target_branch: Some("main".into()),
-                changed_paths: vec!["source.txt".into()],
-                semantics: SemanticChanges {
-                    summary: "fix: frozen result".into(),
-                    ..Default::default()
+        for include_manifest in [false, true] {
+            let temp = tempfile::tempdir().unwrap();
+            let root = temp.path().join("repo");
+            repository(&root);
+            git_command(&root, &["checkout", "-b", "feature"]);
+            let store = RepositoryMemoryStore::at_persistent(temp.path()).unwrap();
+            let context = run(&store, &root);
+            std::fs::write(root.join("source.txt"), "frozen result\n").unwrap();
+            let mut publication = SourcePublication {
+                commit_message: None,
+                manifest: ChangeManifest {
+                    version: 1,
+                    event_id: context.run_id,
+                    repository_id: context.repository_id,
+                    workspace_id: context.workspace_id,
+                    task_id: context.task_id,
+                    created_at: context.created_at,
+                    base_commit: context.base_commit.clone(),
+                    source_commit: context.base_commit.clone(),
+                    target_branch: Some("main".into()),
+                    changed_paths: vec!["source.txt".into()],
+                    semantics: SemanticChanges {
+                        summary: "fix: frozen result".into(),
+                        ..Default::default()
+                    },
                 },
-            },
-            staged_tree: GitService::new().stage_source_snapshot(&root).unwrap(),
-        };
-        store.save_source_publication(&publication).unwrap();
-        // Crash before Git commit; later unstaged changes are deliberately not
-        // swept into the completion commit when the checkpoint is replayed.
-        std::fs::write(root.join("source.txt"), "later unstaged edit\n").unwrap();
-        std::fs::write(root.join("next.txt"), "later untracked edit\n").unwrap();
-        let event = complete_coding_run(&store, &context).unwrap().unwrap();
-        assert_eq!(
-            git_command(
-                &root,
-                &["show", &format!("{}:source.txt", event.source_commit)]
-            ),
-            "frozen result"
-        );
-        assert_eq!(
-            std::fs::read_to_string(root.join("source.txt")).unwrap(),
-            "later unstaged edit\n"
-        );
-        assert!(root.join("next.txt").is_file());
-        assert!(!git_command(&root, &["status", "--porcelain"]).is_empty());
+                staged_tree: GitService::new().stage_source_snapshot(&root).unwrap(),
+            };
+            let message = publication
+                .manifest
+                .semantics
+                .source_commit_message(context.run_id, include_manifest);
+            publication.commit_message = Some(message.clone());
+            store.save_source_publication(&publication).unwrap();
+            // Crash before Git commit; later unstaged changes are deliberately not
+            // swept into the completion commit when the checkpoint is replayed.
+            std::fs::write(root.join("source.txt"), "later unstaged edit\n").unwrap();
+            std::fs::write(root.join("next.txt"), "later untracked edit\n").unwrap();
+            let event = complete_coding_run(&store, &context, !include_manifest)
+                .unwrap()
+                .unwrap();
+            assert_eq!(
+                git_command(
+                    &root,
+                    &["show", &format!("{}:source.txt", event.source_commit)]
+                ),
+                "frozen result"
+            );
+            assert_eq!(
+                std::fs::read_to_string(root.join("source.txt")).unwrap(),
+                "later unstaged edit\n"
+            );
+            assert!(root.join("next.txt").is_file());
+            assert!(!git_command(&root, &["status", "--porcelain"]).is_empty());
+            assert_eq!(git_command(&root, &["log", "-1", "--format=%B"]), message);
+            assert_eq!(store.event(context.run_id).unwrap(), Some(event.clone()));
+            // Replay after Git/event publication also keeps SHA and message unchanged.
+            assert_eq!(
+                complete_coding_run(&store, &context, include_manifest).unwrap(),
+                Some(event)
+            );
+        }
     }
 
     #[tokio::test]
@@ -1267,7 +1338,7 @@ mod tests {
         std::fs::write(&first.draft_path, "invalid JSON").unwrap();
         // The previous source is checkpointed before a new host can edit it,
         // even when that previous host supplied an invalid semantic draft.
-        complete_successful_coding_runs(&pool, &store, first.workspace_id, Some(next))
+        complete_successful_coding_runs(&pool, &store, first.workspace_id, Some(next), false)
             .await
             .unwrap();
         let first_event = store.event(first.run_id).unwrap().unwrap();
@@ -1289,7 +1360,7 @@ mod tests {
             .await
             .unwrap();
         std::fs::write(root.join("second.txt"), "second result").unwrap();
-        complete_successful_coding_runs(&pool, &store, first.workspace_id, Some(next))
+        complete_successful_coding_runs(&pool, &store, first.workspace_id, Some(next), false)
             .await
             .unwrap();
         assert!(
@@ -1306,7 +1377,7 @@ mod tests {
         )
         .unwrap();
         assert_eq!(
-            complete_successful_coding_runs(&pool, &store, first.workspace_id, None)
+            complete_successful_coding_runs(&pool, &store, first.workspace_id, None, false)
                 .await
                 .unwrap(),
             Some("feat: second".into())
@@ -1327,7 +1398,7 @@ mod tests {
             .await
             .unwrap();
         assert_eq!(
-            complete_successful_coding_runs(&pool, &store, first.workspace_id, None)
+            complete_successful_coding_runs(&pool, &store, first.workspace_id, None, false)
                 .await
                 .unwrap(),
             Some("feat: second".into())
@@ -1371,7 +1442,7 @@ mod tests {
             .unwrap(),
         )
         .unwrap();
-        let first_event = complete_coding_run(&store, &first).unwrap().unwrap();
+        let first_event = complete_coding_run(&store, &first, false).unwrap().unwrap();
         let mut second = run(&store, &feature);
         second.workspace_id = first.workspace_id;
         std::fs::write(feature.join("second.txt"), "unpushed second task").unwrap();
@@ -1384,7 +1455,9 @@ mod tests {
             .unwrap(),
         )
         .unwrap();
-        let second_event = complete_coding_run(&store, &second).unwrap().unwrap();
+        let second_event = complete_coding_run(&store, &second, false)
+            .unwrap()
+            .unwrap();
         // Both tasks were completed before the PR merged, in the same workspace.
         // Only the first commit actually belonged to the merged remote branch.
         git_command(

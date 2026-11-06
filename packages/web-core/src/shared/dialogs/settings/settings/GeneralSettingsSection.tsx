@@ -518,6 +518,21 @@ export function GeneralSettingsSection({
         </SettingsCard>
       )}
 
+      {category === 'execution' && (
+        <SettingsCard title={t('settings.general.commits.title')}>
+          <p className="text-xs text-low">{t('settings.scope.instance')}</p>
+          <SettingsCheckbox
+            id="manifest-in-commit-body"
+            label={t('settings.general.commits.manifestBody.label')}
+            description={t('settings.general.commits.manifestBody.helper')}
+            checked={draft?.manifest_in_commit_body ?? false}
+            onChange={(checked) =>
+              updateDraft({ manifest_in_commit_body: checked })
+            }
+          />
+        </SettingsCard>
+      )}
+
       {/* Pull Requests */}
       {category === 'execution' && (
         <SettingsCard

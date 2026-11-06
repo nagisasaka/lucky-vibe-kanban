@@ -138,6 +138,13 @@
           "dialogDescription": "Choose a directory. Workspaces will be created in a .vibe-kanban-workspaces subdirectory within it."
         }
       },
+      "commits": {
+        "title": "Source commits",
+        "manifestBody": {
+          "label": "Include Change Manifest intent in commit messages",
+          "helper": "Adds purpose, changes, design decisions and verification summaries to normal source commits created by LVK. Messages are shared through Git push/clone. File Manifests remain authoritative. Existing commits, Auto-merge/repair, Wiki and squash commits are excluded. Once publication starts, retries keep the frozen message."
+        }
+      },
       "pullRequests": {
         "title": "Pull Requests",
         "description": "Configure PR creation behavior",

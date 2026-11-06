@@ -126,6 +126,13 @@
           "dialogDescription": "ディレクトリを選択してください。ワークスペースはその中の .vibe-kanban-workspaces サブディレクトリに作成されます。"
         }
       },
+      "commits": {
+        "title": "ソースコミット",
+        "manifestBody": {
+          "label": "Change Manifestの意味情報をコミット本文に併記",
+          "helper": "LVKが通常Runで作るソースコミットに、目的・変更内容・設計判断と理由・検証要約などを併記します。本文はGitのpush・clone等で共有されます。ファイルManifestが正本です。既存コミット、自動マージ・修復、Wiki、直接squashは対象外です。公開処理を開始した後の再試行では、固定済みの本文を使います。"
+        }
+      },
       "pullRequests": {
         "title": "プルリクエスト",
         "description": "PR作成の動作を設定",

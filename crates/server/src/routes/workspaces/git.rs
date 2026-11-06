@@ -240,6 +240,7 @@ pub async fn merge_workspace(
             &workspace,
             &worktree_path,
             &workspace_repo.target_branch,
+            deployment.config().read().await.manifest_in_commit_body,
         )
         .await
         .map_err(|error| ApiError::BadRequest(error.to_string()))?;
@@ -334,6 +335,7 @@ pub async fn push_workspace_branch(
         &workspace,
         &worktree_path,
         &workspace_repo.target_branch,
+        deployment.config().read().await.manifest_in_commit_body,
     )
     .await
     .map_err(|error| ApiError::BadRequest(error.to_string()))?;
@@ -380,6 +382,7 @@ pub async fn force_push_workspace_branch(
         &workspace,
         &worktree_path,
         &workspace_repo.target_branch,
+        deployment.config().read().await.manifest_in_commit_body,
     )
     .await
     .map_err(|error| ApiError::BadRequest(error.to_string()))?;

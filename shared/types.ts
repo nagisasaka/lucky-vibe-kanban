@@ -901,7 +901,11 @@ export type Config = { config_version: string, theme: ThemeMode, executor_profil
  * Last browser locale supplied with an explicit server-wide config save.
  * This is a notification hint, not a user preference or UI language override.
  */
-notification_browser_language?: string, git_branch_prefix: string, showcases: ShowcaseState, pr_auto_description_enabled: boolean, pr_auto_description_prompt: string | null, send_message_shortcut: SendMessageShortcut, hidden_agents: Array<BaseCodingAgent>,
+notification_browser_language?: string, git_branch_prefix: string, showcases: ShowcaseState, pr_auto_description_enabled: boolean, pr_auto_description_prompt: string | null,
+/**
+ * Include semantic intent in normal LVK-created source commits (shared through Git).
+ */
+manifest_in_commit_body: boolean, send_message_shortcut: SendMessageShortcut, hidden_agents: Array<BaseCodingAgent>,
 /**
  * Default for new Auto-merge runs, including chat/MCP submissions.
  */

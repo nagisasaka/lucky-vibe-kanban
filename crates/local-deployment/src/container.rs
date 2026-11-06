@@ -471,10 +471,12 @@ impl LocalContainerService {
             };
             if let Some(run) = store.run(run_id)? {
                 let (owned_store, owned_run) = (store.clone(), run.clone());
+                let include_manifest = self.config.read().await.manifest_in_commit_body;
                 tokio::task::spawn_blocking(move || {
                     services::services::repository_memory::complete_coding_run(
                         &owned_store,
                         &owned_run,
+                        include_manifest,
                     )
                 })
                 .await??;

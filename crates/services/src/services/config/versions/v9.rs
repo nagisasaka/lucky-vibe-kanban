@@ -53,6 +53,9 @@ pub struct Config {
     pub pr_auto_description_enabled: bool,
     #[serde(default)]
     pub pr_auto_description_prompt: Option<String>,
+    /// Include semantic intent in normal LVK-created source commits (shared through Git).
+    #[serde(default)]
+    pub manifest_in_commit_body: bool,
     #[serde(default)]
     pub send_message_shortcut: SendMessageShortcut,
     #[serde(default = "default_hidden_agents")]
@@ -102,6 +105,7 @@ impl Config {
             showcases: old_config.showcases,
             pr_auto_description_enabled: old_config.pr_auto_description_enabled,
             pr_auto_description_prompt: old_config.pr_auto_description_prompt,
+            manifest_in_commit_body: false,
             send_message_shortcut: old_config.send_message_shortcut,
             // Provider visibility is rebuilt from the V1 registry; removed
             // provider entries are intentionally not carried across config
@@ -159,6 +163,7 @@ impl Default for Config {
             showcases: ShowcaseState::default(),
             pr_auto_description_enabled: true,
             pr_auto_description_prompt: None,
+            manifest_in_commit_body: false,
             send_message_shortcut: SendMessageShortcut::default(),
             hidden_agents: default_hidden_agents(),
             integration_skip_validation: false,
@@ -252,6 +257,25 @@ mod tests {
         value["integration_skip_validation"] = serde_json::json!(true);
         let config = Config::from(value.to_string());
         assert!(Config::from(serde_json::to_string(&config).unwrap()).integration_skip_validation);
+    }
+
+    #[test]
+    fn manifest_body_setting_defaults_off_and_survives_config_round_trip() {
+        assert!(!Config::default().manifest_in_commit_body);
+        let mut old = serde_json::to_value(Config::default()).unwrap();
+        old.as_object_mut()
+            .unwrap()
+            .remove("manifest_in_commit_body");
+        assert!(!Config::from(old.to_string()).manifest_in_commit_body);
+        let enabled = Config {
+            manifest_in_commit_body: true,
+            ..Default::default()
+        };
+        assert!(Config::from(serde_json::to_string(&enabled).unwrap()).manifest_in_commit_body);
+        assert!(
+            !Config::from(serde_json::to_string(&v8::Config::default()).unwrap())
+                .manifest_in_commit_body
+        );
     }
 
     #[test]

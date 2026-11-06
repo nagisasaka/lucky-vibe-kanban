@@ -13,6 +13,8 @@ use ts_rs::TS;
 use uuid::Uuid;
 
 const MAX_RECORD_BYTES: u64 = 128 * 1024;
+// A frozen Manifest plus its readable commit projection; other records keep their limit.
+const MAX_SOURCE_PUBLICATION_BYTES: u64 = MAX_RECORD_BYTES * 4;
 // Two bounded instruction files, with original/prepared/restoring JSON copies.
 const MAX_INTEGRATION_SETUP_BYTES: u64 = 1024 * 1024;
 /// Resource guard for full Bootstrap reports, independent of Workflow handoffs.
@@ -161,6 +163,98 @@ impl SemanticChanges {
             .chars()
             .take(200)
             .collect()
+    }
+    /// Only the host's normal source commit uses this projection. The file
+    /// Manifest stays authoritative; Git bodies are never parsed back into it.
+    pub fn source_commit_message(&self, run_id: Uuid, include_manifest: bool) -> String {
+        let mut message = self.commit_message();
+        if include_manifest {
+            fn section(message: &mut String, title: &str, entries: Vec<String>) {
+                let entries: Vec<_> = entries
+                    .into_iter()
+                    .filter(|s| !s.trim().is_empty())
+                    .collect();
+                if entries.is_empty() {
+                    return;
+                }
+                message.push_str(&format!("\n\n{title}\n"));
+                for entry in entries {
+                    message.push_str("- ");
+                    message.push_str(&entry.replace('\n', "\n  "));
+                    message.push('\n');
+                }
+                message.pop();
+            }
+            section(&mut message, "Purpose", vec![self.goal.clone()]);
+            // The subject has its historical 200-character projection. Preserve
+            // the complete semantic summary in the body, including longer intent.
+            if self.summary.trim() != self.commit_message() {
+                section(&mut message, "Summary", vec![self.summary.clone()]);
+            }
+            section(
+                &mut message,
+                "Behavioral changes",
+                self.behavioral_changes.clone(),
+            );
+            section(
+                &mut message,
+                "Architectural changes",
+                self.architectural_changes.clone(),
+            );
+            section(&mut message, "Invariants", self.invariants_affected.clone());
+            section(
+                &mut message,
+                "Decisions and reasons",
+                self.decisions
+                    .iter()
+                    .map(|d| match &d.rationale {
+                        Some(reason) if !reason.trim().is_empty() => {
+                            format!("{}\nReason: {}", d.decision, reason)
+                        }
+                        _ => d.decision.clone(),
+                    })
+                    .collect(),
+            );
+            section(
+                &mut message,
+                "Rejected alternatives",
+                self.rejected_alternatives
+                    .iter()
+                    .map(|a| match &a.reason {
+                        Some(reason) if !reason.trim().is_empty() => {
+                            format!("{}\nReason: {}", a.alternative, reason)
+                        }
+                        _ => a.alternative.clone(),
+                    })
+                    .collect(),
+            );
+            section(
+                &mut message,
+                "Unresolved questions",
+                self.unresolved_questions.clone(),
+            );
+            section(
+                &mut message,
+                "Verification summary",
+                self.tests
+                    .iter()
+                    .map(|t| {
+                        let result = match t.result {
+                            MemoryTestResult::Passed => "Passed",
+                            MemoryTestResult::Failed => "Failed",
+                            MemoryTestResult::NotRun => "Not run",
+                        };
+                        match &t.summary {
+                            Some(summary) if !summary.trim().is_empty() => {
+                                format!("{result}: {summary}")
+                            }
+                            _ => result.to_owned(),
+                        }
+                    })
+                    .collect(),
+            );
+        }
+        format!("{message}\n\nLVK-Memory-Source: {run_id}")
     }
 }
 
@@ -439,6 +533,9 @@ pub struct IntegrationWikiSetup {
 pub struct SourcePublication {
     pub manifest: ChangeManifest,
     pub staged_tree: String,
+    /// Frozen before Git mutation. Missing on older records: preserve the old compact message.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub commit_message: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -806,12 +903,16 @@ impl RepositoryMemoryStore {
     }
 
     pub fn source_publication(&self, run_id: Uuid) -> io::Result<Option<SourcePublication>> {
-        let publication: Option<SourcePublication> = self.read_json(
-            &self
-                .root
-                .join("source-publications")
-                .join(format!("{run_id}.json")),
-        )?;
+        let publication: Option<SourcePublication> = self
+            .read_optional_limited(
+                &self
+                    .root
+                    .join("source-publications")
+                    .join(format!("{run_id}.json")),
+                MAX_SOURCE_PUBLICATION_BYTES,
+            )?
+            .map(|bytes| serde_json::from_slice(&bytes).map_err(invalid))
+            .transpose()?;
         if let Some(publication) = &publication {
             publication.manifest.validate()?;
             if publication.manifest.event_id != run_id || !commit_id(&publication.staged_tree) {
@@ -828,13 +929,14 @@ impl RepositoryMemoryStore {
         if !commit_id(&publication.staged_tree) {
             return Err(invalid("Invalid source publication tree"));
         }
-        self.publish(
+        self.publish_limited(
             &self
                 .root
                 .join("source-publications")
                 .join(format!("{}.json", publication.manifest.event_id)),
             publication,
             false,
+            MAX_SOURCE_PUBLICATION_BYTES,
         )
     }
 
@@ -1524,6 +1626,90 @@ mod tests {
         );
         drop(next);
         assert!(store.try_lock().is_ok());
+    }
+
+    #[test]
+    fn readable_source_message_preserves_semantics_without_metadata_or_test_payloads() {
+        let mut manifest = event();
+        let reason = format!("{}最後の重要な設計理由", "理由\n".repeat(7600));
+        manifest.semantics = SemanticChanges {
+            goal: "GitHub上でも人とAIが変更の目的を読めるようにする".into(),
+            summary: format!("feat: preserve intent {}", "意図".repeat(120)),
+            behavioral_changes: vec!["既定OFF、ONで意味情報を併記".into()],
+            architectural_changes: vec!["ファイルManifestを正本にする".into()],
+            invariants_affected: vec!["再試行では固定済み本文を維持".into()],
+            decisions: vec![MemoryDecision {
+                decision: "本文を固定する".into(),
+                rationale: Some(reason.clone()),
+            }],
+            rejected_alternatives: vec![RejectedAlternative {
+                alternative: "本文からManifestを復元".into(),
+                reason: Some("二重管理を避ける".into()),
+            }],
+            unresolved_questions: vec!["実運用での効果は未検証".into()],
+            tests: vec![
+                MemoryTest {
+                    command: Some("do not copy detailed command payload".into()),
+                    result: MemoryTestResult::Passed,
+                    summary: Some("代表例が成功".into()),
+                },
+                MemoryTest {
+                    command: None,
+                    result: MemoryTestResult::NotRun,
+                    summary: Some("実GitHubは範囲外".into()),
+                },
+            ],
+        };
+        manifest.validate().unwrap();
+        let short = manifest
+            .semantics
+            .source_commit_message(manifest.event_id, false);
+        assert_eq!(
+            short,
+            format!(
+                "{}\n\nLVK-Memory-Source: {}",
+                manifest.semantics.commit_message(),
+                manifest.event_id
+            )
+        );
+        let message = manifest
+            .semantics
+            .source_commit_message(manifest.event_id, true);
+        assert_eq!(message.lines().next(), short.lines().next());
+        for value in [
+            &manifest.semantics.goal,
+            &manifest.semantics.summary,
+            &reason,
+            &manifest.semantics.behavioral_changes[0],
+            &manifest.semantics.architectural_changes[0],
+            &manifest.semantics.invariants_affected[0],
+            &manifest.semantics.unresolved_questions[0],
+        ] {
+            assert!(message.contains(&value.replace('\n', "\n  ")));
+        }
+        assert!(message.contains("二重管理を避ける"));
+        assert!(message.contains("Passed: 代表例が成功"));
+        assert!(message.contains("Not run: 実GitHubは範囲外"));
+        assert!(!message.contains("detailed command payload"));
+        assert!(!message.contains(&manifest.source_commit));
+        assert!(!message.contains(&manifest.base_commit));
+        let temp = tempfile::tempdir().unwrap();
+        let store = RepositoryMemoryStore::at_persistent(temp.path()).unwrap();
+        let publication = SourcePublication {
+            staged_tree: "c".repeat(40),
+            commit_message: Some(message.clone()),
+            manifest,
+        };
+        assert!(serde_json::to_vec(&publication).unwrap().len() > MAX_RECORD_BYTES as usize);
+        store.save_source_publication(&publication).unwrap();
+        assert_eq!(
+            store
+                .source_publication(publication.manifest.event_id)
+                .unwrap()
+                .unwrap()
+                .commit_message,
+            Some(message)
+        );
     }
 
     #[test]
