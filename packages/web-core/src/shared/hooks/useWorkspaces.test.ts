@@ -6,6 +6,14 @@ import { useWorkspaces, type UseWorkspacesResult } from './useWorkspaces';
 
 const fixture = vi.hoisted(() => ({
   summaries: new Map<string, WorkspaceSummary>(),
+  archivedWorkspace: undefined as WorkspaceWithStatus | undefined,
+  queries: [] as Array<{
+    refetchInterval:
+      | number
+      | ((query: {
+          state: { data?: Map<string, WorkspaceSummary> };
+        }) => number);
+  }>,
   workspace: {} as WorkspaceWithStatus,
 }));
 
@@ -17,7 +25,9 @@ vi.mock('@/shared/hooks/useJsonPatchWsStream', () => ({
     data: {
       workspaces: endpoint.endsWith('archived=false')
         ? { [fixture.workspace.id]: fixture.workspace }
-        : {},
+        : fixture.archivedWorkspace
+          ? { [fixture.archivedWorkspace.id]: fixture.archivedWorkspace }
+          : {},
     },
     isInitialized: true,
     isConnected: true,
@@ -26,7 +36,10 @@ vi.mock('@/shared/hooks/useJsonPatchWsStream', () => ({
 }));
 vi.mock('@tanstack/react-query', () => ({
   keepPreviousData: (data: unknown) => data,
-  useQuery: () => ({ data: fixture.summaries }),
+  useQuery: (options: (typeof fixture.queries)[number]) => {
+    fixture.queries.push(options);
+    return { data: fixture.summaries };
+  },
 }));
 
 function readWorkspaces() {
@@ -41,6 +54,8 @@ function readWorkspaces() {
 
 describe('workspace sidebar runtime state', () => {
   beforeEach(() => {
+    fixture.archivedWorkspace = undefined;
+    fixture.queries = [];
     fixture.workspace = {
       id: 'workspace',
       name: 'OpenWiki maintenance',
@@ -119,4 +134,73 @@ describe('workspace sidebar runtime state', () => {
     } as WorkspaceSummary);
     expect(readWorkspaces().workspaces[0].isRunning).toBe(true);
   });
+});
+
+describe('archived summary cadence', () => {
+  function interval() {
+    readWorkspaces();
+    expect(fixture.queries.at(-2)!.refetchInterval).toBe(15000);
+    const archived = fixture.queries.at(-1)!.refetchInterval;
+    if (typeof archived !== 'function')
+      throw new Error('Expected dynamic archive interval');
+    return archived({ state: { data: fixture.summaries } });
+  }
+
+  beforeEach(() => {
+    fixture.queries = [];
+    fixture.summaries = new Map();
+    fixture.archivedWorkspace = {
+      id: 'archive',
+      archived: true,
+      is_running: false,
+    } as WorkspaceWithStatus;
+  });
+
+  it('uses 60 seconds normally while retaining archive metadata', () => {
+    expect(interval()).toBe(60000);
+    expect(readWorkspaces().archivedWorkspaces[0].id).toBe('archive');
+  });
+
+  it.each(['is_running', 'has_pending_approval'] as const)(
+    'keeps 15 seconds for known %s',
+    (field) => {
+      fixture.summaries.set('archive', {
+        workspace_id: 'archive',
+        [field]: true,
+      } as WorkspaceSummary);
+      expect(interval()).toBe(15000);
+      fixture.summaries.clear();
+      expect(interval()).toBe(60000);
+    }
+  );
+
+  it('keeps 15 seconds when metadata reports activity before summary catches up', () => {
+    fixture.archivedWorkspace!.is_running = true;
+    fixture.summaries.set('archive', {
+      workspace_id: 'archive',
+      is_running: false,
+    } as WorkspaceSummary);
+    expect(interval()).toBe(15000);
+  });
+});
+
+// Summary and metadata can arrive in either order.
+it('keeps known summary approvals fresh before archived metadata arrives', () => {
+  fixture.queries = [];
+  fixture.archivedWorkspace = undefined;
+  fixture.summaries = new Map([
+    [
+      'archive',
+      {
+        workspace_id: 'archive',
+        has_pending_approval: true,
+      } as WorkspaceSummary,
+    ],
+  ]);
+  readWorkspaces();
+  const interval = fixture.queries.at(-1)!.refetchInterval;
+  expect(
+    typeof interval === 'function' &&
+      interval({ state: { data: fixture.summaries } })
+  ).toBe(15000);
 });

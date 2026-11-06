@@ -54,6 +54,18 @@ export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
     { enabled: !!workspaceId && !isCreateMode }
   );
 
+  const isArchivedTarget =
+    !!workspaceId &&
+    (workspace?.archived ||
+      archivedWorkspaces.some((item) => item.id === workspaceId));
+  useEffect(() => {
+    if (isArchivedTarget) {
+      void queryClient.invalidateQueries({
+        queryKey: workspaceSummaryKeys.byArchived(true, hostId),
+      });
+    }
+  }, [workspaceId, isArchivedTarget, hostId, queryClient]);
+
   const {
     sessions,
     selectedSession,

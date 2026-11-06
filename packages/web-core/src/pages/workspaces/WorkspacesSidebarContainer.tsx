@@ -1,3 +1,6 @@
+import { useQueryClient } from '@tanstack/react-query';
+import { useHostId } from '@/shared/providers/HostIdProvider';
+import { workspaceSummaryKeys } from '@/shared/hooks/workspaceSummaryKeys';
 import { useState, useMemo, useCallback, useEffect } from 'react';
 
 import { useTranslation } from 'react-i18next';
@@ -270,6 +273,15 @@ export function WorkspacesSidebarContainer({
     PERSIST_KEYS.workspacesSidebarArchived,
     false
   );
+  const queryClient = useQueryClient();
+  const hostId = useHostId();
+  useEffect(() => {
+    if (showArchive) {
+      void queryClient.invalidateQueries({
+        queryKey: workspaceSummaryKeys.byArchived(true, hostId),
+      });
+    }
+  }, [showArchive, hostId, queryClient]);
   const [isAccordionLayout, setAccordionLayout] = usePersistedExpanded(
     PERSIST_KEYS.workspacesSidebarAccordionLayout,
     true

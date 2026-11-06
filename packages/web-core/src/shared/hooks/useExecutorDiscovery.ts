@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import type { BaseCodingAgent, ExecutorDiscoveredOptions } from 'shared/types';
 import { useJsonPatchWsStream } from '@/shared/hooks/useJsonPatchWsStream';
+import { useHostId } from '@/shared/providers/HostIdProvider';
 import { agentsApi } from '@/shared/lib/api';
 
 type ExecutorDiscoveryStreamState = {
@@ -25,25 +26,48 @@ const defaultOptions: ExecutorDiscoveredOptions = {
   error: null,
 };
 
-function useExecutorDiscovery(
+type DiscoveryScope = {
+  workspaceId?: string;
+  sessionId?: string;
+  repoId?: string;
+  variant?: string | null;
+};
+
+export interface ExecutorDiscoverySnapshot {
+  scope: DiscoveryScope & {
+    agent: BaseCodingAgent | null | undefined;
+    hostId: string | null;
+  };
+  options: ExecutorDiscoveredOptions | null;
+  error: string | null;
+  isConnected: boolean;
+  isInitialized: boolean;
+}
+
+export function useExecutorDiscovery(
   agent: BaseCodingAgent | null | undefined,
-  opts?: {
-    workspaceId?: string;
-    sessionId?: string;
-    repoId?: string;
-    variant?: string | null;
-  }
-) {
+  opts?: DiscoveryScope,
+  shared?: ExecutorDiscoverySnapshot
+): ExecutorDiscoverySnapshot {
+  const hostId = useHostId();
   const { workspaceId, sessionId, repoId, variant } = opts ?? {};
+  const matchesShared =
+    !!shared &&
+    shared.scope.agent === agent &&
+    shared.scope.hostId === hostId &&
+    shared.scope.workspaceId === workspaceId &&
+    shared.scope.sessionId === sessionId &&
+    shared.scope.repoId === repoId &&
+    shared.scope.variant === variant;
   const endpoint = useMemo(() => {
-    if (!agent) return undefined;
+    if (!agent || matchesShared) return undefined;
     return agentsApi.getDiscoveredOptionsStreamUrl(agent, {
       workspaceId,
       sessionId,
       repoId,
       variant,
     });
-  }, [agent, workspaceId, sessionId, repoId, variant]);
+  }, [agent, workspaceId, sessionId, repoId, variant, matchesShared]);
 
   const initialData = useCallback(
     (): ExecutorDiscoveryStreamState => ({
@@ -75,7 +99,10 @@ function useExecutorDiscovery(
     }
   }, [combinedError]);
 
+  if (matchesShared) return shared;
+
   return {
+    scope: { agent, hostId, workspaceId, sessionId, repoId, variant },
     options: data?.options ?? null,
     error: combinedError,
     isConnected,
@@ -85,16 +112,13 @@ function useExecutorDiscovery(
 
 export function useModelSelectorConfig(
   agent: BaseCodingAgent | null | undefined,
-  opts?: {
-    workspaceId?: string;
-    sessionId?: string;
-    repoId?: string;
-    variant?: string | null;
-  }
+  opts?: DiscoveryScope,
+  shared?: ExecutorDiscoverySnapshot
 ) {
   const { options, error, isConnected, isInitialized } = useExecutorDiscovery(
     agent,
-    opts
+    opts,
+    shared
   );
 
   return {
@@ -107,41 +131,15 @@ export function useModelSelectorConfig(
   };
 }
 
-export function useSlashCommands(
-  agent: BaseCodingAgent | null | undefined,
-  opts?: {
-    workspaceId?: string;
-    sessionId?: string;
-    repoId?: string;
-    variant?: string | null;
-  }
-) {
-  const { options, error, isConnected, isInitialized } = useExecutorDiscovery(
-    agent,
-    opts
-  );
-
-  return {
-    commands: options?.slash_commands ?? [],
-    discovering: options?.loading_slash_commands ?? false,
-    error,
-    isConnected,
-    isInitialized,
-  };
-}
-
 export function useExecutorTooling(
   agent: BaseCodingAgent | null | undefined,
-  opts?: {
-    workspaceId?: string;
-    sessionId?: string;
-    repoId?: string;
-    variant?: string | null;
-  }
+  opts?: DiscoveryScope,
+  shared?: ExecutorDiscoverySnapshot
 ) {
   const { options, error, isConnected, isInitialized } = useExecutorDiscovery(
     agent,
-    opts
+    opts,
+    shared
   );
 
   return {
