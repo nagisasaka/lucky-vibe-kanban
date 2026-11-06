@@ -112,6 +112,32 @@ impl LaunchActions for FixtureLaunch {
             json!({"workspace_id":workspace_id,"session_id":session,"agent_run_id":run,"execution_accepted":true,"implementation_complete":false}),
         )
     }
+    async fn start_session(
+        &self,
+        workspace_id: Uuid,
+        prompt: String,
+        config: ExecutorConfig,
+    ) -> Result<Value, ApiError> {
+        self.starts
+            .lock()
+            .await
+            .push(json!({"workspace_id":workspace_id,"prompt":prompt,"executor_config":config}));
+        let session = Session::create(
+            &self.pool,
+            &CreateSession {
+                executor: Some(config.executor.to_string()),
+                name: None,
+            },
+            Uuid::new_v4(),
+            workspace_id,
+        )
+        .await?;
+        let run = Uuid::new_v4();
+        runtime_write_tests::insert_run(&self.pool, session.id, workspace_id, run).await;
+        Ok(
+            json!({"workspace_id":workspace_id,"session_id":session.id,"agent_run_id":run,"new_session":true,"native_conversation_inherited":false}),
+        )
+    }
     async fn integration(
         &self,
         request: CreateIntegrationRequest,
@@ -780,4 +806,60 @@ async fn wiki_accepted_execution_is_not_publication_success() {
         .unwrap();
     assert_eq!(replay["result"], settled["result"]);
     assert_eq!(dispatch.wiki_requests.lock().await.len(), 1);
+}
+
+#[tokio::test]
+async fn new_session_engine_selection_keeps_workspace_and_receipt_identity() {
+    let (_directory, remote, dispatch, principal, target, _issue, _repo) = fixture(false).await;
+    let input = json!({"project_id":target.project_id,"workspace_id":target.workspace_id,
+        "request_id":Uuid::new_v4(),"engine":"CLAUDE_CODE","prompt":"Purpose, decisions and remaining work"});
+    let first = launch::call(&remote, &principal, "start_session", input.clone())
+        .await
+        .unwrap();
+    assert_eq!(first["status"], "succeeded");
+    let second = launch::call(&remote, &principal, "start_session", input)
+        .await
+        .unwrap();
+    assert_eq!(first["operation_id"], second["operation_id"]);
+    let starts = dispatch.starts.lock().await;
+    assert_eq!(starts.len(), 1);
+    assert_eq!(starts[0]["workspace_id"], json!(target.workspace_id));
+    assert_eq!(starts[0]["executor_config"]["executor"], "CLAUDE_CODE");
+    assert!(starts[0]["executor_config"].get("variant").is_none());
+    let sessions = Session::find_by_workspace_id(&remote.pool, target.workspace_id)
+        .await
+        .unwrap();
+    assert!(
+        sessions
+            .iter()
+            .any(|session| session.executor.as_deref() == Some("CLAUDE_CODE"))
+    );
+    assert!(
+        sessions
+            .iter()
+            .any(|session| session.id == target.session_id)
+    );
+}
+
+#[tokio::test]
+async fn workspace_engine_selection_does_not_silently_accept_claude_modes() {
+    let (_directory, remote, dispatch, principal, target, issue, repo) = fixture(false).await;
+    let mut input = start_args(&remote, &target, issue, repo).await;
+    input["engine"] = json!("CLAUDE_CODE");
+    let rejected = launch::call(&remote, &principal, "start_workspace", input.clone())
+        .await
+        .unwrap();
+    assert_eq!(rejected["status"], "failed");
+    assert!(dispatch.starts.lock().await.is_empty());
+    input["request_id"] = json!(Uuid::new_v4());
+    input.as_object_mut().unwrap().remove("execution_mode");
+    input.as_object_mut().unwrap().remove("goal_token_budget");
+    let accepted = launch::call(&remote, &principal, "start_workspace", input)
+        .await
+        .unwrap();
+    assert_eq!(accepted["status"], "succeeded");
+    assert_eq!(
+        dispatch.starts.lock().await[0]["executor_config"]["executor"],
+        "CLAUDE_CODE"
+    );
 }

@@ -183,7 +183,8 @@ impl RuntimeActions for FixtureRuntime {
         kind: Change,
     ) -> Result<Value, ApiError> {
         let _guard = self.queue.lock_session(target.session_id).await;
-        runtime_write::validate_run(&self.pool, &target, matches!(kind, Change::Continue)).await?;
+        runtime_write::validate_run(&self.pool, &target, matches!(kind, Change::Continue(_)))
+            .await?;
         self.record(
             target.agent_run_id,
             operation,
@@ -665,4 +666,111 @@ async fn reopened_database_preserves_work_questions_and_uncertain_operation_iden
         assert_eq!(count, expected, "{table}");
     }
     restarted.pool.close().await;
+}
+
+#[tokio::test]
+async fn continuation_overrides_are_bound_to_receipt_and_never_steered() {
+    let (remote, dispatch, principal, target, _) = fixture().await;
+    let mut args = input(&target);
+    args["prompt"] = json!("Continue the agreed work");
+    args["overrides"] = json!({"execution_mode":{"action":"set","value":"review"}});
+    assert!(
+        runtime_write::call(&remote, &principal, "steer_execution", args.clone())
+            .await
+            .is_err()
+    );
+    assert!(dispatch.calls.lock().await.is_empty());
+    sqlx::query("UPDATE agent_runs SET status='succeeded' WHERE id=?")
+        .bind(target.agent_run_id)
+        .execute(&remote.pool)
+        .await
+        .unwrap();
+    let accepted = runtime_write::call(&remote, &principal, "continue_execution", args.clone())
+        .await
+        .unwrap();
+    assert_eq!(
+        settle(&remote, &principal, &target, &args).await["status"],
+        "succeeded"
+    );
+    let replay = runtime_write::call(&remote, &principal, "continue_execution", args.clone())
+        .await
+        .unwrap();
+    assert_eq!(accepted["operation_id"], replay["operation_id"]);
+    args["overrides"] = json!({"execution_mode":{"action":"reset"}});
+    assert!(
+        runtime_write::call(&remote, &principal, "continue_execution", args.clone())
+            .await
+            .is_err()
+    );
+    assert_eq!(dispatch.calls.lock().await.len(), 1);
+    args["request_id"] = json!(Uuid::new_v4());
+    runtime_write::call(&remote, &principal, "continue_execution", args.clone())
+        .await
+        .unwrap();
+    assert_eq!(
+        settle(&remote, &principal, &target, &args).await["status"],
+        "succeeded"
+    );
+    assert_eq!(dispatch.calls.lock().await.len(), 2);
+    for overrides in [json!(null), json!({"reasoning_id":null})] {
+        args["request_id"] = json!(Uuid::new_v4());
+        args["overrides"] = overrides;
+        assert!(
+            runtime_write::call(&remote, &principal, "continue_execution", args.clone())
+                .await
+                .is_err()
+        );
+    }
+}
+
+#[tokio::test]
+async fn native_adopted_execution_settings_explain_fixed_identity_without_discovery() {
+    let (remote, _dispatch, _principal, target, _) = fixture().await;
+    sqlx::query("UPDATE workspaces SET container_ref='/fixture' WHERE id=?")
+        .bind(target.workspace_id)
+        .execute(&remote.pool)
+        .await
+        .unwrap();
+    let config = executors::profile::ExecutorConfig {
+        // Deliberately missing profile: adopted settings must not attempt discovery.
+        variant: Some("ABSENT_PROFILE".into()),
+        reasoning_id: Some("high".into()),
+        ..executors::profile::ExecutorConfig::new(executors::executors::BaseCodingAgent::Codex)
+    };
+    let reference = executors::runtime::ProviderSessionReference {
+        schema_version: executors::runtime::PROVIDER_SESSION_REFERENCE_SCHEMA_VERSION,
+        provider_id: "codex".into(),
+        runtime_profile_id: "CODEX:ABSENT_PROFILE".into(),
+        provider_session_id: "native-adopted-fixture".into(),
+        observed_at: chrono::Utc::now(),
+        metadata: Some(
+            json!({"source":"native_adopted","profile_context":{"executor_config":config}}),
+        ),
+    };
+    sqlx::query("INSERT INTO agent_provider_sessions(id,session_id,schema_version,provider_id,runtime_profile_id,provider_session_id,session_reference,observed_at) VALUES(?,?,1,'codex','CODEX:ABSENT_PROFILE','native-adopted-fixture',?,?)")
+        .bind(Uuid::new_v4()).bind(target.session_id)
+        .bind(sqlx::types::Json(reference)).bind(chrono::Utc::now())
+        .execute(&remote.pool).await.unwrap();
+    let mut args = json!({"project_id":target.project_id,"workspace_id":target.workspace_id,"session_id":target.session_id});
+    let actual = super::runtime_read::call(&remote, "get_session_execution_settings", args.clone())
+        .await
+        .unwrap();
+    args["session_id"] = json!(Uuid::new_v4());
+    assert!(
+        super::runtime_read::call(&remote, "get_session_execution_settings", args)
+            .await
+            .is_err()
+    );
+    assert!(actual["capabilities"].is_null());
+    assert_eq!(actual["native_adopted"], true);
+    assert_eq!(actual["settings_change_allowed"], false);
+    assert_eq!(actual["native_session_id"], "native-adopted-fixture");
+    assert!(
+        actual["settings_change_reason"]
+            .as_str()
+            .unwrap()
+            .contains("new Session")
+    );
+    assert_eq!(actual["executor_config"], json!(config));
+    assert_eq!(actual["provider_settings_verified"], false);
 }

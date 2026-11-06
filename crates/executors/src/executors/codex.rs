@@ -832,6 +832,16 @@ impl Codex {
         Ok(skills_list_response_to_discovery(response))
     }
 
+    /// With no model override, resume retains the native thread model. Advertise only
+    /// efforts common to every live-discovered model rather than guess that model.
+    pub async fn discover_next_run_reasoning(
+        &self,
+        cwd: PathBuf,
+    ) -> Result<(Option<String>, Vec<ReasoningOption>), ExecutorError> {
+        let models = self.discover_models(cwd).await?;
+        Ok(next_run_reasoning_options(self.model.as_deref(), &models))
+    }
+
     async fn discover_models(&self, cwd: PathBuf) -> Result<Vec<ModelInfo>, ExecutorError> {
         let response = self
             .with_discovery_app_server(&cwd, move |client| async move { client.model_list().await })
@@ -1658,6 +1668,40 @@ fn model_list_response_to_model_infos(response: ModelListResponse) -> Vec<ModelI
             }
         })
         .collect()
+}
+
+fn next_run_reasoning_options(
+    model: Option<&str>,
+    models: &[ModelInfo],
+) -> (Option<String>, Vec<ReasoningOption>) {
+    let (model, _) = resolve_model(model);
+    if let Some(id) = model {
+        return (
+            Some(id.to_owned()),
+            models
+                .iter()
+                .find(|model| model.id == id)
+                .map(|model| model.reasoning_options.clone())
+                .unwrap_or_default(),
+        );
+    }
+    let Some(first) = models.first() else {
+        return (None, vec![]);
+    };
+    let mut common = first.reasoning_options.clone();
+    common.retain(|option| {
+        models.iter().all(|model| {
+            model
+                .reasoning_options
+                .iter()
+                .any(|candidate| candidate.id == option.id)
+        })
+    });
+    // A provider default effort may depend on the model; unknown native model means no default claim.
+    for option in &mut common {
+        option.is_default = false;
+    }
+    (None, common)
 }
 
 /// Static model list used before/instead of a live `model/list` response
@@ -2677,5 +2721,53 @@ mod integration_worker_tests {
             resume_params_from("same-native-session".into(), worker.clone()).config,
             worker.config
         );
+    }
+}
+
+#[cfg(test)]
+mod next_run_reasoning_tests {
+    use super::*;
+
+    #[test]
+    fn unspecified_native_model_uses_common_efforts_without_changing_model() {
+        let models = vec![
+            ModelInfo {
+                id: "first".into(),
+                name: "First".into(),
+                provider_id: None,
+                reasoning_options: ReasoningOption::from_names_with_default(
+                    ["high", "max"],
+                    Some("max"),
+                ),
+            },
+            ModelInfo {
+                id: "second".into(),
+                name: "Second".into(),
+                provider_id: None,
+                reasoning_options: ReasoningOption::from_names_with_default(
+                    ["low", "high"],
+                    Some("high"),
+                ),
+            },
+        ];
+        let (model, options) = next_run_reasoning_options(None, &models);
+        assert_eq!(model, None);
+        assert_eq!(
+            options
+                .iter()
+                .map(|option| option.id.as_str())
+                .collect::<Vec<_>>(),
+            vec!["high"]
+        );
+        assert!(!options[0].is_default);
+        let (model, options) = next_run_reasoning_options(Some("first-fast"), &models);
+        assert_eq!(model.as_deref(), Some("first"));
+        assert!(options.iter().any(|option| option.id == "max"));
+        assert!(
+            next_run_reasoning_options(Some("missing"), &models)
+                .1
+                .is_empty()
+        );
+        assert!(next_run_reasoning_options(None, &[]).1.is_empty());
     }
 }

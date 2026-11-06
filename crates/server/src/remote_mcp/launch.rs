@@ -29,9 +29,43 @@ use super::{
 use crate::{
     DeploymentImpl,
     error::ApiError,
-    routes::{integrations, local_remote, workspaces},
+    routes::{integrations, local_remote, sessions, workspaces},
 };
 
+/// Engine selection creates a fresh native conversation; it never migrates one.
+#[derive(Clone, Copy, Deserialize, JsonSchema)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+enum Engine {
+    Codex,
+    ClaudeCode,
+}
+impl Engine {
+    fn executor(self) -> executors::executors::BaseCodingAgent {
+        match self {
+            Self::Codex => executors::executors::BaseCodingAgent::Codex,
+            Self::ClaudeCode => executors::executors::BaseCodingAgent::ClaudeCode,
+        }
+    }
+}
+fn select_engine(defaults: ExecutorConfig, engine: Option<Engine>) -> ExecutorConfig {
+    match engine {
+        None => defaults,
+        Some(engine) if engine.executor() == defaults.executor => defaults,
+        Some(engine) => ExecutorConfig::new(engine.executor()),
+    }
+}
+#[derive(Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+struct StartSessionArgs {
+    project_id: Uuid,
+    workspace_id: Uuid,
+    request_id: Uuid,
+    /// Omit to use the configured default engine/profile. Changing engine starts a new native conversation.
+    engine: Option<Engine>,
+    /// Include the handoff purpose, decisions and remaining work. Native provider conversation is not transferred.
+    #[schemars(length(min = 1, max = 256000))]
+    prompt: String,
+}
 #[derive(Clone, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 struct RepositorySelection {
@@ -45,6 +79,8 @@ struct StartArgs {
     issue_id: Uuid,
     request_id: Uuid,
     expected_revision: String,
+    /// New Session engine; omitted preserves configured default selection.
+    engine: Option<Engine>,
     #[schemars(length(min = 1, max = 10))]
     repositories: Vec<RepositorySelection>,
     /// Omit to preserve the default mode. Codex review uses Code execution for bounded review/investigation: include target, scope and expected findings in the Issue. Report in conversation and stop; implementation requires a separate explicit instruction. Existing permissions still apply. Goal uses native controls.
@@ -137,6 +173,16 @@ pub(super) trait LaunchActions: Send + Sync {
     async fn wiki_sync(&self, _request: super::repository_wiki::SyncArgs) -> anyhow::Result<Value> {
         return Err(super::errors::rejection(Category::Unavailable));
     }
+    async fn start_session(
+        &self,
+        _workspace_id: Uuid,
+        _prompt: String,
+        _config: ExecutorConfig,
+    ) -> Result<Value, ApiError> {
+        Err(ApiError::BadRequest(
+            "New Session launch unavailable".into(),
+        ))
+    }
     async fn defaults(&self) -> ExecutorConfig;
     async fn start(
         &self,
@@ -199,6 +245,38 @@ impl LaunchActions for ExistingLaunch {
     async fn wiki_sync(&self, request: super::repository_wiki::SyncArgs) -> anyhow::Result<Value> {
         super::repository_wiki::sync(&self.0, request).await
     }
+    async fn start_session(
+        &self,
+        workspace_id: Uuid,
+        prompt: String,
+        config: ExecutorConfig,
+    ) -> Result<Value, ApiError> {
+        let session = sessions::create_session(
+            axum::extract::State(self.0.clone()),
+            axum::Json(sessions::CreateSessionRequest {
+                workspace_id,
+                executor: Some(config.executor.to_string()),
+                name: None,
+            }),
+        )
+        .await?
+        .0
+        .into_data()
+        .ok_or_else(|| ApiError::Conflict("Session receipt unavailable".into()))?;
+        let run = sessions::start_coding_agent_execution_for_session(
+            &self.0,
+            session.clone(),
+            prompt,
+            None,
+            config.clone(),
+            None,
+            None,
+        )
+        .await?;
+        Ok(
+            json!({"workspace_id":workspace_id,"session_id":session.id,"agent_run_id":run.agent_run_id,"execution_accepted":true,"new_session":true,"native_conversation_inherited":false,"executor_config":config,"provider_settings_verified":false,"implementation_complete":false}),
+        )
+    }
     async fn defaults(&self) -> ExecutorConfig {
         self.0.config().read().await.executor_profile.clone().into()
     }
@@ -207,6 +285,7 @@ impl LaunchActions for ExistingLaunch {
         request: CreateAndStartWorkspaceRequest,
         workspace_id: Uuid,
     ) -> Result<Value, ApiError> {
+        let executor_config = request.executor_config.clone();
         let result = workspaces::create::create_and_start_workspace_admitted(
             self.0.clone(),
             request,
@@ -218,7 +297,7 @@ impl LaunchActions for ExistingLaunch {
             .into_data()
             .ok_or_else(|| ApiError::Conflict("Workspace acceptance receipt unavailable".into()))?;
         Ok(
-            json!({"workspace_id":result.workspace.id,"session_id":result.agent_run.state.session_id,"agent_run_id":result.agent_run.agent_run_id,"execution_accepted":true,"implementation_complete":false}),
+            json!({"workspace_id":result.workspace.id,"session_id":result.agent_run.state.session_id,"agent_run_id":result.agent_run.agent_run_id,"execution_accepted":true,"new_session":true,"native_conversation_inherited":false,"executor_config":executor_config,"provider_settings_verified":false,"implementation_complete":false}),
         )
     }
     async fn integration(
@@ -259,7 +338,7 @@ fn commit(value: &str) -> anyhow::Result<()> {
 }
 
 pub(super) fn tools() -> Vec<rmcp::model::Tool> {
-    let mut start=serde_json::to_value(definition::<StartArgs>("start_workspace","Start agreed Issue requirements in a new Worktree Workspace using the configured default executor profile. Pin the Issue revision and explicit repositories/branches. Review uses the Code path to investigate the Issue scope, report in conversation and stop; separate explicit instructions are required for product implementation and existing permissions still apply. Goal uses native execution_mode. Returns existing execution admission IDs, not completion; use the original request_id after disconnection.")).unwrap();
+    let mut start=serde_json::to_value(definition::<StartArgs>("start_workspace","Start agreed Issue requirements in a new Worktree Workspace using the configured default executor profile unless engine is explicit. Engine selection starts a new Session and native conversation. Pin the Issue revision and explicit repositories/branches. Review uses the Code path to investigate the Issue scope, report in conversation and stop; separate explicit instructions are required for product implementation and existing permissions still apply. Goal uses native execution_mode. Returns existing execution admission IDs, not completion; use the original request_id after disconnection.")).unwrap();
     start["annotations"] = json!({"readOnlyHint":false,"destructiveHint":true,"idempotentHint":true,"openWorldHint":true});
     start["_meta"] =
         json!({"securitySchemes":[{"type":"oauth2","scopes":["lvk:read","lvk:write"]}]});
@@ -269,6 +348,13 @@ pub(super) fn tools() -> Vec<rmcp::model::Tool> {
         json!({"securitySchemes":[{"type":"oauth2","scopes":["lvk:read","lvk:merge"]}]});
     vec![
         serde_json::from_value(start).unwrap(),
+        {
+            let mut tool = serde_json::to_value(definition::<StartSessionArgs>("start_session", "Start a new Session in the specified existing Workspace using its current code. Optional engine selects CODEX or CLAUDE_CODE; omitted uses configured defaults. Include purpose, decisions and remaining work in prompt. This starts a new native conversation; it does not migrate or continue another Session. Returns admission IDs, not completion. Reuse request_id after disconnection.")).unwrap();
+            tool["annotations"] = json!({"readOnlyHint":false,"destructiveHint":true,"idempotentHint":true,"openWorldHint":true});
+            tool["_meta"] =
+                json!({"securitySchemes":[{"type":"oauth2","scopes":["lvk:read","lvk:write"]}]});
+            serde_json::from_value(tool).unwrap()
+        },
         serde_json::from_value(merge).unwrap(),
         definition::<RepositoriesArgs>(
             "list_project_repositories",
@@ -292,9 +378,10 @@ pub(super) fn tools() -> Vec<rmcp::model::Tool> {
 async fn prepare_start(
     pool: &SqlitePool,
     args: &StartArgs,
-    mut executor: ExecutorConfig,
+    executor: ExecutorConfig,
     workspace_id: Uuid,
 ) -> anyhow::Result<CreateAndStartWorkspaceRequest> {
+    let mut executor = select_engine(executor, args.engine);
     ensure!(
         !args.repositories.is_empty() && args.repositories.len() <= 10,
         super::errors::rejection_with_message(
@@ -359,17 +446,21 @@ async fn prepare_start(
         .await?
         .map_err(|_| super::errors::rejection(Category::Unavailable))?;
     }
-    if args.execution_mode == Some(ExecutionMode::Review) {
+    if args.execution_mode.is_some() {
         ensure!(
             executor.executor == executors::executors::BaseCodingAgent::Codex,
             super::errors::rejection_with_message(
                 utils::mcp_error::Category::Validation,
-                "REVIEW execution mode requires CODEX"
+                "Explicit execution_mode requires CODEX; Claude Code does not support these modes"
             )
         );
     }
     if let Some(mode) = args.execution_mode {
         executor.execution_mode = Some(mode);
+        if !matches!(mode, ExecutionMode::Goal | ExecutionMode::PlanWithGoal) {
+            executor.goal_token_budget = None;
+            executor.goal_max_concurrent_agents = None;
+        }
     }
     if let Some(budget) = args.goal_token_budget {
         ensure!(
@@ -600,6 +691,28 @@ pub(super) async fn call(
     let owned = remote.clone();
     let actor = remote.principal_key(principal);
     let receipt = match name {
+        "start_session" => {
+            let args: StartSessionArgs = arguments(input.clone())?;
+            remote
+                .require_workspace(args.project_id, args.workspace_id)
+                .await?;
+            ensure!(
+                !args.prompt.trim().is_empty() && args.prompt.len() <= 256000,
+                super::errors::rejection_with_message(
+                    Category::Validation,
+                    "Provide a nonempty prompt of at most 256000 bytes"
+                )
+            );
+            remote.operations().submit_and_wait(actor,args.request_id,args.project_id,name.into(),input,json!({"workspace_id":args.workspace_id}),move|_|async move {
+                let issue = match owned.require_workspace(args.project_id,args.workspace_id).await { Ok(issue)=>issue,Err(error)=>return validation_error(error) };
+                let config = select_engine(launch.defaults().await, args.engine);
+                let url=owned.config.workspace_url(args.project_id,issue,args.workspace_id);
+                match launch.start_session(args.workspace_id,args.prompt,config).await {
+                    Ok(mut value)=>{value["url"]=json!(url);("succeeded",value)},
+                    Err(_)=>("uncertain",json!({"workspace_id":args.workspace_id,"url":url,"message":"Inspect Workspace Sessions and runs before any new start request; Session creation or execution may have completed"})),
+                }
+            }).await?
+        }
         "start_workspace" => {
             let args: StartArgs = arguments(input.clone())?;
             remote.require_issue(args.project_id, args.issue_id).await?;
@@ -661,4 +774,50 @@ pub(super) async fn call(
         _ => return Err(super::errors::rejection(Category::Validation)),
     };
     Ok(remote.receipt_value(receipt))
+}
+
+#[cfg(test)]
+mod engine_tests {
+    use super::*;
+
+    #[test]
+    fn omitted_or_same_engine_preserves_default_profile() {
+        let mut config = ExecutorConfig::new(executors::executors::BaseCodingAgent::Codex);
+        config.variant = Some("SAVED".into());
+        config.model_id = Some("saved-model".into());
+        for engine in [None, Some(Engine::Codex)] {
+            assert_eq!(
+                serde_json::to_value(select_engine(config.clone(), engine)).unwrap(),
+                serde_json::to_value(&config).unwrap()
+            );
+        }
+    }
+
+    #[test]
+    fn switching_engine_uses_new_provider_profile_without_foreign_overrides() {
+        let mut config = ExecutorConfig::new(executors::executors::BaseCodingAgent::Codex);
+        config.variant = Some("SAVED".into());
+        config.execution_mode = Some(ExecutionMode::Review);
+        config.model_id = Some("codex-model".into());
+        let selected = select_engine(config, Some(Engine::ClaudeCode));
+        assert_eq!(
+            serde_json::to_value(selected).unwrap(),
+            serde_json::to_value(ExecutorConfig::new(
+                executors::executors::BaseCodingAgent::ClaudeCode
+            ))
+            .unwrap()
+        );
+    }
+
+    #[test]
+    fn engine_contract_rejects_unknown_engines_and_existing_session_target() {
+        assert!(serde_json::from_value::<Engine>(json!("OTHER")).is_err());
+        assert!(
+            serde_json::from_value::<StartSessionArgs>(json!({
+                "project_id":Uuid::new_v4(), "workspace_id":Uuid::new_v4(),
+                "request_id":Uuid::new_v4(), "prompt":"handoff", "session_id":Uuid::new_v4()
+            }))
+            .is_err()
+        );
+    }
 }

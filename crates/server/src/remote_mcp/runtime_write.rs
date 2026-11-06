@@ -6,7 +6,7 @@ use anyhow::ensure;
 use async_trait::async_trait;
 use db::models::{session::Session, workspace::Workspace};
 use deployment::Deployment;
-use executors::runtime::AgentRunPortCommand;
+use executors::{profile::NextRunOverrides, runtime::AgentRunPortCommand};
 use schemars::JsonSchema;
 use serde::Deserialize;
 use serde_json::{Value, json};
@@ -45,6 +45,9 @@ struct ChangeArgs {
     prompt: String,
     #[serde(default)]
     attachment_ids: Vec<Uuid>,
+    /// Applies only to the next run. Omitted fields preserve saved settings; explicit action=reset removes that override. Null is invalid.
+    #[serde(default)]
+    overrides: NextRunOverrides,
 }
 #[derive(Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
@@ -59,10 +62,11 @@ struct AnswerArgs {
     #[schemars(length(min = 1, max = 32000))]
     answer: String,
 }
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 pub(super) enum Change {
     Steer,
-    Continue,
+    Continue(NextRunOverrides),
+    PreparedContinue(executors::profile::ExecutorConfig),
 }
 
 #[async_trait]
@@ -103,6 +107,10 @@ pub(super) trait RuntimeActions: Send + Sync {
         action: super::goals::Action,
         revision: String,
     ) -> Result<Value, ApiError>;
+
+    async fn prepare_change(&self, _target: &Target, kind: Change) -> Result<Change, ApiError> {
+        Ok(kind)
+    }
 
     async fn change(
         &self,
@@ -196,6 +204,48 @@ impl RuntimeActions for ExistingRuntime {
         super::goals::dispatch(&self.0, target, operation, action, revision).await
     }
 
+    async fn prepare_change(&self, target: &Target, kind: Change) -> Result<Change, ApiError> {
+        if let Change::Continue(overrides) = &kind {
+            if self
+                .0
+                .queued_message_service()
+                .has_queued(target.session_id)
+            {
+                return Err(ApiError::BadRequest(
+                    "Resume or clear the follow-up queue before changing next-run settings".into(),
+                ));
+            }
+            let pool = &self.0.db().pool;
+            let saved = sessions::executor_config::read_executor_config(pool, target.session_id)
+                .await?
+                .ok_or_else(|| {
+                    ApiError::Conflict("Stored Session configuration unavailable".into())
+                })?;
+            let workspace = Workspace::find_by_id(pool, target.workspace_id)
+                .await?
+                .ok_or_else(|| ApiError::Conflict("Workspace missing".into()))?;
+            let path = workspace
+                .container_ref
+                .as_deref()
+                .ok_or_else(|| ApiError::Conflict("Workspace path unavailable".into()))?;
+            let config = sessions::executor_config::apply_next_run_overrides(
+                &saved,
+                overrides,
+                std::path::Path::new(path),
+            )
+            .await?;
+            let session = Session::find_by_id(pool, target.session_id)
+                .await?
+                .ok_or_else(|| ApiError::Conflict("Session missing".into()))?;
+            sessions::validate_queued_follow_up_profile(pool, &session, &config, None)
+                .await.map_err(|_| ApiError::BadRequest(
+                    "Session provider/runtime profile or native_adopted fingerprint is fixed; use a new Session for this configuration change".into()
+                ))?;
+            return Ok(Change::PreparedContinue(config));
+        }
+        Ok(kind)
+    }
+
     async fn change(
         &self,
         target: Target,
@@ -223,18 +273,14 @@ impl RuntimeActions for ExistingRuntime {
                     json!({"agent_run_id":target.agent_run_id,"session_id":target.session_id,"command_id":operation,"instruction_accepted":true,"implementation_complete":false}),
                 )
             }
-            Change::Continue => {
+            Change::Continue(_) => Err(ApiError::BadRequest(
+                "Continuation settings were not prepared".into(),
+            )),
+            Change::PreparedContinue(executor_config) => {
                 let session = Session::find_by_id(pool, target.session_id)
                     .await?
                     .ok_or_else(|| ApiError::Conflict("Session missing".into()))?;
-                let executor_config =
-                    sessions::executor_config::read_executor_config(pool, session.id)
-                        .await?
-                        .ok_or_else(|| {
-                            ApiError::Conflict(
-                                "Stored Session executor configuration unavailable".into(),
-                            )
-                        })?;
+                let accepted_config = executor_config.clone();
                 let result = sessions::follow_up_checked(
                     self.0.clone(),
                     session,
@@ -252,7 +298,7 @@ impl RuntimeActions for ExistingRuntime {
                 .into_data()
                 .ok_or_else(|| ApiError::Conflict("Continuation receipt unavailable".into()))?;
                 Ok(
-                    json!({"agent_run_id":result.agent_run_id,"session_id":target.session_id,"execution_accepted":true,"implementation_complete":false}),
+                    json!({"agent_run_id":result.agent_run_id,"session_id":target.session_id,"execution_accepted":true,"implementation_complete":false,"conversation":"existing_session","executor_config":accepted_config,"provider_settings_verified":false}),
                 )
             }
         }
@@ -395,7 +441,7 @@ pub(super) fn tools() -> Vec<rmcp::model::Tool> {
         ),
         definition::<ChangeArgs>(
             "continue_execution",
-            "Continue the selected latest finished run in its existing Session using its saved executor configuration. Never redirects to another Workspace or silently restarts a running run.",
+            "Continue the selected latest finished run in the same Session/native conversation. overrides apply to the next run only; omitted fields retain saved values, action=reset removes an override, null is invalid. Engine changes require a new Session. Review reports and stops; Code selection grants no implementation/merge/publication permission. Never stops a running run or bypasses a queue.",
         ),
         definition::<AnswerArgs>(
             "answer_question",
@@ -404,6 +450,11 @@ pub(super) fn tools() -> Vec<rmcp::model::Tool> {
     ];
     for tool in &mut tools {
         let mut value = serde_json::to_value(&*tool).expect("tool schema");
+        if tool.name == "steer_execution"
+            && let Some(properties) = value["inputSchema"]["properties"].as_object_mut()
+        {
+            properties.remove("overrides");
+        }
         value["annotations"] = json!({"readOnlyHint":false,"destructiveHint":true,"idempotentHint":true,"openWorldHint":true});
         value["_meta"] =
             json!({"securitySchemes":[{"type":"oauth2","scopes":["lvk:read","lvk:write"]}]});
@@ -505,18 +556,42 @@ pub(super) async fn call(
             }
         }).await?
     } else {
+        ensure!(
+            name != "steer_execution" || input.get("overrides").is_none(),
+            super::errors::rejection_with_message(
+                Category::Validation,
+                "Steering accepts text only; continue a finished run to change settings"
+            )
+        );
         let args: ChangeArgs = arguments(input.clone())?;
         text(&args.prompt)?;
         let kind = match name {
             "steer_execution" => Change::Steer,
-            "continue_execution" => Change::Continue,
+            "continue_execution" => Change::Continue(args.overrides.clone()),
             _ => return Err(super::errors::rejection(Category::Validation)),
         };
+        ensure!(
+            !matches!(kind, Change::Steer) || args.overrides.is_empty(),
+            super::errors::rejection_with_message(
+                Category::Validation,
+                "Steering accepts text only; use continuation after the run finishes to change settings"
+            )
+        );
         let issue = remote
             .require_workspace(args.target.project_id, args.target.workspace_id)
             .await?;
         remote.operations().submit(actor,args.request_id,args.target.project_id,name.into(),input,json!({"workspace_id":args.target.workspace_id,"session_id":args.target.session_id,"agent_run_id":args.target.agent_run_id}),move |operation| async move {
-            if let Err(error)=validate_run(&owned.pool,&args.target,matches!(kind,Change::Continue)).await {return failure(error);}
+            if let Err(error)=validate_run(&owned.pool,&args.target,matches!(kind,Change::Continue(_))).await {return failure(error);}
+            let kind = match dispatch.prepare_change(&args.target, kind).await {
+                Ok(kind) => kind,
+                Err(error) => {
+                    let message = match &error {
+                        ApiError::BadRequest(message) => message.as_str(),
+                        _ => "Settings validation unavailable; inspect Session settings before retrying",
+                    };
+                    return ("failed",json!({"code":"configuration_rejected","message":message,"execution_accepted":false}));
+                }
+            };
             let url=owned.config.workspace_url(args.target.project_id,issue,args.target.workspace_id);
             let mut prompt=args.prompt;
             if !args.attachment_ids.is_empty() {
