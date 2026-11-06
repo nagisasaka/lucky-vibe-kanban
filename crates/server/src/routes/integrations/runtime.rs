@@ -10,13 +10,13 @@ use db::models::{
     execution_process::{ExecutionProcess, ExecutionProcessStatus},
     integration::{IntegrationRun, resource_key},
     repo::Repo,
+    repository_state::RepositoryMemoryStore,
     session::Session,
     workspace::Workspace,
 };
 use deployment::Deployment;
 use services::services::container::ContainerService;
 use sqlx::SqlitePool;
-use utils::repository_memory::RepositoryMemoryStore;
 use uuid::Uuid;
 
 use super::admission;
@@ -358,8 +358,13 @@ pub(super) async fn publish(
             .publication_request
             .as_ref()
             .context("Missing publication request")?;
-        let store = RepositoryMemoryStore::existing_for_repository(&repo.name, repo.id)?
-            .context("Missing setup journal store")?;
+        let store = RepositoryMemoryStore::existing_for_repository(
+            &deployment.db().pool,
+            &repo.name,
+            repo.id,
+        )
+        .await?
+        .context("Missing setup journal store")?;
         super::conversation::validate_prepared_wiki_proof(pool, &run, &store).await?;
         services::services::openwiki::setup::integration::restore(
             &store,
@@ -503,19 +508,26 @@ async fn finish(deployment: &DeploymentImpl, mut run: IntegrationRun) -> anyhow:
         "Post-processing requires confirmed Git publication"
     );
     // Card effects are independently retryable from Wiki receipt bookkeeping. They
-    // must not be undone or indefinitely reserved when a Wiki file is damaged.
+    // must not be undone or indefinitely reserved when Wiki bookkeeping fails.
     run = complete_cards(deployment, run).await?;
     let repo = Repo::find_by_id(pool, run.repository_id)
         .await?
         .context("Repository missing")?;
-    let wiki_result = super::conversation::record_wiki_result(&repo, &run);
-    run.payload.wiki_result = Some(match wiki_result {
-        Ok(result) => result,
-        Err(error) => format!("Wiki receipt pending: {error:#}"),
-    });
-    run.save(pool).await?;
+    let mut tx = pool.begin_with("BEGIN IMMEDIATE").await?;
+    let wiki_result = super::conversation::record_wiki_result(pool, &mut tx, &repo, &run).await;
     run.status = "succeeded".into();
-    run.save(pool).await?;
+    match wiki_result {
+        Ok(result) => {
+            run.payload.wiki_result = Some(result);
+            run.save_on(&mut tx).await?;
+            tx.commit().await?;
+        }
+        Err(error) => {
+            tx.rollback().await?;
+            run.payload.wiki_result = Some(format!("Wiki receipt pending: {error:#}"));
+            run.save(pool).await?;
+        }
+    }
     admission::release(pool, run.id).await?;
     if let Some(workspace) = Workspace::find_by_id(pool, run.workspace_id.unwrap()).await? {
         crate::routes::local_remote::issue_archive::archive_generated(deployment, workspace).await;

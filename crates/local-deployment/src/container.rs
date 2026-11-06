@@ -463,9 +463,12 @@ impl LocalContainerService {
             WorkspaceRepo::find_repos_for_workspace(&self.db.pool, session.workspace_id).await?;
         for repo in repos {
             let Some(store) =
-                utils::repository_memory::RepositoryMemoryStore::existing_for_repository(
-                    &repo.name, repo.id,
-                )?
+                db::models::repository_state::RepositoryMemoryStore::existing_for_repository(
+                    &self.db.pool,
+                    &repo.name,
+                    repo.id,
+                )
+                .await?
             else {
                 continue;
             };
@@ -473,10 +476,12 @@ impl LocalContainerService {
                 let (owned_store, owned_run) = (store.clone(), run.clone());
                 let include_manifest = self.config.read().await.manifest_in_commit_body;
                 tokio::task::spawn_blocking(move || {
-                    services::services::repository_memory::complete_coding_run(
-                        &owned_store,
-                        &owned_run,
-                        include_manifest,
+                    tokio::runtime::Handle::current().block_on(
+                        services::services::repository_memory::complete_coding_run(
+                            &owned_store,
+                            &owned_run,
+                            include_manifest,
+                        ),
                     )
                 })
                 .await??;

@@ -115,6 +115,23 @@ impl Workspace {
         run_id: Option<Uuid>,
         result: &WorkspaceExecutionResult,
     ) -> Result<(), sqlx::Error> {
+        Self::save_execution_result_on(
+            &mut *pool.acquire().await?,
+            workspace_id,
+            kind,
+            run_id,
+            result,
+        )
+        .await
+    }
+
+    pub async fn save_execution_result_on(
+        conn: &mut sqlx::SqliteConnection,
+        workspace_id: Uuid,
+        kind: &str,
+        run_id: Option<Uuid>,
+        result: &WorkspaceExecutionResult,
+    ) -> Result<(), sqlx::Error> {
         let changed = sqlx::query(
             "UPDATE workspaces SET execution_owner=json_set(execution_owner,'$.result',json(?)), updated_at=datetime('now','subsec')
              WHERE id=? AND usage='execution_only' AND json_extract(execution_owner,'$.kind')=?
@@ -124,7 +141,7 @@ impl Workspace {
         .bind(workspace_id)
         .bind(kind)
         .bind(run_id.map(|id| id.to_string()))
-        .execute(pool)
+        .execute(conn)
         .await?;
         if changed.rows_affected() != 1 {
             return Err(sqlx::Error::Protocol(

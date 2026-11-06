@@ -4,6 +4,7 @@ use db::models::{
     agent_runtime::AgentRunRecord,
     integration::IntegrationRun,
     repo::Repo,
+    repository_state::RepositoryMemoryStore,
     workspace::Workspace,
     workspace_usage::{INTEGRATION, OPENWIKI_BOOTSTRAP, OPENWIKI_SYNC, WorkspaceExecutionOwner},
 };
@@ -15,7 +16,7 @@ use executors::runtime::{
 use serde::Serialize;
 use services::services::agent_runtime::AgentRunCommandService;
 use ts_rs::TS;
-use utils::{repository_memory::RepositoryMemoryStore, response::ApiResponse};
+use utils::response::ApiResponse;
 use uuid::Uuid;
 
 use crate::{DeploymentImpl, error::ApiError};
@@ -120,7 +121,7 @@ pub async fn describe(
                 view.can_stop = !view.terminal;
             }
             if let Some(store) = owner_store(deployment, owner).await? {
-                let state = store.state()?;
+                let state = store.state().await?;
                 if state.maintenance_workspace_id == Some(workspace.id)
                     && state
                         .bootstrap
@@ -130,7 +131,7 @@ pub async fn describe(
                     let phase = state.bootstrap.as_ref().unwrap().phase;
                     view.stop_requested =
                         phase == utils::repository_memory::OpenWikiBootstrapPhase::CleaningUp;
-                    view.can_stop &= !view.stop_requested && store.publication(id)?.is_none();
+                    view.can_stop &= !view.stop_requested && store.publication(id).await?.is_none();
                     if !view.terminal {
                         view.status = format!("{phase:?}").to_lowercase();
                     }
@@ -144,7 +145,7 @@ pub async fn describe(
         }
         (OPENWIKI_SYNC, Some(id)) => {
             if let Some(store) = owner_store(deployment, owner).await? {
-                let state = store.state()?;
+                let state = store.state().await?;
                 if state.maintenance_workspace_id == Some(workspace.id)
                     && state.active_run_id == Some(id)
                 {
@@ -160,7 +161,7 @@ pub async fn describe(
                     view.stop_requested = run.status == AgentRunStatus::Cancelling;
                     view.can_stop = !run.status.is_terminal()
                         && !view.stop_requested
-                        && store.publication(id)?.is_none();
+                        && store.publication(id).await?.is_none();
                     view.status = if run.status.is_terminal() {
                         "finalizing".into()
                     } else {
@@ -195,8 +196,11 @@ async fn owner_store(
         return Ok(None);
     };
     Ok(RepositoryMemoryStore::read_only_configured_for_repository(
-        &repo.name, id,
-    )?)
+        &deployment.db().pool,
+        &repo.name,
+        id,
+    )
+    .await?)
 }
 
 pub async fn get(
@@ -267,14 +271,14 @@ pub async fn stop(deployment: &DeploymentImpl, workspace: &Workspace) -> Result<
                 .await?
                 .ok_or_else(|| error("Maintenance owner missing"))?;
             let _lock = store.try_lock().map_err(error)?;
-            let state = store.state()?;
+            let state = store.state().await?;
             if state.active_run_id != Some(id)
                 || state.maintenance_workspace_id != Some(workspace.id)
                 || state.bootstrap.is_some()
             {
                 return Err(error("Sync ownership changed; stop rejected"));
             }
-            if store.publication(id)?.is_some() {
+            if store.publication(id).await?.is_some() {
                 return Err(error(
                     "Wiki publication already started; its outcome must be reconciled, not undone",
                 ));

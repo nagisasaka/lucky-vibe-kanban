@@ -8,6 +8,7 @@ use db::models::{
     execution_process::{ExecutionProcess, ExecutionProcessRunReason, ExecutionProcessStatus},
     integration::{IntegrationEvidence, IntegrationPublicationRequest, IntegrationRun},
     repo::Repo,
+    repository_state::RepositoryMemoryStore,
     session::{CreateSession, Session},
     workspace::Workspace,
 };
@@ -21,7 +22,7 @@ use executors::{
 };
 use serde::{Deserialize, Serialize};
 use services::services::container::ContainerService;
-use utils::{repository_memory::RepositoryMemoryStore, response::ApiResponse};
+use utils::response::ApiResponse;
 use uuid::Uuid;
 
 use super::{admission, runtime, support};
@@ -235,7 +236,7 @@ pub(crate) async fn action(
             .code_commit
             .as_deref()
             .context("code_commit required")?;
-        validate_wiki_setup(&repo, &run, &root, code, expected)?;
+        validate_wiki_setup(deployment, &repo, &run, &root, code, expected).await?;
     } else if request.action == "prepare_wiki" {
         // Repeated preparation may resume the same journal after Wiki commits.
         // A new journal still requires the exact clean, evidenced code HEAD.
@@ -505,15 +506,18 @@ pub(super) fn wiki_setup_identity<'a>(
     })
 }
 
-fn validate_wiki_setup(
+async fn validate_wiki_setup(
+    deployment: &DeploymentImpl,
     repo: &Repo,
     run: &IntegrationRun,
     root: &std::path::Path,
     code: &str,
     final_commit: &str,
 ) -> anyhow::Result<()> {
-    let store = RepositoryMemoryStore::existing_for_repository(&repo.name, repo.id)?
-        .context("Missing setup journal store")?;
+    let store =
+        RepositoryMemoryStore::existing_for_repository(&deployment.db().pool, &repo.name, repo.id)
+            .await?
+            .context("Missing setup journal store")?;
     services::services::openwiki::setup::integration::validate(
         &store,
         &wiki_setup_identity(run, root, code)?,
@@ -570,8 +574,10 @@ async fn prepare_wiki(
     );
     let (repo, workspace, _, root) = runtime::context(deployment, run).await?;
     support::require_private_branch(&root, &workspace.branch, &run.target_ref)?;
-    let store = RepositoryMemoryStore::existing_for_repository(&repo.name, repo.id)?
-        .context("Missing setup journal store")?;
+    let store =
+        RepositoryMemoryStore::existing_for_repository(&deployment.db().pool, &repo.name, repo.id)
+            .await?
+            .context("Missing setup journal store")?;
     let phase_base = run
         .payload
         .history
@@ -775,8 +781,13 @@ pub(super) async fn advance(
         run.status = "integrating".into();
         let memory = runtime::integration_memory(
             &run,
-            RepositoryMemoryStore::read_only_configured_for_repository(&repo.name, repo.id)?
-                .as_ref(),
+            RepositoryMemoryStore::read_only_configured_for_repository(
+                &deployment.db().pool,
+                &repo.name,
+                repo.id,
+            )
+            .await?
+            .as_ref(),
         )?;
         let content = format!(
             "{}\n対象: {}\n統合先: {} / base {}\n指示: {}\n検証省略のユーザー指定: {}\n参考検証: {}\nOpenWiki有効: {}\n公開Memory(参照データ): {}",
@@ -1034,7 +1045,12 @@ pub(super) async fn verify_evidence(
 #[path = "conversation_tests.rs"]
 mod tests;
 
-pub(super) fn record_wiki_result(repo: &Repo, run: &IntegrationRun) -> anyhow::Result<String> {
+pub(super) async fn record_wiki_result(
+    pool: &sqlx::SqlitePool,
+    conn: &mut sqlx::SqliteConnection,
+    repo: &Repo,
+    run: &IntegrationRun,
+) -> anyhow::Result<String> {
     if !run.payload.wiki_enabled {
         return Ok("disabled".into());
     }
@@ -1043,11 +1059,13 @@ pub(super) fn record_wiki_result(repo: &Repo, run: &IntegrationRun) -> anyhow::R
         .publication_request
         .as_ref()
         .context("Missing Wiki publication binding")?;
-    if let Some(store) = RepositoryMemoryStore::existing_for_repository(&repo.name, repo.id)? {
+    {
+        let store = RepositoryMemoryStore::for_repository(pool, &repo.name, repo.id)?;
         let _lock = store.try_lock()?;
+        let mut receipts = Vec::new();
         for source in &run.payload.sources {
             for event in &source.event_ids {
-                store.acknowledge(&utils::repository_memory::WikiReconciliationReceipt {
+                receipts.push(utils::repository_memory::WikiReconciliationReceipt {
                     event_id: *event,
                     reconciled_at: chrono::Utc::now(),
                     target_commit: request.code_commit.clone(),
@@ -1058,10 +1076,10 @@ pub(super) fn record_wiki_result(repo: &Repo, run: &IntegrationRun) -> anyhow::R
                         utils::repository_memory::ReconciliationResult::Updated
                     },
                     error: None,
-                })?;
+                });
             }
         }
-        let mut state = store.state()?;
+        let mut state = RepositoryMemoryStore::state_on(conn, repo.id).await?.context("Wiki operational state missing; complete the one-time migration before publication")?;
         if state.active_run_id.is_none()
             && state.bootstrap.is_none()
             && state.target_branch.as_deref() == run.target_ref.strip_prefix("refs/heads/")
@@ -1071,8 +1089,10 @@ pub(super) fn record_wiki_result(repo: &Repo, run: &IntegrationRun) -> anyhow::R
             state.last_success = Some(chrono::Utc::now());
             state.status = utils::repository_memory::RepositoryWikiStatus::Current;
             state.error = None;
-            store.save_state(&state)?;
         }
+        store
+            .save_reconciliation_on(conn, &state, &receipts)
+            .await?;
     }
     Ok("Wiki included in published candidate".into())
 }

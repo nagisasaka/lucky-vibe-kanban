@@ -4,6 +4,7 @@ use anyhow::{Context, ensure};
 use db::models::{
     integration::{IntegrationPayload, IntegrationRun, IntegrationSelection, IntegrationSource},
     repo::Repo,
+    repository_state::RepositoryMemoryStore,
     workspace::Workspace,
     workspace_repo::WorkspaceRepo,
 };
@@ -15,7 +16,6 @@ use executors::{
 };
 use services::services::container::ContainerService;
 use sqlx::{Row, SqlitePool};
-use utils::repository_memory::RepositoryMemoryStore;
 use uuid::Uuid;
 
 use super::CreateIntegrationRequest;
@@ -96,8 +96,12 @@ async fn inspect_source(
     // Workspaces and other repositories are not part of this operation.
     let mut event_ids = Vec::new();
     if inspect_memory
-        && let Some(store) =
-            RepositoryMemoryStore::read_only_configured_for_repository(&repo.name, repo.id)?
+        && let Some(store) = RepositoryMemoryStore::read_only_configured_for_repository(
+            &deployment.db().pool,
+            &repo.name,
+            repo.id,
+        )
+        .await?
     {
         let mut after = None;
         loop {
@@ -288,11 +292,16 @@ pub(super) async fn submit_with_expected_target(
         super::support::validation_suggestions(&repo.path, &payload.observed_target)
             .unwrap_or_default();
     payload.instructions = request.instructions.clone().unwrap_or_default();
-    payload.wiki_enabled =
-        RepositoryMemoryStore::read_only_configured_for_repository(&repo.name, repo.id)?
-            .map(|store| store.state().map(|state| state.enabled))
-            .transpose()?
-            .unwrap_or(false);
+    payload.wiki_enabled = match RepositoryMemoryStore::read_only_configured_for_repository(
+        &deployment.db().pool,
+        &repo.name,
+        repo.id,
+    )
+    .await?
+    {
+        Some(store) => store.state().await?.enabled,
+        None => false,
+    };
     let run = IntegrationRun {
         id,
         request_key: key,

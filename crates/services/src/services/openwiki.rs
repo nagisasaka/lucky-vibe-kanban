@@ -314,9 +314,9 @@ pub struct WikiPublicationRequest<'a> {
 /// Caller has verified successful root-host OpenWiki finalisation. A durable
 /// publication intent precedes the source-branch mutation. Replaying it after
 /// Git succeeded but receipts/state failed never creates another Wiki commit.
-pub fn publish_validated_wiki(
+pub async fn publish_validated_wiki(
     git: &git::GitService,
-    store: &utils::repository_memory::RepositoryMemoryStore,
+    store: &db::models::repository_state::RepositoryMemoryStore,
     request: &WikiPublicationRequest<'_>,
 ) -> anyhow::Result<(Option<String>, bool)> {
     let _lock = store.try_integration_lock()?;
@@ -325,7 +325,7 @@ pub fn publish_validated_wiki(
     let marker = format!("LVK-Wiki-Publication: {}", request.run_id);
     let message =
         format!("docs(openwiki): reconcile repository memory\n\nSource: {source}\n{marker}");
-    let publication = if let Some(publication) = store.publication(request.run_id)? {
+    let publication = if let Some(publication) = store.publication(request.run_id).await? {
         if publication.source_commit != source || publication.target_branch != target {
             anyhow::bail!("Wiki publication checkpoint identity mismatch");
         }
@@ -358,7 +358,7 @@ pub fn publish_validated_wiki(
             no_op: maintenance_commit.is_none(),
             maintenance_commit,
         };
-        store.save_publication(&publication)?;
+        store.save_publication(&publication).await?;
         publication
     };
     let Some(maintenance) = &publication.maintenance_commit else {
@@ -428,7 +428,7 @@ mod tests {
     fn publication_fixture(
         root: &Path,
     ) -> (
-        utils::repository_memory::RepositoryMemoryStore,
+        db::models::repository_state::RepositoryMemoryStore,
         String,
         PathBuf,
     ) {
@@ -461,14 +461,15 @@ mod tests {
         let persistent = root.parent().unwrap().join("persistent");
         std::fs::create_dir(&persistent).unwrap();
         (
-            utils::repository_memory::RepositoryMemoryStore::at_persistent(&persistent).unwrap(),
+            db::models::repository_state::RepositoryMemoryStore::at_persistent(&persistent)
+                .unwrap(),
             source,
             maintenance,
         )
     }
 
-    #[test]
-    fn publication_recovers_after_git_commit_before_receipts_and_is_idempotent() {
+    #[tokio::test]
+    async fn publication_recovers_after_git_commit_before_receipts_and_is_idempotent() {
         let temp = tempfile::tempdir().unwrap();
         let root = temp.path().join("repo");
         let (store, source, maintenance) = publication_fixture(&root);
@@ -493,7 +494,9 @@ mod tests {
             run_id: uuid::Uuid::new_v4(),
         };
         let git = git::GitService::new();
-        let first = publish_validated_wiki(&git, &store, &request).unwrap();
+        let first = publish_validated_wiki(&git, &store, &request)
+            .await
+            .unwrap();
         assert!(!first.1);
         assert!(has_canonical_wiki(&root, first.0.as_ref().unwrap()).unwrap());
         assert!(!root.join(".github/workflows/openwiki-update.yml").exists());
@@ -503,7 +506,9 @@ mod tests {
         command(&root, &["commit", "-m", "later source"]);
         let later = command(&root, &["rev-parse", "HEAD"]);
         assert_eq!(
-            publish_validated_wiki(&git, &store, &request).unwrap(),
+            publish_validated_wiki(&git, &store, &request)
+                .await
+                .unwrap(),
             first
         );
         assert_eq!(command(&root, &["rev-parse", "HEAD"]), later);
@@ -513,8 +518,8 @@ mod tests {
         );
     }
 
-    #[test]
-    fn existing_wiki_detection_preserves_partial_imports_and_ignores_dirty_files() {
+    #[tokio::test]
+    async fn existing_wiki_detection_preserves_partial_imports_and_ignores_dirty_files() {
         let temp = tempfile::tempdir().unwrap();
         let root = temp.path().join("repo");
         let (_, source, _) = publication_fixture(&root);
@@ -532,8 +537,8 @@ mod tests {
         assert!(has_canonical_wiki(&root, &source).unwrap());
     }
 
-    #[test]
-    fn noop_is_durable_and_source_drift_blocks_new_publication() {
+    #[tokio::test]
+    async fn noop_is_durable_and_source_drift_blocks_new_publication() {
         let temp = tempfile::tempdir().unwrap();
         let root = temp.path().join("repo");
         let (store, source, maintenance) = publication_fixture(&root);
@@ -547,24 +552,35 @@ mod tests {
         };
         let git = git::GitService::new();
         assert_eq!(
-            publish_validated_wiki(&git, &store, &request).unwrap(),
+            publish_validated_wiki(&git, &store, &request)
+                .await
+                .unwrap(),
             (Some(source.clone()), true)
         );
         std::fs::write(root.join("source.txt"), "advanced source").unwrap();
         command(&root, &["commit", "-am", "advance"]);
-        assert!(publish_validated_wiki(&git, &store, &request).unwrap().1);
+        assert!(
+            publish_validated_wiki(&git, &store, &request)
+                .await
+                .unwrap()
+                .1
+        );
         request.run_id = uuid::Uuid::new_v4();
         std::fs::write(maintenance.join("openwiki/index.md"), "obsolete draft").unwrap();
-        assert!(publish_validated_wiki(&git, &store, &request).is_err());
-        assert!(store.publication(request.run_id).unwrap().is_none());
+        assert!(
+            publish_validated_wiki(&git, &store, &request)
+                .await
+                .is_err()
+        );
+        assert!(store.publication(request.run_id).await.unwrap().is_none());
         assert_eq!(
             std::fs::read_to_string(root.join("openwiki/index.md")).unwrap(),
             "initial wiki"
         );
     }
 
-    #[test]
-    fn publication_rejects_renaming_authoritative_source_into_the_wiki() {
+    #[tokio::test]
+    async fn publication_rejects_renaming_authoritative_source_into_the_wiki() {
         let temp = tempfile::tempdir().unwrap();
         let root = temp.path().join("repo");
         let (_, source, maintenance) = publication_fixture(&root);
@@ -576,8 +592,8 @@ mod tests {
         assert!(publication_paths(&git::GitService::new(), &maintenance, &source).is_err());
     }
 
-    #[test]
-    fn publication_rejects_source_and_user_instruction_changes() {
+    #[tokio::test]
+    async fn publication_rejects_source_and_user_instruction_changes() {
         let temp = tempfile::tempdir().unwrap();
         let root = temp.path().join("repo");
         let (_, source, maintenance) = publication_fixture(&root);

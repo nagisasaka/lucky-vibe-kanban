@@ -1,5 +1,6 @@
 //! Repository memory contracts shared by the host, executors and API.
-//! Storage lives below the existing repository-scoped persistent shared folder.
+//! Semantic artifacts and Git/filesystem journals use the existing persistent
+//! shared folder. Wiki/integration operational state lives in the instance DB.
 
 use std::{
     fs::{self, File, OpenOptions},
@@ -580,6 +581,25 @@ For source changes, write a JSON semantic draft at draft_path before finalising.
     }
 }
 
+pub struct LegacyOperationalState {
+    pub state: RepositoryMemoryState,
+    pub integrations: Vec<MemoryIntegration>,
+    pub publications: Vec<WikiPublication>,
+    pub receipts: Vec<WikiReconciliationReceipt>,
+}
+
+pub fn validate_publication(value: &WikiPublication) -> io::Result<()> {
+    if !commit_id(&value.source_commit)
+        || value
+            .maintenance_commit
+            .as_ref()
+            .is_some_and(|id| !commit_id(id))
+    {
+        return Err(invalid("Invalid Wiki publication Git identity"));
+    }
+    Ok(())
+}
+
 #[derive(Debug, Clone)]
 pub struct RepositoryMemoryStore {
     root: PathBuf,
@@ -600,27 +620,6 @@ impl Drop for RepositoryMemoryLock {
 }
 
 impl RepositoryMemoryStore {
-    /// Open configured storage for writing, preparing directories introduced by
-    /// newer versions. Pure observers use `read_only_configured_for_repository`.
-    pub fn existing_for_repository(repo_name: &str, repo_id: Uuid) -> io::Result<Option<Self>> {
-        Self::read_only_configured_for_repository(repo_name, repo_id)?
-            .map(|_| Self::for_repository(repo_name, repo_id))
-            .transpose()
-    }
-
-    /// Preserve the configured/unconfigured distinction without provisioning.
-    pub fn read_only_configured_for_repository(
-        repo_name: &str,
-        repo_id: Uuid,
-    ) -> io::Result<Option<Self>> {
-        let persistent = crate::path::shared_resources_dir(repo_name, repo_id).join("persistent");
-        let state = persistent.join("knowledge/state.json");
-        if !state.try_exists()? {
-            return Ok(None);
-        }
-        Self::read_only_at_persistent(&persistent)
-    }
-
     pub fn read_only_at_persistent(persistent: &Path) -> io::Result<Option<Self>> {
         let root = persistent.join("knowledge");
         reject_symlinks(&root)?;
@@ -652,13 +651,10 @@ impl RepositoryMemoryStore {
         real_directory(&store.root)?;
         for directory in [
             "events",
-            "receipts",
             "drafts",
             "runs",
             "completed-runs",
             "completion-errors",
-            "integrations",
-            "publications",
             "source-publications",
             "wiki-setups",
             "integration-wiki-setups",
@@ -1021,119 +1017,110 @@ impl RepositoryMemoryStore {
         Ok(event)
     }
 
-    pub fn integrations(&self) -> io::Result<Vec<MemoryIntegration>> {
-        self.list_json("integrations")
-    }
-
-    pub fn save_integration(&self, integration: &MemoryIntegration) -> io::Result<()> {
-        self.publish(
-            &self
-                .root
-                .join("integrations")
-                .join(format!("{}.json", integration.id)),
-            integration,
-            true,
-        )
-    }
-
-    pub fn publication(&self, run_id: Uuid) -> io::Result<Option<WikiPublication>> {
-        let record: Option<WikiPublication> = self.read_json(
-            &self
-                .root
-                .join("publications")
-                .join(format!("{run_id}.json")),
-        )?;
-        if record
-            .as_ref()
-            .is_some_and(|record| record.run_id != run_id)
-        {
-            return Err(invalid("Publication identity does not match its file"));
+    pub fn has_legacy_operational_state(&self) -> io::Result<bool> {
+        for entry in ["state.json", "integrations", "publications", "receipts"] {
+            if self.root.join(entry).try_exists()? {
+                return Ok(true);
+            }
         }
-        Ok(record)
+        Ok(false)
     }
 
-    pub fn save_publication(&self, publication: &WikiPublication) -> io::Result<()> {
-        if !commit_id(&publication.source_commit)
-            || publication
-                .maintenance_commit
-                .as_ref()
-                .is_some_and(|id| !commit_id(id))
-        {
-            return Err(invalid("Invalid Wiki publication Git identity"));
+    /// Read only during the explicit one-time offline migration.
+    pub fn legacy_operational_state(&self) -> io::Result<LegacyOperationalState> {
+        let state: RepositoryMemoryState = self
+            .read_json(&self.root.join("state.json"))
+            .map_err(|error| invalid(format!("Legacy state.json: {error}")))?
+            .ok_or_else(|| invalid("Legacy state.json is missing"))?;
+        if state.version != 1 {
+            return Err(invalid("Unsupported repository state version"));
         }
-        self.publish(
-            &self
-                .root
-                .join("publications")
-                .join(format!("{}.json", publication.run_id)),
-            publication,
-            false,
-        )
-    }
-
-    pub fn receipt(&self, event_id: Uuid) -> io::Result<Option<WikiReconciliationReceipt>> {
-        let receipt: Option<WikiReconciliationReceipt> =
-            self.read_json(&self.root.join("receipts").join(format!("{event_id}.json")))?;
-        if receipt
-            .as_ref()
-            .is_some_and(|receipt| receipt.event_id != event_id)
-        {
-            return Err(invalid("Receipt identity does not match its file"));
+        let integrations: Vec<MemoryIntegration> = self.legacy_records("integrations", "id")?;
+        let publications: Vec<WikiPublication> = self.legacy_records("publications", "run_id")?;
+        let receipts: Vec<WikiReconciliationReceipt> =
+            self.legacy_records("receipts", "event_id")?;
+        for value in &publications {
+            validate_publication(value).map_err(|error| {
+                invalid(format!("Legacy publication {}: {error}", value.run_id))
+            })?;
         }
-        Ok(receipt)
+        for value in &receipts {
+            self.validate_receipt(value)
+                .map_err(|error| invalid(format!("Legacy receipt {}: {error}", value.event_id)))?;
+        }
+        for value in &integrations {
+            if !commit_id(&value.before_commit)
+                || value
+                    .integrated_commit
+                    .as_ref()
+                    .is_some_and(|id| !commit_id(id))
+            {
+                return Err(invalid(format!(
+                    "Invalid Git identity in legacy integration {}",
+                    value.id
+                )));
+            }
+        }
+        Ok(LegacyOperationalState {
+            state,
+            integrations,
+            publications,
+            receipts,
+        })
     }
 
-    pub fn acknowledge(&self, receipt: &WikiReconciliationReceipt) -> io::Result<()> {
-        if !commit_id(&receipt.target_commit)
-            || receipt
-                .wiki_commit
-                .as_ref()
-                .is_some_and(|id| !commit_id(id))
+    fn legacy_records<T: DeserializeOwned>(
+        &self,
+        directory: &str,
+        key: &str,
+    ) -> io::Result<Vec<T>> {
+        let dir = self.root.join(directory);
+        reject_symlinks(&dir)?;
+        if !dir.try_exists()? {
+            return Ok(Vec::new());
+        }
+        let mut records = Vec::new();
+        for entry in fs::read_dir(dir)? {
+            let path = entry?.path();
+            if path.extension().is_none_or(|ext| ext != "json") {
+                return Err(invalid(format!(
+                    "Unexpected legacy file: {}",
+                    path.display()
+                )));
+            }
+            let stem = path
+                .file_stem()
+                .and_then(|v| v.to_str())
+                .ok_or_else(|| invalid("Invalid legacy filename"))?;
+            Uuid::parse_str(stem).map_err(invalid)?;
+            let value: serde_json::Value = self
+                .read_json(&path)
+                .map_err(|error| invalid(format!("{}: {error}", path.display())))?
+                .ok_or_else(|| invalid(format!("Legacy record disappeared: {}", path.display())))?;
+            if value.get(key).and_then(|v| v.as_str()) != Some(stem) {
+                return Err(invalid(format!(
+                    "Legacy record identity mismatch: {}",
+                    path.display()
+                )));
+            }
+            records.push(
+                serde_json::from_value(value)
+                    .map_err(|error| invalid(format!("{}: {error}", path.display())))?,
+            );
+        }
+        Ok(records)
+    }
+
+    pub fn validate_receipt(&self, value: &WikiReconciliationReceipt) -> io::Result<()> {
+        if !commit_id(&value.target_commit)
+            || value.wiki_commit.as_ref().is_some_and(|id| !commit_id(id))
         {
             return Err(invalid("Receipt contains invalid Git identity"));
         }
-        if self
-            .read_optional(
-                &self
-                    .root
-                    .join("events")
-                    .join(format!("{}.json", receipt.event_id)),
-            )?
-            .is_none()
-        {
+        if self.event(value.event_id)?.is_none() {
             return Err(invalid("Cannot acknowledge an unknown semantic event"));
         }
-        self.publish(
-            &self
-                .root
-                .join("receipts")
-                .join(format!("{}.json", receipt.event_id)),
-            receipt,
-            true,
-        )
-    }
-
-    /// Initial defaults never overwrite a previously saved opt-out.
-    pub fn initialize_defaults(&self, target_branch: Option<String>) -> io::Result<()> {
-        let _lock = self.try_lock()?;
-        if !self.root.join("state.json").try_exists()? {
-            self.save_state(&RepositoryMemoryState::enabled_defaults(target_branch))?;
-        }
         Ok(())
-    }
-    pub fn state(&self) -> io::Result<RepositoryMemoryState> {
-        let state: RepositoryMemoryState = self
-            .read_json(&self.root.join("state.json"))?
-            .unwrap_or_default();
-        if state.version != 1 {
-            return Err(invalid("Unsupported repository memory version"));
-        }
-        Ok(state)
-    }
-
-    /// Call only while holding the repository lock. Event publication needs no lock.
-    pub fn save_state(&self, state: &RepositoryMemoryState) -> io::Result<()> {
-        self.publish(&self.root.join("state.json"), state, true)
     }
 
     /// OS lock, released on process death. Durable active_run_id must also be
@@ -1329,10 +1316,16 @@ mod tests {
         let store = RepositoryMemoryStore::read_only_at_persistent(temp.path())
             .unwrap()
             .unwrap();
-        assert!(store.state().unwrap().enabled);
+        assert!(store.legacy_operational_state().unwrap().state.enabled);
         assert!(store.coding_errors().unwrap().is_empty());
         assert!(store.runs().unwrap().is_empty());
-        assert!(store.integrations().unwrap().is_empty());
+        assert!(
+            store
+                .legacy_operational_state()
+                .unwrap()
+                .integrations
+                .is_empty()
+        );
         assert!(store.events().unwrap().is_empty());
         assert!(
             store
@@ -1407,27 +1400,6 @@ mod tests {
             state.derived_status(true, false, true),
             RepositoryWikiStatus::Stale
         );
-    }
-
-    #[test]
-    fn new_repository_memory_is_enabled_without_starting_maintenance_and_preserves_opt_out() {
-        let temp = tempfile::tempdir().unwrap();
-        let store = RepositoryMemoryStore::at_persistent(temp.path()).unwrap();
-        store.initialize_defaults(Some("main".into())).unwrap();
-        let state = store.state().unwrap();
-        assert!(state.enabled);
-        assert_eq!(state.target_branch.as_deref(), Some("main"));
-        assert!(state.active_run_id.is_none());
-        assert!(state.last_success.is_none());
-        let opted_out = RepositoryMemoryState {
-            target_branch: Some("custom".into()),
-            ..Default::default()
-        };
-        store.save_state(&opted_out).unwrap();
-        store.initialize_defaults(Some("main".into())).unwrap();
-        let state = store.state().unwrap();
-        assert!(!state.enabled);
-        assert_eq!(state.target_branch.as_deref(), Some("custom"));
     }
 
     #[test]
@@ -1734,28 +1706,7 @@ mod tests {
     }
 
     #[test]
-    fn failed_receipts_remain_retryable_and_current_requires_evidence() {
-        let temp = tempfile::tempdir().unwrap();
-        let store = RepositoryMemoryStore::at_persistent(temp.path()).unwrap();
-        let a = event();
-        store.publish_event(&a).unwrap();
-        let mut receipt = WikiReconciliationReceipt {
-            event_id: a.event_id,
-            reconciled_at: Utc::now(),
-            target_commit: a.source_commit,
-            wiki_commit: None,
-            result: ReconciliationResult::Failed,
-            error: Some("provider unavailable".into()),
-        };
-        store.acknowledge(&receipt).unwrap();
-        assert_eq!(
-            store.receipt(a.event_id).unwrap().unwrap().result,
-            ReconciliationResult::Failed
-        );
-        receipt.result = ReconciliationResult::NoOp;
-        receipt.error = None;
-        store.acknowledge(&receipt).unwrap();
-        assert_eq!(store.events().unwrap().len(), 1);
+    fn current_requires_successful_reconciliation() {
         let mut state = RepositoryMemoryState {
             enabled: true,
             status: RepositoryWikiStatus::Current,

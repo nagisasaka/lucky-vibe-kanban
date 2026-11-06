@@ -886,17 +886,22 @@ impl LocalAgentRunPort {
                     .map_err(|error| AgentRunPortError::Rejected(error.to_string()))?,
             );
             if !workspace.is_execution_only() {
-                workspace_manager::shared_resources::ensure_repository_memory(repo)
+                workspace_manager::shared_resources::ensure_repository_memory(&self.db.pool, repo)
+                    .await
                     .map_err(|error| AgentRunPortError::Rejected(error.to_string()))?;
             }
             if let Some(store) =
-                utils::repository_memory::RepositoryMemoryStore::existing_for_repository(
-                    &repo.name, repo.id,
+                db::models::repository_state::RepositoryMemoryStore::existing_for_repository(
+                    &self.db.pool,
+                    &repo.name,
+                    repo.id,
                 )
+                .await
                 .map_err(|error| AgentRunPortError::Rejected(error.to_string()))?
             {
                 let state = store
                     .state()
+                    .await
                     .map_err(|error| AgentRunPortError::Rejected(error.to_string()))?;
                 if workspace.is_execution_only()
                     && state.maintenance_workspace_id == Some(workspace.id)
@@ -976,6 +981,7 @@ impl LocalAgentRunPort {
                 && let Some(membership) = membership
             {
                 let context = services::services::repository_memory::begin_coding_run(
+                    &self.db.pool,
                     repo,
                     workspace,
                     request.agent_run_id,
@@ -983,6 +989,7 @@ impl LocalAgentRunPort {
                     &membership.target_branch,
                     source_completion_allowed,
                 )
+                .await
                 .map_err(|error| {
                     AgentRunPortError::Rejected(format!("Repository memory: {error:#}"))
                 })?;

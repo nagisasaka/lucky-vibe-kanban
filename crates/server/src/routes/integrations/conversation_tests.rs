@@ -1,6 +1,9 @@
 //! Isolated real Git/SQLite/managed-process hand-off. The provider is reserved,
 //! never launched. Requires a task-owned fresh LVK_INSTANCE_DIR.
-use db::models::integration::{IntegrationPayload, IntegrationSelection, IntegrationSource};
+use db::models::{
+    integration::{IntegrationPayload, IntegrationSelection, IntegrationSource},
+    repository_state::RepositoryMemoryStore,
+};
 use executors::{executors::BaseCodingAgent, profile::ExecutorConfig};
 
 use super::*;
@@ -235,8 +238,8 @@ async fn exercise(deployment: &DeploymentImpl, instance: &std::path::Path) -> an
             let persistent =
                 utils::path::shared_resources_dir(&repo.name, repo.id).join("persistent");
             std::fs::create_dir_all(&persistent)?;
-            let store = RepositoryMemoryStore::at_persistent(&persistent)?;
-            store.save_state(&store.state()?)?;
+            let store = RepositoryMemoryStore::for_repository(pool, &repo.name, repo.id)?;
+            store.save_state(&store.state().await?).await?;
             if mode == "wiki-before-journal" {
                 record_wiki_audit(
                     pool,
@@ -413,8 +416,13 @@ async fn exercise(deployment: &DeploymentImpl, instance: &std::path::Path) -> an
                 sqlx::query("DROP TRIGGER fixture_intent_failure")
                     .execute(pool)
                     .await?;
-                let store =
-                    RepositoryMemoryStore::existing_for_repository(&repo.name, repo.id)?.unwrap();
+                let store = RepositoryMemoryStore::existing_for_repository(
+                    &deployment.db().pool,
+                    &repo.name,
+                    repo.id,
+                )
+                .await?
+                .unwrap();
                 let restored = store.integration_wiki_setup(id)?.unwrap();
                 ensure!(
                     restored.checkpoint.phase == utils::repository_memory::WikiSetupPhase::Restored
@@ -526,8 +534,13 @@ async fn exercise(deployment: &DeploymentImpl, instance: &std::path::Path) -> an
             action(deployment, continued_prepare.clone()).await?;
             action(deployment, continued_prepare).await?;
             if restored_resume {
-                let store =
-                    RepositoryMemoryStore::existing_for_repository(&repo.name, repo.id)?.unwrap();
+                let store = RepositoryMemoryStore::existing_for_repository(
+                    &deployment.db().pool,
+                    &repo.name,
+                    repo.id,
+                )
+                .await?
+                .unwrap();
                 let reopened = store.integration_wiki_setup(id)?.unwrap();
                 ensure!(
                     reopened.checkpoint.phase == utils::repository_memory::WikiSetupPhase::Prepared
@@ -611,8 +624,13 @@ async fn exercise(deployment: &DeploymentImpl, instance: &std::path::Path) -> an
             )
             .await?;
             if mode == "wiki-tampered-journal" {
-                let store =
-                    RepositoryMemoryStore::existing_for_repository(&repo.name, repo.id)?.unwrap();
+                let store = RepositoryMemoryStore::existing_for_repository(
+                    &deployment.db().pool,
+                    &repo.name,
+                    repo.id,
+                )
+                .await?
+                .unwrap();
                 let mut journal = store.integration_wiki_setup(id)?.unwrap();
                 journal.prepared_at = chrono::Utc::now() + chrono::Duration::seconds(1);
                 store.save_integration_wiki_setup(&journal)?;
@@ -678,8 +696,13 @@ async fn exercise(deployment: &DeploymentImpl, instance: &std::path::Path) -> an
                 ensure!(
                     std::fs::read_to_string(checkout.join("AGENTS.md"))?.contains("OPENWIKI:START")
                 );
-                let store =
-                    RepositoryMemoryStore::existing_for_repository(&repo.name, repo.id)?.unwrap();
+                let store = RepositoryMemoryStore::existing_for_repository(
+                    &deployment.db().pool,
+                    &repo.name,
+                    repo.id,
+                )
+                .await?
+                .unwrap();
                 ensure!(
                     store.integration_wiki_setup(id)?.unwrap().checkpoint.phase
                         == utils::repository_memory::WikiSetupPhase::Prepared

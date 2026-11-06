@@ -9,13 +9,14 @@ use std::{
 use anyhow::{Context, ensure};
 use db::models::{
     repo::Repo,
+    repository_state::RepositoryMemoryStore,
     workspace::Workspace,
     workspace_repo::WorkspaceRepo,
     workspace_usage::{INTEGRATION, OPENWIKI_BOOTSTRAP, OPENWIKI_SYNC, WorkspaceExecutionOwner},
 };
 use executors::runtime::AgentRunRequestEnvelope;
 use sqlx::{SqlitePool, types::Json};
-use utils::repository_memory::{RepositoryMemoryStore, RepositoryWikiStatus};
+use utils::repository_memory::RepositoryWikiStatus;
 use uuid::Uuid;
 
 mod lifecycle;
@@ -55,8 +56,10 @@ pub async fn backfill(pool: &SqlitePool) -> anyhow::Result<()> {
             .context("Workspace disappeared during usage backfill")?;
         for repo in WorkspaceRepo::find_repos_for_workspace(pool, id).await? {
             let store = match RepositoryMemoryStore::read_only_configured_for_repository(
-                &repo.name, repo.id,
-            ) {
+                pool, &repo.name, repo.id,
+            )
+            .await
+            {
                 Ok(Some(store)) => store,
                 Ok(None) => continue,
                 Err(error) => {
@@ -205,10 +208,12 @@ pub async fn validate_agent_owner(
             let repo = Repo::find_by_id(pool, repo_id)
                 .await?
                 .context("Execution repository missing")?;
-            let store =
-                RepositoryMemoryStore::read_only_configured_for_repository(&repo.name, repo.id)?
-                    .context("Maintenance owner missing")?;
-            let state = store.state()?;
+            let store = RepositoryMemoryStore::read_only_configured_for_repository(
+                pool, &repo.name, repo.id,
+            )
+            .await?
+            .context("Maintenance owner missing")?;
+            let state = store.state().await?;
             ensure!(
                 state.maintenance_workspace_id == Some(workspace.id)
                     && state.maintenance_session_id == Some(request.session_id),
@@ -348,9 +353,9 @@ pub async fn cleanup_allowed(pool: &SqlitePool, workspace_id: Uuid) -> anyhow::R
                 return Ok(false);
             };
             if let Some(store) =
-                RepositoryMemoryStore::read_only_configured_for_repository(&repo.name, repo_id)?
+                RepositoryMemoryStore::read_only_configured_for_repository(pool, &repo.name, repo_id).await?
             {
-                let state = store.state()?;
+                let state = store.state().await?;
                 if state.maintenance_workspace_id == Some(workspace_id)
                     && (state.active_run_id.is_some() || state.bootstrap.is_some())
                 {
@@ -506,7 +511,7 @@ mod tests {
             .await
             .unwrap();
         std::fs::create_dir(temp.path().join("persistent")).unwrap();
-        let store = RepositoryMemoryStore::for_repository(&repo.name, repo.id).unwrap();
+        let store = RepositoryMemoryStore::for_repository(&pool, &repo.name, repo.id).unwrap();
         (pool, repo, temp, store)
     }
 
@@ -554,7 +559,7 @@ mod tests {
                 }),
             });
             let lock = store.try_lock().unwrap();
-            store.save_state(&state).unwrap();
+            store.save_state(&state).await.unwrap();
             drop(lock);
             validate_agent_owner(&pool, &ws, &req, false).await.unwrap();
             validate_agent_owner(&pool, &ws, &req, true).await.unwrap();
@@ -574,7 +579,7 @@ mod tests {
         state.bootstrap = None;
         state.status = RepositoryWikiStatus::Current;
         let lock = store.try_lock().unwrap();
-        store.save_state(&state).unwrap();
+        store.save_state(&state).await.unwrap();
         drop(lock);
         assert!(
             validate_agent_owner(&pool, &ws, &previous.unwrap(), true)
@@ -611,7 +616,7 @@ mod tests {
             ..Default::default()
         };
         let lock = store.try_lock().unwrap();
-        store.save_state(&state).unwrap();
+        store.save_state(&state).await.unwrap();
         drop(lock);
         validate_agent_owner(&pool, &ws, &req, false).await.unwrap();
         assert!(validate_agent_owner(&pool, &ws, &req, true).await.is_err());
@@ -621,7 +626,7 @@ mod tests {
         ws = Workspace::find_by_id(&pool, ws.id).await.unwrap().unwrap();
         state.active_run_id = Some(req.agent_run_id);
         let lock = store.try_lock().unwrap();
-        store.save_state(&state).unwrap();
+        store.save_state(&state).await.unwrap();
         drop(lock);
         validate_agent_owner(&pool, &ws, &req, true).await.unwrap();
         let mut spoof = req.clone();
@@ -970,9 +975,10 @@ mod tests {
             status: RepositoryWikiStatus::Error,
             ..Default::default()
         };
-        store.save_state(&state).unwrap();
+        store.save_state(&state).await.unwrap();
         assert!(
             crate::services::repository_memory::begin_coding_run(
+                &pool,
                 &repo,
                 &ws,
                 Uuid::new_v4(),
@@ -980,6 +986,7 @@ mod tests {
                 "main",
                 true
             )
+            .await
             .unwrap()
             .is_none()
         );
@@ -992,12 +999,13 @@ mod tests {
                 .is_execution_only()
         );
         state.active_run_id = None;
-        store.save_state(&state).unwrap();
+        store.save_state(&state).await.unwrap();
         release_completed(&pool).await.unwrap();
         backfill(&pool).await.unwrap();
         let released = Workspace::find_by_id(&pool, ws.id).await.unwrap().unwrap();
         assert!(released.require_interactive().is_ok());
         let context = crate::services::repository_memory::begin_coding_run(
+            &pool,
             &repo,
             &released,
             Uuid::new_v4(),
@@ -1005,6 +1013,7 @@ mod tests {
             "main",
             true,
         )
+        .await
         .unwrap()
         .unwrap();
         assert!(context.finalize_source);
@@ -1307,7 +1316,7 @@ mod tests {
             active_run_id: Some(req.agent_run_id),
             ..Default::default()
         };
-        store.save_state(&state).unwrap();
+        store.save_state(&state).await.unwrap();
         sqlx::query("INSERT INTO agent_runs(id,session_id,workspace_id,request_id,idempotency_key,correlation_id,schema_version,payload_version,runtime_profile_id,provider_id,workspace_mode,workspace_path,status,request_envelope) VALUES(?,?,?,?,?,?,1,1,'CODEX','codex','isolated_worktree','/tmp','running',?)")
             .bind(req.agent_run_id).bind(session.id).bind(ws.id).bind(req.request_id).bind(&req.idempotency_key).bind(req.correlation_id).bind(Json(&req)).execute(&pool).await.unwrap();
         assert!(allows_wiki_instruction(&pool, &ws, &req).await.unwrap());

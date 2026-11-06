@@ -9,7 +9,8 @@ use std::{
 use anyhow::{Context, bail, ensure};
 use async_trait::async_trait;
 use db::models::{
-    agent_runtime::AgentRunRecord, repo::Repo, workflow::WorkflowRunStatus, workspace::Workspace,
+    agent_runtime::AgentRunRecord, repo::Repo, repository_state::RepositoryMemoryStore,
+    workflow::WorkflowRunStatus, workspace::Workspace,
 };
 use deployment::Deployment;
 use executors::{
@@ -30,7 +31,7 @@ use services::services::{
 };
 use utils::repository_memory::{
     BootstrapReportKind, OpenWikiBootstrapChild, OpenWikiBootstrapOwner, OpenWikiBootstrapPhase,
-    RepositoryMemoryState, RepositoryMemoryStore, RepositoryWikiStatus,
+    RepositoryMemoryState, RepositoryWikiStatus,
 };
 use uuid::Uuid;
 
@@ -77,13 +78,13 @@ impl WorkflowAgentExecutor for BootstrapExecutor {
             }
             Err(error) => {
                 let ctx = context(&self.deployment, run_id).await.map_err(api)?;
-                if ctx.store.publication(run_id).map_err(api)?.is_some() {
+                if ctx.store.publication(run_id).await.map_err(api)?.is_some() {
                     // Git may already have committed or integrated. Keep the
                     // existing End node pending for publication-only recovery,
                     // never mark it failed and strand a durable checkpoint.
-                    let mut state = ctx.store.state().map_err(api)?;
+                    let mut state = ctx.store.state().await.map_err(api)?;
                     state.error = Some(format!("{error:#}"));
-                    ctx.store.save_state(&state).map_err(api)?;
+                    ctx.store.save_state(&state).await.map_err(api)?;
                     Ok(None)
                 } else {
                     Err(api(error))
@@ -121,7 +122,7 @@ pub async fn start(
         child: None,
         review_fingerprint: None,
     });
-    store.save_state(state)?;
+    store.save_state(state).await?;
     let identity = InventoryIdentity::new(
         repo.id,
         workspace.id,
@@ -169,7 +170,7 @@ pub async fn start(
     runner::drive_repository_workflow(&deployment.db().pool, run_id, &executor).await?;
     // Dispatch updates the shared owner. Never overwrite its child reservation
     // with the pre-dispatch copy held by the Initialize route.
-    *state = store.state()?;
+    *state = store.state().await?;
     Ok(())
 }
 
@@ -227,8 +228,8 @@ async fn context(deployment: &DeploymentImpl, run_id: Uuid) -> anyhow::Result<Co
     let repo = Repo::find_by_id(&deployment.db().pool, repo_id)
         .await?
         .context("Bootstrap repository missing")?;
-    let store = RepositoryMemoryStore::for_repository(&repo.name, repo_id)?;
-    let state = store.state()?;
+    let store = RepositoryMemoryStore::for_repository(&deployment.db().pool, &repo.name, repo_id)?;
+    let state = store.state().await?;
     ensure!(
         state
             .bootstrap
@@ -373,7 +374,7 @@ pub(super) async fn prepare_child_dispatch(
         node_execution_id: request.orchestration_node_execution_id,
         node_id: request.node_id.clone(),
     });
-    ctx.store.save_state(&ctx.state)?;
+    ctx.store.save_state(&ctx.state).await?;
     Ok(())
 }
 
@@ -642,12 +643,12 @@ async fn publish(
         .active_source_commit
         .as_deref()
         .context("Bootstrap source missing")?;
-    if ctx.store.publication(run_id)?.is_none() {
+    if ctx.store.publication(run_id).await?.is_none() {
         openwiki::setup::restore(&ctx.store, ctx.workspace.id, &ctx.root, source)?;
         openwiki::setup::validate_provenance(&ctx.store, ctx.workspace.id, &ctx.root, source)?;
     }
     ctx.state.bootstrap.as_mut().unwrap().phase = OpenWikiBootstrapPhase::Publishing;
-    ctx.store.save_state(&ctx.state)?;
+    ctx.store.save_state(&ctx.state).await?;
     openwiki::publish_validated_wiki(
         deployment.git(),
         &ctx.store,
@@ -664,6 +665,7 @@ async fn publish(
             run_id,
         },
     )
+    .await
 }
 
 /// Use the existing repository monitor under its repository lock. Ordinary
@@ -673,13 +675,13 @@ pub async fn recover_locked(
     repo: &Repo,
     store: &RepositoryMemoryStore,
 ) -> anyhow::Result<()> {
-    let mut state = store.state()?;
+    let mut state = store.state().await?;
     let owner = state.bootstrap.clone().context("No Bootstrap owner")?;
     let run_id = owner.workflow_run_id;
-    if owner.server_instance_id != *SERVER_INSTANCE && store.publication(run_id)?.is_none() {
+    if owner.server_instance_id != *SERVER_INSTANCE && store.publication(run_id).await?.is_none() {
         state.error = Some("Bootstrap interrupted by a server restart; start a new Initialise Wiki request after cleanup".into());
         state.bootstrap.as_mut().unwrap().phase = OpenWikiBootstrapPhase::CleaningUp;
-        store.save_state(&state)?;
+        store.save_state(&state).await?;
     }
     if state.bootstrap.as_ref().unwrap().phase == OpenWikiBootstrapPhase::CleaningUp {
         return cleanup(deployment, repo, store).await;
@@ -729,23 +731,24 @@ pub async fn recover_locked(
         }
         if run.status == WorkflowRunStatus::Succeeded {
             let publication = publish(deployment, run_id).await?;
-            let mut latest = store.state()?;
+            let mut latest = store.state().await?;
             crate::routes::openwiki::record_reconciliation_result(
                 store,
                 &mut latest,
                 Ok(publication),
-            )?;
+            )
+            .await?;
         }
         Ok::<_, anyhow::Error>(())
     }
     .await;
     if let Err(error) = result {
-        let mut latest = store.state()?;
+        let mut latest = store.state().await?;
         latest.error = Some(format!("{error:#}"));
         // Publication recovery is Git/receipt-only. Never restart paid hosts
         // or discard the identity of a possibly integrated Wiki.
-        if store.publication(run_id)?.is_some() {
-            store.save_state(&latest)?;
+        if store.publication(run_id).await?.is_some() {
+            store.save_state(&latest).await?;
             return Err(error);
         }
         latest
@@ -753,7 +756,7 @@ pub async fn recover_locked(
             .as_mut()
             .context("Bootstrap owner disappeared")?
             .phase = OpenWikiBootstrapPhase::CleaningUp;
-        store.save_state(&latest)?;
+        store.save_state(&latest).await?;
         cleanup(deployment, repo, store).await?;
     }
     Ok(())
@@ -812,7 +815,7 @@ pub(super) async fn cleanup_with_service<P: executors::runtime::AgentRunPort + '
     use executors::runtime::{
         AgentRunPortCommand, AgentRunPortCommandEnvelope, ORCHESTRATION_COMMAND_SCHEMA_VERSION,
     };
-    let mut state = store.state()?;
+    let mut state = store.state().await?;
     let owner = state
         .bootstrap
         .clone()
@@ -888,7 +891,7 @@ pub(super) async fn cleanup_with_service<P: executors::runtime::AgentRunPort + '
                 .is_none()
             {
                 state.error = Some(format!("Bootstrap cleanup retains ownership: {error:#}"));
-                store.save_state(&state)?;
+                store.save_state(&state).await?;
             }
             return Ok(());
         }
@@ -967,7 +970,8 @@ pub(super) async fn cleanup_with_service<P: executors::runtime::AgentRunPort + '
         store,
         &mut state,
         Err(anyhow::anyhow!(reason)),
-    )?;
+    )
+    .await?;
     Ok(())
 }
 
@@ -982,8 +986,8 @@ pub async fn cancel_owned_run(deployment: &DeploymentImpl, run_id: Uuid) -> Resu
     }
     let ctx = context(deployment, run_id).await.map_err(api)?;
     let _lock = ctx.store.try_lock().map_err(api)?;
-    let mut state = ctx.store.state().map_err(api)?;
-    if ctx.store.publication(run_id).map_err(api)?.is_some() {
+    let mut state = ctx.store.state().await.map_err(api)?;
+    if ctx.store.publication(run_id).await.map_err(api)?.is_some() {
         return Err(api(
             "Wiki publication has already started; its exact result must be reconciled before releasing ownership",
         ));
@@ -1005,7 +1009,7 @@ pub async fn cancel_owned_run(deployment: &DeploymentImpl, run_id: Uuid) -> Resu
         .ok_or_else(|| api("Bootstrap owner missing"))?
         .phase = OpenWikiBootstrapPhase::CleaningUp;
     state.error = Some("Bootstrap cancelled by the user".into());
-    ctx.store.save_state(&state).map_err(api)?;
+    ctx.store.save_state(&state).await.map_err(api)?;
     cleanup(deployment, &ctx.repo, &ctx.store)
         .await
         .map_err(api)
@@ -1015,20 +1019,26 @@ pub async fn cancel_owned_run(deployment: &DeploymentImpl, run_id: Uuid) -> Resu
 /// paid phases. Existing hosts receive normal cancellation during cleanup.
 pub async fn fence_interrupted_runs(deployment: &DeploymentImpl) -> anyhow::Result<()> {
     for repo in Repo::list_all(&deployment.db().pool).await? {
-        let Some(store) = RepositoryMemoryStore::existing_for_repository(&repo.name, repo.id)?
-        else {
+        // Startup recovery owns DB-backed Bootstrap runs only. Legacy import is
+        // an explicit offline command, never an all-Repo startup prerequisite.
+        if RepositoryMemoryStore::state_on(&mut *deployment.db().pool.acquire().await?, repo.id)
+            .await?
+            .is_none()
+        {
             continue;
-        };
+        }
+        let store =
+            RepositoryMemoryStore::for_repository(&deployment.db().pool, &repo.name, repo.id)?;
         let _lock = store.try_lock()?;
-        let mut state = store.state()?;
+        let mut state = store.state().await?;
         if let Some(owner) = state.bootstrap.as_mut()
             && owner.server_instance_id != *SERVER_INSTANCE
-            && store.publication(owner.workflow_run_id)?.is_none()
+            && store.publication(owner.workflow_run_id).await?.is_none()
         {
             let workflow_run_id = owner.workflow_run_id;
             owner.phase = OpenWikiBootstrapPhase::CleaningUp;
             state.error = Some("Bootstrap interrupted by server restart; cleaning up without resuming agent phases".into());
-            store.save_state(&state)?;
+            store.save_state(&state).await?;
             if let Some(id) = sqlx::query_scalar::<_, Option<Uuid>>(
                 "SELECT orchestration_run_id FROM workflow_runs WHERE id = ?",
             )

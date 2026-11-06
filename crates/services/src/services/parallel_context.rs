@@ -5,13 +5,14 @@ use std::path::Path;
 use chrono::{DateTime, Utc};
 use db::models::{
     repo::Repo,
+    repository_state::RepositoryMemoryStore,
     workspace::{Workspace, WorkspaceKind},
 };
 use git::GitService;
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, SqlitePool};
 use ts_rs::TS;
-use utils::repository_memory::{ManifestDiscoveryPage, RepositoryMemoryStore};
+use utils::repository_memory::ManifestDiscoveryPage;
 use uuid::Uuid;
 
 const SHARED_START: &str = "<!-- lvk:shared-directories:start -->";
@@ -113,11 +114,12 @@ pub async fn discover(
     };
     // Failure is an unavailable source, not evidence that no work exists. A bad
     // manifest does not hide healthy observations; strict publication is separate.
-    let memory = (|| -> anyhow::Result<()> {
+    let memory: anyhow::Result<()> = async {
         if let Some(store) =
-            RepositoryMemoryStore::read_only_configured_for_repository(&repo.name, repo.id)?
+            RepositoryMemoryStore::read_only_configured_for_repository(pool, &repo.name, repo.id)
+                .await?
         {
-            let state = store.state()?;
+            let state = store.state().await?;
             page.memory_available = state.enabled;
             page.wiki_target = state.target_branch;
             page.wiki_source_commit = state.source_commit;
@@ -126,7 +128,8 @@ pub async fn discover(
                 store.discover_events(repo.id, query.after_manifest.as_deref(), limit)?;
         }
         Ok(())
-    })();
+    }
+    .await;
     if let Err(error) = memory {
         page.memory_error = Some(format!("{error:#}"));
     }
