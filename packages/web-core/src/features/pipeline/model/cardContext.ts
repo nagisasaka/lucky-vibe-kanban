@@ -12,8 +12,8 @@ export const SHARED_DIRECTORIES_CONTEXT = `<!-- lvk:shared-directories:start -->
 ## Shared directories
 
 LVK provides Git-untracked shared directories in each attached repository:
-- .lvk-shared/persistent/: local files retained across workspaces until explicitly deleted.
-- .lvk-shared/cache/: reproducible build outputs and caches.
+- .lvk/shared/persistent/: local files retained across workspaces until explicitly deleted.
+- .lvk/shared/cache/: reproducible build outputs and caches.
 
 These directories are shared by workspaces of the same repository. Changes affect other workspaces; avoid conflicting writes and do not clear a cache while another process uses it. Workspace deletion does not delete their contents. Use them when relevant, never commit their contents, and do not expose secrets. Tool-specific cache configuration is not automatic. Direct-folder workspaces may not provide these paths; check that they exist before using them.
 

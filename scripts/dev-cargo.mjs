@@ -94,7 +94,7 @@ if (args[0] === 'watch') {
     for (const [key, value] of Object.entries(values)) set(`profile.${profile}.${key}`, value);
   if (release && !['fmt', 'metadata'].includes(args[0])) args.splice(1, 0, '--release');
   set('build.target-dir', join(root, 'target'));
-  const shared = join(root, '.lvk-shared/cache');
+  const shared = join(root, '.lvk/shared/cache');
   if (existsSync(shared)) {
     const build = join(realpathSync(shared), 'lvk-dev-cargo-build');
     mkdirSync(build, { recursive: true });
@@ -102,7 +102,7 @@ if (args[0] === 'watch') {
   } else {
     // Explicitly override inherited build-dir config even in an ordinary checkout.
     set('build.build-dir', join(root, 'target'));
-    warn('no .lvk-shared/cache: intermediates stay in this checkout target/.');
+    warn('no .lvk/shared/cache: intermediates stay in this checkout target/.');
   }
   if (process.env.RUSTC_WRAPPER !== undefined)
     fail('explicit RUSTC_WRAPPER: preserve it with raw cargo or unset it to use this entry without a compiler wrapper.');

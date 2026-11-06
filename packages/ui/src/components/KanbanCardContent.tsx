@@ -99,7 +99,7 @@ function formatKanbanDescriptionPreview(
       }
     )
     .replace(
-      /(?<!!)\[([^\]]*)\]\((attachment:\/\/[^)]+|\.vibe-attachments\/[^)]+)\)/g,
+      /(?<!!)\[([^\]]*)\]\((attachment:\/\/[^)]+|\.lvk\/attachments\/[^)]+)\)/g,
       (_match, label: string) => {
         const normalizedLabel = label.trim();
         return normalizedLabel

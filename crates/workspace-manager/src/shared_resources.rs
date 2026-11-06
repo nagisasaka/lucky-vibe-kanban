@@ -1,7 +1,6 @@
 //! Fixed, repository-scoped local resources. No tool-specific cache policy.
 use std::{
-    fs,
-    io::{self, Write},
+    fs, io,
     path::{Path, PathBuf},
     process::Command,
     sync::Mutex,
@@ -110,55 +109,35 @@ fn ensure_at(repo_root: &Path, shared: &Path) -> io::Result<()> {
         .lock()
         .map_err(|_| io::Error::other("shared resource lock poisoned"))?;
     let repo_root = fs::canonicalize(repo_root)?;
-    let common = GitService::new()
-        .get_common_dir(&repo_root)
-        .map_err(io::Error::other)?;
     let tracked = Command::new("git")
         .arg("-C")
         .arg(&repo_root)
-        .args(["ls-files", "-z", "--", ".lvk-shared"])
+        .args(["ls-files", "-z", "--", ".lvk/shared"])
         .output()?;
     if !tracked.status.success() || !tracked.stdout.is_empty() {
         return Err(io::Error::other(
-            "Cannot provision LVK shared directories: .lvk-shared is tracked or Git status could not be checked",
+            "Cannot provision LVK shared directories: .lvk/shared is tracked or Git status could not be checked",
         ));
     }
     ensure_storage(shared)?;
     let shared = fs::canonicalize(shared)?;
-    let mount = repo_root.join(".lvk-shared");
+    let lvk = utils::lvk_directory::LvkDirectory::open(&repo_root)?;
+    let mount = lvk.anchored_path().join("shared");
     real_directory(&mount)?;
     // Check all targets before creating links; never replace user paths.
     for kind in KINDS {
         validate_link(&mount.join(kind), &shared.join(kind))?;
     }
 
-    let info = common.join("info");
-    fs::create_dir_all(&info)?;
-    let exclude = info.join("exclude");
-    if fs::symlink_metadata(&exclude).is_ok_and(|meta| meta.file_type().is_symlink()) {
-        return Err(io::Error::other(
-            "Cannot update Git local excludes through a symlink",
-        ));
-    }
-    let previous = match fs::read_to_string(&exclude) {
-        Ok(text) => text,
-        Err(error) if error.kind() == io::ErrorKind::NotFound => String::new(),
-        Err(error) => return Err(error),
-    };
-    if !previous.lines().any(|line| line.trim() == "/.lvk-shared") {
-        fs::OpenOptions::new()
-            .create(true)
-            .append(true)
-            .open(exclude)?
-            .write_all(b"\n# LVK local shared resources\n/.lvk-shared\n")?;
-    }
+    lvk.ensure_runtime_ignores()?;
     for kind in KINDS {
         let link = mount.join(kind);
         let target = shared.join(kind);
         if validate_link(&link, &target)? {
             continue;
         }
-        let relative = pathdiff::diff_paths(&target, &mount).unwrap_or_else(|| target.clone());
+        let relative = pathdiff::diff_paths(&target, repo_root.join(".lvk/shared"))
+            .unwrap_or_else(|| target.clone());
         if let Err(error) = create_directory_link(&relative, &link) {
             // Another LVK process may have provisioned the same link meanwhile.
             if error.kind() != io::ErrorKind::AlreadyExists || !validate_link(&link, &target)? {
@@ -166,7 +145,7 @@ fn ensure_at(repo_root: &Path, shared: &Path) -> io::Result<()> {
             }
         }
     }
-    Ok(())
+    lvk.verify()
 }
 
 #[cfg(unix)]
@@ -239,22 +218,29 @@ mod tests {
         ensure_at(&repo, &shared).unwrap();
         ensure_at(&tree, &shared).unwrap();
         ensure_at(&tree, &shared).unwrap();
-        fs::write(repo.join(".lvk-shared/persistent/data"), "retained").unwrap();
+        fs::write(repo.join(".lvk/shared/persistent/data"), "retained").unwrap();
         assert_eq!(
-            fs::read_to_string(tree.join(".lvk-shared/persistent/data")).unwrap(),
+            fs::read_to_string(tree.join(".lvk/shared/persistent/data")).unwrap(),
             "retained"
         );
-        assert!(git(&tree, &["status", "--porcelain"]).is_empty());
+        assert_eq!(
+            git(&tree, &["ls-files", "--others", "--exclude-standard"]),
+            ".lvk/.gitignore\n"
+        );
         assert!(
-            !fs::read_link(tree.join(".lvk-shared/cache"))
+            !fs::read_link(tree.join(".lvk/shared/cache"))
                 .unwrap()
                 .is_absolute()
         );
-        let exclude = fs::read_to_string(repo.join(".git/info/exclude")).unwrap();
-        assert_eq!(exclude.matches("/.lvk-shared").count(), 1);
-        assert!(!repo.join(".lvk").exists());
+        let ignore = fs::read_to_string(repo.join(".lvk/.gitignore")).unwrap();
+        assert_eq!(ignore.matches("/shared/").count(), 1);
+        assert!(
+            !fs::read_to_string(repo.join(".git/info/exclude"))
+                .unwrap()
+                .contains(".lvk")
+        );
         assert_eq!(
-            fs::canonicalize(tree.join(".lvk-shared/cache")).unwrap(),
+            fs::canonicalize(tree.join(".lvk/shared/cache")).unwrap(),
             shared.join("cache")
         );
         git(
@@ -268,25 +254,62 @@ mod tests {
     }
 
     #[test]
+    fn repositories_are_isolated_and_tracked_settings_survive() {
+        let tmp = tempdir().unwrap();
+        for name in ["first", "second"] {
+            let repo = tmp.path().join(name);
+            fs::create_dir(&repo).unwrap();
+            git(&repo, &["init"]);
+            fs::create_dir(repo.join(".lvk")).unwrap();
+            fs::write(repo.join(".lvk/integration-validation.json"), "{}").unwrap();
+            fs::write(repo.join(".lvk/.gitignore"), "# user rules\n/custom/\n").unwrap();
+            git(&repo, &["add", ".lvk"]);
+            let shared = tmp.path().join("shared").join(name);
+            ensure_at(&repo, &shared).unwrap();
+            fs::write(repo.join(".lvk/shared/persistent/data"), name).unwrap();
+            assert_eq!(
+                fs::read_to_string(repo.join(".lvk/integration-validation.json")).unwrap(),
+                "{}"
+            );
+            assert!(
+                fs::read_to_string(repo.join(".lvk/.gitignore"))
+                    .unwrap()
+                    .starts_with("# user rules\n/custom/\n")
+            );
+            assert_eq!(
+                git(&repo, &["ls-files", ".lvk/integration-validation.json"]),
+                ".lvk/integration-validation.json\n"
+            );
+        }
+        for name in ["first", "second"] {
+            assert_eq!(
+                fs::read_to_string(tmp.path().join(name).join(".lvk/shared/persistent/data"))
+                    .unwrap(),
+                name
+            );
+        }
+    }
+
+    #[test]
     fn refuses_existing_files_and_links_to_other_repositories() {
         let tmp = tempdir().unwrap();
         let repo = tmp.path().join("repo");
         fs::create_dir(&repo).unwrap();
         git(&repo, &["init"]);
-        fs::create_dir(repo.join(".lvk-shared")).unwrap();
-        fs::write(repo.join(".lvk-shared/cache"), "user data").unwrap();
+        fs::create_dir_all(repo.join(".lvk/shared")).unwrap();
+        fs::write(repo.join(".lvk/shared/cache"), "user data").unwrap();
         let shared = tmp.path().join("shared").join("first");
         assert!(ensure_at(&repo, &shared).is_err());
         assert_eq!(
-            fs::read_to_string(repo.join(".lvk-shared/cache")).unwrap(),
+            fs::read_to_string(repo.join(".lvk/shared/cache")).unwrap(),
             "user data"
         );
-        assert!(!repo.join(".lvk-shared/persistent").exists());
-        fs::remove_file(repo.join(".lvk-shared/cache")).unwrap();
+        assert!(!repo.join(".lvk/shared/persistent").exists());
+        fs::remove_file(repo.join(".lvk/shared/cache")).unwrap();
         ensure_at(&repo, &shared).unwrap();
         assert!(ensure_at(&repo, &tmp.path().join("shared/other")).is_err());
         assert_eq!(
-            fs::canonicalize(repo.join(".lvk-shared/cache")).unwrap(),
+            fs::canonicalize(repo.join(".lvk/shared/cache")).unwrap(),
             shared.join("cache")
         );
     }
@@ -297,23 +320,24 @@ mod tests {
         let repo = tmp.path().join("repo");
         fs::create_dir(&repo).unwrap();
         git(&repo, &["init"]);
-        fs::write(repo.join(".lvk-shared"), "tracked config").unwrap();
-        git(&repo, &["add", ".lvk-shared"]);
+        fs::create_dir(repo.join(".lvk")).unwrap();
+        fs::write(repo.join(".lvk/shared"), "tracked config").unwrap();
+        git(&repo, &["add", ".lvk/shared"]);
         let shared = tmp.path().join("shared/repo-id");
         assert!(ensure_at(&repo, &shared).is_err());
         assert!(!shared.exists());
         assert_eq!(
-            fs::read_to_string(repo.join(".lvk-shared")).unwrap(),
+            fs::read_to_string(repo.join(".lvk/shared")).unwrap(),
             "tracked config"
         );
-        git(&repo, &["rm", "--cached", ".lvk-shared"]);
-        fs::remove_file(repo.join(".lvk-shared")).unwrap();
+        git(&repo, &["rm", "--cached", ".lvk/shared"]);
+        fs::remove_file(repo.join(".lvk/shared")).unwrap();
         fs::create_dir_all(&shared).unwrap();
         let external = tmp.path().join("external");
         fs::create_dir(&external).unwrap();
         create_directory_link(&external, &shared.join("persistent")).unwrap();
         assert!(ensure_at(&repo, &shared).is_err());
-        assert!(!repo.join(".lvk-shared").exists());
+        assert!(!repo.join(".lvk/shared").exists());
         assert!(fs::read_dir(external).unwrap().next().is_none());
     }
 }

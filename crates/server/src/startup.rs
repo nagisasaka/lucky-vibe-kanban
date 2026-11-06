@@ -1,10 +1,4 @@
-use std::{
-    collections::HashSet,
-    fs, io,
-    path::{Path, PathBuf},
-    sync::Arc,
-    time::Duration,
-};
+use std::{fs, io, path::Path, sync::Arc, time::Duration};
 
 use deployment::{Deployment, DeploymentError};
 use services::services::{
@@ -183,7 +177,7 @@ pub async fn initialize_deployment(
     )
     .await
     .map_err(DeploymentError::Other)?;
-    migrate_legacy_attachment_directories(&deployment).await?;
+    migrate_legacy_attachment_directories().await?;
     deployment.update_sentry_scope().await?;
     crate::workflow_runtime::bootstrap::fence_interrupted_runs(&deployment).await?;
 
@@ -284,9 +278,7 @@ impl DirectoryMigrationStats {
     }
 }
 
-async fn migrate_legacy_attachment_directories(
-    deployment: &DeploymentImpl,
-) -> Result<(), DeploymentError> {
+async fn migrate_legacy_attachment_directories() -> Result<(), DeploymentError> {
     let marker_path = asset_dir().join(LEGACY_ATTACHMENT_MIGRATION_MARKER);
     if marker_path.exists() {
         return Ok(());
@@ -298,16 +290,10 @@ async fn migrate_legacy_attachment_directories(
     stats.merge(migrate_legacy_directory(
         &cache_root.join("images"),
         &cache_root.join("attachments"),
-        false,
     ));
 
-    for base_path in collect_attachment_migration_paths(deployment).await? {
-        stats.merge(migrate_legacy_directory(
-            &base_path.join(".vibe-images"),
-            &base_path.join(utils::path::VIBE_ATTACHMENTS_DIR),
-            true,
-        ));
-    }
+    // Repository attachment paths are not migrated. Old provider history and
+    // checkout files remain untouched when switching the canonical LVK namespace.
 
     if stats.failures == 0 {
         fs::write(&marker_path, b"ok")?;
@@ -327,56 +313,7 @@ async fn migrate_legacy_attachment_directories(
     Ok(())
 }
 
-async fn collect_attachment_migration_paths(
-    deployment: &DeploymentImpl,
-) -> Result<Vec<PathBuf>, DeploymentError> {
-    use db::models::{session::Session, workspace::Workspace, workspace_repo::WorkspaceRepo};
-
-    let workspaces = Workspace::fetch_all(&deployment.db().pool).await?;
-    let mut paths = HashSet::new();
-
-    for workspace in workspaces {
-        let Some(container_ref) = workspace.container_ref.as_deref() else {
-            continue;
-        };
-        if container_ref.is_empty() {
-            continue;
-        }
-
-        let workspace_root = PathBuf::from(container_ref);
-        paths.insert(workspace_root.clone());
-
-        for repo in
-            WorkspaceRepo::find_repos_for_workspace(&deployment.db().pool, workspace.id).await?
-        {
-            let repo_base = match repo.default_working_dir.as_deref() {
-                Some(default_dir) if !default_dir.is_empty() => {
-                    workspace_root.join(&repo.name).join(default_dir)
-                }
-                _ => workspace_root.join(&repo.name),
-            };
-            paths.insert(repo_base);
-        }
-
-        for session in Session::find_by_workspace_id(&deployment.db().pool, workspace.id).await? {
-            let base_path = match session.agent_working_dir.as_deref() {
-                Some(dir) if !dir.is_empty() => workspace_root.join(dir),
-                _ => workspace_root.clone(),
-            };
-            paths.insert(base_path);
-        }
-    }
-
-    let mut paths = paths.into_iter().collect::<Vec<_>>();
-    paths.sort();
-    Ok(paths)
-}
-
-fn migrate_legacy_directory(
-    src_dir: &Path,
-    dst_dir: &Path,
-    ensure_gitignore: bool,
-) -> DirectoryMigrationStats {
+fn migrate_legacy_directory(src_dir: &Path, dst_dir: &Path) -> DirectoryMigrationStats {
     let mut stats = DirectoryMigrationStats::default();
 
     if !src_dir.exists() {
@@ -394,19 +331,10 @@ fn migrate_legacy_directory(
     }
     stats.created_directories += 1;
 
-    if let Err(error) = migrate_directory_contents(src_dir, dst_dir, ensure_gitignore, &mut stats) {
+    if let Err(error) = migrate_directory_contents(src_dir, dst_dir, &mut stats) {
         tracing::warn!(
             "Failed to migrate legacy attachment directory {} -> {}: {}",
             src_dir.display(),
-            dst_dir.display(),
-            error
-        );
-        stats.failures += 1;
-    }
-
-    if ensure_gitignore && let Err(error) = ensure_attachments_gitignore(dst_dir) {
-        tracing::warn!(
-            "Failed to ensure .gitignore in {}: {}",
             dst_dir.display(),
             error
         );
@@ -428,7 +356,6 @@ fn migrate_legacy_directory(
 fn migrate_directory_contents(
     src_dir: &Path,
     dst_dir: &Path,
-    ensure_gitignore: bool,
     stats: &mut DirectoryMigrationStats,
 ) -> io::Result<()> {
     for entry in fs::read_dir(src_dir)? {
@@ -436,16 +363,12 @@ fn migrate_directory_contents(
         let src_path = entry.path();
         let file_name = entry.file_name();
 
-        if ensure_gitignore && file_name == ".gitignore" {
-            continue;
-        }
-
         let dst_path = dst_dir.join(&file_name);
         let file_type = entry.file_type()?;
 
         if file_type.is_dir() {
             fs::create_dir_all(&dst_path)?;
-            migrate_directory_contents(&src_path, &dst_path, false, stats)?;
+            migrate_directory_contents(&src_path, &dst_path, stats)?;
             remove_empty_dir_tree(&src_path)?;
             continue;
         }
@@ -474,14 +397,6 @@ fn move_path(src_path: &Path, dst_path: &Path) -> io::Result<()> {
     }
 }
 
-fn ensure_attachments_gitignore(dir: &Path) -> io::Result<()> {
-    let gitignore_path = dir.join(".gitignore");
-    if !gitignore_path.exists() {
-        fs::write(gitignore_path, "*\n")?;
-    }
-    Ok(())
-}
-
 fn remove_empty_dir_tree(path: &Path) -> io::Result<()> {
     if !path.exists() {
         return Ok(());
@@ -508,7 +423,7 @@ mod tests {
         fs::create_dir_all(&src).unwrap();
         fs::write(src.join("asset.png"), b"hello").unwrap();
 
-        let stats = migrate_legacy_directory(&src, &dst, false);
+        let stats = migrate_legacy_directory(&src, &dst);
 
         assert_eq!(stats.moved_files, 1);
         assert!(dst.join("asset.png").exists());
@@ -518,31 +433,17 @@ mod tests {
     #[test]
     fn removes_legacy_duplicates_when_destination_exists() {
         let temp_dir = TempDir::new().unwrap();
-        let src = temp_dir.path().join(".vibe-images");
-        let dst = temp_dir.path().join(".vibe-attachments");
+        let src = temp_dir.path().join("images");
+        let dst = temp_dir.path().join("attachments");
         fs::create_dir_all(&src).unwrap();
         fs::create_dir_all(&dst).unwrap();
         fs::write(src.join("asset.png"), b"old").unwrap();
         fs::write(dst.join("asset.png"), b"new").unwrap();
 
-        let stats = migrate_legacy_directory(&src, &dst, true);
+        let stats = migrate_legacy_directory(&src, &dst);
 
         assert_eq!(stats.removed_duplicates, 1);
         assert_eq!(fs::read(dst.join("asset.png")).unwrap(), b"new");
         assert!(!src.exists());
-    }
-
-    #[test]
-    fn ensures_gitignore_for_workspace_attachment_dir() {
-        let temp_dir = TempDir::new().unwrap();
-        let src = temp_dir.path().join(".vibe-images");
-        let dst = temp_dir.path().join(".vibe-attachments");
-        fs::create_dir_all(&src).unwrap();
-        fs::write(src.join("file.pdf"), b"attachment").unwrap();
-
-        migrate_legacy_directory(&src, &dst, true);
-
-        assert_eq!(fs::read_to_string(dst.join(".gitignore")).unwrap(), "*\n");
-        assert!(dst.join("file.pdf").exists());
     }
 }

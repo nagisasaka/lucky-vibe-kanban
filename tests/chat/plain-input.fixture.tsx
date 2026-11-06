@@ -15,7 +15,7 @@ import {TypeaheadOpenProvider} from '../../packages/ui/src/components/TypeaheadO
 import {createDecoratorNode} from '../../packages/ui/src/components/create-decorator-node';
 import {$getNodeByKey} from 'lexical';
 import type {TextMatchTransformer} from '@lexical/markdown';
-const attachment=createDecoratorNode<{label:string;src:string}>({type:'fixture-attachment',serialization:{format:'inline',pattern:/(?<!!)\[([^\]]+)\]\((\.vibe-attachments\/[^)]+)\)/,trigger:')',serialize:d=>`[${d.label}](${d.src})`,deserialize:m=>({label:m[1],src:m[2]})},component:({data,nodeKey})=>{const[editor]=useLexicalComposerContext();return <button onClick={()=>editor.update(()=>$getNodeByKey(nodeKey)?.remove())}>Remove {data.label}</button>}});
+const attachment=createDecoratorNode<{label:string;src:string}>({type:'fixture-attachment',serialization:{format:'inline',pattern:/(?<!!)\[([^\]]+)\]\((\.lvk\/attachments\/[^)]+)\)/,trigger:')',serialize:d=>`[${d.label}](${d.src})`,deserialize:m=>({label:m[1],src:m[2]})},component:({data,nodeKey})=>{const[editor]=useLexicalComposerContext();return <button onClick={()=>editor.update(()=>$getNodeByKey(nodeKey)?.remove())}>Remove {data.label}</button>}});
 const allTransformers=[...attachment.transformers,...TRANSFORMERS];
 const api=window as any;
 api.sent=[];api.files=[];

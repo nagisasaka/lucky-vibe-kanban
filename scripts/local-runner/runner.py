@@ -28,11 +28,14 @@ def sha(data):
 def safe_path(name):
     if not name or len(name.encode('utf-8')) > 240 or any(c in name for c in '\\:\0'):
         raise ValueError('Unsafe path')
+    parts = name.lower().split('/')
+    if any(a == '.lvk' and b in ('shared', 'attachments') for a, b in zip(parts, parts[1:])):
+        raise ValueError('LVK runtime path')
     reserved = {'CON', 'PRN', 'AUX', 'NUL', 'CONIN$', 'CONOUT$', 'COM¹', 'COM²', 'COM³', 'LPT¹', 'LPT²', 'LPT³'} | {f'{p}{i}' for p in ('COM', 'LPT') for i in range(1, 10)}
     for part in name.split('/'):
         if (not part or part in ('.', '..') or part.endswith((' ', '.'))
                 or part.split('.')[0].upper() in reserved
-                or part.lower() in ('.git', '.lvk-shared')
+                or part.lower() in ('.git',)
                 or any(unicodedata.category(c) == 'Cc' or c in '<>"|?*' for c in part)):
             raise ValueError('Unsafe path')
     return name

@@ -27,6 +27,7 @@ pub(super) fn safe_path(path: &str) -> bool {
     !path.is_empty()
         && path.len() <= 240
         && !path.contains(['\\', ':', '\0'])
+        && !utils::path::is_lvk_runtime_path(Path::new(&path.to_ascii_lowercase()))
         && path.split('/').all(|p| {
             let stem = p.split('.').next().unwrap_or("").to_ascii_uppercase();
             !p.is_empty()
@@ -67,7 +68,7 @@ pub(super) fn safe_path(path: &str) -> bool {
                         | "LPT8"
                         | "LPT9"
                 )
-                && !matches!(p.to_ascii_lowercase().as_str(), ".git" | ".lvk-shared")
+                && !matches!(p.to_ascii_lowercase().as_str(), ".git")
         })
 }
 pub(super) fn validate_files(files: &[SourceFile]) -> anyhow::Result<()> {
@@ -130,6 +131,9 @@ fn collect(root: &Path) -> anyhow::Result<Vec<SourceFile>> {
     let mut files = vec![];
     let mut total = 0;
     for path in paths {
+        if utils::path::is_lvk_runtime_path(Path::new(&path.to_ascii_lowercase())) {
+            continue;
+        }
         ensure!(safe_path(&path), "Unsupported Windows source path: {path}");
         let file = root.join(&path);
         let mut parent = root.to_path_buf();
@@ -282,6 +286,36 @@ pub(super) async fn inspect(
 mod tests {
     use super::*;
     #[test]
+    fn capture_includes_lvk_configuration_and_excludes_only_runtime_children() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path();
+        git(root, &["init"]).unwrap();
+        let expected = [
+            ".lvk/.gitignore",
+            ".lvk/integration-validation.json",
+            ".lvk/preview/config.json",
+            "src/shared/config.json",
+        ];
+        for path in expected
+            .into_iter()
+            .chain([".lvk/shared/cache/a", ".lvk/attachments/a"])
+        {
+            let file = root.join(path);
+            std::fs::create_dir_all(file.parent().unwrap()).unwrap();
+            std::fs::write(file, "{}").unwrap();
+        }
+        let files = collect(root).unwrap();
+        assert_eq!(
+            files.iter().map(|f| f.path.as_str()).collect::<Vec<_>>(),
+            expected
+        );
+        validate_files(&files).unwrap();
+        // Forced tracked runtime files must not leak into a source capture either.
+        git(root, &["add", "."]).unwrap();
+        assert_eq!(collect(root).unwrap(), files);
+    }
+
+    #[test]
     fn windows_paths_and_collisions() {
         for path in [
             "../x",
@@ -292,12 +326,17 @@ mod tests {
             "a/COM1",
             "a.",
             ".git/config",
+            ".lvk/shared/cache/a",
+            "repo/.LVK/Attachments/a",
             "a:b",
             "x\n",
         ] {
             assert!(!safe_path(path), "{path}");
         }
         assert!(safe_path("src/hello world.py"));
+        assert!(safe_path(".lvk/integration-validation.json"));
+        assert!(safe_path(".lvk/preview/vite.config.mjs"));
+        assert!(safe_path("src/shared/a"));
         let f = SourceFile {
             path: "a".into(),
             sha256: format!("{:x}", Sha256::digest(b"")),

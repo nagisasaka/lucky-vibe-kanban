@@ -484,7 +484,7 @@ async fn start_route(
         let mut request=args.request;
         for id in request.attachment_ids.as_deref().unwrap_or_default() {
             let file=match File::find_by_id(&d.db().pool,*id).await {Ok(Some(f))=>f,_=>return ("failed",json!({"code":"attachment_missing","execution_accepted":false}))};
-            request.prompt.push_str(&format!("\n\nAttachment: `.vibe-attachments/{}`",file.file_path));
+            request.prompt.push_str(&format!("\n\nAttachment: `.lvk/attachments/{}`",file.file_path));
         }
         match execution.start(request,operation).await {
             Ok(v)=>("succeeded",v),

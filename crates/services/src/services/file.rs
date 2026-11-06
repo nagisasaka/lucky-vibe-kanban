@@ -298,12 +298,22 @@ impl FileService {
             return Ok(());
         }
         let root = fs::canonicalize(worktree_path)?;
-        let dir = root.join(utils::path::VIBE_ATTACHMENTS_DIR);
+        let lvk = utils::lvk_directory::LvkDirectory::open(&root)?;
+        // Workspace roots without a repository are valid (multi-repository workspaces).
+        let tracked = std::process::Command::new("git")
+            .arg("-C")
+            .arg(&root)
+            .args(["ls-files", "-z", "--", ".lvk/attachments"])
+            .output()?;
+        if tracked.status.success() && !tracked.stdout.is_empty() {
+            return Err(FileError::Placement);
+        }
+        let dir = lvk.anchored_path().join("attachments");
         if fs::symlink_metadata(&dir).is_ok_and(|m| m.file_type().is_symlink()) {
             return Err(FileError::Placement);
         }
         fs::create_dir_all(&dir)?;
-        if fs::canonicalize(&dir)? != dir {
+        if fs::canonicalize(&dir)? != root.join(utils::path::LVK_ATTACHMENTS_DIR) {
             return Err(FileError::Placement);
         }
         // Hold the directory, so a concurrent Linux symlink replacement cannot
@@ -323,19 +333,7 @@ impl FileService {
         };
         #[cfg(not(target_os = "linux"))]
         let anchored_dir = dir.clone();
-        let ignore = anchored_dir.join(".gitignore");
-        match fs::OpenOptions::new()
-            .write(true)
-            .create_new(true)
-            .open(&ignore)
-        {
-            Ok(mut f) => {
-                use std::io::Write;
-                f.write_all(b"*\n")?;
-            }
-            Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => {}
-            Err(e) => return Err(e.into()),
-        }
+        lvk.ensure_runtime_ignores()?;
         for file in files {
             if Path::new(&file.file_path).components().count() != 1
                 || file.file_path.contains(['/', '\\'])
@@ -369,6 +367,7 @@ impl FileService {
             }
             verify_bytes(&file, &read_regular(&dst)?)?;
         }
+        lvk.verify()?;
         let current = fs::symlink_metadata(&dir)?;
         if current.file_type().is_symlink() {
             return Err(FileError::Placement);
@@ -458,6 +457,50 @@ mod attachment_tests {
         (service, root)
     }
     #[tokio::test]
+    async fn attachment_session_bases_and_resume_keep_workspace_and_repositories_separate() {
+        let (svc, root) = fixture().await;
+        sqlx::query("CREATE TABLE workspace_attachments(workspace_id BLOB, attachment_id BLOB, created_at TEXT DEFAULT '2026-11-06T00:00:00Z')")
+            .execute(&svc.pool)
+            .await
+            .unwrap();
+        let workspace = Uuid::new_v4();
+        let file = svc.store_file(b"abc", "a.bin").await.unwrap();
+        sqlx::query("INSERT INTO workspace_attachments(workspace_id,attachment_id) VALUES(?, ?)")
+            .bind(workspace)
+            .bind(file.id)
+            .execute(&svc.pool)
+            .await
+            .unwrap();
+        let work = root.path().join("workspace");
+        for repo in ["first", "second"] {
+            fs::create_dir_all(work.join(repo)).unwrap();
+        }
+        for base in [None, Some("first"), Some("second")] {
+            svc.copy_files_by_workspace_to_worktree(&work, workspace, base)
+                .await
+                .unwrap();
+            // Resuming uses the same verified placement, including after cache eviction.
+            svc.copy_files_by_workspace_to_worktree(&work, workspace, base)
+                .await
+                .unwrap();
+            let path = base.map_or_else(|| work.clone(), |base| work.join(base));
+            assert_eq!(
+                fs::read(
+                    path.join(utils::path::LVK_ATTACHMENTS_DIR)
+                        .join(&file.file_path)
+                )
+                .unwrap(),
+                b"abc"
+            );
+            assert!(!path.join(".lvk/shared").exists());
+        }
+        fs::remove_file(svc.get_absolute_path(&file)).unwrap();
+        svc.copy_files_by_workspace_to_worktree(&work, workspace, Some("first"))
+            .await
+            .unwrap();
+    }
+
+    #[tokio::test]
     async fn attachment_bytes_names_retries_and_strict_placement() {
         let (svc, root) = fixture().await;
         let svg = b"<svg xmlns='http://www.w3.org/2000/svg'><text>hello</text></svg>";
@@ -479,9 +522,15 @@ mod attachment_tests {
         svc.copy_files_by_ids_to_worktree(&work, &ids)
             .await
             .unwrap();
+        assert!(!work.join(".lvk/attachments/.gitignore").exists());
+        assert!(
+            fs::read_to_string(work.join(".lvk/.gitignore"))
+                .unwrap()
+                .contains("/attachments/")
+        );
         for file in [&first, &alias, &binary, &different] {
             let path = work
-                .join(utils::path::VIBE_ATTACHMENTS_DIR)
+                .join(utils::path::LVK_ATTACHMENTS_DIR)
                 .join(&file.file_path);
             verify_bytes(file, &fs::read(path).unwrap()).unwrap();
         }
@@ -494,7 +543,7 @@ mod attachment_tests {
                 .is_err()
         );
         let dst = work
-            .join(utils::path::VIBE_ATTACHMENTS_DIR)
+            .join(utils::path::LVK_ATTACHMENTS_DIR)
             .join(&first.file_path);
         fs::write(&dst, b"changed").unwrap();
         assert!(
@@ -620,7 +669,7 @@ mod attachment_tests {
             .unwrap();
         assert_eq!(
             fs::read(
-                work.join(utils::path::VIBE_ATTACHMENTS_DIR)
+                work.join(utils::path::LVK_ATTACHMENTS_DIR)
                     .join(&file.file_path)
             )
             .unwrap(),
@@ -701,6 +750,57 @@ mod attachment_tests {
 
     #[cfg(unix)]
     #[tokio::test]
+    async fn attachment_parent_and_tracked_destination_are_protected() {
+        let (svc, root) = fixture().await;
+        let file = svc.store_file(b"abc", "a.bin").await.unwrap();
+        let work = root.path().join("work");
+        fs::create_dir(&work).unwrap();
+        fs::write(work.join(".lvk"), "user file").unwrap();
+        assert!(
+            svc.copy_files_by_ids_to_worktree(&work, &[file.id])
+                .await
+                .is_err()
+        );
+        assert_eq!(fs::read_to_string(work.join(".lvk")).unwrap(), "user file");
+        fs::remove_file(work.join(".lvk")).unwrap();
+        let outside = root.path().join("outside");
+        fs::create_dir(&outside).unwrap();
+        std::os::unix::fs::symlink(&outside, work.join(".lvk")).unwrap();
+        assert!(
+            svc.copy_files_by_ids_to_worktree(&work, &[file.id])
+                .await
+                .is_err()
+        );
+        assert!(fs::read_dir(&outside).unwrap().next().is_none());
+        fs::remove_file(work.join(".lvk")).unwrap();
+        fs::create_dir_all(work.join(".lvk/attachments")).unwrap();
+        fs::write(work.join(".lvk/attachments/user.txt"), "tracked").unwrap();
+        for args in [vec!["init"], vec!["add", ".lvk/attachments/user.txt"]] {
+            assert!(
+                std::process::Command::new("git")
+                    .arg("-C")
+                    .arg(&work)
+                    .args(args)
+                    .output()
+                    .unwrap()
+                    .status
+                    .success()
+            );
+        }
+        assert!(
+            svc.copy_files_by_ids_to_worktree(&work, &[file.id])
+                .await
+                .is_err()
+        );
+        assert_eq!(
+            fs::read_to_string(work.join(".lvk/attachments/user.txt")).unwrap(),
+            "tracked"
+        );
+        assert!(!work.join(".lvk/attachments").join(file.file_path).exists());
+    }
+
+    #[cfg(unix)]
+    #[tokio::test]
     async fn attachment_symlinks_are_rejected() {
         use std::os::unix::fs::symlink;
         let (svc, root) = fixture().await;
@@ -709,7 +809,8 @@ mod attachment_tests {
         fs::create_dir(&outside).unwrap();
         let work = root.path().join("work");
         fs::create_dir(&work).unwrap();
-        let dir = work.join(utils::path::VIBE_ATTACHMENTS_DIR);
+        fs::create_dir(work.join(".lvk")).unwrap();
+        let dir = work.join(utils::path::LVK_ATTACHMENTS_DIR);
         symlink(&outside, &dir).unwrap();
         assert!(
             svc.copy_files_by_ids_to_worktree(&work, &[file.id])

@@ -47,8 +47,17 @@ LVKでは別の文書サイトを再作成せず、Wikiで知識を保守しま�
 ## 名前と帰属
 
 製品名は**Lucky Vibe Kanban**、略称は**LVK**です。現在の設定・共有リンクは
-`LVK_*`と`.lvk-shared`を使用します。元のVibe Kanbanの保存先、`VK_*`設定、
+`LVK_*`と`.lvk/shared`を使用します。元のVibe Kanbanの保存先、`VK_*`設定、
 ネイティブバイナリ名は変更していません。
+
+LVK独自のrepo内管理ファイルは `.lvk/` に配置します。`integration-validation.json`、
+`.gitignore`、LVK自体の開発用 `preview/` はGit共有できる設定です。ローカルの
+`shared/` リンクと `attachments/` コピーだけを `.lvk/.gitignore` で除外し、
+このignoreファイル自身は自己除外しません。既存の記述を保持し、必要な実行時除外を追記します。
+repository外の共有実体と中央添付キャッシュは移動しません。添付の基準はSessionの
+agent作業ディレクトリ（未指定時はWorkspace root）、sharedはrepository単位です。
+必須のLVKブロックを含む `AGENTS.md`、`CLAUDE.md`、`openwiki/`、`.openwikiignore`、
+外部ツール設定は標準位置を維持します。旧配置・旧履歴の移行、書換え、互換探索は行いません。
 
 LVKは[Easy Vibe Kanban](https://github.com/toby1123yjh/easy-vibe-kanban)と
 [Vibe Kanban](https://github.com/BloopAI/vibe-kanban)を基にしています。

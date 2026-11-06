@@ -49,8 +49,19 @@ than a separate documentation site.
 ## Naming and attribution
 
 The product is **Lucky Vibe Kanban**, abbreviated **LVK**. Current settings and
-shared links use `LVK_*` and `.lvk-shared`; original Vibe Kanban storage, `VK_*` keys
+shared links use `LVK_*` and `.lvk/shared`; original Vibe Kanban storage, `VK_*` keys
 and native binary names remain unchanged.
+
+LVK-specific repository files live under `.lvk/`: shareable configuration includes
+`integration-validation.json`, `.gitignore`, and LVK's own development `preview/`.
+Local `shared/` links and `attachments/` copies are excluded by `.lvk/.gitignore`;
+that file is shareable and does not ignore itself. Existing rules are preserved and
+runtime rules are appended when needed. Shared storage and the attachment cache
+remain outside repositories. Attachments use the Session's agent working directory,
+or the Workspace root when unspecified; shared links belong to each repository.
+Standard `AGENTS.md` (including LVK's required block), `CLAUDE.md`, `openwiki/`,
+`.openwikiignore` and external tool configuration retain their conventional locations.
+Old paths and history are not migrated, rewritten or supported through fallback lookup.
 
 LVK builds on [Easy Vibe Kanban](https://github.com/toby1123yjh/easy-vibe-kanban)
 and [Vibe Kanban](https://github.com/BloopAI/vibe-kanban). Their contributions and
