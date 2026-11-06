@@ -122,13 +122,13 @@ export function IntegrationPanel({
     queryKey: ['integration-activities', repositoryId],
     queryFn: () => integrationApi.activities(repositoryId),
     enabled: open && !!repositoryId,
-    refetchInterval: open ? 3000 : false,
+    refetchInterval: open ? 10000 : false,
   });
   const runs = useQuery({
     queryKey,
     queryFn: () => integrationApi.list(projectId),
     enabled: open,
-    refetchInterval: open ? 1500 : false,
+    refetchInterval: open ? 5000 : false,
   });
   const refresh = () => client.invalidateQueries({ queryKey });
   const create = useMutation({

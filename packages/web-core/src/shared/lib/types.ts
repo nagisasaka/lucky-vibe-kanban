@@ -6,7 +6,6 @@ import {
 
 export type AttemptData = {
   processes: ExecutionProcess[];
-  runningProcessDetails: Record<string, ExecutionProcess>;
 };
 
 export interface ConversationEntryDisplayType {

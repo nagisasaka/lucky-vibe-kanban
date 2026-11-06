@@ -14,7 +14,7 @@ export function IntegrationFacts({ workspace }: { workspace: Workspace }) {
     queryKey: ['integrations', id],
     queryFn: () => integrationApi.get(id!),
     enabled: !!id,
-    refetchInterval: 2000,
+    refetchInterval: 5000,
   });
   if (!run) return null;
   return (

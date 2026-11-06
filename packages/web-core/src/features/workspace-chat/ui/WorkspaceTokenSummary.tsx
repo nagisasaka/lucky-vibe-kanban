@@ -13,7 +13,7 @@ export function WorkspaceTokenSummary({
     queryKey: ['workspaceTokens', workspaceId],
     queryFn: () => workspacesApi.getTokens(workspaceId),
     // Match the existing React Query refresh mechanism; only while mounted and visible.
-    refetchInterval: 5000,
+    refetchInterval: 30000,
   });
   const number = (value: number | bigint | null | undefined) =>
     value == null ? t('workspaceTokens.unknown') : value.toLocaleString();

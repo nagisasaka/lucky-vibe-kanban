@@ -31,7 +31,7 @@ export function useWorkspaceOwnerView(workspaceId: string) {
     queryKey: ['workspace-execution', host, workspaceId],
     queryFn: () =>
       executionRequest<WorkspaceExecutionView>(host, `/${workspaceId}/usage`),
-    refetchInterval: 3000,
+    refetchInterval: 5000,
   });
   const stop = useMutation({
     mutationFn: () =>

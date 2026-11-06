@@ -18,7 +18,7 @@ export function useSessionQueueInteraction({
       queryKey: ['queue-status', hostId, sessionId],
       queryFn: () => queueApi.getStatus(sessionId!, hostId),
       enabled: !!sessionId,
-      refetchInterval: 2000,
+      refetchInterval: 5000,
     });
   // Capture scope in mutation variables, including when a user switches sessions.
   const mutation = useMutation({

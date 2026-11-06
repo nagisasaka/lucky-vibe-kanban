@@ -37,7 +37,7 @@ export function TodoPanel({
   const query = useQuery({
     queryKey,
     queryFn: () => todoApi.list(projectId),
-    refetchInterval: 5000,
+    refetchInterval: 15000,
   });
   const [search, setSearch] = useState('');
   const [showCompleted, setShowCompleted] = useState(false);

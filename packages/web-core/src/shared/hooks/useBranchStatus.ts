@@ -6,6 +6,6 @@ export function useBranchStatus(workspaceId?: string) {
     queryKey: ['branchStatus', workspaceId],
     queryFn: () => workspacesApi.getBranchStatus(workspaceId!),
     enabled: !!workspaceId,
-    refetchInterval: 5000,
+    refetchInterval: 15000,
   });
 }

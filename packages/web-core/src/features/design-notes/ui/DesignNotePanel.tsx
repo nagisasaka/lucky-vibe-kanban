@@ -134,13 +134,13 @@ export function DesignNotePanel({ projectId }: { projectId: string }) {
   const list = useQuery({
     queryKey: [...key, 'list'],
     queryFn: () => api.list(projectId),
-    refetchInterval: 5000,
+    refetchInterval: 15000,
   });
   const detail = useQuery({
     queryKey: [...key, selected],
     queryFn: () => api.get(projectId, selected!),
     enabled: !!selected,
-    refetchInterval: 5000,
+    refetchInterval: 15000,
   });
   const write: Write = async (operation) => {
     if (active.current) throw new Error(t('designNotes.saving'));
