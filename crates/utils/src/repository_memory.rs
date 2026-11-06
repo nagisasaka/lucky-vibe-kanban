@@ -245,11 +245,14 @@ impl SemanticChanges {
                             MemoryTestResult::Failed => "Failed",
                             MemoryTestResult::NotRun => "Not run",
                         };
-                        match &t.summary {
-                            Some(summary) if !summary.trim().is_empty() => {
-                                format!("{result}: {summary}")
-                            }
-                            _ => result.to_owned(),
+                        match t
+                            .summary
+                            .as_deref()
+                            .filter(|s| !s.trim().is_empty())
+                            .or(t.command.as_deref().filter(|c| !c.trim().is_empty()))
+                        {
+                            Some(summary) => format!("{result}: {summary}"),
+                            None => result.to_owned(),
                         }
                     })
                     .collect(),
@@ -1630,6 +1633,21 @@ mod tests {
                     result: MemoryTestResult::NotRun,
                     summary: Some("実GitHubは範囲外".into()),
                 },
+                MemoryTest {
+                    command: Some("cargo test --lib".into()),
+                    result: MemoryTestResult::Passed,
+                    summary: None,
+                },
+                MemoryTest {
+                    command: Some("pnpm run check".into()),
+                    result: MemoryTestResult::Failed,
+                    summary: Some(" \n\t".into()),
+                },
+                MemoryTest {
+                    command: Some(" \t".into()),
+                    result: MemoryTestResult::NotRun,
+                    summary: Some(" \n".into()),
+                },
             ],
         };
         manifest.validate().unwrap();
@@ -1662,6 +1680,12 @@ mod tests {
         assert!(message.contains("二重管理を避ける"));
         assert!(message.contains("Passed: 代表例が成功"));
         assert!(message.contains("Not run: 実GitHubは範囲外"));
+        assert!(message.contains("Passed: cargo test --lib"));
+        assert!(message.contains("Failed: pnpm run check"));
+        assert!(message.ends_with(&format!(
+            "\n- Not run\n\nLVK-Memory-Source: {}",
+            manifest.event_id
+        )));
         assert!(!message.contains("detailed command payload"));
         assert!(!message.contains(&manifest.source_commit));
         assert!(!message.contains(&manifest.base_commit));
