@@ -1079,7 +1079,9 @@ pub(super) async fn record_wiki_result(
                 });
             }
         }
-        let mut state = RepositoryMemoryStore::state_on(conn, repo.id).await?.context("Wiki operational state missing; complete the one-time migration before publication")?;
+        let mut state = RepositoryMemoryStore::state_on(conn, repo.id)
+            .await?
+            .context("Wiki operational state missing before publication")?;
         if state.active_run_id.is_none()
             && state.bootstrap.is_none()
             && state.target_branch.as_deref() == run.target_ref.strip_prefix("refs/heads/")

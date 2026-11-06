@@ -63,14 +63,6 @@ impl RepositoryMemoryStore {
         .await
         .map_err(invalid)?;
         if !configured {
-            if let Some(legacy) =
-                files::RepositoryMemoryStore::read_only_at_persistent(&persistent)?
-                && legacy.has_legacy_operational_state()?
-            {
-                return Err(invalid(
-                    "Legacy operational state requires one-time migrate-repository-state; refusing empty DB fallback",
-                ));
-            }
             return Ok(None);
         }
         let files = files::RepositoryMemoryStore::read_only_at_persistent(&persistent)?
@@ -122,18 +114,6 @@ impl RepositoryMemoryStore {
                     .await
                     .map_err(invalid)?;
             }
-        }
-        let configured: bool = sqlx::query_scalar(
-            "SELECT EXISTS(SELECT 1 FROM repository_wiki_state WHERE repository_id=?)",
-        )
-        .bind(self.repository_id)
-        .fetch_one(&mut *conn)
-        .await
-        .map_err(invalid)?;
-        if !configured && self.files.has_legacy_operational_state()? {
-            return Err(invalid(
-                "Legacy operational state requires one-time migration; refusing empty DB fallback",
-            ));
         }
         Ok(conn)
     }
@@ -322,114 +302,6 @@ impl RepositoryMemoryStore {
     }
 }
 
-/// Explicit offline, one-time development import. It does not run at startup,
-/// audit other Repos, remove files, or create a permanent migration manager.
-/// Operators must stop all writers; historical Run statuses and durable
-/// integration reservations are preserved and are not evidence of live writers.
-/// Fix any reported cause and retry; the state row commits with every imported
-/// record, so a failed import cannot expose an empty or partial cutover.
-pub async fn import_legacy_operations(
-    pool: &SqlitePool,
-    repository_id: Uuid,
-    persistent: &Path,
-) -> anyhow::Result<Option<[usize; 3]>> {
-    use anyhow::{Context, ensure};
-    let files = files::RepositoryMemoryStore::read_only_at_persistent(persistent)?
-        .context("Legacy knowledge directory is missing")?;
-    let _wiki_lock = files.try_lock()?;
-    let _integration_lock = files.try_integration_lock()?;
-    let mut tx = pool.begin_with("BEGIN IMMEDIATE").await?;
-    let repos: Vec<Uuid> = sqlx::query_scalar("SELECT id FROM repos")
-        .fetch_all(&mut *tx)
-        .await?;
-    ensure!(
-        repos == vec![repository_id],
-        "One-time development import expects exactly the selected registered Repo; inspect the actual Repo set before proceeding"
-    );
-    if RepositoryMemoryStore::state_on(&mut tx, repository_id)
-        .await?
-        .is_some()
-    {
-        return Ok(None);
-    }
-    for table in [
-        "repository_wiki_receipts",
-        "repository_wiki_publications",
-        "repository_integrations",
-    ] {
-        let count: i64 = sqlx::query_scalar(&format!(
-            "SELECT COUNT(*) FROM {table} WHERE repository_id=?"
-        ))
-        .bind(repository_id)
-        .fetch_one(&mut *tx)
-        .await?;
-        ensure!(
-            count == 0,
-            "Operational records exist without the cutover state; inspect the database before retrying"
-        );
-    }
-    let legacy = files.legacy_operational_state()?;
-    ensure!(
-        legacy.state.active_run_id.is_none() && legacy.state.bootstrap.is_none(),
-        "Legacy Wiki maintenance is unfinished; settle it with the old version before importing"
-    );
-    let store = RepositoryMemoryStore::with_artifacts(pool, repository_id, files);
-    for record in &legacy.integrations {
-        for id in &record.event_ids {
-            let event = store
-                .event(*id)?
-                .context("Legacy integration references a missing Manifest")?;
-            ensure!(
-                event.repository_id == repository_id,
-                "Legacy Manifest belongs to a different Repo"
-            );
-        }
-        store
-            .save_on(&mut tx, "repository_integrations", record.id, record, true)
-            .await?;
-    }
-    for record in &legacy.publications {
-        store
-            .save_on(
-                &mut tx,
-                "repository_wiki_publications",
-                record.run_id,
-                record,
-                false,
-            )
-            .await?;
-    }
-    for record in &legacy.receipts {
-        let event = store
-            .event(record.event_id)?
-            .context("Legacy receipt references a missing Manifest")?;
-        ensure!(
-            event.repository_id == repository_id,
-            "Legacy receipt Manifest belongs to a different Repo"
-        );
-        store
-            .save_on(
-                &mut tx,
-                "repository_wiki_receipts",
-                record.event_id,
-                record,
-                true,
-            )
-            .await?;
-    }
-    sqlx::query("INSERT INTO repository_wiki_state(repository_id,payload) VALUES(?,?)")
-        .bind(repository_id)
-        .bind(serde_json::to_string(&legacy.state)?)
-        .execute(&mut *tx)
-        .await?;
-    tx.commit().await?;
-    Ok(Some([
-        legacy.integrations.len(),
-        legacy.publications.len(),
-        legacy.receipts.len(),
-    ]))
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -461,116 +333,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn offline_import_preserves_blocked_candidates_runs_and_reservations() {
-        use crate::models::integration::{
-            IntegrationPublicationRequest, IntegrationRun, tests::fixture,
-        };
-
-        let temp = tempfile::tempdir().unwrap();
-        files::RepositoryMemoryStore::at_persistent(temp.path()).unwrap();
-        let state_path = temp.path().join("knowledge/state.json");
-        let old_state = serde_json::to_vec(&RepositoryMemoryState::enabled_defaults(Some(
-            "main".into(),
-        )))
-        .unwrap();
-        std::fs::write(&state_path, &old_state).unwrap();
-        let (pool, mut run, _) = fixture().await;
-        let workspace = run.payload.sources[0].selection.workspace_id;
-        let session: Uuid = sqlx::query_scalar("SELECT id FROM sessions WHERE workspace_id=?")
-            .bind(workspace)
-            .fetch_one(&pool)
-            .await
-            .unwrap();
-        let mut agent = Uuid::nil();
-        // Historical statuses remain even though no writer runs in this fixture.
-        for status in [
-            "pending",
-            "starting",
-            "running",
-            "awaiting_input",
-            "awaiting_approval",
-            "cancelling",
-        ] {
-            agent = Uuid::new_v4();
-            sqlx::query("INSERT INTO agent_runs(id,session_id,workspace_id,request_id,idempotency_key,correlation_id,schema_version,payload_version,runtime_profile_id,provider_id,workspace_mode,workspace_path,status,request_envelope) VALUES(?,?,?,?,?,?,1,1,'fixture','codex','shared_workspace','/fixture',?,'{}')")
-                .bind(agent).bind(session).bind(workspace).bind(agent)
-                .bind(agent.to_string()).bind(run.id).bind(status)
-                .execute(&pool).await.unwrap();
-        }
-        run.status = "blocked".into();
-        run.workspace_id = Some(workspace);
-        run.session_id = Some(session);
-        run.agent_run_id = Some(agent);
-        run.error = Some("retained stop reason".into());
-        run.payload.result_commit = Some("b".repeat(40));
-        run.payload.publication_request = Some(IntegrationPublicationRequest {
-            request_id: Uuid::new_v4(),
-            agent_run_id: agent,
-            code_commit: "b".repeat(40),
-            wiki_commit: Some("c".repeat(40)),
-            candidate_commit: "c".repeat(40),
-        });
-        run.payload.history.push(serde_json::json!({
-            "status": "blocked", "candidate_commit": "c".repeat(40)
-        }));
-        run.save(&pool).await.unwrap();
-        let other = Uuid::new_v4();
-        sqlx::query("INSERT INTO integration_runs(id,request_key,project_id,repository_id,storage_identity,target_ref,status,workspace_id,session_id,agent_run_id,payload,error) SELECT ?,?,project_id,repository_id,storage_identity,target_ref,status,workspace_id,session_id,agent_run_id,payload,error FROM integration_runs WHERE id=?")
-            .bind(other).bind(other.to_string()).bind(run.id)
-            .execute(&pool).await.unwrap();
-
-        let mut before = Vec::new();
-        for id in [run.id, other] {
-            before.push(
-                serde_json::to_value(IntegrationRun::find(&pool, id).await.unwrap()).unwrap(),
-            );
-        }
-        let agents_query = "SELECT id,session_id,workspace_id,correlation_id,status,request_envelope FROM agent_runs ORDER BY id";
-        let agents = sqlx::query_as::<_, (Uuid, Uuid, Uuid, Uuid, String, String)>(agents_query)
-            .fetch_all(&pool)
-            .await
-            .unwrap();
-        let reservations_query = "SELECT resource_kind,resource_key,run_id FROM integration_reservations ORDER BY resource_kind,resource_key";
-        let reservations = sqlx::query_as::<_, (String, String, Uuid)>(reservations_query)
-            .fetch_all(&pool)
-            .await
-            .unwrap();
-        assert!(!reservations.is_empty());
-
-        for expected in [Some([0, 0, 0]), None] {
-            assert_eq!(
-                import_legacy_operations(&pool, run.repository_id, temp.path())
-                    .await
-                    .unwrap(),
-                expected
-            );
-            for (index, id) in [run.id, other].into_iter().enumerate() {
-                assert_eq!(
-                    serde_json::to_value(IntegrationRun::find(&pool, id).await.unwrap()).unwrap(),
-                    before[index]
-                );
-            }
-            assert_eq!(
-                sqlx::query_as::<_, (Uuid, Uuid, Uuid, Uuid, String, String)>(agents_query)
-                    .fetch_all(&pool)
-                    .await
-                    .unwrap(),
-                agents
-            );
-            assert_eq!(
-                sqlx::query_as::<_, (String, String, Uuid)>(reservations_query)
-                    .fetch_all(&pool)
-                    .await
-                    .unwrap(),
-                reservations
-            );
-            assert_eq!(std::fs::read(&state_path).unwrap(), old_state);
-        }
-        pool.close().await;
-    }
-
-    #[tokio::test]
-    async fn offline_import_rolls_back_retries_and_leaves_db_authoritative() {
+    async fn operational_state_is_atomic_and_durable() {
         use utils::repository_memory::{
             ChangeManifest, ReconciliationResult, RepositoryWikiStatus, SemanticChanges,
         };
@@ -611,7 +374,7 @@ mod tests {
             },
         };
         files.publish_event(&event).unwrap();
-        let mut state = RepositoryMemoryState::enabled_defaults(Some("main".into()));
+        let state = RepositoryMemoryState::enabled_defaults(Some("main".into()));
         let integration = MemoryIntegration {
             id: Uuid::new_v4(),
             event_ids: vec![event.event_id],
@@ -635,131 +398,16 @@ mod tests {
             result: ReconciliationResult::Failed,
             error: Some("retry needed".into()),
         };
-        let root = temp.path().join("knowledge");
-        let write = |path: &Path, value: serde_json::Value| {
-            std::fs::write(path, serde_json::to_vec(&value).unwrap()).unwrap();
-        };
-        for dir in ["integrations", "publications", "receipts"] {
-            std::fs::create_dir(root.join(dir)).unwrap();
-        }
-        write(
-            &root.join("state.json"),
-            serde_json::to_value(&state).unwrap(),
-        );
-        write(
-            &root.join(format!("integrations/{}.json", integration.id)),
-            serde_json::to_value(&integration).unwrap(),
-        );
-        write(
-            &root.join(format!("publications/{}.json", publication.run_id)),
-            serde_json::to_value(&publication).unwrap(),
-        );
-        write(
-            &root.join(format!("receipts/{}.json", event.event_id)),
-            serde_json::to_value(&receipt).unwrap(),
-        );
-        let retained = root.join("sync-inputs/retained-input");
-        std::fs::write(&retained, "fixed Manifest digest/identity").unwrap();
         let store = RepositoryMemoryStore::with_artifacts(&pool, repo, files);
-        assert!(
-            store
-                .state()
-                .await
-                .unwrap_err()
-                .to_string()
-                .contains("one-time migration")
-        );
-        // An unfinished owner is preserved, not silently cleared or quarantined.
-        state.active_run_id = Some(Uuid::new_v4());
-        write(
-            &root.join("state.json"),
-            serde_json::to_value(&state).unwrap(),
-        );
-        assert!(
-            import_legacy_operations(&pool, repo, temp.path())
-                .await
-                .is_err()
-        );
-        state.active_run_id = None;
-        write(
-            &root.join("state.json"),
-            serde_json::to_value(&state).unwrap(),
-        );
-        let old_state = std::fs::read(root.join("state.json")).unwrap();
-        let receipt_path = root.join(format!("receipts/{}.json", event.event_id));
-        let old_receipt = std::fs::read(&receipt_path).unwrap();
-        std::fs::write(&receipt_path, "invalid JSON").unwrap();
-        let malformed = import_legacy_operations(&pool, repo, temp.path())
-            .await
-            .unwrap_err();
-        assert!(
-            malformed
-                .to_string()
-                .contains(receipt_path.to_string_lossy().as_ref())
-        );
-        std::fs::write(&receipt_path, &old_receipt).unwrap();
-
-        // Fail after a mapping was inserted: the whole cutover must roll back.
-        sqlx::query("CREATE TRIGGER fail_import BEFORE INSERT ON repository_wiki_publications BEGIN SELECT RAISE(ABORT,'fixture interruption'); END").execute(&pool).await.unwrap();
-        assert!(
-            import_legacy_operations(&pool, repo, temp.path())
-                .await
-                .is_err()
-        );
-        for table in [
-            "repository_wiki_state",
-            "repository_integrations",
-            "repository_wiki_publications",
-            "repository_wiki_receipts",
-        ] {
-            let count: i64 = sqlx::query_scalar(&format!("SELECT COUNT(*) FROM {table}"))
-                .fetch_one(&pool)
-                .await
-                .unwrap();
-            assert_eq!(count, 0);
-        }
-        assert_eq!(std::fs::read(root.join("state.json")).unwrap(), old_state);
-        sqlx::query("DROP TRIGGER fail_import")
-            .execute(&pool)
-            .await
-            .unwrap();
-        assert_eq!(
-            import_legacy_operations(&pool, repo, temp.path())
-                .await
-                .unwrap(),
-            Some([1, 1, 1])
-        );
+        store.save_state(&state).await.unwrap();
+        store.save_integration(&integration).await.unwrap();
+        store.save_publication(&publication).await.unwrap();
+        store.acknowledge(&receipt).await.unwrap();
         assert_eq!(
             serde_json::to_value(&store.integrations().await.unwrap()[0]).unwrap(),
             serde_json::to_value(&integration).unwrap()
         );
-        assert_eq!(
-            store
-                .publication(publication.run_id)
-                .await
-                .unwrap()
-                .unwrap()
-                .maintenance_commit,
-            publication.maintenance_commit
-        );
-        assert_eq!(
-            store.receipt(event.event_id).await.unwrap().unwrap().result,
-            ReconciliationResult::Failed
-        );
-        assert_eq!(
-            std::fs::read_to_string(&retained).unwrap(),
-            "fixed Manifest digest/identity"
-        );
-        assert!(store.event(event.event_id).unwrap().is_some());
-        // A successful cutover never reimports stale files, even after retry.
-        std::fs::write(root.join("state.json"), "corrupt stale file").unwrap();
-        assert_eq!(
-            import_legacy_operations(&pool, repo, temp.path())
-                .await
-                .unwrap(),
-            None
-        );
-        assert!(store.state().await.unwrap().enabled);
+        // Retrying the same publication is idempotent; changing it is rejected.
         store.save_publication(&publication).await.unwrap();
         let mut conflicting = publication.clone();
         conflicting.no_op = true;

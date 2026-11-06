@@ -584,13 +584,6 @@ For source changes, write a JSON semantic draft at draft_path before finalising.
     }
 }
 
-pub struct LegacyOperationalState {
-    pub state: RepositoryMemoryState,
-    pub integrations: Vec<MemoryIntegration>,
-    pub publications: Vec<WikiPublication>,
-    pub receipts: Vec<WikiReconciliationReceipt>,
-}
-
 pub fn validate_publication(value: &WikiPublication) -> io::Result<()> {
     if !commit_id(&value.source_commit)
         || value
@@ -1020,100 +1013,6 @@ impl RepositoryMemoryStore {
         Ok(event)
     }
 
-    pub fn has_legacy_operational_state(&self) -> io::Result<bool> {
-        for entry in ["state.json", "integrations", "publications", "receipts"] {
-            if self.root.join(entry).try_exists()? {
-                return Ok(true);
-            }
-        }
-        Ok(false)
-    }
-
-    /// Read only during the explicit one-time offline migration.
-    pub fn legacy_operational_state(&self) -> io::Result<LegacyOperationalState> {
-        let state: RepositoryMemoryState = self
-            .read_json(&self.root.join("state.json"))
-            .map_err(|error| invalid(format!("Legacy state.json: {error}")))?
-            .ok_or_else(|| invalid("Legacy state.json is missing"))?;
-        if state.version != 1 {
-            return Err(invalid("Unsupported repository state version"));
-        }
-        let integrations: Vec<MemoryIntegration> = self.legacy_records("integrations", "id")?;
-        let publications: Vec<WikiPublication> = self.legacy_records("publications", "run_id")?;
-        let receipts: Vec<WikiReconciliationReceipt> =
-            self.legacy_records("receipts", "event_id")?;
-        for value in &publications {
-            validate_publication(value).map_err(|error| {
-                invalid(format!("Legacy publication {}: {error}", value.run_id))
-            })?;
-        }
-        for value in &receipts {
-            self.validate_receipt(value)
-                .map_err(|error| invalid(format!("Legacy receipt {}: {error}", value.event_id)))?;
-        }
-        for value in &integrations {
-            if !commit_id(&value.before_commit)
-                || value
-                    .integrated_commit
-                    .as_ref()
-                    .is_some_and(|id| !commit_id(id))
-            {
-                return Err(invalid(format!(
-                    "Invalid Git identity in legacy integration {}",
-                    value.id
-                )));
-            }
-        }
-        Ok(LegacyOperationalState {
-            state,
-            integrations,
-            publications,
-            receipts,
-        })
-    }
-
-    fn legacy_records<T: DeserializeOwned>(
-        &self,
-        directory: &str,
-        key: &str,
-    ) -> io::Result<Vec<T>> {
-        let dir = self.root.join(directory);
-        reject_symlinks(&dir)?;
-        if !dir.try_exists()? {
-            return Ok(Vec::new());
-        }
-        let mut records = Vec::new();
-        for entry in fs::read_dir(dir)? {
-            let path = entry?.path();
-            if path.extension().is_none_or(|ext| ext != "json") {
-                return Err(invalid(format!(
-                    "Unexpected legacy file: {}",
-                    path.display()
-                )));
-            }
-            let stem = path
-                .file_stem()
-                .and_then(|v| v.to_str())
-                .ok_or_else(|| invalid("Invalid legacy filename"))?;
-            Uuid::parse_str(stem).map_err(invalid)?;
-            let value: serde_json::Value = self
-                .read_json(&path)
-                .map_err(|error| invalid(format!("{}: {error}", path.display())))?
-                .ok_or_else(|| invalid(format!("Legacy record disappeared: {}", path.display())))?;
-            if value.get(key).and_then(|v| v.as_str()) != Some(stem) {
-                return Err(invalid(format!(
-                    "Legacy record identity mismatch: {}",
-                    path.display()
-                )));
-            }
-            records.push(
-                serde_json::from_value(value)
-                    .map_err(|error| invalid(format!("{}: {error}", path.display())))?,
-            );
-        }
-        Ok(records)
-    }
-
     pub fn validate_receipt(&self, value: &WikiReconciliationReceipt) -> io::Result<()> {
         if !commit_id(&value.target_commit)
             || value.wiki_commit.as_ref().is_some_and(|id| !commit_id(id))
@@ -1303,7 +1202,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn read_only_observation_of_older_storage_does_not_provision_directories() {
+    fn read_only_observation_does_not_provision_directories() {
         let temp = tempfile::tempdir().unwrap();
         assert!(
             RepositoryMemoryStore::read_only_at_persistent(temp.path())
@@ -1313,22 +1212,11 @@ mod tests {
         assert!(!temp.path().join("knowledge").exists());
         let root = temp.path().join("knowledge");
         fs::create_dir(&root).unwrap();
-        let state = RepositoryMemoryState::enabled_defaults(Some("main".into()));
-        let saved = serde_json::to_vec(&state).unwrap();
-        fs::write(root.join("state.json"), &saved).unwrap();
         let store = RepositoryMemoryStore::read_only_at_persistent(temp.path())
             .unwrap()
             .unwrap();
-        assert!(store.legacy_operational_state().unwrap().state.enabled);
         assert!(store.coding_errors().unwrap().is_empty());
         assert!(store.runs().unwrap().is_empty());
-        assert!(
-            store
-                .legacy_operational_state()
-                .unwrap()
-                .integrations
-                .is_empty()
-        );
         assert!(store.events().unwrap().is_empty());
         assert!(
             store
@@ -1337,11 +1225,10 @@ mod tests {
                 .records
                 .is_empty()
         );
-        assert_eq!(fs::read_dir(&root).unwrap().count(), 1);
-        assert_eq!(fs::read(root.join("state.json")).unwrap(), saved);
+        assert_eq!(fs::read_dir(&root).unwrap().count(), 0);
         let _lock = store.try_lock().unwrap();
         assert!(root.join("locks").is_dir());
-        assert_eq!(fs::read_dir(&root).unwrap().count(), 2);
+        assert_eq!(fs::read_dir(&root).unwrap().count(), 1);
         fs::write(root.join("events"), "not a directory").unwrap();
         assert!(store.events().is_err());
         assert!(store.discover_events(Uuid::new_v4(), None, 10).is_err());

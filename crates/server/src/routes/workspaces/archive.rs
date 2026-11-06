@@ -82,25 +82,8 @@ pub(crate) async fn check_idle(conn: &mut SqliteConnection, id: Uuid) -> Result<
                 | db::models::workspace_usage::OPENWIKI_BOOTSTRAP
         )
         && let Some(repo_id) = owner.repository_id
-        && let Some(name) = sqlx::query_scalar::<_, String>("SELECT name FROM repos WHERE id=?")
-            .bind(repo_id)
-            .fetch_optional(&mut *conn)
-            .await?
     {
         let state = RepositoryMemoryStore::state_on(conn, repo_id).await?;
-        if state.is_none() {
-            let persistent = utils::path::shared_resources_dir(&name, repo_id).join("persistent");
-            if let Some(files) =
-                utils::repository_memory::RepositoryMemoryStore::read_only_at_persistent(
-                    &persistent,
-                )?
-                && files.has_legacy_operational_state()?
-            {
-                return Err(ApiError::Io(std::io::Error::other(
-                    "Legacy operational state requires one-time migration before archive",
-                )));
-            }
-        }
         if let Some(state) = state
             && state.maintenance_workspace_id == Some(id)
             && (state.active_run_id.is_some() || state.bootstrap.is_some())
