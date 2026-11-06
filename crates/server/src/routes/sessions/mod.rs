@@ -593,6 +593,10 @@ pub fn router(deployment: &DeploymentImpl) -> Router<DeploymentImpl> {
             "/executor-config",
             get(executor_config::get_executor_config),
         )
+        .route(
+            "/execution-settings",
+            get(executor_config::get_execution_settings),
+        )
         .route("/follow-up", post(follow_up))
         .route("/questions", get(questions::list))
         .route("/questions/answer", post(questions::submit))

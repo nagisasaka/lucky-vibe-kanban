@@ -473,6 +473,7 @@ mod tests {
             "get_context".to_string(),
             "integration_action".to_string(),
             "get_execution".to_string(),
+            "get_session_execution_settings".to_string(),
             "get_workspace_tokens".to_string(),
             "read_provider_usage".to_string(),
             "start_dev_server".to_string(),

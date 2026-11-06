@@ -254,7 +254,7 @@ impl ClaudeCode {
         Ok(self.build_command_builder_with_effort_support(supports_effort)?)
     }
 
-    async fn supports_effort_flag(&self) -> Result<bool, ExecutorError> {
+    pub async fn supports_effort_flag(&self) -> Result<bool, ExecutorError> {
         self.validate_subscription_profile()?;
         let builder = command_adapter::ClaudeCodeCommandAdapter::new(self).build_effort_probe()?;
 
@@ -370,7 +370,7 @@ impl ClaudeCode {
     }
 }
 
-fn claude_model_options(supports_effort: bool) -> Vec<crate::model_selector::ModelInfo> {
+pub fn claude_model_options(supports_effort: bool) -> Vec<crate::model_selector::ModelInfo> {
     use crate::model_selector::{ModelInfo, ReasoningOption};
 
     let effort_options =
@@ -3055,7 +3055,9 @@ mod tests {
     #[test]
     fn command_builder_includes_effort_when_cli_supports_it() {
         let mut executor = test_executor(None);
-        executor.effort = Some(ClaudeEffort::Max);
+        let mut config = ExecutorConfig::new(BaseCodingAgent::ClaudeCode);
+        config.reasoning_id = Some("max".into());
+        executor.apply_overrides(&config);
 
         let builder = executor
             .build_command_builder_with_effort_support(true)

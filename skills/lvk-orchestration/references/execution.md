@@ -49,3 +49,36 @@ For replacement, partial handoff, Issue closure or cleanup, read [auto-merge.md]
 - For implementation: create or refine a normal Issue containing the agreed objective and acceptance criteria, then select or, when necessary, create the appropriate Workspace for the selected repositories/branches and start or continue an AgentRun in a suitable Session using supported executor configuration. Avoid inventing a parallel planning or task-management system.
 
 - Do not make the developer manually schedule dependent tasks, Git merges, or resource usage if LVK can manage them. Escalate genuinely conflicting product intents and consequential design choices, not routine execution details.
+
+## Next-Run settings and engine selection
+
+Use `continue_execution` with the explicit latest terminal Run, or stdio
+`run_session_prompt` with `agent_run_id`, `project_id` and a stable `request_id`,
+when changing the next Run. `overrides` supports `execution_mode` and
+`reasoning_id`: `{"action":"set","value":...}` sets one field and
+`{"action":"reset"}` removes its saved override and uses preset/provider defaults.
+Omitted fields preserve
+saved settings; `null` is invalid. Read the accepted receipt and execution settings;
+LVK launch configuration is not proof of a provider's unobserved internal choice.
+Check provider/model/CLI capabilities first with `get_session_execution_settings`
+(available through remote and stdio MCP). Unsupported values and native-adopted
+configuration changes fail; do not bypass them or retry with a new identity after
+an uncertain response. Steer adds text to the live Run and does not apply settings.
+An active Run, stale target or queued work must be resolved explicitly.
+For stdio checked continuation, resend the identical full request with the same
+request_id to recover its latest receipt; never use a new ID for an unknown outcome.
+
+For an engine change, create a new Session in the same Workspace (remote
+`start_session`, stdio `create_session` with `executor`). Remote `start_workspace`
+also accepts optional `engine`; stdio `start_workspace` retains its existing
+required `executor`. Only create a new Workspace when needed. For optional fields,
+omission preserves that entry's existing default behavior. Never rewrite an
+existing Session's engine.
+The code state is reused, but native conversations do not transfer across providers.
+Include relevant goals, decisions and remaining work in the new Session's prompt,
+and report its new Session identity. Prefer the existing implementation Session
+for ordinary follow-up work when its engine and constraints remain appropriate.
+
+REVIEW uses the existing Code execution path for bounded investigation, reporting
+and stopping. Switching Review to Code is not authorization to adopt product
+changes, merge, publish or alter permissions; retain the user's authorization scope.

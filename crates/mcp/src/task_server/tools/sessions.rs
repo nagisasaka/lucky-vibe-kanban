@@ -1,6 +1,6 @@
 use db::models::session::Session;
 use executors::{
-    profile::ExecutorConfig,
+    profile::{ExecutorConfig, NextRunOverrides},
     runtime::{AgentRunPortSnapshot, AgentRunStatus, RunState},
 };
 use rmcp::{
@@ -18,7 +18,9 @@ struct CreateSessionRequest {
         description = "Workspace ID to create the session in. Optional when running inside a scoped orchestrator MCP."
     )]
     workspace_id: Option<Uuid>,
-    #[schemars(description = "Optional executor to pin this session to")]
+    #[schemars(
+        description = "Engine for this new conversation (for example CODEX or CLAUDE_CODE). Omit for existing default selection. Reuses Workspace code, not another provider native conversation."
+    )]
     executor: Option<String>,
     #[schemars(description = "Optional display name for the session")]
     name: Option<String>,
@@ -74,6 +76,15 @@ struct ListSessionsResponse {
 struct RunCodingAgentInSessionRequest {
     project_id: Option<Uuid>,
     request_id: Option<Uuid>,
+    #[schemars(
+        description = "Explicit latest terminal Run for checked continuation; requires project_id and request_id. Required when overrides are supplied."
+    )]
+    agent_run_id: Option<Uuid>,
+    #[serde(default)]
+    #[schemars(
+        description = "Apply only to the next Run. Omitted fields preserve saved settings; use action reset explicitly. Null is invalid."
+    )]
+    overrides: NextRunOverrides,
     #[serde(default)]
     attachment_ids: Vec<Uuid>,
     #[schemars(description = "Session ID to run the coding agent in")]
@@ -118,6 +129,12 @@ struct UpdateSessionResponse {
 }
 
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
+struct GetSessionExecutionSettingsRequest {
+    #[schemars(description = "Session whose saved settings and capabilities should be inspected")]
+    session_id: Uuid,
+}
+
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
 struct GetExecutionRequest {
     #[schemars(description = "Execution ID to inspect")]
     execution_id: Uuid,
@@ -141,7 +158,9 @@ struct GetExecutionResponse {
 
 #[tool_router(router = session_tools_router, vis = "pub")]
 impl McpServer {
-    #[tool(description = "Create a new session in a workspace.")]
+    #[tool(
+        description = "Create a new conversation in an existing workspace, optionally selecting its engine. Does not inherit another Session native conversation; include relevant goals, decisions and remaining work in its first prompt."
+    )]
     async fn create_session(
         &self,
         Parameters(CreateSessionRequest {
@@ -252,7 +271,7 @@ impl McpServer {
     }
 
     #[tool(
-        description = "Run a coding agent turn in an existing session and return immediately with the execution process."
+        description = "Run a turn in an existing session. To change next-Run mode/reasoning, supply overrides plus the latest terminal agent_run_id, project_id and stable request_id. Omission preserves saved settings. Engine changes require create_session; REVIEW grants no additional permissions."
     )]
     async fn run_session_prompt(
         &self,
@@ -262,6 +281,8 @@ impl McpServer {
             project_id,
             request_id,
             attachment_ids,
+            agent_run_id,
+            overrides,
         }): Parameters<RunCodingAgentInSessionRequest>,
     ) -> Result<CallToolResult, ErrorData> {
         let prompt = prompt.trim();
@@ -282,6 +303,34 @@ impl McpServer {
                 "Cannot run coding agent in the orchestrator session",
                 Some("Create or re-use a different session and run the coding agent there."),
             );
+        }
+
+        if agent_run_id.is_some() || !overrides.is_empty() {
+            let (Some(agent_run_id), Some(project_id), Some(request_id)) =
+                (agent_run_id, project_id, request_id)
+            else {
+                return Self::err(
+                    "Checked continuation and overrides require agent_run_id, project_id and request_id",
+                    None::<&str>,
+                );
+            };
+            let url = self.url("/api/mcp-execution/continue");
+            return match self
+                .send_json::<serde_json::Value>(self.client.post(url).json(&serde_json::json!({
+                    "project_id": project_id,
+                    "workspace_id": session.workspace_id,
+                    "session_id": session_id,
+                    "agent_run_id": agent_run_id,
+                    "request_id": request_id,
+                    "prompt": prompt,
+                    "attachment_ids": attachment_ids,
+                    "overrides": overrides,
+                })))
+                .await
+            {
+                Ok(value) => Self::success(&value),
+                Err(error) => Ok(Self::tool_error(error)),
+            };
         }
 
         let executor_config = match self.executor_config_for_session(&session).await {
@@ -330,6 +379,33 @@ impl McpServer {
             is_finished: state.status.is_terminal(),
             state: serde_json::to_value(&state).unwrap_or(serde_json::Value::Null),
         })
+    }
+
+    #[tool(
+        description = "Read saved launch settings and supported next-Run mode/reasoning choices for a Session, including native-adopted change restrictions. This is configuration/capability evidence, not confirmation of the provider internal adopted value."
+    )]
+    async fn get_session_execution_settings(
+        &self,
+        Parameters(GetSessionExecutionSettingsRequest { session_id }): Parameters<
+            GetSessionExecutionSettingsRequest,
+        >,
+    ) -> Result<CallToolResult, ErrorData> {
+        let session_url = self.url(&format!("/api/sessions/{session_id}"));
+        let session: Session = match self.send_json(self.client.get(&session_url)).await {
+            Ok(value) => value,
+            Err(error) => return Ok(Self::tool_error(error)),
+        };
+        if let Err(error) = self.scope_allows_workspace(session.workspace_id) {
+            return Ok(Self::tool_error(error));
+        }
+        let url = self.url(&format!("/api/sessions/{session_id}/execution-settings"));
+        match self
+            .send_json::<serde_json::Value>(self.client.get(url))
+            .await
+        {
+            Ok(value) => Self::success(&value),
+            Err(error) => Ok(Self::tool_error(error)),
+        }
     }
 
     #[tool(description = "Get canonical status for an AgentRun.")]
@@ -495,6 +571,8 @@ mod review_tests {
                 session_id: session.id,
                 project_id: None,
                 request_id: None,
+                agent_run_id: None,
+                overrides: NextRunOverrides::default(),
                 attachment_ids: Vec::new(),
                 prompt: "Investigate and report".into(),
             }))
@@ -510,6 +588,82 @@ mod review_tests {
         let posted: serde_json::Value =
             serde_json::from_str(requests[2].split_once("\r\n\r\n").unwrap().1).unwrap();
         assert_eq!(posted["executor_config"], config);
+    }
+
+    #[tokio::test]
+    async fn next_run_overrides_use_checked_receipt_route() {
+        let session = session();
+        let run_id = Uuid::new_v4();
+        let request_id = Uuid::new_v4();
+        let project_id = Uuid::new_v4();
+        let overrides = json!({"execution_mode":{"action":"set","value":"code"},"reasoning_id":{"action":"reset"}});
+        let (url, task) = api_fixture(vec![
+            (200, json!({"success":true,"data":session})),
+            (
+                200,
+                json!({"success":true,"data":{"execution_accepted":true,"session_id":session.id}}),
+            ),
+        ])
+        .await;
+        let result = McpServer::new_global(&url)
+            .run_session_prompt(Parameters(RunCodingAgentInSessionRequest {
+                session_id: session.id,
+                project_id: Some(project_id),
+                request_id: Some(request_id),
+                agent_run_id: Some(run_id),
+                overrides: serde_json::from_value(overrides.clone()).unwrap(),
+                attachment_ids: Vec::new(),
+                prompt: "Continue implementation".into(),
+            }))
+            .await
+            .unwrap();
+        assert_ne!(result.is_error, Some(true));
+        let requests = task.await.unwrap();
+        assert!(requests[1].starts_with("POST /api/mcp-execution/continue "));
+        let posted: serde_json::Value =
+            serde_json::from_str(requests[1].split_once("\r\n\r\n").unwrap().1).unwrap();
+        assert_eq!(posted["overrides"], overrides);
+        assert_eq!(posted["agent_run_id"], run_id.to_string());
+        assert_eq!(posted["request_id"], request_id.to_string());
+        assert!(posted.get("executor_config").is_none());
+    }
+
+    #[tokio::test]
+    async fn settings_read_checks_session_and_returns_capability_evidence() {
+        let session = session();
+        let settings = json!({"session_id":session.id,"provider_adoption":"not_observed","configuration_changes_allowed":false});
+        let (url, task) = api_fixture(vec![
+            (200, json!({"success":true,"data":session})),
+            (200, json!({"success":true,"data":settings})),
+        ])
+        .await;
+        let result = McpServer::new_global(&url)
+            .get_session_execution_settings(Parameters(GetSessionExecutionSettingsRequest {
+                session_id: session.id,
+            }))
+            .await
+            .unwrap();
+        assert_ne!(result.is_error, Some(true));
+        let requests = task.await.unwrap();
+        assert!(requests[1].starts_with(&format!(
+            "GET /api/sessions/{}/execution-settings ",
+            session.id
+        )));
+    }
+
+    #[test]
+    fn next_run_overrides_reject_null() {
+        let base = json!({"session_id":Uuid::new_v4(),"prompt":"Continue"});
+        assert!(serde_json::from_value::<RunCodingAgentInSessionRequest>(base.clone()).is_ok());
+        for overrides in [
+            json!(null),
+            json!({"execution_mode":null}),
+            json!({"reasoning_id":null}),
+        ] {
+            let mut input = base.clone();
+            input["overrides"] = overrides;
+            assert!(serde_json::from_value::<RunCodingAgentInSessionRequest>(input).is_err());
+        }
     }
 
     #[tokio::test]

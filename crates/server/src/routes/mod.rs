@@ -88,6 +88,7 @@ pub fn router(
         .nest("/board", local_remote::board_api::router())
         .nest("/attachments", attachments::routes())
         .merge(attachment_transfer::router(&deployment))
+        .merge(crate::remote_mcp::execution_router())
         .with_state(deployment.clone());
 
     let api_routes = Router::new()

@@ -28,6 +28,14 @@ struct RunListArgs {
     cursor: Option<Uuid>,
 }
 
+#[derive(Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+struct SettingsArgs {
+    project_id: Uuid,
+    workspace_id: Uuid,
+    session_id: Uuid,
+}
+
 #[derive(Debug, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 enum ExecutionSection {
@@ -53,6 +61,10 @@ struct ExecutionArgs {
 
 pub(super) fn tools() -> Vec<rmcp::model::Tool> {
     vec![
+        definition::<SettingsArgs>(
+            "get_session_execution_settings",
+            "Read saved launch settings, current provider/model reasoning choices and next-run mode support. Native-adopted fingerprints are fixed; engine changes require a new Session. Provider adoption is unverified until observed at runtime.",
+        ),
         definition::<WorkspaceArgs>(
             "get_workspace",
             "Read Workspace identity, session/run counts, cumulative token_usage (reported scope, not cost) and review link. Use list_workspace_runs for current execution IDs. An agent turn ending does not prove tests, merge or Wiki completion.",
@@ -70,6 +82,26 @@ pub(super) fn tools() -> Vec<rmcp::model::Tool> {
 
 pub(super) async fn call(remote: &Remote, name: &str, args: Value) -> anyhow::Result<Value> {
     match name {
+        "get_session_execution_settings" => {
+            let args: SettingsArgs = arguments(args)?;
+            remote
+                .require_workspace(args.project_id, args.workspace_id)
+                .await?;
+            let belongs: bool = sqlx::query_scalar(
+                "SELECT EXISTS(SELECT 1 FROM sessions WHERE id=? AND workspace_id=?)",
+            )
+            .bind(args.session_id)
+            .bind(args.workspace_id)
+            .fetch_one(&remote.pool)
+            .await?;
+            ensure!(belongs, "Session does not belong to selected Workspace");
+            crate::routes::sessions::executor_config::read_execution_settings(
+                &remote.pool,
+                args.session_id,
+            )
+            .await
+            .map_err(Into::into)
+        }
         "get_workspace" => remote.workspace(arguments(args)?).await,
         "list_workspace_runs" => remote.runs(arguments(args)?).await,
         "get_execution" => remote.execution(arguments(args)?).await,

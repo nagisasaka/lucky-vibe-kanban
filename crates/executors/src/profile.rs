@@ -38,6 +38,48 @@ pub enum ExecutionMode {
     PlanWithGoal,
 }
 
+/// A next-run override. Reset removes the saved override and uses the preset/provider default.
+#[derive(Debug, Clone, Serialize, Deserialize, schemars::JsonSchema)]
+#[serde(tag = "action", rename_all = "snake_case", deny_unknown_fields)]
+pub enum SettingOverride<T> {
+    Set { value: T },
+    Reset {},
+}
+
+/// Omitted fields preserve the immutable previous launch configuration. Null is rejected.
+#[derive(Debug, Clone, Default, Serialize, Deserialize, schemars::JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct NextRunOverrides {
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        deserialize_with = "deserialize_present_override"
+    )]
+    #[schemars(with = "SettingOverride<ExecutionMode>")]
+    pub execution_mode: Option<SettingOverride<ExecutionMode>>,
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        deserialize_with = "deserialize_present_override"
+    )]
+    #[schemars(with = "SettingOverride<String>")]
+    pub reasoning_id: Option<SettingOverride<String>>,
+}
+
+fn deserialize_present_override<'de, D, T>(deserializer: D) -> Result<Option<T>, D::Error>
+where
+    D: Deserializer<'de>,
+    T: Deserialize<'de>,
+{
+    T::deserialize(deserializer).map(Some)
+}
+
+impl NextRunOverrides {
+    pub fn is_empty(&self) -> bool {
+        self.execution_mode.is_none() && self.reasoning_id.is_none()
+    }
+}
+
 /// Return the canonical form for variant keys.
 /// – "DEFAULT" is kept as-is  
 /// – everything else is converted to SCREAMING_SNAKE_CASE
@@ -632,5 +674,41 @@ impl ExecutorConfigs {
         let selected = agents_with_info[0].0;
         tracing::info!("Recommended executor: {}", selected);
         Ok(ExecutorProfileId::new(selected))
+    }
+}
+
+#[cfg(test)]
+mod next_run_override_tests {
+    use serde_json::json;
+
+    use super::NextRunOverrides;
+
+    #[test]
+    fn omission_is_preserve_and_null_is_not_reset() {
+        assert!(
+            serde_json::from_value::<NextRunOverrides>(json!({}))
+                .unwrap()
+                .is_empty()
+        );
+        for field in ["execution_mode", "reasoning_id"] {
+            assert!(serde_json::from_value::<NextRunOverrides>(json!({field:null})).is_err());
+            assert!(
+                serde_json::from_value::<NextRunOverrides>(json!({field:{"action":"reset"}}))
+                    .is_ok()
+            );
+        }
+        assert!(
+            serde_json::from_value::<NextRunOverrides>(
+                json!({"reasoning_id":{"action":"set","value":null}})
+            )
+            .is_err()
+        );
+        assert!(
+            serde_json::from_value::<NextRunOverrides>(
+                json!({"reasoning_id":{"action":"reset","value":"high"}})
+            )
+            .is_err()
+        );
+        assert!(serde_json::from_value::<NextRunOverrides>(json!({"engine":"CODEX"})).is_err());
     }
 }

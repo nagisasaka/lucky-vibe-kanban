@@ -95,6 +95,58 @@ pub fn configured_router(
     .merge(settings))
 }
 
+/// Authenticated stdio adapter: use the same scope, operation receipts and
+/// domain continuation as remote MCP rather than a second execution path.
+pub(crate) fn execution_router() -> Router<DeploymentImpl> {
+    Router::new().route(
+        "/mcp-execution/continue",
+        axum::routing::post(continue_route),
+    )
+}
+
+async fn continue_route(
+    axum::extract::State(deployment): axum::extract::State<DeploymentImpl>,
+    axum::Json(input): axum::Json<Value>,
+) -> Result<axum::Json<utils::response::ApiResponse<Value>>, crate::error::ApiError> {
+    let actor = server_access::ACTOR.try_with(Clone::clone).map_err(|_| {
+        crate::error::ApiError::Forbidden("Authenticated execution actor required".into())
+    })?;
+    let principal = Principal {
+        subject: actor.subject.clone(),
+        scopes: actor.scopes.clone(),
+    };
+    let pool = deployment.db().pool.clone();
+    let project_ids = sqlx::query_scalar::<_, Uuid>("SELECT id FROM projects")
+        .fetch_all(&pool)
+        .await?
+        .into_iter()
+        .collect();
+    let remote = Remote {
+        pool,
+        config: Arc::new(Config {
+            public_base_url: String::new(),
+            issuer: actor.issuer,
+            #[cfg(test)]
+            introspection_endpoint: String::new(),
+            #[cfg(test)]
+            introspection_client_id: String::new(),
+            #[cfg(test)]
+            introspection_secret_env: String::new(),
+            #[cfg(test)]
+            owner_subject: actor.subject,
+            project_ids,
+        }),
+        runtime: Some(Arc::new(runtime_write::ExistingRuntime(deployment.clone()))),
+        launch: Some(Arc::new(launch::ExistingLaunch(deployment))),
+        environment: None,
+        process_instance: *PROCESS_INSTANCE.get_or_init(Uuid::new_v4),
+    };
+    let value = runtime_write::call(&remote, &principal, "continue_execution", input)
+        .await
+        .map_err(|error| crate::error::ApiError::BadRequest(errors::message(&error)))?;
+    Ok(axum::Json(utils::response::ApiResponse::success(value)))
+}
+
 // Production HTTP entry, shared with the JWT-to-tool integration fixture.
 fn access_router(
     pool: SqlitePool,
@@ -220,6 +272,7 @@ fn operation_scope(name: &str) -> Option<&'static str> {
         | "continue_execution"
         | "answer_question"
         | "start_workspace"
+        | "start_session"
         | "upload_attachment"
         | "place_attachments"
         | "sync_repository_wiki"
