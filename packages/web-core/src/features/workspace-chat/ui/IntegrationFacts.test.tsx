@@ -7,7 +7,11 @@ const fixture = vi.hoisted(() => ({
   run: undefined as IntegrationRun | undefined,
 }));
 vi.mock('@tanstack/react-query', () => ({
-  useQuery: () => ({ data: fixture.run }),
+  useQuery: (options: { refetchInterval: number; enabled: boolean }) => {
+    expect(options.refetchInterval).toBe(5000);
+    expect(options.enabled).toBe(true);
+    return { data: fixture.run };
+  },
 }));
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
@@ -93,3 +97,16 @@ it('shows the stopped next action and exposes raw error only in details', () => 
   expect(html).toContain('raw execution failure');
   expect(html).not.toContain('integrationFacts.published');
 });
+
+it.each(['succeeded', 'blocked', 'recovery_required'] as const)(
+  'continues polling unpublished %s runs',
+  (status) => {
+    fixture.run!.status = status;
+    expect(render()).toContain('integrationFacts.unpublished');
+    fixture.run!.payload.publication_request = {
+      code_commit: 'R2',
+      candidate_commit: 'R2',
+    } as IntegrationRun['payload']['publication_request'];
+    expect(render()).toContain('integrationFacts.pendingSettlement');
+  }
+);

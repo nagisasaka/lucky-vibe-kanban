@@ -56,7 +56,7 @@ export function RepositoryMemorySettings({
   const query = useQuery({
     queryKey: [...client.queryScopeKey, 'repository-memory', repo.id],
     queryFn: () => client.getRepositoryMemory(repo.id),
-    refetchInterval: 5000,
+    refetchInterval: 15000,
   });
   const [enabled, setEnabled] = useState(query.data?.enabled ?? true);
   const [branch, setBranch] = useState(

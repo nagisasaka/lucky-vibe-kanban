@@ -13,7 +13,7 @@ export function WorkspaceTodoPanel({ workspaceId }: { workspaceId: string }) {
   const scope = useQuery({
     queryKey: ['todo-workspace-project', workspaceId],
     queryFn: () => todoApi.workspaceProject(workspaceId),
-    refetchInterval: 5000,
+    refetchInterval: 30000,
   });
   const selected = useTodoViewStore((s) => s.workspaceProjects[workspaceId]);
   const select = useTodoViewStore((s) => s.setWorkspaceProject);

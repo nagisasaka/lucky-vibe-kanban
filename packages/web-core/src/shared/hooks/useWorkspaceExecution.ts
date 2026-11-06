@@ -1,13 +1,8 @@
 import { useMemo, useCallback } from 'react';
-import {
-  useMutation,
-  useMutationState,
-  useQueries,
-} from '@tanstack/react-query';
-import { workspacesApi, executionProcessesApi } from '@/shared/lib/api';
+import { useMutation, useMutationState } from '@tanstack/react-query';
+import { workspacesApi } from '@/shared/lib/api';
 import { useExecutionProcessesContext } from '@/shared/hooks/useExecutionProcessesContext';
 import type { AttemptData } from '@/shared/lib/types';
-import type { ExecutionProcess } from 'shared/types';
 
 export function useWorkspaceExecution(workspaceId?: string) {
   const stopMutationKey = useMemo(
@@ -37,42 +32,10 @@ export function useWorkspaceExecution(workspaceId?: string) {
     isLoading: streamLoading,
   } = useExecutionProcessesContext();
 
-  // Get setup script processes that need detailed info
-  const setupProcesses = useMemo(() => {
-    if (!executionProcesses.length) return [] as ExecutionProcess[];
-    return executionProcesses.filter((p) => p.run_reason === 'setupscript');
-  }, [executionProcesses]);
-
-  // Fetch details for setup processes
-  const processDetailQueries = useQueries({
-    queries: setupProcesses.map((process) => ({
-      queryKey: ['processDetails', process.id],
-      queryFn: () => executionProcessesApi.getDetails(process.id),
-      enabled: !!process.id,
-    })),
-  });
-
-  // Build attempt data combining processes and details
-  const attemptData: AttemptData = useMemo(() => {
-    if (!executionProcesses.length) {
-      return { processes: [], runningProcessDetails: {} };
-    }
-
-    // Build runningProcessDetails from the detail queries
-    const runningProcessDetails: Record<string, ExecutionProcess> = {};
-
-    setupProcesses.forEach((process, index) => {
-      const detailQuery = processDetailQueries[index];
-      if (detailQuery?.data) {
-        runningProcessDetails[process.id] = detailQuery.data;
-      }
-    });
-
-    return {
-      processes: executionProcesses,
-      runningProcessDetails,
-    };
-  }, [executionProcesses, setupProcesses, processDetailQueries]);
+  const attemptData: AttemptData = useMemo(
+    () => ({ processes: executionProcesses }),
+    [executionProcesses]
+  );
 
   const stopExecution = useCallback(async () => {
     if (!workspaceId || isStopping) return;
@@ -85,21 +48,15 @@ export function useWorkspaceExecution(workspaceId?: string) {
     }
   }, [workspaceId, isStopping, stopMutation]);
 
-  const isLoading =
-    streamLoading || processDetailQueries.some((q) => q.isLoading);
-  const isFetching =
-    streamLoading || processDetailQueries.some((q) => q.isFetching);
-
   return {
     // Data
     processes: executionProcesses,
     attemptData,
-    runningProcessDetails: attemptData.runningProcessDetails,
 
     // Status
     isAttemptRunning,
-    isLoading,
-    isFetching,
+    isLoading: streamLoading,
+    isFetching: streamLoading,
 
     // Actions
     stopExecution,

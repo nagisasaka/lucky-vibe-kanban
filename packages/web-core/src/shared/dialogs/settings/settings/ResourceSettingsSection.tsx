@@ -61,7 +61,7 @@ function ResourceSettingsContent() {
   const query = useQuery({
     queryKey,
     enabled: !!client,
-    refetchInterval: 3000,
+    refetchInterval: 10000,
     queryFn: async () => {
       if (!client) throw new Error('Host unavailable');
       const [snapshot, operations, mediations] = await Promise.all([
