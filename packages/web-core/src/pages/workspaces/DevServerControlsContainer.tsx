@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useWorkspaceContext } from '@/shared/hooks/useWorkspaceContext';
 import { useDevServer } from '@/shared/hooks/useDevServer';
 import { useLogsPanel } from '@/shared/hooks/useLogsPanel';
+import { useLogStream } from '@/shared/hooks/useLogStream';
 import { ScriptFixerDialog } from '@/shared/dialogs/scripts/ScriptFixerDialog';
 import { getDevServerWorkingDir } from '@/shared/lib/devServerUtils';
 import {
@@ -12,12 +13,7 @@ import {
 
 function DevServerUrl({ processId }: { processId: string }) {
   const { t } = useTranslation('tasks');
-  const { logsPanelContent, processLogs } = useLogsPanel();
-  const logs =
-    logsPanelContent?.type === 'process' &&
-    logsPanelContent.processId === processId
-      ? processLogs
-      : [];
+  const { logs } = useLogStream(processId);
   const [override, setOverride] = useState<string | null>(null);
   const value = override ?? detectDevServerUrl(logs) ?? '';
   const url = externalDevServerUrl(value);
