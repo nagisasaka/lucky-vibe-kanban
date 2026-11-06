@@ -286,6 +286,7 @@ async fn http_discovery_authentication_and_tool_call_roundtrip() {
         assert!(body.get("error").is_none(), "{body}");
         if request["id"] == 2 {
             for name in [
+                "delete_issue",
                 "list_tags",
                 "list_issue_tags",
                 "add_issue_tag",
@@ -299,6 +300,28 @@ async fn http_discovery_authentication_and_tool_call_roundtrip() {
                         .any(|t| t["name"] == name)
                 );
             }
+            let deletion = body["result"]["tools"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .find(|tool| tool["name"] == "delete_issue")
+                .unwrap();
+            assert_eq!(deletion["annotations"]["destructiveHint"], true);
+            assert_eq!(deletion["annotations"]["idempotentHint"], true);
+            assert_eq!(
+                deletion["_meta"]["securitySchemes"][0]["scopes"],
+                json!(["lvk:read", "lvk:write"])
+            );
+            let required: BTreeSet<_> = deletion["inputSchema"]["required"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .map(|v| v.as_str().unwrap())
+                .collect();
+            assert_eq!(
+                required,
+                BTreeSet::from(["project_id", "issue_id", "request_id"])
+            );
             let integration = body["result"]["tools"]
                 .as_array()
                 .unwrap()
@@ -337,6 +360,7 @@ async fn http_discovery_authentication_and_tool_call_roundtrip() {
     }
     for (tool, scope) in [
         ("create_issue", "lvk:write"),
+        ("delete_issue", "lvk:write"),
         ("add_issue_tag", "lvk:write"),
         ("remove_issue_tag", "lvk:write"),
         ("add_issue_comment", "lvk:write"),
@@ -1397,6 +1421,159 @@ async fn issue_writes_reuse_board_services_and_enforce_scope_retries_and_revisio
         )
         .await
         .is_err()
+    );
+
+    // Deletion shares Board FK behavior, while remote adds scoped targets and
+    // durable receipts. No filesystem deletion service is involved.
+    let workspace = Uuid::new_v4();
+    sqlx::query("INSERT INTO workspaces(id,branch) VALUES(?,'fixture')")
+        .bind(workspace)
+        .execute(&pool)
+        .await
+        .unwrap();
+    sqlx::query(
+        "INSERT INTO local_workspace_links(workspace_id,project_id,issue_id) VALUES(?,?,?)",
+    )
+    .bind(workspace)
+    .bind(project)
+    .bind(issue)
+    .execute(&pool)
+    .await
+    .unwrap();
+    sqlx::query("INSERT INTO local_issue_comments(id,issue_id,message) VALUES(?,?,'fixture')")
+        .bind(Uuid::new_v4())
+        .bind(issue)
+        .execute(&pool)
+        .await
+        .unwrap();
+    let delete_request = Uuid::new_v4();
+    let deletion = json!({"project_id":project,"issue_id":issue,"request_id":delete_request});
+    assert!(
+        issue_write::call(&remote, &read_only, "delete_issue", deletion.clone())
+            .await
+            .is_err()
+    );
+    let mut forbidden = deletion.clone();
+    forbidden["project_id"] = json!(foreign);
+    assert!(
+        issue_write::call(&remote, &principal, "delete_issue", forbidden)
+            .await
+            .is_err()
+    );
+    // A permitted Project cannot be used to delete another Project's Issue.
+    let foreign_issue = Uuid::new_v4();
+    sqlx::query("INSERT INTO local_issues(id,project_id,issue_number,simple_id,status_id,title,sort_order) VALUES(?,?,1,'PR2-1',?,'foreign',0)")
+        .bind(foreign_issue).bind(foreign).bind(foreign_status).execute(&pool).await.unwrap();
+    let wrong_request = Uuid::new_v4();
+    issue_write::call(
+        &remote,
+        &principal,
+        "delete_issue",
+        json!({"project_id":project,"issue_id":foreign_issue,"request_id":wrong_request}),
+    )
+    .await
+    .unwrap();
+    let wrong = settled_operation(&remote, &principal, project, wrong_request).await;
+    assert_eq!(wrong["status"], "failed");
+    assert_eq!(wrong["error"]["category"], "not_found");
+    assert!(
+        crate::routes::local_remote::get_local_issue(&pool, foreign_issue)
+            .await
+            .is_ok()
+    );
+
+    // Existing database constraints still veto deletion and produce a terminal
+    // failed receipt. Removing the constraint never replays that failed write.
+    sqlx::query("CREATE TRIGGER fixture_reject_delete BEFORE DELETE ON local_issues BEGIN SELECT RAISE(ABORT,'fixture constraint'); END")
+        .execute(&pool).await.unwrap();
+    let blocked_request = Uuid::new_v4();
+    let mut blocked = deletion.clone();
+    blocked["request_id"] = json!(blocked_request);
+    issue_write::call(&remote, &principal, "delete_issue", blocked.clone())
+        .await
+        .unwrap();
+    let failed = settled_operation(&remote, &principal, project, blocked_request).await;
+    assert_eq!(failed["status"], "failed");
+    assert!(
+        crate::routes::local_remote::get_local_issue(&pool, issue)
+            .await
+            .is_ok()
+    );
+    sqlx::query("DROP TRIGGER fixture_reject_delete")
+        .execute(&pool)
+        .await
+        .unwrap();
+    assert_eq!(
+        issue_write::call(&remote, &principal, "delete_issue", blocked)
+            .await
+            .unwrap(),
+        failed
+    );
+
+    let (a, b) = tokio::join!(
+        issue_write::call(&remote, &principal, "delete_issue", deletion.clone()),
+        issue_write::call(&remote, &principal, "delete_issue", deletion.clone())
+    );
+    assert_eq!(a.unwrap()["operation_id"], b.unwrap()["operation_id"]);
+    let deleted = settled_operation(&remote, &principal, project, delete_request).await;
+    assert_eq!(deleted["status"], "succeeded", "{deleted}");
+    assert_eq!(deleted["result"]["deleted_issue_id"], json!(issue));
+    assert!(
+        crate::routes::local_remote::get_local_issue(&pool, issue)
+            .await
+            .is_err()
+    );
+    for table in ["local_workspace_links", "local_issue_comments"] {
+        let count: i64 = sqlx::query_scalar(&format!("SELECT count(*) FROM {table}"))
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+        assert_eq!(count, 0, "{table}");
+    }
+    let retained: (bool, bool) =
+        sqlx::query_as("SELECT archived,worktree_deleted FROM workspaces WHERE id=?")
+            .bind(workspace)
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+    assert_eq!(retained, (false, false));
+    // Recovery also works after a process restart, without looking up the now
+    // absent Issue and without re-executing the domain mutation.
+    let restarted = Remote {
+        process_instance: Uuid::new_v4(),
+        ..remote.clone()
+    };
+    let replay = issue_write::call(&restarted, &principal, "delete_issue", deletion.clone())
+        .await
+        .unwrap();
+    assert_eq!(replay, deleted);
+    let mut changed = deletion.clone();
+    changed["issue_id"] = json!(foreign_issue);
+    assert!(
+        issue_write::call(&remote, &principal, "delete_issue", changed)
+            .await
+            .is_err()
+    );
+    let missing_request = Uuid::new_v4();
+    let mut missing = deletion;
+    missing["request_id"] = json!(missing_request);
+    issue_write::call(&remote, &principal, "delete_issue", missing.clone())
+        .await
+        .unwrap();
+    let absent = settled_operation(&remote, &principal, project, missing_request).await;
+    assert_eq!(absent["status"], "failed");
+    assert_eq!(absent["error"]["category"], "not_found");
+    assert_eq!(
+        issue_write::call(&remote, &principal, "delete_issue", missing)
+            .await
+            .unwrap(),
+        absent
+    );
+    // HTTP's shared helper still treats an absent Issue as a successful no-op.
+    assert!(
+        !crate::routes::local_remote::delete_local_issue_outcome(&pool, issue, None)
+            .await
+            .unwrap()
     );
 }
 

@@ -261,6 +261,7 @@ fn operation_scope(name: &str) -> Option<&'static str> {
         | "delete_todo"
         | "create_issue"
         | "update_issue"
+        | "delete_issue"
         | "add_issue_tag"
         | "remove_issue_tag"
         | "steer_execution"
