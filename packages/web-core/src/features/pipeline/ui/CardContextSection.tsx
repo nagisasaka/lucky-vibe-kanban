@@ -44,7 +44,7 @@ export function CardContextSection({
     onDescriptionChange(withCardContext(description, next));
 
   return (
-    <details className="border-t px-base py-base">
+    <details className="issue-section-inset border-t px-base py-base">
       <summary className="cursor-pointer text-sm text-high">
         {t('cardContext.title')}
         <span className="ml-base text-xs text-low">

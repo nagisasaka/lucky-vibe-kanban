@@ -242,7 +242,7 @@ function WorkspaceSessionPanel({
           sessionId={selectedSessionId}
         >
           <MessageEditProvider>
-            <div className="relative flex h-full flex-1 flex-col bg-primary">
+            <div className="kanban-workspace-pane relative flex h-full min-w-0 flex-1 flex-col bg-primary">
               <div className="flex items-center justify-between px-base py-half border-b shrink-0">
                 <div className="flex items-center gap-half min-w-0 font-ibm-plex-mono">
                   <button
@@ -286,7 +286,7 @@ function WorkspaceSessionPanel({
 
               {workspaceWithSession ? (
                 <div className="flex flex-1 min-h-0 overflow-hidden justify-center">
-                  <div className="w-chat max-w-full h-full">
+                  <div className="w-[var(--kanban-chat-width,48rem)] max-w-full h-full">
                     <RetryUiProvider workspaceId={workspaceWithSession.id}>
                       <ConversationList
                         key={`${workspaceId}-${selectedSessionId ?? 'new'}`}
@@ -304,7 +304,7 @@ function WorkspaceSessionPanel({
 
               {workspaceWithSession && !isAtBottom && (
                 <div className="flex justify-center pointer-events-none">
-                  <div className="w-chat max-w-full relative">
+                  <div className="w-[var(--kanban-chat-width,48rem)] max-w-full relative">
                     <button
                       type="button"
                       onClick={() => handleScrollToBottom('auto')}
@@ -318,7 +318,7 @@ function WorkspaceSessionPanel({
                 </div>
               )}
 
-              <div className="flex justify-center @container pl-px">
+              <div className="flex justify-center @container">
                 <SessionChatBoxContainer
                   {...(isSessionsLoading || isWorkspaceLoading
                     ? {

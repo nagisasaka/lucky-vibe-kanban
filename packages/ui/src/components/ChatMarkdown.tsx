@@ -16,7 +16,7 @@ interface ChatMarkdownProps {
 
 export function ChatMarkdown({
   content,
-  maxWidth = '800px',
+  maxWidth = 'var(--kanban-message-max-width,800px)',
   className,
   workspaceId,
   renderContent,

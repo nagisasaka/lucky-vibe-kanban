@@ -1211,3 +1211,83 @@ html {
     background-color: #212121;
   }
 }
+
+/* Issue reading surface: pane-relative gutters, independent of viewport breakpoints.
+   Creation and standalone chat keep their existing layout. */
+.issue-detail-pane,
+.kanban-workspace-pane {
+  container-type: inline-size;
+}
+
+.issue-detail-content {
+  width: 100%;
+  max-width: 64rem;
+  margin-inline: auto;
+  padding-inline: clamp(1rem, 3cqi, 2rem);
+  padding-bottom: 2rem;
+}
+
+.issue-detail-content .issue-section-inset,
+.issue-detail-content .issue-detail-section > div:first-child > button {
+  padding-inline: 0;
+}
+
+.issue-detail-content .issue-detail-section > div:first-child > button {
+  padding-block: 0.75rem;
+  font-size: 1rem;
+}
+
+/* Keep long code and tables inside the reading surface in both editor modes. */
+.issue-detail-content .wysiwyg,
+.issue-detail-content [contenteditable],
+.kanban-workspace-pane .wysiwyg,
+.kanban-workspace-pane [contenteditable] {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.issue-detail-content [contenteditable] table,
+.kanban-workspace-pane [contenteditable] table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-wrap: normal;
+  word-break: normal;
+  white-space: nowrap;
+}
+
+.kanban-workspace-pane {
+  --kanban-message-max-width: none;
+  --kanban-chat-width: min(64rem, calc(100cqi - 2 * clamp(1rem, 3cqi, 2rem)));
+}
+
+.issue-detail-title {
+  font-size: 1.5rem;
+  line-height: 1.35;
+  font-weight: 600;
+}
+
+.issue-detail-content [contenteditable] table td,
+.issue-detail-content [contenteditable] table th,
+.kanban-workspace-pane [contenteditable] table td,
+.kanban-workspace-pane [contenteditable] table th {
+  min-width: 7rem;
+}
+
+.issue-detail-content .issue-detail-section {
+  height: auto;
+}
+
+@container (max-width: 32rem) {
+  .issue-detail-content .sub-issue-summary {
+    display: grid;
+    grid-template-columns: auto auto 1fr;
+  }
+
+  .issue-detail-content .sub-issue-title {
+    grid-column: 1 / -1;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+}

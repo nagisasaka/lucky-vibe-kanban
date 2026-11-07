@@ -294,6 +294,8 @@
     "configureShort": "配置"
   },
   "attempts": {
+    "workflowDescription": "组合多个步骤来处理任务",
+    "singleAgentDescription": "与一个智能体对话并推进任务",
     "title": "任务执行",
     "loading": "正在加载任务执行...",
     "empty": "暂无任务执行。",

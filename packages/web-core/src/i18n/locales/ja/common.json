@@ -321,6 +321,8 @@
     "alreadyLinked": "このWorkspaceは既にIssueにリンクされています。"
   },
   "attempts": {
+    "workflowDescription": "複数のステップを組み合わせて取り組む",
+    "singleAgentDescription": "一人のエージェントと会話しながら進める",
     "title": "タスクの試行",
     "loading": "試行を読み込み中…",
     "empty": "試行はまだありません。",

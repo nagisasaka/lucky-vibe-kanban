@@ -92,7 +92,7 @@ export function SubIssueRow({
           </div>
 
           {/* Left side: Priority, ID, Status, Title */}
-          <div className="flex items-center gap-half flex-1 min-w-0">
+          <div className="sub-issue-summary flex items-center gap-half flex-1 min-w-0">
             {onPriorityClick ? (
               <button
                 type="button"
@@ -114,7 +114,9 @@ export function SubIssueRow({
               {simpleId}
             </span>
             <StatusDot color={statusColor} />
-            <span className="text-base text-high truncate">{title}</span>
+            <span className="sub-issue-title text-base text-high truncate">
+              {title}
+            </span>
           </div>
 
           {/* Right side: Assignee, Age */}
