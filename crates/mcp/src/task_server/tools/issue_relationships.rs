@@ -42,7 +42,7 @@ struct McpDeleteIssueRelationshipResponse {
 #[tool_router(router = issue_relationships_tools_router, vis = "pub")]
 impl McpServer {
     #[tool(
-        description = "Create a relationship between two issues. Types: 'blocking', 'related', 'has_duplicate'."
+        description = "Create a structured relationship after reading get_issue. For A blocks B use issue_id=A, related_issue_id=B once; both endpoints show the same row. Related is undirected. Parent cycles are forbidden; blocking cycles are allowed. Read get_issue again to verify. Types: 'blocking', 'related', 'has_duplicate'."
     )]
     async fn create_issue_relationship(
         &self,

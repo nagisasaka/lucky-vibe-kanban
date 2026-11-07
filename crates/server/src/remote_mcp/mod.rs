@@ -33,6 +33,7 @@ mod issue_comment_text;
 mod issue_comments;
 #[cfg(all(test, unix))]
 mod issue_comments_browser;
+mod issue_relationships;
 mod issue_tags;
 mod issue_write;
 mod launch;
@@ -262,6 +263,8 @@ fn operation_scope(name: &str) -> Option<&'static str> {
         | "create_issue"
         | "update_issue"
         | "delete_issue"
+        | "create_issue_relationship"
+        | "delete_issue_relationship"
         | "add_issue_tag"
         | "remove_issue_tag"
         | "steer_execution"
@@ -460,6 +463,7 @@ fn tools() -> Vec<Tool> {
     tools.extend(repository_read::tools());
     tools.extend(issue_write::tools());
     tools.extend(issue_tags::tools());
+    tools.extend(issue_relationships::tools());
     tools.extend(issue_comments::tools());
     tools.extend(todos::tools());
     tools.extend(design_notes::tools());
@@ -605,6 +609,9 @@ impl Remote {
             }
             name if issue_comments::tools().iter().any(|tool| tool.name == name) => {
                 issue_comments::call(self, principal, name, args).await
+            }
+            name if issue_relationships::tools().iter().any(|tool| tool.name == name) => {
+                issue_relationships::call(self, principal, name, args).await
             }
             name if issue_tags::tools().iter().any(|tool| tool.name == name) => {
                 issue_tags::call(self, principal, name, args).await

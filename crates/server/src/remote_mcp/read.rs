@@ -74,7 +74,7 @@ pub(super) fn tools() -> Vec<Tool> {
         ),
         definition::<IssueArgs>(
             "get_issue",
-            "Read current agreed requirements in character pages (up to 16000). Use returned revision for subsequent pages and before edits/start. An Issue may have multiple Workspaces.",
+            "Read current agreed requirements in character pages (up to 16000). Use returned revision for subsequent pages and before edits/start. Returns parent_issue_id (null means no parent); use list_issue_relationships for incoming/outgoing relations. An Issue may have multiple Workspaces.",
         ),
         definition::<WorkspaceListArgs>(
             "list_issue_workspaces",
@@ -255,7 +255,7 @@ impl Remote {
                 "Supply expected_revision when reading another requirements page"
             )
         );
-        let row = sqlx::query("SELECT substr(title,1,500) AS title,length(title)>500 AS title_truncated,simple_id,status_id,archived,coalesce(priority,'medium') AS priority,updated_at,substr(coalesce(description,''),?,?) AS content,length(coalesce(description,'')) AS total FROM local_issues WHERE id=? AND project_id=?")
+        let row = sqlx::query("SELECT substr(title,1,500) AS title,length(title)>500 AS title_truncated,simple_id,status_id,parent_issue_id,archived,coalesce(priority,'medium') AS priority,updated_at,substr(coalesce(description,''),?,?) AS content,length(coalesce(description,'')) AS total FROM local_issues WHERE id=? AND project_id=?")
             .bind(i64::from(args.offset)+1).bind(args.limit).bind(args.issue_id).bind(args.project_id).fetch_one(&self.pool).await?;
         let revision: String = row.try_get("updated_at")?;
         ensure!(
@@ -277,7 +277,7 @@ impl Remote {
         );
         let next = i64::from(args.offset) + i64::from(args.limit);
         Ok(
-            json!({"id":args.issue_id,"project_id":args.project_id,"archived":row.try_get::<bool,_>("archived")?,"simple_id":row.try_get::<String,_>("simple_id")?,"title":row.try_get::<String,_>("title")?,"title_truncated":row.try_get::<bool,_>("title_truncated")?,"priority":row.try_get::<String,_>("priority")?,"status_id":row.try_get::<Uuid,_>("status_id")?,"revision":revision,"review_target":{"issue_id":args.issue_id,"revision":revision},"description_page":row.try_get::<String,_>("content")?,"offset":args.offset,"total_characters":total,"next_offset":if next<total {Some(next)} else {None},"has_more":next<total,"url":self.config.issue_url(args.project_id,args.issue_id)}),
+            json!({"id":args.issue_id,"project_id":args.project_id,"archived":row.try_get::<bool,_>("archived")?,"simple_id":row.try_get::<String,_>("simple_id")?,"title":row.try_get::<String,_>("title")?,"title_truncated":row.try_get::<bool,_>("title_truncated")?,"priority":row.try_get::<String,_>("priority")?,"status_id":row.try_get::<Uuid,_>("status_id")?,"revision":revision,"parent_issue_id":row.try_get::<Option<Uuid>,_>("parent_issue_id")?,"review_target":{"issue_id":args.issue_id,"revision":revision},"description_page":row.try_get::<String,_>("content")?,"offset":args.offset,"total_characters":total,"next_offset":if next<total {Some(next)} else {None},"has_more":next<total,"url":self.config.issue_url(args.project_id,args.issue_id)}),
         )
     }
 

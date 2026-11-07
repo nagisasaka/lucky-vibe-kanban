@@ -1,5 +1,6 @@
 pub mod board_api;
 pub(crate) mod issue_archive;
+pub(crate) mod issue_relations;
 #[cfg(test)]
 mod issue_update_tests;
 use api_types::{
@@ -863,6 +864,8 @@ pub(crate) async fn create_local_issue_with_tags_outcome(
 ) -> Result<Issue, IssueMutationError> {
     let mut tx = pool.begin_with("BEGIN IMMEDIATE").await?;
     let id = request.id.unwrap_or_else(Uuid::new_v4);
+    issue_relations::validate_parent(&mut tx, id, request.project_id, request.parent_issue_id)
+        .await?;
     let (issue_number, simple_id) =
         db::models::issue_number::next_issue_number(&mut tx, request.project_id)
             .await
@@ -990,6 +993,9 @@ async fn update_local_issue_with_order_guard_outcome(
     // is reserved. Keep revision/rank checks on the snapshot acquired here.
     let mut tx = pool.begin_with("BEGIN IMMEDIATE").await?;
     let existing = get_local_issue_on(&mut *tx, issue_id).await?;
+    if let Some(parent) = changes.parent_issue_id {
+        issue_relations::validate_parent(&mut tx, issue_id, existing.project_id, parent).await?;
+    }
     let extension_metadata = changes
         .extension_metadata
         .unwrap_or(existing.extension_metadata);
@@ -2071,28 +2077,9 @@ async fn create_issue_relationship(
     State(deployment): State<DeploymentImpl>,
     Json(request): Json<CreateIssueRelationshipRequest>,
 ) -> Result<ResponseJson<MutationResponse<IssueRelationship>>, ApiError> {
-    let id = request.id.unwrap_or_else(Uuid::new_v4);
-    sqlx::query(
-        r#"
-        INSERT INTO local_issue_relationships
-            (id, issue_id, related_issue_id, relationship_type)
-        VALUES (?, ?, ?, ?)
-        "#,
-    )
-    .bind(id)
-    .bind(request.issue_id)
-    .bind(request.related_issue_id)
-    .bind(relationship_type_to_str(request.relationship_type))
-    .execute(&deployment.db().pool)
-    .await?;
-
-    let data = IssueRelationship {
-        id,
-        issue_id: request.issue_id,
-        related_issue_id: request.related_issue_id,
-        relationship_type: request.relationship_type,
-        created_at: Utc::now(),
-    };
+    let data = issue_relations::create(&deployment.db().pool, &request, None)
+        .await
+        .map_err(IssueMutationError::into_api_error)?;
     Ok(ResponseJson(MutationResponse { data, txid: txid() }))
 }
 
@@ -2100,10 +2087,9 @@ async fn delete_issue_relationship(
     State(deployment): State<DeploymentImpl>,
     Path(relationship_id): Path<Uuid>,
 ) -> Result<ResponseJson<DeleteResponse>, ApiError> {
-    sqlx::query("DELETE FROM local_issue_relationships WHERE id = ?")
-        .bind(relationship_id)
-        .execute(&deployment.db().pool)
-        .await?;
+    issue_relations::delete(&deployment.db().pool, relationship_id, None)
+        .await
+        .map_err(IssueMutationError::into_api_error)?;
     Ok(ResponseJson(DeleteResponse { txid: txid() }))
 }
 

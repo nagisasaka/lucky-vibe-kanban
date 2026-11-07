@@ -289,6 +289,9 @@ async fn http_discovery_authentication_and_tool_call_roundtrip() {
                 "delete_issue",
                 "list_tags",
                 "list_issue_tags",
+                "list_issue_relationships",
+                "create_issue_relationship",
+                "delete_issue_relationship",
                 "add_issue_tag",
                 "remove_issue_tag",
             ] {
@@ -361,6 +364,8 @@ async fn http_discovery_authentication_and_tool_call_roundtrip() {
     for (tool, scope) in [
         ("create_issue", "lvk:write"),
         ("delete_issue", "lvk:write"),
+        ("create_issue_relationship", "lvk:write"),
+        ("delete_issue_relationship", "lvk:write"),
         ("add_issue_tag", "lvk:write"),
         ("remove_issue_tag", "lvk:write"),
         ("add_issue_comment", "lvk:write"),
