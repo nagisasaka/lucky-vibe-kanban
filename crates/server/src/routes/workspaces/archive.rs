@@ -86,7 +86,9 @@ pub(crate) async fn check_idle(conn: &mut SqliteConnection, id: Uuid) -> Result<
         let state = RepositoryMemoryStore::state_on(conn, repo_id).await?;
         if let Some(state) = state
             && state.maintenance_workspace_id == Some(id)
-            && (state.active_run_id.is_some() || state.bootstrap.is_some())
+            && (state.active_run_id.is_some()
+                || state.bootstrap.is_some()
+                || state.file_operation.is_some())
         {
             return Err(ApiError::Conflict(
                 "使用中のWorkspaceはarchiveできません。".into(),
@@ -637,7 +639,11 @@ pub(crate) mod tests {
             OpenWikiBootstrapOwner, OpenWikiBootstrapPhase, RepositoryMemoryState,
         };
 
-        for kind in ["openwiki_sync", "openwiki_bootstrap"] {
+        for (kind, files) in [
+            ("openwiki_sync", false),
+            ("openwiki_bootstrap", false),
+            ("openwiki_sync", true),
+        ] {
             let (root, pool, ws, repo, _session) = fixture().await;
             let persistent = root.path().join("isolated-memory");
             std::fs::create_dir(&persistent).unwrap();
@@ -666,7 +672,17 @@ pub(crate) mod tests {
                 .await
                 .unwrap();
             state.maintenance_workspace_id = Some(ws.id);
-            if kind == "openwiki_sync" {
+            if files {
+                state.file_operation =
+                    Some(utils::repository_memory::RepositoryWikiFileOperation {
+                        id: Uuid::new_v4(),
+                        workspace_id: ws.id,
+                        source: "a".repeat(40),
+                        branch: "main".into(),
+                        paths: vec!["openwiki/index.md".into()],
+                        delete: true,
+                    });
+            } else if kind == "openwiki_sync" {
                 state.active_run_id = Some(Uuid::new_v4());
             } else {
                 state.bootstrap = Some(OpenWikiBootstrapOwner {
@@ -708,6 +724,7 @@ pub(crate) mod tests {
             state.maintenance_workspace_id = Some(ws.id);
             state.active_run_id = None;
             state.bootstrap = None;
+            state.file_operation = None;
             store.save_state(&state).await.unwrap();
             check_idle(&mut pool.acquire().await.unwrap(), ws.id)
                 .await

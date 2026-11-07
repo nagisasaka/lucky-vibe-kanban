@@ -1,3 +1,4 @@
+import '@/i18n/config';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -97,6 +98,7 @@ describe('repository memory settings', () => {
         button.onClick();
         expect(syncRepositoryMemory).toHaveBeenCalledWith('a', {
           from_commit: null,
+          ...(status === 'uninitialized' ? { initialize: true } : {}),
           ...(projectId ? { project_id: projectId } : {}),
         });
       }
@@ -124,7 +126,7 @@ describe('repository memory settings', () => {
   });
   it('keeps the workflow owner active between child AgentRuns', () => {
     const markup = render('a', 'initializing', false, true);
-    expect(markup).toContain('reviewing');
+    expect(markup).toContain('Reviewing');
     expect(markup).toContain('disabled=""');
     expect(markup).toContain('independent read-only review');
     expect(markup).toContain('href="/workspaces/maintenance-a/workflow"');
@@ -137,6 +139,19 @@ describe('repository memory settings', () => {
     expect(error).toContain('failed semantic events remain pending');
     expect(error).not.toContain('Status: current');
     expect(error).toContain('View Workflow');
+  });
+  it('keeps repository file publication active without a model run', () => {
+    render('a', 'current', false, false, {
+      file_operation: {
+        id: 'operation',
+        workspace_id: 'workspace',
+        branch: 'main',
+        source: 'a'.repeat(40),
+        paths: ['openwiki/index.md'],
+        delete: true,
+      },
+    });
+    expect(buttons.get('Sync Wiki')?.disabled).toBe(true);
   });
   it('disables conflicting operations during maintenance and isolates repositories', () => {
     expect(render('a', 'reconciling', true)).toContain('disabled=""');

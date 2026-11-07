@@ -5,12 +5,14 @@ use std::{
     time::Duration,
 };
 
+use anyhow::Context;
 use tokio::process::Command;
 
 pub mod bootstrap;
 mod codex_config;
 pub mod completion;
 pub mod inventory;
+pub mod management;
 pub mod setup;
 pub mod sync_input;
 pub mod sync_scope;
@@ -245,6 +247,38 @@ pub fn publication_paths(
     if std::fs::read(&instructions_path)? != expected_instructions {
         anyhow::bail!("OpenWiki changed user-authored INSTRUCTIONS.md; publication refused");
     }
+    let generated = management::generated_paths(root, source)?;
+    let snapshot = git.snapshot(root, source)?;
+    let original_paths = snapshot.entries()?;
+    let manifest_path = root.join("openwiki/.page-manifest.json");
+    utils::repository_memory::reject_symlinks(&manifest_path)?;
+    if manifest_path.exists() {
+        anyhow::ensure!(
+            std::fs::metadata(&manifest_path)?.len() <= 8 * 1024 * 1024,
+            "OpenWiki page manifest exceeds size limit"
+        );
+        let manifest: serde_json::Value = serde_json::from_slice(&std::fs::read(manifest_path)?)?;
+        anyhow::ensure!(
+            manifest["schemaVersion"] == 1,
+            "Unsupported OpenWiki page manifest"
+        );
+        let pages = manifest["pages"]
+            .as_object()
+            .context("Invalid OpenWiki page manifest")?;
+        for entry in &original_paths {
+            if entry.path.starts_with("openwiki/")
+                && entry.path != management::INSTRUCTIONS
+                && !generated.contains(&entry.path)
+            {
+                anyhow::ensure!(
+                    !pages.contains_key(&entry.path)
+                        && !pages.contains_key(&format!("/{}", entry.path)),
+                    "OpenWiki adopted human-managed document {} as generated; publication refused. Exclude it with saved .openwikiignore before retrying",
+                    entry.path
+                );
+            }
+        }
+    }
     let mut result = Vec::new();
     for path in git.get_diff_file_paths(root, &source.parse()?)? {
         utils::repository_memory::reject_symlinks(&root.join(&path))?;
@@ -259,6 +293,12 @@ pub fn publication_paths(
             );
         } else if !super::repository_memory::canonical_wiki_path(&path) {
             anyhow::bail!("OpenWiki modified source/configuration {path}; publication refused");
+        }
+        if path != management::INSTRUCTIONS
+            && original_paths.iter().any(|entry| entry.path == path)
+            && !generated.contains(&path)
+        {
+            anyhow::bail!("OpenWiki changed human-managed document {path}; publication refused");
         }
         result.push(path);
     }
@@ -298,8 +338,22 @@ fn git_text(root: &Path, args: &[&str]) -> anyhow::Result<String> {
 
 /// Check the integrated tree, not files in an arbitrary (possibly dirty) checkout.
 pub fn has_canonical_wiki(root: &Path, commit: &str) -> anyhow::Result<bool> {
-    // Even an incomplete imported Wiki must be preserved, not bootstrapped over.
-    Ok(git_text(root, &["ls-tree", "-d", commit, "--", "openwiki"])?.starts_with("040000 tree "))
+    // Preserve incomplete/imported Wikis, but configuration alone is not a Wiki.
+    // NUL separation also preserves non-ASCII and newline-bearing Git paths.
+    Ok(git_text(
+        root,
+        &[
+            "ls-tree",
+            "-r",
+            "-z",
+            "--name-only",
+            commit,
+            "--",
+            "openwiki",
+        ],
+    )?
+    .split('\0')
+    .any(|path| path.starts_with("openwiki/") && path != management::INSTRUCTIONS))
 }
 
 pub struct WikiPublicationRequest<'a> {
@@ -319,12 +373,33 @@ pub async fn publish_validated_wiki(
     store: &db::models::repository_state::RepositoryMemoryStore,
     request: &WikiPublicationRequest<'_>,
 ) -> anyhow::Result<(Option<String>, bool)> {
+    publish_repository_files(git, store, request, None).await
+}
+
+/// Administrative writes use a host-frozen allowlist; model output never
+/// selects this mode. Checkpoint and source-drift recovery are shared.
+pub async fn publish_repository_files(
+    git: &git::GitService,
+    store: &db::models::repository_state::RepositoryMemoryStore,
+    request: &WikiPublicationRequest<'_>,
+    allowed_paths: Option<&[String]>,
+) -> anyhow::Result<(Option<String>, bool)> {
     let _lock = store.try_integration_lock()?;
     let source = request.source_commit;
     let target = request.target_branch;
     let marker = format!("LVK-Wiki-Publication: {}", request.run_id);
-    let message =
-        format!("docs(openwiki): reconcile repository memory\n\nSource: {source}\n{marker}");
+    let subject = match allowed_paths {
+        Some(paths)
+            if paths
+                .iter()
+                .all(|path| management::configuration_path(path)) =>
+        {
+            "chore(openwiki): save repository configuration"
+        }
+        Some(_) => "docs(openwiki): delete generated Wiki",
+        None => "docs(openwiki): reconcile repository memory",
+    };
+    let message = format!("{subject}\n\nSource: {source}\n{marker}");
     let publication = if let Some(publication) = store.publication(request.run_id).await? {
         if publication.source_commit != source || publication.target_branch != target {
             anyhow::bail!("Wiki publication checkpoint identity mismatch");
@@ -341,8 +416,21 @@ pub async fn publish_validated_wiki(
                 "Maintenance Git history changed without a publication checkpoint; inspect and retry"
             );
         }
-        let paths = publication_paths(git, request.maintenance_root, source)?;
-        if !request.maintenance_root.join("openwiki/index.md").is_file() {
+        let paths = if let Some(allowed) = allowed_paths {
+            let paths = git.get_diff_file_paths(request.maintenance_root, &source.parse()?)?;
+            for path in &paths {
+                utils::repository_memory::reject_symlinks(&request.maintenance_root.join(path))?;
+                anyhow::ensure!(
+                    allowed.contains(path),
+                    "Unexpected repository maintenance change: {path}"
+                );
+            }
+            paths.into_iter().collect::<Vec<_>>()
+        } else {
+            publication_paths(git, request.maintenance_root, source)?
+        };
+        if allowed_paths.is_none() && !request.maintenance_root.join("openwiki/index.md").is_file()
+        {
             anyhow::bail!("Finalised OpenWiki has no index.md; publication refused");
         }
         let maintenance_commit = if paths.is_empty() {
@@ -468,6 +556,191 @@ mod tests {
         )
     }
 
+    #[tokio::test]
+    async fn settings_publication_changes_only_saved_file_and_rejects_unexpected_paths() {
+        let temp = tempfile::tempdir().unwrap();
+        let root = temp.path().join("repo");
+        let (store, source, maintenance) = publication_fixture(&root);
+        let git = git::GitService::new();
+        let request = WikiPublicationRequest {
+            repository_root: &root,
+            maintenance_root: &maintenance,
+            maintenance_branch: "wiki",
+            target_branch: "main",
+            source_commit: &source,
+            run_id: uuid::Uuid::new_v4(),
+        };
+        let allowed = vec![management::INSTRUCTIONS.to_owned()];
+        std::fs::write(
+            maintenance.join(management::INSTRUCTIONS),
+            "new saved guidance",
+        )
+        .unwrap();
+        std::fs::write(maintenance.join("source.txt"), "unexpected").unwrap();
+        assert!(
+            publish_repository_files(&git, &store, &request, Some(&allowed))
+                .await
+                .is_err()
+        );
+        assert_eq!(command(&root, &["rev-parse", "HEAD"]), source);
+        std::fs::write(maintenance.join("source.txt"), "integrated source").unwrap();
+        publish_repository_files(&git, &store, &request, Some(&allowed))
+            .await
+            .unwrap();
+        assert_eq!(
+            std::fs::read_to_string(root.join(management::INSTRUCTIONS)).unwrap(),
+            "new saved guidance"
+        );
+        assert_eq!(
+            std::fs::read_to_string(root.join("openwiki/index.md")).unwrap(),
+            "initial wiki"
+        );
+        assert_eq!(
+            management::DEFAULT_INSTRUCTIONS,
+            include_str!("../../../../assets/openwiki-instructions.md")
+        );
+        assert!(management::DEFAULT_IGNORE.is_empty());
+    }
+
+    #[tokio::test]
+    async fn delete_and_rebuild_preserve_human_files_and_public_wiki_until_publication() {
+        for delete in [false, true] {
+            let temp = tempfile::tempdir().unwrap();
+            let root = temp.path().join("repo");
+            let (store, _, maintenance) = publication_fixture(&root);
+            std::fs::write(root.join(".openwikiignore"), "# saved policy\n").unwrap();
+            std::fs::write(root.join("openwiki/human.md"), "human knowledge\n").unwrap();
+            std::fs::create_dir(root.join("openwiki/retired")).unwrap();
+            std::fs::write(
+                root.join("openwiki/retired/page.md"),
+                "---\ngenerated: { by: codex }\n---\nold layout",
+            )
+            .unwrap();
+            std::fs::write(
+                root.join("openwiki/old.md"),
+                "---\ngenerated: { by: codex }\n---\nold operational knowledge",
+            )
+            .unwrap();
+            std::fs::write(
+                root.join("AGENTS.md"),
+                "prefix  \n<!-- OPENWIKI:START -->old<!-- OPENWIKI:END -->\nsuffix  \n",
+            )
+            .unwrap();
+            command(&root, &["add", "."]);
+            command(&root, &["commit", "-m", "fixture knowledge"]);
+            let source = command(&root, &["rev-parse", "HEAD"]);
+            command(&maintenance, &["reset", "--hard", &source]);
+            let mut paths = management::remove_generated(&maintenance, &source).unwrap();
+            assert!(!maintenance.join("openwiki/retired").exists());
+            assert!(root.join("openwiki/retired/page.md").exists());
+            assert!(paths.contains(&"openwiki/old.md".to_owned()));
+            assert!(!paths.contains(&"openwiki/human.md".to_owned()));
+            let git = git::GitService::new();
+            if delete {
+                let original = std::fs::read_to_string(maintenance.join("AGENTS.md")).unwrap();
+                std::fs::write(
+                    maintenance.join("AGENTS.md"),
+                    management::remove_managed_block(&original).unwrap(),
+                )
+                .unwrap();
+                paths.push("AGENTS.md".into());
+            } else {
+                std::fs::write(maintenance.join("openwiki/index.md"), "new structure").unwrap();
+                std::fs::write(maintenance.join("openwiki/new.md"), "verified synthesis").unwrap();
+            }
+            // Failed generation/cancel has no publication and cannot change main.
+            assert!(root.join("openwiki/old.md").exists());
+            assert_eq!(command(&root, &["rev-parse", "HEAD"]), source);
+            assert!(
+                command(
+                    &maintenance,
+                    &["show", &format!("{source}:openwiki/old.md")]
+                )
+                .contains("old operational knowledge")
+            );
+            let request = WikiPublicationRequest {
+                repository_root: &root,
+                maintenance_root: &maintenance,
+                maintenance_branch: "wiki",
+                target_branch: "main",
+                source_commit: &source,
+                run_id: uuid::Uuid::new_v4(),
+            };
+            if !delete {
+                std::fs::write(
+                    maintenance.join("openwiki/human.md"),
+                    "modified by generator",
+                )
+                .unwrap();
+                assert!(
+                    publish_validated_wiki(&git, &store, &request)
+                        .await
+                        .is_err()
+                );
+                assert!(root.join("openwiki/old.md").exists());
+                std::fs::write(maintenance.join("openwiki/human.md"), "human knowledge\n").unwrap();
+                // Untouched human documents must not become future deletion
+                // targets through automatic manifest seeding either.
+                let manifest = maintenance.join("openwiki/.page-manifest.json");
+                std::fs::write(
+                    &manifest,
+                    serde_json::to_vec(&serde_json::json!({
+                        "schemaVersion": 1,
+                        "pages": {"/openwiki/human.md": {"pageVersion": format!("sha256:{}", "a".repeat(64))}}
+                    })).unwrap(),
+                ).unwrap();
+                assert!(publication_paths(&git, &maintenance, &source).is_err());
+                std::fs::remove_file(manifest).unwrap();
+            }
+            let first = publish_repository_files(
+                &git,
+                &store,
+                &request,
+                if delete { Some(&paths) } else { None },
+            )
+            .await
+            .unwrap();
+            let replay = publish_repository_files(
+                &git,
+                &store,
+                &request,
+                if delete { Some(&paths) } else { None },
+            )
+            .await
+            .unwrap();
+            assert_eq!(first, replay);
+            assert!(!root.join("openwiki/old.md").exists());
+            assert_eq!(
+                std::fs::read_to_string(root.join("openwiki/human.md")).unwrap(),
+                "human knowledge\n"
+            );
+            assert_eq!(
+                std::fs::read_to_string(root.join(".openwikiignore")).unwrap(),
+                "# saved policy\n"
+            );
+            assert_eq!(
+                std::fs::read_to_string(root.join(management::INSTRUCTIONS)).unwrap(),
+                "user-authored instructions\n"
+            );
+            if delete {
+                assert!(
+                    management::generated_paths(&root, first.0.as_ref().unwrap())
+                        .unwrap()
+                        .is_empty()
+                );
+                assert_eq!(
+                    std::fs::read_to_string(root.join("AGENTS.md")).unwrap(),
+                    "prefix  \n\nsuffix  \n"
+                );
+            } else {
+                assert!(root.join("openwiki/new.md").exists());
+            }
+            assert!(
+                command(&root, &["show", &format!("{source}:openwiki/old.md")])
+                    .contains("old operational knowledge")
+            );
+        }
+    }
     #[tokio::test]
     async fn publication_recovers_after_git_commit_before_receipts_and_is_idempotent() {
         let temp = tempfile::tempdir().unwrap();
@@ -634,7 +907,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn existing_wiki_detection_preserves_partial_imports_and_ignores_dirty_files() {
+    async fn existing_wiki_detection_distinguishes_configuration_only_and_ignores_dirty_files() {
         let temp = tempfile::tempdir().unwrap();
         let root = temp.path().join("repo");
         let (_, source, _) = publication_fixture(&root);
@@ -642,7 +915,12 @@ mod tests {
         command(&root, &["rm", "openwiki/index.md"]);
         command(&root, &["commit", "-m", "partial imported wiki"]);
         let partial = command(&root, &["rev-parse", "HEAD"]);
-        assert!(has_canonical_wiki(&root, &partial).unwrap());
+        assert!(!has_canonical_wiki(&root, &partial).unwrap());
+        std::fs::write(root.join("openwiki/日本語-guide.md"), "imported knowledge").unwrap();
+        command(&root, &["add", "openwiki"]);
+        command(&root, &["commit", "-m", "non-ASCII imported Wiki"]);
+        let imported = command(&root, &["rev-parse", "HEAD"]);
+        assert!(has_canonical_wiki(&root, &imported).unwrap());
         command(&root, &["rm", "-r", "openwiki"]);
         command(&root, &["commit", "-m", "no wiki"]);
         let absent = command(&root, &["rev-parse", "HEAD"]);

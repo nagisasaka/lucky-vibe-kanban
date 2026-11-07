@@ -1084,6 +1084,8 @@ pub(super) async fn record_wiki_result(
             .context("Wiki operational state missing before publication")?;
         if state.active_run_id.is_none()
             && state.bootstrap.is_none()
+            && state.file_operation.is_none()
+            && !state.generation_suppressed
             && state.target_branch.as_deref() == run.target_ref.strip_prefix("refs/heads/")
         {
             state.source_commit = Some(request.code_commit.clone());

@@ -183,8 +183,8 @@ fn inventory_zero_other_formats_mdx_and_instruction_boundaries() {
 }
 
 #[test]
-fn ignore_presence_is_unavailable_not_empty_and_mismatch_fails() {
-    for text in ["", "# comment", "docs/**"] {
+fn additional_ignore_rules_are_unavailable_and_mismatch_fails() {
+    for text in ["docs/**", "# comment\ndocs/**"] {
         let f = Fixture::new(&[(".openwikiignore", text), ("guide.md", "# hidden")]);
         let inventory = f.generate();
         assert!(matches!(
@@ -304,5 +304,84 @@ fn symlinks_are_not_followed_for_documents_ignore_or_stored_chunks() {
     assert!(
         DocumentInventory::generate(&GitService::new(), &f.root, &f.store, f.identity.clone())
             .is_err()
+    );
+}
+
+#[test]
+fn absent_empty_and_comment_only_ignore_keep_document_inventory() {
+    for policy in [
+        None,
+        Some(""),
+        Some("  \r\n # comment\r\n\t# docs remain visible\n"),
+    ] {
+        let mut files = vec![
+            ("README.md", "# Product"),
+            ("docs/operations.md", "# Recovery"),
+        ];
+        if let Some(policy) = policy {
+            files.push((".openwikiignore", policy));
+        }
+        let fixture = Fixture::new(&files);
+        let inventory = fixture.generate();
+        assert!(matches!(inventory, DocumentInventory::Available { .. }));
+        assert!(
+            fixture
+                .documents(&inventory)
+                .iter()
+                .any(|entry| entry.path == "docs/operations.md")
+        );
+    }
+    let fixture = Fixture::new(&[(".openwikiignore", "# comment\ndocs/private/\n")]);
+    assert!(matches!(
+        fixture.generate(),
+        DocumentInventory::UnavailableIgnorePolicy { .. }
+    ));
+}
+
+#[test]
+#[ignore = "requires the pinned installed OpenWiki 0.7.2 package and Node.js; no model calls"]
+fn installed_openwiki_ignore_blank_and_comment_detection_matches_inventory() {
+    let cases = [
+        "",
+        "# comments",
+        "  \r\n\t# comment\r\n",
+        "\u{feff} # BOM comment",
+        "docs/private/",
+        "!docs/public.md",
+        "\u{0085}",
+    ];
+    let script = r#"
+import {pathToFileURL} from 'node:url';
+import {readFile} from 'node:fs/promises';
+const root = process.argv[1];
+const pkg = JSON.parse(await readFile(`${root}/package.json`, 'utf8'));
+if (pkg.version !== '0.7.2') throw Error('Pinned version mismatch');
+const {OpenWikiIgnore} = await import(pathToFileURL(`${root}/dist/agent/openwiki-ignore.js`));
+process.stdout.write(JSON.stringify(JSON.parse(process.argv[2]).map(value => OpenWikiIgnore.parse(value).isActive)));
+"#;
+    let package = std::env::var("OPENWIKI_TEST_PACKAGE_ROOT")
+        .unwrap_or_else(|_| "/usr/local/lib/node_modules/openwiki".into());
+    let output = std::process::Command::new("node")
+        .args([
+            "--input-type=module",
+            "-e",
+            script,
+            &package,
+            &serde_json::to_string(&cases).unwrap(),
+        ])
+        .output()
+        .unwrap();
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let expected: Vec<bool> = serde_json::from_slice(&output.stdout).unwrap();
+    assert_eq!(
+        expected,
+        cases
+            .iter()
+            .map(|value| has_additional_ignore_rules(value.as_bytes()).unwrap())
+            .collect::<Vec<_>>()
     );
 }

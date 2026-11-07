@@ -405,4 +405,16 @@ pub fn router() -> Router<DeploymentImpl> {
             get(super::openwiki::get_status).put(super::openwiki::configure),
         )
         .route("/repos/{repo_id}/memory/sync", post(super::openwiki::sync))
+        .route(
+            "/repos/{repo_id}/memory/files",
+            get(super::openwiki::management::get_files).put(super::openwiki::management::save_file),
+        )
+        .route(
+            "/repos/{repo_id}/memory/delete",
+            post(super::openwiki::management::delete_wiki),
+        )
+        .route(
+            "/repos/{repo_id}/memory/rebuild",
+            post(super::openwiki::rebuild),
+        )
 }

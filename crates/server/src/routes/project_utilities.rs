@@ -88,16 +88,7 @@ async fn read(
             .ok_or_else(|| ApiError::BadRequest("Repository does not belong to Project".into()))?;
         let root = tokio::fs::canonicalize(&repo.path).await?;
         if kind == "wiki" {
-            let (state, _) = super::openwiki::status_snapshot(&d, repo.id).await?;
-            if !state.enabled {
-                return Err(ApiError::BadRequest("OpenWiki disabled".into()));
-            }
-            let wiki = tokio::task::spawn_blocking(move || {
-                services::services::wiki::openwiki::load_snapshot(&root)
-            })
-            .await
-            .map_err(|e| ApiError::BadRequest(e.to_string()))?
-            .map_err(|e| ApiError::BadRequest(e.to_string()))?;
+            let wiki = super::openwiki::canonical_snapshot(&d, repo.id).await?;
             json!({"workspace_id":project_id,"repo_id":repo.id,"repo_name":repo.name,"repo_display_name":repo.display_name,"source":"main_repository","wiki":wiki,"source_links":[]})
         } else {
             let target = files::normalize_relative_path(q.path.as_deref())?;

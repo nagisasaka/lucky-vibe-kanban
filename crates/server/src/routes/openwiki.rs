@@ -2,6 +2,7 @@
 //! The shared durable pointer and OS lock fence writers across server restarts.
 use db::models::repository_state::RepositoryMemoryStore;
 pub(crate) mod completion;
+pub mod management;
 pub(crate) mod preparation;
 mod project_context;
 use std::{
@@ -59,6 +60,9 @@ pub struct SyncRepositoryMemory {
     /// Review changes after this commit through the frozen integrated head.
     /// Omit to reconcile against the complete current source.
     pub from_commit: Option<String>,
+    /// Explicit Initialize action; required to regenerate after user deletion.
+    #[ts(optional)]
+    pub initialize: Option<bool>,
 }
 
 fn api_error(error: impl std::fmt::Display) -> ApiError {
@@ -119,13 +123,46 @@ pub(crate) async fn status_snapshot(
             .as_deref()
             .or(state.source_commit.as_deref())
             == Some(&head);
-        let exists = services::services::openwiki::has_canonical_wiki(&repo.path, &head)
-            .map_err(api_error)?;
+        let exists = if state.generation_suppressed {
+            !services::services::openwiki::management::generated_paths(&repo.path, &head)
+                .map_err(api_error)?
+                .is_empty()
+        } else {
+            services::services::openwiki::has_canonical_wiki(&repo.path, &head)
+                .map_err(api_error)?
+        };
         state.wiki_exists = exists;
         state.status = state.derived_status(exists, pending, source_matches);
         current_source = Some(head);
     }
     Ok((state, current_source))
+}
+
+/// Main-repository viewing follows canonical generation state. Preserved human
+/// files and INSTRUCTIONS alone must not resurrect a deleted/uninitialised Wiki.
+pub(crate) async fn canonical_snapshot(
+    deployment: &DeploymentImpl,
+    id: Uuid,
+) -> Result<services::services::wiki::WikiSnapshot, ApiError> {
+    let repo = repo(deployment, id).await?;
+    let (state, _) = status_snapshot(deployment, id).await?;
+    if !state.enabled {
+        return Err(api_error("OpenWiki disabled"));
+    }
+    if !state.wiki_exists {
+        return Ok(services::services::wiki::WikiSnapshot {
+            exists: false,
+            config: None,
+            index: None,
+            pages: Vec::new(),
+        });
+    }
+    tokio::task::spawn_blocking(move || {
+        services::services::wiki::openwiki::load_snapshot(&repo.path)
+    })
+    .await
+    .map_err(api_error)?
+    .map_err(api_error)
 }
 
 pub async fn configure(
@@ -146,7 +183,8 @@ pub async fn configure(
     let store = RepositoryMemoryStore::for_repository(&deployment.db().pool, &repo.name, repo.id)?;
     let _lock = store.try_lock()?;
     let mut state = store.state().await?;
-    if state.active_run_id.is_some() || state.bootstrap.is_some() {
+    if state.active_run_id.is_some() || state.bootstrap.is_some() || state.file_operation.is_some()
+    {
         return Err(api_error(
             "Repository maintenance is active; stop or finish that AgentRun before changing configuration",
         ));
@@ -194,6 +232,27 @@ pub async fn sync(
     get_status(State(deployment), Path(id)).await
 }
 
+pub async fn rebuild(
+    State(deployment): State<DeploymentImpl>,
+    Path(id): Path<Uuid>,
+    Json(request): Json<management::RebuildRepositoryWiki>,
+) -> Result<Json<ApiResponse<RepositoryMemoryState>>, ApiError> {
+    start_request(
+        &deployment,
+        id,
+        SyncRepositoryMemory {
+            project_id: request.project_id,
+            from_commit: None,
+            initialize: None,
+        },
+        Some((&request.branch, &request.source)),
+        true,
+    )
+    .await
+    .map_err(api_error)?;
+    get_status(State(deployment), Path(id)).await
+}
+
 /// MCP pins the observed saved configuration and source, but shares every UI
 /// admission/publication guard. It cannot implicitly bootstrap a missing Wiki.
 pub(crate) async fn sync_checked(
@@ -216,7 +275,8 @@ fn check_sync_available(state: &RepositoryMemoryState) -> anyhow::Result<()> {
     if !state.enabled {
         bail!("Enable OpenWiki first");
     }
-    if state.active_run_id.is_some() || state.bootstrap.is_some() {
+    if state.active_run_id.is_some() || state.bootstrap.is_some() || state.file_operation.is_some()
+    {
         bail!(
             "Repository maintenance already has an active AgentRun; inspect its workspace or wait for recovery"
         );
@@ -243,12 +303,55 @@ fn check_sync_target(
     Ok(())
 }
 
+pub(super) async fn integration_busy(
+    pool: &sqlx::SqlitePool,
+    storage: &str,
+) -> Result<bool, sqlx::Error> {
+    // Use terminal states, not an invented generic "running" state: the existing
+    // integration lifecycle includes preparing/integrating/validating/cancelling.
+    // Recovery-required publication remains fenced until operator reconciliation.
+    sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM integration_runs WHERE storage_identity=? AND status NOT IN ('succeeded','blocked','failed','cancelled'))")
+        .bind(storage).fetch_one(pool).await
+}
+
+fn check_initialization_intent(
+    state: &RepositoryMemoryState,
+    initial: bool,
+    initialize: Option<bool>,
+) -> anyhow::Result<()> {
+    if initial
+        && initialize != Some(true)
+        && (state.generation_suppressed || initialize == Some(false))
+    {
+        bail!(
+            "No generated Wiki is available for Sync; use the explicit Initialize Wiki action. Sync does not regenerate a deleted Wiki"
+        );
+    }
+    if !initial && initialize == Some(true) {
+        bail!("Wiki already exists; reload settings and choose Sync or Rebuild");
+    }
+    Ok(())
+}
+
 async fn start_reconciliation_request(
     deployment: &DeploymentImpl,
     id: Uuid,
     request: SyncRepositoryMemory,
     expected: Option<(&str, &str)>,
 ) -> anyhow::Result<RepositoryMemoryState> {
+    start_request(deployment, id, request, expected, false).await
+}
+
+async fn start_request(
+    deployment: &DeploymentImpl,
+    id: Uuid,
+    request: SyncRepositoryMemory,
+    expected: Option<(&str, &str)>,
+    rebuild: bool,
+) -> anyhow::Result<RepositoryMemoryState> {
+    let _admission = services::services::integration_admission::MUTATIONS
+        .lock()
+        .await;
     let repo = repo(deployment, id).await?;
     let project_id = request.project_id;
     project_context::validate(&deployment.db().pool, id, project_id).await?;
@@ -259,8 +362,7 @@ async fn start_reconciliation_request(
         .storage_identity(&repo.path)?
         .to_string_lossy()
         .into_owned();
-    let pending:bool=sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM integration_runs WHERE storage_identity=? AND status IN ('publishing','post_processing','recovery_required'))")
-        .bind(storage).fetch_one(&deployment.db().pool).await?;
+    let pending = integration_busy(&deployment.db().pool, &storage).await?;
     if pending {
         bail!(
             "Auto-merge publication/semantic outbox is still being reconciled; source is retained"
@@ -278,8 +380,33 @@ async fn start_reconciliation_request(
         .as_deref()
         .context("Choose an integration branch")?;
     let source = deployment.git().get_branch_oid(&repo.path, branch)?;
-    let initial = !services::services::openwiki::has_canonical_wiki(&repo.path, &source)?;
+    let initial = if state.generation_suppressed {
+        services::services::openwiki::management::generated_paths(&repo.path, &source)?.is_empty()
+    } else {
+        !services::services::openwiki::has_canonical_wiki(&repo.path, &source)?
+    };
     check_sync_target(&state, &source, initial, expected)?;
+    check_initialization_intent(&state, initial, request.initialize)?;
+    management::ensure_configuration_clean(
+        deployment,
+        &repo,
+        &source,
+        &[
+            services::services::openwiki::management::INSTRUCTIONS,
+            services::services::openwiki::management::IGNORE,
+        ],
+    )?;
+    if rebuild && initial {
+        bail!("No existing Wiki to reconstruct");
+    }
+    // Explicit reinitialisation after deletion also uses the non-destructive
+    // update plan: preserved human documents must survive upstream init.
+    state.rebuild_reference = if rebuild || (initial && state.generation_suppressed) {
+        Some(source.clone())
+    } else {
+        None
+    };
+
     if initial && request.from_commit.is_some() {
         bail!(
             "No existing Wiki on the selected branch; use Initialize Wiki without a starting commit"
@@ -291,7 +418,14 @@ async fn start_reconciliation_request(
         request.from_commit.as_deref(),
     )?;
     let result = prepare_run(
-        deployment, &repo, &store, &mut state, &source, initial, scope, project_id,
+        deployment,
+        &repo,
+        &store,
+        &mut state,
+        &source,
+        initial || rebuild,
+        scope,
+        project_id,
     )
     .await;
     if let Err(error) = result {
@@ -434,6 +568,13 @@ async fn prepare_run(
     )?;
     state.active_sync_scope = if initial { RepositoryWikiSyncScope::CurrentSource } else { scope };
 
+    if state.rebuild_reference.is_some() {
+        // Objects are reachable from the pinned source commit in this same Git
+        // repository throughout all phases, independently of worktree rewrites.
+        deployment.git().snapshot(&root, &source)?.entries()?;
+        services::services::openwiki::management::remove_generated(&root, &source)?;
+    }
+
     // First bootstrap is explicit init; subsequent sync preserves existing Wiki.
     if initial {
         state.active_sync_input_digest = None;
@@ -548,6 +689,9 @@ async fn recover_repository(deployment: &DeploymentImpl, repo: &Repo) -> anyhow:
         return Ok(());
     };
     let mut state = store.state().await?;
+    if state.file_operation.is_some() {
+        return management::recover(deployment, repo, &store, &mut state).await;
+    }
     observe_recorded_pr_integrations(deployment, repo, &store).await?;
     recover_integrations(&store, &repo.path).await?;
     if state.bootstrap.is_some() {
@@ -675,6 +819,7 @@ fn reconciliation_records(
                 _ => {}
             }
             state.last_success = Some(now);
+            state.generation_suppressed = false;
             state.status = RepositoryWikiStatus::Current;
             state.error = None;
         }
@@ -898,6 +1043,64 @@ pub fn spawn_recovery_monitor(deployment: DeploymentImpl) {
 #[cfg(test)]
 mod adoption_tests {
     use super::*;
+
+    #[tokio::test]
+    async fn all_active_integration_phases_and_recovery_fence_wiki_maintenance() {
+        let pool = sqlx::sqlite::SqlitePoolOptions::new()
+            .max_connections(1)
+            .connect("sqlite::memory:")
+            .await
+            .unwrap();
+        sqlx::query(
+            "CREATE TABLE integration_runs(storage_identity TEXT NOT NULL,status TEXT NOT NULL)",
+        )
+        .execute(&pool)
+        .await
+        .unwrap();
+        for (status, busy) in [
+            ("queued", true),
+            ("preparing", true),
+            ("integrating", true),
+            ("validating", true),
+            ("publishing", true),
+            ("post_processing", true),
+            ("cancelling", true),
+            ("recovery_required", true),
+            ("succeeded", false),
+            ("blocked", false),
+            ("failed", false),
+            ("cancelled", false),
+        ] {
+            sqlx::query("DELETE FROM integration_runs")
+                .execute(&pool)
+                .await
+                .unwrap();
+            sqlx::query("INSERT INTO integration_runs VALUES('fixture',?)")
+                .bind(status)
+                .execute(&pool)
+                .await
+                .unwrap();
+            assert_eq!(
+                integration_busy(&pool, "fixture").await.unwrap(),
+                busy,
+                "{status}"
+            );
+            assert!(!integration_busy(&pool, "other").await.unwrap());
+        }
+    }
+
+    #[test]
+    fn explicit_initialization_is_required_after_deletion_and_never_overwrites_existing_wiki() {
+        let mut state = RepositoryMemoryState::enabled_defaults(Some("main".into()));
+        assert!(check_initialization_intent(&state, true, None).is_ok());
+        state.generation_suppressed = true;
+        for intent in [None, Some(false)] {
+            assert!(check_initialization_intent(&state, true, intent).is_err());
+        }
+        assert!(check_initialization_intent(&state, true, Some(true)).is_ok());
+        assert!(check_initialization_intent(&state, false, Some(true)).is_err());
+        assert!(check_initialization_intent(&state, false, None).is_ok());
+    }
 
     #[test]
     fn checked_sync_rejects_stale_target_missing_wiki_and_existing_owner() {

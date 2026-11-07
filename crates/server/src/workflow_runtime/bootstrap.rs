@@ -314,8 +314,15 @@ pub(super) async fn prepare_child_dispatch(
     let phase = match request.node_id.as_str() {
         "generate" => {
             openwiki::setup::prepare(&ctx.store, ctx.workspace.id, &ctx.root, source)?;
-            request.prompt =
-                openwiki::bootstrap::writer_prompt(&ctx.root, &ctx.state.output_language, None);
+            request.prompt = if let Some(reference) = &ctx.state.rebuild_reference {
+                openwiki::bootstrap::rebuild_prompt(
+                    &ctx.root,
+                    &ctx.state.output_language,
+                    reference,
+                )
+            } else {
+                openwiki::bootstrap::writer_prompt(&ctx.root, &ctx.state.output_language, None)
+            };
             OpenWikiBootstrapPhase::Generating
         }
         "review" => {
@@ -342,6 +349,13 @@ pub(super) async fn prepare_child_dispatch(
         }
         _ => bail!("Unsupported Bootstrap agent phase"),
     };
+    if let Some(source) = &ctx.state.rebuild_reference
+        && phase != OpenWikiBootstrapPhase::Generating
+    {
+        request
+            .prompt
+            .push_str(&openwiki::management::reference_prompt(source));
+    }
     if let Some(inventory) = &inventory {
         match phase {
             OpenWikiBootstrapPhase::Generating => request
@@ -575,6 +589,8 @@ pub(super) async fn validate_child_completion(
         &ctx.root,
         if node_id == "refine" {
             WriterPhase::Refine
+        } else if ctx.state.rebuild_reference.is_some() {
+            WriterPhase::Rebuild
         } else {
             WriterPhase::Generate
         },
@@ -646,6 +662,12 @@ async fn publish(
     if ctx.store.publication(run_id).await?.is_none() {
         openwiki::setup::restore(&ctx.store, ctx.workspace.id, &ctx.root, source)?;
         openwiki::setup::validate_provenance(&ctx.store, ctx.workspace.id, &ctx.root, source)?;
+        if ctx.state.rebuild_reference.is_some() {
+            ensure!(
+                ctx.root.join("openwiki/quickstart.md").is_file(),
+                "Reconstructed Wiki is missing its stable quickstart.md entry; publication refused"
+            );
+        }
     }
     ctx.state.bootstrap.as_mut().unwrap().phase = OpenWikiBootstrapPhase::Publishing;
     ctx.store.save_state(&ctx.state).await?;

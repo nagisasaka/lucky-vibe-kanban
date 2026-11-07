@@ -346,6 +346,26 @@ pub struct RepositoryMemoryState {
     /// do not erase that limitation; a full reconciliation can clear it.
     #[serde(default)]
     pub unverified_before: Option<String>,
+    /// Saved repository-file maintenance uses the same publication checkpoint.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub file_operation: Option<RepositoryWikiFileOperation>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub rebuild_reference: Option<String>,
+    /// Explicit deletion suppresses automatic integrations until explicit init.
+    #[serde(default)]
+    pub generation_suppressed: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+pub struct RepositoryWikiFileOperation {
+    pub id: Uuid,
+    pub workspace_id: Uuid,
+    pub source: String,
+    pub branch: String,
+    pub paths: Vec<String>,
+    pub delete: bool,
 }
 
 fn default_memory_language() -> String {
@@ -375,6 +395,9 @@ impl Default for RepositoryMemoryState {
             wiki_exists: false,
             active_sync_scope: RepositoryWikiSyncScope::default(),
             unverified_before: None,
+            file_operation: None,
+            rebuild_reference: None,
+            generation_suppressed: false,
         }
     }
 }

@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { useWikiAvailability } from '@/shared/hooks/useWikiAvailability';
 import type { MainRepo } from '@/shared/lib/projectUtilitiesApi';
 import { readUtility } from '@/shared/lib/projectUtilitiesApi';
@@ -61,6 +62,7 @@ function WorkspaceWikiScope({
   mainRepos,
 }: WorkspaceWikiProviderProps) {
   const { t } = useTranslation('common');
+  const queryClient = useQueryClient();
   const enabledIds = useWikiAvailability(
     projectId ? [] : repos.map((repo) => repo.id)
   );
@@ -97,6 +99,21 @@ function WorkspaceWikiScope({
         : workspacesApi.wiki
     )
   );
+
+  useEffect(() => {
+    if (!projectId) return;
+    // Existing settings polling also observes publication completion. Refresh
+    // only the selected canonical Wiki, without adding another polling loop.
+    return queryClient.getQueryCache().subscribe((event) => {
+      if (
+        event.type === 'updated' &&
+        event.action.type === 'success' &&
+        event.query.queryKey.at(-2) === 'repository-memory' &&
+        event.query.queryKey.at(-1) === controller.getSnapshot().repoId
+      )
+        void controller.reload();
+    });
+  }, [controller, projectId, queryClient]);
 
   useEffect(() => {
     const current = controller.getSnapshot().repoId;

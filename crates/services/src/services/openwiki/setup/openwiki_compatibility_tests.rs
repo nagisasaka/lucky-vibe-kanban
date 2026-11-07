@@ -217,3 +217,69 @@ await ensureCodeModeRepoSetup(process.argv[2], {createWorkflow: false});
         );
     }
 }
+
+#[test]
+#[ignore = "requires installed OpenWiki 0.7.2 and Node.js; provider-free admission fixture only"]
+fn installed_openwiki_072_forced_update_accepts_clean_reconstruction_target() {
+    let package = std::env::var_os("OPENWIKI_TEST_PACKAGE_ROOT")
+        .map(PathBuf::from)
+        .unwrap_or_else(|| PathBuf::from("/usr/local/lib/node_modules/openwiki"));
+    let temp = tempfile::tempdir().unwrap();
+    let root = temp.path().join("repo");
+    fs::create_dir_all(root.join("openwiki")).unwrap();
+    git(&root, &["init", "-b", "main"]);
+    git(&root, &["config", "user.name", "Fixture"]);
+    git(&root, &["config", "user.email", "fixture@example.invalid"]);
+    fs::write(root.join("source.rs"), "// Current source\n").unwrap();
+    fs::write(root.join(".openwikiignore"), "openwiki/human.md\n").unwrap();
+    fs::write(root.join("openwiki/INSTRUCTIONS.md"), "User instructions\n").unwrap();
+    fs::write(
+        root.join("openwiki/human.md"),
+        "Human-owned documentation\n",
+    )
+    .unwrap();
+    fs::write(root.join("openwiki/index.md"), "Old index\n").unwrap();
+    fs::write(
+        root.join("openwiki/old.md"),
+        "---\ngenerated: { by: codex }\n---\nOld knowledge\n",
+    )
+    .unwrap();
+    git(&root, &["add", "."]);
+    git(&root, &["commit", "-m", "fixture source"]);
+    let source = git(&root, &["rev-parse", "HEAD"]);
+    crate::services::openwiki::management::remove_generated(&root, &source).unwrap();
+    let script = r#"
+import {pathToFileURL} from 'node:url';
+import {readFile} from 'node:fs/promises';
+const pkg = JSON.parse(await readFile(`${process.argv[1]}/package.json`, 'utf8'));
+if (pkg.version !== '0.7.2') throw Error('Pinned OpenWiki version mismatch');
+const {beginRepositoryRun} = await import(pathToFileURL(`${process.argv[1]}/dist/generation/repository-run.js`));
+const result = await beginRepositoryRun({root:process.argv[2], mode:'update', force:true, language:'en', actor:{producerActor:'codex',metadataModel:'codex'}});
+process.stdout.write(JSON.stringify({status:result.view.status}));
+"#;
+    // No provider, writer process or publication is started. The temporary
+    // target and its admitted run state are discarded together after this test.
+    let output = Command::new("node")
+        .args(["--input-type=module", "-e", script])
+        .arg(package)
+        .arg(&root)
+        .output()
+        .unwrap();
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let result: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
+    assert_eq!(result["status"], "active");
+    assert_eq!(
+        fs::read_to_string(root.join("openwiki/INSTRUCTIONS.md")).unwrap(),
+        "User instructions\n"
+    );
+    assert_eq!(
+        fs::read_to_string(root.join("openwiki/human.md")).unwrap(),
+        "Human-owned documentation\n"
+    );
+    assert!(!root.join("openwiki/old.md").exists());
+    assert!(git(&root, &["show", &format!("{source}:openwiki/old.md")]).contains("Old knowledge"));
+}

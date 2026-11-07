@@ -39,6 +39,8 @@ fn is_retrieval(tool: &str) -> bool {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum WriterPhase {
     Generate,
+    /// Full reconstruction retains human documents through forced update planning.
+    Rebuild,
     Refine,
     Sync,
     /// An explicit source/range review cannot rely on an old source checkpoint.
@@ -168,8 +170,10 @@ impl PhaseCompletionProof {
             "Generate has no completed init from this phase"
         );
         ensure!(
-            !matches!(self.phase, WriterPhase::Sync | WriterPhase::Reconcile)
-                || self.completed_updates > 0
+            !matches!(
+                self.phase,
+                WriterPhase::Sync | WriterPhase::Reconcile | WriterPhase::Rebuild
+            ) || self.completed_updates > 0
                 || self.completed_noops > 0,
             "Sync has no completed update or audited public begin-noop"
         );
@@ -492,6 +496,8 @@ mod tests {
             (WriterPhase::Refine, "init", true),
             (WriterPhase::Refine, "update", false),
             (WriterPhase::Reconcile, "init", true),
+            (WriterPhase::Rebuild, "init", true),
+            (WriterPhase::Rebuild, "update", false),
             (WriterPhase::Reconcile, "update", false),
         ] {
             let mut proof = PhaseCompletionProof::new(phase);
@@ -519,6 +525,17 @@ mod tests {
     #[test]
     fn explicit_reconciliation_requires_a_completed_forced_update() {
         let tmp = tempfile::tempdir().unwrap();
+        let mut rebuild = PhaseCompletionProof::new(WriterPhase::Rebuild);
+        assert!(rebuild.validate().is_err());
+        let rebuild_id = Uuid::new_v4();
+        feed(
+            &mut rebuild,
+            tmp.path(),
+            begin(tmp.path(), "update", rebuild_id),
+        )
+        .unwrap();
+        feed(&mut rebuild, tmp.path(), finish(rebuild_id)).unwrap();
+        rebuild.validate().unwrap();
         let mut proof = PhaseCompletionProof::new(WriterPhase::Reconcile);
         assert!(proof.validate().is_err());
         let id = Uuid::new_v4();

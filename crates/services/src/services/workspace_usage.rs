@@ -357,7 +357,7 @@ pub async fn cleanup_allowed(pool: &SqlitePool, workspace_id: Uuid) -> anyhow::R
             {
                 let state = store.state().await?;
                 if state.maintenance_workspace_id == Some(workspace_id)
-                    && (state.active_run_id.is_some() || state.bootstrap.is_some())
+                    && (state.active_run_id.is_some() || state.bootstrap.is_some() || state.file_operation.is_some())
                 {
                     return Ok(false);
                 }
