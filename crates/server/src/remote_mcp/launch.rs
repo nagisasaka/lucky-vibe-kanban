@@ -485,7 +485,7 @@ async fn prepare_start(
             .await?
             .ok_or_else(|| super::errors::rejection(Category::NotFound))?;
         prompt.push_str(&format!(
-            "\n\nAttachment: `.vibe-attachments/{}`",
+            "\n\nAttachment: `.lvk/attachments/{}`",
             file.file_path
         ));
     }

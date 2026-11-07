@@ -1160,13 +1160,10 @@ impl Codex {
                 );
             }
         }
-        if let Some(memory) = env
-            .get("LVK_REPOSITORY_MEMORY_INSTRUCTIONS")
-            .filter(|_| !reviewer)
-        {
+        if let Some(memory) = env.repository_memory_instructions().filter(|_| !reviewer) {
             params.developer_instructions = Some(match params.developer_instructions.take() {
                 Some(existing) => format!("{existing}\n\n{memory}"),
-                None => memory.clone(),
+                None => memory,
             });
         }
         let roots = env.shared_resource_roots();
@@ -2338,10 +2335,14 @@ mod tests {
         let json = serde_json::to_value(&params).unwrap();
         assert_eq!(json["runtimeWorkspaceRoots"], json!([cwd, shared]));
         assert_eq!(json["sandbox"], "read-only");
-        assert_eq!(
-            params.developer_instructions.as_deref(),
-            Some(crate::legacy_wiki::RETIREMENT_NOTICE)
+        let instructions = params.developer_instructions.as_deref().unwrap();
+        assert!(instructions.contains(crate::legacy_wiki::RETIREMENT_NOTICE));
+        assert!(instructions.contains(".lvk/shared/tmp/"));
+        assert!(instructions.contains("Run completion does not delete tmp contents"));
+        assert!(
+            instructions.contains("never delete another task's pending handoff or active data")
         );
+        assert!(instructions.contains("appropriate retained destination"));
         let resume =
             serde_json::to_value(resume_params_from("thread-shared".into(), params)).unwrap();
         assert_eq!(
@@ -2349,6 +2350,10 @@ mod tests {
             json["runtimeWorkspaceRoots"]
         );
         assert_eq!(resume["sandbox"], "read-only");
+        assert_eq!(
+            resume["developerInstructions"],
+            json["developerInstructions"]
+        );
     }
 
     #[test]

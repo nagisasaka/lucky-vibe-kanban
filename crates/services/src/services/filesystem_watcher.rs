@@ -68,6 +68,9 @@ fn build_gitignore_set(root: &Path) -> Result<Gitignore, FilesystemWatcherError>
         .hidden(false) // we *want* to see .gitignore
         .git_ignore(true) // Respect gitignore to skip heavy directories
         .filter_entry(|entry| {
+            if utils::path::is_lvk_runtime_path(entry.path()) {
+                return false;
+            }
             let is_dir = entry.file_type().map(|ft| ft.is_dir()).unwrap_or(false);
 
             // Skip .git directory
@@ -118,6 +121,9 @@ fn build_gitignore_set(root: &Path) -> Result<Gitignore, FilesystemWatcherError>
 }
 
 fn path_allowed(path: &Path, gi: &Gitignore, canonical_root: &Path) -> bool {
+    if utils::path::is_lvk_runtime_path(path) {
+        return false;
+    }
     let canonical_path = canonicalize_lossy(path);
 
     // Convert absolute path to relative path from the gitignore root
@@ -302,6 +308,9 @@ fn collect_watch_directories(root: &Path, gi: &Gitignore) -> Vec<WatchTarget> {
         .hidden(false)
         .git_ignore(true) // Respect gitignore to skip node_modules, target, etc.
         .filter_entry(|entry| {
+            if utils::path::is_lvk_runtime_path(entry.path()) {
+                return false;
+            }
             let is_dir = entry.file_type().map(|ft| ft.is_dir()).unwrap_or(false);
             if !is_dir {
                 return false;
@@ -617,4 +626,45 @@ pub fn async_watcher(root: PathBuf) -> Result<WatcherComponents, FilesystemWatch
     });
 
     Ok((debouncer, filtered_rx, canonical_root))
+}
+
+#[cfg(test)]
+mod lvk_path_tests {
+    use super::*;
+
+    #[test]
+    fn runtime_children_are_hidden_while_configuration_is_watched() {
+        let tmp = tempfile::tempdir().unwrap();
+        let root = tmp.path().canonicalize().unwrap();
+        for path in [
+            ".lvk/shared/cache",
+            ".lvk/attachments",
+            ".lvk/preview",
+            "src/shared",
+        ] {
+            std::fs::create_dir_all(root.join(path)).unwrap();
+        }
+        let gi = build_gitignore_set(&root).unwrap();
+        for (path, allowed) in [
+            (".lvk/shared/cache/a", false),
+            (".lvk/attachments/a", false),
+            (".lvk/integration-validation.json", true),
+            (".lvk/.gitignore", true),
+            (".lvk/preview/config.json", true),
+            ("src/shared/config.json", true),
+        ] {
+            assert_eq!(
+                path_allowed(&root.join(path), &gi, &root),
+                allowed,
+                "{path}"
+            );
+        }
+        let watched: Vec<_> = collect_watch_directories(&root, &gi)
+            .into_iter()
+            .map(|target| target.path)
+            .collect();
+        assert!(watched.contains(&root.join(".lvk")));
+        assert!(watched.contains(&root.join(".lvk/preview")));
+        assert!(!watched.contains(&root.join(".lvk/attachments")));
+    }
 }

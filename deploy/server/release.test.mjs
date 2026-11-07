@@ -128,7 +128,8 @@ test("Docker distribution includes the prebuilt app, process host, pinned tools,
     "**/secrets/",
     "**/.codex/",
     "**/.ssh/",
-    "**/.lvk-shared/",
+    "**/.lvk/shared/",
+    "**/.lvk/attachments/",
   ])
     assert(ignore.includes(entry));
 });

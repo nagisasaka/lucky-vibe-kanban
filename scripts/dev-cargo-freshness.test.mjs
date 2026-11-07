@@ -28,8 +28,8 @@ test('official entry checks content across A/B/A and refreshes server build inpu
     mkdirSync(join(dir, 'cache'));
     const roots = ['a', 'b'].map((name) => {
       const root = join(dir, name);
-      for (const p of ['scripts', '.lvk-shared', 'src', 'crates/server/src']) mkdirSync(join(root, p), { recursive: true });
-      symlinkSync(join(dir, 'cache'), join(root, '.lvk-shared/cache'));
+      for (const p of ['scripts', '.lvk/shared', 'src', 'crates/server/src']) mkdirSync(join(root, p), { recursive: true });
+      symlinkSync(join(dir, 'cache'), join(root, '.lvk/shared/cache'));
       cpSync(join(repo, 'rust-toolchain.toml'), join(root, 'rust-toolchain.toml'));
       cpSync(join(repo, 'scripts/dev-cargo.mjs'), join(root, 'scripts/dev-cargo.mjs'));
       write(join(root, 'Cargo.toml'), '[workspace]\nmembers=["crates/server"]\n[package]\nname="api-probe"\nversion="0.1.0"\nedition="2021"\n');
@@ -46,7 +46,7 @@ test('official entry checks content across A/B/A and refreshes server build inpu
       write(join(root, 'crates/server/build.rs'), dotenv + readFileSync(join(repo, 'crates/server/build.rs'), 'utf8'));
       write(join(root, 'crates/server/src/main.rs'), 'fn main(){println!("{}|{}|{}",env!("LVK_BUILD_REVISION"),env!("PROBE_ENV_ROOT"),option_env!("POSTHOG_API_KEY").unwrap_or("none"));}');
       write(join(root, '.env'), 'POSTHOG_API_KEY=AAA\n');
-      writeFileSync(join(root, '.gitignore'), 'target/\n.lvk-shared/\npackages/\nCargo.lock\n');
+      writeFileSync(join(root, '.gitignore'), 'target/\n.lvk/shared/\npackages/\nCargo.lock\n');
       ok(command('git', ['init', '-q'], root, env));
       ok(command('git', ['add', '.'], root, env));
       ok(command('git', ['commit', '-qm', name], root, env));

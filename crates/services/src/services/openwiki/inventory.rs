@@ -309,9 +309,7 @@ fn digest_records(
 
 fn candidate_format(path: &str) -> Option<&'static str> {
     if path.starts_with("openwiki/")
-        || path
-            .split('/')
-            .any(|part| git::ALWAYS_SKIP_DIRS.contains(&part))
+        || utils::path::should_skip_path(Path::new(path))
         || super::is_setup_byproduct(path)
     {
         return None;

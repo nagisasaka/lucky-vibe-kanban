@@ -245,6 +245,9 @@ impl FileSearchCache {
                     .git_exclude(false)
                     .hidden(false)
                     .filter_entry(|entry| {
+                        if utils::path::is_lvk_runtime_path(entry.path()) {
+                            return false;
+                        }
                         let name = entry.file_name().to_string_lossy();
                         name != ".git"
                             && name != "node_modules"
@@ -260,6 +263,9 @@ impl FileSearchCache {
                 .git_exclude(true)
                 .hidden(false)
                 .filter_entry(|entry| {
+                    if utils::path::is_lvk_runtime_path(entry.path()) {
+                        return false;
+                    }
                     let name = entry.file_name().to_string_lossy();
                     name != ".git"
                 })
@@ -392,6 +398,9 @@ impl FileSearchCache {
             .git_exclude(false)
             .hidden(false) // Show hidden files like .env
             .filter_entry(|entry| {
+                if utils::path::is_lvk_runtime_path(entry.path()) {
+                    return false;
+                }
                 let name = entry.file_name().to_string_lossy();
                 // Always exclude .git directories
                 if name == ".git" {
@@ -413,6 +422,9 @@ impl FileSearchCache {
             .git_exclude(true)
             .hidden(false)
             .filter_entry(|entry| {
+                if utils::path::is_lvk_runtime_path(entry.path()) {
+                    return false;
+                }
                 let name = entry.file_name().to_string_lossy();
                 name != ".git"
             })
@@ -541,5 +553,54 @@ impl FileSearchCache {
 impl Default for FileSearchCache {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+#[cfg(test)]
+mod lvk_path_tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn settings_search_and_index_keep_lvk_configuration() {
+        let tmp = tempfile::tempdir().unwrap();
+        let root = tmp.path();
+        let visible = [
+            ".lvk/integration-validation.json",
+            ".lvk/preview/config.json",
+            "src/shared/config.json",
+        ];
+        for path in visible
+            .into_iter()
+            .chain([".lvk/shared/config.json", ".lvk/attachments/config.json"])
+        {
+            let file = root.join(path);
+            std::fs::create_dir_all(file.parent().unwrap()).unwrap();
+            std::fs::write(file, "{}").unwrap();
+        }
+        let index = FileSearchCache::build_file_index(root).unwrap();
+        for path in visible {
+            assert!(index.files.iter().any(|f| f.path == path), "{path}");
+        }
+        assert!(
+            !index
+                .files
+                .iter()
+                .any(|f| utils::path::is_lvk_runtime_path(Path::new(&f.path)))
+        );
+        let cache = FileSearchCache::new();
+        for mode in [SearchMode::Settings, SearchMode::TaskForm] {
+            let found = cache
+                .search_files_no_cache(root, ".json", mode)
+                .await
+                .unwrap();
+            for path in visible {
+                assert!(found.iter().any(|f| f.path == path), "{path}");
+            }
+            assert!(
+                !found
+                    .iter()
+                    .any(|f| utils::path::is_lvk_runtime_path(Path::new(&f.path)))
+            );
+        }
     }
 }

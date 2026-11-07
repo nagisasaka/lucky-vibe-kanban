@@ -132,7 +132,7 @@ type WysiwygProps = {
   onShiftCmdEnter?: () => void;
   /** Keyboard shortcut mode for sending messages */
   sendShortcut?: SendMessageShortcut;
-  /** Task attempt ID for resolving .vibe-attachments paths */
+  /** Task attempt ID for resolving .lvk/attachments paths */
   resolveLocalLink?: (href: string) => (() => void) | undefined;
   workspaceId?: string;
   /** Session ID used for workspace-scoped APIs (attachments, slash command discovery) */
@@ -600,7 +600,7 @@ const WYSIWYGEditor = forwardRef<WYSIWYGEditorRef, WysiwygProps>(
               {
                 ...IMAGE_TRANSFORMER,
                 importRegExp:
-                  /!\[([^\]]*)\]\((\.vibe-attachments\/[^)]+|attachment:\/\/[^)]+|pending-attachment:\/\/[^)]+)\)/,
+                  /!\[([^\]]*)\]\((\.lvk\/attachments\/[^)]+|attachment:\/\/[^)]+|pending-attachment:\/\/[^)]+)\)/,
               },
             ]
           : []),

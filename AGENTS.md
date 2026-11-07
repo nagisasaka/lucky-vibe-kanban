@@ -59,7 +59,7 @@ Run commands from the repository root. Use the toolchain in `rust-toolchain.toml
   any such override (including false/0), conflicting profile/target env and
   debug Rust flags, and explicit compiler wrappers. Unset conflicts to opt in;
   use raw Cargo deliberately to preserve an alternative wrapper/policy.
-- Final `target/` artifacts remain checkout-local. If `.lvk-shared/cache` exists,
+- Final `target/` artifacts remain checkout-local. If `.lvk/shared/cache` exists,
   its canonical path supplies one `lvk-dev-cargo-build` directory for Cargo's
   official `build.build-dir` across LVK workspaces (no workspace-path-hash).
   Otherwise intermediates remain in checkout-local `target/`, with a warning.
@@ -126,8 +126,8 @@ Run commands from the repository root. Use the toolchain in `rust-toolchain.toml
   and that no process or retained result needs it. Git-ignored, old or under
   `/tmp` does not by itself mean disposable. Do not use blanket `/tmp` cleanup,
   `git clean -fdx` or `docker system prune` as routine task cleanup.
-- `.lvk-shared/cache` is shared across workspaces and survives workspace
-  deletion; `.lvk-shared/persistent` holds retained data. Do not clear either
+- `.lvk/shared/cache` is shared across workspaces and survives workspace
+  deletion; `.lvk/shared/persistent` holds retained data. Do not clear either
   for local disk relief or put disposable scratch outputs in persistent
   storage. Shared-cache retention and capacity changes require coordinated
   maintenance, separate from ordinary task cleanup.

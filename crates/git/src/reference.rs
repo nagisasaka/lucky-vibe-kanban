@@ -117,10 +117,7 @@ impl GitService {
             let path = entry
                 .path()
                 .ok_or_else(|| invalid("Non-UTF-8 status path"))?;
-            if path
-                .split('/')
-                .any(|part| utils::path::ALWAYS_SKIP_DIRS.contains(&part))
-            {
+            if utils::path::should_skip_path(Path::new(path)) {
                 continue;
             }
             let status = entry.status();
