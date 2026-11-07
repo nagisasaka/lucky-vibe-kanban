@@ -130,10 +130,10 @@ sources:
     resource: repo://crates/utils/src/reference_file.rs
   - id: openwiki-source-3ecddc0be7b037ea6ab24381
     resource: repo://packages/local-web/vite.config.ts
-generated: { by: "codex", at: "2026-11-06T15:15:40.431Z" }
+generated: { by: "codex", at: "2026-11-07T08:56:27.082Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-06T15:15:40.431Z
+    at: 2026-11-07T08:56:27.082Z
 ---
 
 # 外部アクセス・MCP・Runner の境界
@@ -482,3 +482,13 @@ receipt保存失敗やpanic後もdomain成功の可能性を維持し、同proce
 ### 専用検証MCPの廃止と通常Run報告
 
 Workspace Memoryとno-change専用検証記録のMCPは廃止された。Runの調査結果は `list_workspace_runs` で対象を選び、`get_execution(section="final_response")` で通常の最終報告を読む。Manifestのtest欄を構造化照会する専用機能も維持しない。既存Runの所属検査・paging/revision境界は通常読取に残る。自動マージ自身のcode SHA・管理command/exit・省略理由の記録は別責務であり、Manifestの自己申告を統合検証合格に置き換えない。[catalog](../../crates/server/src/remote_mcp/mod.rs)・[通常のRun最終報告](../../crates/server/src/remote_mcp/runtime_read.rs)・[統合検証](../../crates/server/src/routes/integrations/conversation.rs)
+
+## Issueの物理削除
+
+`delete_issue(project_id, issue_id, request_id)` は既存BoardのIssue物理削除を公開する。archiveと異なり復元できず、既存FK・triggerの関連DB処理と制約を利用する。Workspaceディレクトリやworktreeを物理削除する操作ではない。対象について明示的なユーザー認可を得てhostの確認制御に従う。remote専用のprepare/confirm tokenは追加しない。[tool説明と入力](../../crates/server/src/remote_mcp/issue_write.rs#L55-L78)
+
+`lvk:read`・`lvk:write` と既存Projectアクセス制御を要求し、DELETE自体にもProject条件を含める。正常終了のreceiptは `deleted_issue_id` を持ち、新規要求の対象不在・別Project対象は `not_found` の失敗となる。既存HTTP側の対象不在時成功は保持する。[adapter](../../crates/server/src/remote_mcp/issue_write.rs#L359-L389)・[共通削除](../../crates/server/src/routes/local_remote.rs#L1865-L1898)
+
+安定したrequest_idを保持し、応答喪失時は同一入力・同一IDの再送、または同じ認証主体の `get_operation(project_id, request_id)` で元receiptを回収する。成功後のIssue不在を理由に再送を拒否せず、保存結果を返す。入力を変えた同一IDは拒否される。commit不明・receipt確定不能は既存の `uncertain` 契約を維持し、別IDで盲目的に再実行しない。[receipt処理](../../crates/server/src/remote_mcp/operations.rs)・[削除の隔離回帰](../../crates/server/src/remote_mcp/tests.rs#L1400-L1579)
+
+LOCAL-338のコード候補 `96049a96858974eb52e7d26e0154ec45f909cfad` は固定base `1c3f9c18` にsource `b0e5a364` だけを競合なく統合した。関連server経路のsource一致・祖先・clean・差分空白を管理実行で確認した。source Manifestのremote MCP148成功・8条件付き除外、Board API44成功、Clippy・fmt成功を参照し、重複対象試験と包括検証の再実行は担当判断で省略した。候補上の試験passとは扱わない。実Auth0/ChatGPT・実データ削除・共有dev切替・deploymentは未実施。Wiki完了とRun終了後のhostによるmain公開は別の結果である。

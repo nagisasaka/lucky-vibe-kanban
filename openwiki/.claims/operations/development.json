@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:265700219172ed78724518a84e2340fa6e58ff51147c925c064eb7564018f5cf",
+  "pageVersion": "sha256:80f426c0415c59e8acf372c6c244801adc9b409577054e2949679c1d177d8447",
   "claims": [
     {
       "id": "claim_1640e4eaeac94676a84eb3b9d9970d30",
@@ -1013,8 +1013,8 @@
       "statement": "移管判断でCancelledにした旧Issueは全Workspaceを含むarchiveと物理削除の結果を別々に確認し、部分移管や人間の単純な取消を自動archive許可とせず、既承認の同じ削除範囲を再確認しない。",
       "evidence": [
         {
-          "resource": "repo://skills/lvk-orchestration/references/auto-merge.md#L29-L47",
-          "version": "repo-lines-v1:sha256:93c571d3c5c6692e8428ee353dc90865342754584620c46bc7d4f9f8483e00da:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhmZjY1ZTA0ODExYjVkYzJmMmY4ZDE5NDE4ZGQ0YTIwNjZjZDY2YTU5NDM1NjdkYjc2MWUwMDVkMTYwNmVjOGQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhhMDA5MWM1YzQxN2NhNDA2NTQ2NzgxYmZiMWQ4ZGIwN2ZjMDNhOWUzMTEwNTY5YWEzMDQzYjgwMmRjNTVlYzIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjUwNmFhYmRmNThjMThjZTAwZDI3YjNmZmJlODBjMWExM2ViNWMxNDEwZGMwOGRmNDY0Nzk0MDNkMmIzYzZiNzYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+          "resource": "repo://skills/lvk-orchestration/references/auto-merge.md#L29-L63",
+          "version": "repo-lines-v1:sha256:36c3ecc0a27597c1ae6a792238bc49ff931f5c0967a3e6550f0909d6e85e459a:eyJzZWxlY3RlZExpbmVDb3VudCI6MzUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhmZjY1ZTA0ODExYjVkYzJmMmY4ZDE5NDE4ZGQ0YTIwNjZjZDY2YTU5NDM1NjdkYjc2MWUwMDVkMTYwNmVjOGQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhhMDA5MWM1YzQxN2NhNDA2NTQ2NzgxYmZiMWQ4ZGIwN2ZjMDNhOWUzMTEwNTY5YWEzMDQzYjgwMmRjNTVlYzIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjUwNmFhYmRmNThjMThjZTAwZDI3YjNmZmJlODBjMWExM2ViNWMxNDEwZGMwOGRmNDY0Nzk0MDNkMmIzYzZiNzYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
         }
       ]
     },
@@ -1031,6 +1031,6 @@
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-06T15:15:40.431Z"
+    "at": "2026-11-07T08:56:27.082Z"
   }
 }

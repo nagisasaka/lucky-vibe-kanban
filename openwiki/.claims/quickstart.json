@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:9ea878bc35d4ba9a8281d97e0e204e902520d5b0e8b97934229c8dd01d055be0",
+  "pageVersion": "sha256:eda3be9a294675b0c10a4c582232e64ae41120bd7f9354914bbeb749db5d5a3c",
   "claims": [
     {
       "id": "claim_edf1b78d3c7a4d978a6d8debcee4edd2",
@@ -118,7 +118,7 @@
         },
         {
           "resource": "repo://crates/server/src/remote_mcp/mod.rs",
-          "version": "repo-file-v1:sha256:03ec34385e59f14a71cbd45a8602fad0fab69dd79063b1f11faa5926986ba524"
+          "version": "repo-file-v1:sha256:6423882c1a2c279aece1377fd97c9ed96ba895be4e26a8b0ccff2c4140598794"
         },
         {
           "resource": "repo://crates/server/src/routes/sessions/questions.rs",
@@ -307,6 +307,6 @@
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-06T19:18:22.957Z"
+    "at": "2026-11-07T08:56:27.082Z"
   }
 }

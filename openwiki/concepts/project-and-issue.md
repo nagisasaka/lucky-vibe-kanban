@@ -48,6 +48,8 @@ sources:
     resource: repo://crates/db/tests/generated_issue_status.rs
   - id: openwiki-source-a43253b5be9686da077b8067
     resource: repo://crates/server/src/remote_mcp/issue_comments.rs
+  - id: openwiki-source-9e15762bf7a432b7605f8466
+    resource: repo://crates/server/src/remote_mcp/issue_write.rs
   - id: openwiki-source-5720d865d1c837f0e6b7dab7
     resource: repo://crates/server/src/routes/integrations/conversation.rs
   - id: openwiki-source-1ffb01d1ba3953937e0771bf
@@ -80,10 +82,10 @@ sources:
     resource: repo://packages/web-core/src/shared/stores/useKanbanDisplayStore.ts
   - id: openwiki-source-5ef837b2bc54d286b3dedd8f
     resource: repo://packages/web-core/src/shared/stores/useUiPreferencesStore.ts
-generated: { by: "codex", at: "2026-11-06T07:16:44.917Z" }
+generated: { by: "codex", at: "2026-11-07T08:56:27.082Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-06T19:18:22.957Z
+    at: 2026-11-07T08:56:27.082Z
 ---
 
 # Project・Issue と実施の関係
@@ -275,3 +277,7 @@ Repo はパス、対象ブランチ既定値、setup/cleanup/dev script など�
 手動 archive / unarchive は自動後処理の資格も消費するため、解除した Card を古い完了通知が再び archive しない。人間の確認 token / Operations receipt と内部生成元の一度限りの結果は別の記録である。[失効 trigger](../../crates/db/migrations/20261026010000_generated_archive.sql#L12-L24)・[内部 attempt](../../crates/server/src/routes/local_remote/issue_archive.rs#L450-L470)
 
 今回の採番・生成状態の Sync は凍結 source `7d3bd3e637580c18d5311ec7a5b7466d203683ef` の migration、通常 / system 作成 caller、canonical 同期、公開後処理、archive guard と独立した回帰定義を静的照合した。供給 Manifest の最終候補検証成功は過去の実行証拠であり、この保守で製品 suite や live DB 操作を再実行していない。無関係な既存内容全体の再検証は主張しない。
+
+## Issueの物理削除とarchiveの区別
+
+remote MCPの `delete_issue(project_id, issue_id, request_id)` は既存Boardの物理削除を利用する。archiveと異なりIssueを復元する操作ではなく、既存FK・triggerと削除制約に従う。Workspaceディレクトリやworktreeを物理削除しない。Project所属をDELETE条件でも照合し、remoteの新規要求で対象不在なら失敗receiptを返す。HTTP側は従来どおり対象不在でも成功を返す。対象の明示的なユーザー認可とhost確認、再送・結果照会は [remote MCP](../integrations/remote-access.md#issueの物理削除)を参照する。[共通削除](../../crates/server/src/routes/local_remote.rs#L1865-L1898)・[remote adapter](../../crates/server/src/remote_mcp/issue_write.rs#L359-L389)
