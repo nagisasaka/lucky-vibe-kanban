@@ -67,6 +67,10 @@ remain outside repositories. Attachments use the Session's agent working directo
 or the Workspace root when unspecified; shared links belong to each repository.
 Standard `AGENTS.md` (including LVK's required block), `CLAUDE.md`, `openwiki/`,
 `.openwikiignore` and external tool configuration retain their conventional locations.
+Dedicated Wiki maintenance worktrees preserve tracked ignore configuration. Their
+runtime-only exclusions use Git's local `info/exclude`, shared by worktrees; only
+`.lvk/shared/` and `.lvk/attachments/` are excluded, leaving source and other
+`.lvk/` settings visible. Normal Workspaces keep using `.lvk/.gitignore`.
 Old paths and history are not migrated, rewritten or supported through fallback lookup.
 
 LVK builds on [Easy Vibe Kanban](https://github.com/toby1123yjh/easy-vibe-kanban)

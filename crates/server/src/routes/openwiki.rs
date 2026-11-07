@@ -140,7 +140,9 @@ pub async fn configure(
     if !services::services::wiki::is_valid_language_tag(&request.output_language) {
         return Err(api_error("Use a valid BCP 47 language code"));
     }
-    workspace_manager::shared_resources::ensure(&repo.path, &repo.name, repo.id)?;
+    // Configuring Wiki storage must not introduce tracked ignore changes in the
+    // publication target. Dedicated worktrees provision their own runtime links.
+    workspace_manager::shared_resources::ensure_repository_storage(&repo.name, repo.id)?;
     let store = RepositoryMemoryStore::for_repository(&deployment.db().pool, &repo.name, repo.id)?;
     let _lock = store.try_lock()?;
     let mut state = store.state().await?;

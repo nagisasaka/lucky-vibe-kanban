@@ -61,7 +61,11 @@ TTLや自動掃除は設けず、必要な成果は適切な保存先に残し�
 repository外の共有実体と中央添付キャッシュは移動しません。添付の基準はSessionの
 agent作業ディレクトリ（未指定時はWorkspace root）、sharedはrepository単位です。
 必須のLVKブロックを含む `AGENTS.md`、`CLAUDE.md`、`openwiki/`、`.openwikiignore`、
-外部ツール設定は標準位置を維持します。旧配置・旧履歴の移行、書換え、互換探索は行いません。
+外部ツール設定は標準位置を維持します。
+Wiki専用保守worktreeでは追跡設定を変えず、Gitローカルの `info/exclude` で
+`.lvk/shared/` と `.lvk/attachments/` だけを除外します。このGit情報はworktree間で共有されますが、
+sourceや他の `.lvk/` 設定は除外しません。通常Workspaceは `.lvk/.gitignore` を使います。
+旧配置・旧履歴の移行、書換え、互換探索は行いません。
 
 LVKは[Easy Vibe Kanban](https://github.com/toby1123yjh/easy-vibe-kanban)と
 [Vibe Kanban](https://github.com/BloopAI/vibe-kanban)を基にしています。

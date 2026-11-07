@@ -518,6 +518,121 @@ mod tests {
         );
     }
 
+    #[test]
+    fn maintenance_runtime_exclusion_preserves_initial_and_sync_publication_guards() {
+        for initial in [true, false] {
+            for (case, ignore, root_ignored, dirty) in [
+                ("absent", None, false, false),
+                (
+                    "old",
+                    Some("# user rules\n/custom/\n/shared/\n"),
+                    false,
+                    false,
+                ),
+                ("reordered", Some("/attachments/\n/shared/\n"), false, false),
+                ("matching", Some("/shared/\n/attachments/\n"), false, false),
+                ("root-ignored", None, true, false),
+                (
+                    "source-dirty",
+                    Some("/shared/\n/attachments/\n"),
+                    false,
+                    true,
+                ),
+            ] {
+                let temp = tempfile::tempdir().unwrap();
+                let root = temp.path();
+                command(root, &["init", "-b", "main"]);
+                command(root, &["config", "user.name", "Fixture"]);
+                command(root, &["config", "user.email", "fixture@example.invalid"]);
+                std::fs::create_dir(root.join(".lvk")).unwrap();
+                std::fs::write(root.join("source.txt"), "source").unwrap();
+                std::fs::write(root.join(".lvk/integration-validation.json"), "{}").unwrap();
+                std::fs::write(
+                    root.join(".gitignore"),
+                    if root_ignored {
+                        "/.lvk/\n"
+                    } else {
+                        "# user rules\n"
+                    },
+                )
+                .unwrap();
+                if let Some(ignore) = ignore {
+                    std::fs::write(root.join(".lvk/.gitignore"), ignore).unwrap();
+                }
+                if !initial {
+                    std::fs::create_dir(root.join("openwiki")).unwrap();
+                    std::fs::write(root.join("openwiki/index.md"), "old wiki").unwrap();
+                    std::fs::write(root.join("openwiki/INSTRUCTIONS.md"), "user instructions")
+                        .unwrap();
+                }
+                command(root, &["add", "."]);
+                command(root, &["add", "-f", ".lvk/integration-validation.json"]);
+                command(root, &["commit", "-m", "source"]);
+                let source = command(root, &["rev-parse", "HEAD"]);
+                let git = git::GitService::new();
+                let index = git.get_git_dir(root).unwrap().join("index");
+                let before_index = std::fs::read(&index).unwrap();
+                // The complete shared-link/owner matrix is tested in workspace-manager.
+                // Here exercise its exact exclusion policy against the real publication gate.
+                workspace_manager::shared_resources::ensure_maintenance_runtime_excludes(root)
+                    .unwrap();
+                workspace_manager::shared_resources::ensure_maintenance_runtime_excludes(root)
+                    .unwrap();
+                std::fs::create_dir_all(root.join(".lvk/shared/tmp")).unwrap();
+                std::fs::write(root.join(".lvk/shared/tmp/runtime"), "runtime").unwrap();
+                std::fs::create_dir(root.join(".lvk/attachments")).unwrap();
+                std::fs::write(root.join(".lvk/attachments/runtime"), "runtime").unwrap();
+                assert!(
+                    git.require_clean_source(root, &source).is_ok(),
+                    "{initial}/{case}"
+                );
+                if initial {
+                    std::fs::create_dir(root.join("openwiki")).unwrap();
+                    std::fs::write(
+                        root.join("openwiki/INSTRUCTIONS.md"),
+                        include_bytes!("../../../../assets/openwiki-instructions.md"),
+                    )
+                    .unwrap();
+                }
+                std::fs::write(root.join("openwiki/index.md"), "new wiki").unwrap();
+                if dirty {
+                    std::fs::write(root.join("source.txt"), "unexpected source edit").unwrap();
+                }
+                let published = publication_paths(&git, root, &source);
+                assert_eq!(published.is_ok(), !dirty, "{initial}/{case}");
+                if let Ok(paths) = published {
+                    assert!(paths.iter().all(|p| p.starts_with("openwiki/")));
+                    // A tracked .lvk configuration change must still be refused, even when root-ignored.
+                    std::fs::write(root.join(".lvk/integration-validation.json"), "changed")
+                        .unwrap();
+                    assert!(publication_paths(&git, root, &source).is_err());
+                    std::fs::write(root.join(".lvk/integration-validation.json"), "{}").unwrap();
+                    std::fs::write(root.join(".gitignore"), "changed").unwrap();
+                    assert!(publication_paths(&git, root, &source).is_err());
+                    std::fs::write(
+                        root.join(".gitignore"),
+                        if root_ignored {
+                            "/.lvk/\n"
+                        } else {
+                            "# user rules\n"
+                        },
+                    )
+                    .unwrap();
+                    if let Some(ignore) = ignore {
+                        std::fs::write(root.join(".lvk/.gitignore"), "changed").unwrap();
+                        assert!(publication_paths(&git, root, &source).is_err());
+                        std::fs::write(root.join(".lvk/.gitignore"), ignore).unwrap();
+                    }
+                }
+                assert_eq!(
+                    std::fs::read(root.join(".lvk/.gitignore")).ok(),
+                    ignore.map(|s| s.as_bytes().to_vec())
+                );
+                assert_eq!(std::fs::read(index).unwrap(), before_index);
+            }
+        }
+    }
+
     #[tokio::test]
     async fn existing_wiki_detection_preserves_partial_imports_and_ignores_dirty_files() {
         let temp = tempfile::tempdir().unwrap();

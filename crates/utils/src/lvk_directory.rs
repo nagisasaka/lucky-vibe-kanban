@@ -16,7 +16,15 @@ pub struct LvkDirectory {
 
 impl LvkDirectory {
     pub fn open(root: &Path) -> io::Result<Self> {
-        let path = fs::canonicalize(root)?.join(".lvk");
+        Self::open_at(fs::canonicalize(root)?.join(".lvk"))
+    }
+
+    /// Hold Git's local info directory without following a substituted parent.
+    pub fn open_git_info(common_dir: &Path) -> io::Result<Self> {
+        Self::open_at(fs::canonicalize(common_dir)?.join("info"))
+    }
+
+    fn open_at(path: PathBuf) -> io::Result<Self> {
         match fs::create_dir(&path) {
             Ok(()) => {}
             Err(e) if e.kind() == io::ErrorKind::AlreadyExists => {}
@@ -24,7 +32,9 @@ impl LvkDirectory {
         }
         let meta = fs::symlink_metadata(&path)?;
         if !meta.is_dir() || meta.file_type().is_symlink() {
-            return Err(io::Error::other(".lvk must be a regular directory"));
+            return Err(io::Error::other(
+                "Managed directory must be a regular directory",
+            ));
         }
         let mut options = fs::OpenOptions::new();
         options.read(true);
@@ -59,14 +69,18 @@ impl LvkDirectory {
     pub fn verify(&self) -> io::Result<()> {
         let current = fs::symlink_metadata(&self.path)?;
         if !current.is_dir() || current.file_type().is_symlink() {
-            return Err(io::Error::other(".lvk directory changed during placement"));
+            return Err(io::Error::other(
+                "Managed directory changed during placement",
+            ));
         }
         #[cfg(unix)]
         {
             use std::os::unix::fs::MetadataExt;
             let held = self.directory.metadata()?;
             if current.dev() != held.dev() || current.ino() != held.ino() {
-                return Err(io::Error::other(".lvk directory replaced during placement"));
+                return Err(io::Error::other(
+                    "Managed directory replaced during placement",
+                ));
             }
         }
         Ok(())
@@ -75,44 +89,50 @@ impl LvkDirectory {
     /// Append runtime rules when needed. Keep user text and tracked settings visible.
     /// .gitignore itself is intentionally shareable, not self-ignored.
     pub fn ensure_runtime_ignores(&self) -> io::Result<()> {
-        let _guard = IGNORE_LOCK
-            .lock()
-            .map_err(|_| io::Error::other("ignore lock poisoned"))?;
         self.verify()?;
-        let path = self.anchored_path().join(".gitignore");
-        if let Ok(meta) = fs::symlink_metadata(&path)
-            && (!meta.is_file() || meta.file_type().is_symlink() || meta.nlink_count() > 1)
-        {
-            return Err(io::Error::other(
-                ".lvk/.gitignore must be a regular, unlinked file",
-            ));
-        }
-        let mut options = fs::OpenOptions::new();
-        options.create(true).read(true).append(true);
-        #[cfg(unix)]
-        {
-            use std::os::unix::fs::OpenOptionsExt;
-            options.custom_flags(nix::libc::O_NOFOLLOW | nix::libc::O_NONBLOCK);
-        }
-        let mut file = options.open(&path)?;
-        if !file.metadata()?.is_file() || file.metadata()?.nlink_count() > 1 {
-            return Err(io::Error::other("unsafe .lvk/.gitignore"));
-        }
-        use std::io::Read;
-        let mut previous = String::new();
-        file.read_to_string(&mut previous)?;
-        const RULES: &str = "/shared/\n/attachments/";
-        // Put the rules last so earlier negations cannot accidentally expose runtime data.
-        // Appending preserves user text; repeating placement is idempotent.
-        if !previous
-            .lines()
-            .collect::<Vec<_>>()
-            .ends_with(&["/shared/", "/attachments/"])
-        {
-            file.write_all(format!("\n# LVK local runtime data\n{RULES}\n").as_bytes())?;
-        }
+        append_runtime_ignore_rules(
+            &self.anchored_path().join(".gitignore"),
+            "/shared/\n/attachments/",
+        )?;
         self.verify()
     }
+}
+
+/// Append narrow runtime rules without replacing user text or following file links.
+/// The caller must validate/anchor the parent directory before invoking this helper.
+pub fn append_runtime_ignore_rules(path: &Path, rules: &str) -> io::Result<()> {
+    let _guard = IGNORE_LOCK
+        .lock()
+        .map_err(|_| io::Error::other("ignore lock poisoned"))?;
+    if let Ok(meta) = fs::symlink_metadata(path)
+        && (!meta.is_file() || meta.file_type().is_symlink() || meta.nlink_count() > 1)
+    {
+        return Err(io::Error::other(
+            "Runtime ignore file must be a regular, unlinked file",
+        ));
+    }
+    let mut options = fs::OpenOptions::new();
+    options.create(true).read(true).append(true);
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::OpenOptionsExt;
+        options.custom_flags(nix::libc::O_NOFOLLOW | nix::libc::O_NONBLOCK);
+    }
+    let mut file = options.open(path)?;
+    if !file.metadata()?.is_file() || file.metadata()?.nlink_count() > 1 {
+        return Err(io::Error::other("unsafe runtime ignore file"));
+    }
+    use std::io::Read;
+    let mut previous = String::new();
+    file.read_to_string(&mut previous)?;
+    if !previous
+        .lines()
+        .collect::<Vec<_>>()
+        .ends_with(&rules.lines().collect::<Vec<_>>())
+    {
+        file.write_all(format!("\n# LVK local runtime data\n{rules}\n").as_bytes())?;
+    }
+    Ok(())
 }
 
 trait LinkCount {

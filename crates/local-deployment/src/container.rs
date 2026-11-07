@@ -1003,14 +1003,24 @@ impl LocalContainerService {
     async fn prepare_shared_resources(
         workspace_dir: &Path,
         repos: &[Repo],
+        workspace: &Workspace,
     ) -> Result<(), ContainerError> {
+        let owner = workspace
+            .execution_owner
+            .as_ref()
+            .map(|owner| owner.kind.clone());
         let roots: Vec<_> = repos
             .iter()
             .map(|repo| (workspace_dir.join(&repo.name), repo.name.clone(), repo.id))
             .collect();
         tokio::task::spawn_blocking(move || {
             for (root, name, id) in roots {
-                workspace_manager::shared_resources::ensure(&root, &name, id)?;
+                workspace_manager::shared_resources::ensure_for_workspace(
+                    &root,
+                    &name,
+                    id,
+                    owner.as_deref(),
+                )?;
             }
             Ok::<_, std::io::Error>(())
         })
@@ -1392,7 +1402,8 @@ impl ContainerService for LocalContainerService {
 
         Self::create_workspace_config_files(&created_workspace.workspace_dir, &repositories)
             .await?;
-        Self::prepare_shared_resources(&created_workspace.workspace_dir, &repositories).await?;
+        Self::prepare_shared_resources(&created_workspace.workspace_dir, &repositories, workspace)
+            .await?;
 
         Workspace::update_container_ref(
             &self.db.pool,
@@ -1483,7 +1494,7 @@ impl ContainerService for LocalContainerService {
             .await?;
 
         Self::create_workspace_config_files(&workspace_dir, &repositories).await?;
-        Self::prepare_shared_resources(&workspace_dir, &repositories).await?;
+        Self::prepare_shared_resources(&workspace_dir, &repositories, workspace).await?;
 
         Ok(workspace_dir.to_string_lossy().to_string())
     }

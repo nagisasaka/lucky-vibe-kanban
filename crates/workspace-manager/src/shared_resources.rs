@@ -16,7 +16,31 @@ pub fn ensure(repo_root: &Path, repo_name: &str, repo_id: Uuid) -> io::Result<()
     ensure_at(
         repo_root,
         &utils::path::shared_resources_dir(repo_name, repo_id),
+        None,
     )
+}
+
+/// Wiki preparation must not create tracked configuration changes in its source snapshot.
+/// Use the persistent execution owner, so initial creation and later recreation agree.
+pub fn ensure_for_workspace(
+    repo_root: &Path,
+    repo_name: &str,
+    repo_id: Uuid,
+    owner: Option<&str>,
+) -> io::Result<()> {
+    ensure_at(
+        repo_root,
+        &utils::path::shared_resources_dir(repo_name, repo_id),
+        owner,
+    )
+}
+
+/// Settings/registration owns only external storage, never the user's checkout.
+pub fn ensure_repository_storage(repo_name: &str, repo_id: Uuid) -> io::Result<()> {
+    let _guard = PROVISION_LOCK
+        .lock()
+        .map_err(|_| io::Error::other("shared resource lock poisoned"))?;
+    ensure_storage(&utils::path::shared_resources_dir(repo_name, repo_id))
 }
 
 /// Provision source publication/Change Manifest storage for registered repositories.
@@ -35,12 +59,7 @@ pub async fn ensure_repository_memory(
     }
     // Registration does not own the user's checkout or its shared links.
     // Workspaces provision their own links when materialised.
-    {
-        let _guard = PROVISION_LOCK
-            .lock()
-            .map_err(|_| io::Error::other("shared resource lock poisoned"))?;
-        ensure_storage(&utils::path::shared_resources_dir(&repo.name, repo.id))?;
-    }
+    ensure_repository_storage(&repo.name, repo.id)?;
     db::models::repository_state::RepositoryMemoryStore::for_repository(pool, &repo.name, repo.id)?
         .initialize_defaults(default_memory_target_branch(repo))
         .await
@@ -104,7 +123,7 @@ fn validate_link(link: &Path, target: &Path) -> io::Result<bool> {
     }
 }
 
-fn ensure_at(repo_root: &Path, shared: &Path) -> io::Result<()> {
+fn ensure_at(repo_root: &Path, shared: &Path, owner: Option<&str>) -> io::Result<()> {
     let _guard = PROVISION_LOCK
         .lock()
         .map_err(|_| io::Error::other("shared resource lock poisoned"))?;
@@ -129,7 +148,17 @@ fn ensure_at(repo_root: &Path, shared: &Path) -> io::Result<()> {
         validate_link(&mount.join(kind), &shared.join(kind))?;
     }
 
-    lvk.ensure_runtime_ignores()?;
+    if matches!(
+        owner,
+        Some(
+            db::models::workspace_usage::OPENWIKI_BOOTSTRAP
+                | db::models::workspace_usage::OPENWIKI_SYNC
+        )
+    ) {
+        ensure_maintenance_runtime_excludes(&repo_root)?;
+    } else {
+        lvk.ensure_runtime_ignores()?;
+    }
     for kind in KINDS {
         let link = mount.join(kind);
         let target = shared.join(kind);
@@ -146,6 +175,25 @@ fn ensure_at(repo_root: &Path, shared: &Path) -> io::Result<()> {
         }
     }
     lvk.verify()
+}
+
+/// Dedicated Wiki worktrees cannot rewrite tracked ignore configuration.
+/// These Git-local runtime-only rules are common to this repository's worktrees;
+/// they deliberately do not exclude .lvk/.gitignore or any other configuration.
+pub fn ensure_maintenance_runtime_excludes(repo_root: &Path) -> io::Result<()> {
+    // info/exclude is shared across worktrees. Exclude only LVK runtime children,
+    // never .lvk itself, its .gitignore, or any source/configuration paths.
+    // This dedicated-maintenance exception leaves the frozen checkout untouched.
+    let common = GitService::new()
+        .get_common_dir(repo_root)
+        .map_err(io::Error::other)?;
+    let info = utils::lvk_directory::LvkDirectory::open_git_info(&common)?;
+    utils::lvk_directory::append_runtime_ignore_rules(
+        &info.anchored_path().join("exclude"),
+        "/.lvk/shared/\n/.lvk/attachments/",
+    )?;
+    info.verify()?;
+    Ok(())
 }
 
 #[cfg(unix)]
@@ -219,9 +267,9 @@ mod tests {
         );
         let storage = utils::path::shared_resources_dir("repo", Uuid::nil());
         let shared = tmp.path().join("shared").join(storage.file_name().unwrap());
-        ensure_at(&repo, &shared).unwrap();
-        ensure_at(&tree, &shared).unwrap();
-        ensure_at(&tree, &shared).unwrap();
+        ensure_at(&repo, &shared, None).unwrap();
+        ensure_at(&tree, &shared, None).unwrap();
+        ensure_at(&tree, &shared, None).unwrap();
         // A producer process may finish before another Workspace consumes its handoff.
         assert!(
             Command::new("sh")
@@ -290,7 +338,7 @@ mod tests {
             fs::write(repo.join(".lvk/.gitignore"), "# user rules\n/custom/\n").unwrap();
             git(&repo, &["add", ".lvk"]);
             let shared = tmp.path().join("shared").join(name);
-            ensure_at(&repo, &shared).unwrap();
+            ensure_at(&repo, &shared, None).unwrap();
             fs::write(repo.join(".lvk/shared/persistent/data"), name).unwrap();
             fs::write(repo.join(".lvk/shared/tmp/result"), name).unwrap();
             assert!(writable_roots_at(&shared).contains(&shared.join("tmp")));
@@ -328,17 +376,17 @@ mod tests {
         fs::create_dir(&repo).unwrap();
         git(&repo, &["init"]);
         let shared = tmp.path().join("shared/repo-id");
-        ensure_at(&repo, &shared).unwrap();
+        ensure_at(&repo, &shared, None).unwrap();
         fs::write(shared.join("persistent/data"), "retained").unwrap();
         fs::write(shared.join("cache/data"), "reusable").unwrap();
         // Provisioning a newly added kind must leave earlier persistent/cache data intact.
         fs::remove_file(repo.join(".lvk/shared/tmp")).unwrap();
         fs::remove_dir(shared.join("tmp")).unwrap();
-        ensure_at(&repo, &shared).unwrap();
+        ensure_at(&repo, &shared, None).unwrap();
         assert!(shared.join("tmp").is_dir());
         fs::remove_file(repo.join(".lvk/shared/tmp")).unwrap();
         fs::write(repo.join(".lvk/shared/tmp"), "user file").unwrap();
-        assert!(ensure_at(&repo, &shared).is_err());
+        assert!(ensure_at(&repo, &shared, None).is_err());
         assert_eq!(
             fs::read_to_string(repo.join(".lvk/shared/tmp")).unwrap(),
             "user file"
@@ -347,7 +395,7 @@ mod tests {
         let other = tmp.path().join("other");
         fs::create_dir(&other).unwrap();
         create_directory_link(&other, &repo.join(".lvk/shared/tmp")).unwrap();
-        assert!(ensure_at(&repo, &shared).is_err());
+        assert!(ensure_at(&repo, &shared, None).is_err());
         assert_eq!(
             fs::canonicalize(repo.join(".lvk/shared/tmp")).unwrap(),
             other
@@ -371,7 +419,7 @@ mod tests {
         fs::remove_file(repo.join(".lvk/shared/tmp")).unwrap();
         fs::remove_dir(shared.join("tmp")).unwrap();
         create_directory_link(&other, &shared.join("tmp")).unwrap();
-        assert!(ensure_at(&repo, &shared).is_err());
+        assert!(ensure_at(&repo, &shared, None).is_err());
         assert!(
             fs::symlink_metadata(shared.join("tmp"))
                 .unwrap()
@@ -389,15 +437,15 @@ mod tests {
         fs::create_dir_all(repo.join(".lvk/shared")).unwrap();
         fs::write(repo.join(".lvk/shared/cache"), "user data").unwrap();
         let shared = tmp.path().join("shared").join("first");
-        assert!(ensure_at(&repo, &shared).is_err());
+        assert!(ensure_at(&repo, &shared, None).is_err());
         assert_eq!(
             fs::read_to_string(repo.join(".lvk/shared/cache")).unwrap(),
             "user data"
         );
         assert!(!repo.join(".lvk/shared/persistent").exists());
         fs::remove_file(repo.join(".lvk/shared/cache")).unwrap();
-        ensure_at(&repo, &shared).unwrap();
-        assert!(ensure_at(&repo, &tmp.path().join("shared/other")).is_err());
+        ensure_at(&repo, &shared, None).unwrap();
+        assert!(ensure_at(&repo, &tmp.path().join("shared/other"), None).is_err());
         assert_eq!(
             fs::canonicalize(repo.join(".lvk/shared/cache")).unwrap(),
             shared.join("cache")
@@ -414,7 +462,7 @@ mod tests {
         fs::write(repo.join(".lvk/shared"), "tracked config").unwrap();
         git(&repo, &["add", ".lvk/shared"]);
         let shared = tmp.path().join("shared/repo-id");
-        assert!(ensure_at(&repo, &shared).is_err());
+        assert!(ensure_at(&repo, &shared, None).is_err());
         assert!(!shared.exists());
         assert_eq!(
             fs::read_to_string(repo.join(".lvk/shared")).unwrap(),
@@ -426,8 +474,234 @@ mod tests {
         let external = tmp.path().join("external");
         fs::create_dir(&external).unwrap();
         create_directory_link(&external, &shared.join("persistent")).unwrap();
-        assert!(ensure_at(&repo, &shared).is_err());
+        assert!(ensure_at(&repo, &shared, None).is_err());
         assert!(!repo.join(".lvk/shared").exists());
         assert!(fs::read_dir(external).unwrap().next().is_none());
+    }
+}
+
+#[cfg(all(test, unix))]
+mod maintenance_tests {
+    use super::*;
+
+    fn git(root: &Path, args: &[&str]) -> String {
+        let output = Command::new("git")
+            .arg("-C")
+            .arg(root)
+            .args(args)
+            .output()
+            .unwrap();
+        assert!(
+            output.status.success(),
+            "{}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        String::from_utf8(output.stdout).unwrap().trim().to_owned()
+    }
+
+    #[test]
+    fn maintenance_prepare_preserves_config_index_and_clean_snapshot_matrix() {
+        use db::models::workspace_usage::{OPENWIKI_BOOTSTRAP, OPENWIKI_SYNC};
+        for owner in [OPENWIKI_BOOTSTRAP, OPENWIKI_SYNC] {
+            for (case, ignore, root_ignored, dirty) in [
+                ("absent", None, false, false),
+                (
+                    "old",
+                    Some("# user rules\n/custom/\n/shared/\n"),
+                    false,
+                    false,
+                ),
+                ("reordered", Some("/attachments/\n/shared/\n"), false, false),
+                ("matching", Some("/shared/\n/attachments/\n"), false, false),
+                ("root-ignored", None, true, false),
+                (
+                    "source-dirty",
+                    Some("/shared/\n/attachments/\n"),
+                    false,
+                    true,
+                ),
+            ] {
+                let tmp = tempfile::tempdir().unwrap();
+                let repo = tmp.path().join("repo");
+                fs::create_dir_all(repo.join(".lvk")).unwrap();
+                git(&repo, &["init", "-b", "main"]);
+                fs::write(repo.join("source.txt"), "source\n").unwrap();
+                fs::write(
+                    repo.join(".gitignore"),
+                    if root_ignored {
+                        "/.lvk/\n"
+                    } else {
+                        "# user rules\n"
+                    },
+                )
+                .unwrap();
+                fs::write(repo.join(".lvk/integration-validation.json"), "{}\n").unwrap();
+                if let Some(text) = ignore {
+                    fs::write(repo.join(".lvk/.gitignore"), text).unwrap();
+                }
+                git(&repo, &["add", "."]);
+                git(&repo, &["add", "-f", ".lvk/integration-validation.json"]);
+                git(
+                    &repo,
+                    &[
+                        "-c",
+                        "user.name=Fixture",
+                        "-c",
+                        "user.email=fixture@example.invalid",
+                        "commit",
+                        "-m",
+                        "source",
+                    ],
+                );
+                let source = git(&repo, &["rev-parse", "HEAD"]);
+                let tree = tmp.path().join("maintenance");
+                git(
+                    &repo,
+                    &["worktree", "add", "-b", "wiki", tree.to_str().unwrap()],
+                );
+                let service = GitService::new();
+                let index = service.get_git_dir(&tree).unwrap().join("index");
+                let before_index = fs::read(&index).unwrap();
+                let before_sibling_index = fs::read(repo.join(".git/index")).unwrap();
+                let before_config = fs::read(repo.join(".git/config")).unwrap();
+                let common_exclude = repo.join(".git/info/exclude");
+                fs::write(&common_exclude, "# existing user excludes\n/user-local/\n").unwrap();
+                if dirty {
+                    fs::write(tree.join("source.txt"), "user edit\n").unwrap();
+                }
+                let shared = tmp.path().join("shared/repo-id");
+                ensure_at(&tree, &shared, Some(owner)).unwrap();
+                let excludes = fs::read(&common_exclude).unwrap();
+                ensure_at(&tree, &shared, Some(owner)).unwrap();
+                assert_eq!(
+                    fs::read(&common_exclude).unwrap(),
+                    excludes,
+                    "{owner}/{case}"
+                );
+                assert_eq!(
+                    String::from_utf8(excludes).unwrap(),
+                    "# existing user excludes\n/user-local/\n\n# LVK local runtime data\n/.lvk/shared/\n/.lvk/attachments/\n"
+                );
+                assert_eq!(fs::read(repo.join(".git/config")).unwrap(), before_config);
+                assert_eq!(
+                    fs::read(tree.join(".lvk/.gitignore")).ok(),
+                    ignore.map(|s| s.as_bytes().to_vec()),
+                    "{owner}/{case}"
+                );
+                fs::write(tree.join(".lvk/shared/tmp/handoff"), "runtime").unwrap();
+                fs::create_dir(tree.join(".lvk/attachments")).unwrap();
+                fs::write(tree.join(".lvk/attachments/file"), "runtime").unwrap();
+                let paths = service
+                    .get_diff_file_paths(&tree, &source.parse().unwrap())
+                    .unwrap();
+                assert_eq!(paths.is_empty(), !dirty, "{owner}/{case}: {paths:?}");
+                assert_eq!(
+                    service.require_clean_source(&tree, &source).is_ok(),
+                    !dirty,
+                    "{owner}/{case}"
+                );
+                assert_eq!(
+                    git(&tree, &["--no-optional-locks", "status", "--porcelain"]).is_empty(),
+                    !dirty
+                );
+                assert_eq!(
+                    fs::read(&index).unwrap(),
+                    before_index,
+                    "real index changed: {owner}/{case}"
+                );
+                assert!(
+                    service.require_clean_source(&repo, &source).is_ok(),
+                    "target checkout became dirty"
+                );
+                // Common Git excludes also apply to siblings, but never hide tracked settings/source.
+                fs::write(
+                    repo.join(".lvk/integration-validation.json"),
+                    "{\"changed\":true}\n",
+                )
+                .unwrap();
+                fs::write(repo.join(".gitignore"), "# user edit\n").unwrap();
+                fs::write(repo.join("source.txt"), "sibling edit\n").unwrap();
+                if ignore.is_some() {
+                    fs::write(repo.join(".lvk/.gitignore"), "# user edit\n").unwrap();
+                }
+                let sibling = service
+                    .get_diff_file_paths(&repo, &source.parse().unwrap())
+                    .unwrap();
+                for path in [
+                    ".gitignore",
+                    ".lvk/integration-validation.json",
+                    "source.txt",
+                ] {
+                    assert!(sibling.iter().any(|p| p == path), "{path}");
+                }
+                if ignore.is_some() {
+                    assert!(sibling.iter().any(|p| p == ".lvk/.gitignore"));
+                }
+                assert!(service.require_clean_source(&repo, &source).is_err());
+                assert_eq!(
+                    fs::read(tree.join(".lvk/.gitignore")).ok(),
+                    ignore.map(|s| s.as_bytes().to_vec())
+                );
+                assert_eq!(git(&tree, &["diff", "--cached"]), "");
+                assert_eq!(
+                    fs::read(repo.join(".git/index")).unwrap(),
+                    before_sibling_index
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn non_wiki_owners_keep_the_normal_shareable_ignore_contract() {
+        for owner in [
+            None,
+            Some(db::models::workspace_usage::INTEGRATION),
+            Some("other"),
+        ] {
+            let tmp = tempfile::tempdir().unwrap();
+            let root = tmp.path().join("repo");
+            fs::create_dir(&root).unwrap();
+            git(&root, &["init"]);
+            let exclude = root.join(".git/info/exclude");
+            let before = fs::read(&exclude).unwrap();
+            ensure_at(&root, &tmp.path().join("shared/repo"), owner).unwrap();
+            assert!(
+                fs::read_to_string(root.join(".lvk/.gitignore"))
+                    .unwrap()
+                    .contains("/shared/")
+            );
+            assert_eq!(fs::read(exclude).unwrap(), before);
+        }
+    }
+
+    #[test]
+    fn maintenance_excludes_refuse_symlinks_without_changing_user_data() {
+        let tmp = tempfile::tempdir().unwrap();
+        let repo = tmp.path().join("repo");
+        fs::create_dir(&repo).unwrap();
+        git(&repo, &["init"]);
+        let user = tmp.path().join("user");
+        fs::write(&user, "user data").unwrap();
+        let exclude = repo.join(".git/info/exclude");
+        fs::remove_file(&exclude).unwrap();
+        std::os::unix::fs::symlink(&user, &exclude).unwrap();
+        assert!(
+            ensure_at(
+                &repo,
+                &tmp.path().join("shared/repo"),
+                Some(db::models::workspace_usage::OPENWIKI_SYNC)
+            )
+            .is_err()
+        );
+        assert_eq!(fs::read_to_string(&user).unwrap(), "user data");
+        assert!(!repo.join(".lvk/.gitignore").exists());
+        fs::remove_file(&exclude).unwrap();
+        let info = repo.join(".git/info");
+        fs::rename(&info, repo.join(".git/original-info")).unwrap();
+        let other = tmp.path().join("other");
+        fs::create_dir(&other).unwrap();
+        create_directory_link(&other, &info).unwrap();
+        assert!(ensure_maintenance_runtime_excludes(&repo).is_err());
+        assert!(fs::read_dir(&other).unwrap().next().is_none());
     }
 }

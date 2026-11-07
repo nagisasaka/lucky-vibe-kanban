@@ -53,7 +53,10 @@ LVK专用的仓库管理文件放在 `.lvk/` 中。`integration-validation.json`
 仓库外的共享存储和中央附件缓存保持原位。附件以Session的agent工作目录为基准，
 未指定时使用Workspace根目录；共享链接按仓库隔离。
 `AGENTS.md`（包含必需的LVK管理块）、`CLAUDE.md`、`openwiki/`、`.openwikiignore`
-及外部工具配置保留标准位置。旧路径与历史不自动迁移、改写或兼容查找。
+及外部工具配置保留标准位置。Wiki专用维护worktree保留已跟踪的ignore配置，
+仅通过Git本地的 `info/exclude` 排除 `.lvk/shared/` 和 `.lvk/attachments/`。
+该Git信息由worktree共享，但不排除源码或其他 `.lvk/` 配置；普通Workspace仍使用 `.lvk/.gitignore`。
+旧路径与历史不自动迁移、改写或兼容查找。
 
 感谢[Easy Vibe Kanban](https://github.com/toby1123yjh/easy-vibe-kanban)
 和[Vibe Kanban](https://github.com/BloopAI/vibe-kanban)的贡献者，我们保留其贡献与历史。
