@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:ddf8e119c7734c1cb2e3b5becf32b734763310bf02b65b14ea4f35ca3f429e02",
+  "pageVersion": "sha256:c42a9904bd245ee3f67eaa737214e042578c7699a51f2a7cf880bd67b8bc9538",
   "claims": [
     {
       "id": "claim_5f8fb54c2f6c4bad86021e17d9b3fbec",
@@ -218,21 +218,7 @@
         },
         {
           "resource": "repo://deploy/developer/switch/start_binary.py",
-          "version": "repo-file-v1:sha256:b169fb878d8d93ce91373a3aff001c42f048d5c02794a44c55102b04b2bceb55"
-        }
-      ]
-    },
-    {
-      "id": "claim_5851aebe952441c785d6ea86c759c3af",
-      "statement": "専用自己再起動の固定kitはsnapshot照合後に管理PTYを一度だけ終了し、既存安全guardを実行する。外部調整にはTerminal接続停止が含まれ、再生成はguardで拒否する。",
-      "evidence": [
-        {
-          "resource": "repo://deploy/developer/switch/README.md",
-          "version": "repo-file-v1:sha256:552bf7572bb7af19b8b241867fa4e82ddebac9739fb90b77514bd26be5083de7"
-        },
-        {
-          "resource": "repo://deploy/developer/switch/start_binary.py",
-          "version": "repo-file-v1:sha256:b169fb878d8d93ce91373a3aff001c42f048d5c02794a44c55102b04b2bceb55"
+          "version": "repo-file-v1:sha256:096945340583f5bcd11c10e562cffc9e94d6a3b073dd311a9a030f6c97b9fca1"
         }
       ]
     },
@@ -257,6 +243,6 @@
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-07T09:17:18.907Z"
+    "at": "2026-11-07T09:24:00.725Z"
   }
 }

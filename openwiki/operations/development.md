@@ -62,18 +62,16 @@ sources:
     resource: repo://deploy/developer/switch/bundle.py
   - id: openwiki-source-a764bf933c082e67ed4b6192
     resource: repo://deploy/developer/switch/launcher.py
+  - id: openwiki-source-668dcd1cbb12520ab064b910
+    resource: repo://deploy/developer/switch/process_drain.py
   - id: openwiki-source-417b2b5ecb26c89c1b06df88
     resource: repo://deploy/developer/switch/README.md
   - id: openwiki-source-9e0cfce0846bb98d2dc47de0
     resource: repo://deploy/developer/switch/start_binary.py
   - id: openwiki-source-67b7631c2182dcc02247e199
     resource: repo://deploy/developer/switch/start_support.py
-  - id: openwiki-source-806f8b5e786c99d89742d21f
-    resource: repo://deploy/developer/switch/terminal_drain.py
   - id: openwiki-source-55186e23cd9f537c0d522a81
     resource: repo://deploy/developer/switch/test_real_server.py
-  - id: openwiki-source-e7008c7df8e6a266da0f493b
-    resource: repo://deploy/developer/switch/test_switch.py
   - id: openwiki-source-353b77936aed6c3d486f5cb9
     resource: repo://deploy/developer/updater.py
   - id: openwiki-source-85c8f44da40d30a5a7a1f9c7
@@ -156,10 +154,10 @@ sources:
     resource: repo://tests/workflow/playwright.config.ts
   - id: openwiki-source-1d08facbf90704cd4c4c54d8
     resource: repo://tests/workflow/specs/card-context.spec.ts
-generated: { by: "codex", at: "2026-11-04T20:35:55.356Z" }
+generated: { by: "codex", at: "2026-11-07T09:24:00.725Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-07T09:17:18.907Z
+    at: 2026-11-07T09:24:00.725Z
 ---
 
 # 開発・検証・運用文書の使い分け
@@ -333,13 +331,16 @@ currentを原子的に切り替えて固定launcherを起動し、health、liste
 
 ### 管理PTYを一度だけ終了する
 
-実切替ではbundleの検査と受付snapshotの一致確認後、`terminal-drain` を一度実行し、従来のpreflightと停止直前guardへ進む。`--no-new-work` の外部調整にはTerminal接続の停止も含み、再接続するUIを閉じる等の調整が必要である。再生成したPTYは既存child guardで拒否し、繰返しkillして成功を強制しない。dry-runはdrainせず、PTYがあれば非破壊に拒否する。[順序](../../deploy/developer/switch/start_binary.py#L362-L390)・[dry-run回帰](../../deploy/developer/switch/test_switch.py#L586-L609)
+この見出しは既存リンクのため保持する。現行の開発専用切替はPTY限定ではなく、対象serverの確認済み子孫を終了する。実切替では権限・snapshot・新旧成果物・resource検査後の停止処理で子孫を止める。dry-runはsignalを送らず、子があれば拒否する。[実行順序](../../deploy/developer/switch/start_binary.py#L418-L450)・[idle](../../deploy/developer/switch/start_support.py#L163-L175)
 
-対象はserverの直接の子で、同UID、session/group leader、server保有PTY masterに対応するcontrolling TTYとstdin、`VIBE_KANBAN_TERMINAL=1`、同じ `LVK_INSTANCE_DIR` が揃うshellと境界内の子孫である。cwdやshell名だけでは同定しない。pidfd取得後もPID/start・親・session・group・TTY・UIDを再照合し、detach、境界外group所属、既に停止中のprocess等は拒否する。[所有判定](../../deploy/developer/switch/terminal_drain.py#L26-L107)。製品側のPTY生成はUnix shellにTerminal環境を設定し、masterとchildを保持する。[生成元](../../crates/local-deployment/src/pty.rs#L57-L104)
+対象serverと子孫をpidfd・開始時刻・UID・親子edgeで固定する。環境を消した子や別session/groupの子も捕捉するが、明示的に別instanceを示す子や異UIDはsignal前に拒否する。名前・cwd・process group全体をkill対象選択に使わず、環境一致だけで非子孫を追加しない。[所有境界](../../deploy/developer/switch/process_drain.py#L30-L96)
 
-signal前に `terminal-drain.json` へserverと対象processの所属・start情報を保存する。子孫commandへ深い順にTERMを送り、pidfdで終了確認後にshellへHUPを送る。既定10秒の共通期限でTERM/logoutを確認できなければKILLせず失敗し、診断資料を保持する。旧serverがshellをwaitせずzombieを残しても、pidfdによるexitと非稼働を確認し、既存guardのzombie除外規則に従う。全子孫のwait回収を追加保証するものではない。[signalと終了](../../deploy/developer/switch/terminal_drain.py#L109-L135)・[既存guard](../../deploy/developer/switch/start_support.py#L73-L89)
+signal前の捕捉情報をoperationの `child-stop.json` に保存する。serverと子孫を一時SIGSTOPしてfork元を凍結し、確認済み子孫へ個別SIGKILLを送り、共通10秒期限でpidfdのexitを待つ。捕捉後に親が変わっても同一processは追跡する。server本体は既存SIGTERM/60秒上限を維持しKILLしない。失敗時はこの処理で停止した生存processだけCONTし、backup/cutoverへ進まない。zombieは既存の終了済み扱いを維持し、全子孫wait回収は保証しない。[停止処理](../../deploy/developer/switch/process_drain.py#L49-L147)・[server終了待機](../../deploy/developer/switch/start_support.py#L236-L258)
 
-このdrainの初回導入は、新binaryを先に起動する必要がない。既存固定kit契約を持つ旧serverには、外部調整・対象同定後に `terminal_drain.py` を含む完全な新kitを配置し、外部CLIまたは旧serverの既存 `self_restart` で呼び出せる。過去の失敗fenceは下記の復旧手順で保全・解消してから新IDを使う。稼働binary SHAと配置script SHAを別々に記録する。Rustの新受付lock/protocolを必要としない開発専用経路で、安定版image更新や、次節の旧起動形式からの移行を置き換えない。[初回導入の契約](../../deploy/developer/switch/README.md#L110-L134)・[kit検査](../../deploy/developer/switch/start_binary.py#L53-L62)
+<!-- openwiki: broken internal link [../../deploy/developer/switch/README.md#CLIとMCP] heading anchor "CLIとMCP" does not exist in "../../deploy/developer/switch/README.md". Fix the href or restore the target, then delete this comment. -->
+`--no-new-work` はTerminal再接続停止を含む外部調整の宣言である。server再開後のgraceful shutdown中に新しい子を観測した場合も拒否する。/proc観測前に切り離された未知daemonの完全追跡は保証しない。対象外instance/data利用者の検査を維持し、子孫exit・listener消失・残存data FD不在を確認してから整合backupへ進む。[限界と前提](../../deploy/developer/switch/README.md#CLIとMCP)・[停止後guard](../../deploy/developer/switch/start_support.py#L194-L233)
+
+初回導入でも新binaryの先行起動は不要だが、別途承認されたoperator作業で同revisionの `launcher.py`、`start_binary.py`、`start_support.py`、`process_drain.py`、`start.sh` を一組で配置する。実行中workerのkitは置換しない。旧serverの認可再確認と新stdio委任の違いはREADMEの初回導入手順に従う。稼働binary SHAと固定kit script SHAは別々に記録し、過去失敗fenceとログを保全する。Rustの新protocolや安定版image更新を導入する変更ではない。[初回導入とstdio委任](../../deploy/developer/switch/README.md#初回導入とstdio委任)
 
 ### 失敗と旧契約からの移行
 
@@ -353,9 +354,9 @@ Python `test_switch.py` はコピー後の元bundle不可視、manifest虚偽、
 
 今回のSyncは凍結source `93913677602eaa8f975911641dcd2e81acb91f66` の実装・呼出元・設定・試験定義の静的照合で、製品テストやlive切替は実施していない。開発時の成功記録と、自動マージの明示的検証省略は別の証拠である。実Auth0/ChatGPTの一体E2E、実provider/model、browser操作、live移行は未確認。既存 `/mcp/*` 画像URLの一部404も残る。無関係な過去のWiki全体を再検証したものではない。移行した過去の「記録された試験結果・残る範囲」
 
-今回のPTY変更のSyncでは、凍結入力全3チャンクとSHA-256、統合source `647ceb8512b717fc42b6de29d7b78270669b3a71` を照合した。独立入口としてMCP handoff、固定kitの実行順序、製品PTY生成、procfs/pidfd所有判定、既存停止guard、Python/C fixtureと回帰定義を確認した。`test_terminal_drain.py` は別parent/instance・非管理PTYの保全、nested command、TERM無視、所属/PID変化、旧親のwaitなしを扱い、`test_switch.py` はdry-run非破壊、drain後の切替、再生成拒否を扱う。[drain回帰](../../deploy/developer/switch/test_terminal_drain.py)・[切替回帰](../../deploy/developer/switch/test_switch.py#L586-L637)
+LOCAL-243の統合コード `01d5e55ec0ce5bd25ea9270b24eb85c1a1cfc4ba` では、switch全treeがsource `ad674f76af0f18ae1961618f4d5964cf7e86c8dd` と完全一致し、固定baseとの差分がswitch配下10pathに限定されることと空白検査を実行確認した。競合・修復はない。公開memoryの既存検証はprocess_drain 10件、switch 48件、busy再確認5件成功であり、このWiki更新中の再実行結果ではない。重複suiteとRust/frontend rebuildは省略し、実binary前提stdio 7件も既存skipのままである。
 
-供給Manifestは局所13件・29件成功、途中の全Python探索失敗（pysqlite3不足等）、最終自動マージのinstall / frontend build / check / lint / backend:test成功を記録する。これは供給された履歴で、この保守の再実行結果ではない。今回の検証はソース・試験定義・差分・リンクとOpenWiki lifecycleの静的照合であり、実bundle、browser再接続、実認証/モデル、live切替は未実行。無関係な過去の説明全体は再検証していない。
+`test_process_drain.py` は子孫・TERM無視・PID/UID/親子変化・別instance保全・捕捉後reparent・停止失敗を、`test_switch.py` は環境消去/別group・data reader停止・dry-run・shutdown新子拒否・resource/backup/cutover回帰を扱う。実bundle、browser再接続、実認証/モデル、live切替は今回未実行。source統合と固定kit配置・稼働binary更新を区別する。[停止fixture](../../deploy/developer/switch/test_process_drain.py)・[切替fixture](../../deploy/developer/switch/test_switch.py)
 
 ### ビルド情報の検証境界
 

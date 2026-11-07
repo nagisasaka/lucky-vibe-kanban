@@ -22,16 +22,14 @@ sources:
     resource: repo://crates/server/src/remote_mcp/operations.rs
   - id: openwiki-source-605a3efdc11efae80ada92b1
     resource: repo://crates/utils/src/mcp_error.rs
-  - id: openwiki-source-417b2b5ecb26c89c1b06df88
-    resource: repo://deploy/developer/switch/README.md
   - id: openwiki-source-9e0cfce0846bb98d2dc47de0
     resource: repo://deploy/developer/switch/start_binary.py
   - id: openwiki-source-688a3a970a72f7fa2b5dbc1c
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/RuntimeAccessSettingsSection.tsx
-generated: { by: "codex", at: "2026-11-04T20:06:10.920Z" }
+generated: { by: "codex", at: "2026-11-07T09:24:00.725Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-07T09:17:18.907Z
+    at: 2026-11-07T09:24:00.725Z
 ---
 
 # 実行環境へのアクセス
@@ -76,7 +74,7 @@ server再起動後はoutputと寿命monitorを復元しない。耐久launch rec
 
 ## 開発専用 self_restart
 
-`self_restart` / `get_self_restart_operation`はproject_idとexecution許可、installed instanceの固定switch/start_binary.pyとlaunch.json、no_new_work、絶対bundleを使う。一般run_processで代用しない。実loopback listener・PID/start/boot・instance/data/current・launch設定hashをpipeで渡し、workerが停止前に独立照合する。管理PTYの終了、busy再確認、backup/health/receiptは既存switch kitが所有する。受付とcutover成功を分け、再接続後は同request ID・同principal/Projectで結果を読む。[bridge](../../crates/server/src/remote_mcp/environment_switch.rs)・[切替手順](../../deploy/developer/switch/README.md)
+`self_restart` / `get_self_restart_operation`はproject_idとexecution許可、installed instanceの固定switch/start_binary.pyとlaunch.json、no_new_work、絶対bundleを使う。一般run_processで代用しない。実loopback listener・PID/start/boot・instance/data/current・launch設定hashをpipeで渡し、workerが停止前に独立照合する。対象serverの確認済み子孫の停止、busy再確認、backup/health/receiptは固定switch kitが所有する。権限・成果物・resource検査後、子孫をpidfd/開始時刻/UID/親子関係で固定し、一時停止して個別KILLの終了を確認する。server自体はTERM/60秒上限を維持する。外部no-new-work調整にはTerminal再接続停止も含む。観測前に切り離されたdaemonの完全追跡は保証しない。[停止境界](../operations/development.md#管理ptyを一度だけ終了する)受付とcutover成功を分け、再接続後は同request ID・同principal/Projectで結果を読む。[bridge](../../crates/server/src/remote_mcp/environment_switch.rs)・[切替手順](../../deploy/developer/switch/README.md)
 
 ## 検証範囲
 
