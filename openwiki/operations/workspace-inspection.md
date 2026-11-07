@@ -28,6 +28,10 @@ sources:
     resource: repo://crates/server/src/routes/project_utilities.rs
   - id: openwiki-source-c1a5c9bda8d34af222d811c1
     resource: repo://crates/server/src/routes/repo.rs
+  - id: openwiki-source-640a4edfdcc7be664fc62f5e
+    resource: repo://crates/server/src/routes/shared_storage_http_tests.rs
+  - id: openwiki-source-f1f6d741731d4c0b4e9e6cac
+    resource: repo://crates/server/src/routes/shared_storage.rs
   - id: openwiki-source-7c1b10f112cb99ba82426b5a
     resource: repo://crates/server/src/routes/terminal.rs
   - id: openwiki-source-75b2a3e21f7d8cbca4f8565a
@@ -70,6 +74,8 @@ sources:
     resource: repo://crates/services/src/services/workspace_usage.rs
   - id: openwiki-source-00394af5c4b9d56480285bf6
     resource: repo://crates/utils/src/lvk_directory.rs
+  - id: openwiki-source-0b2eb3f83fc86f6a66a94a46
+    resource: repo://crates/utils/src/shared_storage.rs
   - id: openwiki-source-965b490de6f8364cb7695944
     resource: repo://crates/workspace-manager/src/workspace_manager.rs
   - id: openwiki-source-89d0fb22262f0a0ac1df7d1e
@@ -108,6 +114,8 @@ sources:
     resource: repo://packages/web-core/src/features/workspace-files/ui/WorkspaceFilePreviewHeader.tsx
   - id: openwiki-source-ece894e6e087af564c07e38d
     resource: repo://packages/web-core/src/features/workspace-files/ui/WorkspaceFilePreviewPanel.tsx
+  - id: openwiki-source-06868af84d952b8087cf3ebb
+    resource: repo://packages/web-core/src/i18n/locales/ja/common.json
   - id: openwiki-source-4da1fcbefae4945006795406
     resource: repo://packages/web-core/src/pages/kanban/ProjectKanban.tsx
   - id: openwiki-source-5b956d3d9d7f17c236d42ebb
@@ -124,6 +132,10 @@ sources:
     resource: repo://packages/web-core/src/pages/workspaces/WorkspacesLayout.tsx
   - id: openwiki-source-9231a80ee56432d71077b70c
     resource: repo://packages/web-core/src/pages/workspaces/WorkspacesSidebarContainer.tsx
+  - id: openwiki-source-235a3eb75f22fdecdbd66a8f
+    resource: repo://packages/web-core/src/shared/components/EnvironmentPanel.tsx
+  - id: openwiki-source-fac63ea2f2df3069fa2ed5c9
+    resource: repo://packages/web-core/src/shared/components/SharedStorageBreakdown.tsx
   - id: openwiki-source-867b74d482ff6cc365176503
     resource: repo://packages/web-core/src/shared/components/TerminalSection.tsx
   - id: openwiki-source-93851bff2ebf05ba57ca3277
@@ -132,6 +144,8 @@ sources:
     resource: repo://packages/web-core/src/shared/components/WYSIWYGEditor.tsx
   - id: openwiki-source-6d0dfae3c1582e1af83405d4
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/GeneralSettingsSection.tsx
+  - id: openwiki-source-8c6e3fc2f0060d4f6b2a9810
+    resource: repo://packages/web-core/src/shared/dialogs/settings/settings/SharedStorageSettings.tsx
   - id: openwiki-source-b30612082181a81aa92d89df
     resource: repo://packages/web-core/src/shared/hooks/useUserSystemController.ts
   - id: openwiki-source-97cd8794805cef30e1c2f047
@@ -162,10 +176,10 @@ sources:
     resource: repo://tests/server/specs/workspace-search.spec.ts
   - id: openwiki-source-dcac74ef871fd02e6315fa93
     resource: repo://tests/workflow/specs/diff-tree.spec.ts
-generated: { by: "codex", at: "2026-11-07T09:46:42.639Z" }
+generated: { by: "codex", at: "2026-11-07T09:56:11.730Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-07T09:46:42.639Z
+    at: 2026-11-07T09:56:11.730Z
 ---
 
 # ファイル・差分・プレビュー・端末の境界
@@ -417,3 +431,21 @@ Playwright/CDPで開く場合も明示されたURLを使い、console/network・
 ### 右サイドバーのWiki高さ
 
 Kanban/Workspaceでは展開したWikiが他の項目を除く残り高さを使う。長いツリーは内部スクロールし、小画面では操作欄と最低1行を保ってサイドバー全体も縦スクロールする。固定高さを増やす変更ではない。検索・repository選択・ページ選択・開閉の処理は従来通りである。[高さ配分の構造](../architecture/web-and-sync.md#wikiツリーの高さ配分)・[Kanbanの配置](../../packages/web-core/src/pages/kanban/ProjectUtilities.tsx)・[Workspaceの配置](../../packages/web-core/src/pages/workspaces/RightSidebar.tsx)
+
+
+## 共有cache/tmpの容量と手動削除
+
+Kanban / Workspace の右サイドバーで **DISK** を開くと、関連Repositoryごとの `shared/cache` と `shared/tmp` を確認できる。Repository IDを重複排除し、同じ共有実体をWorkspace数だけ加算しない。表示時に取得してReact Queryで60秒キャッシュし、通常の資源監視pollへ再帰走査を追加しない。計測中・取得失敗・未取得と0 Bを区別する。右サイドバーには削除操作やProject横断の影響注記を置かない。[共通表示](../../packages/web-core/src/shared/components/SharedStorageBreakdown.tsx)・[DISKへの配置](../../packages/web-core/src/shared/components/EnvironmentPanel.tsx)
+
+削除前には同じRepositoryを使う全ProjectのRun・DevServerと外部ツールを停止する。次の操作は元に戻せず、cacheは再生成に時間がかかり、tmpはWorkspace間の受け渡し内容を失う。tmpをRun終了で消す処理やTTLは追加しない。[設定の文言](../../packages/web-core/src/i18n/locales/ja/common.json)・[共有領域の用途](../concepts/workspace.md#共有ディレクトリの意味)
+
+1. Settings → Repositories で対象Repositoryを選び、表示名とパスを確認する。
+2. **共有 cache / tmp** の「このレポジトリを使う他のプロジェクトにも影響します。」を読み、cacheまたはtmpの個別削除を選ぶ。
+3. 対象名と種類を確認して「中身を削除する」を明示実行する。キャンセルでは削除しない。
+4. 完了表示と更新された容量を確認する。「容量を更新」でも再取得できる。失敗時も再計測するが、一部削除済みの可能性があるため成功や0として扱わない。[設定UIと結果処理](../../packages/web-core/src/shared/dialogs/settings/settings/SharedStorageSettings.tsx)
+
+`GET /api/repos/{repo_id}/shared-storage` と `DELETE /api/repos/{repo_id}/shared-storage/{kind}` は登録Repositoryから共有実体を解決し、kindをcache/tmpに固定する。任意パスやpersistentは入力にできない。Linuxでは保持したdirectory FD、NOFOLLOW、openat2のsymlink/mount境界制約とunlinkatで中身だけを処理し、対象ディレクトリとWorkspaceの入口リンクを残す。リンク先のpersistent・ソース・別Repositoryへ再帰しない。非Linuxや必要なkernel機能がない場合は安全性を弱める代替へ進まず失敗する。容量は各entryの論理長の合計であり、filesystemの物理使用量と同一ではない。[固定API](../../crates/server/src/routes/repo.rs)・[削除と集計の境界](../../crates/utils/src/shared_storage.rs)
+
+削除直前の利用中判定はProjectで絞らず、同RepositoryのRun状態、予約・終了未確認のprocess、runningのExecutionProcessを参照する。AgentRunがまだない `openwiki_sync` / `openwiki_bootstrap` ownerも、ownerのrepository_idまたはworkspace_reposから特定し、既存の準備中判定とcleanup_allowedで未完了なら409を返す。完了済みownerが履歴に残るだけでは恒久的に拒否しない。これはpoint-in-timeチェックであり、後続起動・外部ツールへの排他保証ではない。独自の包括追跡・分散lock・保留queueはない。[利用中判定](../../crates/server/src/routes/shared_storage.rs#L18-L100)
+
+変更時の検証入口はutilsの隔離ファイルfixture、serverのbusy単体と `shared_storage_http_tests.rs` の隔離HTTP/SQLite、[browser fixture](../../tests/shared-storage/browser.mjs)である。persistent・別Repository・リンク保持、CSRF、AgentRunなし保守owner、失敗と0の区別、確認/取消・容量更新を扱う。実データの削除や全製品UIの証明ではない。今回の統合候補では差分ファイルと固定sourceの一致・346修正保持・差分空白を実行確認し、ユーザー指定により重複suiteを省略した。過去のsource/独立結合試験は別SHAの証拠であり、この候補のテスト成功とは呼ばない。

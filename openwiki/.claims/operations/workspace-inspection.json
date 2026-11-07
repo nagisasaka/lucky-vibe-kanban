@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:8db02f5eb6edf9fcc7ee5b44d628d33bfa4717be52a411890acb0c18d4fb63f0",
+  "pageVersion": "sha256:63af24d6df8ad77756404058d5387e87916bee936a26e61f4c9a38e54f7a7f57",
   "claims": [
     {
       "id": "claim_ef965d37641846bda42842bf4788c8cc",
@@ -134,7 +134,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/mod.rs",
-          "version": "repo-file-v1:sha256:d9bad8a1d40f6bfa901395d8c3104c01afa8c7437b9a2da6fa5ff1e2ad988773"
+          "version": "repo-file-v1:sha256:6b52c28fa29dce40b31c357d9e44d60d45e412233e5170cad1145f26ed05ec88"
         }
       ]
     },
@@ -686,7 +686,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/mod.rs",
-          "version": "repo-file-v1:sha256:d9bad8a1d40f6bfa901395d8c3104c01afa8c7437b9a2da6fa5ff1e2ad988773"
+          "version": "repo-file-v1:sha256:6b52c28fa29dce40b31c357d9e44d60d45e412233e5170cad1145f26ed05ec88"
         },
         {
           "resource": "repo://deploy/server/server.mjs",
@@ -774,7 +774,7 @@
         },
         {
           "resource": "repo://packages/web-core/src/pages/kanban/ProjectUtilities.tsx",
-          "version": "repo-file-v1:sha256:989c51e8aef56fa122ff938f4581de86ff6968c85b55792dfba7c95864c5abb0"
+          "version": "repo-file-v1:sha256:61b238c126b8e6dc6e4a06f3d95792ee2d00fd9c1f8f5aeb282aea580177a93c"
         }
       ]
     },
@@ -812,7 +812,7 @@
       "evidence": [
         {
           "resource": "repo://packages/web-core/src/pages/kanban/ProjectUtilities.tsx",
-          "version": "repo-file-v1:sha256:989c51e8aef56fa122ff938f4581de86ff6968c85b55792dfba7c95864c5abb0"
+          "version": "repo-file-v1:sha256:61b238c126b8e6dc6e4a06f3d95792ee2d00fd9c1f8f5aeb282aea580177a93c"
         },
         {
           "resource": "repo://packages/web-core/src/shared/lib/mainTerminalRepo.ts",
@@ -834,11 +834,11 @@
         },
         {
           "resource": "repo://packages/web-core/src/pages/workspaces/RightSidebar.tsx#L207-L230",
-          "version": "repo-lines-v1:sha256:36137d0163fdd50965001f17b4a9166549476743fc37c82255b7647a3e73461c:eyJzZWxlY3RlZExpbmVDb3VudCI6MjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU3MjE2ZThlOWMwYTFhNjhkMDZjMmZiYWE1ZmQyMTM5NDgyYjhlZmQwYTE5MzE1YjkxNWU2Y2NlODQ5ZDg5ZGMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNiM2EzYjMxN2E0OTEwZjc2MTEyNTFmZDBkOGYwZjdkODVhZWI3ODExMTBiMTFiYmM4YzE0ZTRlNGU2ODVlZTIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjVkZDNkYjI0YTllOWIxODNjZmEzNjc2ZDU0YTFkZjlhMjA4Mjk0MGNlNjI2NDA1NWUzOGNmYjBkNGUzYmM0MTQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjMyODUzMjM3M2Y4MGJmZTkxOGNmNjk3MmZkZjVkMTA5ZTE4MWZiODFkZGNjMTQxZjg0ZjcxMjAwMDRiZjg5ODIifQ"
+          "version": "repo-lines-v1:sha256:c46fca08b78d402c2123da47583cefe967eadb51c36a55709aa281e87a646030:eyJzZWxlY3RlZExpbmVDb3VudCI6MjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU3MjE2ZThlOWMwYTFhNjhkMDZjMmZiYWE1ZmQyMTM5NDgyYjhlZmQwYTE5MzE1YjkxNWU2Y2NlODQ5ZDg5ZGMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNiM2EzYjMxN2E0OTEwZjc2MTEyNTFmZDBkOGYwZjdkODVhZWI3ODExMTBiMTFiYmM4YzE0ZTRlNGU2ODVlZTIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjVkZDNkYjI0YTllOWIxODNjZmEzNjc2ZDU0YTFkZjlhMjA4Mjk0MGNlNjI2NDA1NWUzOGNmYjBkNGUzYmM0MTQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjMyODUzMjM3M2Y4MGJmZTkxOGNmNjk3MmZkZjVkMTA5ZTE4MWZiODFkZGNjMTQxZjg0ZjcxMjAwMDRiZjg5ODIifQ"
         },
         {
           "resource": "repo://packages/web-core/src/shared/components/UtilitySidebar.tsx",
-          "version": "repo-file-v1:sha256:bed1741f8e8bc24ba276b8aff419593388945bca886dff6ab8973374b94b1fe4"
+          "version": "repo-file-v1:sha256:f32a11e6dbcee2604229564189904a93dd4f872dfd653f88fdb486e952f528fd"
         }
       ]
     },
@@ -855,10 +855,66 @@
           "version": "repo-file-v1:sha256:956d8ee51fa7a0a146157d627ed95d6722587f0660975da3fa86e4de3824c9b4"
         }
       ]
+    },
+    {
+      "id": "claim_08c5735987644badaa6e42e5a55cb508",
+      "statement": "共有cache/tmp容量はDISK展開時にRepository IDを重複排除して取得し60秒キャッシュする。通常資源pollで再帰走査せず、取得失敗・未取得と0を区別する。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/shared/components/EnvironmentPanel.tsx",
+          "version": "repo-file-v1:sha256:c273248db87471861462aa1ae43a54685f6fc721093ea264df783a172e5be7d5"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/components/SharedStorageBreakdown.tsx",
+          "version": "repo-file-v1:sha256:60465159b0ca9e4027bf4bedcf38b7b6fc0ce1ea61e23da236621a88f5f469aa"
+        }
+      ]
+    },
+    {
+      "id": "claim_f0c675fd58fe456eb36e25d5f393ff8b",
+      "statement": "Repository設定はcache/tmpを個別確認して手動削除し、Project横断の影響を示す。成功時は容量cacheを更新し、失敗時も再計測して部分削除の可能性を示す。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/i18n/locales/ja/common.json",
+          "version": "repo-file-v1:sha256:54971942179d929c7e7d02feb6630e5fd8d5f35791e6f1027f516c84ae7ff406"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/dialogs/settings/settings/SharedStorageSettings.tsx",
+          "version": "repo-file-v1:sha256:2252502630a169fffa1868588d2a1dcc2cc6b7662a37e1e4632ac9369fd15bd0"
+        }
+      ]
+    },
+    {
+      "id": "claim_a00fbd13c4984e14a061233856caacf5",
+      "statement": "共有削除は登録Repositoryのcache/tmpの中身に固定し、Linuxの保持directory FDとNOFOLLOW/openat2/unlinkatでリンク・mount境界を守る。非対応環境は失敗し安全性を弱めるfallbackを行わない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/routes/shared_storage.rs",
+          "version": "repo-file-v1:sha256:368b721de54fd3617ada63e96f7a1d41d220d68293266a69e6635ab4c81b5626"
+        },
+        {
+          "resource": "repo://crates/utils/src/shared_storage.rs",
+          "version": "repo-file-v1:sha256:e867a7982068c584d0d3d73ed3ba6c78e0b7f27032eea39099b67e492ad6baa3"
+        }
+      ]
+    },
+    {
+      "id": "claim_de054e473c6142b09f16a2b25dc5e44e",
+      "statement": "共有cleanupは全Projectの同RepositoryのRun/processに加えAgentRunなしWiki保守ownerの未完了/準備中も拒否する。既存cleanup_allowedを再利用し完了履歴だけでは拒否せず、後続起動や外部利用への排他保証はない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/routes/shared_storage.rs#L18-L100",
+          "version": "repo-lines-v1:sha256:0be91d2196431fc90bfa03fc99d418ea634f3cdb5c6c1d468a2e352304246a94:eyJzZWxlY3RlZExpbmVDb3VudCI6ODMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU0N2Q4MWRkYzAzNzRlZTQ1YTUwOGZmYjY1M2FlNGI2OTMzZTJhN2I0ZjU4NzgwYWFmZDNhYzQ5MTczY2MwYWUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjJlZWVjN2YyNTM3YzQwYzk2NDg3NzA4YjFjNzdkMzAyMjUyZjU1NmM1NzE3MWQwNDM0Nzg2OWU1MmI2NzdkOWYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdiYzk4ZDZiMGRjNDkyYzUwMTZkZjEwODA1YTNhNTRlYjljMTg0YTVhNjEzN2U3ZjRiZWNmYTBjMjIwNTUwZDAifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/shared_storage_http_tests.rs",
+          "version": "repo-file-v1:sha256:7eec8d3f03b3607c0bd97b3f447a3495b4c6ab49849f75c19db5cb7743c60556"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-07T09:46:42.639Z"
+    "at": "2026-11-07T09:56:11.730Z"
   }
 }

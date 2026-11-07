@@ -289,7 +289,7 @@ sources:
 generated: { by: "codex", at: "2026-11-06T17:36:48.866Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-06T17:36:48.866Z
+    at: 2026-11-07T09:56:11.730Z
 ---
 
 # Web の実行環境と同期

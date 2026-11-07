@@ -92,10 +92,10 @@ sources:
     resource: repo://packages/web-core/src/shared/providers/TerminalProvider.tsx
   - id: openwiki-source-23775c3de52f3ab95a13cb8b
     resource: repo://README.md
-generated: { by: "codex", at: "2026-11-07T09:46:42.639Z" }
+generated: { by: "codex", at: "2026-11-07T09:56:11.730Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-07T09:46:42.639Z
+    at: 2026-11-07T09:56:11.730Z
 ---
 
 # クイックスタートと調査案内
@@ -145,6 +145,7 @@ LVK独自のrepo内管理領域は原則 `.lvk/` に集約する。共有設定�
 
 | 変更・障害 | 調査経路 |
 | --- | --- |
+| 共有cache/tmpの容量を確認し手動で掃除したい | [容量と削除手順](operations/workspace-inspection.md#共有cachetmpの容量と手動削除)。Repository横断の影響、保守ownerの利用中拒否、失敗時の再計測と排他保証の限界を確認する |
 | 起動、DB、standalone と残存 startup API の差 | [システム境界と起動順](architecture/system.md) → [開発・検証](operations/development.md) |
 | Agent が止まった、表示と監査が合わない、再接続したい | [Session の状態](concepts/session-and-agent-run.md) → [Agent Runtime の監査・投影・回復](architecture/agent-runtime.md) |
 | Workspace の累積トークン、内訳、不明・一部のみの意味 | [Workspace 累積トークン](concepts/workspace.md#workspace-累積トークン) → [画面で確認](operations/workspace-inspection.md#累積トークンを確認する)。context gauge・各 run 時間との違い、thread 単位の保持、MCP の同じ集計を確認する |

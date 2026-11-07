@@ -86,8 +86,6 @@ sources:
     resource: repo://crates/workspace-manager/src/shared_resources.rs
   - id: openwiki-source-bb1ebe868e35e9e500714501
     resource: repo://Dockerfile
-  - id: openwiki-source-00110cdcfec890895b99690a
-    resource: repo://packages/web-core/src/shared/dialogs/settings/settings/RemoteProjectsSettingsSection.tsx
   - id: openwiki-source-bee9097e5e4cc326bebf14ff
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/RepositoryMemorySettings.test.tsx
   - id: openwiki-source-2fab4d75b959f83ee7aaf538
@@ -96,10 +94,10 @@ sources:
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/ReposSettingsSection.tsx
   - id: openwiki-source-7fd9452d5e666180c50f8cb7
     resource: repo://tests/openwiki/recovery.sh
-generated: { by: "codex", at: "2026-11-07T09:46:42.639Z" }
+generated: { by: "codex", at: "2026-11-07T09:56:11.730Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-07T09:46:42.639Z
+    at: 2026-11-07T09:56:11.730Z
 ---
 
 # OpenWiki の初期生成・同期・回復
@@ -160,7 +158,7 @@ Wiki設定保存はRepo外の共有storageだけを準備し、公開先checkout
 
 ## 開始元 Project と保守 Issue
 
-保守の所有単位は Repo のままだが、Project 設定からの Initialize / Sync は選択中の `project_id` を任意フィールドとして共通受付へ渡す。外部 MCP Sync も認可済みの Project を渡す。これにより、複数 Board が同じ Repo を使う場合でも開始元を失わず、その Project の通常 Issue と保守 Workspace を関連付けられる。[UI の引継ぎ](../../packages/web-core/src/shared/dialogs/settings/settings/RemoteProjectsSettingsSection.tsx#L1479-L1490)・[共通フォーム](../../packages/web-core/src/shared/dialogs/settings/settings/RepositoryMemorySettings.tsx#L105-L127)・[MCP adapter](../../crates/server/src/remote_mcp/repository_wiki.rs#L214-L233)
+保守の所有単位は Repo のままだが、Project 設定からの Initialize / Sync は選択中の `project_id` を任意フィールドとして共通受付へ渡す。外部 MCP Sync も認可済みの Project を渡す。これにより、複数 Board が同じ Repo を使う場合でも開始元を失わず、その Project の通常 Issue と保守 Workspace を関連付けられる。[UI の引継ぎ](../../packages/web-core/src/shared/dialogs/settings/settings/ReposSettingsSection.tsx#L570-L577)・[共通フォーム](../../packages/web-core/src/shared/dialogs/settings/settings/RepositoryMemorySettings.tsx#L105-L127)・[MCP adapter](../../crates/server/src/remote_mcp/repository_wiki.rs#L255-L270)
 
 明示 Project は実在し、`project_creation_repository_ids` に対象 Repo が含まれる必要がある。この集合は明示 Repo binding・既存 Issue/Workspace の関連に、Git 方式の保存済み `ProjectRepoDefaults` を加える。したがって開発 Card がまだない Project でも Git 作業先の既定値で関連を証明できる。directory 方式の defaults に残った Repo 値や、削除済み Project の Scratch だけでは認めない。受付時に加え、repository lock や version 検査の待機中に設定が変わり得るため紐付け直前にも検証する。[存在と再検証](../../crates/server/src/routes/openwiki/project_context.rs#L6-L43)・[関連集合](../../crates/server/src/routes/local_remote.rs#L3390-L3413)・[既存関連](../../crates/server/src/routes/integrations/mod.rs#L130-L150)
 
