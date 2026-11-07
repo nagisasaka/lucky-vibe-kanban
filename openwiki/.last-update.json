@@ -1,7 +1,7 @@
 {
-  "updatedAt": "2026-11-07T08:58:21.776Z",
+  "updatedAt": "2026-11-07T09:20:32.217Z",
   "command": "update",
-  "gitHead": "96049a96858974eb52e7d26e0154ec45f909cfad",
+  "gitHead": "bd425027e2bf7ecf4de000597dea3c661d4195a7",
   "model": "host-agent/codex",
   "status": "complete",
   "language": "ja"

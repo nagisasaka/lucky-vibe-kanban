@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:80f426c0415c59e8acf372c6c244801adc9b409577054e2949679c1d177d8447",
+  "pageVersion": "sha256:5aeabf1e9f2ef140cbc12ec2d255cca2f10dba3d617154a8326dd6457b21d8e9",
   "claims": [
     {
       "id": "claim_1640e4eaeac94676a84eb3b9d9970d30",
@@ -994,7 +994,7 @@
       "evidence": [
         {
           "resource": "repo://skills/lvk-orchestration/SKILL.md",
-          "version": "repo-file-v1:sha256:7770b39a370c8757b1bb9063d25ad50c8d2f977abd57fb61f508fa4e7c8317d3"
+          "version": "repo-file-v1:sha256:4badc25bfa26b793d9221b7c199c1f7cd40a90c90e3d2409a9d3bf7b796feb79"
         }
       ]
     },
@@ -1031,6 +1031,6 @@
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-07T08:56:27.082Z"
+    "at": "2026-11-07T09:17:18.907Z"
   }
 }

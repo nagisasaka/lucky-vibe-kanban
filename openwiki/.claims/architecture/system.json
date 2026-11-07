@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:73846b78aeddcf6b32a3a1da19fb0636d755662620080c12853c4b8a59ade953",
+  "pageVersion": "sha256:f2a93c79bf776be08487812af512383ef1f9a409295f8d1067855ae59964dcf3",
   "claims": [
     {
       "id": "claim_040b4779a7b24b2da362496e3236ffd7",
@@ -147,8 +147,8 @@
       "statement": "内部Astraは廃止され、ProjectはBoard・Todo・設計メモを切り替え、外部MCP transportは内部会話モデルを起動しない。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/remote_mcp/mod.rs#L1-L36",
-          "version": "repo-lines-v1:sha256:b0c68fcaf63aaeec156ec5ec1ec1d90155f0d491c6652ca8d218bbccea89b091:eyJzZWxlY3RlZExpbmVDb3VudCI6MzYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc5MjVhYmY2ZWM1YWIyYjU3YjAwMGJjNDRjZjNhMTVjNDY2ZTQ1ZDU3OTIxYzI4ZTQ0ZDczZDgxMGFkN2FjYTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdlYTRkNzIzNTYxNWUxMzIzNTFmNTkxMTRjNjMxMWEwYzEwMTExNjc5YTYxNmVkZGFhNTRhNzY0Y2ZkZTg5NDgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBkYTE5ZGQ0YTgxNDc1MjJmZDEyNTg4NThmNjllNjdhNjhmMTcyYTY4NDUyMzM5MzE2Yzc5MmY2YWE5NmJmNTkifQ"
+          "resource": "repo://crates/server/src/remote_mcp/mod.rs#L1-L37",
+          "version": "repo-lines-v1:sha256:0c7d0b3752728e062b3c270fa59b24dd436d27a1124aea601c63ee0763135c6f:eyJzZWxlY3RlZExpbmVDb3VudCI6MzcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc5MjVhYmY2ZWM1YWIyYjU3YjAwMGJjNDRjZjNhMTVjNDY2ZTQ1ZDU3OTIxYzI4ZTQ0ZDczZDgxMGFkN2FjYTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdlYTRkNzIzNTYxNWUxMzIzNTFmNTkxMTRjNjMxMWEwYzEwMTExNjc5YTYxNmVkZGFhNTRhNzY0Y2ZkZTg5NDgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBkYTE5ZGQ0YTgxNDc1MjJmZDEyNTg4NThmNjllNjdhNjhmMTcyYTY4NDUyMzM5MzE2Yzc5MmY2YWE5NmJmNTkifQ"
         },
         {
           "resource": "repo://packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L1068-L1089",
@@ -295,6 +295,6 @@
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-06T19:18:22.957Z"
+    "at": "2026-11-07T09:17:18.907Z"
   }
 }

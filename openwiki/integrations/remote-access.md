@@ -62,6 +62,8 @@ sources:
     resource: repo://crates/server/src/remote_mcp/issue_archive.rs
   - id: openwiki-source-a43253b5be9686da077b8067
     resource: repo://crates/server/src/remote_mcp/issue_comments.rs
+  - id: openwiki-source-ed82d25dbaeecf748c6e55ab
+    resource: repo://crates/server/src/remote_mcp/issue_relationships.rs
   - id: openwiki-source-a6a66833efdc90f958755f54
     resource: repo://crates/server/src/remote_mcp/issue_tags.rs
   - id: openwiki-source-9e15762bf7a432b7605f8466
@@ -130,10 +132,10 @@ sources:
     resource: repo://crates/utils/src/reference_file.rs
   - id: openwiki-source-3ecddc0be7b037ea6ab24381
     resource: repo://packages/local-web/vite.config.ts
-generated: { by: "codex", at: "2026-11-07T08:56:27.082Z" }
+generated: { by: "codex", at: "2026-11-07T09:17:18.907Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-07T08:56:27.082Z
+    at: 2026-11-07T09:17:18.907Z
 ---
 
 # 外部アクセス・MCP・Runner の境界
@@ -492,3 +494,18 @@ Workspace Memoryとno-change専用検証記録のMCPは廃止された。Runの�
 安定したrequest_idを保持し、応答喪失時は同一入力・同一IDの再送、または同じ認証主体の `get_operation(project_id, request_id)` で元receiptを回収する。成功後のIssue不在を理由に再送を拒否せず、保存結果を返す。入力を変えた同一IDは拒否される。commit不明・receipt確定不能は既存の `uncertain` 契約を維持し、別IDで盲目的に再実行しない。[receipt処理](../../crates/server/src/remote_mcp/operations.rs)・[削除の隔離回帰](../../crates/server/src/remote_mcp/tests.rs#L1400-L1579)
 
 LOCAL-338のコード候補 `96049a96858974eb52e7d26e0154ec45f909cfad` は固定base `1c3f9c18` にsource `b0e5a364` だけを競合なく統合した。関連server経路のsource一致・祖先・clean・差分空白を管理実行で確認した。source Manifestのremote MCP148成功・8条件付き除外、Board API44成功、Clippy・fmt成功を参照し、重複対象試験と包括検証の再実行は担当判断で省略した。候補上の試験passとは扱わない。実Auth0/ChatGPT・実データ削除・共有dev切替・deploymentは未実施。Wiki完了とRun終了後のhostによるmain公開は別の結果である。
+
+
+## Issueの親子・関連・ブロック関係
+
+公開MCPは親を既存の `create_issue` / `update_issue` で扱い、構造化関連を `list_issue_relationships` / `create_issue_relationship` / `delete_issue_relationship` で扱う。読取はread、変更はreadとwriteを必要とし、Project所属・既存operation receiptの契約を共有する。関係変更だけでWorkspace作成や実装開始は行わない。[公開定義とhandler](../../crates/server/src/remote_mcp/issue_relationships.rs#L1-L185)・[scope分類](../../crates/server/src/remote_mcp/mod.rs#L246-L286)
+
+1. `get_issue` で現在の `parent_issue_id` とrevisionを読み、`list_issue_relationships` は `has_more=false` まで `next_cursor` を辿る。成功した親nullと関連空配列だけが未設定を意味する。取得失敗や不完全な端点を未登録と扱わない。
+2. 親指定作成は `create_issue(parent_issue_id=...)`、設定・付替えは `update_issue(parent_issue_id=..., expected_revision=...)` を使う。省略/nullは既存親を保持し、親だけの解除は `clear_parent:true` を明示する。親IDとの同時指定は禁止。同一Project・存在・親子循環の検証はUI/stdioと共通のtransaction内で行う。
+3. 合意した関連は構造化操作で一件ずつ追加する。AがBをブロックする（BがAにブロックされる）なら `issue_id=A, related_issue_id=B, relationship_type=blocking` とし、sourceのrevisionを渡す。一行をA側source・B側targetとして読む。表示用の逆向き追加は不要だが、意図した相互blockingや多件循環は禁止しない。`related` は逆順も同一関係として扱う。本文のURLを登録完了とみなさず、登場した全Issueを自動関連付けしない。
+4. 指定解除は返された `id` を `relationship_id` とし、いずれかの端点Issueの現在revisionを渡す。他の関連、親、本文、状態、Workspaceを保持する。安定した `request_id` と同一入力で再送し、`get_operation` の確定結果を確認する。応答不明を新IDの重複書込みで解消しない。
+5. `get_issue` と両端の関連一覧を読み戻す。各関連はsource/targetのID、相手のID/simple_id、種別、direction、解除IDを返す。incomingで相手を自分自身と取り違えず、欠落・別Project端点は空成功へ置換しない。[読取](../../crates/server/src/remote_mcp/issue_relationships.rs#L92-L126)・[親単体読取](../../crates/server/src/remote_mcp/read.rs#L279-L300)
+
+共通関係writerは `BEGIN IMMEDIATE` 下で重複を確認し、並行追加と逆順relatedを直列化する。新しいDB制約・既存データ補正は導入せず、無関係な主キー衝突は成功再送の代用にしない。親子循環は禁止し、blocking循環は許容する。stdioも明示的親解除を提供し、incoming関連の相手は単体読取で解決して取得失敗を伝える。[共通層](../../crates/server/src/routes/local_remote/issue_relations.rs)・[stdio](../../crates/mcp/src/task_server/tools/remote_issues.rs)・[配布Skill](../../plugins/lvk/skills/lvk-work/SKILL.md)
+
+LOCAL-335と338の統合候補 `bd425027e2bf7ecf4de000597dea3c661d4195a7` では、write scope分類とHTTP認可回帰一覧の競合を両機能の保持で解消した。削除本体と共通物理削除経路は338を維持する。候補上で対象server/stdio/HTTP回帰、削除の認可・receipt・制約拒否・Workspace保持、server/mcp全target Clippy、整形と差分空白の管理実行が成功した。包括suiteと実Auth0/ChatGPT・実画面は担当判断で未再実行、Python補助検証はPyYAML不足で起動不可。実Issue/共有DB変更、稼働サービス再起動、live kit更新、デプロイは行っていない。Wiki lifecycle完了とhostの正式公開は別の結果である。[関係回帰](../../crates/server/src/remote_mcp/issue_relationships.rs#L187-L775)・[削除回帰](../../crates/server/src/remote_mcp/tests.rs#L1260-L1580)

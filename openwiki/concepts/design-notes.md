@@ -35,7 +35,7 @@ sources:
 generated: { by: "codex", at: "2026-11-06T03:28:31.315Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-07T08:56:27.082Z
+    at: 2026-11-07T09:17:18.907Z
 ---
 
 # 設計メモ・本文履歴と独立追記

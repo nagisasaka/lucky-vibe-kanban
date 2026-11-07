@@ -31,7 +31,7 @@ sources:
 generated: { by: "codex", at: "2026-11-04T20:06:10.920Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-07T08:56:27.082Z
+    at: 2026-11-07T09:17:18.907Z
 ---
 
 # 実行環境へのアクセス

@@ -56,6 +56,8 @@ sources:
     resource: repo://crates/server/src/routes/local_remote.rs
   - id: openwiki-source-24838d7108e2888a7fdc2714
     resource: repo://crates/server/src/routes/local_remote/issue_archive.rs
+  - id: openwiki-source-03dd6dd9ecb241eb669cb49c
+    resource: repo://crates/server/src/routes/local_remote/issue_relations.rs
   - id: openwiki-source-a517c0f8e44d2cf0c440fbfc
     resource: repo://crates/server/src/routes/workflows.rs
   - id: openwiki-source-38de6ae4b89edddb12325c18
@@ -82,10 +84,10 @@ sources:
     resource: repo://packages/web-core/src/shared/stores/useKanbanDisplayStore.ts
   - id: openwiki-source-5ef837b2bc54d286b3dedd8f
     resource: repo://packages/web-core/src/shared/stores/useUiPreferencesStore.ts
-generated: { by: "codex", at: "2026-11-07T08:56:27.082Z" }
+generated: { by: "codex", at: "2026-11-07T09:17:18.907Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-07T08:56:27.082Z
+    at: 2026-11-07T09:17:18.907Z
 ---
 
 # Project・Issue と実施の関係
@@ -123,6 +125,14 @@ Issue の分類と関係はそれぞれ別の意味を持つ。
 この関係を [Workflow の制御エッジ](workflow-attempt.md) と同じ依存グラフとして扱う根拠はない。表の保存契約は [スキーマ](../../crates/db/migrations/20260427000000_local_kanban.sql#L125-L179) と [親参照](../../crates/db/migrations/20260427000000_local_kanban.sql#L58-L68) を参照。
 
 部分更新では「送らなかった」と「null に消した」を区別する。description などは二重 Option であり、未指定なら保持し、明示 null ならクリアする。priority の明示 null は上記の medium 正規化が例外となる。フォームや API クライアントの変更でこの違いを失うと、無関係な編集で情報を消し得る。[更新リクエスト](../../crates/api-types/src/issue.rs#L79-L146)、[適用](../../crates/server/src/routes/local_remote.rs)
+
+### 親子・関連・ブロック関係の共通書込み
+
+親は同一Projectの存在するIssueだけを指定でき、自己参照と子孫への付替えを含む親子循環を拒否する。通常作成・更新の `BEGIN IMMEDIATE` 内で検証するため、Web、stdio、公開MCPが共通の制約を通る。公開MCPは `create_issue.parent_issue_id` で子を作成し、`update_issue.parent_issue_id` で設定・付替え、`clear_parent:true` で親だけを解除する。公開MCPの省略/nullは親を保持し、親IDとclearの同時指定は拒否する。これはBoard部分更新の明示nullとは区別する。[共通検証](../../crates/server/src/routes/local_remote/issue_relations.rs#L5-L33)・[呼出元](../../crates/server/src/routes/local_remote.rs#L859-L870)・[公開更新](../../crates/server/src/remote_mcp/issue_write.rs#L411-L450)
+
+関連の追加・指定解除も同じ共通層でwriterを予約し、両端の存在・同一Projectを確認する。自己関連は拒否し、`related` の逆順重複は既存行を返す。`blocking` はブロックする側がsource、される側がtargetの一行で、表示用の逆向き行を作らない。異なるIssue間の意図したblocking循環は許容する。既存不整合を一括削除するmigrationは追加しない。[共通関係操作](../../crates/server/src/routes/local_remote/issue_relations.rs#L54-L141)・[UI表示の向き](../../packages/web-core/src/shared/lib/resolveRelationships.ts)
+
+親子・関連操作はIssueやWorkspaceを削除せず、実装も開始しない。合意した関係だけを構造化登録し、読取失敗を未登録と判断しない。公開MCPでの事前読取、revision、receipt、読み戻しは [関係操作](../integrations/remote-access.md#issueの親子関連ブロック関係)を参照する。Issue自体の物理削除は [別契約](#issueの物理削除とarchiveの区別)であり、既存FKにより子は残って親がnullになり、削除Issueを端点とする関連行が削除される。[FK](../../crates/db/migrations/20260427000000_local_kanban.sql#L58-L68)・[関連FK](../../crates/db/migrations/20260427000000_local_kanban.sql#L165-L176)
 
 ### 採番の寿命と移行の限界
 
