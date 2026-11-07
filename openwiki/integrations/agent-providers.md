@@ -20,6 +20,8 @@ sources:
     resource: repo://crates/executors/src/command.rs
   - id: openwiki-source-7fd554effd70be44f98fe686
     resource: repo://crates/executors/src/config_write.rs
+  - id: openwiki-source-a3956271cbf62ae0786e7fc7
+    resource: repo://crates/executors/src/env.rs
   - id: openwiki-source-bfcf08b9feacd16360e862a4
     resource: repo://crates/executors/src/executors/claude.rs
   - id: openwiki-source-5514d83ac049ec5c68456f7b
@@ -110,10 +112,10 @@ sources:
     resource: repo://tests/claude-subscription/subscription.spec.ts
   - id: openwiki-source-141584dac09cf0f93be6bff5
     resource: repo://tests/codex-process-cleanup/README.md
-generated: { by: "codex", at: "2026-11-06T15:24:11.469Z" }
+generated: { by: "codex", at: "2026-11-07T09:46:42.639Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-07T09:17:18.907Z
+    at: 2026-11-07T09:46:42.639Z
 ---
 
 # Agent provider・設定・MCP・Skill
@@ -146,6 +148,8 @@ Codex の Supervised override は、approval policy が未指定または Never 
 LVK の profile/実行 override が空でも、app-server は利用者・project 設定から model と reasoning effort を解決できる。client は `thread/start` / `thread/resume` の応答を採用してから collaboration mode と turn を構築する。したがって依頼の JSON の `reasoning_effort: null` だけで「設定ファイルの effort が無視された」と結論しない。逆に provider が返した `None` も解決結果として採用し、前回の明示値を残さない。[採用処理](../../crates/executors/src/executors/codex/client.rs#L183-L190)、[start/resume と turn](../../crates/executors/src/executors/codex/client.rs#L257-L322)
 
 実際の値を診断するときは、依頼 override と native の thread 応答・後続 turn の設定を分けて確認する。継承の回帰テストは [reasoning_tests](../../crates/executors/src/executors/codex/client/reasoning_tests.rs#L67-L205) にある。LVK の型が値を表現できることを、任意の provider/model がその値に対応する保証とは扱わない。
+
+共有rootがある通常実行では、共通ExecutionEnvが現在の `.lvk/shared/tmp/`・`cache/`・`persistent/` の利用案内をManifest指示と合成する。Codexは初回と再開のdeveloper instructions、非Codexはslash command以外のprompt suffixへ渡す。保存済みCardの再生成に依存しない。OpenWiki reviewer・resource mediatorは共有案内の追加対象から外す。tmpはRun終了で消さず、受け渡し後の不要・非使用時だけ整理する。[共通合成](../../crates/executors/src/env.rs)・[Codex](../../crates/executors/src/executors/codex.rs)・[非Codex](../../crates/executors/src/executors/provider_adapter.rs)・[保存契約](../concepts/workspace.md#共有ディレクトリの意味)
 
 ### Codex resume の固定指示と現在 identity
 

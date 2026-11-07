@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:830f553e3b99785f45eab98d1897c214d7e8ef06dbe630ae6d7826385261f323",
+  "pageVersion": "sha256:f0b7194b510b16a56081ca86b8cf0f7ca5e8e2afe66ae1e0213853bc87a22a9b",
   "claims": [
     {
       "id": "claim_58a31267fd284cf6b691efe1ca720bfe",
@@ -114,7 +114,7 @@
       "evidence": [
         {
           "resource": "repo://deploy/developer/STAGING.md",
-          "version": "repo-file-v1:sha256:78aebba242b8b564fbceb36bf9722ec8611e57c9374fb53230cf0faf5292ccfd"
+          "version": "repo-file-v1:sha256:2d9cda75af38188da07615d9556cecddfec0f7f91aa63828c40efa70ac27b78d"
         },
         {
           "resource": "repo://deploy/developer/updater.py",
@@ -464,7 +464,7 @@
         },
         {
           "resource": "repo://deploy/developer/STAGING.md#L18-L27",
-          "version": "repo-lines-v1:sha256:7aa27eec1c33ab5fb6a7790386d64fd111c1ed24dce1255620a99f9fedef6448:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU0YjkxZDU3NzZhMzRkMjczN2YxMDMxYWNlZjEwMGQ5ZjM3MWQ1MTA4YzljZjNiODY0YmQ2ZTYzNGM3YTc0NWYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNkZDVhOGViMTY0MTU4MjNmZGMxZTkxNTBhMmYzMTU0NGZiNGM2MWZkNGIyYzUyYzM4MjBkMTQ3ODdhNTY3ZTAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImE0NjQ4OWM4MjVlMDA4MTIzNmY3MmQ5ZGJhZDNkMWIwMTcwMGIxMWQxZTVlZmZmOTk5NDQ5OTRmZWQ0ZTVlNjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjU5YjgyZGJlOTQyMTUyNGVkZWQ2N2IxZThmMjE2ZWQ4YTNiN2QyY2FmMzY0ZWYxOWE2NThhMjdiMDY2N2Q4ZjkifQ"
+          "version": "repo-lines-v1:sha256:b621fc78c1cfe0d743c16790061b9fb72725e739ad1809710c17a79cd048f852:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU0YjkxZDU3NzZhMzRkMjczN2YxMDMxYWNlZjEwMGQ5ZjM3MWQ1MTA4YzljZjNiODY0YmQ2ZTYzNGM3YTc0NWYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNkZDVhOGViMTY0MTU4MjNmZGMxZTkxNTBhMmYzMTU0NGZiNGM2MWZkNGIyYzUyYzM4MjBkMTQ3ODdhNTY3ZTAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImE0NjQ4OWM4MjVlMDA4MTIzNmY3MmQ5ZGJhZDNkMWIwMTcwMGIxMWQxZTVlZmZmOTk5NDQ5OTRmZWQ0ZTVlNjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjU5YjgyZGJlOTQyMTUyNGVkZWQ2N2IxZThmMjE2ZWQ4YTNiN2QyY2FmMzY0ZWYxOWE2NThhMjdiMDY2N2Q4ZjkifQ"
         },
         {
           "resource": "repo://deploy/developer/instance.mjs#L153-L183",
@@ -481,7 +481,7 @@
           "version": "repo-file-v1:sha256:d9bad8a1d40f6bfa901395d8c3104c01afa8c7437b9a2da6fa5ff1e2ad988773"
         },
         {
-          "resource": "repo://crates/server/src/startup.rs#L139-L153",
+          "resource": "repo://crates/server/src/startup.rs#L133-L147",
           "version": "repo-lines-v1:sha256:d63e3dce1e8d73598d9c43e07b28157bb95472c4c52b69d7f2ee8c95aa180e3b:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcyODRiMTJmOWYxMzRjNWZmODhhNmRkZjM5ZmEwMTYwNmY4MzY4ODllZjNkNTQwZjY4ZDEyYzVmYzkzODMzYTciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjdmZDYzYjE5NjM0ZGJhNTk4NzNiYzViOThhMjI4MmQ3N2MwNWQyZWMyZGQ1MTA5ZmRjMjI1ZDViMGIxMmE2NTQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE2NTIzMmQyYzcwYWNmNzFlYmY5YzhmNzRmMWI0NGE0MjRiM2VkNTE4OTMwMWM3NzI1ZmYwY2I1OGU2YTAzNGIifQ"
         },
         {
@@ -497,6 +497,6 @@
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-06T08:11:13.571Z"
+    "at": "2026-11-07T09:46:42.639Z"
   }
 }

@@ -92,6 +92,8 @@ sources:
     resource: repo://crates/services/src/services/workspace_usage/lifecycle.rs
   - id: openwiki-source-5837e5316279163dd8bfbfd3
     resource: repo://crates/utils/src/github_credentials.rs
+  - id: openwiki-source-00394af5c4b9d56480285bf6
+    resource: repo://crates/utils/src/lvk_directory.rs
   - id: openwiki-source-19419edea1d312cc9f07ef2d
     resource: repo://crates/utils/src/path.rs
   - id: openwiki-source-7d5590729f3e0f42d994b0e8
@@ -124,10 +126,10 @@ sources:
     resource: repo://scripts/dev-cargo.mjs
   - id: openwiki-source-c6d955097c4a7a9e7b1873ee
     resource: repo://tests/server/specs/workspace-search.spec.ts
-generated: { by: "codex", at: "2026-11-06T03:09:15.108Z" }
+generated: { by: "codex", at: "2026-11-07T09:46:42.639Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-06T19:18:22.957Z
+    at: 2026-11-07T09:46:42.639Z
 ---
 
 # Workspace と Repository
@@ -258,22 +260,27 @@ directory 一覧と inspection は異なる処理である。inspection はパ�
 
 Agent 起動前の setup script は Repo 設定に従う。DirectFolder では自動 setup 対象を空にする。全ての setup が parallel 指定なら先行 script と agent を並行起動でき、それ以外は [起動ゲート](../workflows/task-to-integration.md) を経由する。この順序を変えると、依存物が未準備の agent 起動につながる。[setup 分岐](../../crates/server/src/routes/workspaces/create.rs)
 
+## .lvkの所有境界
+
+LVK独自のrepo内管理ファイルは原則 `.lvk/` へ集約する。共有設定の `integration-validation.json` と開発用preview設定はGit管理・差分・検索の対象で、実行時の `shared/`・`attachments/` だけを除外する。`.lvk` は通常directoryを要求し、親symlinkやignoreファイルのリンク・hardlinkを拒否する。Linuxでは保持したdirectory descriptorを経由して書き、親差替えを検出する。`AGENTS.md`・`CLAUDE.md`・`openwiki/`・`.openwikiignore` は標準ツール契約の例外として標準位置を保つ。旧配置の移行・削除や旧添付履歴の互換は提供しない。[配置保護](../../crates/utils/src/lvk_directory.rs)・[概要](../../README.ja.md)
+
 ## 共有ディレクトリの意味
 
-managed Git Workspace の各 Repo にある `.lvk-shared/persistent/` と `.lvk-shared/cache/` は、**同じ登録 Repo を使う他 Workspace と内容を共有するリンク**である。保存先は既定 storage base の `shared/<sanitized-name>-<full-repo-UUID>/`。worktree の保管先 override とは独立している。[パス生成](../../crates/utils/src/path.rs#L140-L157)、[README の運用契約](../../README.md)
+managed Git Workspace の各 Repo にある `.lvk/shared/persistent/`・`.lvk/shared/cache/`・`.lvk/shared/tmp/` は、**同じ登録 Repo を使う他 Workspace と内容を共有するリンク**である。保存先は既定 storage base の `shared/<sanitized-name>-<full-repo-UUID>/`。worktree の保管先 override とは独立している。[パス生成](../../crates/utils/src/path.rs)、[README の運用契約](../../README.md)
 
 - persistent は利用者が維持するローカルファイル。[Repository Memory](repository-memory.md) の記録もその下に置く。
+- tmp は同一登録RepoのWorkspace間の一時受け渡し。Run終了では消さず自動TTL・定期掃除も行わない。受け渡し後、不要かつ非使用時だけ整理し、必要な成果は適切な保存先へ残す。
 - cache は再生成できる成果物や cache。ツールごとの cache 設定を LVK が自動変更するものではない。
 - Workspace 削除ではリンク先の共有内容を削除しない。自動清掃やバックアップが保証される領域でもない。
 - DirectFolder ではこれらのリンクがない場合がある。存在を前提にする前に作業環境を確認する。
 
 [共有の利用契約](../../README.md)、[削除後もデータを保持するテスト](../../crates/workspace-manager/src/shared_resources.rs)
 
-provisioner は tracked な `.lvk-shared`、既存の通常ファイル、異なる宛先のリンクを拒否し、全リンクを検査してから作成する。Git のローカル `info/exclude` に追加し、利用者のパスを上書きしない。Windows のリンク作成には Developer Mode または symlink 権限が必要で、作成失敗は明示エラーになる。[検証・配置](../../crates/workspace-manager/src/shared_resources.rs)、[Windows](../../crates/workspace-manager/src/shared_resources.rs)
+provisioner は tracked な `.lvk/shared`、既存の通常ファイル、異なる宛先のリンクを拒否し、全リンクを検査してから作成する。通常Workspaceは `.lvk/.gitignore` に `/shared/`・`/attachments/` だけを追記し、既存文を保持する。`.lvk/.gitignore` 自身は自己ignoreせず共有可能な設定として可視にするが自動stageしない。専用OpenWiki保守のbootstrap/sync ownerだけは追跡設定を変更せずGitローカル `info/exclude` にこの実行時子だけを追記する。common Git情報のため兄弟worktreeにも適用されるがsource・設定の変更は隠さない。利用者のパスを上書きしない。Windows のリンク作成には Developer Mode または symlink 権限が必要で、作成失敗は明示エラーになる。[検証・配置](../../crates/workspace-manager/src/shared_resources.rs)、[Windows](../../crates/workspace-manager/src/shared_resources.rs)
 
 provision lock は配置処理を守る。利用者の共有ファイルへの同時書き込みまで直列化するものではない。共有内容を使うツール側が競合を扱う必要がある。[配置 lock](../../crates/workspace-manager/src/shared_resources.rs)、[共有利用時の指示](../../packages/web-core/src/features/pipeline/model/cardContext.ts#L15-L23)
 
-LVK repository 自身の開発では、明示的な `scripts/dev-cargo.mjs` が cache リンクの canonical path を選び、Cargo の中間物を共有する。これは Workspace provisioner に一般の Cargo 設定を追加する変更ではない。最終成果物は checkout ごとの `target/` に置く。[開発用 Cargo の設定・排他・削除の契約](../operations/development.md#lvk-開発用-cargo-と共有キャッシュ)を参照する。[明示的な選択](../../scripts/dev-cargo.mjs#L85-L94)
+LVK repository 自身の開発では、明示的な `scripts/dev-cargo.mjs` が cache リンクの canonical path を選び、Cargo の中間物を共有する。これは Workspace provisioner に一般の Cargo 設定を追加する変更ではない。最終成果物は checkout ごとの `target/` に置く。[開発用 Cargo の設定・排他・削除の契約](../operations/development.md#lvk-開発用-cargo-と共有キャッシュ)を参照する。[明示的な選択](../../scripts/dev-cargo.mjs#L96-L105)
 
 ## Archive、削除、期限 cleanup
 

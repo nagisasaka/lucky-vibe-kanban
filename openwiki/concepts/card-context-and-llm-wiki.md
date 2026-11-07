@@ -4,6 +4,12 @@ title: Card context と並列作業の参照
 description: 保存済み Card context の継承、並列 Workspace の参照、固定 commit の読取、および旧 LLM Wiki の廃止境界。
 tags: [card-context, pipeline, parallel-context, knowledge]
 sources:
+  - id: openwiki-source-a3956271cbf62ae0786e7fc7
+    resource: repo://crates/executors/src/env.rs
+  - id: openwiki-source-22b82518475034ade38104e6
+    resource: repo://crates/executors/src/executors/codex.rs
+  - id: openwiki-source-f4e0f9b2ce513d3f8b8b070e
+    resource: repo://crates/executors/src/executors/provider_adapter.rs
   - id: openwiki-source-38bb7eaa90f0c92a0514844d
     resource: repo://crates/executors/src/legacy_wiki.rs
   - id: openwiki-source-788fa2f6f1a3d449a1a9efe4
@@ -18,6 +24,8 @@ sources:
     resource: repo://crates/services/src/services/parallel_context.rs
   - id: openwiki-source-1c3e0ab9fadf12dd97d8fd4f
     resource: repo://crates/services/src/services/pipelines.rs
+  - id: openwiki-source-19419edea1d312cc9f07ef2d
+    resource: repo://crates/utils/src/path.rs
   - id: openwiki-source-c0945aff6520d3600561e893
     resource: repo://packages/ui/src/components/PromptContext.tsx
   - id: openwiki-source-1d9ab14665c35291c675b104
@@ -38,10 +46,10 @@ sources:
     resource: repo://tests/chat/prompt-context.fixture.tsx
   - id: openwiki-source-7cc1d248ce00f0c5ef61c76e
     resource: repo://tests/chat/prompt-context.test.mjs
-generated: { by: "codex", at: "2026-11-06T15:24:11.469Z" }
+generated: { by: "codex", at: "2026-11-07T09:46:42.639Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-06T15:24:11.469Z
+    at: 2026-11-07T09:46:42.639Z
 ---
 
 # Card context と並列作業の参照
@@ -59,6 +67,8 @@ Card context は [Issue](project-and-issue.md) の依頼本文と一緒に保存
 実際の launch は選択された Repo ごとに policy を読み、存在するときだけ並列参照 context を追加する。provider の再開と現在 run の identity は [Session](session-and-agent-run.md) および [Codex 接続](../integrations/agent-providers.md)が扱う。[launch の結線](../../crates/local-deployment/src/agent_run_port.rs#L758-L775)、[追加条件](../../crates/local-deployment/src/agent_run_port.rs#L848-L865)
 
 Repo ごとの Git commit identity 案内は Shared directories policy の有無と独立して launch に追加される。ここでいう Change Manifest の現在 identity は Git の著者情報ではない。commit の設定・停止条件は [Repo の Git identity](workspace.md#git-commit-identity)を参照する。[独立した注入](../../crates/local-deployment/src/agent_run_port.rs#L859-L865)
+
+共有案内は `.lvk/shared/persistent/`（継続保存）、`cache/`（再生成可能な再利用）、`tmp/`（同一登録RepoのWorkspace間の一時受け渡し）を区別する。tmpはRun終了で消さず、自動TTLや定期掃除もない。受け渡し完了後、不要かつ利用中でない物だけ整理し、必要な成果は適切な保存先へ残す。保存済みCardを書き換える方式ではなく、共有rootがある実行には共通ExecutionEnvから現在の利用案内も渡す。Codex初回・再開のdeveloper instructionsと非Codexの通常prompt suffixが対象で、reviewer・resource mediatorへの追加やslash commandへの合成は避ける。[共通案内](../../crates/utils/src/path.rs)・[実行時合成](../../crates/executors/src/env.rs)・[provider境界](../../crates/executors/src/executors/provider_adapter.rs)
 
 ## チャットの補助情報と元の全文
 

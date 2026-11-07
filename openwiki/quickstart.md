@@ -56,6 +56,10 @@ sources:
     resource: repo://crates/services/src/services/config/versions/v9.rs
   - id: openwiki-source-6067be8d6f85caa8ac03638f
     resource: repo://crates/services/src/services/repository_memory.rs
+  - id: openwiki-source-00394af5c4b9d56480285bf6
+    resource: repo://crates/utils/src/lvk_directory.rs
+  - id: openwiki-source-19419edea1d312cc9f07ef2d
+    resource: repo://crates/utils/src/path.rs
   - id: openwiki-source-df6b7819295f53fc2381f23d
     resource: repo://deploy/server/compose.yaml
   - id: openwiki-source-89d0fb22262f0a0ac1df7d1e
@@ -88,10 +92,10 @@ sources:
     resource: repo://packages/web-core/src/shared/providers/TerminalProvider.tsx
   - id: openwiki-source-23775c3de52f3ab95a13cb8b
     resource: repo://README.md
-generated: { by: "codex", at: "2026-11-06T19:18:22.957Z" }
+generated: { by: "codex", at: "2026-11-07T09:46:42.639Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-07T09:17:18.907Z
+    at: 2026-11-07T09:46:42.639Z
 ---
 
 # クイックスタートと調査案内
@@ -110,6 +114,8 @@ lucky-vibe-kanban（LVK）は、Issue で仕事を整理し、Workspace 内で c
 旧 LVK npx ランチャーと Tauri desktop shell は撤去済みである。現在はブラウザーを使う。以前の server・MCP・desktop の起動設定を使っている場合は、[移行先と既存データの保持範囲](operations/server-container.md#旧-npx-ランチャーの撤去と移行)を確認する。[配布の移行案内](../README.md#distribution)
 
 初回の準備と通常作業は上記の「最初の作業」と [Issueから統合まで](workflows/task-to-integration.md) を入口にする。現行Boardはlocal APIを使い、公開配置ではBasic/Auth0の認証actorを使う。旧Cloud sign-inやremote API baseは要求しない。入口認証と外部 MCP の認可は [接続境界](integrations/remote-access.md)を参照する。[local API](../packages/web-core/src/shared/lib/remoteApi.ts)
+
+LVK独自のrepo内管理領域は原則 `.lvk/` に集約する。共有設定と実行時データの違い、標準位置を維持するAGENTS/CLAUDE/OpenWikiなどの例外、旧配置を移行しない方針は [Workspaceの所有境界](concepts/workspace.md#lvkの所有境界)を参照する。同一登録RepoのWorkspace間の一時受け渡しは `.lvk/shared/tmp/`、再生成可能な再利用はcache、継続保存はpersistentを使う。tmpはRun終了で消さず、受け渡し後の不要・非使用時だけ整理する。[共有領域](concepts/workspace.md#共有ディレクトリの意味)・[製品概要](../README.ja.md)
 
 ## 主要概念の説明先
 

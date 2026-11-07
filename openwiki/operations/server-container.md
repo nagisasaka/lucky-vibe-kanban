@@ -60,10 +60,10 @@ sources:
     resource: repo://package.json
   - id: openwiki-source-d64d3c5fa2f722c3a06ba2e6
     resource: repo://tests/embedded-browser-removal/controls.test.mjs
-generated: { by: "codex", at: "2026-11-04T20:35:55.356Z" }
+generated: { by: "codex", at: "2026-11-07T09:46:42.639Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-06T08:11:13.571Z
+    at: 2026-11-07T09:46:42.639Z
 ---
 
 # 単一サーバーコンテナーの運用境界
@@ -182,7 +182,7 @@ JS/Python に parser を置く構造は、新しい配布 runtime 依存や moun
 
 Compose project 名の変更は別 volume の選択になる。同じ named volume の再利用はデータを維持するが、実行中プロセスは復元しない。custom worktree root を mount 外へ置けばこの永続化の対象外になる。[保存先](../../deploy/server/compose.yaml)、[永続データの契約](#公開配置を準備して起動する)
 
-`.lvk-shared` の意味は [Workspace の共有領域](../concepts/workspace.md#共有ディレクトリの意味)と同じで、Cargo target 等を自動設定するものではない。停止した Goal や保守 run は保存状態と所有者の規則に従って確認する。コンテナー再起動だけで任意の処理を自動継続する保証はない。[再起動後の確認](#公開配置を準備して起動する)
+`.lvk/shared/` の意味は [Workspace の共有領域](../concepts/workspace.md#共有ディレクトリの意味)と同じで、Cargo target 等を自動設定するものではない。停止した Goal や保守 run は保存状態と所有者の規則に従って確認する。コンテナー再起動だけで任意の処理を自動継続する保証はない。[再起動後の確認](#公開配置を準備して起動する)
 
 supervisor は server と nginx を process group として起動する。一方の終了・spawn 失敗ではもう一方へ SIGTERM を送り、既定 120 秒後に残存 group へ SIGKILL を送る。外部 SIGTERM/SIGINT も同じ停止手順を使い、Compose の停止猶予は150秒である。これは個々の AgentRun の [監査付き取消](../architecture/agent-runtime.md#取消と実プロセスの終了)とは別のコンテナー停止境界である。[supervision](../../deploy/server/server.mjs)、[猶予](../../deploy/server/compose.yaml#L21)
 

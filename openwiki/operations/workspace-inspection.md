@@ -68,6 +68,8 @@ sources:
     resource: repo://crates/services/src/services/wiki/openwiki.rs
   - id: openwiki-source-c128bdfa7a156621b004df06
     resource: repo://crates/services/src/services/workspace_usage.rs
+  - id: openwiki-source-00394af5c4b9d56480285bf6
+    resource: repo://crates/utils/src/lvk_directory.rs
   - id: openwiki-source-965b490de6f8364cb7695944
     resource: repo://crates/workspace-manager/src/workspace_manager.rs
   - id: openwiki-source-89d0fb22262f0a0ac1df7d1e
@@ -160,10 +162,10 @@ sources:
     resource: repo://tests/server/specs/workspace-search.spec.ts
   - id: openwiki-source-dcac74ef871fd02e6315fa93
     resource: repo://tests/workflow/specs/diff-tree.spec.ts
-generated: { by: "codex", at: "2026-11-06T17:36:48.866Z" }
+generated: { by: "codex", at: "2026-11-07T09:46:42.639Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-06T17:36:48.866Z
+    at: 2026-11-07T09:46:42.639Z
 ---
 
 # ファイル・差分・プレビュー・端末の境界
@@ -266,11 +268,15 @@ adapter は `openwiki/` 以下の階層 Markdown を読み、dot-prefixed entry 
 
 通常 Repo は membership を要求する。Repo 未接続の DirectFolder だけは `repo_id=workspace.id` で既存フォルダーを読める。旧機能の終了と Card の保存文脈は [Card context](../concepts/card-context-and-llm-wiki.md)、生成物の公開条件は [OpenWiki 保守](openwiki-maintenance.md)を参照する。[scope の解決](../../crates/server/src/routes/workspaces/wiki.rs)
 
+<a id="添付の実体と-workspace-配置"></a>
+
 ## Session の添付
 
 Session の添付は local File を作業先へ渡す機能である。Board 上の file 参照との関係は [Issue の共同作業](../concepts/issue-collaboration.md) を参照する。
 
-添付 upload は保存レコードを作成し、Session の作業先へ file ID でコピーする。raw 添付の取得は Session が Workspace に属するか確認し、その agent_working_dir または Workspace root 配下の .vibe-attachments を使う。最終 canonical path が添付ディレクトリから外れれば拒否する。Repo file viewer と添付の基準 root は同じとは限らない。[upload](../../crates/server/src/routes/workspaces/attachments.rs)・[添付のパス](../../crates/server/src/routes/workspaces/attachments.rs)・[Session scope](../../crates/server/src/routes/workspaces/attachments.rs)
+添付 upload は保存レコードを作成し、Session の作業先へ file ID でコピーする。raw 添付の取得は Session が Workspace に属するか確認し、その agent_working_dir または Workspace root 配下の .lvk/attachments を使う。最終 canonical path が添付ディレクトリから外れれば拒否する。Repo file viewer と添付の基準 root は同じとは限らない。[upload](../../crates/server/src/routes/workspaces/attachments.rs)・[添付のパス](../../crates/server/src/routes/workspaces/attachments.rs)・[Session scope](../../crates/server/src/routes/workspaces/attachments.rs)
+
+配置では親 `.lvk` を通常directoryとして検証し、追跡済み添付先、親リンク、既存先の内容不一致を拒否する。ignoreは `.lvk/.gitignore` の実行時子だけに集約し、添付子の `.gitignore` を別途作らない。旧履歴・旧prefix互換や旧添付の移動はしない。中央cache内のDB file_pathと作業先の相対pathを混同しない。[配置と回帰](../../crates/services/src/services/file.rs)・[名前空間](../../crates/utils/src/path.rs)
 
 Workspace 作成は明示された attachment_ids を関連づけ、linked_issue があれば local の Issue にリンクする。Cloud 添付を取得する経路ではない。[作成処理](../../crates/server/src/routes/workspaces/create.rs)
 

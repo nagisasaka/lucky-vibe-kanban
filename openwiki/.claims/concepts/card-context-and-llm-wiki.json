@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:d6b1e04df3074f5e3e9867bfdfb73278923bd5b8faff6126f2ff96e8dce8a802",
+  "pageVersion": "sha256:bf397aaf3eaa5083665457b67801dc9047b423c5934680e50bb685bec114b8f4",
   "claims": [
     {
       "id": "claim_fe336fda43dd4a7087db9ff239381b34",
@@ -17,11 +17,11 @@
       "statement": "Card context は保存済み指示と空ブロックによる無効化を保持し、本文編集時にプリセットを再生成しない。",
       "evidence": [
         {
-          "resource": "repo://packages/web-core/src/features/pipeline/model/cardContext.test.ts#L67-L99",
+          "resource": "repo://packages/web-core/src/features/pipeline/model/cardContext.test.ts#L71-L103",
           "version": "repo-lines-v1:sha256:c03ac98c0fad2eef8896afd35ddfc0b84a82e807fd14c9b2e70f20bea3c6e100:eyJzZWxlY3RlZExpbmVDb3VudCI6MzMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgwNmRmMTEzZDI5ODA2OThkMzRhMzRiMmJmZjcwMmUxOWNiMjE3NDUzODc4OWY4YmVjNzMwOWI5NjY0MTMxOGQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJlZWExMjY2MGNmMzUzZWRiN2MxZjJlNDk1OTEwMWVlYTNlZmUxYjkwYWJhYWVhNmU5NTNjNjk0MzhhYjEyNjQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjU2ZDM5MjQzNjdhMzUxYjU5OGU5NmJiZTZkOGE5NDljYzE2NGZkNmU3NDFiOGI4NDkzZTkzY2EwOWJiZGU5OGEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjRkY2Y5YzFlODRmODRhNmE2MWU4YTQzMmRkMzBkYWIyNzkxNDdjMDRhODcyYmRhMzA1ZmNiY2ZkNDk5ZWNmZTcifQ"
         },
         {
-          "resource": "repo://packages/web-core/src/features/pipeline/model/cardContext.ts#L24-L85",
+          "resource": "repo://packages/web-core/src/features/pipeline/model/cardContext.ts#L27-L88",
           "version": "repo-lines-v1:sha256:bda71529bd8e47a60b2467a73ef4feb3dd81c77dc3ebd857a2cb05c656e4ca4c:eyJzZWxlY3RlZExpbmVDb3VudCI6NjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjExYzc0YWY0NTRkNDg5M2FlMzcyZWVjYzZhMTI3OGNjYzFjM2I3MmM4YzRmNjA2YmU2MDA2YTA4YjQ3NTg0Y2IiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRjOThhZDUxZDJmMWMwNjE1YWFhNWIyY2JkOTA0OWVjYWMyNjQwNGRhNDA0OGRmMGRjZjVhN2JjMThmNmM5YjUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjJlNjJiMWU1Y2U4NzJjYWM5OTBkNzA1YWZmZWI4ZmE2NTI0ZGE5NzlhMzFmYjE5ZmIxNzIyNDI3NmUyMDZmNTYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQ0NmIzODFjNmI5YTcxODk4NzNkYjYwYzcxNWY2MDcyMjI0ZmYyNjQ5M2E2OTY3NzU2ZTY4NDY1MDc0ZDdmZTAifQ"
         }
       ]
@@ -50,7 +50,7 @@
         },
         {
           "resource": "repo://packages/web-core/src/features/pipeline/model/cardContext.test.ts",
-          "version": "repo-file-v1:sha256:69c8503db6fb446d946f80407ea5c5e9e332761d81648b435fcdfeb835e48f00"
+          "version": "repo-file-v1:sha256:103df945799a14b7aa3a724819651cf74508613b85c404297cfdbdcb3cee6564"
         }
       ]
     },
@@ -84,7 +84,7 @@
       "evidence": [
         {
           "resource": "repo://packages/web-core/src/features/pipeline/model/cardContext.ts",
-          "version": "repo-file-v1:sha256:4ffc4d1143a33c3bb49c775c58316c86460798a516361f9d3a95ffce9f2367a8"
+          "version": "repo-file-v1:sha256:c05cce7fb23bc45517b4919000581820caa009d9b7df314bebd2a57cb83f5f86"
         }
       ]
     },
@@ -219,10 +219,32 @@
           "version": "repo-file-v1:sha256:ee93be67ad118f400c4fd7dbfe66050a32cec1800e72c74865b28ec097b1a5dc"
         }
       ]
+    },
+    {
+      "id": "claim_8ff5e8d5e86f4a9e9022feefcee80237",
+      "statement": "共有rootのある通常実行には保存済みCardと独立して現行shared tmp/cache/persistent利用案内が合成され、tmpはRun終了で自動削除せず受け渡し後かつ不要・非使用時だけ整理する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/executors/src/env.rs",
+          "version": "repo-file-v1:sha256:2081688e2c7f5662bb6ca9a7384102c06d352fea0e808bbccf0fe3f784fe39a0"
+        },
+        {
+          "resource": "repo://crates/executors/src/executors/codex.rs",
+          "version": "repo-file-v1:sha256:cbb82d9cbd1f07a82cab6edc631b43dd6b198501a43c54ccfaebb1414c77b6d8"
+        },
+        {
+          "resource": "repo://crates/executors/src/executors/provider_adapter.rs",
+          "version": "repo-file-v1:sha256:0081a6cfbe70aa90c19fb5e0dacc53c44526091ecf349b0cf39f588f97a8d70a"
+        },
+        {
+          "resource": "repo://crates/utils/src/path.rs",
+          "version": "repo-file-v1:sha256:88dcf67a6f0e17d65a6ef570b3067748757bf52845f4c742911fa2543a5a6fc0"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-06T15:24:11.469Z"
+    "at": "2026-11-07T09:46:42.639Z"
   }
 }

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:b3a997fed02219ff5e92df1b1412bfc546d5c25ea000fd47b63e5ddae2f1a8aa",
+  "pageVersion": "sha256:225c7ea5ff8057a764e46a8875d77ec52075ee7eb8db46b0d8c628fb67775ba5",
   "claims": [
     {
       "id": "claim_94623b4df5d444f5b2804c9e2c2025c7",
@@ -11,7 +11,7 @@
           "version": "repo-lines-v1:sha256:c9a6107d2e428a884205e569c18fc42f4fe8ac12d83c762d8389397d44c80403:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNjNjFmZmFhOTE3ZmQ1MTYwYjBmODIwYWE4MWE3ZDdkMzAyOGRjNzljODc0MTcyZmIyNWE3ZTdkY2Y1ZGFlZWEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjAwMzAzZTViY2M1NGVkNjg3NTUzMmYyNjk2YzJmNTMyMzY4NWViMjA4NTg5YjI0NWQ3MjVhOTdmYTUwNjYyOWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjRiYzc4YWY3ODFiMDYyMTBmZjM0OWY2NzBlMmRkZTg5YmRmNzhhYTIxOGRmZDBhYmZmNmU4Mjc2MTZmYzk3MTIifQ"
         },
         {
-          "resource": "repo://crates/local-deployment/src/container.rs#L1348-L1387",
+          "resource": "repo://crates/local-deployment/src/container.rs#L1358-L1397",
           "version": "repo-lines-v1:sha256:7c284a8a08f11c23711d2f90f31df621797b381f7dab21c60969810ca5683294:eyJzZWxlY3RlZExpbmVDb3VudCI6NDAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY1ODc5NTZhYThlYzI1MjY5YTk0ODcwMzg3OGMyNTUyMDExOTcyMTJjNDE5YTliMDU1ODU0ZTgzOTE2OGYxZjIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhNDM4YjE5OTJlYTlhYTRjMDhjNDZkYjg2ZWZjNmFjZjUxYjNiYTBlZjI2MTJiYjZmZTZhYzg2MTU1ZTRmODAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk0ZWIzN2NhNGM5YTFmMTQ1ZmNmYzE5MGUzYTI5ODY0Nzg1ZTAzOTYzOGYwM2MxNGM3OGMwZGE5MTFkZDVlN2IiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdlMjVmMmJhNmFjMzZmMzAyZjE5M2E4ZjJjMzI5OGMxNGQyZjdiMGI3NGU1MjZhZTc4MzdjMGZmMTZmY2Q1NDUifQ"
         }
       ]
@@ -73,7 +73,7 @@
       "statement": "worktree保存先overrideは指定先のアプリ所有子ディレクトリを使い、共有資源の既定保存先を変更しない。",
       "evidence": [
         {
-          "resource": "repo://crates/utils/src/path.rs#L150-L172",
+          "resource": "repo://crates/utils/src/path.rs#L180-L202",
           "version": "repo-lines-v1:sha256:cb4f72ece8532edff09b3effbc1d2a41c398354ca488652d0b71d13041d563b4:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImMxNWNmOGVjNzVlMjFjMmEyZTEwMmEwYjE1OWE0Y2UyNGIwN2ZjNWM3NDdmNjYxYWZlOTMzYzU4YmY4NzBiNWEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQ1YWQ2OTg2YTUwNDdiMGI5NjY5ODY1MTkxYzBiNDBiNTc3ZDIyOTAxOWJlMzBlYjNhYzRiMDhlM2U5NjVmZjIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQyMzU2NjExMmE2MTZlYTQ1MDA4ZjNmOThhOWE1ZDc2YmQwMGQ1MDQ4ZmZlNTg4YzZjMjVhYzAyNDUzYjk2NjUifQ"
         },
         {
@@ -94,21 +94,25 @@
     },
     {
       "id": "claim_39203c8500dc43649ab89c225d2a8bcb",
-      "statement": "同じ登録RepoのWorkspaceはpersistent/cacheリンク先を共有し、worktree削除後も共有データを保持する。",
+      "statement": "同じ登録RepoのWorkspaceは.lvk/sharedのpersistent/cache/tmpリンク先を共有し、worktree削除後も共有データを保持する。tmpはRun終了で削除せず自動TTLを設けない。",
       "evidence": [
         {
+          "resource": "repo://crates/utils/src/path.rs",
+          "version": "repo-file-v1:sha256:88dcf67a6f0e17d65a6ef570b3067748757bf52845f4c742911fa2543a5a6fc0"
+        },
+        {
           "resource": "repo://crates/workspace-manager/src/shared_resources.rs",
-          "version": "repo-file-v1:sha256:ce7821f4aa15230b64069ae016125126138754972084d39d9d9d742a233e25d2"
+          "version": "repo-file-v1:sha256:d7a937a6c28de981e57cfed6ce98dc8a3608444adc0644e2a532b91c0ac89932"
         }
       ]
     },
     {
       "id": "claim_26538aeb862f4cfb8170539d9f8c2314",
-      "statement": "共有資源配置はtracked mountや異なる既存宛先を拒否し、Gitローカルexcludeを追加して利用者のパスを上書きしない。",
+      "statement": "共有配置はtracked mountや異なる既存宛先を拒否する。通常Workspaceは.lvk/.gitignoreへruntime子を追記し、専用OpenWiki bootstrap/syncではtracked ignoreを変えずcommon info/excludeへruntime子だけを追記する。",
       "evidence": [
         {
           "resource": "repo://crates/workspace-manager/src/shared_resources.rs",
-          "version": "repo-file-v1:sha256:ce7821f4aa15230b64069ae016125126138754972084d39d9d9d742a233e25d2"
+          "version": "repo-file-v1:sha256:d7a937a6c28de981e57cfed6ce98dc8a3608444adc0644e2a532b91c0ac89932"
         }
       ]
     },
@@ -545,7 +549,7 @@
           "version": "repo-lines-v1:sha256:55f28c67b1e147ecf2e9a7f88e4bd390bdcd20305ea83de2ff09e39c3164ee9f:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZhNzRiMTgyODZkNDIzOWU4MjExOGYyZTU5MTc4MTIzMDIzZjNlZTM4MWYwMmE3NTljODdiODE4NTcxNzAwNmUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRlOGUyNWRjNWM2YWZhNDYxNzVhN2JmYzE2N2VkYTc0Nzg1MDkxYWNjNDE4ZjIwMDY1NmNkZWMwYmZhMzhiMmQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
         },
         {
-          "resource": "repo://crates/server/src/routes/local_remote.rs#L1360-L1427",
+          "resource": "repo://crates/server/src/routes/local_remote.rs#L1366-L1433",
           "version": "repo-lines-v1:sha256:c94433a7befd0cb8f3a132eef2c8b9859d4b04e480a599ece876722631280961:eyJzZWxlY3RlZExpbmVDb3VudCI6NjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZkNTFlZTc5NTExMDM1ZTNmNjg5OWUzYmIwNjBjOTkwOTdhZDEwMGUwZTYxMjg5ZjViOTMxNTc5MzYzOTcwZDAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImZhNGY1ZjNkNjEzMmQxZGNmM2QxODkwMzBjM2E3MGU3NjUzNDY4NDQ5NTE4OWEwYzc0NTU4OGIwNGRhMWYzNDIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImM3NTE4NGExMzEyNjc4NDQ1NGM5MTNlNTliZjAxYjBhNDc1MThkNGNlMmNiMWRlYzMxMmE4ZGU5ZDRmYWZhNTEifQ"
         },
         {
@@ -595,7 +599,7 @@
       "statement": "user Workspace関連情報APIは明示されたuser_idが現在actorと異なる場合に空一覧を返し、検索はこの取得境界を変更しない。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/local_remote.rs#L1658-L1671",
+          "resource": "repo://crates/server/src/routes/local_remote.rs#L1664-L1677",
           "version": "repo-lines-v1:sha256:ad5bdf029163fbfd092ed6f5a8f5daaafeac60eb699471366f03b3bc1c6eeac5:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU0N2FmZjg5M2U1OTIwOWJhMWJkMzc5M2ZlZjM5NDk1YmFhY2Q1ZTAxNTRjNjlmNmFkZjc0OTMyZDNmYmExNWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjIyZGRmNDAzNDg1MTczMDE2MmU1YjVmZDgxZWU5YjljNWJmMWU3YzJkNDNiOTc4YTIyYjE1ZGMyZTk4MzAxYjkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImExMjRkNThhZmIzMzJmZjczODU4MDA5OGUyYTQ4MjUzZTI1YjAzMmZjYTE0NjhkMDQ4ODIxZjliY2JhZjUyNjEifQ"
         }
       ]
@@ -605,7 +609,7 @@
       "statement": "Workspace検索の回帰は比較unit、両一覧のRust SQLite fixture、専用instanceの実UI/API Chromium specで分担し、browser specは失敗から通常pollingでの回復、filter、50件境界、識別子更新を扱う。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/local_remote.rs#L4684-L4754",
+          "resource": "repo://crates/server/src/routes/local_remote.rs#L4691-L4761",
           "version": "repo-lines-v1:sha256:cf1cb807c6806e7d401ad8f3a65814e84ff37df16aaf9fd1a417125ede6325bf:eyJzZWxlY3RlZExpbmVDb3VudCI6NzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjljNmZmZWY4YjFkNGI2NDYwMzU1OWRlYmRiNDA2MTNmNzUzOThiZGRmOGEwYjRlMmUwMDRkMTU3MjI0MmY2ZTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk1OThlYmY3NjA3MzFkMTc1ZDE2OTg3MzY2MThiMDUwMjMyY2U5MmRmZGJiYzgwOWYxOGRmNzA1YWY5ZjQ1M2QiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUwZWRmNmY1ZmY2Y2QyYmUyYjQwMzY5NTU5YmE3NzRmYmVhMDUwYTY0OWY4MjYyODI1ZjUzYmZjYTY3ODVhNTciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImM5ODQ2N2Q0YzBiNTc1MWQ4MGM3NmVkZDM3OTlmYTRkMzdjNTg1NDg0NzhjODEzMmMzOGRlYjE3N2VlYTRmMDYifQ"
         },
         {
@@ -646,7 +650,7 @@
         },
         {
           "resource": "repo://crates/server/src/routes/openwiki.rs",
-          "version": "repo-file-v1:sha256:c7e0c5c2c753ff4372d89e8d0c6ad629df1f5cae8f1a0f0b059ed923d9f105d7"
+          "version": "repo-file-v1:sha256:0f8e8957dc1bcaef46bf200e4d3ddca835cd30fe5eed7b9399abd6937c21053a"
         },
         {
           "resource": "repo://crates/services/src/services/workspace_usage/lifecycle.rs",
@@ -697,8 +701,8 @@
       "statement": "LVK contributor 用 dev-cargo.mjs は明示実行時に cache リンクの canonical path の lvk-dev-cargo-build を中間物の保存先とし、最終 target は checkout 内に分離する。",
       "evidence": [
         {
-          "resource": "repo://scripts/dev-cargo.mjs#L96-L105",
-          "version": "repo-lines-v1:sha256:e5bf854cb18ccb799e5a0328e0fefd56e88bb0f9af28898f232d0e350ef9c3d1:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU0OGYyYTkzN2RkNThiM2E4Mzg5ODNhYjMyN2I1N2M1Y2M1YzRlYmUwZDVjZGJkZjg0NzZhMDBmZGMzNzEyMTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI3ZDYwNGZlN2RhODllYmUxYTdlMzE1MjU1YzRlMzE4MGRjYWNlNzA3NmJjNjZkNDIxMGZjZjU3NjRjYmQ4ZDAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImVlNzgzM2QwMDY0YTRmNjIwYmQ1YTYwMjViMjMxOGVjY2YyODkxYTkyMmJhZDNlNDA0YmEwOWNiNDkyNTI5ZTIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjlmNjg1YzZhOTFiZjhkN2I5ZTJhYWMwNzJlZDdmMjY1MWEzZmVjYzU0YmM4ZWEzMDlkMTBiMzM3ZjkyMTlhODEifQ"
+          "resource": "repo://scripts/dev-cargo.mjs",
+          "version": "repo-file-v1:sha256:3e550fe5fdb058b3ac8ffeee7059b590dba73dba3e68da1806ce38a763e4b074"
         }
       ]
     },
@@ -827,10 +831,20 @@
           "version": "repo-file-v1:sha256:28a6938290d5c4575f16b2ca78e1c1436ccd9a98941cf1b50d672ad04606eec7"
         }
       ]
+    },
+    {
+      "id": "claim_4196dc8e0e3848b1a0d7b651dc73af3b",
+      "statement": ".lvk通常directoryとignore通常非リンクファイルを検証し、Linuxでは保持directory descriptorに書いて親差替えを検知する。ignore自身は自己除外しない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/utils/src/lvk_directory.rs",
+          "version": "repo-file-v1:sha256:956d8ee51fa7a0a146157d627ed95d6722587f0660975da3fa86e4de3824c9b4"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-06T19:18:22.957Z"
+    "at": "2026-11-07T09:46:42.639Z"
   }
 }

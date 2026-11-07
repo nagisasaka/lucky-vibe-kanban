@@ -132,10 +132,10 @@ sources:
     resource: repo://crates/utils/src/reference_file.rs
   - id: openwiki-source-3ecddc0be7b037ea6ab24381
     resource: repo://packages/local-web/vite.config.ts
-generated: { by: "codex", at: "2026-11-07T09:17:18.907Z" }
+generated: { by: "codex", at: "2026-11-07T09:46:42.639Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-07T09:17:18.907Z
+    at: 2026-11-07T09:46:42.639Z
 ---
 
 # 外部アクセス・MCP・Runner の境界
@@ -509,3 +509,7 @@ LOCAL-338のコード候補 `96049a96858974eb52e7d26e0154ec45f909cfad` は固定
 共通関係writerは `BEGIN IMMEDIATE` 下で重複を確認し、並行追加と逆順relatedを直列化する。新しいDB制約・既存データ補正は導入せず、無関係な主キー衝突は成功再送の代用にしない。親子循環は禁止し、blocking循環は許容する。stdioも明示的親解除を提供し、incoming関連の相手は単体読取で解決して取得失敗を伝える。[共通層](../../crates/server/src/routes/local_remote/issue_relations.rs)・[stdio](../../crates/mcp/src/task_server/tools/remote_issues.rs)・[配布Skill](../../plugins/lvk/skills/lvk-work/SKILL.md)
 
 LOCAL-335と338の統合候補 `bd425027e2bf7ecf4de000597dea3c661d4195a7` では、write scope分類とHTTP認可回帰一覧の競合を両機能の保持で解消した。削除本体と共通物理削除経路は338を維持する。候補上で対象server/stdio/HTTP回帰、削除の認可・receipt・制約拒否・Workspace保持、server/mcp全target Clippy、整形と差分空白の管理実行が成功した。包括suiteと実Auth0/ChatGPT・実画面は担当判断で未再実行、Python補助検証はPyYAML不足で起動不可。実Issue/共有DB変更、稼働サービス再起動、live kit更新、デプロイは行っていない。Wiki lifecycle完了とhostの正式公開は別の結果である。[関係回帰](../../crates/server/src/remote_mcp/issue_relationships.rs#L187-L775)・[削除回帰](../../crates/server/src/remote_mcp/tests.rs#L1260-L1580)
+
+
+<!-- openwiki: broken internal link [../operations/workspace-inspection.md#添付の実体と-workspace-配置] heading anchor "添付の実体と-workspace-配置" does not exist in "../operations/workspace-inspection.md". Fix the href or restore the target, then delete this comment. -->
+添付付き実行のpromptとAPIの正規相対pathは `.lvk/attachments/` に揃える。配置先の基準はSessionのagent working directory、未指定時はWorkspace rootであり、Repoごとのshared領域とは異なる。旧prefix互換・旧履歴の書換え・旧添付の再配置は行わない。[配置基準と保護](../operations/workspace-inspection.md#添付の実体と-workspace-配置)・[実行prompt](../../crates/server/src/routes/attachment_transfer.rs)・[MCP launch](../../crates/server/src/remote_mcp/launch.rs)

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:51bbfe1920ee01c23028037ed51cd120b5e80d55d0de2a62b11a030acd465fcf",
+  "pageVersion": "sha256:0faf2e7ba3220b40879a55063e137b79d427653df7e7a02201c4e3bdbf9fa3e4",
   "claims": [
     {
       "id": "claim_33c0ff606c234c65b0a089749cc323a5",
@@ -330,7 +330,7 @@
       "evidence": [
         {
           "resource": "repo://packages/ui/src/components/KanbanCardContent.tsx",
-          "version": "repo-file-v1:sha256:990f24e550d5de9991249848aece0465806fc35a74da4435ee3ed50e445830e3"
+          "version": "repo-file-v1:sha256:afac37df9af12bac5fe498c2389a62ab55d1b4fbd4fd53acf1e6898234502d3f"
         },
         {
           "resource": "repo://packages/web-core/src/features/kanban/ui/KanbanCardDetails.tsx",
@@ -695,6 +695,6 @@
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-07T09:17:18.907Z"
+    "at": "2026-11-07T09:46:42.639Z"
   }
 }

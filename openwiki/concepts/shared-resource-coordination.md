@@ -23,10 +23,10 @@ sources:
     resource: repo://scripts/local-runner/runner.py
   - id: openwiki-source-0e63365a39605f8b71f6bd5c
     resource: repo://scripts/local-runner/test_control.py
-generated: { by: "codex", at: "2026-11-04T20:06:10.920Z" }
+generated: { by: "codex", at: "2026-11-07T09:46:42.639Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-05T04:35:28.799Z
+    at: 2026-11-07T09:46:42.639Z
 ---
 
 # 共有リソースの所有権と AI 調停
@@ -110,7 +110,7 @@ local stdio MCPは内部capabilityを自動で使う。raw loopback HTTPは同�
 
 Runner は明示選択した実行 machine と credential / installation identity であり、共有 Resource 自体ではない。Runner を既存 canonical execution-slot Resource に結び、desktop・device など script が使う全資源と同じ operation で claim する。capability があることは所有権ではない。Windows の user session から outbound poll し、PowerShell を実行する。[Runner 登録・認証](../../crates/server/src/routes/execution_bridge/mod.rs)、[operator CLI](../../scripts/local-runner/control.py)。
 
-Source は Session / Workspace と Git HEAD に結び付く dirty checkout の immutable snapshot である。tracked と非 ignored untracked を収集し、path・case衝突・hash・上限を検査する。`.git` / `.lvk-shared` や危険な Windows path は含めない。操作の working_dir は snapshot root 相対となる。[snapshot の検査](../../crates/server/src/routes/execution_bridge/source.rs)。
+Source は Session / Workspace と Git HEAD に結び付く dirty checkout の immutable snapshot である。tracked と非 ignored untracked を収集し、path・case衝突・hash・上限を検査する。`.git`、`.lvk/shared/`・`.lvk/attachments/` の実行時子や危険な Windows path は含めない。`.lvk/` 全体は除外せず、Git管理する `.lvk/.gitignore`・`integration-validation.json`・preview設定はsnapshot対象のままにする。Rust側の収集・検証とPython Runner側の検証は同じ境界を使う。操作の working_dir は snapshot root 相対となる。[snapshot の検査](../../crates/server/src/routes/execution_bridge/source.rs)。
 
 interactive operation は start 後も資源束を保持する。追加 command は安定 UUID で step を逐次投入し、観察結果・artifact・receipt を取得する。最後の finish が保存済み cleanup と独立 verification を実行する。step の成功だけでは operation 完了にならない。[delivery と reconcile](../../crates/server/src/routes/execution_bridge/mod.rs#L209-L402)。
 

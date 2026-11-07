@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:25a87bad858d253bd4fd22ea6845a948ddd158d9d8857e463361c2757c6fe99a",
+  "pageVersion": "sha256:fa3f1bcac06ef2e14754a5dd2223a609f174485e21d36b673baa83143453491e",
   "claims": [
     {
       "id": "claim_73d8e11679c6457aaf2e2b1a68fb767e",
@@ -36,7 +36,7 @@
       "evidence": [
         {
           "resource": "repo://crates/executors/src/executors/provider_adapter.rs",
-          "version": "repo-file-v1:sha256:bab7d560a214fa8c33539f25defd9cf92e823b6df0ff2168b1c04cb886bebd62"
+          "version": "repo-file-v1:sha256:0081a6cfbe70aa90c19fb5e0dacc53c44526091ecf349b0cf39f588f97a8d70a"
         },
         {
           "resource": "repo://crates/local-deployment/src/process_host/journal.rs",
@@ -362,7 +362,7 @@
       "evidence": [
         {
           "resource": "repo://crates/executors/src/executors/codex.rs",
-          "version": "repo-file-v1:sha256:2d581bfa645d550efb8d4cc5228a0b43d295820683fa3d9dc3d33a1566e1d85d"
+          "version": "repo-file-v1:sha256:cbb82d9cbd1f07a82cab6edc631b43dd6b198501a43c54ccfaebb1414c77b6d8"
         },
         {
           "resource": "repo://crates/executors/src/executors/codex/client.rs",
@@ -733,6 +733,6 @@
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-06T19:18:22.957Z"
+    "at": "2026-11-07T09:46:42.639Z"
   }
 }

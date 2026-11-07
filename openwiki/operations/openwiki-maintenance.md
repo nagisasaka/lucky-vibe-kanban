@@ -18,6 +18,8 @@ sources:
     resource: repo://crates/executors/src/executors/codex.rs
   - id: openwiki-source-38fc795b99b30483be700b71
     resource: repo://crates/executors/src/executors/codex/client/openwiki.rs
+  - id: openwiki-source-343f68138e6e2d3312d2774c
+    resource: repo://crates/local-deployment/src/container.rs
   - id: openwiki-source-a13fe4db1eee073d0a7e2c4d
     resource: repo://crates/server/src/main.rs
   - id: openwiki-source-8e100846c63b4921192f2eb4
@@ -80,6 +82,8 @@ sources:
     resource: repo://crates/services/src/services/workspace_usage/lifecycle.rs
   - id: openwiki-source-2e2c90b28d3bcaf7a890d88a
     resource: repo://crates/workflow/src/templates.rs
+  - id: openwiki-source-7d5590729f3e0f42d994b0e8
+    resource: repo://crates/workspace-manager/src/shared_resources.rs
   - id: openwiki-source-bb1ebe868e35e9e500714501
     resource: repo://Dockerfile
   - id: openwiki-source-00110cdcfec890895b99690a
@@ -92,10 +96,10 @@ sources:
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/ReposSettingsSection.tsx
   - id: openwiki-source-7fd9452d5e666180c50f8cb7
     resource: repo://tests/openwiki/recovery.sh
-generated: { by: "codex", at: "2026-11-06T19:18:22.957Z" }
+generated: { by: "codex", at: "2026-11-07T09:46:42.639Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-07T09:17:18.907Z
+    at: 2026-11-07T09:46:42.639Z
 ---
 
 # OpenWiki の初期生成・同期・回復
@@ -129,6 +133,12 @@ Codex の TOML editor が project trust table を追加すると、OpenWiki の�
 明示 Sync の対象は現在の統合ソース全体、または指定 SHA からの範囲である。SHA は選択 branch の祖先である必要があり、初期生成に開始 SHA は指定できない。範囲外 event の扱いと未確認領域は [Repository memory](../concepts/repository-memory.md) の契約に従う。[scope 解決](../../crates/services/src/services/openwiki/sync_scope.rs)
 
 準備 future は Workspace lifecycle barrier 内で archive 状態を再確認して RAII 予約を取得する。installer 待機など AgentRun/Workflow がまだない期間も [手動 archive の busy 判定](../concepts/workspace.md#archive削除期限-cleanup)で保護し、future の完了・error・cancelで解放する。AgentRun終端後も repository state の active_run_id/bootstrap が残る host finalizing は archive 不可である。単に usage ラベルが execution_only という理由で永久に拒否する方式ではない。[準備の寿命](../../crates/server/src/routes/openwiki/preparation.rs#L1-L41)・[呼出位置](../../crates/server/src/routes/openwiki.rs#L384-L413)・[未完了所有の照合](../../crates/server/src/routes/workspaces/archive.rs#L45-L124)
+
+### 保守準備と追跡ignoreを分ける
+
+Wiki設定保存はRepo外の共有storageだけを準備し、公開先checkoutに共有リンクや `.lvk/.gitignore` を生成しない。専用保守Workspaceは永続execution_ownerのOPENWIKI_BOOTSTRAP / OPENWIKI_SYNCを使い、新規作成と再作成の両方で `.lvk/.gitignore` を変更しない共有準備を選ぶ。runtimeの `/.lvk/shared/`・`/.lvk/attachments/` だけをGit common info/excludeへ冪等追記するため、兄弟worktreeにも適用される。通常Workspaceの `.lvk/.gitignore` 集約契約は維持する。[設定保存](../../crates/server/src/routes/openwiki.rs)・[owner経由の準備](../../crates/local-deployment/src/container.rs)・[限定除外](../../crates/workspace-manager/src/shared_resources.rs)
+
+これはclean判定や公開allowlistを緩める処理ではない。source、integration-validation設定、既存ignoreの変更は公開拒否のままであり、任意の否定ignoreでnative Git statusにruntimeが見えても、人間設定の上書きや `.lvk/` 全体の除外で回避しない。リンク衝突・symlink/hardlink拒否と元のexclude内容を保護する。変更時はworkspace-managerのowner別条件とservicesの `maintenance_runtime_exclusion_preserves_initial_and_sync_publication_guards` を入口にする。[公開guardと回帰](../../crates/services/src/services/openwiki.rs)
 
 ## 自動マージ担当が更新する場合
 

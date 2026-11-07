@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:8ddd7469a2d0a45d98ce7292e26d1ca249a5c72fe527781341b2646e287cdf46",
+  "pageVersion": "sha256:e6ebb8c5644f81b287bbd63bc167920bb27f651a49796ed62491f1467d59fa5f",
   "claims": [
     {
       "id": "claim_71e4432fe19d42fca4c3a1ae5f546775",
@@ -136,7 +136,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/remote_mcp/launch.rs",
-          "version": "repo-file-v1:sha256:19626c9af62fd0b8e7745d2382775f7ecd6f05e9be30e743b078b3eb4c7a7817"
+          "version": "repo-file-v1:sha256:341c9078a13672052452369c71b3cc2bc5c4ad255111ea717ac6b0999b79ed60"
         }
       ]
     },
@@ -309,7 +309,7 @@
       "statement": "search_workspace_filesは要求時に追跡済み安全な作業木ファイルをpath順で走査し、単一行の非重複・大小文字を区別するリテラル一致を返す。位置は1始まりのUnicode scalar列と終端非包含列であり、既定20・最大50一致、文脈は既定前後1・最大2行である。",
       "evidence": [
         {
-          "resource": "repo://crates/git/src/reference.rs#L180-L212",
+          "resource": "repo://crates/git/src/reference.rs#L177-L209",
           "version": "repo-lines-v1:sha256:e1fd7803ebeb2c09523cfb01ee381285f341a044c51ddb2a35a221b81670507a:eyJzZWxlY3RlZExpbmVDb3VudCI6MzMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYzMzEzMmU5MjgxYjI5ZjdjZTVkN2U0NWYwYjQ0ODkxZGU0MWI1Y2U0NjAzMTIxNWE5ZDk1Njc1NzZjMTU1ZTciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM4MWU2OTlkMDc2NDgzOTU3MGQ0ZTU0MTkxOWNjM2YwNzQzNzA1ZmM5ODA2N2E1MTAyMjk4NDcxNjljMjgxMzciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQ1ZDcxMGRjYzNjMDQ2NjVlZjExMzNjNDBiNzgwNGMzYjI1YTg3OWFkNWIxZWVhNDUyNzZlZjBhMWU3YjdmNzcifQ"
         },
         {
@@ -530,7 +530,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/remote_mcp/launch.rs",
-          "version": "repo-file-v1:sha256:19626c9af62fd0b8e7745d2382775f7ecd6f05e9be30e743b078b3eb4c7a7817"
+          "version": "repo-file-v1:sha256:341c9078a13672052452369c71b3cc2bc5c4ad255111ea717ac6b0999b79ed60"
         },
         {
           "resource": "repo://crates/server/src/remote_mcp/repository_wiki.rs",
@@ -788,7 +788,7 @@
         },
         {
           "resource": "repo://crates/server/src/routes/attachment_transfer.rs",
-          "version": "repo-file-v1:sha256:73d60e3905db2d4e1ba084b3eb3a04a062f273497f95e0d97b363f37c7c31c58"
+          "version": "repo-file-v1:sha256:65aa48471be6e90a52d5bef68c34de6a557e5a6e74493ab9a68d73c1e6c3a425"
         }
       ]
     },
@@ -816,7 +816,7 @@
         },
         {
           "resource": "repo://crates/services/src/services/file.rs",
-          "version": "repo-file-v1:sha256:c00a17899631a707ec27559227bcc85d7d43b35de33d6dc7564b53b4d4809eea"
+          "version": "repo-file-v1:sha256:42dae047c9532b531f72bb1102f0ad8b2875dadc3dd7498126946ec0add73eee"
         }
       ]
     },
@@ -834,7 +834,7 @@
         },
         {
           "resource": "repo://crates/server/src/routes/attachment_transfer.rs",
-          "version": "repo-file-v1:sha256:73d60e3905db2d4e1ba084b3eb3a04a062f273497f95e0d97b363f37c7c31c58"
+          "version": "repo-file-v1:sha256:65aa48471be6e90a52d5bef68c34de6a557e5a6e74493ab9a68d73c1e6c3a425"
         }
       ]
     },
@@ -958,7 +958,7 @@
         },
         {
           "resource": "repo://crates/server/src/remote_mcp/launch.rs",
-          "version": "repo-file-v1:sha256:19626c9af62fd0b8e7745d2382775f7ecd6f05e9be30e743b078b3eb4c7a7817"
+          "version": "repo-file-v1:sha256:341c9078a13672052452369c71b3cc2bc5c4ad255111ea717ac6b0999b79ed60"
         }
       ]
     },
@@ -1051,10 +1051,24 @@
           "version": "repo-lines-v1:sha256:eae6ddd0a0ab6deb767a13b57e2e00fc9bd443cd2fba971af07ff1c9a6889043:eyJzZWxlY3RlZExpbmVDb3VudCI6MzUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk0ODliMTI1NmQ5MzJlZjhhZjU1Yzk5YTY5MWRmNjVjNDczMTkwOTdhNTE5M2Q2MGVlNDc4NzVjOWRlNWIwZmUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUzMzQwMmY3NDdhZDZmMTZjMTViNTYzMzk4Y2E3NDY4Mjk1NjM1NzgwYWUxODFmZDk5OWVjYjc4NTM3YzE3MTAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRjY2E5MDFlNmQwMWQwNmE2NmE4NjI1MGFiMjcyMmMxYjE5MjUxODFmZTQzMzgzZTdmNGY4NTcxM2U2ZWJmMDYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImVkMjFmYjZlYmE4OTZiZDUwOGYzOWFiN2YzY2Y3MWQ1ZjYzZTQyMmVhM2JjN2ExMzk4MzQyNzVlZTllZWRlYzYifQ"
         }
       ]
+    },
+    {
+      "id": "claim_18244d52e3e843c7a97931dea79f6ceb",
+      "statement": "添付付き実行の正規prompt相対pathは.lvk/attachments/を使う。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/remote_mcp/launch.rs",
+          "version": "repo-file-v1:sha256:341c9078a13672052452369c71b3cc2bc5c4ad255111ea717ac6b0999b79ed60"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/attachment_transfer.rs",
+          "version": "repo-file-v1:sha256:65aa48471be6e90a52d5bef68c34de6a557e5a6e74493ab9a68d73c1e6c3a425"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-07T09:17:18.907Z"
+    "at": "2026-11-07T09:46:42.639Z"
   }
 }

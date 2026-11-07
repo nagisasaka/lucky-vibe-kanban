@@ -29,7 +29,7 @@ sources:
 generated: { by: "codex", at: "2026-11-07T09:24:00.725Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-07T09:24:00.725Z
+    at: 2026-11-07T09:46:42.639Z
 ---
 
 # 実行環境へのアクセス

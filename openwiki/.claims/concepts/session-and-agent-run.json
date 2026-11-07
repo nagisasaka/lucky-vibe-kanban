@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:1fc849c196e102ce83988db70a5353ca426419fe2af5df313ee88fa7f8f8528a",
+  "pageVersion": "sha256:ae30188f6d9d7a59cfc3d792bee127695f5689940ecf0f639ef78df81cdede20",
   "claims": [
     {
       "id": "claim_82c340b0bbd240889908ea6c2c5be423",
@@ -131,7 +131,7 @@
       "statement": "Goalのsubagent上限は0で無効化、未指定でCodex既定となる。",
       "evidence": [
         {
-          "resource": "repo://crates/executors/src/executors/codex.rs#L2174-L2193",
+          "resource": "repo://crates/executors/src/executors/codex.rs#L2171-L2190",
           "version": "repo-lines-v1:sha256:1d1f66bc0a94f686110e92e25bc67a3492adae0c9dd2dfd19e6552b2c523d9ee:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkyYjVlZGY1OTQ5Y2ZlYTY3ODIyY2Y2OTExMzIzNjNkNjhkNmYxZTE2OWY1ZTBkNGY3YzE0ZTVmYTFlNmQ0ZTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFlNzVjNzBkOTQ2MzYyNWUxMDc5ZmQ4ZmM4ZWU2MmFkMmU5MmM0MmJlYWFiZmQ4NWI3OGQ4ZTBhNDk3OWI5NGEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImYyZDgyOGEwMzdhYzFjODE1MzViMWQ1NTAwODMyMzIzYmZiYjg2NmEzYTNmODdlN2E2OGMxM2EyYmFlNTZmZmYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImEwMGRiMDQwZjI5MDliZjk3OGZmMGE5NTZhNTVlODNjNjUzNDE4ZGU2YmI2OGY4MDQxZGE5NzZmOGQzZDIyNzAifQ"
         },
         {
@@ -155,7 +155,7 @@
       "statement": "現行coding agentはExecutionProcess actionから起動できず、AgentRun APIが要求される。",
       "evidence": [
         {
-          "resource": "repo://crates/local-deployment/src/container.rs#L1533-L1539",
+          "resource": "repo://crates/local-deployment/src/container.rs#L1544-L1550",
           "version": "repo-lines-v1:sha256:c6cd57497580d0e451fc62c7b718bf4b36f870f2bf7b29a02f3db48bae394f02:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMTFlZGIxZDA2Y2YwNGU4NTY4YjdkZWJmNzc5MWJmOTYzYjU4N2I5YzU3N2VhODIzMzc4NzdiNGZhOGIwZDQyOSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYWVmYmY0ZjhiOTczN2YxN2Q0ODI3ODFhZjY3MGQyMTVhOTQ5OGRmNTZiNGZkOTk5M2E5ZDYwNDNkYjU1MDMxNiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOTRlOTRhMWUyMGI5ZWIyNzczYjFkZDJmODRmYmIwODg4YzRkMWI1YWU1YTNiMTNiOThhOTk3Y2FiOWQyZDgyNSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiY2RhOTRlYmVhNTkxYjY0MzQ1MTlhZDM5ODU4NTE4Y2NhZmMyMGYyN2ViZGYyOGFiODNmYzU5MzgwNDdkOTM5NiJ9"
         }
       ]
@@ -222,7 +222,7 @@
       "evidence": [
         {
           "resource": "repo://crates/local-deployment/src/container.rs",
-          "version": "repo-file-v1:sha256:8647726aad091c0e982afdf2a11a69fcfc6b6c539277970e299b5050fd0ed2a6"
+          "version": "repo-file-v1:sha256:fe01ba5a480c6da642e70c3449b97bb357c84c1c73bf8590749f9d516f00a8e4"
         },
         {
           "resource": "repo://crates/server/src/routes/scratch.rs",
@@ -1174,7 +1174,7 @@
       "evidence": [
         {
           "resource": "repo://crates/executors/src/executors/codex.rs",
-          "version": "repo-file-v1:sha256:2d581bfa645d550efb8d4cc5228a0b43d295820683fa3d9dc3d33a1566e1d85d"
+          "version": "repo-file-v1:sha256:cbb82d9cbd1f07a82cab6edc631b43dd6b198501a43c54ccfaebb1414c77b6d8"
         },
         {
           "resource": "repo://crates/server/src/routes/sessions/executor_config.rs",
@@ -1192,7 +1192,7 @@
         },
         {
           "resource": "repo://crates/server/src/remote_mcp/launch.rs",
-          "version": "repo-file-v1:sha256:19626c9af62fd0b8e7745d2382775f7ecd6f05e9be30e743b078b3eb4c7a7817"
+          "version": "repo-file-v1:sha256:341c9078a13672052452369c71b3cc2bc5c4ad255111ea717ac6b0999b79ed60"
         }
       ]
     },
@@ -1213,6 +1213,6 @@
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-06T19:18:22.957Z"
+    "at": "2026-11-07T09:46:42.639Z"
   }
 }

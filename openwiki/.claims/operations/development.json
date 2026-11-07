@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:43adb70a0aaa779516e6ce809d49dff23ece8ef29cb52ef48e1791fa22db0787",
+  "pageVersion": "sha256:43f605d20ee930acc279d2b40ca4ffca57717b1a130a271b47a46483dd05fd77",
   "claims": [
     {
       "id": "claim_1640e4eaeac94676a84eb3b9d9970d30",
@@ -54,7 +54,7 @@
         },
         {
           "resource": "repo://tests/workflow/specs/card-context.spec.ts",
-          "version": "repo-file-v1:sha256:a2f0b16544a70c871adeaa6b5aac524c6be780ccde5a9b14e5c39531e348a8a7"
+          "version": "repo-file-v1:sha256:641ba7fea1df9f2659c13a3cc535d0aedf423abf2bfe348d02f91be78da1c883"
         }
       ]
     },
@@ -351,7 +351,7 @@
           "version": "repo-lines-v1:sha256:2e18c6041f81c7359f613342e3e8540f0312af2e01fe0ca4a2ea819baf78f3bf:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMwLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI5MWNjNDA2ODdkMjQ0ZTlkYWY5MWNlZDQ2NTIzMjY1NjlhNGZiNmRmYzgxZDAzZmJlNzIzYTVlYTNjY2JlOWRmIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJlNmIwNDQ5MTQ2OTcyMmU4MzYzYTk0ZTQwNDQ1MzhlMDEzYTJhMjE3ZTM2YjFlNTY4YmE2MGFjYjdiNGM4ZjJlIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIxNWViN2EzYTk3MzI0MWU5YTQzMTQ3OTJhNTA5ZjhjMmQ1Mjg1ZWMxMzI1ZmQ2MTYxMzlkMDM1YmEwNzEyY2EzIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiIxN2E1ODAwNzBmNTU1YzRhOTViODNhNmUwNDU5NTc1ZDg4NTRkNWMxMzg0NTBiZDQzMGYxOTZjNjc3MDU3MmE5In0"
         },
         {
-          "resource": "repo://crates/executors/src/executors/provider_adapter.rs#L3711-L3754",
+          "resource": "repo://crates/executors/src/executors/provider_adapter.rs#L3744-L3787",
           "version": "repo-lines-v1:sha256:7d4571689c12c4b4be7740181ca27778c27c9e0be46850fbb0b177e257725bd7:eyJzZWxlY3RlZExpbmVDb3VudCI6NDQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkyYjVlZGY1OTQ5Y2ZlYTY3ODIyY2Y2OTExMzIzNjNkNjhkNmYxZTE2OWY1ZTBkNGY3YzE0ZTVmYTFlNmQ0ZTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE1ZWI3YTNhOTczMjQxZTlhNDMxNDc5MmE1MDlmOGMyZDUyODVlYzEzMjVmZDYxNjEzOWQwMzViYTA3MTJjYTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZjZTRmYzYyMzM3YjBjMWIyNjljZDU0ZTFjZWVjYzhkMzMzNTAxMWNjOWZmYzk2MTBiM2I5NDg5Yjk1MTY5ZmUifQ"
         },
         {
@@ -687,8 +687,8 @@
       "statement": "開発 Cargo の最終 target は checkout ごとに分離し、中間物は cache リンクの canonical path の単一 lvk-dev-cargo-build に共有する。リンクなしなら警告して local target を使う。",
       "evidence": [
         {
-          "resource": "repo://scripts/dev-cargo.mjs#L96-L106",
-          "version": "repo-lines-v1:sha256:37e2c0e49b01e0630c4275b580f6782839a0f13197729f73b83e6b1ba0ef7cf6:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU0OGYyYTkzN2RkNThiM2E4Mzg5ODNhYjMyN2I1N2M1Y2M1YzRlYmUwZDVjZGJkZjg0NzZhMDBmZGMzNzEyMTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI3ZTU3ODhkNWQ5ZDczZDI0YTgxZGJjMGE1YTc0YmZhODJjOWMzYjNhZjk5ZTUyYWY3OTZlOTBiNDY4YThhM2QiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjU1NTA2YjZlZjQwMGMxOWEzMTYwMTUxODc1Mzc5M2ZlZGFmMTYzYjdmY2ZhNWYzOTk3MjIxYzFhNzU5YzE3MGMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUxNmU2ZDI0MWUwYzY2YTViOGZhNGViMDVhNWY1YjAxZTM1NzM2YzdiZjk3NGQ0NGQ5YTczNjUzMGU0MGJhMDkifQ"
+          "resource": "repo://scripts/dev-cargo.mjs",
+          "version": "repo-file-v1:sha256:3e550fe5fdb058b3ac8ffeee7059b590dba73dba3e68da1806ce38a763e4b074"
         }
       ]
     },
@@ -698,7 +698,7 @@
       "evidence": [
         {
           "resource": "repo://scripts/dev-cargo.mjs",
-          "version": "repo-file-v1:sha256:487daab271b4e416a1a519909759a3232250ecd1e7956b1a1141d87c72b7a595"
+          "version": "repo-file-v1:sha256:3e550fe5fdb058b3ac8ffeee7059b590dba73dba3e68da1806ce38a763e4b074"
         }
       ]
     },
@@ -708,7 +708,7 @@
       "evidence": [
         {
           "resource": "repo://scripts/dev-cargo.mjs",
-          "version": "repo-file-v1:sha256:487daab271b4e416a1a519909759a3232250ecd1e7956b1a1141d87c72b7a595"
+          "version": "repo-file-v1:sha256:3e550fe5fdb058b3ac8ffeee7059b590dba73dba3e68da1806ce38a763e4b074"
         }
       ]
     },
@@ -732,7 +732,7 @@
       "evidence": [
         {
           "resource": "repo://scripts/dev-cargo.test.mjs",
-          "version": "repo-file-v1:sha256:d8e02ab0151e06dcadddf559d8b88613ac9978db85235a85e9cb5cb47003f9e5"
+          "version": "repo-file-v1:sha256:279e775973c56ebf8afd74433a641e2a28c5a280cccb442519ab33fc56278443"
         }
       ]
     },
@@ -752,7 +752,7 @@
       "evidence": [
         {
           "resource": "repo://scripts/dev-cargo.mjs",
-          "version": "repo-file-v1:sha256:487daab271b4e416a1a519909759a3232250ecd1e7956b1a1141d87c72b7a595"
+          "version": "repo-file-v1:sha256:3e550fe5fdb058b3ac8ffeee7059b590dba73dba3e68da1806ce38a763e4b074"
         }
       ]
     },
@@ -1009,10 +1009,28 @@
           "version": "repo-lines-v1:sha256:114c4e452e73924742b2c556dda669944342bfed384b14ef23510c68756b05b9:eyJzZWxlY3RlZExpbmVDb3VudCI6OTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUyZTcwMmViMTExYzVjOGEzZjE5ZmQ4NzgyNWUyNmNjYWQwZGE4Nzk3MGU5MGNmY2ZmNjU0NzI4ZjQ1M2QzNDciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjI2NTFmN2UwODg4YWQxNjg2MDIyODhhZjZjODhkZjRkZTc5ZTVjMWZlZGVkNTMzMWM4NDg5ZDY3MWRkOThhZWIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY5MDlmMjZkZDY5ZmM0MWNjODE0YjU3ZmM3YjMwMzgzY2FjZDU1MTU3MTYxYzk4ODE5ZWYyNmQzYmVjOGJlM2MifQ"
         }
       ]
+    },
+    {
+      "id": "claim_fd7f4ffa707f4100a6603ab7ae7d289b",
+      "statement": "LVK開発previewは.lvk/preview/vite.config.mjsをscripts/ui4-preview.pyから読み、Cargo共有中間物は.lvk/shared/cacheから選ぶ。",
+      "evidence": [
+        {
+          "resource": "repo://.lvk/preview/vite.config.mjs",
+          "version": "repo-file-v1:sha256:439910414f3d89894143a4660f7a8b3ed69823d076790b8fbb59e348642e530e"
+        },
+        {
+          "resource": "repo://scripts/dev-cargo.mjs",
+          "version": "repo-file-v1:sha256:3e550fe5fdb058b3ac8ffeee7059b590dba73dba3e68da1806ce38a763e4b074"
+        },
+        {
+          "resource": "repo://scripts/ui4-preview.py",
+          "version": "repo-file-v1:sha256:c267142081195b2334d5ae0cf7ff5e5762bf374958a91619e76841e896c54f9d"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-07T09:24:00.725Z"
+    "at": "2026-11-07T09:46:42.639Z"
   }
 }

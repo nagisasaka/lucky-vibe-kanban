@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:cf18b5abd9d23278f614612bf09cd084f7f06a6bbfad60250d87caa25f502b4e",
+  "pageVersion": "sha256:8db02f5eb6edf9fcc7ee5b44d628d33bfa4717be52a411890acb0c18d4fb63f0",
   "claims": [
     {
       "id": "claim_ef965d37641846bda42842bf4788c8cc",
@@ -66,19 +66,11 @@
     },
     {
       "id": "claim_60df1721f8e84026a4e0f9b0d767af78",
-      "statement": "添付はupload後Session作業先へcopyし、Session/Workspace一致と.vibe-attachments内canonical pathを検証する。",
+      "statement": "添付はupload後Session作業先へcopyし、Session/Workspace一致と.lvk/attachments内canonical pathを検証する。Session working directory未指定時はWorkspace rootを基準にする。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/workspaces/attachments.rs#L169-L192",
-          "version": "repo-lines-v1:sha256:645e468aad68500562f4cab5f880eb4ea662147841274abefad1f9b4f3ce5c89:eyJzZWxlY3RlZExpbmVDb3VudCI6MjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc3NjI5NzA2MDdhODhmZTQ5MDkwN2IwNTk1NWNhOGYyZDFkYjMwMjI4OGZiZmQ4ZGI1MjIxMTMyZmYxZWI0MGUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjViN2JmYTY1NTc0YTBmMDg0OGNlODQ4NGQxODMxMGMyZmE5MWY2MTM2OTVjMDNiYzc5MDc2Yjc4YTk4YzQyNGIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE0NGIzOTAzNmRmYjIyMDg5MzQ5YWQ2ZGUzODk1NTEyNTdjMDlmNGVjMmQ5N2FiMTA0MzkwMzc0MTc3ZjlmYTgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjlkODE2YjJkMjIyMjFjOWM4NjNmMzUxMTY3Y2EwZDA1NGViZWM2YjA0NGI3ZTA0NGZlOTY5OGM5MDQxMWI2YjMifQ"
-        },
-        {
-          "resource": "repo://crates/server/src/routes/workspaces/attachments.rs#L257-L297",
-          "version": "repo-lines-v1:sha256:68e47e36fa2b61dcfe5321a1270e8669ae2be55b0127c6d9b90361965f1225f6:eyJzZWxlY3RlZExpbmVDb3VudCI6NDEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImMwZTA4NzllYTI3OTY4Y2U1OTA4MWFlZTQ2MGVhODQzMjY4Mzk2MDdiMTQwMDkzNGYxYWJiOThjNjFlZGU5YTciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk4OWY0ZDFhNzgwZGYzZDEwOTBlY2Y0NTI4NzE5NzBkZWUwZmQ4ZDgwYjNiZDhkYTk0NTUxZTA5ZWZlZDRmYTQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM1ZjZmNDY2ZTU5Y2ZjMzA3MDNjNDVmNzJhZjY1ZGU1NGFjMzYzZDM1NGNjMWEzMzMwMzUwYWNkNDUyNDM0YzQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQ2NmUyNGVmZWQxN2M2NDNjN2RhYzRiOTI0YjNlMmMwOWM2MmVjZjJhNTI2Zjg2NmVhY2NjNjI4OTdmMmY0NjkifQ"
-        },
-        {
-          "resource": "repo://crates/server/src/routes/workspaces/attachments.rs#L62-L77",
-          "version": "repo-lines-v1:sha256:55b7f1fd49596cc2726ddce5aa3b6a1f72a5dbaf3bf87faff85092662612839f:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjViZGI0NmEwZGQyNGE5M2MzMTc0NWQ0ODc0NjAxNmI4ZDUwZTI1ZWI1MWJhZTZlOGY3NzIyZDc2N2Y1NmU1ZTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNiNGNkNDMzMjcwZWQzZTU2ZjQ1N2RjOGRiMmE5ZTlmZjk5NWUxN2FiMmNjMWQzNzMzOTdkOTYwYTI2ZGQ2MWQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQwZGQzYmM1MGNmNjAwZjhiMmE2Njg0NDQwNjI5ZmRhMzVlZWFkYmMxMDUwYWQwMDA1ZjQ4YTNmYTQwMTA2OWIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjcwMzc3OTg3MTU4NDI5ZWNiYzIxMjcxZDVlNTkwODczZjRjNmEzYWY2NWYxZDk2NzRkMzI4MmU4NGNiNDc0N2MifQ"
+          "resource": "repo://crates/server/src/routes/workspaces/attachments.rs",
+          "version": "repo-file-v1:sha256:89be8a63703845e397def677ce01f5a2190c765cc90bd7e02de0aefa7e04a4b8"
         }
       ]
     },
@@ -152,7 +144,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/workspaces/attachments.rs",
-          "version": "repo-file-v1:sha256:c503e1aae4f99a2dbac97e5d8e48b934ffb8468cfbdfd969cc9667296348931b"
+          "version": "repo-file-v1:sha256:89be8a63703845e397def677ce01f5a2190c765cc90bd7e02de0aefa7e04a4b8"
         },
         {
           "resource": "repo://crates/server/src/routes/workspaces/create.rs",
@@ -425,7 +417,7 @@
       "statement": "archive済みでworktree削除済みまたは不在の場合、diffはbranchとbaseのsnapshotをReadyと共に返し、worktreeを復元しない。",
       "evidence": [
         {
-          "resource": "repo://crates/local-deployment/src/container.rs#L1844-L1857",
+          "resource": "repo://crates/local-deployment/src/container.rs#L1855-L1868",
           "version": "repo-lines-v1:sha256:3851e7e27d9df385818ed6e02b55b8b813b69629697ad5c9a2fe3ca4ab95f9de:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4MDg1ZDVkYTFmYjZjMGU0NjMxNmEzMjkzNzljYzExODdlYjhmOTNiZDMxZTg3MmMzNjM2YjczMjY4ZTlmM2UiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjBjNTJhZDY3MDk0OTVlYzE0YzYwYjJmZTc1YzQwYTVhODllMjcyMTVhOTJlOGU1MGY1M2NjNWNkZWYzYTZiYWQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijk1YzYzYWJjZjlmMmVkMjQ2YjhjMzliMDA1NWY4NmJhOTMyNDUzMmJiY2Y3Y2NkYzRkYjBhOGVkNWU1MTdhMGYifQ"
         },
         {
@@ -753,8 +745,8 @@
       "statement": "FileServiceの配置は未知ID・欠損・改変・symlinkを拒否し、保存元と既存先のサイズ/SHA-256を照合して、既存改変先を上書きせず新規先をno-clobberで公開する。",
       "evidence": [
         {
-          "resource": "repo://crates/services/src/services/file.rs#L259-L383",
-          "version": "repo-lines-v1:sha256:c9a9116f58d117dd8541922d589d638858f31a2634017aa2a9ed44a70829750b:eyJzZWxlY3RlZExpbmVDb3VudCI6MTI1LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIwZDRiMWJjNmI3YThjOGVhMjc0NjVlNmJlMTczNzE3ZWIwZTZkYjU4ODQ0Zjk1ZWI3YWVhYzRiMTBmNGJmZTY3IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJlNmIwNDQ5MTQ2OTcyMmU4MzYzYTk0ZTQwNDQ1MzhlMDEzYTJhMjE3ZTM2YjFlNTY4YmE2MGFjYjdiNGM4ZjJlIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIxNjJlZTU3ZTQxYThjMjBhZTAxNjRkZjI2MTQzOWRjYzQ5OWQzNTIwODM0MTUxNTE2ZDA0N2U4ZGVhZThhNDY2IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiIxNjJlZTU3ZTQxYThjMjBhZTAxNjRkZjI2MTQzOWRjYzQ5OWQzNTIwODM0MTUxNTE2ZDA0N2U4ZGVhZThhNDY2In0"
+          "resource": "repo://crates/services/src/services/file.rs",
+          "version": "repo-file-v1:sha256:42dae047c9532b531f72bb1102f0ad8b2875dadc3dd7498126946ec0add73eee"
         }
       ]
     },
@@ -849,10 +841,24 @@
           "version": "repo-file-v1:sha256:bed1741f8e8bc24ba276b8aff419593388945bca886dff6ab8973374b94b1fe4"
         }
       ]
+    },
+    {
+      "id": "claim_ba452e9265d34252950fe84139a34418",
+      "statement": "添付配置は親.lvkの通常directoryと追跡済み実行時pathを検査し、runtime ignoreを.lvk/.gitignoreに集約して添付子のignoreを生成しない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/services/src/services/file.rs",
+          "version": "repo-file-v1:sha256:42dae047c9532b531f72bb1102f0ad8b2875dadc3dd7498126946ec0add73eee"
+        },
+        {
+          "resource": "repo://crates/utils/src/lvk_directory.rs",
+          "version": "repo-file-v1:sha256:956d8ee51fa7a0a146157d627ed95d6722587f0660975da3fa86e4de3824c9b4"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-06T17:36:48.866Z"
+    "at": "2026-11-07T09:46:42.639Z"
   }
 }

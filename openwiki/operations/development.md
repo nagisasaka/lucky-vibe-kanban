@@ -4,6 +4,8 @@ title: 開発・検証・運用文書の使い分け
 description: 起動形態、検証の適用範囲、型と SQLx の更新、DB 回復の制約、リリース文書の位置づけを整理する。
 tags: [development, testing, database, releases]
 sources:
+  - id: openwiki-source-c8500b43a8153df40d055c87
+    resource: repo://.lvk/preview/vite.config.mjs
   - id: openwiki-source-651d1fb6c9e49916a916ab51
     resource: repo://Cargo.toml
   - id: openwiki-source-b41a0c4c19395b75cde58592
@@ -106,6 +108,8 @@ sources:
     resource: repo://scripts/prepare-db.js
   - id: openwiki-source-fae34e38f06cb798a007a45b
     resource: repo://scripts/start-web-preview.sh
+  - id: openwiki-source-bfd53bb2381141e59ae3273f
+    resource: repo://scripts/ui4-preview.py
   - id: openwiki-source-b05e5a1a5a499bbc87e50965
     resource: repo://skills/lvk-orchestration/references/auto-merge.md
   - id: openwiki-source-8dce97867754548fb32565eb
@@ -154,10 +158,10 @@ sources:
     resource: repo://tests/workflow/playwright.config.ts
   - id: openwiki-source-1d08facbf90704cd4c4c54d8
     resource: repo://tests/workflow/specs/card-context.spec.ts
-generated: { by: "codex", at: "2026-11-07T09:24:00.725Z" }
+generated: { by: "codex", at: "2026-11-07T09:46:42.639Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-07T09:24:00.725Z
+    at: 2026-11-07T09:46:42.639Z
 ---
 
 # 開発・検証・運用文書の使い分け
@@ -208,7 +212,7 @@ instance / bundle 作成前に frontend を build する。常用 dev bundle は
 | 保存・設定 | 契約 |
 | --- | --- |
 | 最終 target | 当該 source checkout の `target/` |
-| Cargo 中間物 | `.lvk-shared/cache` があれば canonical path 配下の単一 `lvk-dev-cargo-build`。Workspace ごとの hash を挟まない |
+| Cargo 中間物 | `.lvk/shared/cache` があれば canonical path 配下の単一 `lvk-dev-cargo-build`。Workspace ごとの hash を挟まない |
 | 共有リンクなし | 中間物も checkout の `target/` に置き、警告する。instance の source snapshot も同じ規則 |
 | compiler cache | 開発入口はsccacheの探索・起動・設定を行わずrustcを直接使う。明示wrapperがあれば設定を変更せず拒否する |
 
@@ -395,7 +399,7 @@ npm から別バージョンを取得しない。
 | --- | --- | --- |
 | 実行設定 | `LVK_*` を読み書きし、process host へそのまま渡す。旧接頭辞への変換はしない。 | [ExecutionEnv](../../crates/executors/src/env.rs)、[HostExecutionEnv](../../crates/local-deployment/src/process_host.rs) |
 | Card Context | `lvk:` marker を読み書きする。説明の編集では保存済み指示と明示的 opt-out を維持する。 | [Card Context](../../packages/web-core/src/features/pipeline/model/cardContext.ts) |
-| 共有ファイル | `.lvk-shared` から repository storage を参照する。追跡済み mount・別 repository 向きのリンク・ユーザーファイルを上書きしない。watcher、Git diff、Docker context から除外する。 | [共有リンク](../../crates/workspace-manager/src/shared_resources.rs)、[除外](../../crates/utils/src/path.rs) |
+| 共有ファイル | `.lvk/shared/` から repository storage を参照する。追跡済み mount・別 repository 向きのリンク・ユーザーファイルを上書きしない。watcher、Git diff、Docker context から除外する。 | [共有リンク](../../crates/workspace-manager/src/shared_resources.rs)、[除外](../../crates/utils/src/path.rs) |
 | Git publication | `LVK-Memory-Source` / `LVK-Memory-Integration` / `LVK-Wiki-Publication` trailer を記録し、復旧時も同じ marker を検索して重複 commit を防ぐ。 | [Memory 復旧](../../crates/services/src/services/repository_memory.rs)、[Wiki 公開](../../crates/services/src/services/openwiki.rs) |
 | publication lock | repository 共通の `lvk-publication.lock` 一つを保持する。この lock は外部の任意 Git 操作までは制御しない。 | [GitPublicationGuard](../../crates/git/src/publication.rs) |
 | サーバー | Compose project/service は `lvk-server` / `lvk`。接続先は IP・DNS 共通で `LVK_HOST`、Certbot lineage は `lvk`。 | [Compose](../../deploy/server/compose.yaml)、[ACME](../../deploy/server/acme.py) |
@@ -541,3 +545,10 @@ LOCAL-242統合ではコード候補 `a1f87c7c93e8818aa84d4213788c1429b723ecd7` 
 依存をfrozen lockfileで準備し、`pnpm run chat:test`、agent-runtimeのcanonical conversation/timelineとsessionDraftのVitest、影響packageの型検査・lintを選ぶ。built-app経路では先に `pnpm --dir packages/local-web run build` と `node scripts/dev-cargo.mjs build --locked --bin server --bin agent-process-host` を行い、`python3 tests/chat/run-isolated.py` を実行する。runnerは固有のinstance・loopback portを使い、finallyで停止・port閉鎖を確認する。実Codex steeringを含むため認証済み環境の明示的受入として扱い、共有devへ向けない。[runner](../../tests/chat/run-isolated.py)
 
 `isolated.spec.ts` の合成AgentRun履歴、実Scratchと制御follow-up、実Codex steeringは別の証拠である。prepend座標・最新追従・遅延Workspace応答、末尾改行・IME・Enter設定、再接続後の一度だけのuser inputを確認し、component成功を実provider成功へ拡張しない。[試験定義](../../tests/chat/isolated.spec.ts)
+
+
+### 管理ファイル集約後の開発入口
+
+開発用preview設定は `.lvk/preview/vite.config.mjs` に置き、`scripts/ui4-preview.py` もこの場所を参照する。一般利用者Repoへpreview機能を追加する変更とは区別する。共有設定を隠さないため `.lvk/` 全体をwatcher・検索・snapshotから除外せず、`shared/`・`attachments/` の実行時子だけを除外する。旧配置の自動移行や既存データ整理は行わない。[preview設定](../../.lvk/preview/vite.config.mjs)・[起動参照](../../scripts/ui4-preview.py)・[所有境界](../concepts/workspace.md#lvkの所有境界)
+
+LOCAL-346単独のコード候補 `3b88263a13d2e15606ea445c1a6753919dc08303` は固定base `5dc268936` へsource `35e96363` を無競合統合した。候補上の管理実行でCargo/release fixture 6件とPython Runner 10件、差分空白・選択履歴を確認した。release初回はyaml不足で失敗し、offline固定依存導入後に同一command全体が成功した。Rust/Frontend全suiteと実provider/全UIは既存sourceおよび3本結合の証拠・無競合差分を根拠に担当判断で再実行を省略した。旧候補の成功を本候補のpassに置換しない。348・344・独立339は追加採用していない。環境切替・再起動・既存実データ移行/削除は行っていない。
