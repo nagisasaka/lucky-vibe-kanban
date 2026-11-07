@@ -1866,12 +1866,33 @@ async fn delete_issue(
     State(deployment): State<DeploymentImpl>,
     Path(issue_id): Path<Uuid>,
 ) -> Result<ResponseJson<DeleteResponse>, ApiError> {
-    sqlx::query("DELETE FROM local_issues WHERE id = ?")
-        .bind(issue_id)
-        .execute(&deployment.db().pool)
-        .await?;
+    delete_local_issue_outcome(&deployment.db().pool, issue_id, None)
+        .await
+        .map_err(IssueMutationError::into_api_error)?;
 
     Ok(ResponseJson(DeleteResponse { txid: txid() }))
+}
+
+/// The existing physical Board deletion, including its FK/trigger constraints.
+/// Remote callers supply a Project to enforce the target boundary atomically;
+/// HTTP callers retain their historical success for an already absent Issue.
+pub(crate) async fn delete_local_issue_outcome(
+    pool: &SqlitePool,
+    issue_id: Uuid,
+    project_id: Option<Uuid>,
+) -> Result<bool, IssueMutationError> {
+    let mut tx = pool.begin().await?;
+    let deleted =
+        sqlx::query("DELETE FROM local_issues WHERE id = ? AND (? IS NULL OR project_id = ?)")
+            .bind(issue_id)
+            .bind(project_id)
+            .bind(project_id)
+            .execute(&mut *tx)
+            .await?
+            .rows_affected()
+            == 1;
+    tx.commit().await.map_err(issue_commit_failure)?;
+    Ok(deleted)
 }
 
 async fn create_tag(

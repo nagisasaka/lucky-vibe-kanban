@@ -53,6 +53,13 @@ struct UpdateArgs {
 }
 #[derive(Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
+struct DeleteArgs {
+    project_id: Uuid,
+    request_id: Uuid,
+    issue_id: Uuid,
+}
+#[derive(Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
 struct OperationArgs {
     project_id: Uuid,
     request_id: Uuid,
@@ -63,6 +70,10 @@ pub(super) fn tools() -> Vec<Tool> {
         definition::<CreateArgs>(
             "create_issue",
             "Create a normal Issue containing agreed requirements; does not create a Workspace or start implementation. Use one stable request_id and inspect get_operation after a lost response.",
+        ),
+        definition::<DeleteArgs>(
+            "delete_issue",
+            "Permanently delete an Issue and related database records according to existing Board constraints. Unlike archive, the Issue cannot be restored. Does not physically delete Workspace directories or worktrees. Obtain explicit user authorization for this target and respect host confirmation controls. Reuse the exact request_id after response loss and inspect get_operation; never retry an unknown outcome with a new ID.",
         ),
         definition::<UpdateArgs>(
             "update_issue",
@@ -344,6 +355,36 @@ pub(super) async fn call(
                     Err(error) => domain_failure(error),
                 }
             }).await?
+        }
+        "delete_issue" => {
+            let args: DeleteArgs = arguments(input.clone())?;
+            remote.require_project(args.project_id).await?;
+            remote
+                .operations()
+                .submit(
+                    key,
+                    args.request_id,
+                    args.project_id,
+                    name.into(),
+                    input,
+                    json!({"project_id":args.project_id,"issue_id":args.issue_id}),
+                    move |_| async move {
+                        match local_remote::delete_local_issue_outcome(
+                            &owned.pool,
+                            args.issue_id,
+                            Some(args.project_id),
+                        )
+                        .await
+                        {
+                            Ok(true) => ("succeeded", json!({"deleted_issue_id":args.issue_id})),
+                            Ok(false) => domain_failure(local_remote::IssueMutationError::Failed(
+                                ApiError::BadRequest("Issue not found".into()),
+                            )),
+                            Err(error) => domain_failure(error),
+                        }
+                    },
+                )
+                .await?
         }
         "update_issue" => {
             let args: UpdateArgs = arguments(input.clone())?;

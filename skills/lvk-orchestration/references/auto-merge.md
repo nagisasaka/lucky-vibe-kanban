@@ -38,6 +38,22 @@ For the same objective, first assess the existing Issue, Workspace and Session u
 
 Apply these rules to every Issue or Workspace archive, including ordinary archive requests unrelated to a transfer. First verify the deployed implementation's behaviour; do not assume archiving physically deletes a worktree. If it does, even an explicit MCP archive request requires one confirmation identifying the target and worktree deletion scope, unless the user has already approved that same target and scope. Do not execute while the target is busy or bypass a busy rejection. Verify and report actual archive and physical-deletion outcomes separately, including deletion failures. This confirmation does not replace other deletion safeguards.
 
+## Explicit Issue deletion
+
+Verify the deployed catalog before using `delete_issue`. This physically deletes
+the Issue and related database records under existing Board constraints; unlike
+archive, it cannot be reversed by unarchive. It does not physically delete
+Workspace directories or worktrees. Obtain explicit authorization for the exact
+Issue and respect host confirmation controls; implementation, merge or transfer
+permission does not authorize deletion.
+
+Remote MCP takes `project_id`, `issue_id` and a stable `request_id`, requiring
+`lvk:read`, `lvk:write` and current Project access. Recover a lost response with
+`get_operation(project_id, request_id)` or the identical original request.
+Accepted/running/uncertain is not successful deletion. A new request for an absent
+Issue fails; replaying a successful request returns the original receipt. Never
+use a new request ID to retry an unknown outcome. stdio retains `delete_issue(issue_id)`.
+
 ## Cleanup completion gate
 
 For an AI-directed complete transfer that leaves the old Issue Cancelled, record cleanup explicitly for the old Issue and every child Workspace. Confirm idle state and that required results, evidence and uncommitted work do not survive only in the old folders. Apply the general Issue and Workspace archiving rules above; this gate adds responsibility for cleanup after a transfer.

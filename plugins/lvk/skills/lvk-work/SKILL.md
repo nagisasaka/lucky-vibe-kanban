@@ -82,6 +82,24 @@ LVK. Copy only the agreement needed for implementation. If access or scopes are
 missing, use the supported connection/authorisation flow; do not request secrets
 in chat or bypass the host's confirmation controls.
 
+## Issue deletion
+
+`delete_issue` physically deletes the Issue and related database records using
+existing Board foreign-key and trigger rules. Unlike Issue archive, deletion
+cannot be undone by unarchive. It does not physically delete Workspace directories
+or worktrees. Obtain explicit user authorization for the exact target; respect
+host confirmation controls. Implementation or merge permission is not deletion
+permission.
+
+Remote MCP requires `project_id`, `issue_id` and a stable `request_id`, with
+`lvk:read`, `lvk:write` and current Project access. After a lost response, inspect
+`get_operation(project_id, request_id)` or resend the identical request with the
+same ID. Check the receipt status: accepted/running is not success, failed is not
+deleted, and uncertain requires inspection of the original receipt and target.
+Never retry an unknown outcome with a new ID. A missing target is a failed receipt,
+while a replay of a successful deletion returns its original success.
+stdio retains its existing `delete_issue(issue_id)` HTTP contract.
+
 ## Manual Workspace archive
 
 Archive is a user-confirmed operation that releases the managed worktree while
