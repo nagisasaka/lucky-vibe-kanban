@@ -17,8 +17,8 @@ static IO_LOCK: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(());
 
 // This is a point-in-time check, not a lock against later launches or external tools.
 // The settings UI asks the user to stop all consumers before confirming deletion.
-async fn repository_busy(pool: &sqlx::SqlitePool, repo_id: Uuid) -> Result<bool, sqlx::Error> {
-    sqlx::query_scalar::<_, bool>(r#"
+async fn repository_busy(pool: &sqlx::SqlitePool, repo_id: Uuid) -> Result<bool, ApiError> {
+    let busy = sqlx::query_scalar::<_, bool>(r#"
         SELECT EXISTS (
             SELECT 1 FROM workspace_repos wr
             JOIN agent_runs ar ON ar.workspace_id = wr.workspace_id
@@ -35,7 +35,32 @@ async fn repository_busy(pool: &sqlx::SqlitePool, repo_id: Uuid) -> Result<bool,
             JOIN execution_processes ep ON ep.session_id = s.id
             WHERE wr.repo_id = ? AND ep.status = 'running'
         )
-    "#).bind(repo_id).bind(repo_id).fetch_one(pool).await
+    "#).bind(repo_id).bind(repo_id).fetch_one(pool).await?;
+    if busy {
+        return Ok(true);
+    }
+    // Owners exist before workspace_repos or an AgentRun is created. Include the
+    // durable repository identity as well as materialised workspace membership.
+    let owners: Vec<Uuid> = sqlx::query_scalar(
+        "SELECT w.id FROM workspaces w
+         WHERE json_extract(w.execution_owner,'$.kind') IN ('openwiki_sync','openwiki_bootstrap')
+           AND (json_extract(w.execution_owner,'$.repository_id')=?
+                OR EXISTS(SELECT 1 FROM workspace_repos wr WHERE wr.workspace_id=w.id AND wr.repo_id=?))",
+    )
+    .bind(repo_id.to_string())
+    .bind(repo_id)
+    .fetch_all(pool)
+    .await?;
+    for workspace_id in owners {
+        if super::openwiki::preparation::is_active(workspace_id)
+            || !services::services::workspace_usage::cleanup_allowed(pool, workspace_id)
+                .await
+                .map_err(|error| ApiError::Io(std::io::Error::other(error.to_string())))?
+        {
+            return Ok(true);
+        }
+    }
+    Ok(false)
 }
 
 pub async fn get(
@@ -61,7 +86,7 @@ pub async fn clear(
     let repo = d.repo().get_by_id(&d.db().pool, repo_id).await?;
     let guard = IO_LOCK.lock().await;
     if repository_busy(&d.db().pool, repo_id).await? {
-        return Err(ApiError::Conflict("Repository has active or unsettled Runs / processes. Stop them before clearing shared data.".into()));
+        return Err(ApiError::Conflict("Repository has active or unsettled Runs / processes / Wiki maintenance. Finish them before clearing shared data.".into()));
     }
     let root = utils::path::shared_resources_dir(&repo.name, repo.id);
     let usage = tokio::task::spawn_blocking(move || {
@@ -84,6 +109,7 @@ mod tests {
         // Minimal isolated schema for the activity query: no live LVK DB is opened.
         sqlx::raw_sql(
             "CREATE TABLE workspace_repos (workspace_id BLOB, repo_id BLOB);
+            CREATE TABLE workspaces (id BLOB, execution_owner TEXT);
             CREATE TABLE agent_runs (id BLOB, workspace_id BLOB);
             CREATE TABLE agent_run_state (agent_run_id BLOB, status TEXT);
             CREATE TABLE agent_run_attempts (id BLOB, agent_run_id BLOB);
