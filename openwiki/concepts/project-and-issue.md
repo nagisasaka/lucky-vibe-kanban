@@ -87,7 +87,7 @@ sources:
 generated: { by: "codex", at: "2026-11-07T09:17:18.907Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-07T09:46:42.639Z
+    at: 2026-11-07T10:04:45.638Z
 ---
 
 # Project・Issue と実施の関係

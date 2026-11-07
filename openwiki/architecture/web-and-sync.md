@@ -286,10 +286,10 @@ sources:
     resource: repo://tests/workspace-navigation/run-isolated.py
   - id: openwiki-source-b87e3253bd1458a0091f8587
     resource: repo://tests/workspace-navigation/workspace-navigation.spec.ts
-generated: { by: "codex", at: "2026-11-06T17:36:48.866Z" }
+generated: { by: "codex", at: "2026-11-07T10:04:45.638Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-07T09:56:11.730Z
+    at: 2026-11-07T10:04:45.638Z
 ---
 
 # Web の実行環境と同期
@@ -657,3 +657,8 @@ archive 欄表示、archive 対象への遷移、Issue の Workspace 一覧表�
 ### Wikiツリーの高さ配分
 
 KanbanとWorkspaceの共通 `UtilitySidebar` は縦flexで、各項目を縮めず外側の縦スクロールを維持する。Wiki項目は展開ボタンの `aria-expanded=true` に対応するCSSで残り高さを使い、固定 `h-80` を持たない。Wiki内navはsize containmentと `1lh` の最小高で長いツリーの内容高を親の最小高から除外し、操作欄と最低1行を残して内部スクロールする。小さい画面で全項目が収まらない場合は外側スクロールで到達する。[共通配置](../../packages/web-core/src/shared/components/UtilitySidebar.tsx)・[Kanban](../../packages/web-core/src/pages/kanban/ProjectUtilities.tsx)・[Workspace](../../packages/web-core/src/pages/workspaces/RightSidebar.tsx)
+
+
+### Repository設定操作後のcanonical Wiki表示
+
+Project側のWiki providerは既存のrepository-memory query成功通知を購読し、選択中repoのcontrollerを再読込する。新しいpoll loopは追加しない。削除後はcanonical snapshotが未生成を返すため、古いmain Wikiを表示し続けない。設定ファイル編集・保存とDanger Zoneの操作は[OpenWiki保守](../operations/openwiki-maintenance.md)を参照する。[表示の再読込](../../packages/web-core/src/features/wiki/ui/WorkspaceWikiProvider.tsx)

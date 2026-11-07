@@ -22,6 +22,8 @@ sources:
     resource: repo://crates/server/src/routes/local_remote/issue_archive.rs
   - id: openwiki-source-231241ac3c842dcd67525890
     resource: repo://crates/server/src/routes/openwiki.rs
+  - id: openwiki-source-3b873a675f85754e9183d162
+    resource: repo://crates/server/src/routes/openwiki/management.rs
   - id: openwiki-source-a34361c91f1fbaa3ea42afc5
     resource: repo://crates/server/src/routes/openwiki/project_context.rs
   - id: openwiki-source-16c3e7d25cc14f30f21d7d5a
@@ -36,6 +38,8 @@ sources:
     resource: repo://crates/services/src/services/openwiki/bootstrap.rs
   - id: openwiki-source-bef089692ac7606992050919
     resource: repo://crates/services/src/services/openwiki/bootstrap/reports.rs
+  - id: openwiki-source-a2aa8cef2bdada18779e5370
+    resource: repo://crates/services/src/services/openwiki/management.rs
   - id: openwiki-source-c4df16e7e579927d462857d7
     resource: repo://crates/services/src/services/openwiki/setup/integration.rs
   - id: openwiki-source-110c99f4b05152335c067c71
@@ -44,10 +48,10 @@ sources:
     resource: repo://crates/services/src/services/repository_memory.rs
   - id: openwiki-source-a171e1a170f941fa2a4ba003
     resource: repo://crates/utils/src/repository_memory.rs
-generated: { by: "codex", at: "2026-11-06T19:18:22.957Z" }
+generated: { by: "codex", at: "2026-11-07T10:04:45.638Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-07T09:46:42.639Z
+    at: 2026-11-07T10:04:45.638Z
 ---
 
 # Change Manifest・Run完了とWikiの責務
@@ -166,3 +170,12 @@ Change Manifest の goal・判断・却下案は意図を調べる入口であ�
 ## 自動マージの setup 原本は公開記憶と別の証拠
 
 repository shared storage の `integration-wiki-setups/<integration UUID>.json` は、begin前の原本とowner/code identity、復元phase、過去と最終Wiki SHAを保持する。公開ManifestやWiki本文の代わりではなく、host receiptの原本digestとcode treeに照合する復元用journalである。廃止済みWorkspace MemoryやBootstrap索引をこの原本として流用しない。準備・writer収束・限定復元の順序と再開時の拒否境界は [自動マージ](formal-integration.md#begin-前の原本準備と-host-の限定復元)を参照する。[保存先](../../crates/utils/src/repository_memory.rs#L781-L805)・[identityと原本検証](../../crates/services/src/services/openwiki/setup/integration.rs#L259-L334)
+
+
+## リポジトリ設定ファイルと生成物の所有
+
+LOCAL-344は利用者の決定として、執筆指示 `openwiki/INSTRUCTIONS.md` と探索除外 `.openwikiignore` を同じ操作体系で実ファイルへ全文保存し、保存・削除・再構築を分ける。保存は次回以降の入力変更であり、生成や同期を開始しない。共通既定はリセット元に限り、設定差分の階層合成は行わない。[設定保存](../../crates/server/src/routes/openwiki/management.rs)
+
+削除・置換する生成集合は既存manifest、生成frontmatter、管理索引・メタデータから識別し、openwiki全体を消さない。設定と不明な人間管理文書を保持し、通常writerによる人間文書の本文変更や生成manifestへの取り込みも公開前に拒否する。対象文書が本家の生成対象になる場合は、保存済みignoreで除外してから再試行する。[生成集合](../../crates/services/src/services/openwiki/management.rs)・[公開前検査](../../crates/services/src/services/openwiki.rs)
+
+削除成功はDBのsource/Wiki鮮度とcheckpointを未生成へ戻し、generation_suppressedで通常Syncと自動マージからの再生成を抑止する。設定保存・削除のfile_operationは既存専用Workspaceと公開checkpointを使い、結果とstateを同一DB transactionで確定する。再構築は開始時公開先SHAをrebuild_referenceとして固定し、旧Wikiの知識を現在のコード・テスト・設定へ照合する。コードだけでは失われた運用知識や理由を完全復元できないという利用者の意図を保ち、旧記述を無条件に継承しない。[操作と復旧手順](../operations/openwiki-maintenance.md)

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:63af24d6df8ad77756404058d5387e87916bee936a26e61f4c9a38e54f7a7f57",
+  "pageVersion": "sha256:c6dfede704c45e50dee4d52c9f7f658fd672036dc8cd47c4b9677327e25ec932",
   "claims": [
     {
       "id": "claim_ef965d37641846bda42842bf4788c8cc",
@@ -766,7 +766,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/project_utilities.rs",
-          "version": "repo-file-v1:sha256:6d622389f9539ec232f2b3efba321c01f1de638abca456be4083267c10a836be"
+          "version": "repo-file-v1:sha256:4b4bd515523d155aedb1217f28086812b35e373932ceb94195539dd899a5bd89"
         },
         {
           "resource": "repo://packages/web-core/src/pages/kanban/ProjectKanban.tsx",
@@ -911,10 +911,24 @@
           "version": "repo-file-v1:sha256:7eec8d3f03b3607c0bd97b3f447a3495b4c6ab49849f75c19db5cb7743c60556"
         }
       ]
+    },
+    {
+      "id": "claim_4c4f713985c249dd9005e6a7e9a83fac",
+      "statement": "Kanban main Wiki表示はcanonical生成状態を使い、削除後に保持したINSTRUCTIONSや人間文書だけでは生成Wikiを再表示しない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/routes/openwiki.rs#L144-L166",
+          "version": "repo-lines-v1:sha256:701c1f3e1ddeff532e5316b06d2bea6a1507a12caf4a5b448dd663724dd4be58:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUyYzhhNTg2YzM1ZGFhZDE3MmM5ZjcxOTM2MGNjZDJiYTlhMDZiZTVmMTU2ZjczNjFjZDhmM2Q4NGExMzcxNjciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjcyMTQ3Yzc5YjZhNWEwNDRiZDg5MTA2YzNiYWMwMTczNGM1NjliNTJmZDhlMWMxM2I0OTE0NGQ5Nzg2ZGUyMDciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQyYWRlNzE4ZWJjMDZlZmFkMjhmMzU2MmY2NDQyNDFhYTBjNWUxNWUyZjVlYWZlNjNjMGQ1ZTg3NjI2YzFhZjAifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/project_utilities.rs#L85-L94",
+          "version": "repo-lines-v1:sha256:9cd68dfb9c1673692cd7e1bcb44fc40a6761b766345c18057614d55eefacb220:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdjMmE3ZThlZjRjNDQxZmNjMDcwMGVhZTA1OWZkYmM3Y2UzZTQ1NTY3NTYyMTgzYzExMjE1ODAyZjE1MTlhYzYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAyNzM4NzRkZWVkZjQ5OTJmYjMxMDg4Yjk0Mzc3ZTRkMTIxNGEwYTQ5MTIwNjU2ZjY0ZDVmMTQwZDExNDdhMmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijc5MWVlZmI0NWY3YWE3MjczN2NiNDU0MmYwZTc3YWJhZGJjMGJlNGE1ZTkwYWQ5MDliNmY3NTk3MzY0YzQ1NWQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjgwNjljMDczMjUxZTYwNzc5ZmRjNTIzMTk0ZTUxY2FjZTU1MmUyMTgwNDQwMGM2NGIzN2NhMGQ5NjE0NTEyOTcifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-07T09:56:11.730Z"
+    "at": "2026-11-07T10:04:45.638Z"
   }
 }

@@ -181,7 +181,7 @@ sources:
 generated: { by: "codex", at: "2026-11-06T15:15:40.431Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-07T09:46:42.639Z
+    at: 2026-11-07T10:04:45.638Z
 ---
 
 # Session・AgentRun・RunAttempt

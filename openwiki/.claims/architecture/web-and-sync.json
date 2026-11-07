@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:4b9be7340a40dadeef4c73865f8ff3710e1e98a6f2d5328fd22317645dcfc5f6",
+  "pageVersion": "sha256:b40206eec1c0b397bc2f01442530ee093da6698dfb939f8a0b2dd378e4be555a",
   "claims": [
     {
       "id": "claim_cd547b65737e432fb2cf718c4992aa97",
@@ -102,7 +102,7 @@
         },
         {
           "resource": "repo://packages/web-core/src/features/wiki/ui/WorkspaceWikiProvider.tsx",
-          "version": "repo-file-v1:sha256:8aa8bcff041475f283e4734eb01a941eacf8b8f9aff62ab0f190ce83e42b973a"
+          "version": "repo-file-v1:sha256:20ea69cd53746abe16ea0d35271ec8cec3df0e798b0e200fceaeb31c387ef73b"
         }
       ]
     },
@@ -1635,10 +1635,20 @@
           "version": "repo-file-v1:sha256:f32a11e6dbcee2604229564189904a93dd4f872dfd653f88fdb486e952f528fd"
         }
       ]
+    },
+    {
+      "id": "claim_057f937a2a7b4bb8b32eedb387e9c8d9",
+      "statement": "ProjectのWiki providerは既存repository-memory queryの成功通知で選択中repoを再読込し、別のpoll loopを追加しない。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/features/wiki/ui/WorkspaceWikiProvider.tsx#L123-L140",
+          "version": "repo-lines-v1:sha256:b0e5cd9956a301cec4e1b59cece96bf6a0a3de67a7b1b1e943edae4e3fcdae3d:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkzN2M2ZTZhNTYwODNlYTg3YzM3YjVlNzZmNWI4MDM5ODZiYTQwNWM4YTQ5YWE1ZjVmOTM4NmNiNzBhZTI0NWIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImViZWJkNGUyYjY0MDIxOGYyOTg2NzRiYWNiYmY5YjhkYWFhNDYyMzk5NjViNGEyYjEyM2I3MjhlNzk2MjQ1NWYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjdhZmIwMWQ0MDJkMzJlMWRkOTkwNzNhOGEwY2JiNjhhYmU2ZmRjNTFjMzQ0MWI3MWI5ZTQ4MDdiMGMxZWEyMTQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBiZDRmMjFmZWI3NWUwYzFmNmQ5ZWY3ZDYyODlmNTE3ODA4MzI1ZjVjZWVkNDFhNDk2YjE0MDZlYjM2MDdhNGEifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-07T09:56:11.730Z"
+    "at": "2026-11-07T10:04:45.638Z"
   }
 }

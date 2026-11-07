@@ -24,6 +24,8 @@ sources:
     resource: repo://crates/server/src/routes/integrations/runtime.rs
   - id: openwiki-source-65c0f36670a161dc05040e69
     resource: repo://crates/server/src/routes/mod.rs
+  - id: openwiki-source-231241ac3c842dcd67525890
+    resource: repo://crates/server/src/routes/openwiki.rs
   - id: openwiki-source-f178fbdd0db19291b533ad6c
     resource: repo://crates/server/src/routes/project_utilities.rs
   - id: openwiki-source-c1a5c9bda8d34af222d811c1
@@ -176,10 +178,10 @@ sources:
     resource: repo://tests/server/specs/workspace-search.spec.ts
   - id: openwiki-source-dcac74ef871fd02e6315fa93
     resource: repo://tests/workflow/specs/diff-tree.spec.ts
-generated: { by: "codex", at: "2026-11-07T09:56:11.730Z" }
+generated: { by: "codex", at: "2026-11-07T10:04:45.638Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-07T09:56:11.730Z
+    at: 2026-11-07T10:04:45.638Z
 ---
 
 # ファイル・差分・プレビュー・端末の境界
@@ -449,3 +451,8 @@ Kanban / Workspace の右サイドバーで **DISK** を開くと、関連Reposi
 削除直前の利用中判定はProjectで絞らず、同RepositoryのRun状態、予約・終了未確認のprocess、runningのExecutionProcessを参照する。AgentRunがまだない `openwiki_sync` / `openwiki_bootstrap` ownerも、ownerのrepository_idまたはworkspace_reposから特定し、既存の準備中判定とcleanup_allowedで未完了なら409を返す。完了済みownerが履歴に残るだけでは恒久的に拒否しない。これはpoint-in-timeチェックであり、後続起動・外部ツールへの排他保証ではない。独自の包括追跡・分散lock・保留queueはない。[利用中判定](../../crates/server/src/routes/shared_storage.rs#L18-L100)
 
 変更時の検証入口はutilsの隔離ファイルfixture、serverのbusy単体と `shared_storage_http_tests.rs` の隔離HTTP/SQLite、[browser fixture](../../tests/shared-storage/browser.mjs)である。persistent・別Repository・リンク保持、CSRF、AgentRunなし保守owner、失敗と0の区別、確認/取消・容量更新を扱う。実データの削除や全製品UIの証明ではない。今回の統合候補では差分ファイルと固定sourceの一致・346修正保持・差分空白を実行確認し、ユーザー指定により重複suiteを省略した。過去のsource/独立結合試験は別SHAの証拠であり、この候補のテスト成功とは呼ばない。
+
+
+### 削除後のcanonical Wiki表示
+
+Kanbanのmain Wiki APIはcanonical生成状態を使い、生成Wiki削除後に残るINSTRUCTIONSや人間管理文書だけでWikiを再表示しない。設定の既存状態取得が成功すると選択中repoの表示を再読込する。再構築中は公開成功まで現行Wikiを参照できる。設定・削除・全体再構築の操作と回復は[OpenWiki保守](openwiki-maintenance.md)で確認する。[main API](../../crates/server/src/routes/project_utilities.rs#L85-L94)・[未生成snapshot](../../crates/server/src/routes/openwiki.rs#L144-L166)

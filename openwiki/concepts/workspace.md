@@ -68,6 +68,8 @@ sources:
     resource: repo://crates/server/src/routes/openwiki.rs
   - id: openwiki-source-a34361c91f1fbaa3ea42afc5
     resource: repo://crates/server/src/routes/openwiki/project_context.rs
+  - id: openwiki-source-f1f6d741731d4c0b4e9e6cac
+    resource: repo://crates/server/src/routes/shared_storage.rs
   - id: openwiki-source-9d283785aa68b40f3cd1ceb2
     resource: repo://crates/server/src/routes/workspaces/archive_processes.rs
   - id: openwiki-source-15fe6957ffd50a6292794c19
@@ -126,10 +128,10 @@ sources:
     resource: repo://scripts/dev-cargo.mjs
   - id: openwiki-source-c6d955097c4a7a9e7b1873ee
     resource: repo://tests/server/specs/workspace-search.spec.ts
-generated: { by: "codex", at: "2026-11-07T09:46:42.639Z" }
+generated: { by: "codex", at: "2026-11-07T10:04:45.638Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-07T09:46:42.639Z
+    at: 2026-11-07T10:04:45.638Z
 ---
 
 # Workspace と Repository
@@ -361,3 +363,8 @@ archive失敗には `physical_deletion_may_have_occurred` と `archive_commit_co
 ## 複数 Repo の作成操作
 
 Workspace の作成画面で Project を選び、対象 Repo を追加してそれぞれの target branch を指定する。Repo ごとの Git 操作・差分・認証は独立している。会話を分ける場合は同じ Workspace で New Session を選ぶ。ファイルも分けたい場合は別 Workspace を作り、Session の追加を物理隔離の代用にしない。[Repo 選択](../../packages/web-core/src/shared/components/CreateModeRepoPickerBar.tsx)・[Session](session-and-agent-run.md)
+
+
+### AgentRunのないWiki設定・削除の保護
+
+設定保存・削除は既存openwiki_sync ownerの専用Workspaceで実行し、model AgentRunの有無を稼働判定にしない。保守準備予約中、またはmaintenance_workspace_idが一致してfile_operation・active_run・bootstrapが未確定なら、archiveと用途cleanupを拒否する。348の共有cache/tmp cleanupもこのownerを確認するため、owner結果だけが先に終端でも途中の公開物を消さない。保守状態と準備guardが解消した後に既存cleanup可否へ戻る。[archive](../../crates/server/src/routes/workspaces/archive.rs#L56-L105)・[用途解放](../../crates/services/src/services/workspace_usage.rs#L313-L381)・[共有削除の保護](../../crates/server/src/routes/shared_storage.rs)

@@ -42,6 +42,8 @@ sources:
     resource: repo://crates/server/src/routes/local_remote/issue_archive.rs
   - id: openwiki-source-231241ac3c842dcd67525890
     resource: repo://crates/server/src/routes/openwiki.rs
+  - id: openwiki-source-3b873a675f85754e9183d162
+    resource: repo://crates/server/src/routes/openwiki/management.rs
   - id: openwiki-source-391f34050223d13f679b3793
     resource: repo://crates/server/src/routes/parallel_context.rs
   - id: openwiki-source-e2a1cc763db4a100d48eac0a
@@ -84,10 +86,10 @@ sources:
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/ReposSettingsSection.tsx
   - id: openwiki-source-ffc55e6e31e6ce477ca57329
     resource: repo://packages/web-core/src/shared/hooks/useWorkflowRun.ts
-generated: { by: "codex", at: "2026-11-06T15:24:11.469Z" }
+generated: { by: "codex", at: "2026-11-07T10:04:45.638Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-07T09:46:42.639Z
+    at: 2026-11-07T10:04:45.638Z
 ---
 
 # Issue から実行・レビュー・統合まで
@@ -249,3 +251,8 @@ WorkspaceのPR作成画面で対象Repo、head/base、title・descriptionを確�
 通常成功coding Runのsource commitとファイルManifestはWiki無効でも確定する。既存HEADを再利用し、変更なしRunには空Manifest・余分なcommit・専用検証記録を作らない。検証報告は通常Runの最終報告で参照する。上位AIはIssue化や既存Sessionへの追加指示に確認済みの動機・制約・判断理由を含め、coding agentは人間の意図と実装判断を区別してsemantic draftへ残す。承認は技術的理由の代用にしない。[Manifestの契約](../concepts/repository-memory.md)
 
 source checkpoint / integration準備、Git、integration結果、local Mergeは一transactionではない。Wiki receipt・state・publicationとsource integration対応はinstance DBへ集約し、Gitの実SHA/treeを照合する回復を維持する。live移行と旧共有ファイル削除はコード統合と別の実行許可が必要である。[保存先と一度限り移行](../concepts/repository-memory.md#運用状態のdb集約と一度限りの開発移行)・[直接merge](../../crates/server/src/routes/workspaces/git.rs#L223-L310)
+
+
+### 設定保存・削除後と再構築の選択
+
+Repository設定のINSTRUCTIONS/ignore保存は次回の入力変更であり、既存Wikiを同期しない。削除後は通常Syncや自動マージで再生成せず、Initializeを明示する。構成からの作り直しは削除と別のDanger Zone操作で、固定旧Wikiを参考に既存bootstrapのreview/refineへ進み、公開成功まで現行Wikiを維持する。[操作と失敗回復](../operations/openwiki-maintenance.md)

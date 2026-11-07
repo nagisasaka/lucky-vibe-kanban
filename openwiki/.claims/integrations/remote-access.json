@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:0b891825def21952cd16c1d4a9ba22545fe9904f8cc4bbf7d03f828d7e2ed534",
+  "pageVersion": "sha256:ee6cd7ca3fb29c3f66961dbb2b7b2d979fb4af60e78dff7faa8731f6cb1ffd1e",
   "claims": [
     {
       "id": "claim_71e4432fe19d42fca4c3a1ae5f546775",
@@ -534,7 +534,7 @@
         },
         {
           "resource": "repo://crates/server/src/remote_mcp/repository_wiki.rs",
-          "version": "repo-file-v1:sha256:ff556c7e0f5bf3f9c56e5fa343f17ec8a8bd4dbda8d4070ac1e2c529c790f073"
+          "version": "repo-file-v1:sha256:7878318f5f7a6515102b0ac8f0f235d4f0ea7809e95bce41674c1d6c3e39290b"
         }
       ]
     },
@@ -616,7 +616,7 @@
         },
         {
           "resource": "repo://crates/server/src/remote_mcp/repository_wiki.rs",
-          "version": "repo-file-v1:sha256:ff556c7e0f5bf3f9c56e5fa343f17ec8a8bd4dbda8d4070ac1e2c529c790f073"
+          "version": "repo-file-v1:sha256:7878318f5f7a6515102b0ac8f0f235d4f0ea7809e95bce41674c1d6c3e39290b"
         }
       ]
     },
@@ -1065,10 +1065,24 @@
           "version": "repo-file-v1:sha256:65aa48471be6e90a52d5bef68c34de6a557e5a6e74493ab9a68d73c1e6c3a425"
         }
       ]
+    },
+    {
+      "id": "claim_d8ad6270681a47b5b4fc2cfbbd317096",
+      "statement": "既存Wiki用MCP Syncはinitializeを指定せず共通受付を使い、削除後に初期生成を暗黙に開始しない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/remote_mcp/repository_wiki.rs#L251-L268",
+          "version": "repo-lines-v1:sha256:ad92fd1abec10e33fbbb531131f237eabcf5b7f74b51af341a8249d2a3a1f60d:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY3ZTcyOWMwZTgzMDY4MDg3NWQ1N2RhMjAwMTU2NGI4NzMwMmQ2ZWZkYjdhZmFkZDY1MjEyZjA0MTI5YjhlYzgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA2ZTBlMGY2ODJjOGRiMjc5YTUwZDdlNDMwZTRlNzc2ODFlYjJkMGEwODJhNDNkYTYzMGVjZDFlMTdjYjhkODkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImVmNTVjMDIxZDU0ZTk2MWNjYWUyMDU4NTUxZWNmNDJmOTQ3NTJhYjA3NmIyZDJmMWJmZmM1YjJmZWVjNGVkNjMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJlNzdkZGEyNmJmNDEyMDdmMjM5NDg1MGQ5NmU5ZWYyMTJjZjc4MzU3YzAyOWJmYzc0Mjc0MTMwYTA0NWVjYTIifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/openwiki.rs#L317-L333",
+          "version": "repo-lines-v1:sha256:2dc69b99cec5480d4104c81cee4afb2d67049886f1afde0e1db2173bf768d58d:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjEwYzMxNGU2MDY0ZGMxOTk1NGYyNjRkZTM0MDc2ZDU0MGJlOTEyNjViMTMwYWU4MWZmMzdiMmVhZDA4ZDUwMjAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ4OTc3MWZlMWI2NjI4ODc1YWEyM2U3ZGJlNGFhNzE0NjFkMDBjZGZiNjZkZGYxMWI5ZDgyMGFjNTg5N2ZkZjYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM5ODUxZTlmN2ZmMWU3ZDI3OWMzNWNjMjU3YmExZjIxYmMyMWZmMjY4NTAzMGYxMGE0MDA1ZWEwMmEyNWI2OWEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY5MjViM2Q2N2I1MmQ4ZjkzNzliNDVhMzFhNjQwMzQ0MjQwYTExYzdhNWRmNDZkZjQwNzUzMzhjZmVkZDZjN2UifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-07T09:56:11.730Z"
+    "at": "2026-11-07T10:04:45.638Z"
   }
 }

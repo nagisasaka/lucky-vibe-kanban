@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:fa3f1bcac06ef2e14754a5dd2223a609f174485e21d36b673baa83143453491e",
+  "pageVersion": "sha256:8a54b651746f24a022ee9e76cd383531f65674740826a475747b8a4b384337c0",
   "claims": [
     {
       "id": "claim_73d8e11679c6457aaf2e2b1a68fb767e",
@@ -662,7 +662,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/workspaces/archive.rs",
-          "version": "repo-file-v1:sha256:36adebf809e67df10438e75d324b323247bbeb15dff235673ebb3a7fea3d530b"
+          "version": "repo-file-v1:sha256:3893f8abfbbf7211859dafbe8a93f296b241aaf36e6f6a8947cb441ffcb1dfd1"
         },
         {
           "resource": "repo://crates/services/src/services/workspace_lifecycle.rs",
@@ -708,7 +708,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/integrations/conversation.rs",
-          "version": "repo-file-v1:sha256:c17207df331faae95e3abb7cafebff1dd1b128260e05838bf658a755ade24cf9"
+          "version": "repo-file-v1:sha256:d528dd1fbfda8a407027cbb368350dd9521527b0d8abf57b6ac04a8409ef1966"
         },
         {
           "resource": "repo://crates/server/src/routes/integrations/mod.rs",
@@ -733,6 +733,6 @@
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-07T09:46:42.639Z"
+    "at": "2026-11-07T10:04:45.638Z"
   }
 }

@@ -56,10 +56,10 @@ sources:
     resource: repo://packages/web-core/src/features/workspace-chat/ui/IntegrationFacts.tsx
   - id: openwiki-source-344aff2e68b53276f6be4e40
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/IntegrationValidationSettings.tsx
-generated: { by: "codex", at: "2026-11-06T15:24:11.469Z" }
+generated: { by: "codex", at: "2026-11-07T10:04:45.638Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-07T09:46:42.639Z
+    at: 2026-11-07T10:04:45.638Z
 ---
 
 # 自動マージの選択・検証・公開
@@ -163,3 +163,8 @@ maintenance writer は OpenWiki 0.7.2 の検索・読取・workspace/Wiki一覧�
 ## 公開事実の継続取得
 
 IntegrationFacts は対象IDがある間5秒周期で取得する。succeeded・blocked・recovery_required でも未公開/収束待ちを表示し、終端statusのみで取得を止めない。公開受付と実Git適用の区別を維持する。[表示](../../packages/web-core/src/features/workspace-chat/ui/IntegrationFacts.tsx)・[既存試験](../../packages/web-core/src/features/workspace-chat/ui/IntegrationFacts.test.tsx)
+
+
+### Repository Wiki操作との排他と削除後の抑止
+
+受付は設定保存・削除のfile_operation、同期active_run、bootstrapの存在を確認し、保守中なら拒否する。Wiki削除でgeneration_suppressedが立つと、enabledでも自動マージのWiki更新を起動しない。公開後の鮮度更新もfile_operationや抑止中には行わず、削除済みをCurrentに戻さない。解除は[明示初期生成](../operations/openwiki-maintenance.md)の成功を使う。[受付と鮮度](../../crates/server/src/routes/integrations/admission.rs)・[公開後処理](../../crates/server/src/routes/integrations/conversation.rs)

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:0412d811fd2cf21c00d0307a10ab46383ceaf7918739668f78d3a286ac940193",
+  "pageVersion": "sha256:457acd9b83df59d728e058dfe53469c143ec7e96a7987616649f624cba483323",
   "claims": [
     {
       "id": "claim_edf1b78d3c7a4d978a6d8debcee4edd2",
@@ -72,7 +72,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/integrations/conversation.rs",
-          "version": "repo-file-v1:sha256:c17207df331faae95e3abb7cafebff1dd1b128260e05838bf658a755ade24cf9"
+          "version": "repo-file-v1:sha256:d528dd1fbfda8a407027cbb368350dd9521527b0d8abf57b6ac04a8409ef1966"
         },
         {
           "resource": "repo://crates/server/src/routes/integrations/runtime.rs",
@@ -212,11 +212,11 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/remote_mcp/repository_wiki.rs",
-          "version": "repo-file-v1:sha256:ff556c7e0f5bf3f9c56e5fa343f17ec8a8bd4dbda8d4070ac1e2c529c790f073"
+          "version": "repo-file-v1:sha256:7878318f5f7a6515102b0ac8f0f235d4f0ea7809e95bce41674c1d6c3e39290b"
         },
         {
           "resource": "repo://crates/server/src/routes/openwiki.rs",
-          "version": "repo-file-v1:sha256:0f8e8957dc1bcaef46bf200e4d3ddca835cd30fe5eed7b9399abd6937c21053a"
+          "version": "repo-file-v1:sha256:dddef745ee30572534a75cd09a05ee11fd179e0291e44050120595307aa80790"
         }
       ]
     },
@@ -321,10 +321,28 @@
           "version": "repo-file-v1:sha256:88dcf67a6f0e17d65a6ef570b3067748757bf52845f4c742911fa2543a5a6fc0"
         }
       ]
+    },
+    {
+      "id": "claim_94fcaeb32da241c7aa98c50e6941189b",
+      "statement": "Repositoryの指示/除外設定保存、生成Wiki削除、固定旧Wikiを参考にする再構築は独立操作であり、保存だけでは生成を開始せず削除後は明示初期生成まで通常Sync/自動マージの再生成を抑止する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/routes/integrations/admission.rs#L295-L317",
+          "version": "repo-lines-v1:sha256:8bcdddc0f30940e340814e2d746445f2d42937464597eaf679bdf4a9e5f77746:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFhMWMwYzhjZjQ4NjlkYTM2OWYzMDgzOTU3YjVmYTAwOThlM2RiMzNhMzcxZWViMGViM2UwMjAzYzkzNWJlZDQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImViZjEyMjNhZTZiZGZkNzJlYThlNWYzZmQzZTkzMzc2MWU3MGFkZGZmYWE5MGNiMDY0ZmQ2OTAyZmI4OWEwY2QiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjYzZjM3ZWI4Zjg4OGU1MGZhODYwZjZlZjdlMjU1ZmQxNzI0OGFhYTAxZGZmMTg0OTc2YWQ5OWQ1MzJjNDkxODAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjllODlhODczYWY0NTA3YTIwMTdlZTBjOGM4MzYyYTUwODA4MDNiMWE3ZWE5NmM1MWUxNzExMTViNzVkNTM5ODQifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/openwiki.rs#L317-L445",
+          "version": "repo-lines-v1:sha256:11ef4ea6bacb3a28bf752ced90e82c79f59509d718306251121bc88e601c20b7:eyJzZWxlY3RlZExpbmVDb3VudCI6MTI5LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIxMGMzMTRlNjA2NGRjMTk5NTRmMjY0ZGUzNDA3NmQ1NDBiZTkxMjY1YjEzMGFlODFmZjM3YjJlYWQwOGQ1MDIwIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIzY2QyMGZjNTgwNzEwNWQyMWJlOWRmZjA3Y2YzMTk0NmZmZmFhMzJiNTljYmViOWVjNTk1YmZkZjM0MTc0ZDNjIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIzOTg1MWU5ZjdmZjFlN2QyNzljMzVjYzI1N2JhMWYyMWJjMjFmZjI2ODUwMzBmMTBhNDAwNWVhMDJhMjViNjlhIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJkZTQwMjFmYWNkNjZkMmYwNjQ5NWVhYWMzN2U4ZTU3YjcyNGE3NzRmYjRiODYzMzAzNjEwNDQyMzYyOWY5MGY4In0"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/openwiki/management.rs",
+          "version": "repo-file-v1:sha256:48a1cbd1b18cce0eb0a702f1a60d4e0ade51529070545ba62ae461fb85816163"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-07T09:56:11.730Z"
+    "at": "2026-11-07T10:04:45.638Z"
   }
 }

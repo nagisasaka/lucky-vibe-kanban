@@ -40,12 +40,16 @@ sources:
     resource: repo://crates/server/src/remote_mcp/repository_wiki.rs
   - id: openwiki-source-0987a696c656ec0d4f318f44
     resource: repo://crates/server/src/remote_mcp/run_events.rs
+  - id: openwiki-source-595d5d0308d670e38ef27fbf
+    resource: repo://crates/server/src/routes/integrations/admission.rs
   - id: openwiki-source-5720d865d1c837f0e6b7dab7
     resource: repo://crates/server/src/routes/integrations/conversation.rs
   - id: openwiki-source-b393e75029374eaf9cba5f7d
     resource: repo://crates/server/src/routes/integrations/runtime.rs
   - id: openwiki-source-231241ac3c842dcd67525890
     resource: repo://crates/server/src/routes/openwiki.rs
+  - id: openwiki-source-3b873a675f85754e9183d162
+    resource: repo://crates/server/src/routes/openwiki/management.rs
   - id: openwiki-source-4d617b0e2fa188c6ad63ae56
     resource: repo://crates/server/src/routes/sessions/questions.rs
   - id: openwiki-source-6c4d6d22a9d50e0def61c50d
@@ -92,10 +96,10 @@ sources:
     resource: repo://packages/web-core/src/shared/providers/TerminalProvider.tsx
   - id: openwiki-source-23775c3de52f3ab95a13cb8b
     resource: repo://README.md
-generated: { by: "codex", at: "2026-11-07T09:56:11.730Z" }
+generated: { by: "codex", at: "2026-11-07T10:04:45.638Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-07T09:56:11.730Z
+    at: 2026-11-07T10:04:45.638Z
 ---
 
 # クイックスタートと調査案内
@@ -391,3 +395,10 @@ Kanban / Workspace の右サイドバーは共通環境 panel とファイル・
 固定base `68160407e0de38d9363796ee33b4c9ea7e189caf` からLOCAL-336 source `ed6ac2deec100263a49aec3883e6dff85dadc1bb` を競合なく採用し、コード検証SHAも同じである。338/339の未マージ差分は含めない。一度限りのCLI・importer・decoder・未移行guardと手順書を撤去し、通常DB model・forward migration・Manifest・固定sync-inputs・Git復旧情報を保持する。[保存先と境界](concepts/repository-memory.md#運用状態のdb集約と一度限りの開発移行)・[保守運用](operations/openwiki-maintenance.md#local-332以降の保存先と移行境界)
 
 候補SHAで差分空白・固定baseの祖先関係・撤去参照の不在を管理commandで確認した。実装ManifestのDB 2件・utils 14件・server全targetコンパイル・fmt成功を参照し、同一sourceで追加修復がないため同じsuiteと包括検証の再実行をagent判断で省略した。これは今回の試験実行passではない。Wikiのみを後続commitにし、target publicationはRun終了後のhost receiptで別に確認する。devのビルド・再起動・切替、実DB・backup・release・旧共有データの変更や削除は実施していない。336/332の旧データ残件の完了をコード公開から推定しない。
+
+
+### RepositoryのWiki設定・削除・全体再構築（LOCAL-344）
+
+執筆指示と探索除外は[設定ファイルの保存](operations/openwiki-maintenance.md#執筆指示と探索除外を保存する)で扱う。保存は以後の生成入力を変えるだけで既存ページを更新しない。消す場合は[完全入力付き削除](operations/openwiki-maintenance.md#danger-zoneで生成wikiを削除する)、新指示で構成から見直す場合は[固定旧Wikiを参考にする再構築](operations/openwiki-maintenance.md#danger-zoneで既存wikiを参考に作り直す)を選ぶ。削除後は明示Initializeまで通常Sync/自動マージから再生成しない。再構築は正規公開成功まで現行Wikiを残す。[表示元と未生成表示](operations/workspace-inspection.md#削除後のcanonical-wiki表示)
+
+コード候補は `cb0c335a9d5c8c78fb4cc813c9b6f9ba9543506b`。344のみを固定baseへ競合なく統合し、346/348の修復を保持した。管理検証は既存結合試験の製品tree再現・非Wiki差分ゼロ・祖先・空白・cleanを確認した。重複suiteはユーザー指定で省略し、既存試験を今回SHAのpassへ付け替えない。[検証範囲と未確認事項](operations/openwiki-maintenance.md#local-344の検証範囲)を参照する。Wikiは別commitであり、mainへの反映成立はRun終了後のhost結果と分ける。
