@@ -64,10 +64,18 @@ sources:
     resource: repo://crates/server/src/routes/workspaces/links.rs
   - id: openwiki-source-04d5adb51b5929dacce999bc
     resource: repo://crates/server/src/workflow_runtime/bootstrap.rs
+  - id: openwiki-source-1058a214ad85d213959225ba
+    resource: repo://packages/ui/src/components/IssueRelationshipsSection.tsx
+  - id: openwiki-source-9ed6a174cb1310c0c3caf83b
+    resource: repo://packages/ui/src/components/IssueTaskAttemptsSection.tsx
   - id: openwiki-source-5e4c1802d2c1ee81cad7ac45
     resource: repo://packages/ui/src/components/IssueWorkspaceCard.tsx
   - id: openwiki-source-ff91ec3e5a5f406a698e52e6
     resource: repo://packages/ui/src/components/KanbanCardContent.tsx
+  - id: openwiki-source-ed7fffb17643f4b83bd352a5
+    resource: repo://packages/ui/src/components/KanbanIssuePanel.tsx
+  - id: openwiki-source-acf9f436db885ae9d0a398fb
+    resource: repo://packages/web-core/src/app/styles/new/index.css
   - id: openwiki-source-36bc16e51274306c238a63a2
     resource: repo://packages/web-core/src/features/kanban/model/hooks/useKanbanFilters.ts
   - id: openwiki-source-cae8a3c125596fe3e7ed7b37
@@ -76,6 +84,10 @@ sources:
     resource: repo://packages/web-core/src/features/kanban/ui/KanbanCardDetails.tsx
   - id: openwiki-source-e0c2de9e01617a8949b78360
     resource: repo://packages/web-core/src/features/kanban/ui/KanbanContainer.tsx
+  - id: openwiki-source-1e12225eda0d52cdd64d9939
+    resource: repo://packages/web-core/src/pages/kanban/IssueArenaSectionContainer.tsx
+  - id: openwiki-source-efd2346cc808d71c75e004b0
+    resource: repo://packages/web-core/src/pages/kanban/IssueTaskAttemptsSectionContainer.tsx
   - id: openwiki-source-00110cdcfec890895b99690a
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/RemoteProjectsSettingsSection.tsx
   - id: openwiki-source-b885bc17dfe85c4ca45223e9
@@ -84,10 +96,14 @@ sources:
     resource: repo://packages/web-core/src/shared/stores/useKanbanDisplayStore.ts
   - id: openwiki-source-5ef837b2bc54d286b3dedd8f
     resource: repo://packages/web-core/src/shared/stores/useUiPreferencesStore.ts
-generated: { by: "codex", at: "2026-11-07T09:17:18.907Z" }
+  - id: openwiki-source-eba64a459c9a599849d5ed14
+    resource: repo://tests/kanban/issue-detail.mjs
+  - id: openwiki-source-62d93277f2c37df9b3fcebae
+    resource: repo://tests/kanban/README.md
+generated: { by: "codex", at: "2026-11-07T12:36:43.233Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-07T10:04:45.638Z
+    at: 2026-11-07T12:36:43.233Z
 ---
 
 # Project・Issue と実施の関係
@@ -291,3 +307,13 @@ Repo はパス、対象ブランチ既定値、setup/cleanup/dev script など�
 ## Issueの物理削除とarchiveの区別
 
 remote MCPの `delete_issue(project_id, issue_id, request_id)` は既存Boardの物理削除を利用する。archiveと異なりIssueを復元する操作ではなく、既存FK・triggerと削除制約に従う。Workspaceディレクトリやworktreeを物理削除しない。Project所属をDELETE条件でも照合し、remoteの新規要求で対象不在なら失敗receiptを返す。HTTP側は従来どおり対象不在でも成功を返す。対象の明示的なユーザー認可とhost確認、再送・結果照会は [remote MCP](../integrations/remote-access.md#issueの物理削除)を参照する。[共通削除](../../crates/server/src/routes/local_remote.rs#L1865-L1898)・[remote adapter](../../crates/server/src/remote_mcp/issue_write.rs#L359-L389)
+
+## Issue 詳細の読み幅と試行方法
+
+編集する Issue 詳細はペインを container とし、本文の外枠を最大64rem、左右余白を `clamp(1rem, 3cqi, 2rem)` にする。ヘッダーは全幅を保ち、本文内のセクションは左右の二重 padding を除く。主タイトルは1.5rem・行高1.35・太さ600。作成モードはこの読み幅の対象外である。[パネル](../../packages/ui/src/components/KanbanIssuePanel.tsx#L260-L375)・[幅と文字階層](../../packages/web-core/src/app/styles/new/index.css#L1217-L1269)
+
+関連行には区切り線を設け、削除ボタンは hover に加え focus-within でも見える。32rem以下の Issue ペインではサブ課題タイトルを次行へ回す。長い表はセルの最小幅を維持して表内を横スクロールさせる。[関連](../../packages/ui/src/components/IssueRelationshipsSection.tsx)・[サブ課題と表](../../packages/web-core/src/app/styles/new/index.css#L1250-L1293)
+
+ワークフロー・単一エージェント・アリーナは「タスクの試行」内の同じ説明付き選択肢として並べ、利用幅に応じて列数を変える。アリーナは表示スロット経由で既存 container を使い、開始・既存への遷移・状態判断を保持する。見た目をそろえても実行機構やデータ取得を統合したものではなく、カードコンテキストも維持する。[選択肢](../../packages/ui/src/components/IssueTaskAttemptsSection.tsx)・[接続](../../packages/web-core/src/pages/kanban/IssueTaskAttemptsSectionContainer.tsx#L410-L445)・[アリーナ](../../packages/web-core/src/pages/kanban/IssueArenaSectionContainer.tsx)
+
+表示変更の検査入口は `PLAYWRIGHT_BROWSERS_PATH=/opt/lvk-browsers node tests/kanban/issue-detail.mjs`。本番コンポーネントと inert fixture で5幅×明暗、長文・表・複数コメント・関連・サブ課題と操作を検査する。live ConversationList / SessionChatBoxContainer は mount せず、認証済みアプリ・実機・VSCode E2E の証明にはしない。[試験の範囲](../../tests/kanban/README.md#issue-detail-and-split-conversation-reading-surfaces) 今回の統合保守では既存source証拠を参照し、描画試験を再実行していない。

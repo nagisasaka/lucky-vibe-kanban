@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:e8658704690e28beb57b1ef0920642f8f13847d36de63b8564cce5f1b736e611",
+  "pageVersion": "sha256:cb656f774e9a0b2bfc537dbf309a5c834882450c744676612df926be6a5c9b09",
   "claims": [
     {
       "id": "claim_33c0ff606c234c65b0a089749cc323a5",
@@ -691,10 +691,70 @@
           "version": "repo-lines-v1:sha256:5047bac2d5569916687b4abe6c0658e041b3a4f6a7c0f038ac859e984ac5ef44:eyJzZWxlY3RlZExpbmVDb3VudCI6ODgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFhYTI1MDEwN2NkMGExYWVkOGU4NjI3MWViZWMyMTczYTUxNDU0YTNlNzMyOTY2YWVhNTBjNDJjNjJlMzM4MzIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjU1YWI3YjZkOWI2ZTE5NTY1M2ZjOGI1NWY2M2YzNjQ2MDY4NTVjNDU0ZmM1NjU4NTFmMzFhMmYwOTQ1ZGE3NDIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
         }
       ]
+    },
+    {
+      "id": "claim_2ca271ef0a82452884a30211159edc30",
+      "statement": "編集Issue詳細の本文外枠は64rem上限とペイン基準clamp(1rem,3cqi,2rem)余白を持ち、作成モードは対象外。主タイトルは1.5rem・行高1.35・太さ600。",
+      "evidence": [
+        {
+          "resource": "repo://packages/ui/src/components/KanbanIssuePanel.tsx#L260-L375",
+          "version": "repo-lines-v1:sha256:c348fa8cd89090deb75fca1715ab3a770f39326341a12828af09abb24a7f9322:eyJzZWxlY3RlZExpbmVDb3VudCI6MTE2LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI0ODkzZjQwZTM3ODFlYjg5NmM4MmQwNDZhMDgwNjdhMTFlMzVjZGYyZjFkZmFmMjZmZWE5MGI4ZGI2Njc2NDEzIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIwMWJhNDcxOWM4MGI2ZmU5MTFiMDkxYTdjMDUxMjRiNjRlZWVjZTk2NGUwOWMwNThlZjhmOTgwNWRhY2E1NDZiIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJjNGFhNDE1NWJlYjk5MTY2NmExY2RlM2UzYTMxNWQ1Zjk1YTg1NWNjMjU5MjVjNTY5OWIxYTVhNzQwNzhmMThlIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI2OGVjNjJmMmEzY2JkZDJmOGEyYzFhMjdiNGY4MWJjNjBiZTcwMWQ3ZTAzZjk0NmZkMjdjN2Q0YTZhYmVmODllIn0"
+        },
+        {
+          "resource": "repo://packages/web-core/src/app/styles/new/index.css#L1217-L1269",
+          "version": "repo-lines-v1:sha256:1ac6918e165ac1e5ae28b3cf5ac923c4b85c7ef8340108e79a7f075e1d785f22:eyJzZWxlY3RlZExpbmVDb3VudCI6NTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM2NWJjZjU5MWI5ZjY0N2UwYTFlNjkyNjFlOThhZjJkZDVmNjE4OTI2MTU2OWQ4NTE2ODc4YmNkYjM0MmUzYzUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRhZWM2ZDliZWE4NzBlMjg3NjM2ZGZjMTBhODI5NTUxOTFhZWZjYWE2NTI1ZjAyYWJiODlhMzdiMDU1MWZlYjkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjcxNWVmYWQ5ZGNiZjg2Y2JjZWU0OTg2NDNiMWEzZWNlNWRlNzAzNWY5Y2VkNGNlMWRkZGQwNjRmYTNhMjExZTcifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_acea0a914f074fbda0d47acf57d212d1",
+      "statement": "ワークフロー・単一エージェント・アリーナは同じ説明付き選択グリッドに表示し、アリーナの既存containerをslotに接続して実行/取得機構を維持する。",
+      "evidence": [
+        {
+          "resource": "repo://packages/ui/src/components/IssueTaskAttemptsSection.tsx",
+          "version": "repo-file-v1:sha256:9bf52707882a43a7f5f67734b5c47563454567979acc75dca4cf49e8e230470a"
+        },
+        {
+          "resource": "repo://packages/web-core/src/pages/kanban/IssueArenaSectionContainer.tsx",
+          "version": "repo-file-v1:sha256:b55999017565a38fa8ccf07a055d2b99473f249bee5e54f745cb9a3f9e705500"
+        },
+        {
+          "resource": "repo://packages/web-core/src/pages/kanban/IssueTaskAttemptsSectionContainer.tsx#L410-L445",
+          "version": "repo-lines-v1:sha256:6cbea5796542a7a059a93308f810772759ddd539cf6be1e018feaee2aff5e0cf:eyJzZWxlY3RlZExpbmVDb3VudCI6MzYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhmMGZiZjczNGMxY2JhNDQ5M2U3MjkxMWI3ZjAxNWY1M2EyNDVmOThhN2U1MjVkMzBlODJiMzk2ODk0MDUyY2IiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk1ZWYwMWJjMDhkYmMzYjYzZTRlNzVlYTNkMjZhNWI5NDE4OTE4NzdlMjdhZDg5MTMyOWM4NDExZDdkOGRjNGQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFlYWZlNDc0MjliZWM4NDUxYzFkYTQ1ZmYyMmFiMmMxODRlMzAwYjcwMzFhMmYzNTMyYzQyMTU3NTkyYWM5ODAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_e39119e5a2e34523ba2c8e3c68afc7ae",
+      "statement": "Issueの関連行削除はfocus-withinでも見え、32rem以下のペインでサブ課題タイトルは次行に回る。表はセル最小幅を維持して領域内で横スクロールする。",
+      "evidence": [
+        {
+          "resource": "repo://packages/ui/src/components/IssueRelationshipsSection.tsx",
+          "version": "repo-file-v1:sha256:44e8f652301ef14caf6fadc8fdded79ba2a6059fc8f5f3e7c8e7aa3159628575"
+        },
+        {
+          "resource": "repo://packages/web-core/src/app/styles/new/index.css#L1250-L1293",
+          "version": "repo-lines-v1:sha256:1138a8051669b9ad834e0a0362aec229fce1282e1ca5802230b91ce7ba3e2f96:eyJzZWxlY3RlZExpbmVDb3VudCI6NDQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM0ZjI3NTYwNzU3ZTU1YmQ4Yzk0NWFiYzJhMjBjNjQwMzk1NmM5M2JiMGViN2Y3MDQ4NTVjOTc2MGEwZDlkMTIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjExNDZjYmJjMjg4ODcxODRlZWU0MzI2ZTdlMGU2N2IxZTQxYTJkYjU0YWNhZjU0ZWQ0YmE4NTEyNTA5MmI3YzMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_a54b661c118049a0b0368c62d0aed9b6",
+      "statement": "issue-detail.mjsの5幅×明暗の描画はfixture検査でありlive ConversationListやSessionChatBoxContainerをmountせず、実機/VSCode/認証済アプリE2Eを証明しない。",
+      "evidence": [
+        {
+          "resource": "repo://tests/kanban/README.md#L100-L123",
+          "version": "repo-lines-v1:sha256:3f8160c0d6c8fb8ec7bf2a3bfb314152ed0575a109a1744e9ce3e53d5d912877:eyJzZWxlY3RlZExpbmVDb3VudCI6MjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRmNmYyYzljNDUyYzJmNjA3YzViNTJmMzNkYzc0NjRmYmE0OTRjZWYyOWQxMTZkYmRiNGJjY2M5Yjg3OTMwMTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZjMDM5YTc0NDViOGQ2NzQxZmUxMTQ4NmY3ODM0YTAwMzA3ODc4NWFhOTBlNTM3ZTViMzI1NTRhNzczYzA4ZjciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJkMTdiYzkyZTUzYzY5MDc0NGY0M2VmMjA5NmUyYzM2NjQ4NTVhY2VmZGI4MGE3ZmM5NDFhMzFlOTdkMDljMDQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUyNTgxNmJiMGEzNzA3ZjM2NGRjOTgwYzcxMzRmZjYwMzc1ZmM0MjMzMDE4NDY4YjFhYjZiZGI1MGVkZGEwNGIifQ"
+        },
+        {
+          "resource": "repo://tests/kanban/issue-detail.mjs",
+          "version": "repo-file-v1:sha256:e05bcf32a24adceb703f470078fb80f13a6e8ba4164b32432da4020cdb14eca9"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-07T10:04:45.638Z"
+    "at": "2026-11-07T12:36:43.233Z"
   }
 }

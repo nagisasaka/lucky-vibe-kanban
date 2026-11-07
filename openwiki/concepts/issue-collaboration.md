@@ -42,10 +42,10 @@ sources:
     resource: repo://tests/server/run-issue-comments.mjs
   - id: openwiki-source-24d832f3cec15712d984861e
     resource: repo://tests/server/specs/issue-comment-reviews.spec.ts
-generated: { by: "codex", at: "2026-11-06T07:16:44.917Z" }
+generated: { by: "codex", at: "2026-11-07T12:36:43.233Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-07T09:17:18.907Z
+    at: 2026-11-07T12:36:43.233Z
 ---
 
 # Issue のコメント・レビュー・添付・通知
@@ -122,3 +122,7 @@ Linux の既定 notifier は `notify-rust` を使う。services の依存であ�
 通知を調べる際は、まず実際の呼出し元、sound / push 設定、実行 OS の notifier を確認する。Settings の通知項目で音とOS通知の対象eventを選ぶ。OS通知の受信先はserverの実行環境に依存し、browserの配送は別途Web Pushで登録する。旧 Cloud の受信者規則を適用しない。[設定UI](../../packages/web-core/src/shared/dialogs/settings/settings/GeneralSettingsSection.tsx)
 
 認証された利用者が browser と Project を明示登録する [Web Push](../integrations/web-push.md)は、上記 OS notifier / Follower と別経路である。Codex の canonical blocking input・approval と Run 終端を DB trigger で配送待ちにするため、Issue の担当・コメント・購読変更そのものからは通知を作らない。登録・同意失効・再送と通知からの会話復帰はリンク先を一次説明とする。[admission trigger](../../crates/db/migrations/20261018180000_web_push.sql)
+
+## コメントの視覚的な区切り
+
+各コメントは独立した article として下余白と区切り線を持ち、最後の項目だけ線を省く。著者名は高コントラストの太字、相対時刻は小さな補助文字にし、長い著者名は折り返す。レビュー来歴・本文編集・reaction・返信の既存機能は同じ項目内に保持する。[表示](../../packages/ui/src/components/IssueCommentsSection.tsx#L280-L430)

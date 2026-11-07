@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:10de66584f288078a9b0d6f0ea9d0c605b618e317f471c2e6d93e8588c9043ca",
+  "pageVersion": "sha256:4e567c70a307987ff5ed74aedb3ac9242010f41c2826516fbaa314c85f909c46",
   "claims": [
     {
       "id": "claim_82c340b0bbd240889908ea6c2c5be423",
@@ -342,7 +342,7 @@
       "evidence": [
         {
           "resource": "repo://packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx",
-          "version": "repo-file-v1:sha256:7b9ce57574a8d61fb6ecec2428d3ed4658fcd48cbd1c9ffaa9bc2bc0a18f1b45"
+          "version": "repo-file-v1:sha256:c5386113dbd3e4a07120f79d32dc5598c0c0f9d376d790353adc62d92415d906"
         },
         {
           "resource": "repo://packages/web-core/src/shared/lib/executionProcessRuntime.test.ts",
@@ -1209,10 +1209,36 @@
           "version": "repo-lines-v1:sha256:9cccd0a1490dc56a3bce386d565f4ee5d8e9aaccf6f7fd362696afc033b43fdc:eyJzZWxlY3RlZExpbmVDb3VudCI6NDQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAwZjMwYmM4YWU2YmM1ZGQ3YjkxMTRjMjAwZTFhMjQ1ZTcwYTViODZkNjMwNzAxYzgwZjQwMzVjZDQ0N2QyNTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ3ZTg4MGQ0MTFhZjQxOWYyNDcxMTU0MGU4MzkxNzFjMzUzY2I4NGQwZjY0N2VkYTdhZjkyYzFmMmUxOTUyMzkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk2YmJjNWYyNDQ5MWU3Zjk1NmUxYzI5NGYwZjU3YmU5ZTZhNzc1NDQ0ZGJiMGM2M2U3NTViNTZkNTAyM2U4YzIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM3OWY4MTZjYWMzMDdhZDU4N2ExOTNjYWE4ZjljYzhiZGMzNjg2YTU2NGYwNDMxOGExNTcwODA5YjMwNDdhMWUifQ"
         }
       ]
+    },
+    {
+      "id": "claim_1f234b28734f45278b6294ca98701460",
+      "statement": "カンバン内Workspaceの会話・入力欄・末尾移動ボタンは共通の可変幅を使い、64rem上限とペイン基準1〜2remの左右余白を持つ。このスコープだけMarkdown800px上限を解除し、共通48rem/800px既定値は維持する。",
+      "evidence": [
+        {
+          "resource": "repo://packages/ui/src/components/ChatBoxBase.tsx#L75-L85",
+          "version": "repo-lines-v1:sha256:bc5714ab66115dca3c914dd12e92926499d33dd57685df881bad0c5f3731f8bc:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ5ZTU5ZmRkYjMxZWM1YTNmNTBjZmRiYzNmZGI4ZDFmYWEyMGQzYjc0OWVlZThkYzAyNzIyZTcyNmE2MzEzYmYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjJhOTEyMDk5OWU1ZjE1ZWE1ODVkNWY4OTY5YjY5MjRjYmM1ODM4ZGViYmViMjZkZTg5OGFmYzU3NWFkMzFjYjgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE2ZjZlYWY5YjliOWI3MTc0MmM1MmJmYmY0YjAzMDNlM2IwOGVmNzJkYjJjZjE5NjA3ZGYzOGUwYmUwNGVlYTQifQ"
+        },
+        {
+          "resource": "repo://packages/ui/src/components/ChatMarkdown.tsx#L12-L25",
+          "version": "repo-lines-v1:sha256:dd5a19aba711361a9e4cd7d52cb87ab85c74b0b00af5a683fe77700ef5e5c5f2:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFiMjQwOWIwMzdlMGVjODc1YzZlMjE1MzBlNTRjYTBjODQ0OWJmMDEwMTc3OGNjY2VkYzQ1NmE0MDU2ODBkODgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImYyNTNiZjBhYjRiNjQyYzYxMzliNWY1MGMzZjRjN2M3ZjUzZTQ2OGI3ZTJkY2RkODU3NDc3YzNiMTc5MTkwNjEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImU4MjVmZDZlZjBjMDRkYzM4MjQxYjNhNzIwY2FjNWZjN2YyMGM4NDJkNGVjMDU3MjFlOGZiMGRjOWE0OTZkZjUifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/app/styles/new/index.css#L1260-L1263",
+          "version": "repo-lines-v1:sha256:fb3c4bc255c834830496dc3a104b3a41a68656d160595549a527e023d514473d:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNzMzYzMzYTMwM2MwZjY2ZTNkMjA2NWY4MmI4ZmZlNjU1ZGIwOWE3OTZlNzZmZjQ0NDJjMGQ3MGMwZGYzOTA5ZCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDEyY2EzNDVjY2Y3NWJmOWMwODA2YmNlNjk1YmU4ZGU4MDhiNzk5ODQyNTFhN2E1NGQyMDJjZjYxMDFkZDQ1MSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYjQ5YzNmN2FlMDZjMDk2NmNiNjllNzg5ZjEyMTQxMjk1ZmU1NTIwMWYzOWRjOTFiZWMzZjQ5YzhjNjdkNjViYSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYjg3OTUyMGE5MDJlZWU1YmU1Njg5OGQzMTBiNjFkZTlhYmEyNGIxYTc1MjM0MzJkZDMxOTU0YTQzNDEwZTQwZiJ9"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx#L1550-L1565",
+          "version": "repo-lines-v1:sha256:256daa6f1480a7d7085f349ff7abbc261dda5cb120668d6061a79d7e9dd34bba:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY5YjE5ODJlOGRkNzQ4MTE4MTQ2YjM5YTJkMDA2MmY0MDgxZTM0Nzc5Yjg2NzVjMjM0YzRmYjEyNGRjMzkzOTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRjMmM3NTFiMmY2ZjFiN2I1ZjA0OGIwODBkZDhjNzVhYzJlMzEzYzkxOWJkNjJkNTNkMWM4ZDlmYTZiOWVjNzUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjY4YzQzYWM5MjY3Y2EyOGMxY2NmMTgwYmM0YTc4ZmI2MTk5NTQ3NDUyY2ZkYjkxNTQyOGJkZDc0N2Y5YTFkZWYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImI5ZmY4MTgxNzcxZjI5MjFkMjVjZDBhYTU5ZDMwN2U4YjY4ZjhmMDNmYTQzNDY0ZTI3YTFmMjdkOTc2YWY0NjcifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/pages/kanban/ProjectRightSidebarContainer.tsx#L245-L315",
+          "version": "repo-lines-v1:sha256:f53c7e053c9a28d819973ec9ca8d30717e93691f7451bc2d3e9e206b96541237:eyJzZWxlY3RlZExpbmVDb3VudCI6NzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNkNzk0NjVmMTcxZTFjMTcwZmEzNWJkMGVhMDAwN2FiNjY1NTcxODY1NDk1MTBjMzkwZmI4Mzc0MDVlZTZiNWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYyZWRlMjA5Yjk4YjhiZWQ5MGQ4MTA0YjBmMzJjOTJmMTQwMmQ5MzY5MDhiNGM1ZjhmOTRlNzdjMjViNTVhYjciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFhYWRhMThkMWI5Y2ZhZjU3NDc1YTkwYzc2ZDcwODUxZGI5YmNmNmU2NTFlNGIzNGU0NmMzNjQ4M2Y4OGJkNjEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFmNDRlYzhkNDQ1NmRkYjIwNjAzN2MzZWRkMTE4OWYwMmMzYzFkYjIzNjhlYTFlNjVkMjI0ZDVlNmRlZmQ5NDUifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-07T10:04:45.638Z"
+    "at": "2026-11-07T12:36:43.233Z"
   }
 }

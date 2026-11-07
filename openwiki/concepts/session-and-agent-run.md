@@ -86,8 +86,12 @@ sources:
     resource: repo://crates/services/src/services/approvals/executor_approvals.rs
   - id: openwiki-source-9c5d335ecd1178e88c47c0a8
     resource: repo://crates/services/src/services/queued_message.rs
+  - id: openwiki-source-b26c7f3a0d7934f679a80a5e
+    resource: repo://packages/ui/src/components/ChatBoxBase.tsx
   - id: openwiki-source-e4d0ff0d72ea9774e1af777c
     resource: repo://packages/ui/src/components/ChatElapsedTime.tsx
+  - id: openwiki-source-e35f0007a76905bef1b14305
+    resource: repo://packages/ui/src/components/ChatMarkdown.tsx
   - id: openwiki-source-a38f11830547e0c1d7e425e5
     resource: repo://packages/ui/src/components/ContextUsageGauge.tsx
   - id: openwiki-source-32f2fab37a89ee366d4f150a
@@ -102,6 +106,8 @@ sources:
     resource: repo://packages/ui/src/components/SessionChatBox.tsx
   - id: openwiki-source-ac028c59eb7a9a6091191607
     resource: repo://packages/ui/src/lib/plainTextEditor.ts
+  - id: openwiki-source-acf9f436db885ae9d0a398fb
+    resource: repo://packages/web-core/src/app/styles/new/index.css
   - id: openwiki-source-6f68befb805cadf03e4b569b
     resource: repo://packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts
   - id: openwiki-source-fe9d810dccb0b777dfcb7ae4
@@ -136,6 +142,8 @@ sources:
     resource: repo://packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx
   - id: openwiki-source-3f4f76b473cff31732d54424
     resource: repo://packages/web-core/src/features/workspace-chat/ui/WorkspaceTokenSummary.tsx
+  - id: openwiki-source-66793fe227221fe9c587db67
+    resource: repo://packages/web-core/src/pages/kanban/ProjectRightSidebarContainer.tsx
   - id: openwiki-source-649882ab70d5bba1d79459a5
     resource: repo://packages/web-core/src/shared/components/CreateChatBoxContainer.tsx
   - id: openwiki-source-f2fdb07edb2a73ea40538a98
@@ -178,10 +186,10 @@ sources:
     resource: repo://tests/supervised/README.md
   - id: openwiki-source-5184ef612e83b7ab35d62e7b
     resource: repo://tests/supervised/run_isolated.py
-generated: { by: "codex", at: "2026-11-06T15:15:40.431Z" }
+generated: { by: "codex", at: "2026-11-07T12:36:43.233Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-07T10:04:45.638Z
+    at: 2026-11-07T12:36:43.233Z
 ---
 
 # Session・AgentRun・RunAttempt
@@ -503,3 +511,9 @@ InteractiveSessionChatBox が discovery snapshot を一度取得し、ModelSelec
 ### 通常Runの成果確定とWikiの独立性
 
 通常成功coding Runのsource自動commitとファイルManifestはWiki無効でも有効で、既存HEADが全変更を含む場合は再利用する。変更なしRunは専用検証記録を作らず通常の最終報告で検証を伝える。失敗・取消・REVIEW・制御・自動マージ担当・Design Arena等の適用除外は維持する。人間の目的・動機・判断理由はIssue・追加指示・直接会話からsemantic draftへ渡し、承認を技術理由の代用にしない。[Run完了と意図の契約](repository-memory.md#sessionmanifest統合済みwiki)・[完了host](../../crates/local-deployment/src/container.rs#L450-L493)・[source適用条件](../../crates/local-deployment/src/agent_run_port.rs#L939-L998)
+
+### カンバン内 Workspace の読み幅
+
+カンバンの Workspace ペインだけで、会話・入力欄・末尾移動ボタンは共通の `--kanban-chat-width` を使う。幅は最大64rem、ペイン幅から左右それぞれ `clamp(1rem, 3cqi, 2rem)` を引いた範囲で伸縮する。入力の親と ChatBoxBase も同じ変数を参照するため左右位置を合わせられる。[ペイン配置](../../packages/web-core/src/pages/kanban/ProjectRightSidebarContainer.tsx#L245-L315)・[composer](../../packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx#L1550-L1565)・[定義](../../packages/web-core/src/app/styles/new/index.css#L1260-L1263)
+
+このペインでは Markdown の別800px上限を解除する。変数がない共通チャットは48rem、Markdownは800pxの既定値を維持し、分割外・作成・Workflow画面を一律に広げる変更ではない。[共通入力](../../packages/ui/src/components/ChatBoxBase.tsx#L75-L85)・[Markdown](../../packages/ui/src/components/ChatMarkdown.tsx#L12-L25) [Issue側の幅と検査範囲](project-and-issue.md#issue-詳細の読み幅と試行方法)も参照する。
