@@ -1,3 +1,4 @@
+import { SharedStorageBreakdown } from './SharedStorageBreakdown';
 import { petStatus } from '@/features/pets/petStatus';
 import { SidebarPet } from '@/features/pets/SidebarPet';
 import { useQuery } from '@tanstack/react-query';
@@ -19,7 +20,7 @@ import { claudeQuotaView } from '@/shared/lib/claudeQuotaView';
 import { readUtility } from '@/shared/lib/projectUtilitiesApi';
 import { EnvironmentQuota } from './EnvironmentQuota';
 
-export function EnvironmentPanel() {
+export function EnvironmentPanel({ repoIds = [] }: { repoIds?: string[] }) {
   const { t, i18n } = useTranslation('common');
   const hostId = useHostId();
   const openHostSettings = () => {
@@ -229,6 +230,9 @@ export function EnvironmentPanel() {
                         : '—',
                   })}
                 </p>
+              )}
+              {metric.label === 'DISK' && (
+                <SharedStorageBreakdown repoIds={repoIds} />
               )}
               <p className="mt-base text-low">
                 {t(

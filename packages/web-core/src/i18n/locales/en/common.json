@@ -2364,5 +2364,21 @@
     "saved": "Display name saved.",
     "hostname": "Actual hostname",
     "petDescription": "Pet changes are saved immediately."
+  },
+  "sharedStorage": {
+    "title": "Shared cache / tmp",
+    "kind": "shared/{{kind}}",
+    "impact": "This also affects other projects using this repository.",
+    "activity": "Stop all Runs and DevServers for this repository before clearing. Active or unsettled LVK processes block deletion. External tools and processes started during cleanup cannot be detected; make sure they are stopped too.",
+    "cacheDescription": "Reusable data. The next build may take longer while the cache is regenerated.",
+    "tmpDescription": "Temporary handoffs between workspaces. Clearing permanently removes their contents.",
+    "clear": "Clear {{kind}}",
+    "confirm": "Delete all contents of shared/{{kind}} for {{name}}? This cannot be undone.",
+    "confirmClear": "Delete contents",
+    "cleared": "Contents deleted.",
+    "clearFailed": "Deletion failed or was blocked. Some contents may already have been deleted. Stop all repository Runs / DevServers and check permissions before retrying.",
+    "failed": "Unavailable",
+    "measuring": "Measuring…",
+    "refresh": "Refresh sizes"
   }
 }

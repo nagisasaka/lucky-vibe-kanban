@@ -13,6 +13,9 @@ fn generate_types_content() -> String {
 // If you are an AI, and you absolutely have to edit this file, please confirm with the user first.";
 
     let decls: Vec<String> = vec![
+        utils::shared_storage::SharedStorageKind::decl(),
+        utils::shared_storage::SharedStorageSize::decl(),
+        utils::shared_storage::SharedStorageUsage::decl(),
         server::remote_mcp::environment::RuntimeAccessSettings::decl(),
         server::remote_mcp::environment_settings::RuntimeAccessView::decl(),
         server::remote_mcp::environment_settings::SaveRuntimeAccess::decl(),

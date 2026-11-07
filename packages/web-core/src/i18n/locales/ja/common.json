@@ -2355,5 +2355,21 @@
     "saved": "表示名を保存しました。",
     "hostname": "実 hostname",
     "petDescription": "ペットの変更はすぐに保存されます。"
+  },
+  "sharedStorage": {
+    "title": "共有 cache / tmp",
+    "kind": "shared/{{kind}}",
+    "impact": "このレポジトリを使う他のプロジェクトにも影響します。",
+    "activity": "削除前に、このRepositoryの全Run・DevServerを停止してください。LVKが把握する実行中・終了未確認のプロセスがある場合は削除できません。外部ツールや掃除中に開始する処理は検出できないため、それらも停止してから操作してください。",
+    "cacheDescription": "再利用するデータです。削除後のビルド等では再生成のため時間がかかる場合があります。",
+    "tmpDescription": "Workspace間の一時的な受け渡し用です。削除すると受け渡し内容が失われます。",
+    "clear": "{{kind}}を削除",
+    "confirm": "{{name}} の shared/{{kind}} の中身をすべて削除しますか？元に戻せません。",
+    "confirmClear": "中身を削除する",
+    "cleared": "削除が完了しました。",
+    "clearFailed": "削除に失敗したか、利用中のため拒否されました。一部が削除済みの場合があります。Repositoryの全Run・DevServerの停止と権限を確認してください。",
+    "failed": "取得失敗",
+    "measuring": "計測中…",
+    "refresh": "容量を更新"
   }
 }

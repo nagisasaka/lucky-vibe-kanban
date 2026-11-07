@@ -1,3 +1,4 @@
+import { SharedStorageSettings } from './SharedStorageSettings';
 import { EditorSelectionDialog } from '@/shared/dialogs/command-bar/EditorSelectionDialog';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -567,6 +568,13 @@ export function ReposSettingsSection({
             <RepositoryMemorySettings
               key={`${machineClient.target.id}:${selectedRepo.id}`}
               projectId={projectId}
+              repo={selectedRepo}
+              client={machineClient}
+            />
+          )}
+          {machineClient && (
+            <SharedStorageSettings
+              key={`storage:${machineClient.target.id}:${selectedRepo.id}`}
               repo={selectedRepo}
               client={machineClient}
             />

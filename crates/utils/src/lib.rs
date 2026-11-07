@@ -106,3 +106,5 @@ pub async fn get_powershell_script()
     Ok(script_path)
 }
 pub mod repository_memory;
+
+pub mod shared_storage;

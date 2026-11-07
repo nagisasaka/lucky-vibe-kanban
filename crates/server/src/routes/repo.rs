@@ -357,6 +357,14 @@ pub async fn delete_repo(
 pub fn router() -> Router<DeploymentImpl> {
     Router::new()
         .route("/repos", get(get_repos).post(register_repo))
+        .route(
+            "/repos/{repo_id}/shared-storage",
+            get(super::shared_storage::get),
+        )
+        .route(
+            "/repos/{repo_id}/shared-storage/{kind}",
+            axum::routing::delete(super::shared_storage::clear),
+        )
         .route("/repos/recent", get(get_recent_repos))
         .route("/repos/init", post(init_repo))
         .route("/repos/batch", post(get_repos_batch))
