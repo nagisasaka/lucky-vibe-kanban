@@ -13,7 +13,6 @@ import sys
 import time
 import uuid
 import start_support as s
-import terminal_drain
 
 DEV = P(__file__).resolve().parent.parent
 TERMINAL = {"succeeded", "failed", "interrupted"}
@@ -53,7 +52,7 @@ def configure(instance):
         ),
         "Invalid launch environment",
     )
-    for name in ["launcher.py", "start_binary.py", "start_support.py", "terminal_drain.py", "start.sh"]:
+    for name in ["launcher.py", "start_binary.py", "start_support.py", "process_drain.py", "start.sh"]:
         helper = DEV / "switch" / name
         s.need(
             helper.is_file()
@@ -248,7 +247,7 @@ def preflight(a, *, dry_run=False, expected=None):
         "Insufficient backup space",
     )
     s.resources()
-    s.idle(selected["snapshot"]["identity"]["pid"])
+    s.idle(selected["snapshot"]["identity"]["pid"], allow_children=not dry_run)
     return selected
 
 
@@ -423,8 +422,6 @@ def execute(op, request, config_path):
         inspect(a)
         expected = request.get("snapshot")
         s.need(snapshot() == expected, "Running instance changed after admission")
-        stage("terminal-drain")
-        terminal_drain.terminate(expected["identity"], op)
         stage("preflight")
         selected = initial_preflight(a, op, expected, stage)
         expected = request.get("snapshot")
@@ -445,8 +442,8 @@ def execute(op, request, config_path):
         verify_release(previous)
         channel_guard(a)
         s.resources()
-        s.idle(expected["identity"]["pid"])
-        s.stop(expected["identity"], previous["manifest"]["files"]["server"])
+        s.idle(expected["identity"]["pid"], allow_children=True)
+        s.stop(expected["identity"], previous["manifest"]["files"]["server"], operation=op)
         stage("backup")
         s.stopped()
         (op / "settings").mkdir(mode=0o700)

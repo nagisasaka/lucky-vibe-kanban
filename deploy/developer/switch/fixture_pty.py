@@ -24,7 +24,7 @@ if mode in ('command', 'ignore', 'nested'):
     command = {'command': 'sleep 120', 'ignore': "trap '' TERM; sleep 120", 'nested': "sh -c 'sleep 120 & wait'"}[mode]
     os.write(master, (command + '\n').encode())
 def cleanup(*_):
-    import terminal_drain as drain
+    import process_drain as drain
     deadline = time.monotonic() + 5
     while True:
         rows = drain.processes()

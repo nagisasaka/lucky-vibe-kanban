@@ -12,9 +12,21 @@ extern int sqlite3_exec(sqlite3 *, const char *, void *, void *, char **);
 #include <unistd.h>
 #include <signal.h>
 #include <sys/wait.h>
+#include <sys/prctl.h>
 extern int forkpty(int *, char *, const void *, const void *);
 static volatile sig_atomic_t terminal_exited = 0;
 static void reap(int signo) { (void)signo; while (waitpid(-1, NULL, WNOHANG) > 0) terminal_exited = 1; }
+static void shutdown_child(int signo) {
+  (void)signo;
+  if (fork() == 0) {
+    prctl(PR_SET_PDEATHSIG, SIGKILL);
+    clearenv();
+    sleep(30);
+    _exit(0);
+  }
+  usleep(300000); /* Give the production stop guard a visible shutdown child. */
+  _exit(0);
+}
 #ifndef REVISION
 #define REVISION 1
 #endif
@@ -48,7 +60,25 @@ int main(int argc, char **argv) {
     }
   }
   if (getenv("FIXTURE_CHILD") && fork() == 0) {
-    /* No data FD exists yet. A real server child must still prevent cutover. */
+    /* Every fixture child dies with its test parent, including after cutover. */
+    prctl(PR_SET_PDEATHSIG, SIGKILL);
+    if (strcmp(getenv("FIXTURE_CHILD"), "env-clear-tree") == 0) {
+      if (fork() == 0) {
+        prctl(PR_SET_PDEATHSIG, SIGKILL);
+        setsid();
+        clearenv();
+        execl("/bin/sleep", "sleep", "30", NULL);
+        _exit(11);
+      }
+      setsid();
+      clearenv();
+      execl("/bin/sleep", "sleep", "30", NULL);
+      _exit(11);
+    } else if (strcmp(getenv("FIXTURE_CHILD"), "data-reader") == 0) {
+      char file[4096];
+      snprintf(file, sizeof(file), "%s/data/db.v2.sqlite", getenv("LVK_INSTANCE_DIR"));
+      if (!fopen(file, "rb")) _exit(12);
+    }
     sleep(30);
     return 0;
   }
@@ -59,6 +89,7 @@ int main(int argc, char **argv) {
   /* Migration is performed by the fixture server at startup, never the engine. */
   if (REVISION == 2 && sqlite3_exec(db, "CREATE TABLE IF NOT EXISTS migrated(value TEXT); PRAGMA user_version=2;", NULL, NULL, NULL) != SQLITE_OK) return 3;
   if (getenv("FIXTURE_EXIT")) return 4;
+  if (getenv("FIXTURE_SHUTDOWN_CHILD")) signal(SIGTERM, shutdown_child);
   int sock = socket(AF_INET, SOCK_STREAM, 0), yes = 1;
   setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes));
   struct sockaddr_in addr = {.sin_family=AF_INET, .sin_addr.s_addr=htonl(INADDR_LOOPBACK), .sin_port=htons(atoi(getenv("BACKEND_PORT")))};

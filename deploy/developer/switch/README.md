@@ -17,7 +17,7 @@ INSTANCE/
     start.sh
     start_binary.py
     start_support.py
-    terminal_drain.py
+    process_drain.py
   releases/RELEASE_ID/         # 通常current + previous、切替中のみcandidate追加
     server
     agent-process-host
@@ -103,7 +103,7 @@ manifestの`format:1`、`files`（3実行ファイルのSHA256）、`assets`（f
 remote MCPの専用`self_restart`は稼働server自身のPID/start/boot/cwd、解決済instance/data、起動port、
 currentと起動設定hashを非公開pipeで渡します。operation snapshotは監査記録であり恒久設定ではありません。
 停止直前にworkerがlistener/identity/hashを独立に再検証します。
-terminal drainは1回だけ実施し、その後の初回preflightが子孫・instance利用者・共有resource占有でbusyの場合だけ、30秒待って1回再確認します。
+初回preflightが外部instance/data利用者・共有resource占有でbusyの場合だけ、30秒待って1回再確認します。対象serverの子孫の自然終了は待たず、成果物検査後の停止処理で終了させます。
 identity/hash/config/権限等の拒否、停止直前の新しいbusy、SIGTERM以降の失敗は再試行しません。待機と理由は永続receiptのstageとbusy-recheck.jsonへ記録します。
 stdioの`self_restart`は既存のローカルOS UID/instance所有者の信頼境界で独立engineへ直接委任し、永続受付を返します。HTTP経路やOAuth principalは使いません。受付後は担当Codex Runを終了し、再接続後に同じproject_id/request_idの`get_self_restart_operation`で確認してください。受付は切替成功を意味しません。
 `LVK_SELF_RESTART_ENGINE/CONFIG`は不要です。engineは`INSTANCE/switch/start_binary.py`固定です。
@@ -114,26 +114,35 @@ region/grant形式は廃止され、読書rootは自己再起動の許可条件�
 対象は実行中の開発instanceとその固定kit/configurationに限定します。
 汎用`run_process`の自己再起動禁止は変わりません。権限を本kitから作成・拡大しません。
 
-実切替の開始時に、対象serverが所有する内蔵PTYとそのcommandを一度だけ終了し、
-その後に従来のidle/identity/listener/data-FD/resource guardを実行します。
-`--no-new-work` の外部調整には、対象DEVへのTerminal接続停止（再接続するUIを閉じる等）も含めます。
-終了後にPTYが再生成された場合は既存child guardで安全拒否します。成功するまで繰り返しkillしません。
-Rust変更・新しい受付lock・追加protocol・一般UI変更は不要で、既存binaryでも初回から利用できます。
-通常利用者の安定版image更新にこの運用は追加しません。
+2026-11-06の追加合意により、開発用切替ではPTYだけでなく対象serverの確認済み子孫を終了します。
+実行中の作業も中断対象です。単に子孫があることや、子が同じ `LVK_INSTANCE_DIR` を継承していることでは
+実切替を拒否しません。dry-runは従来どおり停止せず、子があれば非破壊に拒否します。
+通常利用者の安定版image更新は変更しません。
 
-終了対象は、対象serverの直接の子、同UID、session/group leader、serverが保持するPTY masterと
-対応するcontrolling TTY・stdin、`VIBE_KANBAN_TERMINAL=1` と同一 `LVK_INSTANCE_DIR` が
-揃う内蔵PTYと、その境界内の子孫だけです。cwdやshell名で判定しません。
-PID/startと親・session・group・TTY・UIDをpidfd取得後も照合し、別sessionへのdetachや所属変化は拒否します。
-commandへTERMを送り終了確認後、通常TERMを無視する対話shellへHUPを送ります。
-管理PTY内の実行中commandも終了対象です。Terminalをguardから除外しません。
-旧serverはshellを明示的にwaitしないためzombieが残る場合があります。pidfdでexitを確認し、
-実行・FDを持たないzombieは既存guardの既存規則に従います。全子孫のwait回収を追加保証するものではありません。
+権限・設定・identity/listener・新旧成果物・resource holder/queueを確認してから、停止直前に
+serverと子孫をPID/start・UID・親子edgeで照合しpidfdに固定します。名前やcwdだけで選ばず、
+process group全体にsignalを送りません。envを消した子や別session/groupの子も親子関係で捕捉します。
+明示的に別 `LVK_INSTANCE_DIR` を持つ子や異UIDの子は、最初のsignal前に拒否します。
+環境変数一致だけで非子孫を追加killしません。別instance・previewや無関係processは停止対象外です。
 
-TERM・logoutのtimeoutではKILLへ進まず、残ったprocessと失敗記録を診断用に保持します。
-`terminal-drain.json` にはsignal前に確認したprocessの所属・start等を保存します。
-失敗fenceとDB/log保全は従来どおりです。`--dry-run` はPTY停止を行わず、
-PTYがある場合は従来のchild guardで非破壊に拒否します。
+fork中に対象を取り落とさないよう、対象serverと捕捉した子孫を一時SIGSTOPしてtreeを確定します。
+捕捉済みの同一processは親変更後もpidfdで追い、終了済みPIDを新しい探索元にはしません。
+凍結した確認済み子孫にだけSIGKILLを送り、共通10秒以内に全pidfdのexitを確認します。
+この直接KILLは、子のTERM handlerが新しい子を作る窓を避け、開発作業を中断して切り替えるためです。
+server本体は従来のSIGTERMと60秒上限を維持し、KILLしません。
+失敗時はこの処理がSTOPした生存processだけをCONTし、backup/cutoverへ進めません。
+
+`--no-new-work` は停止中も新しい作業を起動しない外部調整を含み、Terminal再接続も止めます。
+serverをCONTした後のgraceful shutdown中に新しい子孫を観測した場合も、安全拒否します。
+任意のdaemon逃走を追跡・修復する仕組みではありません。終了直後に親から離れる未観測processを
+/procだけで完全捕捉する保証は加えず、停止中に新規生成しない対象serverと外部調整を前提とします。
+対象外のinstance利用者とdata reader/writerは停止前・停止後の既存guardで拒否し、
+backup/migrationは子孫のexit、listener消失、instance/data FD不在を確認した後だけ行います。
+zombieは従来どおり実行・FDを持たない終了済みprocessとして扱い、全子孫のwait回収は追加保証しません。
+
+signal前の捕捉情報はoperationの `child-stop.json` に保存します。旧 `terminal-drain.json` と
+過去operationの状態・ログは変更しません。停止不能・所有不明は永続receiptへ失敗理由を残します。
+DB rollbackや自動復旧はせず、既存の失敗fenceと診断資料を保持します。
 
 初回も、外部調整と対象同定後に新しい固定kitを配置し、外部terminalから新kitを使うか、
 旧serverの既存 `self_restart` から同じ固定kitを呼び出せます。新binaryの先行起動は不要です。
@@ -154,7 +163,7 @@ bundleは3binaryとmanifestだけで、固定`switch/` kitは自動更新しま�
 30秒再確認とstdio直接受付を使うには、レビュー・main統合・新bundleの隔離検証後に、
 別途承認されたoperator作業で、対象instanceと進行中operationがないことを確認してください。
 現kitを復旧用に保持し、同じrevisionの`launcher.py`、`start_binary.py`、`start_support.py`、
-`terminal_drain.py`、`start.sh`を整合して配置します。実行中workerのkitは置換せず、
+`process_drain.py`、`start.sh`を整合して配置します。実行中workerのkitは置換せず、
 source symlinkで代用しません。launch/current/dataや既存認証情報を上書き・コピーする手順ではありません。
 
 261のstdioにはself_restartがありません。新しいstdio binaryを明示するMCP起動設定で
@@ -175,7 +184,7 @@ stdio結果のownerはOS UIDとprojectから決まるinstance内namespaceです�
 `self_restart`を依頼できます。上位AIの新remote MCPによる再起動を前提にしません。
 受付後は担当Codex Runを終了して子孫/writerを収束させ、復帰後に同じproject/request IDの
 `get_self_restart_operation`を使います。stdio processだけを終了しても担当Runやhostが残ればbusyは解消しません。
-30秒後もbusyなら未切替で停止します。設定失効、unknown結果、権限拒否を成功と扱わず、自動再送もしません。
+30秒後も外部instance/data利用者・共有resourceがbusyなら未切替で停止します。設定失効、unknown結果、権限拒否を成功と扱わず、自動再送もしません。
 Codexの既存MCP設定では`mcp_servers.vibe_kanban.command`を、保持した検証済み新bundleの
 `vibe-kanban-mcp`絶対pathにします。旧serverが設定したPATHは旧releaseを先頭にするので、
 単にcommandをbasenameのままにして新bundleを置くだけでは切り替わりません。
@@ -228,7 +237,7 @@ resource snapshotのholders/queueは停止前に拒否します。未使用resou
 
 ```bash
 python3 -m unittest discover -s deploy/developer/switch -p test_switch.py -v
-python3 -m unittest discover -s deploy/developer/switch -p test_terminal_drain.py -v
+python3 -m unittest discover -s deploy/developer/switch -p test_process_drain.py -v
 python3 -m unittest discover -s deploy/developer/switch -p test_busy_recheck.py -v
 CARGO_BUILD_JOBS=4 node scripts/dev-cargo.mjs test -p server --features developer-runtime --lib remote_mcp::environment
 LVK_TEST_MCP_BINARY=/absolute/checkout/target/debug/vibe-kanban-mcp python3 -m unittest discover -s deploy/developer/switch -p test_stdio_restart.py -v

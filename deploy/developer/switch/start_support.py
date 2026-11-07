@@ -160,16 +160,19 @@ def ro(path):
     return closing(c)
 
 
-def idle(server_pid):
+def idle(server_pid, *, allow_children=False):
     """Physical occupancy only; work eligibility is the caller's responsibility.
 
     Historical Run/registry/Integration/delivery states are not process identities.
     Never require rewriting them to deploy. The caller coordinates work/schedules
-    and attests --no-new-work; current children, instance processes and data users
-    remain hard guards, rechecked inside the pidfd-bound stop.
+    and attests --no-new-work. Actual switching stops proven children; dry-run
+    still refuses them. External instance/data users remain hard guards, rechecked
+    inside the pidfd-bound stop after every captured child has exited.
     """
-    need_idle(not descendants(server_pid), "Dev has child processes; finish them first")
-    pre_stop_writers(server_pid)
+    children = descendants(server_pid)
+    if not allow_children:
+        need_idle(not children, "Dev has child processes; finish them first")
+    pre_stop_writers(server_pid, allowed_pids=children if allow_children else ())
 
 
 def process_files(p):
@@ -215,9 +218,9 @@ def stopped():
     # The caller's no-new-work coordination excludes actors opening new FDs later.
 
 
-def pre_stop_writers(allowed_pid):
+def pre_stop_writers(allowed_pid, *, allowed_pids=()):
     for p in P("/proc").iterdir():
-        if not p.name.isdigit() or int(p.name) in [os.getpid(), allowed_pid]:
+        if not p.name.isdigit() or int(p.name) in {os.getpid(), allowed_pid, *allowed_pids}:
             continue
         env, targets = process_files(p)
         need_idle(
@@ -230,7 +233,7 @@ def pre_stop_writers(allowed_pid):
         )
 
 
-def stop(want, expected_hash, require_port=True):
+def stop(want, expected_hash, require_port=True, *, operation=None):
     pid = want["pid"]
     fd = os.pidfd_open(pid)
     try:
@@ -238,15 +241,15 @@ def stop(want, expected_hash, require_port=True):
         need(
             digest(f"/proc/{pid}/exe") == expected_hash, "Live executable hash changed"
         )
-        need(not descendants(pid), "Dev has child processes; finish them first")
-        pre_stop_writers(pid)
         if require_port:
             need(owns_port(pid), "Instance port does not belong to expected dev")
-        signal.pidfd_send_signal(fd, signal.SIGTERM)
-        need(
-            bool(select.select([fd], [], [], 60)[0]),
-            "TERM timeout; no SIGKILL, no automatic recovery",
-        )
+        import process_drain
+        process_drain.terminate(want, fd, operation)
+        deadline = time.monotonic() + 60
+        while not select.select([fd], [], [], 0)[0]:
+            need(not descendants(pid), "New child during server shutdown; no backup/cutover")
+            need(time.monotonic() < deadline, "TERM timeout; no server SIGKILL, no automatic recovery")
+            select.select([fd], [], [], min(.05, max(0, deadline - time.monotonic())))
     finally:
         os.close(fd)
     # SQLx/process shutdown may take a moment to close all descriptors.

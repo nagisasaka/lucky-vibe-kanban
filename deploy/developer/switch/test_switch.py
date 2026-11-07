@@ -20,7 +20,7 @@ from unittest.mock import patch
 
 import start_binary as engine
 import start_support as support
-import terminal_drain
+import process_drain
 
 HERE = Path(__file__).resolve().parent
 
@@ -218,7 +218,7 @@ class SwitchTest(unittest.TestCase):
     def test_runtime_settings_read_failure_prevents_stop_without_retry(self):
         # No settings table: an actual SQLite read error must not become default ON.
         a = self.args(request_id=str(uuid.uuid4()), owner="remote-owner", asynchronous=False, require_execution_enabled=True)
-        with patch.object(engine.time, "sleep") as sleep, patch.object(terminal_drain, "terminate") as drain, patch.object(support, "stop") as stop:
+        with patch.object(engine.time, "sleep") as sleep, patch.object(process_drain, "terminate") as drain, patch.object(support, "stop") as stop:
             result = engine.submit(a, self.config)
         self.assertEqual(result["status"], "failed", result)
         self.assertEqual(result["reason"], "OperationalError")
@@ -230,7 +230,7 @@ class SwitchTest(unittest.TestCase):
     def test_remote_execution_disabled_is_not_busy(self):
         self.remote_execution_setting(False, create=True)
         a = self.args(request_id=str(uuid.uuid4()), owner="remote-owner", asynchronous=False, require_execution_enabled=True)
-        with patch.object(engine.time, "sleep") as sleep, patch.object(terminal_drain, "terminate") as drain, patch.object(support, "stop") as stop:
+        with patch.object(engine.time, "sleep") as sleep, patch.object(process_drain, "terminate") as drain, patch.object(support, "stop") as stop:
             result = engine.submit(a, self.config)
         self.assertEqual(result["status"], "failed", result)
         self.assertEqual(result["reason"], "Program execution disabled")
@@ -253,12 +253,12 @@ class SwitchTest(unittest.TestCase):
         a = self.args(request_id=str(uuid.uuid4()), owner="remote-owner", asynchronous=False, require_execution_enabled=True)
         real_idle = support.idle
         calls = 0
-        def idle(pid):
+        def idle(pid, **kwargs):
             nonlocal calls
             calls += 1
             if calls == 1:
                 raise support.Busy("requesting Run settling")
-            return real_idle(pid)
+            return real_idle(pid, **kwargs)
         real_sleep = time.sleep
         def wait(seconds):
             if seconds == 30:
@@ -269,13 +269,13 @@ class SwitchTest(unittest.TestCase):
                     self.remote_execution_setting(False)
             else:
                 real_sleep(seconds)
-        with patch.object(support, "idle", side_effect=idle), patch.object(engine.time, "sleep", side_effect=wait) as sleep, patch.object(terminal_drain, "terminate", wraps=terminal_drain.terminate) as drain, patch.object(support, "stop") as stop:
+        with patch.object(support, "idle", side_effect=idle), patch.object(engine.time, "sleep", side_effect=wait) as sleep, patch.object(process_drain, "terminate", wraps=process_drain.terminate) as drain, patch.object(support, "stop") as stop:
             result = engine.submit(a, self.config)
         self.assertEqual(result["status"], "failed", result)
         self.assertEqual(result["stage"], "preflight", result)
         self.assertEqual(result["reason"], "Program execution disabled")
         self.assertEqual(sum(call.args == (30,) for call in sleep.call_args_list), 1)
-        drain.assert_called_once()
+        drain.assert_not_called()
         stop.assert_not_called()
         self.assertIsNone(self.old.poll())
         request = json.loads((Path(result["result_path"]).parent / "request.json").read_text())
@@ -308,13 +308,13 @@ class SwitchTest(unittest.TestCase):
             if calls == 1:
                 raise support.Busy("requesting worker settling")
             return real_preflight(*args, **kwargs)
-        with patch.object(engine, "preflight", side_effect=preflight), patch.object(engine.time, "sleep") as sleep, patch.object(terminal_drain, "terminate", wraps=terminal_drain.terminate) as drain, patch.object(engine, "preserve", side_effect=support.Refuse("copy hash changed")) as preserve, patch.object(support, "stop") as stop:
+        with patch.object(engine, "preflight", side_effect=preflight), patch.object(engine.time, "sleep") as sleep, patch.object(process_drain, "terminate", wraps=process_drain.terminate) as drain, patch.object(engine, "preserve", side_effect=support.Refuse("copy hash changed")) as preserve, patch.object(support, "stop") as stop:
             result = engine.submit(a, self.config)
         self.assertEqual(result["status"], "failed", result)
         self.assertEqual(result["reason"], "copy hash changed")
         self.assertEqual(calls, 2)
         sleep.assert_called_once_with(30)
-        self.assertEqual(drain.call_count, 1)
+        self.assertEqual(drain.call_count, 0)
         preserve.assert_called_once()
         stop.assert_not_called()
         self.assertIsNone(self.old.poll())
@@ -332,7 +332,7 @@ class SwitchTest(unittest.TestCase):
         real_sleep = time.sleep
         def sleep(seconds):
             if seconds != 30: real_sleep(seconds)
-        with patch.object(engine, "preflight", side_effect=preflight), patch.object(engine.time, "sleep", side_effect=sleep) as wait, patch.object(terminal_drain, "terminate", wraps=terminal_drain.terminate) as drain, patch.object(support, "stop", wraps=support.stop) as stop, patch.object(support, "backup_data", side_effect=support.Refuse("backup failed")) as backup:
+        with patch.object(engine, "preflight", side_effect=preflight), patch.object(engine.time, "sleep", side_effect=sleep) as wait, patch.object(process_drain, "terminate", wraps=process_drain.terminate) as drain, patch.object(support, "stop", wraps=support.stop) as stop, patch.object(support, "backup_data", side_effect=support.Refuse("backup failed")) as backup:
             result = engine.submit(a, self.config)
         self.assertEqual(result["stage"], "backup", result)
         self.assertEqual(calls, 2)
@@ -362,29 +362,29 @@ class SwitchTest(unittest.TestCase):
             else:
                 real_sleep(seconds)
         try:
-            with patch.object(engine.time, "sleep", side_effect=sleep) as wait, patch.object(terminal_drain, "terminate", wraps=terminal_drain.terminate) as drain, patch.object(support, "stop", wraps=support.stop) as stop:
+            with patch.object(engine.time, "sleep", side_effect=sleep) as wait, patch.object(process_drain, "terminate", wraps=process_drain.terminate) as drain, patch.object(support, "stop", wraps=support.stop) as stop:
                 result = engine.submit(a, self.config)
         finally:
             for _, fd, _ in handles: os.close(fd)
         self.assertEqual(result["status"], "succeeded", result)
-        self.assertEqual(sum(c.args == (30,) for c in wait.call_args_list), 1)
+        self.assertEqual(sum(c.args == (30,) for c in wait.call_args_list), 0)
         self.assertEqual(drain.call_count, 1)
         self.assertEqual(stop.call_count, 1)
 
     def test_new_work_at_final_guard_is_not_retried_or_stopped(self):
         a = self.args(request_id=str(uuid.uuid4()), owner="operator", asynchronous=False)
         calls = 0
-        def idle(pid):
+        def idle(pid, **kwargs):
             nonlocal calls
             calls += 1
             if calls in (1, 3): raise support.Busy("new child")
-        with patch.object(support, "idle", side_effect=idle), patch.object(engine.time, "sleep") as sleep, patch.object(terminal_drain, "terminate", wraps=terminal_drain.terminate) as drain, patch.object(support, "stop") as stop:
+        with patch.object(support, "idle", side_effect=idle), patch.object(engine.time, "sleep") as sleep, patch.object(process_drain, "terminate", wraps=process_drain.terminate) as drain, patch.object(support, "stop") as stop:
             result = engine.submit(a, self.config)
         self.assertEqual(result["status"], "failed", result)
         self.assertEqual(result["stage"], "stopping", result)
         self.assertEqual(calls, 3)
         self.assertEqual(sum(c.args == (30,) for c in sleep.call_args_list), 1)
-        self.assertEqual(drain.call_count, 1)
+        self.assertEqual(drain.call_count, 0)
         stop.assert_not_called()
         self.assertIsNone(self.old.poll())
 
@@ -853,7 +853,7 @@ class SwitchTest(unittest.TestCase):
             reader.wait()
             reader.stdout.close()
 
-    def test_server_child_without_data_fd_blocks(self):
+    def test_server_child_without_data_fd_is_stopped(self):
         self.old.terminate()
         self.old.wait()
         self.write_run(self.builds[0], {"FIXTURE_CHILD": "1"})
@@ -867,13 +867,91 @@ class SwitchTest(unittest.TestCase):
             stderr=subprocess.DEVNULL,
         )
         self.wait_port()
-        with self.assertRaisesRegex(support.Refuse, "child processes"):
-            support.stop(engine.observation(), support.digest(self.instance / "releases/initial/server"))
+        result = self.run_cli(self.cli())
+        self.assertEqual(result["status"], "succeeded", result)
+        self.assertIsNotNone(self.old.poll())
+
+    def test_env_clear_children_grandchildren_and_separate_groups_are_stopped(self):
+        self.old.terminate()
+        self.old.wait(timeout=5)
+        self.write_run(self.builds[0], {"FIXTURE_CHILD": "env-clear-tree"})
+        self.old = subprocess.Popen([sys.executable, str(self.instance / "switch/launcher.py"), str(self.instance)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        self.wait_port()
+        deadline = time.monotonic() + 5
+        while len(support.descendants(self.old.pid)) < 2:
+            self.assertLess(time.monotonic(), deadline)
+            time.sleep(.01)
+        children = support.descendants(self.old.pid)
+        while any(support.process_files(Path(f"/proc/{p}"))[0] for p in children):
+            self.assertLess(time.monotonic(), deadline)
+            time.sleep(.01)
+        self.assertTrue(all(process_drain.processes()[p]["group"] != os.getpgid(self.old.pid) for p in children))
+        before = support.tree_manifest(self.instance / "data")
+        dry = self.run_cli(self.cli() + ["--dry-run"])
+        self.assertEqual(dry["status"], "refused", dry)
+        self.assertEqual(support.tree_manifest(self.instance / "data"), before)
+        self.assertTrue(children <= support.descendants(self.old.pid))
+        result = self.run_cli(self.cli())
+        self.assertEqual(result["status"], "succeeded", result)
+        rows = process_drain.processes()
+        self.assertFalse(any(rows.get(p, {}).get("state", "Z") != "Z" for p in children))
+        audit = json.loads((Path(result["result_path"]).parent / "child-stop.json").read_text())
+        self.assertEqual(set(map(int, audit["processes"])), children)
+
+    def test_owned_data_reader_is_stopped_before_backup(self):
+        self.old.terminate()
+        self.old.wait(timeout=5)
+        self.write_run(self.builds[0], {"FIXTURE_CHILD": "data-reader"})
+        self.old = subprocess.Popen([sys.executable, str(self.instance / "switch/launcher.py"), str(self.instance)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        self.wait_port()
+        result = self.run_cli(self.cli())
+        self.assertEqual(result["status"], "succeeded", result)
+        self.assertEqual(support.readjson(self.instance / "data/config.json"), {})
+
+    def test_child_stop_failure_never_backs_up_or_switches(self):
+        old = (self.instance / "current.json").read_bytes()
+        a = self.args(request_id=str(uuid.uuid4()), owner="operator", asynchronous=False)
+        with patch.object(process_drain, "terminate", side_effect=support.Refuse("Child KILL timeout")), patch.object(support, "backup_data") as backup:
+            result = engine.submit(a, self.config)
+        self.assertEqual(result["status"], "failed", result)
+        self.assertEqual(result["stage"], "stopping", result)
+        self.assertIn("Child KILL timeout", result["reason"])
+        self.assertEqual((self.instance / "current.json").read_bytes(), old)
         self.assertIsNone(self.old.poll())
+        backup.assert_not_called()
+        self.assertFalse((Path(result["result_path"]).parent / "backup-complete.json").exists())
+
+    def test_resource_holder_refuses_before_any_process_signal(self):
+        a = self.args(request_id=str(uuid.uuid4()), owner="operator", asynchronous=False)
+        real_get = support.get
+        def get(path):
+            if path == "/api/resource-coordination/snapshot":
+                return {"success": True, "data": {"resources": [], "holders": [{"resource_id": "fixture"}], "queue": []}}
+            return real_get(path)
+        with patch.object(support, "get", side_effect=get), patch.object(engine.time, "sleep"), patch.object(process_drain, "terminate") as terminate, patch.object(signal, "pidfd_send_signal") as signals:
+            result = engine.submit(a, self.config)
+        self.assertEqual(result["status"], "failed", result)
+        self.assertIn("Resource holders", result["reason"])
+        terminate.assert_not_called()
+        signals.assert_not_called()
+        self.assertIsNone(self.old.poll())
+
+    def test_new_child_during_shutdown_blocks_backup_and_cutover(self):
+        self.old.terminate()
+        self.old.wait(timeout=5)
+        self.write_run(self.builds[0], {"FIXTURE_SHUTDOWN_CHILD": "1"})
+        self.old = subprocess.Popen([sys.executable, str(self.instance / "switch/launcher.py"), str(self.instance)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        self.wait_port()
+        before = (self.instance / "current.json").read_bytes()
         result = self.run_cli(self.cli())
         self.assertEqual(result["status"], "failed", result)
-        self.assertIn("child processes", result["reason"])
-        self.assertIsNone(self.old.poll())
+        self.assertEqual(result["stage"], "stopping", result)
+        self.assertIn("New child during server shutdown", result["reason"])
+        self.assertEqual((self.instance / "current.json").read_bytes(), before)
+        operation = Path(result["result_path"]).parent
+        self.assertFalse((operation / "backup-complete.json").exists())
+        self.assertFalse((operation / "data").exists())
+        self.old.wait(timeout=5)
 
     def test_managed_pty_command_drained_before_existing_switch_guards(self):
         self.old.terminate()
@@ -893,15 +971,15 @@ class SwitchTest(unittest.TestCase):
         dry = self.run_cli(self.cli() + ["--dry-run"])
         self.assertEqual(dry["status"], "refused", dry)
         self.assertIn("child processes", dry["reason"])
-        self.assertTrue(children <= terminal_drain.processes().keys())
+        self.assertTrue(children <= process_drain.processes().keys())
         self.assertEqual(support.tree_manifest(self.instance / "data"), before)
         self.assertFalse((self.instance / "switch-operations").exists())
         result = self.run_cli(self.cli())
         self.assertEqual(result["status"], "succeeded", result)
-        self.assertFalse(children & terminal_drain.processes().keys())
-        self.assertTrue((Path(result["result_path"]).parent / "terminal-drain.json").exists())
+        self.assertFalse(children & process_drain.processes().keys())
+        self.assertTrue((Path(result["result_path"]).parent / "child-stop.json").exists())
 
-    def test_terminal_respawn_is_refused_by_existing_child_guard(self):
+    def test_terminal_stopped_with_server_without_preflight_drain_respawn(self):
         self.old.terminate()
         self.old.wait(timeout=5)
         self.write_run(self.builds[0], {"FIXTURE_PTY": "shell", "FIXTURE_RESPAWN": "1"})
@@ -912,24 +990,9 @@ class SwitchTest(unittest.TestCase):
         self.wait_port()
         original = support.descendants(self.old.pid)
         result = self.run_cli(self.cli())
-        self.assertEqual(result["status"], "failed", result)
-        self.assertIn("child processes", result["reason"])
-        self.assertIsNone(self.old.poll())
-        self.assertFalse(any(terminal_drain.processes().get(p, {}).get("state", "Z") != "Z" for p in original))
-        # The one-pass drain must leave the regenerated terminal alone.
-        new = support.descendants(self.old.pid)
-        self.assertTrue(new)
-        self.assertFalse(new & original)
-        for child in new:
-            fd = os.pidfd_open(child)
-            try:
-                signal.pidfd_send_signal(fd, signal.SIGHUP)
-            finally:
-                os.close(fd)
-        deadline = time.monotonic() + 3
-        while support.descendants(self.old.pid):
-            self.assertLess(time.monotonic(), deadline)
-            time.sleep(.01)
+        self.assertEqual(result["status"], "succeeded", result)
+        self.assertIsNotNone(self.old.poll())
+        self.assertFalse(any(process_drain.processes().get(p, {}).get("state", "Z") != "Z" for p in original))
 
     def test_dry_run_without_attestation_and_real_switch_still_requires_it(self):
         self.add_stale_history()
