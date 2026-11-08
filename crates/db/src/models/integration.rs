@@ -252,14 +252,14 @@ impl IntegrationRun {
         .bind(serde_json::to_string(&owner)?)
         .execute(&mut *tx)
         .await?;
-        sqlx::query(
-            "INSERT INTO workspace_repos(id,workspace_id,repo_id,target_branch) VALUES(?,?,?,?)",
+        super::workspace_repo::WorkspaceRepo::create_many_in_transaction(
+            &mut tx,
+            workspace_id,
+            &[super::workspace_repo::CreateWorkspaceRepo {
+                repo_id: self.repository_id,
+                target_branch: target.into(),
+            }],
         )
-        .bind(Uuid::new_v4())
-        .bind(workspace_id)
-        .bind(self.repository_id)
-        .bind(target)
-        .execute(&mut *tx)
         .await?;
         sqlx::query(
             "INSERT INTO local_workspace_links(workspace_id,project_id,issue_id) VALUES(?,?,?)",

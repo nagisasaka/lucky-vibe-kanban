@@ -123,7 +123,7 @@ async fn resolve_editor_target(
         None
     };
     let directory = existing_editor_directory(&match repo {
-        Some(repo) => root.join(&repo.name),
+        Some(repo) => repo.worktree_dir(&root),
         None => root,
     })
     .await?;
@@ -226,7 +226,9 @@ mod editor_tests {
         }
         std::fs::write(root.join("one/日本 % file.txt"), "file").unwrap();
         let mut ws = workspace(&root);
-        let repos = vec![repo("one", &original), repo("two", &original)];
+        let mut aliased = repo("one", &original);
+        aliased.worktree_name = Some("two".into());
+        let repos = vec![repo("one", &original), aliased];
         let folder = OpenEditorRequest {
             repo_id: None,
             file_path: None,

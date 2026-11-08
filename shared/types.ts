@@ -64,7 +64,11 @@ category: string | null, completed: boolean | null, issue_id: string | null, cle
 
 export type TodoPage = { items: Array<Todo>, next_offset: number | null, };
 
-export type Repo = { id: string, path: string, name: string, display_name: string, setup_script: string | null, cleanup_script: string | null, archive_script: string | null, copy_files: string | null, parallel_setup_script: boolean, dev_server_script: string | null, default_target_branch: string | null, default_working_dir: string | null, created_at: Date, updated_at: Date, };
+export type Repo = { id: string, path: string, name: string, display_name: string,
+/**
+ * Workspace-local placement; absent for global repository records.
+ */
+worktree_name?: string, setup_script: string | null, cleanup_script: string | null, archive_script: string | null, copy_files: string | null, parallel_setup_script: boolean, dev_server_script: string | null, default_target_branch: string | null, default_working_dir: string | null, created_at: Date, updated_at: Date, };
 
 export type RunnerTarget = { runner_id: string, source_id: string,
 /**
@@ -264,11 +268,15 @@ score: bigint, };
 
 export type SearchMatchType = "FileName" | "DirectoryName" | "FullPath";
 
-export type WorkspaceRepo = { id: string, workspace_id: string, repo_id: string, target_branch: string, created_at: Date, updated_at: Date, };
+export type WorkspaceRepo = { id: string, workspace_id: string, repo_id: string, target_branch: string, worktree_name: string | null, created_at: Date, updated_at: Date, };
 
 export type CreateWorkspaceRepo = { repo_id: string, target_branch: string, };
 
-export type RepoWithTargetBranch = { target_branch: string, id: string, path: string, name: string, display_name: string, setup_script: string | null, cleanup_script: string | null, archive_script: string | null, copy_files: string | null, parallel_setup_script: boolean, dev_server_script: string | null, default_target_branch: string | null, default_working_dir: string | null, created_at: Date, updated_at: Date, };
+export type RepoWithTargetBranch = { target_branch: string, id: string, path: string, name: string, display_name: string,
+/**
+ * Workspace-local placement; absent for global repository records.
+ */
+worktree_name?: string, setup_script: string | null, cleanup_script: string | null, archive_script: string | null, copy_files: string | null, parallel_setup_script: boolean, dev_server_script: string | null, default_target_branch: string | null, default_working_dir: string | null, created_at: Date, updated_at: Date, };
 
 export type Tag = { id: string, tag_name: string, content: string, created_at: string, updated_at: string, };
 

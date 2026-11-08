@@ -486,7 +486,9 @@ impl StandardCodingAgentExecutor for Codex {
         &self,
         workdir: Option<&std::path::Path>,
         repo_path: Option<&std::path::Path>,
+        repository_roots: &[PathBuf],
     ) -> Result<futures::stream::BoxStream<'static, json_patch::Patch>, ExecutorError> {
+        let extra_roots = crate::repo_skills::codex_roots(repository_roots);
         let skills_cwd = workdir.or(repo_path).map(Path::to_path_buf);
         let mut options = ExecutorDiscoveredOptions {
             model_selector: ModelSelectorConfig {
@@ -545,7 +547,7 @@ impl StandardCodingAgentExecutor for Codex {
             };
             let result = tokio::time::timeout(
                 SKILLS_DISCOVERY_TIMEOUT,
-                this.discover_skills(skills_cwd),
+                this.discover_skills(skills_cwd, extra_roots),
             )
             .await;
 
@@ -822,10 +824,12 @@ impl Codex {
     async fn discover_skills(
         &self,
         cwd: PathBuf,
+        extra_roots: Vec<PathBuf>,
     ) -> Result<(Vec<CodexSkillDescription>, Vec<CodexSkillLoadError>), ExecutorError> {
         let request_cwd = cwd.clone();
         let response = self
             .with_discovery_app_server(&cwd, move |client| async move {
+                client.set_skill_extra_roots(extra_roots).await?;
                 client.skills_list(request_cwd).await
             })
             .await?;
@@ -1303,6 +1307,7 @@ impl Codex {
         resume_session: Option<&str>,
         env: &ExecutionEnv,
     ) -> Result<SpawnedChild, ExecutorError> {
+        let extra_roots = crate::repo_skills::codex_roots(&env.repository_roots());
         let mut params = self.build_thread_start_params_with_resources(current_dir, env);
         let resource_mediator = env.get("LVK_RESOURCE_MEDIATOR").is_some_and(|v| v == "1");
         let resume_session = resume_session.map(|s| s.to_string());
@@ -1312,6 +1317,7 @@ impl Codex {
             command_parts,
             env,
             move |client, _| async move {
+                client.set_skill_extra_roots(extra_roots).await?;
                 let disable_openwiki = params.config.as_ref().is_some_and(|config| {
                     config.get("mcp_servers.openwiki.enabled") == Some(&Value::Bool(false))
                 });
@@ -1618,6 +1624,10 @@ fn skills_list_response_to_discovery(
     }
 
     skills.sort_by(|a, b| a.name.cmp(&b.name).then_with(|| a.path.cmp(&b.path)));
+    // A source cwd and extra root can discover the same physical entry. Keep
+    // same-name skills in different repositories; only identical paths collapse.
+    let mut seen_paths = std::collections::HashSet::new();
+    skills.retain(|skill| seen_paths.insert(skill.path.clone()));
     errors.sort_by(|a, b| a.path.cmp(&b.path));
     (skills, errors)
 }
@@ -1832,6 +1842,22 @@ mod tests {
         executors::{BaseCodingAgent, StandardCodingAgentExecutor},
         profile::{ExecutionMode, ExecutorConfig},
     };
+
+    #[test]
+    fn skill_discovery_deduplicates_paths_but_preserves_repository_homonyms() {
+        let skill = |path: &str| json!({"name":"audit","description":"Scoped audit","path":path,"scope":"repo","enabled":true});
+        let a = "/fixture/a/.agents/skills/audit/SKILL.md";
+        let b = "/fixture/b/.agents/skills/audit/SKILL.md";
+        let response = serde_json::from_value(
+            json!({"data":[{"cwd":"/fixture","skills":[skill(a),skill(a),skill(b)],"errors":[]}]}),
+        )
+        .unwrap();
+        let (skills, _) = super::skills_list_response_to_discovery(response);
+        assert_eq!(
+            skills.iter().map(|s| s.path.as_path()).collect::<Vec<_>>(),
+            vec![Path::new(a), Path::new(b)]
+        );
+    }
 
     fn test_executor() -> Codex {
         serde_json::from_value(json!({})).expect("empty Codex config should deserialize")

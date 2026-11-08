@@ -625,6 +625,21 @@ impl AppServerClient {
         self.send_request(request, "mcpServerStatus/list").await
     }
 
+    /// This endpoint is process-local and non-persistent. Configure each isolated
+    /// execution/discovery process before starting or resuming its thread.
+    pub async fn set_skill_extra_roots(&self, roots: Vec<PathBuf>) -> Result<(), ExecutorError> {
+        if roots.is_empty() {
+            return Ok(());
+        }
+        let id = self.next_request_id();
+        let request = serde_json::json!({"id": id, "method":"skills/extraRoots/set", "params":{"extraRoots":roots}});
+        let _: serde_json::Value = self
+            .rpc()
+            .request(id, &request, "skills/extraRoots/set", self.cancel.clone())
+            .await?;
+        Ok(())
+    }
+
     pub async fn skills_list(&self, cwd: PathBuf) -> Result<SkillsListResponse, ExecutorError> {
         let request = ClientRequest::SkillsList {
             request_id: self.next_request_id(),

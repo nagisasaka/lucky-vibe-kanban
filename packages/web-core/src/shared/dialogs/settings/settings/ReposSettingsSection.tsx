@@ -584,22 +584,9 @@ export function ReposSettingsSection({
               title={t('settings.repos.projectWorkspace.title')}
               description={t('settings.repos.projectWorkspace.description')}
             >
-              <SettingsField
-                label={t('settings.repos.general.defaultWorkingDir.label')}
-                description={t(
-                  'settings.repos.general.defaultWorkingDir.helper'
-                )}
-              >
-                <SettingsInput
-                  value={draft.default_working_dir}
-                  onChange={(value) =>
-                    updateDraft({ default_working_dir: value })
-                  }
-                  placeholder={t(
-                    'settings.repos.general.defaultWorkingDir.placeholder'
-                  )}
-                />
-              </SettingsField>
+              <p className="text-sm text-low">
+                {t('settings.repos.general.defaultWorkingDir.helper')}
+              </p>
             </SettingsCard>
           ) : (
             <SettingsCard
@@ -628,22 +615,9 @@ export function ReposSettingsSection({
                 </div>
               </SettingsField>
 
-              <SettingsField
-                label={t('settings.repos.general.defaultWorkingDir.label')}
-                description={t(
-                  'settings.repos.general.defaultWorkingDir.helper'
-                )}
-              >
-                <SettingsInput
-                  value={draft.default_working_dir}
-                  onChange={(value) =>
-                    updateDraft({ default_working_dir: value })
-                  }
-                  placeholder={t(
-                    'settings.repos.general.defaultWorkingDir.placeholder'
-                  )}
-                />
-              </SettingsField>
+              <p className="text-sm text-low">
+                {t('settings.repos.general.defaultWorkingDir.helper')}
+              </p>
 
               <SettingsField
                 label={t('settings.repos.general.defaultTargetBranch.label')}

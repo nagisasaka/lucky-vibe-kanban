@@ -1593,6 +1593,7 @@ export const agentsApi = {
       workspaceId?: string;
       sessionId?: string;
       repoId?: string;
+      repoIds?: string[];
       variant?: string | null;
     }
   ): string => {
@@ -1601,6 +1602,7 @@ export const agentsApi = {
     if (opts?.workspaceId) params.set('workspace_id', opts.workspaceId);
     if (opts?.sessionId) params.set('session_id', opts.sessionId);
     if (opts?.repoId) params.set('repo_id', opts.repoId);
+    if (opts?.repoIds?.length) params.set('repo_ids', opts.repoIds.join(','));
     if (opts?.variant) params.set('variant', opts.variant);
 
     return `/api/agents/discovered-options/ws?${params.toString()}`;
@@ -1736,12 +1738,16 @@ export const searchApi = {
     repoIds: string[],
     query: string,
     mode?: SearchMode,
-    options?: RequestInit
+    options?: RequestInit,
+    workspaceId?: string
   ): Promise<SearchResult[]> => {
     const repoIdsParam = repoIds.join(',');
+    const workspaceParam = workspaceId
+      ? `&workspace_id=${encodeURIComponent(workspaceId)}`
+      : '';
     const modeParam = mode ? `&mode=${encodeURIComponent(mode)}` : '';
     const response = await makeRequest(
-      `/api/search?q=${encodeURIComponent(query)}&repo_ids=${encodeURIComponent(repoIdsParam)}${modeParam}`,
+      `/api/search?q=${encodeURIComponent(query)}&repo_ids=${encodeURIComponent(repoIdsParam)}${modeParam}${workspaceParam}`,
       options
     );
     return handleApiResponse<SearchResult[]>(response);

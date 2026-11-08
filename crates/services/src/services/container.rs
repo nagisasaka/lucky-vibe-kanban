@@ -139,10 +139,7 @@ pub trait ContainerService {
             }
 
             let workspace_path = PathBuf::from(container_ref);
-            let workdir = match session.agent_working_dir.as_deref() {
-                Some(dir) if !dir.is_empty() => Some(workspace_path.join(dir)),
-                _ => Some(workspace_path),
-            };
+            let workdir = Some(workspace_path);
 
             let repos =
                 WorkspaceRepo::find_repos_for_workspace(&self.db().pool, session.workspace_id)
@@ -203,15 +200,50 @@ pub trait ContainerService {
         session_id: Option<Uuid>,
         workspace_id: Option<Uuid>,
         repo_id: Option<Uuid>,
+        repo_ids: &[Uuid],
     ) -> Result<Option<BoxStream<'static, Patch>>, ContainerError> {
         let (workdir, repo_path) = self
-            .executor_discovery_paths(session_id, workspace_id, repo_id)
+            .executor_discovery_paths(
+                session_id,
+                workspace_id,
+                repo_id.or_else(|| repo_ids.first().copied()),
+            )
             .await?;
+        let ws_id = match (workspace_id, session_id) {
+            (Some(id), _) => Some(id),
+            (_, Some(id)) => Session::find_by_id(&self.db().pool, id)
+                .await?
+                .map(|s| s.workspace_id),
+            _ => None,
+        };
+        let mut repository_roots = Vec::new();
+        if let Some(id) = ws_id
+            && let Some(ws) = Workspace::find_by_id(&self.db().pool, id).await?
+            && !ws.is_direct_folder()
+            && let Some(root) = ws.container_ref
+        {
+            repository_roots = WorkspaceRepo::find_repos_for_workspace(&self.db().pool, id)
+                .await?
+                .into_iter()
+                .map(|r| PathBuf::from(&root).join(r.worktree_name()))
+                .collect();
+        }
+        if ws_id.is_none() {
+            for id in repo_ids {
+                let repo = Repo::find_by_id(&self.db().pool, *id)
+                    .await?
+                    .ok_or(SqlxError::RowNotFound)?;
+                if !repository_roots.contains(&repo.path) {
+                    repository_roots.push(repo.path);
+                }
+            }
+        }
         #[cfg(feature = "qa-mode")]
         {
             let _ = executor_profile_id;
             let _ = workdir;
             let _ = repo_path;
+            let _ = repository_roots;
             return Ok(None);
         }
         #[cfg(not(feature = "qa-mode"))]
@@ -231,7 +263,7 @@ pub trait ContainerService {
             }
 
             let stream = executor
-                .discover_options(workdir.as_deref(), repo_path.as_deref())
+                .discover_options(workdir.as_deref(), repo_path.as_deref(), &repository_roots)
                 .await?;
             Ok(Some(stream))
         }
@@ -350,11 +382,12 @@ pub trait ContainerService {
             }
             // Capture after-head commit OID per repository
             if let Ok(ctx) = ExecutionProcess::load_context(&self.db().pool, process.id).await
+                && !ctx.workspace.is_direct_folder()
                 && let Some(ref container_ref) = ctx.workspace.container_ref
             {
                 let workspace_root = PathBuf::from(container_ref);
                 for repo in &ctx.repos {
-                    let repo_path = workspace_root.join(&repo.name);
+                    let repo_path = repo.worktree_dir(&workspace_root);
                     if let Ok(head) = self.git().get_head_info(&repo_path)
                         && let Err(err) = ExecutionProcessRepoState::update_after_head_commit(
                             &self.db().pool,
@@ -422,7 +455,7 @@ pub trait ContainerService {
                 script: first.cleanup_script.clone().unwrap(),
                 language: ScriptRequestLanguage::Bash,
                 context: ScriptContext::CleanupScript,
-                working_dir: Some(first.name.clone()),
+                working_dir: Some(first.worktree_name().to_owned()),
             }),
             None,
         );
@@ -433,7 +466,7 @@ pub trait ContainerService {
                     script: repo.cleanup_script.clone().unwrap(),
                     language: ScriptRequestLanguage::Bash,
                     context: ScriptContext::CleanupScript,
-                    working_dir: Some(repo.name.clone()),
+                    working_dir: Some(repo.worktree_name().to_owned()),
                 }),
                 None,
             ));
@@ -459,7 +492,7 @@ pub trait ContainerService {
                 script: first.archive_script.clone().unwrap(),
                 language: ScriptRequestLanguage::Bash,
                 context: ScriptContext::ArchiveScript,
-                working_dir: Some(first.name.clone()),
+                working_dir: Some(first.worktree_name().to_owned()),
             }),
             None,
         );
@@ -470,7 +503,7 @@ pub trait ContainerService {
                     script: repo.archive_script.clone().unwrap(),
                     language: ScriptRequestLanguage::Bash,
                     context: ScriptContext::ArchiveScript,
-                    working_dir: Some(repo.name.clone()),
+                    working_dir: Some(repo.worktree_name().to_owned()),
                 }),
                 None,
             ));
@@ -542,7 +575,7 @@ pub trait ContainerService {
                 script: first.setup_script.clone().unwrap(),
                 language: ScriptRequestLanguage::Bash,
                 context: ScriptContext::SetupScript,
-                working_dir: Some(first.name.clone()),
+                working_dir: Some(first.worktree_name().to_owned()),
             }),
             None,
         );
@@ -553,7 +586,7 @@ pub trait ContainerService {
                     script: repo.setup_script.clone().unwrap(),
                     language: ScriptRequestLanguage::Bash,
                     context: ScriptContext::SetupScript,
-                    working_dir: Some(repo.name.clone()),
+                    working_dir: Some(repo.worktree_name().to_owned()),
                 }),
                 None,
             ));
@@ -569,7 +602,7 @@ pub trait ContainerService {
                     script: script.clone(),
                     language: ScriptRequestLanguage::Bash,
                     context: ScriptContext::SetupScript,
-                    working_dir: Some(repo.name.clone()),
+                    working_dir: Some(repo.worktree_name().to_owned()),
                 }),
                 None,
             )
@@ -588,7 +621,7 @@ pub trait ContainerService {
                         script: script.clone(),
                         language: ScriptRequestLanguage::Bash,
                         context: ScriptContext::SetupScript,
-                        working_dir: Some(repo.name.clone()),
+                        working_dir: Some(repo.worktree_name().to_owned()),
                     }),
                     Some(Box::new(chained)),
                 );
@@ -651,7 +684,7 @@ pub trait ContainerService {
                 }
             };
 
-            let worktree_path = workspace_dir.join(&repo.name);
+            let worktree_path = repo.worktree_dir(&workspace_dir);
             if let Some(oid) = target_oid {
                 self.git().reconcile_worktree_to_commit(
                     &worktree_path,
@@ -893,6 +926,11 @@ pub trait ContainerService {
         // Capture current HEAD per repository as the "before" commit for this execution
         let repositories =
             WorkspaceRepo::find_repos_for_workspace(&self.db().pool, workspace.id).await?;
+        let repositories = if workspace.is_direct_folder() {
+            Vec::new()
+        } else {
+            repositories
+        };
         if repositories.is_empty() && !workspace.is_direct_folder() {
             return Err(ContainerError::Other(anyhow!(
                 "Workspace has no repositories configured"
@@ -920,7 +958,7 @@ pub trait ContainerService {
 
         let mut repo_states = Vec::with_capacity(repositories.len());
         for repo in &repositories {
-            let repo_path = workspace_root.join(&repo.name);
+            let repo_path = repo.worktree_dir(&workspace_root);
             let before_head_commit = self.git().get_head_info(&repo_path).ok().map(|h| h.oid);
             repo_states.push(CreateExecutionProcessRepoState {
                 repo_id: repo.id,

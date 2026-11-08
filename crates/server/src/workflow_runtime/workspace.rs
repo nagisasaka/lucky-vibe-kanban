@@ -1,6 +1,5 @@
 use async_trait::async_trait;
 use db::models::{
-    scratch::{Scratch, ScratchPayload, ScratchType},
     workspace::{CreateWorkspace, Workspace, WorkspaceError},
     workspace_repo::{CreateWorkspaceRepo, WorkspaceRepo},
 };
@@ -48,81 +47,27 @@ async fn project_workspace_repos_from_db<F>(
 where
     F: FnMut(&str) -> String,
 {
-    let rows = sqlx::query(
-        r#"
-        SELECT r.id AS repo_id, r.path, r.default_target_branch
-        FROM repos r
-        JOIN project_repos pr ON pr.repo_id = r.id
-        WHERE pr.project_id = ?
-        ORDER BY r.display_name ASC
-        "#,
-    )
-    .bind(project_id)
-    .fetch_all(pool)
-    .await?;
-
-    if !rows.is_empty() {
-        return rows
-            .into_iter()
-            .map(|row| {
-                let repo_id: Uuid = row.get("repo_id");
-                let path: String = row.get("path");
-                let default_target_branch: Option<String> = row.get("default_target_branch");
-
-                Ok::<CreateWorkspaceRepo, ApiError>(CreateWorkspaceRepo {
-                    repo_id,
-                    target_branch: resolve_target_branch(
-                        default_target_branch.as_deref(),
-                        &path,
-                        &mut current_branch_for_path,
-                    ),
-                })
-            })
-            .collect();
-    }
-
-    let Some(scratch) =
-        Scratch::find_by_id(pool, project_id, &ScratchType::ProjectRepoDefaults).await?
-    else {
-        return Ok(Vec::new());
-    };
-
-    let ScratchPayload::ProjectRepoDefaults(defaults) = scratch.payload else {
-        return Ok(Vec::new());
-    };
-
-    let mut repos = Vec::with_capacity(defaults.repos.len());
-    for draft_repo in defaults.repos {
-        let row = sqlx::query(
-            r#"
-            SELECT id AS repo_id, path, default_target_branch
-            FROM repos
-            WHERE id = ?
-            "#,
-        )
-        .bind(draft_repo.repo_id)
-        .fetch_optional(pool)
-        .await?;
-
+    let ids = crate::routes::local_remote::project_creation_repository_ids(pool, project_id)
+        .await
+        .map_err(|e| ApiError::BadRequest(e.to_string()))?;
+    let mut repos = Vec::with_capacity(ids.len());
+    for repo_id in ids {
+        let row = sqlx::query("SELECT path, default_target_branch FROM repos WHERE id=?")
+            .bind(repo_id)
+            .fetch_optional(pool)
+            .await?;
         let Some(row) = row else {
             continue;
         };
-        let repo_id: Uuid = row.get("repo_id");
         let path: String = row.get("path");
         let default_target_branch: Option<String> = row.get("default_target_branch");
-        let target_branch = if draft_repo.target_branch.trim().is_empty() {
-            resolve_target_branch(
+        repos.push(CreateWorkspaceRepo {
+            repo_id,
+            target_branch: resolve_target_branch(
                 default_target_branch.as_deref(),
                 &path,
                 &mut current_branch_for_path,
-            )
-        } else {
-            draft_repo.target_branch.trim().to_string()
-        };
-
-        repos.push(CreateWorkspaceRepo {
-            repo_id,
-            target_branch,
+            ),
         });
     }
 
@@ -211,6 +156,29 @@ impl WorkflowWorkspaceResolver for DeploymentWorkflowWorkspaceResolver {
             ));
         }
 
+        let preset = crate::routes::local_remote::project_creation_repository_ids(pool, project_id)
+            .await
+            .map_err(|e| ApiError::BadRequest(e.to_string()))?;
+        for selected in &repos {
+            if !preset.contains(&selected.repo_id) {
+                return Err(ApiError::BadRequest(
+                    "New Workflow workspaces must use the current Project preset".into(),
+                ));
+            }
+            let repo = db::models::repo::Repo::find_by_id(pool, selected.repo_id)
+                .await?
+                .ok_or_else(|| ApiError::BadRequest("Repository not found".into()))?;
+            if !self
+                .deployment
+                .git()
+                .check_branch_exists(&repo.path, &selected.target_branch)?
+            {
+                return Err(ApiError::BadRequest(
+                    "Workflow base branch is unavailable".into(),
+                ));
+            }
+        }
+
         crate::routes::local_remote::issue_archive::require_unarchived(
             pool,
             project_id,
@@ -240,22 +208,23 @@ async fn upsert_workflow_workspace_link(
     project_id: Uuid,
     issue_id: Uuid,
 ) -> Result<(), ApiError> {
-    sqlx::query(
-        r#"INSERT INTO local_workspace_links
-               (workspace_id, project_id, issue_id)
-           VALUES (?, ?, ?)
-           ON CONFLICT(workspace_id) DO UPDATE
-               SET project_id = excluded.project_id,
-                   issue_id = excluded.issue_id,
-                   updated_at = datetime('now', 'subsec')"#,
+    let linked: Option<(Uuid, Uuid)> = sqlx::query_as(
+        "SELECT project_id, issue_id FROM local_workspace_links WHERE workspace_id=?",
     )
     .bind(workspace_id)
-    .bind(project_id)
-    .bind(issue_id)
-    .execute(pool)
+    .fetch_optional(pool)
     .await?;
-
-    Ok(())
+    if linked == Some((project_id, issue_id)) {
+        return Ok(());
+    }
+    // Reusing a Workflow's own link is idempotent; another Issue is never replaced.
+    crate::routes::workspaces::links::upsert_local_workspace_link(
+        pool,
+        workspace_id,
+        project_id,
+        issue_id,
+    )
+    .await
 }
 
 #[cfg(test)]
@@ -515,7 +484,33 @@ mod tests {
 
         assert_eq!(repos.len(), 1);
         assert_eq!(repos[0].repo_id, repo_id);
-        assert_eq!(repos[0].target_branch, "master");
+        // Legacy Project branch selection is not a Workspace branch decision.
+        assert_eq!(repos[0].target_branch, "main");
+        let other = Uuid::new_v4();
+        insert_repo(&pool, other, "/fixture/other", "other", Some("main")).await;
+        sqlx::query("INSERT INTO project_repos (project_id, repo_id) VALUES (?, ?)")
+            .bind(project_id)
+            .bind(other)
+            .execute(&pool)
+            .await
+            .unwrap();
+        let current = project_workspace_repos_from_db(&pool, project_id, |_| "fallback".into())
+            .await
+            .unwrap();
+        assert_eq!(current.len(), 1);
+        assert_eq!(current[0].repo_id, repo_id);
+        sqlx::query("UPDATE scratch SET payload=? WHERE id=?")
+            .bind(json!({"type":"PROJECT_REPO_DEFAULTS","data":{"repos":[]}}).to_string())
+            .bind(project_id)
+            .execute(&pool)
+            .await
+            .unwrap();
+        assert!(
+            project_workspace_repos_from_db(&pool, project_id, |_| "fallback".into())
+                .await
+                .unwrap()
+                .is_empty()
+        );
     }
 
     #[tokio::test]
@@ -554,5 +549,13 @@ mod tests {
                 .await
                 .expect("fetch issue link");
         assert_eq!(linked_issue_id, issue_id);
+        upsert_workflow_workspace_link(&pool, workspace_id, project_id, issue_id)
+            .await
+            .unwrap();
+        assert!(
+            upsert_workflow_workspace_link(&pool, workspace_id, project_id, Uuid::new_v4())
+                .await
+                .is_err()
+        );
     }
 }

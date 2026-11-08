@@ -497,13 +497,16 @@ impl StandardCodingAgentExecutor for ClaudeCode {
         &self,
         workdir: Option<&Path>,
         repo_path: Option<&Path>,
+        repository_roots: &[PathBuf],
     ) -> Result<futures::stream::BoxStream<'static, json_patch::Patch>, ExecutorError> {
+        let repository_roots = repository_roots.to_vec();
         use crate::{
             executor_discovery::ExecutorConfigCacheKey, executors::utils::executor_options_cache,
         };
 
         let cache = executor_options_cache();
-        let cmd_key = self.compute_cmd_key();
+        let cmd_key =
+            crate::repo_skills::discovery_cache_key(self.compute_cmd_key(), &repository_roots);
         let base_executor = BaseCodingAgent::ClaudeCode;
         let supports_effort = self.supports_effort_flag_or_false().await;
 
@@ -608,11 +611,13 @@ impl StandardCodingAgentExecutor for ClaudeCode {
         let cmd_key_for_discovery = cmd_key.clone();
 
         let discovery_stream = async_stream::stream! {
-            let discovery_path = target_path.as_deref().unwrap_or(Path::new(".")).to_path_buf();
+            let discovery_path = target_path.clone().or_else(dirs::home_dir).unwrap_or_else(|| PathBuf::from("."));
             let mut final_options = default_discovered_options(supports_effort);
 
-            match this.discover_agents_and_slash_commands_initial(&discovery_path).await {
+            match this.discover_agents_and_slash_commands_initial(&discovery_path, &repository_roots).await {
                 Ok((mut agent_options, slash_commands_initial, plugins, skills)) => {
+                    let conflicts = crate::repo_skills::ambiguous_claude_names(&repository_roots);
+                    if !conflicts.is_empty() { yield patch::discovery_error(format!("Repository skills/commands have conflicting names and are disabled: {}", conflicts.join(", "))); }
                     let default_agents = [
                         "Bash",
                         "general-purpose",
@@ -642,6 +647,7 @@ impl StandardCodingAgentExecutor for ClaudeCode {
                         &discovery_path,
                         &plugins,
                         &final_options.slash_commands,
+                        &repository_roots,
                     ).await;
                     final_options.slash_commands = slash_commands_with_descriptions;
                     yield patch::update_slash_commands(final_options.slash_commands.clone());
@@ -660,12 +666,11 @@ impl StandardCodingAgentExecutor for ClaudeCode {
                         );
                         cache.put(target_cache_key, final_options.clone());
                     }
-                    let global_cache_key = ExecutorConfigCacheKey::new(
-                        None,
-                        cmd_key_for_discovery,
-                        BaseCodingAgent::ClaudeCode,
-                    );
-                    cache.put(global_cache_key, final_options);
+                    // Never advertise a Workspace's local skills as global options.
+                    if target_path.is_none() {
+                        let global_cache_key = ExecutorConfigCacheKey::new(None, cmd_key_for_discovery, BaseCodingAgent::ClaudeCode);
+                        cache.put(global_cache_key, final_options);
+                    }
                 }
                 Err(e) => {
                     tracing::warn!("Failed to discover Claude Code options: {}", e);
@@ -750,6 +755,19 @@ impl ClaudeCode {
             .env("NPM_CONFIG_LOGLEVEL", "error")
             .args(&args);
 
+        let repository_roots = env.repository_roots();
+        let conflicts = crate::repo_skills::ambiguous_claude_names(&repository_roots);
+        for name in &conflicts {
+            if crate::repo_skills::mentions_skill(prompt, name) {
+                return Err(ExecutorError::Io(std::io::Error::other(format!(
+                    "Skill/command '{name}' occurs in multiple Workspace repositories. Use a uniquely named repository skill; no ambiguous command was run."
+                ))));
+            }
+            command.arg(format!("--disallowedTools=Skill({name})"));
+        }
+        for root in &repository_roots {
+            command.arg("--add-dir").arg(root);
+        }
         for root in env.shared_resource_roots() {
             command.arg("--add-dir").arg(root);
         }

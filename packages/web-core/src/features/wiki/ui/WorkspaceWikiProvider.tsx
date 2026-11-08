@@ -64,7 +64,9 @@ function WorkspaceWikiScope({
   const { t } = useTranslation('common');
   const queryClient = useQueryClient();
   const enabledIds = useWikiAvailability(
-    projectId ? [] : repos.map((repo) => repo.id)
+    projectId || workspace?.workspace_kind === 'direct_folder'
+      ? []
+      : repos.map((repo) => repo.id)
   );
   const repositoryOptions = useMemo(
     () =>
@@ -72,7 +74,9 @@ function WorkspaceWikiScope({
         ? (mainRepos ?? [])
             .filter((repo) => repo.wiki_enabled === true)
             .map((repo) => ({ id: repo.id, name: repo.name }))
-        : workspace && repos.length > 0
+        : workspace &&
+            workspace.workspace_kind !== 'direct_folder' &&
+            repos.length > 0
           ? wikiRepositoryOptions(
               workspace,
               repos.filter((repo) => enabledIds.includes(repo.id)),

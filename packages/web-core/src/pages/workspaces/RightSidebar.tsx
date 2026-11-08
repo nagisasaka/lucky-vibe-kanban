@@ -103,7 +103,7 @@ export const RightSidebar = memo(function RightSidebar({
       {
         title: 'Git',
         persistKey: PERSIST_KEYS.gitPanelRepositories,
-        visible: true,
+        visible: selectedWorkspace?.workspace_kind !== 'direct_folder',
         expanded: gitExpanded,
         content: (
           <GitPanelContainer

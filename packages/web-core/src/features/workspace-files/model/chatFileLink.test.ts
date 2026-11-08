@@ -21,6 +21,24 @@ const resolve = (
   });
 
 describe('chat file references', () => {
+  it('uses saved placement names for identical repository names', () => {
+    const repos = [
+      { ...repo, id: 'first', name: 'same', worktree_name: 'same' },
+      { ...repo, id: 'second', name: 'same', worktree_name: 'same--second' },
+    ];
+    expect(resolve('same--second/src/a.ts', repos)).toMatchObject({
+      repoId: 'second',
+      path: 'src/a.ts',
+    });
+    expect(resolve('/work/current/same--second/src/a.ts', repos)).toMatchObject(
+      { repoId: 'second', path: 'src/a.ts' }
+    );
+    expect(resolve('same/src/a.ts', repos)).toMatchObject({
+      repoId: 'first',
+      path: 'src/a.ts',
+    });
+  });
+
   it.each([
     'src/a.ts',
     './src/a.ts',

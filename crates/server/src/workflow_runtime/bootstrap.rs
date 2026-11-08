@@ -225,9 +225,13 @@ async fn context(deployment: &DeploymentImpl, run_id: Uuid) -> anyhow::Result<Co
     let (repo_id, workspace_id): (Uuid, Uuid) = sqlx::query_as(
         "SELECT repository_id, workspace_id FROM workflow_runs WHERE id = ? AND issue_id IS NULL AND workflow_id = ?",
     ).bind(run_id).bind(Uuid::parse_str(workflow::templates::OPENWIKI_BOOTSTRAP_ID)?).fetch_one(&deployment.db().pool).await?;
-    let repo = Repo::find_by_id(&deployment.db().pool, repo_id)
-        .await?
-        .context("Bootstrap repository missing")?;
+    let repo = db::models::workspace_repo::WorkspaceRepo::find_repo_for_workspace(
+        &deployment.db().pool,
+        workspace_id,
+        repo_id,
+    )
+    .await?
+    .context("Bootstrap repository missing")?;
     let store = RepositoryMemoryStore::for_repository(&deployment.db().pool, &repo.name, repo_id)?;
     let state = store.state().await?;
     ensure!(
@@ -250,7 +254,7 @@ async fn context(deployment: &DeploymentImpl, run_id: Uuid) -> anyhow::Result<Co
             .as_ref()
             .context("Bootstrap worktree is unavailable")?,
     )
-    .join(&repo.name);
+    .join(repo.worktree_name());
     Ok(ContextData {
         repo,
         store,
@@ -919,6 +923,13 @@ pub(super) async fn cleanup_with_service<P: executors::runtime::AgentRunPort + '
         }
     }
     if let Some(workspace_id) = state.maintenance_workspace_id {
+        let repo = db::models::workspace_repo::WorkspaceRepo::find_repo_for_workspace(
+            pool,
+            workspace_id,
+            repo.id,
+        )
+        .await?
+        .context("Bootstrap repository missing")?;
         let workspace = Workspace::find_by_id(pool, workspace_id)
             .await?
             .context("Cannot restore missing Bootstrap workspace")?;
@@ -927,7 +938,7 @@ pub(super) async fn cleanup_with_service<P: executors::runtime::AgentRunPort + '
                 .container_ref
                 .context("Cannot restore missing Bootstrap path")?,
         )
-        .join(&repo.name);
+        .join(repo.worktree_name());
         openwiki::setup::restore(
             store,
             workspace_id,

@@ -824,6 +824,8 @@ pub struct ExecutorDiscoveredOptionsStreamQuery {
     workspace_id: Option<Uuid>,
     #[serde(default)]
     repo_id: Option<Uuid>,
+    #[serde(default)]
+    repo_ids: Option<String>,
 }
 
 pub async fn stream_executor_discovered_options_ws(
@@ -845,6 +847,14 @@ async fn handle_executor_discovered_options_ws(
 ) -> anyhow::Result<()> {
     use futures_util::StreamExt;
 
+    let repo_ids = query
+        .repo_ids
+        .as_deref()
+        .unwrap_or("")
+        .split(',')
+        .filter(|s| !s.is_empty())
+        .map(Uuid::parse_str)
+        .collect::<Result<Vec<_>, _>>()?;
     match deployment
         .container()
         .discover_executor_options(
@@ -855,6 +865,7 @@ async fn handle_executor_discovered_options_ws(
             query.session_id,
             query.workspace_id,
             query.repo_id,
+            &repo_ids,
         )
         .await
     {

@@ -131,7 +131,8 @@ export function integrationWikiLabel(
 
 export function integrationSelectionIsCurrent(
   selected: IntegrationSelection[],
-  activities: WorkspaceActivity[]
+  activities: WorkspaceActivity[],
+  targetBranch?: string
 ): boolean {
   return (
     selected.length > 0 &&
@@ -140,6 +141,7 @@ export function integrationSelectionIsCurrent(
         !!s.expected_commit &&
         activities.some(
           (a) =>
+            (!targetBranch || a.target_branch === targetBranch) &&
             a.current_issue_id === s.card_id &&
             a.workspace_id === s.workspace_id &&
             a.observed_head_oid === s.expected_commit

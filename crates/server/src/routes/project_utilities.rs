@@ -31,7 +31,7 @@ pub(super) async fn project_repos(
     d: &DeploymentImpl,
     project_id: Uuid,
 ) -> Result<Vec<Repo>, ApiError> {
-    let ids = super::local_remote::project_creation_repository_ids(&d.db().pool, project_id)
+    let ids = super::local_remote::project_associated_repository_ids(&d.db().pool, project_id)
         .await
         .map_err(|e| ApiError::BadRequest(e.to_string()))?;
     let mut repos = Vec::new();

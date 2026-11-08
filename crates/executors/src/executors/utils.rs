@@ -135,7 +135,7 @@ fn spawn_global_cache_refresh_for_agent_with_configs(
 
     if let Some(coding_agent) = configs.get_coding_agent(&profile_id) {
         tokio::spawn(async move {
-            if let Ok(mut stream) = coding_agent.discover_options(None, None).await {
+            if let Ok(mut stream) = coding_agent.discover_options(None, None, &[]).await {
                 while stream.next().await.is_some() {}
             }
         });

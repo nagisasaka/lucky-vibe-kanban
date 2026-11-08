@@ -20,3 +20,5 @@ pub mod account_usage;
 
 #[cfg(all(test, target_os = "linux"))]
 mod account_usage_tests;
+
+pub mod repo_skills;

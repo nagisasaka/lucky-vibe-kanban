@@ -241,7 +241,7 @@ impl McpServer {
     }
 
     #[tool(
-        description = "Link an existing workspace to a remote issue. This associates the workspace with the issue for tracking."
+        description = "Link an orphan workspace to an issue without changing repositories or history. Already-linked workspaces are rejected; explicitly unlink them from the old issue first."
     )]
     async fn link_workspace_issue(
         &self,

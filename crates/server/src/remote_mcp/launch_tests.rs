@@ -215,6 +215,25 @@ async fn fixture(
     )
     .await
     .unwrap();
+    // New Issue workspaces use an explicit Project preset, never linked history.
+    use db::models::scratch::{
+        CreateScratch, DraftWorkspaceRepo, ProjectRepoDefaultsData, Scratch, ScratchPayload,
+    };
+    Scratch::create(
+        &remote.pool,
+        target.project_id,
+        &CreateScratch {
+            payload: ScratchPayload::ProjectRepoDefaults(ProjectRepoDefaultsData {
+                repos: vec![DraftWorkspaceRepo {
+                    repo_id: repo.id,
+                    target_branch: String::new(),
+                }],
+                directory_path: None,
+            }),
+        },
+    )
+    .await
+    .unwrap();
     sqlx::query(
         "UPDATE local_issues SET description='Agreed behavior and acceptance criteria' WHERE id=?",
     )
@@ -246,6 +265,78 @@ async fn start_args(remote: &Remote, target: &Target, issue: Uuid, repo: Uuid) -
         .await
         .unwrap();
     json!({"project_id":target.project_id,"issue_id":issue,"request_id":Uuid::new_v4(),"expected_revision":revision,"repositories":[{"repository_id":repo,"target_branch":"main"}],"execution_mode":"goal","goal_token_budget":1234})
+}
+
+#[tokio::test]
+async fn preset_removal_keeps_read_scope_but_blocks_new_workspace_admission() {
+    use db::models::scratch::{
+        ProjectRepoDefaultsData, Scratch, ScratchPayload, ScratchType, UpdateScratch,
+    };
+    let (_directory, remote, dispatch, principal, target, issue, repo) = fixture(false).await;
+    Scratch::update(
+        &remote.pool,
+        target.project_id,
+        &ScratchType::ProjectRepoDefaults,
+        &UpdateScratch {
+            payload: ScratchPayload::ProjectRepoDefaults(ProjectRepoDefaultsData {
+                repos: vec![],
+                directory_path: None,
+            }),
+        },
+    )
+    .await
+    .unwrap();
+    assert!(
+        crate::routes::local_remote::project_associated_repository_ids(
+            &remote.pool,
+            target.project_id
+        )
+        .await
+        .unwrap()
+        .contains(&repo)
+    );
+    assert!(
+        crate::routes::local_remote::project_creation_repository_ids(
+            &remote.pool,
+            target.project_id
+        )
+        .await
+        .unwrap()
+        .is_empty()
+    );
+    let input = start_args(&remote, &target, issue, repo).await;
+    let rejected = launch::call(&remote, &principal, "start_workspace", input)
+        .await
+        .unwrap();
+    assert_eq!(
+        rejected["status"], "failed",
+        "Removed preset must not be inferred from linked history"
+    );
+    assert!(dispatch.starts.lock().await.is_empty());
+    let candidate = json!({"project_id":target.project_id,"repository_id":repo,"workspace_id":target.workspace_id,"target_branch":"main"});
+    assert!(
+        launch::call(
+            &remote,
+            &principal,
+            "get_integration_candidate",
+            candidate.clone()
+        )
+        .await
+        .is_ok()
+    );
+    sqlx::query(
+        "UPDATE workspace_repos SET target_branch='stable' WHERE workspace_id=? AND repo_id=?",
+    )
+    .bind(target.workspace_id)
+    .bind(repo)
+    .execute(&remote.pool)
+    .await
+    .unwrap();
+    assert!(
+        launch::call(&remote, &principal, "get_integration_candidate", candidate)
+            .await
+            .is_err()
+    );
 }
 
 #[tokio::test]

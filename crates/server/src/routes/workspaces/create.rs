@@ -9,7 +9,7 @@ use db::models::{
     },
     session::{CreateSession, Session},
     workspace::{CreateWorkspace, Workspace},
-    workspace_repo::{CreateWorkspaceRepo, WorkspaceRepo},
+    workspace_repo::WorkspaceRepo,
     workspace_usage::WorkspaceExecutionOwner,
 };
 use deployment::Deployment;
@@ -127,59 +127,20 @@ async fn create_direct_folder_workspace_record(
     let selected_dir_str = path_to_api_string(&selected_dir);
     let workspace_id = Uuid::new_v4();
     let workspace_name = name.filter(|workspace_name| !workspace_name.is_empty());
-    let is_git_repo =
-        selected_dir.join(".git").exists() && deployment.git().is_repo_openable(&selected_dir);
-
-    if is_git_repo {
-        let current_branch = deployment.git().get_current_branch(&selected_dir)?;
-        let repo = deployment
-            .repo()
-            .register(&deployment.db().pool, &selected_dir_str, None)
-            .await?;
-        let target_branch = repo
-            .default_target_branch
-            .clone()
-            .unwrap_or_else(|| current_branch.clone());
-        let container_ref = selected_dir.parent().ok_or_else(|| {
-            ApiError::BadRequest(
-                "Cannot use a filesystem root as a git direct folder workspace.".to_string(),
-            )
-        })?;
-        let workspace = Workspace::create_direct_folder(
-            &deployment.db().pool,
-            &CreateWorkspace {
-                branch: current_branch,
-                name: workspace_name,
-            },
-            workspace_id,
-            &path_to_api_string(container_ref),
-        )
-        .await?;
-
-        WorkspaceRepo::create_many(
-            &deployment.db().pool,
-            workspace.id,
-            &[CreateWorkspaceRepo {
-                repo_id: repo.id,
-                target_branch,
-            }],
-        )
-        .await?;
-
-        Ok(workspace)
-    } else {
-        Workspace::create_direct_folder(
-            &deployment.db().pool,
-            &CreateWorkspace {
-                branch: "direct-folder".to_string(),
-                name: workspace_name,
-            },
-            workspace_id,
-            &selected_dir_str,
-        )
-        .await
-        .map_err(ApiError::from)
+    if deployment.git().is_inside_repository(&selected_dir) {
+        return Err(ApiError::BadRequest("Choose a directory outside a Git repository, or use Git worktree development. Repository subdirectories are also Git workspaces.".into()));
     }
+    Workspace::create_direct_folder(
+        &deployment.db().pool,
+        &CreateWorkspace {
+            branch: "direct-folder".into(),
+            name: workspace_name,
+        },
+        workspace_id,
+        &selected_dir_str,
+    )
+    .await
+    .map_err(ApiError::from)
 }
 
 pub async fn create_and_start_workspace(
@@ -255,6 +216,40 @@ pub(crate) async fn create_and_start_workspace_admitted(
         .await?;
     }
 
+    if matches!(mode, CreateWorkspaceMode::Worktree) {
+        let unique: std::collections::HashSet<_> = repos.iter().map(|r| r.repo_id).collect();
+        if unique.len() != repos.len() {
+            return Err(ApiError::BadRequest(
+                "Select each repository only once".into(),
+            ));
+        }
+        for selected in &repos {
+            let repo = db::models::repo::Repo::find_by_id(&deployment.db().pool, selected.repo_id)
+                .await?
+                .ok_or_else(|| ApiError::BadRequest("Repository not found".into()))?;
+            if !deployment
+                .git()
+                .check_branch_exists(&repo.path, &selected.target_branch)?
+            {
+                return Err(ApiError::BadRequest(format!(
+                    "Base branch '{}' is unavailable in '{}'",
+                    selected.target_branch, repo.display_name
+                )));
+            }
+        }
+        if let Some(link) = &linked_issue {
+            let preset = crate::routes::local_remote::project_creation_repository_ids(
+                &deployment.db().pool,
+                link.remote_project_id,
+            )
+            .await
+            .map_err(|e| ApiError::BadRequest(e.to_string()))?;
+            if repos.iter().any(|r| !preset.contains(&r.repo_id)) {
+                return Err(ApiError::BadRequest("Choose repositories from this Project preset. Existing Workspace links do not change their repositories.".into()));
+            }
+        }
+    }
+
     let managed_workspace = match mode {
         CreateWorkspaceMode::Worktree => {
             if repos.is_empty() {
@@ -276,12 +271,10 @@ pub(crate) async fn create_and_start_workspace_admitted(
                 )
                 .await?;
 
-            for repo in &repos {
-                managed_workspace
-                    .add_repository(repo, deployment.git())
-                    .await
-                    .map_err(ApiError::from)?;
-            }
+            managed_workspace
+                .add_repositories(&repos, deployment.git())
+                .await
+                .map_err(ApiError::from)?;
 
             managed_workspace
         }
@@ -329,6 +322,22 @@ pub(crate) async fn create_and_start_workspace_admitted(
     .await?;
     let workspace_repos =
         WorkspaceRepo::find_repos_for_workspace(&deployment.db().pool, workspace.id).await?;
+    let mut selected_skills = selected_skills;
+    if !workspace.is_direct_folder()
+        && let Some(skills) = selected_skills.as_mut()
+    {
+        let root = Path::new(
+            workspace
+                .container_ref
+                .as_deref()
+                .ok_or_else(|| ApiError::BadRequest("Workspace root is missing".into()))?,
+        );
+        let mappings: Vec<_> = workspace_repos
+            .iter()
+            .map(|repo| (repo.path.clone(), repo.worktree_dir(root)))
+            .collect();
+        executors::repo_skills::retarget_selected_skills(skills, &mappings);
+    }
     let repos_with_setup = if workspace.is_direct_folder() {
         Vec::new()
     } else {

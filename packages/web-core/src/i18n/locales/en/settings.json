@@ -434,8 +434,8 @@
         "noRepos": "No repositories available"
       },
       "projectWorkspace": {
-        "title": "Agent working directory",
-        "description": "Configure the subdirectory where agents run after entering the code directory above. Choose the project's base branch in the workspace.",
+        "title": "Workspace execution",
+        "description": "The agent uses the common Workspace root. Repository scripts keep their own working directories.",
         "unavailable": "The local repository referenced by this workspace is unavailable. Choose the working folder again."
       },
       "general": {
@@ -452,7 +452,7 @@
         "defaultWorkingDir": {
           "label": "Default Working Directory",
           "placeholder": "e.g., packages/frontend",
-          "helper": "Subdirectory relative to the repository root where the coding agent runs for single-repo workspaces. Set when the workspace is created. Leave empty to use the repository root."
+          "helper": "Agents start at the common Workspace root. Run repository commands inside the relevant child repository."
         },
         "defaultTargetBranch": {
           "label": "Default Target Branch",
@@ -554,15 +554,15 @@
           "description": "Manage kanban columns for this project."
         },
         "defaultRepos": {
-          "label": "Workspace on this device",
-          "description": "The local working directory this project uses on {{host}}. Git repositories also store a base branch. New executions are prefilled and still require confirmation.",
-          "empty": "No workspace configured on this device",
+          "label": "Repository preset",
+          "description": "Repositories usually used together on {{host}}. Choose base branches when creating a Workspace.",
+          "empty": "No repositories registered",
           "addButton": "Choose or change",
-          "addNew": "Choose project workspace",
-          "pickerDescription": "Choose a local directory for this project on {{host}}. Git repositories require a base branch; ordinary directories are saved as direct working folders.",
+          "addNew": "Select repository preset",
+          "pickerDescription": "Select local repositories for new Workspaces. Existing Workspaces are unchanged.",
           "branchLabel": "Branch",
           "current": "current",
-          "remove": "Remove the current working folder",
+          "remove": "Remove from preset",
           "executionSettings": "Local execution configuration",
           "executionSettingsDescription": "Working subdirectory, dev server, setup, cleanup, and Worktree files.",
           "noBranches": "No branches found for this repository",

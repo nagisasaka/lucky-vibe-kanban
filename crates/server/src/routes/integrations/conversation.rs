@@ -324,7 +324,7 @@ pub(crate) async fn action(
                     script: command.clone(),
                     language: ScriptRequestLanguage::Bash,
                     context: ScriptContext::IntegrationValidation,
-                    working_dir: Some(repo.name.clone()),
+                    working_dir: Some(repo.worktree_name().to_owned()),
                 }),
                 None,
             );
@@ -752,9 +752,13 @@ pub(super) async fn advance(
             run.session_id = Some(session.id);
             run.save(pool).await?;
         }
-        let repo = Repo::find_by_id(pool, run.repository_id)
-            .await?
-            .context("Repository missing")?;
+        let repo = db::models::workspace_repo::WorkspaceRepo::find_repo_for_workspace(
+            pool,
+            workspace.id,
+            run.repository_id,
+        )
+        .await?
+        .context("Repository missing")?;
         if deployment
             .git()
             .get_branch_oid(&repo.path, &workspace.branch)
@@ -770,10 +774,14 @@ pub(super) async fn advance(
             .container()
             .ensure_container_exists(&workspace)
             .await?;
-        let repo = Repo::find_by_id(pool, run.repository_id)
-            .await?
-            .context("Repository missing")?;
-        let root = PathBuf::from(&container).join(&repo.name);
+        let repo = db::models::workspace_repo::WorkspaceRepo::find_repo_for_workspace(
+            pool,
+            workspace.id,
+            run.repository_id,
+        )
+        .await?
+        .context("Repository missing")?;
+        let root = PathBuf::from(&container).join(repo.worktree_name());
         support::require_private_branch(&root, &workspace.branch, &run.target_ref)?;
         deployment
             .git()

@@ -15,23 +15,14 @@ export function buildExplicitProjectWorkspaceDefaults(
 ): WorkspaceDefaults | null {
   if (workspaceDefault?.kind === 'direct_folder') {
     const path = workspaceDefault.path.trim();
-    return path ? { preferredRepos: [], preferredDirectoryPath: path } : null;
+    return path ? { preferredRepos: [], preferredDirectoryPath: null } : null;
   }
 
-  if (
-    workspaceDefault?.kind !== 'git' ||
-    !workspaceDefault.repo.target_branch.trim()
-  ) {
-    return null;
-  }
-
+  if (workspaceDefault?.kind !== 'git') return null;
   return {
-    preferredRepos: [
-      {
-        repo_id: workspaceDefault.repo.repo_id,
-        target_branch: workspaceDefault.repo.target_branch,
-      },
-    ],
+    preferredRepos: (workspaceDefault.repos ?? [workspaceDefault.repo]).map(
+      (r) => ({ repo_id: r.repo_id, target_branch: null })
+    ),
     preferredDirectoryPath: null,
   };
 }

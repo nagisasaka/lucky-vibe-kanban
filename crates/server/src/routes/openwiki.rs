@@ -527,7 +527,8 @@ async fn prepare_run(
         .container()
         .ensure_container_exists(&workspace)
         .await?;
-    let root = PathBuf::from(&container).join(&repo.name);
+    let placed = WorkspaceRepo::find_repo_for_workspace(&deployment.db().pool, workspace.id, repo.id).await?.context("Maintenance repository missing")?;
+    let root = placed.worktree_dir(&container);
     if deployment.git().get_head_info(&root)?.oid != source {
         bail!("Integrated source advanced during maintenance preparation; retry");
     }
@@ -908,7 +909,11 @@ async fn finish_run(
                 completion::MaintenanceFenced(format!("{error:#}")).into()
             }
         })?;
-    let root = PathBuf::from(&run.workspace_path).join(&repo.name);
+    let placed =
+        WorkspaceRepo::find_repo_for_workspace(&deployment.db().pool, run.workspace_id, repo.id)
+            .await?
+            .context("Maintenance repository missing")?;
+    let root = placed.worktree_dir(&run.workspace_path);
     let source = state
         .active_source_commit
         .as_deref()

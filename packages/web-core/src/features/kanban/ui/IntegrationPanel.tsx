@@ -179,7 +179,8 @@ export function IntegrationPanel({
   };
   const validSelection = integrationSelectionIsCurrent(
     Object.values(selected),
-    activities.data ?? []
+    activities.data ?? [],
+    target
   );
   const dataError =
     error === 'preference'
@@ -258,6 +259,7 @@ export function IntegrationPanel({
                   disabled={create.isPending}
                   onChange={(e) => {
                     setTarget(e.target.value);
+                    setSelected({});
                     resetRequest();
                   }}
                 >
@@ -332,7 +334,9 @@ export function IntegrationPanel({
               {issues.map((issue) => {
                 const candidates =
                   activities.data?.filter(
-                    (a) => a.current_issue_id === issue.id
+                    (a) =>
+                      a.current_issue_id === issue.id &&
+                      a.target_branch === target
                   ) ?? [];
                 if (!candidates.length) return null;
                 return (

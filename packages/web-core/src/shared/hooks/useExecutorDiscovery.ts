@@ -30,6 +30,7 @@ type DiscoveryScope = {
   workspaceId?: string;
   sessionId?: string;
   repoId?: string;
+  repoIds?: string[];
   variant?: string | null;
 };
 
@@ -51,6 +52,7 @@ export function useExecutorDiscovery(
 ): ExecutorDiscoverySnapshot {
   const hostId = useHostId();
   const { workspaceId, sessionId, repoId, variant } = opts ?? {};
+  const repoIdsKey = opts?.repoIds?.join(',') ?? '';
   const matchesShared =
     !!shared &&
     shared.scope.agent === agent &&
@@ -58,6 +60,7 @@ export function useExecutorDiscovery(
     shared.scope.workspaceId === workspaceId &&
     shared.scope.sessionId === sessionId &&
     shared.scope.repoId === repoId &&
+    (shared.scope.repoIds?.join(',') ?? '') === repoIdsKey &&
     shared.scope.variant === variant;
   const endpoint = useMemo(() => {
     if (!agent || matchesShared) return undefined;
@@ -65,9 +68,18 @@ export function useExecutorDiscovery(
       workspaceId,
       sessionId,
       repoId,
+      repoIds: repoIdsKey ? repoIdsKey.split(',') : undefined,
       variant,
     });
-  }, [agent, workspaceId, sessionId, repoId, variant, matchesShared]);
+  }, [
+    agent,
+    workspaceId,
+    sessionId,
+    repoId,
+    repoIdsKey,
+    variant,
+    matchesShared,
+  ]);
 
   const initialData = useCallback(
     (): ExecutorDiscoveryStreamState => ({
@@ -102,7 +114,15 @@ export function useExecutorDiscovery(
   if (matchesShared) return shared;
 
   return {
-    scope: { agent, hostId, workspaceId, sessionId, repoId, variant },
+    scope: {
+      agent,
+      hostId,
+      workspaceId,
+      sessionId,
+      repoId,
+      repoIds: opts?.repoIds,
+      variant,
+    },
     options: data?.options ?? null,
     error: combinedError,
     isConnected,

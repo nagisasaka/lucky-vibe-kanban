@@ -435,7 +435,7 @@
         "defaultWorkingDir": {
           "label": "デフォルト作業ディレクトリ",
           "placeholder": "例: packages/frontend",
-          "helper": "単一リポジトリワークスペースでコーディングエージェントが実行されるサブディレクトリ。ワークスペース作成時に設定されます。リポジトリのルートを使用する場合は空のままにしてください。"
+          "helper": "AI は Workspace 共通 root から開始します。Repo 内のコマンドは対象の子 Repo で実行します。"
         },
         "defaultTargetBranch": {
           "label": "デフォルトターゲットブランチ",
@@ -499,8 +499,8 @@
         "confirmSwitch": "未保存の変更があります。本当にリポジトリを切り替えますか？変更は失われます。"
       },
       "projectWorkspace": {
-        "title": "エージェントの作業ディレクトリ",
-        "description": "上のコードディレクトリに移動した後、エージェントが実行されるサブディレクトリを設定します。プロジェクトのベースブランチはワークスペースで選択してください。",
+        "title": "Workspace での作業",
+        "description": "AI は Workspace 共通 root を使います。Repo のスクリプトはそれぞれの作業場所で実行します。",
         "unavailable": "このワークスペースが参照するローカルリポジトリを利用できません。作業フォルダを選び直してください。"
       },
       "notices": {
@@ -542,20 +542,20 @@
           "description": "このプロジェクトのKanbanの列を管理します。"
         },
         "defaultRepos": {
-          "label": "この端末のワークスペース",
-          "description": "The local code directory and base branch this project uses on {{host}}. New executions are prefilled with these values and still require confirmation.",
-          "empty": "この端末のワークスペースは設定されていません",
+          "label": "Repository プリセット",
+          "description": "{{host}} で通常一緒に扱う Repository です。基準ブランチは Workspace 作成時に選びます。",
+          "empty": "Repository が登録されていません",
           "addButton": "選択・変更",
-          "addNew": "プロジェクトのワークスペースを選択",
+          "addNew": "Repository プリセットを選択",
           "branchLabel": "ブランチ",
-          "remove": "現在の作業フォルダーを削除",
+          "remove": "プリセットから解除",
           "executionSettings": "ローカル実行設定",
           "executionSettingsDescription": "作業サブディレクトリ、開発サーバー、セットアップ、クリーンアップ、Worktreeのファイルを設定します。",
           "noBranches": "このリポジトリのブランチはありません",
           "fetchError": "リポジトリを読み込めませんでした",
           "saveError": "既定の作業場所を保存できませんでした",
           "current": "現在",
-          "pickerDescription": "{{host}} 上でこのプロジェクトのローカルディレクトリを選択してください。Gitリポジトリにはベースブランチが必要です。通常のディレクトリは、そのまま作業フォルダとして保存されます。"
+          "pickerDescription": "新しい Workspace 用のローカル Repository を選択します。既存 Workspace の構成は変わりません。"
         }
       },
       "loginRequired": {

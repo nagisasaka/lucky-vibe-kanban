@@ -18,7 +18,13 @@ export function wikiRepositoryOptions(
   directFolderLabel?: string
 ): WikiRepositoryOption[] {
   if (repos.length > 0) {
-    return repos.map((repo) => ({ id: repo.id, name: repo.display_name }));
+    return repos.map((repo) => ({
+      id: repo.id,
+      name:
+        repo.worktree_name && repo.worktree_name !== repo.name
+          ? `${repo.display_name} (${repo.worktree_name})`
+          : repo.display_name,
+    }));
   }
   if (workspace.workspace_kind === 'direct_folder') {
     return [

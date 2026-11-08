@@ -198,7 +198,7 @@ describe('project workspace defaults', () => {
         payload: {
           type: 'PROJECT_REPO_DEFAULTS',
           data: {
-            repos: [{ repo_id: 'repo-1', target_branch: 'main' }],
+            repos: [{ repo_id: 'repo-1', target_branch: '' }],
             directory_path: null,
           },
         },
@@ -216,6 +216,43 @@ describe('project workspace defaults', () => {
         },
       },
       'host-1'
+    );
+  });
+  it('retains all preset repos, filters only stale entries, and saves no branch selection', async () => {
+    const repos = [
+      { repo_id: 'a', target_branch: 'old-main' },
+      { repo_id: 'b', target_branch: 'old-develop' },
+    ];
+    mockScratchGet.mockResolvedValue({
+      payload: {
+        type: 'PROJECT_REPO_DEFAULTS',
+        data: { repos, directory_path: null },
+      },
+    } as never);
+    expect(
+      await getValidProjectWorkspaceDefault('project', new Set(['b']))
+    ).toEqual({ kind: 'git', repo: repos[1], repos: [repos[1]] });
+    await saveProjectWorkspaceDefault('project', {
+      kind: 'git',
+      repo: repos[0],
+      repos,
+    });
+    expect(mockScratchUpdate).toHaveBeenLastCalledWith(
+      'PROJECT_REPO_DEFAULTS',
+      'project',
+      {
+        payload: {
+          type: 'PROJECT_REPO_DEFAULTS',
+          data: {
+            repos: [
+              { repo_id: 'a', target_branch: '' },
+              { repo_id: 'b', target_branch: '' },
+            ],
+            directory_path: null,
+          },
+        },
+      },
+      undefined
     );
   });
 });

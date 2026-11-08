@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT id as \"id!: Uuid\",\n                      path,\n                      name,\n                      display_name,\n                      setup_script,\n                      cleanup_script,\n                      archive_script,\n                      copy_files,\n                      parallel_setup_script as \"parallel_setup_script!: bool\",\n                      dev_server_script,\n                      default_target_branch,\n                      default_working_dir,\n                      created_at as \"created_at!: DateTime<Utc>\",\n                      updated_at as \"updated_at!: DateTime<Utc>\"\n               FROM repos\n               WHERE id = $1",
+  "query": "SELECT id as \"id!: Uuid\",\n                      path,\n                      name,\n                      display_name,\n                      NULL as \"worktree_name?: String\",\n                      setup_script,\n                      cleanup_script,\n                      archive_script,\n                      copy_files,\n                      parallel_setup_script as \"parallel_setup_script!: bool\",\n                      dev_server_script,\n                      default_target_branch,\n                      default_working_dir,\n                      created_at as \"created_at!: DateTime<Utc>\",\n                      updated_at as \"updated_at!: DateTime<Utc>\"\n               FROM repos\n               WHERE id = $1",
   "describe": {
     "columns": [
       {
@@ -24,53 +24,58 @@
         "type_info": "Text"
       },
       {
-        "name": "setup_script",
+        "name": "worktree_name?: String",
         "ordinal": 4,
-        "type_info": "Text"
+        "type_info": "Null"
       },
       {
-        "name": "cleanup_script",
+        "name": "setup_script",
         "ordinal": 5,
         "type_info": "Text"
       },
       {
-        "name": "archive_script",
+        "name": "cleanup_script",
         "ordinal": 6,
         "type_info": "Text"
       },
       {
-        "name": "copy_files",
+        "name": "archive_script",
         "ordinal": 7,
         "type_info": "Text"
       },
       {
-        "name": "parallel_setup_script!: bool",
+        "name": "copy_files",
         "ordinal": 8,
+        "type_info": "Text"
+      },
+      {
+        "name": "parallel_setup_script!: bool",
+        "ordinal": 9,
         "type_info": "Integer"
       },
       {
         "name": "dev_server_script",
-        "ordinal": 9,
-        "type_info": "Text"
-      },
-      {
-        "name": "default_target_branch",
         "ordinal": 10,
         "type_info": "Text"
       },
       {
-        "name": "default_working_dir",
+        "name": "default_target_branch",
         "ordinal": 11,
         "type_info": "Text"
       },
       {
-        "name": "created_at!: DateTime<Utc>",
+        "name": "default_working_dir",
         "ordinal": 12,
         "type_info": "Text"
       },
       {
-        "name": "updated_at!: DateTime<Utc>",
+        "name": "created_at!: DateTime<Utc>",
         "ordinal": 13,
+        "type_info": "Text"
+      },
+      {
+        "name": "updated_at!: DateTime<Utc>",
+        "ordinal": 14,
         "type_info": "Text"
       }
     ],
@@ -82,6 +87,7 @@
       false,
       false,
       false,
+      null,
       true,
       true,
       true,
@@ -94,5 +100,5 @@
       false
     ]
   },
-  "hash": "973e43902b05d671f69b24a0aeeb07bc0cbcd22d75b20c83c49a122f92c6b231"
+  "hash": "714a3008644d309e724ce4556069dcc1429d5f39dcf3649fe710a806df09fbfc"
 }

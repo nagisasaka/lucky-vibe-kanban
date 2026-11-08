@@ -200,6 +200,16 @@ export function SkillTypeaheadPlugin({
                           </span>
                         )}
                       </div>
+                      {skills.filter(
+                        (skill) => skill.name === option.skill.name
+                      ).length > 1 && (
+                        <div
+                          className="text-xs text-low truncate"
+                          title={option.skill.path}
+                        >
+                          {option.skill.path}
+                        </div>
+                      )}
                       {details && (
                         <div className="text-xs text-low truncate">
                           {details}

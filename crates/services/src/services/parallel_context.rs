@@ -80,7 +80,7 @@ pub async fn discover(
          LEFT JOIN local_workspace_links l ON l.workspace_id=w.id
          LEFT JOIN local_issues i ON i.id=l.issue_id
          LEFT JOIN local_project_statuses st ON st.id=i.status_id
-         WHERE w.usage='interactive' AND wr.repo_id=? AND (? IS NULL OR w.id>?) ORDER BY w.id LIMIT ?",
+         WHERE w.usage='interactive' AND w.workspace_kind='worktree' AND wr.repo_id=? AND (? IS NULL OR w.id>?) ORDER BY w.id LIMIT ?",
     ).bind(repo.id).bind(query.after_workspace).bind(query.after_workspace)
         .bind((limit + 1) as i64).fetch_all(pool).await?;
     let next_workspace = (activities.len() > limit).then(|| activities[limit - 1].workspace_id);
@@ -301,6 +301,23 @@ mod tests {
         assert_eq!(page.activities[0].active_agent_runs, 1);
         assert_eq!(page.activities[0].latest_agent_run_id, Some(agent));
         assert!(page.activities[0].observed_head_oid.is_some());
+        sqlx::query("UPDATE workspaces SET workspace_kind='direct_folder' WHERE id=?")
+            .bind(ws.id)
+            .execute(&pool)
+            .await
+            .unwrap();
+        assert!(
+            discover(&pool, &repo, &DiscoveryQuery::default())
+                .await
+                .unwrap()
+                .activities
+                .is_empty()
+        );
+        sqlx::query("UPDATE workspaces SET workspace_kind='worktree' WHERE id=?")
+            .bind(ws.id)
+            .execute(&pool)
+            .await
+            .unwrap();
         assert!(page.manifests.records.is_empty());
         assert!(!page.memory_available);
         assert!(

@@ -215,7 +215,7 @@ pub async fn create_pr(
             .await?
             .ok_or(RepoError::NotFound)?;
 
-    let repo = Repo::find_by_id(pool, workspace_repo.repo_id)
+    let repo = WorkspaceRepo::find_repo_for_workspace(pool, workspace.id, workspace_repo.repo_id)
         .await?
         .ok_or(RepoError::NotFound)?;
 
@@ -231,7 +231,7 @@ pub async fn create_pr(
         .ensure_container_exists(&workspace)
         .await?;
     let workspace_path = PathBuf::from(&container_ref);
-    let worktree_path = workspace_path.join(&repo.name);
+    let worktree_path = repo.worktree_dir(&workspace_path);
 
     let git = deployment.git();
     let push_remote = git.get_push_remote(&repo_path)?;
@@ -414,7 +414,7 @@ pub async fn attach_existing_pr(
             .await?
             .ok_or(RepoError::NotFound)?;
 
-    let repo = Repo::find_by_id(pool, workspace_repo.repo_id)
+    let repo = WorkspaceRepo::find_repo_for_workspace(pool, workspace.id, workspace_repo.repo_id)
         .await?
         .ok_or(RepoError::NotFound)?;
 
@@ -527,7 +527,7 @@ pub async fn get_pr_comments(
             .await?
             .ok_or(RepoError::NotFound)?;
 
-    let repo = Repo::find_by_id(pool, workspace_repo.repo_id)
+    let repo = WorkspaceRepo::find_repo_for_workspace(pool, workspace.id, workspace_repo.repo_id)
         .await?
         .ok_or(RepoError::NotFound)?;
 
@@ -718,7 +718,10 @@ pub async fn create_workspace_from_pr(
 
     // Use gh pr checkout to fetch and switch to the PR branch
     // This handles SSH/HTTPS auth correctly regardless of fork URL format
-    let worktree_path = PathBuf::from(&container_ref).join(&repo.name);
+    let repo = WorkspaceRepo::find_repo_for_workspace(pool, workspace.id, repo.id)
+        .await?
+        .ok_or(RepoError::NotFound)?;
+    let worktree_path = repo.worktree_dir(&container_ref);
     match GhCli::new().get_repo_info(&remote.url, &worktree_path) {
         Ok(repo_info) => {
             if let Err(e) = GhCli::new().pr_checkout(

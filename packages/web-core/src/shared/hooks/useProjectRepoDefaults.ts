@@ -9,7 +9,7 @@ import {
 const SCRATCH_TYPE = ScratchType.PROJECT_REPO_DEFAULTS;
 
 export type ProjectWorkspaceDefault =
-  | { kind: 'git'; repo: DraftWorkspaceRepo }
+  | { kind: 'git'; repo: DraftWorkspaceRepo; repos?: DraftWorkspaceRepo[] }
   | { kind: 'direct_folder'; path: string };
 
 export const projectWorkspaceDefaultQueryKey = (
@@ -26,7 +26,13 @@ export function normalizeProjectWorkspaceDefault(
   }
 
   const [repo] = data.repos ?? [];
-  return repo ? { kind: 'git', repo } : null;
+  return repo
+    ? {
+        kind: 'git',
+        repo,
+        ...(data.repos.length > 1 ? { repos: data.repos } : {}),
+      }
+    : null;
 }
 
 export function areProjectWorkspaceDefaultsEqual(
@@ -42,8 +48,8 @@ export function areProjectWorkspaceDefaultsEqual(
 
   if (left.kind === 'git' && right.kind === 'git') {
     return (
-      left.repo.repo_id === right.repo.repo_id &&
-      left.repo.target_branch === right.repo.target_branch
+      JSON.stringify(left.repos ?? [left.repo]) ===
+      JSON.stringify(right.repos ?? [right.repo])
     );
   }
 
@@ -116,7 +122,12 @@ export async function saveProjectWorkspaceDefault(
 ): Promise<void> {
   const data: ProjectRepoDefaultsData =
     workspaceDefault?.kind === 'git'
-      ? { repos: [workspaceDefault.repo], directory_path: null }
+      ? {
+          repos: (workspaceDefault.repos ?? [workspaceDefault.repo]).map(
+            (r) => ({ repo_id: r.repo_id, target_branch: '' })
+          ),
+          directory_path: null,
+        }
       : {
           repos: [],
           directory_path:
@@ -152,7 +163,8 @@ export async function getValidProjectWorkspaceDefault(
     return workspaceDefault;
   }
 
-  return availableRepoIds.has(workspaceDefault.repo.repo_id)
-    ? workspaceDefault
-    : null;
+  const repos = (workspaceDefault.repos ?? [workspaceDefault.repo]).filter(
+    (r) => availableRepoIds.has(r.repo_id)
+  );
+  return repos.length ? { kind: 'git', repo: repos[0], repos } : null;
 }

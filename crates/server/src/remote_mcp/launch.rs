@@ -338,7 +338,7 @@ fn commit(value: &str) -> anyhow::Result<()> {
 }
 
 pub(super) fn tools() -> Vec<rmcp::model::Tool> {
-    let mut start=serde_json::to_value(definition::<StartArgs>("start_workspace","Start agreed Issue requirements in a new Worktree Workspace using the configured default executor profile unless engine is explicit. Engine selection starts a new Session and native conversation. Pin the Issue revision and explicit repositories/branches. Review uses the Code path to investigate the Issue scope, report in conversation and stop; separate explicit instructions are required for product implementation and existing permissions still apply. Goal uses native execution_mode. Returns existing execution admission IDs, not completion; use the original request_id after disconnection.")).unwrap();
+    let mut start=serde_json::to_value(definition::<StartArgs>("start_workspace","Start agreed Issue requirements in a new Worktree Workspace using the configured default executor profile unless engine is explicit. Engine selection starts a new Session and native conversation. Pin the Issue revision and explicit repositories/branches from its current Project preset; historical linked repositories do not extend creation choices. Review uses the Code path to investigate the Issue scope, report in conversation and stop; separate explicit instructions are required for product implementation and existing permissions still apply. Goal uses native execution_mode. Returns existing execution admission IDs, not completion; use the original request_id after disconnection.")).unwrap();
     start["annotations"] = json!({"readOnlyHint":false,"destructiveHint":true,"idempotentHint":true,"openWorldHint":true});
     start["_meta"] =
         json!({"securitySchemes":[{"type":"oauth2","scopes":["lvk:read","lvk:write"]}]});
@@ -358,7 +358,7 @@ pub(super) fn tools() -> Vec<rmcp::model::Tool> {
         serde_json::from_value(merge).unwrap(),
         definition::<RepositoriesArgs>(
             "list_project_repositories",
-            "List current Project repository IDs and default branches in bounded pages, including configured Worktree defaults. Host paths are omitted. Auto-merge membership may be narrower than creation defaults.",
+            "List Project preset and linked Workspace repositories in bounded pages. creation_preset_member identifies choices permitted for new Issue Workspaces; removing a preset never invalidates existing Workspace repositories. Host paths are omitted. Auto-merge admission still uses the actual Workspace and recorded merge target.",
         ),
         definition::<BranchArgs>(
             "list_repository_branches",
@@ -525,7 +525,7 @@ impl Remote {
             )
         );
         let mut ids =
-            local_remote::project_creation_repository_ids(&self.pool, args.project_id).await?;
+            local_remote::project_associated_repository_ids(&self.pool, args.project_id).await?;
         ids.sort();
         if let Some(cursor) = args.cursor {
             ensure!(
@@ -536,6 +536,8 @@ impl Remote {
                 )
             );
         }
+        let preset_ids =
+            local_remote::project_creation_repository_ids(&self.pool, args.project_id).await?;
         let integration_ids =
             integrations::project_repository_ids(&self.pool, args.project_id).await?;
         let mut items = Vec::new();
@@ -545,7 +547,7 @@ impl Remote {
             .take(args.limit as usize + 1)
         {
             if let Some(repo) = Repo::find_by_id(&self.pool, id).await? {
-                items.push(json!({"id":repo.id,"name":repo.display_name.chars().take(500).collect::<String>(),"name_truncated":repo.display_name.chars().count()>500,"default_target_branch":repo.default_target_branch,"integration_member":integration_ids.contains(&id),"url":self.config.project_url(args.project_id)}));
+                items.push(json!({"id":repo.id,"name":repo.display_name.chars().take(500).collect::<String>(),"name_truncated":repo.display_name.chars().count()>500,"default_target_branch":repo.default_target_branch,"integration_member":integration_ids.contains(&id),"creation_preset_member":preset_ids.contains(&id),"url":self.config.project_url(args.project_id)}));
             }
         }
         Ok(page(items, args.limit))
@@ -560,7 +562,7 @@ impl Remote {
             )
         );
         ensure!(
-            local_remote::project_creation_repository_ids(&self.pool, args.project_id)
+            local_remote::project_associated_repository_ids(&self.pool, args.project_id)
                 .await?
                 .contains(&args.repository_id),
             super::errors::rejection_with_message(
@@ -604,16 +606,24 @@ impl Remote {
             .await?
             .ok_or_else(|| super::errors::rejection(Category::NotFound))?;
         ensure!(
-            WorkspaceRepo::find_by_workspace_and_repo_id(
-                &self.pool,
-                args.workspace_id,
-                args.repository_id
-            )
-            .await?
-            .is_some(),
+            !workspace.is_direct_folder(),
             super::errors::rejection_with_message(
-                utils::mcp_error::Category::Permission,
-                "Repository is not in this Workspace"
+                Category::Validation,
+                "Direct folders do not support Auto-merge"
+            )
+        );
+        let membership = WorkspaceRepo::find_by_workspace_and_repo_id(
+            &self.pool,
+            args.workspace_id,
+            args.repository_id,
+        )
+        .await?
+        .ok_or_else(|| super::errors::rejection(Category::Permission))?;
+        ensure!(
+            membership.target_branch == args.target_branch.trim_start_matches("refs/heads/"),
+            super::errors::rejection_with_message(
+                Category::Validation,
+                "Select the merge target recorded by this Workspace"
             )
         );
         let repo = Repo::find_by_id(&self.pool, args.repository_id)

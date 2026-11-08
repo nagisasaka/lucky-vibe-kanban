@@ -121,11 +121,19 @@ export function resolveWorkspaceFilePreviewTarget({
   const [firstSegment, ...restSegments] = normalizedPath.split('/');
   if (firstSegment && restSegments.length > 0) {
     const normalizedFirstSegment = normalizeRepoNameSegment(firstSegment);
-    const matchingRepo = repos.find(
+    const physical = repos.filter(
       (repo) =>
-        normalizeRepoNameSegment(repo.name) === normalizedFirstSegment ||
-        normalizeRepoNameSegment(repo.display_name) === normalizedFirstSegment
+        normalizeRepoNameSegment(repo.worktree_name ?? repo.name) ===
+        normalizedFirstSegment
     );
+    const candidates = physical.length
+      ? physical
+      : repos.filter(
+          (repo) =>
+            normalizeRepoNameSegment(repo.display_name) ===
+            normalizedFirstSegment
+        );
+    const matchingRepo = candidates.length === 1 ? candidates[0] : undefined;
 
     if (matchingRepo) {
       return {
