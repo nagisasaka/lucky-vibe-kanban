@@ -326,11 +326,17 @@ function appendRunEntries(
     | { index: number; messageId: string; role: string }
     | undefined;
 
+  let assistantBlocks: number[] = [];
+  let messageScope: string | undefined;
   const resetMessageMerge = () => {
     previousMessage = undefined;
+    assistantBlocks = [];
   };
 
   for (const event of events) {
+    const scope = JSON.stringify([event.turn_id, event.run_attempt_id]);
+    if (messageScope !== scope) resetMessageMerge();
+    messageScope = scope;
     const payload = event.payload;
     switch (payload.type) {
       case 'agent_activity': {
@@ -424,17 +430,31 @@ function appendRunEntries(
             : message.role === 'assistant'
               ? 'assistant_message'
               : 'system_message';
-        const previousEntry = previousMessage
-          ? output[previousMessage.index]
-          : undefined;
-        const repeatedFinal =
-          payload.data.final_output &&
-          previousEntry?.type === 'NORMALIZED_ENTRY' &&
-          previousEntry.content.content === message.content;
+        // A result may repeat several completed text blocks from the last
+        // assistant response. Match only a contiguous suffix in this turn and
+        // attempt; tool/user/final boundaries discard the candidate group.
+        if (message.role === 'assistant' && payload.data.final_output) {
+          const contents: string[] = [];
+          let repeatedFinal = false;
+          for (const index of [...assistantBlocks].reverse()) {
+            const block = output[index];
+            if (block.type !== 'NORMALIZED_ENTRY') break;
+            contents.unshift(block.content.content);
+            if (contents.join('\n\n') === message.content) {
+              repeatedFinal = true;
+              break;
+            }
+          }
+          if (repeatedFinal && previousMessage) {
+            mergeEventIdentity(output[previousMessage.index], event, runActive);
+            resetMessageMerge();
+            break;
+          }
+        }
         const canMerge =
           message.role === 'assistant' &&
           previousMessage?.role === message.role &&
-          (previousMessage.messageId === message.message_id || repeatedFinal);
+          previousMessage.messageId === message.message_id;
         if (canMerge && previousMessage) {
           const previous = output[previousMessage.index];
           if (previous.type === 'NORMALIZED_ENTRY') {
@@ -442,7 +462,7 @@ function appendRunEntries(
             previous.content = {
               ...previous.content,
               content:
-                !liveIds.has(event.event_id) &&
+                (payload.data.final_output || !liveIds.has(event.event_id)) &&
                 message.content.startsWith(previousContent)
                   ? message.content
                   : `${previousContent}${message.content}`,
@@ -450,8 +470,10 @@ function appendRunEntries(
             };
             mergeEventIdentity(previous, event, runActive);
           }
+          if (payload.data.final_output) resetMessageMerge();
           break;
         }
+        if (message.role !== 'assistant') resetMessageMerge();
         output.push(
           normalizedPatch(event, {
             entry_type: { type: entryType },
@@ -464,6 +486,9 @@ function appendRunEntries(
           messageId: message.message_id,
           role: message.role,
         };
+        if (message.role === 'assistant')
+          assistantBlocks.push(output.length - 1);
+        if (payload.data.final_output) resetMessageMerge();
         break;
       }
       case 'thinking':

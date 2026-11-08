@@ -138,6 +138,140 @@ describe('projectCanonicalAgentConversation', () => {
       answers[0].type === 'NORMALIZED_ENTRY' && answers[0].content.content
     ).toBe('Final answer');
   });
+  const assistant = (
+    sequence: number,
+    content: string,
+    final = false,
+    id = `block-${sequence}`
+  ) =>
+    event('blocks', sequence, {
+      type: 'message',
+      data: {
+        message: { message_id: id, role: 'assistant', content },
+        final_output: final,
+      },
+    });
+  const answers = (
+    events: AgentEventEnvelope[],
+    transientEvents: AgentEventEnvelope[] = []
+  ) =>
+    projectRuns([
+      { runId: 'blocks', status: 'succeeded', events, transientEvents },
+    ]).entries.flatMap((entry) =>
+      entry.type === 'NORMALIZED_ENTRY' &&
+      entry.content.entry_type.type === 'assistant_message'
+        ? [entry.content.content]
+        : []
+    );
+
+  it('matches the final snapshot to the last multi-block answer without reprinting it', () => {
+    expect(
+      answers([
+        assistant(1, 'Earlier commentary.'),
+        assistant(2, 'First paragraph.'),
+        assistant(3, 'Second paragraph.'),
+        assistant(4, 'First paragraph.\n\nSecond paragraph.', true),
+      ])
+    ).toEqual(['Earlier commentary.', 'First paragraph.', 'Second paragraph.']);
+  });
+
+  it('keeps an earlier identical answer when matching only the final suffix', () => {
+    expect(
+      answers([
+        assistant(1, 'Same answer'),
+        assistant(2, 'Same answer'),
+        assistant(3, 'Same answer', true),
+      ])
+    ).toEqual(['Same answer', 'Same answer']);
+  });
+
+  it.each([false, true])(
+    'merges streaming chunks and a final snapshot (live=%s)',
+    (live) => {
+      const events = [
+        assistant(1, 'First ', false, 'stream'),
+        assistant(2, 'paragraph.', false, 'stream'),
+        assistant(3, 'Second paragraph.'),
+        assistant(4, 'First paragraph.\n\nSecond paragraph.', true),
+      ];
+      expect(live ? answers([], events) : answers(events)).toEqual([
+        'First paragraph.',
+        'Second paragraph.',
+      ]);
+      const snapshot = [
+        assistant(1, 'Partial', false, 'stream'),
+        assistant(2, 'Partial answer', true, 'stream'),
+      ];
+      expect(live ? answers([], snapshot) : answers(snapshot)).toEqual([
+        'Partial answer',
+      ]);
+    }
+  );
+
+  it.each(['tool', 'user', 'final', 'turn', 'attempt'] as const)(
+    'does not deduplicate an earlier answer across a %s boundary',
+    (boundary) => {
+      const first = assistant(1, 'Same answer', boundary === 'final');
+      const final = assistant(3, 'Same answer', true);
+      const events = [first];
+      if (boundary === 'tool')
+        events.push(
+          event('blocks', 2, {
+            type: 'tool_call',
+            data: {
+              tool_call_id: 'tool',
+              tool_name: 'Read',
+              status: AgentRuntimeToolStatus.succeeded,
+              arguments: null,
+              result: 'read',
+            },
+          })
+        );
+      if (boundary === 'user')
+        events.push(
+          event('blocks', 2, {
+            type: 'message',
+            data: {
+              message: { message_id: 'user', role: 'user', content: 'Again' },
+              final_output: false,
+            },
+          })
+        );
+      if (boundary === 'turn') final.turn_id = 'another-turn';
+      if (boundary === 'attempt') {
+        final.run_attempt_id = 'another-attempt';
+        final.run_attempt_number = 2;
+      }
+      events.push(final);
+      expect(answers(events)).toEqual(['Same answer', 'Same answer']);
+    }
+  );
+
+  it('does not match a combined snapshot across a tool boundary', () => {
+    const tool = event('blocks', 2, {
+      type: 'tool_call',
+      data: {
+        tool_call_id: 'read',
+        tool_name: 'Read',
+        status: AgentRuntimeToolStatus.succeeded,
+        arguments: null,
+        result: 'read',
+      },
+    });
+    expect(
+      answers([
+        assistant(1, 'First paragraph.'),
+        tool,
+        assistant(3, 'Second paragraph.'),
+        assistant(4, 'First paragraph.\n\nSecond paragraph.', true),
+      ])
+    ).toEqual([
+      'First paragraph.',
+      'Second paragraph.',
+      'First paragraph.\n\nSecond paragraph.',
+    ]);
+  });
+
   it.each([
     [AgentRuntimeToolStatus.waiting_approval, 'waiting_approval'],
     [AgentRuntimeToolStatus.approved, 'approved'],
