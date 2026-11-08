@@ -50,6 +50,7 @@ export function useWorkflowRepositorySelection({
       initialPath: preferredRepoDetails?.path,
       initialMode: 'worktree',
       initialBranch: preferredRepo?.target_branch,
+      initialRepos: preferredRepo ? [preferredRepo] : undefined,
       hostId: routeState.hostId,
       allowedModes: ['worktree'],
       singleRepository: true,

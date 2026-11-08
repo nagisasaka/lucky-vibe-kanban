@@ -547,6 +547,28 @@ export function RemoteProjectsSettingsSection({
     t,
   ]);
 
+  const handleChangeProjectWorkspace = useCallback(
+    (next: ProjectWorkspaceDefault | null) => {
+      if (!selectedProjectId) return false;
+      const currentRepoId =
+        workspaceDefault?.kind === 'git' ? workspaceDefault.repo.repo_id : null;
+      const nextRepoId = next?.kind === 'git' ? next.repo.repo_id : null;
+      if (
+        repoConfigDirty &&
+        currentRepoId !== nextRepoId &&
+        !window.confirm(
+          t('settings.common.discardChangesConfirm', 'Discard unsaved changes?')
+        )
+      ) {
+        return false;
+      }
+      setDefaultReposError(null);
+      setWorkspaceDefault(next);
+      return true;
+    },
+    [selectedProjectId, workspaceDefault, repoConfigDirty, t]
+  );
+
   const handleChooseProjectWorkspace = useCallback(async () => {
     if (!selectedProjectId) return;
 
@@ -607,21 +629,7 @@ export function RemoteProjectsSettingsSection({
               kind: 'direct_folder',
               path: result.selection.path,
             };
-      const nextRepoId =
-        nextWorkspaceDefault.kind === 'git'
-          ? nextWorkspaceDefault.repo.repo_id
-          : null;
-      const currentRepoId =
-        workspaceDefault?.kind === 'git' ? workspaceDefault.repo.repo_id : null;
-      if (
-        repoConfigDirty &&
-        currentRepoId !== nextRepoId &&
-        !window.confirm(
-          t('settings.common.discardChangesConfirm', 'Discard unsaved changes?')
-        )
-      ) {
-        return;
-      }
+      if (!handleChangeProjectWorkspace(nextWorkspaceDefault)) return;
 
       if (result.selection.mode === 'worktree') {
         const nextRepo = result.selection.repo;
@@ -634,7 +642,6 @@ export function RemoteProjectsSettingsSection({
             : [...previous, nextRepo];
         });
       }
-      setWorkspaceDefault(nextWorkspaceDefault);
     } catch {
       setDefaultReposError(
         t('settings:settings.remoteProjects.form.defaultRepos.saveError')
@@ -644,7 +651,7 @@ export function RemoteProjectsSettingsSection({
     allRepos,
     workspaceDefault,
     t,
-    repoConfigDirty,
+    handleChangeProjectWorkspace,
     repoDefaultsHostId,
     selectedHost?.label,
     selectedHost?.kind,
@@ -652,18 +659,8 @@ export function RemoteProjectsSettingsSection({
   ]);
 
   const handleRemoveProjectWorkspace = useCallback(() => {
-    if (!selectedProjectId) return;
-    if (
-      repoConfigDirty &&
-      !window.confirm(
-        t('settings.common.discardChangesConfirm', 'Discard unsaved changes?')
-      )
-    ) {
-      return;
-    }
-    setDefaultReposError(null);
-    setWorkspaceDefault(null);
-  }, [selectedProjectId, repoConfigDirty, t]);
+    handleChangeProjectWorkspace(null);
+  }, [handleChangeProjectWorkspace]);
 
   const visibleStatusCount = useMemo(
     () => localStatuses.filter((status) => !status.hidden).length,
@@ -1307,7 +1304,7 @@ export function RemoteProjectsSettingsSection({
                           const remaining = (
                             workspaceDefault.repos ?? [workspaceDefault.repo]
                           ).filter((r) => r.repo_id !== item.repo_id);
-                          setWorkspaceDefault(
+                          handleChangeProjectWorkspace(
                             remaining.length
                               ? {
                                   kind: 'git',

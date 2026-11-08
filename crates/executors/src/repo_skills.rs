@@ -50,34 +50,35 @@ pub fn codex_roots(repos: &[PathBuf]) -> Vec<PathBuf> {
 pub fn claude_skills(repos: &[PathBuf]) -> BTreeMap<String, Vec<PathBuf>> {
     let mut result: BTreeMap<String, Vec<PathBuf>> = BTreeMap::new();
     for repo in repos {
-        for (folder, skill) in [("skills", true), ("commands", false)] {
-            let base = repo.join(".claude").join(folder);
-            if let Ok(entries) = std::fs::read_dir(&base) {
-                for entry in entries.flatten() {
-                    let path = if skill {
-                        entry.path().join("SKILL.md")
-                    } else {
-                        entry.path()
-                    };
-                    if !path.is_file() || path.extension().is_none_or(|e| e != "md") {
-                        continue;
-                    }
-                    let name = if skill {
-                        entry.file_name().to_string_lossy().into_owned()
-                    } else {
-                        path.file_stem()
-                            .unwrap_or_default()
-                            .to_string_lossy()
-                            .into_owned()
-                    };
-                    let name = if skill {
-                        read_skill_name(&path).unwrap_or(name)
-                    } else {
-                        name
-                    };
+        if let Ok(entries) = std::fs::read_dir(repo.join(".claude/skills")) {
+            for entry in entries.flatten() {
+                let path = entry.path().join("SKILL.md");
+                if path.is_file() {
+                    let name = read_skill_name(&path)
+                        .unwrap_or_else(|| entry.file_name().to_string_lossy().into_owned());
                     result.entry(name).or_default().push(path);
                 }
             }
+        }
+        let commands = repo.join(".claude/commands");
+        for entry in walkdir::WalkDir::new(&commands)
+            .into_iter()
+            .filter_map(Result::ok)
+        {
+            let path = entry.path();
+            if !path.is_file() || path.extension().is_none_or(|e| e != "md") {
+                continue;
+            }
+            // Legacy commands use their path, never frontmatter `name`:
+            // commands/frontend/component.md is /frontend:component.
+            let relative = path.strip_prefix(&commands).expect("walked command root");
+            let name = relative
+                .with_extension("")
+                .components()
+                .map(|c| c.as_os_str().to_string_lossy())
+                .collect::<Vec<_>>()
+                .join(":");
+            result.entry(name).or_default().push(path.to_path_buf());
         }
     }
     result
@@ -232,5 +233,50 @@ mod tests {
         assert!(mentions_skill("Use $inspect here", "inspect"));
         assert!(!mentions_skill("Use $inspection", "inspect"));
         assert!(mentions_skill("Use `/inspect`, please", "inspect"));
+    }
+
+    #[test]
+    fn nested_commands_use_native_names_and_detect_cross_repo_conflicts() {
+        let tmp = tempfile::tempdir().unwrap();
+        let roots: Vec<_> = ["a", "b"].iter().map(|r| tmp.path().join(r)).collect();
+        for repo in &roots {
+            let folder = repo.join(".claude/commands/frontend");
+            std::fs::create_dir_all(&folder).unwrap();
+            std::fs::write(
+                folder.join("component.md"),
+                "---\nname: ignored-for-commands\n---\nSynthetic command",
+            )
+            .unwrap();
+            std::fs::write(folder.join("ignored.txt"), "Not a command").unwrap();
+        }
+        let backend = roots[0].join(".claude/commands/backend");
+        std::fs::create_dir_all(&backend).unwrap();
+        std::fs::write(backend.join("component.md"), "Different namespace").unwrap();
+        std::fs::write(roots[0].join(".claude/commands/top.md"), "Top level").unwrap();
+
+        let found = claude_skills(&roots);
+        assert_eq!(found.len(), 3);
+        assert_eq!(
+            found["frontend:component"],
+            roots
+                .iter()
+                .map(|r| r.join(".claude/commands/frontend/component.md"))
+                .collect::<Vec<_>>()
+        );
+        assert_eq!(
+            found["backend:component"],
+            vec![backend.join("component.md")]
+        );
+        assert_eq!(found["top"].len(), 1);
+        assert!(ambiguous_claude_names(&roots[..1]).is_empty());
+        assert_eq!(ambiguous_claude_names(&roots), vec!["frontend:component"]);
+        assert!(mentions_skill(
+            "Use `/frontend:component`, please",
+            "frontend:component"
+        ));
+        assert!(!mentions_skill(
+            "Use /frontend:component-other",
+            "frontend:component"
+        ));
     }
 }

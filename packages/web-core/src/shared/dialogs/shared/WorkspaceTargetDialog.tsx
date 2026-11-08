@@ -185,14 +185,17 @@ const WorkspaceTargetDialogImpl = create<WorkspaceTargetDialogProps>(
                     repo_id: r.id,
                     target_branch: initialBranch ?? '',
                   })));
+          const validSeeds = seeds.filter((s) =>
+            repos.some((r) => r.id === s.repo_id)
+          );
           setSelected(
             Object.fromEntries(
-              seeds
-                .filter((s) => repos.some((r) => r.id === s.repo_id))
-                .map((s) => [
+              (singleRepository ? validSeeds.slice(0, 1) : validSeeds).map(
+                (s) => [
                   s.repo_id,
                   projectDefault ? '' : (s.target_branch ?? ''),
-                ])
+                ]
+              )
             )
           );
         })
@@ -215,6 +218,7 @@ const WorkspaceTargetDialogImpl = create<WorkspaceTargetDialogProps>(
       initialPath,
       initialBranch,
       initialRepos,
+      singleRepository,
     ]);
 
     const choices = useMemo(
@@ -253,7 +257,9 @@ const WorkspaceTargetDialogImpl = create<WorkspaceTargetDialogProps>(
         setAvailable((all) =>
           all.some((r) => r.id === repo.id) ? all : [...all, repo]
         );
-        setSelected((previous) => ({ ...previous, [repo.id]: '' }));
+        setSelected((previous) =>
+          singleRepository ? { [repo.id]: '' } : { ...previous, [repo.id]: '' }
+        );
       } catch (e) {
         if (id === generation.current) setError(String(e));
       } finally {
@@ -268,7 +274,7 @@ const WorkspaceTargetDialogImpl = create<WorkspaceTargetDialogProps>(
         } satisfies WorkspaceTargetDialogResult);
       else {
         const first = choices[0];
-        if (!first) return;
+        if (!first || (singleRepository && choices.length !== 1)) return;
         modal.resolve({
           kind: 'confirmed',
           selection: { mode, path: first.repo.path, ...first, repos: choices },
@@ -409,6 +415,7 @@ const WorkspaceTargetDialogImpl = create<WorkspaceTargetDialogProps>(
                 (mode === 'direct_folder'
                   ? !path.trim()
                   : choices.length === 0 ||
+                    (singleRepository && choices.length !== 1) ||
                     (!projectDefault && choices.some((r) => !r.targetBranch)))
               }
             >
