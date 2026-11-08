@@ -160,7 +160,10 @@ export function WorkspaceFileBrowserPanel({
         </Tooltip>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-auto p-base">
+      <div
+        data-file-tree-scroll
+        className="min-h-0 flex-1 overflow-auto p-base"
+      >
         {isLoading ? (
           <WorkspaceFileEmptyState
             icon={<Loader2 className="size-5 animate-spin" />}
