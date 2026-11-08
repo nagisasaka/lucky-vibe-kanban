@@ -609,30 +609,26 @@ impl LocalContainerService {
         };
         let workspace_dir = PathBuf::from(container_ref);
 
-        let repositories = WorkspaceRepo::find_repos_for_workspace(&self.db.pool, workspace.id)
-            .await
-            .unwrap_or_default();
-
-        if repositories.is_empty() {
-            tracing::warn!(
-                "No repositories found for workspace {}, cleaning up workspace directory only",
-                workspace.id
-            );
-            if workspace_dir.exists()
-                && let Err(e) = tokio::fs::remove_dir_all(&workspace_dir).await
-            {
-                tracing::warn!("Failed to remove workspace directory: {}", e);
-            }
-        } else {
-            WorkspaceManager::cleanup_workspace(&workspace_dir, &repositories)
-                .await
-                .unwrap_or_else(|e| {
+        let repositories =
+            match WorkspaceRepo::find_repos_for_workspace(&self.db.pool, workspace.id).await {
+                Ok(repos) if !repos.is_empty() => repos,
+                result => {
                     tracing::warn!(
-                        "Failed to clean up workspace for workspace {}: {}",
+                        "Workspace {} cleanup lacks repository ownership; directory retained: {:?}",
                         workspace.id,
-                        e
+                        result
                     );
-                });
+                    return;
+                }
+            };
+        if let Err(error) = WorkspaceManager::cleanup_workspace(&workspace_dir, &repositories).await
+        {
+            tracing::warn!(
+                "Workspace {} cleanup stopped; files retained: {}",
+                workspace.id,
+                error
+            );
+            return;
         }
 
         let _ = Workspace::mark_worktree_deleted(&self.db.pool, workspace.id).await;
@@ -1092,31 +1088,57 @@ impl LocalContainerService {
                 result?;
             }
         }
-        // Retire only the exact old workspace-level CLAUDE import template,
-        // preserving it for recovery. Never touch a child/user CLAUDE file.
+        // The old generator emitted only one import per selected child. A
+        // child may since have migrated to AGENTS or disappeared; existence is
+        // not provenance. Recognize only whole lines for known saved placements.
         let claude = workspace_dir.join("CLAUDE.md");
-        let legacy_claude = repos
-            .iter()
-            .filter(|r| r.worktree_dir(workspace_dir).join("CLAUDE.md").is_file())
-            .map(|r| format!("@{}/CLAUDE.md\n", r.worktree_name()))
-            .collect::<String>();
-        if !legacy_claude.is_empty()
-            && claude
-                .symlink_metadata()
-                .is_ok_and(|m| m.is_file() && !m.file_type().is_symlink())
-            && tokio::fs::read_to_string(&claude)
-                .await
-                .is_ok_and(|s| s == legacy_claude)
+        if claude
+            .symlink_metadata()
+            .is_ok_and(|m| m.is_file() && !m.file_type().is_symlink())
+            && let Ok(content) = tokio::fs::read_to_string(&claude).await
         {
-            let legacy = workspace_dir.join(".lvk/legacy-workspace-CLAUDE.md");
-            let lvk = utils::lvk_directory::LvkDirectory::open(workspace_dir)?;
-            lvk.verify()?;
-            let backup_name = if legacy.exists() {
-                format!("legacy-workspace-CLAUDE-{}.md", Uuid::new_v4())
+            let known: std::collections::HashSet<_> = repos
+                .iter()
+                .map(|r| format!("@{}/CLAUDE.md", r.worktree_name()))
+                .collect();
+            let lines: Vec<_> = content.lines().collect();
+            let unique: std::collections::HashSet<_> = lines.iter().copied().collect();
+            let legacy = content == lines.join("\n") + "\n"
+                && !lines.is_empty()
+                && unique.len() == lines.len()
+                && lines.iter().all(|line| known.contains(*line));
+            if legacy {
+                let lvk = utils::lvk_directory::LvkDirectory::open(workspace_dir)?;
+                lvk.verify()?;
+                let mut name = "legacy-workspace-CLAUDE.md".to_owned();
+                let backup = loop {
+                    let backup = lvk.anchored_path().join(&name);
+                    // Unlike rename, hard_link never replaces an existing file
+                    // or dangling symlink. Both names stay until backup succeeds.
+                    match tokio::fs::hard_link(&claude, &backup).await {
+                        Ok(()) => break backup,
+                        Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => {
+                            name = format!("legacy-workspace-CLAUDE-{}.md", Uuid::new_v4());
+                        }
+                        Err(error) => return Err(error.into()),
+                    }
+                };
+                if !backup.symlink_metadata()?.is_file()
+                    || backup.symlink_metadata()?.file_type().is_symlink()
+                    || tokio::fs::read_to_string(&backup).await? != content
+                    || claude.symlink_metadata()?.file_type().is_symlink()
+                    || tokio::fs::read_to_string(&claude).await? != content
+                {
+                    return Err(ContainerError::Other(anyhow!(
+                        "Parent CLAUDE.md changed during retirement; files preserved"
+                    )));
+                }
+                tokio::fs::remove_file(&claude).await?;
             } else {
-                "legacy-workspace-CLAUDE.md".into()
-            };
-            tokio::fs::rename(&claude, lvk.anchored_path().join(backup_name)).await?;
+                tracing::debug!(
+                    "Preserving unrecognized/custom parent CLAUDE.md; it may suppress native AGENTS loading"
+                );
+            }
         }
 
         Ok(())
@@ -2211,6 +2233,266 @@ mod tests {
                 assert!(worktree.worktree_path.join(".git").is_file());
             }
         }
+    }
+
+    #[tokio::test]
+    async fn existing_output_survives_repository_addition_and_resume() {
+        use db::models::{
+            workspace::{CreateWorkspace, Workspace},
+            workspace_repo::{CreateWorkspaceRepo, WorkspaceRepo},
+        };
+        let temp = tempfile::tempdir().unwrap();
+        let pool = SqlitePoolOptions::new()
+            .max_connections(1)
+            .connect("sqlite::memory:")
+            .await
+            .unwrap();
+        db::run_migrations(&pool).await.unwrap();
+        let source = temp.path().join("source/output");
+        std::fs::create_dir_all(&source).unwrap();
+        std::fs::write(
+            source.join("AGENTS.md"),
+            "Only output repository instructions",
+        )
+        .unwrap();
+        for args in [
+            vec!["init", "-b", "main"],
+            vec!["add", "."],
+            vec![
+                "-c",
+                "user.name=Fixture",
+                "-c",
+                "user.email=fixture@example.invalid",
+                "commit",
+                "-m",
+                "fixture",
+            ],
+        ] {
+            let output = std::process::Command::new("git")
+                .arg("-C")
+                .arg(&source)
+                .args(args)
+                .output()
+                .unwrap();
+            assert!(
+                output.status.success(),
+                "{}",
+                String::from_utf8_lossy(&output.stderr)
+            );
+        }
+        let repo = Repo::find_or_create(&pool, &source, "Output")
+            .await
+            .unwrap();
+        let root = temp.path().join("workspace");
+        std::fs::create_dir_all(root.join("output")).unwrap();
+        std::fs::write(root.join("output/user-result.txt"), "user result").unwrap();
+        let id = Uuid::new_v4();
+        Workspace::create(
+            &pool,
+            &CreateWorkspace {
+                branch: "fixture".into(),
+                name: None,
+            },
+            id,
+        )
+        .await
+        .unwrap();
+        Workspace::update_container_ref(&pool, id, root.to_str().unwrap())
+            .await
+            .unwrap();
+        WorkspaceRepo::create_many(
+            &pool,
+            id,
+            &[CreateWorkspaceRepo {
+                repo_id: repo.id,
+                target_branch: "main".into(),
+            }],
+        )
+        .await
+        .unwrap();
+        let placed = WorkspaceRepo::find_repo_for_workspace(&pool, id, repo.id)
+            .await
+            .unwrap()
+            .unwrap();
+        assert_eq!(
+            placed.worktree_name(),
+            format!("output--{}", repo.id.simple())
+        );
+        let inputs = [RepoWorkspaceInput::new(placed.clone(), "main".into())];
+        for _ in 0..2 {
+            WorkspaceManager::ensure_workspace_exists(&root, &inputs, "fixture")
+                .await
+                .unwrap();
+            LocalContainerService::create_workspace_config_files(
+                &root,
+                std::slice::from_ref(&placed),
+            )
+            .await
+            .unwrap();
+            assert_eq!(
+                std::fs::read_to_string(root.join("output/user-result.txt")).unwrap(),
+                "user result"
+            );
+            assert!(placed.worktree_dir(&root).join(".git").is_file());
+        }
+        worktree_manager::WorktreeManager::cleanup_worktree(
+            &worktree_manager::WorktreeCleanup::new(
+                placed.worktree_dir(&root),
+                Some(source.clone()),
+            ),
+        )
+        .await
+        .unwrap();
+        assert_eq!(
+            std::fs::read_to_string(root.join("output/user-result.txt")).unwrap(),
+            "user result"
+        );
+        assert_eq!(
+            std::fs::read_to_string(source.join("AGENTS.md")).unwrap(),
+            "Only output repository instructions"
+        );
+        pool.close().await;
+    }
+
+    #[tokio::test]
+    async fn unknown_repository_path_stops_enclosing_workspace_cleanup() {
+        let temp = tempfile::tempdir().unwrap();
+        let pool = SqlitePoolOptions::new()
+            .max_connections(1)
+            .connect("sqlite::memory:")
+            .await
+            .unwrap();
+        db::run_migrations(&pool).await.unwrap();
+        let source = temp.path().join("source/output");
+        std::fs::create_dir_all(&source).unwrap();
+        let repo = Repo::find_or_create(&pool, &source, "Output")
+            .await
+            .unwrap();
+        let root = temp.path().join("workspace");
+        std::fs::create_dir_all(root.join("output")).unwrap();
+        std::fs::write(root.join("output/user-result.txt"), "preserve").unwrap();
+        std::fs::write(root.join("root-result.txt"), "also preserve").unwrap();
+        assert!(
+            WorkspaceManager::cleanup_workspace(&root, std::slice::from_ref(&repo))
+                .await
+                .is_err()
+        );
+        assert!(
+            WorkspaceManager::cleanup_workspace_strict(&root, &[repo])
+                .await
+                .is_err()
+        );
+        assert_eq!(
+            std::fs::read_to_string(root.join("output/user-result.txt")).unwrap(),
+            "preserve"
+        );
+        assert_eq!(
+            std::fs::read_to_string(root.join("root-result.txt")).unwrap(),
+            "also preserve"
+        );
+        pool.close().await;
+    }
+
+    #[tokio::test]
+    async fn legacy_parent_retirement_ignores_missing_children_and_never_clobbers_backups() {
+        let tmp = tempfile::tempdir().unwrap();
+        let pool = SqlitePoolOptions::new()
+            .max_connections(1)
+            .connect("sqlite::memory:")
+            .await
+            .unwrap();
+        db::run_migrations(&pool).await.unwrap();
+        let child = tmp.path().join("a");
+        std::fs::create_dir(&child).unwrap();
+        std::fs::write(
+            child.join("AGENTS.md"),
+            "User AGENTS; old CLAUDE has migrated",
+        )
+        .unwrap();
+        let repo = Repo::find_or_create(&pool, &child, "a").await.unwrap();
+        let repos = [repo];
+        std::fs::create_dir(tmp.path().join(".lvk")).unwrap();
+        let backup = tmp.path().join(".lvk/legacy-workspace-CLAUDE.md");
+        std::fs::write(&backup, "previous backup").unwrap();
+        for _ in 0..2 {
+            std::fs::write(tmp.path().join("CLAUDE.md"), "@a/CLAUDE.md\n").unwrap();
+            LocalContainerService::create_workspace_config_files(tmp.path(), &repos)
+                .await
+                .unwrap();
+            assert!(!tmp.path().join("CLAUDE.md").exists());
+        }
+        assert_eq!(std::fs::read_to_string(&backup).unwrap(), "previous backup");
+        assert_eq!(
+            std::fs::read_dir(tmp.path().join(".lvk")).unwrap().count(),
+            3
+        );
+        assert_eq!(
+            std::fs::read_to_string(child.join("AGENTS.md")).unwrap(),
+            "User AGENTS; old CLAUDE has migrated"
+        );
+        // Missing child directory, not only a migrated child instruction file.
+        std::fs::remove_file(child.join("AGENTS.md")).unwrap();
+        std::fs::remove_dir(&child).unwrap();
+        std::fs::write(tmp.path().join("CLAUDE.md"), "@a/CLAUDE.md\n").unwrap();
+        LocalContainerService::create_workspace_config_files(tmp.path(), &repos)
+            .await
+            .unwrap();
+        assert!(!tmp.path().join("CLAUDE.md").exists());
+        for custom in [
+            "Custom parent\n@a/CLAUDE.md\n",
+            "@unknown/CLAUDE.md\n",
+            "@a/CLAUDE.md\n@a/CLAUDE.md\n",
+        ] {
+            std::fs::write(tmp.path().join("CLAUDE.md"), custom).unwrap();
+            LocalContainerService::create_workspace_config_files(tmp.path(), &repos)
+                .await
+                .unwrap();
+            assert_eq!(
+                std::fs::read_to_string(tmp.path().join("CLAUDE.md")).unwrap(),
+                custom
+            );
+        }
+        #[cfg(unix)]
+        {
+            std::fs::remove_file(tmp.path().join("CLAUDE.md")).unwrap();
+            let target = tmp.path().join("user-instructions");
+            std::fs::write(&target, "@a/CLAUDE.md\n").unwrap();
+            std::os::unix::fs::symlink(&target, tmp.path().join("CLAUDE.md")).unwrap();
+            LocalContainerService::create_workspace_config_files(tmp.path(), &repos)
+                .await
+                .unwrap();
+            assert!(
+                tmp.path()
+                    .join("CLAUDE.md")
+                    .symlink_metadata()
+                    .unwrap()
+                    .file_type()
+                    .is_symlink()
+            );
+            assert_eq!(std::fs::read_to_string(target).unwrap(), "@a/CLAUDE.md\n");
+        }
+        #[cfg(unix)]
+        {
+            let fresh = tempfile::tempdir().unwrap();
+            std::fs::create_dir(fresh.path().join(".lvk")).unwrap();
+            let backup = fresh.path().join(".lvk/legacy-workspace-CLAUDE.md");
+            let missing = fresh.path().join("missing-backup-target");
+            std::os::unix::fs::symlink(&missing, &backup).unwrap();
+            std::fs::write(fresh.path().join("CLAUDE.md"), "@a/CLAUDE.md\n").unwrap();
+            LocalContainerService::create_workspace_config_files(fresh.path(), &repos)
+                .await
+                .unwrap();
+            assert!(backup.symlink_metadata().unwrap().file_type().is_symlink());
+            assert!(!missing.exists());
+            assert!(!fresh.path().join("CLAUDE.md").exists());
+            assert_eq!(
+                std::fs::read_dir(fresh.path().join(".lvk"))
+                    .unwrap()
+                    .count(),
+                2
+            );
+        }
+        pool.close().await;
     }
 
     #[tokio::test]

@@ -1384,11 +1384,28 @@ mod tests {
             .connect("sqlite::memory:")
             .await
             .unwrap();
+        // Workspace-kind guards read the real Workspace model. Keep only the
+        // agent status feed minimal; all Workspace columns come from migrations.
+        db::run_migrations(&pool).await.unwrap();
+        sqlx::query("DROP TABLE agent_runs")
+            .execute(&pool)
+            .await
+            .unwrap();
         sqlx::query("CREATE TABLE agent_runs (id BLOB PRIMARY KEY, workspace_id BLOB NOT NULL, status TEXT NOT NULL)")
             .execute(&pool)
             .await
             .unwrap();
         let first = run(&store, &root);
+        Workspace::create(
+            &pool,
+            &db::models::workspace::CreateWorkspace {
+                branch: "feature".into(),
+                name: None,
+            },
+            first.workspace_id,
+        )
+        .await
+        .unwrap();
         let unrelated_workspace = run(&store, &root);
         let mut failed = run(&store, &root);
         failed.workspace_id = first.workspace_id;

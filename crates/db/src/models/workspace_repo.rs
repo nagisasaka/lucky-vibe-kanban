@@ -85,8 +85,32 @@ impl WorkspaceRepo {
         workspace_id: Uuid,
         repos: &[CreateWorkspaceRepo],
     ) -> Result<Vec<Self>, sqlx::Error> {
-        let occupied: Vec<String> = sqlx::query_scalar("SELECT COALESCE(wr.worktree_name, r.name) FROM workspace_repos wr JOIN repos r ON r.id = wr.repo_id WHERE wr.workspace_id = ?")
+        let mut occupied: Vec<String> = sqlx::query_scalar("SELECT COALESCE(wr.worktree_name, r.name) FROM workspace_repos wr JOIN repos r ON r.id = wr.repo_id WHERE wr.workspace_id = ?")
             .bind(workspace_id).fetch_all(&mut *connection).await?;
+        let root: Option<String> =
+            sqlx::query_scalar("SELECT container_ref FROM workspaces WHERE id = ?")
+                .bind(workspace_id)
+                .fetch_one(&mut *connection)
+                .await?;
+        if let Some(root) = root {
+            match std::fs::read_dir(&root) {
+                Ok(entries) => {
+                    for entry in entries {
+                        let entry = entry.map_err(sqlx::Error::Io)?;
+                        // read_dir includes files and dangling symlinks. Never
+                        // follow or replace them when choosing a new placement.
+                        occupied.push(entry.file_name().to_string_lossy().into_owned());
+                    }
+                }
+                Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+                    // A dangling root symlink is not an absent Workspace.
+                    if std::fs::symlink_metadata(&root).is_ok() {
+                        return Err(sqlx::Error::Io(error));
+                    }
+                }
+                Err(error) => return Err(sqlx::Error::Io(error)),
+            }
+        }
         let mut requested = Vec::with_capacity(repos.len());
         for repo in repos {
             let name: String = sqlx::query_scalar("SELECT name FROM repos WHERE id = ?")
@@ -329,6 +353,86 @@ impl WorkspaceRepo {
 mod placement_tests {
     use super::*;
     use crate::models::workspace::{CreateWorkspace, Workspace};
+
+    #[tokio::test]
+    async fn new_placements_reserve_existing_files_directories_and_symlinks() {
+        let pool = sqlx::sqlite::SqlitePoolOptions::new()
+            .max_connections(1)
+            .connect("sqlite::memory:")
+            .await
+            .unwrap();
+        crate::run_migrations(&pool).await.unwrap();
+        let temp = tempfile::tempdir().unwrap();
+        let root = temp.path().join("workspace");
+        std::fs::create_dir_all(root.join("output")).unwrap();
+        std::fs::write(root.join("output/user-result.txt"), "preserve result").unwrap();
+        std::fs::write(root.join("notes"), "preserve notes").unwrap();
+        let mut names = vec!["output", "notes"];
+        #[cfg(unix)]
+        {
+            std::os::unix::fs::symlink(root.join("output"), root.join("linked")).unwrap();
+            std::os::unix::fs::symlink(root.join("missing"), root.join("dangling")).unwrap();
+            names.extend(["linked", "dangling"]);
+        }
+        let id = Uuid::new_v4();
+        Workspace::create(
+            &pool,
+            &CreateWorkspace {
+                branch: "fixture".into(),
+                name: None,
+            },
+            id,
+        )
+        .await
+        .unwrap();
+        Workspace::update_container_ref(&pool, id, root.to_str().unwrap())
+            .await
+            .unwrap();
+        let mut inputs = Vec::new();
+        for name in &names {
+            let source = temp.path().join("source").join(name);
+            std::fs::create_dir_all(&source).unwrap();
+            let repo = Repo::find_or_create(&pool, &source, name).await.unwrap();
+            inputs.push(CreateWorkspaceRepo {
+                repo_id: repo.id,
+                target_branch: "main".into(),
+            });
+        }
+        let allocated = WorkspaceRepo::create_many(&pool, id, &inputs)
+            .await
+            .unwrap();
+        for (row, name) in allocated.iter().zip(&names) {
+            assert_eq!(
+                row.worktree_name.as_deref(),
+                Some(format!("{}--{}", name, row.repo_id.simple()).as_str())
+            );
+        }
+        let saved = WorkspaceRepo::find_repos_for_workspace(&pool, id)
+            .await
+            .unwrap();
+        assert_eq!(
+            std::fs::read_to_string(root.join("output/user-result.txt")).unwrap(),
+            "preserve result"
+        );
+        assert_eq!(
+            std::fs::read_to_string(root.join("notes")).unwrap(),
+            "preserve notes"
+        );
+        // A late collision does not rewrite an already saved placement on reload.
+        let late = saved[0].worktree_dir(&root);
+        std::fs::create_dir(&late).unwrap();
+        std::fs::write(late.join("late.txt"), "late result").unwrap();
+        let reloaded = WorkspaceRepo::find_repo_for_workspace(&pool, id, saved[0].id)
+            .await
+            .unwrap()
+            .unwrap();
+        assert_eq!(reloaded.worktree_name(), saved[0].worktree_name());
+        assert_eq!(
+            std::fs::read_to_string(late.join("late.txt")).unwrap(),
+            "late result"
+        );
+        pool.close().await;
+    }
 
     #[tokio::test]
     async fn migration_freezes_legacy_names_without_reconstructing_workspace() {
