@@ -1,5 +1,7 @@
 //! Claude Code-native command construction and capability probes.
 
+use std::path::PathBuf;
+
 use uuid::Uuid;
 
 use super::{ClaudeCode, PermissionMode, base_command};
@@ -138,8 +140,11 @@ impl<'a> ClaudeCodeCommandAdapter<'a> {
         Ok(builder)
     }
 
-    pub fn build_discovery_probe(&self) -> Result<CommandBuilder, CommandBuildError> {
-        let builder =
+    pub fn build_discovery_probe(
+        &self,
+        repository_roots: &[PathBuf],
+    ) -> Result<CommandBuilder, CommandBuildError> {
+        let mut builder =
             CommandBuilder::new(base_command(self.agent.claude_code_router.unwrap_or(false)))
                 .params(["-p"])
                 .extend_params([
@@ -148,10 +153,15 @@ impl<'a> ClaudeCodeCommandAdapter<'a> {
                     "--max-turns",
                     "1",
                 ]);
-        apply_overrides(
-            self.with_authentication_settings(builder)
+        for root in repository_roots {
+            builder =
+                builder.extend_params(["--add-dir".into(), root.to_string_lossy().into_owned()]);
+        }
+        // Keep repository/profile options before the end-of-options marker:
+        // anything after it is part of the discovery prompt, not CLI options.
+        Ok(
+            apply_overrides(self.with_authentication_settings(builder), &self.agent.cmd)?
                 .extend_params(["--", "/"]),
-            &self.agent.cmd,
         )
     }
 }
@@ -210,7 +220,7 @@ mod tests {
         .unwrap();
         let adapter = ClaudeCodeCommandAdapter::new(&agent);
         let runtime = adapter.build_runtime(true).unwrap();
-        let probe = adapter.build_discovery_probe().unwrap();
+        let probe = adapter.build_discovery_probe(&[]).unwrap();
 
         assert_eq!(runtime.base, "claude");
         let runtime_params = runtime.params.unwrap();
@@ -234,7 +244,7 @@ mod tests {
         let adapter = ClaudeCodeCommandAdapter::new(&agent);
         for builder in [
             adapter.build_runtime(false).unwrap(),
-            adapter.build_discovery_probe().unwrap(),
+            adapter.build_discovery_probe(&[]).unwrap(),
         ] {
             let params = builder.params.unwrap();
             let settings = params.iter().position(|arg| arg == "--settings").unwrap();
@@ -283,5 +293,65 @@ mod tests {
             .unwrap();
 
         assert_eq!(params.last().map(String::as_str), Some("--profile-flag"));
+    }
+
+    #[test]
+    fn discovery_keeps_repository_roots_before_prompt() {
+        let agent: ClaudeCode = serde_json::from_value(serde_json::json!({})).unwrap();
+        let adapter = ClaudeCodeCommandAdapter::new(&agent);
+        for roots in [
+            vec![],
+            vec![PathBuf::from("/workspace/repo space")],
+            vec![
+                PathBuf::from("/workspace/repo space"),
+                PathBuf::from("/workspace/repo space--b2222222"),
+            ],
+        ] {
+            let builder = adapter.build_discovery_probe(&roots).unwrap();
+            assert_eq!(builder.base, "claude");
+            let params = builder.params.unwrap();
+            let prompt_start = params.iter().position(|arg| arg == "--").unwrap();
+            assert_eq!(&params[prompt_start..], &["--", "/"]);
+            let actual_roots: Vec<_> = params[..prompt_start]
+                .windows(2)
+                .filter(|pair| pair[0] == "--add-dir")
+                .map(|pair| PathBuf::from(&pair[1]))
+                .collect();
+            assert_eq!(actual_roots, roots);
+        }
+    }
+
+    #[test]
+    fn discovery_preserves_profile_options_before_prompt() {
+        let agent: ClaudeCode = serde_json::from_value(serde_json::json!({
+            "base_command_override": "custom-claude --base-flag",
+            "additional_params": ["--profile-flag", "value with spaces"],
+            "require_subscription_login": true
+        }))
+        .unwrap();
+        let roots = [PathBuf::from("/workspace/repo space")];
+        let builder = ClaudeCodeCommandAdapter::new(&agent)
+            .build_discovery_probe(&roots)
+            .unwrap();
+        assert_eq!(builder.base, "custom-claude --base-flag");
+        let params = builder.params.unwrap();
+        assert_eq!(
+            params,
+            [
+                "-p",
+                "--verbose",
+                "--output-format=stream-json",
+                "--max-turns",
+                "1",
+                "--add-dir",
+                "/workspace/repo space",
+                "--settings",
+                SUBSCRIPTION_SETTINGS,
+                "--profile-flag",
+                "value with spaces",
+                "--",
+                "/",
+            ]
+        );
     }
 }

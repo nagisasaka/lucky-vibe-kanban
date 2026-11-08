@@ -232,8 +232,10 @@ impl ClaudeCode {
 
     async fn build_slash_commands_discovery_command_builder(
         &self,
+        repository_roots: &[PathBuf],
     ) -> Result<CommandBuilder, CommandBuildError> {
-        super::command_adapter::ClaudeCodeCommandAdapter::new(self).build_discovery_probe()
+        super::command_adapter::ClaudeCodeCommandAdapter::new(self)
+            .build_discovery_probe(repository_roots)
     }
 
     async fn discover_available_command_and_plugins(
@@ -244,7 +246,7 @@ impl ClaudeCode {
         self.check_subscription_login(current_dir, &ExecutionEnv::new(RepoContext::default()))
             .await?;
         let command_builder = self
-            .build_slash_commands_discovery_command_builder()
+            .build_slash_commands_discovery_command_builder(repository_roots)
             .await?;
         let command_parts = command_builder.build_initial()?;
         let (program_path, args) = command_parts.into_resolved().await?;
@@ -258,9 +260,6 @@ impl ClaudeCode {
             .current_dir(current_dir)
             .args(&args);
 
-        for root in repository_roots {
-            command.arg("--add-dir").arg(root);
-        }
         ExecutionEnv::new(RepoContext::default())
             .with_profile(&self.cmd)
             .apply_to_command(&mut command);
