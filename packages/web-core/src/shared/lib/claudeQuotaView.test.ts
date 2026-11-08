@@ -74,6 +74,44 @@ describe('Claude account windows', () => {
       windows: [],
       status: 'pending',
       observed: null,
+      reason: null,
+      reasonCode: null,
+    });
+  });
+  it('distinguishes blocked, busy, timeout and partial reads from stale quota', () => {
+    for (const code of ['in_progress', 'cleanup_unconfirmed', 'timeout']) {
+      expect(
+        claudeQuotaView(
+          { result: { status: 'unavailable', code, reason: 'safe reason' } },
+          false,
+          now
+        )
+      ).toMatchObject({
+        status: code === 'in_progress' ? 'pending' : 'error',
+        reasonCode: code,
+        reason: 'safe reason',
+        windows: [],
+      });
+    }
+    expect(
+      claudeQuotaView(
+        {
+          result: {
+            quota: {
+              status: 'partial',
+              observedAt: new Date(now).toISOString(),
+              reason: 'No subscription snapshot',
+              data: null,
+            },
+          },
+        },
+        false,
+        now
+      )
+    ).toMatchObject({
+      status: 'unknown',
+      reason: 'No subscription snapshot',
+      observed: now,
     });
   });
   it('includes provider model windows without exposing control characters', () => {

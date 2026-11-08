@@ -1,13 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { randomUUID } from "node:crypto";
-import {
-  mkdirSync,
-  readdirSync,
-  readFileSync,
-  renameSync,
-  writeFileSync,
-} from "node:fs";
-import { dirname, join } from "node:path";
+import { mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 
 const config = {
   executor: "CLAUDE_CODE",
@@ -127,16 +121,8 @@ test("subscription preflight, real runtime lifecycle and browser output", async 
   }
   writeFileSync(process.env.LVK_CLAUDE_FIXTURE_STATE!, "{}");
   expect((await policy("CONFLICT")).readiness).toBe("AUTH_REQUIRED");
-  const executable = join(
-    dirname(process.env.LVK_CLAUDE_FIXTURE_STATE!),
-    "bin/claude",
-  );
-  renameSync(executable, executable + ".hidden");
-  try {
-    expect((await policy()).readiness).toBe("MISSING_EXECUTABLE");
-  } finally {
-    renameSync(executable + ".hidden", executable);
-  }
+  // Missing-executable classification is covered by command/policy unit tests.
+  // Hiding this fixture would fall through to an installed official CLI on PATH.
   expect((await policy()).readiness).toBe("READY");
   const directory = join(process.env.LVK_CLAUDE_TEST_ROOT!, randomUUID());
   mkdirSync(directory);
@@ -148,7 +134,7 @@ test("subscription preflight, real runtime lifecycle and browser output", async 
     linked_issue: null,
     attachment_ids: [],
     executor_config: config,
-    prompt: "Fixture start",
+    prompt: "Fixture start CLAUDE_FIXTURE_RESULT_HOLD",
   });
   const workspace = created.workspace.id;
   const first = created.agent_run.agent_run_id;
@@ -176,6 +162,14 @@ test("subscription preflight, real runtime lifecycle and browser output", async 
     expect(actual).toBe(status);
   };
   await settled(first, "succeeded");
+  expect((await state(first)).terminal_output?.content).toBe(
+    "Fixture completed",
+  );
+  expect(
+    (await api(`/api/agent-runs/${first}/events`)).events.filter(
+      (e: any) => e.payload.type === "error",
+    ),
+  ).toHaveLength(0);
   const session = (await state(first)).session_id;
   await page.goto(`/workspaces/${workspace}`);
   await page.keyboard.press("Escape");
@@ -219,8 +213,11 @@ test("subscription preflight, real runtime lifecycle and browser output", async 
     beforeRejectedFollow,
   );
   writeFileSync(process.env.LVK_CLAUDE_FIXTURE_STATE!, "{}");
-  const second = await follow("Fixture follow up");
+  const second = await follow("Fixture follow up CLAUDE_FIXTURE_RESULT_HOLD");
   await settled(second, "succeeded");
+  expect((await state(second)).terminal_output?.content).toBe(
+    "Fixture completed",
+  );
   await expect(
     page.getByText("Fixture resumed", { exact: true }).first(),
   ).toBeVisible();
@@ -295,7 +292,7 @@ test("Issue to Workspace selects subscription and sends through the real UI", as
   });
   await page.goto(`/projects/${project.id}/issues/${issue.id}`);
   await page
-    .getByRole("button", { name: "New single-agent attempt", exact: true })
+    .getByRole("button", { name: /^New single-agent attempt/ })
     .last()
     .click();
   const chooser = page
@@ -353,6 +350,11 @@ test("Issue to Workspace selects subscription and sends through the real UI", as
   await expect(
     page.getByText("Fixture resumed", { exact: true }).first(),
   ).toBeVisible();
+  // Issue conversations now open in the split pane. Continue provider/session
+  // selection on the normal Workspace surface, where the composer has room.
+  await page
+    .getByRole("button", { name: "Open in workspace view", exact: true })
+    .click();
   const discoveryUrls: string[] = [];
   page.on("websocket", (socket) => discoveryUrls.push(socket.url()));
   await page.getByRole("button", { name: "Latest", exact: true }).click();

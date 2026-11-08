@@ -263,6 +263,11 @@ export function EnvironmentPanel({ repoIds = [] }: { repoIds?: string[] }) {
       />
       <EnvironmentQuota
         name="Claude"
+        reason={
+          cl.reasonCode
+            ? t(`utilityPanel.claudeQuotaReason.${cl.reasonCode}`)
+            : cl.reason
+        }
         status={cl.status}
         observed={cl.observed}
         now={resources.now}

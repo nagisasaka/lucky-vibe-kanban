@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use tokio::{
     process::Command,
-    sync::{Mutex, Semaphore},
+    sync::{Mutex, Semaphore, TryAcquireError},
 };
 use tokio_util::sync::CancellationToken;
 use workspace_utils::command_ext::GroupSpawnNoWindowExt;
@@ -113,7 +113,16 @@ impl Usage {
     }
 }
 fn unavailable(reason: &str) -> Value {
-    json!({"status":"unavailable","reason":reason,"data":null})
+    unavailable_code("read_failed", reason)
+}
+fn unavailable_code(code: &str, reason: &str) -> Value {
+    json!({"status":"unavailable","code":code,"reason":reason,"data":null})
+}
+fn admit(slot: &Arc<Semaphore>) -> Result<tokio::sync::OwnedSemaphorePermit, Value> {
+    slot.clone().try_acquire_owned().map_err(|error| match error {
+        TryAcquireError::Closed => unavailable_code("cleanup_unconfirmed", "Claude account reads are disabled because process cleanup could not be confirmed; operator recovery is required"),
+        TryAcquireError::NoPermits => unavailable_code("in_progress", "Claude account read already in progress; no duplicate process started"),
+    })
 }
 impl ClaudeCode {
     pub async fn read_account_usage(&self, existing_session: bool, include_usage: bool) -> Value {
@@ -123,15 +132,17 @@ impl ClaudeCode {
         {
             return json!({"status":"unsupported","reason":"Passive reads require the official CLI executable without router, base arguments, extra parameters or incompatible authentication overrides","data":null});
         }
-        let Ok(permit) = SLOT.clone().try_acquire_owned() else {
-            return unavailable(
-                "Claude account read already in progress; no duplicate process started",
-            );
+        let permit = match admit(&SLOT) {
+            Ok(permit) => permit,
+            Err(value) => return value,
         };
         {
             let mut last = LAST_START.lock().await;
             if last.is_some_and(|t| t.elapsed() < Duration::from_secs(5)) {
-                return unavailable("Claude reads are limited to one start per five seconds");
+                return unavailable_code(
+                    "rate_limited",
+                    "Claude reads are limited to one start per five seconds",
+                );
             }
             *last = Some(Instant::now());
         }
@@ -237,14 +248,28 @@ impl ClaudeCode {
             result
         };
         let result = tokio::spawn(read).await;
+        if SLOT.is_closed() {
+            return unavailable_code(
+                "cleanup_unconfirmed",
+                "Claude account reads are disabled because process cleanup could not be confirmed; operator recovery is required",
+            );
+        }
         match result {
+            Ok(Err(ExecutorError::Io(ref error)))
+                if error.kind() == std::io::ErrorKind::TimedOut =>
+            {
+                unavailable_code(
+                    "timeout",
+                    "Claude account initialization or usage read timed out; owned process cleanup completed",
+                )
+            }
             Ok(Ok(usage)) => {
                 json!({"quota":{"status":if usage.rate_limits_available && usage.rate_limits.is_some() {"fresh"}else{"partial"},"observedAt":chrono::Utc::now(),"rate_limits_available":usage.rate_limits_available,"subscription_type":usage.subscription_type,"data":usage.rate_limits,"reason":if !usage.rate_limits_available {Some("Subscription limits do not apply or profile scope is missing")}else if usage.rate_limits.is_none(){Some("Provider did not return a quota snapshot")}else{None}},"usage":if existing_session {json!({"status":"unsupported","reason":"No safely reusable existing session control handle; passive connection is never resumed to obtain usage","data":null})}else if include_usage {json!({"status":"fresh","observedAt":chrono::Utc::now(),"scope":"information_connection_session_only","data":usage.session,"reason":"This short-lived connection's session totals are not Workspace usage"})}else{json!({"status":"not_requested","data":null})}})
             }
             Ok(Err(ExecutorError::Io(error)))
                 if error.kind() == std::io::ErrorKind::Unsupported =>
             {
-                json!({"status":"unsupported","reason":"Claude passive usage requires verified CLI 2.1.308; unknown versions are not sent get_usage","data":null})
+                json!({"status":"unsupported","reason":"Claude passive usage requires verified CLI 2.1.308 and supported official control methods","data":null})
             }
             _ => unavailable(
                 "Claude initialization/get_usage/cleanup failed, timed out, or is unsupported by this CLI/authentication",
@@ -318,6 +343,16 @@ async fn verify_passive_version(
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn admission_distinguishes_busy_from_unconfirmed_cleanup_without_reopening() {
+        let slot = Arc::new(Semaphore::new(1));
+        let permit = admit(&slot).unwrap();
+        assert_eq!(admit(&slot).unwrap_err()["code"], "in_progress");
+        slot.close();
+        drop(permit);
+        assert_eq!(admit(&slot).unwrap_err()["code"], "cleanup_unconfirmed");
+        assert!(slot.is_closed());
+    }
     #[test]
     fn experimental_usage_is_nullable_typed_and_never_exports_behaviors() {
         let mut value = json!({"session":{"total_cost_usd":null},"rate_limits_available":false,"rate_limits":null,"behaviors":{"secret":"discard"}});

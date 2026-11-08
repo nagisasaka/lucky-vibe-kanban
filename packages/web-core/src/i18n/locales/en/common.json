@@ -2304,6 +2304,13 @@
     "mainRepositories_other": "Main repositories ({{count}})",
     "terminalRepository": "Terminal repository",
     "terminalDirectory": "Working directory",
+    "claudeQuotaReason": {
+      "in_progress": "Another Claude quota read is in progress. No duplicate process was started.",
+      "cleanup_unconfirmed": "Claude quota reads are blocked because process cleanup is unconfirmed. Operator recovery is required.",
+      "rate_limited": "Please wait at least five seconds between Claude quota reads.",
+      "timeout": "The Claude quota read timed out. Its dedicated process was cleaned up.",
+      "read_failed": "Claude quota could not be read from the official CLI. Check the CLI and existing authentication."
+    },
     "quotaStatus": {
       "fresh": "Current",
       "pending": "Loading",

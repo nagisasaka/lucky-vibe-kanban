@@ -97,6 +97,47 @@ function projectRuns(
 }
 
 describe('projectCanonicalAgentConversation', () => {
+  it('stores a final snapshot without displaying an identical assistant answer twice', () => {
+    const entries = projectRuns([
+      {
+        runId: 'claude-result',
+        status: 'succeeded',
+        events: [
+          event('claude-result', 1, {
+            type: 'message',
+            data: {
+              message: {
+                message_id: 'assistant',
+                role: 'assistant',
+                content: 'Final answer',
+              },
+              final_output: false,
+            },
+          }),
+          event('claude-result', 2, {
+            type: 'message',
+            data: {
+              message: {
+                message_id: 'result',
+                role: 'assistant',
+                content: 'Final answer',
+              },
+              final_output: true,
+            },
+          }),
+        ],
+      },
+    ]);
+    const answers = entries.entries.filter(
+      (entry) =>
+        entry.type === 'NORMALIZED_ENTRY' &&
+        entry.content.entry_type.type === 'assistant_message'
+    );
+    expect(answers).toHaveLength(1);
+    expect(
+      answers[0].type === 'NORMALIZED_ENTRY' && answers[0].content.content
+    ).toBe('Final answer');
+  });
   it.each([
     [AgentRuntimeToolStatus.waiting_approval, 'waiting_approval'],
     [AgentRuntimeToolStatus.approved, 'approved'],

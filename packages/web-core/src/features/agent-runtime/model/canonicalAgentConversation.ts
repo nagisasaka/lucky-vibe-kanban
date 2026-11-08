@@ -424,10 +424,17 @@ function appendRunEntries(
             : message.role === 'assistant'
               ? 'assistant_message'
               : 'system_message';
+        const previousEntry = previousMessage
+          ? output[previousMessage.index]
+          : undefined;
+        const repeatedFinal =
+          payload.data.final_output &&
+          previousEntry?.type === 'NORMALIZED_ENTRY' &&
+          previousEntry.content.content === message.content;
         const canMerge =
           message.role === 'assistant' &&
-          previousMessage?.messageId === message.message_id &&
-          previousMessage.role === message.role;
+          previousMessage?.role === message.role &&
+          (previousMessage.messageId === message.message_id || repeatedFinal);
         if (canMerge && previousMessage) {
           const previous = output[previousMessage.index];
           if (previous.type === 'NORMALIZED_ENTRY') {
