@@ -6,6 +6,7 @@ import { join } from "node:path";
 const config = {
   executor: "CLAUDE_CODE",
   variant: "SUBSCRIPTION",
+  permission_policy: "AUTO",
   execution_mode: "code",
 };
 const terminal = new Set([
@@ -124,6 +125,39 @@ test("subscription preflight, real runtime lifecycle and browser output", async 
   // Missing-executable classification is covered by command/policy unit tests.
   // Hiding this fixture would fall through to an installed official CLI on PATH.
   expect((await policy()).readiness).toBe("READY");
+  for (const permission of [undefined, "SUPERVISED", "PLAN"]) {
+    const before = traces().filter(
+      (v) => v.event === "launch" && !v.discovery,
+    ).length;
+    const deniedDirectory = join(
+      process.env.LVK_CLAUDE_TEST_ROOT!,
+      randomUUID(),
+    );
+    mkdirSync(deniedDirectory);
+    const denied = await api("/api/workspaces/start", {
+      mode: "direct_folder",
+      name: "Unsupported approval fixture",
+      repos: [],
+      directory_path: deniedDirectory,
+      linked_issue: null,
+      attachment_ids: [],
+      executor_config: { ...config, permission_policy: permission },
+      prompt: "Must not launch an interactive provider",
+    });
+    const run = denied.agent_run.agent_run_id;
+    await expect
+      .poll(async () => (await api(`/api/agent-runs/${run}`)).status, {
+        timeout: 30000,
+      })
+      .toBe("failed");
+    const events = (await api(`/api/agent-runs/${run}/events`)).events;
+    expect(JSON.stringify(events)).toContain(
+      "approval/question UI is not connected",
+    );
+    expect(
+      traces().filter((v) => v.event === "launch" && !v.discovery),
+    ).toHaveLength(before);
+  }
   const directory = join(process.env.LVK_CLAUDE_TEST_ROOT!, randomUUID());
   mkdirSync(directory);
   const created = await api("/api/workspaces/start", {
@@ -322,6 +356,9 @@ test("Issue to Workspace selects subscription and sends through the real UI", as
   await page
     .getByRole("menuitem", { name: "Subscription", exact: true })
     .click();
+  // The saved subscription profile requires approval. Opt into AUTO explicitly.
+  await page.getByRole("button", { name: "Permissions", exact: true }).click();
+  await page.getByRole("menuitem", { name: "Auto", exact: true }).click();
   const editor = page.locator('[contenteditable="true"]').last();
   await editor.fill("Fixture UI start");
   const started = page.waitForResponse(

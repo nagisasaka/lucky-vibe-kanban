@@ -358,7 +358,7 @@ impl DirectProvider {
                 ),
                 (
                     crate::runtime::AgentCapability::Approval,
-                    CapabilityState::Native,
+                    CapabilityState::Unsupported,
                 ),
                 (
                     crate::runtime::AgentCapability::Images,

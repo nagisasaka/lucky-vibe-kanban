@@ -213,6 +213,16 @@ impl ClaudeCode {
         self.approvals_service = Some(approvals);
     }
 
+    fn validate_permission_support(&self) -> Result<(), ExecutorError> {
+        if self.plan.unwrap_or(false) || self.approvals.unwrap_or(false) {
+            return Err(ExecutorError::Io(std::io::Error::new(
+                std::io::ErrorKind::Unsupported,
+                "Claude Supervised/Plan and profiles requiring interactive approval are unavailable: the approval/question UI is not connected. Select AUTO explicitly to run without interactive approval.",
+            )));
+        }
+        Ok(())
+    }
+
     pub(crate) async fn launch_direct(
         &self,
         intent: super::provider_adapter::DirectIntent,
@@ -222,6 +232,7 @@ impl ClaudeCode {
         reset_to_message_id: Option<&str>,
         env: &ExecutionEnv,
     ) -> Result<SpawnedChild, ExecutorError> {
+        self.validate_permission_support()?;
         let supports_effort = if self.effort.is_some() {
             self.supports_effort_flag_or_false().await
         } else {
@@ -409,11 +420,7 @@ fn default_discovered_options(
             models: claude_model_options(supports_effort),
             default_model: Some("opus".to_string()),
             agents: vec![],
-            permissions: vec![
-                PermissionPolicy::Auto,
-                PermissionPolicy::Supervised,
-                PermissionPolicy::Plan,
-            ],
+            permissions: vec![PermissionPolicy::Auto],
         },
         slash_commands: ClaudeCode::hardcoded_slash_commands(),
         skills: vec![],
@@ -736,6 +743,7 @@ impl ClaudeCode {
         command_parts: CommandParts,
         env: &ExecutionEnv,
     ) -> Result<SpawnedChild, ExecutorError> {
+        self.validate_permission_support()?;
         self.check_subscription_login(current_dir, env).await?;
         let (program_path, args) = command_parts.into_resolved().await?;
         let combined_prompt = self.append_prompt.combine_prompt(prompt);
@@ -3004,6 +3012,49 @@ mod tests {
             disable_api_key: None,
             require_subscription_login: None,
         }
+    }
+
+    #[tokio::test]
+    async fn interactive_profiles_are_rejected_before_cli_resolution_without_fallback() {
+        for (plan, approvals) in [(true, false), (false, true), (true, true)] {
+            let mut agent = test_executor(None);
+            agent.plan = Some(plan);
+            agent.approvals = Some(approvals);
+            agent.cmd.base_command_override = Some("nonexistent-claude-permission-fixture".into());
+            let error = match agent
+                .launch_direct(
+                    super::super::provider_adapter::DirectIntent::Initial,
+                    Path::new("/"),
+                    "must not run",
+                    None,
+                    None,
+                    &ExecutionEnv::new(crate::env::RepoContext::default()),
+                )
+                .await
+            {
+                Err(error) => error,
+                Ok(_) => panic!("interactive launch must fail"),
+            };
+            assert!(
+                error
+                    .to_string()
+                    .contains("approval/question UI is not connected")
+            );
+            assert_eq!(agent.plan, Some(plan));
+            assert_eq!(agent.approvals, Some(approvals));
+        }
+        let mut agent = test_executor(None);
+        agent.approvals = Some(true);
+        let config = serde_json::from_value(serde_json::json!({
+            "executor": "CLAUDE_CODE", "permission_policy": "AUTO"
+        }))
+        .unwrap();
+        agent.apply_direct_overrides(&config);
+        assert!(agent.validate_permission_support().is_ok());
+        assert_eq!(
+            default_discovered_options(false).model_selector.permissions,
+            vec![PermissionPolicy::Auto]
+        );
     }
 
     #[tokio::test]

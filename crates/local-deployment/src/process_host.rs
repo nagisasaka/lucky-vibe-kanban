@@ -19,7 +19,7 @@ use std::{
 use chrono::{DateTime, Utc};
 use executors::{
     actions::SelectedSkill,
-    approvals::NoopExecutorApprovalService,
+    approvals::UnavailableExecutorApprovalService,
     env::{ExecutionEnv, RepoContext},
     executors::{
         CancellationToken, ExecutorControl, ExecutorExitResult,
@@ -350,7 +350,7 @@ impl SharedHost {
             approvals: if launch.provider == DirectProvider::Codex {
                 approvals::ProcessHostApprovals::new(launch.run_attempt_id)
             } else {
-                Arc::new(NoopExecutorApprovalService)
+                Arc::new(UnavailableExecutorApprovalService)
             },
             current_dir: &launch.current_dir,
             env: &env,
