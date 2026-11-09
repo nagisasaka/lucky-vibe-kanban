@@ -38,10 +38,10 @@ sources:
     resource: repo://packages/web-core/src/shared/hooks/useWorkspaceRepositoryWorkflow.ts
   - id: openwiki-source-23775c3de52f3ab95a13cb8b
     resource: repo://README.md
-generated: { by: "codex", at: "2026-11-06T03:22:40.407Z" }
+generated: { by: "codex", at: "2026-11-09T07:12:52.696Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-06T19:18:22.957Z
+    at: 2026-11-09T07:12:52.696Z
 ---
 
 # Workflow の実行と耐久オーケストレーション
@@ -141,3 +141,9 @@ system Condition はこの検証済み verdict から `pass` / `refine` を決�
 ## 検証の入口
 
 [outbox と lease の再起動テスト](../../crates/db/src/models/orchestration.rs#L2189-L2241)は配送中コマンドの回収を確認する。グラフ凍結、重複 dispatch、親取消、router 不正出力、bootstrap の製品検証を、それぞれの境界で確認する。過去の 2026-05-08 の承認済み Workflow V1 draftにある仕組みは設計経緯であり、現行 runtime の保証を代用しない。
+
+## Workspaceプリセットとリンクの境界
+
+新規Workflow Workspaceは現在のProject作成プリセットに選択Repoが含まれることと各base branchの実在を検査する。旧Project保存branchをWorkspaceの選択branchとして採用せず、Repo既定値/現在branchから候補を作る。既存Workspaceの再利用はその構成を保つ。UIのWorkflow選択は単一Repoを守り、通常Workspaceの全プリセット選択とは別である。
+
+内部リンク処理はWorkflow自身の同じProject/Issueリンクなら冪等に再利用する。他Issueのリンクを付け替えず、共有リンク層の孤立のみINSERTを通す。worktree snapshotとArena winnerの差分適用はRepo表示名ではなく保存配置名を使う。複数Repoの適用は順次で、全体rollbackや原子性を追加しない。[Workspace resolver](../../crates/server/src/workflow_runtime/workspace.rs)・[snapshot](../../crates/server/src/workflow_runtime/runner.rs)・[Arena](../../crates/server/src/workflow_runtime/arena.rs)

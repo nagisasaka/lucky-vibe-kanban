@@ -128,10 +128,10 @@ sources:
     resource: repo://scripts/dev-cargo.mjs
   - id: openwiki-source-c6d955097c4a7a9e7b1873ee
     resource: repo://tests/server/specs/workspace-search.spec.ts
-generated: { by: "codex", at: "2026-11-07T10:04:45.638Z" }
+generated: { by: "codex", at: "2026-11-09T07:03:14.304Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-07T10:04:45.638Z
+    at: 2026-11-09T07:03:14.304Z
 ---
 
 # Workspace と Repository
@@ -142,7 +142,7 @@ Workspace は、エージェントの [Session](session-and-agent-run.md)、作�
 
 **Repo** は登録された source パスと、setup/cleanup/archive/dev script、copy files、target branch・working directory の既定値を持つ。**WorkspaceRepo** は登録 Repo を特定 Workspace に接続し、その実施で使う target branch を保存する。Repo の既定値と、既存 Workspace の選択を区別する。[Repo](../../crates/db/src/models/repo.rs#L36-L54)、[membership](../../crates/db/src/models/workspace_repo.rs#L11-L34)
 
-通常の追加は Repo 存在、target branch 存在、重複 attachment を検証する。managed Workspace のルート直下に Repo 名ごとの Git worktree を作り、共通の作業 branch 名を各 Repo で使用する。各 Repo の Git 履歴・target branch は独立しているため、一つの Workspace が複数 Repo をまとめていても Git の一括 transaction にはならない。[追加検証](../../crates/workspace-manager/src/workspace_manager.rs#L133-L162)、[worktree 作成](../../crates/workspace-manager/src/workspace_manager.rs#L528-L571)、[作成時のRepo選択](../../packages/web-core/src/shared/components/CreateModeRepoPickerBar.tsx)
+通常の追加は Repo 存在、target branch 存在、重複 attachment を検証する。managed Workspace のルート直下に保存済み配置名ごとの Git worktree を作り、共通の作業 branch 名を各 Repo で使用する。各 Repo の Git 履歴・target branch は独立しているため、一つの Workspace が複数 Repo をまとめていても Git の一括 transaction にはならない。[追加検証](../../crates/workspace-manager/src/workspace_manager.rs#L133-L162)、[worktree 作成](../../crates/workspace-manager/src/workspace_manager.rs#L528-L571)、[作成時のRepo選択](../../packages/web-core/src/shared/components/CreateModeRepoPickerBar.tsx)
 
 GitHub 認証の設定入口は Repo にあるが、token の保存 identity は Repo UUID や Workspace ではなく、instance 内の正規化した GitHub `owner/repository` である。同じ remote を使う Workspace は資格情報を共有する。対象は登録 Repo の remotes と既定 push URL から選ぶ。[PAT の管理・適用範囲](../integrations/github-review.md#リポジトリ別-pat-の所有と管理)に保存・削除・失敗時の契約を集約する。[対象の解決](../../crates/server/src/routes/github_credentials.rs#L32-L63)・[保存キー](../../crates/utils/src/github_credentials.rs#L147-L177)
 
@@ -178,7 +178,7 @@ agent には Repo ごとの案内を渡し、不足時は commit をせず調査
 
 削除可能性は kind の名称からではなく `container_ownership` から判定する。External の container path を LVK が削除することは許可しない。[所有権](../../crates/db/src/models/workspace.rs#L35-L53)、[判定とテスト](../../crates/db/src/models/workspace.rs#L137-L148)、[削除テスト](../../crates/db/src/models/workspace.rs#L876-L886)
 
-DirectFolder で選択先が開ける Git Repo なら Repo を登録し、現在の branch を使い、選択ディレクトリの親を container_ref にする。通常の Repo 相対解決で選択先に到達するためである。Git Repo でなければ選択先自体をルートとし、Repo membership を持たない。DirectFolder は新しい Git worktree を作る操作ではない。[DirectFolder 作成](../../crates/server/src/routes/workspaces/create.rs)、[既存パス検証](../../crates/local-deployment/src/container.rs)
+DirectFolderは指定した既存フォルダをそのままcontainer_ref/cwdとし、Git rootとRepo内サブディレクトリは作成前に拒否する。Git Repoを含む親フォルダは再帰走査せず許容し、配下Repoを自動登録しない。旧直接GitのRepo行があっても、自動commit・前後のGit回収・Manifest・自動マージ・Repo Wiki管理から除外する。これはOS権限やMCP許可rootの拡張でも、配下Gitへの書込を技術的に全て禁止する境界でもない。[作成検証](../../crates/server/src/routes/workspaces/create.rs)・[Git回収除外](../../crates/services/src/services/repository_memory.rs)
 
 Worktree の保管先を変更すると、指定先の `.vibe-kanban-workspaces` 子ディレクトリを使用する。アプリ所有領域を区別するための配置であり、現在は起動時 orphan 回収を行わない。[保管先](../../crates/worktree-manager/src/worktree_manager.rs#L609-L625)
 
@@ -242,17 +242,19 @@ Project / PR filter を先に適用し、Active / Archived の区分を保った
 
 通常の Workspace 入口は既存一覧を表示する。新しい作業を始めるときは「＋」から作成先 chooser を開く。create 画面で再び「＋」を押しても chooser を開き直せ、取消で本文 draft や確定済みの作成先を捨てない。route と再選択要求の伝達は [Web の一覧遷移と作成要求](../architecture/web-and-sync.md#workspace-の一覧遷移と作成要求)にまとめる。[一覧入口](../../packages/web-core/src/pages/workspaces/WorkspacesLanding.tsx#L1-L5)・[選択の適用](../../packages/web-core/src/shared/components/CreateChatBoxContainer.tsx#L210-L250)
 
-chooser では directory を読み込み、作業方式を選び、Worktree なら Repo と target branch を確認してから確定する。パスを編集すると inspection・方式・branch を破棄し、読み込み失敗や処理中には確定できない。branch 一覧にない以前の選択値を復元しない。確認済みかつ有効な target が揃って初めて composer が表示される。これは実際の [作成・Setup・起動](../workflows/task-to-integration.md#1-作業先を作り起動を予約する)に先立つ UI の契約であり、サーバー側の作成検証を代替しない。[derived state の無効化と branch](../../packages/web-core/src/shared/dialogs/shared/WorkspaceTargetDialog.tsx#L108-L148)・[inspection と失敗](../../packages/web-core/src/shared/dialogs/shared/WorkspaceTargetDialog.tsx#L153-L228)・[確定条件](../../packages/web-core/src/shared/dialogs/shared/WorkspaceTargetDialog.tsx#L324-L358)・[composer の表示条件](../../packages/web-core/src/shared/components/CreateChatBoxContainer.tsx#L104-L117)
+新規作成はGit/その他ディレクトリのタブを分け、Gitを既定とする。Git側は複数Repoと各基準branchを選ぶ。Issue起点はProjectの全プリセットを初期選択し、減らせるが外部追加できない。孤立作成は自由選択する。空のGit選択は確定不可で、直接フォルダへ自動変換しない。WorkflowはsingleRepositoryモードで最大1件を初期化・手動選択・確定の全境界で守り、preferred Repoを明示する。[選択画面](../../packages/web-core/src/shared/dialogs/shared/WorkspaceTargetDialog.tsx)・[Workflow](../../packages/web-core/src/features/workflow/ui/useWorkflowRepositorySelection.ts)
+
+直接フォルダ側は非空pathを確定し、存在・Git内外等の検証は作成APIが行う。Git側のbranch候補はRepo既定、現在branch、先頭候補の順で初期化し、一覧に存在しない選択を置換する。取消は既存の選択とmessage draftを適用し直さない。
 
 ### サーバーのパスと端末のファイルを区別する
 
 「サーバーを参照」は `ServerFolderPickerDialog` から既存の `/api/filesystem/directory` を読む。ブラウザー端末の file/directory input でも、サーバー OS の native dialog でもない。パス未指定なら server の home を一覧化し、API が返す entries のうち directory だけを表示する。API はドットで始まる子項目を除外するため、一覧に出ないことをパス不存在の証明にしない。パス直接入力も利用できる。[一覧 API の接続](../../packages/web-core/src/shared/lib/api.ts#L959-L970)・[picker](../../packages/web-core/src/shared/dialogs/shared/ServerFolderPickerDialog.tsx#L23-L122)・[一覧生成](../../crates/services/src/services/filesystem.rs#L316-L364)
 
-入力したパスは「パスを読み込む」または Enter で明示的に読み込む。chooser の blur は inspection を起動しないので、参照ボタンへの focus 移動と読込処理を結び付けない。picker は新しい要求時に古い一覧を消し、失敗を表示する。読み込み中、一覧なし、入力値と取得済み `current_path` が不一致の場合は選択不可である。取消は `null` を返し、選択時だけ親 chooser がそのパスを inspect する。picker は effect cleanup の active flag、親は request ID により古い応答の反映を防ぐ。[明示読込](../../packages/web-core/src/shared/dialogs/shared/WorkspaceTargetDialog.tsx#L397-L437)・[一覧の応答と選択](../../packages/web-core/src/shared/dialogs/shared/ServerFolderPickerDialog.tsx#L31-L122)・[親への結果](../../packages/web-core/src/shared/dialogs/shared/WorkspaceTargetDialog.tsx#L264-L291)
+picker内の入力は明示読込し、新しい要求で古い一覧を消す。loading・一覧なし・入力とcurrent_path不一致では選択不可で、取消はnullを返す。親は確定pathだけを受け取り、Git側の参照はinspectionでRepoを選択候補へ追加する。直接フォルダ側はpathを保存し、作成時検証へ渡す。[picker](../../packages/web-core/src/shared/dialogs/shared/ServerFolderPickerDialog.tsx)・[親](../../packages/web-core/src/shared/dialogs/shared/WorkspaceTargetDialog.tsx)
 
 directory 一覧と inspection は異なる処理である。inspection はパスを正規化し、存在・directory・可読性を検査する。選択先に `.git` があり Repo を開ける場合は **Repo を登録**して返すので、まだ Workspace を作成していない段階でも登録の副作用がある。chooser を後で取り消すことを、この Repo 登録の rollback と解釈しない。[検証](../../crates/server/src/routes/filesystem.rs#L42-L81)・[登録を伴う inspection](../../crates/server/src/routes/filesystem.rs#L117-L142)
 
-同じ chooser は Project 設定の既定作業先にも使う。そこでは `purpose: project_default` で開き、確定結果を Git の Repo/branch または DirectFolder の path として保存用の値に変換する。参照・読込を変更すると新規 Workspace とこの設定の両方へ影響する。[Project の呼出側](../../packages/web-core/src/shared/dialogs/settings/settings/RemoteProjectsSettingsSection.tsx#L559-L610)。`fileSystemApi.list` は host scope を明示的に受け渡すが、remote host 接続を復活させたわけではなく、[local transport の拒否契約](../architecture/web-and-sync.md#同じ-api-呼び出しでも対象ホストが変わる)に従う。旧 native picker API も別用途の実装として残るため、全 folder picker が置き換わったとは扱わない。[scope の伝達](../../packages/web-core/src/shared/lib/api.ts#L150-L165)・[remote 拒否](../../packages/web-core/src/shared/lib/localApiTransport.ts#L35-L61)・[native picker](../../crates/server/src/routes/filesystem.rs#L83-L115)
+Project設定もpurpose: project_defaultで同じDialogを使うが、ここではGit Repoプリセットだけを保存しbranchとDirectFolderは選ばせない。先頭の編集対象Repoが変わる解除・変更は未保存破棄確認を通し、取消では編集中の値を保つ。対象外Repoの解除に余分な確認は出さない。[Project設定](../../packages/web-core/src/shared/dialogs/settings/settings/RemoteProjectsSettingsSection.tsx)。サーバー参照はhost scopeを引き継ぐが、remote host接続を復活させるものではない。
 
 変更時の検証入口と、Agent 起動・実 worktree 作成を含まない試験の限界は [Workspace 導線の検証範囲](../architecture/web-and-sync.md#workspace-導線の検証範囲)を参照する。
 
@@ -368,3 +370,13 @@ Workspace の作成画面で Project を選び、対象 Repo を追加してそ�
 ### AgentRunのないWiki設定・削除の保護
 
 設定保存・削除は既存openwiki_sync ownerの専用Workspaceで実行し、model AgentRunの有無を稼働判定にしない。保守準備予約中、またはmaintenance_workspace_idが一致してfile_operation・active_run・bootstrapが未確定なら、archiveと用途cleanupを拒否する。348の共有cache/tmp cleanupもこのownerを確認するため、owner結果だけが先に終端でも途中の公開物を消さない。保守状態と準備guardが解消した後に既存cleanup可否へ戻る。[archive](../../crates/server/src/routes/workspaces/archive.rs#L56-L105)・[用途解放](../../crates/services/src/services/workspace_usage.rs#L313-L381)・[共有削除の保護](../../crates/server/src/routes/shared_storage.rs)
+
+## 共通root・配置と成果物の保全
+
+単一/複数Repoとも新規Sessionの起動cwdは共通rootで、root自体をGit Repoにしない。Git操作は対象の子worktree内で行う。親AGENTS.mdはGit管理外のLVK案内としてRepo位置・下位指示の読取義務・Repoごとのshared/Wikiとroot添付の区別を示す。子の指示はそのRepoと適用subtreeだけへ作用する。[provider別の経路](../integrations/agent-providers.md)を参照する。
+
+WorkspaceRepoはtarget branchに加えてnullableなworktree_nameを保存する。旧行は従来Repo名でbackfillし、既存配置は再計算しない。新規はRepo ID順で通常名を先に予約し、同名・大小文字・Unicode正規化・予約名の衝突だけRepo ID由来suffixで回避する。追加時は共通rootの全既存エントリ（dangling symlinkを含む）も予約する。表示名・元Repo識別・共有実体は変えない。[配置](../../crates/db/src/models/workspace_repo.rs)・[名前制約](../../crates/utils/src/path.rs)
+
+作成・再開・消失復旧・cleanupは相互Gitポインタで所有を確認する。保存名やstale Git登録だけで未知pathを採用・削除せず停止する。Git remove失敗後の無条件再帰削除は行わず、cleanup失敗なら共通root削除へ進めない。Repo情報取得不能や削除失敗を物理削除済みと記録しない。[所有確認](../../crates/worktree-manager/src/worktree_manager.rs)・[cleanup伝播](../../crates/workspace-manager/src/workspace_manager.rs)
+
+旧Sessionの保存cwd・添付・成果物を移動削除せず、今後のRunと添付コピーを共通rootへ揃える。Projectプリセット変更と孤立Workspaceの後付けリンクも既存Repo・branch・Session履歴を再構成しない。[Session継続](session-and-agent-run.md#共通rootと旧sessionの継続)

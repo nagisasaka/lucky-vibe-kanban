@@ -88,6 +88,10 @@ sources:
     resource: repo://packages/web-core/src/pages/kanban/IssueArenaSectionContainer.tsx
   - id: openwiki-source-efd2346cc808d71c75e004b0
     resource: repo://packages/web-core/src/pages/kanban/IssueTaskAttemptsSectionContainer.tsx
+  - id: openwiki-source-8bf9c53954166f4a7e70ae94
+    resource: repo://packages/web-core/src/shared/components/ProjectWorkspaceDefaultContext.test.tsx
+  - id: openwiki-source-1665c3801b2c75a34634dc00
+    resource: repo://packages/web-core/src/shared/components/ProjectWorkspaceDefaultContext.tsx
   - id: openwiki-source-00110cdcfec890895b99690a
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/RemoteProjectsSettingsSection.tsx
   - id: openwiki-source-b885bc17dfe85c4ca45223e9
@@ -100,10 +104,10 @@ sources:
     resource: repo://tests/kanban/issue-detail.mjs
   - id: openwiki-source-62d93277f2c37df9b3fcebae
     resource: repo://tests/kanban/README.md
-generated: { by: "codex", at: "2026-11-07T12:36:43.233Z" }
+generated: { by: "codex", at: "2026-11-09T07:03:14.304Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-07T12:36:43.233Z
+    at: 2026-11-09T07:03:14.304Z
 ---
 
 # Project・Issue と実施の関係
@@ -115,6 +119,14 @@ local Project は固定Organizationと現在actorの [表示モデル](organizat
 Project には Issue と独立した [Todo 共有メモ](project-todos.md)もある。メモの完了は Card の Done や agent 実行を進めず、任意の同一 Project の Card 参照だけを持つ。Board の Not Started 列（旧 Todo）や旧 `tasks` と区別する。
 
 設計の意図と変遷は [設計メモ](design-notes.md) に本文・独立追記として保持する。Project 削除時もその履歴は残るが、既存APIでのアクセスは閉じる。他機能の削除制約と、保持後の閲覧方針は [削除後の契約](design-notes.md#project-を削除した後の保持)を参照する。
+
+## ProjectのRepositoryプリセット
+
+ProjectのRepo群は新規Workspace作成用プリセットであり、作業branchを所有しない。設定は複数Repoを保存し、Issueからの新規作成は全件を初期選択して減らせるが外部Repoを追加できない。各基準branch＝マージ先は作成時にWorkspaceへ保存する。プリセット変更は既存Repo・配置・branch・Sessionを変更しない。空branchのプリセットもヘッダーで正常表示する。
+
+作成用IDは保存済みProjectRepoDefaultsを優先し、空配列も空プリセットとして扱う。旧直接フォルダ既定値はGitプリセットへ変換しない。保存値がない場合のみproject_reposを使う。読取・保守の関連Repoは既存リンク済みGit Workspaceの実Repoも含み、新規作成の選択範囲とは異なる。
+
+既存Workspaceの選択は全Issueのリンク済みWorkspaceを除外し、保存時も一意INSERTで競合を拒否する。移動は明示解除→孤立→再リンクで行う。リンクだけでは既存Repo、成果物、Session、Run履歴を再作成しない。Workflowが自分の同じリンクを再利用する場合だけ内部で冪等性を保つ。
 
 ## 仕事の識別と分類
 
@@ -266,7 +278,7 @@ UI/stdio/外部HTTPは共通primitiveと耐久receiptを使う。応答喪失・
 
 ## Issue から実施へ
 
-通常の Workspace 作成は `linked_issue` を受け取り、コンテナーと Session を作る前に関連付けを行う。ローカルでは `local_workspace_links.workspace_id` が主キーで、一つの Workspace の関連先を upsert する。一件の Issue は複数 Workspace を持てる。関連解除はリンクの削除であり、Workspace の作業ファイル削除とは別の操作である。[作成順](../../crates/server/src/routes/workspaces/create.rs)、[関連付け・解除](../../crates/server/src/routes/workspaces/links.rs#L24-L59)
+通常の Workspace 作成は `linked_issue` を受け取り、コンテナーと Session を作る前に関連付けを行う。ローカルでは `local_workspace_links.workspace_id` が主キーで、孤立WorkspaceだけにリンクをINSERTする。既存リンクがあれば同じIssue指定でもConflictとなり、暗黙の付け替えを行わない。一件の Issue は複数 Workspace を持てる。関連解除はリンクの削除であり、Workspace の作業ファイル削除とは別の操作である。[作成順](../../crates/server/src/routes/workspaces/create.rs)、[関連付け・解除](../../crates/server/src/routes/workspaces/links.rs#L24-L59)
 
 「実施」には複数の形がある。
 

@@ -102,8 +102,6 @@ sources:
     resource: repo://packages/web-core/src/features/workspace-files/model/chatFileLink.ts
   - id: openwiki-source-10a02a3880ad701da1e4c49f
     resource: repo://packages/web-core/src/features/workspace-files/model/codeHighlightLines.ts
-  - id: openwiki-source-b20f21ce6e1fdbde2fcde6ed
-    resource: repo://packages/web-core/src/features/workspace-files/model/useChatFileLink.ts
   - id: openwiki-source-18dc5170d4dade4bcfbc64d8
     resource: repo://packages/web-core/src/features/workspace-files/model/useWorkspaceFileContent.ts
   - id: openwiki-source-0f1df48871fe6f036c219dff
@@ -178,10 +176,10 @@ sources:
     resource: repo://tests/server/specs/workspace-search.spec.ts
   - id: openwiki-source-dcac74ef871fd02e6315fa93
     resource: repo://tests/workflow/specs/diff-tree.spec.ts
-generated: { by: "codex", at: "2026-11-07T10:04:45.638Z" }
+generated: { by: "codex", at: "2026-11-09T07:12:52.696Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-07T12:36:43.233Z
+    at: 2026-11-09T07:12:52.696Z
 ---
 
 # ファイル・差分・プレビュー・端末の境界
@@ -222,7 +220,7 @@ Workspace の Todo panel は作業木内のファイルではなく、現在の 
 
 ## Repo 内ファイルを読む
 
-files API は tree / directory / content / raw の GET を公開する。repo_id は WorkspaceRepo membership で解決し、その Workspace の container_ref/repo.name を root とする。任意の filesystem path を読む API ではない。[router](../../crates/server/src/routes/workspaces/files.rs)・[root の解決](../../crates/server/src/routes/workspaces/files.rs)
+files API は tree / directory / content / raw の GET を公開する。repo_id は WorkspaceRepo membership で解決し、その Workspace の container_ref/保存済みworktree_name（未設定時はrepo.name） を root とする。任意の filesystem path を読む API ではない。[router](../../crates/server/src/routes/workspaces/files.rs)・[root の解決](../../crates/server/src/routes/workspaces/files.rs)
 
 パスは slash を正規化し、NUL、絶対パス、Windows drive、親への .. を拒否する。さらに canonicalize した最終 target が Repo root 内にあるか確認し、外への symlink は NotFound とする。directory の列挙でも root 外へ解決される entry を省く。[パス検証](../../crates/server/src/routes/workspaces/files.rs)・[列挙](../../crates/server/src/routes/workspaces/files.rs)・[traversal / symlink test](../../crates/server/src/routes/workspaces/files.rs)
 
@@ -252,7 +250,7 @@ Files surface は選択targetのオブジェクト同一性で戻る操作を管
 
 チャットの Markdown file link は、現在の Workspace / Repo に属するファイルを既存 preview で読むための参照である。`[source](src/example.ts:120)` を開くと file panel が選択される。リンクを別の Workspace の会話に移したときも、解決基準は表示先の Workspace である。本文 renderer から panel までの責務は [Web の接続構造](../architecture/web-and-sync.md#チャットのファイルリンクを既存-panel-へ渡す)にまとめる。[resolver の入力](../../packages/web-core/src/features/workspace-files/model/useChatFileLink.ts#L7-L23)
 
-相対パスは Repo 基準で、`./` と Repo 名 prefix を扱う。Repo が一つなら省略できるが、複数 Repo で所属を一意に解決できなければリンクを無効のままにし、推測して開かない。絶対形式は現在の `container_ref/repo.name/` 配下だけを repo-relative target に変換する。Windows 形式も slash を正規化して同じ条件を使う。元の host checkout の `Repo.path` へ fallback しない。[チャットの変換](../../packages/web-core/src/features/workspace-files/model/chatFileLink.ts#L36-L77)、[共通の Repo 解決](../../packages/web-core/src/features/workspace-files/model/useWorkspaceFilePreviewResolver.ts#L77-L157)
+相対パスは Repo 基準で、`./` と Repo 名 prefix を扱う。Repo が一つなら省略できるが、複数 Repo で所属を一意に解決できなければリンクを無効のままにし、推測して開かない。絶対形式は現在の `container_ref/保存済みworktree_name（未設定時はrepo.name）/` 配下だけを repo-relative target に変換する。Windows 形式も slash を正規化して同じ条件を使う。元の host checkout の `Repo.path` へ fallback しない。[チャットの変換](../../packages/web-core/src/features/workspace-files/model/chatFileLink.ts#L36-L77)、[共通の Repo 解決](../../packages/web-core/src/features/workspace-files/model/useWorkspaceFilePreviewResolver.ts#L77-L157)
 
 行指定は `:line[:column]`、`#Lline`、`#Lline-Lend` 等を受け付けるが、保存する位置は正の安全な整数の**開始行だけ**であり、column や範囲の選択を約束しない。行 suffix を外してから URL decode を一度だけ行うため、encoded `#` / `:` はファイル名として残る。空白は percent encoding または `[label](<path with spaces:2>)` を使える。後者の transformer は local resolver がある read-only editor で有効になる。[位置と decode 順序](../../packages/web-core/src/features/workspace-files/model/chatFileLink.ts#L21-L35)、[angle destination](../../packages/web-core/src/shared/components/WYSIWYGEditor.tsx#L547-L566)
 
@@ -282,7 +280,7 @@ Wiki は `openwiki/` の読取専用表示に統一され、repository 選択・
 
 adapter は `openwiki/` 以下の階層 Markdown を読み、dot-prefixed entry と `INSTRUCTIONS.md` をページから除く。root・子 entry の symlink を拒否し、index を含め最大2,000ページ、1ページ512 KiB、合計16 MiBを超えれば snapshot 全体をエラーにする。切り詰めた Wiki を正常応答にはしない。frontmatter は optional だが、ある場合は正しい YAML mapping を要求する。Claims 解釈・設定書込・初期化・修復はしない。[adapter](../../crates/services/src/services/wiki/openwiki.rs)、[安全な読取](../../crates/services/src/services/wiki.rs)、[旧ファイル保持と容量の test](../../crates/services/src/services/wiki/openwiki.rs)
 
-通常 Repo は membership を要求する。Repo 未接続の DirectFolder だけは `repo_id=workspace.id` で既存フォルダーを読める。旧機能の終了と Card の保存文脈は [Card context](../concepts/card-context-and-llm-wiki.md)、生成物の公開条件は [OpenWiki 保守](openwiki-maintenance.md)を参照する。[scope の解決](../../crates/server/src/routes/workspaces/wiki.rs)
+通常Repoはmembershipを要求する。DirectFolderは旧Repo行が残っていてもWorkspace Repo Wikiの解決を拒否し、旧repo_id=workspace.idのfallbackを使わない。旧機能の終了と Card の保存文脈は [Card context](../concepts/card-context-and-llm-wiki.md)、生成物の公開条件は [OpenWiki 保守](openwiki-maintenance.md)を参照する。[scope の解決](../../crates/server/src/routes/workspaces/wiki.rs)
 
 <a id="添付の実体と-workspace-配置"></a>
 
@@ -290,7 +288,7 @@ adapter は `openwiki/` 以下の階層 Markdown を読み、dot-prefixed entry 
 
 Session の添付は local File を作業先へ渡す機能である。Board 上の file 参照との関係は [Issue の共同作業](../concepts/issue-collaboration.md) を参照する。
 
-添付 upload は保存レコードを作成し、Session の作業先へ file ID でコピーする。raw 添付の取得は Session が Workspace に属するか確認し、その agent_working_dir または Workspace root 配下の .lvk/attachments を使う。最終 canonical path が添付ディレクトリから外れれば拒否する。Repo file viewer と添付の基準 root は同じとは限らない。[upload](../../crates/server/src/routes/workspaces/attachments.rs)・[添付のパス](../../crates/server/src/routes/workspaces/attachments.rs)・[Session scope](../../crates/server/src/routes/workspaces/attachments.rs)
+添付 upload は保存レコードを作成し、Session の作業先へ file ID でコピーする。raw 添付の取得は Session が Workspace に属するか確認し、保存済みagent_working_dirに依存せずWorkspace root配下の .lvk/attachments を使う。最終 canonical path が添付ディレクトリから外れれば拒否する。Repo file viewer と添付の基準 root は同じとは限らない。[upload](../../crates/server/src/routes/workspaces/attachments.rs)・[添付のパス](../../crates/server/src/routes/workspaces/attachments.rs)・[Session scope](../../crates/server/src/routes/workspaces/attachments.rs)
 
 配置では親 `.lvk` を通常directoryとして検証し、追跡済み添付先、親リンク、既存先の内容不一致を拒否する。ignoreは `.lvk/.gitignore` の実行時子だけに集約し、添付子の `.gitignore` を別途作らない。旧履歴・旧prefix互換や旧添付の移動はしない。中央cache内のDB file_pathと作業先の相対pathを混同しない。[配置と回帰](../../crates/services/src/services/file.rs)・[名前空間](../../crates/utils/src/path.rs)
 
@@ -300,7 +298,7 @@ Workspace 作成は明示された attachment_ids を関連づけ、linked_issue
 
 MCPからはProjectへ保存した添付IDを、明示したWorkspace/Sessionへ配置できる。保存・配置だけではRunを開始しない。添付はWorkspace共有であり、Sessionを指定しても秘密領域にはならない。Remoteのhost fileParamsと両transportのinline入力、上限・URL・receiptの契約は [MCPで素材ファイルを渡す](../integrations/remote-access.md#mcpで素材ファイルを渡す)に集約する。
 
-FileServiceはUnicode名を保ち、hashだけで別名・別MIMEを誤って再利用せず、同じbytesでも名前が違えば別レコードを保持する。配置は全IDの実在を確認し、保存元と既存先のサイズ/SHA-256を検証する。欠損・改変・symlinkを無視せず、既存改変先を上書きしない。新規配置は一時ファイルからno-clobberで公開する。通常UIのコピー経路も同じサービスを使い、続行時は実Session作業先を検証してからRunを作る。[保存](../../crates/services/src/services/file.rs#L89-L175)・[コピー](../../crates/services/src/services/file.rs#L256-L380)・[実行前検証](../../crates/server/src/routes/sessions/mod.rs#L449-L465)
+FileServiceはUnicode名を保ち、hashだけで別名・別MIMEを誤って再利用せず、同じbytesでも名前が違えば別レコードを保持する。配置は全IDの実在を確認し、保存元と既存先のサイズ/SHA-256を検証する。欠損・改変・symlinkを無視せず、既存改変先を上書きしない。新規配置は一時ファイルからno-clobberで公開する。通常UIのコピー経路も同じサービスを使い、続行時もWorkspace共通rootへ新添付を配置してからRunを作り、旧Session保存pathと旧ファイルを移動しない。[保存](../../crates/services/src/services/file.rs#L89-L175)・[コピー](../../crates/services/src/services/file.rs#L256-L380)・[実行前検証](../../crates/server/src/routes/sessions/mod.rs#L449-L465)
 
 複数配置は各要素のsaved/associated/verifiedと全体all_verifiedを分ける。一部失敗なら成功分は残るが実行は始めない。未知ID・Project/Workspace/Session不一致を副作用前に拒否する。Project参照のある未配置ファイルは孤立掃除から保護され、参照がある限り無期限保持となる。per-file上限は総容量制限ではなく、TTL・定期GC・総保存quotaはない。[配置](../../crates/server/src/routes/attachment_transfer.rs#L242-L310)・[保持](../../crates/db/migrations/20261029160000_project_attachments.sql)・[清掃の再確認](../../crates/services/src/services/file.rs)
 
@@ -393,7 +391,7 @@ server は保存前に表示名の空白のみ・80文字超・trim 後の完全
 | 操作元 | 解決するディレクトリ / ファイル |
 | --- | --- |
 | Workspace 全体 | Repo が一つならその worktree、複数またはゼロなら Workspace root |
-| Workspace の Repo | membership を確認した `container_ref/repo.name` |
+| Workspace の Repo | membership を確認した `container_ref/保存済みworktree_name（未設定時はrepo.name）` |
 | ファイル preview / diff | 明示 `repo_id` と Repo 相対 `file_path`。ディレクトリ変数は Repo root、ファイル変数は解決したファイル |
 | Repository settings | 登録済み元 Repo の `Repo.path`。Workspace worktree ではなく、body の Repo/file 指定は拒否 |
 
@@ -456,3 +454,9 @@ Kanban / Workspace の右サイドバーで **DISK** を開くと、関連Reposi
 ### 削除後のcanonical Wiki表示
 
 Kanbanのmain Wiki APIはcanonical生成状態を使い、生成Wiki削除後に残るINSTRUCTIONSや人間管理文書だけでWikiを再表示しない。設定の既存状態取得が成功すると選択中repoの表示を再読込する。再構築中は公開成功まで現行Wikiを参照できる。設定・削除・全体再構築の操作と回復は[OpenWiki保守](openwiki-maintenance.md)で確認する。[main API](../../crates/server/src/routes/project_utilities.rs#L85-L94)・[未生成snapshot](../../crates/server/src/routes/openwiki.rs#L144-L166)
+
+### LOCAL-349の保存配置と直接フォルダ
+
+files/editor/diff/Wiki/terminal/dev scriptはWorkspaceRepoの保存配置名で子Repoを解決する。チャットの相対/絶対参照もこの物理名を優先し、同じ表示名の複数Repoを先頭一致で選ばない。登録元Repo.pathへのfallbackで別checkoutを開かない。添付の新規コピー基準は単一Repo・旧Sessionでも共通rootで、Repo file viewerのrootとは異なる。
+
+Project utilitiesの関連Repo読取は現在のプリセットだけでなく既存リンク済みGit Workspaceの実Repoも含む。DirectFolderではGit panelとWorkspace Repo Wiki候補を除外する。これは任意folderのOS書込権限を制限・拡張する境界ではない。

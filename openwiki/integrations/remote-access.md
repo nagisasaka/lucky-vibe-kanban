@@ -134,10 +134,10 @@ sources:
     resource: repo://crates/utils/src/reference_file.rs
   - id: openwiki-source-3ecddc0be7b037ea6ab24381
     resource: repo://packages/local-web/vite.config.ts
-generated: { by: "codex", at: "2026-11-07T10:04:45.638Z" }
+generated: { by: "codex", at: "2026-11-09T07:03:14.304Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-07T10:04:45.638Z
+    at: 2026-11-09T07:03:14.304Z
 ---
 
 # 外部アクセス・MCP・Runner の境界
@@ -514,3 +514,7 @@ LOCAL-335と338の統合候補 `bd425027e2bf7ecf4de000597dea3c661d4195a7` では
 
 
 添付付き実行のpromptとAPIの正規相対pathは `.lvk/attachments/` に揃える。配置先の基準はSessionのagent working directory、未指定時はWorkspace rootであり、Repoごとのshared領域とは異なる。旧prefix互換・旧履歴の書換え・旧添付の再配置は行わない。[配置基準と保護](../operations/workspace-inspection.md#session-の添付)・[実行prompt](../../crates/server/src/routes/attachment_transfer.rs)・[MCP launch](../../crates/server/src/remote_mcp/launch.rs)
+
+### 作成用プリセットと既存Workspaceの関連Repo
+
+list_project_repositoriesは現在のプリセットと既存リンク済みGit WorkspaceのRepoを列挙し、creation_preset_memberで新規Issue Workspaceへ選べる範囲を区別する。integration_memberだけで新規作成可と判断しない。プリセット解除後も既存WorkspaceのRepo・保存target branchを保持し、自動マージはその実membershipとtarget一致を要求する。DirectFolderは旧Repo行が残っていても自動マージ不可である。Wiki保守の所属読取は関連Repo集合を用いるが、Project認可を迂回しない。ファイル/証拠読取は保存済みworktree配置名でrootを解決する。[実装](../../crates/server/src/remote_mcp/launch.rs)・[証拠root](../../crates/server/src/remote_mcp/evidence_read.rs)

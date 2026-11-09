@@ -286,10 +286,10 @@ sources:
     resource: repo://tests/workspace-navigation/run-isolated.py
   - id: openwiki-source-b87e3253bd1458a0091f8587
     resource: repo://tests/workspace-navigation/workspace-navigation.spec.ts
-generated: { by: "codex", at: "2026-11-07T10:04:45.638Z" }
+generated: { by: "codex", at: "2026-11-09T07:03:14.304Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-07T10:04:45.638Z
+    at: 2026-11-09T07:03:14.304Z
 ---
 
 # Web の実行環境と同期
@@ -662,3 +662,7 @@ KanbanとWorkspaceの共通 `UtilitySidebar` は縦flexで、各項目を縮め�
 ### Repository設定操作後のcanonical Wiki表示
 
 Project側のWiki providerは既存のrepository-memory query成功通知を購読し、選択中repoのcontrollerを再読込する。新しいpoll loopは追加しない。削除後はcanonical snapshotが未生成を返すため、古いmain Wikiを表示し続けない。設定ファイル編集・保存とDanger Zoneの操作は[OpenWiki保守](../operations/openwiki-maintenance.md)を参照する。[表示の再読込](../../packages/web-core/src/features/wiki/ui/WorkspaceWikiProvider.tsx)
+
+### LOCAL-349 の作成と管理対象
+
+作成composerは選択した全Repoと各target branchを送信し、作成結果をProjectの既定値へ書き戻さない。新規選択と既存Workspaceのリンクは別操作である。DirectFolderではGit sidebarとWorkspaceのRepo Wiki候補を除外する。Project側のWiki閲覧はProject controllerのまま独立している。

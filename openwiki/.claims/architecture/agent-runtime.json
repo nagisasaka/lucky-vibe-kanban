@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:8a54b651746f24a022ee9e76cd383531f65674740826a475747b8a4b384337c0",
+  "pageVersion": "sha256:f5b59ccba098f21e1fbcb7307b1cf5ba883f702717b84a007b6d1c3800d45194",
   "claims": [
     {
       "id": "claim_73d8e11679c6457aaf2e2b1a68fb767e",
@@ -83,7 +83,7 @@
       "statement": "一時SQLite競合は有限retryとUnavailableで処理し、決定的投影失敗は観測単位に隔離し、DB基盤障害はcursorを進めない。",
       "evidence": [
         {
-          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L2324-L2406",
+          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L2340-L2422",
           "version": "repo-lines-v1:sha256:b192895072ea5fd1a25195bc954497ffc4021f5abb9000bd86aba01e316df05c:eyJzZWxlY3RlZExpbmVDb3VudCI6ODMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg3MzdiZTNjODJiNTc1Y2U1N2NkNWUwNmI4MDRiMzU3MzQ5YmEwMzVlZDZlNzk1YTRiNWM1YzlkMGMwMTJlMmQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU3YTVmZmEzZTA5NWRmMDViNmIzMzMzODcxYWJhMWMxYjNlMjVhYjNkYmYxZDQ5MmYxNTRjMmNjMmIxMjJmNTciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjAyNzEzNGU5ZTkyOGNmNzkzNjNkMmU0OTc2NWIyNmJhNTllMzExOTY5NTIxZGYzNzdiZTNiOTA1NzM4M2ZhNzgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImM5M2YwMTMwMGM2YWJjYTA2YTE3MDU1ZDcwODgwNjYyYWRjOTVhOWY2NTc1MjhhNzgzYjlhNDYzZDgxNWY1NmUifQ"
         }
       ]
@@ -93,11 +93,11 @@
       "statement": "投影劣化時は通常制御を拒否するがCancelと証拠検証付きの明示Retryを残し、終端AgentRunのCancelは冪等な無操作である。",
       "evidence": [
         {
-          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L1600-L1636",
+          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L1616-L1652",
           "version": "repo-lines-v1:sha256:0988a8e0b30521f5b2de085a6bab25621c781fb3c1ef2f2330eef2a45d84950f:eyJzZWxlY3RlZExpbmVDb3VudCI6MzcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZiNDAxMGM2NzRlNjgyZmM3OTE1YzZhMTNjNzJkMjBiMTIwOGYyOWFkMGFhYWI2MDc2YmFmMWNiODczYzYwMGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImU5ZmIzZGIzZTA1YjRlMTQ4NWQ4OWQzYWQxMjFkNzM4Nzk2ODMwOGMzYWE3ZWI3NzNlNDExNzgzYTRjNWY5ZjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFhMjZkZmEyZjY0OWQ2OTQ3ZDhhYzE3ODJlOWM5OTEyM2Q2MjllNzFiZThjZDkyM2M1M2JiNmE5NzdmYjA2OGYifQ"
         },
         {
-          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L3508-L3527",
+          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L3524-L3543",
           "version": "repo-lines-v1:sha256:9f5aba64c4698530bd2c111dfc8aa04e2e773b813819b3f10f533cfc8136f88b:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk1M2ViNjY4ZDNmMTk3OGNhMTJlNDNlODNhZTg4Nzk2YWE5ZjAxOGFkNGEyYzcxMWVlZGQzNDk4MTlkYTBjYWUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU1MjJjNDJjZDE5YzZkMDNkODA4YzQ1MjcyMDU1MjgyNWI3ZWExYzViNDkxYjIxODUxMWNhYzc0MTVjZjlkOWIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImIyOWVmN2YyOTMxMTI0YTEwYTIwZDdlYTA5ZWViN2RiNTE1Nzg0ZjcxZjI0ZjMxNTZjNTBiODIxMzE3NDM5NmMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFhMzFmZjZkMTk3MWJkNGE5OTZlODY3MDRiMjIwNGM5MTI0NjM4YzMyYjA5ZGYxM2UwZjE1YjZiNTFiYzU3MzUifQ"
         }
       ]
@@ -185,11 +185,11 @@
       "statement": "Workspace明示削除後のbackground cleanupはSessionごとにNative Auditとprocess logを削除するため、周期cleanupを追加しない歴史的方針は永久保持を保証しない。",
       "evidence": [
         {
-          "resource": "repo://crates/workspace-manager/src/workspace_manager.rs#L1367-L1396",
+          "resource": "repo://crates/workspace-manager/src/workspace_manager.rs#L1358-L1387",
           "version": "repo-lines-v1:sha256:0b797b19623d346ac9532e94bace2630043585da9d184d5afcdbf97ee58d232e:eyJzZWxlY3RlZExpbmVDb3VudCI6MzAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkxY2M0MDY4N2QyNDRlOWRhZjkxY2VkNDY1MjMyNjU2OWE0ZmI2ZGZjODFkMDNmYmU3MjNhNWVhM2NjYmU5ZGYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjJjZTRjYTliOWNjODhmYTQ4NWY1MjA3MWEyNzg3YzBkMTNmN2NkYmE4ODMwNDgzMmFhMTEzMmQzZWQ4Mzk4YzEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEifQ"
         },
         {
-          "resource": "repo://crates/workspace-manager/src/workspace_manager.rs#L436-L515",
+          "resource": "repo://crates/workspace-manager/src/workspace_manager.rs#L427-L506",
           "version": "repo-lines-v1:sha256:9dbe5c7e65cbdb6f420ea6efca3f76164e6c17cfd427f7e359ecfff4d22de1aa:eyJzZWxlY3RlZExpbmVDb3VudCI6ODAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE1YjUzNGEwNWNhMzNmNzUwZThjYjkyODFiNGNlYmUzNmZiMDRiZjAzOWEwMmM1YzBhNDA0MWQ4NGYxMzQ4ODciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJlNzBhYTI5Zjg2ZmFmOTAxZjA4NjAxNjQ4OWQ1OWIzNDUyNjhiNTU1YmJmYmFkYzE1MjViYmIzOGVlNDU5NjUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRmZTdjZGZmNmEwYTU4NjczNDQ3NTM5ZTMzMTYyNTU0ZjkwN2FjODA1MjI5ZjA4ZGNhNDJmMGU3NjQxMThlNjUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjU2MDhjZTExZjY5MjYyZTRmYjkwNGU0ZWMyOWRmMmIzODZhMmQ4Yzk3ZTU2N2YxMWE3ZjgyNzJiMjU0ODYxMmQifQ"
         }
       ]
@@ -241,7 +241,7 @@
       "statement": "Host の回復は確認済み終了・journal と閉じた Audit の証拠検証を要し、provider が生存中または不明なら成功へ昇格させない。",
       "evidence": [
         {
-          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L1852-L2008",
+          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L1868-L2024",
           "version": "repo-lines-v1:sha256:27b2eeef147fddfaa3765070694f6ce9c63fd7e7ccb2c1c898f807be80de4c7c:eyJzZWxlY3RlZExpbmVDb3VudCI6MTU3LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJlOThkN2QyZDNiZTEwODdjNjZkMTc2MjFlMzMwMzliMGE3NzhlYzEwOTliZDRkNGUyNTc5YmI2YzNiNGM1NzZlIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIyZWI5MDI0MDNlMjg2NDQ2OGJiOGRkNmE1OTA5N2YwMTc5ZDdmMWI2M2Y0ZTIyZDRhYmI4YzAyOTc4NTJiZDQ1IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI2YjIwZTc4YjhkZTJiNWQwZWM0ZTQ4MDdiNGUzYTgxZmMyMmI3MzE0ODM4NmVlZjczNWY2Y2MxZTEyMmI0ZGVjIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI5YWQyYmY3NTk1ODhmNzA5ODc5N2I4NWYzYTA0YTYzNTBmYmIyNTE0MzE3OWE3NzkxMzdhYzdjNzhiMGQwNWY0In0"
         }
       ]
@@ -297,7 +297,7 @@
       "statement": "Startingの保存に失敗した場合providerを起動せず、同一attemptの再配送ではStartingのIDと時刻を維持する。Retry inputのevent IDはattempt別で初回互換を保つ。",
       "evidence": [
         {
-          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L2701-L2938",
+          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L2717-L2954",
           "version": "repo-lines-v1:sha256:4a1e075dfdf5ac2a9d2c8f5972a91575aff342c5bcbef6f6b19ebe86fe8a5009:eyJzZWxlY3RlZExpbmVDb3VudCI6MjM4LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIzN2I4YTEwOWJjZGNlNGQ2MTU3OWJkNmRhNWJlNDhiYmY0YjBjODIzMjg2NTYxNTAxNGJjOWE2OWUwNTVjYTJkIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJhODMxMGJkOWFiNjk4YTE1OGYyYmM1MDM5ZWI4NzEyZjRlNjU1ZjcwZjIzMWZiM2M0ZWFjODg1NWZlYjk5MmEyIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIwMDNiZTFlYTBiYWQ1NTUxMDJkNGUwNDZiNmJjMWU5MzFlOTg1MDVhMzcwNDI2YTY5MjhlOTAzYTE1NGI0NmU3IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJkYWEwZGQ3MGRjZGU1YTAwNjFlMzliYzUxZjNkOWJlYTA5MTdiN2U3OWY0YTA1YTkyYWJmNmRiMDljM2QzYTYxIn0"
         },
         {
@@ -315,7 +315,7 @@
           "version": "repo-lines-v1:sha256:164ed02e3466915faebef4b390665382ad0d7dba35c09a949002d0fc3eeb6436:eyJzZWxlY3RlZExpbmVDb3VudCI6ODcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUwNzFjNmU5MjJkNjRlM2MyZDEyZDFiNDAwODRjMzFjYzRlNzgwN2ZiNDJlN2Y3MjI5Y2M4ODYwNWU3ZmM4YjUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjgzNTM4MWJiZmNkZGQwNTQ2NTY1ZWE3OTRlYmQzZDNhNmVjYTk5ZmQ5ZjU0MzI4YzU5Y2U3Y2RlZTdlZGNhMmUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQ0ZWYwZWY0MWNhMjA4NTFiNDEyZTQ2YjcyYjRmNDM5Yzg1ZDVlYzhhM2IwNWIxYmViM2JlODc4NzY1NjUwMDkifQ"
         },
         {
-          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L1638-L1839",
+          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L1654-L1855",
           "version": "repo-lines-v1:sha256:c8f2edd80d0f515f13fc46d8ce232cd83a67117803b7cbc0ed8de68538f543c8:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAyLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJmNjg0YjYzMzBkOGIyNzU5ZjAzMTNkNzkwMTE3MWFkODRiZmY0Mzk4ZTFmMTRjZmVlYzVmM2U0NWM0YTJmNTkyIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI1MDcxYzZlOTIyZDY0ZTNjMmQxMmQxYjQwMDg0YzMxY2M0ZTc4MDdmYjQyZTdmNzIyOWNjODg2MDVlN2ZjOGI1IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIxNjJlZTU3ZTQxYThjMjBhZTAxNjRkZjI2MTQzOWRjYzQ5OWQzNTIwODM0MTUxNTE2ZDA0N2U4ZGVhZThhNDY2IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlM2QzN2E5MzhmOTY5NzkwZGMwMGVlNWI4YzE2YWNjNzQ5MmU5ZDRkMjJmNTY3OGY4ODAxMTZmY2I0YTQ0NzkyIn0"
         }
       ]
@@ -343,11 +343,11 @@
       "statement": "provider spawn後のHost Started timestampはportでprocess registryに保存され、同じ時刻のcanonical Runningを生成する。registry保存はcanonical batchとは別段階で、回復後も保存済み開始時刻を保持する。",
       "evidence": [
         {
-          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L2146-L2203",
+          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L2162-L2219",
           "version": "repo-lines-v1:sha256:075d97950b484df6a41d55ce340649d58808494e13824c49d9c3884f1a5aafa6:eyJzZWxlY3RlZExpbmVDb3VudCI6NTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM3OTc2MDllM2FlZjUwMzFkZTg3ZTI4NWE5YWYwYTE0ZjVhYTJjZTU0NDRlMzQ2MjU4NDI0ODYwMWFiZTBlMmUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEzZWE3MTIxZGFhMzM5M2ZiMDRhMmNlM2UyN2VjMzg1NTI3YmQzM2E1Nzc3YzEyZTc4NDE2YmQxNGYzMWI4MmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijg2OGEwZTQ0M2QyZGM2MGU0YTQ1ZWU0ZmE2M2NjMzE3YWMxNjhiNzNhMjBjNzUzMmYzZTEzZDcxNTU3ZjA4YjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjUxMmQxYjMxZTNlMGI0YmQyMDUyNGRiMGRlNzI1OTAzNTM1OTZiZGJhODVkZmRkNmNmN2QzMzE3MGMyYjZjMGMifQ"
         },
         {
-          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L5347-L5375",
+          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L5363-L5391",
           "version": "repo-lines-v1:sha256:fe26b4b06355c637d7756a00f67d1e77da4ef250472b96e940a54a05d78ac820:eyJzZWxlY3RlZExpbmVDb3VudCI6MjksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIyNzJmNmFkMzdjYzM2YWZiMTgxNGQzMDAxMGUyMzNhYWIyMGVmMTUxMTI5YzRhOGI4MjVlNWU5NDFhMWZhZjAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjljNmZmZWY4YjFkNGI2NDYwMzU1OWRlYmRiNDA2MTNmNzUzOThiZGRmOGEwYjRlMmUwMDRkMTU3MjI0MmY2ZTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhhODNkMjM5ZjlmYmM2YTAzZTBjNmVhMzIyNzNiMjcyYzJhNGVhMTc4MjczYmFiMDY4ZTlhNmYzOTk0NDQyNTkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE2MDYxMTdhNTFhNzYxMjMxNDMyMTJiMTNkYWI1YjJhMjZiNzU5NTMwZDQ0YWM3YTZlZjA0YzczMGQ3NWQxYWUifQ"
         },
         {
@@ -362,11 +362,11 @@
       "evidence": [
         {
           "resource": "repo://crates/executors/src/executors/codex.rs",
-          "version": "repo-file-v1:sha256:cbb82d9cbd1f07a82cab6edc631b43dd6b198501a43c54ccfaebb1414c77b6d8"
+          "version": "repo-file-v1:sha256:bd131d2a3150d7dead10b7e5ea8907ad96669d8ddf863ef4083cea3c183ee32c"
         },
         {
           "resource": "repo://crates/executors/src/executors/codex/client.rs",
-          "version": "repo-file-v1:sha256:f5efc5b635df18ecc17354e7ac3086d11e552566dd43b1573c5a5166fc00a7c2"
+          "version": "repo-file-v1:sha256:ade8fe27c1fda15bee98858c1de7cbc8f77e47d66009744b1426f194f5b6d18f"
         },
         {
           "resource": "repo://crates/local-deployment/src/process_host.rs",
@@ -408,7 +408,7 @@
       "evidence": [
         {
           "resource": "repo://crates/local-deployment/src/agent_run_port.rs",
-          "version": "repo-file-v1:sha256:ee93be67ad118f400c4fd7dbfe66050a32cec1800e72c74865b28ec097b1a5dc"
+          "version": "repo-file-v1:sha256:72c3df1f03bc1b8996d137301e9d68b218e2c7ced7e1818a2774ba8bf8ef8f11"
         },
         {
           "resource": "repo://crates/local-deployment/src/process_host/approvals.rs",
@@ -425,7 +425,7 @@
       "statement": "Codex の承認解決は port で先行生成せず request handler の待機結果から記録し、未解決件数が正なら AwaitingApproval、0 なら Running を投影する。",
       "evidence": [
         {
-          "resource": "repo://crates/executors/src/executors/codex/client.rs#L1088-L1152",
+          "resource": "repo://crates/executors/src/executors/codex/client.rs#L1103-L1167",
           "version": "repo-lines-v1:sha256:9a59a927a2a90e8931df5bb418bf7b26b5d43ccc3dbba1d982997501082135ad:eyJzZWxlY3RlZExpbmVDb3VudCI6NjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU1MDMyZTk2NGQwOTMyMzUxZTVkMTg1MjY5MjgxYjE3MWEzYTA5YjA4YjI4NmU2NjFlYTQ3MDMyM2M4MmViNGQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxOTBjNmVkYWUwNTI2MjYxMGM5Yjk2ZTQxM2EyM2Q0MGI4NWZkYjA4ZDY3Y2ZkOWJhZjQ2NTkyMWFjZDE1NWYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQxODEyOTJmYWZlOGM3YTM4M2NjYThlYjNhZjg5NTE4NGM0NjM1OWZkYzk2NmUyMWVhYWM5NmMxNWU0YTM2MTYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQyYmMwMjNmNDhmMjdkOWFiOTNkNzM3MjhiYTc3OGE1ZjM0NTVlOGVkNzMwM2MxMTc1NmQxMDQ2MjQ2NzkxN2QifQ"
         },
         {
@@ -433,7 +433,7 @@
           "version": "repo-lines-v1:sha256:099278fada1bd768eb77bf27f7ec1929d528b7d1a0f89c7a22cc593f40bf005b:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBkNjc2MGYxYjlmMjdkNTNlMjY4ZmZhYTYxYmU1MzJiOGVhZmQ2ZjUxOTc1ZTE2ODg2MWRlZmRiZTI3ZDJiNzQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUwMzk1YzgyZTJmZDA2MGZkNmE0NzI5NWM5ZWUzNGJmYTk0MTU0Nzg2ZjRjOGJkZjdmZWZkYTI1ZGI5Mzk3OGEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjU5NmYyOTM3YjI2Zjg0NGZmNDZkYTIzYWU5ZDFjZjFjY2NhZTgyY2Q0ZjE2NjhlMTJhYTZiZTQxZDg4OTBlOWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImZiYTRjNTY0ODBhODliYzI5ZmUyMzY3ZjQzZTc3OGVlYWEyYjFiODhhZWZhZDIzMDE0YTk0ODg3MTlmMjk0NjUifQ"
         },
         {
-          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L3601-L3650",
+          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L3617-L3666",
           "version": "repo-lines-v1:sha256:3727bb0c1fd48944a289a161a303c73876c964c0c36bcdc5f43e11634f95970a:eyJzZWxlY3RlZExpbmVDb3VudCI6NTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA2M2FmZmU5MzQxYWIwYjk1OTQxNWNmMzg2ZDI3ZDMxMjFlNmM4YzY5MjkwZWQyNTMwNDQ5YjRlMjJmNzMxMTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNjMWVhNjgxZjEzZjgwYmMxM2RiOWQ2MmMyZjQxZWIyNTY5MzU3YjBjYmM2NTU4M2ZhNDg1ZWM5MDhmOWQ2MGMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjA3NjJhMTcwOGRiNjllNzlhMDMwNmVkNTEwOWVlYWY4ZTg2MjM5OTdmZTRmMTE4MTQ0MjUyY2E3MTE3MjU3YmMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjEzMTUyN2EwNTc2M2U4MmY5YzEyMzNmMThmZTdhYTA0MWUxNzdjOGYxNDYxMGQzMWY2MWM1ZTY3YmM4ZTE5MGIifQ"
         }
       ]
@@ -577,7 +577,7 @@
           "version": "repo-lines-v1:sha256:3385a6fc7b63e43ef3782e669bfeb77be4921feb1c113398c3835315e5bf3c29:eyJzZWxlY3RlZExpbmVDb3VudCI6MTM2LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIyNGQ5OGNkYjliYTkwOTdmODkwOGU5MmZiYWU0ZDU2MzgxOWI0ZTM4N2ZjYWJkOTNjMjRlMTY3ZWVmODY1YmZkIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI4NmI1MjcxMWQ1NGFiNmIxNGMwMWQ2ZTMxN2RkOGY3OWFiYjcyZjZlMGIyZjA5MmYyMzY4NjNjOGIxYjcxNTFhIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJiZTA1ZDY5NWQzMWY4OTFhYmJkNzJiMDcwNGNhZWQ2MGVmZWJjMGM4NmFhZTZlZDJkZGM1NmVkZTAyMDQ0NzI5IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiIwY2QxYTg5NWYxNzRjNGE3MzYzMjNkZTA3ZGI0MzA1MWYyMTcyYjg0YTcyMTNhNWI2MDA1NGMxOTViOWZhZWI2In0"
         },
         {
-          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L2701-L2783",
+          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L2717-L2799",
           "version": "repo-lines-v1:sha256:1de4b88518438317375eda361270ca8755282acce08b894eefcc2388c5a1e748:eyJzZWxlY3RlZExpbmVDb3VudCI6ODMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM3YjhhMTA5YmNkY2U0ZDYxNTc5YmQ2ZGE1YmU0OGJiZjRiMGM4MjMyODY1NjE1MDE0YmM5YTY5ZTA1NWNhMmQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YjA0NDkxNDY5NzIyZTgzNjNhOTRlNDA0NDUzOGUwMTNhMmEyMTdlMzZiMWU1NjhiYTYwYWNiN2I0YzhmMmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjAwM2JlMWVhMGJhZDU1NTEwMmQ0ZTA0NmI2YmMxZTkzMWU5ODUwNWEzNzA0MjZhNjkyOGU5MDNhMTU0YjQ2ZTciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjEyN2JjZTgzOTYxMzMzYTRhYzdiMGM5MDBkNmUxZjViZWE4YmQ4NzYzM2U4MzA5ODVmOWE1MjA0OWJmODFhMzkifQ"
         }
       ]
@@ -591,7 +591,7 @@
           "version": "repo-lines-v1:sha256:88c828ca307a7d7c81de16bed0b69bdb80d80dfbf660652538e3de6cd897e828:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZkNzliMzJmYjc1NTFlNWI1MTMwMWM2NjQ0ZmQwM2I3ZGIxODIzYjIzNmM4NzkzZDc2ZGYxMTQwNzAwMTk1NTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE4ODVkY2UzZGViZjQxODE1M2Y1NGRhNTdkYTkxMDE3ODVkNGI1NTdlY2U5MmI0NWIxODhmNGNiNThjNzVjMWIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM2N2QxZjI4MjJkMGQwODU5OTJlNjM1OWU2ZDMzYWViN2Q5YzI2OWUxZDcxZTMzM2UwMGI5MzUzNjIxY2NiZmEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjY2YWU1ZDU4ZTMxY2YwYTFkZTdmMDFiNDg5ZmY2ODBlNTJlMmJiODY3N2ZlMGVhNDBmMzU0NmIyMzQwMmZjMzcifQ"
         },
         {
-          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L2682-L2896",
+          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L2698-L2912",
           "version": "repo-lines-v1:sha256:9476d35ad28b77576d4729069b57a8ee6cab9775c1c67badb7e1e0bd060b8320:eyJzZWxlY3RlZExpbmVDb3VudCI6MjE1LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI2ZTMyOGJmYmYzOWRhN2JhNjNlZjdlZGIyYjAxZmZmZTZkMTFkMGZkYTg1NjYzYTA3MmI4NDQzMjE5ZGNhNDJiIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI1MDcxYzZlOTIyZDY0ZTNjMmQxMmQxYjQwMDg0YzMxY2M0ZTc4MDdmYjQyZTdmNzIyOWNjODg2MDVlN2ZjOGI1IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI4MmJlZGRlY2Y1MzY5NDYyMGVhZWM3MDQ5ZjgwNTM0ZjkwOTdhMzBiMjBmY2M4Njc1YmY1MjU5ZDlhMmJiMGIzIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiIxZTg4NGFkOTRhMDFmY2Q5N2IwNWI5NjhlMmQ2NDg1Mzc2YTdiYzYxMWMyODBlNzM4Njg3YjRkODdhMzAyZjRjIn0"
         }
       ]
@@ -601,11 +601,11 @@
       "statement": "共通Cancelは完全な未起動証拠がある場合にAudit writerなしでCancelledを保存できるが、開始証拠のある監査障害を未起動と解釈せずAuditFailedにする。",
       "evidence": [
         {
-          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L2682-L2699",
+          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L2698-L2715",
           "version": "repo-lines-v1:sha256:ef12a94a032e1c8bcf4d0fbb70ca124bcc3e3371d915444c9eb254657d191d95:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZlMzI4YmZiZjM5ZGE3YmE2M2VmN2VkYjJiMDFmZmZlNmQxMWQwZmRhODU2NjNhMDcyYjg0NDMyMTlkY2E0MmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjgyYmVkZGVjZjUzNjk0NjIwZWFlYzcwNDlmODA1MzRmOTA5N2EzMGIyMGZjYzg2NzViZjUyNTlkOWEyYmIwYjMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQ4NDhkMjYzMWI0YTAwNjNkZDU2ZjVhZmUzMjY3N2I2MjViZWI5NTVlY2E5M2QxNTQyZjIzNThhNjljNWJkZGIifQ"
         },
         {
-          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L3054-L3076",
+          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L3070-L3092",
           "version": "repo-lines-v1:sha256:6d5e8be82ad30a6db8fa4e3634b32785a474a88b00d2218ed79a1d64233d7f26:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU2YWZjNzMwMmI2ODQyNWRlYTRhNmFkZWZiMTNkNTFlYmY4ZGJmZTk4NmE3NDUxYzUyN2EwYjVmOGI0M2RiOTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg4YjhkNGVlY2FmNGQ2NzA3NWRlZDRiMzZhNjA1ZDhiZTU4OTBjNWVlZjQ3M2MzNGMxOWI1NWQxNmMyM2UyYmYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZjNDhmNGI0MGYyNDQ2YmIzYTQ5MTc4M2YzZmE5ZDI1NTNjZTk5MTcyMGM5YzJhZDRhODNlZjY0YWQyYTE2MDIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImYwNmFiZDgwYmJlZjg3MWFhN2Y5YzllOGU1ZjkwODM2NmJkNjg2YWJjNWMxNmRkZDlkMzllNTFjYmFhODM5OWIifQ"
         }
       ]
@@ -629,15 +629,15 @@
       "statement": "Starting失敗の終端後に診断保存が中断しても、最新attemptのnot_startedとstarting_failure_pendingを既存prelaunch照合が再処理し、診断の永続化後にpendingを消す。",
       "evidence": [
         {
-          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L2709-L2730",
+          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L2725-L2746",
           "version": "repo-lines-v1:sha256:e8c6cd580f412f6d71056a1e7041e6a11c0b78e47ecff131873592b898c5aeb3:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM0ZmExOGMyY2I2MjdmMGZhMTgwNmU3ZWU3ZTIwMzEwYmM3ODgyOWJmZmU2ZGRjN2VjNjdhZjM1ZmQ1NTlhNDkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YjA0NDkxNDY5NzIyZTgzNjNhOTRlNDA0NDUzOGUwMTNhMmEyMTdlMzZiMWU1NjhiYTYwYWNiN2I0YzhmMmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjIwODM1MTM0NjM0Y2Q5OWY1ZWQzODZkNmEyZjM3MzViMWNjOTM3ZjU3YmE4NmRmNzAxOWRiZDQzOTk3ZDhhNzYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQ1NzVkMTcyMDMyNzE0MzcyYjcxNzIyMGUzOTdjYmRmOWVjNzg0Yzg3NzRjNmVjOTNiMTQ5ZTk4OTE0MjIyNTgifQ"
         },
         {
-          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L2803-L2896",
+          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L2819-L2912",
           "version": "repo-lines-v1:sha256:533a1ca12b262e6278ed31cef032c8097b99ca3ca4ced80acba909b68cd9c505:eyJzZWxlY3RlZExpbmVDb3VudCI6OTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjlkYmY0YWZmOGIyZWQyOTI3MmQxNjY0YTM5YmE1ZWJhMmNkMmYxZjI5N2UxMjk1NmYwYjk3ZGZlYzE2OGY1ZjMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUwNzFjNmU5MjJkNjRlM2MyZDEyZDFiNDAwODRjMzFjYzRlNzgwN2ZiNDJlN2Y3MjI5Y2M4ODYwNWU3ZmM4YjUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZiZjllMjI2ZTVmZGY4Mzk4MjMxMDYzZjYwODZlYzJlODQ1NzNkY2U2Y2Q3Y2I1NWRlMTYzYTAzNTAyNTg0ZmYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFlODg0YWQ5NGEwMWZjZDk3YjA1Yjk2OGUyZDY0ODUzNzZhN2JjNjExYzI4MGU3Mzg2ODdiNGQ4N2EzMDJmNGMifQ"
         },
         {
-          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L4711-L4769",
+          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L4727-L4785",
           "version": "repo-lines-v1:sha256:6c4f835210ccf8bc5417bb8f4b1e3990f791a0c3d4d9c0b3a200962b51470254:eyJzZWxlY3RlZExpbmVDb3VudCI6NTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFhODlmZDQwMzBiMGZlNzQyZGM4ZDFjMzM2OTZkZjBhMGRiMjJiMWYxYTQ0YzRiYTlkMTAwODg4YWYyM2E1NGYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBmY2Q1OGM2ZDNjZWQ2ZDM1YmFhMzRmMWM3YzM3ZjI3ZDg1ZDgzZWI2ZjNhNjE1MWE0ODU5MDAzNGEzZjkwOWIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE3YTU4MDA3MGY1NTVjNGE5NWI4M2E2ZTA0NTk1NzVkODg1NGQ1YzEzODQ1MGJkNDMwZjE5NmM2NzcwNTcyYTkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImMwOTRkYjM4YmRhYmNlOWM3NjE3ZTEyMGUwMjc5ODkxNzI3ZDkxYTA2OWNkNWM4Y2E3MzdhY2EzZDlkZGJmOGQifQ"
         }
       ]
@@ -708,7 +708,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/integrations/conversation.rs",
-          "version": "repo-file-v1:sha256:d528dd1fbfda8a407027cbb368350dd9521527b0d8abf57b6ac04a8409ef1966"
+          "version": "repo-file-v1:sha256:d8679de1eea32d443349ce27bbf40b6e90bc4d7579e15342ceb8ce6d61ffac56"
         },
         {
           "resource": "repo://crates/server/src/routes/integrations/mod.rs",
@@ -733,6 +733,6 @@
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-07T10:04:45.638Z"
+    "at": "2026-11-09T07:03:14.304Z"
   }
 }

@@ -45,7 +45,7 @@ sources:
 generated: { by: "codex", at: "2026-11-07T12:36:43.233Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-07T12:36:43.233Z
+    at: 2026-11-09T07:03:14.304Z
 ---
 
 # Issue のコメント・レビュー・添付・通知

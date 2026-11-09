@@ -86,10 +86,10 @@ sources:
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/ReposSettingsSection.tsx
   - id: openwiki-source-ffc55e6e31e6ce477ca57329
     resource: repo://packages/web-core/src/shared/hooks/useWorkflowRun.ts
-generated: { by: "codex", at: "2026-11-07T10:04:45.638Z" }
+generated: { by: "codex", at: "2026-11-09T07:03:14.304Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-07T10:04:45.638Z
+    at: 2026-11-09T07:03:14.304Z
 ---
 
 # Issue から実行・レビュー・統合まで
@@ -97,6 +97,8 @@ verified:
 [Issue](../concepts/project-and-issue.md) は作業の要求、[Workspace](../concepts/workspace.md) は変更するファイルの場所、[Session / AgentRun](../concepts/session-and-agent-run.md) は会話と実行を表す。一つの Issue に複数 Workspace や WorkflowAttempt が関わり得るため、「作業が成功した」をどの対象の状態として扱うかを区別する。
 
 ## 1. 作業先を作り、起動を予約する
+
+Git新規作成はProjectの全Repoプリセットを初期選択し、減らせるが外部追加不可。孤立作成では自由選択し、基準branch＝マージ先はWorkspaceへ保存する。既存リンクは孤立だけを対象に別操作で行い、移す場合は明示解除後に再リンクする。
 
 通常の create-and-start 経路は Workspace の作成、Issue link、作業ディレクトリ準備、Session 作成の順に進む。明示された attachment_ids と linked_issue は local の処理で関連づけ、失敗はエラーになる。後段の起動が失敗しても全体が一つの DB/Git transaction で巻き戻るわけではない。再試行時は既存の Workspace/link/Session を先に確認する。[作成と添付](../../crates/server/src/routes/workspaces/create.rs)
 
@@ -256,3 +258,9 @@ source checkpoint / integration準備、Git、integration結果、local Mergeは
 ### 設定保存・削除後と再構築の選択
 
 Repository設定のINSTRUCTIONS/ignore保存は次回の入力変更であり、既存Wikiを同期しない。削除後は通常Syncや自動マージで再生成せず、Initializeを明示する。構成からの作り直しは削除と別のDanger Zone操作で、固定旧Wikiを参考に既存bootstrapのreview/refineへ進み、公開成功まで現行Wikiを維持する。[操作と失敗回復](../operations/openwiki-maintenance.md)
+
+### LOCAL-349の作業方式と継続
+
+Gitは単一/複数Repoとも共通root配下のworktreeを使う。LVK親AGENTSと子Repoの指示・skillsの到達はprovider別に扱い、本文の全量一括注入をしない。既存Session保存cwdと成果物を保持し、今後のRun/添付はrootへ揃える。DirectFolderはGit root/内側を拒否し、配下Repoを含む親folderを管理Repoへ自動登録しない。Git回収・自動commit・Manifest・自動マージ・Repo Wiki対象外であり、非Git成果は会話で確認する。[Workspace契約](../concepts/workspace.md)
+
+自動マージの候補一覧はWorkspaceの保存target branchで絞り、target変更時に旧選択を解除する。Repoごとの公開は独立し、複数Repoを原子的にまとめる機能ではない。Projectプリセットを変えたりWorkspaceを後付けリンクしても既存のRepo/targetを再構成しない。

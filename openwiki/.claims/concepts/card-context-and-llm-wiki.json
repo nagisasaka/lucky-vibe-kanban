@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:bf397aaf3eaa5083665457b67801dc9047b423c5934680e50bb685bec114b8f4",
+  "pageVersion": "sha256:ff8749ca808ef422fe51bb466fb04b07d7b9623128fbbaf4abce9fe7ea7ea7c2",
   "claims": [
     {
       "id": "claim_fe336fda43dd4a7087db9ff239381b34",
@@ -42,11 +42,11 @@
       "evidence": [
         {
           "resource": "repo://crates/local-deployment/src/agent_run_port.rs",
-          "version": "repo-file-v1:sha256:ee93be67ad118f400c4fd7dbfe66050a32cec1800e72c74865b28ec097b1a5dc"
+          "version": "repo-file-v1:sha256:72c3df1f03bc1b8996d137301e9d68b218e2c7ced7e1818a2774ba8bf8ef8f11"
         },
         {
           "resource": "repo://crates/services/src/services/parallel_context.rs",
-          "version": "repo-file-v1:sha256:0fd3ce81d1a054dbb96fb670c4fca7754ee4c0708a7ced38f21c5531785ee7de"
+          "version": "repo-file-v1:sha256:e6082ce39a73a48bb3edece0485c704931aebaa6e860585c15a2576a436a7237"
         },
         {
           "resource": "repo://packages/web-core/src/features/pipeline/model/cardContext.test.ts",
@@ -94,7 +94,7 @@
       "evidence": [
         {
           "resource": "repo://crates/services/src/services/parallel_context.rs",
-          "version": "repo-file-v1:sha256:0fd3ce81d1a054dbb96fb670c4fca7754ee4c0708a7ced38f21c5531785ee7de"
+          "version": "repo-file-v1:sha256:e6082ce39a73a48bb3edece0485c704931aebaa6e860585c15a2576a436a7237"
         }
       ]
     },
@@ -135,7 +135,7 @@
           "version": "repo-file-v1:sha256:554ca56f62b28c1f298abeaff89ea4e288271e32f768b82eb0325557e5f82dd8"
         },
         {
-          "resource": "repo://crates/server/src/routes/workspaces/wiki.rs#L148-L168",
+          "resource": "repo://crates/server/src/routes/workspaces/wiki.rs#L131-L151",
           "version": "repo-lines-v1:sha256:e3692ee1a8d94acdcae0a47d6a6143454ea77a7c2a00ae3f79f5051c110b3658:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE1MzllNDE5NWEyOTIwNjgyN2UzZTM0NTE0NDk1OGE0Njc4YWZiODJiNWRmNjJkMzZlMWFiYTY3MWZjOWQyMjgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjNhMDZiYjU0NGY1NmM0ZjIwZjdlYzI3ZTI3OGM3NWE3MmZmMDQ0Yzc4ODZmYmM0YmJkYmY3ODgwOTU1NzQxOTYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoyLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijg1MjQ5NTVhMTUwZjYxMWMwYmUxYWYyNzBjZWE1MWZjMzdiZDExZWNjNGE2MDZlNDIxNTM1NzE0NDQ0Y2YzNjEifQ"
         }
       ]
@@ -216,35 +216,27 @@
       "evidence": [
         {
           "resource": "repo://crates/local-deployment/src/agent_run_port.rs",
-          "version": "repo-file-v1:sha256:ee93be67ad118f400c4fd7dbfe66050a32cec1800e72c74865b28ec097b1a5dc"
+          "version": "repo-file-v1:sha256:72c3df1f03bc1b8996d137301e9d68b218e2c7ced7e1818a2774ba8bf8ef8f11"
         }
       ]
     },
     {
       "id": "claim_8ff5e8d5e86f4a9e9022feefcee80237",
-      "statement": "共有rootのある通常実行には保存済みCardと独立して現行shared tmp/cache/persistent利用案内が合成され、tmpはRun終了で自動削除せず受け渡し後かつ不要・非使用時だけ整理する。",
+      "statement": "共有案内は保存済みCardと独立し、共通親AGENTSがあれば静的案内を親へ集約してExecutionEnvからの重複を避ける。tmpはRun終了で削除せず受渡し完了・不要・非使用時だけ整理する。",
       "evidence": [
         {
-          "resource": "repo://crates/executors/src/env.rs",
-          "version": "repo-file-v1:sha256:2081688e2c7f5662bb6ca9a7384102c06d352fea0e808bbccf0fe3f784fe39a0"
-        },
-        {
-          "resource": "repo://crates/executors/src/executors/codex.rs",
-          "version": "repo-file-v1:sha256:cbb82d9cbd1f07a82cab6edc631b43dd6b198501a43c54ccfaebb1414c77b6d8"
-        },
-        {
-          "resource": "repo://crates/executors/src/executors/provider_adapter.rs",
-          "version": "repo-file-v1:sha256:0081a6cfbe70aa90c19fb5e0dacc53c44526091ecf349b0cf39f588f97a8d70a"
+          "resource": "repo://crates/executors/src/env.rs#L55-L72",
+          "version": "repo-lines-v1:sha256:17b45b0486b0c1daffb06548f2a9235c76e142b22df7f573c417cab832c2a1fe:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNlNmMwMDc5ZTY5MDY5NzRjM2Q5ZjlmMDdlMGY3NTRhNmU0NjE4N2NiMDFmNDc5OWZlYmFiYWRiMDI0MzNjODkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk0NTgyNTcyNGI3ZGZkNjg4MjM4MTlmZjE1NTJjM2ExNjk1ZDIyNzE2NzdmMmZlNGMzNzJjNmM1ZWJjNGI2YTciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQ0MjFmZDBmY2Q0ODNkYjM4ZGQ4NTk2MmE2NTQzMDliZDBkYzNiNzRmNDJiYjQ3ODlkYmZkMDFhNTEwNWE5OTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBkNGYzODc5YzY4YmFjNjY4ODJkZGRjYjM4NTVkNjNkNWU0OGNhMjhkZDM2ZTMyZGY3ZGIzODU5OGQ2OTRlZWEifQ"
         },
         {
           "resource": "repo://crates/utils/src/path.rs",
-          "version": "repo-file-v1:sha256:88dcf67a6f0e17d65a6ef570b3067748757bf52845f4c742911fa2543a5a6fc0"
+          "version": "repo-file-v1:sha256:c992e6dda1e9c8129a65c07351678e0edae611c0f9521bc0fc8a632eb4300627"
         }
       ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-07T09:46:42.639Z"
+    "at": "2026-11-09T07:03:14.304Z"
   }
 }

@@ -32,8 +32,6 @@ sources:
     resource: repo://crates/server/src/remote_mcp/repository_wiki.rs
   - id: openwiki-source-5720d865d1c837f0e6b7dab7
     resource: repo://crates/server/src/routes/integrations/conversation.rs
-  - id: openwiki-source-ecfa47de2e3842c785820c9b
-    resource: repo://crates/server/src/routes/integrations/mod.rs
   - id: openwiki-source-b393e75029374eaf9cba5f7d
     resource: repo://crates/server/src/routes/integrations/runtime.rs
   - id: openwiki-source-1ffb01d1ba3953937e0771bf
@@ -98,10 +96,10 @@ sources:
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/RepositoryWikiFilesSettings.tsx
   - id: openwiki-source-7fd9452d5e666180c50f8cb7
     resource: repo://tests/openwiki/recovery.sh
-generated: { by: "codex", at: "2026-11-07T10:04:45.638Z" }
+generated: { by: "codex", at: "2026-11-09T07:12:52.696Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-07T10:04:45.638Z
+    at: 2026-11-09T07:12:52.696Z
 ---
 
 # OpenWiki の初期生成・同期・回復
@@ -164,7 +162,7 @@ Wiki設定保存はRepo外の共有storageだけを準備し、公開先checkout
 
 保守の所有単位は Repo のままだが、Project 設定からの Initialize / Sync は選択中の `project_id` を任意フィールドとして共通受付へ渡す。外部 MCP Sync も認可済みの Project を渡す。これにより、複数 Board が同じ Repo を使う場合でも開始元を失わず、その Project の通常 Issue と保守 Workspace を関連付けられる。[UI の引継ぎ](../../packages/web-core/src/shared/dialogs/settings/settings/ReposSettingsSection.tsx#L570-L577)・[共通フォーム](../../packages/web-core/src/shared/dialogs/settings/settings/RepositoryMemorySettings.tsx#L105-L127)・[MCP adapter](../../crates/server/src/remote_mcp/repository_wiki.rs#L255-L270)
 
-明示 Project は実在し、`project_creation_repository_ids` に対象 Repo が含まれる必要がある。この集合は明示 Repo binding・既存 Issue/Workspace の関連に、Git 方式の保存済み `ProjectRepoDefaults` を加える。したがって開発 Card がまだない Project でも Git 作業先の既定値で関連を証明できる。directory 方式の defaults に残った Repo 値や、削除済み Project の Scratch だけでは認めない。受付時に加え、repository lock や version 検査の待機中に設定が変わり得るため紐付け直前にも検証する。[存在と再検証](../../crates/server/src/routes/openwiki/project_context.rs#L6-L43)・[関連集合](../../crates/server/src/routes/local_remote.rs#L3390-L3413)・[既存関連](../../crates/server/src/routes/integrations/mod.rs#L130-L150)
+明示 Project は実在し、`project_associated_repository_ids` に対象 Repo が含まれる必要がある。この集合は新規作成用Gitプリセットと既存Issue/Worktree Workspaceの実Repoを合わせる。保存済みProjectRepoDefaultsがあれば空配列も含めて作成プリセットとして優先し、なければproject_reposを使う。したがって開発 Card がまだない Project でも Git Repoプリセットで関連を証明できる。directory 方式の defaults に残った Repo 値や、削除済み Project の Scratch だけでは認めない。受付時に加え、repository lock や version 検査の待機中に設定が変わり得るため紐付け直前にも検証する。[存在と再検証](../../crates/server/src/routes/openwiki/project_context.rs#L6-L43)・[関連集合](../../crates/server/src/routes/local_remote.rs#L3390-L3413)・[既存関連](../../crates/server/src/routes/integrations/mod.rs#L130-L150)
 
 | 開始文脈 | 保守 Issue の扱い |
 | --- | --- |
@@ -406,3 +404,9 @@ LOCAL-336で一度限りの移行CLI・importer・旧JSON decoder・未移行互
 コード候補 `cb0c335a9d5c8c78fb4cc813c9b6f9ba9543506b` は固定base `b33708ba` にsource `91f1affd` のみを競合なく採用し、346の `35e96363` と348の `7460f721` を祖先に保持する。管理commandで独立結合検証の製品tree `96a846e957cefe90366c846805bfe75cba06d147` を再現し、非Wiki製品差分ゼロ・祖先・空白・cleanを確認した。追加製品修復はない。重複suiteはユーザー指定で省略し、既存source/結合試験を今回SHAのpassへ付け替えない。
 
 確認の入口はservicesの限定削除・人間文書保護・inventory、serverの隔離Git/SQLite設定保存と削除公開、bootstrap成功/失敗とarchive、設定unitと `tests/workflow/specs/repository-wiki.spec.ts` である。既存Manifestはservices104、server25、隔離公開1、frontend14、browser3とClippy/型成功を報告する。独立結合Runはworkspace-manager17、OpenWiki/inventory22（2ignored）、utils5、344実Workspace公開1、348 HTTP/SQLite1、busy1とcompile成功を報告する。実provider再構築の意味品質・全認証後UI・全workspace再試験は未確認であり、このWiki更新は製品テスト再実行ではない。LOCAL-339、共有dev/preview、実DB・実Wiki削除・移行・環境切替は操作していない。Wiki完了SHAとコードSHA、hostのmain公開成立は別に記録する。
+
+### LOCAL-349の配置・関連境界
+
+保守Workspaceの作業rootはWorkspaceRepoに保存した配置名で解決し、元Repo名や表示名から組み立てない。setup復元、Bootstrap、設定保存/削除の回復も同じ配置を使う。Repo sharedの正本は従来の元Repo名/IDのままで移動しない。開始元Projectの関連検査は作成プリセットと既存リンク済みGit Workspaceの実Repoを含み、プリセット解除で既存の保守対象を無効化しない。新規Issue Workspaceの作成選択制約とは分ける。DirectFolderは旧Repo行や配下Gitの存在によってRepo Wiki管理対象へ自動変換しない。[配置利用](../../crates/server/src/routes/openwiki.rs)・[関連検査](../../crates/server/src/routes/openwiki/project_context.rs)
+
+この統合内の保守は別のWiki専用Workspaceを起動せず、コード検証後の同じ候補で行う。prepare_wikiの原本journalをbegin前に保存し、生成setup差分は手動復元/commitせずhostへ残す。完了proof・Wiki-only commit・公開要求・実Git適用は別々の事実として報告する。[自動マージの契約](../concepts/formal-integration.md#begin-前の原本準備と-host-の限定復元)

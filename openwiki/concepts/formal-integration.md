@@ -56,10 +56,10 @@ sources:
     resource: repo://packages/web-core/src/features/workspace-chat/ui/IntegrationFacts.tsx
   - id: openwiki-source-344aff2e68b53276f6be4e40
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/IntegrationValidationSettings.tsx
-generated: { by: "codex", at: "2026-11-07T10:04:45.638Z" }
+generated: { by: "codex", at: "2026-11-09T07:03:14.304Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-07T10:04:45.638Z
+    at: 2026-11-09T07:03:14.304Z
 ---
 
 # 自動マージの選択・検証・公開
@@ -168,3 +168,7 @@ IntegrationFacts は対象IDがある間5秒周期で取得する。succeeded・
 ### Repository Wiki操作との排他と削除後の抑止
 
 受付は設定保存・削除のfile_operation、同期active_run、bootstrapの存在を確認し、保守中なら拒否する。Wiki削除でgeneration_suppressedが立つと、enabledでも自動マージのWiki更新を起動しない。公開後の鮮度更新もfile_operationや抑止中には行わず、削除済みをCurrentに戻さない。解除は[明示初期生成](../operations/openwiki-maintenance.md)の成功を使う。[受付と鮮度](../../crates/server/src/routes/integrations/admission.rs)・[公開後処理](../../crates/server/src/routes/integrations/conversation.rs)
+
+### Workspaceが所有する統合対象
+
+LOCAL-349ではProjectの作成用プリセットと統合対象を分離する。採用元はWorktree Workspaceに実際に記録されたRepoとtarget branchで検査し、DirectFolderは旧Repo行が残っていても拒否する。Projectからプリセットを解除しても既存Workspaceの対象を変えない。候補のcommand・公開・Wiki結果は保存済みworktree配置名で解決し、表示名や元Repo名から作業pathを推測しない。1回の自動マージは引き続き1 Repo・1 targetである。

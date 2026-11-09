@@ -18,6 +18,8 @@ sources:
     resource: repo://crates/db/src/models/design_note.rs
   - id: openwiki-source-5144fccee237bf35dd134ccb
     resource: repo://crates/db/src/models/repository_state.rs
+  - id: openwiki-source-3e5425718d87b437a12edd60
+    resource: repo://crates/db/src/models/session.rs
   - id: openwiki-source-0ba09128382dd913fe9a4c4a
     resource: repo://crates/db/src/models/tag.rs
   - id: openwiki-source-c30cc36c4bbe315c59b8e38f
@@ -46,6 +48,8 @@ sources:
     resource: repo://crates/server/src/routes/integrations/conversation.rs
   - id: openwiki-source-b393e75029374eaf9cba5f7d
     resource: repo://crates/server/src/routes/integrations/runtime.rs
+  - id: openwiki-source-1ffb01d1ba3953937e0771bf
+    resource: repo://crates/server/src/routes/local_remote.rs
   - id: openwiki-source-231241ac3c842dcd67525890
     resource: repo://crates/server/src/routes/openwiki.rs
   - id: openwiki-source-3b873a675f85754e9183d162
@@ -96,10 +100,10 @@ sources:
     resource: repo://packages/web-core/src/shared/providers/TerminalProvider.tsx
   - id: openwiki-source-23775c3de52f3ab95a13cb8b
     resource: repo://README.md
-generated: { by: "codex", at: "2026-11-07T10:04:45.638Z" }
+generated: { by: "codex", at: "2026-11-09T07:03:14.304Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-07T10:04:45.638Z
+    at: 2026-11-09T07:03:14.304Z
 ---
 
 # クイックスタートと調査案内
@@ -402,3 +406,14 @@ Kanban / Workspace の右サイドバーは共通環境 panel とファイル・
 執筆指示と探索除外は[設定ファイルの保存](operations/openwiki-maintenance.md#執筆指示と探索除外を保存する)で扱う。保存は以後の生成入力を変えるだけで既存ページを更新しない。消す場合は[完全入力付き削除](operations/openwiki-maintenance.md#danger-zoneで生成wikiを削除する)、新指示で構成から見直す場合は[固定旧Wikiを参考にする再構築](operations/openwiki-maintenance.md#danger-zoneで既存wikiを参考に作り直す)を選ぶ。削除後は明示Initializeまで通常Sync/自動マージから再生成しない。再構築は正規公開成功まで現行Wikiを残す。[表示元と未生成表示](operations/workspace-inspection.md#削除後のcanonical-wiki表示)
 
 コード候補は `cb0c335a9d5c8c78fb4cc813c9b6f9ba9543506b`。344のみを固定baseへ競合なく統合し、346/348の修復を保持した。管理検証は既存結合試験の製品tree再現・非Wiki差分ゼロ・祖先・空白・cleanを確認した。重複suiteはユーザー指定で省略し、既存試験を今回SHAのpassへ付け替えない。[検証範囲と未確認事項](operations/openwiki-maintenance.md#local-344の検証範囲)を参照する。Wikiは別commitであり、mainへの反映成立はRun終了後のhost結果と分ける。
+
+## Projectプリセット・作業場所を変更するとき
+
+LOCAL-349でProjectは新規WorkspaceのRepoプリセット、Workspaceは実Repo/基準branchの所有者になった。新規作成はGit/直接folderを分け、Gitは単一/複数Repoとも共通root配下のworktreeを使う。既存選択は孤立Workspaceだけで、移す際は明示解除後に再リンクする。プリセット変更/リンクは既存構成・成果物・Session履歴を再作成しない。
+
+- 作成・保存配置・未知pathの保全・DirectFolderのGit支援除外は[Workspace](concepts/workspace.md)。
+- プリセットと既存関連の区別・リンク競合は[ProjectとIssue](concepts/project-and-issue.md#projectのrepositoryプリセット)。
+- 親子AGENTSの適用範囲、Codex extraRoots、Claude add-dirと同名拒否は[provider別の経路](integrations/agent-providers.md#共通rootのagentsとrepo-skills)。
+- 旧保存cwdを保った継続と検証限界は[Session](concepts/session-and-agent-run.md#共通rootと旧sessionの継続)、新添付・chat file link・editorは[Workspace inspection](operations/workspace-inspection.md#local-349の保存配置と直接フォルダ)。
+
+DirectFolderを選んでも実行権限/MCP許可rootを拡張しない。metadata発見・本文到達・自動選択・手順実行・指示遵守は別々に確認する。今回の統合では最終sourceとコード候補treeの一致を管理commandで検証し、アプリ試験/buildの反復はSHA付き既存証拠に基づき省略した。Wiki保守で実provider行列や旧binary移行を再検証したとは扱わない。

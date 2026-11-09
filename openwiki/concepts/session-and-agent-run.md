@@ -186,10 +186,10 @@ sources:
     resource: repo://tests/supervised/README.md
   - id: openwiki-source-5184ef612e83b7ab35d62e7b
     resource: repo://tests/supervised/run_isolated.py
-generated: { by: "codex", at: "2026-11-07T12:36:43.233Z" }
+generated: { by: "codex", at: "2026-11-09T07:03:14.304Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-07T12:36:43.233Z
+    at: 2026-11-09T07:03:14.304Z
 ---
 
 # Session・AgentRun・RunAttempt
@@ -503,17 +503,23 @@ Workspace累積tokenの表示は30秒周期、Session queue状態は5秒周期�
 
 ### composer 内の discovery 共有（316-CD後続）
 
-InteractiveSessionChatBox が discovery snapshot を一度取得し、ModelSelector と editor へ渡す。hook は agent / variant / Workspace / Session / Repo / Host がすべて厳密一致した場合だけ snapshot を再利用し、異なる場合は従来の独立取得へ戻る。undefined と null や異なる variant を同一視しない。新規作成画面の global selector と Repo 付き editor は別 scope のままで、未使用 useSlashCommands wrapper は削除された。[親](../../packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx#L599-L607)・[一致条件と fallback](../../packages/web-core/src/shared/hooks/useExecutorDiscovery.ts#L29-L112)・[selector](../../packages/web-core/src/shared/components/ModelSelectorContainer.tsx#L118-L134)・[editor](../../packages/web-core/src/shared/components/WYSIWYGEditor.tsx#L372-L383)
+InteractiveSessionChatBox が discovery snapshot を一度取得し、ModelSelector と editor へ渡す。hook は agent / variant / Workspace / Session / Repo / Repo ID配列 / Host がすべて厳密一致した場合だけ snapshot を再利用し、異なる場合は従来の独立取得へ戻る。undefined と null や異なる variant を同一視しない。新規作成画面の global selector と Repo 付き editor は別 scope のままで、未使用 useSlashCommands wrapper は削除された。[親](../../packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx#L599-L607)・[一致条件と fallback](../../packages/web-core/src/shared/hooks/useExecutorDiscovery.ts#L29-L112)・[selector](../../packages/web-core/src/shared/components/ModelSelectorContainer.tsx#L118-L134)・[editor](../../packages/web-core/src/shared/components/WYSIWYGEditor.tsx#L372-L383)
 
 同 scope の2 consumer は親の1購読を利用するというコード上の削減であり性能実測ではない。統合候補と既存検証証拠、隔離Chromiumと実providerの区別は [同期の検証記録](../architecture/web-and-sync.md#選択ログ共有と-archive-の鮮度316-cd後続)を参照する。
 
 
 ### 通常Runの成果確定とWikiの独立性
 
-通常成功coding Runのsource自動commitとファイルManifestはWiki無効でも有効で、既存HEADが全変更を含む場合は再利用する。変更なしRunは専用検証記録を作らず通常の最終報告で検証を伝える。失敗・取消・REVIEW・制御・自動マージ担当・Design Arena等の適用除外は維持する。人間の目的・動機・判断理由はIssue・追加指示・直接会話からsemantic draftへ渡し、承認を技術理由の代用にしない。[Run完了と意図の契約](repository-memory.md#sessionmanifest統合済みwiki)・[完了host](../../crates/local-deployment/src/container.rs#L450-L493)・[source適用条件](../../crates/local-deployment/src/agent_run_port.rs#L939-L998)
+Worktree Workspaceの通常成功coding Runのsource自動commitとファイルManifestはWiki無効でも有効で、既存HEADが全変更を含む場合は再利用する。変更なしRunは専用検証記録を作らず通常の最終報告で検証を伝える。失敗・取消・REVIEW・制御・自動マージ担当・DirectFolder・Design Arena等の適用除外は維持する。人間の目的・動機・判断理由はIssue・追加指示・直接会話からsemantic draftへ渡し、承認を技術理由の代用にしない。[Run完了と意図の契約](repository-memory.md#sessionmanifest統合済みwiki)・[完了host](../../crates/local-deployment/src/container.rs#L450-L493)・[source適用条件](../../crates/local-deployment/src/agent_run_port.rs#L939-L998)
 
 ### カンバン内 Workspace の読み幅
 
 カンバンの Workspace ペインだけで、会話・入力欄・末尾移動ボタンは共通の `--kanban-chat-width` を使う。幅は最大64rem、ペイン幅から左右それぞれ `clamp(1rem, 3cqi, 2rem)` を引いた範囲で伸縮する。入力の親と ChatBoxBase も同じ変数を参照するため左右位置を合わせられる。[ペイン配置](../../packages/web-core/src/pages/kanban/ProjectRightSidebarContainer.tsx#L245-L315)・[composer](../../packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx#L1550-L1565)・[定義](../../packages/web-core/src/app/styles/new/index.css#L1260-L1263)
 
 このペインでは Markdown の別800px上限を解除する。変数がない共通チャットは48rem、Markdownは800pxの既定値を維持し、分割外・作成・Workflow画面を一律に広げる変更ではない。[共通入力](../../packages/ui/src/components/ChatBoxBase.tsx#L75-L85)・[Markdown](../../packages/ui/src/components/ChatMarkdown.tsx#L12-L25) [Issue側の幅と検査範囲](project-and-issue.md#issue-詳細の読み幅と試行方法)も参照する。
+
+### 共通rootと旧Sessionの継続
+
+新しいSessionのagent_working_dirはRepo数にかかわらず未指定とし、Gitは共通Workspace root、DirectFolderは指定フォルダから開始する。旧Sessionの保存値は変更せず、Runの実cwdは共通rootへ揃える。新しい添付コピーもrootへ置き、旧添付・成果物を移動削除しない。native会話の継続と履歴は同一Sessionの既存bindingを使い、cwd変更を新会話作成として扱わない。
+
+LOCAL-349の供給検証記録ではCodex同一Sessionの実2turn継続と再起動後の前後履歴を確認している。旧cwdはsynthetic metadataで表した代表例で、旧binaryでの実DB upgrade全般や全provider移行を保証しない。今回のWiki保守はこれらを再実行していない。

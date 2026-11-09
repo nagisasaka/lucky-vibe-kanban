@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:cb656f774e9a0b2bfc537dbf309a5c834882450c744676612df926be6a5c9b09",
+  "pageVersion": "sha256:bfe34bfc92252a7affafa1410c17c63c227d83ef6a428eccc2aa225d130035ee",
   "claims": [
     {
       "id": "claim_33c0ff606c234c65b0a089749cc323a5",
@@ -36,7 +36,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/local_remote.rs",
-          "version": "repo-file-v1:sha256:b5fbca0986173b35cf78964f27f2685b14fd49d0bb76307f0d6f4b9a1b1837d4"
+          "version": "repo-file-v1:sha256:8b661c0765ae30724ed29819246a92c8be7e9ffe7a7f286095548d843be4fcba"
         }
       ]
     },
@@ -60,7 +60,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/local_remote.rs",
-          "version": "repo-file-v1:sha256:b5fbca0986173b35cf78964f27f2685b14fd49d0bb76307f0d6f4b9a1b1837d4"
+          "version": "repo-file-v1:sha256:8b661c0765ae30724ed29819246a92c8be7e9ffe7a7f286095548d843be4fcba"
         }
       ]
     },
@@ -90,11 +90,11 @@
     },
     {
       "id": "claim_43fbd50dfe16404881a6f1bb800c176b",
-      "statement": "Workspace linkはlocal表へのupsert、unlinkは削除でありremote呼出しを行わない。",
+      "statement": "Workspace linkはlocal表の一意INSERTで孤立だけを受け付け、既存リンクはConflictとする。unlinkは関連削除でremote呼出しを行わない。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/workspaces/links.rs",
-          "version": "repo-file-v1:sha256:7be200d38ad3270902112b083db1eda276ce4490d89e87e7d87547f5d4a10e2c"
+          "resource": "repo://crates/server/src/routes/workspaces/links.rs#L23-L61",
+          "version": "repo-lines-v1:sha256:a1f3d3f98ad0f5f3feedeb64ba8cc06742a38dce855bd8ee36f4b2e6cbbbc465:eyJzZWxlY3RlZExpbmVDb3VudCI6MzksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZjNDM2MmEyMGFmNjk4MmU3MTI1MmE1YmRkZGU4NTY5OTA1MzI5MjhiOWQ1ZDBkYzI5NTcyZGIwZjFiMTM3ZDkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzMTlhZjk5ZjI5M2I5MGFmNzZmNWZmZGQzOTY3ODdlY2EwMjBiMDlmZGNhZjA3MDk2OWYxNTk3MzJhMmI1MzciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijg3OGNlZThjNjU1NWU4ZjUwNjA2ZGRiMWU0Mzg1NjMzMDQ4YWEwNWI5ZGY4MjI2ODY3Y2M5YjkzOTE3ZTkzYjEifQ"
         }
       ]
     },
@@ -121,8 +121,8 @@
       "statement": "Repo は実行用パスと setup/cleanup/dev script やブランチ既定値を保持する。",
       "evidence": [
         {
-          "resource": "repo://crates/db/src/models/repo.rs#L36-L54",
-          "version": "repo-lines-v1:sha256:6ee2c6379ec38e9d2a2f14c331f8d61f80271ee66c19c34f65083d6e35e4c614:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdiNDMxYmJmN2YxYmRkM2VhMWI5YzU5M2IxMjYwZjM3ZDY2ZWM5MWM0MDRhYzRlYTg5NWNhNGJjYThlZjA3NmMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRkYTAwYjg1N2E3NzdiMjc0MGZkMWY4NDFiMWVkNDM3MDZmMDk3OWFhMjcxOWY5NWMyYzkyYzBjZGFhMzliZGIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjIyNTU1Y2E2ZGIzZmZjMmU2MTIwNmU5MGYzMDk0YThhY2VjOGJjNGM3ODBiNmVjN2E1NjdmMGFlMWIyNzg1MTUifQ"
+          "resource": "repo://crates/db/src/models/repo.rs#L36-L59",
+          "version": "repo-lines-v1:sha256:de65b28c8c746aa4ac77adf9422821f491b992ef809aa7cd09df78d6e42a11fa:eyJzZWxlY3RlZExpbmVDb3VudCI6MjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdiNDMxYmJmN2YxYmRkM2VhMWI5YzU5M2IxMjYwZjM3ZDY2ZWM5MWM0MDRhYzRlYTg5NWNhNGJjYThlZjA3NmMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRkYTAwYjg1N2E3NzdiMjc0MGZkMWY4NDFiMWVkNDM3MDZmMDk3OWFhMjcxOWY5NWMyYzkyYzBjZGFhMzliZGIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjIyNTU1Y2E2ZGIzZmZjMmU2MTIwNmU5MGYzMDk0YThhY2VjOGJjNGM3ODBiNmVjN2E1NjdmMGFlMWIyNzg1MTUifQ"
         }
       ]
     },
@@ -154,7 +154,7 @@
         },
         {
           "resource": "repo://packages/web-core/src/shared/dialogs/settings/settings/RemoteProjectsSettingsSection.tsx",
-          "version": "repo-file-v1:sha256:fff31b9f6247a8e98519f9313e299ba7c7b6a3445b74b4443278822a3f362bdc"
+          "version": "repo-file-v1:sha256:47f01ba27f5cead1da2911f97c025d28c79fc65b4ae01e9bc8f93a33e97f709c"
         }
       ]
     },
@@ -198,7 +198,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/workspaces/links.rs",
-          "version": "repo-file-v1:sha256:7be200d38ad3270902112b083db1eda276ce4490d89e87e7d87547f5d4a10e2c"
+          "version": "repo-file-v1:sha256:89b7859d34deb8bc6fd6144f579231aaa87bc65c3af5d8ad01c4df8596d94830"
         }
       ]
     },
@@ -208,7 +208,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/integrations/conversation.rs",
-          "version": "repo-file-v1:sha256:d528dd1fbfda8a407027cbb368350dd9521527b0d8abf57b6ac04a8409ef1966"
+          "version": "repo-file-v1:sha256:d8679de1eea32d443349ce27bbf40b6e90bc4d7579e15342ceb8ce6d61ffac56"
         }
       ]
     },
@@ -278,7 +278,7 @@
         },
         {
           "resource": "repo://crates/server/src/routes/local_remote.rs",
-          "version": "repo-file-v1:sha256:b5fbca0986173b35cf78964f27f2685b14fd49d0bb76307f0d6f4b9a1b1837d4"
+          "version": "repo-file-v1:sha256:8b661c0765ae30724ed29819246a92c8be7e9ffe7a7f286095548d843be4fcba"
         }
       ]
     },
@@ -514,7 +514,7 @@
         },
         {
           "resource": "repo://crates/server/src/routes/local_remote.rs",
-          "version": "repo-file-v1:sha256:b5fbca0986173b35cf78964f27f2685b14fd49d0bb76307f0d6f4b9a1b1837d4"
+          "version": "repo-file-v1:sha256:8b661c0765ae30724ed29819246a92c8be7e9ffe7a7f286095548d843be4fcba"
         }
       ]
     },
@@ -534,7 +534,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/local_remote.rs",
-          "version": "repo-file-v1:sha256:b5fbca0986173b35cf78964f27f2685b14fd49d0bb76307f0d6f4b9a1b1837d4"
+          "version": "repo-file-v1:sha256:8b661c0765ae30724ed29819246a92c8be7e9ffe7a7f286095548d843be4fcba"
         }
       ]
     },
@@ -566,7 +566,7 @@
         },
         {
           "resource": "repo://crates/server/src/routes/local_remote.rs",
-          "version": "repo-file-v1:sha256:b5fbca0986173b35cf78964f27f2685b14fd49d0bb76307f0d6f4b9a1b1837d4"
+          "version": "repo-file-v1:sha256:8b661c0765ae30724ed29819246a92c8be7e9ffe7a7f286095548d843be4fcba"
         }
       ]
     },
@@ -751,10 +751,38 @@
           "version": "repo-file-v1:sha256:e05bcf32a24adceb703f470078fb80f13a6e8ba4164b32432da4020cdb14eca9"
         }
       ]
+    },
+    {
+      "id": "claim_a552a55498ed456aa6ac1a2821cbada2",
+      "statement": "Projectは新規作成用Repoプリセットであり、保存済み空配列を含む設定を優先する。関連Repo読取は既存WorkspaceのRepoも含むがプリセット変更は既存構成とSessionを変更しない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/routes/local_remote.rs#L3614-L3661",
+          "version": "repo-lines-v1:sha256:fbd1bca44a4228fe6b793f04e1522541350a80ebe643b0a904ea959950f89560:eyJzZWxlY3RlZExpbmVDb3VudCI6NDgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAyNWYxZWQ4MjkyZWZhMzY4MjNlY2M5Nzk4Njc1NWQ0MzNjYzhjMjUxYTcxYTEzNGQ4MWQyMGM5ZTA3Y2ZlZTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM1ZTM0NDVkMDA4MTNlMWIyM2QxZTgxYTBlZjU0NDE0NDMyY2RjYjc4OTg5Y2IyNTJlMzcyMGU1ODZiMWEzZmMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFiNzhjMGIxMzc3Mjc5MTAyYzM0ODFjMjMxNTNmY2FjNDEyZmJmZWZkYjgwMDRmMjhhOTUyOGQ5MGIzNzQ1NjAifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/local_remote.rs#L3671-L3835",
+          "version": "repo-lines-v1:sha256:3850e0a7b3434c3f30f5ed2e57b7e957be2e57b0ddede7781d233c9b11544d03:eyJzZWxlY3RlZExpbmVDb3VudCI6MTY1LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI5MWNjNDA2ODdkMjQ0ZTlkYWY5MWNlZDQ2NTIzMjY1NjlhNGZiNmRmYzgxZDAzZmJlNzIzYTVlYTNjY2JlOWRmIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIxYjE3ZmJmZGZjMGQ0YmMyZWE3NDkzMGY4OWExYTE1N2M3Zjg1ZTVlOWZkY2U3YWExZGZiZTMzMWE5ZDI1MWZhIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI5OTM5NDYxOWJhNTBkZDQwY2I3MzAwOTJmZTEyN2U1YWM4M2Y1ZjhjYTY5M2Q3YmU5YWZmNTBlNzcwOTI1MzEzIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI4MGZmODhmOGU0MTMxYjI5NzU3ZTEyNTU1ZWRlODQ2MzFmMzQwODU0Y2E5NzA0YjRjZWJkZGIxZTE0MGYxNWU3In0"
+        }
+      ]
+    },
+    {
+      "id": "claim_595ec939fca24ae5b9cf02fca8d86163",
+      "statement": "Project Repoプリセットの空・空白branchはヘッダーの不正条件ではなく、Repoパスを表示できる。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/shared/components/ProjectWorkspaceDefaultContext.test.tsx",
+          "version": "repo-file-v1:sha256:60b58fe722a6ae28b34fae13ad1d250b9f087fe0d71053b77fe11b2ac6ae3eeb"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/components/ProjectWorkspaceDefaultContext.tsx",
+          "version": "repo-file-v1:sha256:8c118a2168e0d444de5f29023314d3a34a6aa513cca83e996cb7927fbd8e1d23"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-07T12:36:43.233Z"
+    "at": "2026-11-09T07:03:14.304Z"
   }
 }

@@ -56,6 +56,8 @@ sources:
     resource: repo://crates/executors/src/profile.rs
   - id: openwiki-source-bccd47f2decfe8aa6a080767
     resource: repo://crates/executors/src/provider_policy.rs
+  - id: openwiki-source-83a4482f2da34ab38737b161
+    resource: repo://crates/executors/src/repo_skills.rs
   - id: openwiki-source-8fd7f4fe2d73e778cc63c256
     resource: repo://crates/local-deployment/src/process_host.rs
   - id: openwiki-source-5a8e26da42457b4b47bca3ee
@@ -112,10 +114,10 @@ sources:
     resource: repo://tests/claude-subscription/subscription.spec.ts
   - id: openwiki-source-141584dac09cf0f93be6bff5
     resource: repo://tests/codex-process-cleanup/README.md
-generated: { by: "codex", at: "2026-11-07T09:46:42.639Z" }
+generated: { by: "codex", at: "2026-11-09T07:03:14.304Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-07T09:56:11.730Z
+    at: 2026-11-09T07:03:14.304Z
 ---
 
 # Agent provider・設定・MCP・Skill
@@ -149,7 +151,7 @@ LVK の profile/実行 override が空でも、app-server は利用者・project
 
 実際の値を診断するときは、依頼 override と native の thread 応答・後続 turn の設定を分けて確認する。継承の回帰テストは [reasoning_tests](../../crates/executors/src/executors/codex/client/reasoning_tests.rs#L67-L205) にある。LVK の型が値を表現できることを、任意の provider/model がその値に対応する保証とは扱わない。
 
-共有rootがある通常実行では、共通ExecutionEnvが現在の `.lvk/shared/tmp/`・`cache/`・`persistent/` の利用案内をManifest指示と合成する。Codexは初回と再開のdeveloper instructions、非Codexはslash command以外のprompt suffixへ渡す。保存済みCardの再生成に依存しない。OpenWiki reviewer・resource mediatorは共有案内の追加対象から外す。tmpはRun終了で消さず、受け渡し後の不要・非使用時だけ整理する。[共通合成](../../crates/executors/src/env.rs)・[Codex](../../crates/executors/src/executors/codex.rs)・[非Codex](../../crates/executors/src/executors/provider_adapter.rs)・[保存契約](../concepts/workspace.md#共有ディレクトリの意味)
+共有rootがある通常実行では、LVK生成の親AGENTSがあれば静的な共有案内を親へ集約し、ExecutionEnvは親・対象Repo・下位AGENTSの確認要求を渡す。親がない場合は現在の `.lvk/shared/tmp/`・`cache/`・`persistent/` 利用案内をManifest指示と合成する。Codexは初回と再開のdeveloper instructions、非Codexはslash command以外のprompt suffixへ渡す。保存済みCardの再生成に依存しない。OpenWiki reviewer・resource mediatorは共有案内の追加対象から外す。tmpはRun終了で消さず、受け渡し後の不要・非使用時だけ整理する。[共通合成](../../crates/executors/src/env.rs)・[Codex](../../crates/executors/src/executors/codex.rs)・[非Codex](../../crates/executors/src/executors/provider_adapter.rs)・[保存契約](../concepts/workspace.md#共有ディレクトリの意味)
 
 ### Codex resume の固定指示と現在 identity
 
@@ -215,7 +217,7 @@ runtime と実 CLI discovery probe は per-process settings の `forceLoginMetho
 
 `/api/agents/profile-policy` は executor / variant を解決し、存在しない profile を拒否する。厳格 Claude profile だけ auth probe を行い、実行ファイル欠落を MissingExecutable、それ以外の認証確認失敗を AuthRequired として、InitialRun / FollowUp / SessionResume / WorkflowAgentStep / TeamSlot を除く。一般の installation 検出は `.claude.json` の更新時刻を login 証拠にしない。[policy API](../../crates/server/src/routes/config.rs#L804-L838)・[失敗と能力](../../crates/executors/src/provider_policy.rs#L96-L134)・[installation](../../crates/executors/src/executors/claude.rs#L727-L736)
 
-policy と discovery は共通の scope 解決を使う。Session 指定時は所属 Workspace と agent working dir、Workspace だけならその container path、Repo だけなら Repo path を使う。policy は scope がなければ server cwd を使う。この確認は server 環境での readiness であり、実 launch の完全な execution env を保証しない。[scope 解決](../../crates/services/src/services/container.rs#L105-L193)・[policy env](../../crates/server/src/routes/config.rs#L823-L836)。[composer の接続](../concepts/session-and-agent-run.md#選択した-claude-profile-の-readiness)は選択 variant と scope を保持し、確認失敗を別 profile の Ready で補わない。
+policy と discovery は共通の scope 解決を使う。Session指定時は所属を検査し、Session/Workspaceとも共通rootを使う。Repo指定なら元Repo pathを使う。policy は scope がなければ server cwd を使う。この確認は server 環境での readiness であり、実 launch の完全な execution env を保証しない。[scope 解決](../../crates/services/src/services/container.rs#L105-L193)・[policy env](../../crates/server/src/routes/config.rs#L823-L836)。[composer の接続](../concepts/session-and-agent-run.md#選択した-claude-profile-の-readiness)は選択 variant と scope を保持し、確認失敗を別 profile の Ready で補わない。
 
 discovery stream も選択 variant を渡し、未存在 profile を DEFAULT へ代替しない。厳格 profile の要求から DEFAULT の global cache refresh を並行起動しない。Claude cache key は command 設定と `require_subscription_login` を含み、認証モードを分離する。実 CLI の command/plugin probe は認証確認後に起動するが、cache hit は既存 options を返し得るため、モデル・補完候補が表示されたことは現在の login 成功の証拠ではない。[stream の選択](../../crates/server/src/routes/config.rs#L893-L908)・[別 profile の refresh 抑止](../../crates/services/src/services/container.rs#L196-L233)・[cache key](../../crates/executors/src/executors/claude.rs#L367-L369)・[cache hit](../../crates/executors/src/executors/claude.rs#L513-L540)・[CLI probe](../../crates/executors/src/executors/claude/slash_commands.rs#L239-L265)
 
@@ -354,3 +356,17 @@ Settings の agent 設定でproviderを選び、既存profileを選択して変�
 ### LOCAL-332のManifest指示とcompact
 
 Workspace Memoryのcheckpoint / reload連鎖とcommit reminderは撤去済みである。Codexの明示compactはnative `thread/compact/start` を使い、独自記憶の保存・再注入へ置き換えない。Codexのpersistent developer instructionsと他providerへのprompt suffixは、source変更時のsemantic draftとcanonical Wikiのread-only境界を伝える。人間の目的・動機・判断理由を自分の実装判断と区別し、承認を設計理由に置換しない。変更なしならdraftや専用検証記録を作らず通常の最終報告へ返す。[native compact](../../crates/executors/src/executors/codex/client.rs)・[共通prompt](../../crates/executors/src/executors/provider_adapter.rs#L2487-L2545)・[Manifest契約](../../crates/utils/src/repository_memory.rs#L575-L589)
+
+## 共通rootのAGENTSとRepo skills
+
+Git Workspaceは単一Repoでも共通rootから開始し、親AGENTSをLVK管理物として生成する。親はRepoと下位AGENTSの確認を要求し、子指示の適用を対象Repo/subtreeへ限定する。Claude用の子AGENTS @importは空白をbackslash escapeする。子本文をdeveloper権限へ昇格させず、独自親ファイル・子AGENTS/CLAUDE・provider設定を上書きしない。旧LVKのimport-only親CLAUDEは既知保存配置との完全一致だけを回復可能に退避する。backupがあれば別名を使い、hard link保存後に元名を外す。任意custom親やsymlinkを一括退避しない。[生成・退避](../../crates/local-deployment/src/container.rs)
+
+Codexは各Repoの `.agents/skills` 絶対pathをskills/extraRoots/setへ設定する。これはprocess-localなのでUI discoveryと実行の別process、新規threadとresumeの前にそれぞれ設定する。Repo rootそのものや全skill本文を毎Run注入しない。同pathだけ重複除外し、同名別pathは残す。[roots](../../crates/executors/src/repo_skills.rs)・[接続](../../crates/executors/src/executors/codex.rs)・[RPC](../../crates/executors/src/executors/codex/client.rs)
+
+Claudeは実行・discovery双方へ同じrepository rootsを --add-dir で渡す。discoveryはprofile追加引数・認証options・Repo rootsを終端 `-- /` より前に構築し、空白pathを1引数で保持する。cacheはRepo集合で分け、Workspace固有catalogをglobalへ保存しない。作成前は選択した全元Repoを探索し、明示skill pathを作成後の保存配置worktreeへ対応付ける。[builder](../../crates/executors/src/executors/claude/command_adapter.rs)・[discovery](../../crates/executors/src/executors/claude/slash_commands.rs)
+
+Repo間で同名のClaude skills/commandsはUIで無効化し、曖昧な明示呼出しを起動前拒否してnative Skill(name)も禁止する。`.claude/commands` は再帰走査し `frontend/component.md` を `frontend:component` とする。command名は相対pathで決まりfrontmatter nameを使わない。独自の大規模skills基盤やCLI最低版の引上げではなく、既存native機構と共有catalogを使う。[名前と衝突](../../crates/executors/src/repo_skills.rs)・[実行guard](../../crates/executors/src/executors/claude.rs)
+
+### 観測と未検証を分ける
+
+metadata一覧、明示本文到達、自動選択、手順実行、親子/下位指示の遵守は別々の証拠である。LOCAL-349の公開記録にはCodex path明示とClaude固有名/同名拒否の過去実行、修正後Claude 2.1.308の製品discover_optionsによる単一/複数/空fixture、Codex同一Session継続がある。今回Wiki保守はsource/試験を静的照合したもので再実行ではない。Claude階層commandの実発火とSkill禁止のlive確認、全providerの指示・skills start/resume行列、旧binary実DB移行は未検証として残る。認証・sandbox・実行承認を変更して補わない。

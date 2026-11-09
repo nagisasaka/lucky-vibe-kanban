@@ -6,10 +6,6 @@ tags: [card-context, pipeline, parallel-context, knowledge]
 sources:
   - id: openwiki-source-a3956271cbf62ae0786e7fc7
     resource: repo://crates/executors/src/env.rs
-  - id: openwiki-source-22b82518475034ade38104e6
-    resource: repo://crates/executors/src/executors/codex.rs
-  - id: openwiki-source-f4e0f9b2ce513d3f8b8b070e
-    resource: repo://crates/executors/src/executors/provider_adapter.rs
   - id: openwiki-source-38bb7eaa90f0c92a0514844d
     resource: repo://crates/executors/src/legacy_wiki.rs
   - id: openwiki-source-788fa2f6f1a3d449a1a9efe4
@@ -46,10 +42,10 @@ sources:
     resource: repo://tests/chat/prompt-context.fixture.tsx
   - id: openwiki-source-7cc1d248ce00f0c5ef61c76e
     resource: repo://tests/chat/prompt-context.test.mjs
-generated: { by: "codex", at: "2026-11-07T09:46:42.639Z" }
+generated: { by: "codex", at: "2026-11-09T07:03:14.304Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-07T09:46:42.639Z
+    at: 2026-11-09T07:03:14.304Z
 ---
 
 # Card context と並列作業の参照
@@ -68,7 +64,7 @@ Card context は [Issue](project-and-issue.md) の依頼本文と一緒に保存
 
 Repo ごとの Git commit identity 案内は Shared directories policy の有無と独立して launch に追加される。ここでいう Change Manifest の現在 identity は Git の著者情報ではない。commit の設定・停止条件は [Repo の Git identity](workspace.md#git-commit-identity)を参照する。[独立した注入](../../crates/local-deployment/src/agent_run_port.rs#L859-L865)
 
-共有案内は `.lvk/shared/persistent/`（継続保存）、`cache/`（再生成可能な再利用）、`tmp/`（同一登録RepoのWorkspace間の一時受け渡し）を区別する。tmpはRun終了で消さず、自動TTLや定期掃除もない。受け渡し完了後、不要かつ利用中でない物だけ整理し、必要な成果は適切な保存先へ残す。保存済みCardを書き換える方式ではなく、共有rootがある実行には共通ExecutionEnvから現在の利用案内も渡す。Codex初回・再開のdeveloper instructionsと非Codexの通常prompt suffixが対象で、reviewer・resource mediatorへの追加やslash commandへの合成は避ける。[共通案内](../../crates/utils/src/path.rs)・[実行時合成](../../crates/executors/src/env.rs)・[provider境界](../../crates/executors/src/executors/provider_adapter.rs)
+共有案内は `.lvk/shared/persistent/`（継続保存）、`cache/`（再生成可能な再利用）、`tmp/`（同一登録RepoのWorkspace間の一時受け渡し）を区別する。tmpはRun終了で消さず、自動TTLや定期掃除もない。受け渡し完了後、不要かつ利用中でない物だけ整理し、必要な成果は適切な保存先へ残す。保存済みCardを書き換える方式ではなく、共有rootがある実行では現在の利用案内を渡す。LVK生成の共通親AGENTS.mdがある場合はそこへ静的案内を集め、ExecutionEnvは親・対象Repo・下位AGENTSの確認要求を渡して重複注入を避ける。Codex初回・再開のdeveloper instructionsと非Codexの通常prompt suffixが対象で、reviewer・resource mediatorへの追加やslash commandへの合成は避ける。[共通案内](../../crates/utils/src/path.rs)・[実行時合成](../../crates/executors/src/env.rs)・[provider境界](../../crates/executors/src/executors/provider_adapter.rs)
 
 ## チャットの補助情報と元の全文
 
@@ -90,7 +86,7 @@ parser は backtick / tilde の fenced code 内の marker を無視する。引�
 
 ## 並列活動と固定したソースを読む
 
-`/api/repos/{id}/parallel-context` は登録 Repo の interactive Workspace、現在の Card link、実行数、観測時の branch HEAD と immutable Manifest の参照を返す。peer の checkout を復元せず common repository の branch を読む。活動と Manifest は別 snapshot であり、Manifest がないことは活動ゼロ、現在の Card link は過去 event の帰属、という意味にはならない。[discovery](../../crates/services/src/services/parallel_context.rs#L63-L131)
+`/api/repos/{id}/parallel-context` は登録 Repo の interactiveなWorktree Workspace（DirectFolderを除く）、現在の Card link、実行数、観測時の branch HEAD と immutable Manifest の参照を返す。peer の checkout を復元せず common repository の branch を読む。活動と Manifest は別 snapshot であり、Manifest がないことは活動ゼロ、現在の Card link は過去 event の帰属、という意味にはならない。[discovery](../../crates/services/src/services/parallel_context.rs#L63-L131)
 
 Workspace と Manifest は独立した cursor でページングする。既定25・最大100件で、memory 読取失敗は `memory_error` として残す。空結果と情報源の故障を区別し、他 Workspace の私的文脈や raw conversation を参照する仕組みにしない。Wiki の target / source / publication commit は maintenance の観測情報であり、今の作業木へ最新 Wiki を配達した証拠ではない。[情報の解釈契約](../../crates/services/src/services/parallel_context.rs#L192-L198)
 

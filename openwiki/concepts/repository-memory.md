@@ -48,10 +48,10 @@ sources:
     resource: repo://crates/services/src/services/repository_memory.rs
   - id: openwiki-source-a171e1a170f941fa2a4ba003
     resource: repo://crates/utils/src/repository_memory.rs
-generated: { by: "codex", at: "2026-11-07T10:04:45.638Z" }
+generated: { by: "codex", at: "2026-11-09T07:03:14.304Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-07T10:04:45.638Z
+    at: 2026-11-09T07:03:14.304Z
 ---
 
 # Change Manifest・Run完了とWikiの責務
@@ -60,7 +60,7 @@ verified:
 
 ## Session・Manifest・統合済みWiki
 
-通常の成功 coding Run は Wiki の有効／無効と独立して source を確定し、Manifest をその SHA に結び付ける。source が既に全て commit 済みなら HEAD を再利用し、余分な commit や amend をしない。no-change では空の Manifest や commit を作らない。失敗・取消・REVIEW・制御・自動マージ担当・Design Arena 等を一律に自動 commit する規則ではなく、既存の実行目的と正常終了条件を維持する。[完了処理](../../crates/services/src/services/repository_memory.rs)・[host適用条件](../../crates/local-deployment/src/agent_run_port.rs)
+Worktree Workspaceの通常の成功 coding Run は Wiki の有効／無効と独立して source を確定し、Manifest をその SHA に結び付ける。source が既に全て commit 済みなら HEAD を再利用し、余分な commit や amend をしない。no-change では空の Manifest や commit を作らない。失敗・取消・REVIEW・制御・自動マージ担当・Design Arena 等を一律に自動 commit する規則ではなく、既存の実行目的と正常終了条件を維持する。[完了処理](../../crates/services/src/services/repository_memory.rs)・[host適用条件](../../crates/local-deployment/src/agent_run_port.rs)
 
 Issue化・要件更新・既存Sessionへの追加指示では、上位AIが確認できた人間の目的・動機・制約、判断と理由、見送り案・未決点を渡す。Issue本文の編集だけでは既存Sessionへの追加指示にならない。coding host は直接会話も含めて人間の意図と自分の実装判断を区別し semantic draft に残す。承認を技術的理由の代わりにせず、不明な理由は創作しない。固定書式の空欄埋めや些細な変更の長文説明は要求しない。[上位AIの受渡し](../../skills/lvk-orchestration/references/execution.md)・[coding host](../../crates/utils/src/repository_memory.rs)
 
@@ -179,3 +179,7 @@ LOCAL-344は利用者の決定として、執筆指示 `openwiki/INSTRUCTIONS.md
 削除・置換する生成集合は既存manifest、生成frontmatter、管理索引・メタデータから識別し、openwiki全体を消さない。設定と不明な人間管理文書を保持し、通常writerによる人間文書の本文変更や生成manifestへの取り込みも公開前に拒否する。対象文書が本家の生成対象になる場合は、保存済みignoreで除外してから再試行する。[生成集合](../../crates/services/src/services/openwiki/management.rs)・[公開前検査](../../crates/services/src/services/openwiki.rs)
 
 削除成功はDBのsource/Wiki鮮度とcheckpointを未生成へ戻し、generation_suppressedで通常Syncと自動マージからの再生成を抑止する。設定保存・削除のfile_operationは既存専用Workspaceと公開checkpointを使い、結果とstateを同一DB transactionで確定する。再構築は開始時公開先SHAをrebuild_referenceとして固定し、旧Wikiの知識を現在のコード・テスト・設定へ照合する。コードだけでは失われた運用知識や理由を完全復元できないという利用者の意図を保ち、旧記述を無条件に継承しない。[操作と復旧手順](../operations/openwiki-maintenance.md)
+
+### 直接フォルダの除外
+
+DirectFolderは古いRepo行が残っていてもbegin・前回成功Runの回収・source準備から除外する。LVKの自動commit、Manifest、Repo Wiki管理を配下Gitの発見だけで有効化しない。結果は通常会話で確認し、非Git専用Manifestを追加しない。Repoのshared保存先は元Repoの識別を保ち、同名衝突用のworktree配置名へ移動しない。
