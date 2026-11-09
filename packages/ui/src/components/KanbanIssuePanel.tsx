@@ -121,7 +121,6 @@ export interface KanbanIssuePanelProps {
     props: KanbanIssueDescriptionEditorProps
   ) => ReactNode;
   renderProjectWorkspaceContext?: () => ReactNode;
-  renderPipelineSection?: () => ReactNode;
 
   // Loading states
   isSubmitting?: boolean;
@@ -183,7 +182,6 @@ export function KanbanIssuePanel({
   renderAddTagControl,
   renderDescriptionEditor,
   renderProjectWorkspaceContext,
-  renderPipelineSection,
   isSubmitting,
   submitError,
   onDismissSubmitError,
@@ -506,8 +504,6 @@ export function KanbanIssuePanel({
               )}
             </div>
           </div>
-
-          {renderPipelineSection?.()}
 
           {/* Create Draft Workspace Toggle (Create mode only) */}
           {isCreateMode && (

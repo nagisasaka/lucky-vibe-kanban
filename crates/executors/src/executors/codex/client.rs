@@ -59,7 +59,6 @@ use crate::{
 
 mod mcp_approval;
 pub(super) mod openwiki;
-mod resume_instructions;
 
 struct PendingPlan {
     item_id: String,
@@ -113,7 +112,6 @@ pub struct AppServerClient {
     goal_lifecycle: StdMutex<GoalLifecycle>,
     self_ref: Weak<AppServerClient>,
     resolved_model: OnceLock<String>,
-    runtime_user_agent: OnceLock<String>,
     reasoning_effort: StdMutex<Option<ProtocolReasoningEffort>>,
     pending_plan: Mutex<Option<PendingPlan>>,
     cancel: CancellationToken,
@@ -153,7 +151,6 @@ impl AppServerClient {
             goal_lifecycle: StdMutex::new(GoalLifecycle::default()),
             self_ref: weak.clone(),
             resolved_model: OnceLock::new(),
-            runtime_user_agent: OnceLock::new(),
             reasoning_effort: StdMutex::new(reasoning_effort),
             pending_plan: Mutex::new(None),
             thread_id: Mutex::new(None),
@@ -251,7 +248,6 @@ impl AppServerClient {
         // established by the handshake and the methods/capabilities we use.
         if observe_version {
             observe_codex_version(&response.user_agent);
-            let _ = self.runtime_user_agent.set(response.user_agent.clone());
         }
         self.send_message(&ClientNotification::Initialized).await
     }
@@ -277,54 +273,6 @@ impl AppServerClient {
         // `thread/fork` would create another CLI-visible thread on every turn.
         let requested_thread_id = params.thread_id.clone();
         let developer_instructions = params.developer_instructions.clone();
-        // Only the first load in this owned app-server can use durable replay
-        // evidence. Later in-process resume/reset may have unflushed state.
-        let first_load = self.thread_id.lock().await.is_none();
-        let evidence = if first_load
-            && params.history.is_none()
-            && params.path.is_none()
-            && let Some(instructions) = developer_instructions.as_deref()
-            && resume_instructions::eligible(
-                instructions,
-                self.runtime_user_agent.get().map(String::as_str),
-            ) {
-            // Metadata-only public RPC; no display history or extra model turn.
-            // Failure/unknown path disables reduction, not ordinary resume.
-            let request = ClientRequest::ThreadRead {
-                request_id: self.next_request_id(),
-                params: ThreadReadParams {
-                    thread_id: requested_thread_id.clone(),
-                    include_turns: false,
-                },
-            };
-            match self
-                .rpc()
-                .request_with_raw_timeout::<Value, _>(
-                    request_id(&request),
-                    &request,
-                    "thread/read",
-                    self.cancel.clone(),
-                    Duration::from_secs(2),
-                )
-                .await
-            {
-                Ok((metadata, _)) if metadata["thread"]["id"] == requested_thread_id => {
-                    if let Some(path) = metadata["thread"]["path"].as_str() {
-                        resume_instructions::prepare(
-                            instructions,
-                            &requested_thread_id,
-                            std::path::Path::new(path),
-                        )
-                        .await
-                    } else {
-                        None
-                    }
-                }
-                _ => None,
-            }
-        } else {
-            None
-        };
         *self.thread_id.lock().await = Some(requested_thread_id.clone());
         let request = ClientRequest::ThreadResume {
             request_id: self.next_request_id(),
@@ -333,26 +281,9 @@ impl AppServerClient {
         let response: ResumedThread = self.send_request(request, "thread/resume").await?;
         ensure_resumed_thread_id(&requested_thread_id, &response.thread.id)?;
         self.adopt_thread_settings(response.model.clone(), response.reasoning_effort.clone());
-        // Keep full instructions in config for reconstruction. Only omit fixed
-        // text from the history append when this thread's durable history proves
-        // it is still present. Identity is always refreshed, even in the same run.
-        // Missing/changed/compacted history falls back to the full append; a
-        // failed injection still stops continuation before any model turn.
+        // Explicitly refresh current instructions before any continuation turn.
+        // Native resume configuration alone is not evidence of model visibility.
         if let Some(instructions) = developer_instructions.filter(|text| !text.trim().is_empty()) {
-            let instructions = match evidence {
-                Some(evidence) => evidence
-                    .after_resume(
-                        response
-                            .thread
-                            .path
-                            .as_ref()
-                            .and_then(Value::as_str)
-                            .map(std::path::Path::new),
-                    )
-                    .await
-                    .unwrap_or(instructions),
-                None => instructions,
-            };
             let request = ClientRequest::ThreadInjectItems {
                 request_id: self.next_request_id(),
                 params: ThreadInjectItemsParams {
@@ -2209,14 +2140,6 @@ mod version_check_tests {
             .await
             .unwrap()
             .unwrap();
-            assert_eq!(
-                client.runtime_user_agent.get().map(String::as_str),
-                if passive {
-                    None
-                } else {
-                    Some("fixture/0.163.0")
-                }
-            );
             assert!(client.thread_id.lock().await.is_none());
             assert_eq!(*client.pending_tool_approvals.lock().await, 0);
             cancel.cancel();
@@ -2512,36 +2435,16 @@ mod version_check_tests {
     fn resumed_host_context_stdio_fixture() {
         use std::io::{BufRead, Write};
         let mut lines = std::io::stdin().lock().lines();
-        let mut resume: serde_json::Value =
+        let resume: serde_json::Value =
             serde_json::from_str(&lines.next().unwrap().unwrap()).unwrap();
-        let rollout = std::env::var("LVK_TEST_RESUME_ROLLOUT").ok();
-        if resume["method"] == "thread/read" {
-            assert!(rollout.is_some());
-            assert_ne!(resume["params"]["includeTurns"], true);
-            let result = if std::env::var_os("LVK_TEST_READ_REJECT").is_some() {
-                json!({"id":resume["id"],"error":{"code":-32601,"message":"unsupported fixture metadata"}})
-            } else {
-                json!({"id":resume["id"],"result":{"thread":{"id":"resumed","path":rollout}}})
-            };
-            println!("{}", result);
-            std::io::stdout().flush().unwrap();
-            resume = serde_json::from_str(&lines.next().unwrap().unwrap()).unwrap();
-        }
         assert_eq!(resume["method"], "thread/resume");
         assert_eq!(
             resume["params"]["developerInstructions"],
             RESUME_FIXTURE_INSTRUCTIONS
         );
-        if let Some(path) = &rollout {
-            use std::io::Write;
-            // Match reviewed Codex startup: resume appends only a settings
-            // receipt before returning, without another model turn.
-            let mut file = std::fs::OpenOptions::new().append(true).open(path).unwrap();
-            writeln!(file, "{}", json!({"type":"event_msg","payload":{"type":"thread_settings_applied","turn_id":null}})).unwrap();
-        }
         println!(
             "{}",
-            json!({"id":resume["id"],"result":{"thread":{"id":"resumed","path":rollout},"model":"fixture","reasoningEffort":"high"}})
+            json!({"id":resume["id"],"result":{"thread":{"id":"resumed","path":null},"model":"fixture","reasoningEffort":"high"}})
         );
         std::io::stdout().flush().unwrap();
         let injection: serde_json::Value =
@@ -2556,12 +2459,11 @@ mod version_check_tests {
                 .unwrap()
                 .contains("drafts/current-run.json")
         );
-        assert_eq!(
+        assert!(
             item["content"][0]["text"]
                 .as_str()
                 .unwrap()
-                .contains("Keep fixed repository safety"),
-            rollout.is_none() || std::env::var_os("LVK_TEST_READ_REJECT").is_some()
+                .contains("Keep fixed repository safety")
         );
         let _: codex_protocol::models::ResponseItem = serde_json::from_value(item.clone()).unwrap();
         let response = if std::env::var_os("LVK_TEST_REJECT_INJECTION").is_some() {
@@ -2576,20 +2478,12 @@ mod version_check_tests {
     #[tokio::test]
     async fn resumed_host_context_is_visible_before_any_new_turn() {
         use super::super::jsonrpc::{ExitSignalSender, JsonRpcPeer};
-        for (mode, reject, reduced, read_reject) in [
-            (ExecutionMode::Code, false, false, false),
-            (ExecutionMode::Review, false, false, false),
-            (ExecutionMode::Plan, false, false, false),
-            (ExecutionMode::Goal, false, false, false),
-            (ExecutionMode::PlanWithGoal, false, false, false),
-            (ExecutionMode::Code, true, false, false),
-            (ExecutionMode::Code, false, true, false),
-            (ExecutionMode::Code, true, true, false),
-            (ExecutionMode::Code, false, true, true),
+        for (mode, reject) in [
+            (ExecutionMode::Code, false),
+            (ExecutionMode::Review, false),
+            (ExecutionMode::Goal, false),
+            (ExecutionMode::Code, true),
         ] {
-            if reduced && !cfg!(unix) {
-                continue;
-            }
             let cancel = CancellationToken::new();
             let client = AppServerClient::new(
                 LogWriter::new(tokio::io::sink()),
@@ -2606,27 +2500,6 @@ mod version_check_tests {
                 .stdin(std::process::Stdio::piped()).stdout(std::process::Stdio::piped()).stderr(std::process::Stdio::inherit()).kill_on_drop(true);
             if reject {
                 command.env("LVK_TEST_REJECT_INJECTION", "1");
-            }
-            if read_reject {
-                command.env("LVK_TEST_READ_REJECT", "1");
-            }
-            let fixture_dir = tempfile::tempdir().unwrap();
-            if reduced {
-                // Synthetic history only; never read real Codex session files.
-                let path = fixture_dir
-                    .path()
-                    .canonicalize()
-                    .unwrap()
-                    .join("rollout.jsonl");
-                let previous = RESUME_FIXTURE_INSTRUCTIONS.replace("current-run", "previous-run");
-                let meta = json!({"type":"session_meta","payload":{"id":"resumed","cli_version":"0.163.0"}});
-                let message = json!({"type":"response_item","payload":{"type":"message","role":"developer","content":[{"type":"input_text","text":previous}]}});
-                std::fs::write(&path, format!("{meta}\n{message}\n")).unwrap();
-                command.env("LVK_TEST_RESUME_ROLLOUT", &path);
-                client
-                    .runtime_user_agent
-                    .set("fixture/0.163.0".into())
-                    .unwrap();
             }
             let mut child = command.spawn().unwrap();
             let (exit_tx, _exit_rx) = tokio::sync::oneshot::channel();

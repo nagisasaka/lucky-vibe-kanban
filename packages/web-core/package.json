@@ -97,7 +97,7 @@
   },
   "scripts": {
     "check": "tsc --noEmit",
-    "test:wiki": "vitest run src/features/pipeline/model src/features/wiki",
+    "test:wiki": "vitest run src/features/wiki",
     "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json,css,md}\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx,js,jsx,json,css,md}\""
   },

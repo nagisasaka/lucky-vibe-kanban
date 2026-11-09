@@ -850,13 +850,6 @@ impl LocalAgentRunPort {
             .is_some_and(|o| o.kind == db::models::workspace_usage::RESOURCE_MEDIATION);
         let mut openwiki_maintenance = false;
         let mut openwiki_reviewer = false;
-        let parallel_policy = services::services::parallel_context::saved_context(
-            &self.db.pool,
-            workspace.id,
-            &request.input.content,
-        )
-        .await
-        .map_err(|error| AgentRunPortError::Rejected(format!("Card context: {error:#}")))?;
         let local_api_port = utils::port_file::read_port_file("vibe-kanban").await.ok();
         if !resource_mediator && let Some(port) = local_api_port {
             memory_instructions.push(services::services::resource_coordination::instructions(
@@ -970,19 +963,13 @@ impl LocalAgentRunPort {
                     })?;
                 }
             }
-            if !openwiki_maintenance
-                && !openwiki_reviewer
-                && let Some(policy) = &parallel_policy
-            {
+            if !openwiki_maintenance && !openwiki_reviewer {
                 parallel_contexts.push(
                     services::services::parallel_context::identity_instructions(
                         repo,
                         workspace,
                         &root,
                         local_api_port,
-                        policy,
-                        attempt.provider_session.is_none()
-                            && !request.input.content.contains(policy),
                     ),
                 );
             }
