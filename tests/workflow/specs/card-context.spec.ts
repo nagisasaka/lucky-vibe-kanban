@@ -17,11 +17,12 @@ test("context is collapsed, read-only and independent of the task description", 
   await expect(preview).toBeVisible();
   await expect(preview).not.toBeEditable();
   await expect(
-    page.getByRole("checkbox", { name: "LLM Wiki", exact: true }),
+    page.getByRole("checkbox", { name: "Quality checks", exact: true }),
   ).not.toBeChecked();
-  // Repository Memory replaced automatic legacy Wiki injection. Explicitly
-  // select this fixture's optional Pipeline before testing independent toggles.
-  await page.getByRole("checkbox", { name: "LLM Wiki", exact: true }).check();
+  // Select the optional Pipeline before testing independent toggles.
+  await page
+    .getByRole("checkbox", { name: "Quality checks", exact: true })
+    .check();
   const shared = page.getByRole("checkbox", {
     name: "Shared directory guidance",
     exact: true,
@@ -30,11 +31,13 @@ test("context is collapsed, read-only and independent of the task description", 
   await expect(preview).toHaveValue(/\.lvk\/shared\/cache/);
   await expect(preview).toHaveValue(/\.lvk\/shared\/persistent/);
   await expect(preview).toHaveValue(/\.lvk\/shared\/tmp/);
-  await expect(preview).toHaveValue(/Run completion does not delete tmp contents/);
+  await expect(preview).toHaveValue(
+    /Run completion does not delete tmp contents/,
+  );
   await expect(preview).not.toHaveValue(/\.lvk\/integration-validation\.json/);
   await shared.uncheck();
   await expect(preview).not.toHaveValue(/\.lvk\/shared\/persistent/);
-  await expect(preview).toHaveValue(/Consult prior knowledge/);
+  await expect(preview).toHaveValue(/Inspect the proposed change/);
   await page
     .getByRole("textbox", { name: "Task description" })
     .fill("Edited task");
@@ -47,20 +50,23 @@ test("context is collapsed, read-only and independent of the task description", 
   await expect(shared).not.toBeChecked();
 });
 
-test("legacy Wiki instructions are displayed separately without changing stored text", async ({
+test("Stored Pipeline instructions are displayed separately without changing stored text", async ({
   page,
 }) => {
-  await page.goto("/?mode=card-context&legacy=1");
+  await page.goto("/?mode=card-context&stored-pipeline=1");
   const stored = await page.getByTestId("stored-description").textContent();
   await expect(
     page.getByRole("textbox", { name: "Task description" }),
   ).toHaveValue("Existing task");
   await page.locator("summary").click();
   await expect(
-    page.getByRole("checkbox", { name: "LLM Wiki", exact: true }),
+    page.getByRole("checkbox", { name: "Quality checks", exact: true }),
   ).toBeChecked();
   await expect(
-    page.getByRole("checkbox", { name: "Shared directory guidance", exact: true }),
+    page.getByRole("checkbox", {
+      name: "Shared directory guidance",
+      exact: true,
+    }),
   ).not.toBeChecked();
   await expect(page.getByTestId("stored-description")).toHaveText(stored!);
 });

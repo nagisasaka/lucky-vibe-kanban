@@ -12,21 +12,21 @@ import {
 } from './cardPipeline';
 
 const pipeline: Pipeline = {
-  id: 'wikillm',
-  name: 'LLM Wiki',
+  id: 'quality',
+  name: 'Quality checks',
   description: null,
   stages: [
     {
-      id: 'recall',
-      label: 'Recall prior knowledge',
-      prompt_fragment: 'Recall.',
+      id: 'inspect',
+      label: 'Inspect changes',
+      prompt_fragment: 'Inspect.',
       default_enabled: true,
       heavy: false,
     },
     {
-      id: 'enrich',
-      label: 'Enrich knowledge base',
-      prompt_fragment: 'Enrich.',
+      id: 'report',
+      label: 'Report results',
+      prompt_fragment: 'Report.',
       default_enabled: true,
       heavy: false,
     },
@@ -36,32 +36,32 @@ const pipeline: Pipeline = {
 describe('card pipeline block', () => {
   it('preserves stage order and is idempotent', () => {
     const once = updatePipelineBlock('Manual text', pipeline, [
-      'recall',
-      'enrich',
+      'inspect',
+      'report',
     ]);
-    const twice = updatePipelineBlock(once, pipeline, ['recall', 'enrich']);
+    const twice = updatePipelineBlock(once, pipeline, ['inspect', 'report']);
     expect(twice).toBe(once);
-    expect(once.indexOf('Recall.')).toBeLessThan(once.indexOf('Enrich.'));
+    expect(once.indexOf('Inspect.')).toBeLessThan(once.indexOf('Report.'));
   });
 
   it('replaces or removes only the generated block', () => {
     const initial = updatePipelineBlock('Before\n\nAfter', pipeline, [
-      'recall',
-      'enrich',
+      'inspect',
+      'report',
     ]);
     expect(removePipelineBlock(initial)).toBe('Before\n\nAfter');
-    expect(updatePipelineBlock(initial, pipeline, ['enrich'])).toContain(
-      'Enrich.'
+    expect(updatePipelineBlock(initial, pipeline, ['report'])).toContain(
+      'Report.'
     );
-    expect(updatePipelineBlock(initial, pipeline, ['enrich'])).not.toContain(
-      'Recall.'
+    expect(updatePipelineBlock(initial, pipeline, ['report'])).not.toContain(
+      'Inspect.'
     );
   });
 
   it('preserves manual additions made inside a generated block', () => {
     const initial = composePipelineBlock(pipeline, [
-      'recall',
-      'enrich',
+      'inspect',
+      'report',
     ]).replace(
       PIPELINE_END,
       `Operator note: keep this constraint.\n${PIPELINE_END}`
@@ -72,34 +72,34 @@ describe('card pipeline block', () => {
     const updated = updatePipelineBlock(
       initial,
       pipeline,
-      ['recall'],
+      ['inspect'],
       [pipeline]
     );
     expect(updated).toContain('Operator note: keep this constraint.');
-    expect(updated).not.toContain('Enrich.');
+    expect(updated).not.toContain('Report.');
     expect(updatePipelineBlock(initial, null, [], [pipeline])).toBe(
       'Operator note: keep this constraint.'
     );
   });
 
   it('does not preserve obsolete generated prompts after a definition update', () => {
-    const initial = composePipelineBlock(pipeline, ['recall']);
+    const initial = composePipelineBlock(pipeline, ['inspect']);
     const updatedPipeline = {
       ...pipeline,
       stages: pipeline.stages.map((stage) =>
-        stage.id === 'recall'
-          ? { ...stage, prompt_fragment: 'Recall with the new rules.' }
+        stage.id === 'inspect'
+          ? { ...stage, prompt_fragment: 'Inspect with the new rules.' }
           : stage
       ),
     };
     const updated = updatePipelineBlock(
       initial,
       updatedPipeline,
-      ['recall'],
+      ['inspect'],
       [updatedPipeline]
     );
-    expect(updated).toContain('Recall with the new rules.');
-    expect(updated).not.toContain('**Recall prior knowledge:** Recall.');
+    expect(updated).toContain('Inspect with the new rules.');
+    expect(updated).not.toContain('**Inspect changes:** Inspect.');
   });
 
   it('does not interpret marker text embedded in prose', () => {
@@ -108,13 +108,13 @@ describe('card pipeline block', () => {
   });
 
   it('extracts the last complete block and infers selected stages', () => {
-    const old = composePipelineBlock(pipeline, ['recall']);
-    const current = composePipelineBlock(pipeline, ['enrich']);
+    const old = composePipelineBlock(pipeline, ['inspect']);
+    const current = composePipelineBlock(pipeline, ['report']);
     const description = `${old}\nmanual\n${current}`;
     expect(extractPipelineBlock(description)).toBe(current);
     expect(inferPipelineSelection(description, [pipeline])).toEqual({
-      pipelineId: 'wikillm',
-      stageIds: new Set(['enrich']),
+      pipelineId: 'quality',
+      stageIds: new Set(['report']),
     });
   });
 

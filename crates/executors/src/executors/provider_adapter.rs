@@ -2771,7 +2771,7 @@ mod tests {
         assert!(actual.contains(".lvk/shared/tmp/"));
         assert_eq!(
             actual
-                .matches(crate::legacy_wiki::RETIREMENT_NOTICE)
+                .matches(crate::env::OPENWIKI_READ_ONLY_GUIDANCE)
                 .count(),
             1
         );
@@ -2779,7 +2779,7 @@ mod tests {
         maintenance.insert("LVK_OPENWIKI_MAINTENANCE", "1");
         let actual =
             prompt_with_repository_memory(DirectProvider::ClaudeCode, "maintain", &maintenance);
-        assert!(!actual.contains(crate::legacy_wiki::RETIREMENT_NOTICE));
+        assert!(!actual.contains(crate::env::OPENWIKI_READ_ONLY_GUIDANCE));
         assert!(actual.contains("CURRENT Manifest identity"));
         env.insert("LVK_OPENWIKI_REVIEWER", "1");
         assert!(

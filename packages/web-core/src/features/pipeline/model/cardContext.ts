@@ -38,7 +38,7 @@ export function splitCardContext(description: string): {
       context: match[0].slice(START.length, match[0].lastIndexOf(END)).trim(),
     };
   }
-  // Existing cards retain the exact legacy Wiki instructions, without migration.
+  // Existing Pipeline blocks remain stored context, without migration.
   return {
     description: removePipelineBlock(description),
     context: extractPipelineBlock(description),

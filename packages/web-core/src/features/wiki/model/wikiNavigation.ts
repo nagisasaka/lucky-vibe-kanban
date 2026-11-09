@@ -128,7 +128,7 @@ export function searchWikiPages(
   });
 }
 
-function normaliseSegments(value: string, openwiki = false): string | null {
+function normaliseSegments(value: string): string | null {
   const segments: string[] = [];
   for (const segment of value.replace(/\\/g, '/').split('/')) {
     if (!segment || segment === '.') continue;
@@ -140,16 +140,13 @@ function normaliseSegments(value: string, openwiki = false): string | null {
     segments.push(segment);
   }
   const result = segments.join('/');
-  return openwiki || result === 'index.md' || result.startsWith('pages/')
-    ? result
-    : null;
+  return result;
 }
 
 export function resolveWikiHref(
   currentPath: string,
   href: string,
-  availablePaths: ReadonlySet<string>,
-  openwiki = false
+  availablePaths: ReadonlySet<string>
 ): string | null {
   if (!href || href.startsWith('#') || EXTERNAL_SCHEME_RE.test(href)) {
     return null;
@@ -160,28 +157,29 @@ export function resolveWikiHref(
   } catch {
     return null;
   }
-  const wikiAbsolute = openwiki && decoded.startsWith('/openwiki/');
+  const wikiAbsolute = decoded.startsWith('/openwiki/');
   if (wikiAbsolute) decoded = decoded.slice('/openwiki/'.length);
   if (decoded.startsWith('/') || /^[a-z]:/i.test(decoded)) return null;
   const base = currentPath.includes('/')
     ? currentPath.slice(0, currentPath.lastIndexOf('/') + 1)
     : '';
-  const candidates = wikiAbsolute
-    ? [decoded]
-    : openwiki
-      ? [`${base}${decoded}`, decoded]
-      : [decoded, `${base}${decoded}`];
+  const candidates = wikiAbsolute ? [decoded] : [`${base}${decoded}`, decoded];
   for (const candidate of candidates) {
     const withExtension =
-      openwiki && (candidate === '' || candidate.endsWith('/'))
+      candidate === '' || candidate.endsWith('/')
         ? `${candidate}index.md`
         : candidate.endsWith('.md')
           ? candidate
           : `${candidate}.md`;
-    const normalised = normaliseSegments(withExtension, openwiki);
+    const normalised = normaliseSegments(withExtension);
     if (normalised && availablePaths.has(normalised)) return normalised;
     const underPages = normaliseSegments(`pages/${withExtension}`);
-    if (underPages && availablePaths.has(underPages)) return underPages;
+    if (
+      underPages &&
+      (underPages === 'index.md' || underPages.startsWith('pages/')) &&
+      availablePaths.has(underPages)
+    )
+      return underPages;
   }
   return null;
 }

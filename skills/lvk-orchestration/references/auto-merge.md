@@ -10,7 +10,7 @@
 
 Before starting, verify authorization, the selected source Workspace commits and expected target HEAD using live MCP schemas. Submit the frozen selection through the supported Auto-merge operation and retain its receipt and conversation identifiers. Continue questions and repairs in that assigned conversation. Do not merge directly to bypass guards.
 
-The assigned Codex owns candidate preparation, conflict repair, risk-based validation and enabled OpenWiki maintenance. Record executed checks and justified skips separately with actor, reason, remaining risk and exact SHA. OpenWiki runs in that same candidate branch after code validation, with a separate Wiki commit; ordinary coding agents must not update canonical OpenWiki. Never execute retired .llm-wiki stages.
+The assigned Codex owns candidate preparation, conflict repair, risk-based validation and enabled OpenWiki maintenance. Record executed checks and justified skips separately with actor, reason, remaining risk and exact SHA. OpenWiki runs in that same candidate branch after code validation, with a separate Wiki commit; ordinary coding agents must not update canonical OpenWiki.
 
 Read merge/candidate, target publication and Wiki evidence separately. A publish request is not confirmed Git application. Finish the admitted candidate if target advances; publish it unchanged only if the actual target is its ancestor and host checks pass. Otherwise preserve evidence and stop InReview; do not start automatic tracking/rebase chains. Publication success drives the generated system Issue/Workspace state and archive lifecycle in LVK itself. It is distinct from the coordinating AI's cleanup after a transfer. Never manually manipulate the system tag to simulate this lifecycle.
 

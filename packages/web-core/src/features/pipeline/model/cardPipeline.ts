@@ -138,8 +138,3 @@ export function inferPipelineSelection(
     ),
   };
 }
-
-export function hasWikiLlmPipeline(description: string): boolean {
-  const block = extractPipelineBlock(description);
-  return block.includes('## Pipeline: LLM Wiki');
-}

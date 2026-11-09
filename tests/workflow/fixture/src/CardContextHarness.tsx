@@ -8,15 +8,15 @@ import {
 } from "../../../../packages/web-core/src/features/pipeline/model/cardContext";
 import { composePipelineBlock } from "../../../../packages/web-core/src/features/pipeline/model/cardPipeline";
 
-const wiki: Pipeline = {
-  id: "wikillm",
-  name: "LLM Wiki",
+const pipeline: Pipeline = {
+  id: "quality",
+  name: "Quality checks",
   description: null,
   stages: [
     {
-      id: "recall",
-      label: "Recall",
-      prompt_fragment: "Consult prior knowledge.",
+      id: "inspect",
+      label: "Inspect",
+      prompt_fragment: "Inspect the proposed change.",
       default_enabled: true,
       heavy: false,
     },
@@ -24,11 +24,13 @@ const wiki: Pipeline = {
 };
 
 export function CardContextHarness() {
-  const legacy = new URLSearchParams(window.location.search).has("legacy");
+  const stored = new URLSearchParams(window.location.search).has(
+    "stored-pipeline",
+  );
   const [description, setDescription] = useState(() =>
-    legacy
-      ? `Existing task\n\n${composePipelineBlock(wiki, ["recall"])}`
-      : defaultCardContext("New task", [wiki]),
+    stored
+      ? `Existing task\n\n${composePipelineBlock(pipeline, ["inspect"])}`
+      : defaultCardContext("New task", [pipeline]),
   );
   return (
     <main>
@@ -43,7 +45,7 @@ export function CardContextHarness() {
       />
       <CardContextSection
         description={description}
-        pipelines={[wiki]}
+        pipelines={[pipeline]}
         onRetry={() => {}}
         onDescriptionChange={setDescription}
       />

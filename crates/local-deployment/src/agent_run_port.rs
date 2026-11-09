@@ -150,24 +150,22 @@ impl FrozenDirectProviderLaunchSpec {
         attempt: &RunAttemptRequest,
         provider: DirectProvider,
         env: ExecutionEnv,
-    ) -> Result<Self, AgentRunPortError> {
-        let prompt = executors::legacy_wiki::execution_prompt(&request.input.content)
-            .map_err(AgentRunPortError::Rejected)?;
-        Ok(Self {
+    ) -> Self {
+        Self {
             provider,
             executor_config: attempt.executor_config.clone(),
             intent: direct_intent(request.intent, attempt.mode),
             prompt: executors::executors::provider_adapter::prompt_with_repository_memory(
-                provider, &prompt, &env,
+                provider,
+                &request.input.content,
+                &env,
             ),
             provider_session: attempt.provider_session.clone(),
             reset_to_message_id: attempt.reset_to_message_id.clone(),
-            selected_skills: executors::legacy_wiki::filter_skills(
-                attempt.selected_skills.clone().unwrap_or_default(),
-            ),
+            selected_skills: attempt.selected_skills.clone().unwrap_or_default(),
             current_dir: PathBuf::from(&attempt.workspace.path),
             env,
-        })
+        }
     }
 
     #[cfg(test)]
@@ -2658,20 +2656,7 @@ impl LocalAgentRunPort {
                 return;
             }
         };
-        let launch = match FrozenDirectProviderLaunchSpec::new(&request, &attempt, provider, env) {
-            Ok(launch) => launch,
-            Err(error) => {
-                self.terminalize_failure(
-                    &request,
-                    &attempt,
-                    AgentRunStatus::Failed,
-                    AgentRuntimeError::new(AgentRuntimeErrorKind::StartupFailed, error.to_string())
-                        .with_provider(Some(provider.id())),
-                )
-                .await;
-                return;
-            }
-        };
+        let launch = FrozenDirectProviderLaunchSpec::new(&request, &attempt, provider, env);
 
         if let Err(error) = self
             .launch_process_host(&request, &attempt, provider, &launch)
@@ -5773,8 +5758,7 @@ mod tests {
             &attempt,
             DirectProvider::Codex,
             test_execution_env(&attempt.workspace.path),
-        )
-        .unwrap();
+        );
         let direct = launch.launch_request();
         assert_eq!(direct.provider, DirectProvider::Codex);
         assert_eq!(direct.intent, DirectIntent::Initial);
@@ -5845,8 +5829,7 @@ mod tests {
             &attempt,
             DirectProvider::ClaudeCode,
             test_execution_env(&attempt.workspace.path),
-        )
-        .unwrap();
+        );
         let direct = launch.launch_request();
         assert_eq!(direct.intent, DirectIntent::FollowUp);
         assert_eq!(direct.executor_config, &attempt.executor_config);
@@ -5860,42 +5843,43 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn launch_boundary_retires_old_cards_for_initial_follow_up_and_goal() {
+    async fn launch_boundary_preserves_caller_pipeline_text_and_selected_skills() {
         let db = setup_runtime_db().await;
         let (mut request, mut attempt) = persisted_codex_run(&db).await;
-        let old_block = "<!-- vk:pipeline:start -->\n<!-- vk:pipeline:id=wikillm -->\n## Pipeline: LLM Wiki\nManual note: preserve API compatibility.\n<!-- vk:pipeline:end -->";
-        for (intent, text) in [
-            (AgentRunIntent::Initial, "Implement safely"),
-            (AgentRunIntent::FollowUp, "Continue"),
-            (AgentRunIntent::FollowUp, "/goal Implement safely"),
-        ] {
-            request.intent = intent;
-            request.input.content = format!("{text}\n{old_block}");
-            attempt.selected_skills = Some(vec![api_types::SelectedSkill {
-                name: "knowledge-enrich".into(),
-                path: utils::assets::asset_dir().join("skills/llm-wiki/knowledge-enrich/SKILL.md"),
-            }]);
-            let launch = FrozenDirectProviderLaunchSpec::new(
-                &request,
-                &attempt,
-                DirectProvider::Codex,
-                test_execution_env(&attempt.workspace.path),
-            )
-            .unwrap();
-            let direct = launch.launch_request();
-            assert!(direct.prompt.starts_with(text));
-            assert!(
-                direct
-                    .prompt
-                    .contains("Manual note: preserve API compatibility.")
-            );
-            assert!(!direct.prompt.contains("vk:pipeline"));
-            assert!(direct.selected_skills.is_empty());
-            let audited: serde_json::Value =
-                serde_json::from_slice(&launch.audit_payload().unwrap()).unwrap();
-            assert_eq!(audited["prompt"], direct.prompt);
-            // Persisted caller input is not rewritten by compatibility filtering.
-            assert!(request.input.content.contains(old_block));
+        let pipeline = "<!-- vk:pipeline:start -->\n<!-- vk:pipeline:id=custom -->\nArbitrary user-authored stages and manual notes.\n<!-- vk:pipeline:end -->";
+        let skills = vec![api_types::SelectedSkill {
+            name: "custom".into(),
+            path: PathBuf::from("/fixture/skills/custom/SKILL.md"),
+        }];
+        attempt.selected_skills = Some(skills.clone());
+        for provider in [DirectProvider::Codex, DirectProvider::ClaudeCode] {
+            for (intent, text) in [
+                (AgentRunIntent::Initial, "Implement safely"),
+                (AgentRunIntent::FollowUp, "Continue"),
+                (AgentRunIntent::FollowUp, "/goal Implement safely"),
+            ] {
+                request.intent = intent;
+                let original = format!("{text}\n{pipeline}");
+                request.input.content = original.clone();
+                let launch = FrozenDirectProviderLaunchSpec::new(
+                    &request,
+                    &attempt,
+                    provider,
+                    test_execution_env(&attempt.workspace.path),
+                );
+                let direct = launch.launch_request();
+                assert_eq!(direct.selected_skills, skills);
+                assert!(direct.prompt.starts_with(&original));
+                if provider == DirectProvider::Codex || text.starts_with('/') {
+                    assert_eq!(direct.prompt, original);
+                } else {
+                    assert!(direct.prompt.contains("Canonical openwiki/ is read-only"));
+                }
+                let audited: serde_json::Value =
+                    serde_json::from_slice(&launch.audit_payload().unwrap()).unwrap();
+                assert_eq!(audited["prompt"], direct.prompt);
+                assert_eq!(request.input.content, original);
+            }
         }
     }
 

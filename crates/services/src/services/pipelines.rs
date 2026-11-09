@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use ts_rs::TS;
 
-// Built-ins may be added here; the retired wikillm definition is not seeded.
+// No built-in pipelines are shipped.
 const BUNDLED: &[(&str, &str)] = &[];
 const PIPELINE_MARKER_PREFIX: &str = "<!-- vk:pipeline:";
 
@@ -161,10 +161,6 @@ pub fn load_pipelines(dir: &Path) -> Vec<Pipeline> {
                 return None;
             }
             let id = path.file_stem()?.to_str()?;
-            if id == "wikillm" {
-                tracing::debug!(path = %path.display(), "retired Wiki Pipeline remains on disk but is not offered");
-                return None;
-            }
             let input = std::fs::read_to_string(&path).ok()?;
             match parse_pipeline(id, &input) {
                 Ok(pipeline) => Some(pipeline),
@@ -254,28 +250,9 @@ prompt = "<!-- vk:pipeline:end -->"
     }
 
     #[test]
-    fn does_not_seed_or_offer_retired_wikillm_and_preserves_saved_file() {
+    fn loads_user_definitions_without_modifying_them() {
         let temp = tempdir().unwrap();
-        ensure_seeded(temp.path()).unwrap();
-        let seeded = load_pipelines(temp.path());
-        assert!(seeded.is_empty());
-        assert!(!temp.path().join("wikillm.toml").exists());
-
-        let persisted = "name = \"LLM Wiki\"\n[[stage]]\nid = \"recall\"\nlabel = \"Recall\"\nprompt = \"User-edited legacy instruction\"\n";
-        assert!(parse_pipeline("wikillm", persisted).is_ok());
-        std::fs::write(temp.path().join("wikillm.toml"), persisted).unwrap();
-        ensure_seeded(temp.path()).unwrap();
         assert!(load_pipelines(temp.path()).is_empty());
-        assert_eq!(
-            std::fs::read_to_string(temp.path().join("wikillm.toml")).unwrap(),
-            persisted
-        );
-    }
-
-    #[test]
-    fn lists_bundled_pipelines_before_user_definitions() {
-        let temp = tempdir().unwrap();
-        std::fs::create_dir_all(temp.path()).unwrap();
         std::fs::write(
             temp.path().join("alpha.toml"),
             r#"
@@ -287,6 +264,7 @@ prompt = "one"
 "#,
         )
         .unwrap();
+        let stored = std::fs::read(temp.path().join("alpha.toml")).unwrap();
         let pipelines = load_pipelines(temp.path());
         assert_eq!(
             pipelines
@@ -294,6 +272,10 @@ prompt = "one"
                 .map(|pipeline| pipeline.id.as_str())
                 .collect::<Vec<_>>(),
             ["alpha"]
+        );
+        assert_eq!(
+            std::fs::read(temp.path().join("alpha.toml")).unwrap(),
+            stored
         );
     }
 }

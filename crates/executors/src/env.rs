@@ -4,6 +4,8 @@ use tokio::process::Command;
 
 use crate::command::CmdOverrides;
 
+pub(crate) const OPENWIKI_READ_ONLY_GUIDANCE: &str = "Canonical openwiki/ is read-only in normal coding executions. Only an authorised OpenWiki maintenance execution may initialise or update it. Follow repository-memory instructions when supplied.";
+
 /// Repository context for executor operations
 #[derive(Debug, Clone, Default)]
 pub struct RepoContext {
@@ -61,7 +63,7 @@ impl ExecutionEnv {
             .get("LVK_OPENWIKI_MAINTENANCE")
             .is_none_or(|value| value != "1")
         {
-            parts.push(crate::legacy_wiki::RETIREMENT_NOTICE);
+            parts.push(crate::env::OPENWIKI_READ_ONLY_GUIDANCE);
         }
         if let Some(memory) = self.get("LVK_REPOSITORY_MEMORY_INSTRUCTIONS") {
             parts.push(memory.as_str());
@@ -138,7 +140,7 @@ mod tests {
             let instructions = env.repository_memory_instructions().unwrap();
             assert_eq!(
                 instructions
-                    .matches(crate::legacy_wiki::RETIREMENT_NOTICE)
+                    .matches(crate::env::OPENWIKI_READ_ONLY_GUIDANCE)
                     .count(),
                 1
             );
@@ -148,7 +150,7 @@ mod tests {
         }
         env.insert("LVK_OPENWIKI_MAINTENANCE", "1");
         let instructions = env.repository_memory_instructions().unwrap();
-        assert!(!instructions.contains(crate::legacy_wiki::RETIREMENT_NOTICE));
+        assert!(!instructions.contains(crate::env::OPENWIKI_READ_ONLY_GUIDANCE));
         assert!(instructions.contains("continued identity"));
         for mode in ["LVK_OPENWIKI_REVIEWER", "LVK_RESOURCE_MEDIATOR"] {
             let mut dedicated = env.clone();

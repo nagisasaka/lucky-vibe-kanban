@@ -7,7 +7,6 @@ pub mod config_write;
 pub mod env;
 pub mod executor_discovery;
 pub mod executors;
-pub mod legacy_wiki;
 pub mod logs;
 pub mod mcp_config;
 pub mod model_selector;
