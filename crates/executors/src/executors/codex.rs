@@ -2574,6 +2574,31 @@ mod goal_skill_tests {
     }
 
     #[test]
+    fn normal_profile_without_lvk_mcp_has_file_guide_on_start_and_resume() {
+        let codex: Codex = serde_json::from_value(serde_json::json!({})).unwrap();
+        let root = tempfile::tempdir().unwrap();
+        let mut env = ExecutionEnv::new(RepoContext::new(root.path().into(), vec![]));
+        env.prepare_runtime_guide().unwrap();
+        let path = env.get("LVK_EXECUTION_GUIDE").unwrap();
+        let params = codex.build_thread_start_params_with_resources(root.path(), &env);
+        assert!(
+            params
+                .developer_instructions
+                .as_ref()
+                .unwrap()
+                .contains(path)
+        );
+        assert!(
+            std::fs::read_to_string(path)
+                .unwrap()
+                .contains("Draft schema:")
+        );
+        let resumed = resume_params_from("same-thread".into(), params);
+        assert!(resumed.developer_instructions.unwrap().contains(path));
+        assert_eq!(resumed.thread_id, "same-thread");
+    }
+
+    #[test]
     fn manifest_guidance_is_persistent_for_initial_and_resumed_threads() {
         let codex: Codex = serde_json::from_value(serde_json::json!({})).unwrap();
         let mut env = ExecutionEnv::new(RepoContext::default());

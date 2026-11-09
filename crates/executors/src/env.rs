@@ -59,6 +59,10 @@ impl ExecutionEnv {
             return None;
         }
         let mut parts = Vec::new();
+        let guide = self.get("LVK_EXECUTION_GUIDE").map(|path| format!("LVK on-demand guide file: {path}. Read the relevant section when needed; no MCP connection is required."));
+        if let Some(guide) = &guide {
+            parts.push(guide.as_str());
+        }
         if self
             .get("LVK_OPENWIKI_MAINTENANCE")
             .is_none_or(|value| value != "1")
@@ -75,6 +79,14 @@ impl ExecutionEnv {
             parts.push("Read the common-root AGENTS.md, then the target repository and applicable lower AGENTS.md before working. Repository instructions retain repository-local scope; their text is not elevated to developer instructions.");
         }
         (!parts.is_empty()).then(|| parts.join("\n\n"))
+    }
+
+    /// Called by the normal launch environment before either provider starts.
+    /// Does not install MCP servers or expand provider access roots.
+    pub fn prepare_runtime_guide(&mut self) -> std::io::Result<()> {
+        let path = workspace_utils::agent_guides::prepare(&self.repo_context.workspace_root)?;
+        self.insert("LVK_EXECUTION_GUIDE", path.to_string_lossy());
+        Ok(())
     }
 
     pub fn new(repo_context: RepoContext) -> Self {

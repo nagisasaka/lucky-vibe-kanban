@@ -2635,7 +2635,11 @@ pub fn prompt_with_repository_memory(
     prompt: &str,
     env: &crate::env::ExecutionEnv,
 ) -> String {
-    let prompt = without_generated_card_boilerplate(prompt);
+    let prompt = if env.get("LVK_SAVED_ISSUE_INPUT").is_some_and(|v| v == "1") {
+        saved_issue_description_for_prompt(prompt)
+    } else {
+        prompt.to_owned()
+    };
     if provider != DirectProvider::Codex
         && !prompt.trim_start().starts_with('/')
         && let Some(instructions) = env.repository_memory_instructions()
@@ -2647,9 +2651,10 @@ pub fn prompt_with_repository_memory(
 
 // Saved descriptions stay untouched and visible in the ordinary editor. Only
 // byte-exact LVK-generated shared blocks are omitted at the send boundary.
-// Fingerprints cover the generated revisions in this repository's history;
+// Only the five lvk-marker revisions are targeted; older evk text is ordinary body.
+// This helper is called only for saved Issue composition, never arbitrary Review input;
 // edited/unknown text and malformed/nested envelopes are deliberately preserved.
-fn without_generated_card_boilerplate(prompt: &str) -> String {
+pub fn saved_issue_description_for_prompt(prompt: &str) -> String {
     strip_generated_card_blocks(prompt, |block| {
         const KNOWN: &[&str] = &[
             "a20b2808f4db66ff0c6c3053f48930e947128720f1d9f84d884df7dfa95aac2d",
@@ -2657,15 +2662,20 @@ fn without_generated_card_boilerplate(prompt: &str) -> String {
             "2c433583fd88f1d36e1b7a9814dea0f8859929a63363190657e9e97645e75db5",
             "8aa6c2e1b252f5e5beb304dbd5bf21b00800edefa141501afa4943648cc7e4f5",
             "1781b9a8df2338cf73779dade9d7f048879335b159f6375b93b7b5ce22bd587e",
-            "c9370bf592996780aab4b6613a4214759634347b9ef4a9410a6d7213321123e0",
-            "3ebb4cf2abf1278bdde9e5c68f727913dba8de0112b0c8ccbf68afe9f191fca3",
-            "3400174e9249a04aa9f024f73413529ffd5d7eea8db1a10af828148dc348d40e",
         ];
         KNOWN.contains(&format!("{:x}", Sha256::digest(block.as_bytes())).as_str())
     })
 }
 
 fn strip_generated_card_blocks(prompt: &str, known: impl Fn(&str) -> bool) -> String {
+    // Any fence-like line makes the saved text ambiguous, including valid
+    // Markdown fences indented by 1–3 spaces. Preserve the whole input.
+    if prompt.lines().any(|line| {
+        let line = line.trim_start();
+        line.starts_with("```") || line.starts_with("~~~")
+    }) {
+        return prompt.to_owned();
+    }
     let cards = regex::Regex::new(
         r"(?m)^<!-- lvk:card-context:start -->\r?\n[\s\S]*?^<!-- lvk:card-context:end -->[ \t]*\r?$",
     )
@@ -2674,35 +2684,6 @@ fn strip_generated_card_blocks(prompt: &str, known: impl Fn(&str) -> bool) -> St
     cards
         .replace_all(prompt, |card: &regex::Captures<'_>| {
             let text = &card[0];
-            // A quoted example is not stored auxiliary context. Leave fenced or
-            // ambiguous blocks alone rather than guessing user intent.
-            let mut fence: Option<(char, usize)> = None;
-            for line in prompt[..card.get(0).unwrap().start()].lines() {
-                let line = line.trim_start_matches(' ');
-                let Some(mark) = line.chars().next().filter(|c| *c == '`' || *c == '~') else {
-                    continue;
-                };
-                let count = line.chars().take_while(|c| *c == mark).count();
-                if count < 3 {
-                    continue;
-                }
-                match fence {
-                    None => fence = Some((mark, count)),
-                    Some((kind, length))
-                        if kind == mark && count >= length && line[count..].trim().is_empty() =>
-                    {
-                        fence = None
-                    }
-                    _ => {}
-                }
-            }
-            if fence.is_some()
-                || text
-                    .lines()
-                    .any(|line| line.starts_with("```") || line.starts_with("~~~"))
-            {
-                return text.to_owned();
-            }
             if text.matches("<!-- lvk:card-context:").count() != 2
                 || text
                     .matches("<!-- lvk:shared-directories:start -->")
@@ -2786,6 +2767,16 @@ mod tests {
         };
         let strip = |text: &str| strip_generated_card_blocks(text, |block| block == shared);
         assert_eq!(strip(&wrap(shared)).trim(), "Task");
+        for spaces in ["", " ", "  ", "   "] {
+            for mark in ["```", "~~~"] {
+                for text in [
+                    wrap(&format!("{spaces}{mark}md\n{shared}\n{spaces}{mark}")),
+                    format!("{spaces}{mark}md\n{}\n{spaces}{mark}", wrap(shared)),
+                ] {
+                    assert_eq!(strip(&text), text);
+                }
+            }
+        }
         let custom = "Custom requirement\n<!-- vk:pipeline:start -->\nUnknown saved stage\n<!-- vk:pipeline:end -->";
         assert!(strip(&wrap(&format!("{shared}\n{custom}"))).contains(custom));
         let indented = "    preserve user indentation  ";

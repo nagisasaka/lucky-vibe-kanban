@@ -878,6 +878,22 @@ impl LocalAgentRunPort {
                 &attempt.executor_config,
                 &request.input.content,
             );
+        // Only an exact saved-Issue composition may opt into boilerplate removal.
+        // Ordinary new prompts, continuations and Review examples stay untouched.
+        let saved_issue_input = if source_completion_allowed {
+            let issue: Option<(String, Option<String>)> = sqlx::query_as("SELECT i.title,i.description FROM local_workspace_links l JOIN local_issues i ON i.id=l.issue_id WHERE l.workspace_id=?")
+                .bind(workspace.id).fetch_optional(&self.db.pool).await.map_err(port_database)?;
+            issue.is_some_and(|(title, description)| {
+                let expected = [title.trim(), description.as_deref().unwrap_or("").trim()]
+                    .into_iter()
+                    .filter(|s| !s.is_empty())
+                    .collect::<Vec<_>>()
+                    .join("\n\n");
+                !expected.is_empty() && request.input.content.trim() == expected
+            })
+        } else {
+            false
+        };
         for repo in &repos {
             let root = PathBuf::from(&request.workspace.path).join(repo.worktree_name());
             let identity_instructions = git::GitService::new()
@@ -1019,6 +1035,14 @@ impl LocalAgentRunPort {
                 .is_ok_and(|s| s.starts_with("<!-- LVK WORKSPACE INSTRUCTIONS v1 -->"))
         {
             env.insert("LVK_PARENT_AGENTS", "1");
+        }
+        if !resource_mediator && !openwiki_reviewer {
+            env.prepare_runtime_guide().map_err(|error| {
+                AgentRunPortError::Unavailable(format!("Execution guide: {error}"))
+            })?;
+        }
+        if saved_issue_input {
+            env.insert("LVK_SAVED_ISSUE_INPUT", "1");
         }
         env.insert("VK_WORKSPACE_ID", workspace.id.to_string());
         env.insert("VK_WORKSPACE_BRANCH", &workspace.branch);
@@ -5827,6 +5851,126 @@ mod tests {
                 .map(|session| session.provider_session_id.as_str()),
             Some("claude-session")
         );
+    }
+
+    #[tokio::test]
+    async fn normal_launch_prepares_readable_guides_without_mcp_for_both_providers() {
+        let fixture = setup_runtime_db().await;
+        let (mut request, mut attempt) = persisted_codex_run(&fixture).await;
+        let pool = SqlitePoolOptions::new()
+            .max_connections(1)
+            .connect("sqlite::memory:")
+            .await
+            .unwrap();
+        sqlx::migrate!("../db/migrations").run(&pool).await.unwrap();
+        let mut workspace = db::models::workspace::Workspace::create(
+            &pool,
+            &db::models::workspace::CreateWorkspace {
+                branch: "fixture".into(),
+                name: None,
+            },
+            request.workspace.workspace_id,
+        )
+        .await
+        .unwrap();
+        workspace.workspace_kind = db::models::workspace::WorkspaceKind::DirectFolder;
+        let root = tempfile::tempdir().unwrap();
+        request.workspace.path = root.path().to_string_lossy().into_owned();
+        attempt.workspace = request.workspace.clone();
+        let port = LocalAgentRunPort::new(DBService { pool });
+        let mut previous = None;
+        for provider in [DirectProvider::Codex, DirectProvider::ClaudeCode] {
+            for intent in [
+                AgentRunIntent::Initial,
+                AgentRunIntent::FollowUp,
+                AgentRunIntent::Review,
+            ] {
+                request.intent = intent;
+                request.agent_run_id = Uuid::new_v4();
+                let env = port
+                    .execution_env(&request, &attempt, &workspace, provider)
+                    .await
+                    .unwrap();
+                assert!(env.get("LVK_INTEGRATION_MCP_COMMAND").is_none());
+                assert!(env.get("LVK_SAVED_ISSUE_INPUT").is_none());
+                assert_eq!(
+                    env.get("VK_AGENT_RUN_ID"),
+                    Some(&request.agent_run_id.to_string())
+                );
+                let path = PathBuf::from(env.get("LVK_EXECUTION_GUIDE").unwrap());
+                assert!(path.starts_with(root.path()));
+                let content = std::fs::read_to_string(&path).unwrap();
+                for section in [
+                    "Draft schema:",
+                    "after_workspace",
+                    "X-LVK-Internal-Token",
+                    "verification_script",
+                    "same contents on retry",
+                ] {
+                    assert!(content.contains(section));
+                }
+                let launch = FrozenDirectProviderLaunchSpec::new(&request, &attempt, provider, env);
+                let instructions = launch.env.repository_memory_instructions().unwrap();
+                assert!(instructions.contains(path.to_str().unwrap()));
+                assert!(!instructions.contains("Draft schema:"));
+                if provider == DirectProvider::ClaudeCode {
+                    assert!(launch.prompt.contains(path.to_str().unwrap()));
+                }
+                if let Some(previous) = &previous {
+                    assert_eq!(&path, previous);
+                }
+                previous = Some(path);
+            }
+        }
+        let project = Uuid::new_v4();
+        let status = Uuid::new_v4();
+        let issue = Uuid::new_v4();
+        sqlx::query("INSERT INTO projects(id,name) VALUES(?,'fixture')")
+            .bind(project)
+            .execute(&port.db.pool)
+            .await
+            .unwrap();
+        sqlx::query("INSERT INTO local_project_statuses(id,project_id,name,color,sort_order) VALUES(?,?,'Todo','blue',0)").bind(status).bind(project).execute(&port.db.pool).await.unwrap();
+        let body = "<!-- lvk:card-context:start -->\nUser edited requirement\n<!-- lvk:card-context:end -->";
+        sqlx::query("INSERT INTO local_issues(id,project_id,issue_number,simple_id,status_id,title,description,sort_order) VALUES(?,?,1,'T-1',?,'Task',?,0)").bind(issue).bind(project).bind(status).bind(body).execute(&port.db.pool).await.unwrap();
+        sqlx::query(
+            "INSERT INTO local_workspace_links(workspace_id,issue_id,project_id) VALUES(?,?,?)",
+        )
+        .bind(workspace.id)
+        .bind(issue)
+        .bind(project)
+        .execute(&port.db.pool)
+        .await
+        .unwrap();
+        request.intent = AgentRunIntent::Initial;
+        request.input.content = format!("Task\n\n{body}");
+        let env = port
+            .execution_env(&request, &attempt, &workspace, DirectProvider::Codex)
+            .await
+            .unwrap();
+        assert_eq!(
+            env.get("LVK_SAVED_ISSUE_INPUT").map(String::as_str),
+            Some("1")
+        );
+        request.input.content.push_str("\nNew caller instructions");
+        let env = port
+            .execution_env(&request, &attempt, &workspace, DirectProvider::Codex)
+            .await
+            .unwrap();
+        assert!(env.get("LVK_SAVED_ISSUE_INPUT").is_none());
+        request.input.content = format!("Task\n\n{body}");
+        request.intent = AgentRunIntent::Review;
+        let env = port
+            .execution_env(&request, &attempt, &workspace, DirectProvider::Codex)
+            .await
+            .unwrap();
+        assert!(env.get("LVK_SAVED_ISSUE_INPUT").is_none());
+        let stored: String = sqlx::query_scalar("SELECT description FROM local_issues WHERE id=?")
+            .bind(issue)
+            .fetch_one(&port.db.pool)
+            .await
+            .unwrap();
+        assert_eq!(stored, body);
     }
 
     #[tokio::test]

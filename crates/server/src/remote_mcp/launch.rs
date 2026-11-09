@@ -478,7 +478,22 @@ async fn prepare_start(
     }
     let mut prompt = format!(
         "{}\n\n{}\n\nLVK MCP operation: {workspace_id}",
-        issue.title, description
+        issue.title,
+        if executors::executors::provider_adapter::DirectProvider::from_base_agent(
+            executor.executor
+        )
+        .is_some_and(|provider| {
+            executors::executors::provider_adapter::memory_source_completion_allowed(
+                provider,
+                executors::executors::provider_adapter::DirectIntent::Initial,
+                &executor,
+                description,
+            )
+        }) {
+            executors::executors::provider_adapter::saved_issue_description_for_prompt(description)
+        } else {
+            description.to_owned()
+        }
     );
     for id in &args.attachment_ids {
         let file = db::models::file::File::find_by_id(pool, *id)

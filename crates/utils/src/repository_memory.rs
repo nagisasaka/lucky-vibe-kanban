@@ -595,9 +595,9 @@ fn source_completion_default() -> bool {
 }
 
 /// Fixed coding contract, delivered once even when a run has several repositories.
-pub const CODING_RUN_INSTRUCTIONS: &str = "For source changes, read get_context(guide=coding) and write a JSON semantic draft at the CURRENT draft_path before finishing. Connect confirmed human goals, constraints and decisions to the implementation; distinguish your choices and never invent rationale. Use the same summary for any source commit. Successful normal coding Runs automatically commit source and bind the Manifest; shared drafts must not be Git committed. With no source changes, write no draft or dedicated verification record; report in the ordinary final response.";
+pub const CODING_RUN_INSTRUCTIONS: &str = "For source changes, read the Coding and Manifest section of the LVK on-demand guide file and write a JSON semantic draft at the CURRENT draft_path before finishing. Connect confirmed human goals, constraints and decisions to the implementation; distinguish your choices and never invent rationale. Use the same summary for any source commit. Successful normal coding Runs automatically commit source and bind the Manifest; shared drafts must not be Git committed. With no source changes, write no draft or dedicated verification record; report in the ordinary final response.";
 
-/// Read on demand through the coding agent's existing MCP context.
+/// Read on demand through the launch guide file or optional MCP context.
 pub const CODING_RUN_GUIDE: &str = r#"Draft schema: {"goal":"current task intent","summary":"concise human commit message","behavioral_changes":[],"architectural_changes":[],"invariants_affected":[],"decisions":[{"decision":"...","rationale":"..."}],"rejected_alternatives":[{"alternative":"...","reason":"..."}],"unresolved_questions":[],"tests":[{"command":"...","result":"passed|failed|not-run","summary":"..."}]}. Omit empty optional arrays. Preserve confirmed human motivations and meaningful rejected alternatives; approval is authorization, not technical rationale. Tests are short performed/not-performed summaries with reasons, never invented results or logs. Development context stays in the coding Session, not Workspace Memory or another handoff store."#;
 
 impl RepositoryMemoryRun {

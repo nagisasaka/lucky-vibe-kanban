@@ -86,6 +86,6 @@ pub async fn guard_workspace_idle(pool: &SqlitePool, workspace: Uuid) -> anyhow:
 
 pub fn instructions(port: u16, session: Uuid) -> String {
     format!(
-        "Shared resource authority: http://127.0.0.1:{port}/api/resource-coordination; current session_id: {session}. Before shared device/DB/deployment access, use MCP list_shared_resources and read run_resource_operation's contract. Use the canonical resource identity, one atomic bundle, cleanup and idle/state verification; never bypass owners. Retry only with the same request_id and identical contents. Finish or cancel managed operations before completion; failures may require operator recovery. MCP authenticates automatically; read get_context(guide=resources) for raw HTTP/Runner details when needed."
+        "Shared resource authority: http://127.0.0.1:{port}/api/resource-coordination; current session_id: {session}. Before shared device/DB/deployment access, read the snapshot (MCP list_shared_resources or GET /snapshot) and the guide's operation contract. Use the canonical resource identity, one atomic bundle, cleanup and idle/state verification; never bypass owners. Retry only with the same request_id and identical contents. Finish or cancel managed operations before completion; failures may require operator recovery. MCP authenticates automatically; read the Shared resources section of the LVK on-demand guide file for raw HTTP/Runner details when needed."
     )
 }
