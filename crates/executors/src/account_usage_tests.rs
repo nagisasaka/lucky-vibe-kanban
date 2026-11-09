@@ -213,6 +213,8 @@ async fn live_provider_usage_observations() {
         let overridden = match &agent {
             CodingAgent::Codex(a) => a.cmd.base_command_override.is_some(),
             CodingAgent::ClaudeCode(a) => a.cmd.base_command_override.is_some(),
+            #[cfg(feature = "qa-mode")]
+            CodingAgent::QaMock(_) => false,
         };
         println!(
             "LIVE {profile}: launcher_override={overridden}; authentication=official CLI existing context (kind not independently inspected)"
@@ -220,6 +222,8 @@ async fn live_provider_usage_observations() {
         let value = match agent {
             CodingAgent::Codex(agent) => agent.read_account(None, true).await,
             CodingAgent::ClaudeCode(agent) => agent.read_account_usage(false, true).await,
+            #[cfg(feature = "qa-mode")]
+            CodingAgent::QaMock(_) => unreachable!("live diagnostics only select official providers"),
         };
         let auth_inference = if profile.executor == BaseCodingAgent::Codex
             && value.pointer("/quota/status").and_then(Value::as_str) == Some("fresh")
