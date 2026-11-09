@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:84c067b80f9a613400915fe94ad02bbf3e0d4f4b6764792f43beaf2befb0ea1e",
+  "pageVersion": "sha256:89dfba0e678a42c9f1c0842eef9362be25f4e34588f7df67116091faca44879c",
   "claims": [
     {
       "id": "claim_58a31267fd284cf6b691efe1ca720bfe",
@@ -15,8 +15,8 @@
           "version": "repo-lines-v1:sha256:de51fa9428d7497154a8762dab1c5306c44da7dceaa64f75babc062d9d06bd07:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQyNjMyYmZlYzRmMzhlNTUzMDU4MzE3ODVjNzI2NDhlZTRkOGNiMjllMDEzNzg0NDc0OTk5YzYxYTcwYjg2ZjQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEzYTY3Y2FlYzdkZWIzYzhmZWFhMDQ2NTNiNTA5YzlkZmYyMzAxNTVkYzViYjAzYjliZGY4ODYzN2I5MGJiMjIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjBmNzU3YzQ4NzRlM2JhZTNjMjhkYjdhNzNkMTM2NDg1MDgwNjE4NmE4MzdlZThhOWQ2ZTcyZmIyNTIwMzgwOWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
         },
         {
-          "resource": "repo://crates/server/src/routes/mod.rs#L55-L111",
-          "version": "repo-lines-v1:sha256:b8fad56e02dd390255537ea8413237cca1b087cf27de2efab280cafa10105cbf:eyJzZWxlY3RlZExpbmVDb3VudCI6NTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgyZWE1YTIxYzAyMGYwMTM0MTY3MGZmZjkxODJlYmQ1ZjhjNDZiNzcwZTczYTEwMjRhNDkwYjg5YTA0ZDk1NTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJhYzBhYTYxNGU3MGM1ODk5ZDAzMDlmYzA5ZGE5ZDliMTE5ZmUwM2Y0ZmQ2Y2QzNzU3NzYzYTFhODZlOTE3YjEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+          "resource": "repo://crates/server/src/routes/mod.rs#L54-L109",
+          "version": "repo-lines-v1:sha256:dbf3c0f897fe3bad1f374e098c8759e20590f81619e3fd7d705e071aecf635b4:eyJzZWxlY3RlZExpbmVDb3VudCI6NTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgyZWE1YTIxYzAyMGYwMTM0MTY3MGZmZjkxODJlYmQ1ZjhjNDZiNzcwZTczYTEwMjRhNDkwYjg5YTA0ZDk1NTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJhYzBhYTYxNGU3MGM1ODk5ZDAzMDlmYzA5ZGE5ZDliMTE5ZmUwM2Y0ZmQ2Y2QzNzU3NzYzYTFhODZlOTE3YjEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
         },
         {
           "resource": "repo://deploy/server/compose.yaml",
@@ -478,7 +478,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/mod.rs",
-          "version": "repo-file-v1:sha256:6b52c28fa29dce40b31c357d9e44d60d45e412233e5170cad1145f26ed05ec88"
+          "version": "repo-file-v1:sha256:4b23d2ceaa859e28c22477309b8bca7cf08ff65f70ba4be32ec6d64c92ed0fcd"
         },
         {
           "resource": "repo://crates/server/src/startup.rs#L133-L147",
@@ -497,6 +497,6 @@
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-07T09:56:11.730Z"
+    "at": "2026-11-09T18:10:41.827Z"
   }
 }

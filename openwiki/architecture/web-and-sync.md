@@ -52,6 +52,8 @@ sources:
     resource: repo://packages/ui/src/components/ChatCode.tsx
   - id: openwiki-source-415636b44e23058beab18db4
     resource: repo://packages/ui/src/components/ChatRunFooter.tsx
+  - id: openwiki-source-8fc81a64a6927ed4ae184ab7
+    resource: repo://packages/ui/src/components/ChatUserMessage.tsx
   - id: openwiki-source-d89c4480040eee7fa41a6000
     resource: repo://packages/ui/src/components/CodeHighlightPlugin.tsx
   - id: openwiki-source-5e4c1802d2c1ee81cad7ac45
@@ -66,8 +68,6 @@ sources:
     resource: repo://packages/ui/src/components/PasteMarkdownPlugin.tsx
   - id: openwiki-source-b5c65c61c678426ad814529a
     resource: repo://packages/ui/src/components/Popover.tsx
-  - id: openwiki-source-c0945aff6520d3600561e893
-    resource: repo://packages/ui/src/components/PromptContext.tsx
   - id: openwiki-source-bb23b715172e6051c10e1afc
     resource: repo://packages/ui/src/components/ReadOnlyLinkPlugin.tsx
   - id: openwiki-source-1383d6dc4e3d9d2ea475e735
@@ -286,10 +286,10 @@ sources:
     resource: repo://tests/workspace-navigation/run-isolated.py
   - id: openwiki-source-b87e3253bd1458a0091f8587
     resource: repo://tests/workspace-navigation/workspace-navigation.spec.ts
-generated: { by: "codex", at: "2026-11-09T08:47:44.052Z" }
+generated: { by: "codex", at: "2026-11-09T18:20:01.087Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-09T08:47:44.052Z
+    at: 2026-11-09T18:20:01.087Z
 ---
 
 # Web の実行環境と同期
@@ -472,9 +472,9 @@ AgentRun stream は Electric ではない。サーバーは Live を先に購読
 
 ### User message の補助情報を表示時だけ折り畳む
 
-`UserMessageEntry` は元の `content` と編集 callback を `ChatUserMessage` へ渡し、UI package の `PromptContext` が表示だけを分割する。通常部分は従来の `AppChatMarkdown`、補助部分と元の全文は native `details` 内の plain `pre` で描画する。編集開始は分割結果ではなく元の `content` を使い、実行 process・fork capability・編集中状態による既存の可否判定を維持する。[呼出側と編集](../../packages/web-core/src/features/workspace-chat/ui/DisplayConversationEntry.tsx#L882-L930)・[UI への接続](../../packages/ui/src/components/ChatUserMessage.tsx#L74-L88)・[表示部品](../../packages/ui/src/components/PromptContext.tsx#L16-L42)
+この専用表示はLOCAL-361で廃止した。`UserMessageEntry` は元の `content` と既存の編集callbackを `ChatUserMessage` へ渡し、本文全体を従来の `AppChatMarkdown` で描画する。markerによる補助情報分割や専用全文コピーは行わない。編集開始は元のcontentを使い、process・fork capability・編集中状態の可否判定を維持する。[通常表示](../../packages/ui/src/components/ChatUserMessage.tsx#L74-L86)・[編集の接続](../../packages/web-core/src/features/workspace-chat/ui/DisplayConversationEntry.tsx#L990-L1065)
 
-認識する marker、曖昧入力の fallback、全文コピーと試験の限界は [Card context の表示契約](../concepts/card-context-and-llm-wiki.md#チャットの補助情報と元の全文)を正本とする。この表示境界を会話の保存・provider 注入・権限制御へ流用しない。
+保存Issueの独自文や未知Pipelineも通常本文として閲覧・編集する。送信時の既知生成文の限定除去は表示とは別であり、[保存本文の境界](../concepts/card-context-and-llm-wiki.md)を参照する。通常Markdown表示はHTML comment自体の可視化を保証しない。
 
 ### 永続会話と Live の順序
 

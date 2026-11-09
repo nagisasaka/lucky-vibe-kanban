@@ -17,16 +17,16 @@ sources:
     resource: repo://crates/server/src/routes/execution_bridge/mod.rs
   - id: openwiki-source-516767fac5b6f9159d5b8c8f
     resource: repo://crates/server/src/routes/execution_bridge/source.rs
+  - id: openwiki-source-8dd059d50335f535b6d49e83
+    resource: repo://crates/utils/src/agent_guides.rs
   - id: openwiki-source-e87354b216cb8b45c9c5fb2f
     resource: repo://scripts/local-runner/control.py
   - id: openwiki-source-ec73ab84df7c9375970d7057
     resource: repo://scripts/local-runner/runner.py
-  - id: openwiki-source-0e63365a39605f8b71f6bd5c
-    resource: repo://scripts/local-runner/test_control.py
-generated: { by: "codex", at: "2026-11-07T09:46:42.639Z" }
+generated: { by: "codex", at: "2026-11-09T18:20:01.087Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-07T09:46:42.639Z
+    at: 2026-11-09T18:20:01.087Z
 ---
 
 # 共有リソースの所有権と AI 調停
@@ -104,7 +104,7 @@ DB の履歴が実行時の正本であり、Wiki は live owner ledger とし�
 
 ## 調停への接続認証
 
-local stdio MCPは内部capabilityを自動で使う。raw loopback HTTPは同じdata directoryの`access-internal.token`をメモリー内のヘッダーに載せ、外部送信・URLやログへの記載・redirect追跡をしない。`control.py --internal-token-file`もloopback限定である。この認証は資源claimを代行せず、認証設定の管理権限でもない。[生成context](../../crates/services/src/services/resource_coordination.rs#L87-L99)、[operator client](../../scripts/local-runner/control.py#L43-L67)、[共通認証](server-access.md#webmcp内部agentを同じ資格情報にしない)
+local stdio MCPは内部capabilityを自動で使う。raw loopback HTTPは同じdata directoryの`access-internal.token`をメモリー内のヘッダーに載せ、外部送信・URLやログへの記載・redirect追跡をしない。`control.py --internal-token-file`もloopback限定である。この認証は資源claimを代行せず、認証設定の管理権限でもない。[短いcontext](../../crates/services/src/services/resource_coordination.rs#L87-L91)・[必要時の完全ガイド](../../crates/utils/src/agent_guides.rs#L11-L23)、[operator client](../../scripts/local-runner/control.py#L43-L67)、[共通認証](server-access.md#webmcp内部agentを同じ資格情報にしない)
 
 ## 外部 Runner と interactive operation
 
@@ -149,3 +149,10 @@ journalはprocess作成より前にcommand受付を記録する。受付済み�
 Runner settlementが揃った後、operatorが実機・DBなどの外部状態を確認する。`POST /api/resource-coordination/operations/ID/recover` には証拠と**全held resource**の現在revision・確認済み状態を渡す。serverはcontainment未確認ならreleaseを拒否し、遅れた成功報告でもrecovery_requiredを成功へ変えない。installation/journalを失った場合にunreachable Runnerを停止扱いにするforce-unlock APIはない。[回復guard](../../crates/server/src/routes/execution_bridge/mod.rs#L404-L419)・[operator回復](../../crates/server/src/routes/resource_coordination/mod.rs#L109-L131)
 
 `disable`は新規dispatchだけを止め、既存cleanup/resultsの配送は許す。token紛失時はoperatorの `rotate-token RUNNER_UUID` で旧tokenを無効にし、元Runnerを停止して同じrootへ新tokenで接続する。rotationはinstallation・所有権を変更しない。自動artifact保持期限はなく、結果未解決の間はrootとDBを保持する。[credentialの変更](../../crates/server/src/routes/execution_bridge/mod.rs#L60-L99)
+
+
+## 通常Runへの入口と詳細の責任元
+
+通常注入はauthority URL・現在session_id・snapshot確認・canonical identity・原子的bundle・cleanup/idle検証・同一request_id再試行の短い契約に絞る。raw HTTPとRunnerの詳細は通常起動が実ファイルへ配置し、任意 `get_context(guide=resources)` も同じ定義を返す。MCP未設定でもガイドを読め、登録数による長文切替や新しい権限設定は追加しない。[共通ガイド](../../crates/utils/src/agent_guides.rs)・[MCP参照](../../crates/mcp/src/task_server/tools/context.rs)
+
+文面短縮はserver側の排他・revision・recovery guardを弱める変更ではない。queuedは完了ではなく、失敗・timeout後の所有保持とoperator確認の境界は従来どおりである。[完了前guard](../../crates/services/src/services/resource_coordination.rs#L78-L85)

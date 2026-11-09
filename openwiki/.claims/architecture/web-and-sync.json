@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:a36f72d1ac957610ced6850595632b5792d2d03b1a7c887922bd1fa39b010c8d",
+  "pageVersion": "sha256:7a07aab5ed95c2ea1f53f66f61e011c0c3ddb36dce369ed1df7b779c5976aeb1",
   "claims": [
     {
       "id": "claim_cd547b65737e432fb2cf718c4992aa97",
@@ -331,7 +331,7 @@
       "statement": "会話の永続イベントはattempt番号とcanonical sequenceで並べ、native audit番号と混在ソートしない。Steerはprovider制御送信後にcommand IDのUser messageをnative refsなしで保存する。",
       "evidence": [
         {
-          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L3668-L3708",
+          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L3680-L3720",
           "version": "repo-lines-v1:sha256:0483a7451e1e4251ef8a95cad6bb5e0051fbf2e94e7608a0b95176329ab1df76:eyJzZWxlY3RlZExpbmVDb3VudCI6NDEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQzYTE5ZmRiZjJmMjFiMmMxOTg3MzgwNjE0NWM3ZjU4ZjlmOGFmYWYyNGUxNDQ0M2Y2NDBiOTkwMzIwYzI2NzciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU1MjJjNDJjZDE5YzZkMDNkODA4YzQ1MjcyMDU1MjgyNWI3ZWExYzViNDkxYjIxODUxMWNhYzc0MTVjZjlkOWIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjA3NjJhMTcwOGRiNjllNzlhMDMwNmVkNTEwOWVlYWY4ZTg2MjM5OTdmZTRmMTE4MTQ0MjUyY2E3MTE3MjU3YmMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjVlMmEyOWE4MGY1MGIxNjI4ZGNjNTM0MzA1MWE3MTVhM2I0MWJiNmUzYjI5ZDgzZmFmZWUzZDYyMjdkZDc1M2UifQ"
         },
         {
@@ -994,15 +994,15 @@
     },
     {
       "id": "claim_d475d38017ff4fd29fa91c320da6e1c1",
-      "statement": "UserMessageEntry は元の content と編集 callback を ChatUserMessage に渡す。PromptContext は表示だけを分割し、通常部分に AppChatMarkdown、補助部分と全文に details/pre を使う。編集開始は元の content と既存の process・fork capability・編集中状態の判定を維持する。",
+      "statement": "UserMessageEntryは元のcontentと既存の編集callbackをChatUserMessageへ渡し、本文全体をAppChatMarkdownで表示する。Card Context専用分割は行わず、process・fork capability・編集中状態による編集可否を維持する。",
       "evidence": [
         {
-          "resource": "repo://packages/ui/src/components/PromptContext.tsx#L16-L42",
-          "version": "repo-lines-v1:sha256:2c94182b788ccf3054d6545638904f7b921037e31bf65b037f09a6ae1336036d:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRkMGMwNDY1NGI0NzllMDFmOWU1MjY3N2FlYmU0OWZhNzkyMGU0NWMwZjc4ZGQ1YzBjMjU4NzZkMjRkNDA1YjMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNhOTU0NWIwY2UwNWMyZDk3NTg0OTcxMTUzNTI1YjMwNzJmMzY0YjgwZDQ4NjdlOTljOGE0NTllNzI1MTBhYTQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImYwYTQwNTRkYmQ1ZWNmNTM5MDc0MzIyMTE4NzEyZDg3YmIwMzE0MmNkOTVlZDcwYzYwNmNiZDdkMjlkYzY3NDEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjAzMzdmNjdiZjhjZjFmMmJiODZiNzY0MTZiMzVjZTAyZGVjZmExNTNkMjkyZWIwMWFhZTg0OGM5NWY4NWM5YjkifQ"
+          "resource": "repo://packages/ui/src/components/ChatUserMessage.tsx#L74-L86",
+          "version": "repo-lines-v1:sha256:cef42cc266e64b734ba1bfbec805d570516324ae7d98d0f909c1813b4cf7376d:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJiZWZkZTRmOTYzMjIzZGNlMTdkODQ1ZjZiMTJmNDdhOTYyYmQwMGI4MTc0NzhkOGM4OTYzNDg0YmE1Y2FkMzkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk0Y2JhMmVkNGQxNjM0MmZmY2ZiODAwNzZlZWJlMTM1NGYxZGJlMGU2OTJlN2Y3NGNmZjNjOTkyYmQyOTAwMjkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
         },
         {
-          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/DisplayConversationEntry.tsx#L1000-L1065",
-          "version": "repo-lines-v1:sha256:653be7bfa6504d94c5eec0f913d7ab8e4720193d66e1996e3206231690a9e974:eyJzZWxlY3RlZExpbmVDb3VudCI6NjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVkZGJkMjcyMjViMzAyYjM3N2I0OGRhYWEzMDU3YTIxNzYyMGRlZDEwMDdkYjhmMDliMWEyMDVmNWVhNzg4ZGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFhNTI2YWI3NDE2OWQzYmNlYzk4YTkzODczN2I1MDVjODQwODYxMjcwMTg1OTQ5MzFlMzU3MTE4NDM5NDVmNjQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijg4OWM2NDZjZTVmM2EyZmQwNmI2NjM0ZGQ1ZWRmZGJkZjI0YmVkZDJmNjA2NTg3OThlMzY2MGQ1OTQxMTczZmIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjU3YWQ4MWE4ZTFlMmM4NmQxMjUzZDUwZmZlMWZlNTMyM2JhODlmNTE4MWYzZDNhODY5MTJlZDJiYjMwNTY5ZDYifQ"
+          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/DisplayConversationEntry.tsx#L990-L1065",
+          "version": "repo-lines-v1:sha256:65bea26b3af237da51059847d37c0a589646320d5820f985cca775523b2cebb3:eyJzZWxlY3RlZExpbmVDb3VudCI6NzYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdlOGY3MDgwZjAzZDA0YmIxMzBlMmQ3ZTMzNGU1NGUzYzA0NmM2MGZmZTZiYTA5MjllYmM1MjExMjNlY2RjODgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFhNTI2YWI3NDE2OWQzYmNlYzk4YTkzODczN2I1MDVjODQwODYxMjcwMTg1OTQ5MzFlMzU3MTE4NDM5NDVmNjQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM3OTI5ZTkxZTBmOTljM2U4MjVkZTY5YjQzNWZiNjQ4NGQxYjBhMWRmMmY0NjU2MWFiZjFhMjlmMDQxODhiODgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjU3YWQ4MWE4ZTFlMmM4NmQxMjUzZDUwZmZlMWZlNTMyM2JhODlmNTE4MWYzZDNhODY5MTJlZDJiYjMwNTY5ZDYifQ"
         }
       ]
     },
@@ -1318,7 +1318,7 @@
       "evidence": [
         {
           "resource": "repo://packages/web-core/src/features/wiki/ui/WorkspaceWikiSurfaces.test.tsx",
-          "version": "repo-file-v1:sha256:77189059c7c1afaec2ae95dd6021ded7de5eb1aa6f8c905dabba31f7704c32c1"
+          "version": "repo-file-v1:sha256:c754416026a0689d458c5e9eb7ddf71898906aad13a6adbcbd319e80718cd5b9"
         },
         {
           "resource": "repo://packages/web-core/src/features/workspace-files/ui/WorkspaceFileInspection.test.tsx",
@@ -1699,6 +1699,6 @@
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-09T08:47:44.052Z"
+    "at": "2026-11-09T18:20:01.087Z"
   }
 }

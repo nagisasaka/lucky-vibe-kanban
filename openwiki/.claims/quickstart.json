@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:8f186f3252dba034ce358d687657c330f6cd6f2b2695777d8cde16338d807e12",
+  "pageVersion": "sha256:fd66742610bcea1d839aae8a179755be30fe0e5c21c1896126d8ed881808fbd3",
   "claims": [
     {
       "id": "claim_edf1b78d3c7a4d978a6d8debcee4edd2",
@@ -77,24 +77,6 @@
         {
           "resource": "repo://crates/server/src/routes/integrations/runtime.rs",
           "version": "repo-file-v1:sha256:1784bf32772537242b96048e935912e321e5c8f7edd23c4f000b9f4240a86133"
-        }
-      ]
-    },
-    {
-      "id": "claim_dc14b6ee71ec4e5ca9d247e3f05519b7",
-      "statement": "新規CardのShared directories案内はManifest生成・Wiki読取専用規則と独立し、旧LLM Wiki自動生成は終了してreaderはOpenWikiのみを読む。",
-      "evidence": [
-        {
-          "resource": "repo://crates/executors/src/legacy_wiki.rs",
-          "version": "repo-file-v1:sha256:554ca56f62b28c1f298abeaff89ea4e288271e32f768b82eb0325557e5f82dd8"
-        },
-        {
-          "resource": "repo://crates/server/src/routes/workspaces/wiki.rs",
-          "version": "repo-file-v1:sha256:439bbf710c84638ebbd07fd20e6fce913fb8774f3e9b4a062be68d6409b66b15"
-        },
-        {
-          "resource": "repo://packages/web-core/src/features/pipeline/model/cardContext.ts",
-          "version": "repo-file-v1:sha256:c05cce7fb23bc45517b4919000581820caa009d9b7df314bebd2a57cb83f5f86"
         }
       ]
     },
@@ -318,7 +300,7 @@
         },
         {
           "resource": "repo://crates/utils/src/path.rs",
-          "version": "repo-file-v1:sha256:c992e6dda1e9c8129a65c07351678e0edae611c0f9521bc0fc8a632eb4300627"
+          "version": "repo-file-v1:sha256:bce99c31cad5552b5bac7e3bad76b62e9281db01cc9b5a446e9d2e09e999848f"
         }
       ]
     },
@@ -361,10 +343,28 @@
           "version": "repo-lines-v1:sha256:a8a5ac2f2ce07310008e3c5fd57b3083b5899ad3ccf0a8076d6f97f0e0da1def:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZmYzZkMWQyZjczOTlkMWU2Yzk1NmZiNDI2NGI1ZmRjYWI5NjVjODQxMzgwMmY1NTFkOTBhYTNhMWY5MWRmNDQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY1MDM4YTc2MjI4ODhkM2JhNzI1NzM0Mjg2MWU4MWY0NmM5NmVlYTVlOGNiNTBkZDczMDM0NDRmODA0Y2IwZDQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUwMGMzNzA5OGRmZWQyOTcwZjFmYjNiZDI4YTliYTFmYTAyNmY3ODU1Mzg4YTAzMmQ2ZDlmY2JlYTE3YWYyMDAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE2ZTg5ZTk1ZjdmOWUzYzA4MDZkZjI3NmI0YzIzY2Y0MDcxZjkwMTdmMTczNjRmNWIwN2Q1OTA4MThiYTI5NmEifQ"
         }
       ]
+    },
+    {
+      "id": "claim_0e3a558a94dc4d42a6bf7e2e04d75fa7",
+      "statement": "通常起動は現在のManifest identityと短い契約を渡し、詳細はMCPに依存しない実ガイドへ配置する。保存本文の既知5hash限定除去と現在OpenWiki read-only規則は別責務である。",
+      "evidence": [
+        {
+          "resource": "repo://crates/executors/src/env.rs#L53-L90",
+          "version": "repo-lines-v1:sha256:6a5600788401406ab37db34cf1bda05bc6504719d6bc5c7e6dc35fd909a16701:eyJzZWxlY3RlZExpbmVDb3VudCI6MzgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjkwYmZhMzY4OWNiNWEwMDNmYmI4MTNiNDhlNzYwZDBhYzc4MTRlODY5NzkzOTNhYWYyMGJmNGIwYzllZDY3ZDQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjEyM2QyODY1OTgzYmRiOGIwNTMzOTU2YWIwNDlmNmFjNmRmZmZlOWRlYmIwMzU1YzA1MmY5OWE4MTBiMzhhM2QifQ"
+        },
+        {
+          "resource": "repo://crates/executors/src/executors/provider_adapter.rs#L2651-L2725",
+          "version": "repo-lines-v1:sha256:fef2fbc255b8eb731d6a9ed6273abac35d884d93bd779bc84ae9edb900c2ddd7:eyJzZWxlY3RlZExpbmVDb3VudCI6NzUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZhMmVkNjM3NzkzOWFiZGY4MGRjNjVhMTk3ZjViYmY0MjY3NzdkNWRhMDA2NjIwODcyOTYzZjU1NWM1YWIzNjYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjgzNWM2ZDY3MDEwZmI4NjhkODk5ZTA3YzliMDNlZTRmNDM5NmVjMDZmYWZmMTZlZmUxNzFiMDNmMDc2NDA1OTIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZmNzFhYmNhMWJiOGVlZjBjZTY5NzVhYTFhMjY0ZDg4ZGY5ZTA5NmJmNWRhYzNkNGI5NGUzNjUwMTU0N2JhNGQifQ"
+        },
+        {
+          "resource": "repo://crates/utils/src/agent_guides.rs#L25-L62",
+          "version": "repo-lines-v1:sha256:c3c54cdb15d94bbc8556514cb976ff71a82288183e11473856f3647f8cc478ee:eyJzZWxlY3RlZExpbmVDb3VudCI6MzgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBkZmQ4ODk4YzQ2YmQ4NjQwODIzNGQ4ZDdiN2IzOGQ4Mzg4NGQ3ZjZkNjY1OGY2NjQ3NzI2Njc5ZjZlNWQ2MTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjBiMmYzYmEyYTk2M2Q2MjAwZTY1N2MzNTJiMGI5MTBlODc5ZWZkYzZiNzgyZjE1YzQ4NDc1Yzg5ZWIwNTZkZDIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQxMzYwZTc4OTM3Mjc0OTA3NjlhYzM4ZTYxMjRhNzZhMGIyOGZkZGJiZjFlYTM1ZDJiOTk4MDYzMjNiMWZjODUifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-09T07:03:14.304Z"
+    "at": "2026-11-09T18:10:41.827Z"
   }
 }

@@ -1,8 +1,9 @@
 ---
 type: guide
 title: 開発・検証・運用文書の使い分け
-description: 起動形態、検証の適用範囲、型と SQLx の更新、DB 回復の制約、リリース文書の位置づけを整理する。
+description: 起動形態、検証範囲、型とSQLx、DB回復、指示配信変更と切替bundleの検証境界を整理する。
 tags: [development, testing, database, releases]
+openwiki_generated: true
 sources:
   - id: openwiki-source-c8500b43a8153df40d055c87
     resource: repo://.lvk/preview/vite.config.mjs
@@ -26,8 +27,8 @@ sources:
     resource: repo://crates/db/src/models/agent_runtime.rs
   - id: openwiki-source-8856c7b6451960c4ee31ae56
     resource: repo://crates/executors/src/account_usage_tests.rs
-  - id: openwiki-source-f44bd32fb5e7cb5ee909f5c6
-    resource: repo://crates/executors/src/executors/codex/client/resume_instructions.rs
+  - id: openwiki-source-c88a7c6fabdac15166554032
+    resource: repo://crates/executors/src/executors/codex/client.rs
   - id: openwiki-source-f4e0f9b2ce513d3f8b8b070e
     resource: repo://crates/executors/src/executors/provider_adapter.rs
   - id: openwiki-source-788fa2f6f1a3d449a1a9efe4
@@ -128,6 +129,8 @@ sources:
     resource: repo://tests/chat/mcp-approval.mjs
   - id: openwiki-source-6bda7be6a5c83fa82bbb1e39
     resource: repo://tests/chat/paste-markdown.test.mjs
+  - id: openwiki-source-7cc1d248ce00f0c5ef61c76e
+    resource: repo://tests/chat/prompt-context.test.mjs
   - id: openwiki-source-e023073a2ead0d2a5b8304d5
     resource: repo://tests/project-keys/migration_compat.py
   - id: openwiki-source-27c3f21856d770e96494e465
@@ -156,13 +159,12 @@ sources:
     resource: repo://tests/terminal-latency/run.py
   - id: openwiki-source-966297deb875824dc95ee8d5
     resource: repo://tests/workflow/playwright.config.ts
-  - id: openwiki-source-1d08facbf90704cd4c4c54d8
-    resource: repo://tests/workflow/specs/card-context.spec.ts
-generated: { by: "codex", at: "2026-11-07T09:46:42.639Z" }
+generated: { by: "codex", at: "2026-11-09T18:20:01.087Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-09T08:47:44.052Z
+    at: 2026-11-09T18:20:01.087Z
 ---
+
 
 # 開発・検証・運用文書の使い分け
 
@@ -254,14 +256,14 @@ orchestration の記録では、明示された調査には必要な独立 Works
 | pnpm run lint | local-web / ui の lint、現行 Rust workspace の Clippy（qa-mode、all-targets）、未使用 i18n key 検査 |
 | pnpm run backend:test | 現行 Rust workspace の tests |
 | pnpm run workflow:e2e | 専用 Vite fixture に対する Chromium UI tests |
-| web-core の test:wiki | Pipeline model と Wiki feature の Vitest。全 frontend tests の包括実行ではない |
+| web-core の test:wiki | Wiki feature の Vitest。全 frontend tests の包括実行ではない |
 | pnpm run server:check | server 配布 kit の Node tests。native nginx test の実行には nginx が必要 |
 
 [コマンド定義](../../package.json)・[Wiki test script](../../packages/web-core/package.json#L100-L104)
 
 Tauri crate 自体が workspace からなくなったため、backend の check/lint/test は `--workspace` を使い、旧 `--exclude vibe-kanban-tauri` はない。[Cargo構成](../../Cargo.toml)、[script](../../package.json)。
 
-Workflow の Playwright は1 workerで専用 fixture を立ち上げる。fixture は製品の Workflow component/model を import するが、実 provider と DB を含む本番実行全体の test ではない。たとえば Card context test は折り畳み、read-only preview、保存 description との独立性を確認する。[test 設定](../../tests/workflow/playwright.config.ts)・[fixture](../../tests/workflow/fixture/src/main.tsx#L1-L24)・[Card context test](../../tests/workflow/specs/card-context.spec.ts)
+旧Card ContextのWorkflow specは撤去した。専用Viteを使うWorkflow Playwrightは1workerの既存fixtureとして残り、保存済み本文の閲覧・編集・専用UI不在は `node --test tests/chat/prompt-context.test.mjs` のChromium隔離componentで確認する。[Workflow設定](../../tests/workflow/playwright.config.ts)・[本文試験](../../tests/chat/prompt-context.test.mjs)
 
 実行制御の変更は [監査・投影の回復 tests](../architecture/agent-runtime.md)、Graph の変更は [Workflow の validation/planner tests](../concepts/workflow-attempt.md)、memory checkpoint は [Repository memory の冪等性 tests](../concepts/repository-memory.md) へ進む。画面上の成功と永続状態の成功を分けて検証する。
 
@@ -341,8 +343,7 @@ currentを原子的に切り替えて固定launcherを起動し、health、liste
 
 signal前の捕捉情報をoperationの `child-stop.json` に保存する。serverと子孫を一時SIGSTOPしてfork元を凍結し、確認済み子孫へ個別SIGKILLを送り、共通10秒期限でpidfdのexitを待つ。捕捉後に親が変わっても同一processは追跡する。server本体は既存SIGTERM/60秒上限を維持しKILLしない。失敗時はこの処理で停止した生存processだけCONTし、backup/cutoverへ進まない。zombieは既存の終了済み扱いを維持し、全子孫wait回収は保証しない。[停止処理](../../deploy/developer/switch/process_drain.py#L49-L147)・[server終了待機](../../deploy/developer/switch/start_support.py#L236-L258)
 
-<!-- openwiki: broken internal link [../../deploy/developer/switch/README.md#CLIとMCP] heading anchor "CLIとMCP" does not exist in "../../deploy/developer/switch/README.md". Fix the href or restore the target, then delete this comment. -->
-`--no-new-work` はTerminal再接続停止を含む外部調整の宣言である。server再開後のgraceful shutdown中に新しい子を観測した場合も拒否する。/proc観測前に切り離された未知daemonの完全追跡は保証しない。対象外instance/data利用者の検査を維持し、子孫exit・listener消失・残存data FD不在を確認してから整合backupへ進む。[限界と前提](../../deploy/developer/switch/README.md#CLIとMCP)・[停止後guard](../../deploy/developer/switch/start_support.py#L194-L233)
+`--no-new-work` はTerminal再接続停止を含む外部調整の宣言である。server再開後のgraceful shutdown中に新しい子を観測した場合も拒否する。/proc観測前に切り離された未知daemonの完全追跡は保証しない。対象外instance/data利用者の検査を維持し、子孫exit・listener消失・残存data FD不在を確認してから整合backupへ進む。[限界と前提](../../deploy/developer/switch/README.md#cliとmcp)・[停止後guard](../../deploy/developer/switch/start_support.py#L194-L233)
 
 初回導入でも新binaryの先行起動は不要だが、別途承認されたoperator作業で同revisionの `launcher.py`、`start_binary.py`、`start_support.py`、`process_drain.py`、`start.sh` を一組で配置する。実行中workerのkitは置換しない。旧serverの認可再確認と新stdio委任の違いはREADMEの初回導入手順に従う。稼働binary SHAと固定kit script SHAは別々に記録し、過去失敗fenceとログを保全する。Rustの新protocolや安定版image更新を導入する変更ではない。[初回導入とstdio委任](../../deploy/developer/switch/README.md#初回導入とstdio委任)
 
@@ -398,7 +399,7 @@ npm から別バージョンを取得しない。
 | 境界 | 現在の契約 | 根拠 |
 | --- | --- | --- |
 | 実行設定 | `LVK_*` を読み書きし、process host へそのまま渡す。旧接頭辞への変換はしない。 | [ExecutionEnv](../../crates/executors/src/env.rs)、[HostExecutionEnv](../../crates/local-deployment/src/process_host.rs) |
-| Card Context | `lvk:` marker を読み書きする。説明の編集では保存済み指示と明示的 opt-out を維持する。 | [Card Context](../../packages/web-core/src/features/pipeline/model/cardContext.ts) |
+| 保存済み本文 | 専用UI・既定文生成・hidden分離を廃止し、独自文を通常descriptionで保持する。送信時の既知5hash限定除去は保存値を書き換えない。 | [本文保護](../concepts/card-context-and-llm-wiki.md) |
 | 共有ファイル | `.lvk/shared/` から repository storage を参照する。追跡済み mount・別 repository 向きのリンク・ユーザーファイルを上書きしない。watcher、Git diff、Docker context から除外する。 | [共有リンク](../../crates/workspace-manager/src/shared_resources.rs)、[除外](../../crates/utils/src/path.rs) |
 | Git publication | `LVK-Memory-Source` / `LVK-Memory-Integration` / `LVK-Wiki-Publication` trailer を記録し、復旧時も同じ marker を検索して重複 commit を防ぐ。 | [Memory 復旧](../../crates/services/src/services/repository_memory.rs)、[Wiki 公開](../../crates/services/src/services/openwiki.rs) |
 | publication lock | repository 共通の `lvk-publication.lock` 一つを保持する。この lock は外部の任意 Git 操作までは制御しない。 | [GitPublicationGuard](../../crates/git/src/publication.rs) |
@@ -494,7 +495,7 @@ busy_timeout=0 の port fixture では、独立した監視 SELECT の SQLITE_BU
 
 [Starting 回復](../architecture/agent-runtime.md#starting-保存失敗と未起動の回復)では、`agent_run_port::tests` の SQLite busy、再起動越し予算、部分終端保存、Stop/重複要求、setup除外、ACK不確実性を分けて確認する。DBのmigration fixtureは旧行の既定値・保持・部分indexと、Starting/host予約フェンスを検査する。画面のPreparingと実開始時計はcanonical conversation / taskAttemptモデル試験が対象であり、実providerが一度だけ起動したことのE2E保証ではない。[port試験](../../crates/local-deployment/src/agent_run_port.rs#L4468-L4903)・[migration試験](../../crates/db/src/models/agent_runtime.rs#L2560-L2659)・[表示試験](../../packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.test.ts#L1505-L1550)
 
-[Codex resume指示](../integrations/agent-providers.md#codex-resume-の固定指示と現在-identity)は合成JSONL/RPCで固定文変更、同じ/新しいrun、compaction・rollback・fork・未知形式、有界file・symlink・変更中file、inject拒否を確認する。実利用者の履歴を読む試験ではなく、effective promptやtoken/課金効果は未測定である。`merged_initialize_keeps_normal_version_evidence_out_of_passive_reads` は通常initializeとpassiveの分離を検査する。[履歴fixture](../../crates/executors/src/executors/codex/client/resume_instructions.rs#L300-L569)・[共有initialize fixture](../../crates/executors/src/executors/codex/client.rs#L2251-L2310)
+[Codex resume指示](../integrations/agent-providers.md#codex-resume-の固定指示と現在-identity)は短い現在契約を明示injectする。履歴JSONLの保持解析・版条件・専用fixtureは撤去した。`resumed_host_context_is_visible_before_any_new_turn` は注入順序と失敗時停止、`goal_skill_tests` は初回/継続のSkill・profile・guide参照を検証する。実provider/modelの到達とは区別する。[client試験](../../crates/executors/src/executors/codex/client.rs)・[provider設定試験](../../crates/executors/src/executors/codex.rs)
 
 [受動quota/usage](../integrations/agent-providers.md#受動的な-account-quotausage-参照)のfixtureは非モデルRPCだけを許し、成功・失敗・timeout・cancelと子process回収、admission制限、未知CLI版、単位/null/秘密field除外、所属/provider/profile不一致を検査する。ignored live試験は通常suiteと別であり、実行しなければlive成功とは扱わない。[executor fixture](../../crates/executors/src/account_usage_tests.rs)・[server認可](../../crates/server/src/remote_mcp/provider_usage.rs#L42-L123)
 
@@ -552,3 +553,12 @@ LOCAL-242統合ではコード候補 `a1f87c7c93e8818aa84d4213788c1429b723ecd7` 
 開発用preview設定は `.lvk/preview/vite.config.mjs` に置き、`scripts/ui4-preview.py` もこの場所を参照する。一般利用者Repoへpreview機能を追加する変更とは区別する。共有設定を隠さないため `.lvk/` 全体をwatcher・検索・snapshotから除外せず、`shared/`・`attachments/` の実行時子だけを除外する。旧配置の自動移行や既存データ整理は行わない。[preview設定](../../.lvk/preview/vite.config.mjs)・[起動参照](../../scripts/ui4-preview.py)・[所有境界](../concepts/workspace.md#lvkの所有境界)
 
 LOCAL-346単独のコード候補 `3b88263a13d2e15606ea445c1a6753919dc08303` は固定base `5dc268936` へsource `35e96363` を無競合統合した。候補上の管理実行でCargo/release fixture 6件とPython Runner 10件、差分空白・選択履歴を確認した。release初回はyaml不足で失敗し、offline固定依存導入後に同一command全体が成功した。Rust/Frontend全suiteと実provider/全UIは既存sourceおよび3本結合の証拠・無競合差分を根拠に担当判断で再実行を省略した。旧候補の成功を本候補のpassに置換しない。348・344・独立339は追加採用していない。環境切替・再起動・既存実データ移行/削除は行っていない。
+
+
+## LOCAL-361の統合検証とbundle
+
+コード候補 `da8f775878924b833971888e7c8ee28586cdf84b` は固定base `e093e788…` へG `86a2708f…` を競合なくmergeし、Gとの全tree一致・両祖先・空白・cleanを管理commandで確認した。Gの型生成・影響crate/consumer検査と独立レビュー、Fの本文/guide焦点検証は既存SHAの証拠であり、今回候補の再実行passへ付け替えない。重複する全check/lint/backend suiteと実CLI行列は理由と残存riskをagent判断のskipとして記録した。
+
+今回候補ではlocked install、実frontend build、developer-runtime付きdev最適化のserver/agent-process-host/MCP buildを実行した。現行switch kitの `bundle.py` と `test_real_server.py` でsourceアクセス拒否下のasset/API、pending/no-pending migration、async receipt、host bootstrap、bundled stdio MCPを確認した。起動のbuild_infoは当該SHA・development・dirty=falseだった。pip不在とwheel tag誤選択の準備失敗2件は保持し、task専用のpysqlite3 wheelを正しく展開した修正版で成功した。一時依存・隔離processは回収し、要求されたbundleのみ共有persistentに保持した。[実bundle試験の定義](../../deploy/developer/switch/test_real_server.py)・[正式buildと切替手順](../../deploy/developer/switch/README.md)
+
+これはlive DB互換性の全履歴試験、実Auth0/browser/model、dev切替や再起動の成功ではない。Wiki commitはコード候補と別であり、main publicationは担当Run終了後のhost確認に従う。ガイド移設だけをtoken削減の実測とは扱わない。

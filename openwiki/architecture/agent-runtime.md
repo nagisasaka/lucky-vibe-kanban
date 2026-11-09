@@ -5,7 +5,7 @@ description: AgentRun を独立プロセスで実行し、Native Audit から永
 tags: [agent-runtime, audit, persistence, recovery]
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-09T08:47:44.052Z
+    at: 2026-11-09T18:10:41.827Z
 sources:
   - id: openwiki-source-b85c3dc0eaacdffedf4e68ee
     resource: repo://crates/db/migrations/20261026180000_agent_starting_recovery.sql
@@ -63,6 +63,8 @@ sources:
     resource: repo://crates/services/src/services/approvals/executor_approvals.rs
   - id: openwiki-source-2a2f483b690a2eb00cd79616
     resource: repo://crates/services/src/services/workspace_lifecycle.rs
+  - id: openwiki-source-8dd059d50335f535b6d49e83
+    resource: repo://crates/utils/src/agent_guides.rs
   - id: openwiki-source-7d788a7c8b1c5bf5122bab53
     resource: repo://crates/utils/src/assets.rs
   - id: openwiki-source-06fe728b6644f76e4e63a8f4
@@ -77,7 +79,7 @@ sources:
     resource: repo://crates/workspace-manager/src/workspace_manager.rs
   - id: openwiki-source-141584dac09cf0f93be6bff5
     resource: repo://tests/codex-process-cleanup/README.md
-generated: { by: "codex", at: "2026-11-09T08:47:44.052Z" }
+generated: { by: "codex", at: "2026-11-09T18:10:41.827Z" }
 ---
 
 # Agent Runtime の監査・投影・回復
@@ -276,3 +278,9 @@ PTY service は所有対象の停止、shell の wait、reader thread の join �
 Claude protocolはinitialize、permission設定の応答をrequest IDで待ち、失敗・期限切れ・prompt送信失敗を所有側のexit signalへ通知する。result前のEOFやreader失敗も待ち続けない。Hostは非ゼロOS終了が先着してもproviderの失敗理由を保持し、既存の所有process回収・drain・監査closeを経て最終化する。[protocol](../../crates/executors/src/executors/claude/protocol.rs)・[起動](../../crates/executors/src/executors/claude.rs#L812-L852)・[終端理由](../../crates/local-deployment/src/process_host.rs#L1220-L1295)
 
 Linuxのprocfs identity解析は不完全・不正なsampleを最大3回読む。継続的不正はPIDと失敗fieldを付けて失敗し、未知のprocessを無視して回収成功にはしない。pidfd・leader開始identity・group/session照合は維持する。[有限再読と解析](../../crates/utils/src/process/owned_group.rs#L280-L335)。利用枠の回収未確認による閉鎖は[providerの利用枠契約](../integrations/agent-providers.md)を参照する。
+
+## 通常起動の短い契約と必要時ガイド
+
+LOCAL-361以後、通常起動は現在のRun/Repo identityと短い契約を合成し、Manifest形式・並列snapshot/preview・共有資源/Runnerの詳細は `.lvk/attachments/lvk-agent-guide-<内容hash>.md` に配置する。通常 `execution_env` がprovider起動前に実ファイルを準備し、両providerへ絶対参照pathを渡すため、LVK MCPの登録は前提ではない。内容が同じなら再利用し、不明な既存内容やsymlinkは上書きせず起動準備を失敗させる。[配置](../../crates/utils/src/agent_guides.rs)・[起動前準備](../../crates/local-deployment/src/agent_run_port.rs#L1037-L1043)
+
+通常codingのWiki read-only案内はExecutionEnvが一元合成し、保守・reviewer・資源調整役の境界を保つ。保存Issue由来の既知定型文除去は任意prompt全体には適用せず、[保存本文の保護](../concepts/card-context-and-llm-wiki.md)と分離する。ファイル配置とprovider設定の検証は、実モデルがガイドを読んで遵守した証明ではない。[合成](../../crates/executors/src/env.rs#L53-L102)

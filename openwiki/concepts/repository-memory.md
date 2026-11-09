@@ -8,8 +8,8 @@ sources:
     resource: repo://crates/db/migrations/20261106140000_repository_operational_state.sql
   - id: openwiki-source-5144fccee237bf35dd134ccb
     resource: repo://crates/db/src/models/repository_state.rs
-  - id: openwiki-source-38bb7eaa90f0c92a0514844d
-    resource: repo://crates/executors/src/legacy_wiki.rs
+  - id: openwiki-source-dc107dec6d46a1dcc08d0a9b
+    resource: repo://crates/mcp/src/task_server/tools/context.rs
   - id: openwiki-source-a13fe4db1eee073d0a7e2c4d
     resource: repo://crates/server/src/main.rs
   - id: openwiki-source-0545bff1ae2507a92137efaf
@@ -46,12 +46,14 @@ sources:
     resource: repo://crates/services/src/services/openwiki/sync_input.rs
   - id: openwiki-source-6067be8d6f85caa8ac03638f
     resource: repo://crates/services/src/services/repository_memory.rs
+  - id: openwiki-source-8dd059d50335f535b6d49e83
+    resource: repo://crates/utils/src/agent_guides.rs
   - id: openwiki-source-a171e1a170f941fa2a4ba003
     resource: repo://crates/utils/src/repository_memory.rs
-generated: { by: "codex", at: "2026-11-09T07:03:14.304Z" }
+generated: { by: "codex", at: "2026-11-09T18:10:41.827Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-09T07:03:14.304Z
+    at: 2026-11-09T18:10:41.827Z
 ---
 
 # Change Manifest・Run完了とWikiの責務
@@ -64,7 +66,7 @@ Worktree Workspaceの通常の成功 coding Run は Wiki の有効／無効と�
 
 Issue化・要件更新・既存Sessionへの追加指示では、上位AIが確認できた人間の目的・動機・制約、判断と理由、見送り案・未決点を渡す。Issue本文の編集だけでは既存Sessionへの追加指示にならない。coding host は直接会話も含めて人間の意図と自分の実装判断を区別し semantic draft に残す。承認を技術的理由の代わりにせず、不明な理由は創作しない。固定書式の空欄埋めや些細な変更の長文説明は要求しない。[上位AIの受渡し](../../skills/lvk-orchestration/references/execution.md)・[coding host](../../crates/utils/src/repository_memory.rs)
 
-[Card context の .llm-wiki](card-context-and-llm-wiki.md) は従来の作業ブランチ内の知識機能である。導入時の判断は「既存機能と利用者の編集を保持し、canonical OpenWiki を別名と単一 writer で追加する」だった。これは導入時の履歴であり、現行版は旧 `.llm-wiki` の生成・読取 UI・自動注入を終了している。既存ファイルや手作業のメモは残す。[終了後の扱いと移行境界](card-context-and-llm-wiki.md#旧-llm-wiki-からの移行境界)を参照する。[現行の旧指示filter](../../crates/executors/src/legacy_wiki.rs)
+[Card context の .llm-wiki](card-context-and-llm-wiki.md) は従来の作業ブランチ内の知識機能である。導入時の判断は「既存機能と利用者の編集を保持し、canonical OpenWiki を別名と単一 writer で追加する」だった。これは導入時の履歴であり、現行版は旧 `.llm-wiki` の生成・読取 UI・自動注入を終了している。既存ファイルや手作業のメモは残す。[終了後の扱いと移行境界](card-context-and-llm-wiki.md#旧-llm-wiki-からの移行境界)を参照する。LOCAL-361で旧生成指示の互換filter・通知・skill特別除外も撤去した。保存済み文は通常本文として保持し、[5hashの限定除去](card-context-and-llm-wiki.md#保存と-fresh-session-への継承)とは別である。
 
 ### Bootstrap の索引・レポートは記憶の正本ではない
 
@@ -183,3 +185,10 @@ LOCAL-344は利用者の決定として、執筆指示 `openwiki/INSTRUCTIONS.md
 ### 直接フォルダの除外
 
 DirectFolderは古いRepo行が残っていてもbegin・前回成功Runの回収・source準備から除外する。LVKの自動commit、Manifest、Repo Wiki管理を配下Gitの発見だけで有効化しない。結果は通常会話で確認し、非Git専用Manifestを追加しない。Repoのshared保存先は元Repoの識別を保ち、同名衝突用のworktree配置名へ移動しない。
+
+
+## 現在identityとオンデマンドのManifest形式
+
+通常codingにはRepoごとのCURRENT identity JSONと最新draft_pathを送り、複数Repoで共通の短いcoding契約は一度だけ合成する。同じSession継続でも旧Runのdraftを再利用しない。source変更時だけsemantic draftを書き、変更なしではdraftや専用検証記録を作らず通常の最終報告で返す。自動マージ担当のmerge/Wiki commitは通常codingの自動commitとは別契約である。[合成](../../crates/utils/src/repository_memory.rs#L597-L626)
+
+schema・判断と却下案・tests要約の記述手順は `CODING_RUN_GUIDE` にあり、起動時の実ガイドファイルと任意 `get_context(guide=coding)` が同じ定義を使う。確認済み人間の目的と担当の選択を区別し、承認を技術的理由として創作しない。これは通常注入の責務整理であり、token削減量の実測や全providerでの実モデル遵守を意味しない。[配置](../../crates/utils/src/agent_guides.rs#L25-L49)・[MCP](../../crates/mcp/src/task_server/tools/context.rs)

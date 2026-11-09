@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:aba9e39b353e086b9a04af6deb04be29f14a3b46c306742f9f1492c776b1fd7b",
+  "pageVersion": "sha256:6882870a59ac7a64433802fe4d00b0406ef59651927786869c9ef605c0a3a0a0",
   "claims": [
     {
       "id": "claim_62fc79a5c9fd478cbd529ca6222d3af2",
@@ -332,7 +332,7 @@
         },
         {
           "resource": "repo://crates/server/src/remote_mcp/launch.rs",
-          "version": "repo-file-v1:sha256:2f062bfadf40d34009cf86b3f37d4ae4948139582addb0abc0a3f15909e1ad5e"
+          "version": "repo-file-v1:sha256:a39e58fb89e0bf5d94aa4132e20005a7acc79fbeabbc822e06d5b3d91350ece2"
         }
       ]
     },
@@ -521,10 +521,24 @@
           "version": "repo-lines-v1:sha256:ea9646fa3820103da544c5459248456f71dfd1eb3bd3c9cbcdc4e495e6ef11dd:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM3Mjc5ZGI5ZDJhYzlkMGJlMjY1ZTJmOTEzYWMyNGRkMTgyMGYwNzI3OTUzNDAzOTA4NTU2ZGQxMWNmNmNkMmYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQwMjkzM2Y2MDFjNDEyZjkxNWYwODZjYzVjZjYxNjc3NmEzY2UzNzQ4YTQ4NzM1NDU3MTk0ZmU3MjMzMTU4YzAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImVhYmI1NDM3MmQ4Nzc2OTRiYjA0ZWFhYzkyMDc2NjAwZWMwN2E5MWYzMzk1M2MyNTA2YjkyNDVkMThiNDIwZDUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJlN2I0ZmU5YzcwOTI5MTRiMjNjZjlkM2Q2NzdkODhjOTA2MDljMTQxYzllOGM0NWE1MWFlNjhkZTgwZTdlNWUifQ"
         }
       ]
+    },
+    {
+      "id": "claim_69d4e1135d854713a8b0e60a39c2d1d3",
+      "statement": "通常Runは保存Cardの旧設定に依存せず現在parallel identityと短いread-only契約を配信し、snapshot/previewの詳細は内容共通の実ガイドに置く。peer私的会話を読まず、previewは正式publicationではない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/services/src/services/parallel_context.rs#L145-L180",
+          "version": "repo-lines-v1:sha256:c332ea967b3d0e876ae63ead970593973cb65055e45c18dc0723fea5a8d36f51:eyJzZWxlY3RlZExpbmVDb3VudCI6MzYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNiN2M0M2Y1YWNlNTQzZjg1MTkzZmQ1NzAwYjI0YjA3ZTc4NWE2ZDlmN2JhOWI3YTQ5MzI2MzMwMjE4NjE0ZWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVmMTExNDI2NTExNzFhYjY1YWRlMWY4MTIwMzMwMjRiYTgxODk4ODJlZTY5MGMxOTFlMjY4NWVlZTU3NjA3YjEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ1ZGI0Y2IzOWY0MTc2YzlkOGNiMzA5ZWUwOGY0ZDk1ZTc3NWFkY2IxNmQwYTY3MzQzNmUxMTkyMjMyZWNjOTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE3YTlhYTE0MmY3ZDI0ZDM1ZWExOGY1MGExZDYzZDkwOTQ5ZmM3MjViYjBlYjVmMDUyMjhkYTg2NjFmOGJkYTUifQ"
+        },
+        {
+          "resource": "repo://crates/utils/src/agent_guides.rs#L11-L23",
+          "version": "repo-lines-v1:sha256:8b95c49dcc98f723c9632fb899e20a80273416254f8571934847cc5b1bb2bb95:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE5YmE4N2NhYmU3N2RhOWVjZTZkNjY5MzRmOTA1ZWJmNDE2ZTg3MTBkZmMzMGIxZGY2NmU0Njk4YWYyOTI2MDQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZkODQwZTZiZTMxNTY5ZWRlZWNjNzQwOTM4ZDQyMjg2NjhiZTc2ZjVlMWZhYTYxYzkzMzA3Njc4ODE1NTYyNjkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjMwYTJkZTMwYzE3YzBjOWUyMGJlODllNTAxNjM0M2U2Y2E2ZDZiZGM2ZmFiNzQ3M2M1YmViNWQ1ZTMzZmI0MjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNjNGIxYmE2MDEyYmE4Njk2NTMxNmJlMDE5NTU2ZTk5MTE4MGQ5NjE0MzU1OGE2NDIwODdlYzRjMzBkOGE2ZmYifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-09T07:03:14.304Z"
+    "at": "2026-11-09T18:10:41.827Z"
   }
 }

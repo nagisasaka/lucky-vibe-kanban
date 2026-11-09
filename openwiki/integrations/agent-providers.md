@@ -44,16 +44,12 @@ sources:
     resource: repo://crates/executors/src/executors/codex/client.rs
   - id: openwiki-source-38fc795b99b30483be700b71
     resource: repo://crates/executors/src/executors/codex/client/openwiki.rs
-  - id: openwiki-source-f44bd32fb5e7cb5ee909f5c6
-    resource: repo://crates/executors/src/executors/codex/client/resume_instructions.rs
   - id: openwiki-source-680ceb819b2bbd9dbba3a8d4
     resource: repo://crates/executors/src/executors/codex/jsonrpc.rs
   - id: openwiki-source-1222b138c478c7fe70625991
     resource: repo://crates/executors/src/executors/mod.rs
   - id: openwiki-source-f4e0f9b2ce513d3f8b8b070e
     resource: repo://crates/executors/src/executors/provider_adapter.rs
-  - id: openwiki-source-38bb7eaa90f0c92a0514844d
-    resource: repo://crates/executors/src/legacy_wiki.rs
   - id: openwiki-source-f07f62eba81c4ffbaf0db9d5
     resource: repo://crates/executors/src/profile.rs
   - id: openwiki-source-bccd47f2decfe8aa6a080767
@@ -112,10 +108,10 @@ sources:
     resource: repo://tests/claude-subscription/subscription.spec.ts
   - id: openwiki-source-141584dac09cf0f93be6bff5
     resource: repo://tests/codex-process-cleanup/README.md
-generated: { by: "codex", at: "2026-11-09T08:47:44.052Z" }
+generated: { by: "codex", at: "2026-11-09T18:10:41.827Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-09T08:47:44.052Z
+    at: 2026-11-09T18:10:41.827Z
 ---
 
 # Agent provider・設定・MCP・Skill
@@ -153,11 +149,11 @@ LVK の profile/実行 override が空でも、app-server は利用者・project
 
 ### Codex resume の固定指示と現在 identity
 
-resume は同一 native thread を使い、start / resume config には完全な developer instructions を渡す。履歴への inject では、Change Manifest の現在 run/draft identity と parallel context の JSON 行だけを分離できる場合がある。それ以外の固定文は空白まで完全一致で比較する。必要指示の保持を証明できないときは従来の全文 append に戻り、inject 失敗なら次の実行を開始しない。[順序と fallback](../../crates/executors/src/executors/codex/client.rs#L290-L388)・[分離と一致](../../crates/executors/src/executors/codex/client/resume_instructions.rs#L1-L157)
+resumeは同一native threadを使い、start/resume configのdeveloper instructionsを保持する。非空の現在指示は次のchat・Goal・review・compactionより先に `thread/inject_items` でdeveloper messageとして明示注入する。inject失敗なら継続を停止し、Goal objectiveや擬似user turnで代用しない。[現在のresume](../../crates/executors/src/executors/codex/client.rs#L268-L301)
 
-縮小を許すのは、owned app-server の初回 load、通常履歴、Unix、確認対象 version metadata（0.144.1 / 0.163.0）の条件が揃う場合だけである。metadata-only `thread/read(include_turns=false)` で当該 thread の path を得て、resume 前後の同じ canonical regular JSONL を各最大16 MiB・2秒で読む。directory 走査や他の履歴・sidecar は使わず、symlink・非通常ファイル・部分行・identity不一致・未知形式・compaction・rollback・fork/history_base があれば全文へ戻す。prefix と inode の連続性を照合し、resume が追加する既知の settings / warning event だけを suffix に許す。[履歴判定](../../crates/executors/src/executors/codex/client/resume_instructions.rs#L47-L157)・[有界読取と前後照合](../../crates/executors/src/executors/codex/client/resume_instructions.rs#L159-L290)
+LOCAL-361でrollout JSONL/thread履歴の保持解析、専用CLI版条件、保持を証明できたときだけidentityへ縮小する処理とfixtureを撤去した。短くした現在契約とRepo別identity/draft_path、実ガイドpathを初回・同一Session継続に届ける。native設定だけへの未検証の期待には依存せず、profile追加指示と選択Skill参照は保持する。[短いManifest契約](../../crates/utils/src/repository_memory.rs#L597-L626)・[初回/継続guide fixture](../../crates/executors/src/executors/codex.rs#L2576-L2600)
 
-通常 initialize だけが user_agent を保存し、後述の passive initialize は版観測・resume state に入らない。未知版や非Unixでも通常 resume を拒否せず、指示縮小だけを無効にする。sidecarの過去ACKでは compaction 後の保持を証明できないという判断が実装に記録される。これは履歴追加の削減であり、native compactやWorkflowの実行契約とは別である。Workspace Memory checkpoint/restoreの追加turnは廃止済みである。[initialize の分離](../../crates/executors/src/executors/codex/client.rs#L239-L275)・[resume指示の検証実装](../../crates/executors/src/executors/codex/client.rs)。実binaryの厳密Git revision、effective prompt、token/cache/課金削減量は未測定である。
+通常起動の実ガイドはMCP未設定でも読め、Manifest・parallel・resourceの詳細を同じ定義から供給する。Codexはdeveloper、Claudeは既存のuser suffixという配信roleを維持する。token/cache/課金削減量や、実モデルによる全ガイド遵守は未測定である。[配置](../../crates/utils/src/agent_guides.rs)・[合成](../../crates/executors/src/env.rs#L53-L90)
 
 ### Discovery と手動 override の境界
 
@@ -240,7 +236,7 @@ Codex の selected_skills は name/path の参照であり、渡し方は実行�
 
 この区別の理由は、Goal activation に UserInput 配列がないこと、余分な推論 turn を発生させず、永続する 4,000 文字上限の objective を Skill 参照で膨らませないことである。これはソースコメントと 移行したControl and skillsの設計説明 に記録された理由である。同文書は明示的な承認・廃止ステータスを持たず Validation plan も含むが、この Skill の節は現行コードおよび [通常 chat の順序テスト](../../crates/executors/src/executors/codex.rs)、[Goal の初回・再開・既存指示保持テスト](../../crates/executors/src/executors/codex.rs) と整合する。文書内の将来の再投影構想まで実装済みとは扱わない。
 
-両経路とも、旧 LVK 同梱 `skills/llm-wiki` 配下の参照を除外する。同じ名前でも利用者が別の場所に置いた Skill は残し、既存ファイルを削除しない。旧 Pipeline の互換処理は [Card context と LLM Wiki の終了](../concepts/card-context-and-llm-wiki.md)に置く。[選択のフィルター](../../crates/executors/src/legacy_wiki.rs#L101-L119)
+両経路とも選択Skillをname/path参照として保持し、旧LVK同梱Skillだけを除外する特別処理は提供しない。旧Wiki互換filterや廃止通知も撤去し、保存済み本文の限定処理は[本文保護](../concepts/card-context-and-llm-wiki.md)に分離する。[chat入力](../../crates/executors/src/executors/codex.rs#L1570-L1595)
 
 Plan の承認後遷移と PlanWithGoal の退役は [Session の Plan 契約](../concepts/session-and-agent-run.md#plan-の遷移)、resume 時に現在の host context を会話へ反映する順序と失敗は [Provider session の継続](../concepts/session-and-agent-run.md#provider-session-の継続と取り込み)を参照する。
 

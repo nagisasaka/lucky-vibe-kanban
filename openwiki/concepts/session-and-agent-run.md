@@ -188,10 +188,10 @@ sources:
     resource: repo://tests/supervised/README.md
   - id: openwiki-source-5184ef612e83b7ab35d62e7b
     resource: repo://tests/supervised/run_isolated.py
-generated: { by: "codex", at: "2026-11-09T08:47:44.052Z" }
+generated: { by: "codex", at: "2026-11-09T18:10:41.827Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-09T08:47:44.052Z
+    at: 2026-11-09T18:10:41.827Z
 ---
 
 # Session・AgentRun・RunAttempt
@@ -317,7 +317,7 @@ Session の executor は最初の指定で設定できるが、以後の別 exec
 
 Codex の thread 開始・再開では、app-server が設定から解決した model と reasoning effort を client が採用し、その後の turn 構築に用いる。LVK の依頼で effort override が未指定であることと、実行時の effort が未解決であることは同じではない。設定の継承と OpenWiki writer の起動前確認は [Provider 統合](../integrations/agent-providers.md)を参照する。[解決結果の採用](../../crates/executors/src/executors/codex/client.rs)、[開始・再開・turn](../../crates/executors/src/executors/codex/client.rs)
 
-Codex の resume は同じ native thread ID を要求し、fork しない。再開設定の更新だけでは新しい developer instructions が会話履歴に現れない場合があるため、次の chat・Goal・review・compaction より先に `thread/inject_items` で現在の host context を注入する。空の context では注入せず、注入失敗なら継続を停止する。Goal objective の増量や擬似 user turn で代用しない。[再開処理](../../crates/executors/src/executors/codex/client.rs)、[順序と失敗のテスト](../../crates/executors/src/executors/codex/client.rs)。これにより、[Repository Memory の現在 run identity](repository-memory.md#change-manifest-は変更理由を運ぶイベント)と、[fresh 会話だけへ組み込む保存文脈](card-context-and-llm-wiki.md)を区別できる。
+Codex の resume は同じ native thread ID を要求し、fork しない。再開設定の更新だけでは新しい developer instructions が会話履歴に現れない場合があるため、次の chat・Goal・review・compaction より先に `thread/inject_items` で現在の host context を注入する。空の context では注入せず、注入失敗なら継続を停止する。Goal objective の増量や擬似 user turn で代用しない。[再開処理](../../crates/executors/src/executors/codex/client.rs)、[順序と失敗のテスト](../../crates/executors/src/executors/codex/client.rs)。これにより、[Repository Memory の現在 run identity](repository-memory.md#change-manifest-は変更理由を運ぶイベント)と、[保存Issue由来だけに限定した本文処理](card-context-and-llm-wiki.md)を区別できる。
 
 ## 状態、停止、送信待ち
 
@@ -529,3 +529,10 @@ LOCAL-349の供給検証記録ではCodex同一Sessionの実2turn継続と再起
 ### Claude の未接続承認モード
 
 Claudeは実効設定がSupervised/Planまたは対話承認必須なら、CLI解決・起動前に理由付きで拒否する。保存profileを変更したりAUTOへ黙って切り替えたりせず、利用者が明示したAUTOだけを適用する。discoveryのpermission候補はAUTOのみ、Approval capabilityはUnsupportedである。host側もClaudeへUnavailable承認serviceを渡し、予期しない承認要求を自動承認しない。正規の承認・質問UIの接続は残課題である。[起動guardと明示override](../../crates/executors/src/executors/claude.rs#L184-L244)・[host接続](../../crates/local-deployment/src/process_host.rs#L340-L358)・[capability](../../crates/executors/src/executors/provider_adapter.rs#L350-L400)
+
+
+### LOCAL-361以後の継続指示
+
+Codexは履歴JSONL/threadを解析して固定文の保持を推測せず、短くした現在のdeveloper instructions全体を非空なら明示injectする。旧版条件や履歴によるidentityだけへの縮小は廃止した。初回と継続で現在Run/Repoのidentity・draft_pathとガイド参照を更新し、profile追加指示と選択Skill参照は保持する。Claudeは既存のuser prompt suffixで現在契約を届け、provider固有のroleを同一化しない。[resume](../../crates/executors/src/executors/codex/client.rs#L268-L301)・[共通契約](../../crates/executors/src/env.rs#L53-L90)
+
+通常のexecution_envはMCPなしでも読めるガイドを起動前に配置する。配置成功、provider設定への参照path到達、実モデルによる読取・遵守は異なる検証段階である。保存Cardの旧ON/OFFで必須のManifest・parallel・資源契約を切り替えない。[配置と通常起動fixture](../../crates/local-deployment/src/agent_run_port.rs)

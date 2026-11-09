@@ -61,7 +61,7 @@ sources:
 generated: { by: "codex", at: "2026-11-06T03:26:16.411Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-09T08:47:44.052Z
+    at: 2026-11-09T18:10:41.827Z
 ---
 
 # Project Todo の共有メモ

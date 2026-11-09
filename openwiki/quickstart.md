@@ -24,8 +24,10 @@ sources:
     resource: repo://crates/db/src/models/tag.rs
   - id: openwiki-source-c30cc36c4bbe315c59b8e38f
     resource: repo://crates/db/src/models/workspace_tokens.rs
-  - id: openwiki-source-38bb7eaa90f0c92a0514844d
-    resource: repo://crates/executors/src/legacy_wiki.rs
+  - id: openwiki-source-a3956271cbf62ae0786e7fc7
+    resource: repo://crates/executors/src/env.rs
+  - id: openwiki-source-f4e0f9b2ce513d3f8b8b070e
+    resource: repo://crates/executors/src/executors/provider_adapter.rs
   - id: openwiki-source-0a300791bc056c6eee6a577a
     resource: repo://crates/mcp/src/bin/vibe_kanban_mcp.rs
   - id: openwiki-source-076036ed7bdac82d628d39d1
@@ -64,6 +66,8 @@ sources:
     resource: repo://crates/services/src/services/config/versions/v9.rs
   - id: openwiki-source-6067be8d6f85caa8ac03638f
     resource: repo://crates/services/src/services/repository_memory.rs
+  - id: openwiki-source-8dd059d50335f535b6d49e83
+    resource: repo://crates/utils/src/agent_guides.rs
   - id: openwiki-source-00394af5c4b9d56480285bf6
     resource: repo://crates/utils/src/lvk_directory.rs
   - id: openwiki-source-19419edea1d312cc9f07ef2d
@@ -82,8 +86,6 @@ sources:
     resource: repo://packages/ui/src/components/FileTagTypeaheadPlugin.tsx
   - id: openwiki-source-cbfe71b82135aa5496989f7e
     resource: repo://packages/web-core/src/features/pets/SidebarPet.tsx
-  - id: openwiki-source-ddf0f7c06298de76526a4f7c
-    resource: repo://packages/web-core/src/features/pipeline/model/cardContext.ts
   - id: openwiki-source-5b956d3d9d7f17c236d42ebb
     resource: repo://packages/web-core/src/pages/kanban/ProjectUtilities.tsx
   - id: openwiki-source-235a3eb75f22fdecdbd66a8f
@@ -100,10 +102,10 @@ sources:
     resource: repo://packages/web-core/src/shared/providers/TerminalProvider.tsx
   - id: openwiki-source-23775c3de52f3ab95a13cb8b
     resource: repo://README.md
-generated: { by: "codex", at: "2026-11-09T07:03:14.304Z" }
+generated: { by: "codex", at: "2026-11-09T18:10:41.827Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-09T07:03:14.304Z
+    at: 2026-11-09T18:10:41.827Z
 ---
 
 # クイックスタートと調査案内
@@ -115,7 +117,7 @@ lucky-vibe-kanban（LVK）は、Issue で仕事を整理し、Workspace 内で c
 1. [サーバーコンテナー](operations/server-container.md)の手順で LVK の Docker image を起動し、公開配置では [LVKの初回認証設定](concepts/server-access.md#初回設定と方式変更)、続いて実行環境内で coding agent の認証を済ませる。LVK は npm パッケージを公開しない。ソースから開発する場合は [開発環境と検証範囲](operations/development.md) を参照する。[配布版の案内](../README.md)
 2. [Project / Issue](concepts/project-and-issue.md) と、変更先の [Repo / Workspace](concepts/workspace.md) を確認する。仕事の分類と、実ファイルを置く場所は別の設定である。
 3. 通常 Session、[WorkflowAttempt](concepts/workflow-attempt.md)、または [Arena](concepts/arena.md) を選び、[Setup → 実行 → レビュー → 統合](workflows/task-to-integration.md) を進める。local Board で複数 Card の採用成果を統合する場合は [自動マージ](concepts/formal-integration.md)を使う。同じ割当Issue / Workspace / Sessionの担当が候補・必要な検証/根拠付き省略・同候補Wiki・公開要求まで進める。Wiki有効時はbegin前に正式prepareで原本を保存し、生成setup差分は未stageで残す。担当Run終了後にhostがwriter収束・限定復元・cleanを含む安全条件を検査してlocal targetへ公開する。検証省略は成功したテストを意味しない。
-4. canonical repository memory は [OpenWiki 初期生成・Sync](operations/openwiki-maintenance.md)を Repo ごとに設定する。新規 Card の既定 [Shared directories context](concepts/card-context-and-llm-wiki.md)とは独立しており、旧 LLM Wiki の自動生成は終了している。成果物は [OpenWiki Viewer の表示元](operations/workspace-inspection.md#wiki-の本文ツリーと表示元を確認する)を確認し、閲覧可能と publication 成功を区別する。
+4. canonical repository memory は [OpenWiki 初期生成・Sync](operations/openwiki-maintenance.md)を Repo ごとに設定する。保存Issue本文とは独立しており、Card Context専用UI・Pipeline供給・旧Wiki互換は廃止した。[本文保護と必要時ガイド](concepts/card-context-and-llm-wiki.md)を参照する。成果物は [OpenWiki Viewer の表示元](operations/workspace-inspection.md#wiki-の本文ツリーと表示元を確認する)を確認し、閲覧可能と publication 成功を区別する。
 
 サーバーに常駐させる場合は [単一サーバーコンテナー](operations/server-container.md)を参照する。信頼された一チーム向けHTTPS配布であり、データ永続化と実行プロセスの継続を区別する。旧 Cloud / relay は退役している。
 
@@ -143,7 +145,7 @@ LVK独自のrepo内管理領域は原則 `.lvk/` に集約する。共有設定�
 | タブを閉じた後の Codex 待機・終了を知りたい | [Web Push・通知同意・会話への復帰](integrations/web-push.md)。Project/browser 登録、logout と別の同意寿命、配送失敗、参照先への復帰 |
 | 複数段階の仕事をどう定義して動かすか | [WorkflowAttempt](concepts/workflow-attempt.md)。template と Run、分岐・合流、人の判断待ち |
 | 候補をどう比較し、採用後の実装へ移るか | [Arena](concepts/arena.md)。Design / Implementation、候補、promotion と Workflow 内の選択 |
-| prompt の再利用文脈と並列 source をどう扱うか | [Card context・Shared dirs・旧 LLM Wiki](concepts/card-context-and-llm-wiki.md)。fresh 会話への保存文脈、固定 snapshot と移行境界 |
+| prompt の再利用文脈と並列 source をどう扱うか | [保存本文・共有領域・並列参照](concepts/card-context-and-llm-wiki.md)。既知5hash限定の送信時除去と引用保護、必要時ガイド、固定snapshotと旧機能撤去の境界 |
 | 採用した並列成果を安全に local target へ反映するには | [自動マージ](concepts/formal-integration.md)。固定source/base、同じ会話の候補・検証/省略・Wiki、hostの公開と取消 |
 | 並列作業の知識を統合済み repository にどう反映するか | [Repository memory](concepts/repository-memory.md)。canonical Wiki、ファイルChange Manifest、正常Run自動commit、DB運用状態とsource checkpoint |
 
@@ -417,3 +419,12 @@ LOCAL-349でProjectは新規WorkspaceのRepoプリセット、Workspaceは実Rep
 - 旧保存cwdを保った継続と検証限界は[Session](concepts/session-and-agent-run.md#共通rootと旧sessionの継続)、新添付・chat file link・editorは[Workspace inspection](operations/workspace-inspection.md#local-349の保存配置と直接フォルダ)。
 
 DirectFolderを選んでも実行権限/MCP許可rootを拡張しない。metadata発見・本文到達・自動選択・手順実行・指示遵守は別々に確認する。今回の統合では最終sourceとコード候補treeの一致を管理commandで検証し、アプリ試験/buildの反復はSHA付き既存証拠に基づき省略した。Wiki保守で実provider行列や旧binary移行を再検証したとは扱わない。
+
+
+## LOCAL-361の指示配信と本文整理
+
+Issue固有の要求は通常本文で閲覧・編集し、旧Card Contextの専用操作やhidden分離は行わない。保存Issue由来の完全一致入力だけに既知lvk共有文5版のhash除去を適用し、編集・未知・不完全・引用は保持する。[保存本文](concepts/card-context-and-llm-wiki.md)
+
+通常起動は現在identity/draft_pathと短い契約を届け、Manifest・parallel・資源/Runnerの詳細はMCPなしでも読める実ガイドファイルへ置く。任意get_context guideも同じ定義を返す。Codex継続は履歴保持の推測をせず現在developer指示を明示injectし、Claudeは既存user suffixを使う。[配信境界](integrations/agent-providers.md#codex-resume-の固定指示と現在-identity)・[Manifest](concepts/repository-memory.md#現在identityとオンデマンドのmanifest形式)
+
+コード候補は `da8f775878924b833971888e7c8ee28586cdf84b`。Gとtree一致の無競合merge、実frontend/最適化3binary build、sourceアクセス拒否下の隔離bundle試験を管理記録で確認した。重複検証は既存SHAの証拠と差分riskから理由付き省略であり、新しいpassではない。実Auth0/browser/modelとdev切替・再起動は今回未実施。Wikiは別commitとし、mainへの正式反映はRun終了後のhost結果を確認する。[検証範囲](operations/development.md#local-361の統合検証とbundle)

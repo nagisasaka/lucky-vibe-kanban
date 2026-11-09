@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:c7b1a64a365a597660ee86b11b5f84ddc31e4113012621cbf3ecb97550582609",
+  "pageVersion": "sha256:b4fa6103635119752a701606cc17d4954d916fc9eb28a10e6be6cb21943d19f8",
   "claims": [
     {
       "id": "claim_ef965d37641846bda42842bf4788c8cc",
@@ -130,7 +130,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/mod.rs",
-          "version": "repo-file-v1:sha256:6b52c28fa29dce40b31c357d9e44d60d45e412233e5170cad1145f26ed05ec88"
+          "version": "repo-file-v1:sha256:4b23d2ceaa859e28c22477309b8bca7cf08ff65f70ba4be32ec6d64c92ed0fcd"
         }
       ]
     },
@@ -167,7 +167,7 @@
           "version": "repo-lines-v1:sha256:39a418e89379f941d94b694e0979a8d16e522c089bb4a22fe2588ea50fcd134a:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcxMzkyYWE3ODVjYzJjNjA1OWUwNmFmOTUxYTBkYjcwYWIxMDY3NDZjMTNhYmJhNDg0ZWYyYzY3MWM1NmZlZWEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY4NjMwMmQ5YWU5NzhjZjI3N2Y0MWY1ZmZlOTgyNDFlZTk3Y2U1YWRhMDU0MGIzNjg0MWUxODk0MTM0NjJlNjEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
         },
         {
-          "resource": "repo://packages/web-core/src/features/wiki/ui/WorkspaceWikiPanel.tsx#L293-L327",
+          "resource": "repo://packages/web-core/src/features/wiki/ui/WorkspaceWikiPanel.tsx#L292-L326",
           "version": "repo-lines-v1:sha256:f1c8fabf8e99f2dd5c1232dac9ef601dfe1e944ede082715ae66c1e4373b16c4:eyJzZWxlY3RlZExpbmVDb3VudCI6MzUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBiNjExOTdiYmVhNjdhOWQ3OGE1OTY1MDdkYTRlNjU1OTVkZDRiOTVkZWRhY2Q0MTFhODJlMGZlYzU1YzBkZGEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFmMjE1ZmQwM2NmYzJiZWViZjgwNGExN2FjNWU5NDc5NTFmN2NkMmRjMDU2MDUyMjQ5OWM2MDZmZGJjZDcxODUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjYwOGNlY2JhZGU1YTE0NmY3ZTVlZDYxYzU4MWUxYTdmMTRkZDUxMGJmYzBhYmFlZjQ4NDFiM2U3NzFiNWFlMDYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJhNDg4MzMyZWQwM2RkMjNlZGIxNWMzZGM5ODZiN2IwMjhmYzhlMGU4ZWQxYmJlMDQyMzQxZjBlYWQxOTI2YzQifQ"
         },
         {
@@ -178,15 +178,15 @@
     },
     {
       "id": "claim_33a464fd0b254385be7d70637f94e71c",
-      "statement": "Wiki ツリーと検索は公開 snapshot 内だけを対象とし、内部リンクは既知の Wiki ページ path へ解決する。source tree の任意読取や fragment 付きの節スクロールを追加する仕組みではない。",
+      "statement": "Wikiツリーと検索は公開snapshot内の既知ページだけを対象とし、現行OpenWikiの相対・絶対リンク、拡張子省略とpages fallbackを解決する。source任意読取やfragment節スクロールは追加しない。",
       "evidence": [
         {
-          "resource": "repo://packages/web-core/src/features/wiki/model/wikiNavigation.ts#L68-L197",
-          "version": "repo-lines-v1:sha256:60d683aa4e810560c2ed24f7b26041d2cdfb31a3fa458aaed6cc8bbac8b80850:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMwLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI3ODk3MDhkMmI4YTYwMGJmYjk5MDZkM2E1NmYxOTQwNWUxODVkOWUzMzgxMWQ3NTI0MDUyZDQ3NjcyNzg4MDYyIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI0ODkzZjQwZTM3ODFlYjg5NmM4MmQwNDZhMDgwNjdhMTFlMzVjZGYyZjFkZmFmMjZmZWE5MGI4ZGI2Njc2NDEzIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJiZTFkNzA2ZDYwODA0ZjcxNjZlZTliZTYyYmU4NzY4ZjM3MWFiMjkxYWVkYjU2NDI1ZDc5YWM2ZDhjMjdjZmViIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MiwiZm9sbG93aW5nQ29udGV4dEhhc2giOiI3YjhiNjAwYTViNDQ4YjFlNGQwMmRmMDk3NDZlZDNjYTMxNzJmNzVjNGFhYmIwMWRkZTA4MGUzNmNhYjA3NGI0In0"
+          "resource": "repo://packages/web-core/src/features/wiki/model/wikiNavigation.ts#L130-L180",
+          "version": "repo-lines-v1:sha256:cb82ea972d677af27c07bd8625ded74d947485062c6c13aefb3a2fe73c94d67d:eyJzZWxlY3RlZExpbmVDb3VudCI6NTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVjMzVmNWVlMzc0YmQyNjU0ODc5YTEwMWZkNzkxZDJiOTJiYTgyNWZjNGQ0NmVhNDkzOTQzOGNiZjc1NjNmMjYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijg0ZjYxZjY3ZGIzYzIyMGE1MDY4NGM2N2U4OTEwNzY3MmNmOWIzOWZmNGYxNTY1YzdiZmQ2YzRlNDQ2YzI4ZDEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjUxMzc2MGYzNWM5NjY1MzU5NzU1OWU0YTIwZGQ4NTY4MzM3ODUwZWU3Njg0YjUwYWZkMDg0YmZkZmUxMWQ1ZDAifQ"
         },
         {
-          "resource": "repo://packages/web-core/src/features/wiki/ui/WorkspaceWikiPanel.tsx#L258-L272",
-          "version": "repo-lines-v1:sha256:ef986bf8df57ddc23a5741586b944c61874d3482deb2b7f921791dd16d9e7ed2:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFkMWQ2ZTA3YjA5ZWU1Njk4YjJkNmM0ZGQ1ZGU4MWJhODljNjAyY2MxZDFiMjU3MDQ0ZDg2MDk4ZjRhYmZlY2MiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg0ZTQyMDhjZDZmZmI4YzRhMzU0N2IyZjU0YWRhMTk5NzhjM2YzNjVlNzhmOTUwMmVmNTE0NWNkZDJhYTg1NDMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjkzNzU2OThiYmMyM2Q5NzRlZGI1NGI2NDY2Y2JiY2U0ZjJmNDM2MjQyMTI2MjdiYTkyNTI4YWEwYjNiOWZjMjAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImRkNzAyYjM4OGI4MWIwMjQyMDFkYjViMDk0MTg3MWE4YWIwMWY2YTAzYjY1MDc0NTQyMjg2MDk5YTdiMDhhODAifQ"
+          "resource": "repo://packages/web-core/src/features/wiki/ui/WorkspaceWikiPanel.tsx#L256-L275",
+          "version": "repo-lines-v1:sha256:6277d873e95c1cf3de5de5a28893eb5f72598c9daa175bc18f8d9d44b2b27796:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE0YzM2Mjk5ZTg4NDBmMTYxOTQ4Y2RiNjYxNzQwYjhkOTc1NjFiOWZhODVmZjM1YTMzOTIyY2E1OGUwMGRjNjUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQxOTUzNmJhZjU3YWVhNjAzMWQ2MzkzYTkzNGRmOWZkNzAyNTc3OWFhMmNmMmUyODg5NGY1N2ZlNWJlMGNmZDEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImVhZDAwYzUwODA3NWFkYzg1NGVkMjhlNzNiNThiNjA2MThmZGMxYjVlZTRiYTI3NTA4NTE1MjgwZDU1ZjNhOTQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQ4MDA5NzlmODU2MjIwMGE0NjUyMzU5ZjA4ZTk5YmRmNmRjMDkwMDliNzA0MWYxYWI0NGMxNDJmZGJkODQ1NzQifQ"
         }
       ]
     },
@@ -195,7 +195,7 @@
       "statement": "Wiki 本文は既存 MarkdownPreview を使う。Wiki を閉じると共通右ペーン mode は null となり、以前のペーンを復元せず layout が左チャットを表示する。保存済みの会話非表示設定は Wiki を開くだけでは上書きしない。",
       "evidence": [
         {
-          "resource": "repo://packages/web-core/src/features/wiki/ui/WorkspaceWikiPanel.tsx#L349-L362",
+          "resource": "repo://packages/web-core/src/features/wiki/ui/WorkspaceWikiPanel.tsx#L348-L361",
           "version": "repo-lines-v1:sha256:a86fe8c7b01b67d5700b86cc2cb20df5f769bd1a6090eea7c05cda1770e98f6e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUzN2ExYjg1MGZjMWNkYmFhZDIzMjk4YzY2MTkwNWJmYzNkNTBmYWY5MzJhMmM1Nzg0YzNlYTY1M2FiYmFkOGQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ3YjhjMTA4NWY5NWExYWZhYmU1ZDE1MmFkNThkYjlkYzI2MzM2YzEyMThlMmI4NDBhZTdhZDgyNmEwZDU3NDgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjJjMDAyZGQ4ZWY1MThlNDc1ZGIyNjVhYWUyOTI1ZjhkODU0NTAyNzEyN2M0OTcxMzI0ZGM5MzdiZWZhYzkxYjUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdiMDA4NTlhZmNmODA2ODdkODkwZDg1YTY0Mzg4OGIzYTljZjcwMGFjZmY2MWJmNzE2ZjMyN2ZmMWM5NmYyODkifQ"
         },
         {
@@ -234,7 +234,7 @@
     },
     {
       "id": "claim_facb971c3c124009ad171a4d648da6ca",
-      "statement": "OpenWiki reader は階層 Markdown から hidden entry と INSTRUCTIONS を除き、symlink・不正 frontmatter・容量超過を拒否する。最大2000ページ、各512KiB、合計16MiBで、旧Wikiを変更しない。",
+      "statement": "OpenWiki readerは階層Markdownからhidden entryとINSTRUCTIONSを除き、symlink・不正frontmatter・容量超過を拒否する。最大2000ページ、各512KiB、合計16MiBで、読取時に書換えや修復をしない。",
       "evidence": [
         {
           "resource": "repo://crates/services/src/services/wiki.rs#L14-L15",
@@ -247,10 +247,6 @@
         {
           "resource": "repo://crates/services/src/services/wiki/openwiki.rs#L1-L121",
           "version": "repo-lines-v1:sha256:fd6134a37b0e4a44cd330885819d73adf2611be0ad3c720d2d087700b5b6ea70:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIxLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJiNTA3MTU0NzU3N2NiY2M3NWYzYjBjNmRhNDM4NGNhOWQ4ZWVmYmZhNzBlOTg5NDI0N2FhYzhlYjI1MmQwYTVhIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI2NDc1ZTk0YTkwNGFjNDliMzE1NGQ0NjcyYTY2ZTg2MjliODZkYWM3NGUzZTI5MzdiZTY5MjdhZTNkYTExYzUzIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MCwicHJlY2VkaW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJhNTIxNjA0YjM1ZmM0MGFmMDBjYmE0ZWVhMmZkNWUyYzNhZjE4NjNiMzkxMTg1ZDdiZjRiYjA5ZTcyZDBjOGIzIn0"
-        },
-        {
-          "resource": "repo://crates/services/src/services/wiki/openwiki.rs#L168-L206",
-          "version": "repo-lines-v1:sha256:d5f20ca9b8152e5d148b14cd2f4f80c0e8aa137147aeac7f8b94ce3ed0b1cb1e:eyJzZWxlY3RlZExpbmVDb3VudCI6MzksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkyYjVlZGY1OTQ5Y2ZlYTY3ODIyY2Y2OTExMzIzNjNkNjhkNmYxZTE2OWY1ZTBkNGY3YzE0ZTVmYTFlNmQ0ZTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2MjcyZDUzNDdmYzBkMDVkNWNlYjVlYmIwZmZhYmMxMGY1M2U4OWJjZDRiMmEzNTVmMDI5MmVmMDFmZDNlMTgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImM0MTFiM2FiYWZmOGIyM2JiNDBkYjUzODFmZTIyNWE4YjRmZjk0OGQ2MjYzODljMThjNjlmZjI5YWI1Y2FkMWQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoyLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM3OTRkMDJhODEyMTk0NGQxNzZkMjY1ZTliYjljYzU5ZjZhYjg5MGJjYWRmOGFlZmRlYmRiYmI0ZjJlYTg0NDQifQ"
         }
       ]
     },
@@ -678,7 +674,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/mod.rs",
-          "version": "repo-file-v1:sha256:6b52c28fa29dce40b31c357d9e44d60d45e412233e5170cad1145f26ed05ec88"
+          "version": "repo-file-v1:sha256:4b23d2ceaa859e28c22477309b8bca7cf08ff65f70ba4be32ec6d64c92ed0fcd"
         },
         {
           "resource": "repo://deploy/server/server.mjs",
@@ -868,7 +864,7 @@
       "evidence": [
         {
           "resource": "repo://packages/web-core/src/i18n/locales/ja/common.json",
-          "version": "repo-file-v1:sha256:b7c37768053138f62a9b4b889df762f7e0aec8bd7b2964ad1d38800ab8674b88"
+          "version": "repo-file-v1:sha256:bbc321c8f625aee01a267b7f17bfafdfda6ef3601e6db05dbdd7487eeb506091"
         },
         {
           "resource": "repo://packages/web-core/src/shared/dialogs/settings/settings/SharedStorageSettings.tsx",
@@ -949,6 +945,6 @@
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-09T08:47:44.052Z"
+    "at": "2026-11-09T18:10:41.827Z"
   }
 }

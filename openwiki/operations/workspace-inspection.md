@@ -180,10 +180,10 @@ sources:
     resource: repo://tests/server/specs/workspace-search.spec.ts
   - id: openwiki-source-dcac74ef871fd02e6315fa93
     resource: repo://tests/workflow/specs/diff-tree.spec.ts
-generated: { by: "codex", at: "2026-11-09T08:47:44.052Z" }
+generated: { by: "codex", at: "2026-11-09T18:10:41.827Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-09T08:47:44.052Z
+    at: 2026-11-09T18:10:41.827Z
 ---
 
 # ファイル・差分・プレビュー・端末の境界
@@ -282,7 +282,7 @@ Wiki は `openwiki/` の読取専用表示に統一され、repository 選択・
 
 保存済み設定で会話が非表示なら、Wiki を開くだけでは表示に戻らない。共通チャット表示操作、または右ペーンを閉じる操作で戻す。右サイドバーを隠していた場合も Wiki が強制的に開き直すことはない。モバイルでは Wiki タブからツリーと本文を開き、会話には Chat タブで戻る。これは desktop の右ペーン選択を解除する操作とは異なる。保存値の由来を識別できない制約、共通 layout の補正、下書き保持と試験範囲は [通常ペーン操作と保存済み設定](../architecture/web-and-sync.md#通常ペーン操作と保存済み設定)、共有 reader の責任は [Wiki の状態管理](../architecture/web-and-sync.md#wiki-のナビゲーションと本文を一つの状態で動かす)にまとめる。[チャット表示操作](../../packages/web-core/src/shared/stores/useUiPreferencesStore.ts#L534-L552)・[閉じた後の layout](../../packages/web-core/src/pages/workspaces/WorkspacesLayout.tsx#L199-L210)・[モバイル入口](../../packages/web-core/src/shared/components/ui-new/containers/NavbarContainer.tsx#L175-L185)
 
-adapter は `openwiki/` 以下の階層 Markdown を読み、dot-prefixed entry と `INSTRUCTIONS.md` をページから除く。root・子 entry の symlink を拒否し、index を含め最大2,000ページ、1ページ512 KiB、合計16 MiBを超えれば snapshot 全体をエラーにする。切り詰めた Wiki を正常応答にはしない。frontmatter は optional だが、ある場合は正しい YAML mapping を要求する。Claims 解釈・設定書込・初期化・修復はしない。[adapter](../../crates/services/src/services/wiki/openwiki.rs)、[安全な読取](../../crates/services/src/services/wiki.rs)、[旧ファイル保持と容量の test](../../crates/services/src/services/wiki/openwiki.rs)
+adapter は `openwiki/` 以下の階層 Markdown を読み、dot-prefixed entry と `INSTRUCTIONS.md` をページから除く。root・子 entry の symlink を拒否し、index を含め最大2,000ページ、1ページ512 KiB、合計16 MiBを超えれば snapshot 全体をエラーにする。切り詰めた Wiki を正常応答にはしない。frontmatter は optional だが、ある場合は正しい YAML mapping を要求する。Claims 解釈・設定書込・初期化・修復はしない。[adapter](../../crates/services/src/services/wiki/openwiki.rs)、[安全な読取](../../crates/services/src/services/wiki.rs)、[非変更・symlink・容量の test](../../crates/services/src/services/wiki/openwiki.rs)
 
 通常Repoはmembershipを要求する。DirectFolderは旧Repo行が残っていてもWorkspace Repo Wikiの解決を拒否し、旧repo_id=workspace.idのfallbackを使わない。旧機能の終了と Card の保存文脈は [Card context](../concepts/card-context-and-llm-wiki.md)、生成物の公開条件は [OpenWiki 保守](openwiki-maintenance.md)を参照する。[scope の解決](../../crates/server/src/routes/workspaces/wiki.rs)
 
@@ -468,3 +468,8 @@ Project utilitiesの関連Repo読取は現在のプリセットだけでなく�
 ### Claude 利用枠を取得できないとき
 
 右sidebarの理由を確認する。取得中は重複processを起動せず待ち、開始間隔制限なら時間を空ける。`cleanup_unconfirmed`は回収未確認による閉鎖で、画面の再取得やSLOTの無条件開放で復旧しない。運用担当が所有processと正式診断を確認する必要がある。timeout表示は専用process回収完了後の結果であり、認証変更や新loginを自動実行しない。partial/未知値を0や無制限と扱わず、実際のaccount scope・既存公式認証とCLI互換性を[provider契約](../integrations/agent-providers.md#短命接続の所有と失敗)で確認する。[理由表示](../../packages/web-core/src/shared/components/EnvironmentPanel.tsx)・[理由とstatus](../../packages/web-core/src/shared/lib/claudeQuotaView.ts)・[回収](../../crates/executors/src/executors/claude/usage.rs)
+
+
+### LOCAL-361のWikiリンク整理
+
+旧形式を切り替えるopenwiki selector引数を廃止し、現行OpenWikiとして相対path、`/openwiki/`絶対path、拡張子省略、directory indexを解決する。既知availablePathsにある候補だけを返し、汎用 `pages/` fallbackとroot逸脱拒否は保持する。旧Wiki専用のtestは撤去したが、現行の非変更・symlink・過大page拒否のreader試験は残る。[resolver](../../packages/web-core/src/features/wiki/model/wikiNavigation.ts#L130-L188)・[reader試験](../../crates/services/src/services/wiki/openwiki.rs)

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:c75c271b26bec8fe02185a931b218fefe70f31c4909ef3475ce807c17e79ccb4",
+  "pageVersion": "sha256:2f793c27e67c719fd5b456af1e57b205ad26db97c341beb57bc860204917fa77",
   "claims": [
     {
       "id": "claim_b19b76396a064309bf7402c5c74e707d",
@@ -16,25 +16,25 @@
         },
         {
           "resource": "repo://crates/services/src/services/resource_coordination.rs",
-          "version": "repo-file-v1:sha256:174dbf36bd937039ad4134f58aa4d90d7b906bdbbc5a5ad51b71508cbee9f332"
+          "version": "repo-file-v1:sha256:6e78428dc9716bf3830b7960fc41fdaf5f94604e632298db475f7b10be7eeaba"
         }
       ]
     },
     {
       "id": "claim_97ffbae8ff854c92b436d0b24f87be8f",
-      "statement": "調停contextはstdio MCPの自動認証とraw loopback専用内部tokenを案内し、control.pyも内部tokenの送信先をloopback HTTPに限定してredirectを追わない。",
+      "statement": "通常の資源contextは短い入口と現在sessionを送り、stdio自動認証とraw loopback token/Runner詳細は実ガイドファイルまたは同定義の任意MCPから読む。control.pyは内部tokenをloopback HTTPへ限定しredirectを追わない。",
       "evidence": [
         {
-          "resource": "repo://crates/services/src/services/resource_coordination.rs#L80-L98",
-          "version": "repo-lines-v1:sha256:f5b309b29b484c81af3a219c115a9e026b3a0dd5a8fc0243e17e47120698c783:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAwMzUzODM0MWFlYjRjNzQ4MDZiZDZiY2UyYTI1YjNjNjUxMGFlZjg4YzI0YjRhNWFiNWU1MDI0YjlkNTljZDciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMwYzFmMTg4ZjE0MmVkN2E4MjQ2ODBiMjA3MTcyYzU1MTliYzYxNGE0OGZkYTdjZjE2N2VkYjhkZGY3OTk1NmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjVlZWYxZjZiYWY2MWI0NGE2YmRhN2Y4ZDIwY2VmZDY4MWEyYmMwMTc5N2JlZDg0YWMzYmRjNTI1YzU5MmZlZDIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEifQ"
+          "resource": "repo://crates/services/src/services/resource_coordination.rs#L87-L90",
+          "version": "repo-lines-v1:sha256:e22e8a7946ee9b7c2ddd5f8dc7c38ea76af59e34193570df49ac529adba01b60:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOTRiODE2NDU5NGQzZTIzNzcyODdmYjRhYjRlMWVlYWE1MmM0YjY4OTUxYWRkZDczNzVkMjA2YjkyZmEzMDJlOCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMzBjMWYxODhmMTQyZWQ3YTgyNDY4MGIyMDcxNzJjNTUxOWJjNjE0YTQ4ZmRhN2NmMTY3ZWRiOGRkZjc5OTU2YyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMzVmNmY0NjZlNTljZmMzMDcwM2M0NWY3MmFmNjVkZTU0YWMzNjNkMzU0Y2MxYTMzMzAzNTBhY2Q0NTI0MzRjNCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjEsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNDEyY2EzNDVjY2Y3NWJmOWMwODA2YmNlNjk1YmU4ZGU4MDhiNzk5ODQyNTFhN2E1NGQyMDJjZjYxMDFkZDQ1MSJ9"
+        },
+        {
+          "resource": "repo://crates/utils/src/agent_guides.rs#L11-L23",
+          "version": "repo-lines-v1:sha256:8b95c49dcc98f723c9632fb899e20a80273416254f8571934847cc5b1bb2bb95:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE5YmE4N2NhYmU3N2RhOWVjZTZkNjY5MzRmOTA1ZWJmNDE2ZTg3MTBkZmMzMGIxZGY2NmU0Njk4YWYyOTI2MDQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZkODQwZTZiZTMxNTY5ZWRlZWNjNzQwOTM4ZDQyMjg2NjhiZTc2ZjVlMWZhYTYxYzkzMzA3Njc4ODE1NTYyNjkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjMwYTJkZTMwYzE3YzBjOWUyMGJlODllNTAxNjM0M2U2Y2E2ZDZiZGM2ZmFiNzQ3M2M1YmViNWQ1ZTMzZmI0MjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNjNGIxYmE2MDEyYmE4Njk2NTMxNmJlMDE5NTU2ZTk5MTE4MGQ5NjE0MzU1OGE2NDIwODdlYzRjMzBkOGE2ZmYifQ"
         },
         {
           "resource": "repo://scripts/local-runner/control.py#L43-L67",
           "version": "repo-lines-v1:sha256:66f15c54f296d3e71900a8beb6642164cb17f5666d8a0e3c518f724bd804a27c:eyJzZWxlY3RlZExpbmVDb3VudCI6MjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVjNjg0OTExZDk4YjQ1MzlmODExNzVhODI4YWY5MzlmMTBjZmQyNmRiNGVlYWExNjI1YTM2NDY2NWNkNWNhZmMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE0OTZhOTEyY2JlMTFkMzBiMmQ2YmE5Y2I0ZWZjNzY3NWMxOWM0Y2VhNjk1MmQ2M2NkZWE1YzZkNmVlZmM2YzAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjkyOWExYjI4NDc4OWU5Y2I5ODA3M2MwYjA3OTk5M2VmMzMyNWE1MGNiMmI5YWI1NzY3ODAxYTVkNzRkMWZmOTQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijk3NmFiNmQ3MzhlMjdkNzBhOWQ4MmNiNjgxZGU4NDZiN2Y1ZGEzNjQ4NTFlYzY3Y2IyNmJkMTQxZjAzZjcwNjEifQ"
-        },
-        {
-          "resource": "repo://scripts/local-runner/test_control.py",
-          "version": "repo-file-v1:sha256:3310e8e6c7480720349c2e03f739f0723817b45f56815da76fed36d59403637f"
         }
       ]
     },
@@ -109,6 +109,6 @@
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-07T09:46:42.639Z"
+    "at": "2026-11-09T18:20:01.087Z"
   }
 }

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:3f7e83f008a7d00fdee91788f655131c461178cbc11493ac91c9079111eb59aa",
+  "pageVersion": "sha256:74fbbe6b9bb86b0695358d3be47ffe6c558b0c83daaa26e472c925b6907dae9c",
   "claims": [
     {
       "id": "claim_94623b4df5d444f5b2804c9e2c2025c7",
@@ -73,7 +73,7 @@
       "statement": "worktree保存先overrideは指定先のアプリ所有子ディレクトリを使い、共有資源の既定保存先を変更しない。",
       "evidence": [
         {
-          "resource": "repo://crates/utils/src/path.rs#L180-L202",
+          "resource": "repo://crates/utils/src/path.rs#L173-L195",
           "version": "repo-lines-v1:sha256:cb4f72ece8532edff09b3effbc1d2a41c398354ca488652d0b71d13041d563b4:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImMxNWNmOGVjNzVlMjFjMmEyZTEwMmEwYjE1OWE0Y2UyNGIwN2ZjNWM3NDdmNjYxYWZlOTMzYzU4YmY4NzBiNWEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQ1YWQ2OTg2YTUwNDdiMGI5NjY5ODY1MTkxYzBiNDBiNTc3ZDIyOTAxOWJlMzBlYjNhYzRiMDhlM2U5NjVmZjIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQyMzU2NjExMmE2MTZlYTQ1MDA4ZjNmOThhOWE1ZDc2YmQwMGQ1MDQ4ZmZlNTg4YzZjMjVhYzAyNDUzYjk2NjUifQ"
         },
         {
@@ -98,7 +98,7 @@
       "evidence": [
         {
           "resource": "repo://crates/utils/src/path.rs",
-          "version": "repo-file-v1:sha256:c992e6dda1e9c8129a65c07351678e0edae611c0f9521bc0fc8a632eb4300627"
+          "version": "repo-file-v1:sha256:bce99c31cad5552b5bac7e3bad76b62e9281db01cc9b5a446e9d2e09e999848f"
         },
         {
           "resource": "repo://crates/workspace-manager/src/shared_resources.rs",
@@ -315,7 +315,7 @@
           "version": "repo-lines-v1:sha256:e834729570fe00a6d2b160b424be3199575626052ecb5a72ff5cef4647c5100d:eyJzZWxlY3RlZExpbmVDb3VudCI6MzMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZmYTU4OTJiYzI5YWEzOTg5MTJiMWM5MTBiODUzZWY2MDgwODY5MDhkMDBiOTRlNzdiMTE1NjQ0OTA4ZDg1N2IiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjNhODI1ZWVjYWM2YjlmOTY4OTJhZmI3OThkNWYzNzRhYWRiMDRmYjUyODc3MDIyY2Y1YWEyNWY0MmVkMTM4Y2UiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImEwZTVhOTM3ZTY5ZjU5MWNmZjYxZjg1ZjhlZGVkZTlhZWEyOTI4NDg4MTgxY2U4MTBhZjQ2YWE4NTU0YTUwZGYifQ"
         },
         {
-          "resource": "repo://packages/web-core/src/shared/lib/api.ts#L987-L997",
+          "resource": "repo://packages/web-core/src/shared/lib/api.ts#L986-L996",
           "version": "repo-lines-v1:sha256:287d8ae640fe61d6d39c12d4888498ad7e96c93a2f159152739329b026dd9cca:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJmYzY4MGU3YzYzNzQwMTMyZTY2NzY2MmY2Zjg0MDZlZDVkMzExOTBkNWI5ODgyZmI5NzVmZjI1OWI2ZTFiN2IiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRkNWNkMmZiNGYzZGY4ODQ1MTUyNTViMzk1MjNmMmY4YjU0NzJiZWVhOWY1NjZmZmNhMjA0ZGI4MDI1NjEwNDEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhiOWY5YzBjNmY1MDNhYzAxYzUyMDk4ZWZjOGFjOGU2NWI2MmI3MTc4ZGI1MDY0M2ZmZDhmM2U0ZmFlYzc5ZjAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjY4Y2FiZGJiYWM2Yzc1ZTM1Mzc3OWE5ZTljMTMxMzZlYWY0ZDNjZWM3NDliYmIwN2M5MmM1ZTMwYjYxNTBiMmIifQ"
         },
         {
@@ -343,7 +343,7 @@
           "version": "repo-lines-v1:sha256:6bb72f8a1767eeecb43e9216f23bf4c57a08f512db8ae807c4ff5b71a1537567:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRhNmEwZjM4YmQ0NGU4MGZkZjI2MDUwZTkxZjJlZTI5ZWZhNTkxOTAyZjYxNDYzNTlmNTY0MmU1MGUxMWNmNDYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZjMTBkODc1YTIxNTU4NmI1OThjMzU0NjY2NzUzNzQ2Y2U5YzM3NmM2ZjFhYzY0NzVkYTY0N2Q2MTYwNjI5ZjkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRhOWY4NmQyOGU3ODRmOWZkMzFmYjcyZDE1ZjYwY2JjZWFhZmRkNjY5Y2JkNWI2ZGE3ODg4YTAyMzMyMWViYjkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjcwNTY1MTFlZTQyOTJlODQ5MjRjYTVmOWUzNDViMjg0YjRhOWU0YTNlOGMxMjkwNmE3ZWUwZjlhNGRmNTU5NmYifQ"
         },
         {
-          "resource": "repo://crates/executors/src/executors/provider_adapter.rs#L1874-L1930",
+          "resource": "repo://crates/executors/src/executors/provider_adapter.rs#L1974-L2030",
           "version": "repo-lines-v1:sha256:77dd2b524accb891169676bb5746a882b21eec42b753b94b2756b285a76a1810:eyJzZWxlY3RlZExpbmVDb3VudCI6NTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFlNTNlMjQ4ODZlZDg5OTFmZDZhMjdkNzhjM2Q3MDI2N2JjNTVjOWFhYjg1NWI5MDk4NzJkNzJlNDYzNmM1NGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjI3ZDJlZGY4MmVhNDVmZTNkZTk0ZDYxYmRlYjgxMTg2Y2JiN2IxY2IxMjk5Yzg4OTUyMTRhZDZmNzgwNGEzMGIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjY1NTY5NTQ5ZTdiNzE2ZmM1OGMyNmNhNDFmMDY3ZWFmMzA3MzVlODZkZmExN2EwY2IwMzdkZjNkZjFlMTgzZjUifQ"
         }
       ]
@@ -463,7 +463,7 @@
       "statement": "受動閲覧はarchived/execution-onlyのworktreeを再生成せず、unarchiveや明示準備で再生成する。AgentRun予約はarchive/worktree削除済みを拒否する。",
       "evidence": [
         {
-          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L763-L782",
+          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L761-L780",
           "version": "repo-lines-v1:sha256:8e1307d3c7e0b5ca4f842c4cd6de642be1df1e6105c90510e54c139eaa8b9551:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFlZjBlZmE1MjU4NGQwY2YyNTE2NmEyZThhZDg0ZDRhYmUyNWQzOGViNTBiYjdjYzk5Y2VlN2Q0NTdjN2I5ZTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQzYWU5NDFmYWViNDcxMDFkZmViY2I3OGNkODI5ZDNhOWRhNTZiNDk4MWNmMDIyOWFlODlkNGZlM2U1MGMzMWYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjNhNzhmNmVjMjgwMDAwYjI1ODdkMmJjM2I4Y2UyZWNkNTVkMjkzMzAyMzA3YTYwNGNkNzdjYzVkMDVlY2U1ZGIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjYzYzAyZTg0MWVkYjIwMTliMzVlYTAzZjQzNWFlY2U1NmYyZDJjYTA2NDNjNDU4N2RhY2I2ZDExMjdiODZhZmYifQ"
         },
         {
@@ -869,6 +869,6 @@
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-09T07:03:14.304Z"
+    "at": "2026-11-09T18:20:01.087Z"
   }
 }

@@ -66,6 +66,8 @@ sources:
     resource: repo://crates/server/src/startup.rs
   - id: openwiki-source-04d5adb51b5929dacce999bc
     resource: repo://crates/server/src/workflow_runtime/bootstrap.rs
+  - id: openwiki-source-cc3b0007b9399fe7dda21b8e
+    resource: repo://crates/services/src/services/parallel_context.rs
   - id: openwiki-source-72948db7f01925b4b2ff17af
     resource: repo://crates/services/src/services/pr_monitor.rs
   - id: openwiki-source-9c5d335ecd1178e88c47c0a8
@@ -74,6 +76,8 @@ sources:
     resource: repo://crates/services/src/services/repository_memory.rs
   - id: openwiki-source-6043692809cbf72f253c5631
     resource: repo://crates/services/src/services/workspace_usage/lifecycle.rs
+  - id: openwiki-source-8dd059d50335f535b6d49e83
+    resource: repo://crates/utils/src/agent_guides.rs
   - id: openwiki-source-08b3f4dcb1a91c97b6d127f8
     resource: repo://crates/worktree-manager/src/worktree_manager.rs
   - id: openwiki-source-db035046d01e3f24722812c8
@@ -86,10 +90,10 @@ sources:
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/ReposSettingsSection.tsx
   - id: openwiki-source-ffc55e6e31e6ce477ca57329
     resource: repo://packages/web-core/src/shared/hooks/useWorkflowRun.ts
-generated: { by: "codex", at: "2026-11-09T07:03:14.304Z" }
+generated: { by: "codex", at: "2026-11-09T18:10:41.827Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-09T07:03:14.304Z
+    at: 2026-11-09T18:10:41.827Z
 ---
 
 # Issue から実行・レビュー・統合まで
@@ -104,7 +108,7 @@ Git新規作成はProjectの全Repoプリセットを初期選択し、減らせ
 
 Session に渡す local File と作業先のコピーは [Workspace の添付](../operations/workspace-inspection.md#session-の添付)、Board の file 参照は [Issue の共同作業](../concepts/issue-collaboration.md) を参照する。
 
-入力の user description と再利用する context は [Card context と LLM Wiki](../concepts/card-context-and-llm-wiki.md) で区別する。Workflow の graph を実行する場合は、通常 Session の起動と別に [WorkflowAttempt の準備・Run snapshot](../concepts/workflow-attempt.md) を作る。
+Issue要求は通常descriptionへ保存し、廃止したCard Context専用欄やhidden分離は使わない。保存Issue由来だけに限定した既知5hashの送信時除去と独自文保護は[保存本文](../concepts/card-context-and-llm-wiki.md)を参照する。Workflow の graph を実行する場合は、通常 Session の起動と別に [WorkflowAttempt の準備・Run snapshot](../concepts/workflow-attempt.md) を作る。
 
 ## 2. Setup の依存を満たす
 
@@ -138,7 +142,7 @@ Agent の review API は Workspace 内に active AgentRun があれば拒否す�
 
 ## 並列変更を試してから正式統合する
 
-他 Card の文脈や branch を調べるときは、[Shared dirs と並列 context](../concepts/card-context-and-llm-wiki.md)で関係を発見し、採用する commit を固定する。発見された最新 HEAD や他 Workspace の未統合の私的文脈 を、既に統合済みの仕様として扱わない。
+他 Card の文脈や branch を調べるときは、[共有領域と公開peer参照](../concepts/card-context-and-llm-wiki.md)で関係を発見し、採用する commit を固定する。発見された最新 HEAD や他 Workspace の未統合の私的文脈 を、既に統合済みの仕様として扱わない。
 
 組合せ試験には `POST /api/workspaces/<id>/integration/preview` がある。自分の base commit と peer の commit を明示し、Repo membership、各 commit がその Workspace branch に帰属する祖先であること、自分の checkout が指定 base に一致して clean なことを確認する。古い固定 commit は許すが、自動的に新 HEAD へ追従しない。自分を含む source は最大100件である。[preview の受付](../../crates/server/src/routes/parallel_context.rs)
 
@@ -264,3 +268,8 @@ Repository設定のINSTRUCTIONS/ignore保存は次回の入力変更であり、
 Gitは単一/複数Repoとも共通root配下のworktreeを使う。LVK親AGENTSと子Repoの指示・skillsの到達はprovider別に扱い、本文の全量一括注入をしない。既存Session保存cwdと成果物を保持し、今後のRun/添付はrootへ揃える。DirectFolderはGit root/内側を拒否し、配下Repoを含む親folderを管理Repoへ自動登録しない。Git回収・自動commit・Manifest・自動マージ・Repo Wiki対象外であり、非Git成果は会話で確認する。[Workspace契約](../concepts/workspace.md)
 
 自動マージの候補一覧はWorkspaceの保存target branchで絞り、target変更時に旧選択を解除する。Repoごとの公開は独立し、複数Repoを原子的にまとめる機能ではない。Projectプリセットを変えたりWorkspaceを後付けリンクしても既存のRepo/targetを再構成しない。
+
+
+### 必須契約と必要時参照
+
+通常起動は現在Repo/RunのManifest・parallel identityと短い契約を配信し、詳細schema、snapshot/preview、資源/Runner手順は実ガイドファイルまたは任意stdio get_context guideから読む。旧Card設定のON/OFFでは必須案内を無効化しない。peerの私的会話・資格情報を読まず、採用sourceを固定し、試験用previewを正式publicationと混同しない。[現在identity](../../crates/services/src/services/parallel_context.rs#L145-L180)・[ガイド](../../crates/utils/src/agent_guides.rs)
