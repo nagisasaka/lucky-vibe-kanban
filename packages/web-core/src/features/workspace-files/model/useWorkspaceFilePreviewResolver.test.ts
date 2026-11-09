@@ -14,6 +14,32 @@ const repo = (
   }) as RepoWithTargetBranch;
 
 describe('workspace file preview path resolution', () => {
+  it('uses physical placement before duplicate display names and rejects ambiguous display aliases', () => {
+    const repos = [
+      { ...repo('one', 'same', 'Shared'), worktree_name: 'same' },
+      { ...repo('two', 'same', 'Shared'), worktree_name: 'same--two' },
+    ];
+    expect(
+      resolveWorkspaceFilePreviewTarget({
+        workspaceId: 'w',
+        repos,
+        path: 'same--two/a.ts',
+        source: 'chat',
+      })
+    ).toMatchObject({
+      status: 'resolved',
+      target: { repoId: 'two', path: 'a.ts' },
+    });
+    expect(
+      resolveWorkspaceFilePreviewTarget({
+        workspaceId: 'w',
+        repos,
+        path: 'Shared/a.ts',
+        source: 'chat',
+      }).status
+    ).toBe('ambiguous');
+  });
+
   it('rejects unsafe paths before creating a target', () => {
     const repos = [repo('repo-1', 'app')];
 

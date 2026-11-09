@@ -23,6 +23,9 @@ pub async fn begin_coding_run(
     target_branch: &str,
     finalize_source: bool,
 ) -> anyhow::Result<Option<RepositoryMemoryRun>> {
+    if workspace.is_direct_folder() {
+        return Ok(None);
+    }
     let Some(store) =
         RepositoryMemoryStore::existing_for_repository(pool, &repo.name, repo.id).await?
     else {
@@ -129,6 +132,12 @@ pub async fn complete_successful_coding_runs(
     next_run_id: Option<Uuid>,
     include_manifest: bool,
 ) -> anyhow::Result<Option<String>> {
+    if Workspace::find_by_id(pool, workspace_id)
+        .await?
+        .is_some_and(|w| w.is_direct_folder())
+    {
+        return Ok(None);
+    }
     let succeeded: HashSet<Uuid> = sqlx::query_scalar(
         "SELECT id FROM agent_runs WHERE workspace_id = ? AND status = 'succeeded'",
     )
@@ -501,6 +510,9 @@ pub async fn prepare_workspace_source(
     target_branch: &str,
     include_manifest: bool,
 ) -> anyhow::Result<Option<String>> {
+    if workspace.is_direct_folder() {
+        bail!("Direct folder workspaces do not support LVK Git integration");
+    }
     let Some(store) =
         RepositoryMemoryStore::existing_for_repository(pool, &repo.name, repo.id).await?
     else {
@@ -1372,11 +1384,28 @@ mod tests {
             .connect("sqlite::memory:")
             .await
             .unwrap();
+        // Workspace-kind guards read the real Workspace model. Keep only the
+        // agent status feed minimal; all Workspace columns come from migrations.
+        db::run_migrations(&pool).await.unwrap();
+        sqlx::query("DROP TABLE agent_runs")
+            .execute(&pool)
+            .await
+            .unwrap();
         sqlx::query("CREATE TABLE agent_runs (id BLOB PRIMARY KEY, workspace_id BLOB NOT NULL, status TEXT NOT NULL)")
             .execute(&pool)
             .await
             .unwrap();
         let first = run(&store, &root);
+        Workspace::create(
+            &pool,
+            &db::models::workspace::CreateWorkspace {
+                branch: "feature".into(),
+                name: None,
+            },
+            first.workspace_id,
+        )
+        .await
+        .unwrap();
         let unrelated_workspace = run(&store, &root);
         let mut failed = run(&store, &root);
         failed.workspace_id = first.workspace_id;

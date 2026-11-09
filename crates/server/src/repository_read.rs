@@ -14,7 +14,7 @@ async fn root(pool: &SqlitePool, request: &Request) -> Result<PathBuf> {
         .await?;
     ensure!(exists, "Project does not exist");
     ensure!(
-        crate::routes::local_remote::project_creation_repository_ids(pool, request.project_id)
+        crate::routes::local_remote::project_associated_repository_ids(pool, request.project_id)
             .await?
             .contains(&request.repository_id),
         "Repository does not belong to Project"
@@ -38,6 +38,10 @@ async fn root(pool: &SqlitePool, request: &Request) -> Result<PathBuf> {
                 .is_some(),
                 "Repository does not belong to Workspace"
             );
+            let repo =
+                WorkspaceRepo::find_repo_for_workspace(pool, *workspace_id, request.repository_id)
+                    .await?
+                    .ok_or_else(|| anyhow::anyhow!("Repository not found in Workspace"))?;
             let workspace = Workspace::find_by_id(pool, *workspace_id)
                 .await?
                 .ok_or_else(|| anyhow::anyhow!("Workspace not found"))?;
@@ -50,7 +54,7 @@ async fn root(pool: &SqlitePool, request: &Request) -> Result<PathBuf> {
                         .container_ref
                         .ok_or_else(|| anyhow::anyhow!("Workspace checkout unavailable"))?,
                 )
-                .join(repo.name)
+                .join(repo.worktree_name())
             }
         }
     };

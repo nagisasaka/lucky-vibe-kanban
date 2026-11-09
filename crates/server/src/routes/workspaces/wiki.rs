@@ -9,10 +9,7 @@ use axum::{
 use db::models::{workspace::Workspace, workspace_repo::WorkspaceRepo};
 use deployment::Deployment;
 use serde::{Deserialize, Serialize};
-use services::services::{
-    container::ContainerService,
-    wiki::{self, WikiError, WikiSnapshot},
-};
+use services::services::wiki::{self, WikiError, WikiSnapshot};
 use ts_rs::TS;
 use utils::response::ApiResponse;
 use uuid::Uuid;
@@ -76,6 +73,11 @@ async fn resolve_wiki_repo(
     workspace: &Workspace,
     repo_id: Uuid,
 ) -> Result<ResolvedWikiRepo, ApiError> {
+    if workspace.is_direct_folder() {
+        return Err(ApiError::BadRequest(
+            "Direct folders do not have LVK repository Wiki management".into(),
+        ));
+    }
     if WorkspaceRepo::find_by_workspace_and_repo_id(&deployment.db().pool, workspace.id, repo_id)
         .await?
         .is_some()
@@ -89,28 +91,9 @@ async fn resolve_wiki_repo(
         });
     }
 
-    let attached = WorkspaceRepo::find_by_workspace_id(&deployment.db().pool, workspace.id).await?;
-    if !workspace.is_direct_folder() || !attached.is_empty() || repo_id != workspace.id {
-        return Err(ApiError::BadRequest(
-            "Repository is not part of this workspace".to_string(),
-        ));
-    }
-    let container_ref = deployment
-        .container()
-        .container_for_inspection(workspace)
-        .await?;
-    let root = tokio::fs::canonicalize(container_ref).await?;
-    let name = root
-        .file_name()
-        .and_then(|value| value.to_str())
-        .unwrap_or("direct-folder")
-        .to_string();
-    Ok(ResolvedWikiRepo {
-        id: workspace.id,
-        display_name: workspace.name.clone().unwrap_or_else(|| name.clone()),
-        name,
-        root,
-    })
+    Err(ApiError::BadRequest(
+        "Repository is not part of this workspace".into(),
+    ))
 }
 
 async fn resolve_source_links(

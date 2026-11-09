@@ -201,7 +201,8 @@ pub struct DraftWorkspaceRepo {
     pub target_branch: String,
 }
 
-/// Data for project repo defaults scratch (default repos/branches per project)
+/// Local repository preset for future Workspaces. Legacy branch strings remain
+/// wire-compatible; base branches are selected and owned by each Workspace.
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct ProjectRepoDefaultsData {
     #[serde(default)]

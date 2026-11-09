@@ -232,18 +232,21 @@ impl ClaudeCode {
 
     async fn build_slash_commands_discovery_command_builder(
         &self,
+        repository_roots: &[PathBuf],
     ) -> Result<CommandBuilder, CommandBuildError> {
-        super::command_adapter::ClaudeCodeCommandAdapter::new(self).build_discovery_probe()
+        super::command_adapter::ClaudeCodeCommandAdapter::new(self)
+            .build_discovery_probe(repository_roots)
     }
 
     async fn discover_available_command_and_plugins(
         &self,
         current_dir: &Path,
+        repository_roots: &[PathBuf],
     ) -> Result<DiscoveredCommands, ExecutorError> {
         self.check_subscription_login(current_dir, &ExecutionEnv::new(RepoContext::default()))
             .await?;
         let command_builder = self
-            .build_slash_commands_discovery_command_builder()
+            .build_slash_commands_discovery_command_builder(repository_roots)
             .await?;
         let command_parts = command_builder.build_initial()?;
         let (program_path, args) = command_parts.into_resolved().await?;
@@ -318,6 +321,7 @@ impl ClaudeCode {
     pub async fn discover_agents_and_slash_commands_initial(
         &self,
         current_dir: &Path,
+        repository_roots: &[PathBuf],
     ) -> Result<
         (
             Vec<AgentInfo>,
@@ -328,7 +332,7 @@ impl ClaudeCode {
         ExecutorError,
     > {
         let (names, plugins, agents, skills) = self
-            .discover_available_command_and_plugins(current_dir)
+            .discover_available_command_and_plugins(current_dir, repository_roots)
             .await?;
 
         let agent_options = Self::map_discovered_agents(agents);
@@ -343,7 +347,21 @@ impl ClaudeCode {
             .iter()
             .map(|command| (command.name, command.description))
             .collect();
-        let discovered_skills = Self::map_discovered_skills(current_dir, skills);
+        let conflicts = crate::repo_skills::ambiguous_claude_names(repository_roots);
+        let paths = crate::repo_skills::claude_skills(repository_roots);
+        let mut discovered_skills = Self::map_discovered_skills(current_dir, skills);
+        for skill in &mut discovered_skills {
+            // Native user/project precedence wins over an added directory.
+            // Replace the placeholder only when there is no native local file.
+            if !skill.path.is_file()
+                && let Some(path) = paths.get(&skill.name).and_then(|p| p.first())
+            {
+                skill.path = path.clone();
+            }
+            if conflicts.contains(&skill.name) {
+                skill.enabled = false;
+            }
+        }
         let skill_names: HashSet<String> = discovered_skills
             .iter()
             .map(|skill| skill.name.clone())
@@ -354,7 +372,9 @@ impl ClaudeCode {
         let mut seen = HashSet::new();
         let mut slash_commands: Vec<SlashCommandDescription> = names
             .into_iter()
-            .filter(|name| !name.is_empty() && seen.insert(name.clone()))
+            .filter(|name| {
+                !name.is_empty() && !conflicts.contains(name) && seen.insert(name.clone())
+            })
             .map(|name| {
                 let description = builtin_descriptions
                     .get(name.as_str())
@@ -364,7 +384,7 @@ impl ClaudeCode {
             .collect();
 
         for skill in &discovered_skills {
-            if skill.name.is_empty() || !seen.insert(skill.name.clone()) {
+            if !skill.enabled || skill.name.is_empty() || !seen.insert(skill.name.clone()) {
                 continue;
             }
             slash_commands.push(Self::classify_slash_command(
@@ -385,8 +405,15 @@ impl ClaudeCode {
         current_dir: &Path,
         plugins: &[ClaudePlugin],
         slash_commands: &[SlashCommandDescription],
+        repository_roots: &[PathBuf],
     ) -> Vec<SlashCommandDescription> {
-        let descriptions = Self::discover_custom_command_descriptions(current_dir, plugins).await;
+        let mut descriptions = HashMap::new();
+        // Native added-directory precedence is first-in-order. Existing
+        // project/personal commands retain precedence over added directories.
+        for root in repository_roots.iter().rev() {
+            descriptions.extend(Self::scan_base_path(&root.join(".claude"), None).await);
+        }
+        descriptions.extend(Self::discover_custom_command_descriptions(current_dir, plugins).await);
 
         slash_commands
             .iter()
@@ -493,17 +520,12 @@ impl ClaudeCode {
                 let global_path = home_claude
                     .as_ref()
                     .map(|claude_dir| claude_dir.join("skills").join(&name).join("SKILL.md"));
-                let path = if project_path.exists() {
-                    project_path
-                } else if let Some(global_path) = global_path
+                let path = if let Some(global_path) = global_path
                     && global_path.exists()
                 {
                     global_path
                 } else {
-                    PathBuf::from(".claude")
-                        .join("skills")
-                        .join(&name)
-                        .join("SKILL.md")
+                    project_path
                 };
 
                 Some(CodexSkillDescription {
@@ -534,6 +556,37 @@ mod tests {
     use std::collections::HashSet;
 
     use super::*;
+
+    #[tokio::test]
+    async fn descriptions_follow_native_added_directory_and_project_precedence() {
+        let temp = tempfile::tempdir().unwrap();
+        let common = temp.path().join("common");
+        let a = temp.path().join("a");
+        let b = temp.path().join("b");
+        let name = format!("lvk349-test-{}", uuid::Uuid::new_v4());
+        for (root, description) in [(&common, "common"), (&a, "a"), (&b, "b")] {
+            std::fs::create_dir_all(root.join(".claude/commands")).unwrap();
+            std::fs::write(
+                root.join(".claude/commands").join(format!("{name}.md")),
+                format!("---\ndescription: {description}\n---\nsynthetic command"),
+            )
+            .unwrap();
+        }
+        let commands = vec![SlashCommandDescription {
+            name: name.clone(),
+            description: None,
+            source: None,
+            support_level: None,
+        }];
+        let roots = vec![a, b];
+        let project =
+            ClaudeCode::fill_slash_command_descriptions(&common, &[], &commands, &roots).await;
+        assert_eq!(project[0].description.as_deref(), Some("common"));
+        std::fs::remove_file(common.join(".claude/commands").join(format!("{name}.md"))).unwrap();
+        let added =
+            ClaudeCode::fill_slash_command_descriptions(&common, &[], &commands, &roots).await;
+        assert_eq!(added[0].description.as_deref(), Some("a"));
+    }
 
     #[test]
     fn fallback_commands_use_current_claude_names_and_fallback_metadata() {

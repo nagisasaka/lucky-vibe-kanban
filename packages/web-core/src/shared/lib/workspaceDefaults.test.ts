@@ -39,7 +39,7 @@ describe('workspace defaults', () => {
         repo: { repo_id: 'repo-1', target_branch: 'main' },
       })
     ).toEqual({
-      preferredRepos: [{ repo_id: 'repo-1', target_branch: 'main' }],
+      preferredRepos: [{ repo_id: 'repo-1', target_branch: null }],
       preferredDirectoryPath: null,
     });
   });
@@ -52,7 +52,7 @@ describe('workspace defaults', () => {
       })
     ).toEqual({
       preferredRepos: [],
-      preferredDirectoryPath: 'F:\\notes',
+      preferredDirectoryPath: null,
     });
   });
 
@@ -62,7 +62,10 @@ describe('workspace defaults', () => {
         kind: 'git',
         repo: { repo_id: 'repo-1', target_branch: '  ' },
       })
-    ).toBeNull();
+    ).toEqual({
+      preferredRepos: [{ repo_id: 'repo-1', target_branch: null }],
+      preferredDirectoryPath: null,
+    });
     expect(
       buildExplicitProjectWorkspaceDefaults({
         kind: 'direct_folder',
@@ -82,7 +85,7 @@ describe('workspace defaults', () => {
     await expect(
       getExplicitProjectWorkspaceDefaults('project-1', 'host-1')
     ).resolves.toEqual({
-      preferredRepos: [{ repo_id: 'repo-1', target_branch: 'main' }],
+      preferredRepos: [{ repo_id: 'repo-1', target_branch: null }],
       preferredDirectoryPath: null,
     });
 
@@ -106,7 +109,7 @@ describe('workspace defaults', () => {
       getWorkspaceDefaults([], new Set(), 'project-1', 'host-1')
     ).resolves.toEqual({
       preferredRepos: [],
-      preferredDirectoryPath: 'F:\\notes',
+      preferredDirectoryPath: null,
     });
   });
 
@@ -157,5 +160,23 @@ describe('workspace defaults', () => {
     });
 
     expect(mockGetWorkspaceRepos).toHaveBeenCalledWith('global-workspace');
+  });
+  it('prefills the complete Project preset and leaves base branches to creation', () => {
+    expect(
+      buildExplicitProjectWorkspaceDefaults({
+        kind: 'git',
+        repo: { repo_id: 'a', target_branch: 'main' },
+        repos: [
+          { repo_id: 'a', target_branch: 'main' },
+          { repo_id: 'b', target_branch: 'develop' },
+        ],
+      })
+    ).toEqual({
+      preferredRepos: [
+        { repo_id: 'a', target_branch: null },
+        { repo_id: 'b', target_branch: null },
+      ],
+      preferredDirectoryPath: null,
+    });
   });
 });

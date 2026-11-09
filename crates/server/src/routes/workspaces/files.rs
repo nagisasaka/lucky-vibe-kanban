@@ -145,7 +145,7 @@ pub async fn get_workspace_file_tree(
     let mut repo_nodes = Vec::with_capacity(repos.len());
 
     for repo in repos {
-        let repo_root = workspace_dir.join(&repo.name);
+        let repo_root = repo.worktree_dir(&workspace_dir);
         let canonical_repo_root = fs::canonicalize(&repo_root)
             .await
             .map_err(|_| ApiError::File(FileError::NotFound))?;
@@ -161,8 +161,8 @@ pub async fn get_workspace_file_tree(
         repo_nodes.push(WorkspaceFileRepoNode {
             workspace_id: workspace.id,
             repo_id: repo.id,
-            repo_name: repo.name,
-            repo_display_name: repo.display_name,
+            repo_name: repo.worktree_name().to_owned(),
+            repo_display_name: repo.workspace_display_name(),
             entries,
             truncated,
         });
@@ -309,7 +309,7 @@ pub(super) async fn resolve_workspace_repo_root(
     let workspace_repo = WorkspaceRepo::find_by_workspace_and_repo_id(pool, workspace.id, repo_id)
         .await?
         .ok_or(RepoError::NotFound)?;
-    let repo = Repo::find_by_id(pool, workspace_repo.repo_id)
+    let repo = WorkspaceRepo::find_repo_for_workspace(pool, workspace.id, workspace_repo.repo_id)
         .await?
         .ok_or(RepoError::NotFound)?;
 
@@ -317,7 +317,7 @@ pub(super) async fn resolve_workspace_repo_root(
         .container()
         .container_for_inspection(workspace)
         .await?;
-    let repo_root = PathBuf::from(container_ref).join(&repo.name);
+    let repo_root = PathBuf::from(container_ref).join(repo.worktree_name());
     let canonical_repo_root = fs::canonicalize(&repo_root)
         .await
         .map_err(|_| ApiError::File(FileError::NotFound))?;

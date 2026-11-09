@@ -78,7 +78,7 @@ async fn require_repository(
 ) -> anyhow::Result<()> {
     remote.require_project(project).await?;
     ensure!(
-        local_remote::project_creation_repository_ids(&remote.pool, project)
+        local_remote::project_associated_repository_ids(&remote.pool, project)
             .await?
             .contains(&repository),
         super::errors::rejection_with_message(

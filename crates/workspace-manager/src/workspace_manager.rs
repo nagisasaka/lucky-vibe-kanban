@@ -103,21 +103,6 @@ impl ManagedWorkspace {
         }
     }
 
-    async fn attach_repository(&self, repo: &WorkspaceRepoInput) -> Result<(), sqlx::Error> {
-        let create_repo = CreateWorkspaceRepo {
-            repo_id: repo.repo_id,
-            target_branch: repo.target_branch.clone(),
-        };
-
-        WorkspaceRepo::create_many(
-            &self.db.pool,
-            self.workspace.id,
-            std::slice::from_ref(&create_repo),
-        )
-        .await
-        .map(|_| ())
-    }
-
     async fn refresh(&mut self) -> Result<(), WorkspaceError> {
         self.workspace = DbWorkspace::find_by_id(&self.db.pool, self.workspace.id)
             .await?
@@ -132,34 +117,40 @@ impl ManagedWorkspace {
 
     pub async fn add_repository(
         &mut self,
-        repo_ref: &WorkspaceRepoInput,
+        repo: &WorkspaceRepoInput,
         git: &GitService,
     ) -> Result<(), WorkspaceError> {
-        let repo = Repo::find_by_id(&self.db.pool, repo_ref.repo_id)
-            .await?
-            .ok_or(RepoError::NotFound)?;
+        self.add_repositories(std::slice::from_ref(repo), git).await
+    }
 
-        if !git.check_branch_exists(&repo.path, &repo_ref.target_branch)? {
-            return Err(WorkspaceError::BranchNotFound {
-                repo_name: repo.name,
-                branch: repo_ref.target_branch.clone(),
+    pub async fn add_repositories(
+        &mut self,
+        repos: &[WorkspaceRepoInput],
+        git: &GitService,
+    ) -> Result<(), WorkspaceError> {
+        let mut seen = std::collections::HashSet::new();
+        let mut create = Vec::with_capacity(repos.len());
+        for input in repos {
+            if !seen.insert(input.repo_id) || self.repos.iter().any(|r| r.repo.id == input.repo_id)
+            {
+                return Err(WorkspaceError::RepoAlreadyAttached);
+            }
+            let repo = Repo::find_by_id(&self.db.pool, input.repo_id)
+                .await?
+                .ok_or(RepoError::NotFound)?;
+            if !git.check_branch_exists(&repo.path, &input.target_branch)? {
+                return Err(WorkspaceError::BranchNotFound {
+                    repo_name: repo.name,
+                    branch: input.target_branch.clone(),
+                });
+            }
+            create.push(CreateWorkspaceRepo {
+                repo_id: input.repo_id,
+                target_branch: input.target_branch.clone(),
             });
         }
-
-        if WorkspaceRepo::find_by_workspace_and_repo_id(
-            &self.db.pool,
-            self.workspace.id,
-            repo_ref.repo_id,
-        )
-        .await?
-        .is_some()
-        {
-            return Err(WorkspaceError::RepoAlreadyAttached);
-        }
-
-        self.attach_repository(repo_ref).await?;
-        self.refresh().await?;
-        Ok(())
+        WorkspaceRepo::create_many(&self.db.pool, self.workspace.id, &create).await?;
+        self.refresh().await
     }
 
     pub async fn associate_attachments(&self, attachment_ids: &[Uuid]) -> Result<(), sqlx::Error> {
@@ -545,7 +536,7 @@ impl WorkspaceManager {
         let mut created_worktrees: Vec<RepoWorktree> = Vec::new();
 
         for input in repos {
-            let worktree_path = workspace_dir.join(&input.repo.name);
+            let worktree_path = input.repo.worktree_dir(workspace_dir);
 
             debug!(
                 "Creating worktree for repo '{}' at {}",
@@ -630,7 +621,7 @@ impl WorkspaceManager {
 
         for input in repos {
             let repo = &input.repo;
-            let worktree_path = workspace_dir.join(&repo.name);
+            let worktree_path = repo.worktree_dir(workspace_dir);
 
             debug!(
                 "Ensuring worktree exists for repo '{}' at {}",
@@ -670,7 +661,7 @@ impl WorkspaceManager {
         let cleanup_data: Vec<WorktreeCleanup> = repos
             .iter()
             .map(|repo| {
-                let worktree_path = workspace_dir.join(&repo.name);
+                let worktree_path = repo.worktree_dir(workspace_dir);
                 WorktreeCleanup::new(worktree_path, Some(repo.path.clone()))
             })
             .collect();
@@ -699,7 +690,7 @@ impl WorkspaceManager {
     ) -> Result<(), WorkspaceError> {
         for repo in repos {
             WorktreeManager::cleanup_worktree(&WorktreeCleanup::new(
-                workspace_dir.join(&repo.name),
+                repo.worktree_dir(workspace_dir),
                 Some(repo.path.clone()),
             ))
             .await?;
@@ -725,7 +716,7 @@ impl WorkspaceManager {
         workspace_dir: &Path,
         repo: &Repo,
     ) -> Result<bool, WorkspaceError> {
-        let expected_worktree_path = workspace_dir.join(&repo.name);
+        let expected_worktree_path = repo.worktree_dir(workspace_dir);
 
         // Detect old-style: workspace_dir exists AND has .git file (worktree marker)
         // AND expected new location doesn't exist

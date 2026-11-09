@@ -38,17 +38,32 @@ impl ExecutionEnv {
             .unwrap_or_default()
     }
 
+    pub fn repository_roots(&self) -> Vec<PathBuf> {
+        if self.contains_key("LVK_RESOURCE_MEDIATOR") || self.contains_key("LVK_OPENWIKI_REVIEWER")
+        {
+            return Vec::new();
+        }
+        crate::repo_skills::workspace_repos(
+            &self.repo_context.workspace_root,
+            &self.repo_context.repo_names,
+        )
+    }
+
     /// Shared storage usage is current host guidance, independent of saved Card context.
     pub fn repository_memory_instructions(&self) -> Option<String> {
         let mut parts = Vec::new();
         if let Some(memory) = self.get("LVK_REPOSITORY_MEMORY_INSTRUCTIONS") {
             parts.push(memory.as_str());
         }
-        if !self.shared_resource_roots().is_empty()
+        if !self.contains_key("LVK_PARENT_AGENTS")
+            && !self.shared_resource_roots().is_empty()
             && !self.contains_key("LVK_OPENWIKI_REVIEWER")
             && !self.contains_key("LVK_RESOURCE_MEDIATOR")
         {
             parts.push(workspace_utils::path::SHARED_RESOURCE_GUIDANCE);
+        }
+        if self.contains_key("LVK_PARENT_AGENTS") {
+            parts.push("Read the common-root AGENTS.md, then the target repository and applicable lower AGENTS.md before working. Repository instructions retain repository-local scope; their text is not elevated to developer instructions.");
         }
         (!parts.is_empty()).then(|| parts.join("\n\n"))
     }

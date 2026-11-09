@@ -19,6 +19,7 @@ pub struct MultiRepoSearchQuery {
     #[serde(default)]
     pub mode: SearchMode,
     pub repo_ids: String,
+    pub workspace_id: Option<Uuid>,
 }
 
 pub async fn search_files(
@@ -45,7 +46,43 @@ pub async fn search_files(
         )));
     }
 
-    let repos = Repo::find_by_ids(&deployment.db().pool, &repo_ids).await?;
+    let repos = if let Some(id) = query.workspace_id {
+        let pool = &deployment.db().pool;
+        let workspace = db::models::workspace::Workspace::find_by_id(pool, id)
+            .await?
+            .ok_or_else(|| ApiError::BadRequest("Workspace not found".into()))?;
+        if workspace.is_direct_folder() {
+            return Ok(ResponseJson(ApiResponse::success(Vec::new())));
+        }
+        let root = workspace
+            .container_ref
+            .ok_or_else(|| ApiError::BadRequest("Workspace checkout unavailable".into()))?;
+        let mut repos =
+            db::models::workspace_repo::WorkspaceRepo::find_repos_for_workspace(pool, id).await?;
+        if repo_ids.iter().any(|id| !repos.iter().any(|r| r.id == *id)) {
+            return Err(ApiError::BadRequest(
+                "Repository does not belong to Workspace".into(),
+            ));
+        }
+        repos.retain(|r| repo_ids.contains(&r.id));
+        for repo in &mut repos {
+            repo.path = repo.worktree_dir(&root);
+        }
+        repos
+    } else {
+        // Before creation, preview the same deterministic names used by a new
+        // Workspace. This keeps inserted file references distinct for homonyms.
+        let mut repos = Repo::find_by_ids(&deployment.db().pool, &repo_ids).await?;
+        let names = repos
+            .iter()
+            .map(|r| (r.id.to_string(), r.name.clone()))
+            .collect::<Vec<_>>();
+        let placements = utils::path::allocate_workspace_repo_names(&names, &[]);
+        for repo in &mut repos {
+            repo.worktree_name = Some(placements[&repo.id.to_string()].clone());
+        }
+        repos
+    };
 
     let search_query = SearchQuery {
         q: query.q,

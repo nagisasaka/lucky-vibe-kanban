@@ -452,14 +452,10 @@ async fn prepare_coding_agent_execution_for_session(
         agent_run::bind_provider_session(pool, session.id, reference).await?;
     }
 
-    // Verify the selected Session's actual directory before creating any run.
+    // New attachments follow the canonical Run cwd. Keep legacy files in place.
     deployment
         .file()
-        .copy_files_by_workspace_to_worktree(
-            Path::new(&workspace_path),
-            workspace.id,
-            session.agent_working_dir.as_deref(),
-        )
+        .copy_files_by_workspace_to_worktree(Path::new(&workspace_path), workspace.id, None)
         .await?;
     let mut prompt = prompt;
     if is_open_design_arena_workspace(pool, workspace.id).await? {

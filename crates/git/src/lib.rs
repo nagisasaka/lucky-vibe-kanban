@@ -178,6 +178,11 @@ impl GitService {
     }
 
     /// Returns whether a path can be opened as a git repository.
+    /// Check only this directory and its ancestors, never repositories below it.
+    pub fn is_inside_repository(&self, path: &Path) -> bool {
+        git2::Repository::discover(path).is_ok()
+    }
+
     pub fn is_repo_openable(&self, repo_path: &Path) -> bool {
         Repository::open(repo_path).is_ok()
     }

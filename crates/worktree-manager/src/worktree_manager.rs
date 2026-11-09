@@ -45,6 +45,8 @@ pub enum WorktreeError {
     Io(#[from] std::io::Error),
     #[error("Branch not found: {0}")]
     BranchNotFound(String),
+    #[error("Preserved existing path with unverified worktree ownership: {0}")]
+    UnownedPath(PathBuf),
     #[error("Repository error: {0}")]
     Repository(String),
 }
@@ -166,13 +168,13 @@ impl WorktreeManager {
             let repo_path_owned = repo_path.to_path_buf();
             let branch_name_owned = branch_name.to_string();
             let base_branch_owned = base_branch.to_string();
+            let worktree_path_owned = worktree_path.to_owned();
 
             tokio::task::spawn_blocking(move || {
-                GitService::new().create_branch(
-                    &repo_path_owned,
-                    &branch_name_owned,
-                    &base_branch_owned,
-                )
+                Self::owned_worktree_or_absent(&repo_path_owned, &worktree_path_owned)?;
+                GitService::new()
+                    .create_branch(&repo_path_owned, &branch_name_owned, &base_branch_owned)
+                    .map_err(WorktreeError::from)
             })
             .await
             .map_err(|e| WorktreeError::TaskJoin(format!("Task join error: {e}")))??;
@@ -259,8 +261,9 @@ impl WorktreeManager {
         let worktree_path = worktree_path.to_path_buf();
 
         tokio::task::spawn_blocking(move || -> Result<bool, WorktreeError> {
-            // Check 1: Filesystem path must exist
-            if !worktree_path.exists() {
+            // A registration alone does not prove ownership of what is now
+            // at its former path (including symlinks and replacement folders).
+            if !Self::owned_worktree_or_absent(&repo_path, &worktree_path)? {
                 return Ok(false);
             }
 
@@ -324,41 +327,68 @@ impl WorktreeManager {
         Ok(git_service.get_common_dir(git_repo_path)?.join("worktrees"))
     }
 
-    /// Comprehensive cleanup of worktree path and metadata to prevent "path exists" errors (blocking)
+    /// Require reciprocal Git pointers, not only a stale admin registration.
+    /// Missing worktrees can be recovered; unknown existing paths are preserved.
+    fn owned_worktree_or_absent(repo: &Path, path: &Path) -> Result<bool, WorktreeError> {
+        let metadata = match fs::symlink_metadata(path) {
+            Ok(metadata) => metadata,
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(false),
+            Err(error) => return Err(error.into()),
+        };
+        let unknown = || WorktreeError::UnownedPath(path.to_owned());
+        if !metadata.is_dir() || metadata.file_type().is_symlink() {
+            return Err(unknown());
+        }
+        let dotgit = path.join(".git");
+        let marker = fs::symlink_metadata(&dotgit).map_err(|_| unknown())?;
+        if !marker.is_file() || marker.file_type().is_symlink() {
+            return Err(unknown());
+        }
+        let gitdir = fs::read_to_string(&dotgit).map_err(|_| unknown())?;
+        let admin = Path::new(gitdir.trim().strip_prefix("gitdir: ").ok_or_else(unknown)?);
+        let admin = if admin.is_absolute() {
+            admin.to_owned()
+        } else {
+            path.join(admin)
+        };
+        let admin = dunce::canonicalize(admin).map_err(|_| unknown())?;
+        let expected =
+            dunce::canonicalize(Self::get_worktree_metadata_path(repo)?).map_err(|_| unknown())?;
+        if admin.parent() != Some(expected.as_path()) {
+            return Err(unknown());
+        }
+        let backlink = fs::read_to_string(admin.join("gitdir")).map_err(|_| unknown())?;
+        if dunce::canonicalize(backlink.trim()).map_err(|_| unknown())?
+            != dunce::canonicalize(&dotgit).map_err(|_| unknown())?
+            || dunce::canonicalize(GitService::new().get_common_dir(path)?)
+                .map_err(|_| unknown())?
+                != dunce::canonicalize(GitService::new().get_common_dir(repo)?)
+                    .map_err(|_| unknown())?
+        {
+            return Err(unknown());
+        }
+        Ok(true)
+    }
+
+    /// Only Git removes a verified worktree. Never fall back to recursively
+    /// deleting a path after Git refuses it: it may be a user's replacement.
     fn comprehensive_worktree_cleanup(
         git_repo_path: &Path,
         worktree_path: &Path,
     ) -> Result<(), WorktreeError> {
-        let worktree_display_name = worktree_path.to_string_lossy().to_string();
-        debug!("Performing cleanup for worktree: {worktree_display_name}");
-
-        // Step 1: Use GitService to remove the worktree registration (force) if present
-        // The Git CLI is more robust than libgit2 for mutable worktree operations
-        let git_service = GitService::new();
-        if let Err(e) = git_service.remove_worktree(git_repo_path, worktree_path, true) {
-            debug!("git worktree remove non-fatal error: {}", e);
+        let owned = Self::owned_worktree_or_absent(git_repo_path, worktree_path)?;
+        let git = GitService::new();
+        if owned {
+            git.remove_worktree(git_repo_path, worktree_path, true)?;
+            match fs::symlink_metadata(worktree_path) {
+                Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+                Err(error) => return Err(error.into()),
+                Ok(_) => return Err(WorktreeError::UnownedPath(worktree_path.to_owned())),
+            }
+        } else {
+            // Only stale registration for an absent checkout can be discarded.
+            Self::force_cleanup_worktree_metadata(git_repo_path, worktree_path)?;
         }
-
-        // Step 2: Always force cleanup metadata directory (proactive cleanup)
-        if let Err(e) = Self::force_cleanup_worktree_metadata(git_repo_path, worktree_path) {
-            debug!("Metadata cleanup failed (non-fatal): {}", e);
-        }
-
-        // Step 3: Clean up physical worktree directory if it exists
-        if worktree_path.exists() {
-            debug!(
-                "Removing existing worktree directory: {}",
-                worktree_path.display()
-            );
-            std::fs::remove_dir_all(worktree_path).map_err(WorktreeError::Io)?;
-        }
-
-        // Step 4: Good-practice to clean up any other stale admin entries
-        if let Err(e) = git_service.prune_worktrees(git_repo_path) {
-            debug!("git worktree prune non-fatal error: {}", e);
-        }
-
-        debug!("Comprehensive cleanup completed for worktree: {worktree_display_name}",);
         Ok(())
     }
 
@@ -386,9 +416,9 @@ impl WorktreeManager {
             .await
             .map_err(|e| WorktreeError::TaskJoin(format!("Task join error: {e}")))?
         } else {
-            // Repository doesn't exist (likely deleted project), fall back to simple cleanup
+            // Repository unavailable: preserve paths whose ownership cannot be verified
             debug!(
-                "Failed to open repository at {:?}. Falling back to simple cleanup for worktree at {}",
+                "Cannot verify repository {:?}; retaining any existing path at {}",
                 git_repo_path_owned,
                 worktree_path_owned.display()
             );
@@ -412,6 +442,13 @@ impl WorktreeManager {
         tokio::task::spawn_blocking(move || -> Result<(), WorktreeError> {
             // Prefer git CLI for worktree add to inherit sparse-checkout semantics
             let git_service = GitService::new();
+            fs::create_dir(&worktree_path).map_err(|error| {
+                if error.kind() == std::io::ErrorKind::AlreadyExists {
+                    WorktreeError::UnownedPath(worktree_path.clone())
+                } else {
+                    WorktreeError::Io(error)
+                }
+            })?;
             match git_service.add_worktree(&git_repo_path, &worktree_path, &branch_name, false) {
                 Ok(()) => {
                     if !worktree_path.exists() {
@@ -430,13 +467,10 @@ impl WorktreeManager {
                         "git worktree add failed; attempting metadata cleanup and retry: {}",
                         e
                     );
-                    // Force cleanup metadata and try one more time
-                    Self::force_cleanup_worktree_metadata(&git_repo_path, &worktree_path)?;
-                    // Clean up physical directory if it exists
-                    // Needed if previous attempt failed after directory creation
-                    if worktree_path.exists() {
-                        std::fs::remove_dir_all(&worktree_path).map_err(WorktreeError::Io)?;
-                    }
+                    // An incomplete add without reciprocal pointers is not
+                    // proof of ownership. Preserve it for explicit recovery.
+                    Self::comprehensive_worktree_cleanup(&git_repo_path, &worktree_path)?;
+                    fs::create_dir(&worktree_path)?;
                     if let Err(e2) = git_service.add_worktree(
                         &git_repo_path,
                         &worktree_path,
@@ -490,9 +524,7 @@ impl WorktreeManager {
         for cleanup_data in data {
             tracing::debug!("Cleaning up worktree: {:?}", cleanup_data.worktree_path);
 
-            if let Err(e) = Self::cleanup_worktree(cleanup_data).await {
-                tracing::error!("Failed to cleanup worktree: {}", e);
-            }
+            Self::cleanup_worktree(cleanup_data).await?;
         }
         Ok(())
     }
@@ -525,7 +557,7 @@ impl WorktreeManager {
         } else {
             // Can't determine repo path, just clean up the worktree directory
             debug!(
-                "Cannot determine git repo path for worktree {}, performing simple cleanup",
+                "Cannot determine git repo path for {}; retaining any existing path",
                 path_str
             );
             Self::simple_worktree_cleanup(&worktree.worktree_path).await?;
@@ -567,22 +599,16 @@ impl WorktreeManager {
         }
     }
 
-    /// Simple worktree cleanup when we can't determine the main repo
+    /// Refuse deletion when we cannot verify the main repository
     async fn simple_worktree_cleanup(worktree_path: &Path) -> Result<(), WorktreeError> {
         let worktree_path_owned = worktree_path.to_path_buf();
 
-        tokio::task::spawn_blocking(move || -> Result<(), WorktreeError> {
-            if worktree_path_owned.exists() {
-                std::fs::remove_dir_all(&worktree_path_owned).map_err(WorktreeError::Io)?;
-                info!(
-                    "Removed worktree directory: {}",
-                    worktree_path_owned.display()
-                );
-            }
-            Ok(())
-        })
-        .await
-        .map_err(|e| WorktreeError::TaskJoin(format!("{e}")))?
+        // A deleted/unavailable source does not authorize filesystem deletion.
+        match tokio::fs::symlink_metadata(&worktree_path_owned).await {
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
+            Err(error) => Err(error.into()),
+            Ok(_) => Err(WorktreeError::UnownedPath(worktree_path_owned)),
+        }
     }
 
     /// Move a worktree to a new location
@@ -684,4 +710,209 @@ async fn create_worktree_when_repo_path_is_a_worktree() {
     )
     .await
     .unwrap();
+}
+
+#[cfg(test)]
+mod ownership_tests {
+    use super::*;
+
+    fn git(root: &Path, args: &[&str]) {
+        let output = std::process::Command::new("git")
+            .arg("-C")
+            .arg(root)
+            .args(args)
+            .output()
+            .unwrap();
+        assert!(
+            output.status.success(),
+            "{}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
+    fn source(root: &Path) -> PathBuf {
+        let source = root.join("source");
+        fs::create_dir(&source).unwrap();
+        git(&source, &["init", "-b", "main"]);
+        fs::write(source.join("original.txt"), "original").unwrap();
+        git(&source, &["add", "."]);
+        git(
+            &source,
+            &[
+                "-c",
+                "user.name=Fixture",
+                "-c",
+                "user.email=fixture@example.invalid",
+                "commit",
+                "-m",
+                "fixture",
+            ],
+        );
+        git(&source, &["branch", "trial"]);
+        source
+    }
+
+    #[tokio::test]
+    async fn unowned_files_directories_and_symlinks_are_never_adopted_or_deleted() {
+        let temp = tempfile::tempdir().unwrap();
+        let source = source(temp.path());
+        let directory = temp.path().join("output");
+        fs::create_dir(&directory).unwrap();
+        fs::write(directory.join("user-result.txt"), "keep").unwrap();
+        let file = temp.path().join("file");
+        fs::write(&file, "keep file").unwrap();
+        let empty = temp.path().join("empty");
+        fs::create_dir(&empty).unwrap();
+        let mut paths = vec![directory.clone(), file.clone(), empty];
+        #[cfg(unix)]
+        {
+            for (name, target) in [
+                ("link", directory.clone()),
+                ("dangling", temp.path().join("missing")),
+            ] {
+                let path = temp.path().join(name);
+                std::os::unix::fs::symlink(target, &path).unwrap();
+                paths.push(path);
+            }
+        }
+        for path in &paths {
+            assert!(matches!(
+                WorktreeManager::ensure_worktree_exists(&source, "trial", path).await,
+                Err(WorktreeError::UnownedPath(_))
+            ));
+            assert!(
+                WorktreeManager::cleanup_worktree(&WorktreeCleanup::new(
+                    path.clone(),
+                    Some(source.clone())
+                ))
+                .await
+                .is_err()
+            );
+            assert!(fs::symlink_metadata(path).is_ok());
+        }
+        assert!(
+            WorktreeManager::batch_cleanup_worktrees(&[WorktreeCleanup::new(
+                directory.clone(),
+                Some(source.clone())
+            )])
+            .await
+            .is_err()
+        );
+        assert_eq!(
+            fs::read_to_string(directory.join("user-result.txt")).unwrap(),
+            "keep"
+        );
+        assert_eq!(fs::read_to_string(file).unwrap(), "keep file");
+        // An unavailable source never authorizes fallback recursive deletion.
+        assert!(
+            WorktreeManager::cleanup_worktree(&WorktreeCleanup::new(
+                directory.clone(),
+                Some(temp.path().join("missing-source"))
+            ))
+            .await
+            .is_err()
+        );
+        assert_eq!(
+            fs::read_to_string(directory.join("user-result.txt")).unwrap(),
+            "keep"
+        );
+    }
+
+    #[tokio::test]
+    async fn reservation_preserves_a_path_appearing_before_git_add() {
+        let temp = tempfile::tempdir().unwrap();
+        let source = source(temp.path());
+        let path = temp.path().join("late");
+        assert!(!path.exists());
+        // Creation after the earlier placement/preflight check.
+        fs::create_dir(&path).unwrap();
+        fs::write(path.join("result.txt"), "late result").unwrap();
+        assert!(matches!(
+            WorktreeManager::create_worktree_with_retry(
+                &source,
+                "trial",
+                &path,
+                path.to_str().unwrap()
+            )
+            .await,
+            Err(WorktreeError::UnownedPath(_))
+        ));
+        assert_eq!(
+            fs::read_to_string(path.join("result.txt")).unwrap(),
+            "late result"
+        );
+        assert!(!path.join(".git").exists());
+    }
+
+    #[tokio::test]
+    async fn resume_recovery_and_cleanup_require_reciprocal_ownership() {
+        let temp = tempfile::tempdir().unwrap();
+        let source = source(temp.path());
+        let checkout = temp.path().join("checkout");
+        WorktreeManager::ensure_worktree_exists(&source, "trial", &checkout)
+            .await
+            .unwrap();
+        fs::write(checkout.join("local.txt"), "uncommitted").unwrap();
+        WorktreeManager::ensure_worktree_exists(&source, "trial", &checkout)
+            .await
+            .unwrap();
+        assert_eq!(
+            fs::read_to_string(checkout.join("local.txt")).unwrap(),
+            "uncommitted"
+        );
+        // Simulate replacement after placement/registration, only in this dummy repo.
+        let saved = temp.path().join("saved");
+        fs::rename(&checkout, &saved).unwrap();
+        fs::create_dir(&checkout).unwrap();
+        fs::write(checkout.join("user-result.txt"), "new owner").unwrap();
+        assert!(
+            WorktreeManager::ensure_worktree_exists(&source, "trial", &checkout)
+                .await
+                .is_err()
+        );
+        assert!(
+            WorktreeManager::cleanup_worktree(&WorktreeCleanup::new(
+                checkout.clone(),
+                Some(source.clone())
+            ))
+            .await
+            .is_err()
+        );
+        assert_eq!(
+            fs::read_to_string(checkout.join("user-result.txt")).unwrap(),
+            "new owner"
+        );
+        assert_eq!(
+            fs::read_to_string(saved.join("local.txt")).unwrap(),
+            "uncommitted"
+        );
+        fs::remove_file(checkout.join("user-result.txt")).unwrap();
+        fs::remove_dir(&checkout).unwrap();
+        fs::rename(saved, &checkout).unwrap();
+        WorktreeManager::cleanup_worktree(&WorktreeCleanup::new(
+            checkout.clone(),
+            Some(source.clone()),
+        ))
+        .await
+        .unwrap();
+        assert!(!checkout.exists());
+        WorktreeManager::ensure_worktree_exists(&source, "trial", &checkout)
+            .await
+            .unwrap();
+        // Missing checkout with stale registration is recoverable without any unknown path deletion.
+        fs::remove_dir_all(&checkout).unwrap();
+        WorktreeManager::ensure_worktree_exists(&source, "trial", &checkout)
+            .await
+            .unwrap();
+        assert_eq!(
+            fs::read_to_string(checkout.join("original.txt")).unwrap(),
+            "original"
+        );
+        assert_eq!(
+            fs::read_to_string(source.join("original.txt")).unwrap(),
+            "original"
+        );
+        WorktreeManager::cleanup_worktree(&WorktreeCleanup::new(checkout, Some(source)))
+            .await
+            .unwrap();
+    }
 }

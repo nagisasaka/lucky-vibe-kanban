@@ -146,6 +146,20 @@ pub fn router() -> Router<DeploymentImpl> {
         .route("/conflicts/abort", post(abort_workspace_conflicts))
         .route("/target-branch", axum::routing::put(change_target_branch))
         .route("/branch", axum::routing::put(rename_branch))
+        .route_layer(axum::middleware::from_fn(require_git_workspace))
+}
+
+async fn require_git_workspace(
+    Extension(workspace): Extension<Workspace>,
+    request: axum::extract::Request,
+    next: axum::middleware::Next,
+) -> Result<axum::response::Response, ApiError> {
+    if workspace.is_direct_folder() {
+        return Err(ApiError::BadRequest(
+            "Direct folders do not support LVK Git operations".into(),
+        ));
+    }
+    Ok(next.run(request).await)
 }
 
 async fn resolve_vibe_kanban_identifier(
@@ -188,7 +202,7 @@ pub async fn merge_workspace(
             .await?
             .ok_or(RepoError::NotFound)?;
 
-    let repo = Repo::find_by_id(pool, workspace_repo.repo_id)
+    let repo = WorkspaceRepo::find_repo_for_workspace(pool, workspace.id, workspace_repo.repo_id)
         .await?
         .ok_or(RepoError::NotFound)?;
 
@@ -217,7 +231,7 @@ pub async fn merge_workspace(
         .ensure_container_exists(&workspace)
         .await?;
     let workspace_path = Path::new(&container_ref);
-    let worktree_path = workspace_path.join(&repo.name);
+    let worktree_path = repo.worktree_dir(workspace_path);
 
     let workspace_label = workspace.name.as_deref().unwrap_or(&workspace.branch);
     let vk_id = resolve_vibe_kanban_identifier(&deployment, workspace.id).await;
@@ -321,7 +335,7 @@ pub async fn push_workspace_branch(
             .await?
             .ok_or(RepoError::NotFound)?;
 
-    let repo = Repo::find_by_id(pool, workspace_repo.repo_id)
+    let repo = WorkspaceRepo::find_repo_for_workspace(pool, workspace.id, workspace_repo.repo_id)
         .await?
         .ok_or(RepoError::NotFound)?;
 
@@ -330,7 +344,7 @@ pub async fn push_workspace_branch(
         .ensure_container_exists(&workspace)
         .await?;
     let workspace_path = Path::new(&container_ref);
-    let worktree_path = workspace_path.join(&repo.name);
+    let worktree_path = repo.worktree_dir(workspace_path);
 
     services::services::repository_memory::prepare_workspace_source(
         pool,
@@ -368,7 +382,7 @@ pub async fn force_push_workspace_branch(
             .await?
             .ok_or(RepoError::NotFound)?;
 
-    let repo = Repo::find_by_id(pool, workspace_repo.repo_id)
+    let repo = WorkspaceRepo::find_repo_for_workspace(pool, workspace.id, workspace_repo.repo_id)
         .await?
         .ok_or(RepoError::NotFound)?;
 
@@ -377,7 +391,7 @@ pub async fn force_push_workspace_branch(
         .ensure_container_exists(&workspace)
         .await?;
     let workspace_path = Path::new(&container_ref);
-    let worktree_path = workspace_path.join(&repo.name);
+    let worktree_path = repo.worktree_dir(workspace_path);
 
     services::services::repository_memory::prepare_workspace_source(
         pool,
@@ -444,7 +458,7 @@ pub async fn get_workspace_branch_status(
         };
 
         let repo_merges = merges_by_repo.get(&repo.id).cloned().unwrap_or_default();
-        let worktree_path = workspace_dir.join(&repo.name);
+        let worktree_path = repo.worktree_dir(&workspace_dir);
 
         let head_oid = deployment
             .git()
@@ -555,7 +569,7 @@ pub async fn change_target_branch(
     let new_target_branch = payload.new_target_branch;
     let pool = &deployment.db().pool;
 
-    let repo = Repo::find_by_id(pool, repo_id)
+    let repo = WorkspaceRepo::find_repo_for_workspace(pool, workspace.id, repo_id)
         .await?
         .ok_or(RepoError::NotFound)?;
 
@@ -642,7 +656,7 @@ pub async fn rename_branch(
     let workspace_dir = PathBuf::from(&container_ref);
 
     for repo in &repos {
-        let worktree_path = workspace_dir.join(&repo.name);
+        let worktree_path = repo.worktree_dir(&workspace_dir);
 
         if deployment
             .git()
@@ -668,7 +682,7 @@ pub async fn rename_branch(
     let mut renamed_repos: Vec<&Repo> = Vec::new();
 
     for repo in &repos {
-        let worktree_path = workspace_dir.join(&repo.name);
+        let worktree_path = repo.worktree_dir(&workspace_dir);
 
         match deployment.git().rename_local_branch(
             &worktree_path,
@@ -680,7 +694,7 @@ pub async fn rename_branch(
             }
             Err(e) => {
                 for renamed_repo in &renamed_repos {
-                    let rollback_path = workspace_dir.join(&renamed_repo.name);
+                    let rollback_path = workspace_dir.join(renamed_repo.worktree_name());
                     if let Err(rollback_err) = deployment.git().rename_local_branch(
                         &rollback_path,
                         new_branch_name,
@@ -748,7 +762,7 @@ pub async fn rebase_workspace(
             .await?
             .ok_or(RepoError::NotFound)?;
 
-    let repo = Repo::find_by_id(pool, workspace_repo.repo_id)
+    let repo = WorkspaceRepo::find_repo_for_workspace(pool, workspace.id, workspace_repo.repo_id)
         .await?
         .ok_or(RepoError::NotFound)?;
 
@@ -788,7 +802,7 @@ pub async fn rebase_workspace(
         .ensure_container_exists(&workspace)
         .await?;
     let workspace_path = Path::new(&container_ref);
-    let worktree_path = workspace_path.join(&repo.name);
+    let worktree_path = repo.worktree_dir(workspace_path);
 
     let result = deployment.git().rebase_branch(
         &repo.path,
@@ -843,7 +857,7 @@ pub async fn abort_workspace_conflicts(
 ) -> Result<ResponseJson<ApiResponse<()>>, ApiError> {
     let pool = &deployment.db().pool;
 
-    let repo = Repo::find_by_id(pool, payload.repo_id)
+    let repo = WorkspaceRepo::find_repo_for_workspace(pool, workspace.id, payload.repo_id)
         .await?
         .ok_or(RepoError::NotFound)?;
 
@@ -852,7 +866,7 @@ pub async fn abort_workspace_conflicts(
         .ensure_container_exists(&workspace)
         .await?;
     let workspace_path = Path::new(&container_ref);
-    let worktree_path = workspace_path.join(&repo.name);
+    let worktree_path = repo.worktree_dir(workspace_path);
 
     deployment.git().abort_conflicts(&worktree_path)?;
 
@@ -867,7 +881,7 @@ pub async fn continue_workspace_rebase(
 ) -> Result<ResponseJson<ApiResponse<()>>, ApiError> {
     let pool = &deployment.db().pool;
 
-    let repo = Repo::find_by_id(pool, payload.repo_id)
+    let repo = WorkspaceRepo::find_repo_for_workspace(pool, workspace.id, payload.repo_id)
         .await?
         .ok_or(RepoError::NotFound)?;
 
@@ -876,7 +890,7 @@ pub async fn continue_workspace_rebase(
         .ensure_container_exists(&workspace)
         .await?;
     let workspace_path = Path::new(&container_ref);
-    let worktree_path = workspace_path.join(&repo.name);
+    let worktree_path = repo.worktree_dir(workspace_path);
 
     deployment.git().continue_rebase(&worktree_path)?;
 

@@ -8900,6 +8900,7 @@ dependencies = [
  "tracing",
  "tracing-subscriber",
  "ts-rs 11.0.1",
+ "unicode-normalization",
  "uuid",
  "which",
  "windows-sys 0.61.2",

@@ -78,7 +78,7 @@ pub async fn backfill(pool: &SqlitePool) -> anyhow::Result<()> {
             let expected = workspace
                 .container_ref
                 .as_ref()
-                .map(|root| Path::new(root).join(&repo.name));
+                .map(|root| Path::new(root).join(repo.worktree_name()));
             if setup.workspace_id != id
                 || expected.as_deref() != Some(Path::new(&setup.repository_path))
             {

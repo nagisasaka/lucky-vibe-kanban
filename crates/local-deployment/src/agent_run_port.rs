@@ -830,6 +830,13 @@ impl LocalAgentRunPort {
         let repos = WorkspaceRepo::find_repos_for_workspace(&self.db.pool, workspace.id)
             .await
             .map_err(port_database)?;
+        // Direct folders never acquire repository ownership or Git completion,
+        // including old direct-Git workspaces that still have attached repo rows.
+        let repos = if workspace.is_direct_folder() {
+            Vec::new()
+        } else {
+            repos
+        };
         let shared_roots: Vec<_> = repos
             .iter()
             .flat_map(|repo| {
@@ -879,7 +886,7 @@ impl LocalAgentRunPort {
                 &request.input.content,
             );
         for repo in &repos {
-            let root = PathBuf::from(&request.workspace.path).join(&repo.name);
+            let root = PathBuf::from(&request.workspace.path).join(repo.worktree_name());
             memory_instructions.push(
                 git::GitService::new()
                     .commit_identity_instructions(&root)
@@ -998,11 +1005,20 @@ impl LocalAgentRunPort {
                 }
             }
         }
-        let repo_names = repos.into_iter().map(|repo| repo.name).collect();
+        let repo_names = repos
+            .into_iter()
+            .map(|repo| repo.worktree_name().to_owned())
+            .collect();
         let mut env = ExecutionEnv::new(RepoContext::new(
             PathBuf::from(&request.workspace.path),
             repo_names,
         ));
+        if !workspace.is_direct_folder()
+            && std::fs::read_to_string(Path::new(&request.workspace.path).join("AGENTS.md"))
+                .is_ok_and(|s| s.starts_with("<!-- LVK WORKSPACE INSTRUCTIONS v1 -->"))
+        {
+            env.insert("LVK_PARENT_AGENTS", "1");
+        }
         env.insert("VK_WORKSPACE_ID", workspace.id.to_string());
         env.insert("VK_WORKSPACE_BRANCH", &workspace.branch);
         env.insert("VK_AGENT_RUN_ID", request.agent_run_id.to_string());

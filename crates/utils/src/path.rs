@@ -320,3 +320,152 @@ mod tests {
         );
     }
 }
+
+/// Allocate portable child directory names without changing occupied placements.
+/// IDs, not selection order, break ties. Reserve natural names before aliases so
+/// an alias can never displace another repository's ordinary name.
+pub fn allocate_workspace_repo_names(
+    requested: &[(String, String)],
+    occupied: &[String],
+) -> std::collections::BTreeMap<String, String> {
+    use std::collections::{BTreeMap, HashSet};
+
+    // Conservative on every host: layouts remain safe on case-insensitive
+    // Windows/macOS volumes as well as Linux.
+    use unicode_normalization::UnicodeNormalization;
+    let key = |name: &str| name.nfd().collect::<String>().to_lowercase();
+    let mut used: HashSet<String> = occupied.iter().map(|n| key(n)).collect();
+    used.extend(
+        [
+            ".git",
+            ".lvk",
+            ".agents",
+            ".claude",
+            "agents.md",
+            "claude.md",
+        ]
+        .map(str::to_owned),
+    );
+    let mut ordered = requested.to_vec();
+    ordered.sort_by(|a, b| a.0.cmp(&b.0));
+    let mut result = BTreeMap::new();
+    let safe = |name: &str| {
+        let stem = name
+            .split('.')
+            .next()
+            .unwrap_or("")
+            .trim_end_matches(' ')
+            .to_ascii_uppercase();
+        let device = matches!(stem.as_str(), "CON" | "PRN" | "AUX" | "NUL")
+            || stem
+                .strip_prefix("COM")
+                .or_else(|| stem.strip_prefix("LPT"))
+                .is_some_and(|suffix| {
+                    matches!(
+                        suffix,
+                        "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "¹" | "²" | "³"
+                    )
+                });
+        !name.is_empty()
+            && name != "."
+            && name != ".."
+            && name.len() <= 255
+            && !name.ends_with(['.', ' '])
+            && !device
+            && !name
+                .chars()
+                .any(|c| c.is_control() || "<>:\"/\\|?*".contains(c))
+    };
+    for (id, name) in &ordered {
+        if safe(name) && used.insert(key(name)) {
+            result.insert(id.clone(), name.clone());
+        }
+    }
+    for (id, name) in &ordered {
+        if result.contains_key(id) {
+            continue;
+        }
+        // Dots in a device basename such as CON.txt would remain reserved
+        // even after appending a suffix; the generated prefix avoids them.
+        let mut prefix: String = name
+            .chars()
+            .map(|c| {
+                if c.is_alphanumeric() || "-_ ".contains(c) {
+                    c
+                } else {
+                    '_'
+                }
+            })
+            .collect();
+        while prefix.len() > 160 {
+            prefix.pop();
+        }
+        let prefix = prefix.trim_matches(['.', ' ']);
+        let prefix = if prefix.is_empty() { "repo" } else { prefix };
+        let base = format!("{prefix}--{}", id.replace('-', ""));
+        let mut candidate = base.clone();
+        let mut suffix = 0;
+        while !used.insert(key(&candidate)) {
+            suffix += 1;
+            candidate = format!("{base}-{suffix}");
+        }
+        result.insert(id.clone(), candidate);
+    }
+    result
+}
+
+#[cfg(test)]
+mod workspace_repo_names_tests {
+    use super::allocate_workspace_repo_names as allocate;
+    #[test]
+    fn stable_portable_placements_preserve_existing_locations() {
+        let request = vec![
+            ("02".into(), "app".into()),
+            ("01".into(), "app".into()),
+            ("03".into(), "APP".into()),
+            ("04".into(), ".lvk".into()),
+            ("05".into(), "CON.txt".into()),
+            ("06".into(), "../outside".into()),
+            ("07".into(), "api".into()),
+        ];
+        let a = allocate(&request, &[]);
+        let mut reversed = request.clone();
+        reversed.reverse();
+        assert_eq!(a, allocate(&reversed, &[]));
+        assert_eq!(a["01"], "app");
+        assert_eq!(a["02"], "app--02");
+        assert_eq!(a["07"], "api");
+        assert_eq!(
+            a.values()
+                .map(|n| n.to_lowercase())
+                .collect::<std::collections::HashSet<_>>()
+                .len(),
+            request.len()
+        );
+        assert!(
+            a.values()
+                .all(|n| std::path::Path::new(n).components().count() == 1)
+        );
+        let next = allocate(
+            &[("00".into(), "app".into())],
+            &a.values().cloned().collect::<Vec<_>>(),
+        );
+        assert_eq!(next["00"], "app--00");
+        let unicode = allocate(
+            &[
+                ("1".into(), "café".into()),
+                ("2".into(), "cafe\u{301}".into()),
+            ],
+            &[],
+        );
+        assert_eq!(unicode["1"], "café");
+        assert_ne!(unicode["2"], "cafe\u{301}");
+        assert!(!a["05"].starts_with("CON."));
+        let protected = allocate(
+            &[("02".into(), "app".into()), ("03".into(), "app--02".into())],
+            &["app".into()],
+        );
+        assert_eq!(protected["03"], "app--02");
+        assert_eq!(protected["02"], "app--02-1");
+    }
+}

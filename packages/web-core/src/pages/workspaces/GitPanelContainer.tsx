@@ -92,7 +92,10 @@ export function GitPanelContainer({
 
         return {
           id: repo.id,
-          name: repo.display_name || repo.name,
+          name:
+            repo.worktree_name && repo.worktree_name !== repo.name
+              ? `${repo.display_name || repo.name} (${repo.worktree_name})`
+              : repo.display_name || repo.name,
           targetBranch: repo.target_branch || 'main',
           commitsAhead: repoStatus?.commits_ahead ?? 0,
           commitsBehind: repoStatus?.commits_behind ?? 0,

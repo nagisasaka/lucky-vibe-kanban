@@ -83,6 +83,15 @@ describe('formal Integration selection and controls', () => {
     ).toBe(false);
     expect(integrationSelectionIsCurrent([selection], [])).toBe(false);
   });
+  it('limits Auto-merge to the Workspace recorded merge target', () => {
+    const recorded = { ...activity, target_branch: 'stable' };
+    expect(
+      integrationSelectionIsCurrent([selection], [recorded], 'stable')
+    ).toBe(true);
+    expect(integrationSelectionIsCurrent([selection], [recorded], 'main')).toBe(
+      false
+    );
+  });
   it('never exposes cancel as Git undo during or after publication', () => {
     for (const state of ['queued', 'integrating', 'validating', 'blocked'])
       expect(integrationCanCancel(state)).toBe(true);

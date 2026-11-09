@@ -50,18 +50,18 @@ export function resolveChatFileLink({
     const root = containerRef?.replace(/\\/g, '/').replace(/\/+$/, '');
     if (!root) return;
     const repo = repos.find((candidate) =>
-      path.startsWith(`${root}/${candidate.name}/`)
+      path.startsWith(`${root}/${candidate.worktree_name ?? candidate.name}/`)
     );
     if (!repo) return;
-    path = path.slice(`${root}/${repo.name}/`.length);
+    path = path.slice(`${root}/${repo.worktree_name ?? repo.name}/`.length);
     repoId = repo.id;
   } else {
     path = path.replace(/^(?:\.\/)+/, '');
     const repo = repos.find((candidate) =>
-      path.startsWith(`${candidate.name}/`)
+      path.startsWith(`${candidate.worktree_name ?? candidate.name}/`)
     );
     if (repo) {
-      path = path.slice(repo.name.length + 1);
+      path = path.slice((repo.worktree_name ?? repo.name).length + 1);
       repoId = repo.id;
     }
   }

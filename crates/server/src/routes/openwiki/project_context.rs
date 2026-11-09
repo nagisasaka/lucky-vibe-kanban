@@ -14,7 +14,7 @@ pub(super) async fn validate(
             "The selected Project no longer exists. Select an existing Project and retry."
         );
         anyhow::ensure!(
-            crate::routes::local_remote::project_creation_repository_ids(pool, project_id)
+            crate::routes::local_remote::project_associated_repository_ids(pool, project_id)
                 .await?
                 .contains(&repository_id),
             "Repository does not belong to the selected Project. Check its configured working location or linked repositories, then retry."

@@ -151,9 +151,13 @@ pub(super) async fn context(
     run: &IntegrationRun,
 ) -> anyhow::Result<(Repo, Workspace, Session, PathBuf)> {
     let pool = &deployment.db().pool;
-    let repo = Repo::find_by_id(pool, run.repository_id)
-        .await?
-        .context("Repository missing")?;
+    let repo = db::models::workspace_repo::WorkspaceRepo::find_repo_for_workspace(
+        pool,
+        run.workspace_id.context("Auto-merge Workspace missing")?,
+        run.repository_id,
+    )
+    .await?
+    .context("Repository missing")?;
     let workspace = Workspace::find_by_id(
         pool,
         run.workspace_id.context("Auto-merge Workspace missing")?,
@@ -169,7 +173,7 @@ pub(super) async fn context(
             .as_ref()
             .context("Workspace checkout missing")?,
     )
-    .join(&repo.name);
+    .join(repo.worktree_name());
     Ok((repo, workspace, session, root))
 }
 
@@ -510,9 +514,13 @@ async fn finish(deployment: &DeploymentImpl, mut run: IntegrationRun) -> anyhow:
     // Card effects are independently retryable from Wiki receipt bookkeeping. They
     // must not be undone or indefinitely reserved when Wiki bookkeeping fails.
     run = complete_cards(deployment, run).await?;
-    let repo = Repo::find_by_id(pool, run.repository_id)
-        .await?
-        .context("Repository missing")?;
+    let repo = db::models::workspace_repo::WorkspaceRepo::find_repo_for_workspace(
+        pool,
+        run.workspace_id.context("Auto-merge Workspace missing")?,
+        run.repository_id,
+    )
+    .await?
+    .context("Repository missing")?;
     let mut tx = pool.begin_with("BEGIN IMMEDIATE").await?;
     let wiki_result = super::conversation::record_wiki_result(pool, &mut tx, &repo, &run).await;
     run.status = "succeeded".into();

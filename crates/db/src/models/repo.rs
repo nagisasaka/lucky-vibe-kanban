@@ -39,6 +39,11 @@ pub struct Repo {
     pub path: PathBuf,
     pub name: String,
     pub display_name: String,
+    /// Workspace-local placement; absent for global repository records.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    #[sqlx(default)]
+    pub worktree_name: Option<String>,
     pub setup_script: Option<String>,
     pub cleanup_script: Option<String>,
     pub archive_script: Option<String>,
@@ -129,6 +134,22 @@ pub struct UpdateRepo {
 }
 
 impl Repo {
+    pub fn worktree_name(&self) -> &str {
+        self.worktree_name.as_deref().unwrap_or(&self.name)
+    }
+
+    pub fn workspace_display_name(&self) -> String {
+        if self.worktree_name() == self.name {
+            self.display_name.clone()
+        } else {
+            format!("{} ({})", self.display_name, self.worktree_name())
+        }
+    }
+
+    pub fn worktree_dir(&self, root: impl AsRef<Path>) -> PathBuf {
+        root.as_ref().join(self.worktree_name())
+    }
+
     /// Get repos that still have the migration sentinel as their name.
     /// Used by the startup backfill to fix repo names.
     pub async fn list_needing_name_fix(pool: &SqlitePool) -> Result<Vec<Self>, sqlx::Error> {
@@ -138,6 +159,7 @@ impl Repo {
                       path,
                       name,
                       display_name,
+                      NULL as "worktree_name?: String",
                       setup_script,
                       cleanup_script,
                       archive_script,
@@ -179,6 +201,7 @@ impl Repo {
                       path,
                       name,
                       display_name,
+                      NULL as "worktree_name?: String",
                       setup_script,
                       cleanup_script,
                       archive_script,
@@ -237,6 +260,7 @@ impl Repo {
                          path,
                          name,
                          display_name,
+                      NULL as "worktree_name?: String",
                          setup_script,
                          cleanup_script,
                          archive_script,
@@ -263,6 +287,7 @@ impl Repo {
                       path,
                       name,
                       display_name,
+                      NULL as "worktree_name?: String",
                       setup_script,
                       cleanup_script,
                       archive_script,
@@ -289,6 +314,7 @@ impl Repo {
                       r.path,
                       r.name,
                       r.display_name,
+                      NULL as "worktree_name?: String",
                       r.setup_script,
                       r.cleanup_script,
                       r.archive_script,
@@ -408,6 +434,7 @@ impl Repo {
                          path,
                          name,
                          display_name,
+                      NULL as "worktree_name?: String",
                          setup_script,
                          cleanup_script,
                          archive_script,

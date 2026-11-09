@@ -121,7 +121,7 @@ impl Source {
                     .as_deref()
                     .ok_or_else(|| anyhow::anyhow!("Workspace checkout is not available"))?,
             )
-            .join(&self.repo.name)
+            .join(self.repo.worktree_name())
         };
         let root = root
             .canonicalize()
@@ -147,9 +147,13 @@ impl Remote {
         )
         .await?
         .ok_or_else(|| anyhow::anyhow!("Repository does not belong to this Workspace"))?;
-        let repo = Repo::find_by_id(&self.pool, target.repository_id)
-            .await?
-            .ok_or_else(|| anyhow::anyhow!("Repository no longer exists"))?;
+        let repo = WorkspaceRepo::find_repo_for_workspace(
+            &self.pool,
+            target.workspace_id,
+            target.repository_id,
+        )
+        .await?
+        .ok_or_else(|| anyhow::anyhow!("Repository no longer exists"))?;
         let workspace = Workspace::find_by_id(&self.pool, target.workspace_id)
             .await?
             .ok_or_else(|| anyhow::anyhow!("Workspace no longer exists"))?;

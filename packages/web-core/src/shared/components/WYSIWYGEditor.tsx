@@ -376,6 +376,7 @@ const WYSIWYGEditor = forwardRef<WYSIWYGEditorRef, WysiwygProps>(
         workspaceId,
         sessionId,
         repoId,
+        repoIds,
       },
       discovery
     );
@@ -466,7 +467,10 @@ const WYSIWYGEditor = forwardRef<WYSIWYGEditorRef, WysiwygProps>(
         query: string,
         options: { repoIds?: string[] }
       ): Promise<SearchResultItemLike[]> => {
-        const results = await searchTagsAndFiles(query, options);
+        const results = await searchTagsAndFiles(query, {
+          ...options,
+          workspaceId,
+        });
         const mappedResults: SearchResultItemLike[] = [];
         for (const result of results) {
           if (result.type === 'tag' && result.tag) {
@@ -478,7 +482,7 @@ const WYSIWYGEditor = forwardRef<WYSIWYGEditorRef, WysiwygProps>(
         }
         return mappedResults;
       },
-      []
+      [workspaceId]
     );
     const handleCopy = useCallback(async () => {
       if (!value) return;

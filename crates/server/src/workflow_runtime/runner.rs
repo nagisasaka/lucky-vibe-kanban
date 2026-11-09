@@ -3093,13 +3093,18 @@ async fn workflow_worktree_snapshot(
     let mut fingerprint_lines = Vec::new();
 
     for repo in repos {
-        let repo_path = workspace_root.join(&repo.repo.name);
+        let repo_path = workspace_root.join(repo.repo.worktree_name());
         match git.get_worktree_status(&repo_path) {
             Ok(status) => {
-                summary_lines.push(render_worktree_status_summary(&repo.repo.name, &status));
+                summary_lines.push(render_worktree_status_summary(
+                    repo.repo.worktree_name(),
+                    &status,
+                ));
                 fingerprint_lines.push(format!(
                     "repo={};tracked={};untracked={}",
-                    repo.repo.name, status.uncommitted_tracked, status.untracked
+                    repo.repo.worktree_name(),
+                    status.uncommitted_tracked,
+                    status.untracked
                 ));
                 for entry in status.entries {
                     let path = String::from_utf8_lossy(&entry.path);
@@ -3115,8 +3120,14 @@ async fn workflow_worktree_snapshot(
                 }
             }
             Err(err) => {
-                summary_lines.push(format!("{}: status unavailable ({err})", repo.repo.name));
-                fingerprint_lines.push(format!("repo={};status=unavailable:{err}", repo.repo.name));
+                summary_lines.push(format!(
+                    "{}: status unavailable ({err})",
+                    repo.repo.worktree_name()
+                ));
+                fingerprint_lines.push(format!(
+                    "repo={};status=unavailable:{err}",
+                    repo.repo.worktree_name()
+                ));
             }
         }
     }

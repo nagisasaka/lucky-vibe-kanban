@@ -14,6 +14,7 @@ export interface SearchResultItem {
 export interface SearchOptions {
   repoIds?: string[];
   projectId?: string;
+  workspaceId?: string;
 }
 
 export async function searchTagsAndFiles(
@@ -33,7 +34,13 @@ export async function searchTagsAndFiles(
   if (query.length > 0) {
     let fileResults: SearchResult[] = [];
     if (options?.repoIds && options.repoIds.length > 0) {
-      fileResults = await searchApi.searchFiles(options.repoIds, query);
+      fileResults = await searchApi.searchFiles(
+        options.repoIds,
+        query,
+        undefined,
+        undefined,
+        options.workspaceId
+      );
     }
 
     if (fileResults.length > 0) {

@@ -5,7 +5,8 @@ use thiserror::Error;
 use ts_rs::TS;
 use uuid::Uuid;
 
-use super::{workspace::Workspace, workspace_repo::WorkspaceRepo};
+#[cfg(test)]
+use super::workspace::Workspace;
 
 #[derive(Debug, Error)]
 pub enum SessionError {
@@ -204,25 +205,10 @@ impl Session {
         pool: &SqlitePool,
         workspace_id: Uuid,
     ) -> Result<Option<String>, sqlx::Error> {
-        let repos = WorkspaceRepo::find_repos_for_workspace(pool, workspace_id).await?;
-        if repos.len() != 1 {
-            return Ok(None);
-        }
-
-        let repo = &repos[0];
-        let workspace = Workspace::find_by_id(pool, workspace_id).await?;
-        let path = match (
-            workspace.as_ref().map(Workspace::is_direct_folder),
-            repo.default_working_dir.as_deref(),
-        ) {
-            (Some(true), _) => std::path::PathBuf::from(&repo.name),
-            (_, Some(subdir)) if !subdir.is_empty() => {
-                std::path::PathBuf::from(&repo.name).join(subdir)
-            }
-            _ => std::path::PathBuf::from(&repo.name),
-        };
-
-        Ok(Some(path.to_string_lossy().to_string()))
+        // New sessions always use the Workspace root (common root for Git,
+        // selected directory for direct folders). Keep existing saved paths intact.
+        let _ = (pool, workspace_id);
+        Ok(None)
     }
 
     pub async fn update(

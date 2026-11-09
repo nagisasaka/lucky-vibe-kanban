@@ -40,10 +40,6 @@ export function ProjectWorkspaceDefaultContext({
       if (workspaceDefault.kind === 'direct_folder') {
         return { path: workspaceDefault.path, branch: undefined };
       }
-      if (!workspaceDefault.repo.target_branch.trim()) {
-        throw new Error('Project default branch is empty');
-      }
-
       const repo = await repoApi.getById(workspaceDefault.repo.repo_id, hostId);
       return {
         path: repo.path,

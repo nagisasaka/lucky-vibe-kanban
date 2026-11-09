@@ -2,18 +2,11 @@ import i18n from '@/i18n/config';
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { create, useModal } from '@ebay/nice-modal-react';
 import { useTranslation } from 'react-i18next';
-import { GitBranchIcon, PlusIcon } from '@phosphor-icons/react';
+import { GitBranchIcon } from '@phosphor-icons/react';
 import { defineModal } from '@/shared/lib/modals';
 import { ApiError, workspacesApi } from '@/shared/lib/api';
-import { getWorkspaceDefaults } from '@/shared/lib/workspaceDefaults';
 import { ErrorDialog } from '@vibe/ui/components/ErrorDialog';
-import { useProjectWorkspaceCreateDraft } from '@/shared/hooks/useProjectWorkspaceCreateDraft';
-import {
-  buildLinkedIssueCreateState,
-  buildLocalWorkspaceIdSet,
-  buildWorkspaceCreateInitialState,
-  buildWorkspaceCreatePrompt,
-} from '@/shared/lib/workspaceCreateState';
+
 import {
   Command,
   CommandDialog,
@@ -60,7 +53,6 @@ function isAlreadyLinked(error: unknown): boolean {
 function WorkspaceSelectionContent({
   projectId,
   issueId,
-  hostId,
 }: {
   projectId: string;
   issueId: string;
@@ -68,14 +60,13 @@ function WorkspaceSelectionContent({
 }) {
   const { t } = useTranslation('common');
   const modal = useModal();
-  const { openWorkspaceCreateFromState } = useProjectWorkspaceCreateDraft();
   const previousFocusRef = useRef<HTMLElement | null>(null);
 
   // Get local workspaces from WorkspaceContext (both active and archived)
   const { activeWorkspaces, archivedWorkspaces } = useWorkspaceContext();
 
   // Get already-linked workspaces from UserContext (workspaces are user-scoped)
-  const { getWorkspacesForIssue, workspaces } = useUserContext();
+  const { workspaces } = useUserContext();
 
   // Get issue data from ProjectContext (issues are project-scoped)
   const { getIssue } = useProjectContext();
@@ -95,13 +86,13 @@ function WorkspaceSelectionContent({
 
   // Get IDs of workspaces already linked to this issue
   const linkedLocalWorkspaceIds = useMemo(() => {
-    const remoteWorkspaces = getWorkspacesForIssue(issueId);
+    const remoteWorkspaces = workspaces.filter((w) => w.issue_id !== null);
     return new Set(
       remoteWorkspaces
         .map((w) => w.local_workspace_id)
         .filter((id): id is string => id !== null)
     );
-  }, [getWorkspacesForIssue, issueId]);
+  }, [workspaces]);
 
   // Combine active and archived workspaces with archived flag
   const allWorkspaces = useMemo(() => {
@@ -166,67 +157,6 @@ function WorkspaceSelectionContent({
     [projectId, issueId, isLinking, issueArchived, modal]
   );
 
-  const handleCreateNewWorkspace = useCallback(async () => {
-    if (isLinking || issueArchived) return;
-    setIsLinking(true);
-
-    try {
-      // Get issue details for initial prompt
-      const issue = getIssue(issueId);
-      const initialPrompt = buildWorkspaceCreatePrompt(
-        issue?.title ?? null,
-        issue?.description ?? null
-      );
-
-      // Build set of local workspace IDs that exist on this machine
-      const localWorkspaceIds = buildLocalWorkspaceIdSet(
-        activeWorkspaces,
-        archivedWorkspaces
-      );
-
-      // Get defaults from most recent workspace
-      const defaults = await getWorkspaceDefaults(
-        workspaces,
-        localWorkspaceIds,
-        projectId,
-        hostId
-      );
-
-      const createState = buildWorkspaceCreateInitialState({
-        prompt: initialPrompt,
-        defaults,
-        linkedIssue: buildLinkedIssueCreateState(issue, projectId),
-      });
-
-      modal.hide();
-      const draftId = await openWorkspaceCreateFromState(createState, {
-        issueId,
-      });
-      if (!draftId) {
-        await ErrorDialog.show({
-          title: () => i18n.t('common:error'),
-          message: () =>
-            i18n.t('workspaces.createDraftError', { ns: 'common' }),
-          buttonText: () => i18n.t('common:ok'),
-        });
-      }
-    } finally {
-      setIsLinking(false);
-    }
-  }, [
-    modal,
-    openWorkspaceCreateFromState,
-    getIssue,
-    issueId,
-    projectId,
-    hostId,
-    workspaces,
-    isLinking,
-    issueArchived,
-    activeWorkspaces,
-    archivedWorkspaces,
-  ]);
-
   // Restore focus when dialog closes
   const handleCloseAutoFocus = useCallback((event: Event) => {
     event.preventDefault();
@@ -267,20 +197,6 @@ function WorkspaceSelectionContent({
           <CommandEmpty>
             {t('commandBar.noResults', 'No results found')}
           </CommandEmpty>
-
-          {/* Create new workspace option - stubbed */}
-          <CommandGroup>
-            <CommandItem
-              value="__create_new__"
-              onSelect={handleCreateNewWorkspace}
-              disabled={isLinking || issueArchived}
-            >
-              <PlusIcon className="h-4 w-4" weight="bold" />
-              <span>
-                {t('kanban.createNewWorkspace', 'Create new workspace')}
-              </span>
-            </CommandItem>
-          </CommandGroup>
 
           {/* Available workspaces */}
           {displayedWorkspaces.length > 0 && (

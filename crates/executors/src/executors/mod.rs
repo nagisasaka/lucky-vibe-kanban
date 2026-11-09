@@ -1,4 +1,7 @@
-use std::{path::Path, sync::Arc};
+use std::{
+    path::{Path, PathBuf},
+    sync::Arc,
+};
 
 use async_trait::async_trait;
 use command_group::AsyncGroupChild;
@@ -289,6 +292,7 @@ pub trait StandardCodingAgentExecutor {
         &self,
         _workdir: Option<&Path>,
         _repo_path: Option<&Path>,
+        _repository_roots: &[PathBuf],
     ) -> Result<BoxStream<'static, json_patch::Patch>, ExecutorError> {
         let options = crate::executor_discovery::ExecutorDiscoveredOptions::default();
         Ok(Box::pin(futures::stream::once(async move {

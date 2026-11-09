@@ -6,7 +6,7 @@ use axum::{
     Extension, Json,
     extract::{Path as ApiPath, Query, State},
 };
-use db::models::{repo::Repo, workspace::Workspace, workspace_repo::WorkspaceRepo};
+use db::models::{workspace::Workspace, workspace_repo::WorkspaceRepo};
 use deployment::Deployment;
 use git::GitService;
 use serde::{Deserialize, Serialize};
@@ -110,7 +110,7 @@ pub async fn preview(
     workspace.require_interactive()?;
     let pool = &deployment.db().pool;
     db::models::integration::guard_workspace(pool, workspace.id).await?;
-    let repo = Repo::find_by_id(pool, request.repository_id)
+    let repo = WorkspaceRepo::find_repo_for_workspace(pool, workspace.id, request.repository_id)
         .await?
         .ok_or(db::models::repo::RepoError::NotFound)?;
     let mut sources = request.peers.clone();
@@ -154,7 +154,7 @@ pub async fn preview(
     let root = if workspace.is_direct_folder() {
         Path::new(container).to_path_buf()
     } else {
-        Path::new(container).join(&repo.name)
+        Path::new(container).join(repo.worktree_name())
     };
     deployment
         .git()

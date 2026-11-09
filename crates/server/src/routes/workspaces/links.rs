@@ -19,21 +19,18 @@ pub struct LinkWorkspaceRequest {
     pub issue_id: Uuid,
 }
 
-async fn upsert_local_workspace_link(
+pub(crate) async fn upsert_local_workspace_link(
     pool: &sqlx::SqlitePool,
     workspace_id: Uuid,
     project_id: Uuid,
     issue_id: Uuid,
 ) -> Result<(), ApiError> {
-    sqlx::query(
+    let inserted = sqlx::query(
         r#"
         INSERT INTO local_workspace_links
             (workspace_id, project_id, issue_id)
         VALUES (?, ?, ?)
-        ON CONFLICT(workspace_id) DO UPDATE SET
-            project_id = excluded.project_id,
-            issue_id = excluded.issue_id,
-            updated_at = datetime('now', 'subsec')
+        ON CONFLICT(workspace_id) DO NOTHING
         "#,
     )
     .bind(workspace_id)
@@ -41,6 +38,11 @@ async fn upsert_local_workspace_link(
     .bind(issue_id)
     .execute(pool)
     .await?;
+    if inserted.rows_affected() == 0 {
+        return Err(ApiError::Conflict(
+            "Workspace is already linked. Unlink it from its Issue first.".into(),
+        ));
+    }
 
     Ok(())
 }
@@ -153,7 +155,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn upsert_local_workspace_link_inserts_and_updates() {
+    async fn link_rejects_replacement_and_preserves_original() {
         let pool = setup_pool().await;
         let workspace_id = Uuid::new_v4();
         let project_id = Uuid::new_v4();
@@ -163,9 +165,11 @@ mod tests {
         upsert_local_workspace_link(&pool, workspace_id, project_id, first_issue_id)
             .await
             .expect("insert link");
-        upsert_local_workspace_link(&pool, workspace_id, project_id, second_issue_id)
-            .await
-            .expect("update link");
+        assert!(
+            upsert_local_workspace_link(&pool, workspace_id, project_id, second_issue_id)
+                .await
+                .is_err()
+        );
 
         let row = sqlx::query(
             "SELECT project_id, issue_id FROM local_workspace_links WHERE workspace_id = ?",
@@ -179,7 +183,32 @@ mod tests {
         let linked_issue_id: Uuid = row.try_get("issue_id").expect("issue_id");
 
         assert_eq!(linked_project_id, project_id);
-        assert_eq!(linked_issue_id, second_issue_id);
+        assert_eq!(linked_issue_id, first_issue_id);
+    }
+
+    #[tokio::test]
+    async fn concurrent_link_loser_must_detach_before_relinking() {
+        let pool = setup_pool().await;
+        let workspace = Uuid::new_v4();
+        let project = Uuid::new_v4();
+        let a = Uuid::new_v4();
+        let b = Uuid::new_v4();
+        let (left, right) = tokio::join!(
+            upsert_local_workspace_link(&pool, workspace, project, a),
+            upsert_local_workspace_link(&pool, workspace, project, b)
+        );
+        assert_ne!(left.is_ok(), right.is_ok());
+        delete_local_workspace_link(&pool, workspace).await.unwrap();
+        upsert_local_workspace_link(&pool, workspace, project, b)
+            .await
+            .unwrap();
+        let issue: Uuid =
+            sqlx::query_scalar("SELECT issue_id FROM local_workspace_links WHERE workspace_id=?")
+                .bind(workspace)
+                .fetch_one(&pool)
+                .await
+                .unwrap();
+        assert_eq!(issue, b);
     }
 
     #[tokio::test]

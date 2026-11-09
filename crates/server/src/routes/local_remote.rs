@@ -2398,19 +2398,12 @@ async fn insert_workspace_link(
     issue_id: Uuid,
 ) -> Result<(), ApiError> {
     db::models::workspace_usage::require_interactive(pool, workspace_id).await?;
-    sqlx::query(
-        r#"INSERT INTO local_workspace_links
-               (workspace_id, project_id, issue_id)
-           VALUES (?, ?, ?)
-           ON CONFLICT(workspace_id) DO UPDATE
-               SET project_id = excluded.project_id,
-                   issue_id   = excluded.issue_id,
-                   updated_at = datetime('now', 'subsec')"#,
+    crate::routes::workspaces::links::upsert_local_workspace_link(
+        pool,
+        workspace_id,
+        project_id,
+        issue_id,
     )
-    .bind(workspace_id)
-    .bind(project_id)
-    .bind(issue_id)
-    .execute(pool)
     .await?;
     Ok(())
 }
@@ -3623,19 +3616,44 @@ pub(crate) async fn project_creation_repository_ids(
     project: Uuid,
 ) -> anyhow::Result<Vec<Uuid>> {
     use db::models::scratch::{Scratch, ScratchPayload, ScratchType};
-    let mut ids = crate::routes::integrations::project_repository_ids(pool, project).await?;
+    let mut ids = Vec::new();
     if let Some(scratch) =
         Scratch::find_by_id(pool, project, &ScratchType::ProjectRepoDefaults).await?
         && let ScratchPayload::ProjectRepoDefaults(defaults) = scratch.payload
-        && defaults
+    {
+        // A legacy direct-folder default is not a Git preset, even if stale
+        // repository entries remain in the old payload.
+        if defaults
             .directory_path
             .as_deref()
-            .is_none_or(|p| p.trim().is_empty())
-    {
+            .is_some_and(|p| !p.trim().is_empty())
+        {
+            return Ok(ids);
+        }
         for repo in defaults.repos {
             if !ids.contains(&repo.repo_id) {
                 ids.push(repo.repo_id);
             }
+        }
+    } else {
+        ids = sqlx::query_scalar("SELECT repo_id FROM project_repos WHERE project_id = ?")
+            .bind(project)
+            .fetch_all(pool)
+            .await?;
+    }
+    Ok(ids)
+}
+
+/// Read/maintenance scope includes actual linked Git Workspaces independently
+/// of the mutable creation preset. Linking never rewrites Workspace ownership.
+pub(crate) async fn project_associated_repository_ids(
+    pool: &sqlx::SqlitePool,
+    project: Uuid,
+) -> anyhow::Result<Vec<Uuid>> {
+    let mut ids = project_creation_repository_ids(pool, project).await?;
+    for id in crate::routes::integrations::project_repository_ids(pool, project).await? {
+        if !ids.contains(&id) {
+            ids.push(id);
         }
     }
     Ok(ids)
@@ -3649,6 +3667,178 @@ mod tests {
     use serde_json::Value;
     use sqlx::{SqlitePool, sqlite::SqlitePoolOptions, types::Json};
     use uuid::Uuid;
+
+    #[tokio::test]
+    async fn project_preset_changes_never_reconfigure_existing_workspace() {
+        use db::models::{
+            repo::Repo,
+            scratch::{
+                CreateScratch, DraftWorkspaceRepo, ProjectRepoDefaultsData, Scratch,
+                ScratchPayload, ScratchType, UpdateScratch,
+            },
+            session::{CreateSession, Session},
+            workspace::{CreateWorkspace, Workspace},
+            workspace_repo::{CreateWorkspaceRepo, WorkspaceRepo},
+        };
+        let pool = SqlitePoolOptions::new()
+            .max_connections(1)
+            .connect("sqlite::memory:")
+            .await
+            .unwrap();
+        sqlx::migrate!("../db/migrations").run(&pool).await.unwrap();
+        let project = super::create_local_project(&pool, project_request("PRESET"))
+            .await
+            .unwrap()
+            .id;
+        let statuses = super::list_project_statuses(&pool, project).await.unwrap();
+        let issue = super::create_local_issue(&pool, issue_request(project, statuses[0].id))
+            .await
+            .unwrap();
+        let a = Repo::find_or_create(&pool, std::path::Path::new("/fixture/a"), "a")
+            .await
+            .unwrap();
+        let b = Repo::find_or_create(&pool, std::path::Path::new("/fixture/b"), "b")
+            .await
+            .unwrap();
+        let preset = |ids: Vec<Uuid>| {
+            ScratchPayload::ProjectRepoDefaults(ProjectRepoDefaultsData {
+                repos: ids
+                    .into_iter()
+                    .map(|repo_id| DraftWorkspaceRepo {
+                        repo_id,
+                        target_branch: String::new(),
+                    })
+                    .collect(),
+                directory_path: None,
+            })
+        };
+        Scratch::create(
+            &pool,
+            project,
+            &CreateScratch {
+                payload: preset(vec![a.id, b.id]),
+            },
+        )
+        .await
+        .unwrap();
+        assert_eq!(
+            super::project_creation_repository_ids(&pool, project)
+                .await
+                .unwrap(),
+            vec![a.id, b.id]
+        );
+        let ws = Workspace::create(
+            &pool,
+            &CreateWorkspace {
+                branch: "fixture".into(),
+                name: None,
+            },
+            Uuid::new_v4(),
+        )
+        .await
+        .unwrap();
+        WorkspaceRepo::create_many(
+            &pool,
+            ws.id,
+            &[CreateWorkspaceRepo {
+                repo_id: a.id,
+                target_branch: "stable".into(),
+            }],
+        )
+        .await
+        .unwrap();
+        let old_session = Session::create(
+            &pool,
+            &CreateSession {
+                name: None,
+                executor: None,
+            },
+            Uuid::new_v4(),
+            ws.id,
+        )
+        .await
+        .unwrap();
+        assert_eq!(old_session.agent_working_dir, None);
+        // Simulate a saved legacy session path. Creating another Session must
+        // neither change it nor inherit its single-repository cwd exception.
+        sqlx::query("UPDATE sessions SET agent_working_dir='a/src' WHERE id=?")
+            .bind(old_session.id)
+            .execute(&pool)
+            .await
+            .unwrap();
+        Scratch::update(
+            &pool,
+            project,
+            &ScratchType::ProjectRepoDefaults,
+            &UpdateScratch {
+                payload: preset(vec![b.id]),
+            },
+        )
+        .await
+        .unwrap();
+        // A preset-external orphan can be linked without replacing its targets.
+        super::super::workspaces::links::upsert_local_workspace_link(
+            &pool, ws.id, project, issue.id,
+        )
+        .await
+        .unwrap();
+        assert!(
+            super::project_associated_repository_ids(&pool, project)
+                .await
+                .unwrap()
+                .contains(&a.id)
+        );
+        let attached = WorkspaceRepo::find_by_workspace_id(&pool, ws.id)
+            .await
+            .unwrap();
+        assert_eq!(
+            (attached[0].repo_id, attached[0].target_branch.as_str()),
+            (a.id, "stable")
+        );
+        assert_eq!(
+            super::project_creation_repository_ids(&pool, project)
+                .await
+                .unwrap(),
+            vec![b.id]
+        );
+        let new_session = Session::create(
+            &pool,
+            &CreateSession {
+                name: None,
+                executor: None,
+            },
+            Uuid::new_v4(),
+            ws.id,
+        )
+        .await
+        .unwrap();
+        assert_eq!(new_session.agent_working_dir, None);
+        assert_eq!(
+            Session::find_by_id(&pool, old_session.id)
+                .await
+                .unwrap()
+                .unwrap()
+                .agent_working_dir
+                .as_deref(),
+            Some("a/src")
+        );
+        Scratch::update(
+            &pool,
+            project,
+            &ScratchType::ProjectRepoDefaults,
+            &UpdateScratch {
+                payload: preset(vec![]),
+            },
+        )
+        .await
+        .unwrap();
+        assert!(
+            super::project_creation_repository_ids(&pool, project)
+                .await
+                .unwrap()
+                .is_empty()
+        );
+    }
 
     #[test]
     fn bulk_issue_decimal_ranks_deserialize_from_http_json() {

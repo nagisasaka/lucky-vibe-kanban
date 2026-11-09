@@ -83,9 +83,17 @@ async fn inspect_source(
     let workspace = Workspace::find_by_id(pool, selected.workspace_id)
         .await?
         .context("Workspace missing")?;
-    WorkspaceRepo::find_by_workspace_and_repo_id(pool, workspace.id, repo.id)
+    ensure!(
+        !workspace.is_direct_folder(),
+        "Direct folder workspaces do not support Auto-merge"
+    );
+    let membership = WorkspaceRepo::find_by_workspace_and_repo_id(pool, workspace.id, repo.id)
         .await?
         .context("Selected Workspace does not contain this repository")?;
+    ensure!(
+        membership.target_branch == request.target_branch.trim_start_matches("refs/heads/"),
+        "Choose the merge target recorded by the Workspace"
+    );
     let commit = deployment
         .git()
         .get_branch_oid(&repo.path, &workspace.branch)?;

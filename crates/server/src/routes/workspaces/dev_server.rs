@@ -106,7 +106,7 @@ async fn start_managed_observed(
                 script: repo.dev_server_script.clone().unwrap(),
                 language: ScriptRequestLanguage::Bash,
                 context: ScriptContext::DevServer,
-                working_dir: Some(repo.name.clone()),
+                working_dir: Some(repo.worktree_name().to_owned()),
             }),
             None,
         );

@@ -33,6 +33,9 @@ pub async fn get_workspace_repos(
     Extension(workspace): Extension<Workspace>,
     State(deployment): State<DeploymentImpl>,
 ) -> Result<ResponseJson<ApiResponse<Vec<RepoWithTargetBranch>>>, ApiError> {
+    if workspace.is_direct_folder() {
+        return Ok(ResponseJson(ApiResponse::success(Vec::new())));
+    }
     let pool = &deployment.db().pool;
     let repos =
         WorkspaceRepo::find_repos_with_target_branch_for_workspace(pool, workspace.id).await?;
@@ -45,6 +48,11 @@ pub async fn add_workspace_repo(
     State(deployment): State<DeploymentImpl>,
     Json(payload): Json<AddWorkspaceRepoRequest>,
 ) -> Result<ResponseJson<ApiResponse<AddWorkspaceRepoResponse>>, ApiError> {
+    if workspace.is_direct_folder() {
+        return Err(ApiError::BadRequest(
+            "Direct folders cannot attach managed repositories".into(),
+        ));
+    }
     let mut managed_workspace = deployment
         .workspace_manager()
         .load_managed_workspace(workspace)

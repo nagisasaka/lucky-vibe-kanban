@@ -29,6 +29,13 @@ import {
 } from '@/shared/lib/projectKey';
 import { ColorPicker } from '@/shared/components/ui-new/containers/ColorPickerContainer';
 
+import { WorkspaceTargetDialog } from '@/shared/dialogs/shared/WorkspaceTargetDialog';
+import {
+  saveProjectWorkspaceDefault,
+  type ProjectWorkspaceDefault,
+} from '@/shared/hooks/useProjectRepoDefaults';
+import { useHostId } from '@/shared/providers/HostIdProvider';
+
 export type CreateRemoteProjectDialogProps = {
   organizationId: string;
 };
@@ -42,6 +49,9 @@ const CreateRemoteProjectDialogImpl = create<CreateRemoteProjectDialogProps>(
   ({ organizationId }) => {
     const modal = useModal();
     const { t } = useTranslation('projects');
+    const hostId = useHostId();
+    const [preset, setPreset] = useState<ProjectWorkspaceDefault | null>(null);
+    const [createdProject, setCreatedProject] = useState<Project | null>(null);
     const [name, setName] = useState('');
     const [keyInput, setKeyInput] = useState<string | null>(null);
     const [color, setColor] = useState<string>(() => getRandomPresetColor());
@@ -81,6 +91,8 @@ const CreateRemoteProjectDialogImpl = create<CreateRemoteProjectDialogProps>(
       // Reset form when dialog opens
       if (modal.visible) {
         setName('');
+        setPreset(null);
+        setCreatedProject(null);
         setKeyInput(null);
         setColor(getRandomPresetColor());
         setError(null);
@@ -119,6 +131,7 @@ const CreateRemoteProjectDialogImpl = create<CreateRemoteProjectDialogProps>(
         return;
       }
       if (
+        !createdProject &&
         projects.some((project) => project.key === normalizeProjectKey(key))
       ) {
         setError('keyDuplicate');
@@ -130,18 +143,27 @@ const CreateRemoteProjectDialogImpl = create<CreateRemoteProjectDialogProps>(
       setIsCreating(true);
 
       try {
-        const { data: project, persisted } = insert({
-          organization_id: organizationId,
-          name: name.trim(),
-          key: normalizeProjectKey(key),
-          color: color,
-        });
-
-        const persistedProject = await persisted;
+        let persistedProject = createdProject;
+        if (!persistedProject) {
+          const { data: project, persisted } = insert({
+            organization_id: organizationId,
+            name: name.trim(),
+            key: normalizeProjectKey(key),
+            color,
+          });
+          persistedProject = (await persisted) ?? project;
+          setCreatedProject(persistedProject);
+        }
+        if (preset)
+          await saveProjectWorkspaceDefault(
+            persistedProject.id,
+            preset,
+            hostId
+          );
 
         modal.resolve({
           action: 'created',
-          project: persistedProject ?? project,
+          project: persistedProject,
         } as CreateRemoteProjectResult);
         modal.hide();
       } catch (err) {
@@ -262,6 +284,42 @@ const CreateRemoteProjectDialogImpl = create<CreateRemoteProjectDialogProps>(
             )}
           </div>
 
+          <div className="flex flex-col gap-base">
+            <Button
+              type="button"
+              variant="outline"
+              disabled={isCreating}
+              onClick={async () => {
+                const result = await WorkspaceTargetDialog.show({
+                  purpose: 'project_default',
+                  hostId,
+                  initialRepos:
+                    preset?.kind === 'git'
+                      ? (preset.repos ?? [preset.repo])
+                      : [],
+                });
+                if (
+                  result.kind === 'confirmed' &&
+                  result.selection.mode === 'worktree'
+                ) {
+                  const repos = result.selection.repos.map((r) => ({
+                    repo_id: r.repo.id,
+                    target_branch: '',
+                  }));
+                  setPreset({ kind: 'git', repo: repos[0], repos });
+                }
+              }}
+            >
+              {t('common:createMode.workspaceDialog.presetHint')}
+            </Button>
+            {preset?.kind === 'git' && (
+              <span className="text-xs text-low">
+                {t('common:createMode.workspaceDialog.repoCount', {
+                  count: (preset.repos ?? [preset.repo]).length,
+                })}
+              </span>
+            )}
+          </div>
           <DialogFooter>
             <Button
               variant="outline"

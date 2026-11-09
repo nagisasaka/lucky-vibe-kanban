@@ -689,21 +689,13 @@ async fn insert_workspace_link(
     project_id: Uuid,
     issue_id: Uuid,
 ) -> Result<(), ApiError> {
-    sqlx::query(
-        r#"INSERT INTO local_workspace_links
-               (workspace_id, project_id, issue_id)
-           VALUES (?, ?, ?)
-           ON CONFLICT(workspace_id) DO UPDATE
-               SET project_id = excluded.project_id,
-                   issue_id   = excluded.issue_id,
-                   updated_at = datetime('now', 'subsec')"#,
+    crate::routes::workspaces::links::upsert_local_workspace_link(
+        pool,
+        workspace_id,
+        project_id,
+        issue_id,
     )
-    .bind(workspace_id)
-    .bind(project_id)
-    .bind(issue_id)
-    .execute(pool)
-    .await?;
-    Ok(())
+    .await
 }
 
 async fn apply_deployment_arena_winner(
@@ -764,8 +756,8 @@ async fn apply_deployment_arena_winner(
                 winner_workspace.id, main_repo.repo.name
             ))
         })?;
-        let main_repo_path = main_root.join(&main_repo.repo.name);
-        let winner_repo_path = winner_root.join(&winner_repo.repo.name);
+        let main_repo_path = main_root.join(main_repo.repo.worktree_name());
+        let winner_repo_path = winner_root.join(winner_repo.repo.worktree_name());
         let base_commit = deployment.git().get_base_commit(
             &winner_repo_path,
             &winner_workspace.branch,

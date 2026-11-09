@@ -17,11 +17,23 @@ use crate::{
 fn reasoning_stdio_fixture() {
     let inherited: Value =
         serde_json::from_str(&std::env::var("LVK_REASONING_FIXTURE").unwrap()).unwrap();
+    let mut roots = Value::Null;
     let mut resolved = Value::Null;
     for line in std::io::stdin().lock().lines() {
         let request: Value = serde_json::from_str(&line.unwrap()).unwrap();
         let result = match request["method"].as_str().unwrap() {
+            "skills/extraRoots/set" => {
+                roots = request["params"]["extraRoots"].clone();
+                assert_eq!(
+                    roots,
+                    json!(["/fixture/a/.agents/skills", "/fixture/b/.agents/skills"])
+                );
+                json!({})
+            }
             "thread/start" | "thread/resume" => {
+                if std::env::var_os("LVK_EXPECT_SKILL_ROOTS").is_some() {
+                    assert!(roots.is_array(), "set must precede start/resume");
+                }
                 resolved = request["params"]["config"]
                     .get("model_reasoning_effort")
                     .cloned()
@@ -212,4 +224,71 @@ fn resolved_default_replaces_stale_explicit_effort() {
             .reasoning_effort,
         None
     );
+}
+
+#[tokio::test]
+async fn skill_roots_are_set_on_each_fresh_start_and_resume_process() {
+    for resume in [false, true] {
+        let cancel = CancellationToken::new();
+        let client = AppServerClient::new(
+            LogWriter::new(tokio::io::sink()),
+            None,
+            false,
+            false,
+            ExecutionMode::Code,
+            None,
+            None,
+            cancel.clone(),
+        );
+        let mut child = tokio::process::Command::new(std::env::current_exe().unwrap())
+            .args([
+                "--exact",
+                "executors::codex::client::reasoning_tests::reasoning_stdio_fixture",
+                "--ignored",
+                "--nocapture",
+            ])
+            .env("LVK_REASONING_FIXTURE", "null")
+            .env("LVK_EXPECT_SKILL_ROOTS", "1")
+            .stdin(std::process::Stdio::piped())
+            .stdout(std::process::Stdio::piped())
+            .kill_on_drop(true)
+            .spawn()
+            .unwrap();
+        let (exit_tx, _exit_rx) = tokio::sync::oneshot::channel();
+        client.connect(JsonRpcPeer::spawn(
+            child.stdin.take().unwrap(),
+            child.stdout.take().unwrap(),
+            client.clone(),
+            ExitSignalSender::new(exit_tx),
+            cancel.clone(),
+        ));
+        let result = tokio::time::timeout(std::time::Duration::from_secs(5), async {
+            client
+                .set_skill_extra_roots(vec![
+                    "/fixture/a/.agents/skills".into(),
+                    "/fixture/b/.agents/skills".into(),
+                ])
+                .await
+                .unwrap();
+            if resume {
+                client
+                    .thread_resume(ThreadResumeParams {
+                        thread_id: "reasoning-thread".into(),
+                        ..Default::default()
+                    })
+                    .await
+                    .unwrap();
+            } else {
+                client
+                    .thread_start(ThreadStartParams::default())
+                    .await
+                    .unwrap();
+            }
+        })
+        .await;
+        cancel.cancel();
+        child.kill().await.unwrap();
+        child.wait().await.unwrap();
+        result.unwrap();
+    }
 }

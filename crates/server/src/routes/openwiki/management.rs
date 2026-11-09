@@ -265,7 +265,11 @@ async fn mutate(
             .container()
             .ensure_container_exists(&workspace)
             .await?;
-        let root = PathBuf::from(container).join(&repo.name);
+        let placed =
+            WorkspaceRepo::find_repo_for_workspace(&deployment.db().pool, workspace.id, repo.id)
+                .await?
+                .context("Maintenance repository missing")?;
+        let root = placed.worktree_dir(&container);
         anyhow::ensure!(
             deployment.git().get_head_info(&root)?.oid == source
                 && deployment
@@ -363,13 +367,17 @@ pub(super) async fn recover(
     let workspace = Workspace::find_by_id(&deployment.db().pool, operation.workspace_id)
         .await?
         .context("Maintenance workspace missing")?;
+    let placed =
+        WorkspaceRepo::find_repo_for_workspace(&deployment.db().pool, workspace.id, repo.id)
+            .await?
+            .context("Maintenance repository missing")?;
     let root = PathBuf::from(
         workspace
             .container_ref
             .as_ref()
             .context("Maintenance path missing")?,
     )
-    .join(&repo.name);
+    .join(placed.worktree_name());
     let request = WikiPublicationRequest {
         repository_root: &repo.path,
         maintenance_root: &root,

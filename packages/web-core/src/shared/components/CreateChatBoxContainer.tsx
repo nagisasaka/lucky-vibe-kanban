@@ -9,7 +9,6 @@ import WYSIWYGEditor from '@/shared/components/WYSIWYGEditor';
 import { useCreateWorkspace } from '@/shared/hooks/useCreateWorkspace';
 import { useCreateAttachments } from '@/shared/hooks/useCreateAttachments';
 import { useExecutorConfig } from '@/shared/hooks/useExecutorConfig';
-import { saveProjectWorkspaceDefault } from '@/shared/hooks/useProjectRepoDefaults';
 import { useCurrentAppDestination } from '@/shared/hooks/useCurrentAppDestination';
 import { getSortedExecutorVariantKeys } from '@/shared/lib/executor';
 import { getDestinationHostId } from '@/shared/lib/routes/appNavigation';
@@ -106,7 +105,8 @@ export function CreateChatBoxContainer({
   const selectedTargetBranch = selectedRepo
     ? targetBranches[selectedRepo.id]
     : null;
-  const hasSelectedBranch = Boolean(selectedTargetBranch);
+  const hasSelectedBranch =
+    repos.length > 0 && repos.every((repo) => Boolean(targetBranches[repo.id]));
   const hasValidWorkspaceTarget =
     workspaceMode === 'direct_folder'
       ? hasDirectFolderPath
@@ -184,11 +184,13 @@ export function CreateChatBoxContainer({
       const branch = selectedBranch
         ? truncateBranchLabel(selectedBranch)
         : 'Select branch';
-      return `${getRepoDisplayName(repo)} · ${branch}`;
+      return repos.length > 1
+        ? `${repos.length} repositories`
+        : `${getRepoDisplayName(repo)} · ${branch}`;
     }
 
     return 'Choose workspace';
-  }, [selectedRepo, targetBranches]);
+  }, [repos, selectedRepo, targetBranches]);
 
   const repoSummaryTitle = useMemo(
     () =>
@@ -223,6 +225,13 @@ export function CreateChatBoxContainer({
         initialPath,
         initialMode,
         initialBranch: selectedTargetBranch,
+        initialRepos: repos.length
+          ? repos.map((r) => ({
+              repo_id: r.id,
+              target_branch: targetBranches[r.id] ?? null,
+            }))
+          : undefined,
+        projectId: linkedIssue?.remoteProjectId,
         hostId,
       });
 
@@ -232,11 +241,10 @@ export function CreateChatBoxContainer({
       if (result.selection.mode === 'worktree') {
         setWorkspaceMode('worktree');
         setDirectFolderPath('');
-        addRepo(result.selection.repo);
-        setTargetBranch(
-          result.selection.repo.id,
-          result.selection.targetBranch
-        );
+        for (const item of result.selection.repos) {
+          addRepo(item.repo);
+          setTargetBranch(item.repo.id, item.targetBranch);
+        }
       } else {
         setWorkspaceMode('direct_folder');
         setDirectFolderPath(result.selection.path);
@@ -255,30 +263,12 @@ export function CreateChatBoxContainer({
     hostId,
     selectedRepo,
     selectedTargetBranch,
+    repos,
+    targetBranches,
+    linkedIssue,
     setDirectFolderPath,
     setTargetBranch,
     workspaceMode,
-  ]);
-
-  useEffect(() => {
-    if (!hasInitialValue || repos.length <= 1) return;
-
-    const firstRepo = repos[0];
-    if (!firstRepo) return;
-    const firstBranch = targetBranches[firstRepo.id];
-
-    clearRepos();
-    addRepo(firstRepo);
-    if (firstBranch) {
-      setTargetBranch(firstRepo.id, firstBranch);
-    }
-  }, [
-    addRepo,
-    clearRepos,
-    hasInitialValue,
-    repos,
-    setTargetBranch,
-    targetBranches,
   ]);
 
   useEffect(() => {
@@ -407,13 +397,11 @@ export function CreateChatBoxContainer({
         name: title,
         prompt,
         repos:
-          workspaceMode === 'worktree' && selectedRepo && selectedTargetBranch
-            ? [
-                {
-                  repo_id: selectedRepo.id,
-                  target_branch: selectedTargetBranch,
-                },
-              ]
+          workspaceMode === 'worktree'
+            ? repos.map((repo) => ({
+                repo_id: repo.id,
+                target_branch: targetBranches[repo.id] ?? '',
+              }))
             : [],
         directory_path:
           workspaceMode === 'direct_folder'
@@ -449,26 +437,6 @@ export function CreateChatBoxContainer({
         onWorkspaceCreated(result.workspace.id);
       }
 
-      if (linkedIssue?.remoteProjectId) {
-        const projectWorkspaceDefault =
-          workspaceMode === 'worktree' && data.repos[0]
-            ? { kind: 'git' as const, repo: data.repos[0] }
-            : workspaceMode === 'direct_folder' && data.directory_path
-              ? {
-                  kind: 'direct_folder' as const,
-                  path: data.directory_path,
-                }
-              : null;
-
-        saveProjectWorkspaceDefault(
-          linkedIssue.remoteProjectId,
-          projectWorkspaceDefault,
-          hostId
-        ).catch((err) =>
-          console.warn('Failed to save project workspace default:', err)
-        );
-      }
-
       clearAttachments();
       setSelectedSkills([]);
       setStagedResumeSession(null);
@@ -484,8 +452,8 @@ export function CreateChatBoxContainer({
     stagedResumeSession?.agent_session_id,
     workspaceMode,
     directFolderPath,
-    selectedRepo,
-    selectedTargetBranch,
+    repos,
+    targetBranches,
     resumeScopePath,
     createWorkspace,
     onWorkspaceCreated,
@@ -493,7 +461,6 @@ export function CreateChatBoxContainer({
     clearAttachments,
     clearDraft,
     linkedIssue,
-    hostId,
   ]);
 
   // Determine error to display
@@ -604,7 +571,7 @@ export function CreateChatBoxContainer({
                   error={displayError}
                   repoIds={
                     workspaceMode === 'worktree' && selectedRepo
-                      ? [selectedRepo.id]
+                      ? repos.map((r) => r.id)
                       : []
                   }
                   repoId={workspaceMode === 'worktree' ? repoId : undefined}

@@ -290,17 +290,9 @@ pub(crate) async fn resolve_session_base_path(
         }
     };
     let workspace_path = std::path::PathBuf::from(container_ref);
-    let base_path = match session.agent_working_dir.as_deref() {
-        Some(dir) if !dir.is_empty() => workspace_path.join(dir),
-        _ => workspace_path.clone(),
-    };
-    let canonical_root = tokio::fs::canonicalize(&workspace_path).await?;
-    let base_path = tokio::fs::canonicalize(&base_path).await?;
-    if !base_path.starts_with(&canonical_root) {
-        return Err(ApiError::BadRequest(
-            "Session directory escapes Workspace".into(),
-        ));
-    }
+    // Cwd is the Workspace root for both worktrees and direct folders. Saved
+    // legacy session paths and files are retained; cache copies are placed here.
+    let base_path = tokio::fs::canonicalize(&workspace_path).await?;
     Ok(base_path)
 }
 

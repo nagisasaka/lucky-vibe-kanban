@@ -454,6 +454,12 @@ impl LocalContainerService {
         let Some(session) = Session::find_by_id(&self.db.pool, session_id).await? else {
             return Ok(());
         };
+        if Workspace::find_by_id(&self.db.pool, session.workspace_id)
+            .await?
+            .is_some_and(|w| w.is_direct_folder())
+        {
+            return Ok(());
+        }
         if should_disable_default_commit_for_workspace(&self.db.pool, session.workspace_id).await? {
             // Design Arena deliberately leaves source uncommitted until the
             // existing promotion lifecycle chooses an implementation.
@@ -603,30 +609,26 @@ impl LocalContainerService {
         };
         let workspace_dir = PathBuf::from(container_ref);
 
-        let repositories = WorkspaceRepo::find_repos_for_workspace(&self.db.pool, workspace.id)
-            .await
-            .unwrap_or_default();
-
-        if repositories.is_empty() {
-            tracing::warn!(
-                "No repositories found for workspace {}, cleaning up workspace directory only",
-                workspace.id
-            );
-            if workspace_dir.exists()
-                && let Err(e) = tokio::fs::remove_dir_all(&workspace_dir).await
-            {
-                tracing::warn!("Failed to remove workspace directory: {}", e);
-            }
-        } else {
-            WorkspaceManager::cleanup_workspace(&workspace_dir, &repositories)
-                .await
-                .unwrap_or_else(|e| {
+        let repositories =
+            match WorkspaceRepo::find_repos_for_workspace(&self.db.pool, workspace.id).await {
+                Ok(repos) if !repos.is_empty() => repos,
+                result => {
                     tracing::warn!(
-                        "Failed to clean up workspace for workspace {}: {}",
+                        "Workspace {} cleanup lacks repository ownership; directory retained: {:?}",
                         workspace.id,
-                        e
+                        result
                     );
-                });
+                    return;
+                }
+            };
+        if let Err(error) = WorkspaceManager::cleanup_workspace(&workspace_dir, &repositories).await
+        {
+            tracing::warn!(
+                "Workspace {} cleanup stopped; files retained: {}",
+                workspace.id,
+                error
+            );
+            return;
         }
 
         let _ = Workspace::mark_worktree_deleted(&self.db.pool, workspace.id).await;
@@ -637,9 +639,12 @@ impl LocalContainerService {
     /// and failure should not block process finalization.
     async fn update_after_head_commits(&self, exec_id: Uuid) {
         if let Ok(ctx) = ExecutionProcess::load_context(&self.db.pool, exec_id).await {
+            if ctx.workspace.is_direct_folder() {
+                return;
+            }
             let workspace_root = self.workspace_to_current_dir(&ctx.workspace);
             for repo in &ctx.repos {
-                let repo_path = workspace_root.join(&repo.name);
+                let repo_path = repo.worktree_dir(&workspace_root);
                 if let Ok(head) = self.git().get_head_info(&repo_path) {
                     let _ = ExecutionProcessRepoState::update_after_head_commit(
                         &self.db.pool,
@@ -676,7 +681,7 @@ impl LocalContainerService {
         let mut repos_with_changes = Vec::new();
 
         for repo in repos {
-            let worktree_path = workspace_root.join(&repo.name);
+            let worktree_path = repo.worktree_dir(workspace_root);
 
             match git.get_worktree_status(&worktree_path) {
                 Ok(ws) if !ws.entries.is_empty() => {
@@ -971,7 +976,7 @@ impl LocalContainerService {
             if let Some(copy_files) = &repo.copy_files
                 && !copy_files.trim().is_empty()
             {
-                let worktree_path = workspace_dir.join(&repo.name);
+                let worktree_path = repo.worktree_dir(workspace_dir);
                 self.copy_project_files(&repo.path, &worktree_path, copy_files)
                     .await
                     .unwrap_or_else(|e| {
@@ -984,16 +989,8 @@ impl LocalContainerService {
             }
         }
 
-        let agent_working_dir = Session::find_latest_by_workspace_id(&self.db.pool, workspace.id)
-            .await?
-            .and_then(|session| session.agent_working_dir);
-
         self.file_service
-            .copy_files_by_workspace_to_worktree(
-                workspace_dir,
-                workspace.id,
-                agent_working_dir.as_deref(),
-            )
+            .copy_files_by_workspace_to_worktree(workspace_dir, workspace.id, None)
             .await
             .map_err(|e| ContainerError::Other(e.into()))?;
 
@@ -1011,7 +1008,7 @@ impl LocalContainerService {
             .map(|owner| owner.kind.clone());
         let roots: Vec<_> = repos
             .iter()
-            .map(|repo| (workspace_dir.join(&repo.name), repo.name.clone(), repo.id))
+            .map(|repo| (repo.worktree_dir(workspace_dir), repo.name.clone(), repo.id))
             .collect();
         tokio::task::spawn_blocking(move || {
             for (root, name, id) in roots {
@@ -1029,57 +1026,119 @@ impl LocalContainerService {
         Ok(())
     }
 
-    /// Create workspace-level CLAUDE.md and AGENTS.md files that import from each repo.
-    /// Uses the @import syntax to reference each repo's config files.
-    /// Skips creating files if they already exist or if no repos have the source file.
+    /// Maintain LVK's non-Git parent instructions without changing repository files.
+    /// Claude understands scoped @imports; Codex is directed to read child files.
     async fn create_workspace_config_files(
         workspace_dir: &Path,
         repos: &[Repo],
     ) -> Result<(), ContainerError> {
-        const CONFIG_FILES: [&str; 2] = ["CLAUDE.md", "AGENTS.md"];
-
-        for config_file in CONFIG_FILES {
-            let workspace_config_path = workspace_dir.join(config_file);
-
-            if workspace_config_path.exists() {
-                tracing::trace!(
-                    "Workspace config file {} already exists, skipping",
-                    config_file
-                );
-                continue;
+        const MARKER: &str = "<!-- LVK WORKSPACE INSTRUCTIONS v1 -->";
+        let mut imports = Vec::new();
+        let mut content = format!(
+            "{MARKER}\n# Workspace instructions\n\nThis non-Git directory is the Workspace's common working root. Each child repository is a separate Git worktree. Run Git commands inside the relevant repository, not at this root.\n\nBefore working in any repository, read its AGENTS.md and every lower AGENTS.md applicable to the target path. Imported repository instructions apply ONLY to their own repository and subtree, never to siblings. The parent does not replace repository instructions. Do not edit user instruction files to add LVK policy. AGENTS.md is LVK's standard; existing CLAUDE.md compatibility is not guaranteed.\n\nWorkspace attachments are relative to this root under .lvk/attachments. Each repository owns its own .lvk/shared and openwiki; never combine or move those stores into this root.\n\n{}\n\n## Repositories and scoped instructions\n",
+            utils::path::SHARED_RESOURCE_GUIDANCE
+        );
+        for repo in repos {
+            content.push_str(&format!(
+                "\n### {} — only ./{} and its descendants\n",
+                repo.display_name,
+                repo.worktree_name()
+            ));
+            if repo.worktree_dir(workspace_dir).join("AGENTS.md").is_file() {
+                let line = format!("@{}/AGENTS.md", repo.worktree_name().replace(' ', "\\ "));
+                imports.push(format!("@{}/AGENTS.md", repo.worktree_name()));
+                content.push_str(&format!("{line}\n"));
+            } else {
+                content.push_str("No root AGENTS.md was found. Still check target-path instructions before making changes.\n");
             }
-
-            let mut import_lines = Vec::new();
-            for repo in repos {
-                let repo_config_path = workspace_dir.join(&repo.name).join(config_file);
-                if repo_config_path.exists() {
-                    import_lines.push(format!("@{}/{}", repo.name, config_file));
+        }
+        let agents = workspace_dir.join("AGENTS.md");
+        let legacy_agents = imports.join("\n") + "\n";
+        let old = tokio::fs::read_to_string(&agents).await.ok();
+        // Only our marked file or the exact previous generated template may be
+        // refreshed. Preserve custom root files and every child repository file.
+        if old
+            .as_ref()
+            .is_none_or(|s| s.starts_with(MARKER) || *s == legacy_agents)
+        {
+            if agents
+                .symlink_metadata()
+                .is_ok_and(|m| m.file_type().is_symlink())
+            {
+                return Ok(());
+            }
+            if old.as_deref() != Some(content.as_str()) {
+                // Readers starting another Session must see the complete old or
+                // new parent, never a file truncated during a refresh.
+                let temporary = workspace_dir.join(format!(".AGENTS-{}.tmp", Uuid::new_v4()));
+                let result: std::io::Result<()> = async {
+                    let mut file = tokio::fs::OpenOptions::new()
+                        .write(true)
+                        .create_new(true)
+                        .open(&temporary)
+                        .await?;
+                    tokio::io::AsyncWriteExt::write_all(&mut file, content.as_bytes()).await?;
+                    drop(file);
+                    tokio::fs::rename(&temporary, &agents).await
                 }
+                .await;
+                if result.is_err() {
+                    let _ = tokio::fs::remove_file(&temporary).await;
+                }
+                result?;
             }
-
-            if import_lines.is_empty() {
-                tracing::trace!(
-                    "No repos have {}, skipping workspace config creation",
-                    config_file
+        }
+        // The old generator emitted only one import per selected child. A
+        // child may since have migrated to AGENTS or disappeared; existence is
+        // not provenance. Recognize only whole lines for known saved placements.
+        let claude = workspace_dir.join("CLAUDE.md");
+        if claude
+            .symlink_metadata()
+            .is_ok_and(|m| m.is_file() && !m.file_type().is_symlink())
+            && let Ok(content) = tokio::fs::read_to_string(&claude).await
+        {
+            let known: std::collections::HashSet<_> = repos
+                .iter()
+                .map(|r| format!("@{}/CLAUDE.md", r.worktree_name()))
+                .collect();
+            let lines: Vec<_> = content.lines().collect();
+            let unique: std::collections::HashSet<_> = lines.iter().copied().collect();
+            let legacy = content == lines.join("\n") + "\n"
+                && !lines.is_empty()
+                && unique.len() == lines.len()
+                && lines.iter().all(|line| known.contains(*line));
+            if legacy {
+                let lvk = utils::lvk_directory::LvkDirectory::open(workspace_dir)?;
+                lvk.verify()?;
+                let mut name = "legacy-workspace-CLAUDE.md".to_owned();
+                let backup = loop {
+                    let backup = lvk.anchored_path().join(&name);
+                    // Unlike rename, hard_link never replaces an existing file
+                    // or dangling symlink. Both names stay until backup succeeds.
+                    match tokio::fs::hard_link(&claude, &backup).await {
+                        Ok(()) => break backup,
+                        Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => {
+                            name = format!("legacy-workspace-CLAUDE-{}.md", Uuid::new_v4());
+                        }
+                        Err(error) => return Err(error.into()),
+                    }
+                };
+                if !backup.symlink_metadata()?.is_file()
+                    || backup.symlink_metadata()?.file_type().is_symlink()
+                    || tokio::fs::read_to_string(&backup).await? != content
+                    || claude.symlink_metadata()?.file_type().is_symlink()
+                    || tokio::fs::read_to_string(&claude).await? != content
+                {
+                    return Err(ContainerError::Other(anyhow!(
+                        "Parent CLAUDE.md changed during retirement; files preserved"
+                    )));
+                }
+                tokio::fs::remove_file(&claude).await?;
+            } else {
+                tracing::debug!(
+                    "Preserving unrecognized/custom parent CLAUDE.md; it may suppress native AGENTS loading"
                 );
-                continue;
             }
-
-            let content = import_lines.join("\n") + "\n";
-            if let Err(e) = tokio::fs::write(&workspace_config_path, &content).await {
-                tracing::warn!(
-                    "Failed to create workspace config file {}: {}",
-                    config_file,
-                    e
-                );
-                continue;
-            }
-
-            tracing::info!(
-                "Created workspace {} with {} import(s)",
-                config_file,
-                import_lines.len()
-            );
         }
 
         Ok(())
@@ -1500,6 +1559,9 @@ impl ContainerService for LocalContainerService {
     }
 
     async fn is_container_clean(&self, workspace: &Workspace) -> Result<bool, ContainerError> {
+        if workspace.is_direct_folder() {
+            return Ok(true);
+        }
         let Some(container_ref) = &workspace.container_ref else {
             return Ok(true);
         };
@@ -1513,7 +1575,7 @@ impl ContainerService for LocalContainerService {
             WorkspaceRepo::find_repos_for_workspace(&self.db.pool, workspace.id).await?;
 
         for repo in &repositories {
-            let worktree_path = workspace_dir.join(&repo.name);
+            let worktree_path = repo.worktree_dir(&workspace_dir);
             if worktree_path.exists() {
                 let (uncommitted, untracked) =
                     self.git().get_worktree_change_counts(&worktree_path)?;
@@ -1566,7 +1628,7 @@ impl ContainerService for LocalContainerService {
         );
 
         let repos = WorkspaceRepo::find_repos_for_workspace(&self.db.pool, workspace.id).await?;
-        let repo_names: Vec<String> = repos.iter().map(|r| r.name.clone()).collect();
+        let repo_names: Vec<String> = repos.iter().map(|r| r.worktree_name().to_owned()).collect();
         let repo_context = RepoContext::new(current_dir.clone(), repo_names);
 
         let mut env = ExecutionEnv::new(repo_context);
@@ -1782,6 +1844,9 @@ impl ContainerService for LocalContainerService {
         stats_only: bool,
     ) -> Result<futures::stream::BoxStream<'static, Result<LogMsg, std::io::Error>>, ContainerError>
     {
+        if workspace.is_direct_folder() {
+            return Ok(Box::pin(futures::stream::empty()));
+        }
         let workspace_repos =
             WorkspaceRepo::find_by_workspace_id(&self.db.pool, workspace.id).await?;
         let target_branches: HashMap<_, _> = workspace_repos
@@ -1813,7 +1878,7 @@ impl ContainerService for LocalContainerService {
         drop(lifecycle);
 
         for repo in repositories {
-            let worktree_path = workspace_root.join(&repo.name);
+            let worktree_path = repo.worktree_dir(&workspace_root);
             let branch = &workspace.branch;
 
             let Some(target_branch) = target_branches.get(&repo.id) else {
@@ -1850,7 +1915,7 @@ impl ContainerService for LocalContainerService {
                 target_branch: target_branch.clone(),
                 base_commit: base_commit.clone(),
                 stats_only,
-                path_prefix: Some(repo.name.clone()),
+                path_prefix: Some(repo.worktree_name().to_owned()),
             };
             let stream: futures::stream::BoxStream<'static, Result<LogMsg, std::io::Error>> =
                 if archived && (workspace.worktree_deleted || !args.worktree_path.is_dir()) {
@@ -1875,6 +1940,9 @@ impl ContainerService for LocalContainerService {
     }
 
     async fn try_commit_changes(&self, ctx: &ExecutionContext) -> Result<bool, ContainerError> {
+        if ctx.workspace.is_direct_folder() {
+            return Ok(false);
+        }
         if !matches!(
             ctx.execution_process.run_reason,
             ExecutionProcessRunReason::CleanupScript,
@@ -1978,6 +2046,534 @@ mod tests {
     use sqlx::sqlite::SqlitePoolOptions;
 
     use super::*;
+
+    #[tokio::test]
+    async fn same_named_repositories_use_persisted_paths_for_instructions_ensure_and_cleanup() {
+        use db::models::{
+            workspace::{CreateWorkspace, Workspace},
+            workspace_repo::{CreateWorkspaceRepo, WorkspaceRepo},
+        };
+        let tmp = tempfile::tempdir().unwrap();
+        let pool = SqlitePoolOptions::new()
+            .max_connections(1)
+            .connect("sqlite::memory:")
+            .await
+            .unwrap();
+        db::run_migrations(&pool).await.unwrap();
+        let workspace_id = Uuid::new_v4();
+        Workspace::create(
+            &pool,
+            &CreateWorkspace {
+                branch: "placement-test".into(),
+                name: None,
+            },
+            workspace_id,
+        )
+        .await
+        .unwrap();
+        let mut selections = Vec::new();
+        for parent in ["first", "second"] {
+            let source = tmp.path().join(parent).join("same repo");
+            std::fs::create_dir_all(source.join(".agents/skills/test")).unwrap();
+            std::fs::write(
+                source.join("AGENTS.md"),
+                format!("Only this repository: {parent}\n"),
+            )
+            .unwrap();
+            std::fs::write(
+                source.join(".agents/skills/test/SKILL.md"),
+                "---\nname: test\ndescription: synthetic\n---\nSynthetic only.\n",
+            )
+            .unwrap();
+            for args in [
+                vec!["init", "-b", "main"],
+                vec!["add", "."],
+                vec![
+                    "-c",
+                    "user.name=Fixture",
+                    "-c",
+                    "user.email=fixture@example.invalid",
+                    "commit",
+                    "-m",
+                    "fixture",
+                ],
+            ] {
+                let output = std::process::Command::new("git")
+                    .arg("-C")
+                    .arg(&source)
+                    .args(args)
+                    .output()
+                    .unwrap();
+                assert!(
+                    output.status.success(),
+                    "{}",
+                    String::from_utf8_lossy(&output.stderr)
+                );
+            }
+            let repo = Repo::find_or_create(&pool, &source, parent).await.unwrap();
+            selections.push(CreateWorkspaceRepo {
+                repo_id: repo.id,
+                target_branch: "main".into(),
+            });
+        }
+        WorkspaceRepo::create_many(&pool, workspace_id, &selections)
+            .await
+            .unwrap();
+        let repos = WorkspaceRepo::find_repos_for_workspace(&pool, workspace_id)
+            .await
+            .unwrap();
+        let inputs: Vec<_> = repos
+            .iter()
+            .cloned()
+            .map(|r| RepoWorkspaceInput::new(r, "main".into()))
+            .collect();
+        let root = tmp.path().join("workspace");
+        WorkspaceManager::create_workspace(&root, &inputs, "placement-test")
+            .await
+            .unwrap();
+        LocalContainerService::create_workspace_config_files(&root, &repos)
+            .await
+            .unwrap();
+        let parent = std::fs::read_to_string(root.join("AGENTS.md")).unwrap();
+        assert!(!root.join(".git").exists());
+        assert_ne!(repos[0].worktree_name(), repos[1].worktree_name());
+        for repo in &repos {
+            let checkout = repo.worktree_dir(&root);
+            assert!(checkout.join(".agents/skills/test/SKILL.md").is_file());
+            assert_eq!(
+                std::fs::read_to_string(checkout.join("AGENTS.md")).unwrap(),
+                std::fs::read_to_string(repo.path.join("AGENTS.md")).unwrap()
+            );
+            assert!(parent.contains(&format!(
+                "@{}/AGENTS.md",
+                repo.worktree_name().replace(' ', "\\ ")
+            )));
+            std::fs::write(checkout.join("local.txt"), repo.id.to_string()).unwrap();
+            assert_eq!(
+                GitService::new()
+                    .get_worktree_status(&checkout)
+                    .unwrap()
+                    .untracked,
+                1
+            );
+        }
+        WorkspaceManager::ensure_workspace_exists(&root, &inputs, "placement-test")
+            .await
+            .unwrap();
+        for repo in &repos {
+            assert_eq!(
+                std::fs::read_to_string(repo.worktree_dir(&root).join("local.txt")).unwrap(),
+                repo.id.to_string()
+            );
+            assert!(!repo.path.join("local.txt").exists());
+        }
+        WorkspaceManager::cleanup_workspace_strict(&root, &repos)
+            .await
+            .unwrap();
+        assert!(!root.exists());
+        assert!(repos.iter().all(|r| r.path.join("AGENTS.md").is_file()));
+        pool.close().await;
+    }
+
+    #[tokio::test]
+    async fn common_root_contains_single_and_multiple_real_worktrees() {
+        let tmp = tempfile::tempdir().unwrap();
+        let pool = SqlitePoolOptions::new()
+            .max_connections(1)
+            .connect("sqlite::memory:")
+            .await
+            .unwrap();
+        sqlx::migrate!("../db/migrations").run(&pool).await.unwrap();
+        let mut inputs = Vec::new();
+        for name in ["a", "b"] {
+            let source = tmp.path().join("sources").join(name);
+            std::fs::create_dir_all(&source).unwrap();
+            for args in [
+                vec!["init", "-b", "main"],
+                vec![
+                    "-c",
+                    "user.name=Fixture",
+                    "-c",
+                    "user.email=fixture@example.invalid",
+                    "commit",
+                    "--allow-empty",
+                    "-m",
+                    "synthetic fixture",
+                ],
+            ] {
+                let output = std::process::Command::new("git")
+                    .arg("-C")
+                    .arg(&source)
+                    .args(args)
+                    .output()
+                    .unwrap();
+                assert!(
+                    output.status.success(),
+                    "{}",
+                    String::from_utf8_lossy(&output.stderr)
+                );
+            }
+            let repo = Repo::find_or_create(&pool, &source, name).await.unwrap();
+            inputs.push(RepoWorkspaceInput::new(repo, "main".into()));
+        }
+        for count in [1, 2] {
+            let root = tmp.path().join(format!("work-{count}"));
+            let created = WorkspaceManager::create_workspace(
+                &root,
+                &inputs[..count],
+                &format!("fixture-{count}"),
+            )
+            .await
+            .unwrap();
+            assert_eq!(created.workspace_dir, root);
+            assert!(!root.join(".git").exists());
+            assert_eq!(created.worktrees.len(), count);
+            for worktree in created.worktrees {
+                assert!(worktree.worktree_path.starts_with(&root));
+                assert!(worktree.worktree_path.join(".git").is_file());
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn existing_output_survives_repository_addition_and_resume() {
+        use db::models::{
+            workspace::{CreateWorkspace, Workspace},
+            workspace_repo::{CreateWorkspaceRepo, WorkspaceRepo},
+        };
+        let temp = tempfile::tempdir().unwrap();
+        let pool = SqlitePoolOptions::new()
+            .max_connections(1)
+            .connect("sqlite::memory:")
+            .await
+            .unwrap();
+        db::run_migrations(&pool).await.unwrap();
+        let source = temp.path().join("source/output");
+        std::fs::create_dir_all(&source).unwrap();
+        std::fs::write(
+            source.join("AGENTS.md"),
+            "Only output repository instructions",
+        )
+        .unwrap();
+        for args in [
+            vec!["init", "-b", "main"],
+            vec!["add", "."],
+            vec![
+                "-c",
+                "user.name=Fixture",
+                "-c",
+                "user.email=fixture@example.invalid",
+                "commit",
+                "-m",
+                "fixture",
+            ],
+        ] {
+            let output = std::process::Command::new("git")
+                .arg("-C")
+                .arg(&source)
+                .args(args)
+                .output()
+                .unwrap();
+            assert!(
+                output.status.success(),
+                "{}",
+                String::from_utf8_lossy(&output.stderr)
+            );
+        }
+        let repo = Repo::find_or_create(&pool, &source, "Output")
+            .await
+            .unwrap();
+        let root = temp.path().join("workspace");
+        std::fs::create_dir_all(root.join("output")).unwrap();
+        std::fs::write(root.join("output/user-result.txt"), "user result").unwrap();
+        let id = Uuid::new_v4();
+        Workspace::create(
+            &pool,
+            &CreateWorkspace {
+                branch: "fixture".into(),
+                name: None,
+            },
+            id,
+        )
+        .await
+        .unwrap();
+        Workspace::update_container_ref(&pool, id, root.to_str().unwrap())
+            .await
+            .unwrap();
+        WorkspaceRepo::create_many(
+            &pool,
+            id,
+            &[CreateWorkspaceRepo {
+                repo_id: repo.id,
+                target_branch: "main".into(),
+            }],
+        )
+        .await
+        .unwrap();
+        let placed = WorkspaceRepo::find_repo_for_workspace(&pool, id, repo.id)
+            .await
+            .unwrap()
+            .unwrap();
+        assert_eq!(
+            placed.worktree_name(),
+            format!("output--{}", repo.id.simple())
+        );
+        let inputs = [RepoWorkspaceInput::new(placed.clone(), "main".into())];
+        for _ in 0..2 {
+            WorkspaceManager::ensure_workspace_exists(&root, &inputs, "fixture")
+                .await
+                .unwrap();
+            LocalContainerService::create_workspace_config_files(
+                &root,
+                std::slice::from_ref(&placed),
+            )
+            .await
+            .unwrap();
+            assert_eq!(
+                std::fs::read_to_string(root.join("output/user-result.txt")).unwrap(),
+                "user result"
+            );
+            assert!(placed.worktree_dir(&root).join(".git").is_file());
+        }
+        worktree_manager::WorktreeManager::cleanup_worktree(
+            &worktree_manager::WorktreeCleanup::new(
+                placed.worktree_dir(&root),
+                Some(source.clone()),
+            ),
+        )
+        .await
+        .unwrap();
+        assert_eq!(
+            std::fs::read_to_string(root.join("output/user-result.txt")).unwrap(),
+            "user result"
+        );
+        assert_eq!(
+            std::fs::read_to_string(source.join("AGENTS.md")).unwrap(),
+            "Only output repository instructions"
+        );
+        pool.close().await;
+    }
+
+    #[tokio::test]
+    async fn unknown_repository_path_stops_enclosing_workspace_cleanup() {
+        let temp = tempfile::tempdir().unwrap();
+        let pool = SqlitePoolOptions::new()
+            .max_connections(1)
+            .connect("sqlite::memory:")
+            .await
+            .unwrap();
+        db::run_migrations(&pool).await.unwrap();
+        let source = temp.path().join("source/output");
+        std::fs::create_dir_all(&source).unwrap();
+        let repo = Repo::find_or_create(&pool, &source, "Output")
+            .await
+            .unwrap();
+        let root = temp.path().join("workspace");
+        std::fs::create_dir_all(root.join("output")).unwrap();
+        std::fs::write(root.join("output/user-result.txt"), "preserve").unwrap();
+        std::fs::write(root.join("root-result.txt"), "also preserve").unwrap();
+        assert!(
+            WorkspaceManager::cleanup_workspace(&root, std::slice::from_ref(&repo))
+                .await
+                .is_err()
+        );
+        assert!(
+            WorkspaceManager::cleanup_workspace_strict(&root, &[repo])
+                .await
+                .is_err()
+        );
+        assert_eq!(
+            std::fs::read_to_string(root.join("output/user-result.txt")).unwrap(),
+            "preserve"
+        );
+        assert_eq!(
+            std::fs::read_to_string(root.join("root-result.txt")).unwrap(),
+            "also preserve"
+        );
+        pool.close().await;
+    }
+
+    #[tokio::test]
+    async fn legacy_parent_retirement_ignores_missing_children_and_never_clobbers_backups() {
+        let tmp = tempfile::tempdir().unwrap();
+        let pool = SqlitePoolOptions::new()
+            .max_connections(1)
+            .connect("sqlite::memory:")
+            .await
+            .unwrap();
+        db::run_migrations(&pool).await.unwrap();
+        let child = tmp.path().join("a");
+        std::fs::create_dir(&child).unwrap();
+        std::fs::write(
+            child.join("AGENTS.md"),
+            "User AGENTS; old CLAUDE has migrated",
+        )
+        .unwrap();
+        let repo = Repo::find_or_create(&pool, &child, "a").await.unwrap();
+        let repos = [repo];
+        std::fs::create_dir(tmp.path().join(".lvk")).unwrap();
+        let backup = tmp.path().join(".lvk/legacy-workspace-CLAUDE.md");
+        std::fs::write(&backup, "previous backup").unwrap();
+        for _ in 0..2 {
+            std::fs::write(tmp.path().join("CLAUDE.md"), "@a/CLAUDE.md\n").unwrap();
+            LocalContainerService::create_workspace_config_files(tmp.path(), &repos)
+                .await
+                .unwrap();
+            assert!(!tmp.path().join("CLAUDE.md").exists());
+        }
+        assert_eq!(std::fs::read_to_string(&backup).unwrap(), "previous backup");
+        assert_eq!(
+            std::fs::read_dir(tmp.path().join(".lvk")).unwrap().count(),
+            3
+        );
+        assert_eq!(
+            std::fs::read_to_string(child.join("AGENTS.md")).unwrap(),
+            "User AGENTS; old CLAUDE has migrated"
+        );
+        // Missing child directory, not only a migrated child instruction file.
+        std::fs::remove_file(child.join("AGENTS.md")).unwrap();
+        std::fs::remove_dir(&child).unwrap();
+        std::fs::write(tmp.path().join("CLAUDE.md"), "@a/CLAUDE.md\n").unwrap();
+        LocalContainerService::create_workspace_config_files(tmp.path(), &repos)
+            .await
+            .unwrap();
+        assert!(!tmp.path().join("CLAUDE.md").exists());
+        for custom in [
+            "Custom parent\n@a/CLAUDE.md\n",
+            "@unknown/CLAUDE.md\n",
+            "@a/CLAUDE.md\n@a/CLAUDE.md\n",
+        ] {
+            std::fs::write(tmp.path().join("CLAUDE.md"), custom).unwrap();
+            LocalContainerService::create_workspace_config_files(tmp.path(), &repos)
+                .await
+                .unwrap();
+            assert_eq!(
+                std::fs::read_to_string(tmp.path().join("CLAUDE.md")).unwrap(),
+                custom
+            );
+        }
+        #[cfg(unix)]
+        {
+            std::fs::remove_file(tmp.path().join("CLAUDE.md")).unwrap();
+            let target = tmp.path().join("user-instructions");
+            std::fs::write(&target, "@a/CLAUDE.md\n").unwrap();
+            std::os::unix::fs::symlink(&target, tmp.path().join("CLAUDE.md")).unwrap();
+            LocalContainerService::create_workspace_config_files(tmp.path(), &repos)
+                .await
+                .unwrap();
+            assert!(
+                tmp.path()
+                    .join("CLAUDE.md")
+                    .symlink_metadata()
+                    .unwrap()
+                    .file_type()
+                    .is_symlink()
+            );
+            assert_eq!(std::fs::read_to_string(target).unwrap(), "@a/CLAUDE.md\n");
+        }
+        #[cfg(unix)]
+        {
+            let fresh = tempfile::tempdir().unwrap();
+            std::fs::create_dir(fresh.path().join(".lvk")).unwrap();
+            let backup = fresh.path().join(".lvk/legacy-workspace-CLAUDE.md");
+            let missing = fresh.path().join("missing-backup-target");
+            std::os::unix::fs::symlink(&missing, &backup).unwrap();
+            std::fs::write(fresh.path().join("CLAUDE.md"), "@a/CLAUDE.md\n").unwrap();
+            LocalContainerService::create_workspace_config_files(fresh.path(), &repos)
+                .await
+                .unwrap();
+            assert!(backup.symlink_metadata().unwrap().file_type().is_symlink());
+            assert!(!missing.exists());
+            assert!(!fresh.path().join("CLAUDE.md").exists());
+            assert_eq!(
+                std::fs::read_dir(fresh.path().join(".lvk"))
+                    .unwrap()
+                    .count(),
+                2
+            );
+        }
+        pool.close().await;
+    }
+
+    #[tokio::test]
+    async fn parent_instructions_preserve_children_and_custom_files() {
+        let tmp = tempfile::tempdir().unwrap();
+        let pool = SqlitePoolOptions::new()
+            .max_connections(1)
+            .connect("sqlite::memory:")
+            .await
+            .unwrap();
+        sqlx::migrate!("../db/migrations").run(&pool).await.unwrap();
+        let mut repos = Vec::new();
+        for name in ["a", "b"] {
+            let child = tmp.path().join(name);
+            std::fs::create_dir(&child).unwrap();
+            std::fs::write(child.join("AGENTS.md"), format!("Only {name} marker")).unwrap();
+            std::fs::write(child.join("CLAUDE.md"), "User Claude rules").unwrap();
+            repos.push(Repo::find_or_create(&pool, &child, name).await.unwrap());
+        }
+        // Even legacy direct-Git workspaces never initialize repository memory.
+        let direct = runtime_workspace(WorkspaceKind::DirectFolder);
+        assert!(
+            services::services::repository_memory::begin_coding_run(
+                &pool,
+                &repos[0],
+                &direct,
+                Uuid::new_v4(),
+                tmp.path(),
+                "main",
+                true
+            )
+            .await
+            .unwrap()
+            .is_none()
+        );
+        assert!(
+            services::services::repository_memory::prepare_workspace_source(
+                &pool,
+                &git::GitService::new(),
+                &repos[0],
+                &direct,
+                tmp.path(),
+                "main",
+                false
+            )
+            .await
+            .is_err()
+        );
+        // Exact previous LVK-generated parent is backed up, never child files.
+        std::fs::write(tmp.path().join("CLAUDE.md"), "@a/CLAUDE.md\n@b/CLAUDE.md\n").unwrap();
+        LocalContainerService::create_workspace_config_files(tmp.path(), &repos)
+            .await
+            .unwrap();
+        let generated = std::fs::read_to_string(tmp.path().join("AGENTS.md")).unwrap();
+        assert!(generated.contains("@a/AGENTS.md"));
+        assert!(generated.contains("@b/AGENTS.md"));
+        assert!(generated.contains("ONLY to their own repository"));
+        assert!(!tmp.path().join("CLAUDE.md").exists());
+        assert!(tmp.path().join(".lvk/legacy-workspace-CLAUDE.md").is_file());
+        assert_eq!(
+            std::fs::read_to_string(tmp.path().join("a/CLAUDE.md")).unwrap(),
+            "User Claude rules"
+        );
+        assert_eq!(
+            std::fs::read_to_string(tmp.path().join("a/AGENTS.md")).unwrap(),
+            "Only a marker"
+        );
+        std::fs::write(tmp.path().join("AGENTS.md"), "Custom parent").unwrap();
+        std::fs::write(tmp.path().join("CLAUDE.md"), "Custom Claude parent").unwrap();
+        LocalContainerService::create_workspace_config_files(tmp.path(), &repos[..1])
+            .await
+            .unwrap();
+        assert_eq!(
+            std::fs::read_to_string(tmp.path().join("AGENTS.md")).unwrap(),
+            "Custom parent"
+        );
+        assert_eq!(
+            std::fs::read_to_string(tmp.path().join("CLAUDE.md")).unwrap(),
+            "Custom Claude parent"
+        );
+    }
 
     async fn setup_container_policy_pool() -> SqlitePool {
         let pool = SqlitePoolOptions::new()

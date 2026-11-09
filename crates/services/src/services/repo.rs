@@ -148,7 +148,7 @@ impl RepoService {
         let search_futures: Vec<_> = repositories
             .iter()
             .map(|repo| {
-                let repo_name = repo.name.clone();
+                let repo_name = repo.worktree_name().to_owned();
                 let repo_path = repo.path.clone();
                 let mode = query.mode.clone();
                 let query_str = query_str.to_string();

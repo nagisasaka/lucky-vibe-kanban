@@ -90,7 +90,9 @@ impl Fixture {
         .unwrap();
         sqlx::query("INSERT INTO workspaces (id, branch, container_ref, usage, execution_owner) VALUES (?, 'wiki', ?, 'execution_only', ?)")
             .bind(workspace_id)
-            .bind(maintenance.parent().unwrap().to_str())
+            // This fixture imports an already-owned checkout. Publish its root
+            // only after its membership/placement has been established.
+            .bind(Option::<String>::None)
             .bind(sqlx::types::Json(db::models::workspace_usage::WorkspaceExecutionOwner::new(
                 db::models::workspace_usage::OPENWIKI_BOOTSTRAP, repository_id, None,
             )))
@@ -104,6 +106,13 @@ impl Fixture {
                 repo_id: repository_id,
                 target_branch: "main".into(),
             }],
+        )
+        .await
+        .unwrap();
+        db::models::workspace::Workspace::update_container_ref(
+            &pool,
+            workspace_id,
+            maintenance.parent().unwrap().to_str().unwrap(),
         )
         .await
         .unwrap();
