@@ -56,7 +56,7 @@ def main():
 
     def finish(error=False, text="Fixture completed"):
         send({"type": "result", "subtype": "error_during_execution" if error else "success",
-              "is_error": error, "result": text, "errors": [text] if error else [],
+              "is_error": error, "api_error_status": None, "result": text, "errors": [text] if error else [],
               "session_id": session_id, "duration_ms": 1, "duration_api_ms": 0,
               "num_turns": 1, "total_cost_usd": 0,
               "usage": {"input_tokens": 10, "output_tokens": 5}})
@@ -66,6 +66,16 @@ def main():
         if message.get("type") == "control_request":
             subtype = message["request"]["subtype"]
             trace("control", subtype=subtype)
+            if state.get("control_eof") == subtype:
+                sys.stdout.close()
+                import time
+                time.sleep(120)
+                return 0
+            if state.get("control_hang") == subtype:
+                continue
+            if state.get("control_reject") == subtype:
+                send({"type": "control_response", "response": {"subtype": "error", "request_id": message["request_id"], "error": "fixture rejection"}})
+                continue
             send({"type": "control_response", "response": {
                 "subtype": "success", "request_id": message["request_id"], "response": {}}})
             if subtype == "interrupt":
@@ -84,6 +94,9 @@ def main():
                 continue
             failed = "CLAUDE_FIXTURE_FAIL" in scenario
             finish(failed, "Fixture failure" if failed else "Fixture completed")
+            if "CLAUDE_FIXTURE_RESULT_HOLD" in scenario:
+                import time
+                time.sleep(120)
             return 1 if failed else 0
     return 0
 

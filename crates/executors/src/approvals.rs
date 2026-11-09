@@ -114,7 +114,67 @@ impl ExecutorApprovalService for NoopExecutorApprovalService {
     }
 }
 
+/// Host without an interactive approval bridge. Never auto-approve a request.
+#[derive(Debug, Default)]
+pub struct UnavailableExecutorApprovalService;
+
+#[async_trait]
+impl ExecutorApprovalService for UnavailableExecutorApprovalService {
+    async fn create_tool_approval(&self, _: &str) -> Result<String, ExecutorApprovalError> {
+        Err(ExecutorApprovalError::ServiceUnavailable)
+    }
+    async fn create_question_approval(
+        &self,
+        _: &str,
+        _: usize,
+    ) -> Result<String, ExecutorApprovalError> {
+        Err(ExecutorApprovalError::ServiceUnavailable)
+    }
+    async fn wait_tool_approval(
+        &self,
+        _: &str,
+        _: CancellationToken,
+    ) -> Result<ApprovalStatus, ExecutorApprovalError> {
+        Err(ExecutorApprovalError::ServiceUnavailable)
+    }
+    async fn wait_question_answer(
+        &self,
+        _: &str,
+        _: CancellationToken,
+    ) -> Result<QuestionStatus, ExecutorApprovalError> {
+        Err(ExecutorApprovalError::ServiceUnavailable)
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct ToolCallMetadata {
     pub tool_call_id: String,
+}
+
+#[cfg(test)]
+mod unavailable_tests {
+    use super::*;
+    #[tokio::test]
+    async fn unconnected_host_fails_closed_for_tools_and_questions() {
+        let service = UnavailableExecutorApprovalService;
+        assert!(service.create_tool_approval("tool").await.is_err());
+        assert!(
+            service
+                .create_question_approval("question", 1)
+                .await
+                .is_err()
+        );
+        assert!(
+            service
+                .wait_tool_approval("id", CancellationToken::new())
+                .await
+                .is_err()
+        );
+        assert!(
+            service
+                .wait_question_answer("id", CancellationToken::new())
+                .await
+                .is_err()
+        );
+    }
 }

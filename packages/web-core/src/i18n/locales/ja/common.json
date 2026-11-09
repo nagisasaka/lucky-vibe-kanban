@@ -2283,6 +2283,13 @@
     "mainRepositories_other": "main リポジトリ（{{count}}件）",
     "terminalRepository": "ターミナルのリポジトリ",
     "terminalDirectory": "作業ディレクトリ",
+    "claudeQuotaReason": {
+      "in_progress": "Claude利用枠を別の要求で取得中です。重複プロセスは起動していません。",
+      "cleanup_unconfirmed": "プロセスの回収を確認できないため、Claude利用枠の取得を停止しています。運用担当による復旧が必要です。",
+      "rate_limited": "Claude利用枠の再取得は5秒以上空けてください。",
+      "timeout": "Claude利用枠の取得がタイムアウトしました。取得専用プロセスは回収済みです。",
+      "read_failed": "公式CLIからClaude利用枠を取得できませんでした。CLIと既存の認証状態を確認してください。"
+    },
     "quotaStatus": {
       "fresh": "取得済み",
       "pending": "取得中",

@@ -19,7 +19,7 @@ use std::{
 use chrono::{DateTime, Utc};
 use executors::{
     actions::SelectedSkill,
-    approvals::NoopExecutorApprovalService,
+    approvals::UnavailableExecutorApprovalService,
     env::{ExecutionEnv, RepoContext},
     executors::{
         CancellationToken, ExecutorControl, ExecutorExitResult,
@@ -350,7 +350,7 @@ impl SharedHost {
             approvals: if launch.provider == DirectProvider::Codex {
                 approvals::ProcessHostApprovals::new(launch.run_attempt_id)
             } else {
-                Arc::new(NoopExecutorApprovalService)
+                Arc::new(UnavailableExecutorApprovalService)
             },
             current_dir: &launch.current_dir,
             env: &env,
@@ -1274,10 +1274,12 @@ fn terminal_from_exit(
             code,
         } => (
             AgentRunStatus::Failed,
-            runtime_error(
-                AgentRuntimeErrorKind::ProcessCrashed,
-                "provider process exited unsuccessfully".to_string(),
-            ),
+            provider_error.or_else(|| {
+                runtime_error(
+                    AgentRuntimeErrorKind::ProcessCrashed,
+                    "provider process exited unsuccessfully".to_string(),
+                )
+            }),
             code,
         ),
         ExitCause::Process {
@@ -1910,6 +1912,16 @@ mod tests {
         );
         assert_eq!(status, executors::runtime::AgentRunStatus::Failed);
         assert_eq!(detail.unwrap().message, error.message);
+        let (_, detail, code) = super::terminal_from_exit(
+            super::ExitCause::Process {
+                success: false,
+                code: Some(1),
+            },
+            executors::executors::provider_adapter::DirectProvider::ClaudeCode,
+            Some(error.clone()),
+        );
+        assert_eq!(detail.unwrap().message, error.message);
+        assert_eq!(code, Some(1));
         let (_, detail, _) = super::terminal_from_exit(
             super::ExitCause::Cancelled,
             executors::executors::provider_adapter::DirectProvider::Codex,

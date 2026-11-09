@@ -213,6 +213,16 @@ impl ClaudeCode {
         self.approvals_service = Some(approvals);
     }
 
+    fn validate_permission_support(&self) -> Result<(), ExecutorError> {
+        if self.plan.unwrap_or(false) || self.approvals.unwrap_or(false) {
+            return Err(ExecutorError::Io(std::io::Error::new(
+                std::io::ErrorKind::Unsupported,
+                "Claude Supervised/Plan and profiles requiring interactive approval are unavailable: the approval/question UI is not connected. Select AUTO explicitly to run without interactive approval.",
+            )));
+        }
+        Ok(())
+    }
+
     pub(crate) async fn launch_direct(
         &self,
         intent: super::provider_adapter::DirectIntent,
@@ -222,6 +232,7 @@ impl ClaudeCode {
         reset_to_message_id: Option<&str>,
         env: &ExecutionEnv,
     ) -> Result<SpawnedChild, ExecutorError> {
+        self.validate_permission_support()?;
         let supports_effort = if self.effort.is_some() {
             self.supports_effort_flag_or_false().await
         } else {
@@ -409,11 +420,7 @@ fn default_discovered_options(
             models: claude_model_options(supports_effort),
             default_model: Some("opus".to_string()),
             agents: vec![],
-            permissions: vec![
-                PermissionPolicy::Auto,
-                PermissionPolicy::Supervised,
-                PermissionPolicy::Plan,
-            ],
+            permissions: vec![PermissionPolicy::Auto],
         },
         slash_commands: ClaudeCode::hardcoded_slash_commands(),
         skills: vec![],
@@ -741,6 +748,7 @@ impl ClaudeCode {
         command_parts: CommandParts,
         env: &ExecutionEnv,
     ) -> Result<SpawnedChild, ExecutorError> {
+        self.validate_permission_support()?;
         self.check_subscription_login(current_dir, env).await?;
         let (program_path, args) = command_parts.into_resolved().await?;
         let combined_prompt = self.append_prompt.combine_prompt(prompt);
@@ -804,38 +812,42 @@ impl ClaudeCode {
             self.approvals_service.clone(),
             cancel.clone(),
         );
-        let protocol_peer =
+        let (protocol_peer, exit_signal) =
             ProtocolPeer::spawn(child_stdin, child_stdout, client.clone(), cancel.clone());
         let control = Arc::new(protocol_peer.clone());
 
         // Spawn task to initialize the SDK client and send the first message.
         let prompt_clone = combined_prompt.clone();
+        let cancel_startup = cancel.clone();
         tokio::spawn(async move {
-            // Initialize control protocol
-            if let Err(e) = protocol_peer.initialize(hooks).await {
-                tracing::error!("Failed to initialize control protocol: {e}");
-                let _ = log_writer
-                    .log_raw(&format!("Error: Failed to initialize - {e}"))
-                    .await;
-                return;
-            }
-
-            if let Err(e) = protocol_peer.set_permission_mode(permission_mode).await {
-                tracing::warn!("Failed to set permission mode to {permission_mode}: {e}");
-            }
-
-            // Send user message
-            if let Err(e) = protocol_peer.send_user_message(prompt_clone).await {
-                tracing::error!("Failed to send prompt: {e}");
-                let _ = log_writer
-                    .log_raw(&format!("Error: Failed to send prompt - {e}"))
-                    .await;
+            let startup = async {
+                protocol_peer
+                    .initialize(hooks)
+                    .await
+                    .map_err(|_| "Claude initialization failed or timed out")?;
+                protocol_peer
+                    .set_permission_mode(permission_mode)
+                    .await
+                    .map_err(|_| "Claude permission setup failed or timed out")?;
+                protocol_peer
+                    .send_user_message(prompt_clone)
+                    .await
+                    .map_err(|_| "Claude prompt delivery failed or timed out")
+            };
+            tokio::select! {
+                _ = cancel_startup.cancelled() => {},
+                result = startup => if let Err(message) = result {
+                    let _ = log_writer.log_raw(&serde_json::json!({
+                        "type":"error", "message":message
+                    }).to_string()).await;
+                    protocol_peer.fail_runtime();
+                }
             }
         });
 
         Ok(SpawnedChild {
             child,
-            exit_signal: None,
+            exit_signal: Some(exit_signal),
             cancel: Some(cancel),
             control: Some(control),
         })
@@ -3021,6 +3033,49 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn interactive_profiles_are_rejected_before_cli_resolution_without_fallback() {
+        for (plan, approvals) in [(true, false), (false, true), (true, true)] {
+            let mut agent = test_executor(None);
+            agent.plan = Some(plan);
+            agent.approvals = Some(approvals);
+            agent.cmd.base_command_override = Some("nonexistent-claude-permission-fixture".into());
+            let error = match agent
+                .launch_direct(
+                    super::super::provider_adapter::DirectIntent::Initial,
+                    Path::new("/"),
+                    "must not run",
+                    None,
+                    None,
+                    &ExecutionEnv::new(crate::env::RepoContext::default()),
+                )
+                .await
+            {
+                Err(error) => error,
+                Ok(_) => panic!("interactive launch must fail"),
+            };
+            assert!(
+                error
+                    .to_string()
+                    .contains("approval/question UI is not connected")
+            );
+            assert_eq!(agent.plan, Some(plan));
+            assert_eq!(agent.approvals, Some(approvals));
+        }
+        let mut agent = test_executor(None);
+        agent.approvals = Some(true);
+        let config = serde_json::from_value(serde_json::json!({
+            "executor": "CLAUDE_CODE", "permission_policy": "AUTO"
+        }))
+        .unwrap();
+        agent.apply_direct_overrides(&config);
+        assert!(agent.validate_permission_support().is_ok());
+        assert_eq!(
+            default_discovered_options(false).model_selector.permissions,
+            vec![PermissionPolicy::Auto]
+        );
+    }
+
+    #[tokio::test]
     async fn default_claude_uses_local_claude_command() {
         let executor = test_executor(None);
 
@@ -3044,6 +3099,53 @@ mod tests {
 
         assert_eq!(builder.base, "ccr code");
         assert_eq!(builder.params.as_ref().unwrap()[0], "-p");
+    }
+
+    #[tokio::test]
+    async fn control_startup_failures_notify_owner_and_reap_without_model_turn() {
+        use crate::env::RepoContext;
+        for (mode, subtype) in [
+            ("control_reject", "initialize"),
+            ("control_reject", "set_permission_mode"),
+            ("control_hang", "initialize"),
+            ("control_eof", "initialize"),
+        ] {
+            let root = tempfile::tempdir().unwrap();
+            let state = root.path().join("state.json");
+            std::fs::write(&state, serde_json::json!({mode: subtype}).to_string()).unwrap();
+            let fixture = Path::new(env!("CARGO_MANIFEST_DIR"))
+                .join("../../tests/claude-subscription/cli_fixture.py");
+            let agent: ClaudeCode = serde_json::from_value(serde_json::json!({
+                "base_command_override": format!("python3 {}", shlex::try_quote(fixture.to_str().unwrap()).unwrap()),
+                "env": {"LVK_CLAUDE_FIXTURE_STATE": state}
+            })).unwrap();
+            let env = ExecutionEnv::new(RepoContext::default());
+            let mut spawned = agent
+                .launch_direct(
+                    super::super::provider_adapter::DirectIntent::Initial,
+                    root.path(),
+                    "must not reach a model",
+                    None,
+                    None,
+                    &env,
+                )
+                .await
+                .unwrap();
+            let mut owner = workspace_utils::process::OwnedProcessGroup::capture(
+                &mut spawned.child,
+                "claude-startup-fixture",
+            )
+            .unwrap();
+            let failure =
+                tokio::time::timeout(Duration::from_secs(8), spawned.exit_signal.take().unwrap())
+                    .await;
+            let cleanup = owner.terminate(&mut spawned.child).await;
+            assert!(matches!(
+                failure.unwrap().unwrap(),
+                super::super::ExecutorExitResult::Failure
+            ));
+            cleanup.unwrap();
+        }
     }
 
     #[test]

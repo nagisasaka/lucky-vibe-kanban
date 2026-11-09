@@ -23,8 +23,10 @@ export function EnvironmentQuota({
   refresh,
   fetching,
   canRefresh,
+  reason,
 }: {
   name: string;
+  reason?: string | null;
   status: 'fresh' | 'pending' | 'error' | 'unsupported' | 'stale' | 'unknown';
   observed: number | null;
   rows: EnvironmentQuotaRow[];
@@ -133,6 +135,11 @@ export function EnvironmentQuota({
           </button>
         </div>
       </div>
+      {reason && (
+        <p className="break-words text-xs text-low" data-testid="quota-reason">
+          {reason}
+        </p>
+      )}
       {rows
         .filter((row) => row.windows.length > 0)
         .map((row, index) => (

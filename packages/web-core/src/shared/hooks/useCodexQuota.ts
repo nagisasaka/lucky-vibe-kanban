@@ -17,7 +17,10 @@ export function useCodexQuota(
           account_context: 'server_default',
           include_usage: false,
         }),
-        signal: AbortSignal.timeout(20_000),
+        // Claude retains admission while its bounded process/reader cleanup runs.
+        signal: AbortSignal.timeout(
+          provider === 'claude_code' ? 50_000 : 20_000
+        ),
         cache: 'no-store',
       });
       if (!response.ok) throw new Error('Codex quota unavailable');

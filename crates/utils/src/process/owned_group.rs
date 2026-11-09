@@ -279,24 +279,61 @@ mod linux {
     }
 
     pub(super) fn identity(pid: u32) -> io::Result<Identity> {
-        let stat = std::fs::read_to_string(format!("/proc/{pid}/stat"))?;
+        read_identity(|| std::fs::read_to_string(format!("/proc/{pid}/stat"))).map_err(|error| {
+            io::Error::new(
+                error.kind(),
+                format!("process identity for pid {pid}: {error}"),
+            )
+        })
+    }
+
+    // procfs enumeration races with exit. Retry an incomplete/malformed sample,
+    // never skip a still-unreadable process or relax the anchored pidfd checks.
+    fn read_identity(mut read: impl FnMut() -> io::Result<String>) -> io::Result<Identity> {
+        for attempt in 0..3 {
+            let stat = read()?;
+            match parse_identity(&stat) {
+                Ok(identity) => return Ok(identity),
+                Err(_) if attempt < 2 => std::thread::yield_now(),
+                Err(error) => return Err(error),
+            }
+        }
+        unreachable!()
+    }
+
+    fn parse_identity(stat: &str) -> io::Result<Identity> {
         let fields: Vec<_> = stat
             .rsplit_once(')')
-            .ok_or_else(|| io::Error::other("invalid stat"))?
+            .ok_or_else(|| {
+                io::Error::new(io::ErrorKind::InvalidData, "invalid process stat delimiter")
+            })?
             .1
             .split_whitespace()
             .collect();
-        let number = |index: usize| -> io::Result<u64> {
+        let number = |index: usize, name: &str| -> io::Result<u64> {
             fields
                 .get(index)
                 .and_then(|value| value.parse().ok())
-                .ok_or_else(|| io::Error::other("invalid process identity"))
+                .ok_or_else(|| {
+                    io::Error::new(
+                        io::ErrorKind::InvalidData,
+                        format!("invalid process identity field: {name}"),
+                    )
+                })
+        };
+        let pid_number = |index, name| -> io::Result<u32> {
+            u32::try_from(number(index, name)?).map_err(|_| {
+                io::Error::new(
+                    io::ErrorKind::InvalidData,
+                    format!("invalid process identity field: {name}"),
+                )
+            })
         };
         Ok(Identity {
-            parent: number(1)? as u32,
-            group: number(2)? as u32,
-            session: number(3)? as u32,
-            start: number(19)?,
+            parent: pid_number(1, "ppid")?,
+            group: pid_number(2, "pgrp")?,
+            session: pid_number(3, "session")?,
+            start: number(19, "starttime")?,
         })
     }
 
@@ -440,6 +477,55 @@ mod linux {
                 }
                 tokio::time::sleep(Duration::from_millis(10)).await;
             }
+        }
+    }
+    #[cfg(test)]
+    mod identity_tests {
+        use super::*;
+        fn stat() -> String {
+            let mut fields = ["0"; 20];
+            fields[0] = "Z";
+            fields[1] = "1";
+            fields[2] = "42";
+            fields[3] = "42";
+            fields[19] = "900";
+            format!("42 (name with ) and spaces) {}", fields.join(" "))
+        }
+        #[test]
+        fn transient_stat_recovers_without_skipping_identity() {
+            let mut reads = 0;
+            let value = read_identity(|| {
+                reads += 1;
+                Ok(if reads == 1 {
+                    "42 (exiting) Z 1".into()
+                } else {
+                    stat()
+                })
+            })
+            .unwrap();
+            assert_eq!(reads, 2);
+            assert_eq!(value.group, 42);
+            assert_eq!(value.start, 900);
+        }
+        #[test]
+        fn stable_invalid_identity_fails_closed_and_identifies_field() {
+            let mut reads = 0;
+            let error = read_identity(|| {
+                reads += 1;
+                Ok("42 (fixture) Z 1".into())
+            })
+            .err()
+            .unwrap();
+            assert_eq!(reads, 3);
+            assert_eq!(error.kind(), io::ErrorKind::InvalidData);
+            assert!(error.to_string().contains("pgrp"));
+        }
+        #[test]
+        fn vanished_procfs_entry_remains_not_found() {
+            let error = read_identity(|| Err(io::Error::from(io::ErrorKind::NotFound)))
+                .err()
+                .unwrap();
+            assert_eq!(error.kind(), io::ErrorKind::NotFound);
         }
     }
 }

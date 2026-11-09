@@ -36,6 +36,7 @@ function ClaudeFixture({ now }: { now: number }) {
       name="Claude"
       {...quota}
       {...view}
+      reason={view.reasonCode ? t(`utilityPanel.claudeQuotaReason.${view.reasonCode}`) : view.reason}
       now={now}
       rows={
         view.windows.length

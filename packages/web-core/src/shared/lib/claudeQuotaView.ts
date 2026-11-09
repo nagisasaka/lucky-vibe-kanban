@@ -61,14 +61,35 @@ export function claudeQuotaView(
     ? 'error'
     : !data
       ? 'pending'
-      : result.status === 'unsupported' || quota.status === 'unsupported'
-        ? 'unsupported'
-        : !fresh
-          ? 'stale'
-          : windows.some((window) => window.remaining !== null)
-            ? 'fresh'
-            : 'unknown';
+      : result.status === 'unavailable'
+        ? result.code === 'in_progress'
+          ? 'pending'
+          : 'error'
+        : result.status === 'unsupported' || quota.status === 'unsupported'
+          ? 'unsupported'
+          : quota.status === 'partial'
+            ? 'unknown'
+            : !fresh
+              ? 'stale'
+              : windows.some((window) => window.remaining !== null)
+                ? 'fresh'
+                : 'unknown';
+  const knownCodes = [
+    'in_progress',
+    'cleanup_unconfirmed',
+    'rate_limited',
+    'timeout',
+    'read_failed',
+  ] as const;
+  const reasonCode = knownCodes.find((code) => result.code === code) ?? null;
+  const rawReason = result.reason ?? quota.reason;
+  const reason =
+    typeof rawReason === 'string'
+      ? rawReason.replace(/[\p{Cc}\p{Cf}]/gu, '').slice(0, 500)
+      : null;
   return {
+    reasonCode,
+    reason,
     fresh,
     windows,
     status,

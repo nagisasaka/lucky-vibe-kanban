@@ -17,7 +17,7 @@ use super::types::{CLIMessage, ControlRequestType, ControlResponseMessage, Contr
 use crate::{
     approvals::ExecutorApprovalError,
     executors::{
-        ExecutorError,
+        ExecutorError, ExecutorExitResult, ExecutorExitSignal,
         claude::{
             client::ClaudeAgentClient,
             types::{Message, PermissionMode, SDKControlRequest, SDKControlRequestType},
@@ -28,6 +28,8 @@ use crate::{
 type ControlWaiters =
     Arc<StdMutex<HashMap<String, oneshot::Sender<Result<serde_json::Value, ()>>>>>;
 
+type RuntimeFailure = Arc<StdMutex<Option<oneshot::Sender<ExecutorExitResult>>>>;
+
 /// Handles bidirectional control protocol communication
 #[derive(Clone, Debug)]
 pub struct ProtocolPeer {
@@ -35,6 +37,7 @@ pub struct ProtocolPeer {
     interrupt_sent: Arc<AtomicBool>,
     pending: ControlWaiters,
     closed: Arc<AtomicBool>,
+    failure: Option<RuntimeFailure>,
 }
 
 #[async_trait::async_trait]
@@ -90,24 +93,31 @@ impl ProtocolPeer {
         stdout: ChildStdout,
         client: Arc<ClaudeAgentClient>,
         cancel: CancellationToken,
-    ) -> Self {
+    ) -> (Self, ExecutorExitSignal) {
+        let (failure_tx, failure_rx) = oneshot::channel();
         let peer = Self {
             stdin: Arc::new(Mutex::new(stdin)),
             interrupt_sent: Arc::new(AtomicBool::new(false)),
             pending: Default::default(),
             closed: Arc::new(AtomicBool::new(false)),
+            failure: Some(Arc::new(StdMutex::new(Some(failure_tx)))),
         };
 
         let reader_peer = peer.clone();
         tokio::spawn(async move {
-            if let Err(e) = reader_peer.read_loop(stdout, Some(client), cancel).await {
+            if let Err(e) = reader_peer
+                .read_loop(stdout, Some(client.clone()), cancel)
+                .await
+            {
                 tracing::error!("Protocol reader loop error: {}", e);
+                let _ = client.log_message(&serde_json::json!({"type":"error","message":"Claude control stream closed or failed before a result"}).to_string()).await;
+                reader_peer.fail_runtime();
             }
             reader_peer.closed.store(true, Ordering::Release);
             reader_peer.pending.lock().unwrap().clear();
         });
 
-        peer
+        (peer, failure_rx)
     }
 
     /// Passive transport uses the same correlation/control framing without
@@ -122,6 +132,7 @@ impl ProtocolPeer {
             interrupt_sent: Arc::new(AtomicBool::new(false)),
             pending: Default::default(),
             closed: Arc::new(AtomicBool::new(false)),
+            failure: None,
         };
         let reader = peer.clone();
         let task = tokio::spawn(async move {
@@ -130,6 +141,14 @@ impl ProtocolPeer {
             reader.pending.lock().unwrap().clear();
         });
         (peer, task)
+    }
+
+    pub(super) fn fail_runtime(&self) {
+        if let Some(failure) = &self.failure
+            && let Some(sender) = failure.lock().unwrap().take()
+        {
+            let _ = sender.send(ExecutorExitResult::Failure);
+        }
     }
 
     async fn request_control(
@@ -161,11 +180,17 @@ impl ProtocolPeer {
         let _remove = RemovePending(self, request.request_id.clone());
         tokio::time::timeout(std::time::Duration::from_secs(5), async {
             self.send_json(&request).await?;
-            rx.await.ok().and_then(Result::ok).ok_or_else(|| {
-                ExecutorError::Io(std::io::Error::other(
-                    "Claude control RPC unsupported or unavailable",
-                ))
-            })
+            match rx.await {
+                Ok(Ok(value)) => Ok(value),
+                Ok(Err(())) => Err(ExecutorError::Io(std::io::Error::new(
+                    std::io::ErrorKind::Unsupported,
+                    "Claude control RPC is unsupported or rejected by the current authentication",
+                ))),
+                Err(_) => Err(ExecutorError::Io(std::io::Error::new(
+                    std::io::ErrorKind::UnexpectedEof,
+                    "Claude control connection closed before its response",
+                ))),
+            }
         })
         .await
         .map_err(|_| {
@@ -233,7 +258,12 @@ impl ProtocolPeer {
                 }
                 line_result = reader.read_line(&mut buffer) => {
                     match line_result {
-                        Ok(0) => break, // EOF
+                        Ok(0) => {
+                            if client.is_some() {
+                                return Err(ExecutorError::Io(std::io::Error::new(std::io::ErrorKind::UnexpectedEof, "Claude stream ended before result")));
+                            }
+                            break;
+                        },
                         Ok(_) => {
                             let line = buffer.trim();
                             if line.is_empty() {
@@ -274,12 +304,20 @@ impl ProtocolPeer {
                                 Ok(CLIMessage::Result(_)) => {
                                     break;
                                 }
-                                _ => {}
+                                _ => {
+                                    // Optional notifications may be ignored, but an unknown
+                                    // request needs a rejection so the CLI cannot wait forever.
+                                    if let Ok(value) = serde_json::from_str::<serde_json::Value>(line)
+                                        && value["type"] == "control_request"
+                                        && let Some(id) = value["request_id"].as_str()
+                                    {
+                                        self.send_error(id.to_string(), "Unsupported Claude control request".into()).await?;
+                                    }
+                                }
                             }
                         }
                         Err(e) => {
-                            tracing::error!("Error reading stdout: {}", e);
-                            break;
+                            return Err(ExecutorError::Io(e));
                         }
                     }
                 }
@@ -383,9 +421,24 @@ impl ProtocolPeer {
         let json = serde_json::to_string(message)?;
         let mut bytes = json.into_bytes();
         bytes.push(b'\n');
-        let mut stdin = self.stdin.lock().await;
-        stdin.write_all(&bytes).await?;
-        stdin.flush().await?;
+        if self.closed.load(Ordering::Acquire) {
+            return Err(ExecutorError::Io(std::io::Error::new(
+                std::io::ErrorKind::BrokenPipe,
+                "Claude control connection closed",
+            )));
+        }
+        tokio::time::timeout(std::time::Duration::from_secs(5), async {
+            let mut stdin = self.stdin.lock().await;
+            stdin.write_all(&bytes).await?;
+            stdin.flush().await
+        })
+        .await
+        .map_err(|_| {
+            ExecutorError::Io(std::io::Error::new(
+                std::io::ErrorKind::TimedOut,
+                "Claude control write timed out",
+            ))
+        })??;
         Ok(bytes)
     }
 
@@ -417,19 +470,17 @@ impl ProtocolPeer {
     }
 
     pub async fn initialize(&self, hooks: Option<serde_json::Value>) -> Result<(), ExecutorError> {
-        self.send_json(&SDKControlRequest::new(SDKControlRequestType::Initialize {
-            hooks,
-        }))
-        .await
+        self.request_control(SDKControlRequestType::Initialize { hooks })
+            .await
+            .map(|_| ())
     }
     pub async fn interrupt(&self) -> Result<(), ExecutorError> {
         self.send_interrupt_once().await.map(|_| ())
     }
 
     pub async fn set_permission_mode(&self, mode: PermissionMode) -> Result<(), ExecutorError> {
-        self.send_json(&SDKControlRequest::new(
-            SDKControlRequestType::SetPermissionMode { mode },
-        ))
-        .await
+        self.request_control(SDKControlRequestType::SetPermissionMode { mode })
+            .await
+            .map(|_| ())
     }
 }

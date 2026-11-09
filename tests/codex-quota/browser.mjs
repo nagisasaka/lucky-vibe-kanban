@@ -178,11 +178,34 @@ try {
         seven_day: window(bucket.secondary),
       };
     }
+    if (provider === 'claude_code' && ['in_progress', 'cleanup_unconfirmed', 'timeout'].includes(mode)) {
+      await route.fulfill({ json: { success: true, data: { result: {
+        status: 'unavailable', code: mode, reason: 'Read did not complete', data: null,
+      } } } });
+      return;
+    }
     await route.fulfill({
       status: mode === 'error' ? 503 : 200,
       json: { success: true, data: { result } },
     });
   });
+  // Focused Claude cases use the real hook/component with an isolated HTTP fixture.
+  for (const [code, text] of [
+    ['in_progress', '取得中'],
+    ['cleanup_unconfirmed', '回収を確認できない'],
+    ['timeout', 'タイムアウト'],
+  ]) {
+    mode = code;
+    await page.goto(`${base}/?sidebar&dual&lang=ja&width=300`);
+    const panel = page.getByTestId('environment-quota-claude');
+    await expect(panel.getByTestId('quota-reason')).toContainText(text);
+    await expect(panel.getByRole('status')).toHaveText(code === 'in_progress' ? '取得中' : '取得不可');
+    assert.equal(await panel.locator('dd').count(), 0);
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+    await page.screenshot({ path: path.join(output, `claude-${code}.png`) });
+    results.cases.push(`Claude ${code}: reason visible, no invented quota`);
+  }
+  mode = 'fresh';
   for (const width of [320, 390, 768, 1280]) {
     requests = 0;
     mode = 'fresh';

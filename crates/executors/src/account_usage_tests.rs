@@ -75,7 +75,7 @@ async fn passive_usage_subprocesses_only_read_and_reap_success_failure_cancel_ti
     let root = tempfile::tempdir().unwrap();
     let claude: ClaudeCode = serde_json::from_value(config(root.path(), "unsupported")).unwrap();
     let value = claude.read_account_usage(true, true).await;
-    assert_eq!(value["status"], "unavailable");
+    assert_eq!(value["status"], "unsupported");
     assert!(!value.to_string().contains("secret-provider-error"));
     assert_reaped(root.path());
 
