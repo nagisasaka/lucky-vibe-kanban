@@ -39,12 +39,14 @@ def wait_http(port, path, process):
 
 
 def owned_pids(instance):
-    marker = f'LVK_INSTANCE_DIR={instance}'.encode()
+    # The server/hosts start in our disposable root, and providers use its
+    # workspace children. Do not read unrelated process environments/secrets.
+    root = instance.parent.resolve()
     found = []
     for entry in Path('/proc').iterdir():
         if entry.name.isdigit():
             try:
-                if marker in (entry / 'environ').read_bytes().split(b'\0'):
+                if (entry / 'cwd').resolve().is_relative_to(root):
                     found.append(int(entry.name))
             except (OSError, PermissionError):
                 pass
@@ -72,7 +74,10 @@ with tempfile.TemporaryDirectory(prefix='lvk-claude-subscription-') as temporary
     (temp / 'state.json').write_text('{}')
     env.update({'PATH': str(temp / 'bin') + os.pathsep + env['PATH'],
                 'CLAUDE_CONFIG_DIR': str(temp / 'claude-config'),
-                'LVK_CLAUDE_FIXTURE_STATE': str(temp / 'state.json')})
+                'LVK_CLAUDE_FIXTURE_STATE': str(temp / 'state.json'),
+                'ANTHROPIC_API_KEY': 'offline-inherited-key',
+                'ANTHROPIC_AUTH_TOKEN': 'offline-inherited-token',
+                'ANTHROPIC_CUSTOM_HEADERS': 'Authorization: offline-inherited-header'})
     profile_env = {key: env[key] for key in ('PATH', 'CLAUDE_CONFIG_DIR', 'LVK_CLAUDE_FIXTURE_STATE', 'LVK_CLAUDE_FIXTURE_TRACE')}
     profiles = {'DEFAULT': {'CLAUDE_CODE': {'approvals': True, 'env': profile_env}},
                 'SUBSCRIPTION': {'CLAUDE_CODE': {'approvals': True, 'require_subscription_login': True, 'env': profile_env}},
@@ -86,7 +91,7 @@ with tempfile.TemporaryDirectory(prefix='lvk-claude-subscription-') as temporary
                               ('vite', ['pnpm', '--dir', 'packages/local-web', 'exec', 'vite', '--host', '127.0.0.1', '--port', str(frontend), '--strictPort'])]:
             log = open(EVIDENCE / f'{name}.log', 'w')
             logs.append(log)
-            processes.append(subprocess.Popen(command, cwd=ROOT, env=env, stdout=log, stderr=subprocess.STDOUT, start_new_session=True))
+            processes.append(subprocess.Popen(command, cwd=temp if name == 'server' else ROOT, env=env, stdout=log, stderr=subprocess.STDOUT, start_new_session=True))
             wait_http(backend if name == 'server' else frontend, '/api/health' if name == 'server' else '/', processes[-1])
         with open(EVIDENCE / 'browser.log', 'w') as log:
             code = subprocess.call(['pnpm', 'exec', 'playwright', 'test', '-c', 'tests/claude-subscription/playwright.config.ts'], cwd=ROOT, env=env, stdout=log, stderr=subprocess.STDOUT)
@@ -97,6 +102,8 @@ with tempfile.TemporaryDirectory(prefix='lvk-claude-subscription-') as temporary
             try: os.kill(pid, signal.SIGTERM)
             except ProcessLookupError: pass
         for process in processes:
+            try: os.killpg(process.pid, signal.SIGTERM)
+            except ProcessLookupError: pass
             try: process.wait(timeout=10)
             except subprocess.TimeoutExpired:
                 os.killpg(process.pid, signal.SIGKILL)

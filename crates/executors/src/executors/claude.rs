@@ -267,6 +267,26 @@ impl ClaudeCode {
 
     pub async fn supports_effort_flag(&self) -> Result<bool, ExecutorError> {
         self.validate_subscription_profile()?;
+        use crate::{
+            executor_discovery::ExecutorConfigCacheKey, executors::utils::executor_options_cache,
+        };
+        // Reuse the options cache and its five-minute lifetime, in a separate
+        // key namespace so capability-only entries never replace discovery.
+        // Profile/PATH changes invalidate immediately; replacing the binary at
+        // the same path is observed on expiry, without another --version probe.
+        let cache = executor_options_cache();
+        let cache_key = ExecutorConfigCacheKey::new(
+            None,
+            format!("claude-effort:{}", self.compute_cmd_key()),
+            BaseCodingAgent::ClaudeCode,
+        );
+        if let Some(options) = cache.get(&cache_key) {
+            return Ok(options
+                .model_selector
+                .models
+                .iter()
+                .any(|model| !model.reasoning_options.is_empty()));
+        }
         let builder = command_adapter::ClaudeCodeCommandAdapter::new(self).build_effort_probe()?;
 
         let command_parts = builder.build_initial()?;
@@ -285,7 +305,9 @@ impl ClaudeCode {
             .with_profile(&self.cmd)
             .apply_to_command(&mut command);
 
-        if self.disable_api_key.unwrap_or(false) {
+        if self.disable_api_key.unwrap_or(false)
+            && !self.require_subscription_login.unwrap_or(false)
+        {
             command.env_remove("ANTHROPIC_API_KEY");
         }
 
@@ -301,7 +323,9 @@ impl ClaudeCode {
         let stdout = String::from_utf8_lossy(&output.stdout);
         let stderr = String::from_utf8_lossy(&output.stderr);
 
-        Ok(stdout.contains("--effort") || stderr.contains("--effort"))
+        let supports_effort = stdout.contains("--effort") || stderr.contains("--effort");
+        cache.put(cache_key, default_discovered_options(supports_effort));
+        Ok(supports_effort)
     }
 
     async fn supports_effort_flag_or_false(&self) -> bool {
@@ -368,7 +392,13 @@ impl ClaudeCode {
     }
 
     fn compute_cmd_key(&self) -> String {
-        serde_json::to_string(&(&self.cmd, self.require_subscription_login)).unwrap_or_default()
+        serde_json::to_string(&(
+            &self.cmd,
+            self.require_subscription_login,
+            self.disable_api_key,
+            std::env::var_os("PATH").map(|path| path.to_string_lossy().into_owned()),
+        ))
+        .unwrap_or_default()
     }
 }
 
@@ -785,7 +815,9 @@ impl ClaudeCode {
             .apply_to_command(&mut command);
 
         // Remove ANTHROPIC_API_KEY if disable_api_key is enabled
-        if self.disable_api_key.unwrap_or(false) {
+        if self.disable_api_key.unwrap_or(false)
+            && !self.require_subscription_login.unwrap_or(false)
+        {
             command.env_remove("ANTHROPIC_API_KEY");
             tracing::info!("ANTHROPIC_API_KEY removed from environment");
         }
@@ -3073,6 +3105,43 @@ mod tests {
             default_discovered_options(false).model_selector.permissions,
             vec![PermissionPolicy::Auto]
         );
+    }
+
+    #[cfg(unix)]
+    #[tokio::test]
+    async fn effort_help_reuses_options_cache_and_invalidates_on_profile_changes() {
+        let root = tempfile::tempdir().unwrap();
+        let marker = root.path().join("help-count");
+        let script = root.path().join("help.sh");
+        std::fs::write(
+            &script,
+            format!(
+                "printf x >> {}\nprintf '%s' --effort\n",
+                shlex::try_quote(marker.to_str().unwrap()).unwrap()
+            ),
+        )
+        .unwrap();
+        let mut agent: ClaudeCode = serde_json::from_value(serde_json::json!({
+            "base_command_override": format!("/bin/sh {}", shlex::try_quote(script.to_str().unwrap()).unwrap())
+        })).unwrap();
+        assert!(agent.supports_effort_flag().await.unwrap());
+        assert!(agent.supports_effort_flag().await.unwrap());
+        assert_eq!(std::fs::read_to_string(&marker).unwrap(), "x");
+        agent.disable_api_key = Some(true);
+        assert!(agent.supports_effort_flag().await.unwrap());
+        assert_eq!(std::fs::read_to_string(&marker).unwrap(), "xx");
+        agent.cmd.env = Some(HashMap::from([("PATH".into(), "/usr/bin:/bin".into())]));
+        assert!(agent.supports_effort_flag().await.unwrap());
+        assert_eq!(std::fs::read_to_string(&marker).unwrap(), "xxx");
+        // Same-path executable changes wait for the shared cache TTL; they do
+        // not trigger a new process/version check on every request.
+        std::fs::write(&script, "printf old-cli").unwrap();
+        assert!(agent.supports_effort_flag().await.unwrap());
+        agent.cmd.env = None;
+        agent.disable_api_key = None;
+        agent.cmd.additional_params = Some(vec!["changed-profile".into()]);
+        assert!(!agent.supports_effort_flag().await.unwrap());
+        assert!(!agent.supports_effort_flag().await.unwrap());
     }
 
     #[tokio::test]

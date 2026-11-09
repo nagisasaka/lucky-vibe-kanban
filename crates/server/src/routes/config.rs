@@ -12,8 +12,7 @@ use axum::{
 use deployment::{Deployment, DeploymentError};
 use executors::{
     executors::{
-        AvailabilityInfo, BaseAgentCapability, BaseCodingAgent, CodingAgent,
-        StandardCodingAgentExecutor,
+        AvailabilityInfo, BaseAgentCapability, BaseCodingAgent, StandardCodingAgentExecutor,
     },
     mcp_config::{McpConfig, read_agent_config, write_agent_config},
     profile::{ExecutorConfigs, ExecutorProfileId},
@@ -760,10 +759,9 @@ pub struct AgentPresetOptionsQuery {
     pub variant: Option<String>,
 }
 
-/// Server-environment readiness for the selected profile. Launch always checks
-/// again in the actual Workspace with its full execution environment.
+/// Installation metadata only: displaying a profile must not launch a CLI.
+/// Authentication is checked before discovery and each actual run.
 async fn get_agent_profile_policy(
-    State(deployment): State<DeploymentImpl>,
     Query(query): Query<ExecutorDiscoveredOptionsStreamQuery>,
 ) -> Result<ResponseJson<ApiResponse<AgentProviderPolicy>>, ApiError> {
     let profiles = ExecutorConfigs::get_cached();
@@ -774,22 +772,8 @@ async fn get_agent_profile_policy(
     let agent = profiles
         .get_coding_agent(&profile_id)
         .ok_or_else(|| ApiError::BadRequest("Agent profile not found".to_owned()))?;
-    let mut policy =
+    let policy =
         AgentProviderPolicy::for_agent(query.executor, &agent, agent.get_availability_info());
-    if let CodingAgent::ClaudeCode(claude) = &agent
-        && claude.require_subscription_login.unwrap_or(false)
-    {
-        let (workdir, repo_path) = deployment
-            .container()
-            .executor_discovery_paths(query.session_id, query.workspace_id, query.repo_id)
-            .await?;
-        let current_dir = match workdir.or(repo_path) {
-            Some(path) => path,
-            None => std::env::current_dir()?,
-        };
-        let env = executors::env::ExecutionEnv::new(executors::env::RepoContext::default());
-        policy.require_authentication(claude.check_subscription_login(&current_dir, &env).await);
-    }
     Ok(ResponseJson(ApiResponse::success(policy)))
 }
 

@@ -152,3 +152,22 @@ pub async fn preload_global_executor_options_cache() {
         spawn_global_cache_refresh_for_agent_with_configs(base_agent, configs.clone());
     }
 }
+
+#[cfg(test)]
+mod cache_tests {
+    use super::*;
+
+    #[test]
+    fn options_cache_reads_do_not_extend_expiry_and_false_is_cached() {
+        let cache = TtlCache::new(2, DEFAULT_CACHE_TTL);
+        cache.put("capability", false);
+        assert!(!*cache.get(&"capability").unwrap());
+        let mut entries = cache.cache.lock().unwrap();
+        entries.get_mut(&"capability").unwrap().cached_at =
+            Instant::now() - DEFAULT_CACHE_TTL - Duration::from_secs(1);
+        drop(entries);
+        assert!(cache.get(&"capability").is_none());
+        cache.put("capability", true);
+        assert!(*cache.get(&"capability").unwrap());
+    }
+}
