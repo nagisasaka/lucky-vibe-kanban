@@ -5,7 +5,7 @@ description: AgentRun を独立プロセスで実行し、Native Audit から永
 tags: [agent-runtime, audit, persistence, recovery]
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-09T07:03:14.304Z
+    at: 2026-11-09T08:47:44.052Z
 sources:
   - id: openwiki-source-b85c3dc0eaacdffedf4e68ee
     resource: repo://crates/db/migrations/20261026180000_agent_starting_recovery.sql
@@ -21,6 +21,10 @@ sources:
     resource: repo://crates/db/src/models/agent_runtime_reservation_tests.rs
   - id: openwiki-source-d20a82e2192a07c687b838cb
     resource: repo://crates/db/src/models/agent_runtime.rs
+  - id: openwiki-source-bfcf08b9feacd16360e862a4
+    resource: repo://crates/executors/src/executors/claude.rs
+  - id: openwiki-source-b15b24f9113eb215c902d4b4
+    resource: repo://crates/executors/src/executors/claude/protocol.rs
   - id: openwiki-source-22b82518475034ade38104e6
     resource: repo://crates/executors/src/executors/codex.rs
   - id: openwiki-source-d0244e39b6cb88790907b9b2
@@ -73,7 +77,7 @@ sources:
     resource: repo://crates/workspace-manager/src/workspace_manager.rs
   - id: openwiki-source-141584dac09cf0f93be6bff5
     resource: repo://tests/codex-process-cleanup/README.md
-generated: { by: "codex", at: "2026-11-04T20:55:57.207Z" }
+generated: { by: "codex", at: "2026-11-09T08:47:44.052Z" }
 ---
 
 # Agent Runtime の監査・投影・回復
@@ -264,3 +268,11 @@ host は Linux の自然終了でも group cleanup を省略しない。cleanup 
 UI の PTY は provider host とは別の寿命を持つ。Linux の `OwnedProcessSession` は未回収の shell leader を anchor にして、同じ POSIX session の前景・背景 job を pidfd で捕捉し、終了を確認する。別 session へ移った捕捉可能な子孫も既存の descendant cleanup を使う。cwd 一致や数値 PID だけで他実行を停止しない。[所有 session](../../crates/utils/src/process/owned_group.rs)・[PTY](../../crates/local-deployment/src/pty.rs)
 
 PTY service は所有対象の停止、shell の wait、reader thread の join が成功してから管理 map を解放する。自然 exit 後も背景 job を後片付けし、失敗を map 除去だけで成功にしない。捕捉前に再親化した daemon、停止不能 kernel 状態、server 強制終了を越える完全回収や非 Linux の同等保証はない。表示の折畳み・通信断と起動抑止は [端末の操作契約](../operations/workspace-inspection.md)を参照する。[実プロセス回帰](../../crates/local-deployment/src/pty.rs#L362-L490)
+
+## Claude の result と起動失敗の終端
+
+新規Claude監査はmapper v6を使う。v5で成功resultの`api_error_status: null`をエラー扱いしない判定と、成功・失敗resultの終端投影を導入し、v6では成功本文の型を検証する。本文は文字列（空文字を含む）または欠落/nullを許し、それ以外は`ProtocolFailed`とFailed終端にする。`structured_output`を独自に本文へ変換しない。旧v5以前の監査は当時のmapperで再生する。[分類と投影](../../crates/executors/src/executors/provider_adapter.rs)
+
+Claude protocolはinitialize、permission設定の応答をrequest IDで待ち、失敗・期限切れ・prompt送信失敗を所有側のexit signalへ通知する。result前のEOFやreader失敗も待ち続けない。Hostは非ゼロOS終了が先着してもproviderの失敗理由を保持し、既存の所有process回収・drain・監査closeを経て最終化する。[protocol](../../crates/executors/src/executors/claude/protocol.rs)・[起動](../../crates/executors/src/executors/claude.rs#L812-L852)・[終端理由](../../crates/local-deployment/src/process_host.rs#L1220-L1295)
+
+Linuxのprocfs identity解析は不完全・不正なsampleを最大3回読む。継続的不正はPIDと失敗fieldを付けて失敗し、未知のprocessを無視して回収成功にはしない。pidfd・leader開始identity・group/session照合は維持する。[有限再読と解析](../../crates/utils/src/process/owned_group.rs#L280-L335)。利用枠の回収未確認による閉鎖は[providerの利用枠契約](../integrations/agent-providers.md)を参照する。

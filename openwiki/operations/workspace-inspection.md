@@ -4,6 +4,8 @@ title: ファイル・差分・プレビュー・端末の境界
 description: Workspace 内のファイル・Wiki 閲覧、添付、差分配信、dev server preview、PTY、editor 操作で異なるパス・ホスト・寿命の契約を説明する。
 tags: [workspace, files, wiki, diff, preview, terminal]
 sources:
+  - id: openwiki-source-f615018b2948c78d0299828c
+    resource: repo://crates/executors/src/executors/claude/usage.rs
   - id: openwiki-source-bd15422ef1716eca23408f1f
     resource: repo://crates/git/src/lib.rs
   - id: openwiki-source-40ec9fc6ff784c4bb2d0c6e3
@@ -150,6 +152,8 @@ sources:
     resource: repo://packages/web-core/src/shared/hooks/useUserSystemController.ts
   - id: openwiki-source-97cd8794805cef30e1c2f047
     resource: repo://packages/web-core/src/shared/hooks/useWorkspaces.ts
+  - id: openwiki-source-2b7aa45c584402b062848c47
+    resource: repo://packages/web-core/src/shared/lib/claudeQuotaView.ts
   - id: openwiki-source-ea8e692dfd4142379f167b66
     resource: repo://packages/web-core/src/shared/lib/externalEditors.ts
   - id: openwiki-source-4fb8a1b1995ea82c4cf31ea2
@@ -176,10 +180,10 @@ sources:
     resource: repo://tests/server/specs/workspace-search.spec.ts
   - id: openwiki-source-dcac74ef871fd02e6315fa93
     resource: repo://tests/workflow/specs/diff-tree.spec.ts
-generated: { by: "codex", at: "2026-11-09T07:12:52.696Z" }
+generated: { by: "codex", at: "2026-11-09T08:47:44.052Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-09T07:12:52.696Z
+    at: 2026-11-09T08:47:44.052Z
 ---
 
 # ファイル・差分・プレビュー・端末の境界
@@ -460,3 +464,7 @@ Kanbanのmain Wiki APIはcanonical生成状態を使い、生成Wiki削除後に
 files/editor/diff/Wiki/terminal/dev scriptはWorkspaceRepoの保存配置名で子Repoを解決する。チャットの相対/絶対参照もこの物理名を優先し、同じ表示名の複数Repoを先頭一致で選ばない。登録元Repo.pathへのfallbackで別checkoutを開かない。添付の新規コピー基準は単一Repo・旧Sessionでも共通rootで、Repo file viewerのrootとは異なる。
 
 Project utilitiesの関連Repo読取は現在のプリセットだけでなく既存リンク済みGit Workspaceの実Repoも含む。DirectFolderではGit panelとWorkspace Repo Wiki候補を除外する。これは任意folderのOS書込権限を制限・拡張する境界ではない。
+
+### Claude 利用枠を取得できないとき
+
+右sidebarの理由を確認する。取得中は重複processを起動せず待ち、開始間隔制限なら時間を空ける。`cleanup_unconfirmed`は回収未確認による閉鎖で、画面の再取得やSLOTの無条件開放で復旧しない。運用担当が所有processと正式診断を確認する必要がある。timeout表示は専用process回収完了後の結果であり、認証変更や新loginを自動実行しない。partial/未知値を0や無制限と扱わず、実際のaccount scope・既存公式認証とCLI互換性を[provider契約](../integrations/agent-providers.md#短命接続の所有と失敗)で確認する。[理由表示](../../packages/web-core/src/shared/components/EnvironmentPanel.tsx)・[理由とstatus](../../packages/web-core/src/shared/lib/claudeQuotaView.ts)・[回収](../../crates/executors/src/executors/claude/usage.rs)

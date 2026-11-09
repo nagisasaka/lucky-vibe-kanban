@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:2754148dbf9e9143f96ddc3d5c1490c05602388a7f9159662a5182c3d429435c",
+  "pageVersion": "sha256:a36f72d1ac957610ced6850595632b5792d2d03b1a7c887922bd1fa39b010c8d",
   "claims": [
     {
       "id": "claim_cd547b65737e432fb2cf718c4992aa97",
@@ -415,7 +415,7 @@
       "statement": "layout試験はprepend後の遅延DOM resizeと遅いinitialで同一行座標を検査し、projection試験はuser/assistantだけのsteering順序とreplay重複・Run identityを検査する。built-app試験は合成履歴、mock follow-upと実Scratch、実Codex steeringの経路を分ける。",
       "evidence": [
         {
-          "resource": "repo://packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.test.ts#L100-L166",
+          "resource": "repo://packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.test.ts#L275-L341",
           "version": "repo-lines-v1:sha256:627d04f3ab8c64d7676b9a926e135c1c37b5792ec49c553ca390c386e9e5619f:eyJzZWxlY3RlZExpbmVDb3VudCI6NjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRiNmZlYThmNGMzYWNmMWM3MDlmNDVkNTBhY2Y5YjhkYWI1MmY2OTBlNGVkMTNkNDk0Y2I3NTVhZjNiYmFmMDUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI2OTU3ZTU3ZWNhOTg0Y2FmYTVkZTIzYWQzYWRlYjc5MTFkODYzOTMxM2E1NWQ4OTIyNWQ4ZjM3MGQyZmU0MzMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijc5N2IyZWMyZmViMDhjYTkxMDFiZTQ2MmQwM2QzMzIyZWE2Y2U4NDRhMmVjY2M0YTM5MTM5NzAyNmQxYjcyYzgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjA1YjgwNTJiMjEzZDM3MTQyMjY3NDdkMDMwYTUxM2FkOTcxZTdhMDU0ZWFiMTM5Yzk0ODI2Yjc5YjZlZWVjNWYifQ"
         },
         {
@@ -857,7 +857,7 @@
       "statement": "既存 tool_call_id に対応する承認要求は元の tool 名・action・identity と command/tool 引数を保持して pending approval に更新し、pending_approval entry は集約せず単独表示する。",
       "evidence": [
         {
-          "resource": "repo://packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts#L543-L648",
+          "resource": "repo://packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts#L575-L680",
           "version": "repo-lines-v1:sha256:d37a5ba9fa1b73151ee00ec9c0b830caf4c3709b969964b3fd3ee03e65d51ec8:eyJzZWxlY3RlZExpbmVDb3VudCI6MTA2LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI4N2IwYmVjZGVhNGZkZWNjYzk1Mjc1NWIwN2JhNTExY2Y0NjYyNTk0YTg5ZDRkZTg3Y2JmNjk2Y2I1MjFmYmYwIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIxMDY5YWJjMzRjMjIzMDVhZjEzMjk3MjdiYTIwODkxZDgzMzBkMzk1NDFkZmFiNDgzZjcyNWZkZDNlNjJhYmE5IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI1OTlhNzJkOWU4MWJlNmYxOGUwNjZiYjgzYTExOWVmNTQ1OGI1YTI2ZmU3MGIyZTE4NmE3ZGFkYzc5YTVjMmRjIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJjZmNkNDdhOTM1MGQzY2ZjMTU3YzQzNDNiOWYyYzhjMjY0MTkyNGRiYmYzMzFiMWQxYTc3OTQ0Yjc0MWU2NTZkIn0"
         },
         {
@@ -889,11 +889,11 @@
       "statement": "steeringのprojection回帰試験は3件のmessage順序・identityを維持し、4件目のsummary由来elapsed footerのkeyとtimingを別に検査する。",
       "evidence": [
         {
-          "resource": "repo://packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.test.ts#L350-L428",
+          "resource": "repo://packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.test.ts#L525-L603",
           "version": "repo-lines-v1:sha256:372d7f8de1697d8e091e8759a88fa72a4836e05f346039e22d84abd3ad16b866:eyJzZWxlY3RlZExpbmVDb3VudCI6NzksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJlZjQ1NGU4NzNmOTEzNzIyNmZhY2QyN2I0Y2JlNTdjNjk3YTY0ZTMyM2I3OTlmNWZkNTBiYmM5YmE3MDM3NDYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNhM2U0NmY5NDI3NmI2ZjZmNGVkMWYwMmFmNzhiZWY2YTJlZTFjNDM5ZGQ1NTg0Yjk3Mzk0ODMxMzIxNGQyYjciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjcyMGZjOWU2N2RiMDdlZDIzOWJiM2FkMjMxMmVhYWI5YTcwZTFmNmZiYTAxMjg4YjBiYTZlNjFkN2Y4ZWU3ODgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImI5NDVmOWMxNGU2NzliZjAwNzYxOGJlNGIzNjk1YTJmYTAzZDdiNzVkMTExYzUyNTZkNGFiMGI3NGY3ZTI0YmIifQ"
         },
         {
-          "resource": "repo://packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts#L920-L973",
+          "resource": "repo://packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts#L952-L1005",
           "version": "repo-lines-v1:sha256:4d11fc7db0af8bbe73e638dc84c6cedceb8c053cefb95cc82b2cbe0fc1bd98e5:eyJzZWxlY3RlZExpbmVDb3VudCI6NTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVkODQ5ZjVhMGRjMGFkODFiMzIwZDY2OGMyZGU3Y2JkZDFkODEwNTY3MDkxNzNkNTBiMmNiNmZjZDY3YjIxMGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZiNGY0ZjU4ZWQ4NjY5ZGI3NzM0MjRlOWQ5Y2ZjNGY5ZjlhNDFkY2U1MjA5ZTVmN2E4ZTRiM2FhZjFlNGExNTAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRlOGM3NWU5MGNjYzdjZjI4NzhlMzdmN2MyM2QwNDExNjI2MTJlNmE5OTMzYTI3MDYyNzBjOGE5M2ViZWNhMTIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImYwMTZhY2QzMzA5MGVhNGQ3N2VhZjFjOWFlNTQyMjliM2MzY2M1MjBmYzU3MzViZWFmNjQyZjcxMGE1NzU1NDEifQ"
         }
       ]
@@ -984,7 +984,7 @@
         },
         {
           "resource": "repo://packages/web-core/src/shared/components/EnvironmentPanel.tsx",
-          "version": "repo-file-v1:sha256:c273248db87471861462aa1ae43a54685f6fc721093ea264df783a172e5be7d5"
+          "version": "repo-file-v1:sha256:3520161b9d37f7b251aace792f3e9acb14134279db1c19c57bc97228aebb16a1"
         },
         {
           "resource": "repo://packages/web-core/src/shared/hooks/useResourceObservation.ts",
@@ -1256,11 +1256,11 @@
       "evidence": [
         {
           "resource": "repo://packages/web-core/src/shared/components/EnvironmentPanel.tsx",
-          "version": "repo-file-v1:sha256:c273248db87471861462aa1ae43a54685f6fc721093ea264df783a172e5be7d5"
+          "version": "repo-file-v1:sha256:3520161b9d37f7b251aace792f3e9acb14134279db1c19c57bc97228aebb16a1"
         },
         {
           "resource": "repo://packages/web-core/src/shared/lib/claudeQuotaView.ts",
-          "version": "repo-file-v1:sha256:12dea855df98548472d1c0bacea47506ab38bed7879744f10dae7e68c8ac04cf"
+          "version": "repo-file-v1:sha256:794ba0680cfeaa59e01aa088babd6f34195a865be2e8ab1c18d566d6d2d6da0a"
         }
       ]
     },
@@ -1269,8 +1269,8 @@
       "statement": "Codex quotaは既存provider-usage受動APIを共通query keyでvisible時5分周期・20秒timeout・retryなしで参照し、手動更新を取得中と最終成功/失敗から30秒以内に抑制する。",
       "evidence": [
         {
-          "resource": "repo://packages/web-core/src/shared/hooks/useCodexQuota.ts#L5-L47",
-          "version": "repo-lines-v1:sha256:50b0a45e7c823f21aa67233355f8ac1dc0d46073a1be933ad34e5974a37ae631:eyJzZWxlY3RlZExpbmVDb3VudCI6NDMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA1YWViZmYzMWI2NjhkMTM4MmFiMmFjNjA2YmJmMzdjMDA4ZjMwM2YwNzIyMmJjYjY5NGVhM2FiMDgyMGY3MjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQyYTJjYjI1YTEyMmI0NDIyMWE2MjM0ZWM2NjBhN2I1ZmI3ZjliZGU3YjNiOWUyYjNjNTU5YTBkOTZmYWM3MzkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjY3ZDNjMDczZGMwODY1NTg5MzE1YTM3MTJhYjMzYzIwMTcyY2NlNTBiNzBiMjQ4MzVhYjNhNDk3NjQ5ZDVjNzMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEifQ"
+          "resource": "repo://packages/web-core/src/shared/hooks/useCodexQuota.ts#L5-L50",
+          "version": "repo-lines-v1:sha256:a7d434062583aada724f7939b8cc37b044f4b72b7c6308e737f7372c2cd3259d:eyJzZWxlY3RlZExpbmVDb3VudCI6NDYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA1YWViZmYzMWI2NjhkMTM4MmFiMmFjNjA2YmJmMzdjMDA4ZjMwM2YwNzIyMmJjYjY5NGVhM2FiMDgyMGY3MjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQyYTJjYjI1YTEyMmI0NDIyMWE2MjM0ZWM2NjBhN2I1ZmI3ZjliZGU3YjNiOWUyYjNjNTU5YTBkOTZmYWM3MzkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjY3ZDNjMDczZGMwODY1NTg5MzE1YTM3MTJhYjMzYzIwMTcyY2NlNTBiNzBiMjQ4MzVhYjNhNDk3NjQ5ZDVjNzMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEifQ"
         }
       ]
     },
@@ -1290,7 +1290,7 @@
       "evidence": [
         {
           "resource": "repo://tests/codex-quota/browser.mjs",
-          "version": "repo-file-v1:sha256:9433af1567e7e21e77363fe13c8a569103bc2fb6ca225d32afbdb90f1e4b7276"
+          "version": "repo-file-v1:sha256:16e5a4dc3d9bdba6565205ae4a580c96ed94aabc2519de298c3438fb9fa9d383"
         },
         {
           "resource": "repo://tests/workspace-navigation/mobile-list.mjs",
@@ -1406,7 +1406,7 @@
       "evidence": [
         {
           "resource": "repo://packages/web-core/src/shared/components/EnvironmentQuota.tsx",
-          "version": "repo-file-v1:sha256:53c5d4920b884546c0647b6a2c216b2d2d09987888b7d8e4d90331c386787886"
+          "version": "repo-file-v1:sha256:e586efd734faa7febb3e7490cad1309054fbbda3001e84c0f5ab0820f64cab00"
         }
       ]
     },
@@ -1663,10 +1663,42 @@
           "version": "repo-lines-v1:sha256:fdc9312b924e7db1940de63d2aac8f12745fb28182a6534b59fe469e1d1ff1e0:eyJzZWxlY3RlZExpbmVDb3VudCI6NDksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYyYTNiYjAxZjFhNmJkMDQxYWM4NTkwNWQ0ODM4ZTE2M2I0OWJhMzJlOWYxYjUwNTdmMGEzMzlhZmQ5YjIxYjUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI0Mjc5MjA5MTE5ZjUwMjc4NzA3YTRiN2EwOTIxYzU1NjQ0MDU0MTk1YzBhOTg4YWQzMTEwNzBjZTA4MjU3NzIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhiZjQzYjI2ZmI4NGZkODU5ZmYyN2QzMjg4NThmMzY1YmQxNDBjNDI1YTY5YmViODBlMjU5YjBjNGRlNWYyYWIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBhY2FjOTY2Mzc1MTBkN2ZhZDI2NzE3YmU5MzkzZjQ5ZmZhZThmMDI0ZDM0MGVlOGY2MzA1NGUwNjQ0ODU2ZGYifQ"
         }
       ]
+    },
+    {
+      "id": "claim_c56f9e2700764cd9999d42d3b784cbd3",
+      "statement": "会話投影は同じturn/attempt内の連続assistant suffixとfinal本文の完全一致で再掲を防ぎ、tool/user/final境界を越えて過去本文を消さない。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.test.ts",
+          "version": "repo-file-v1:sha256:29d8cfe47c7382cd9e5b5797887bd1f6abda67ed7e86fd5d763529ac326e98ad"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts#L420-L491",
+          "version": "repo-lines-v1:sha256:83388f845216b5af192f11956975d70b1577e89c29c0f2fb85160d259933d9ce:eyJzZWxlY3RlZExpbmVDb3VudCI6NzIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjlmNWU1OTQzMTEyM2Q1ZmVhMWY1NTZjMGU5ZTdhMTEyN2E0M2MyNzA3Y2JlNmY3OWZmZDVkNDM2MWEyNjk1ODciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE1ZWRjYmNlOTk5MzBkYTFiNjllZGQ1YjBmZTY2YWUzNmQwOTczYjNjOTAzOWQwMTE1M2FkMWMzMTBhNWNhODkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhhZmYwMTM1NDI0ZTY4YzBkNzFlNzg4ODM2MDM1N2M5NjUwZTgwMWQ4NDk2NmJkOTVmNjMxNzVhM2U4ZjU3YTYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNiMjg4ODhjMGMyMWFjMzFmNTAyMGM4ZjI5M2M4ZTFhM2RjZWUzMTAzMTk2NmJhZGExNzJjZWNlMDMyMDIxYTYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_e1b431d85f474e9e95b8b6079a3c8430",
+      "statement": "Claude quota要求は50秒で回収を待ち、in_progressをpending、取得不能をerror、partialをunknownとして理由codeを表示する。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/shared/components/EnvironmentPanel.tsx",
+          "version": "repo-file-v1:sha256:3520161b9d37f7b251aace792f3e9acb14134279db1c19c57bc97228aebb16a1"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/hooks/useCodexQuota.ts",
+          "version": "repo-file-v1:sha256:41841bb708651198979c55ff8d047c14ab821714754288453546db74274ac129"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/lib/claudeQuotaView.ts",
+          "version": "repo-file-v1:sha256:794ba0680cfeaa59e01aa088babd6f34195a865be2e8ab1c18d566d6d2d6da0a"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-09T07:03:14.304Z"
+    "at": "2026-11-09T08:47:44.052Z"
   }
 }

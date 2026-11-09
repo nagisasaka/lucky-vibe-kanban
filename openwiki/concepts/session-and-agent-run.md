@@ -16,6 +16,8 @@ sources:
     resource: repo://crates/db/src/models/workspace_tokens.rs
   - id: openwiki-source-4f59e07f8850eb04105d5cb8
     resource: repo://crates/db/tests/generated_issue_status.rs
+  - id: openwiki-source-bfcf08b9feacd16360e862a4
+    resource: repo://crates/executors/src/executors/claude.rs
   - id: openwiki-source-22b82518475034ade38104e6
     resource: repo://crates/executors/src/executors/codex.rs
   - id: openwiki-source-d0244e39b6cb88790907b9b2
@@ -186,10 +188,10 @@ sources:
     resource: repo://tests/supervised/README.md
   - id: openwiki-source-5184ef612e83b7ab35d62e7b
     resource: repo://tests/supervised/run_isolated.py
-generated: { by: "codex", at: "2026-11-09T07:03:14.304Z" }
+generated: { by: "codex", at: "2026-11-09T08:47:44.052Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-09T07:03:14.304Z
+    at: 2026-11-09T08:47:44.052Z
 ---
 
 # Session・AgentRun・RunAttempt
@@ -523,3 +525,7 @@ Worktree Workspaceの通常成功coding Runのsource自動commitとファイルM
 新しいSessionのagent_working_dirはRepo数にかかわらず未指定とし、Gitは共通Workspace root、DirectFolderは指定フォルダから開始する。旧Sessionの保存値は変更せず、Runの実cwdは共通rootへ揃える。新しい添付コピーもrootへ置き、旧添付・成果物を移動削除しない。native会話の継続と履歴は同一Sessionの既存bindingを使い、cwd変更を新会話作成として扱わない。
 
 LOCAL-349の供給検証記録ではCodex同一Sessionの実2turn継続と再起動後の前後履歴を確認している。旧cwdはsynthetic metadataで表した代表例で、旧binaryでの実DB upgrade全般や全provider移行を保証しない。今回のWiki保守はこれらを再実行していない。
+
+### Claude の未接続承認モード
+
+Claudeは実効設定がSupervised/Planまたは対話承認必須なら、CLI解決・起動前に理由付きで拒否する。保存profileを変更したりAUTOへ黙って切り替えたりせず、利用者が明示したAUTOだけを適用する。discoveryのpermission候補はAUTOのみ、Approval capabilityはUnsupportedである。host側もClaudeへUnavailable承認serviceを渡し、予期しない承認要求を自動承認しない。正規の承認・質問UIの接続は残課題である。[起動guardと明示override](../../crates/executors/src/executors/claude.rs#L184-L244)・[host接続](../../crates/local-deployment/src/process_host.rs#L340-L358)・[capability](../../crates/executors/src/executors/provider_adapter.rs#L350-L400)

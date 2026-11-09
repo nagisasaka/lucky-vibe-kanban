@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:d8f8b0337f0b0a672e2e312c861fcee06b120a2abd09fcb782a93dcf6c65d12e",
+  "pageVersion": "sha256:c7b1a64a365a597660ee86b11b5f84ddc31e4113012621cbf3ecb97550582609",
   "claims": [
     {
       "id": "claim_ef965d37641846bda42842bf4788c8cc",
@@ -854,7 +854,7 @@
       "evidence": [
         {
           "resource": "repo://packages/web-core/src/shared/components/EnvironmentPanel.tsx",
-          "version": "repo-file-v1:sha256:c273248db87471861462aa1ae43a54685f6fc721093ea264df783a172e5be7d5"
+          "version": "repo-file-v1:sha256:3520161b9d37f7b251aace792f3e9acb14134279db1c19c57bc97228aebb16a1"
         },
         {
           "resource": "repo://packages/web-core/src/shared/components/SharedStorageBreakdown.tsx",
@@ -868,7 +868,7 @@
       "evidence": [
         {
           "resource": "repo://packages/web-core/src/i18n/locales/ja/common.json",
-          "version": "repo-file-v1:sha256:07d40792f301eed18c7f541f555c36989f2be1ba971f7114fc5f4a118650ebb0"
+          "version": "repo-file-v1:sha256:b7c37768053138f62a9b4b889df762f7e0aec8bd7b2964ad1d38800ab8674b88"
         },
         {
           "resource": "repo://packages/web-core/src/shared/dialogs/settings/settings/SharedStorageSettings.tsx",
@@ -927,10 +927,28 @@
           "version": "repo-lines-v1:sha256:675917207d62308bf6af0e56050499d14344c62315e292e617b40f657db1c3d3:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY1YjA4NjA0ZTA5NTNhZDE1YjdkZDBkNjczMTZjNGM0ODljYWM3NzVlYmVjNGY4N2I5NWZmNTJlNWM5NTcwNjUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM0MWMwNTZmOWY1MTE3MThjMmYzOTJiZjcxNWQ4OTMxMjBjN2YwMmJlMTE4NjBkNmZmZmJlOGY0MWU5MzE0OGYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjMxMzY5NzYxNWM4MWE4NTAxNDlkM2NhMTQ2YmFkZmNkYzM5MzkzYjA4Y2VmN2M0NDM3OWU2OTFjNWZkMTU4Y2IiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjMwMzk5OThkOTg4YmE0OTkyYTk1MTc0MzYxYmE5MTA3ODlkOGIzMTU1MTMyYjVkYTQ2YTBmOTY4ZThjNDA4ODcifQ"
         }
       ]
+    },
+    {
+      "id": "claim_90330cccd51a4f2d819421e12c97209b",
+      "statement": "Claude quotaのcleanup_unconfirmedは回収未確認による閉鎖を示し、UIの再取得でSLOTを無条件開放せず運用担当の復旧を必要とする。timeout理由は専用process回収完了後だけ返す。",
+      "evidence": [
+        {
+          "resource": "repo://crates/executors/src/executors/claude/usage.rs",
+          "version": "repo-file-v1:sha256:2ef4746be0974cbc5889b5a835f2da392417635b6a0cbbc6ad1ced7e7eca1b56"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/components/EnvironmentPanel.tsx",
+          "version": "repo-file-v1:sha256:3520161b9d37f7b251aace792f3e9acb14134279db1c19c57bc97228aebb16a1"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/lib/claudeQuotaView.ts",
+          "version": "repo-file-v1:sha256:794ba0680cfeaa59e01aa088babd6f34195a865be2e8ab1c18d566d6d2d6da0a"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-09T07:12:52.696Z"
+    "at": "2026-11-09T08:47:44.052Z"
   }
 }

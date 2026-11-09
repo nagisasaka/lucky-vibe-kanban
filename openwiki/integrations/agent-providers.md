@@ -16,6 +16,8 @@ sources:
     resource: repo://crates/executors/src/agent_tools.rs
   - id: openwiki-source-9ad3b97da67cba82e9d5ffc0
     resource: repo://crates/executors/src/agent_tools/public_api.rs
+  - id: openwiki-source-13210275fc6cb3d346bc25ae
+    resource: repo://crates/executors/src/approvals.rs
   - id: openwiki-source-43a564588ddd816c6fc257af
     resource: repo://crates/executors/src/command.rs
   - id: openwiki-source-7fd554effd70be44f98fe686
@@ -60,8 +62,6 @@ sources:
     resource: repo://crates/executors/src/repo_skills.rs
   - id: openwiki-source-8fd7f4fe2d73e778cc63c256
     resource: repo://crates/local-deployment/src/process_host.rs
-  - id: openwiki-source-5a8e26da42457b4b47bca3ee
-    resource: repo://crates/local-deployment/src/process_host/approvals.rs
   - id: openwiki-source-0a300791bc056c6eee6a577a
     resource: repo://crates/mcp/src/bin/vibe_kanban_mcp.rs
   - id: openwiki-source-773e3d7e88410badd1cab059
@@ -108,16 +108,14 @@ sources:
     resource: repo://packages/web-core/src/shared/lib/runtimeAccessApi.ts
   - id: openwiki-source-92ef988228c55634defb8970
     resource: repo://scripts/test-codex-app-server.py
-  - id: openwiki-source-7d0c710ba947513a98d2c88d
-    resource: repo://tests/claude-subscription/README.md
   - id: openwiki-source-d8023ed75464072c99cdef5c
     resource: repo://tests/claude-subscription/subscription.spec.ts
   - id: openwiki-source-141584dac09cf0f93be6bff5
     resource: repo://tests/codex-process-cleanup/README.md
-generated: { by: "codex", at: "2026-11-09T07:03:14.304Z" }
+generated: { by: "codex", at: "2026-11-09T08:47:44.052Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-09T07:03:14.304Z
+    at: 2026-11-09T08:47:44.052Z
 ---
 
 # Agent provider・設定・MCP・Skill
@@ -135,11 +133,11 @@ Profile は既定値と user の profiles.json を合成して読み、保存時
 | Provider | Steering | Approval | Subagents | Goal |
 | --- | --- | --- | --- | --- |
 | Codex | Native | Native | Unknown | Native |
-| ClaudeCode | Native | Native | Native | Unsupported |
+| ClaudeCode | Native | Unsupported | Native | Unsupported |
 
 Unknown は能力が解決されていない状態であり、「上流に機能がない」という証拠にはならない。能力を要求する経路は Native を許可し、Emulated は明示許可を要し、Unknown と Unsupported は拒否する。native 子 agent の観測と capability gating の整合性を変える際は両方を確認する。[snapshot](../../crates/executors/src/executors/provider_adapter.rs)・[能力の検証](../../crates/executors/src/executors/provider_adapter.rs)
 
-Approval が Native という capability snapshot と、host に人の応答を待つサービスが接続されていることは別である。[Codex の command/file 待機と Plan・質問の境界](../concepts/session-and-agent-run.md#承認質問と現在の接続状態) を合わせて確認する。Codex host は command/file 用 waiter を持つが、他 provider の注入は Noop のままであり、capability 名だけから全 provider の対話承認を保証しない。[host の分岐](../../crates/local-deployment/src/process_host.rs#L348-L366)
+Approval が Native という capability snapshot と、host に人の応答を待つサービスが接続されていることは別である。[Codex の command/file 待機と Plan・質問の境界](../concepts/session-and-agent-run.md#承認質問と現在の接続状態) を合わせて確認する。Codex host は command/file 用 waiter を持つ。ClaudeにはUnavailable承認serviceを注入し、未接続要求を自動承認しない。ClaudeのApprovalはUnsupportedであり、Supervised/Plan・承認必須profileは起動前に拒否する。[host の分岐](../../crates/local-deployment/src/process_host.rs#L348-L366)
 
 Codex の Supervised override は、approval policy が未指定または Never の場合に UnlessTrusted へ変更し、別の明示 policy は保持する。sandbox 自体はこの override で変更しない。command/file の client 自動承認は DangerFullAccess と未指定/Never の組合せだけに限定する。[override と自動承認条件](../../crates/executors/src/executors/codex.rs#L628-L680)・[回帰テスト](../../crates/executors/src/executors/codex.rs#L1755-L1776)
 
@@ -203,11 +201,13 @@ Subscription profile の LVK probe は現在の cwd と execution env に profil
 
 `SUBSCRIPTION` は通常 Issue → Workspace → Session で公式 `claude` CLI の subscription login を使うための任意 preset で、`require_subscription_login: true` と `approvals: true` を持つ。DEFAULT の置換でも新しい provider / scheduler でもない。既存の stream-json、native resume、取消 adapter を使い、Claude native Goal や Arena の追加対応を意味しない。`approvals: true` だけで人の待機 UI が配線されるわけではなく、上記の host approval 境界を引き続き確認する。[preset](../../crates/executors/default_profiles.json#L3-L15)・[direct launch](../../crates/executors/src/executors/claude.rs#L215-L237)・[command adapter](../../crates/executors/src/executors/claude/command_adapter.rs#L33-L115)
 
+現在のSUBSCRIPTION保存presetは`approvals: true`のため、そのままの実行は拒否する。正規の承認・質問UI接続までは利用者がPermissionsでAUTOを明示する必要があり、保存profileを暗黙変更しない。[起動guard](../../crates/executors/src/executors/claude.rs#L215-L244)。
+
 利用者は **LVK の実行環境内の同じ account と設定ディレクトリ**で CLI を準備し、`claude auth login` / `claude auth status` を行ってから Subscription preset を選ぶ。別マシンでの login を server の設定と取り違えない。image内では `docker compose exec lvk claude auth login` を使い、CLIのbrowser案内に従って本人が同意する。次に `claude auth status` を同じaccountで確認する。[公式認証案内](https://code.claude.com/docs/en/authentication)を参照する。LVK は credential file を読み取って SDK へ転用せず、public auth metadata を確認する。[auth probe](../../crates/executors/src/executors/claude/auth.rs#L1-L128)
 
 ### 認証の確認と拒否条件
 
-実行直前の `spawn_internal` は現在の cwd と execution env に profile env を合成して認証を確認する。新規・follow-up / resume の direct launch がこの経路を通る。`claude --settings … auth status` は10秒で制限し、成功 exit、`loggedIn: true`、`authMethod: "claude.ai"`、`apiProvider: "firstParty"` のすべてを要求する。JSON 不正・未 login・異なる provider・timeout を別課金方式への fallback で回復しない。stderr は捨て、stdout の原文を診断へ含めない。[起動前確認](../../crates/executors/src/executors/claude.rs#L739-L775)・[判定](../../crates/executors/src/executors/claude/auth.rs#L35-L49)・[環境と timeout](../../crates/executors/src/executors/claude/auth.rs#L78-L128)
+実行直前の `spawn_internal` は未接続承認モードを先に拒否し、許可された明示AUTO経路では現在の cwd と execution env に profile env を合成して認証を確認する。新規・follow-up / resume の direct launch がこの経路を通る。`claude --settings … auth status` は10秒で制限し、成功 exit、`loggedIn: true`、`authMethod: "claude.ai"`、`apiProvider: "firstParty"` のすべてを要求する。JSON 不正・未 login・異なる provider・timeout を別課金方式への fallback で回復しない。stderr は捨て、stdout の原文を診断へ含めない。[起動前確認](../../crates/executors/src/executors/claude.rs#L739-L775)・[判定](../../crates/executors/src/executors/claude/auth.rs#L35-L49)・[環境と timeout](../../crates/executors/src/executors/claude/auth.rs#L78-L128)
 
 専用 profile は router、base command override、非空の追加 CLI 引数を拒否する。また API key/token、OAuth token 注入、custom headers、base URL / profile、Bedrock / Vertex / Foundry 選択など、ソースで列挙する競合環境変数の非空値を拒否し、診断には変数名だけを出す。任意の wrapper や引数で preflight 後の認証を変えられないようにするという理由がソースコメントに記録されている。他方式を意図するときは別 profile を使う。[拒否集合と理由](../../crates/executors/src/executors/claude/auth.rs#L12-L99)
 
@@ -223,7 +223,7 @@ discovery stream も選択 variant を渡し、未存在 profile を DEFAULT へ
 
 ### 検証の範囲と残る確認
 
-[auth unit tests](../../crates/executors/src/executors/claude/auth.rs#L147-L260)は競合設定、秘密値の非表示、wrapper 拒否、metadata / exit 判定を扱う。[frontend tests](../../packages/web-core/src/shared/hooks/useAgentProviderPolicy.test.ts)と [discovery URL tests](../../packages/web-core/src/shared/lib/agentDiscovery.test.ts)は profile 別の失敗と scope を検査する。[隔離 browser 試験](../../tests/claude-subscription/subscription.spec.ts)は実 backend / host と offline CLI fixture を接続し、拒否・初回実行・期限切れ後の follow-up 拒否・Stop / native resume と Issue UI の preset 選択を検査する。高速終了時の証拠は [shared host の drain 契約](../architecture/agent-runtime.md#os-終了より遅い-provider-終端証拠)で扱う。
+[auth unit tests](../../crates/executors/src/executors/claude/auth.rs#L147-L260)は競合設定、秘密値の非表示、wrapper 拒否、metadata / exit 判定を扱う。[frontend tests](../../packages/web-core/src/shared/hooks/useAgentProviderPolicy.test.ts)と [discovery URL tests](../../packages/web-core/src/shared/lib/agentDiscovery.test.ts)は profile 別の失敗と scope を検査する。[隔離 browser 試験](../../tests/claude-subscription/subscription.spec.ts)は実 backend / host と offline CLI fixture を接続し、拒否・初回実行・期限切れ後の follow-up 拒否・Stop / native resume と Issue UI の preset 選択と明示AUTO、保存profile/Supervised/Plan拒否を検査する。高速終了時の証拠は [shared host の drain 契約](../architecture/agent-runtime.md#os-終了より遅い-provider-終端証拠)で扱う。
 
 fixture は公式 CLI でも実モデルでもない。auth metadata は実モデル応答、refresh 可能性、残 quota を証明しない。公式 CLI / account での期限切れ・更新・quota・network 挙動と managed settings の影響は別途確認が必要である。[検証手順と限界](../../tests/claude-subscription/README.md#live-validation-remains-separate)。この Sync は統合済み source と試験定義の静的照合であり、製品テストや live Claude 検証の再実行ではない。
 
@@ -286,7 +286,7 @@ quota/usageは別々に fresh / partial / unsupported / unavailable 等の理由
 
 ### 参照機能の検証限界
 
-[passive fixture](../../crates/executors/src/account_usage_tests.rs)は非モデルRPC、timeout/cancel・子process回収、単位/null/未知field除外を検査し、[server fixture](../../crates/server/src/remote_mcp/provider_usage.rs#L42-L123)は認可・所属・DEFAULT mismatchを検査する。供給された開発記録にはCodex account quota/summaryのfresh、Claude get_usage成功でもquota partialがある。Claude subscription枠、Codex既存thread usage、稼働MCP経由live、account切替や親子包含は未確認で、今回も製品試験を再実行していない。参照成功から認証種別やモデル実行品質を推定しない。
+[passive fixture](../../crates/executors/src/account_usage_tests.rs)は非モデルRPC、timeout/cancel・子process回収、単位/null/未知field除外を検査し、[server fixture](../../crates/server/src/remote_mcp/provider_usage.rs#L42-L123)は認可・所属・DEFAULT mismatchを検査する。供給された開発記録にはCodex account quota/summaryのfresh、Claude get_usage成功でもquota partialがある。後続LOCAL-359のsource開発記録は公式CLI 2.1.308の隔離AUTO初回/継続とquota fresh/再取得を報告する。今回の統合では実モデルや実認証を再実行せず、passive fixtureを含むexecutors試験とquota browserを実施した。Codex既存thread usage、稼働dev反映後、account切替や親子包含は今回の確認範囲外である。参照成功から認証種別やモデル実行品質を推定しない。
 
 ## MCP の二つの方向
 
@@ -322,7 +322,7 @@ Global stdio には [Project Todo](../concepts/project-todos.md)と[設計メモ
 
 Settings の「MCP連携」は LVK が外部へ公開する [Runtime Access の管理設定](../concepts/runtime-access.md#管理設定の保存適用取消)であり、上記のcoding agent向けnative MCP config editorとは別の入口である。直接アプリケーションを動かす権限・環境・停止の契約は同ページを参照する。[設定registry](../../packages/web-core/src/shared/dialogs/settings/settings/settingsRegistry.tsx#L95-L143)
 
-現行はCodex v7 / Claude v4のmapperを使い、旧v6・v5等のreplay入口を保持する。Codexの公開summaryはv6以降、明示 `turn/plan/updated` はv7で独立extensionへ投影する。private contentを推論して表示せず、旧mapper出力を新仕様に遡及変更しない。[mapper選択](../../crates/executors/src/executors/provider_adapter.rs#L532-L578)・[plan](../../crates/executors/src/executors/provider_adapter.rs#L2350-L2399)・[公開summary](../../crates/executors/src/executors/provider_adapter.rs#L2540-L2580)。表示の収束と操作プレビューは [Webの会話表示](../architecture/web-and-sync.md#操作のプレビューと-provider-の説明)に集約する。
+現行はCodex v7 / Claude v6のmapperを使い、両providerの旧版replay入口を保持する。Codexの公開summaryはv6以降、明示 `turn/plan/updated` はv7で独立extensionへ投影する。private contentを推論して表示せず、旧mapper出力を新仕様に遡及変更しない。[mapper選択](../../crates/executors/src/executors/provider_adapter.rs#L532-L578)・[plan](../../crates/executors/src/executors/provider_adapter.rs#L2350-L2399)・[公開summary](../../crates/executors/src/executors/provider_adapter.rs#L2540-L2580)。表示の収束と操作プレビューは [Webの会話表示](../architecture/web-and-sync.md#操作のプレビューと-provider-の説明)に集約する。
 
 ### 自動マージ担当の必須stdio bootstrap
 
@@ -370,3 +370,11 @@ Repo間で同名のClaude skills/commandsはUIで無効化し、曖昧な明示�
 ### 観測と未検証を分ける
 
 metadata一覧、明示本文到達、自動選択、手順実行、親子/下位指示の遵守は別々の証拠である。LOCAL-349の公開記録にはCodex path明示とClaude固有名/同名拒否の過去実行、修正後Claude 2.1.308の製品discover_optionsによる単一/複数/空fixture、Codex同一Session継続がある。今回Wiki保守はsource/試験を静的照合したもので再実行ではない。Claude階層commandの実発火とSkill禁止のlive確認、全providerの指示・skills start/resume行列、旧binary実DB移行は未検証として残る。認証・sandbox・実行承認を変更して補わない。
+
+## Claude 終了と利用枠診断の現行契約
+
+新規mapper v6は成功result本文の文字列（空文字を含む）・欠落/nullを許し、それ以外をProtocolFailedとFailedへ投影する。v5以降は`api_error_status:null`を成功の妨げにせず、成功・失敗resultをterminalへ投影する。旧版再生を新しい判定へ遡及変更しない。startupではinitialize/permission応答を相関して期限付きで待ち、送信失敗・result前のEOFも所有側へ通知する。[Runtimeの終端契約](../architecture/agent-runtime.md#claude-の-result-と起動失敗の終端)。final snapshotの複数block再掲回避は[Web投影](../architecture/web-and-sync.md#claude-final-snapshot-と利用枠の理由)を参照する。
+
+Claude利用枠は`in_progress`、`cleanup_unconfirmed`、`rate_limited`、`timeout`、`read_failed`の理由codeを区別する。回収失敗で閉鎖したSLOTは閉鎖のままにし、運用担当の復旧を要する。timeout理由は所有process回収完了後だけ返す。HTTP側の50秒期限は20秒read後の回収を待つためで、モデルturnや既存Run停止へのfallbackは行わない。[取得と回収](../../crates/executors/src/executors/claude/usage.rs)・[表示](../../packages/web-core/src/shared/lib/claudeQuotaView.ts)
+
+349の共通root/cwd・repository roots・同名skill拒否と359の承認guard/終了処理は同じClaude起動経路で両立する。今回の統合検証は型/check、frontend build、影響lint/Clippy、executors・host・owned-group回帰、会話/利用枠Vitestとquota browserを対象とし、source時点の実CLI証拠とは区別する。invalid identityの当時の発生契機と大量エラーの全内訳、稼働dev既存閉鎖の復旧は未確定・未実施である。

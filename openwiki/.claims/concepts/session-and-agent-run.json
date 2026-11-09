@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:23922cd9950dfc12328730859dfe76b15d45a62af6849e9e9009abc1c9e4c010",
+  "pageVersion": "sha256:4e7cd82a06d7812c271c1d55304fd1a3aff44fee39a6265ee11b9a93988484aa",
   "claims": [
     {
       "id": "claim_82c340b0bbd240889908ea6c2c5be423",
@@ -403,7 +403,7 @@
           "version": "repo-lines-v1:sha256:89a47990106239e5eb1c50f23546e56c1762a742c28c8e00841f1b8b2ef86026:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIxLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI5OGI5NjhkZTdjMGQwYTYyN2E0MzM0OTY2Mjc5NTA4NTViYzA0M2NhNjk1ODEzNzljNWIyZDYzNTgyOWQ2MGViIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIxNjg0NTYwNGNkMTE1NzFkMjAxZTJjZTI3M2MzMGI4ZjZlMzVmYjMxMzgzYzJmZjMzOTIzZjhjZDkwNjk4OTQ2IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI4ZjE3NDUzZDI0Y2E3YjI1OWQyYmVhNjM2OGI4NjI0NWMyMTgyZTI2NWExOGM4OWYxYWJjZjA0NzhmYzRmNDlmIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJiZDM0Yzk0NTVjZGE0ZDZkOTQ1NmU0ZTMyOGYwZjIyNmZmZTE4MzljYTc3NGQ5NDg2MGY4ZDI5NTYxNTlmZmY3In0"
         },
         {
-          "resource": "repo://packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts#L336-L406",
+          "resource": "repo://packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts#L342-L412",
           "version": "repo-lines-v1:sha256:b6413e58ca396c1429a9e1fed24ae1304eae4a9a831dd0ad42f47724a8c3bf6c:eyJzZWxlY3RlZExpbmVDb3VudCI6NzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNjYTVjNzA3OWEwOGRjZjQwY2FlZDVhNTMzMTBmNTJiOTQ4Y2ZmY2EwNTY5NWQyNWVlYmYyMmNiZWM4OWE4YjMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZlZGI3YTU2ODA2ZDE3ZDNmM2M2MThlNjdhNDg5ZDc3MWRjNzcxN2M0OTUzZGI4YWY1OTYyYTIyNGRkMWMzZTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjYzODAzYTg4ZWI3NzIxN2FmMDQwY2QwYmNmODY1NWQ1NTJmYjYxYzhlYmNhZTZiMGNlNmMwOTM3MTA4ZDMwNmMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjkyM2UyMmZhMmU4ZjhmZDZiYjVkZDQzMWUwZWE1NDdhYTk1ZDU4MGQxNDYyMmI1MWM1NzA1ZGQxNTQ1ODEyNDcifQ"
         }
       ]
@@ -423,7 +423,7 @@
       "statement": "context gaugeは最新親contextとcapacityを累積input+outputとは区別し、不正・欠損測定をunknownとする。新Run/attemptで古いgaugeを継承しない。",
       "evidence": [
         {
-          "resource": "repo://crates/executors/src/executors/provider_adapter.rs#L1537-L1563",
+          "resource": "repo://crates/executors/src/executors/provider_adapter.rs#L1637-L1663",
           "version": "repo-lines-v1:sha256:1f35db553a841c30dbd8d3f6fe7e3d42020b439c3edddaa69c4fe54f981aa1bf:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU0OGRiMDMxZmI2ZDRlNjM3YTI0ODdjMWFiODlhYjZmY2ExODU2MWVmOGYzNWQ0ODBhYzFhOWIxOTlhOTI5ZDQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjlmNjRkMzQzZmM3MTVkOTFkMDE0Njg3OTVjOWRmZDhmNzVjODgzYmQyM2NiZTBiZTk3N2M3ZjYwMTUzNDk0YjkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjVjYzhkYjMyMzAwYjIwODA1ZWYzOTA1Y2U2M2YzNzkyMDIzN2RiZmU3ZDE0N2ZmM2Y3NmFiOTg0MDMzZjAxODYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijg5YTI3MjBkYmRkZmRhYWE3YzQ5ZGIzYWZmNTA1NTdmZDg4MGZiNDIwMjBmNmEzMTU3NmVlNGU3N2E1NjBlZjAifQ"
         },
         {
@@ -431,11 +431,11 @@
           "version": "repo-lines-v1:sha256:6fe8e87e01cb22106e2d183c96ae91ab5e329132fd56057a480b43802b7c90ea:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRjNTBjOTU1OTQ2OWUwZjMyYzIwYTlmODM2NGFlZWE4OTRjYjAxZGJiZjI1NmUxY2U0NjBmNmI1ODcxMWE2NGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImIyNmRjZjBmZjllZjJkYmVkZTg3YjUwMDMxYjk3NTkwZjM2ZWM5ZDYzMDlhODliZGFiZTNlMzkyNjFlZTg1MzQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhkMTU2Zjk4NGI5YjQwNzFjOTYxZjlkNzdhNzNiNjJkNjdjMzc5Mjg3ZDY2MGY4YjlkNTk2MGY4ODUzYmQ3OTcifQ"
         },
         {
-          "resource": "repo://packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts#L706-L726",
+          "resource": "repo://packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts#L738-L758",
           "version": "repo-lines-v1:sha256:ced35832fe1a84ad02f981b9535c49933e00bda9ecd06b96ad5fcbc5a783395a:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZmZmI1ZTA4Mjk4OGZiNTIyODA2N2YwMmNhZTRiMzk3N2UwOGM2NWY2OGZiOTc4ODJhYzRmNjE2Y2ZkZTljN2YiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJmMmFjZWU0ZjJjYWU4YTFjZDM1YzFkZDMzYmQ2MDhmZTY2MGRkODgxYzJhYTIzODI3MzZjY2YxOWQ4NjIxYWUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjU5OWE3MmQ5ZTgxYmU2ZjE4ZTA2NmJiODNhMTE5ZWY1NDU4YjVhMjZmZTcwYjJlMTg2YTdkYWRjNzlhNWMyZGMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjgyMzBhZDY4Nzc3NDBkNDJhMzZlMzAwMTE3NWQ0MTQzYTVjMWY3NzkyOWVhMWY3N2NhNTI1NzRiNjgxNGE2NjkifQ"
         },
         {
-          "resource": "repo://packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts#L987-L1001",
+          "resource": "repo://packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts#L1019-L1033",
           "version": "repo-lines-v1:sha256:ddf6ad2c92ef8bb5e3b58a1dc2576afbbee2dbecd0e9d54d19abac095d4c2ab5:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE4OWFiZmYxNTRkNjIzNThhNDM0Zjk1M2Q2NTBjOTA2MTEwZjRmMmIyNWFkZmYyOGRlMzBmZjEzOTY4MGFmZGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJlZWVmZGQ1MTEzZDk5MDU2ZjFlMTlkZTFiN2Q1YmVkZTZlMGEzMDFmOWU4ZjdiZTRlYWQzZjhmOGRhODY2YzgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjU1MTc3YzdmMmJmZTcyYmQ4YzE2ZmU3ZGVmZDljNjVmOTVlMGQ3ZWQwYTE2ZWY1Y2EyNWExZTEwNGE1YTJiMzQifQ"
         }
       ]
@@ -459,12 +459,8 @@
       "statement": "OS exit 0だけではAgentRun成功にせず、provider成功根拠のない正常終了はCrashedにする。",
       "evidence": [
         {
-          "resource": "repo://crates/local-deployment/src/process_host.rs#L1221-L1297",
-          "version": "repo-lines-v1:sha256:aaac8f8a0515c2cc498ef146c12c651ac2e75b35047ba1e8de05edbe8a95a417:eyJzZWxlY3RlZExpbmVDb3VudCI6NzcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ3N2RkNDE3NDljMTAxM2U3M2IwYzgwODNjOTI3MzAyYTM4NTQ3MTkyZWJhMWIyNzcyNDRkNTY1OTQ3YjdlMDkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc3ZjljOGQwYzQ0YzliZjc4MjNjNDU4OWJlZjlmZjNiYzA5NTk4ZWI3NjJjM2Y0ZDA1NzBjM2NiMTcwMTAxOGUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE5ZTc2MzU1Y2YxMTk5NDgwYzNmOTk4MzZiMTQ4NmM4NDFkODkxZmFhZDkwNGM2MDhlMDkzMDIyZDM3NTdhZWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdkOWM5NmZlMmJlZDI0Njk0YTM1NGI5MDhhOGVmMjdiMWVjMGQ4ODU5MThiOTg3YzEyMWU4NzRhYjFlNjhlOTIifQ"
-        },
-        {
-          "resource": "repo://crates/local-deployment/src/process_host.rs#L1875-L1902",
-          "version": "repo-lines-v1:sha256:00b54c2774c6e2d3204cbb32ab7829a08f804a094cde6c02cdcd86491b0a7d76:eyJzZWxlY3RlZExpbmVDb3VudCI6MjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkyYjVlZGY1OTQ5Y2ZlYTY3ODIyY2Y2OTExMzIzNjNkNjhkNmYxZTE2OWY1ZTBkNGY3YzE0ZTVmYTFlNmQ0ZTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVkY2EwZTgxMGQ2OGFlYThkNzZjMWY1YzgxNmMxMGM0NThlYjg5YzVlNzQxN2FjNWIyNmRhOGM0ZDMxYzk1NmEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk5OWJkZWZlZWFjYTYzNDBlMDI5MGRjODZlODg5Yzg5ZDVlMTg5YWE1YmE0NGI1ODViM2I3MDczNGY0YTYyZDgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY2NjBlOTljYTdjNTRiYzQyYjIxZTM2ZjRkYThjNWJlYjIzYjkwZjBjYjU2MjkyNWM2MDY1OTdiNzE0NTg3NGMifQ"
+          "resource": "repo://crates/local-deployment/src/process_host.rs#L1282-L1295",
+          "version": "repo-lines-v1:sha256:75b8cc435c2799621c4e3bc8e0ea937c123429313c5a4b76db16c0d8546ed23e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFmNmMwYzEyMTBhZjM4NWVkNWYxMjBiMmQ1ZDg5ZmIyZjg1ODkzZGIzMDg4ZjY0NmRhN2Q0ZDc2YzBhODJkMWUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk0MzNkMGVhOWVjZjJmMzljOWE1MDQwNzM5NWVlNDExNzJmZTY4MmM5Yzg4NWEzNTA4Zjc1YmRlZTE1MWVmZmYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjkzZGFhMjVkMWEwZmI1YzljYTNiM2UwODNmNGMzZjlhNDRjYTJmNmFkZjk3ZjYyMjZkMWEwOWIzOGE3OWY2Y2QiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE5ZTc2MzU1Y2YxMTk5NDgwYzNmOTk4MzZiMTQ4NmM4NDFkODkxZmFhZDkwNGM2MDhlMDkzMDIyZDM3NTdhZWUifQ"
         }
       ]
     },
@@ -477,7 +473,7 @@
           "version": "repo-lines-v1:sha256:e0e6a089d70a1823a92d7d606224df4d7153fd579044740083da24c62edc3cd1:eyJzZWxlY3RlZExpbmVDb3VudCI6MzYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNkOTFmZTA5ZGZiYjU4YjMxOTAwZjMyZjBjMjIyYWI5NDJlNDhjNDgzN2FhOTlkNTFmZDczYmZlNGE4YzRhMjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE2MmVlNTdlNDFhOGMyMGFlMDE2NGRmMjYxNDM5ZGNjNDk5ZDM1MjA4MzQxNTE1MTZkMDQ3ZThkZWFlOGE0NjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImI5ZmExNDFkNzcyYzhjZDk4MjA3NjJkMjdmNWQ0ZjNlZWRlNTIxYmFjMWRmN2Y2YjFmOGUxNzFmYmIxODcxYzEifQ"
         },
         {
-          "resource": "repo://packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts#L920-L973",
+          "resource": "repo://packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts#L952-L1005",
           "version": "repo-lines-v1:sha256:4d11fc7db0af8bbe73e638dc84c6cedceb8c053cefb95cc82b2cbe0fc1bd98e5:eyJzZWxlY3RlZExpbmVDb3VudCI6NTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVkODQ5ZjVhMGRjMGFkODFiMzIwZDY2OGMyZGU3Y2JkZDFkODEwNTY3MDkxNzNkNTBiMmNiNmZjZDY3YjIxMGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZiNGY0ZjU4ZWQ4NjY5ZGI3NzM0MjRlOWQ5Y2ZjNGY5ZjlhNDFkY2U1MjA5ZTVmN2E4ZTRiM2FhZjFlNGExNTAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRlOGM3NWU5MGNjYzdjZjI4NzhlMzdmN2MyM2QwNDExNjI2MTJlNmE5OTMzYTI3MDYyNzBjOGE5M2ViZWNhMTIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImYwMTZhY2QzMzA5MGVhNGQ3N2VhZjFjOWFlNTQyMjliM2MzY2M1MjBmYzU3MzViZWFmNjQyZjcxMGE1NzU1NDEifQ"
         }
       ]
@@ -505,7 +501,7 @@
       "statement": "チャットの時計はattempt番号・event sequence・更新時刻で新しいstateを選び、終端時は一致するattemptのsummary.completed_at、次にterminal lifecycle event時刻を使い、新retryへ前attemptの終了時刻を引き継がない。",
       "evidence": [
         {
-          "resource": "repo://packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts#L920-L973",
+          "resource": "repo://packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts#L952-L1005",
           "version": "repo-lines-v1:sha256:4d11fc7db0af8bbe73e638dc84c6cedceb8c053cefb95cc82b2cbe0fc1bd98e5:eyJzZWxlY3RlZExpbmVDb3VudCI6NTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVkODQ5ZjVhMGRjMGFkODFiMzIwZDY2OGMyZGU3Y2JkZDFkODEwNTY3MDkxNzNkNTBiMmNiNmZjZDY3YjIxMGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZiNGY0ZjU4ZWQ4NjY5ZGI3NzM0MjRlOWQ5Y2ZjNGY5ZjlhNDFkY2U1MjA5ZTVmN2E4ZTRiM2FhZjFlNGExNTAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRlOGM3NWU5MGNjYzdjZjI4NzhlMzdmN2MyM2QwNDExNjI2MTJlNmE5OTMzYTI3MDYyNzBjOGE5M2ViZWNhMTIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImYwMTZhY2QzMzA5MGVhNGQ3N2VhZjFjOWFlNTQyMjliM2MzY2M1MjBmYzU3MzViZWFmNjQyZjcxMGE1NzU1NDEifQ"
         },
         {
@@ -752,7 +748,7 @@
         },
         {
           "resource": "repo://crates/local-deployment/src/process_host.rs#L340-L358",
-          "version": "repo-lines-v1:sha256:8e895046ce86ec2466d11ff05e2cfd1049f39209cfd79a66927bb9048448a50c:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM2NzFjZGYwM2I1N2E2ODdjZGY1NmRiYmNkOWIzMjAxMTlmYTZiNzIzMWI0NDI5YzNkMzU3NmI4NGMwOTFlMzMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFkZGY1NmQ5OTRjNDY1NTQyNDNmZjlhYWU5MDFkMWU1NDliN2I0OGY3OWIzZmZhYzEwZmI1MWM4ODljNTZlNzgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJmNjNhMTVmZTdhNmM0NjI0N2YxNDQwNGUyMmY3NDhjNDBjYzk1MTU5NTcxMzk3YmI5MGRlMDcyMjU3Njk4ZGMifQ"
+          "version": "repo-lines-v1:sha256:909e6958cbfc3c63e8b5cda6c09f69b347feadedcd2a5bc3ad5ef3030a68f4af:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM2NzFjZGYwM2I1N2E2ODdjZGY1NmRiYmNkOWIzMjAxMTlmYTZiNzIzMWI0NDI5YzNkMzU3NmI4NGMwOTFlMzMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFkZGY1NmQ5OTRjNDY1NTQyNDNmZjlhYWU5MDFkMWU1NDliN2I0OGY3OWIzZmZhYzEwZmI1MWM4ODljNTZlNzgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJmNjNhMTVmZTdhNmM0NjI0N2YxNDQwNGUyMmY3NDhjNDBjYzk1MTU5NTcxMzk3YmI5MGRlMDcyMjU3Njk4ZGMifQ"
         },
         {
           "resource": "repo://crates/local-deployment/src/process_host/approvals.rs#L26-L59",
@@ -1237,10 +1233,28 @@
           "version": "repo-lines-v1:sha256:ef781bf22d81caabafb166ae5a01a2004604cc366720ac0f536031db523f620d:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNzcwM2I4ODkyNGI5OWM5OTg3Y2QwY2NjMzQ3ZjJkN2I2MmI2MGYwY2E1OTU5ZmYxZGZiMzI1YmRkNTRjOWMzNCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNWZiOWM3NDgyMDcwYjRiZDMxNjFmMzA5NTk0MWQ0ODIxZWU4YmMxNjM2YTAzNmJiZTdhMjAzZTM4NjUxZjk3YSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZjAzMTRmZDQ0YmU5N2ZkOTAzZThjODRkMjk2ZTVkODI2YTU1NjkyNjM4M2JkMDIxNmUwOTFiYTZhNDcyZTk0YSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiN2VlMTliNGMyMmRiYmY1MGYzNTZjNDVmNDgxMWY2MGYyY2UwOWIxYTEzNGY2YzAwNjRlZDdhNmVmMjEwNWRjNCJ9"
         }
       ]
+    },
+    {
+      "id": "claim_bed9814a57dd4490aea8aabbe9aa9715",
+      "statement": "Claudeは対話承認必須またはPlanを起動前に拒否し、保存設定を変えず明示AUTOだけを適用する。hostのUnavailable承認serviceとUnsupported capabilityで未接続UIを利用可能に見せない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/executors/src/executors/claude.rs#L184-L244",
+          "version": "repo-lines-v1:sha256:0b9f608dd466e81403e9daed00aad4ad754839dc46f17532aa8ba45a921e877b:eyJzZWxlY3RlZExpbmVDb3VudCI6NjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJhYmQ1YWFhZmU5MDg1MTQzMzNhOGZmNTllZTA3YTc3MDhjYjNlOTA1Y2MwNWU4M2U1M2YzOTY1Mjg2YWVhOWYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI1MmE3OGU3MGYwZGZkMGRmZjEzNDgyNGE1MWYyMDI0ZTY4NWYwZTg5ZDZlYzBhNGI0NTMwMjgyMmNhOGQ3NmYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjlmMmUzNzk2MjA2Y2E3MTg1NjFkNGQ5MzIxZGI2ZTBkMTZmYmFiOTQ3ZjQ4MWUyYjliNjhjMThmNzE0ZDE2ZmUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImI2OGQ3YjczODcwZjVkNDhlOGM4ZGUyNWZlZDg2ZDFjMGZkMTY2YTdmZmI5M2M5Njg5NmRkNTg2NGUwZWVkMDAifQ"
+        },
+        {
+          "resource": "repo://crates/executors/src/executors/provider_adapter.rs#L350-L400",
+          "version": "repo-lines-v1:sha256:9e087ccffde294f3306f0903726ece73d6513905d091032657fe02843340f1fe:eyJzZWxlY3RlZExpbmVDb3VudCI6NTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ2MDJiOGE4ZWM5MjU1MTQyZDI2YzkwNTVlNWI1N2RiOTcxYjE4ZGFlMmYxN2M3NDVmZjFjZTA1NDg2NWRhZTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijg0YWU4N2ZlZTBmNjg5MWRhYTFmYzgxOWFjN2FlZmNlYThkYzQ3NTBkYmQ2YzM4YjMxYzA2ZWIwZDRhMDZjOGQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImU4YzA0OGNhNzQxNTk0ZTk0YWFmZDM5NjU5NTJkZjMwZTE2NzQwOTNjMDA0YTU0ZjZiYWNhNmZjYzVkMWY0ZTUifQ"
+        },
+        {
+          "resource": "repo://crates/local-deployment/src/process_host.rs#L340-L358",
+          "version": "repo-lines-v1:sha256:909e6958cbfc3c63e8b5cda6c09f69b347feadedcd2a5bc3ad5ef3030a68f4af:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM2NzFjZGYwM2I1N2E2ODdjZGY1NmRiYmNkOWIzMjAxMTlmYTZiNzIzMWI0NDI5YzNkMzU3NmI4NGMwOTFlMzMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFkZGY1NmQ5OTRjNDY1NTQyNDNmZjlhYWU5MDFkMWU1NDliN2I0OGY3OWIzZmZhYzEwZmI1MWM4ODljNTZlNzgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJmNjNhMTVmZTdhNmM0NjI0N2YxNDQwNGUyMmY3NDhjNDBjYzk1MTU5NTcxMzk3YmI5MGRlMDcyMjU3Njk4ZGMifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-09T07:03:14.304Z"
+    "at": "2026-11-09T08:47:44.052Z"
   }
 }

@@ -286,10 +286,10 @@ sources:
     resource: repo://tests/workspace-navigation/run-isolated.py
   - id: openwiki-source-b87e3253bd1458a0091f8587
     resource: repo://tests/workspace-navigation/workspace-navigation.spec.ts
-generated: { by: "codex", at: "2026-11-09T07:03:14.304Z" }
+generated: { by: "codex", at: "2026-11-09T08:47:44.052Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-09T07:03:14.304Z
+    at: 2026-11-09T08:47:44.052Z
 ---
 
 # Web の実行環境と同期
@@ -666,3 +666,9 @@ Project側のWiki providerは既存のrepository-memory query成功通知を購�
 ### LOCAL-349 の作成と管理対象
 
 作成composerは選択した全Repoと各target branchを送信し、作成結果をProjectの既定値へ書き戻さない。新規選択と既存Workspaceのリンクは別操作である。DirectFolderではGit sidebarとWorkspaceのRepo Wiki候補を除外する。Project側のWiki閲覧はProject controllerのまま独立している。
+
+### Claude final snapshot と利用枠の理由
+
+会話投影は同じturn/attemptの連続する最後のassistant block群だけを候補とし、`\n\n`で結合したsuffixがfinal本文と完全一致すると、既存表示へevent identityを統合して再掲しない。tool/user/既存final等の境界を越えて過去の同一本文を消さず、streamingのfinal snapshotも本文の追記重複を避ける。[投影](../../packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts#L420-L491)・[境界の回帰試験](../../packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.test.ts)
+
+Claudeの利用枠要求期限は50秒で、backendのread期限後の専用process/reader回収を待つ。Codexは20秒を維持する。Claudeの`in_progress`はpending、回収未確認・timeout等のunavailableはerror、partialはunknownへ表示し、未知値を0にしない。既知の理由codeは英日翻訳し、その他の理由は制御文字除去と長さ制限を経て渡す。回収未確認の閉鎖を画面から解除する機能ではない。[要求](../../packages/web-core/src/shared/hooks/useCodexQuota.ts)・[view](../../packages/web-core/src/shared/lib/claudeQuotaView.ts)・[理由表示](../../packages/web-core/src/shared/components/EnvironmentPanel.tsx)

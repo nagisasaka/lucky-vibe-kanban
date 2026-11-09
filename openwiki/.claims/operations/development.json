@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:af7c6858e1ab5c10fb6116636c27af4e9c23e83b6c9fcba62d3505d148337bdb",
+  "pageVersion": "sha256:a7471c9df5b09923d8c0692a54432da9e2e3a207e1cbd0f61961a95f5a8735b7",
   "claims": [
     {
       "id": "claim_1640e4eaeac94676a84eb3b9d9970d30",
@@ -351,7 +351,7 @@
           "version": "repo-lines-v1:sha256:2e18c6041f81c7359f613342e3e8540f0312af2e01fe0ca4a2ea819baf78f3bf:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMwLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI5MWNjNDA2ODdkMjQ0ZTlkYWY5MWNlZDQ2NTIzMjY1NjlhNGZiNmRmYzgxZDAzZmJlNzIzYTVlYTNjY2JlOWRmIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJlNmIwNDQ5MTQ2OTcyMmU4MzYzYTk0ZTQwNDQ1MzhlMDEzYTJhMjE3ZTM2YjFlNTY4YmE2MGFjYjdiNGM4ZjJlIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIxNWViN2EzYTk3MzI0MWU5YTQzMTQ3OTJhNTA5ZjhjMmQ1Mjg1ZWMxMzI1ZmQ2MTYxMzlkMDM1YmEwNzEyY2EzIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiIxN2E1ODAwNzBmNTU1YzRhOTViODNhNmUwNDU5NTc1ZDg4NTRkNWMxMzg0NTBiZDQzMGYxOTZjNjc3MDU3MmE5In0"
         },
         {
-          "resource": "repo://crates/executors/src/executors/provider_adapter.rs#L3744-L3787",
+          "resource": "repo://crates/executors/src/executors/provider_adapter.rs#L4050-L4093",
           "version": "repo-lines-v1:sha256:7d4571689c12c4b4be7740181ca27778c27c9e0be46850fbb0b177e257725bd7:eyJzZWxlY3RlZExpbmVDb3VudCI6NDQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkyYjVlZGY1OTQ5Y2ZlYTY3ODIyY2Y2OTExMzIzNjNkNjhkNmYxZTE2OWY1ZTBkNGY3YzE0ZTVmYTFlNmQ0ZTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE1ZWI3YTNhOTczMjQxZTlhNDMxNDc5MmE1MDlmOGMyZDUyODVlYzEzMjVmZDYxNjEzOWQwMzViYTA3MTJjYTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZjZTRmYzYyMzM3YjBjMWIyNjljZDU0ZTFjZWVjYzhkMzMzNTAxMWNjOWZmYzk2MTBiM2I5NDg5Yjk1MTY5ZmUifQ"
         },
         {
@@ -794,7 +794,7 @@
       "evidence": [
         {
           "resource": "repo://crates/executors/src/account_usage_tests.rs",
-          "version": "repo-file-v1:sha256:9ab55c2d7b32fa4f75d9fcb0fd6d722da6a2b8eb0e9220c026e05df481b3460a"
+          "version": "repo-file-v1:sha256:c2ef4c2635562a70b707e7cab918faccc64b3dbf89f562b38ad060ea1d98c571"
         },
         {
           "resource": "repo://crates/executors/src/executors/codex/client/resume_instructions.rs#L300-L569",
@@ -905,7 +905,7 @@
       "statement": "utilsのprocess cleanupテストはPython fixtureを実行時CARGO_MANIFEST_DIRから解決し、共有キャッシュに埋め込まれた過去checkoutの場所に依存しない。",
       "evidence": [
         {
-          "resource": "repo://crates/utils/src/process/owned_group.rs#L446-L526",
+          "resource": "repo://crates/utils/src/process/owned_group.rs#L532-L612",
           "version": "repo-lines-v1:sha256:5bd9809978dcdc910d7a12f6c56f78f736351bca37380200e5089a762714c825:eyJzZWxlY3RlZExpbmVDb3VudCI6ODEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZiOTFmNDQ2NzRkMTNhYTFkOTc2MWQ5ZTVlYzljMzg0YjAyYTNlMTU0ZmMxMjZjMTU4ZDQ3Y2Q5N2FkNzJhOGYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI0YTM2NWE5MGVjMTFlOTA0MzI3NTJjZjkzNzZlYzVlZDM2YjgwYmE1ZThlNjg1NGZjZjk4OTcwZDMwNDQ0NjkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBkNmQwMDU4NTEzODQ2YzNkMzc5MzFlOWQyYjhkNjI1NTg3YjNjY2E5NWEyMDlmYmM4NDBkNTU5ZTljZDcxZWYifQ"
         }
       ]
@@ -1031,6 +1031,6 @@
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-09T07:03:14.304Z"
+    "at": "2026-11-09T08:47:44.052Z"
   }
 }
