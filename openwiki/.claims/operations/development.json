@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:85798eae94a48890e8b672c161cdc8f81e7a5ea25f29edb41e50459f87d6b7a1",
+  "pageVersion": "sha256:c18b6ed35b28121b946c4a986bfe5b6055e3147ccb35038861b083228ae83af5",
   "claims": [
     {
       "id": "claim_1640e4eaeac94676a84eb3b9d9970d30",
@@ -794,7 +794,7 @@
       "evidence": [
         {
           "resource": "repo://crates/executors/src/account_usage_tests.rs",
-          "version": "repo-file-v1:sha256:c2ef4c2635562a70b707e7cab918faccc64b3dbf89f562b38ad060ea1d98c571"
+          "version": "repo-file-v1:sha256:45cfc9a4097e3f1a2b1c2d9359c462e0f26edc499ca4d63680beb9f81933a4e4"
         },
         {
           "resource": "repo://crates/executors/src/executors/codex/client.rs",
@@ -948,7 +948,7 @@
       "evidence": [
         {
           "resource": "repo://skills/lvk-orchestration/SKILL.md",
-          "version": "repo-file-v1:sha256:2192f4760df248688071bc420ae481b5bf7b7bf25197e9c44e8391f3e91b64fe"
+          "version": "repo-file-v1:sha256:609c18d4af7f7a7ce04c0281f38f05beffaceae1022da5900c8b2102288e4fc2"
         }
       ]
     },
@@ -977,8 +977,8 @@
       "statement": "orchestration Skillは上位AIにbuildとmanaged Workspace変更の担当coding agentへの委譲を求め、既に割り当てられたcoding agent自身は自Workspaceで実装・検証すると区別する。",
       "evidence": [
         {
-          "resource": "repo://skills/lvk-orchestration/SKILL.md#L10-L17",
-          "version": "repo-lines-v1:sha256:bfea9ad5f356c9d9638ecf6f79097576b72c836c627446efeab7138224ce1342:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNjJmNjE3OGU2ZjU2YmJjMDE4MGFlMWM0ZjZiOTlmMjM2YzM4YjdhODg2Yjc4OGY4NDBiYjAzYTllYzk5Mzc0MCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYmY2NzQ3MjhjZjg0ZTZlOWE2ODZmMzI3NTUyNTk4YjNiYjNiMWI2MzA5OGM1NzEyYzdjYTM0NjY4MzNlMjBkNyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOTU1YTM1MTdhZDI5OGVhNjdjZTAyNTNiM2Y3OTc3Njk2NDNlMTVlNWZjMzRmZTg0ZDg4MDY2MGVjOTYyMmJkMCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNWEzMThjOTdhYjYyMTE5YTkwOWExOTIxNjA3ZDhkNDgxODFhNjA5NmY1MjM3MjBmY2ZkYmNhNzE4NmQ4ZTQxZiJ9"
+          "resource": "repo://skills/lvk-orchestration/SKILL.md#L10-L18",
+          "version": "repo-lines-v1:sha256:3d2c55f6cf82cf255a0b588d1fe47166d06e752cd6e979c194d0219d061b17e4:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNjJmNjE3OGU2ZjU2YmJjMDE4MGFlMWM0ZjZiOTlmMjM2YzM4YjdhODg2Yjc4OGY4NDBiYjAzYTllYzk5Mzc0MCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYmY2NzQ3MjhjZjg0ZTZlOWE2ODZmMzI3NTUyNTk4YjNiYjNiMWI2MzA5OGM1NzEyYzdjYTM0NjY4MzNlMjBkNyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOTU1YTM1MTdhZDI5OGVhNjdjZTAyNTNiM2Y3OTc3Njk2NDNlMTVlNWZjMzRmZTg0ZDg4MDY2MGVjOTYyMmJkMCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNWEzMThjOTdhYjYyMTE5YTkwOWExOTIxNjA3ZDhkNDgxODFhNjA5NmY1MjM3MjBmY2ZkYmNhNzE4NmQ4ZTQxZiJ9"
         }
       ]
     },
@@ -1023,10 +1023,34 @@
           "version": "repo-file-v1:sha256:c267142081195b2334d5ae0cf7ff5e5762bf374958a91619e76841e896c54f9d"
         }
       ]
+    },
+    {
+      "id": "claim_d856c28f8bd245b28c78d923b927f5e7",
+      "statement": "統合時の実bundle試験は専用DBでpending/no-pending startup migration、sourceアクセス拒否下のasset hash/API、async receipt、host bootstrapとWorkspace cwdのbundled stdio MCPを確認し、実provider/model/Auth0/browserとは区別する。",
+      "evidence": [
+        {
+          "resource": "repo://deploy/developer/switch/test_real_server.py#L121-L254",
+          "version": "repo-lines-v1:sha256:358bdd92c037d2fd30b803441c1fe1ffe6f625093f94f69767a1b0c0dc34a4d3:eyJzZWxlY3RlZExpbmVDb3VudCI6MTM0LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJjMmUzMTI1N2RjMGFlMWQ1OTMwMzdjMjgwYzlhZDUwODE5YjhhNmM4Y2Y3MjhiZTA3MTZkMDBhM2VlY2MwNGJiIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIwMWJhNDcxOWM4MGI2ZmU5MTFiMDkxYTdjMDUxMjRiNjRlZWVjZTk2NGUwOWMwNThlZjhmOTgwNWRhY2E1NDZiIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJkOTZhZGFhMzU3NTMzZTM0ZTdkMWJiYmIxNDEwZTJlMmFiMDhlMGU0NDdkMDNhYmFhYTgyNjUwYWQzMjdhMzg5IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiIwMzJlNjkyMjUxODQ2NWRlZTk4NzBlNzYwMTY1NGFlZGViODk4Yjg0OWZiZjZjM2YwNDhjOGMxOTJmNzNiZjBlIn0"
+        }
+      ]
+    },
+    {
+      "id": "claim_2fc90010166a4069bbefe44185a10526",
+      "statement": "Git管理のorchestration Skillと既存Codex REVIEW指示は結論直後の人間判断事項集約、未決選択に限定したDECISION、確定した人間の意図の通常ラベル付き引用を指針とする。",
+      "evidence": [
+        {
+          "resource": "repo://crates/executors/src/executors/codex.rs#L1-L10",
+          "version": "repo-lines-v1:sha256:53513d72190602fbb8b2a4616dc95e51b98edbad471f52c7c6ba1ede7467cedd:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI1ZGQxMzBhYTRlOTQzNDIzN2MzNjJlMjc3ZWMzZTQwYTlkYTJjOTNlNjAwMGVlYzFmMTI5ZmM3OTk3Y2U1ZjEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ5OTY3ZWMxZWQzODM2ZjhlYjE3YWZmMTcyYjViZmVmN2RlNjA0ODVhNDM5YzZjYTExYzU5MWUxNzU1NzM5YWUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdkNDVjODJiM2Q5NGJhYTI1OTk4NDdmMDYwMGQzOTU5MjYxZDVhODkzZDk1YjgxYjBhMTJlNTlhY2I5NWYzODYifQ"
+        },
+        {
+          "resource": "repo://skills/lvk-orchestration/SKILL.md#L10-L23",
+          "version": "repo-lines-v1:sha256:50f81b47e9683855f9f6e9529661f288e93d3a8dc7b94db524bb7f788a2a4dfe:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYyZjYxNzhlNmY1NmJiYzAxODBhZTFjNGY2Yjk5ZjIzNmMzOGI3YTg4NmI3ODhmODQwYmIwM2E5ZWM5OTM3NDAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk1NWEzNTE3YWQyOThlYTY3Y2UwMjUzYjNmNzk3NzY5NjQzZTE1ZTVmYzM0ZmU4NGQ4ODA2NjBlYzk2MjJiZDAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjY2ZjU1OGIyYzk4Y2E2MjM2YTE2OGY5Y2VmMGQ5OTVhODFiOTI0NmE3YTM2YWZjOGQ0MDBiM2EzNjc3YjEyMzcifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-09T18:20:01.087Z"
+    "at": "2026-11-09T20:29:18.834Z"
   }
 }

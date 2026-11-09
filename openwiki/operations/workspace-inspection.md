@@ -112,6 +112,8 @@ sources:
     resource: repo://packages/web-core/src/features/workspace-files/model/workspaceFileRawUrl.test.ts
   - id: openwiki-source-e26b48aa743da73944d9c0b1
     resource: repo://packages/web-core/src/features/workspace-files/ui/viewers/CodeTextViewer.tsx
+  - id: openwiki-source-a37c8f73174e9393571f496d
+    resource: repo://packages/web-core/src/features/workspace-files/ui/viewers/MarkdownFileViewer.tsx
   - id: openwiki-source-48d5859237df58130423c433
     resource: repo://packages/web-core/src/features/workspace-files/ui/WorkspaceFilePreviewHeader.tsx
   - id: openwiki-source-ece894e6e087af564c07e38d
@@ -180,10 +182,10 @@ sources:
     resource: repo://tests/server/specs/workspace-search.spec.ts
   - id: openwiki-source-dcac74ef871fd02e6315fa93
     resource: repo://tests/workflow/specs/diff-tree.spec.ts
-generated: { by: "codex", at: "2026-11-09T18:10:41.827Z" }
+generated: { by: "codex", at: "2026-11-09T20:29:18.834Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-09T18:10:41.827Z
+    at: 2026-11-09T20:29:18.834Z
 ---
 
 # ファイル・差分・プレビュー・端末の境界
@@ -473,3 +475,11 @@ Project utilitiesの関連Repo読取は現在のプリセットだけでなく�
 ### LOCAL-361のWikiリンク整理
 
 旧形式を切り替えるopenwiki selector引数を廃止し、現行OpenWikiとして相対path、`/openwiki/`絶対path、拡張子省略、directory indexを解決する。既知availablePathsにある候補だけを返し、汎用 `pages/` fallbackとroot逸脱拒否は保持する。旧Wiki専用のtestは撤去したが、現行の非変更・symlink・過大page拒否のreader試験は残る。[resolver](../../packages/web-core/src/features/wiki/model/wikiNavigation.ts#L130-L188)・[reader試験](../../crates/services/src/services/wiki/openwiki.rs)
+
+## Markdown本文の目次と引用表示
+
+Issue本文、設計メモ、Wiki、Markdownファイルの閲覧では、h1〜h3が3件以上あると本文上部の「目次」を開ける。初期は閉じ、項目をクリックまたはキーボードで選ぶと対象paneの見出しへ移動してfocusを渡す。日本語や同名見出しも扱い、ページ/ファイル切替で参照と開閉をresetする。短い会話と編集中には表示せず、閉じたdetails内部は一覧へ含めない。保存本文やURL hashを変更する操作ではない。[共通の表示境界](../architecture/web-and-sync.md#markdown本文引用目次の表示境界local-368)
+
+Wikiは既存リンク捕捉とページ別scroll復元を維持し、scrollKeyを目次のcontentKeyにも使う。MarkdownファイルはWorkspace/Repo/pathをcontentKeyにする。行指定リンクは従来どおりsource viewerへ開くため、描画見出しをソース行番号と混同しない。[Wiki](../../packages/web-core/src/features/wiki/ui/WorkspaceWikiPanel.tsx#L348-L361)・[ファイル分岐](../../packages/web-core/src/features/workspace-files/ui/WorkspaceFilePreviewPanel.tsx#L105-L128)
+
+判断待ちは先頭に独立した `> [!DECISION]` を置いた引用だけが専用表示になる。標準alert5種も閲覧装飾されるが、人間の意図は通常引用に明示ラベルを付ける。表示器は原文を自動分類・保存せず、コピーにも元のMarkdownを使う。未決事項を解消してマーカーを外す場合は通常の権限のある編集として行う。新しいdetails記法や判断待ち件数の自動抽出は追加していない。[実コンポーネント検証と限界](../../tests/markdown/README.md)

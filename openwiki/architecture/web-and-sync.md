@@ -60,6 +60,8 @@ sources:
     resource: repo://packages/ui/src/components/IssueWorkspaceCard.tsx
   - id: openwiki-source-9ac09945bdd807003978190a
     resource: repo://packages/ui/src/components/KanbanTags.tsx
+  - id: openwiki-source-fc852f232a501f48c2781efb
+    resource: repo://packages/ui/src/components/MarkdownReadingSurface.tsx
   - id: openwiki-source-84123960815ca9b2c23d8a0b
     resource: repo://packages/ui/src/components/MarkdownSyncPlugin.tsx
   - id: openwiki-source-05854b6bc56b95355f9e2f59
@@ -74,10 +76,14 @@ sources:
     resource: repo://packages/ui/src/lib/chat-code-highlighting.ts
   - id: openwiki-source-2c0d6b926239bcee46352b0f
     resource: repo://packages/ui/src/lib/codexQuota.ts
+  - id: openwiki-source-4ff7feb1d9f47c40f879faa4
+    resource: repo://packages/ui/src/lib/markdownQuote.ts
   - id: openwiki-source-2a1a06abf88738697abb7c30
     resource: repo://packages/ui/src/lib/repository.ts
   - id: openwiki-source-536269ea917b55a30e54f617
     resource: repo://packages/ui/src/lib/resourceObservation.ts
+  - id: openwiki-source-acf9f436db885ae9d0a398fb
+    resource: repo://packages/web-core/src/app/styles/new/index.css
   - id: openwiki-source-397291e029ec7b98f2f46af2
     resource: repo://packages/web-core/src/features/agent-runtime/model/AgentRunSessionContext.tsx
   - id: openwiki-source-a46d1ceab41257b518aa5a4a
@@ -168,6 +174,8 @@ sources:
     resource: repo://packages/web-core/src/shared/components/EnvironmentPanel.tsx
   - id: openwiki-source-44823e238660c0c3c02d5a53
     resource: repo://packages/web-core/src/shared/components/EnvironmentQuota.tsx
+  - id: openwiki-source-e43fc86a21c713666db8bb2b
+    resource: repo://packages/web-core/src/shared/components/MarkdownPreview.tsx
   - id: openwiki-source-a7cac6e6f3abafbcf9390ddf
     resource: repo://packages/web-core/src/shared/components/RouteLoadState.tsx
   - id: openwiki-source-867b74d482ff6cc365176503
@@ -274,6 +282,8 @@ sources:
     resource: repo://tests/integration-skip/history.spec.ts
   - id: openwiki-source-249425b2ca74a9cd2211b712
     resource: repo://tests/kanban/isolated.mjs
+  - id: openwiki-source-83f6dac5589f86d65b4628c7
+    resource: repo://tests/markdown/roundtrip.test.mjs
   - id: openwiki-source-2651e132dfea3c98790877f6
     resource: repo://tests/resource-observation/model.test.mjs
   - id: openwiki-source-b1f4325353088fa9d003b939
@@ -286,10 +296,10 @@ sources:
     resource: repo://tests/workspace-navigation/run-isolated.py
   - id: openwiki-source-b87e3253bd1458a0091f8587
     resource: repo://tests/workspace-navigation/workspace-navigation.spec.ts
-generated: { by: "codex", at: "2026-11-09T18:20:01.087Z" }
+generated: { by: "codex", at: "2026-11-09T20:29:18.834Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-09T18:20:01.087Z
+    at: 2026-11-09T20:29:18.834Z
 ---
 
 # Web の実行環境と同期
@@ -672,3 +682,13 @@ Project側のWiki providerは既存のrepository-memory query成功通知を購�
 会話投影は同じturn/attemptの連続する最後のassistant block群だけを候補とし、`\n\n`で結合したsuffixがfinal本文と完全一致すると、既存表示へevent identityを統合して再掲しない。tool/user/既存final等の境界を越えて過去の同一本文を消さず、streamingのfinal snapshotも本文の追記重複を避ける。[投影](../../packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts#L420-L491)・[境界の回帰試験](../../packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.test.ts)
 
 Claudeの利用枠要求期限は50秒で、backendのread期限後の専用process/reader回収を待つ。Codexは20秒を維持する。Claudeの`in_progress`はpending、回収未確認・timeout等のunavailableはerror、partialはunknownへ表示し、未知値を0にしない。既知の理由codeは英日翻訳し、その他の理由は制御文字除去と長さ制限を経て渡す。回収未確認の閉鎖を画面から解除する機能ではない。[要求](../../packages/web-core/src/shared/hooks/useCodexQuota.ts)・[view](../../packages/web-core/src/shared/lib/claudeQuotaView.ts)・[理由表示](../../packages/web-core/src/shared/components/EnvironmentPanel.tsx)
+
+## Markdown本文・引用・目次の表示境界（LOCAL-368）
+
+Issue本文と設計メモはLexical、WikiとMarkdownファイルはMarkdownPreviewという既存の二系統を維持する。両方が共通の `.markdown-body` を使い、文字組みは [共通CSS](../../packages/web-core/src/app/styles/new/index.css) が所有する。長文は1.0625rem・行高1.65、会話・コメントはcompactの1remを使う。入力欄とtoolbar全体を拡大せず、既存64rem外枠と表・コードの領域内スクロールを保つ。GitHubコメント固有の折返しは小さなvariantで扱う。
+
+[MarkdownReadingSurface](../../packages/ui/src/components/MarkdownReadingSurface.tsx) は閲覧DOMだけを観測する。引用先頭の独立した `[!DECISION]` と標準5種のalertを明示マーカーとして装飾し、未知マーカーや通常引用から意味を推測しない。DECISIONは紫の左罫線・記号・ラベルで警告と区別する。人間の意図は通常引用と明示ラベルのままで、独自保存型を増やさない。Lexical stateや保存Markdownを書き換えず、編集時には装飾を外す。[QUOTE adapter](../../packages/ui/src/lib/markdownQuote.ts) は裸の `>` による引用内空行を扱い、複数段落とマーカーの保存往復を保つ。
+
+目次は明示的にoutlineを有効にした本文で、描画されたh1〜h3が3件以上ある場合だけ表示する。初期は閉じ、contentKey変更で開閉と参照を更新する。閉じたdetails内の見出しを除き、日本語や同名見出しもDOM参照で移動する。URL hashや保存IDは作らず、最寄りの縦scroll paneだけを動かし、見出しへfocusを渡す。Issueのクリック編集から目次操作を分離し、編集中と短い会話には目次を出さない。
+
+変更時は [保存往復試験](../../tests/markdown/roundtrip.test.mjs) と [実コンポーネントfixture](../../tests/markdown/reading.mjs) を使う。後者は明暗・狭幅/広幅、通常引用/alert、見出し切替、閲覧無保存、原文copy、既存リンク・添付・ファイル操作を検査する。fixture成功を認証済アプリ、OS clipboard、実機mobileや外部preview/HMRの成功へ拡張しない。[実行方法と限界](../../tests/markdown/README.md)・[統合時の検証](../operations/development.md#local-366368の統合検証とbundle)

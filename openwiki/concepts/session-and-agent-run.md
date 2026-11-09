@@ -34,6 +34,8 @@ sources:
     resource: repo://crates/executors/src/profile.rs
   - id: openwiki-source-dc7ce5cfcb903cb959653602
     resource: repo://crates/executors/src/profile/runtime_identity.rs
+  - id: openwiki-source-bccd47f2decfe8aa6a080767
+    resource: repo://crates/executors/src/provider_policy.rs
   - id: openwiki-source-351583963abfe37bbf137f7e
     resource: repo://crates/executors/src/runtime/contracts.rs
   - id: openwiki-source-6e93b2f0738ee5fe4379942f
@@ -68,6 +70,8 @@ sources:
     resource: repo://crates/server/src/routes/agent_runs.rs
   - id: openwiki-source-a98b89b4828bd8f76e2ca9bf
     resource: repo://crates/server/src/routes/attachment_transfer.rs
+  - id: openwiki-source-a9b6d4be264787a78357c9d6
+    resource: repo://crates/server/src/routes/config.rs
   - id: openwiki-source-5720d865d1c837f0e6b7dab7
     resource: repo://crates/server/src/routes/integrations/conversation.rs
   - id: openwiki-source-79cca50cc03fbe39bcd5a22c
@@ -188,10 +192,10 @@ sources:
     resource: repo://tests/supervised/README.md
   - id: openwiki-source-5184ef612e83b7ab35d62e7b
     resource: repo://tests/supervised/run_isolated.py
-generated: { by: "codex", at: "2026-11-09T18:10:41.827Z" }
+generated: { by: "codex", at: "2026-11-09T20:29:18.834Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-09T18:10:41.827Z
+    at: 2026-11-09T20:29:18.834Z
 ---
 
 # Session・AgentRun・RunAttempt
@@ -266,7 +270,7 @@ Rust の `ExecutorConfig` は `Option::None` を JSON から省略するため�
 
 ### 選択した Claude profile の readiness
 
-Session composer は executor に加え selected variant と Workspace / Session scope を readiness 確認へ渡し、Claude の診断をモデル選択欄に表示する。確認失敗を provider 全体の Ready で代用せず、hook は Unknown・空の capability を返す。これは起動許可の確約ではなく、[サブスクリプション専用 profile の実行前確認](../integrations/agent-providers.md#claude-のサブスクリプション専用-profile)が実際の実行環境で再度適用される。[composer](../../packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx#L605-L609)・[診断表示](../../packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx#L1381-L1392)・[失敗時の扱い](../../packages/web-core/src/shared/hooks/useAgentProviderPolicy.ts#L40-L83)
+Session composer は executor に加え selected variant と Workspace / Session scope を readiness 確認へ渡し、Claude の診断をモデル選択欄に表示する。確認失敗を provider 全体の Ready で代用せず、hook は Unknown・空の capability を返す。LOCAL-366以後、画面用policyはinstallationの静的情報だけを使い、表示のためのauth statusは実行しない。Claudeの単なるInstallationFoundには認証未確認の赤診断を出さず、実行時の失敗診断は維持する。これは起動許可の確約ではなく、[サブスクリプション専用 profile の実行前確認](../integrations/agent-providers.md#claude-のサブスクリプション専用-profile)が実際の実行環境で再度適用される。[composer](../../packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx#L605-L609)・[診断表示](../../packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx#L1381-L1392)・[失敗時の扱い](../../packages/web-core/src/shared/hooks/useAgentProviderPolicy.ts#L40-L83)
 
 新規 Workspace と Session の editor は選択 variant を tooling discovery へ渡す。Claude の新規 Session では Session ID がまだなくても model discovery の Workspace cwd を保持する。したがって preset の切替を実行 payload だけへ反映し、補完やモデル探索を別 profile のままにしてはいけない。認証・cache 分離の詳細は [Provider discovery の契約](../integrations/agent-providers.md#選択-profile-と-discovery-の一貫性)に置く。[editor の接続](../../packages/web-core/src/shared/components/WYSIWYGEditor.tsx#L343-L360)・[Workspace 作成](../../packages/web-core/src/shared/components/CreateChatBoxContainer.tsx#L569-L586)・[Session editor](../../packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx#L1329-L1351)・[model scope](../../packages/web-core/src/shared/components/ModelSelectorContainer.tsx#L116-L121)
 

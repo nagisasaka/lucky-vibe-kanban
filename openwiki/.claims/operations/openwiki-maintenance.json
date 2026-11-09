@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:9bed9ad6aa4fd5844bca13d528851262d5b33302d47cbe935285915b022aee62",
+  "pageVersion": "sha256:e7d4273e02a89fd8b2b5cc7b26571d3957558ffae9e33fb0f7713f960f7e1cde",
   "claims": [
     {
       "id": "claim_7239e619508e4a2785f62b8f23fd0a74",
@@ -54,7 +54,7 @@
       "evidence": [
         {
           "resource": "repo://crates/executors/src/executors/codex.rs",
-          "version": "repo-file-v1:sha256:66c3b27eca417a14edf08f6182fa75d824421db03a400046cdda72d4b975744e"
+          "version": "repo-file-v1:sha256:d3ebf24a533bb448dd39e7cc7acaf31490676949085278fb707073f43dbf58ae"
         },
         {
           "resource": "repo://crates/services/src/services/openwiki.rs",
@@ -150,7 +150,7 @@
       "evidence": [
         {
           "resource": "repo://crates/executors/src/executors/codex.rs",
-          "version": "repo-file-v1:sha256:66c3b27eca417a14edf08f6182fa75d824421db03a400046cdda72d4b975744e"
+          "version": "repo-file-v1:sha256:d3ebf24a533bb448dd39e7cc7acaf31490676949085278fb707073f43dbf58ae"
         },
         {
           "resource": "repo://crates/server/src/workflow_runtime/bootstrap.rs",
@@ -771,7 +771,7 @@
       "statement": "maintenance writerのpreflightとthread-local承認はlifecycle6toolと読取4toolを同じ集合として扱い、OPENWIKI_CONFIG_DIRをMCPに引き継ぐ。",
       "evidence": [
         {
-          "resource": "repo://crates/executors/src/executors/codex.rs#L1071-L1115",
+          "resource": "repo://crates/executors/src/executors/codex.rs#L1072-L1116",
           "version": "repo-lines-v1:sha256:c0dc55b97b39cdd68c0dcb43c3fb3f3d53b0ad128337e9c68e68f5102bca5306:eyJzZWxlY3RlZExpbmVDb3VudCI6NDUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ2ZjJmZWMwNGUzYzhlN2Y2MTNhYzFiMzNlYjE1ZDMzNjAzZDU2YmQyYmE3ZDU1N2NjZDhhODk3MTUzZGU2NmQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFmMzc0ZTZkMWYzYmI2OWZjMWY1ZjYyZTg4MThkYzAyN2MwNzAyYjNhNDliM2UxYTY5ODYxMmFjM2UzZDllZTkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjMwNzRkNTdhMTM0ODk1ZjZiNzZhOTg2YzUwY2E3YWE3NGE5MmQ3MDgxODc0ZWYwOTFkNTFkNzZmMmMyOTA3Y2MiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNhY2RjM2MyMmQ3ZjY1NzZlOGNmMGI1ZTUyNjc5Nzk0N2I1MzZhOWUyNDE0ODJiODBkZDVlMWY0ZDk5OGE0ZDUifQ"
         },
         {
@@ -963,6 +963,6 @@
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-09T18:10:41.827Z"
+    "at": "2026-11-09T20:29:18.834Z"
   }
 }

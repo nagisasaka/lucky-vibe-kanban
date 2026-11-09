@@ -32,10 +32,10 @@ sources:
     resource: repo://packages/web-core/src/shared/lib/listSearch.ts
   - id: openwiki-source-4917ca78c6137f6aa2fe5c81
     resource: repo://tests/design-notes/markdown-editing.mjs
-generated: { by: "codex", at: "2026-11-06T03:28:31.315Z" }
+generated: { by: "codex", at: "2026-11-09T20:29:18.834Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-07T09:17:18.907Z
+    at: 2026-11-09T20:29:18.834Z
 ---
 
 # 設計メモ・本文履歴と独立追記
@@ -123,3 +123,7 @@ MCP の書込成功結果は `{note:{id,revision},addition:null|{id,revision}}` 
 ## 一覧・詳細の再取得周期
 
 一覧と選択中の詳細は15秒周期で再取得する。書込み直後の再取得と既存の下書き・版・競合保護は維持する。[UI](../../packages/web-core/src/features/design-notes/ui/DesignNotePanel.tsx#L131-L181)
+
+## 共通本文表示と目次
+
+設計メモの閲覧・保存前プレビューはdocument用文字組みとoutlineを指定する。同じ描画済本文にh1〜h3が3件以上あれば初期閉の目次を提供し、本文やrevisionへ目次を書き込まない。生テキスト入力・明示保存・競合時の下書き保持は従来どおりである。[適用箇所](../../packages/web-core/src/features/design-notes/ui/DesignNotePanel.tsx#L32-L42)・[共通の表示境界](../architecture/web-and-sync.md#markdown本文引用目次の表示境界local-368)

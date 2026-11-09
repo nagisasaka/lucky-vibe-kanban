@@ -27,6 +27,8 @@ sources:
     resource: repo://crates/db/src/models/agent_runtime.rs
   - id: openwiki-source-8856c7b6451960c4ee31ae56
     resource: repo://crates/executors/src/account_usage_tests.rs
+  - id: openwiki-source-22b82518475034ade38104e6
+    resource: repo://crates/executors/src/executors/codex.rs
   - id: openwiki-source-c88a7c6fabdac15166554032
     resource: repo://crates/executors/src/executors/codex/client.rs
   - id: openwiki-source-f4e0f9b2ce513d3f8b8b070e
@@ -159,10 +161,10 @@ sources:
     resource: repo://tests/terminal-latency/run.py
   - id: openwiki-source-966297deb875824dc95ee8d5
     resource: repo://tests/workflow/playwright.config.ts
-generated: { by: "codex", at: "2026-11-09T18:20:01.087Z" }
+generated: { by: "codex", at: "2026-11-09T20:29:18.834Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-09T18:20:01.087Z
+    at: 2026-11-09T20:29:18.834Z
 ---
 
 
@@ -562,3 +564,17 @@ LOCAL-346単独のコード候補 `3b88263a13d2e15606ea445c1a6753919dc08303` は
 今回候補ではlocked install、実frontend build、developer-runtime付きdev最適化のserver/agent-process-host/MCP buildを実行した。現行switch kitの `bundle.py` と `test_real_server.py` でsourceアクセス拒否下のasset/API、pending/no-pending migration、async receipt、host bootstrap、bundled stdio MCPを確認した。起動のbuild_infoは当該SHA・development・dirty=falseだった。pip不在とwheel tag誤選択の準備失敗2件は保持し、task専用のpysqlite3 wheelを正しく展開した修正版で成功した。一時依存・隔離processは回収し、要求されたbundleのみ共有persistentに保持した。[実bundle試験の定義](../../deploy/developer/switch/test_real_server.py)・[正式buildと切替手順](../../deploy/developer/switch/README.md)
 
 これはlive DB互換性の全履歴試験、実Auth0/browser/model、dev切替や再起動の成功ではない。Wiki commitはコード候補と別であり、main publicationは担当Run終了後のhost確認に従う。ガイド移設だけをtoken削減の実測とは扱わない。
+
+## LOCAL-366/368の統合検証とbundle
+
+固定base `6ad758d6ee1d74785a6e70e0f17ef93a0ab43d8e` へ366 `68c3faab…` と368 `7a6ad766…` を競合なくmergeした。コード検証SHAは `9647311264878cc047f465fd05869597c1d524da`。追加修復は `account_usage_tests.rs` の2つのwildcardを削除し、qa-mode時に存在するQaMockだけをcfg付きで明示したもの。単純削除の旧候補はQA構成の非網羅matchで失敗し、その後の通常全target Clippyとexecutors/serverのqa-mode全target Clippyが成功した。警告抑制や型の緩和は使っていない。
+
+最終コードSHAではexecutors libが350成功・既存7ignored、Markdown保存往復6件、両実rendererを使う明暗・狭幅/広幅のbrowser fixture、UI/web-core/local-web型検査が成功した。sourceのlint・Claude隔離E2E・frontend79件・Kanban幅行列は固定SHA付きManifestの既存証拠を参照し、包括check/lint/backend suiteとともに担当判断で反復を省略した。これは今回のpassではない。ignored live診断、実OS clipboard/mobile、認証後アプリ・実provider/model/quota、外部preview/HMRは未検証である。[Markdown試験](../../tests/markdown/README.md)・[usage回帰](../../crates/executors/src/account_usage_tests.rs)
+
+管理Workspaceで実frontendと `--purpose dev` の最適化server/agent-process-host/vibe-kanban-mcp（developer-runtime付き）をbuildし、bundle.pyで埋込みpayloadを照合した。隔離受入はPython SQLite 3.40.1に必要な拡張がなく開始前失敗し、続くcommandもshのpipefail非対応で開始前失敗した。hash確認したpysqlite3 wheelをtask-localへ展開し、Bashを明示して、完成済みbundleの試験だけを成功させた。失敗の履歴と完全build/受入ログは保持し、重複buildの反復は理由付き省略として記録した。
+
+[test_real_server.py](../../deploy/developer/switch/test_real_server.py) は専用DBを過去schemaから構築し、pending/no-pending migrationの2ケース、DB integrity、sourceアクセス拒否下の埋込みasset hash/API、async workerとreceipt再読、host bootstrap、Workspace cwdからのbundled stdio MCPを検査した。稼働identityは上記コードSHA・development・dirty=falseだった。live DBのコピーや認証変更はしておらず、live DB全履歴の互換性・実Auth0/UI/model成功まで証明しない。
+
+bundleとSHA256SUMS・code-commit.txt・試験ログはrepositoryの `.lvk/shared/persistent/auto-merge-366-368-9647311264878cc047f465fd05869597c1d524da/` へ保持した。Workspace archive後も読む成果物であり、通常の一時cleanup対象ではない。導入は[切替手順](../../deploy/developer/switch/README.md)の後続操作で、今回のbuild成功はdev切替や再起動の成功ではない。368 Workspaceは後続改善・preview2用に保持する。コード検証後のprepare_wikiで原本journal保存を確認してからWikiを開始し、Wikiだけを別commitとする。正式main publicationは担当Run終了後のhost結果で別に証明する。
+
+LOCAL-368はGit正本のorchestration Skillと既存Codex REVIEW指示へ、人間の判断事項を結論直後へ集約する指針を追加した。DECISIONは未決の選択だけに限定し、確定した人間の意図は通常のラベル付き引用で扱う。空欄の固定sectionや通常Runへの新規共通注入は増やしていない。[Skill](../../skills/lvk-orchestration/SKILL.md)・[REVIEW指示](../../crates/executors/src/executors/codex.rs#L1-L10)

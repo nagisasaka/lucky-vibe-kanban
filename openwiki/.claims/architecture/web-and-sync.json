@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:7a07aab5ed95c2ea1f53f66f61e011c0c3ddb36dce369ed1df7b779c5976aeb1",
+  "pageVersion": "sha256:f1f484f10cf0a27feaeb217e00127e0a9e747515bfef87a764e4a0ca47563823",
   "claims": [
     {
       "id": "claim_cd547b65737e432fb2cf718c4992aa97",
@@ -475,7 +475,7 @@
           "version": "repo-lines-v1:sha256:b3457837fedf518139a80ac538b5e6ad1b7e7c369feb57a9346c674859d0597a:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhhZWUxNDUwODdjZmZkMTcxYWFiMmIxNDJiY2ExNzczZDM4NTIyYTljNGRjN2Y4NzcxNGU1NmM2MmU1MjJlMTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
         },
         {
-          "resource": "repo://packages/web-core/src/shared/components/WYSIWYGEditor.tsx#L710-L715",
+          "resource": "repo://packages/web-core/src/shared/components/WYSIWYGEditor.tsx#L726-L731",
           "version": "repo-lines-v1:sha256:222e5ff1f43cc39fab3a9c4f6b71c1dd623eb38a3c12295d653716327aa0aeb5:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYjUwN2IzZDI4NDJkOGE0NDRlMGY3N2U2ZTZiOTg0OTg3MzRiN2Q5YzEwMDg1ZWMzZjJmODcwY2I0Y2FkYWM5MCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMzVkYmM4NDRlMWNkMjNjYjkwMjAyOGM4ZGRhNmRkNDIwYjhlNmU5M2Q5MGVmZTI0YWYwZTRjNjZjNmNhYjEzOSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMmM0NDg1OTJhZjg5Mjg5MzY1NDFmYjIzZTFmNzcyNjhkYTljODQ1NjAyM2I3ZWFhMjUzMWI2YTY1YTBlNjliYyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZGI5ODRkZWIxMWM3MDQ3MjUxZDE2NzQ5ZGY5NDExZDlhMzEwNWY1YWVhMWZhYmFiNjQ2MjQ3Yzg4ODU0NWZmNSJ9"
         }
       ]
@@ -517,7 +517,7 @@
           "version": "repo-lines-v1:sha256:bab1e0d28c4b242fc7c93d939d2b7d25d8e3885292c579c519a7242605a44c9f:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEyZmJjNGIyZGE1NTE4ZDY0ZDY4Y2EzZmU3OGFkZWJhMzk1MDU4YjU5YjJjN2RkYzdhY2RiZTRmMGU4MDJlNDYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZkYTU5M2ViODNjNzlmZTljNmQyNjhkMWMxYjg3ODdhMDkyODEwODYyYjIxZmU4YTFkMTYyZjRmMWQxZjMxMWEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijg4YjU1Y2U2NzI5ZjkwMjY2ZWJiNzU3NGFlMWRjMzE3MzM2NmZhN2NhNzZhOThjMWRmNDIxZmIwNWNjZjNiOTQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZhOGFmZjk4OTRmMjcxMmZjY2E3MTJiMDVhMjg5YWVkNWZmMjcyMGMxZTA4YTNhODY1ZDExZGJiMWY1Y2Y0Y2IifQ"
         },
         {
-          "resource": "repo://packages/web-core/src/shared/components/WYSIWYGEditor.tsx#L487-L500",
+          "resource": "repo://packages/web-core/src/shared/components/WYSIWYGEditor.tsx#L496-L509",
           "version": "repo-lines-v1:sha256:96cf029ee94406f4b15703614838c26179b51545cb1bc0010a2526f125a67d6b:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNmNWFmYzMwOTg4M2RjMWJmZWMyN2Q2ZDg3MzYzM2NkY2U2NjNkNzQ0YmY0YjdiMmIwOGZmZDJmYTA3YzcxZDkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJiZWNkODczZjlmZGJlZDFmMWZmZmI2NzZmZTllMGNhOGNiZTY1NWUxNjJlMzI3OWExMTU0NTBlOTZiNTRmNDMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRhMWNiMGY0YjRiYzIwZTQ4Y2QzZjE2N2E1MTA4MDQ2Yjc1OWI0MTIzYTdkMGVhM2YyZmU3NGFjYzg2YWFmODAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjY2ZDdiOTU2MTY3M2UwOGU3YmRiNTI0NjE1YjA0OTJmNmJjN2M2MTMxNDIzYTZjM2I3ZDY4MGJhMTFiMWYyOTIifQ"
         }
       ]
@@ -1695,10 +1695,62 @@
           "version": "repo-file-v1:sha256:794ba0680cfeaa59e01aa088babd6f34195a865be2e8ab1c18d566d6d2d6da0a"
         }
       ]
+    },
+    {
+      "id": "claim_78782010c6e1425f9f4ef2afac055028",
+      "statement": "LexicalとMarkdownPreviewは二系統を維持し、markdown-bodyの共通CSSとcompact/GitHub variantで本文文字組みを共有する。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/app/styles/new/index.css#L1297-L1435",
+          "version": "repo-lines-v1:sha256:cd88620f0c3a6c1586dba739e92d7db6bc48ce49a418bee51f663b2ce8bd1572:eyJzZWxlY3RlZExpbmVDb3VudCI6MTM5LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIxZjAwYmQzMzJhMTIwYzQzZjQ3YjA3MDc2NDIyY2RmYjYwM2ZjNDhiMGY3MGExZjgwY2RiNGU3MDdmOTQ5OGFkIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJhNjMzYjVjZTM0ZjUyZGVmNzMwZTc0YTRkN2UwYWY3YjY4ZWZlMDI0OTEyNTc5M2EwNGI3MGJmYmI0NWMyNWM5IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJiNjI1ZTdhNTM4N2MxZmUxZDUzZWI5ZjMwZDVkYmFiNTUxM2M3MDA1OGI1ZDhlNTNhODdjZDc2YzA4NTJmYzZjIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJhOWZiZDE0NDRhZWIzOGFmNTg5ZGViMDIyZWUxNDc1ODc4NmNjN2QwOGM2MGQxYTIxNGRhODg0ODdhMDU2OWIzIn0"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/components/MarkdownPreview.tsx",
+          "version": "repo-file-v1:sha256:d53fcd66e53e121106f32d0cdbe8166209756d9cd13de3cc3f9a89c957b54f13"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/components/WYSIWYGEditor.tsx",
+          "version": "repo-file-v1:sha256:a95d0c0380e691490fea8689cbe83319f761231f337f1c3b52b87e00d88d1961"
+        }
+      ]
+    },
+    {
+      "id": "claim_81fc430c74204504a98ff64d2e70ed47",
+      "statement": "MarkdownReadingSurfaceは閲覧DOM上の明示的なDECISIONと標準alertだけを装飾し、Lexical stateと保存Markdownを変更しない。編集時には装飾を除く。",
+      "evidence": [
+        {
+          "resource": "repo://packages/ui/src/components/MarkdownReadingSurface.tsx#L1-L115",
+          "version": "repo-lines-v1:sha256:244e82936344522abe7d8a10df6800038df5a8ca274d873694245923a0be6180:eyJzZWxlY3RlZExpbmVDb3VudCI6MTE1LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJkNDFiMjYxNWE0NWZlZWQ3OTA3NDQ0ZTMwN2EyMmJkY2M0YWYyMWQ0MzYyZDVjMzE4MjMwMTJhOGZkNTE3NDBmIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJmM2ZlZWZkNzVmNThjMjA5OTc3ODRmOWE1Nzk5ZDY0NDY2MjNkN2VlNGZjZWM1NzEwMmZiMWY0ZTI0NjY4Zjc5IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MCwicHJlY2VkaW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlYmNhMGQ4M2EzYTVhOTFiNmUzYWUwZDA0ZjdmYzlmZTFjZTk5NDNlYzAzN2MxNTRhZTk3NmRlZWQ5N2VmMDQ2In0"
+        }
+      ]
+    },
+    {
+      "id": "claim_edf6b4eb19d1474bb82bd45fe83b1fd0",
+      "statement": "目次はoutline指定かつ閲覧時のh1〜h3が3件以上の場合に提供し、閉じたdetailsを除外、contentKeyで開閉をresetし、DOM参照と最寄りpaneのscroll/focusで移動する。",
+      "evidence": [
+        {
+          "resource": "repo://packages/ui/src/components/MarkdownReadingSurface.tsx#L34-L177",
+          "version": "repo-lines-v1:sha256:fce6bd6ecbc1fd3916e03785e92b301721d06e0d0550acab99f7a234dd7ae9e1:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQ0LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIwMWJhNDcxOWM4MGI2ZmU5MTFiMDkxYTdjMDUxMjRiNjRlZWVjZTk2NGUwOWMwNThlZjhmOTgwNWRhY2E1NDZiIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJlMDU2MzA0YjBlZWFiZDg4YWQ0Y2JkZDYwYmRmNDY2NTFhZDg1N2FkMWUwMTA0ZTQyYWJmZjZiMDQzYWU4ZWEwIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI0ODQwMzI5NjIxNjczY2VhNDA1NDg0MmUyMWM0ZjdjZGI1MzJiYjA1NDNiZDg2YWRkMjViNjEyZmI1ZjM4NWRjIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MiwiZm9sbG93aW5nQ29udGV4dEhhc2giOiI3YjhiNjAwYTViNDQ4YjFlNGQwMmRmMDk3NDZlZDNjYTMxNzJmNzVjNGFhYmIwMWRkZTA4MGUzNmNhYjA3NGI0In0"
+        }
+      ]
+    },
+    {
+      "id": "claim_6bfcab3679e7407e88838cd89d0e752c",
+      "statement": "裸の引用空行に対応する小さなQUOTE adapterを使い、保存往復試験はDECISION/標準alertの複数段落と通常引用を保持することを検査する。",
+      "evidence": [
+        {
+          "resource": "repo://packages/ui/src/lib/markdownQuote.ts",
+          "version": "repo-file-v1:sha256:2ee8dc11a346bed36446718287dc0ad772a5cf7d0fa581eb6ec83346cf4eabb9"
+        },
+        {
+          "resource": "repo://tests/markdown/roundtrip.test.mjs",
+          "version": "repo-file-v1:sha256:cedf12a86babc2bdc13a00ca384f883550119e192908f3b0b4e175a715e319c6"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-09T18:20:01.087Z"
+    "at": "2026-11-09T20:29:18.834Z"
   }
 }

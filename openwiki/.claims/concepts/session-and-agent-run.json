@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:a87daf76c5f216a54720949b5c234f83df482093d6d77e783bb59bc813602f77",
+  "pageVersion": "sha256:91cb58579c8286ac17aef09e642dc89586c8efdd0b459b800b93b37470e73b1a",
   "claims": [
     {
       "id": "claim_82c340b0bbd240889908ea6c2c5be423",
@@ -107,7 +107,7 @@
       "statement": "ExecutionMode はPermissionPolicyと別で、Codex Goal objectiveは4,000文字を上限とする。",
       "evidence": [
         {
-          "resource": "repo://crates/executors/src/executors/codex.rs#L12-L34",
+          "resource": "repo://crates/executors/src/executors/codex.rs#L13-L35",
           "version": "repo-lines-v1:sha256:0ab2f4535e0db706c43480799e3554be23df2f36cd92c5ceee764390466bfed8:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBkYjJjYmFkNWM4MzE0ZGVjNGEzNDE3OWRlZDY5YzQwZjg1YWZjODIzMTcxZjQxNzk2ODJhYzAzN2RjNzc1NGMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ4OTc3MWZlMWI2NjI4ODc1YWEyM2U3ZGJlNGFhNzE0NjFkMDBjZGZiNjZkZGYxMWI5ZDgyMGFjNTg5N2ZkZjYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQzMmNkMmU3OWQxY2E2NDkxZjcyZWU2N2NjY2FjMGViM2VkYTVmYWYxNWIyYzAwM2MzYTRmN2U3MTFkYTVjZGQifQ"
         },
         {
@@ -131,7 +131,7 @@
       "statement": "Goalのsubagent上限は0で無効化、未指定でCodex既定となる。",
       "evidence": [
         {
-          "resource": "repo://crates/executors/src/executors/codex.rs#L2189-L2208",
+          "resource": "repo://crates/executors/src/executors/codex.rs#L2190-L2209",
           "version": "repo-lines-v1:sha256:1d1f66bc0a94f686110e92e25bc67a3492adae0c9dd2dfd19e6552b2c523d9ee:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkyYjVlZGY1OTQ5Y2ZlYTY3ODIyY2Y2OTExMzIzNjNkNjhkNmYxZTE2OWY1ZTBkNGY3YzE0ZTVmYTFlNmQ0ZTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFlNzVjNzBkOTQ2MzYyNWUxMDc5ZmQ4ZmM4ZWU2MmFkMmU5MmM0MmJlYWFiZmQ4NWI3OGQ4ZTBhNDk3OWI5NGEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImYyZDgyOGEwMzdhYzFjODE1MzViMWQ1NTAwODMyMzIzYmZiYjg2NmEzYTNmODdlN2E2OGMxM2EyYmFlNTZmZmYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImEwMGRiMDQwZjI5MDliZjk3OGZmMGE5NTZhNTVlODNjNjUzNDE4ZGU2YmI2OGY4MDQxZGE5NzZmOGQzZDIyNzAifQ"
         },
         {
@@ -359,7 +359,7 @@
       "statement": "新規PlanWithGoal launchはPlanへ正規化してGoalを自動作成せず、composer復元も旧Goal optionsを消す。既存enum/API値は互換用に残る。",
       "evidence": [
         {
-          "resource": "repo://crates/executors/src/executors/codex.rs#L600-L680",
+          "resource": "repo://crates/executors/src/executors/codex.rs#L601-L681",
           "version": "repo-lines-v1:sha256:a70a8369f950a078df53c190d2750aa81769ab6614d8650b71142fbd0ebfcb6d:eyJzZWxlY3RlZExpbmVDb3VudCI6ODEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNmYTMyMjk5Y2Y3NjlkZTcyZWE5MjIyNzg2MGMzYWYyOTk0ZTExODY4Y2M0NmU3ZDM5ODIyOWQ5NzZiY2I4MGYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg0ZjMwNDBlNjM5ZTA2OGNmYjY5YzQxMDQ4ZDViOGI4YWRlZWQzMDUyMmRkZWY3Y2I5YjMxZGVkNWFiMTZjY2IiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijc5NzQ3ZDhlZmY4MzQwNjgzMTU1YTUzYzg0MjRiMGM2ZjY5ZmFjYWUzMDBjNTUyYjRmNjAzZjVmNDY1ZDk0ODciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNhNjgyZjRjNDhjZDg0YTk4NjgwOGQ3OWY5YmE3MWYxNDkyN2QyYWI0MGQxNGI4ZmIzYzM1NGIyYjE1MWMyNzMifQ"
         },
         {
@@ -377,7 +377,7 @@
       "statement": "Planはnative collaborationModeを使い、legacy plan presetをpermission変更前に解決し明示modeを優先する。承認でPlan flagを解除し、後のreasoning更新でもDefaultを維持する。",
       "evidence": [
         {
-          "resource": "repo://crates/executors/src/executors/codex.rs#L641-L684",
+          "resource": "repo://crates/executors/src/executors/codex.rs#L642-L685",
           "version": "repo-lines-v1:sha256:50adfa11d7bc42aa12f7f54fe5d4f8949dcbcaa781b52bc37bfbb8a25fb88230:eyJzZWxlY3RlZExpbmVDb3VudCI6NDQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIxZGY4NDQ2MzUxZDcyMjhhOTdlZDdlYjhmNjI1MjI1NGIzZDg1MmY5ZDFjYjI5YTIyODVjNjRhNWUzZjM2NWQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjUzNzRmMTViYTllMDAyOWMyMGU3NzA1YjdmMTkxOTBhMmRiMTllMjA1MzE2ZjY4YTE4ZDBlYTE5N2Q1NjYxYjUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE0Y2ZhZTYwZTlkMTFlODI4Y2MzNGViYTE2ZGI3Y2E3NzRiYjhiNzAxNTVlYTYyOTUxZjI3NGI0M2I5OTAwMGQifQ"
         },
         {
@@ -743,7 +743,7 @@
       "statement": "Codex の command/file approval は host の ProcessHostApprovals で明示回答を待つ。Supervised は未指定/Never の policy を UnlessTrusted にし他の明示 policy を保持する。DangerFullAccess と未指定/Never の組合せは全許可を維持する。",
       "evidence": [
         {
-          "resource": "repo://crates/executors/src/executors/codex.rs#L641-L698",
+          "resource": "repo://crates/executors/src/executors/codex.rs#L642-L699",
           "version": "repo-lines-v1:sha256:4489b10d230b5bdb5a78b7fa88789db6ada152030a67bcffc0de5500bbbe732b:eyJzZWxlY3RlZExpbmVDb3VudCI6NTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI2MGU4ZDFlMGRjZmI2NWY3NDliOGViZjllZGI0MzJkNmUzNDFkNDk1NzVmNDMzM2I1OGVkNGU0Nzc1YTZhZDEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjUzNzRmMTViYTllMDAyOWMyMGU3NzA1YjdmMTkxOTBhMmRiMTllMjA1MzE2ZjY4YTE4ZDBlYTE5N2Q1NjYxYjUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjA5ZjcwZjVhYTg0MmM3NDVkZjAzOThjYTBmZGFlNTNjYmY0YWZiYTY3NGNjZmQ1ODRhMWQxOWNjYWY2MWYwYWYifQ"
         },
         {
@@ -887,7 +887,7 @@
           "version": "repo-lines-v1:sha256:4774522c61408f19fc15e18f404ad19d1e59d18105fb0715ec4cb72c1d24abc2:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI3ODM5ZGQ4YzY3N2IwZGRmNGFlMTM2ZDIyMWQwY2E2MTQ4OTk3ZjlkYWExMGZmYzZkOWFkMTEwNWVkMWFjYTIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjcyZTQ4N2NlZTY3ZTcyYzFmNjBlMjI5MWRlMDJiYTQwZDUxZWM0ZjUwMGU5YWQ0ZDA1MGJlZWNlZmZlNTNhODciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM3OTVjODFjYzYwNWMyYTg2YmNkZGEwZWJlY2Q5ZTBlYjNhYzkxNzRmNjFjNjgxNzRlZmM1N2ExZTUyZjdmMGQifQ"
         },
         {
-          "resource": "repo://packages/web-core/src/shared/components/WYSIWYGEditor.tsx#L370-L383",
+          "resource": "repo://packages/web-core/src/shared/components/WYSIWYGEditor.tsx#L379-L392",
           "version": "repo-lines-v1:sha256:009ab3e0435773c993d2e9748e5e22adf9156f9772d89c4e48cbc453c81435b4:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNiMTJmMTYyYzRlYmU0YmUxNjVkNDcwMDAxYzhiYmFiNGIxYzM4MmMyZDEzZDk1ZjM4NDk5N2RiNDU2YmRmNjciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQ2NGExZWMxMTQ5N2NhMjE2MmQ0ZmIxYmZlY2M2Zjc3ZDE1MzBiOWUyNmM3NjIyYzcyMjEwM2FlM2FiNGMzODUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjYzMzAwOTZlYjY3MWNjOWY2MzZkZTQ4YjExMGE1NjRmZDViMWViNDE2OTYxNjgwMTFjNTFkZTgzMGE5OGIwOTgifQ"
         }
       ]
@@ -1158,7 +1158,7 @@
       "evidence": [
         {
           "resource": "repo://crates/executors/src/executors/codex.rs",
-          "version": "repo-file-v1:sha256:66c3b27eca417a14edf08f6182fa75d824421db03a400046cdda72d4b975744e"
+          "version": "repo-file-v1:sha256:d3ebf24a533bb448dd39e7cc7acaf31490676949085278fb707073f43dbf58ae"
         },
         {
           "resource": "repo://crates/server/src/routes/sessions/executor_config.rs",
@@ -1204,7 +1204,7 @@
         },
         {
           "resource": "repo://packages/ui/src/components/ChatMarkdown.tsx#L12-L25",
-          "version": "repo-lines-v1:sha256:dd5a19aba711361a9e4cd7d52cb87ab85c74b0b00af5a683fe77700ef5e5c5f2:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFiMjQwOWIwMzdlMGVjODc1YzZlMjE1MzBlNTRjYTBjODQ0OWJmMDEwMTc3OGNjY2VkYzQ1NmE0MDU2ODBkODgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImYyNTNiZjBhYjRiNjQyYzYxMzliNWY1MGMzZjRjN2M3ZjUzZTQ2OGI3ZTJkY2RkODU3NDc3YzNiMTc5MTkwNjEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImU4MjVmZDZlZjBjMDRkYzM4MjQxYjNhNzIwY2FjNWZjN2YyMGM4NDJkNGVjMDU3MjFlOGZiMGRjOWE0OTZkZjUifQ"
+          "version": "repo-lines-v1:sha256:7951be6fd6a6df53ee73e48e7d03f67d73f02d0e625e16caa60aee9dd92b2de0:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFiMjQwOWIwMzdlMGVjODc1YzZlMjE1MzBlNTRjYTBjODQ0OWJmMDEwMTc3OGNjY2VkYzQ1NmE0MDU2ODBkODgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImYyNTNiZjBhYjRiNjQyYzYxMzliNWY1MGMzZjRjN2M3ZjUzZTQ2OGI3ZTJkY2RkODU3NDc3YzNiMTc5MTkwNjEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImU4MjVmZDZlZjBjMDRkYzM4MjQxYjNhNzIwY2FjNWZjN2YyMGM4NDJkNGVjMDU3MjFlOGZiMGRjOWE0OTZkZjUifQ"
         },
         {
           "resource": "repo://packages/web-core/src/app/styles/new/index.css#L1260-L1263",
@@ -1251,10 +1251,28 @@
           "version": "repo-lines-v1:sha256:909e6958cbfc3c63e8b5cda6c09f69b347feadedcd2a5bc3ad5ef3030a68f4af:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM2NzFjZGYwM2I1N2E2ODdjZGY1NmRiYmNkOWIzMjAxMTlmYTZiNzIzMWI0NDI5YzNkMzU3NmI4NGMwOTFlMzMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFkZGY1NmQ5OTRjNDY1NTQyNDNmZjlhYWU5MDFkMWU1NDliN2I0OGY3OWIzZmZhYzEwZmI1MWM4ODljNTZlNzgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJmNjNhMTVmZTdhNmM0NjI0N2YxNDQwNGUyMmY3NDhjNDBjYzk1MTU5NTcxMzk3YmI5MGRlMDcyMjU3Njk4ZGMifQ"
         }
       ]
+    },
+    {
+      "id": "claim_38c322dbddd6466298b755aeb6f152e2",
+      "statement": "画面用profile-policyはClaudeのauth statusを実行せずinstallation情報で応答し、Claude InstallationFoundだけでは認証未確認診断を出さない。実起動前の認証確認とは別の責務である。",
+      "evidence": [
+        {
+          "resource": "repo://crates/executors/src/executors/claude.rs#L780-L815",
+          "version": "repo-lines-v1:sha256:2129662e7a4b4a5854a6031f2445f332077c72a85a503f87fd1926bc52970b4b:eyJzZWxlY3RlZExpbmVDb3VudCI6MzYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM4MmRmOTFlZDU0MjI4N2M2N2IxNzAyNmZiYzU4NDU0ODg4YjdiZDcwMjY4ZWQwOTQyN2RkYmYzZDkzMjM4Y2MiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEwYTUyMjUzODhjMTU4YWRiZDk0MDVlNWQzMmVjMDdhNzcyOTg1Y2VmMzk5OTQ0YjAyNDI5ZDg3MTJlY2YwZTkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjAxM2NmMzZjNjBiOTk1NDVmZGRiYTY3YmQyMTdhY2NlZWI2MjA2ZDQ3Zjg2ZGYxNDc3OGUxMmI5MzlhNDI5NTkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImVmMGE2YzdjMTA5NTU1MTU2ZWY4NjllYjhjNjgyZTBiNmZjMGE1MmE5YWUxMjcyMjYwMDk1YmQwNmFlZjhhYTYifQ"
+        },
+        {
+          "resource": "repo://crates/executors/src/provider_policy.rs#L206-L225",
+          "version": "repo-lines-v1:sha256:7787db13d20d4974591ce6c707f6bdf0b91c4e4dc115a98c8fb87aa10e7eb9e4:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFhMmYyZGRhYTA2NzM2NzcwNTkyOWE1MjQ4YjJiNDU4NmMwMjgwMjY3MmI3YWQ2OTAzMDYxYTc0OTkyMGZiMTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA5YzA3NDNhZWJiN2ZhYmU2NzgyYTA4NGE2M2E1ODU5N2NjMGI4YmY5Yzc1NDhjZTNkYmU3YTI2MzQ2NzRmODQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjY1NDVlOWI5NDU4NWQyMTQyNTFiMGNmOTZkZTE2ZDNmMjE0MjZkODI1YTU2N2YyZDNhYTRkMDhiZTdlMzYwYjkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjY1YWNlYWU0N2Y1ZjMxYjQzOWFjYmNmZDlkNWU2MmYwNjI4YjA2MGI1Nzg1YWY2NGZmZDkwNzQ3Nzg1NWU0ZDAifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/config.rs#L760-L792",
+          "version": "repo-lines-v1:sha256:2bf5139c2542af8c3af2438515e5df60081501c879ba30c55945a2fe475b3ff7:eyJzZWxlY3RlZExpbmVDb3VudCI6MzMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImYyNGU3Njc4OGQ0Nzg2ZjViNTBlNWY2NTg3ODFkNjMyMzNhNWFmODZkNDNiZTc2ODEzZDE3M2QxYzg0ZWYxYjgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImZiZjYxMDhmNjQ1YTU2Y2IwYWMwYjJkNTViMWMwZGRmNjQ5M2E4NGUxYzZkMmY1MjZkNDI2MmI2MjkxYWM3OTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJmMWI2M2JkMTQwZjg5ZjdjNDkwNTM3MzJmMmFiZGU2YWM1NWQ0NzE1ZjA2MjU5NDBiNThlN2I3ZTI1ZDhjY2UifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-09T18:10:41.827Z"
+    "at": "2026-11-09T20:29:18.834Z"
   }
 }

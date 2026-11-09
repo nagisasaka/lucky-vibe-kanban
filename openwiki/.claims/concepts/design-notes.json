@@ -1,17 +1,17 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:a54ebc20c9c4262e6f6e138b02f47b06592bc01d44f2980ab63a00ae8b29d59b",
+  "pageVersion": "sha256:22694d828c238fcca689453ca2241d1e01a963ba0c80b029b52c42800bcda663",
   "claims": [
     {
       "id": "claim_4e9b35333650431290516aff5f98065c",
       "statement": "設計メモはProjectごとに複数の本文と独立追記を保持し、初版はメモの最初の記録であってProject創始時の思想とは限らない。",
       "evidence": [
         {
-          "resource": "repo://packages/web-core/src/features/design-notes/ui/DesignNotePanel.tsx#L195-L238",
+          "resource": "repo://packages/web-core/src/features/design-notes/ui/DesignNotePanel.tsx#L201-L244",
           "version": "repo-lines-v1:sha256:120cd9d0b13722c1fa7c690011c27ebaa762ff0a99e6b4239d0b0ad886fa4ac1:eyJzZWxlY3RlZExpbmVDb3VudCI6NDQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgxY2FlMjMyNWE1ZTgxNDJiNDA2YmQ3MjIwNDZlNGRiZTAzODVmM2MxNjI4NDBlNDdlZDY2MTY5ZTFlYzZmMWIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMzNjllZGE2OTRhZjM5MjFjY2Y3M2JjZWZjNTRmNTk0MmIxZGQ1OGEwNjBlNDViZjZkMGNhNmM2ZjNmN2IzNzgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQzNjNiMGY5NTA3YzU3YjQ2OGZlMzJjMjM3MTYxMmE5ODAyMGE2NTU4YjQ3MmQ3ZjRjNmU1ZGFiZTAzZDBhZGEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQxYmRmYzY1MzI2M2ZhOWZhZmM2YjJlNDk0MDQ1MzNkNDZjOThiOGY4M2JhNDUwYTU2OWMzMWMxMTI4ZmEwYWQifQ"
         },
         {
-          "resource": "repo://packages/web-core/src/features/design-notes/ui/DesignNotePanel.tsx#L508-L562",
+          "resource": "repo://packages/web-core/src/features/design-notes/ui/DesignNotePanel.tsx#L514-L568",
           "version": "repo-lines-v1:sha256:55a5cb015207171095dcae942c20ff1eb4d58cc456fa2abcf1992deb77fb1787:eyJzZWxlY3RlZExpbmVDb3VudCI6NTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjExMzljNmYyNDdhMGVlMzFiYjc0NTIzMDc1OTg0ZDM1ZTU0YWVkYmFjMjgwZGQxMWM0MzU0NjNmZjE0N2QyMDgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFmMjE1ZmQwM2NmYzJiZWViZjgwNGExN2FjNWU5NDc5NTFmN2NkMmRjMDU2MDUyMjQ5OWM2MDZmZGJjZDcxODUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImZjNGMwMTY5MjI2MzI5NDIyYjcyNTdlZTRiOGRjODcyZWU5NzIxNTQxMDM0YzljMTQ5YTA0ZThmZDRkYTU3YmEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijc3MTM5NjI2ZjQ3NGQ0YzFlNDU2MjE0ZDc4N2UyNmU0ZTczMTNlNDliZDc5NjIwZjcxOGU5ODM0NjlmNmNlMTAifQ"
         }
       ]
@@ -73,11 +73,11 @@
       "statement": "UIは編集中の下書きと版を保持して競合時に現在版を再取得し、比較後の再適用を明示操作にする。同じ入力の応答喪失時はrequest IDを再利用する。",
       "evidence": [
         {
-          "resource": "repo://packages/web-core/src/features/design-notes/ui/DesignNotePanel.tsx#L124-L181",
+          "resource": "repo://packages/web-core/src/features/design-notes/ui/DesignNotePanel.tsx#L130-L187",
           "version": "repo-lines-v1:sha256:ec3152c5553971e3d1a77eba863793c5095aa935df0beac0cf432e2593743b70:eyJzZWxlY3RlZExpbmVDb3VudCI6NTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJhMzA2MzQwODkwNWNkNmM5OTBjMTc4YTBjZjlmODA4MGUwNTQyMmJiOWQ3MDI3YmM1YWE4MzI5NjU4ZTkyYmMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNlY2Q5Mzc5YTVhY2RmMDc0MTg2NDI4YjY1MDQ2OWIxM2I5NDFlOGMzMDIyNzY2ZDRmYzNjOTY4OWRjMjM4YWIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE0MjcwODVlY2FhY2U2OWE0MzIyMWQyMTMxMGZkZTlmYWIxYWZmMjAzZjlkOTNkMjdlODc1NjM2MTMzNDJkYjEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFkZjZiMDdiMTk1N2ExNGVhMWRmNGYzMDY5Yjk1MzVmNzM2YjIyM2E2MGJjN2MwMmQ3MTg1YThiOTU1NDNlMmEifQ"
         },
         {
-          "resource": "repo://packages/web-core/src/features/design-notes/ui/DesignNotePanel.tsx#L395-L452",
+          "resource": "repo://packages/web-core/src/features/design-notes/ui/DesignNotePanel.tsx#L401-L458",
           "version": "repo-lines-v1:sha256:408be0a83ed80b0cca8b3cb12d182f8b623ee89616809195acf328af2e6d381b:eyJzZWxlY3RlZExpbmVDb3VudCI6NTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg2MWRmMmFiZDYxZWJiYTVmYmJkNGUyZWIwZWFlNjg2YTUwMDMzZDI5MTBlZjg1ZTJlYzgyZWZmZmI0MTQ4N2UiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImMwMWRkYTFiNTAwZGZkODMwZTAzOWY1M2M1MGY1YjNmNmE2MjQzYTY5ZDExZjkxYmM0MGE0MGI1OGYxMzNiNzIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjMwZjhlY2NhMmJlZWMwZDBmYWE2NDNmNDhkNDFlZWFhZWYxNjM3NGQ3NjBlODJhMjI0ZWQ1OGU0NTg2N2E5NzYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjVmOTM3NmQ3ZjVmMjYyNTBhMDlkMWYwOGEwMTA5MzU1YjJlOWEwMDlkOTkwZjIxYjUyMzVmYTM3MzA0OWU5MmIifQ"
         }
       ]
@@ -145,7 +145,7 @@
           "version": "repo-lines-v1:sha256:bba2950c21dce0fd47db19f1af9aaa994d27342d7c842ca8b4376c46b445e9f7:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4N2FhOTgzZThiOGQ5M2JhZDgyZjhlYjNiNjVhZDEwMWFlNGU0ZGViZmFmYTFkZWJmYjkyYzQzMWVhYTQyMDkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkwYTVkZjc4NzFlMDRhMzI5Yzk2YmRiZjZkNzA5ODMyYjkxNDU1NGUxZmIwZjNmNTkxMzE4YjE3ZTdhOTYwYTQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjkyNGRjNzhlZWU5OTBjOWI4OWU0ZmUyODhiYTllYmM1YzMyZGRiM2MwZTk1NDQ3MDcwNGIyNjcxMmQ5OTdiMWYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM3NzMyODRjODM3MTQ4ZjVhZDhmNDg4MDQxM2EwNzc1NGY3MTI0NDk5YWIyNzlhYjIxZmZjYTc2MjY1MjRjZmMifQ"
         },
         {
-          "resource": "repo://crates/server/src/routes/local_remote.rs#L3917-L4050",
+          "resource": "repo://crates/server/src/routes/local_remote.rs#L4107-L4240",
           "version": "repo-lines-v1:sha256:7ca05db95f395b65dabb4649318bc9a0cd317e1fa32f33f8f1d68a3c347ba491:eyJzZWxlY3RlZExpbmVDb3VudCI6MTM0LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI4Yjc5MjNmY2VjMTkwMDAxYjhjNDMxNzg4NjY5NWZkODIwZGE0ZTdlNzE3ZGRmZTJlNTYyMGY5ZmYzYzRiZGFmIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI0ODkzZjQwZTM3ODFlYjg5NmM4MmQwNDZhMDgwNjdhMTFlMzVjZGYyZjFkZmFmMjZmZWE5MGI4ZGI2Njc2NDEzIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI1NTZhZDZhMjliOGJlYWExZDMwMDU2YmMzZDE3MmY2OWY1YWNjNDYyNmY3NWRiNmYxNGJhZWEwN2JkYjg2OGU4IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiIwNTgzNDk2YzVjN2VhZjgwZWQ0ZWJlZmI3NWE3Y2ZjNmY2YTkxZDNhODRlM2IxMTY1MmRiMTAyZDdkZDVhMWQxIn0"
         }
       ]
@@ -165,15 +165,15 @@
       "statement": "設計メモの本文作成・編集と追記追加・訂正は textarea の値をフォーム state に直接渡して保存し、プレビューと閲覧では同じ disabled WYSIWYGEditor を使う。",
       "evidence": [
         {
-          "resource": "repo://packages/web-core/src/features/design-notes/ui/DesignNotePanel.tsx#L312-L344",
+          "resource": "repo://packages/web-core/src/features/design-notes/ui/DesignNotePanel.tsx#L318-L350",
           "version": "repo-lines-v1:sha256:999f2d6ab93c671c76036c6bd7d104bcd96207bbff30b6c51c5a601df979ef9a:eyJzZWxlY3RlZExpbmVDb3VudCI6MzMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU3MzY1ODBjNDQ3NzdjZjhkMWRhMWFkMzNhNmUzNWM2MDJlOWZjN2NiYzc4MzFlNjI2NzEwNGU0YWU2Mzk4ZDYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBiNTkyZTA3YjRjZjUzYTgzODZjNTY4MGNmYjdmM2U0ZTc1NDI5NjljODcyNmFjNWVkMzI3NTNmOGNhOTU5NzQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImYxYjZlN2VlMzJmZjNjZGJiZTVkN2UxYTJhYjNhZDg0ODg5NWMxYmFmMmM5MDZiZTIyNDFiNjBhMzdhMGMyZTAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjgxNzgwNDY4YjgwZGMyZjc0MmU3NmRkMTBiMWFiYmQwY2I0YzNhNGNhM2FmZGRhMWUxOTA4NjJjZTAwMTliMjcifQ"
         },
         {
-          "resource": "repo://packages/web-core/src/features/design-notes/ui/DesignNotePanel.tsx#L32-L117",
-          "version": "repo-lines-v1:sha256:8421bf56553411e6073fdd88e3f57d59dfd4f7076990bc4fdcf8fb0102e5d22b:eyJzZWxlY3RlZExpbmVDb3VudCI6ODYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM1NDk0MzQ2MTYwMjc5MjVmYjAyODZkMjg0OGFiODcwYjkzNTRkYjU3N2Y4NTVhY2RiMmY3OWM4ZjE2YWQ5ZDUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzZGY0NWE4YmZhYTYwNTRjZWE4ZWJlYmNhYzY5OTJjNjZlMWZiZDg4NjViYTFiNjlkYjk2NWRiYzdhOTE4YTIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImIwZmNmY2YzMmE0MTNiOGY1YWRlMTBhOThlYjljMjNjZWY5NGQ3M2UwMTFkYzFhNjBlZGFmN2I3ZDVkOGExNjAifQ"
+          "resource": "repo://packages/web-core/src/features/design-notes/ui/DesignNotePanel.tsx#L32-L123",
+          "version": "repo-lines-v1:sha256:e4f0570c300c21bb4e0f01cd5ba0b4a08aaf00939ec5b3dcf31775e8ce128752:eyJzZWxlY3RlZExpbmVDb3VudCI6OTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM1NDk0MzQ2MTYwMjc5MjVmYjAyODZkMjg0OGFiODcwYjkzNTRkYjU3N2Y4NTVhY2RiMmY3OWM4ZjE2YWQ5ZDUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzZGY0NWE4YmZhYTYwNTRjZWE4ZWJlYmNhYzY5OTJjNjZlMWZiZDg4NjViYTFiNjlkYjk2NWRiYzdhOTE4YTIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImIwZmNmY2YzMmE0MTNiOGY1YWRlMTBhOThlYjljMjNjZWY5NGQ3M2UwMTFkYzFhNjBlZGFmN2I3ZDVkOGExNjAifQ"
         },
         {
-          "resource": "repo://packages/web-core/src/features/design-notes/ui/DesignNotePanel.tsx#L770-L829",
+          "resource": "repo://packages/web-core/src/features/design-notes/ui/DesignNotePanel.tsx#L776-L835",
           "version": "repo-lines-v1:sha256:1e7736eb088ec204c0d03fe4a9b2937783c238f1a44b1560337daba7aba4d884:eyJzZWxlY3RlZExpbmVDb3VudCI6NjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU3NjA4YTk5ZTlkYzFiZWU4ZTUwNTI5NjFiMTBhN2JhNWY3YTA0MWI2MTM5MmI2MzY0NTA0OTEzNzlmYjU1ODAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZkYTU5M2ViODNjNzlmZTljNmQyNjhkMWMxYjg3ODdhMDkyODEwODYyYjIxZmU4YTFkMTYyZjRmMWQxZjMxMWEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjkzMjFlZmU2NTA5NjEzMjQyODUxNjI5MmM0OTQ0NmRhZTc1ZmFiZWE2MGUwY2FjODM5Zjc4MmQ3NzRlNmYzNWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImYwNjlmOWUwMTU1MjkwNzkxYWE0OTZhMmFjOTRhNzE4OGM2Yjk0NzlhNDY5YzEzMmZjYmZhN2NhNTU1YTdmMTYifQ"
         }
       ]
@@ -183,7 +183,7 @@
       "statement": "編集・プレビュー切替は textarea とフォーム state を保持し、表示時のみ renderer をマウントする。切替は書込せず、左右矢印とHome/Endで選択とフォーカスを移し、保存中はタブと入力を無効化する。",
       "evidence": [
         {
-          "resource": "repo://packages/web-core/src/features/design-notes/ui/DesignNotePanel.tsx#L53-L114",
+          "resource": "repo://packages/web-core/src/features/design-notes/ui/DesignNotePanel.tsx#L59-L120",
           "version": "repo-lines-v1:sha256:07d3a8c6b3291e959758580db88a1fb9881936c180fae3356a662b7c393b4587:eyJzZWxlY3RlZExpbmVDb3VudCI6NjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk3MTIyZTM1MTA5ZjAxNjAwMTJjNDdmZDkyMzIzNTA5ZGYzZjFlYWJlNTNhNTRkMWEzYzA5NDNjMjUzMTRkMGMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgyZjNjZmQxMWRhNjE1MDE5N2FjZWVkMDg0MDZhYzY0YjA1MDM0MGRlN2JjMDQxMjRhNGNiN2VmYTY3MTM0MGIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJlZGY1ZTNiYTg4M2EwNzk5MjExNzY4YzM4ZGNhMGU3NmNmOWY5M2M2MmQ0OGIxZTE0ZDI4MDZlZGY4ODJiZWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjgwODY3YTYzODc0ZDM0YTJhMDAyNGMzYWRjYzdjNzExMmM2NjUyMzNiNzZhODQ1YTYxNmNmYjNmZmQzNDQ1OTUifQ"
         },
         {
@@ -202,7 +202,7 @@
         },
         {
           "resource": "repo://packages/web-core/src/features/design-notes/ui/DesignNotePanel.tsx",
-          "version": "repo-file-v1:sha256:ef52d0c42e0a94c3be69db2d5b1846d6243db8b56d04e53d73270f0452b8bbc9"
+          "version": "repo-file-v1:sha256:017d199d8f741a1652ac8205f725e3108781e9a96c52a858794c1b7645b19d0a"
         },
         {
           "resource": "repo://tests/design-notes/markdown-editing.mjs",
@@ -223,7 +223,7 @@
           "version": "repo-lines-v1:sha256:b13056d1b5dfd18f3ff03b97be3cf50b41358f7b87c89687376b5bdee7d19a44:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVlYjhlZmM2ZjhmMjZhZDhlY2E5ZDI0ZWZkN2E1NGY4ZjJkNTE0Y2Q1OGU3ZmExYzE0MGQ1Zjk5YTM1NDY0OWQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijk3MDRiNTg1NzAzZjA5YmJiNWY3YjU1N2ExNTgxMTAyMWM5OTI5NTAzOGVhMjQzMmQwMDYwMjIyNzczZDM5ZDAifQ"
         },
         {
-          "resource": "repo://packages/web-core/src/features/design-notes/ui/DesignNotePanel.tsx#L131-L223",
+          "resource": "repo://packages/web-core/src/features/design-notes/ui/DesignNotePanel.tsx#L137-L229",
           "version": "repo-lines-v1:sha256:b143100d8e8aba45bb07eef2cb16879777bf1a07c408facb2fc81438fcdf4c2f:eyJzZWxlY3RlZExpbmVDb3VudCI6OTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYzYTZjMWViNTdmZWRhNjQ3OTQ0NGZmODg4Njg2ZjljYzQ3MGFjMDVkOGY3OWVlMzcwYTkxMjRjZGU1YzA4ZjUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNkYzg0Mzg2OWNkODFlMTViNmQzMDhlMTg5NjNlMzUzNTk2NzJiZTk2NGQwMjViNDM0YWY4ZTFmY2YxMjI4MjUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjBmNzhmZGU1NDdhZTA5OWRlMTkxMzRlY2ExN2FkYWMyNzgzMTViNWM1YTI1Yjc4YzRhNjk2ZjJlYWYxZmY5ZjQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImI1ODhiODU5OWUwOWQ4OTIyOTcyNjE4MjJjOWYxNDI0NzI5YjRjYjlkZDBlMjJlNWQ3OGE4MDMwYmNmZTEyMmIifQ"
         },
         {
@@ -251,14 +251,24 @@
       "statement": "設計メモの一覧と選択中詳細は15秒周期で再取得し、書込み後の再取得を維持する。",
       "evidence": [
         {
-          "resource": "repo://packages/web-core/src/features/design-notes/ui/DesignNotePanel.tsx#L131-L181",
+          "resource": "repo://packages/web-core/src/features/design-notes/ui/DesignNotePanel.tsx#L137-L187",
           "version": "repo-lines-v1:sha256:6a0ffcdd63c39e8c361815188172982e090b89ae1dd68ffe5d60229a16c0e2eb:eyJzZWxlY3RlZExpbmVDb3VudCI6NTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYzYTZjMWViNTdmZWRhNjQ3OTQ0NGZmODg4Njg2ZjljYzQ3MGFjMDVkOGY3OWVlMzcwYTkxMjRjZGU1YzA4ZjUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNlY2Q5Mzc5YTVhY2RmMDc0MTg2NDI4YjY1MDQ2OWIxM2I5NDFlOGMzMDIyNzY2ZDRmYzNjOTY4OWRjMjM4YWIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjBmNzhmZGU1NDdhZTA5OWRlMTkxMzRlY2ExN2FkYWMyNzgzMTViNWM1YTI1Yjc4YzRhNjk2ZjJlYWYxZmY5ZjQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFkZjZiMDdiMTk1N2ExNGVhMWRmNGYzMDY5Yjk1MzVmNzM2YjIyM2E2MGJjN2MwMmQ3MTg1YThiOTU1NDNlMmEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_b1239117f36245818f410679bd6a9592",
+      "statement": "設計メモのdisabled WYSIWYGEditorはdocument readingStyleとoutlineを指定し、閲覧と保存前プレビューで共通本文・目次を利用する。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/features/design-notes/ui/DesignNotePanel.tsx#L32-L42",
+          "version": "repo-lines-v1:sha256:22bf90ca2931a352fae921f93e4884b2b181b6795146a41f16d3855db168c79b:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM1NDk0MzQ2MTYwMjc5MjVmYjAyODZkMjg0OGFiODcwYjkzNTRkYjU3N2Y4NTVhY2RiMmY3OWM4ZjE2YWQ5ZDUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzZGY0NWE4YmZhYTYwNTRjZWE4ZWJlYmNhYzY5OTJjNjZlMWZiZDg4NjViYTFiNjlkYjk2NWRiYzdhOTE4YTIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjMzOTI5ZTAyNDhmN2E2YjNkNzE3ZmY4NWNkZTQ2ZjRmMjIzYjcxYWQxZTczMWNiODJkNmVkZmRkZDUxYjIyZGMifQ"
         }
       ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-07T09:17:18.907Z"
+    "at": "2026-11-09T20:29:18.834Z"
   }
 }

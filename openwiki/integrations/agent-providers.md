@@ -50,6 +50,8 @@ sources:
     resource: repo://crates/executors/src/executors/mod.rs
   - id: openwiki-source-f4e0f9b2ce513d3f8b8b070e
     resource: repo://crates/executors/src/executors/provider_adapter.rs
+  - id: openwiki-source-d58798d72f34b67aca1b08f3
+    resource: repo://crates/executors/src/executors/utils.rs
   - id: openwiki-source-f07f62eba81c4ffbaf0db9d5
     resource: repo://crates/executors/src/profile.rs
   - id: openwiki-source-bccd47f2decfe8aa6a080767
@@ -108,10 +110,10 @@ sources:
     resource: repo://tests/claude-subscription/subscription.spec.ts
   - id: openwiki-source-141584dac09cf0f93be6bff5
     resource: repo://tests/codex-process-cleanup/README.md
-generated: { by: "codex", at: "2026-11-09T18:10:41.827Z" }
+generated: { by: "codex", at: "2026-11-09T20:29:18.834Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-09T18:10:41.827Z
+    at: 2026-11-09T20:29:18.834Z
 ---
 
 # Agent provider・設定・MCP・Skill
@@ -191,7 +193,7 @@ LVK の `codex_home()` は非空の `CODEX_HOME` を優先し、未設定・空�
 
 Claude CLI を使う account と設定 directory は login・status・実行で揃え、`CLAUDE_CONFIG_DIR` を選ぶなら三者に同じ値を適用する。これは移行元の Claude 導入手順に記録された運用前提であり、LVK が別 account の資格情報を移植する機能ではない。`claude auth login` と `claude auth status` は利用者がその環境で行う vendor CLI 操作である。vendor 内部の credential 格納形式や全設定優先順位は、LVK の probe 実装だけからは確定できない。
 
-Subscription profile の LVK probe は現在の cwd と execution env に profile env を合成し、その環境を `claude --settings … auth status` の子プロセスへ適用する。`CLAUDE_CONFIG_DIR` を LVK が独自に解釈して credential を読み出すのではなく、公式 CLI の public metadata を検査する。profile-policy/discovery の readiness と実 launch の完全な環境は同一保証ではないため、login/status 後に選択 profile の次の実行を同じ環境で確認する。[profile env と probe](../../crates/executors/src/executors/claude/auth.rs#L78-L128)・[実起動直前の確認](../../crates/executors/src/executors/claude.rs#L739-L775)・[scope と readiness の限界](#選択-profile-と-discovery-の一貫性)
+Subscription profile の LVK probe は現在の cwd と execution env に profile env を合成し、その環境を `claude --settings … auth status` の子プロセスへ適用する。`CLAUDE_CONFIG_DIR` を LVK が独自に解釈して credential を読み出すのではなく、公式 CLI の public metadata を検査する。画面用profile-policyは認証probeを実行しない。discoveryと実 launch の完全な環境は同一保証ではないため、login/status 後に選択 profile の次の実行を同じ環境で確認する。[profile env と probe](../../crates/executors/src/executors/claude/auth.rs#L78-L128)・[実起動直前の確認](../../crates/executors/src/executors/claude.rs#L739-L775)・[scope と readiness の限界](#選択-profile-と-discovery-の一貫性)
 
 ## Claude のサブスクリプション専用 profile
 
@@ -205,23 +207,27 @@ Subscription profile の LVK probe は現在の cwd と execution env に profil
 
 実行直前の `spawn_internal` は未接続承認モードを先に拒否し、許可された明示AUTO経路では現在の cwd と execution env に profile env を合成して認証を確認する。新規・follow-up / resume の direct launch がこの経路を通る。`claude --settings … auth status` は10秒で制限し、成功 exit、`loggedIn: true`、`authMethod: "claude.ai"`、`apiProvider: "firstParty"` のすべてを要求する。JSON 不正・未 login・異なる provider・timeout を別課金方式への fallback で回復しない。stderr は捨て、stdout の原文を診断へ含めない。[起動前確認](../../crates/executors/src/executors/claude.rs#L739-L775)・[判定](../../crates/executors/src/executors/claude/auth.rs#L35-L49)・[環境と timeout](../../crates/executors/src/executors/claude/auth.rs#L78-L128)
 
-専用 profile は router、base command override、非空の追加 CLI 引数を拒否する。また API key/token、OAuth token 注入、custom headers、base URL / profile、Bedrock / Vertex / Foundry 選択など、ソースで列挙する競合環境変数の非空値を拒否し、診断には変数名だけを出す。任意の wrapper や引数で preflight 後の認証を変えられないようにするという理由がソースコメントに記録されている。他方式を意図するときは別 profile を使う。[拒否集合と理由](../../crates/executors/src/executors/claude/auth.rs#L12-L99)
+専用profileはrouter、base command override、非空の追加CLI引数を引き続き拒否する。環境の11変数を列挙して親環境を拒否する処理は撤去した。profile自身の `cmd.env` に `ANTHROPIC_API_KEY` / `ANTHROPIC_AUTH_TOKEN` / `ANTHROPIC_CUSTOM_HEADERS` が明示されていれば、空文字でも設定矛盾として拒否し、診断はキー名だけを含む。OAuth tokenを列挙拒否しなくなったことは方式サポートの拡張ではなく、公式CLIが別方式を返せば従来のmetadata判定で拒否する。[profile検査](../../crates/executors/src/executors/claude/auth.rs#L43-L85)
 
-runtime と実 CLI discovery probe は per-process settings の `forceLoginMethod: "claudeai"` および空の `ANTHROPIC_CUSTOM_HEADERS` を渡し、通常の CLI 設定ファイルを書き換えない。ただし managed settings は本来の優先順位を維持するため、管理者設定を超える普遍的な保証ではない。従来の `disable_api_key` は一変数を取り除く別機能で、厳格 profile はその除去より前に競合を検査する。[settings と適用](../../crates/executors/src/executors/claude/command_adapter.rs#L11-L33)・[runtime / discovery](../../crates/executors/src/executors/claude/command_adapter.rs#L80-L145)・[除去との順序](../../crates/executors/src/executors/claude.rs#L739-L775)
+共通 `SUBSCRIPTION_SETTINGS` は `forceLoginMethod: "claudeai"` と上記3キーの空文字を持ち、auth status・discovery・初回/継続Run・passive usageの4経路に渡る。CLIの通常settingsや親環境の資格情報を同じ条件で無効化し、保存設定は変更しない。managed settingsの本来の優先順位を超える保証や請求額の監視は追加しない。usageだけ共通設定へ `disableAllHooks` を合成し、user設定限定・隔離cwd・MCP/tools/永続化無効化を保つ。非SUBSCRIPTIONの `disable_api_key` による既存キー除去は維持する。[共通設定と各command](../../crates/executors/src/executors/claude/command_adapter.rs#L13-L70)・[起動条件](../../crates/executors/src/executors/claude.rs)
 
 ### 選択 profile と discovery の一貫性
 
-`/api/agents/profile-policy` は executor / variant を解決し、存在しない profile を拒否する。厳格 Claude profile だけ auth probe を行い、実行ファイル欠落を MissingExecutable、それ以外の認証確認失敗を AuthRequired として、InitialRun / FollowUp / SessionResume / WorkflowAgentStep / TeamSlot を除く。一般の installation 検出は `.claude.json` の更新時刻を login 証拠にしない。[policy API](../../crates/server/src/routes/config.rs#L804-L838)・[失敗と能力](../../crates/executors/src/provider_policy.rs#L96-L134)・[installation](../../crates/executors/src/executors/claude.rs#L727-L736)
+`/api/agents/profile-policy` は選択profileの存在を検証し、installation metadataだけで応答する。画面用のauth statusやscope探索は行わない。ClaudeのInstallationFoundは「認証未確認」の赤診断にせず、認証成功とも呼ばない。実行・discovery前の公式CLI確認と実行時のエラー表示を維持する。[静的policy API](../../crates/server/src/routes/config.rs#L762-L779)・[availability診断](../../crates/executors/src/provider_policy.rs#L206-L225)
 
-policy と discovery は共通の scope 解決を使う。Session指定時は所属を検査し、Session/Workspaceとも共通rootを使う。Repo指定なら元Repo pathを使う。policy は scope がなければ server cwd を使う。この確認は server 環境での readiness であり、実 launch の完全な execution env を保証しない。[scope 解決](../../crates/services/src/services/container.rs#L105-L193)・[policy env](../../crates/server/src/routes/config.rs#L823-L836)。[composer の接続](../concepts/session-and-agent-run.md#選択した-claude-profile-の-readiness)は選択 variant と scope を保持し、確認失敗を別 profile の Ready で補わない。
+discoveryはSession/Workspace/Repoのscopeを解決し、Session所属を検査する。Session/Workspaceは共通root、Repo指定では元Repo pathを使う。このdiscovery環境と実launchの完全なexecution envを同一保証にしない。[scope解決](../../crates/services/src/services/container.rs#L109-L193)・[composerの接続](../concepts/session-and-agent-run.md#選択した-claude-profile-の-readiness)
 
 discovery stream も選択 variant を渡し、未存在 profile を DEFAULT へ代替しない。厳格 profile の要求から DEFAULT の global cache refresh を並行起動しない。Claude cache key は command 設定と `require_subscription_login` を含み、認証モードを分離する。実 CLI の command/plugin probe は認証確認後に起動するが、cache hit は既存 options を返し得るため、モデル・補完候補が表示されたことは現在の login 成功の証拠ではない。[stream の選択](../../crates/server/src/routes/config.rs#L893-L908)・[別 profile の refresh 抑止](../../crates/services/src/services/container.rs#L196-L233)・[cache key](../../crates/executors/src/executors/claude.rs#L367-L369)・[cache hit](../../crates/executors/src/executors/claude.rs#L513-L540)・[CLI probe](../../crates/executors/src/executors/claude/slash_commands.rs#L239-L265)
+
+### --helpの能力cache
+
+`--effort` 能力は既存options cacheの別キー名前空間で5分間再利用する。読取で期限を延長せずfalse結果も保持する。command/profile・PATH・disable_api_keyの変更はキーを分け、同じpathのCLI差替えは期限切れ後に検出する。毎回のversion probeや別の管理層は追加しない。passive usageの互換version検査は別の安全条件として残る。[能力probeとキー](../../crates/executors/src/executors/claude.rs#L268-L328)・[TTL](../../crates/executors/src/executors/utils.rs#L114-L121)
 
 ### 検証の範囲と残る確認
 
 [auth unit tests](../../crates/executors/src/executors/claude/auth.rs#L147-L260)は競合設定、秘密値の非表示、wrapper 拒否、metadata / exit 判定を扱う。[frontend tests](../../packages/web-core/src/shared/hooks/useAgentProviderPolicy.test.ts)と [discovery URL tests](../../packages/web-core/src/shared/lib/agentDiscovery.test.ts)は profile 別の失敗と scope を検査する。[隔離 browser 試験](../../tests/claude-subscription/subscription.spec.ts)は実 backend / host と offline CLI fixture を接続し、拒否・初回実行・期限切れ後の follow-up 拒否・Stop / native resume と Issue UI の preset 選択と明示AUTO、保存profile/Supervised/Plan拒否を検査する。高速終了時の証拠は [shared host の drain 契約](../architecture/agent-runtime.md#os-終了より遅い-provider-終端証拠)で扱う。
 
-fixture は公式 CLI でも実モデルでもない。auth metadata は実モデル応答、refresh 可能性、残 quota を証明しない。公式 CLI / account での期限切れ・更新・quota・network 挙動と managed settings の影響は別途確認が必要である。[検証手順と限界](../../tests/claude-subscription/README.md#live-validation-remains-separate)。この Sync は統合済み source と試験定義の静的照合であり、製品テストや live Claude 検証の再実行ではない。
+fixture は公式 CLI でも実モデルでもない。auth metadata は実モデル応答、refresh 可能性、残 quota を証明しない。公式 CLI / account での期限切れ・更新・quota・network 挙動と managed settings の影響は別途確認が必要である。[検証手順と限界](../../tests/claude-subscription/README.md#live-validation-remains-separate)。LOCAL-366のsource Manifestは公式CLI 2.1.308でダミー資格情報を正規化前後に比較した実証を記録するが、これは実モデル・請求・quota確認ではない。今回の統合ではexecutors回帰とClippyを候補上で確認し、同じClaude E2Eや公式CLI比較の再実行はSHA付き既存証拠に基づいて省略した。[統合検証と限界](../operations/development.md#local-366368の統合検証とbundle)を参照する。
 
 ## Skill と Tool Manager
 

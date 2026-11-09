@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:9bdefe226882f4b6ac2e70a6a1cae1f8dcb1c8c61821abc6eba5358d7319163b",
+  "pageVersion": "sha256:88bdbc334928ed71ab615dffd5e9973175da146e022fefda9f433e989c9f97db",
   "claims": [
     {
       "id": "claim_73d8e11679c6457aaf2e2b1a68fb767e",
@@ -362,7 +362,7 @@
       "evidence": [
         {
           "resource": "repo://crates/executors/src/executors/codex.rs",
-          "version": "repo-file-v1:sha256:66c3b27eca417a14edf08f6182fa75d824421db03a400046cdda72d4b975744e"
+          "version": "repo-file-v1:sha256:d3ebf24a533bb448dd39e7cc7acaf31490676949085278fb707073f43dbf58ae"
         },
         {
           "resource": "repo://crates/executors/src/executors/codex/client.rs",
@@ -745,7 +745,7 @@
       "statement": "Claude startupは相関したinitialize/permission応答とprompt送信を期限付きで扱い、失敗またはresult前のEOFを所有側へ通知する。",
       "evidence": [
         {
-          "resource": "repo://crates/executors/src/executors/claude.rs#L812-L852",
+          "resource": "repo://crates/executors/src/executors/claude.rs#L844-L884",
           "version": "repo-lines-v1:sha256:4cc41b3d4528a27973aeb05472d4fdc3b8e8429574daa4c1945888d07a5d7bc7:eyJzZWxlY3RlZExpbmVDb3VudCI6NDEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFhYzhiZWU0MWNmZjY0OTZjY2ViZjBlNTU4NzA0ZjU4NTVhMzM4OWE1MzBkYmU2M2Q3NDUyNWIyOTAzYTQ3ZjAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU4MjkzMTc4YjlhN2UzNTY3ZjIxMGI0N2E4ZGMwYjg4YWNlMGYyYTA0MGZiMmIwMDBhNjA2YzI4MDFiYWJiZWUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJmNjlmYjNjYzllYWZhYjE4MmU0ZDUyMTg0YzRlZDk0NzJmNDk5ZTczODVmNWUzMTA1YjIyOGZlOGMwYjNmMmMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjRmZWJkYzQ5MzgwNTcxNDYxYjI2YTUwM2M5NTUwYTk0NDU0MzEyYjA0NjdmMjFkOTFmN2IzMmY2MmMzYjZkMjEifQ"
         },
         {
@@ -791,6 +791,6 @@
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-09T18:10:41.827Z"
+    "at": "2026-11-09T20:29:18.834Z"
   }
 }
