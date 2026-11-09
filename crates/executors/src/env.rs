@@ -49,17 +49,24 @@ impl ExecutionEnv {
         )
     }
 
-    /// Shared storage usage is current host guidance, independent of saved Card context.
+    /// Host-owned guidance for this execution, independent of saved Card context.
+    /// Both providers use this composition; native delivery roles stay separate.
     pub fn repository_memory_instructions(&self) -> Option<String> {
+        if self.contains_key("LVK_OPENWIKI_REVIEWER") || self.contains_key("LVK_RESOURCE_MEDIATOR")
+        {
+            return None;
+        }
         let mut parts = Vec::new();
+        if self
+            .get("LVK_OPENWIKI_MAINTENANCE")
+            .is_none_or(|value| value != "1")
+        {
+            parts.push(crate::legacy_wiki::RETIREMENT_NOTICE);
+        }
         if let Some(memory) = self.get("LVK_REPOSITORY_MEMORY_INSTRUCTIONS") {
             parts.push(memory.as_str());
         }
-        if !self.contains_key("LVK_PARENT_AGENTS")
-            && !self.shared_resource_roots().is_empty()
-            && !self.contains_key("LVK_OPENWIKI_REVIEWER")
-            && !self.contains_key("LVK_RESOURCE_MEDIATOR")
-        {
+        if !self.contains_key("LVK_PARENT_AGENTS") && !self.shared_resource_roots().is_empty() {
             parts.push(workspace_utils::path::SHARED_RESOURCE_GUIDANCE);
         }
         if self.contains_key("LVK_PARENT_AGENTS") {
@@ -120,6 +127,35 @@ impl ExecutionEnv {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn execution_guidance_is_mode_specific_and_keeps_current_context() {
+        let mut env = ExecutionEnv::new(RepoContext::default());
+        env.insert("LVK_PARENT_AGENTS", "1");
+        env.insert("LVK_SHARED_RESOURCE_ROOTS", r#"["/shared/tmp"]"#);
+        for identity in ["initial identity", "continued identity"] {
+            env.insert("LVK_REPOSITORY_MEMORY_INSTRUCTIONS", identity);
+            let instructions = env.repository_memory_instructions().unwrap();
+            assert_eq!(
+                instructions
+                    .matches(crate::legacy_wiki::RETIREMENT_NOTICE)
+                    .count(),
+                1
+            );
+            assert!(instructions.contains(identity));
+            assert!(instructions.contains("common-root AGENTS.md"));
+            assert!(!instructions.contains(workspace_utils::path::SHARED_RESOURCE_GUIDANCE));
+        }
+        env.insert("LVK_OPENWIKI_MAINTENANCE", "1");
+        let instructions = env.repository_memory_instructions().unwrap();
+        assert!(!instructions.contains(crate::legacy_wiki::RETIREMENT_NOTICE));
+        assert!(instructions.contains("continued identity"));
+        for mode in ["LVK_OPENWIKI_REVIEWER", "LVK_RESOURCE_MEDIATOR"] {
+            let mut dedicated = env.clone();
+            dedicated.insert(mode, "1");
+            assert!(dedicated.repository_memory_instructions().is_none());
+        }
+    }
 
     #[test]
     fn profile_overrides_runtime_env() {

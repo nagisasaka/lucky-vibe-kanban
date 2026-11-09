@@ -356,6 +356,31 @@ mod tests {
     }
 
     #[test]
+    fn multiple_repository_identities_refresh_together_with_one_retained_contract() {
+        let policy = workspace_utils::repository_memory::CODING_RUN_INSTRUCTIONS;
+        let initial = format!(
+            "{}\n\n{}\n\n{policy}",
+            instructions("repo-a-old", ""),
+            instructions("repo-b-old", "")
+        );
+        let current = initial
+            .replace("repo-a-old", "repo-a-current")
+            .replace("repo-b-old", "repo-b-current");
+        // A pre-refactor/full-history mismatch cannot enable reduced injection.
+        assert!(!retained(
+            &current,
+            "thread",
+            &history(&instructions("old", "old contract"))
+        ));
+        assert!(retained(&current, "thread", &history(&initial)));
+        let (_, dynamic) = split(&current).unwrap();
+        assert!(dynamic.contains("drafts/repo-a-current.json"));
+        assert!(dynamic.contains("drafts/repo-b-current.json"));
+        assert!(!dynamic.contains("-old"));
+        assert!(!dynamic.contains(policy));
+    }
+
+    #[test]
     fn changed_policy_and_reversions_require_latest_full_policy() {
         let old = instructions("old", "policy v1");
         let new = instructions("current", "policy v2");

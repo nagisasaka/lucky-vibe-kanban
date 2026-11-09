@@ -2639,13 +2639,7 @@ pub fn prompt_with_repository_memory(
         && !prompt.trim_start().starts_with('/')
         && let Some(instructions) = env.repository_memory_instructions()
     {
-        return format!(
-            "{prompt}\n\n{}\n\n## LVK Change Manifest context\n{instructions}",
-            crate::legacy_wiki::RETIREMENT_NOTICE
-        );
-    }
-    if provider != DirectProvider::Codex && !prompt.trim_start().starts_with('/') {
-        return format!("{prompt}\n\n{}", crate::legacy_wiki::RETIREMENT_NOTICE);
+        return format!("{prompt}\n\n{instructions}");
     }
     prompt.to_owned()
 }
@@ -2775,6 +2769,18 @@ mod tests {
         let actual = prompt_with_repository_memory(DirectProvider::ClaudeCode, "task", &env);
         assert!(actual.contains("CURRENT Manifest identity"));
         assert!(actual.contains(".lvk/shared/tmp/"));
+        assert_eq!(
+            actual
+                .matches(crate::legacy_wiki::RETIREMENT_NOTICE)
+                .count(),
+            1
+        );
+        let mut maintenance = env.clone();
+        maintenance.insert("LVK_OPENWIKI_MAINTENANCE", "1");
+        let actual =
+            prompt_with_repository_memory(DirectProvider::ClaudeCode, "maintain", &maintenance);
+        assert!(!actual.contains(crate::legacy_wiki::RETIREMENT_NOTICE));
+        assert!(actual.contains("CURRENT Manifest identity"));
         env.insert("LVK_OPENWIKI_REVIEWER", "1");
         assert!(
             !prompt_with_repository_memory(DirectProvider::ClaudeCode, "review", &env)

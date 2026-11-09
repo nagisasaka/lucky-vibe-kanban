@@ -844,6 +844,8 @@ impl LocalAgentRunPort {
             })
             .collect();
         let mut memory_instructions = Vec::new();
+        let mut coding_runs = Vec::new();
+        let mut parallel_contexts = Vec::new();
         let resource_mediator = workspace
             .execution_owner
             .as_ref()
@@ -887,11 +889,14 @@ impl LocalAgentRunPort {
             );
         for repo in &repos {
             let root = PathBuf::from(&request.workspace.path).join(repo.worktree_name());
-            memory_instructions.push(
-                git::GitService::new()
-                    .commit_identity_instructions(&root)
-                    .map_err(|error| AgentRunPortError::Rejected(error.to_string()))?,
-            );
+            let identity_instructions = git::GitService::new()
+                .commit_identity_instructions(&root)
+                .map_err(|error| AgentRunPortError::Rejected(error.to_string()))?;
+            // Successful identity guidance is common to all attached repos;
+            // missing/invalid identities retain their repository-specific warning.
+            if !memory_instructions.contains(&identity_instructions) {
+                memory_instructions.push(identity_instructions);
+            }
             if !workspace.is_execution_only() {
                 workspace_manager::shared_resources::ensure_repository_memory(&self.db.pool, repo)
                     .await
@@ -971,14 +976,17 @@ impl LocalAgentRunPort {
                 && !openwiki_reviewer
                 && let Some(policy) = &parallel_policy
             {
-                memory_instructions.push(services::services::parallel_context::instructions(
-                    repo,
-                    workspace,
-                    &root,
-                    local_api_port,
-                    policy,
-                    attempt.provider_session.is_none() && !request.input.content.contains(policy),
-                ));
+                parallel_contexts.push(
+                    services::services::parallel_context::identity_instructions(
+                        repo,
+                        workspace,
+                        &root,
+                        local_api_port,
+                        policy,
+                        attempt.provider_session.is_none()
+                            && !request.input.content.contains(policy),
+                    ),
+                );
             }
             let membership =
                 WorkspaceRepo::find_by_workspace_and_repo_id(&self.db.pool, workspace.id, repo.id)
@@ -1001,9 +1009,17 @@ impl LocalAgentRunPort {
                     AgentRunPortError::Rejected(format!("Repository memory: {error:#}"))
                 })?;
                 if let Some(context) = context {
-                    memory_instructions.push(context.instructions());
+                    coding_runs.push(context);
                 }
             }
+        }
+        if !parallel_contexts.is_empty() {
+            memory_instructions.extend(parallel_contexts);
+            memory_instructions.push(services::services::parallel_context::INSTRUCTIONS.into());
+        }
+        if let Some(instructions) = utils::repository_memory::coding_run_instructions(&coding_runs)
+        {
+            memory_instructions.push(instructions);
         }
         let repo_names = repos
             .into_iter()

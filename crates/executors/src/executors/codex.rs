@@ -1119,12 +1119,6 @@ impl Codex {
                 .config
                 .get_or_insert_with(HashMap::new)
                 .insert("mcp_servers.openwiki.enabled".into(), Value::Bool(false));
-            params.developer_instructions = Some(match params.developer_instructions.take() {
-                Some(existing) => {
-                    format!("{existing}\n\n{}", crate::legacy_wiki::RETIREMENT_NOTICE)
-                }
-                None => crate::legacy_wiki::RETIREMENT_NOTICE.into(),
-            });
         }
         if env.get("LVK_INTEGRATION_WORKER").is_some_and(|v| v == "1")
             && let Some(agent) = env.get("VK_AGENT_RUN_ID")
@@ -2619,6 +2613,15 @@ mod goal_skill_tests {
         assert_eq!(
             params.config.as_ref().unwrap()["mcp_servers.openwiki.enabled"],
             false
+        );
+        assert_eq!(
+            params
+                .developer_instructions
+                .as_deref()
+                .unwrap()
+                .matches(crate::legacy_wiki::RETIREMENT_NOTICE)
+                .count(),
+            1
         );
         let resumed = resume_params_from("existing".into(), params.clone());
         assert_eq!(
