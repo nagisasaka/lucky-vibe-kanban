@@ -1302,5 +1302,14 @@
     "chooseProject": "Choose a Project",
     "integration": "自动合并"
   },
-  "integrationPanel": {}
+  "integrationPanel": {},
+  "markdownReading": {
+    "outline": "目录",
+    "decision": "等待决策",
+    "note": "备注",
+    "tip": "提示",
+    "important": "重要",
+    "warning": "警告",
+    "caution": "注意"
+  }
 }

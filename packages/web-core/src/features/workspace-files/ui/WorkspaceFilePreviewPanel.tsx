@@ -104,7 +104,14 @@ export function WorkspaceFilePreviewPanel({
             )}
           />
         ) : displayInfo?.viewKind === 'markdown' && !target.line ? (
-          <MarkdownFileViewer content={data.content ?? ''} />
+          <MarkdownFileViewer
+            content={data.content ?? ''}
+            contentKey={JSON.stringify([
+              target.workspaceId,
+              target.repoId,
+              target.path,
+            ])}
+          />
         ) : displayInfo?.viewKind === 'image' ? (
           <ImageFileViewer src={scopedRawUrl} alt={data.name} />
         ) : displayInfo?.viewKind === 'code' ||

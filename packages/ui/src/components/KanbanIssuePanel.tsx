@@ -63,6 +63,9 @@ export interface IssueFormData {
 export interface LinkedPullRequest extends IssueTagsLinkedPullRequest {}
 
 export interface KanbanIssueDescriptionEditorProps {
+  readingStyle?: 'document' | 'compact';
+  outline?: boolean;
+  contentKey?: string;
   placeholder: string;
   value: string;
   onChange: (value: string) => void;
@@ -419,6 +422,9 @@ export function KanbanIssuePanel({
                 />
               )}
               {renderDescriptionEditor({
+                readingStyle: 'document',
+                outline: !isCreateMode,
+                contentKey: issueId ?? undefined,
                 placeholder: isDescriptionEditing
                   ? t('kanban.issueDescriptionPlaceholder')
                   : formData.description

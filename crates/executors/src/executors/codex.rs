@@ -5,6 +5,7 @@ const REVIEW_INSTRUCTIONS: &str = concat!(
     "Workspace-local reproduction code, scripts, fixtures and tests are allowed when needed for the investigation; distinguish temporary investigation artifacts from proposed product changes. ",
     "REVIEW alone does not authorize adopting, merging or publishing product changes, or changing shared environments or live data. ",
     "Preserve existing permissions and approval boundaries; REVIEW does not bypass or guarantee external approval. ",
+    "Put any decisions requiring human input immediately after the conclusion; use explicit > [!DECISION] quotes sparingly for pending choices, not warnings or settled constraints. Express confirmed human intent with an ordinary labeled quote; omit empty decision sections. ",
     "Do not automatically post results to Issue comments or require a new report artifact."
 );
 

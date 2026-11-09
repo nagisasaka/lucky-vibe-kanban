@@ -2367,5 +2367,14 @@
     "failed": "Unavailable",
     "measuring": "Measuring…",
     "refresh": "Refresh sizes"
+  },
+  "markdownReading": {
+    "outline": "Contents",
+    "decision": "Decision needed",
+    "note": "Note",
+    "tip": "Tip",
+    "important": "Important",
+    "warning": "Warning",
+    "caution": "Caution"
   }
 }

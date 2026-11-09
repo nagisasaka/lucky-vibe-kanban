@@ -1,3 +1,5 @@
+import { MARKDOWN_QUOTE } from '@vibe/ui/lib/markdownQuote';
+import { MarkdownReadingSurface } from '@vibe/ui/components/MarkdownReadingSurface';
 import { useTranslation } from 'react-i18next';
 import {
   useMemo,
@@ -111,6 +113,9 @@ type WysiwygProps = {
   discovery?: ExecutorDiscoverySnapshot;
   /** Literal chat input; display-only Markdown consumers keep rich rendering. */
   plainText?: boolean;
+  readingStyle?: 'document' | 'compact';
+  outline?: boolean;
+  contentKey?: string;
   placeholder?: string;
   /** Markdown string representing the editor content */
   value: SerializedEditorState;
@@ -295,6 +300,9 @@ const WYSIWYGEditor = forwardRef<WYSIWYGEditorRef, WysiwygProps>(
     {
       placeholder = '',
       plainText = false,
+      readingStyle,
+      outline = false,
+      contentKey,
       value,
       onChange,
       onEditorStateChange,
@@ -330,6 +338,7 @@ const WYSIWYGEditor = forwardRef<WYSIWYGEditorRef, WysiwygProps>(
     ref: React.ForwardedRef<WYSIWYGEditorRef>
   ) {
     const { t } = useTranslation('common');
+    const reading = readingStyle ?? (disabled ? 'compact' : undefined);
     // Ref to capture the Lexical editor instance for imperative methods
     const editorInstanceRef = useRef<LexicalEditor | null>(null);
     const selectedSkillsRef = useRef(selectedSkills);
@@ -519,41 +528,36 @@ const WYSIWYGEditor = forwardRef<WYSIWYGEditorRef, WysiwygProps>(
         namespace: 'md-wysiwyg',
         onError: console.error,
         theme: {
-          paragraph: 'mb-1 last:mb-0',
+          paragraph: 'md-paragraph',
           heading: {
-            h1: 'mt-4 mb-2 text-2xl font-semibold',
-            h2: 'mt-3 mb-2 text-xl font-semibold',
-            h3: 'mt-3 mb-2 text-lg font-semibold',
-            h4: 'mt-2 mb-1 text-base font-medium',
-            h5: 'mt-2 mb-1 text-sm font-medium',
-            h6: 'mt-2 mb-1 text-xs font-medium uppercase tracking-wide',
+            h1: 'md-heading',
+            h2: 'md-heading',
+            h3: 'md-heading',
+            h4: 'md-heading',
+            h5: 'md-heading',
+            h6: 'md-heading',
           },
-          quote:
-            'my-3 border-l-4 border-primary-foreground pl-4 text-muted-foreground',
+          quote: 'md-quote',
           list: {
-            ul: 'my-1 list-disc pl-6',
-            ol: 'my-1 list-decimal pl-6',
+            ul: 'md-list',
+            ol: 'md-list',
             listitem: '',
-            nested: {
-              // Hide the structural wrapper marker Lexical adds for nested items.
-              listitem: 'list-none pl-4',
-            },
+            nested: { listitem: 'md-nested-item' },
           },
-          link: 'text-blue-600 dark:text-blue-400 underline underline-offset-2 cursor-pointer hover:text-blue-800 dark:hover:text-blue-300',
+          link: 'md-link',
           text: {
             bold: 'font-semibold',
             italic: 'italic',
             underline: 'underline underline-offset-2',
             strikethrough: 'line-through',
-            code: 'font-mono bg-muted bg-panel px-1 py-0.5 rounded',
+            code: 'md-inline-code',
           },
-          code: 'block font-mono bg-secondary rounded-md px-3 py-2 my-2 whitespace-pre overflow-x-auto',
+          code: 'markdown-code-block',
           codeHighlight: CODE_HIGHLIGHT_CLASSES,
-          table: 'border-collapse my-2 w-full text-sm',
+          table: 'md-table',
           tableRow: '',
-          tableCell: 'border border-low px-3 py-2 text-left align-top',
-          tableCellHeader:
-            'bg-muted font-semibold border border-low px-3 py-2 text-left align-top',
+          tableCell: 'md-cell',
+          tableCellHeader: 'md-header-cell',
         },
         nodes: [
           HeadingNode,
@@ -591,6 +595,7 @@ const WYSIWYGEditor = forwardRef<WYSIWYGEditorRef, WysiwygProps>(
         ...(enableLocalLinks
           ? [{ ...LINK, importRegExp: /\[(.*?)\]\(<([^<>\n]+)>\)/ }]
           : []),
+        MARKDOWN_QUOTE,
         ...TRANSFORMERS,
       ],
       [ATTACHMENT_TRANSFORMER, IMAGE_TRANSFORMER, enableLocalLinks]
@@ -680,11 +685,22 @@ const WYSIWYGEditor = forwardRef<WYSIWYGEditorRef, WysiwygProps>(
                   <ToolbarPlugin />
                 )}
 
-                <div className="relative">
+                <MarkdownReadingSurface
+                  contentKey={contentKey ?? ''}
+                  outline={outline}
+                  readOnly={disabled}
+                  className="relative"
+                >
                   <TextPlugin
                     contentEditable={
                       <ContentEditable
-                        className={cn('outline-none', className)}
+                        className={cn(
+                          'outline-none',
+                          reading
+                            ? `markdown-body markdown-body--${reading}`
+                            : 'markdown-editor',
+                          className
+                        )}
                         aria-label={
                           disabled
                             ? t('markdownEditor.content')
@@ -696,7 +712,7 @@ const WYSIWYGEditor = forwardRef<WYSIWYGEditorRef, WysiwygProps>(
                     placeholder={placeholderElement}
                     ErrorBoundary={LexicalErrorBoundary}
                   />
-                </div>
+                </MarkdownReadingSurface>
 
                 {showStaticToolbar && (
                   <StaticToolbarPlugin

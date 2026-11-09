@@ -31,7 +31,13 @@ function useDesignNoteText() {
 }
 function Markdown({ value }: { value: string }) {
   return (
-    <WYSIWYGEditor value={value} disabled className="break-words p-base" />
+    <WYSIWYGEditor
+      value={value}
+      disabled
+      readingStyle="document"
+      outline
+      className="break-words p-base"
+    />
   );
 }
 function MarkdownInput({

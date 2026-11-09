@@ -65,7 +65,7 @@ export function ClickableCodePlugin({
       // Inline code uses the theme class which includes 'font-mono' and 'bg-muted'
       // The actual class applied is from theme.text.code
       const codeElements = root.querySelectorAll(
-        'code, .font-mono.bg-muted, [class*="text-code"]'
+        'code, .md-inline-code, .font-mono.bg-muted, [class*="text-code"]'
       );
       codeElements.forEach(processCodeElement);
     };
@@ -81,13 +81,15 @@ export function ClickableCodePlugin({
           if (node instanceof Element) {
             // Check if the node itself is a code element
             if (
-              node.matches('code, .font-mono.bg-muted, [class*="text-code"]')
+              node.matches(
+                'code, .md-inline-code, .font-mono.bg-muted, [class*="text-code"]'
+              )
             ) {
               processCodeElement(node);
             }
             // Check child code elements
             const childCodeElements = node.querySelectorAll(
-              'code, .font-mono.bg-muted, [class*="text-code"]'
+              'code, .md-inline-code, .font-mono.bg-muted, [class*="text-code"]'
             );
             childCodeElements.forEach(processCodeElement);
           }
