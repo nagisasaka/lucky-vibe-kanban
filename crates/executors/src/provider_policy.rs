@@ -94,45 +94,6 @@ pub fn direct_provider_capability_snapshot(
 }
 
 impl AgentProviderPolicy {
-    /// Apply the selected profile's CLI authentication preflight without changing
-    /// another profile's readiness or exposing raw CLI output.
-    pub fn require_authentication(&mut self, result: Result<(), crate::executors::ExecutorError>) {
-        match result {
-            Ok(()) => {
-                self.readiness = AgentProviderReadiness::Ready;
-                self.diagnostics.clear();
-            }
-            Err(error) => {
-                self.readiness = if matches!(
-                    error,
-                    crate::executors::ExecutorError::ExecutableNotFound { .. }
-                ) {
-                    AgentProviderReadiness::MissingExecutable
-                } else {
-                    AgentProviderReadiness::AuthRequired
-                };
-                self.diagnostics = vec![AgentProviderDiagnostic {
-                    kind: if self.readiness == AgentProviderReadiness::MissingExecutable {
-                        AgentProviderDiagnosticKind::MissingExecutable
-                    } else {
-                        AgentProviderDiagnosticKind::AuthRequired
-                    },
-                    message: error.to_string(),
-                }];
-                self.capabilities.retain(|capability| {
-                    !matches!(
-                        capability,
-                        AgentProviderCapability::InitialRun
-                            | AgentProviderCapability::FollowUp
-                            | AgentProviderCapability::SessionResume
-                            | AgentProviderCapability::WorkflowAgentStep
-                            | AgentProviderCapability::TeamSlot
-                    )
-                });
-            }
-        }
-    }
-
     pub fn for_agent(
         executor: BaseCodingAgent,
         agent: &CodingAgent,
@@ -160,7 +121,7 @@ impl AgentProviderPolicy {
             capabilities,
             legacy: false,
             disabled: false,
-            diagnostics: diagnostics_for_availability(&availability),
+            diagnostics: diagnostics_for_availability(executor, &availability),
         }
     }
 }
@@ -242,12 +203,16 @@ fn agent_supports_observed_config(agent: &CodingAgent) -> bool {
     matches!(agent, CodingAgent::ClaudeCode(_) | CodingAgent::Codex(_))
 }
 
-fn diagnostics_for_availability(availability: &AvailabilityInfo) -> Vec<AgentProviderDiagnostic> {
+fn diagnostics_for_availability(
+    executor: BaseCodingAgent,
+    availability: &AvailabilityInfo,
+) -> Vec<AgentProviderDiagnostic> {
     match availability {
         AvailabilityInfo::NotFound => vec![AgentProviderDiagnostic {
             kind: AgentProviderDiagnosticKind::MissingExecutable,
             message: "Agent executable or local configuration was not found.".to_string(),
         }],
+        AvailabilityInfo::InstallationFound if executor == BaseCodingAgent::ClaudeCode => vec![],
         AvailabilityInfo::InstallationFound => vec![AgentProviderDiagnostic {
             kind: AgentProviderDiagnosticKind::AuthRequired,
             message: "Agent installation was found, but authenticated readiness was not confirmed."
@@ -284,50 +249,52 @@ mod tests {
     }
 
     #[test]
-    fn authentication_failure_blocks_execution_without_removing_other_profile_support() {
-        let agent = claude_agent();
-        let original = AgentProviderPolicy::for_agent(
+    fn installed_claude_is_usable_without_claiming_authentication_failure() {
+        for profile in [
+            serde_json::json!({}),
+            serde_json::json!({"require_subscription_login": true}),
+        ] {
+            let agent = CodingAgent::ClaudeCode(serde_json::from_value(profile).unwrap());
+            let policy = AgentProviderPolicy::for_agent(
+                BaseCodingAgent::ClaudeCode,
+                &agent,
+                AvailabilityInfo::InstallationFound,
+            );
+            assert_eq!(policy.readiness, AgentProviderReadiness::Installed);
+            assert!(policy.diagnostics.is_empty());
+            assert!(
+                policy
+                    .capabilities
+                    .contains(&AgentProviderCapability::InitialRun)
+            );
+            assert!(
+                policy
+                    .capabilities
+                    .contains(&AgentProviderCapability::FollowUp)
+            );
+        }
+        let missing = AgentProviderPolicy::for_agent(
             BaseCodingAgent::ClaudeCode,
-            &agent,
-            AvailabilityInfo::InstallationFound,
-        );
-        let mut subscription = original.clone();
-        subscription.require_authentication(Err(crate::executors::ExecutorError::AuthRequired(
-            "Run claude auth login".into(),
-        )));
-        assert_eq!(subscription.readiness, AgentProviderReadiness::AuthRequired);
-        assert!(
-            !subscription
-                .capabilities
-                .contains(&AgentProviderCapability::InitialRun)
-        );
-        assert!(
-            !subscription
-                .capabilities
-                .contains(&AgentProviderCapability::FollowUp)
-        );
-        assert!(
-            !subscription
-                .capabilities
-                .contains(&AgentProviderCapability::SessionResume)
+            &claude_agent(),
+            AvailabilityInfo::NotFound,
         );
         assert_eq!(
-            subscription.diagnostics[0].message,
-            "Auth required: Run claude auth login"
+            missing.diagnostics[0].kind,
+            AgentProviderDiagnosticKind::MissingExecutable
         );
         assert!(
-            original
+            !missing
                 .capabilities
                 .contains(&AgentProviderCapability::InitialRun)
         );
-        let mut ready = original;
-        ready.require_authentication(Ok(()));
-        assert_eq!(ready.readiness, AgentProviderReadiness::Ready);
-        assert!(ready.diagnostics.is_empty());
-        assert!(
-            ready
-                .capabilities
-                .contains(&AgentProviderCapability::SessionResume)
+        let codex = AgentProviderPolicy::for_agent(
+            BaseCodingAgent::Codex,
+            &codex_agent(),
+            AvailabilityInfo::InstallationFound,
+        );
+        assert_eq!(
+            codex.diagnostics[0].kind,
+            AgentProviderDiagnosticKind::AuthRequired
         );
     }
 

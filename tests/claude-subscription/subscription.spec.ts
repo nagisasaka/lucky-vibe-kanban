@@ -72,6 +72,8 @@ test("subscription preflight, real runtime lifecycle and browser output", async 
   for (const state of [
     { loggedIn: false },
     { authMethod: "api_key" },
+    { authMethod: "oauth_token" },
+    { conflictProfile: true },
     { apiProvider: "bedrock" },
     { malformed: true },
     { exitCode: 1 },
@@ -80,9 +82,15 @@ test("subscription preflight, real runtime lifecycle and browser output", async 
     const before = traces().filter(
       (v) => v.event === "launch" && !v.discovery,
     ).length;
-    const denied = await policy();
-    expect(denied.readiness).toBe("AUTH_REQUIRED");
-    expect(denied.capabilities).not.toContain("INITIAL_RUN");
+    const selectedVariant =
+      "conflictProfile" in state ? "CONFLICT" : "SUBSCRIPTION";
+    const authBefore = traces().filter((v) => v.event === "auth").length;
+    const denied = await policy(selectedVariant);
+    expect(denied.readiness).toBe("INSTALLED");
+    expect(denied.diagnostics).toEqual([]);
+    expect(denied.capabilities).toContain("INITIAL_RUN");
+    // Merely displaying readiness never invokes auth status.
+    expect(traces().filter((v) => v.event === "auth")).toHaveLength(authBefore);
     const rejectedDirectory = join(
       process.env.LVK_CLAUDE_TEST_ROOT!,
       randomUUID(),
@@ -97,7 +105,7 @@ test("subscription preflight, real runtime lifecycle and browser output", async 
         directory_path: rejectedDirectory,
         linked_issue: null,
         attachment_ids: [],
-        executor_config: config,
+        executor_config: { ...config, variant: selectedVariant },
         prompt: "Must never reach runtime",
       },
     });
@@ -121,10 +129,11 @@ test("subscription preflight, real runtime lifecycle and browser output", async 
     ).toHaveLength(before);
   }
   writeFileSync(process.env.LVK_CLAUDE_FIXTURE_STATE!, "{}");
-  expect((await policy("CONFLICT")).readiness).toBe("AUTH_REQUIRED");
+  expect((await policy("CONFLICT")).readiness).toBe("INSTALLED");
+  expect((await policy("DEFAULT")).diagnostics).toEqual([]);
   // Missing-executable classification is covered by command/policy unit tests.
   // Hiding this fixture would fall through to an installed official CLI on PATH.
-  expect((await policy()).readiness).toBe("READY");
+  expect((await policy()).readiness).toBe("INSTALLED");
   for (const permission of [undefined, "SUPERVISED", "PLAN"]) {
     const before = traces().filter(
       (v) => v.event === "launch" && !v.discovery,
@@ -257,6 +266,9 @@ test("subscription preflight, real runtime lifecycle and browser output", async 
   ).toBeVisible();
   const failure = await follow("CLAUDE_FIXTURE_FAIL");
   await settled(failure, "failed");
+  await expect(
+    page.getByText("Fixture failure", { exact: true }).first(),
+  ).toBeVisible();
   const held = await follow("CLAUDE_FIXTURE_HOLD");
   await expect.poll(async () => (await state(held)).status).toBe("running");
   await page
@@ -283,6 +295,12 @@ test("subscription preflight, real runtime lifecycle and browser output", async 
       nativeResumeIds: [...new Set(resumedLaunches.map((v) => v.resume))],
     }),
   );
+  const strictChildren = traces().filter((v) => v.subscription);
+  expect(strictChildren.some((v) => v.event === "auth")).toBe(true);
+  expect(strictChildren.some((v) => v.event === "launch" && !v.discovery)).toBe(
+    true,
+  );
+  expect(strictChildren.every((v) => v.credentials_cleared)).toBe(true);
 });
 
 test("Issue to Workspace selects subscription and sends through the real UI", async ({
@@ -329,20 +347,22 @@ test("Issue to Workspace selects subscription and sends through the real UI", as
     .getByRole("button", { name: /^New single-agent attempt/ })
     .last()
     .click();
-  const chooser = page
-    .getByRole("heading", { name: "Choose workspace", exact: true })
-    .locator("../..");
+  const chooser = page.getByRole("dialog").filter({
+    has: page.getByRole("heading", {
+      name: "Create a new Workspace",
+      exact: true,
+    }),
+  });
+  await chooser
+    .getByRole("tab", { name: "Other directory", exact: true })
+    .click();
   const directory = join(process.env.LVK_CLAUDE_TEST_ROOT!, randomUUID());
   mkdirSync(directory);
   await chooser
     .getByLabel("Working directory", { exact: true })
     .fill(directory);
-  await chooser.getByRole("button", { name: "Load path", exact: true }).click();
   await chooser
-    .getByRole("button", { name: /Work directly in this directory/ })
-    .click();
-  await chooser
-    .getByRole("button", { name: "Use this directory", exact: true })
+    .getByRole("button", { name: "Use this workspace", exact: true })
     .click();
   // Explicitly choose the provider, even when the user's isolated default differs.
   const provider = page
@@ -352,6 +372,12 @@ test("Issue to Workspace selects subscription and sends through the real UI", as
   await page
     .getByRole("menuitem", { name: "Claude Code", exact: true })
     .click();
+  await expect(
+    page.getByText(
+      "Agent installation was found, but authenticated readiness was not confirmed.",
+      { exact: true },
+    ),
+  ).toHaveCount(0);
   await page.getByRole("button", { name: "Preset", exact: true }).click();
   await page
     .getByRole("menuitem", { name: "Subscription", exact: true })
@@ -402,6 +428,12 @@ test("Issue to Workspace selects subscription and sends through the real UI", as
   await page
     .getByRole("menuitem", { name: "Claude Code", exact: true })
     .click();
+  await expect(
+    page.getByText(
+      "Agent installation was found, but authenticated readiness was not confirmed.",
+      { exact: true },
+    ),
+  ).toHaveCount(0);
   await page.getByRole("button", { name: "Preset", exact: true }).click();
   await page
     .getByRole("menuitem", { name: "Subscription", exact: true })

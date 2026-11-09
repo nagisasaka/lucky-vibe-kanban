@@ -10,11 +10,10 @@ use crate::{
     executors::provider_adapter::{DirectControl, DirectIntent, encode_stdio_rpc},
 };
 
-// Session-scoped official CLI setting. It blocks API credentials at startup;
-// Custom headers from ordinary CLI settings are neutralised for this profile;
+// One authentication policy for status, discovery, runs and passive usage.
+// Empty values neutralise inherited credentials and ordinary settings;
 // managed settings retain their native higher priority.
-pub(super) const SUBSCRIPTION_SETTINGS: &str =
-    r#"{"forceLoginMethod":"claudeai","env":{"ANTHROPIC_CUSTOM_HEADERS":""}}"#;
+pub(super) const SUBSCRIPTION_SETTINGS: &str = r#"{"forceLoginMethod":"claudeai","env":{"ANTHROPIC_API_KEY":"","ANTHROPIC_AUTH_TOKEN":"","ANTHROPIC_CUSTOM_HEADERS":""}}"#;
 
 pub struct ClaudeCodeCommandAdapter<'a> {
     agent: &'a ClaudeCode,
@@ -33,16 +32,37 @@ impl<'a> ClaudeCodeCommandAdapter<'a> {
         }
     }
 
+    pub(super) fn build_auth_probe(&self) -> CommandBuilder {
+        self.with_authentication_settings(CommandBuilder::new("claude"))
+            .extend_params(["auth", "status"])
+    }
+
     /// Official non-model control lane. Do not inherit Project settings,
     /// hooks, MCP servers or persistence. --bare is unsuitable for OAuth.
     pub(super) fn build_passive_usage(&self) -> Result<CommandBuilder, CommandBuildError> {
-        let builder=CommandBuilder::new(base_command(false)).params([
-            "-p", "--verbose", "--input-format=stream-json", "--output-format=stream-json",
-            "--no-session-persistence", "--setting-sources", "user",
-            "--strict-mcp-config", "--mcp-config", "{\"mcpServers\":{}}",
-            "--tools", "", "--settings", if self.agent.require_subscription_login.unwrap_or(false) {
-                "{\"disableAllHooks\":true,\"forceLoginMethod\":\"claudeai\",\"env\":{\"ANTHROPIC_CUSTOM_HEADERS\":\"\"}}"
-            } else { "{\"disableAllHooks\":true}" },
+        let mut settings = if self.agent.require_subscription_login.unwrap_or(false) {
+            serde_json::from_str::<serde_json::Value>(SUBSCRIPTION_SETTINGS)
+                .expect("static subscription settings")
+        } else {
+            serde_json::json!({})
+        };
+        settings["disableAllHooks"] = true.into();
+        let settings = settings.to_string();
+        let builder = CommandBuilder::new(base_command(false)).params([
+            "-p",
+            "--verbose",
+            "--input-format=stream-json",
+            "--output-format=stream-json",
+            "--no-session-persistence",
+            "--setting-sources",
+            "user",
+            "--strict-mcp-config",
+            "--mcp-config",
+            "{\"mcpServers\":{}}",
+            "--tools",
+            "",
+            "--settings",
+            &settings,
         ]);
         apply_overrides(builder, &self.agent.cmd)
     }
@@ -236,22 +256,48 @@ mod tests {
     }
 
     #[test]
-    fn subscription_settings_apply_to_runtime_and_discovery_before_prompt() {
+    fn subscription_authentication_matches_across_all_four_lanes() {
         let agent: ClaudeCode = serde_json::from_value(serde_json::json!({
             "require_subscription_login": true
         }))
         .unwrap();
         let adapter = ClaudeCodeCommandAdapter::new(&agent);
         for builder in [
+            adapter.build_auth_probe(),
             adapter.build_runtime(false).unwrap(),
             adapter.build_discovery_probe(&[]).unwrap(),
+            adapter.build_passive_usage().unwrap(),
         ] {
             let params = builder.params.unwrap();
             let settings = params.iter().position(|arg| arg == "--settings").unwrap();
-            assert_eq!(params[settings + 1], SUBSCRIPTION_SETTINGS);
-            let parsed: serde_json::Value = serde_json::from_str(&params[settings + 1]).unwrap();
-            assert_eq!(parsed["forceLoginMethod"], "claudeai");
-            assert_eq!(parsed["env"]["ANTHROPIC_CUSTOM_HEADERS"], "");
+            let mut parsed: serde_json::Value =
+                serde_json::from_str(&params[settings + 1]).unwrap();
+            if params.iter().any(|arg| arg == "--no-session-persistence") {
+                assert_eq!(
+                    parsed.as_object_mut().unwrap().remove("disableAllHooks"),
+                    Some(true.into())
+                );
+                for (flag, value) in [
+                    ("--setting-sources", "user"),
+                    ("--mcp-config", "{\"mcpServers\":{}}"),
+                    ("--tools", ""),
+                ] {
+                    let index = params.iter().position(|arg| arg == flag).unwrap();
+                    assert_eq!(params[index + 1], value);
+                }
+                assert!(params.iter().any(|arg| arg == "--strict-mcp-config"));
+            }
+            assert_eq!(
+                parsed,
+                serde_json::from_str::<serde_json::Value>(SUBSCRIPTION_SETTINGS).unwrap()
+            );
+            for key in [
+                "ANTHROPIC_API_KEY",
+                "ANTHROPIC_AUTH_TOKEN",
+                "ANTHROPIC_CUSTOM_HEADERS",
+            ] {
+                assert_eq!(parsed["env"][key], "");
+            }
             if let Some(prompt_start) = params.iter().position(|arg| arg == "--") {
                 assert!(settings < prompt_start);
                 assert_eq!(params.last().unwrap(), "/");
@@ -259,6 +305,16 @@ mod tests {
             assert!(!params.iter().any(|arg| arg == "--bare"));
         }
         let legacy: ClaudeCode = serde_json::from_value(serde_json::json!({})).unwrap();
+        let passive = ClaudeCodeCommandAdapter::new(&legacy)
+            .build_passive_usage()
+            .unwrap()
+            .params
+            .unwrap();
+        let index = passive.iter().position(|arg| arg == "--settings").unwrap();
+        assert_eq!(
+            serde_json::from_str::<serde_json::Value>(&passive[index + 1]).unwrap(),
+            serde_json::json!({"disableAllHooks":true})
+        );
         assert!(
             !ClaudeCodeCommandAdapter::new(&legacy)
                 .build_runtime(false)

@@ -7,22 +7,7 @@ use serde::Deserialize;
 use tokio::process::Command;
 
 use super::ClaudeCode;
-use crate::{command::CommandBuilder, env::ExecutionEnv, executors::ExecutorError};
-
-// Reject ambiguity rather than silently removing credentials the user configured.
-const CONFLICTING_ENV: &[&str] = &[
-    "ANTHROPIC_API_KEY",
-    "ANTHROPIC_AUTH_TOKEN",
-    "ANTHROPIC_CUSTOM_HEADERS",
-    "ANTHROPIC_BASE_URL",
-    "ANTHROPIC_PROFILE",
-    "ANTHROPIC_BEDROCK_BASE_URL",
-    "ANTHROPIC_VERTEX_BASE_URL",
-    "CLAUDE_CODE_OAUTH_TOKEN",
-    "CLAUDE_CODE_USE_BEDROCK",
-    "CLAUDE_CODE_USE_VERTEX",
-    "CLAUDE_CODE_USE_FOUNDRY",
-];
+use crate::{env::ExecutionEnv, executors::ExecutorError};
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -72,6 +57,25 @@ impl ClaudeCode {
                 "Subscription login requires the official `claude` command on PATH without a router, base command override, or additional parameters. Use a separate profile for custom commands.",
             ));
         }
+        // Only reject contradictions explicitly saved in this profile. The CLI
+        // settings neutralise inherited credentials; public metadata decides
+        // the selected method rather than a second provider precedence table.
+        for key in [
+            "ANTHROPIC_API_KEY",
+            "ANTHROPIC_AUTH_TOKEN",
+            "ANTHROPIC_CUSTOM_HEADERS",
+        ] {
+            if self
+                .cmd
+                .env
+                .as_ref()
+                .is_some_and(|env| env.contains_key(key))
+            {
+                return Err(auth_error(&format!(
+                    "Subscription login conflicts with profile env {key}. Remove that entry from this profile, or choose another profile."
+                )));
+            }
+        }
         Ok(())
     }
 
@@ -85,25 +89,8 @@ impl ClaudeCode {
         }
         self.validate_subscription_profile()?;
         let effective_env = env.clone().with_profile(&self.cmd);
-        for key in CONFLICTING_ENV {
-            let configured = effective_env
-                .vars
-                .get(*key)
-                .map(|value| !value.is_empty())
-                .unwrap_or_else(|| std::env::var_os(key).is_some_and(|value| !value.is_empty()));
-            if configured {
-                return Err(auth_error(&format!(
-                    "Subscription login conflicts with {key}. Remove that setting from this profile/execution environment, or choose another profile. No alternative billing method was selected."
-                )));
-            }
-        }
-        let (program, args) = CommandBuilder::new("claude")
-            .params([
-                "--settings",
-                super::command_adapter::SUBSCRIPTION_SETTINGS,
-                "auth",
-                "status",
-            ])
+        let (program, args) = super::command_adapter::ClaudeCodeCommandAdapter::new(self)
+            .build_auth_probe()
             .build_initial()?
             .into_resolved()
             .await?;
@@ -137,48 +124,57 @@ mod tests {
     }
 
     fn clean_env() -> ExecutionEnv {
-        let mut env = ExecutionEnv::new(crate::env::RepoContext::default());
-        for key in CONFLICTING_ENV {
-            env.insert(*key, "");
-        }
-        env
+        ExecutionEnv::new(crate::env::RepoContext::default())
     }
 
-    #[tokio::test]
-    async fn rejects_each_conflicting_credential_without_reporting_values() {
-        for key in CONFLICTING_ENV {
-            let mut env = clean_env();
-            env.insert(*key, "private-fixture-value");
-            let error = subscription_agent()
-                .check_subscription_login(Path::new("."), &env)
-                .await
-                .unwrap_err()
-                .to_string();
-            assert!(error.contains(key), "{error}");
-            assert!(!error.contains("private-fixture-value"));
+    #[test]
+    fn rejects_only_explicit_profile_credential_entries_without_reporting_values() {
+        for key in [
+            "ANTHROPIC_API_KEY",
+            "ANTHROPIC_AUTH_TOKEN",
+            "ANTHROPIC_CUSTOM_HEADERS",
+        ] {
+            for value in ["", "private-profile-value"] {
+                let mut agent = subscription_agent();
+                agent.cmd.env = Some(std::collections::HashMap::from([(
+                    key.into(),
+                    value.into(),
+                )]));
+                let error = agent
+                    .validate_subscription_profile()
+                    .unwrap_err()
+                    .to_string();
+                assert!(error.contains(key), "{error}");
+                assert!(!error.contains("private-profile-value"));
+                agent.require_subscription_login = None;
+                assert!(agent.validate_subscription_profile().is_ok());
+            }
         }
     }
 
-    #[tokio::test]
-    async fn profile_environment_overrides_runtime_and_legacy_profiles_are_unchanged() {
+    #[test]
+    fn other_authentication_inputs_are_left_to_cli_status() {
         let mut agent = subscription_agent();
-        agent.cmd.env = Some(std::collections::HashMap::from([(
-            "ANTHROPIC_API_KEY".to_string(),
-            "private-profile-value".to_string(),
-        )]));
-        let error = agent
-            .check_subscription_login(Path::new("."), &clean_env())
-            .await
-            .unwrap_err()
-            .to_string();
-        assert!(error.contains("ANTHROPIC_API_KEY"));
-        assert!(!error.contains("private-profile-value"));
-        agent.require_subscription_login = None;
+        agent.cmd.env = Some(std::collections::HashMap::from([
+            ("CLAUDE_CODE_OAUTH_TOKEN".into(), "private-token".into()),
+            ("CLAUDE_CODE_USE_BEDROCK".into(), "1".into()),
+        ]));
+        assert!(agent.validate_subscription_profile().is_ok());
+        // This is not support for token authentication or a cloud provider.
+        // verify_status still rejects their reported methods/providers.
         assert!(
-            agent
-                .check_subscription_login(Path::new("."), &clean_env())
-                .await
-                .is_ok()
+            verify_status(
+                true,
+                br#"{"loggedIn":true,"authMethod":"oauth_token","apiProvider":"firstParty"}"#
+            )
+            .is_err()
+        );
+        assert!(
+            verify_status(
+                true,
+                br#"{"loggedIn":true,"authMethod":"third_party","apiProvider":"bedrock"}"#
+            )
+            .is_err()
         );
     }
 

@@ -28,16 +28,22 @@ def main():
         print("Claude Code (offline LVK fixture, not an official CLI)")
         return 0
     if "--help" in args:
+        trace("help")
         print("Offline fixture: --effort --resume --settings")
         return 0
     state_file = os.environ.get("LVK_CLAUDE_FIXTURE_STATE")
     state = json.loads(Path(state_file).read_text()) if state_file else {}
     settings = json.loads(args[args.index("--settings") + 1]) if "--settings" in args else {}
     subscription = settings.get("forceLoginMethod") == "claudeai"
+    os.environ.update(settings.get("env", {}))
+    credentials_cleared = all(not os.environ.get(key) for key in
+                              ("ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN", "ANTHROPIC_CUSTOM_HEADERS"))
     if "auth" in args and "status" in args:
-        method = state.get("authMethod", "claude.ai")
+        inherited_method = ("oauth_token" if os.environ.get("ANTHROPIC_AUTH_TOKEN") else
+                            "api_key" if os.environ.get("ANTHROPIC_API_KEY") else "claude.ai")
+        method = state.get("authMethod", inherited_method)
         logged_in = state.get("loggedIn", True)
-        trace("auth", method=method, logged_in=logged_in, subscription=subscription)
+        trace("auth", method=method, logged_in=logged_in, subscription=subscription, credentials_cleared=credentials_cleared)
         if state.get("malformed"):
             print("fixture-invalid-status")
         else:
@@ -47,7 +53,7 @@ def main():
 
     resume = args[args.index("--resume") + 1] if "--resume" in args else None
     session_id = resume or str(uuid.uuid4())
-    trace("launch", resume=resume, session_id=session_id, subscription=subscription, discovery=args[-2:] == ["--", "/"])
+    trace("launch", resume=resume, session_id=session_id, subscription=subscription, credentials_cleared=credentials_cleared, discovery=args[-2:] == ["--", "/"])
     send({"type": "system", "subtype": "init", "session_id": session_id,
           "model": "offline-fixture", "tools": [], "slash_commands": [],
           "apiKeySource": "/login managed key"})
