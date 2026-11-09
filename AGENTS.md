@@ -14,7 +14,7 @@
 
 - README is human-maintained with AI assistance; operational detail belongs in OpenWiki. Check source, configuration and tests before describing behaviour; distinguish current behaviour, proposals and historical validation. Keep procedures complete with prerequisites, ordered steps, outcomes and recovery limits. Preserve stable README-linked Wiki paths.
 - For frontend changes in `packages/local-web`, `packages/web-core` or `packages/ui`, read the shared UI guidance in [`packages/local-web/AGENTS.md`](packages/local-web/AGENTS.md).
-- Read `openwiki/quickstart.md` and relevant pages when present, and verify important claims against source, tests and configuration. Canonical `openwiki/` is read-only during normal development; only authorised maintenance updates it. The generated `.llm-wiki` Pipeline and knowledge-recall/enrich integration are retired: preserve existing files and do not initialise, update or run the legacy stages.
+- Read `openwiki/quickstart.md` and relevant pages when present, and verify important claims against source, tests and configuration. Canonical `openwiki/` is read-only during normal development; only authorised maintenance updates it.
 
 ## Generated Types and SQLx Metadata
 

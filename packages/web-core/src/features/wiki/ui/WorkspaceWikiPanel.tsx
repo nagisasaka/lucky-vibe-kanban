@@ -264,8 +264,7 @@ export function WorkspaceWikiArticle({ actions }: { actions?: ReactNode }) {
       resolveWikiHref(
         selectedPath,
         href,
-        new Set(pages.map((page) => page.path)),
-        true
+        new Set(pages.map((page) => page.path))
       ),
       event,
       (path) => controller.selectPage(path)

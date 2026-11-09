@@ -2635,19 +2635,91 @@ pub fn prompt_with_repository_memory(
     prompt: &str,
     env: &crate::env::ExecutionEnv,
 ) -> String {
+    let prompt = if env.get("LVK_SAVED_ISSUE_INPUT").is_some_and(|v| v == "1") {
+        saved_issue_description_for_prompt(prompt)
+    } else {
+        prompt.to_owned()
+    };
     if provider != DirectProvider::Codex
         && !prompt.trim_start().starts_with('/')
         && let Some(instructions) = env.repository_memory_instructions()
     {
-        return format!(
-            "{prompt}\n\n{}\n\n## LVK Change Manifest context\n{instructions}",
-            crate::legacy_wiki::RETIREMENT_NOTICE
-        );
+        return format!("{prompt}\n\n{instructions}");
     }
-    if provider != DirectProvider::Codex && !prompt.trim_start().starts_with('/') {
-        return format!("{prompt}\n\n{}", crate::legacy_wiki::RETIREMENT_NOTICE);
+    prompt
+}
+
+// Saved descriptions stay untouched and visible in the ordinary editor. Only
+// byte-exact LVK-generated shared blocks are omitted at the send boundary.
+// Only the five lvk-marker revisions are targeted; older evk text is ordinary body.
+// This helper is called only for saved Issue composition, never arbitrary Review input;
+// edited/unknown text and malformed/nested envelopes are deliberately preserved.
+pub fn saved_issue_description_for_prompt(prompt: &str) -> String {
+    strip_generated_card_blocks(prompt, |block| {
+        const KNOWN: &[&str] = &[
+            "a20b2808f4db66ff0c6c3053f48930e947128720f1d9f84d884df7dfa95aac2d",
+            "f0aee89219c67982543cf24118b434edd2b48365df54bba4bf97f3a6e88d876a",
+            "2c433583fd88f1d36e1b7a9814dea0f8859929a63363190657e9e97645e75db5",
+            "8aa6c2e1b252f5e5beb304dbd5bf21b00800edefa141501afa4943648cc7e4f5",
+            "1781b9a8df2338cf73779dade9d7f048879335b159f6375b93b7b5ce22bd587e",
+        ];
+        KNOWN.contains(&format!("{:x}", Sha256::digest(block.as_bytes())).as_str())
+    })
+}
+
+fn strip_generated_card_blocks(prompt: &str, known: impl Fn(&str) -> bool) -> String {
+    // Any fence-like line makes the saved text ambiguous, including valid
+    // Markdown fences indented by 1–3 spaces. Preserve the whole input.
+    if prompt.lines().any(|line| {
+        let line = line.trim_start();
+        line.starts_with("```") || line.starts_with("~~~")
+    }) {
+        return prompt.to_owned();
     }
-    prompt.to_owned()
+    let cards = regex::Regex::new(
+        r"(?m)^<!-- lvk:card-context:start -->\r?\n[\s\S]*?^<!-- lvk:card-context:end -->[ \t]*\r?$",
+    )
+    .unwrap();
+    let shared = regex::Regex::new(r"(?m)^<!-- lvk:shared-directories:start -->\r?\n[\s\S]*?^<!-- lvk:shared-directories:end -->[ \t]*\r?$").unwrap();
+    cards
+        .replace_all(prompt, |card: &regex::Captures<'_>| {
+            let text = &card[0];
+            if text.matches("<!-- lvk:card-context:").count() != 2
+                || text
+                    .matches("<!-- lvk:shared-directories:start -->")
+                    .count()
+                    != text.matches("<!-- lvk:shared-directories:end -->").count()
+                || shared.find_iter(text).count()
+                    != text
+                        .matches("<!-- lvk:shared-directories:start -->")
+                        .count()
+            {
+                return text.to_owned();
+            }
+            let cleaned = shared.replace_all(text, |block: &regex::Captures<'_>| {
+                let normalized = block[0].replace("\r\n", "\n");
+                if known(normalized.trim_end_matches('\r')) {
+                    String::new()
+                } else {
+                    block[0].to_owned()
+                }
+            });
+            if cleaned == text {
+                return text.to_owned();
+            }
+            let body = cleaned
+                .strip_prefix("<!-- lvk:card-context:start -->")
+                .unwrap()
+                .trim_end()
+                .strip_suffix("<!-- lvk:card-context:end -->")
+                .unwrap();
+            if body.trim().is_empty() {
+                String::new()
+            } else {
+                cleaned.into_owned()
+            }
+        })
+        .into_owned()
 }
 
 /// Control-only calls must never sweep pre-existing dirty source into a commit.
@@ -2687,6 +2759,49 @@ pub fn memory_source_completion_allowed(
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn saved_card_body_keeps_custom_text_and_only_omits_exact_generated_blocks() {
+        let shared = "<!-- lvk:shared-directories:start -->\nknown generated fixture\n<!-- lvk:shared-directories:end -->";
+        let wrap = |body: &str| {
+            format!("Task\n<!-- lvk:card-context:start -->\n{body}\n<!-- lvk:card-context:end -->")
+        };
+        let strip = |text: &str| strip_generated_card_blocks(text, |block| block == shared);
+        assert_eq!(strip(&wrap(shared)).trim(), "Task");
+        for spaces in ["", " ", "  ", "   "] {
+            for mark in ["```", "~~~"] {
+                for text in [
+                    wrap(&format!("{spaces}{mark}md\n{shared}\n{spaces}{mark}")),
+                    format!("{spaces}{mark}md\n{}\n{spaces}{mark}", wrap(shared)),
+                ] {
+                    assert_eq!(strip(&text), text);
+                }
+            }
+        }
+        let custom = "Custom requirement\n<!-- vk:pipeline:start -->\nUnknown saved stage\n<!-- vk:pipeline:end -->";
+        assert!(strip(&wrap(&format!("{shared}\n{custom}"))).contains(custom));
+        let indented = "    preserve user indentation  ";
+        assert!(strip(&wrap(&format!("{shared}\n{indented}"))).contains(indented));
+        let crlf = format!("{}\nSuffix", wrap(shared)).replace('\n', "\r\n");
+        assert!(!strip(&crlf).contains("known generated fixture"));
+        for text in [
+            wrap(&shared.replace("known", "edited")),
+            format!("```md\n{}\n```", wrap(shared)),
+            format!("~~~md\n{}\n~~~", wrap(shared)),
+            wrap(custom),
+            wrap(shared).replace("<!-- lvk:card-context:end -->", ""),
+            wrap(&format!("<!-- lvk:card-context:start -->\n{shared}")),
+            wrap(&format!("<!-- lvk:shared-directories:start -->\n{shared}")),
+        ] {
+            assert_eq!(strip(&text), text);
+        }
+        assert_eq!(strip(&wrap(&shared.replace('\n', "\r\n"))).trim(), "Task");
+        for provider in [DirectProvider::Codex, DirectProvider::ClaudeCode] {
+            let env =
+                crate::env::ExecutionEnv::new(crate::env::RepoContext::new("/tmp".into(), vec![]));
+            assert!(prompt_with_repository_memory(provider, &wrap(custom), &env).contains(custom));
+        }
+    }
+
     #[test]
     fn codex_turn_plan_preserves_steps_and_scope_without_rewriting_v6() {
         let provider = DirectProvider::Codex;
@@ -2775,6 +2890,18 @@ mod tests {
         let actual = prompt_with_repository_memory(DirectProvider::ClaudeCode, "task", &env);
         assert!(actual.contains("CURRENT Manifest identity"));
         assert!(actual.contains(".lvk/shared/tmp/"));
+        assert_eq!(
+            actual
+                .matches(crate::env::OPENWIKI_READ_ONLY_GUIDANCE)
+                .count(),
+            1
+        );
+        let mut maintenance = env.clone();
+        maintenance.insert("LVK_OPENWIKI_MAINTENANCE", "1");
+        let actual =
+            prompt_with_repository_memory(DirectProvider::ClaudeCode, "maintain", &maintenance);
+        assert!(!actual.contains(crate::env::OPENWIKI_READ_ONLY_GUIDANCE));
+        assert!(actual.contains("CURRENT Manifest identity"));
         env.insert("LVK_OPENWIKI_REVIEWER", "1");
         assert!(
             !prompt_with_repository_memory(DirectProvider::ClaudeCode, "review", &env)

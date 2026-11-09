@@ -42,7 +42,7 @@ describe('Wiki navigation', () => {
     const selectPage = (path: string) => actions.push(`select:${path}`);
     const paths = new Set(['index.md', 'quickstart.md']);
     activateWikiLink(
-      resolveWikiHref('index.md', 'quickstart.md', paths, true),
+      resolveWikiHref('index.md', 'quickstart.md', paths),
       event,
       selectPage
     );
@@ -59,7 +59,7 @@ describe('Wiki navigation', () => {
     ]) {
       actions.length = 0;
       activateWikiLink(
-        resolveWikiHref('index.md', href, paths, true),
+        resolveWikiHref('index.md', href, paths),
         event,
         selectPage
       );
@@ -113,60 +113,52 @@ describe('Wiki navigation', () => {
   });
   it('routes OpenWiki generated directory links to their index pages', () => {
     const paths = new Set(['index.md', 'architecture/index.md']);
-    expect(resolveWikiHref('index.md', 'architecture/', paths, true)).toBe(
+    expect(resolveWikiHref('index.md', 'architecture/', paths)).toBe(
       'architecture/index.md'
     );
-    expect(resolveWikiHref('architecture/index.md', '../', paths, true)).toBe(
+    expect(resolveWikiHref('architecture/index.md', '../', paths)).toBe(
       'index.md'
     );
-    expect(
-      resolveWikiHref('index.md', '/openwiki/architecture/', paths, true)
-    ).toBe('architecture/index.md');
-    expect(resolveWikiHref('index.md', 'missing/', paths, true)).toBeNull();
-    expect(resolveWikiHref('index.md', '../../', paths, true)).toBeNull();
-    expect(resolveWikiHref('index.md', 'architecture/', paths)).toBeNull();
+    expect(resolveWikiHref('index.md', '/openwiki/architecture/', paths)).toBe(
+      'architecture/index.md'
+    );
+    expect(resolveWikiHref('index.md', 'missing/', paths)).toBeNull();
+    expect(resolveWikiHref('index.md', '../../', paths)).toBeNull();
   });
-  it('routes nested OpenWiki pages without changing legacy or escaping the wiki', () => {
+  it('routes nested OpenWiki pages without escaping the wiki', () => {
     const paths = new Set([
       'index.md',
       'architecture/index.md',
       'architecture/system.md',
       'runtime/lifecycle.md',
     ]);
-    expect(
-      resolveWikiHref('index.md', 'architecture/system.md', paths, true)
-    ).toBe('architecture/system.md');
+    expect(resolveWikiHref('index.md', 'architecture/system.md', paths)).toBe(
+      'architecture/system.md'
+    );
     expect(
       resolveWikiHref(
         'architecture/system.md',
         '../runtime/lifecycle.md#state',
-        paths,
-        true
+        paths
       )
     ).toBe('runtime/lifecycle.md');
-    expect(
-      resolveWikiHref('architecture/system.md', 'index.md', paths, true)
-    ).toBe('architecture/index.md');
+    expect(resolveWikiHref('architecture/system.md', 'index.md', paths)).toBe(
+      'architecture/index.md'
+    );
     expect(
       resolveWikiHref(
         'architecture/system.md',
         '/openwiki/runtime/lifecycle.md',
-        paths,
-        true
+        paths
       )
     ).toBe('runtime/lifecycle.md');
     expect(
-      resolveWikiHref('architecture/system.md', '../../secret.md', paths, true)
+      resolveWikiHref('architecture/system.md', '../../secret.md', paths)
     ).toBeNull();
     expect(
-      resolveWikiHref('index.md', '/openwiki/../secret.md', paths, true)
+      resolveWikiHref('index.md', '/openwiki/../secret.md', paths)
     ).toBeNull();
-    expect(
-      resolveWikiHref('index.md', 'repo://README.md', paths, true)
-    ).toBeNull();
-    expect(
-      resolveWikiHref('index.md', 'architecture/system.md', paths)
-    ).toBeNull();
+    expect(resolveWikiHref('index.md', 'repo://README.md', paths)).toBeNull();
   });
   it('searches frontmatter and full text', () => {
     expect(searchWikiPages(wiki, 'EASY-123 markers')).toHaveLength(1);
@@ -182,6 +174,9 @@ describe('Wiki navigation', () => {
       'index.md'
     );
     expect(resolveWikiHref('index.md', '../../secret', paths)).toBeNull();
+    expect(
+      resolveWikiHref('index.md', '../secret.md', new Set(['secret.md']))
+    ).toBeNull();
     expect(expandWikiLinks('See [[pipeline|the page]].')).toBe(
       'See [the page](pipeline.md).'
     );

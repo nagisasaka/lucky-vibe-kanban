@@ -103,3 +103,76 @@ async fn stdio_codec_initialises_lists_existing_tools_and_calls_the_existing_api
         assert_eq!(backend.await.unwrap().len(),2);
     }).await.expect("stdio compatibility fixture timed out");
 }
+
+#[tokio::test]
+async fn coding_context_details_are_readable_over_stdio_without_orchestrator_delegation() {
+    super::tests::install_rustls_provider();
+    tokio::time::timeout(Duration::from_secs(10), async {
+        let workspace = Uuid::new_v4();
+        let mut server = McpServer::new_orchestrator("http://127.0.0.1:1");
+        server.context = Some(crate::task_server::McpContext {
+            organization_id: None, project_id: None, issue_id: None,
+            orchestrator_session_id: Some(Uuid::new_v4()), workspace_id: workspace,
+            workspace_branch: "fixture".into(), workspace_repos: vec![],
+        });
+        let (client, transport) = tokio::io::duplex(65536);
+        let (read, write) = tokio::io::split(transport);
+        let serving = tokio::spawn(async move {
+            server.serve((read, write)).await.unwrap().waiting().await.unwrap();
+        });
+        let (read, mut write) = tokio::io::split(client);
+        let mut lines = BufReader::new(read).lines();
+        for (id, method, params) in [
+            (1, "initialize", json!({"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"coding-details-fixture","version":"1"}})),
+            (2, "tools/list", json!({})),
+            (3, "tools/call", json!({"name":"get_context","arguments":{"guide":"coding"}})),
+            (4, "tools/call", json!({"name":"get_context","arguments":{"guide":"parallel"}})),
+            (5, "tools/call", json!({"name":"get_context","arguments":{"guide":"resources"}})),
+            (6, "tools/call", json!({"name":"get_context","arguments":{}})),
+        ] {
+            write.write_all(format!("{}\n", json!({"jsonrpc":"2.0","id":id,"method":method,"params":params})).as_bytes()).await.unwrap();
+            let reply: Value = serde_json::from_str(&lines.next_line().await.unwrap().unwrap()).unwrap();
+            assert!(reply.get("error").is_none(), "{reply}");
+            match id {
+                1 => {
+                    let instructions = reply["result"]["instructions"].as_str().unwrap();
+                    assert!(instructions.contains("get_context"));
+                    assert!(!instructions.contains("TOOLS:"));
+                    write.write_all(b"{\"jsonrpc\":\"2.0\",\"method\":\"notifications/initialized\"}\n").await.unwrap();
+                }
+                2 => {
+                    let catalog = reply["result"]["tools"].as_array().unwrap();
+                    let operation = catalog.iter().find(|t| t["name"] == "run_resource_operation").unwrap();
+                    let contract = operation["description"].as_str().unwrap();
+                    for term in ["atomic", "cleanup", "verification", "owners", "same request_id"] { assert!(contract.contains(term)); }
+                    assert!(catalog.iter().any(|t| t["name"] == "list_shared_resources"));
+                }
+                3 => {
+                    assert_ne!(reply["result"]["isError"], true);
+                    let details: Value = serde_json::from_str(reply["result"]["content"][0]["text"].as_str().unwrap()).unwrap();
+                    assert_eq!(details["workspace_id"], workspace.to_string());
+                    let guide = details["coding_run_guide"].as_str().unwrap();
+                    assert!(guide.contains("behavioral_changes"));
+                    assert!(guide.contains("rationale"));
+                    assert!(details.get("resource_access_guide").is_none());
+                    assert!(details.get("parallel_api_guide").is_none());
+                }
+                4..=6 => {
+                    assert_ne!(reply["result"]["isError"], true);
+                    let details: Value = serde_json::from_str(reply["result"]["content"][0]["text"].as_str().unwrap()).unwrap();
+                    assert_eq!(details["workspace_id"], workspace.to_string());
+                    assert!(details.get("coding_run_guide").is_none());
+                    match id {
+                        4 => assert!(details["parallel_api_guide"].as_str().unwrap().contains("after_workspace")),
+                        5 => assert!(details["resource_access_guide"].as_str().unwrap().contains("X-LVK-Internal-Token")),
+                        6 => { assert!(details.get("parallel_api_guide").is_none()); assert!(details.get("resource_access_guide").is_none()); },
+                        _ => unreachable!(),
+                    }
+                }
+                _ => unreachable!(),
+            }
+        }
+        drop(write); drop(lines);
+        serving.await.unwrap();
+    }).await.expect("coding guide stdio timeout");
+}

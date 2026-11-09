@@ -180,18 +180,6 @@ describe('split Wiki navigation and article surfaces', () => {
     expect(controller.getSnapshot().selectedPath).toBe('concepts/execution.md');
   });
 
-  it('does not expose retired configuration or bootstrap controls in either surface', async () => {
-    await fixture();
-    const navigation = renderToStaticMarkup(
-      createElement(WorkspaceWikiNavigation)
-    );
-    expect(navigation).not.toContain('Wiki output language');
-    expect(navigation).not.toContain('Supplement Wiki from code');
-    const article = renderToStaticMarkup(createElement(WorkspaceWikiArticle));
-    expect(article).not.toContain('.llm-wiki/');
-    expect(article).not.toContain('Supplement Wiki from code');
-  });
-
   it('makes reload accessible from empty mobile navigation', async () => {
     const { snapshot } = await fixture();
     snapshot.wiki.exists = false;

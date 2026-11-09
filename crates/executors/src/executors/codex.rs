@@ -1119,12 +1119,6 @@ impl Codex {
                 .config
                 .get_or_insert_with(HashMap::new)
                 .insert("mcp_servers.openwiki.enabled".into(), Value::Bool(false));
-            params.developer_instructions = Some(match params.developer_instructions.take() {
-                Some(existing) => {
-                    format!("{existing}\n\n{}", crate::legacy_wiki::RETIREMENT_NOTICE)
-                }
-                None => crate::legacy_wiki::RETIREMENT_NOTICE.into(),
-            });
         }
         if env.get("LVK_INTEGRATION_WORKER").is_some_and(|v| v == "1")
             && let Some(agent) = env.get("VK_AGENT_RUN_ID")
@@ -1387,8 +1381,7 @@ impl Codex {
                 && config.get("mcp_servers.openwiki.enabled") != Some(&Value::Bool(false))
         });
         if client.execution_mode() == ExecutionMode::Goal {
-            let skills = crate::legacy_wiki::filter_skills(selected_skills.clone());
-            add_goal_skill_context(&mut thread_start_params, &skills);
+            add_goal_skill_context(&mut thread_start_params, &selected_skills);
         }
         let account = client.get_account().await?;
         if account.requires_openai_auth && account.account.is_none() {
@@ -1579,7 +1572,6 @@ fn build_chat_input(
     combined_prompt: String,
     selected_skills: Vec<SelectedSkill>,
 ) -> Vec<UserInput> {
-    let selected_skills = crate::legacy_wiki::filter_skills(selected_skills);
     let mut input = selected_skills
         .into_iter()
         .map(|skill| UserInput::Skill {
@@ -2362,7 +2354,7 @@ mod tests {
         assert_eq!(json["runtimeWorkspaceRoots"], json!([cwd, shared]));
         assert_eq!(json["sandbox"], "read-only");
         let instructions = params.developer_instructions.as_deref().unwrap();
-        assert!(instructions.contains(crate::legacy_wiki::RETIREMENT_NOTICE));
+        assert!(instructions.contains(crate::env::OPENWIKI_READ_ONLY_GUIDANCE));
         assert!(instructions.contains(".lvk/shared/tmp/"));
         assert!(instructions.contains("Run completion does not delete tmp contents"));
         assert!(
@@ -2544,21 +2536,6 @@ mod tests {
             other => panic!("expected text input second, got {other:?}"),
         }
     }
-
-    #[test]
-    fn build_chat_input_does_not_augment_retired_wiki_and_filters_owned_skills() {
-        let prompt = "task\n<!-- vk:pipeline:start -->\n## Pipeline: LLM Wiki\n1. recall\n<!-- vk:pipeline:end -->";
-        let input = build_chat_input(
-            prompt.to_string(),
-            vec![SelectedSkill {
-                name: "knowledge-recall".into(),
-                path: workspace_utils::assets::asset_dir()
-                    .join("skills/llm-wiki/knowledge-recall/SKILL.md"),
-            }],
-        );
-        assert_eq!(input.len(), 1);
-        assert!(matches!(&input[0], UserInput::Text { text, .. } if text == prompt));
-    }
 }
 
 #[cfg(test)]
@@ -2597,6 +2574,31 @@ mod goal_skill_tests {
     }
 
     #[test]
+    fn normal_profile_without_lvk_mcp_has_file_guide_on_start_and_resume() {
+        let codex: Codex = serde_json::from_value(serde_json::json!({})).unwrap();
+        let root = tempfile::tempdir().unwrap();
+        let mut env = ExecutionEnv::new(RepoContext::new(root.path().into(), vec![]));
+        env.prepare_runtime_guide().unwrap();
+        let path = env.get("LVK_EXECUTION_GUIDE").unwrap();
+        let params = codex.build_thread_start_params_with_resources(root.path(), &env);
+        assert!(
+            params
+                .developer_instructions
+                .as_ref()
+                .unwrap()
+                .contains(path)
+        );
+        assert!(
+            std::fs::read_to_string(path)
+                .unwrap()
+                .contains("Draft schema:")
+        );
+        let resumed = resume_params_from("same-thread".into(), params);
+        assert!(resumed.developer_instructions.unwrap().contains(path));
+        assert_eq!(resumed.thread_id, "same-thread");
+    }
+
+    #[test]
     fn manifest_guidance_is_persistent_for_initial_and_resumed_threads() {
         let codex: Codex = serde_json::from_value(serde_json::json!({})).unwrap();
         let mut env = ExecutionEnv::new(RepoContext::default());
@@ -2614,11 +2616,20 @@ mod goal_skill_tests {
                 .developer_instructions
                 .as_deref()
                 .unwrap()
-                .contains(crate::legacy_wiki::RETIREMENT_NOTICE)
+                .contains(crate::env::OPENWIKI_READ_ONLY_GUIDANCE)
         );
         assert_eq!(
             params.config.as_ref().unwrap()["mcp_servers.openwiki.enabled"],
             false
+        );
+        assert_eq!(
+            params
+                .developer_instructions
+                .as_deref()
+                .unwrap()
+                .matches(crate::env::OPENWIKI_READ_ONLY_GUIDANCE)
+                .count(),
+            1
         );
         let resumed = resume_params_from("existing".into(), params.clone());
         assert_eq!(
@@ -2647,13 +2658,13 @@ mod goal_skill_tests {
             ..Default::default()
         };
         let selected = vec![SelectedSkill {
-            name: "knowledge-recall".into(),
-            path: PathBuf::from("/skills/knowledge-recall/SKILL.md"),
+            name: "sample-skill".into(),
+            path: PathBuf::from("/skills/sample-skill/SKILL.md"),
         }];
         add_goal_skill_context(&mut params, &selected);
         let instructions = params.developer_instructions.as_deref().unwrap();
         assert!(instructions.starts_with("existing rules"));
-        assert!(instructions.contains("knowledge-recall/SKILL.md"));
+        assert!(instructions.contains("sample-skill/SKILL.md"));
         assert!(instructions.contains("does not require invoking"));
         let resumed = resume_params_from("existing-thread".into(), params.clone());
         assert_eq!(

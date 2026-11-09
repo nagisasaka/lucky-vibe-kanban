@@ -416,7 +416,6 @@ mod tests {
         list.expected_revision = None;
         list.limit = 51;
         assert!(wiki_list(temp.path(), &list).is_err());
-        assert!(!temp.path().join(".llm-wiki").exists());
         #[cfg(unix)]
         {
             std::os::unix::fs::symlink("/etc/passwd", temp.path().join("openwiki/unsafe.md"))

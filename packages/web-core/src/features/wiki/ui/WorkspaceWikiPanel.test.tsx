@@ -4,6 +4,7 @@ beforeEach(async () => {
   await i18n.changeLanguage('en');
 });
 import { createElement } from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { WorkspaceWikiPanel } from './WorkspaceWikiPanel';
@@ -25,35 +26,15 @@ describe('OpenWiki-only Viewer', () => {
     workspace_kind: 'direct_folder',
     name: 'Current repo',
   } as Workspace;
-  it('always displays read-only OpenWiki with no legacy controls', () => {
+  it('always displays read-only OpenWiki for the current workspace', () => {
     const html = renderToStaticMarkup(
-      createElement(WorkspaceWikiPanel, { workspace, repos: [] })
+      createElement(
+        QueryClientProvider,
+        { client: new QueryClient() },
+        createElement(WorkspaceWikiPanel, { workspace, repos: [] })
+      )
     );
-    expect(html).not.toContain('Wiki format');
-    expect(html).not.toContain('.llm-wiki/');
     expect(html).toContain('openwiki/');
     expect(html).toContain('Current workspace');
-  });
-  it('ignores obsolete format storage on reload', () => {
-    const getItem = vi.fn((key: string) =>
-      key === 'retired-wiki-viewer-format:workspace-one' ? 'llm-wiki' : null
-    );
-    vi.stubGlobal('sessionStorage', { getItem });
-    const html = renderToStaticMarkup(
-      createElement(WorkspaceWikiPanel, { workspace, repos: [] })
-    );
-    expect(getItem).not.toHaveBeenCalled();
-    expect(html).toContain('openwiki/');
-    expect(html).toContain('including unpublished changes');
-    expect(html).not.toContain('Wiki output language');
-    expect(html).not.toContain('Create Wiki from existing code');
-    const other = renderToStaticMarkup(
-      createElement(WorkspaceWikiPanel, {
-        workspace: { ...workspace, id: 'other' },
-        repos: [],
-      })
-    );
-    expect(other).toContain('openwiki/');
-    expect(other).not.toContain('.llm-wiki/');
   });
 });

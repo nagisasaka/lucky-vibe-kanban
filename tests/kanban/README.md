@@ -144,4 +144,4 @@ that scope. The header remains full width. Creation and standalone chat retain
 their existing defaults. Existing palette/typeface tokens remain in use; the main
 Issue title is 1.5rem to distinguish it from Markdown section headings. Workflow,
 single agent and Arena share a responsive choice grid and explanatory copy,
-while their existing handlers and Card context are preserved.
+while their existing handlers are preserved.

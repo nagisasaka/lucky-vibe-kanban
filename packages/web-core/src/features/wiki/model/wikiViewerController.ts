@@ -131,7 +131,7 @@ export function createWikiViewerController(
       const paths = new Set(
         allWikiPages(state.snapshot.wiki).map((page) => page.path)
       );
-      const target = resolveWikiHref(state.selectedPath, href, paths, true);
+      const target = resolveWikiHref(state.selectedPath, href, paths);
       if (!target) return false;
       update({ selectedPath: target });
       return true;

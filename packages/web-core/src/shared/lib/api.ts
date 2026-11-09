@@ -90,7 +90,6 @@ import {
   AgentGarageEntry,
   ResumableAgentSession,
   NativeSessionDiscoveryState,
-  Pipeline,
   WorkspaceWikiSnapshot,
 } from 'shared/types';
 import type { Project as RemoteProject } from 'shared/remote-types';
@@ -1722,13 +1721,6 @@ export const releasesApi = {
     const response = await makeRequest('/api/releases');
     const result = await handleApiResponse<ReleasesResponse>(response);
     return result.releases;
-  },
-};
-
-export const pipelinesApi = {
-  list: async (): Promise<Pipeline[]> => {
-    const response = await makeRequest('/api/pipelines');
-    return handleApiResponse<Pipeline[]>(response);
   },
 };
 

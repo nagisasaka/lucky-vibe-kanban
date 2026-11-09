@@ -5,7 +5,6 @@ import { createRoot } from "react-dom/client";
 import { ReactFlowProvider } from "@xyflow/react";
 import i18n from "../../../../packages/web-core/src/i18n/config";
 import "./style.css";
-import { CardContextHarness } from "./CardContextHarness";
 import { RuntimeInputHarness } from "./RuntimeInputHarness";
 import { SettingsSafetyHarness } from "./SettingsSafetyHarness";
 import { RouteLoadingHarness } from "./RouteLoadingHarness";
@@ -565,8 +564,6 @@ createRoot(document.getElementById("root")!).render(
     <SettingsSafetyHarness />
   ) : mode === "runtime-input" ? (
     <RuntimeInputHarness />
-  ) : mode === "card-context" ? (
-    <CardContextHarness />
   ) : mode === "entry" ? (
     <WorkflowEntryHarness />
   ) : mode === "task-attempts" ? (

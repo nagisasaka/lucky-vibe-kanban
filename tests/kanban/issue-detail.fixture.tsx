@@ -19,7 +19,6 @@ import {
   ChatBoxBase,
   VisualVariant,
 } from '../../packages/ui/src/components/ChatBoxBase';
-import { CardContextSection } from '../../packages/web-core/src/features/pipeline/ui/CardContextSection';
 import WYSIWYGEditor from '../../packages/web-core/src/shared/components/WYSIWYGEditor';
 i18n
   .use(initReactI18next)
@@ -69,14 +68,6 @@ function Fixture() {
               onSubmit={noop}
               titleInputRef={ref}
               renderDescriptionEditor={editor}
-              renderPipelineSection={() => (
-                <CardContextSection
-                  description={data.description}
-                  pipelines={[]}
-                  onRetry={noop}
-                  onDescriptionChange={noop}
-                />
-              )}
               renderWorkspacesSection={() => (
                 <>
                   <IssueTaskAttemptsSection

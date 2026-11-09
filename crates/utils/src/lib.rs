@@ -108,3 +108,5 @@ pub async fn get_powershell_script()
 pub mod repository_memory;
 
 pub mod shared_storage;
+
+pub mod agent_guides;

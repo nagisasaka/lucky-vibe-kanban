@@ -367,14 +367,9 @@ pub(super) async fn create_agent_run(
     session: &Session,
     workspace: &Workspace,
     workspace_path: String,
-    mut launch: AgentRunLaunch,
+    launch: AgentRunLaunch,
     dispatch: AgentRunDispatch,
 ) -> Result<AgentRunPortSnapshot, ApiError> {
-    launch.prompt =
-        executors::legacy_wiki::execution_prompt(&launch.prompt).map_err(ApiError::BadRequest)?;
-    launch.selected_skills = launch
-        .selected_skills
-        .map(executors::legacy_wiki::filter_skills);
     let provider = direct_provider(&launch.executor_config)?;
     let runtime_profile_id = launch.executor_config.profile_id().cache_key();
     let capability_snapshot =

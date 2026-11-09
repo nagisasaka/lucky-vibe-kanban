@@ -150,24 +150,22 @@ impl FrozenDirectProviderLaunchSpec {
         attempt: &RunAttemptRequest,
         provider: DirectProvider,
         env: ExecutionEnv,
-    ) -> Result<Self, AgentRunPortError> {
-        let prompt = executors::legacy_wiki::execution_prompt(&request.input.content)
-            .map_err(AgentRunPortError::Rejected)?;
-        Ok(Self {
+    ) -> Self {
+        Self {
             provider,
             executor_config: attempt.executor_config.clone(),
             intent: direct_intent(request.intent, attempt.mode),
             prompt: executors::executors::provider_adapter::prompt_with_repository_memory(
-                provider, &prompt, &env,
+                provider,
+                &request.input.content,
+                &env,
             ),
             provider_session: attempt.provider_session.clone(),
             reset_to_message_id: attempt.reset_to_message_id.clone(),
-            selected_skills: executors::legacy_wiki::filter_skills(
-                attempt.selected_skills.clone().unwrap_or_default(),
-            ),
+            selected_skills: attempt.selected_skills.clone().unwrap_or_default(),
             current_dir: PathBuf::from(&attempt.workspace.path),
             env,
-        })
+        }
     }
 
     #[cfg(test)]
@@ -844,19 +842,14 @@ impl LocalAgentRunPort {
             })
             .collect();
         let mut memory_instructions = Vec::new();
+        let mut coding_runs = Vec::new();
+        let mut parallel_contexts = Vec::new();
         let resource_mediator = workspace
             .execution_owner
             .as_ref()
             .is_some_and(|o| o.kind == db::models::workspace_usage::RESOURCE_MEDIATION);
         let mut openwiki_maintenance = false;
         let mut openwiki_reviewer = false;
-        let parallel_policy = services::services::parallel_context::saved_context(
-            &self.db.pool,
-            workspace.id,
-            &request.input.content,
-        )
-        .await
-        .map_err(|error| AgentRunPortError::Rejected(format!("Card context: {error:#}")))?;
         let local_api_port = utils::port_file::read_port_file("vibe-kanban").await.ok();
         if !resource_mediator && let Some(port) = local_api_port {
             memory_instructions.push(services::services::resource_coordination::instructions(
@@ -885,13 +878,32 @@ impl LocalAgentRunPort {
                 &attempt.executor_config,
                 &request.input.content,
             );
+        // Only an exact saved-Issue composition may opt into boilerplate removal.
+        // Ordinary new prompts, continuations and Review examples stay untouched.
+        let saved_issue_input = if source_completion_allowed {
+            let issue: Option<(String, Option<String>)> = sqlx::query_as("SELECT i.title,i.description FROM local_workspace_links l JOIN local_issues i ON i.id=l.issue_id WHERE l.workspace_id=?")
+                .bind(workspace.id).fetch_optional(&self.db.pool).await.map_err(port_database)?;
+            issue.is_some_and(|(title, description)| {
+                let expected = [title.trim(), description.as_deref().unwrap_or("").trim()]
+                    .into_iter()
+                    .filter(|s| !s.is_empty())
+                    .collect::<Vec<_>>()
+                    .join("\n\n");
+                !expected.is_empty() && request.input.content.trim() == expected
+            })
+        } else {
+            false
+        };
         for repo in &repos {
             let root = PathBuf::from(&request.workspace.path).join(repo.worktree_name());
-            memory_instructions.push(
-                git::GitService::new()
-                    .commit_identity_instructions(&root)
-                    .map_err(|error| AgentRunPortError::Rejected(error.to_string()))?,
-            );
+            let identity_instructions = git::GitService::new()
+                .commit_identity_instructions(&root)
+                .map_err(|error| AgentRunPortError::Rejected(error.to_string()))?;
+            // Successful identity guidance is common to all attached repos;
+            // missing/invalid identities retain their repository-specific warning.
+            if !memory_instructions.contains(&identity_instructions) {
+                memory_instructions.push(identity_instructions);
+            }
             if !workspace.is_execution_only() {
                 workspace_manager::shared_resources::ensure_repository_memory(&self.db.pool, repo)
                     .await
@@ -967,18 +979,15 @@ impl LocalAgentRunPort {
                     })?;
                 }
             }
-            if !openwiki_maintenance
-                && !openwiki_reviewer
-                && let Some(policy) = &parallel_policy
-            {
-                memory_instructions.push(services::services::parallel_context::instructions(
-                    repo,
-                    workspace,
-                    &root,
-                    local_api_port,
-                    policy,
-                    attempt.provider_session.is_none() && !request.input.content.contains(policy),
-                ));
+            if !openwiki_maintenance && !openwiki_reviewer {
+                parallel_contexts.push(
+                    services::services::parallel_context::identity_instructions(
+                        repo,
+                        workspace,
+                        &root,
+                        local_api_port,
+                    ),
+                );
             }
             let membership =
                 WorkspaceRepo::find_by_workspace_and_repo_id(&self.db.pool, workspace.id, repo.id)
@@ -1001,9 +1010,17 @@ impl LocalAgentRunPort {
                     AgentRunPortError::Rejected(format!("Repository memory: {error:#}"))
                 })?;
                 if let Some(context) = context {
-                    memory_instructions.push(context.instructions());
+                    coding_runs.push(context);
                 }
             }
+        }
+        if !parallel_contexts.is_empty() {
+            memory_instructions.extend(parallel_contexts);
+            memory_instructions.push(services::services::parallel_context::INSTRUCTIONS.into());
+        }
+        if let Some(instructions) = utils::repository_memory::coding_run_instructions(&coding_runs)
+        {
+            memory_instructions.push(instructions);
         }
         let repo_names = repos
             .into_iter()
@@ -1018,6 +1035,14 @@ impl LocalAgentRunPort {
                 .is_ok_and(|s| s.starts_with("<!-- LVK WORKSPACE INSTRUCTIONS v1 -->"))
         {
             env.insert("LVK_PARENT_AGENTS", "1");
+        }
+        if !resource_mediator && !openwiki_reviewer {
+            env.prepare_runtime_guide().map_err(|error| {
+                AgentRunPortError::Unavailable(format!("Execution guide: {error}"))
+            })?;
+        }
+        if saved_issue_input {
+            env.insert("LVK_SAVED_ISSUE_INPUT", "1");
         }
         env.insert("VK_WORKSPACE_ID", workspace.id.to_string());
         env.insert("VK_WORKSPACE_BRANCH", &workspace.branch);
@@ -2642,20 +2667,7 @@ impl LocalAgentRunPort {
                 return;
             }
         };
-        let launch = match FrozenDirectProviderLaunchSpec::new(&request, &attempt, provider, env) {
-            Ok(launch) => launch,
-            Err(error) => {
-                self.terminalize_failure(
-                    &request,
-                    &attempt,
-                    AgentRunStatus::Failed,
-                    AgentRuntimeError::new(AgentRuntimeErrorKind::StartupFailed, error.to_string())
-                        .with_provider(Some(provider.id())),
-                )
-                .await;
-                return;
-            }
-        };
+        let launch = FrozenDirectProviderLaunchSpec::new(&request, &attempt, provider, env);
 
         if let Err(error) = self
             .launch_process_host(&request, &attempt, provider, &launch)
@@ -5757,8 +5769,7 @@ mod tests {
             &attempt,
             DirectProvider::Codex,
             test_execution_env(&attempt.workspace.path),
-        )
-        .unwrap();
+        );
         let direct = launch.launch_request();
         assert_eq!(direct.provider, DirectProvider::Codex);
         assert_eq!(direct.intent, DirectIntent::Initial);
@@ -5829,8 +5840,7 @@ mod tests {
             &attempt,
             DirectProvider::ClaudeCode,
             test_execution_env(&attempt.workspace.path),
-        )
-        .unwrap();
+        );
         let direct = launch.launch_request();
         assert_eq!(direct.intent, DirectIntent::FollowUp);
         assert_eq!(direct.executor_config, &attempt.executor_config);
@@ -5844,42 +5854,163 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn launch_boundary_retires_old_cards_for_initial_follow_up_and_goal() {
+    async fn normal_launch_prepares_readable_guides_without_mcp_for_both_providers() {
+        let fixture = setup_runtime_db().await;
+        let (mut request, mut attempt) = persisted_codex_run(&fixture).await;
+        let pool = SqlitePoolOptions::new()
+            .max_connections(1)
+            .connect("sqlite::memory:")
+            .await
+            .unwrap();
+        sqlx::migrate!("../db/migrations").run(&pool).await.unwrap();
+        let mut workspace = db::models::workspace::Workspace::create(
+            &pool,
+            &db::models::workspace::CreateWorkspace {
+                branch: "fixture".into(),
+                name: None,
+            },
+            request.workspace.workspace_id,
+        )
+        .await
+        .unwrap();
+        workspace.workspace_kind = db::models::workspace::WorkspaceKind::DirectFolder;
+        let root = tempfile::tempdir().unwrap();
+        request.workspace.path = root.path().to_string_lossy().into_owned();
+        attempt.workspace = request.workspace.clone();
+        let port = LocalAgentRunPort::new(DBService { pool });
+        let mut previous = None;
+        for provider in [DirectProvider::Codex, DirectProvider::ClaudeCode] {
+            for intent in [
+                AgentRunIntent::Initial,
+                AgentRunIntent::FollowUp,
+                AgentRunIntent::Review,
+            ] {
+                request.intent = intent;
+                request.agent_run_id = Uuid::new_v4();
+                let env = port
+                    .execution_env(&request, &attempt, &workspace, provider)
+                    .await
+                    .unwrap();
+                assert!(env.get("LVK_INTEGRATION_MCP_COMMAND").is_none());
+                assert!(env.get("LVK_SAVED_ISSUE_INPUT").is_none());
+                assert_eq!(
+                    env.get("VK_AGENT_RUN_ID"),
+                    Some(&request.agent_run_id.to_string())
+                );
+                let path = PathBuf::from(env.get("LVK_EXECUTION_GUIDE").unwrap());
+                assert!(path.starts_with(root.path()));
+                let content = std::fs::read_to_string(&path).unwrap();
+                for section in [
+                    "Draft schema:",
+                    "after_workspace",
+                    "X-LVK-Internal-Token",
+                    "verification_script",
+                    "same contents on retry",
+                ] {
+                    assert!(content.contains(section));
+                }
+                let launch = FrozenDirectProviderLaunchSpec::new(&request, &attempt, provider, env);
+                let instructions = launch.env.repository_memory_instructions().unwrap();
+                assert!(instructions.contains(path.to_str().unwrap()));
+                assert!(!instructions.contains("Draft schema:"));
+                if provider == DirectProvider::ClaudeCode {
+                    assert!(launch.prompt.contains(path.to_str().unwrap()));
+                }
+                if let Some(previous) = &previous {
+                    assert_eq!(&path, previous);
+                }
+                previous = Some(path);
+            }
+        }
+        let project = Uuid::new_v4();
+        let status = Uuid::new_v4();
+        let issue = Uuid::new_v4();
+        sqlx::query("INSERT INTO projects(id,name) VALUES(?,'fixture')")
+            .bind(project)
+            .execute(&port.db.pool)
+            .await
+            .unwrap();
+        sqlx::query("INSERT INTO local_project_statuses(id,project_id,name,color,sort_order) VALUES(?,?,'Todo','blue',0)").bind(status).bind(project).execute(&port.db.pool).await.unwrap();
+        let body = "<!-- lvk:card-context:start -->\nUser edited requirement\n<!-- lvk:card-context:end -->";
+        sqlx::query("INSERT INTO local_issues(id,project_id,issue_number,simple_id,status_id,title,description,sort_order) VALUES(?,?,1,'T-1',?,'Task',?,0)").bind(issue).bind(project).bind(status).bind(body).execute(&port.db.pool).await.unwrap();
+        sqlx::query(
+            "INSERT INTO local_workspace_links(workspace_id,issue_id,project_id) VALUES(?,?,?)",
+        )
+        .bind(workspace.id)
+        .bind(issue)
+        .bind(project)
+        .execute(&port.db.pool)
+        .await
+        .unwrap();
+        request.intent = AgentRunIntent::Initial;
+        request.input.content = format!("Task\n\n{body}");
+        let env = port
+            .execution_env(&request, &attempt, &workspace, DirectProvider::Codex)
+            .await
+            .unwrap();
+        assert_eq!(
+            env.get("LVK_SAVED_ISSUE_INPUT").map(String::as_str),
+            Some("1")
+        );
+        request.input.content.push_str("\nNew caller instructions");
+        let env = port
+            .execution_env(&request, &attempt, &workspace, DirectProvider::Codex)
+            .await
+            .unwrap();
+        assert!(env.get("LVK_SAVED_ISSUE_INPUT").is_none());
+        request.input.content = format!("Task\n\n{body}");
+        request.intent = AgentRunIntent::Review;
+        let env = port
+            .execution_env(&request, &attempt, &workspace, DirectProvider::Codex)
+            .await
+            .unwrap();
+        assert!(env.get("LVK_SAVED_ISSUE_INPUT").is_none());
+        let stored: String = sqlx::query_scalar("SELECT description FROM local_issues WHERE id=?")
+            .bind(issue)
+            .fetch_one(&port.db.pool)
+            .await
+            .unwrap();
+        assert_eq!(stored, body);
+    }
+
+    #[tokio::test]
+    async fn launch_boundary_preserves_caller_pipeline_text_and_selected_skills() {
         let db = setup_runtime_db().await;
         let (mut request, mut attempt) = persisted_codex_run(&db).await;
-        let old_block = "<!-- vk:pipeline:start -->\n<!-- vk:pipeline:id=wikillm -->\n## Pipeline: LLM Wiki\nManual note: preserve API compatibility.\n<!-- vk:pipeline:end -->";
-        for (intent, text) in [
-            (AgentRunIntent::Initial, "Implement safely"),
-            (AgentRunIntent::FollowUp, "Continue"),
-            (AgentRunIntent::FollowUp, "/goal Implement safely"),
-        ] {
-            request.intent = intent;
-            request.input.content = format!("{text}\n{old_block}");
-            attempt.selected_skills = Some(vec![api_types::SelectedSkill {
-                name: "knowledge-enrich".into(),
-                path: utils::assets::asset_dir().join("skills/llm-wiki/knowledge-enrich/SKILL.md"),
-            }]);
-            let launch = FrozenDirectProviderLaunchSpec::new(
-                &request,
-                &attempt,
-                DirectProvider::Codex,
-                test_execution_env(&attempt.workspace.path),
-            )
-            .unwrap();
-            let direct = launch.launch_request();
-            assert!(direct.prompt.starts_with(text));
-            assert!(
-                direct
-                    .prompt
-                    .contains("Manual note: preserve API compatibility.")
-            );
-            assert!(!direct.prompt.contains("vk:pipeline"));
-            assert!(direct.selected_skills.is_empty());
-            let audited: serde_json::Value =
-                serde_json::from_slice(&launch.audit_payload().unwrap()).unwrap();
-            assert_eq!(audited["prompt"], direct.prompt);
-            // Persisted caller input is not rewritten by compatibility filtering.
-            assert!(request.input.content.contains(old_block));
+        let pipeline = "<!-- vk:pipeline:start -->\n<!-- vk:pipeline:id=custom -->\nArbitrary user-authored stages and manual notes.\n<!-- vk:pipeline:end -->";
+        let skills = vec![api_types::SelectedSkill {
+            name: "custom".into(),
+            path: PathBuf::from("/fixture/skills/custom/SKILL.md"),
+        }];
+        attempt.selected_skills = Some(skills.clone());
+        for provider in [DirectProvider::Codex, DirectProvider::ClaudeCode] {
+            for (intent, text) in [
+                (AgentRunIntent::Initial, "Implement safely"),
+                (AgentRunIntent::FollowUp, "Continue"),
+                (AgentRunIntent::FollowUp, "/goal Implement safely"),
+            ] {
+                request.intent = intent;
+                let original = format!("{text}\n{pipeline}");
+                request.input.content = original.clone();
+                let launch = FrozenDirectProviderLaunchSpec::new(
+                    &request,
+                    &attempt,
+                    provider,
+                    test_execution_env(&attempt.workspace.path),
+                );
+                let direct = launch.launch_request();
+                assert_eq!(direct.selected_skills, skills);
+                assert!(direct.prompt.starts_with(&original));
+                if provider == DirectProvider::Codex || text.starts_with('/') {
+                    assert_eq!(direct.prompt, original);
+                } else {
+                    assert!(direct.prompt.contains("Canonical openwiki/ is read-only"));
+                }
+                let audited: serde_json::Value =
+                    serde_json::from_slice(&launch.audit_payload().unwrap()).unwrap();
+                assert_eq!(audited["prompt"], direct.prompt);
+                assert_eq!(request.input.content, original);
+            }
         }
     }
 
