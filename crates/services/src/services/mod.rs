@@ -16,7 +16,6 @@ pub mod notification;
 pub mod openwiki;
 pub mod orchestration;
 pub mod parallel_context;
-pub mod pipelines;
 pub mod pr_monitor;
 pub mod resource_coordination;
 

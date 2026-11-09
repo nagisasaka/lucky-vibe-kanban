@@ -31,7 +31,6 @@ pub mod integrations;
 pub mod local_remote;
 pub mod openwiki;
 pub mod parallel_context;
-pub mod pipelines;
 mod project_utilities;
 pub mod releases;
 pub mod repo;
@@ -69,7 +68,6 @@ pub fn router(
         .merge(tags::router(&deployment))
         .merge(todos::router())
         .merge(design_notes::router())
-        .merge(pipelines::router())
         .merge(filesystem::router())
         .merge(repo::router())
         .merge(integrations::router())

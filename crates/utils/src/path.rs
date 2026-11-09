@@ -1,7 +1,5 @@
 use std::path::{Path, PathBuf};
 
-use crate::assets::asset_dir;
-
 /// Directory name for storing attachments in worktrees
 pub const LVK_ATTACHMENTS_DIR: &str = ".lvk/attachments";
 
@@ -170,11 +168,6 @@ fn temp_dir_for_instance(root: Option<PathBuf>) -> PathBuf {
         // Windows and other platforms: use temp dir with vibe-kanban subdirectory
         std::env::temp_dir().join(dir_name)
     }
-}
-
-/// User-editable card pipeline definitions seeded by the application.
-pub fn pipelines_dir() -> PathBuf {
-    asset_dir().join("pipelines")
 }
 
 /// Shared local resources live outside the worktree cleanup tree, even when

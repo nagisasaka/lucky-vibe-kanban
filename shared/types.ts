@@ -634,10 +634,6 @@ export type PullRequestInfo = { number: bigint, url: string, status: MergeStatus
 
 export type ApprovalInfo = { approval_id: string, tool_name: string, execution_process_id: string, is_question: boolean, created_at: string, timeout_at: string, };
 
-export type Pipeline = { id: string, name: string, description: string | null, stages: Array<PipelineStep>, };
-
-export type PipelineStep = { id: string, label: string, prompt_fragment: string, default_enabled: boolean, heavy: boolean, };
-
 export type ApprovalStatus = { "status": "pending" } | { "status": "approved" } | { "status": "denied", reason?: string, } | { "status": "timed_out" };
 
 export type QuestionAnswer = { question: string, answer: Array<string>, };
