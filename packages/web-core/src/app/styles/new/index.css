@@ -1291,3 +1291,322 @@ html {
     overflow-wrap: anywhere;
   }
 }
+
+/* Markdown typography: shared by Lexical and react-markdown. Scope to the body,
+   never its toolbar or composer. DOM adapters only provide semantic classes. */
+.markdown-body {
+  --markdown-gap: 0.75em;
+  font-size: 1.0625rem;
+  line-height: 1.65;
+  color: hsl(var(--text-normal));
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+.markdown-body--compact,
+.markdown-body--github {
+  --markdown-gap: 0.6em;
+  font-size: 1rem;
+}
+.markdown-body--github {
+  --markdown-gap: 0.25em;
+}
+.markdown-body p,
+.markdown-body ul,
+.markdown-body ol,
+.markdown-body blockquote,
+.markdown-body .markdown-code-block,
+.markdown-body table {
+  margin-block: 0 var(--markdown-gap);
+}
+.markdown-body p,
+.markdown-body .md-quote {
+  white-space: pre-wrap;
+}
+.markdown-body :is(h1, h2, h3, h4, h5, h6) {
+  margin-block: 1.5em 0.5em;
+  line-height: 1.3;
+  font-weight: 600;
+  color: hsl(var(--text-high));
+}
+.markdown-body h1 {
+  font-size: 1.8em;
+}
+.markdown-body h2 {
+  font-size: 1.45em;
+}
+.markdown-body h3 {
+  font-size: 1.2em;
+}
+.markdown-body h4 {
+  font-size: 1.05em;
+}
+.markdown-body h5 {
+  font-size: 1em;
+}
+.markdown-body h6 {
+  font-size: 0.9em;
+  color: hsl(var(--text-low));
+}
+.markdown-body :is(h1, h2) {
+  border-bottom: 1px solid hsl(var(--border));
+  padding-bottom: 0.3em;
+}
+.markdown-body > :first-child {
+  margin-top: 0;
+}
+.markdown-body > :last-child,
+.markdown-body li > :last-child,
+.markdown-body blockquote > :last-child {
+  margin-bottom: 0;
+}
+.markdown-body :is(ul, ol) {
+  padding-inline-start: 1.7em;
+}
+.markdown-body ul {
+  list-style-type: disc;
+}
+.markdown-body ol {
+  list-style-type: decimal;
+}
+.markdown-body li + li {
+  margin-top: 0.2em;
+}
+.markdown-body li > :is(ul, ol) {
+  margin-block: 0.2em 0;
+}
+.markdown-body .md-nested-item {
+  list-style: none;
+}
+.markdown-body blockquote {
+  padding-inline-start: 1em;
+  border-inline-start: 0.22rem solid hsl(var(--border));
+  color: hsl(var(--text-normal));
+  font-style: normal;
+}
+.markdown-body a {
+  color: hsl(var(--brand));
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+  cursor: pointer;
+}
+.markdown-body a:hover {
+  color: hsl(var(--brand-hover));
+}
+.markdown-body :is(a, h1, h2, h3):focus-visible,
+.markdown-outline button:focus-visible {
+  outline: 2px solid hsl(var(--brand));
+  outline-offset: 3px;
+}
+.markdown-body code,
+.markdown-body .markdown-code-block {
+  font-family: 'IBM Plex Mono', monospace;
+}
+.markdown-body :not(pre) > code:not(.markdown-code-block) {
+  font-size: 0.875em;
+  background: hsl(var(--bg-panel));
+  border-radius: 0.2rem;
+  padding: 0.15em 0.3em;
+}
+.markdown-body .markdown-code-block {
+  display: block;
+  font-size: 0.875em;
+  line-height: 1.5;
+  padding: 0.8em 1em;
+  background: hsl(var(--bg-secondary));
+  border-radius: 0.25rem;
+  white-space: pre;
+  overflow-x: auto;
+  max-width: 100%;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+.markdown-body .markdown-code-block > code {
+  font-size: inherit;
+}
+.markdown-body--github .markdown-code-block {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.markdown-body table {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+  font-size: 0.9em;
+  white-space: nowrap;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+.markdown-body :is(td, th) {
+  border: 1px solid hsl(var(--border));
+  padding: 0.5em 0.75em;
+  text-align: start;
+  vertical-align: top;
+}
+.markdown-body :is(th, .md-header-cell) {
+  background: hsl(var(--bg-panel));
+  font-weight: 600;
+}
+.markdown-body hr {
+  border-color: hsl(var(--border));
+  margin-block: 1.5em;
+}
+.markdown-body img {
+  max-width: 100%;
+  border-radius: 0.2rem;
+}
+.markdown-body input[type='checkbox'] {
+  margin-inline-end: 0.5em;
+}
+.markdown-body blockquote[data-markdown-alert] {
+  --markdown-alert-color: var(--brand);
+  border-color: hsl(var(--markdown-alert-color));
+  padding: 0.75em 1em;
+  background: hsl(var(--markdown-alert-color) / 0.06);
+}
+.markdown-body [data-markdown-alert]::before {
+  content: attr(data-alert-label);
+  display: block;
+  color: hsl(var(--text-high));
+  font-weight: 600;
+  margin-bottom: 0.4em;
+  white-space: normal;
+}
+.markdown-body blockquote[data-markdown-alert='decision'] {
+  --markdown-alert-color: var(--merged);
+  border-inline-start-width: 0.35rem;
+}
+.markdown-body blockquote[data-markdown-alert='note'] {
+  --markdown-alert-color: 217 75% 42%;
+}
+.dark .markdown-body blockquote[data-markdown-alert='note'] {
+  --markdown-alert-color: 217 90% 70%;
+}
+.markdown-body blockquote[data-markdown-alert='tip'] {
+  --markdown-alert-color: var(--success);
+}
+.markdown-body blockquote[data-markdown-alert='important'] {
+  --markdown-alert-color: var(--merged);
+}
+.markdown-body blockquote[data-markdown-alert='warning'] {
+  --markdown-alert-color: var(--_warning);
+}
+.markdown-body blockquote[data-markdown-alert='caution'] {
+  --markdown-alert-color: var(--error);
+}
+.markdown-body [data-alert-marker],
+.markdown-body [data-alert-marker] + br {
+  display: none;
+}
+.markdown-outline {
+  margin-bottom: 0.75rem;
+  color: hsl(var(--text-low));
+  font-size: 0.875rem;
+  line-height: 1.5;
+  white-space: normal;
+}
+.markdown-outline button {
+  text-align: start;
+  border-radius: 0.15rem;
+}
+.markdown-outline button:hover {
+  color: hsl(var(--text-high));
+  text-decoration: underline;
+}
+.markdown-outline ol {
+  list-style: none;
+  margin-top: 0.5em;
+  padding: 0.5em 0.75em;
+  border-inline-start: 1px solid hsl(var(--border));
+}
+.markdown-outline li + li {
+  margin-top: 0.25em;
+}
+
+/* Existing editable composers retain their density. Body consumers opt in above. */
+.markdown-editor .md-paragraph {
+  margin-bottom: 0.25rem;
+}
+.markdown-editor .md-paragraph:last-child {
+  margin-bottom: 0;
+}
+.markdown-editor .md-heading {
+  margin-block: 0.75rem 0.5rem;
+  font-weight: 600;
+}
+.markdown-editor h1 {
+  font-size: 1.5rem;
+}
+.markdown-editor h2 {
+  font-size: 1.25rem;
+}
+.markdown-editor h3 {
+  font-size: 1.125rem;
+}
+.markdown-editor h4 {
+  font-size: 1rem;
+}
+.markdown-editor h5 {
+  font-size: 0.875rem;
+}
+.markdown-editor h6 {
+  font-size: 0.75rem;
+}
+.markdown-editor .md-quote {
+  margin-block: 0.75rem;
+  border-inline-start: 0.25rem solid hsl(var(--border));
+  padding-inline-start: 1rem;
+}
+.markdown-editor .md-list {
+  margin-block: 0.25rem;
+  padding-inline-start: 1.5rem;
+}
+.markdown-editor ul {
+  list-style: disc;
+}
+.markdown-editor ol {
+  list-style: decimal;
+}
+.markdown-editor .md-nested-item {
+  list-style: none;
+  padding-inline-start: 1rem;
+}
+.markdown-editor .md-inline-code {
+  font-family: monospace;
+  background: hsl(var(--bg-panel));
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+}
+.markdown-editor .markdown-code-block {
+  display: block;
+  font-family: monospace;
+  background: hsl(var(--bg-secondary));
+  border-radius: 0.375rem;
+  padding: 0.5rem 0.75rem;
+  margin-block: 0.5rem;
+  white-space: pre;
+  overflow-x: auto;
+}
+.markdown-editor .md-table {
+  border-collapse: collapse;
+  margin-block: 0.5rem;
+  width: 100%;
+  font-size: 0.875rem;
+}
+.markdown-editor .md-cell {
+  border: 1px solid hsl(var(--border));
+  padding: 0.5rem 0.75rem;
+  text-align: start;
+  vertical-align: top;
+}
+.markdown-editor .md-header-cell {
+  background: hsl(var(--bg-panel));
+  font-weight: 600;
+}
+
+.markdown-editor .md-link {
+  @apply text-blue-600 dark:text-blue-400 underline underline-offset-2 cursor-pointer hover:text-blue-800 dark:hover:text-blue-300;
+}

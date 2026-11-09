@@ -2358,5 +2358,14 @@
     "failed": "取得失敗",
     "measuring": "計測中…",
     "refresh": "容量を更新"
+  },
+  "markdownReading": {
+    "outline": "目次",
+    "decision": "判断待ち",
+    "note": "補足",
+    "tip": "ヒント",
+    "important": "重要",
+    "warning": "警告",
+    "caution": "注意"
   }
 }

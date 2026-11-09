@@ -351,9 +351,11 @@ export function WorkspaceWikiArticle({ actions }: { actions?: ReactNode }) {
               )}
               <div onClickCapture={handleMarkdownClick}>
                 <MarkdownPreview
+                  outline
+                  contentKey={scrollKey}
                   content={expandWikiLinks(selectedPage.content)}
                   theme={getResolvedTheme(theme)}
-                  className="min-w-0 break-words [&_p]:text-[14px] [&_li]:text-[14px] [&_table]:text-[13px] [&_pre]:max-w-full [&_pre]:text-[12px] [&_h1]:text-[24px] [&_h2]:text-[20px] [&_h3]:text-[17px]"
+                  className="min-w-0 break-words"
                 />
               </div>
             </article>

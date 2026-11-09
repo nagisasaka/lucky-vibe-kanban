@@ -1212,5 +1212,14 @@
     "chooseProject": "Choose a Project",
     "integration": "自動合併"
   },
-  "integrationPanel": {}
+  "integrationPanel": {},
+  "markdownReading": {
+    "outline": "目錄",
+    "decision": "等待決策",
+    "note": "備註",
+    "tip": "提示",
+    "important": "重要",
+    "warning": "警告",
+    "caution": "注意"
+  }
 }

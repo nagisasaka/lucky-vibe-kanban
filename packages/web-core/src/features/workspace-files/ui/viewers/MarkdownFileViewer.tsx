@@ -4,15 +4,21 @@ import { useTheme } from '@/shared/hooks/useTheme';
 
 interface MarkdownFileViewerProps {
   content: string;
+  contentKey?: string;
 }
 
-export function MarkdownFileViewer({ content }: MarkdownFileViewerProps) {
+export function MarkdownFileViewer({
+  content,
+  contentKey,
+}: MarkdownFileViewerProps) {
   const { theme } = useTheme();
   const actualTheme = getActualTheme(theme);
 
   return (
     <div className="h-full min-h-0 overflow-auto bg-primary px-double py-base">
       <MarkdownPreview
+        outline
+        contentKey={contentKey}
         content={content}
         theme={actualTheme}
         className="mx-auto max-w-[820px] [&_pre]:max-w-full"

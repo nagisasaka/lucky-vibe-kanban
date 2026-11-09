@@ -1206,5 +1206,14 @@
     "chooseProject": "Choose a Project",
     "integration": "Fusión automática"
   },
-  "integrationPanel": {}
+  "integrationPanel": {},
+  "markdownReading": {
+    "outline": "Contenido",
+    "decision": "Decisión pendiente",
+    "note": "Nota",
+    "tip": "Consejo",
+    "important": "Importante",
+    "warning": "Advertencia",
+    "caution": "Precaución"
+  }
 }

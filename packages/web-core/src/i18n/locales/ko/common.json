@@ -1206,5 +1206,14 @@
     "chooseProject": "Choose a Project",
     "integration": "자동 병합"
   },
-  "integrationPanel": {}
+  "integrationPanel": {},
+  "markdownReading": {
+    "outline": "목차",
+    "decision": "판단 필요",
+    "note": "참고",
+    "tip": "팁",
+    "important": "중요",
+    "warning": "경고",
+    "caution": "주의"
+  }
 }
