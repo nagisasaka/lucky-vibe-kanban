@@ -66,10 +66,10 @@ sources:
     resource: repo://crates/server/src/remote_mcp/runtime_read.rs
   - id: openwiki-source-b8d968c49ef2f35fc1a18cce
     resource: repo://crates/server/src/remote_mcp/runtime_write.rs
+  - id: openwiki-source-ab70a43b3f61734a8322478b
+    resource: repo://crates/server/src/remote_mcp/stdio.rs
   - id: openwiki-source-162bcfe1ee47c1047ccf7d52
     resource: repo://crates/server/src/routes/agent_runs.rs
-  - id: openwiki-source-a98b89b4828bd8f76e2ca9bf
-    resource: repo://crates/server/src/routes/attachment_transfer.rs
   - id: openwiki-source-a9b6d4be264787a78357c9d6
     resource: repo://crates/server/src/routes/config.rs
   - id: openwiki-source-5720d865d1c837f0e6b7dab7
@@ -195,7 +195,7 @@ sources:
 generated: { by: "codex", at: "2026-11-09T20:29:18.834Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-09T20:29:18.834Z
+    at: 2026-11-10T13:43:59.705Z
 ---
 
 # Session・AgentRun・RunAttempt

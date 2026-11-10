@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:89dfba0e678a42c9f1c0842eef9362be25f4e34588f7df67116091faca44879c",
+  "pageVersion": "sha256:418a7fb40a579352c5d1424c85088eea34313868c242a2238156e498adf51f49",
   "claims": [
     {
       "id": "claim_58a31267fd284cf6b691efe1ca720bfe",
@@ -233,7 +233,7 @@
           "version": "repo-lines-v1:sha256:6a855a4847e7f423e9736d1d00951f772ec366dd79c8929bcf18988a2d5d0a05:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJjZTNjNzg4MmRiMGNmN2M5YTg2YTM0N2EwZGZjMTliNmQxYTBiODJkNjFiMzAzNmI2MzBmMTY4ZmM5ZDRjNjYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI2NjhlNjZhMzFkMTUyNDNjOTMwMjU2NzkwZTA5N2UxOTA3ZGMwYWI5MjU2ZDAxNjdmZWQ0Yjk0ZmMzODMxZDMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk1NzUwODc3OTI4YjU1NWYyODE3MDI2MjFjMTA5MzM4NzA1NzY0NDI1YjVjMjI5M2ZjYjg4YTRkYmY4NzhiNjQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJiNTc4NGE3OGJlZGRlMzkxNzE1ZTMxNzk0ZTQxZGYxMDI1OTc4YTM4NmU2MzA4YjI3ZTcxYzNiNTE5ZWI3NDAifQ"
         },
         {
-          "resource": "repo://crates/server/src/routes/config.rs#L87-L146",
+          "resource": "repo://crates/server/src/routes/config.rs#L86-L145",
           "version": "repo-lines-v1:sha256:91f3da60c89707a74376e3cbf7384e37f536fadb6bee884655da27f24e27a12a:eyJzZWxlY3RlZExpbmVDb3VudCI6NjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZmMWIzYzM4ZjA3MWYxOGNjNGQwOWIxYmRjMzllYTk4YTRhYWQ2ZmM1OGY0NDRkOWI5MmFjNmIxMzdhMzYyOTAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI0YTM2NWE5MGVjMTFlOTA0MzI3NTJjZjkzNzZlYzVlZDM2YjgwYmE1ZThlNjg1NGZjZjk4OTcwZDMwNDQ0NjkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjIzYWU4N2M3ZjYwZWIyYWQ0ZDA4ZmRhMjFkODIxMWQ1MTJmMTk1ZjczNjNkNDNjZmEwMjYyZWQ3OTI1ZjkzYmMifQ"
         }
       ]
@@ -296,7 +296,7 @@
         },
         {
           "resource": "repo://crates/mcp/src/bin/vibe_kanban_mcp.rs",
-          "version": "repo-file-v1:sha256:fb4ee0c2f237f52f0c6f37c3b572a844c283ee41d5cbbfb2dcbc95c4942fc625"
+          "version": "repo-file-v1:sha256:2d8e90745d1bd7783e8c01c91c1d77b316e58a21eccec0338c8d50927241ce17"
         },
         {
           "resource": "repo://package.json",
@@ -306,15 +306,11 @@
     },
     {
       "id": "claim_94b2e25f988a422488581f6d4b3e851e",
-      "statement": "直接stdio MCPは既存HTTP backendを利用し、mode省略時global、orchestratorは明示指定する。ランチャーのようにbackendを起動しない。",
+      "statement": "直接stdio MCPは既存HTTP backendを利用しmode省略時global。orchestratorは廃止案内付き明示エラーでglobalへ黙って置換せず、backendを起動しない。",
       "evidence": [
         {
-          "resource": "repo://crates/mcp/src/bin/vibe_kanban_mcp.rs#L23-L56",
-          "version": "repo-lines-v1:sha256:23c3fbb358be85e0a376477a139995aacc5314444eeead42de87aef77fc85f0c:eyJzZWxlY3RlZExpbmVDb3VudCI6MzQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNlY2U4ZGIxYmFjZmMzNzY4OGM0MjdhYzI1NmRmYmIxNjhkYjIzOGE5YjI3YWNmM2Q5MDk4ZTA4NTY3Njk3Y2UiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY5YjE5ODJlOGRkNzQ4MTE4MTQ2YjM5YTJkMDA2MmY0MDgxZTM0Nzc5Yjg2NzVjMjM0YzRmYjEyNGRjMzkzOTAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImM3MTZlZmY3NDM3NzJlODE4NjhlNmRjNjllMjM5NDcxMDMxOTdmYWRjZTY5OGU4OTI1NjllNTI5MTI4MmE1ZDgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImI1YmRhNGQ0ZDJkMjJiYWIxZmUyOTdlNDhjYzEzYzRmMmU3ZTI1MzEyMGZmZGNhYzMwZTJkZjFmNTRjMzFlZWEifQ"
-        },
-        {
-          "resource": "repo://crates/mcp/src/bin/vibe_kanban_mcp.rs#L63-L140",
-          "version": "repo-lines-v1:sha256:67bb780c7cf950fe58807bef6bd9d267a17d482487e7b309d5b7ba0305f00547:eyJzZWxlY3RlZExpbmVDb3VudCI6NzgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIyMTk1OGU1OGQ1NjAxYzQzMzY3Y2M1ZDExMjc4MGQ1YmM0MjU5YTA2OTU5NWRkZTQ0YTViMWE5ODJkZTI2YzUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNhODc0NzAzZWViOWJlMzM1MDk5ZDkzY2JkMDQ1MTQ2OTcyNWE0ZDIwYzI0NGMxYTNmMjAxN2UxNjM1NzM0YTIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQxYzNkMGQ3MDYzMmQyMTUxODI3NWI2N2M0NGIzMjVhNTc3NTRhZDNlMTRmMjUyNDM4NWE4ZDA1MzUwZDNlZmYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY3ZGFhOTA5YWY3NTZmMGI2ZDYxMmZiZDk4MjNkNGYzNDE0NzRkOWYyMTE5YmU1NDAwMWM1ZjhlZDlhODJiYzMifQ"
+          "resource": "repo://crates/mcp/src/bin/vibe_kanban_mcp.rs#L22-L112",
+          "version": "repo-lines-v1:sha256:ec6597a0c4309bca640e407c26e1bdffc417220768831ab3a8ab89092078d301:eyJzZWxlY3RlZExpbmVDb3VudCI6OTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNlY2U4ZGIxYmFjZmMzNzY4OGM0MjdhYzI1NmRmYmIxNjhkYjIzOGE5YjI3YWNmM2Q5MDk4ZTA4NTY3Njk3Y2UiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImYwYWY0MDY5NjFiZGUyNmVkZWE5MjkyZjdmOTRiNjU1Njc4NWQ2N2MzNGVhMjY3MTVlY2YwZWI0ZjRlMTQ5ZjEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImM3MTZlZmY3NDM3NzJlODE4NjhlNmRjNjllMjM5NDcxMDMxOTdmYWRjZTY5OGU4OTI1NjllNTI5MTI4MmE1ZDgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQ1MmEyNDBhZGY0OGQwZWNiYWMyZTMxMDgxNDQ3YjdmZjYxYTk5YjZiZWE4ZDM4NjIwYWIyM2UxMmIzNmQwNDUifQ"
         }
       ]
     },
@@ -497,6 +493,6 @@
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-09T18:10:41.827Z"
+    "at": "2026-11-10T13:43:59.705Z"
   }
 }

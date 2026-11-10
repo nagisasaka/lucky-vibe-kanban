@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:0e3b620d367c5f103cb09e345f31e2d5ebdcecfcea08b970a08bcb7af5cef1a5",
+  "pageVersion": "sha256:6c559e6ab732c0cfc4be3b7b9e8a200e424bf75b6d7dc03a787b8f37e70399f4",
   "claims": [
     {
       "id": "claim_12101e4e85524a9280291b25d4812f5f",
@@ -8,7 +8,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/integrations/conversation.rs",
-          "version": "repo-file-v1:sha256:d8679de1eea32d443349ce27bbf40b6e90bc4d7579e15342ceb8ce6d61ffac56"
+          "version": "repo-file-v1:sha256:a5fd73c385670816c141ae93c0d801254082d7642c4969dbb32c30ddc4f366c4"
         }
       ]
     },
@@ -52,7 +52,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/integrations/conversation.rs",
-          "version": "repo-file-v1:sha256:d8679de1eea32d443349ce27bbf40b6e90bc4d7579e15342ceb8ce6d61ffac56"
+          "version": "repo-file-v1:sha256:a5fd73c385670816c141ae93c0d801254082d7642c4969dbb32c30ddc4f366c4"
         },
         {
           "resource": "repo://crates/server/src/routes/integrations/runtime.rs",
@@ -66,7 +66,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/integrations/conversation.rs",
-          "version": "repo-file-v1:sha256:d8679de1eea32d443349ce27bbf40b6e90bc4d7579e15342ceb8ce6d61ffac56"
+          "version": "repo-file-v1:sha256:a5fd73c385670816c141ae93c0d801254082d7642c4969dbb32c30ddc4f366c4"
         }
       ]
     },
@@ -75,7 +75,7 @@
       "statement": "code SHAに結び付いた管理commandの実行証拠は要件の意味的解釈やtest網羅性を証明しない。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/integrations/conversation.rs#L321-L393",
+          "resource": "repo://crates/server/src/routes/integrations/conversation.rs#L343-L415",
           "version": "repo-lines-v1:sha256:6795dce8cb107ea0ee3f1c7a7f2a0520f608d52abb6415d1619a10ccf195d232:eyJzZWxlY3RlZExpbmVDb3VudCI6NzMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhiYzU5MTJkYjczZWRjMmE1NTU4YjkyNzgyZTQ0Mjk4MDE2MjEzNDU3MWRlODdmMzY3NzNkNzJkOGY1YTIwNWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRlNDYyYmQ4NWVhMzUyMjgyMmE5YWQzZWIyNDA5OWIwMzJhMWI2MjdiZWNmZDdjNTgzMWU5OTI3ZDRiYWM0MGUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImIyNDA3N2QxZTk1MDA3YTBmYjc0ZDQ0ZDQ4NzUwZTMyNGMzMTU5YjVjYmQzNjY3YTNkNTUwNDJjZTFlNDg2ZDgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNjY2M5NjlhYTU1ZTBhMzRkNTI3M2FkYzc2ZGMxZDY2ZmZhZTZlOWE1MGIxN2Y5NWU5NGU2ODcyMDBmY2JlMzQifQ"
         }
       ]
@@ -119,7 +119,7 @@
       "statement": "Wiki有効時はコード検証後に同じ候補でWikiを別commitにし、公開後にevent receipt・鮮度state・integrationのWiki結果を同じinstance DB transactionで確定する。後処理失敗はGit適用を取り消さない。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/integrations/conversation.rs#L1048-L1110",
+          "resource": "repo://crates/server/src/routes/integrations/conversation.rs#L1070-L1132",
           "version": "repo-lines-v1:sha256:20018f51d885a22052f870080f2de788aee4a5e7cfec08e1c96023d33b6c6edc:eyJzZWxlY3RlZExpbmVDb3VudCI6NjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImIzNmY5YmY0OGUxZWFhZTAwMTQ2MzVjNmMzODA4ZGQ5YjEyMDhhZmMzMGViMDhiOTlkMTIzMDQ3ODViMGFkZjAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE0YjE2MTlhNjE4NmJkNzQ5MzBmNmNlYTA3MTM4NzRkOTI0ZmZlYzc3MGVhNGQ1YTliZDZmMzhlMGNhZWI3ZjQifQ"
         },
         {
@@ -194,7 +194,7 @@
         },
         {
           "resource": "repo://crates/server/src/remote_mcp/operations.rs",
-          "version": "repo-file-v1:sha256:cb9879bf081892b4874d0c9c95a6abdfe10cd875c437a00b5b74fc692c9d7c17"
+          "version": "repo-file-v1:sha256:0859c5de8ecfefeca7796036e3019301a9387793da6ee200655b8161fba5c97e"
         }
       ]
     },
@@ -236,7 +236,7 @@
         },
         {
           "resource": "repo://crates/server/src/routes/integrations/conversation.rs",
-          "version": "repo-file-v1:sha256:d8679de1eea32d443349ce27bbf40b6e90bc4d7579e15342ceb8ce6d61ffac56"
+          "version": "repo-file-v1:sha256:a5fd73c385670816c141ae93c0d801254082d7642c4969dbb32c30ddc4f366c4"
         },
         {
           "resource": "repo://crates/server/src/routes/integrations/support.rs",
@@ -376,7 +376,7 @@
         },
         {
           "resource": "repo://crates/server/src/routes/integrations/conversation.rs",
-          "version": "repo-file-v1:sha256:d8679de1eea32d443349ce27bbf40b6e90bc4d7579e15342ceb8ce6d61ffac56"
+          "version": "repo-file-v1:sha256:a5fd73c385670816c141ae93c0d801254082d7642c4969dbb32c30ddc4f366c4"
         }
       ]
     },
@@ -414,7 +414,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/integrations/conversation.rs",
-          "version": "repo-file-v1:sha256:d8679de1eea32d443349ce27bbf40b6e90bc4d7579e15342ceb8ce6d61ffac56"
+          "version": "repo-file-v1:sha256:a5fd73c385670816c141ae93c0d801254082d7642c4969dbb32c30ddc4f366c4"
         }
       ]
     },
@@ -457,7 +457,7 @@
       "statement": "Wiki有効な自動マージは検証code SHAの証拠を確定して最初のbegin前にprepare_wikiで原本journalとdigest receiptを保存し、先行beginを後付けjournalで正当化しない。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/integrations/conversation.rs#L530-L719",
+          "resource": "repo://crates/server/src/routes/integrations/conversation.rs#L552-L741",
           "version": "repo-lines-v1:sha256:02a70f48f694e360079c44dbaee15d1722e3d38aeafd13d62d2b5110e4445444:eyJzZWxlY3RlZExpbmVDb3VudCI6MTkwLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI1MmM4YTU4NmMzNWRhYWQxNzJjOWY3MTkzNjBjY2QyYmE5YTA2YmU1ZjE1NmY3MzYxY2Q4ZjNkODRhMTM3MTY3IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIxNDQ1YTk1N2Q5MzMzODdjMjM3YjAwMDEyYzc5NmE2ZWJhMTRkMzAwMzI1Zjg1Zjc3YWRlNDUyNzAyYzMxYmFjIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIzYTFiZjhlNzZmOTE0ZDNmMDA3NDJhN2MyNjA0NzgwMmQyYjhjZDdlNzU2YzViYTJmNDRiMDdhN2YzYTZlNzY3IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI4NDFmNzZjNzM0M2NiYzdmNjM0ODUyMGUwNzg0ZGRlM2I4Mjk1ZjU2MWFhZTAwNWJmYzU2YjMzYzFiNGU0ZWUzIn0"
         }
       ]
@@ -481,7 +481,7 @@
       "statement": "hostは担当・target writerの終了とWiki完了証拠を確認後、最終Wiki SHAを固定したjournalでsetupだけを限定復元しclean検査してから公開する。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/integrations/conversation.rs#L840-L883",
+          "resource": "repo://crates/server/src/routes/integrations/conversation.rs#L862-L905",
           "version": "repo-lines-v1:sha256:0c8df446a406d1a6b3ec5d5f8f907fe4579b61989e1ac98a2a10078b92cfd4e3:eyJzZWxlY3RlZExpbmVDb3VudCI6NDQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJkYmU5NWRiY2I4NmJiYjM0Y2UxZDk0Mjc4NWU0ZTZhNjQ1NWUzYjBkMGYyY2I4ZTJmMDlkMDhkZDFkYjQzYzciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjIzYjM5NGJmYWU3MDgyNjUyNWQxZTk5ZmJmNTQ5M2E5YTEwZTY1OTNmYjEyY2RmMDkzMTdkYjc0MTI3NWViYjUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImEyYmIxNjhkZDZkYzEyN2ZhZTczNGIwODU2ZDk3Y2IzMWQ4YTNmNTlkZmMyZWE2MDc5ZTYwZGMwOTRhMjYxYjAifQ"
         },
         {
@@ -499,7 +499,7 @@
       "statement": "Restoredからの新prepareは原本を取り直さずcodeと過去Wiki履歴を保持してwriter phaseを再開する。最終SHA固定後の未復元状態はprepareを拒否し、同じ最終SHAの再publishを要求する。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/integrations/conversation.rs#L581-L687",
+          "resource": "repo://crates/server/src/routes/integrations/conversation.rs#L603-L709",
           "version": "repo-lines-v1:sha256:a27d0855be2061633727053dda85a9b685b067342b094bdecb27ba0f9fe59526:eyJzZWxlY3RlZExpbmVDb3VudCI6MTA3LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIxOTk2NTc0Njk0Mjg1ODA3OGI0ZWRhMDVjZGE4YzA5ODI2N2IxZjdmNjlmZjA3OWI2MzE1MTc4MDUyOTA2NTA2IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI3MzVmMDMxOGM3ZDQzOGM4NGI3MjlmNmY5ODY5ZTAwYmI0M2Q4MzYyZTZkYzExYWQ0NmJmZGFlNTEwZTAyY2Q4IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJkMGU0MjNiNGI4NDVlMjE4YjYzMGNlMGNjN2RkODAzOThhNTI5ZDhkM2M2ODJlZTljYTk0MTc2YzkxOWZjMjExIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJkZjI0MmRmYTBiODE1YzRlOTc2OTM1YjhmMTViY2Q2NmM3MjdmODJkYmU0MTM1ZDA3Yjc0YzQxNzAwYjk0ZDc5In0"
         },
         {
@@ -531,7 +531,7 @@
           "version": "repo-lines-v1:sha256:8bcdddc0f30940e340814e2d746445f2d42937464597eaf679bdf4a9e5f77746:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFhMWMwYzhjZjQ4NjlkYTM2OWYzMDgzOTU3YjVmYTAwOThlM2RiMzNhMzcxZWViMGViM2UwMjAzYzkzNWJlZDQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImViZjEyMjNhZTZiZGZkNzJlYThlNWYzZmQzZTkzMzc2MWU3MGFkZGZmYWE5MGNiMDY0ZmQ2OTAyZmI4OWEwY2QiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjYzZjM3ZWI4Zjg4OGU1MGZhODYwZjZlZjdlMjU1ZmQxNzI0OGFhYTAxZGZmMTg0OTc2YWQ5OWQ1MzJjNDkxODAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjllODlhODczYWY0NTA3YTIwMTdlZTBjOGM4MzYyYTUwODA4MDNiMWE3ZWE5NmM1MWUxNzExMTViNzVkNTM5ODQifQ"
         },
         {
-          "resource": "repo://crates/server/src/routes/integrations/conversation.rs#L1091-L1106",
+          "resource": "repo://crates/server/src/routes/integrations/conversation.rs#L1113-L1128",
           "version": "repo-lines-v1:sha256:643a50ff7a3c7ba6113308e18c83543eb07e14179f2e5f74e37bb4e2bb6d63ed:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU3NjBkYTI1YWYwZjUxYjc1MDk1YTI3Y2YwNDg5NWUzYjAwZjNjMGEzNDQyOWExNjRmYzYxMzlkOGE0ZTkzZjIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA0OTc4MjVhMTJjNTE1YTdhOTkzMGU2NDZlYTYyMWRmNDMzY2VmYTdmMTdhZTBmYjBkYWQ4NjVhYWQ1YzM2YjIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFjZWRmYWFjZDhmNGEwMmZlMWY0ZDFjNjQzNTZjNTIzM2VhMTdhMWRjOGZjODgxNmMwY2EwYzU4ZjlhNjQyYmIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImIxODBjZjk2MDY5NzI4ZjFjMmE2ZjczNmUyYzMwNThjYmI4MTk3MzI5N2E2ZTA2YzE2NTA3MWZmZTQ4OTM5YjkifQ"
         }
       ]
@@ -553,6 +553,6 @@
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-09T18:10:41.827Z"
+    "at": "2026-11-10T13:43:59.705Z"
   }
 }

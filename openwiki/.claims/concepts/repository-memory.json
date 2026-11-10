@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:f5d1fbab5ac8ef796541a0ce17339e4fe1427c978f785367829b03e754b4533e",
+  "pageVersion": "sha256:0a2da3776fd7fd50a6fbeae50d954e63077f86426a32d68458ac4ac425c9d6e0",
   "claims": [
     {
       "id": "claim_be2584d6229c4001870388b8bb27ec00",
@@ -139,7 +139,7 @@
       "statement": "自動マージは同じ候補でcodeとWikiのSHAを固定し、公開後に選択eventのreceipt・鮮度state・integration結果をinstance DBへ一括確定する。後処理失敗は適用済みGit/Doneを戻さない。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/integrations/conversation.rs#L1048-L1110",
+          "resource": "repo://crates/server/src/routes/integrations/conversation.rs#L1070-L1132",
           "version": "repo-lines-v1:sha256:20018f51d885a22052f870080f2de788aee4a5e7cfec08e1c96023d33b6c6edc:eyJzZWxlY3RlZExpbmVDb3VudCI6NjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImIzNmY5YmY0OGUxZWFhZTAwMTQ2MzVjNmMzODA4ZGQ5YjEyMDhhZmMzMGViMDhiOTlkMTIzMDQ3ODViMGFkZjAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE0YjE2MTlhNjE4NmJkNzQ5MzBmNmNlYTA3MTM4NzRkOTI0ZmZlYzc3MGVhNGQ1YTliZDZmMzhlMGNhZWI3ZjQifQ"
         },
         {
@@ -282,7 +282,7 @@
       "evidence": [
         {
           "resource": "repo://crates/mcp/src/task_server/tools/context.rs",
-          "version": "repo-file-v1:sha256:f3d4646115fed8dd37d25ed814b2057852ed6a4949f5837445e2b9a4b2fb5c42"
+          "version": "repo-file-v1:sha256:45a55782e9be35915640101e9b426be304cc8f19ffdb3f9ce6c25df806e65af4"
         },
         {
           "resource": "repo://crates/utils/src/agent_guides.rs#L25-L49",
@@ -421,6 +421,6 @@
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-09T18:10:41.827Z"
+    "at": "2026-11-10T13:43:59.705Z"
   }
 }

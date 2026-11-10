@@ -48,8 +48,12 @@ sources:
     resource: repo://crates/db/tests/generated_issue_status.rs
   - id: openwiki-source-a43253b5be9686da077b8067
     resource: repo://crates/server/src/remote_mcp/issue_comments.rs
+  - id: openwiki-source-2a590025825dbc1cf1ae93fb
+    resource: repo://crates/server/src/remote_mcp/issue_mutations.rs
   - id: openwiki-source-9e15762bf7a432b7605f8466
     resource: repo://crates/server/src/remote_mcp/issue_write.rs
+  - id: openwiki-source-ab70a43b3f61734a8322478b
+    resource: repo://crates/server/src/remote_mcp/stdio.rs
   - id: openwiki-source-5720d865d1c837f0e6b7dab7
     resource: repo://crates/server/src/routes/integrations/conversation.rs
   - id: openwiki-source-1ffb01d1ba3953937e0771bf
@@ -104,10 +108,10 @@ sources:
     resource: repo://tests/kanban/issue-detail.mjs
   - id: openwiki-source-62d93277f2c37df9b3fcebae
     resource: repo://tests/kanban/README.md
-generated: { by: "codex", at: "2026-11-09T07:03:14.304Z" }
+generated: { by: "codex", at: "2026-11-10T13:43:59.705Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-09T07:03:14.304Z
+    at: 2026-11-10T13:43:59.705Z
 ---
 
 # Project・Issue と実施の関係
@@ -134,7 +138,7 @@ Issue の主キーは UUID。表示用 `simple_id` は保存済み Project key �
 
 Project key 未適用の既存 DB は、互換 migration が Project UUID 順で先頭を `LOCAL`、以降を `LOCAL2`〜`LOCAL99999` にする。既存 Issue UUID・番号・simple_id は変更しないため、過去の表示接頭辞と現在の Project key が異なる場合がある。新規 Issue は現在の key を使う。履歴選択・上限失敗・旧 tool の制約は [Project key migration の互換運用](../operations/development.md#project-key-migration-の互換運用)を参照する。通常 Issue・自動マージ Card・OpenWiki保守Cardは同じ allocator に caller の `BEGIN IMMEDIATE` transaction を渡し、Issue と関連 Tag を一緒に commit/rollback する。番号・simple_id のDB一意制約はProject内であり、高水位導入後に commit した番号は最高行・全行を削除しても再利用しない。Project削除後のkey再利用も禁止する履歴予約はない。永続参照はUUIDを使う。[allocator](../../crates/db/src/models/issue_number.rs#L23-L46)・[互換 SQL](../../crates/db/migration_compat/project_keys_multi.sql#L1-L21)・[通常作成](../../crates/server/src/routes/local_remote.rs#L789-L855)。
 
-priority は urgent / high / medium / low の四値で、作成時省略と legacy の明示 null は medium に正規化する。更新時の省略は保持するが明示 null は medium になる。nullable wire型は旧client互換のため残り、migration と trigger は直接生成・旧行の NULL も補正する。優先度は実行の許可や順序を変更する仕組みではない。[共有更新](../../crates/server/src/routes/local_remote.rs#L879-L963)・[NULL補正](../../crates/db/migrations/20261025000000_issue_classification.sql#L1-L11)。
+priority は urgent / high / medium / low の四値で、作成時省略と legacy の明示 null は medium に正規化する。Board RESTの更新は省略を保持し明示 null を medium にする。一方、LOCAL-365以降のstdio/remote MCP更新は省略・`priority:null`とも既存値を保持し、mediumに戻すには `priority:"medium"` を明示する。nullable wire型は旧client互換のため残り、migration と trigger は直接生成・旧行の NULL も補正する。優先度は実行の許可や順序を変更する仕組みではない。[共有更新](../../crates/server/src/routes/local_remote.rs#L879-L963)・[NULL補正](../../crates/db/migrations/20261025000000_issue_classification.sql#L1-L11)。
 
 Tag は Project 内の分類であり、system はLVK管理の予約名である。通常のrename・削除・手動付与/解除を拒否するがcolor変更は許す。新規Projectと一度限りのmigrationで不足する system / survey / bug / feature を用意し、読取は削除済み通常Tagを再作成しない。既存同名定義は残し、自動 system 関連は最小IDを選ぶ。自動マージ/OpenWikiの生成transactionと、記録されたownerのstartup補完がsystemを付ける。ラベルはownerの証拠や承認に代わらない。[初期化と既存owner](../../crates/db/migrations/20261025000000_issue_classification.sql#L13-L39)・[同一Projectと予約名](../../crates/db/src/models/board_tag.rs#L14-L72)。外部MCPのadd/removeは独立した一件の変更で、他のTagを置換しない。[MCP](../integrations/remote-access.md)。
 
@@ -152,11 +156,11 @@ Issue の分類と関係はそれぞれ別の意味を持つ。
 
 この関係を [Workflow の制御エッジ](workflow-attempt.md) と同じ依存グラフとして扱う根拠はない。表の保存契約は [スキーマ](../../crates/db/migrations/20260427000000_local_kanban.sql#L125-L179) と [親参照](../../crates/db/migrations/20260427000000_local_kanban.sql#L58-L68) を参照。
 
-部分更新では「送らなかった」と「null に消した」を区別する。description などは二重 Option であり、未指定なら保持し、明示 null ならクリアする。priority の明示 null は上記の medium 正規化が例外となる。フォームや API クライアントの変更でこの違いを失うと、無関係な編集で情報を消し得る。[更新リクエスト](../../crates/api-types/src/issue.rs#L79-L146)、[適用](../../crates/server/src/routes/local_remote.rs)
+部分更新では「送らなかった」と「null に消した」を区別する。description などは二重 Option であり、未指定なら保持し、明示 null ならクリアする。Board RESTのpriority明示nullはmedium正規化の例外であり、MCP更新のnull保持とは区別する。フォームや API クライアントの変更でこの違いを失うと、無関係な編集で情報を消し得る。[更新リクエスト](../../crates/api-types/src/issue.rs#L79-L146)、[適用](../../crates/server/src/routes/local_remote.rs)
 
 ### 親子・関連・ブロック関係の共通書込み
 
-親は同一Projectの存在するIssueだけを指定でき、自己参照と子孫への付替えを含む親子循環を拒否する。通常作成・更新の `BEGIN IMMEDIATE` 内で検証するため、Web、stdio、公開MCPが共通の制約を通る。公開MCPは `create_issue.parent_issue_id` で子を作成し、`update_issue.parent_issue_id` で設定・付替え、`clear_parent:true` で親だけを解除する。公開MCPの省略/nullは親を保持し、親IDとclearの同時指定は拒否する。これはBoard部分更新の明示nullとは区別する。[共通検証](../../crates/server/src/routes/local_remote/issue_relations.rs#L5-L33)・[呼出元](../../crates/server/src/routes/local_remote.rs#L859-L870)・[公開更新](../../crates/server/src/remote_mcp/issue_write.rs#L411-L450)
+親は同一Projectの存在するIssueだけを指定でき、自己参照と子孫への付替えを含む親子循環を拒否する。通常作成・更新の `BEGIN IMMEDIATE` 内で検証するため、Web、stdio、公開MCPが共通の制約を通る。公開MCPは `create_issue.parent_issue_id` で子を作成し、`update_issue.parent_issue_id` で設定・付替え、`clear_parent:true` で親だけを解除する。公開MCPの省略/nullは親を保持し、親IDとclearの同時指定は拒否する。これはBoard部分更新の明示nullとは区別する。[共通検証](../../crates/server/src/routes/local_remote/issue_relations.rs#L5-L33)・[呼出元](../../crates/server/src/routes/local_remote.rs#L859-L870)・[公開更新](../../crates/server/src/remote_mcp/issue_write.rs#L260-L330)
 
 関連の追加・指定解除も同じ共通層でwriterを予約し、両端の存在・同一Projectを確認する。自己関連は拒否し、`related` の逆順重複は既存行を返す。`blocking` はブロックする側がsource、される側がtargetの一行で、表示用の逆向き行を作らない。異なるIssue間の意図したblocking循環は許容する。既存不整合を一括削除するmigrationは追加しない。[共通関係操作](../../crates/server/src/routes/local_remote/issue_relations.rs#L54-L141)・[UI表示の向き](../../packages/web-core/src/shared/lib/resolveRelationships.ts)
 

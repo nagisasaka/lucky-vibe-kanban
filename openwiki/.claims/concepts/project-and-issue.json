@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:bfe34bfc92252a7affafa1410c17c63c227d83ef6a428eccc2aa225d130035ee",
+  "pageVersion": "sha256:69ed82c499d399a72bb6537939bdec23007846ca38a79e287b8e84c7fa81474d",
   "claims": [
     {
       "id": "claim_33c0ff606c234c65b0a089749cc323a5",
@@ -56,8 +56,16 @@
     },
     {
       "id": "claim_ffe4e3097fc4492b84e4d0e2f92de397",
-      "statement": "Issue部分更新はnullable属性の省略保持と明示nullを区別するが、priorityの明示nullはmediumへ正規化する。",
+      "statement": "Board RESTのIssue部分更新は省略保持と明示nullを区別しpriority:nullはmediumに正規化するが、stdio/remote MCP更新のpriority:nullは既存値を保持しmediumは明示指定する。",
       "evidence": [
+        {
+          "resource": "repo://crates/server/src/remote_mcp/issue_write.rs#L260-L330",
+          "version": "repo-lines-v1:sha256:a1eb7879c1b1cd0ae0cf0e93582fb805c60f71502a8da4d3c55172ebb3718c40:eyJzZWxlY3RlZExpbmVDb3VudCI6NzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNiZmMwNzBjZWZhOWMyYTNkYzkzMWNhYzVmYzVhN2QwMmIzZTY1MTBjMTA4MmJiZjM0Njc4MTA3NTczZDM1YjYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBkMGIzMGI5NWQwMDRiZWQ0MWNiNDliYWIwY2EwNGFiMWJmZWZiMThlMmJlMGZlNDdhN2IxNTQyMDEwMjYwZjAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjMzMzZmNDUzZTUwNGFkMWZkNTliZmQ3ZjI2NDgyYTRhODA5YjNiMDUwNjBjY2I2NjFjYTZiYTBmMDAzYmY1NTQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjgyOGEwYzc3MDMxZjI2ZWU1ODI3MWNmZmEzMTRlNzY4MGJiZjRiMGVlNzhhOTQ2OTJmYWZjMmQzOTRhOTU1MzUifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/remote_mcp/stdio.rs",
+          "version": "repo-file-v1:sha256:c3a1942e1bcec179fae452d18fbd169799a045a319cfcb8e43cdadc0ba42aec4"
+        },
         {
           "resource": "repo://crates/server/src/routes/local_remote.rs",
           "version": "repo-file-v1:sha256:8b661c0765ae30724ed29819246a92c8be7e9ffe7a7f286095548d843be4fcba"
@@ -208,7 +216,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/integrations/conversation.rs",
-          "version": "repo-file-v1:sha256:d8679de1eea32d443349ce27bbf40b6e90bc4d7579e15342ceb8ce6d61ffac56"
+          "version": "repo-file-v1:sha256:a5fd73c385670816c141ae93c0d801254082d7642c4969dbb32c30ddc4f366c4"
         }
       ]
     },
@@ -651,12 +659,12 @@
       "statement": "remoteのIssue物理削除はProject条件付きの既存Board削除を使い、対象不在を失敗とする。HTTPは対象不在時成功を保持し、Workspace/worktreeディレクトリ削除は追加しない。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/remote_mcp/issue_write.rs#L375-L405",
-          "version": "repo-lines-v1:sha256:de15fe58df9a62b2361854c99d57cde815ed144d7ef05574d5d76c898c2805d4:eyJzZWxlY3RlZExpbmVDb3VudCI6MzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU1NzQ2NTQxNzU1ZWJjYmIyMTQ1NGNmNWFjYzUxNTFhMzc0ZTU3NzQ4NzUwZDc2M2EzYjFkYjU1ZTk0NTYyMjIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMzZDJjMGU5ZDk0NDE5ZjUwZjBjNGVhNTlkZjlmNzMzZWJmMzdkNTY4YzAzNTFlODk3ZDgwZmQzYTk4MWY5NzkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImVlMzczOTc5YjQ2NDg0ZmUzY2Y0M2M4ZjRhOWZkZTM5MjFhYmFhYThlNDk5NDZhNzkwYTQzMjYyZDA4NDA3NDMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjIyZDc0NDY3NTU3ODI0ZDQ4MTE3NzBiYzI0ODdkYzczODdiN2E1NWVjZWY0YzUwMGY3NjFlNTNhNzk5ZGU0ZWIifQ"
+          "resource": "repo://crates/server/src/remote_mcp/issue_mutations.rs#L48-L80",
+          "version": "repo-lines-v1:sha256:512a4da0ffe7d9caf2dbd8794f27627cf3f1427e3091c6aa741791322dfbb865:eyJzZWxlY3RlZExpbmVDb3VudCI6MzMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjlkNDdjOTYyYTdlMGUzMzU3MWQ1YmM2MDg3NGU5ZjVkYWM3N2QxODJkNjQ5YWEzZDY0YmVjZWVjNDdmZWUzNTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY3ZDQyODE1MzQ4NDc1OTEwMmJkNjlmOWEwYzdjZmQ3ODU0MGM5N2MwNjJhZjNkZjZhYmNkNGJkMjYwZGZhMzkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI0OWU0ZmM5NDU3NjhkNzc1NmY3ZDRiZmY3MGE4YjFiODZmMjcyYTc0YTk1MjQxOWU2YTA0Y2ZhNTI4ZjMxZDgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNkYmZmM2IwMTdhNTY5NDAwMzMyNTdiM2JlOThjOGI2YTZmMjgyNGNiMmQ1Njc1YzJkYmQwNTRlNTU1YWQ0MzgifQ"
         },
         {
-          "resource": "repo://crates/server/src/routes/local_remote.rs#L1871-L1904",
-          "version": "repo-lines-v1:sha256:ab52f30226f8b642d67b5f9ba3f4e6332dc48f7630d98784482986b92a1bf3f1:eyJzZWxlY3RlZExpbmVDb3VudCI6MzQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM5OWE3MDYwYmNkYzc4YTY0NWNiMDNiNGZlYjhkM2YzY2JhYWU4NWIxZDE0MThkYTY3NzRhNzkzMmJlNGZhMjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRkNDQxZmNiNmFkN2YwODg2ZmIxMDg5ZjIwN2ExYjFmMmVhZmQ2NTAwYjgwMTJlNjNjMGY2YjU5OWJjOGYwNTIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImIyYWE2ZTM0NzUyODEyMTI3YmY2YjNiOGRmNzBkOGNjM2RlNGU3MjgyZDdmOWY1YzgxMmRhODU3N2ExZjY3OTQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhhYTU1Yzc1Mzg4YWQ4YzUxZTU4ZTU1ZjUwZjMwODU1NDhkMTI3NDc4ZWNkZTYxYzk4ZjEwNjBkNDgyYjk0NjYifQ"
+          "resource": "repo://crates/server/src/routes/local_remote.rs",
+          "version": "repo-file-v1:sha256:8b661c0765ae30724ed29819246a92c8be7e9ffe7a7f286095548d843be4fcba"
         }
       ]
     },
@@ -665,16 +673,8 @@
       "statement": "親の存在・同一Project・自己参照・親子循環は通常Issue作成/更新のBEGIN IMMEDIATE内で共通検証し、公開MCPはnull保持とclear_parentによる明示解除を区別する。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/remote_mcp/issue_write.rs#L411-L450",
-          "version": "repo-lines-v1:sha256:3a55297b6da11bd8c5c504cb2061b7b1f3821dfeedc84b24aa9e1a3b9864bb68:eyJzZWxlY3RlZExpbmVDb3VudCI6NDAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA4ZTkwMGVjMWNlZmNlNTdhMDNjZjE3NjRmNmRjN2E0MDIwY2Q5ZjBjM2E0NDAzMWRlMjFmNTI4ZDJiNGY4ZmMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFkOWUxMjU0NjQyNTU3NmQzZGVhZThjOWI5ZGJmMTI4ZDVkNmRkYWY1ZDdmZTg1NzkzNDkyN2RlZmZhM2I5ZGQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQzNTY3MjgwZTcyYjEyZTQ2OTZmYTc0YzVmNzZmODQ1NzFkNzRmYmU5ZWE2ZTM2MDFhZWNkNDgxNjAxZDBhOGEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjljZTNiN2NkZTc0OGU2NDVlYjI3MGJjNzdiNTFhMmYwNWQ3YTMyZjUwMGJkZjAwOTBmY2UzZjUzYjdlMmM2MTIifQ"
-        },
-        {
-          "resource": "repo://crates/server/src/routes/local_remote.rs#L859-L870",
-          "version": "repo-lines-v1:sha256:8c12dc16fc97c59bca74c5a44ddc2b916487bfd653c3e9844c3c83d433b9678b:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNmMjA2NjY4YTNiNDAxOWQyZDEwY2QyYjg0ZDUzMzU0MDVjYTlkNjgyNzBjOTIwZjcxMjkwNmM3NjkzMDUzMDYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjA2ZDlmMzQwNDY1MGQ4ODQ3NjI5ODRiZjRiNmM0ZDM4NjFhYjU3ZDMwODJlMzk3NWU1ZWFlN2IzMzJhMWRmMzAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBhZTQ5NDc2OTllODJkN2NkY2FkYzk0NWZkNmE2ZGJmYjlhYTRkMzQzMmY1ZGI0NmNlNGM4Y2YyNGE0YjgwNDUifQ"
-        },
-        {
-          "resource": "repo://crates/server/src/routes/local_remote.rs#L990-L1000",
-          "version": "repo-lines-v1:sha256:39fcd7173b2767fdd45502eb33ccb6b891f9eee1a5ec1083ffaa7b1df50d46cc:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI2ZmVhMjUyZDUzZmY1ZjEwMjJjZDE4MjBiMjU2MTZlMTc2MTA4NGY4NmQ2OTliZmQ1NjQ2YTI0NTg4YWM1OGUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk2OTBiMDdlNGNlNTY2OTFiOTlkMmYxNmNkMGY2NmYxZjc0YzUyOWU2YjcyY2Y2Mjc0Y2U2ZjM1NjQ3NGUwMWQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQ1NzJiZDQ2YTY4YmYxMWQ0OGE2ZGVmYmEzYWYyNDI0ZGNjMTIyYzY0ZjFjODdiOTZjNWY0NzhiMzkzNjdjNjEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdmMzUxNTZjYzY4NWUyMmExOGU3Njk5NzRkMDBkMWJlYmZiMWU4MGVhZWRlMjNhZDcxYzQ5MTY3ZTAyZDAxYjEifQ"
+          "resource": "repo://crates/server/src/remote_mcp/issue_write.rs#L260-L330",
+          "version": "repo-lines-v1:sha256:a1eb7879c1b1cd0ae0cf0e93582fb805c60f71502a8da4d3c55172ebb3718c40:eyJzZWxlY3RlZExpbmVDb3VudCI6NzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNiZmMwNzBjZWZhOWMyYTNkYzkzMWNhYzVmYzVhN2QwMmIzZTY1MTBjMTA4MmJiZjM0Njc4MTA3NTczZDM1YjYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBkMGIzMGI5NWQwMDRiZWQ0MWNiNDliYWIwY2EwNGFiMWJmZWZiMThlMmJlMGZlNDdhN2IxNTQyMDEwMjYwZjAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjMzMzZmNDUzZTUwNGFkMWZkNTliZmQ3ZjI2NDgyYTRhODA5YjNiMDUwNjBjY2I2NjFjYTZiYTBmMDAzYmY1NTQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjgyOGEwYzc3MDMxZjI2ZWU1ODI3MWNmZmEzMTRlNzY4MGJiZjRiMGVlNzhhOTQ2OTJmYWZjMmQzOTRhOTU1MzUifQ"
         },
         {
           "resource": "repo://crates/server/src/routes/local_remote/issue_relations.rs#L5-L33",
@@ -697,7 +697,7 @@
       "statement": "編集Issue詳細の本文外枠は64rem上限とペイン基準clamp(1rem,3cqi,2rem)余白を持ち、作成モードは対象外。主タイトルは1.5rem・行高1.35・太さ600。",
       "evidence": [
         {
-          "resource": "repo://packages/ui/src/components/KanbanIssuePanel.tsx#L260-L375",
+          "resource": "repo://packages/ui/src/components/KanbanIssuePanel.tsx#L261-L376",
           "version": "repo-lines-v1:sha256:c348fa8cd89090deb75fca1715ab3a770f39326341a12828af09abb24a7f9322:eyJzZWxlY3RlZExpbmVDb3VudCI6MTE2LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI0ODkzZjQwZTM3ODFlYjg5NmM4MmQwNDZhMDgwNjdhMTFlMzVjZGYyZjFkZmFmMjZmZWE5MGI4ZGI2Njc2NDEzIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIwMWJhNDcxOWM4MGI2ZmU5MTFiMDkxYTdjMDUxMjRiNjRlZWVjZTk2NGUwOWMwNThlZjhmOTgwNWRhY2E1NDZiIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJjNGFhNDE1NWJlYjk5MTY2NmExY2RlM2UzYTMxNWQ1Zjk1YTg1NWNjMjU5MjVjNTY5OWIxYTVhNzQwNzhmMThlIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI2OGVjNjJmMmEzY2JkZDJmOGEyYzFhMjdiNGY4MWJjNjBiZTcwMWQ3ZTAzZjk0NmZkMjdjN2Q0YTZhYmVmODllIn0"
         },
         {
@@ -783,6 +783,6 @@
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-09T07:03:14.304Z"
+    "at": "2026-11-10T13:43:59.705Z"
   }
 }

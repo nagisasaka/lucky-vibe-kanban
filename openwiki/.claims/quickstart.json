@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:fd66742610bcea1d839aae8a179755be30fe0e5c21c1896126d8ed881808fbd3",
+  "pageVersion": "sha256:9eec0893ac142fae11402eb7aaa3cc0f28896a64a2cb033467f493525dc5f472",
   "claims": [
     {
       "id": "claim_edf1b78d3c7a4d978a6d8debcee4edd2",
@@ -72,7 +72,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/integrations/conversation.rs",
-          "version": "repo-file-v1:sha256:d8679de1eea32d443349ce27bbf40b6e90bc4d7579e15342ceb8ce6d61ffac56"
+          "version": "repo-file-v1:sha256:a5fd73c385670816c141ae93c0d801254082d7642c4969dbb32c30ddc4f366c4"
         },
         {
           "resource": "repo://crates/server/src/routes/integrations/runtime.rs",
@@ -100,7 +100,7 @@
         },
         {
           "resource": "repo://crates/server/src/remote_mcp/mod.rs",
-          "version": "repo-file-v1:sha256:b95190531437f420376bccb7aa018c9b83bed560f0433c18410180e6ae77e370"
+          "version": "repo-file-v1:sha256:c19fbe8e768fcc60788782a980f010088afd23062d26124d8d0212d2d50d92aa"
         },
         {
           "resource": "repo://crates/server/src/routes/sessions/questions.rs",
@@ -180,7 +180,7 @@
         },
         {
           "resource": "repo://crates/mcp/src/bin/vibe_kanban_mcp.rs",
-          "version": "repo-file-v1:sha256:fb4ee0c2f237f52f0c6f37c3b572a844c283ee41d5cbbfb2dcbc95c4942fc625"
+          "version": "repo-file-v1:sha256:2d8e90745d1bd7783e8c01c91c1d77b316e58a21eccec0338c8d50927241ce17"
         },
         {
           "resource": "repo://package.json",
@@ -327,7 +327,7 @@
       "statement": "Projectは新規作成Repoプリセットとし既存Workspace構成を再構成せず、Git Workspaceは共通rootと保存配置を使い、DirectFolderはGit/Repo Wiki支援の対象外である。",
       "evidence": [
         {
-          "resource": "repo://crates/db/src/models/session.rs#L203-L213",
+          "resource": "repo://crates/db/src/models/session.rs#L179-L189",
           "version": "repo-lines-v1:sha256:d34d03d9470ee23e8ecd3a50a6ecd0d48db6129857074494f99bcc7d26f162d1:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImE4YTliNmVjZTNjOWJkMzExZTkzMjE4ZDBhMTdiMWI1ODVjZmM1NmU4Y2YzMDVmYmQ1MzQ0ZGE2ZTkwNjU2ZTIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImZmOTA3MGEzMzI5OWVmNjBkODAyYzM0ZTc1MDY5ZTQ2MWEyMTZmNTIwNTRkMDRjMjU2NzdkZTU0ZjBiYzRjNmYifQ"
         },
         {
@@ -361,10 +361,28 @@
           "version": "repo-lines-v1:sha256:c3c54cdb15d94bbc8556514cb976ff71a82288183e11473856f3647f8cc478ee:eyJzZWxlY3RlZExpbmVDb3VudCI6MzgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBkZmQ4ODk4YzQ2YmQ4NjQwODIzNGQ4ZDdiN2IzOGQ4Mzg4NGQ3ZjZkNjY1OGY2NjQ3NzI2Njc5ZjZlNWQ2MTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjBiMmYzYmEyYTk2M2Q2MjAwZTY1N2MzNTJiMGI5MTBlODc5ZWZkYzZiNzgyZjE1YzQ4NDc1Yzg5ZWIwNTZkZDIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQxMzYwZTc4OTM3Mjc0OTA3NjlhYzM4ZTYxMjRhNzZhMGIyOGZkZGJiZjFlYTM1ZDJiOTk4MDYzMjNiMWZjODUifQ"
         }
       ]
+    },
+    {
+      "id": "claim_6e3874ad4d4d40c68d337da69fa4169c",
+      "statement": "LOCAL-365のMCP移行はpriority:null保持、query_repository範囲readと旧4tool廃止、orchestrator指定の明示エラーを含む。",
+      "evidence": [
+        {
+          "resource": "repo://crates/mcp/src/bin/vibe_kanban_mcp.rs#L59-L112",
+          "version": "repo-lines-v1:sha256:d26ef6a222770642dc63c3136718ca3906e8c7ca3f81dff4a31f7b179f52d711:eyJzZWxlY3RlZExpbmVDb3VudCI6NTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImYwYWY0MDY5NjFiZGUyNmVkZWE5MjkyZjdmOTRiNjU1Njc4NWQ2N2MzNGVhMjY3MTVlY2YwZWI0ZjRlMTQ5ZjEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjYxZmUzN2M5NjQwYzc1NGU2MTliNDMzYzc1NmNhYzdiYjNmNWU1NTBkZDIzMzQ4ZjgxNmZiOWMyZGE3NGNiODMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQ1MmEyNDBhZGY0OGQwZWNiYWMyZTMxMDgxNDQ3YjdmZjYxYTk5YjZiZWE4ZDM4NjIwYWIyM2UxMmIzNmQwNDUifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/remote_mcp/issue_write.rs#L260-L330",
+          "version": "repo-lines-v1:sha256:a1eb7879c1b1cd0ae0cf0e93582fb805c60f71502a8da4d3c55172ebb3718c40:eyJzZWxlY3RlZExpbmVDb3VudCI6NzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNiZmMwNzBjZWZhOWMyYTNkYzkzMWNhYzVmYzVhN2QwMmIzZTY1MTBjMTA4MmJiZjM0Njc4MTA3NTczZDM1YjYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBkMGIzMGI5NWQwMDRiZWQ0MWNiNDliYWIwY2EwNGFiMWJmZWZiMThlMmJlMGZlNDdhN2IxNTQyMDEwMjYwZjAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjMzMzZmNDUzZTUwNGFkMWZkNTliZmQ3ZjI2NDgyYTRhODA5YjNiMDUwNjBjY2I2NjFjYTZiYTBmMDAzYmY1NTQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjgyOGEwYzc3MDMxZjI2ZWU1ODI3MWNmZmEzMTRlNzY4MGJiZjRiMGVlNzhhOTQ2OTJmYWZjMmQzOTRhOTU1MzUifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/remote_mcp/repository_read.rs",
+          "version": "repo-file-v1:sha256:b8621f0bc92b10d70a744c5f10041a8a6eeecac5be71744beb6dad3a2ab75274"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-09T18:10:41.827Z"
+    "at": "2026-11-10T13:43:59.705Z"
   }
 }

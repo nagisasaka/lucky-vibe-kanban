@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:22694d828c238fcca689453ca2241d1e01a963ba0c80b029b52c42800bcda663",
+  "pageVersion": "sha256:52a0047ee0f63f628f04f366158b13645aa1b16511bd80efd327861a6c3ea85f",
   "claims": [
     {
       "id": "claim_4e9b35333650431290516aff5f98065c",
@@ -98,11 +98,15 @@
     },
     {
       "id": "claim_e6749af9183f4f1bbb0030791f758d2f",
-      "statement": "設計メモはstdio global routerに含まれorchestrator routerには含まれず、外部HTTP書込はreadとwrite scopeおよびProject照合を必要とする。",
+      "statement": "設計メモはstdio global routerに含まれ、orchestrator mode/routerは廃止済み。外部HTTP書込はreadとwrite scopeおよびProject照合を必要とする。",
       "evidence": [
         {
+          "resource": "repo://crates/mcp/src/bin/vibe_kanban_mcp.rs",
+          "version": "repo-file-v1:sha256:2d8e90745d1bd7783e8c01c91c1d77b316e58a21eccec0338c8d50927241ce17"
+        },
+        {
           "resource": "repo://crates/mcp/src/task_server/tools/mod.rs",
-          "version": "repo-file-v1:sha256:bcb0685c42272543cd57ff27d76fb190a26fd34ae03440a1d1d6c10d23ac1fe2"
+          "version": "repo-file-v1:sha256:7115b8131d0150d05bdb488aa4cc06d3d31d74acddffeb2a3900e101742c4610"
         },
         {
           "resource": "repo://crates/server/src/remote_mcp/design_notes.rs",
@@ -124,7 +128,7 @@
         },
         {
           "resource": "repo://crates/server/src/remote_mcp/issue_write.rs",
-          "version": "repo-file-v1:sha256:29d253d5b87c1e584346c0cb2f6c4d35a3da2bdf23dd06c15cb6a91cd3b8fc39"
+          "version": "repo-file-v1:sha256:baf3417b472da799c486119a4a711b810bc72e1a6836998a1d76d0a8e9b17084"
         }
       ]
     },
@@ -269,6 +273,6 @@
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-09T20:29:18.834Z"
+    "at": "2026-11-10T13:43:59.705Z"
   }
 }

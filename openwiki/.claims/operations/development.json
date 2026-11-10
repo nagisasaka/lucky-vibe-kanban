@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:c18b6ed35b28121b946c4a986bfe5b6055e3147ccb35038861b083228ae83af5",
+  "pageVersion": "sha256:686ef4f8acf00a431f3c0c33baa64e25704394968c65e033cfa52ab5f229d447",
   "claims": [
     {
       "id": "claim_1640e4eaeac94676a84eb3b9d9970d30",
@@ -884,15 +884,15 @@
     },
     {
       "id": "claim_cf2e689edd814433aaf5fbd29f909a8c",
-      "statement": "添付隔離E2Eは新規attachment-fixture instanceとその内側のcacheで実HTTP MCP/stdioを通しnative実行をmockする。stdio続行に保存設定読取が必要なため、隔離local routerもexecutor-config読取を接続する。",
+      "statement": "添付隔離E2Eはtask-owned attachment-fixture instanceとmock nativeを使うignored fixtureだが、local routerは旧入口のためLOCAL-365のmcp-stdio開始/継続を再検証する前にrouteとmock adapterの追従が必要である。",
       "evidence": [
         {
-          "resource": "repo://crates/mcp/src/task_server/tools/sessions.rs",
-          "version": "repo-file-v1:sha256:b55cb89ba797da1a588dead74910715854bc39c01bcde62f03ab218ec0dc92a0"
+          "resource": "repo://crates/mcp/src/task_server/tools/sessions.rs#L250-L290",
+          "version": "repo-lines-v1:sha256:6fedf3675efe1ea6e34fe0d99530555a3bc51115b429ecb520c35e2f034c7231:eyJzZWxlY3RlZExpbmVDb3VudCI6NDEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY5YjE5ODJlOGRkNzQ4MTE4MTQ2YjM5YTJkMDA2MmY0MDgxZTM0Nzc5Yjg2NzVjMjM0YzRmYjEyNGRjMzkzOTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYzZTY0YjlmYmI4NjhhMjllODc5Y2RmMzRmNDIwMDYyMjk2NzQwMmJlNTRjMWQxMzg2ZDhiYWFmMzhjNzk4MTUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE2NjEyMWQyYjBmZTJlMWYwYjlhNjA4OTI1YmMxMTYzNTk2ZGE4NzcxM2NkZWU2Njg2ZDJmZjhlNTg2MTcxNzEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjIzOTEyZDg3ODAxMWIyNzA0YmU4ZGNlYjEyMjI1MDBiYjA1YzNjYTk5NWJhYmY4MDdjZTkzODdmNTdjOWJjNWEifQ"
         },
         {
-          "resource": "repo://crates/server/src/remote_mcp/attachment_tests.rs",
-          "version": "repo-file-v1:sha256:cebbc91599984174c4c61d82339747ced02a69e76db4ed926a391534918a6da7"
+          "resource": "repo://crates/server/src/remote_mcp/attachment_tests.rs#L189-L320",
+          "version": "repo-lines-v1:sha256:e90dd958cb1c416d5b23795bc12eb6fcb958db98ca3ffea812906a6b260c430b:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMyLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI5MGM2MDk5YjU1MzU4NjQ5Yzk4NjBkZTQ0YWFlOTZjZTgxMTM1YjkzZjBjODQ3MThiZDE3NzBiMzE3MDYyMDFkIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI0ZjdmMzQwMmZhOWQyMzE0YzdmN2ExZDBmNDRlODNkNTk2OWUxZTYxYzY1MDI5ZWIyODRmMGFkZGE5MjBiODAwIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI3NzcyZTkyNzVjYjZhMjRmZmE4OTUyY2NhNzdlNmE0YTVhMmFkZTYzY2VkNDM1MWM2YmM1ODYwYWFmZTUyMmQxIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlNDZhMDczZmQ5N2NlZDEyMWQxZWU0N2M1NWE3MmMwOTJkYjczYTlmNWUxNTkwYmViMDM5N2I1MDMwZTc0OWQzIn0"
         }
       ]
     },
@@ -1051,6 +1051,6 @@
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-09T20:29:18.834Z"
+    "at": "2026-11-10T13:43:59.705Z"
   }
 }

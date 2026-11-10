@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:75dc608fd4918b28ac8f20c4aa10b4422912e192ac5d2c420a91c0b093cf9819",
+  "pageVersion": "sha256:0b4ae96e1f2ff196e93cdd00b42789a21a4eb7f3001b1f6530265948ff7480cd",
   "claims": [
     {
       "id": "claim_040b4779a7b24b2da362496e3236ffd7",
@@ -123,7 +123,7 @@
       "statement": "local Boardへの入口はWeb向け/api/localとstdio MCP向け/api/boardを同じローカルrouterに構成する。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/mod.rs#L85-L92",
+          "resource": "repo://crates/server/src/routes/mod.rs#L84-L91",
           "version": "repo-lines-v1:sha256:93540dc9d293bdd955571452e8c93cb728119b86aad8f09338a5d5c27346424f:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNDAwOTc4ZmM2NDAwNzczMzU5NDFmNzYwNmQ4OTZjOTRkOWNjODBkNzU5YjJlNGEyYTgwNDA1MTcwMjE3ZjZlYiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYzllZWM4ZTVmZDcyNDFiZmM3OTdmNzQ4NWM0MjVkMzhiNTkzNjA4MjJlZDFmYjk5NTc0MmZkMzg0NTk3YWI5OCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNGZlNTcyMTBlOThmM2U0MGEzNTg3NTU5YWUwODMyNGU0ZjQ5OWFiMDQyY2Y3NjZjOTIzMjA5YjU2NjA3YTljNSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNjIwYTU5ZTlhYzBhNTljYzhiMzdjNjY1YzljZTE0YTE0OWM3Nzc2Yjk5Y2FiMzk3OGJlZDA3Yzk2ZmY2YjcxNCJ9"
         }
       ]
@@ -147,8 +147,8 @@
       "statement": "内部Astraは廃止され、ProjectはBoard・Todo・設計メモを切り替え、外部MCP transportは内部会話モデルを起動しない。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/remote_mcp/mod.rs#L1-L37",
-          "version": "repo-lines-v1:sha256:0c7d0b3752728e062b3c270fa59b24dd436d27a1124aea601c63ee0763135c6f:eyJzZWxlY3RlZExpbmVDb3VudCI6MzcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc5MjVhYmY2ZWM1YWIyYjU3YjAwMGJjNDRjZjNhMTVjNDY2ZTQ1ZDU3OTIxYzI4ZTQ0ZDczZDgxMGFkN2FjYTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdlYTRkNzIzNTYxNWUxMzIzNTFmNTkxMTRjNjMxMWEwYzEwMTExNjc5YTYxNmVkZGFhNTRhNzY0Y2ZkZTg5NDgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBkYTE5ZGQ0YTgxNDc1MjJmZDEyNTg4NThmNjllNjdhNjhmMTcyYTY4NDUyMzM5MzE2Yzc5MmY2YWE5NmJmNTkifQ"
+          "resource": "repo://crates/server/src/remote_mcp/mod.rs#L1-L38",
+          "version": "repo-lines-v1:sha256:9f3d23d016350591586fb0367ff6cc4f141124367660a329428cea5b63025e1d:eyJzZWxlY3RlZExpbmVDb3VudCI6MzgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc5MjVhYmY2ZWM1YWIyYjU3YjAwMGJjNDRjZjNhMTVjNDY2ZTQ1ZDU3OTIxYzI4ZTQ0ZDczZDgxMGFkN2FjYTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdlYTRkNzIzNTYxNWUxMzIzNTFmNTkxMTRjNjMxMWEwYzEwMTExNjc5YTYxNmVkZGFhNTRhNzY0Y2ZkZTg5NDgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBkYTE5ZGQ0YTgxNDc1MjJmZDEyNTg4NThmNjllNjdhNjhmMTcyYTY4NDUyMzM5MzE2Yzc5MmY2YWE5NmJmNTkifQ"
         },
         {
           "resource": "repo://packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L1068-L1089",
@@ -225,7 +225,7 @@
       "statement": "server runtime-payload は通常のDB・認証・listener初期化前に終了し、frontend・sounds・scriptsが実際に埋込みであることとbytesのhashを検査する。developer-runtime featureはdebugでも埋込みを有効にする。",
       "evidence": [
         {
-          "resource": "repo://crates/server/Cargo.toml#L71-L75",
+          "resource": "repo://crates/server/Cargo.toml#L72-L76",
           "version": "repo-lines-v1:sha256:b9ef1d4ea9b42d340b2ae5d265b504be4d45daf1a7656f6e648acd36051b7488:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYjZmNmMxYzczZTQ2ODViNmY1NTc5MmFlNTM5MjU1M2ZmNzlkM2NjMDY3YjBiNzRlMDY4Njk4ZjZiMmM3NmI4MiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMTQzMjNhOWJkZTIyMDBhOGYzYmZhNWNkNTVkMmFiMTgzNmU1N2E0YTNmNjFhZGNmMzU1NmEwOWNmNTE2NGVhOCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZDk5M2ZhODJmMTFjZmRlYzRmZWUzZGQ5OWI2M2Q2ZWQ0YTRhNTZlNmQ5NGRkMmY2YTYzZWNjYTEwZTllZGJiZCJ9"
         },
         {
@@ -295,6 +295,6 @@
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-07T09:46:42.639Z"
+    "at": "2026-11-10T13:43:59.705Z"
   }
 }

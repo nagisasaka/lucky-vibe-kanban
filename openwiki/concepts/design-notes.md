@@ -12,6 +12,8 @@ sources:
     resource: repo://crates/db/src/models/design_note.rs
   - id: openwiki-source-5cc18853b4052cffae9ca81e
     resource: repo://crates/db/src/models/text_search.rs
+  - id: openwiki-source-0a300791bc056c6eee6a577a
+    resource: repo://crates/mcp/src/bin/vibe_kanban_mcp.rs
   - id: openwiki-source-104d584b7b5ffa5973f60cde
     resource: repo://crates/mcp/src/task_server/tools/design_notes.rs
   - id: openwiki-source-4c00e6ad62d940e70c2ebbb3
@@ -32,10 +34,10 @@ sources:
     resource: repo://packages/web-core/src/shared/lib/listSearch.ts
   - id: openwiki-source-4917ca78c6137f6aa2fe5c81
     resource: repo://tests/design-notes/markdown-editing.mjs
-generated: { by: "codex", at: "2026-11-09T20:29:18.834Z" }
+generated: { by: "codex", at: "2026-11-10T13:43:59.705Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-09T20:29:18.834Z
+    at: 2026-11-10T13:43:59.705Z
 ---
 
 # 設計メモ・本文履歴と独立追記
@@ -79,7 +81,7 @@ UI は15秒ごとの再取得を行うが、編集中の版と下書きを勝手
 
 ## UI REST と MCP の境界
 
-UI は `/api/projects/{project}/design-notes` の REST を使い、一覧・履歴を100件ずつ最後まで取得する。detail は本文と追記、書込成功は完全な結果を返す。両 MCP は同じDBを使うが、別の有界 read projection を共有する。stdio は global router に登録され、scoped orchestrator router には入らない。外部 HTTP は既存の [MCP 認証・operation receipt](../integrations/remote-access.md)を利用し、読取に `lvk:read`、書込には加えて `lvk:write` と live Project の確認が必要である。[UI取得](../../packages/web-core/src/features/design-notes/model/designNoteApi.ts#L20-L39)・[router](../../crates/mcp/src/task_server/tools/mod.rs#L49-L79)・[HTTP scope](../../crates/server/src/remote_mcp/mod.rs#L167-L193)
+UI は `/api/projects/{project}/design-notes` の REST を使い、一覧・履歴を100件ずつ最後まで取得する。detail は本文と追記、書込成功は完全な結果を返す。両 MCP は同じDBを使うが、別の有界 read projection を共有する。stdio は global router に登録される。LOCAL-365で専用 orchestrator mode/router は廃止され、旧 mode 指定は移行案内付きエラーとなる。外部 HTTP は既存の [MCP 認証・operation receipt](../integrations/remote-access.md)を利用し、読取に `lvk:read`、書込には加えて `lvk:write` と live Project の確認が必要である。[UI取得](../../packages/web-core/src/features/design-notes/model/designNoteApi.ts#L20-L39)・[router](../../crates/mcp/src/task_server/tools/mod.rs#L49-L79)・[HTTP scope](../../crates/server/src/remote_mcp/mod.rs#L167-L193)
 
 | MCP 読取 | 続き方と整合性 |
 | --- | --- |

@@ -14,8 +14,8 @@ sources:
     resource: repo://crates/db/src/models/board_tag.rs
   - id: openwiki-source-27eb1d689068b93b5282d2b6
     resource: repo://crates/db/src/models/design_note_read.rs
-  - id: openwiki-source-d83dfc60bdfadf451d836df3
-    resource: repo://crates/git/src/reference.rs
+  - id: openwiki-source-b688f8904e0728c38535a521
+    resource: repo://crates/git/src/repository_read.rs
   - id: openwiki-source-237b255ffafe7ecea55eefc6
     resource: repo://crates/mcp/src/task_server/tools/attachments.rs
   - id: openwiki-source-c1a99ab3d402970b84e3cc23
@@ -36,18 +36,12 @@ sources:
     resource: repo://crates/server/src/remote_mcp/attachment_tests.rs
   - id: openwiki-source-b5d7c5a5b00efaa28b3e1777
     resource: repo://crates/server/src/remote_mcp/attachments.rs
-  - id: openwiki-source-53c04d549d6401053afe5fc4
-    resource: repo://crates/server/src/remote_mcp/code_query.rs
-  - id: openwiki-source-0009a6c83972b5e5975ba606
-    resource: repo://crates/server/src/remote_mcp/code_read.rs
   - id: openwiki-source-2a0ddba6878eea1524264906
     resource: repo://crates/server/src/remote_mcp/design_notes.rs
   - id: openwiki-source-87ddf3d108f228e9ef8f8964
     resource: repo://crates/server/src/remote_mcp/dev_server.rs
   - id: openwiki-source-8e100846c63b4921192f2eb4
     resource: repo://crates/server/src/remote_mcp/errors.rs
-  - id: openwiki-source-0c4d7a1c881e7f1618f3bb2f
-    resource: repo://crates/server/src/remote_mcp/evidence_read.rs
   - id: openwiki-source-235c61e44e26d792cb34ab1d
     resource: repo://crates/server/src/remote_mcp/execution_approvals.rs
   - id: openwiki-source-c2b406887bcde85e48eb07b0
@@ -62,6 +56,8 @@ sources:
     resource: repo://crates/server/src/remote_mcp/issue_archive.rs
   - id: openwiki-source-a43253b5be9686da077b8067
     resource: repo://crates/server/src/remote_mcp/issue_comments.rs
+  - id: openwiki-source-2a590025825dbc1cf1ae93fb
+    resource: repo://crates/server/src/remote_mcp/issue_mutations.rs
   - id: openwiki-source-ed82d25dbaeecf748c6e55ab
     resource: repo://crates/server/src/remote_mcp/issue_relationships.rs
   - id: openwiki-source-a6a66833efdc90f958755f54
@@ -92,6 +88,8 @@ sources:
     resource: repo://crates/server/src/remote_mcp/runtime_read.rs
   - id: openwiki-source-b8d968c49ef2f35fc1a18cce
     resource: repo://crates/server/src/remote_mcp/runtime_write.rs
+  - id: openwiki-source-ab70a43b3f61734a8322478b
+    resource: repo://crates/server/src/remote_mcp/stdio.rs
   - id: openwiki-source-43c18ae2d53a6d4bee6c33b2
     resource: repo://crates/server/src/remote_mcp/tests.rs
   - id: openwiki-source-0ce0e179a46d5c36c5f05ecf
@@ -130,14 +128,12 @@ sources:
     resource: repo://crates/services/src/services/file.rs
   - id: openwiki-source-605a3efdc11efae80ada92b1
     resource: repo://crates/utils/src/mcp_error.rs
-  - id: openwiki-source-4055aa6b8c5089e24c2a9f7c
-    resource: repo://crates/utils/src/reference_file.rs
   - id: openwiki-source-3ecddc0be7b037ea6ab24381
     resource: repo://packages/local-web/vite.config.ts
-generated: { by: "codex", at: "2026-11-09T07:03:14.304Z" }
+generated: { by: "codex", at: "2026-11-10T13:50:38.953Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-09T18:10:41.827Z
+    at: 2026-11-10T13:50:38.953Z
 ---
 
 # 外部アクセス・MCP・Runner の境界
@@ -180,7 +176,7 @@ ChatGPT 接続用 application は Web login 用と分離する。Auth0 作成支
 
 ## Managed DevServer を操作する
 
-`start_dev_server` / `stop_dev_server` / `get_dev_server_status` は明示 Project / Workspace を要求し、stdio の両 mode と外部 HTTP から同じ UI manager を使う。外部の観測には read + runtime:read、開始停止にはさらに runtime:execute が必要で、一般 write や [Runtime Access の設定](../concepts/runtime-access.md)で代用しない。Orchestrator stdio は別 Workspace を拒否する。[外部 scope](../../crates/server/src/remote_mcp/dev_server.rs#L13-L108)・[stdio adapter](../../crates/mcp/src/task_server/tools/dev_server.rs#L11-L79)
+`start_dev_server` / `stop_dev_server` / `get_dev_server_status` は明示 Project / Workspace を要求し、stdio global と外部 HTTP から同じ UI manager を使う。外部の観測には read + runtime:read、開始停止にはさらに runtime:execute が必要で、一般 write や [Runtime Access の設定](../concepts/runtime-access.md)で代用しない。Orchestrator stdio は別 Workspace を拒否する。[外部 scope](../../crates/server/src/remote_mcp/dev_server.rs#L13-L108)・[stdio adapter](../../crates/mcp/src/task_server/tools/dev_server.rs#L11-L79)
 
 外部の開始停止は `request_id` を持つ耐久receiptを返す。同じID/入力で再送し、`get_operation` と現在statusを読み分ける。succeededはmanager受付の結果で、アプリreadinessの証明ではない。副作用後の観測失敗は uncertain となり、新IDで盲目的に再起動しない。重複startの再利用、停止後のsettlement、複数Repoの部分失敗と観測状態は [DevServer運用の正本](../operations/workspace-inspection.md#preview-と開発サーバー)に集約する。[receipt と失敗](../../crates/server/src/remote_mcp/dev_server.rs#L51-L108)
 
@@ -240,41 +236,45 @@ Auth0実テナント・Google/GitHub本人認証・ChatGPT OAuth/MCPの実接続
 
 ## Workspace のコード根拠を絞って読む
 
-外部 AI が必要な実装箇所を読む経路は、`list_workspace_files` による所在の絞り込み、`search_workspace_files` による文字列検索、`get_workspace_file_ranges` による周辺行の取得である。既存の `get_workspace_file` は文字単位のページ取得として残る。これらは要求時に現在の作業木を読む参照機能で、検索用の常駐索引や過去本文の snapshot 保存を持たない。[公開 schema と dispatch](../../crates/server/src/remote_mcp/code_read.rs#L32-L90)・[検索・範囲取得](../../crates/server/src/remote_mcp/code_query.rs#L122-L179)。画面の [files API](../operations/workspace-inspection.md#repo-内ファイルを読む)とは入口も読取対象の契約も異なる。
+LOCAL-365では `list_workspace_files` / `get_workspace_file` / `search_workspace_files` / `get_workspace_file_ranges` を廃止し、`query_repository` の `list` / `grep` / `read` に統合した。旧引数・revision・文字offsetをそのまま渡す互換aliasではない。`get_workspace_diff` などdiff操作は残る。[公開schema](../../crates/server/src/remote_mcp/repository_read.rs#L9-L25)・[残るdiff](../../crates/server/src/remote_mcp/code_read.rs)
 
 ### 対象と一覧の継続
 
-Project / Workspace / repository の関係を共通の evidence reader で検証し、I/O 後にも所属を再照合する。checkout root は保存済みの [Workspace 種別と所在地](../concepts/workspace.md)から解決し、利用者指定の filesystem root は受け取らない。削除済み worktree を復元しない。[対象解決と再照合](../../crates/server/src/remote_mcp/evidence_read.rs#L133-L214)
+`project_id`、`repository_id`、`target`、`operation`を指定する。`target:{mode:"commit",ref:"..."}` はrefをSHAへ固定し、Workspaceなしでも登録Repoを読む。`target:{mode:"workspace",workspace_id:"..."}` はlive HEAD/index/worktreeを読み、追跡済みファイルに加えて無視されていない安全なuntrackedも含む。dirty内容を過去commitへ重ねない。Project/Repo/Workspaceの関係はI/Oの前後で確認する。[共有サービス](../../crates/server/src/repository_read.rs)・[対象と観測](../../crates/git/src/repository_read.rs#L300-L400)
 
-候補は Git index の追跡済み regular file である。untracked、private path、Git symlink、submodule は検索範囲外であり、runtime の symlink に置き換えられても読取範囲は広がらない。共通 reader は各相対 path component を `O_NOFOLLOW` で開き、regular file だけを制限付きで読む。非 Unix で安全性を緩めた fallback はしない。これは任意コード実行や shell 検索ではない。[追跡対象](../../crates/git/src/reference.rs#L180-L212)・[private path](../../crates/git/src/reference.rs#L38-L60)・[confined read](../../crates/utils/src/reference_file.rs#L5-L75)
+private path、symlink、submoduleは対象外で、regular fileのconfined readを用いる。任意root、shell、検索用常駐index、過去本文の保存を追加しない。[除外](../../crates/git/src/reference.rs)・[安全な読取](../../crates/utils/src/reference_file.rs)
 
-一覧と検索は `directory_prefix` と `filename_contains` を共有する。前者は先頭・末尾 slash のない repository 相対ディレクトリーで、`src` は `src/a` を含むが `src2/a` は含まない。後者は basename の大文字小文字を区別するリテラル部分一致で、glob や full path 検索ではない。一覧では両 filter を **paging 前** に適用し、継続時は同じ filter と一覧の `expected_revision` を渡す。filter 有効時はその値も一覧 revision に含め、未指定時は既存の revision 計算を保つ。この一覧 revision は後述のファイル本文 revision とは用途が異なる。[filter](../../crates/server/src/remote_mcp/code_query.rs#L13-L76)・[一覧と revision](../../crates/server/src/remote_mcp/code_read.rs#L113-L169)
+`operation:{kind:"list",filter:{directory_prefix:"src",filename_contains:"server",glob:"**/*.rs"}}` はpaging前にfilterを適用する。prefixはディレクトリー子孫、filenameはbasenameの大小文字を区別する部分一致、globの `*` はslashを越えず `**` は越える。一覧やgrepの続頁は元の引数を保持して `next_cursor` を `cursor` に渡す。cursorはquery・SHA・観測revisionへ束縛され、server再起動で失効する。Workspaceの変化時は最初から読み直す。外側の `expected_revision` は対象観測revisionで、範囲ごとの本文revisionとは交換できない。[filter](../../crates/git/src/repository_read.rs#L135-L179)・[cursor](../../crates/git/src/repository_read.rs#L179-L240)・[照合](../../crates/git/src/repository_read.rs#L553-L578)
 
 ### 検索の完了と文脈の短縮
 
-検索は大文字小文字を区別する単一行の非重複リテラル一致であり、正規表現ではない。query は空でない1,024 UTF-8 bytes以下、CR/LFを含めない。path順に走査し、行・列は1始まり、列は Unicode scalar value 単位、`end_column_exclusive` は終端非包含である。LF / CRLF は行を区切り、末尾改行による余分な空行は作らない。既定は20一致と前後1行、指定上限は50一致と前後2行である。[入力](../../crates/server/src/remote_mcp/code_query.rs#L78-L99)・[検証](../../crates/server/src/remote_mcp/code_query.rs#L134-L151)・[一致位置](../../crates/server/src/remote_mcp/code_query.rs#L259-L345)
+`grep` は `syntax:literal|regex`、`case_sensitive`、`output:content|files|count` を明示する。queryは空でない最大1,024 UTF-8 bytesの単一行、context_linesは省略0・最大2である。旧検索の既定前後1行を必要とするclientは1を指定する。contentの位置は1始まりのUnicode scalar列と終端非包含列。文脈は各行の先頭512文字まで、一致文字列は1,024文字までで、それぞれtruncated flagを確認する。旧128/32文字窓・context_ranges形式のまま解釈しない。[入力](../../crates/git/src/repository_read.rs#L790-L830)・[出力](../../crates/git/src/repository_read.rs#L940-L1025)
 
-一要求は最大1,000ファイル、各512 KiB、走査予算16 MiB、協調的な2秒期限、結果と除外 item 合計64 KiBに制限される。各読取前に512 KiB + 1の余裕を確認し、非text・失敗時はその量を保守的に課金するため、`scan_bytes_charged` を実転送量と解釈しない。Git index は既存 reader の100,000 entry上限を持つ。期限チェックはファイル間と行間で行い、index列挙・個別 OS read を強制中断しないため、2秒の wall-clock 保証ではない。[走査・予算](../../crates/server/src/remote_mcp/code_query.rs#L259-L345)・[reader 上限](../../crates/git/src/reference.rs#L11-L33)・[index上限](../../crates/git/src/reference.rs#L180-L196)
-
-`complete`、`stop_reason`、`exclusions` を一緒に読む。打切り理由は `time_limit` / `file_limit` / `scan_byte_limit` / `match_limit` / `output_byte_limit`。候補の binary、too_large、missing、unsupported、unsafe_or_unreadable は除外として返り、除外だけでも `complete:false`、`stop_reason:null` になり得る。空の `items` が選択範囲内の一致なしを意味するのは `complete:true` のときだけで、private path 等の範囲外まで調べた証明ではない。検索には continuation cursor がなく、制限に当たれば filter / query を狭めて再検索する。[完了条件](../../crates/server/src/remote_mcp/code_query.rs#L273-L345)
-
-長い一致行や隣接行が残り出力予算に入らない場合、全文脈 → 一致の前後128文字・隣接行の先頭128文字 → 同32文字 → 一致文字列のみ → 所在メタデータのみ、の順で縮小する。`matched`、path、行列、revision は短縮しない。`context_ranges` は `context` の各文字列と一対一に対応し、実際の行と開始列・終端非包含列を示す。抜粋へ架空の省略記号は挿入せず、文脈がなければ両配列は空、`context_start_line` は null となる。[文脈の選択](../../crates/server/src/remote_mcp/code_query.rs#L190-L250)
-
-`context_truncated:true` は要求した文脈の省略であり、走査の不完了を意味しない。最小の所在 item さえ入らない場合だけ、その一致を返せず `output_byte_limit` で打ち切る。すべての候補は `matched`・path・範囲情報を含む JSON escaping 後の bytes と区切り分で計量する。標準の応答 identity / link metadata は64 KiBの **item予算** の外側であり、応答全体の上限と混同しない。[計量](../../crates/server/src/remote_mcp/code_query.rs#L181-L250)・[出力打切り](../../crates/server/src/remote_mcp/code_query.rs#L319-L345)
+一要求は既定20・最大50 item、64 KiBのJSON item予算、最大1,000ファイル、512 KiB/ファイル、16 MiB走査課金、協調的2秒期限を使う。期限はOS I/Oの強制中断保証ではない。grepは最大100,000 match訪問も制限する。非text・読取失敗をexclusionsへ返し、`complete` は打切りなし、`search_complete` は打切りも累積除外もなしを示す。`stop_reason`、`exclusions`、`exclusions_total`、`next_cursor`も一緒に読み、complete:trueでも除外があれば一致なしを断定しない。旧検索と異なりcursorで継続可能であり、元query/filterを変えない。[予算](../../crates/git/src/repository_read.rs#L20-L26)・[走査](../../crates/git/src/repository_read.rs#L830-L940)・[継続と完了](../../crates/git/src/repository_read.rs#L1037-L1105)
 
 ### 同じ本文を確認して周辺行を読む
 
-検索の hit または `get_workspace_file` が返すファイル revision を、`get_workspace_file_ranges` の各 `expected_revision` に渡す。初回読取では省略でき、指定した場合だけ本文の一致を要求する。1バッチは1–8範囲、各範囲は1始まり両端包含で最大200行。存在しない終端は黙って丸めず `range_out_of_bounds` となり、成功 item の `lines` は行終端を含まない。各 item 合計64 KiBの予算は残り item のメタデータを予約し、入らない本文は `output_byte_limit` とする。[入力検証](../../crates/server/src/remote_mcp/code_query.rs#L100-L120)・[範囲処理](../../crates/server/src/remote_mcp/code_query.rs#L348-L403)
+単一readは既存の `operation:{kind:"read",path:"...",start_line:1,end_line:20}` を保持する。複数readは `operation:{kind:"read",ranges:[{path:"...",start_line:1,end_line:20,expected_revision:"..."}]}` とし、単一指定との併用を拒否する。1–8範囲、各1始まり両端包含・最大200行、合計64 KiB item予算で、残りitemのmetadataを予約する。readはcursorを使わない。[型](../../crates/git/src/repository_read.rs#L52-L112)・[範囲処理](../../crates/git/src/repository_read.rs#L617-L731)
 
-成功 `status:text` と、`revision_mismatch`・範囲外・読取失敗・出力上限は同じバッチに混在できる。失敗 item は本文を返さず `complete:false` になるので、全 item の status を確認する。一方、不正な path / 範囲指定 / 対象関係、メタデータだけで予算超過、処理中に検出した checkout の branch / HEAD 不一致は要求全体のエラーである。[要求境界](../../crates/server/src/remote_mcp/code_query.rs#L134-L170)・[HEAD再照合](../../crates/server/src/remote_mcp/code_query.rs#L252-L257)・[部分失敗](../../crates/server/src/remote_mcp/code_query.rs#L348-L403)
+範囲ごとの `expected_revision` はquery_repositoryのread/grep itemが返す全文bytesのSHA-256であり、初回は省略できる。旧get_workspace_file系のtarget/path/HEADを含むrevisionと互換ではないため、新toolで読み直して観測値を取得する。不一致は `revision_mismatch`、終端超過は `range_out_of_bounds`、安全でない指定は `unsafe_or_unlisted`、読取不能は `unsafe_or_unreadable`、予算超過は `output_byte_limit` などをitemで返す。失敗itemは本文を返さず、batchの `complete:false` / `stop_reason:range_failure` を確認する。全itemを調べ、失敗を黙って省略しない。旧単一readの不正範囲・終端超過等は要求エラーを維持する。[失敗とrevision](../../crates/git/src/repository_read.rs#L640-L731)
 
-ファイル revision は既存 text reader と同じ target・path・HEAD・text status・**観測した全文**の SHA-256 identity を使う。HEAD が変わらない dirty edit も追加取得時に不一致となる。不一致時は新たに検索または本文取得し、内容を見て範囲を選び直す。返された新 revision だけを無条件に差し替えない。応答の `snapshot:per_file_observation` は複数ファイルの atomic snapshot ではなく、同じファイルの重複範囲も独立に読む。読み終えた後の編集は次の revision 照合まで検出されず、同時の in-place write が一貫した全文になる保証もない。[互換 revision](../../crates/server/src/remote_mcp/code_query.rs#L173-L179)・[共通 hash](../../crates/server/src/remote_mcp/evidence_read.rs#L218-L226)・[既存 text reader](../../crates/server/src/remote_mcp/code_read.rs#L231-L251)・[範囲別の観測](../../crates/server/src/remote_mcp/code_query.rs#L363-L403)
+Workspaceはmetadata/indexとHEADを前後照合するが、複数範囲は独立観測でatomic snapshotではない。同一fileの重複範囲も別々に読み、同時in-place writeの一貫性や読了後の変更を保証しない。`snapshot:live_metadata_observation_not_atomic` と `end_kind:workspace_observation` とcommit固定を区別し、content revisionを確認して必要なら再読取する。[再照合と応答](../../crates/git/src/repository_read.rs#L1043-L1105)
 
 ### 変更時の確認範囲
 
-検索用索引や snapshot 基盤を増やさず要求時の有界読取と既存 revision を再利用する構成は、[有界code読取](../../crates/server/src/remote_mcp/code_read.rs)と一致する。転送削減の fixture は小さな特定ケースの比較であり、一般の調査時間・削減率を保証しない。
+単一互換、8範囲/9拒否、範囲別revision・失敗・出力予算、除外、cursor、dirty変更等の回帰は[共有reader試験](../../crates/git/src/repository_read.rs)、Project認可とcatalogは[remote adapter試験](../../crates/server/src/remote_mcp/repository_read.rs)を入口にする。今回のWiki保守はsourceと試験内容の照合であり、実Auth0/ChatGPT接続や全組合せE2Eの成功を意味しない。
 
-回帰の入口は [filterとpaging、Unicodeとdirty revision](../../crates/server/src/remote_mcp/code_query.rs#L408-L581)、[除外・期限・出力予算・認可とsymlink](../../crates/server/src/remote_mcp/code_query.rs#L583-L711)、[巨大文脈・実表示範囲・JSON escaping・最小item境界・schema](../../crates/server/src/remote_mcp/code_query.rs#L812-L944)である。今回の Sync は凍結 source の MCP 登録・共通認可、Git reader、OS読取境界、これらのテスト内容から照合した。テスト再実行や実 ChatGPT / Auth0 接続は行っておらず、凍結入力で検証省略とされた 自動マージ を合格扱いにはしない。無関係な既存節全体の再検証を意味しない。
+## stdioとremoteのmutation保証（LOCAL-365）
+
+Issue作成・更新・削除は共通Mutation/CAS/receipt処理を使い、認証と既存入力解決はadapterに残す。remoteの必須request_id/revisionとOAuth/Project範囲は維持する。stdioの `request_id` と更新 `expected_revision` は独立に省略可能で、指定した保証だけを適用する。request_idなしでは応答喪失後の同一要求の重複排除を、expected_revisionなしでは利用者の読取後の競合検出を保証しない。応答の `guarantees` と旧成功JSONのmeaningを確認する。自動生成IDや更新直前のrevision取得をその保証と呼ばない。[共通mutation](../../crates/server/src/remote_mcp/issue_mutations.rs#L1-L85)・[stdio保証](../../crates/server/src/remote_mcp/stdio.rs#L190-L290)
+
+stdioの `get_operation` は元request_idを共有内部principalのowner境界で照会する。別principalや内部/外部間のreceipt共有はしない。内部principalはRun別隔離ではなく、request_id省略で初回応答を失うとreceipt特定を保証しない。受付・domain完了・実装完了・結果不明を区別し、不明な操作を新IDで重ねない。[照会](../../crates/server/src/remote_mcp/stdio.rs#L38-L85)・[stdio tool](../../crates/mcp/src/task_server/tools/operations.rs)
+
+Workspace開始・Session作成/継続も確認付きdomainとOperationsを利用する。request_idは添付・Run指定・overridesの有無で無視されない。既存receiptの照合は可変Issue本文や現在対象の解決より先に行い、同じIDの内容変更を拒否する。継続は最新finished Runを確認し、runningへはsteerを使う。孤立Workspaceの旧ID省略呼出は維持するが、耐久receipt指定にはProject contextまたは既存リンクが必要である。[開始と継続](../../crates/server/src/remote_mcp/stdio.rs#L294-L650)・[再送照合](../../crates/server/src/remote_mcp/operations.rs#L262-L292)
+
+両MCPのIssue更新はpriority省略/nullを保持し、mediumに戻すには `priority:"medium"` を明示する。作成時の既定medium、親null保持/clear_parentによる解除は維持する。[remote更新](../../crates/server/src/remote_mcp/issue_write.rs#L260-L330)・[stdio解決](../../crates/server/src/remote_mcp/stdio.rs#L85-L185)
+
+workerのWorkspace/Run/Session/Integration・最新Run・実行状態・private branch等の整合性検証は維持する。ただし共有内部認証のため、正しい別workerのID組を揃えた呼出者自体のRun束縛を証明しない。限定回帰は不整合IDの事故防止を検査する。[境界](../../crates/server/src/routes/integrations/conversation.rs#L60-L120)。コメントstdio公開、タグ解除/has_duplicate/pagination等の新契約は今回未決定のままである。
 
 ## MCP から Integration の検証方針を選ぶ
 
