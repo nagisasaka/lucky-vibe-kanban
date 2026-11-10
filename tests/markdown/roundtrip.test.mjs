@@ -50,7 +50,7 @@ for (const marker of [
         throw e;
       },
     });
-    const source = `> [!${marker}]\n> 日本語の判断事項\n>\n> 複数段落の補足\n\n> **人間の意図**\n> 通常引用を保つ`;
+    const source = `> [!${marker}]\n> 日本語の判断事項\n> ソフト改行\n> HardOne  \n> HardTwo\n>\n> 複数段落の補足\n\n> **人間の意図**\n> 通常引用を保つ`;
     let output;
     editor.update(
       () => {
@@ -59,6 +59,7 @@ for (const marker of [
         output = $convertToMarkdownString(transformers);
         assert.ok(output.includes(`> [!${marker}]`), output);
         assert.ok(output.includes('**人間の意図**'), output);
+        assert.ok(output.includes('> HardOne  \n> HardTwo'), output);
         assert.ok(!output.includes('> >'), output);
         assert.ok(output.includes('> \n> 複数段落の補足'), output);
         $convertFromMarkdownString(output, transformers);

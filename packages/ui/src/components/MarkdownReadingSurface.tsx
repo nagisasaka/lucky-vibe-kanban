@@ -1,15 +1,21 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { cn } from '../lib/cn';
+import { getMarkdownAlert } from '../lib/markdownAlert';
 
-const ALERTS = {
-  DECISION: ['decision', '◇'],
-  NOTE: ['note', 'ⓘ'],
-  TIP: ['tip', '✧'],
-  IMPORTANT: ['important', '❖'],
-  WARNING: ['warning', '⚠'],
-  CAUTION: ['caution', '⛔'],
-} as const;
+// Read authored line/paragraph boundaries, independent of CSS whitespace and
+// whether a marker is currently hidden. This never mutates the displayed DOM.
+function quoteText(node: Node): string {
+  if (node.nodeType === Node.TEXT_NODE) {
+    // react-markdown inserts formatting whitespace between block children.
+    if (node.parentNode?.nodeName === 'BLOCKQUOTE' && !node.textContent?.trim())
+      return '';
+    return node.textContent ?? '';
+  }
+  if (node.nodeName === 'BR') return '\n';
+  const text = Array.from(node.childNodes, quoteText).join('');
+  return node.nodeName === 'P' ? `${text}\n` : text;
+}
 
 type Heading = { element: HTMLElement; label: string; level: number };
 
@@ -53,14 +59,9 @@ export function MarkdownReadingSurface({
     const refresh = () => {
       clearAlerts();
       root.querySelectorAll('blockquote').forEach((quote) => {
-        // Only an explicit, standalone marker at the start of a quote is special.
-        const match =
-          /^\[!(DECISION|NOTE|TIP|IMPORTANT|WARNING|CAUTION)\](?:\r?\n|$)/.exec(
-            (quote as HTMLElement).innerText ?? ''
-          );
-        if (!match) return;
-        const type = match[1] as keyof typeof ALERTS;
-        const [name, icon] = ALERTS[type];
+        const alert = getMarkdownAlert(quoteText(quote));
+        if (!alert) return;
+        const { name, icon } = alert;
         quote.setAttribute('data-markdown-alert', name);
         quote.setAttribute(
           'data-alert-label',
@@ -69,7 +70,7 @@ export function MarkdownReadingSurface({
         // Lexical has a leaf span; react-markdown has an explicit marker span.
         // Hide only the marker leaf, never a paragraph containing the message.
         const marker = Array.from(quote.querySelectorAll('span')).find(
-          (span) => span.textContent?.trim() === match[0].trim()
+          (span) => span.textContent?.trim() === alert.marker.trim()
         );
         marker?.setAttribute('data-alert-marker', 'true');
       });

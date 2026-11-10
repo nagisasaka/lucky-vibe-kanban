@@ -21,13 +21,26 @@ sanitized details behavior. It does not prove authenticated application/API
 integration, external preview routing, OS clipboard interoperability or physical
 mobile behavior.
 
-Screenshots and measurements are written to ignored `.build/markdown-reading/`.
+Screenshots and measurements are written to ignored `.build/markdown-reading-review/`.
 For a before comparison, set `MARKDOWN_BASELINE` to a pinned commit; the script
 loads product source and CSS from Git without changing the checkout. For example:
 
 ```sh
-PLAYWRIGHT_BROWSERS_PATH=/opt/lvk-browsers MARKDOWN_BASELINE=6ad758d6ee1d74785a6e70e0f17ef93a0ab43d8e node tests/markdown/reading.mjs
+PLAYWRIGHT_BROWSERS_PATH=/opt/lvk-browsers MARKDOWN_BASELINE=12f505d7da23efd696312aae8c088fa4dadae01b node tests/markdown/reading.mjs
 ```
+
+The break sample measures text line positions: MarkdownPreview collapses ordinary
+soft breaks, both paths preserve explicit hard breaks, and Lexical retains its
+existing line rendering. It also checks all six alert types across multiple
+paragraphs, re-render, edit/export/reload and exact source copy, including that
+hiding a marker span does not leave an extra first line. The adjacent DECISION /
+IMPORTANT sample produces an investigation-only teal-border candidate image;
+that candidate is never written to product CSS.
+
+Visual context: this inert fixture uses `bg-primary` for the comparison surface.
+It does not reproduce the authenticated application's `bg-secondary` Issue pane;
+these screenshots cannot establish that parent surface's contrast. Product and
+fixture background colors are not changed by the break fix.
 
 These are regression fixtures, not a public preview server. Use the existing
 managed DevServer workflow for preview2; verify its authentication, isolated

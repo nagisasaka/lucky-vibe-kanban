@@ -64,6 +64,19 @@ const result = "${'long-code-'.repeat(50)}";
 
 結論・主要要件・人間の判断待ちは折りたたみません。
 `;
+const lineBreakSource = `# 改行と引用の比較
+
+SoftOne
+SoftTwo
+
+HardOne\x20\x20
+HardTwo
+
+> QuoteOne
+> QuoteTwo
+
+${['DECISION', 'IMPORTANT', 'NOTE', 'TIP', 'WARNING', 'CAUTION'].map((type) => `> [!${type}]\n> ${type}First\n> ${type}Second\n>\n> ${type}Paragraph`).join('\n\n')}
+`;
 const attachments = [
   {
     path: '.lvk/attachments/sample.txt',
@@ -84,6 +97,7 @@ function Fixture() {
   const titleRef = useRef<HTMLTextAreaElement>(null);
   const api = window as any;
   api.source = source;
+  api.lineBreakSource = lineBreakSource;
   api.changes ??= [];
   api.changeBody = setValue;
   api.switchDocument = (next = 'second') => setKey(next);

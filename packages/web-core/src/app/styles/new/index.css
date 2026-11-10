@@ -1320,7 +1320,7 @@ html {
 .markdown-body table {
   margin-block: 0 var(--markdown-gap);
 }
-.markdown-body p,
+.markdown-body .md-paragraph,
 .markdown-body .md-quote {
   white-space: pre-wrap;
 }
