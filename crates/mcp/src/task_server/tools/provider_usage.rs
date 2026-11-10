@@ -19,11 +19,6 @@ impl McpServer {
         &self,
         Parameters(request): Parameters<Request>,
     ) -> Result<CallToolResult, ErrorData> {
-        if let Some(workspace) = request.workspace_id
-            && let Err(error) = self.scope_allows_workspace(workspace)
-        {
-            return Ok(Self::tool_error(error));
-        }
         let url = self.url("/api/provider-usage/read");
         match self
             .send_read_json::<serde_json::Value>(self.client.post(url).json(&request))

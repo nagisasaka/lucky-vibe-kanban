@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:0532d4cb223282a26455d39b6b6ce29be1a1720f41894da91bffbb69ec2206ac",
+  "pageVersion": "sha256:310823e5bfc36892357822f5cd49c2e3d86349125d5894edbf94c2f4ec661e10",
   "claims": [
     {
       "id": "claim_8c3b7b704cee45f0ad83d4207da34794",
@@ -118,19 +118,15 @@
     },
     {
       "id": "claim_6a0aa0a3b75a408081c0f79a7ac03a36",
-      "statement": "LVK MCPはstdioでbackendへ転送し、Global routerと実行context必須の限定Orchestrator routerを分ける。",
+      "statement": "LVK MCPはstdioでbackendへ転送する。既定globalを維持し、orchestrator mode/routerは廃止され旧指定は案内付き明示エラーとなる。",
       "evidence": [
         {
           "resource": "repo://crates/mcp/src/bin/vibe_kanban_mcp.rs",
-          "version": "repo-file-v1:sha256:fb4ee0c2f237f52f0c6f37c3b572a844c283ee41d5cbbfb2dcbc95c4942fc625"
-        },
-        {
-          "resource": "repo://crates/mcp/src/task_server/mod.rs",
-          "version": "repo-file-v1:sha256:513d8ab3be6ca6a31f63a2728de10b06bbaf4640c1b0428f057fdc531ea9895d"
+          "version": "repo-file-v1:sha256:2d8e90745d1bd7783e8c01c91c1d77b316e58a21eccec0338c8d50927241ce17"
         },
         {
           "resource": "repo://crates/mcp/src/task_server/tools/mod.rs",
-          "version": "repo-file-v1:sha256:bcb0685c42272543cd57ff27d76fb190a26fd34ae03440a1d1d6c10d23ac1fe2"
+          "version": "repo-file-v1:sha256:7115b8131d0150d05bdb488aa4cc06d3d31d74acddffeb2a3900e101742c4610"
         }
       ]
     },
@@ -139,7 +135,7 @@
       "statement": "LVK MCP backendはVIBE_BACKEND_URLを優先し、host/port変数とport fileへfallbackする。",
       "evidence": [
         {
-          "resource": "repo://crates/mcp/src/bin/vibe_kanban_mcp.rs#L107-L140",
+          "resource": "repo://crates/mcp/src/bin/vibe_kanban_mcp.rs#L115-L148",
           "version": "repo-lines-v1:sha256:3ffb8055818262895b5adf9a39e6397a32dd2b689110b44fbddf78949c3902f3:eyJzZWxlY3RlZExpbmVDb3VudCI6MzQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI2ZjRjYmYzYjAyMzk1M2MxOWY5N2NlZDAwMjQxZDE0OWE2ODkyZjg3ZmU5MTQyMGU0NTVhNWQxNDc5NGY3YmUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNhODc0NzAzZWViOWJlMzM1MDk5ZDkzY2JkMDQ1MTQ2OTcyNWE0ZDIwYzI0NGMxYTNmMjAxN2UxNjM1NzM0YTIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM4ZWQ1YjRmMmYzYjY4NTgwNTUwYmVkZjc5YjA4NzdhYjZlY2JmMDZjOGJiN2JhMzk5ZDRjMzY2MGYyYTk1ZjUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY3ZGFhOTA5YWY3NTZmMGI2ZDYxMmZiZDk4MjNkNGYzNDE0NzRkOWYyMTE5YmU1NDAwMWM1ZjhlZDlhODJiYzMifQ"
         }
       ]
@@ -150,7 +146,7 @@
       "evidence": [
         {
           "resource": "repo://crates/mcp/src/task_server/tools/mod.rs",
-          "version": "repo-file-v1:sha256:bcb0685c42272543cd57ff27d76fb190a26fd34ae03440a1d1d6c10d23ac1fe2"
+          "version": "repo-file-v1:sha256:7115b8131d0150d05bdb488aa4cc06d3d31d74acddffeb2a3900e101742c4610"
         }
       ]
     },
@@ -279,7 +275,7 @@
       "statement": "stdio MCP clientはloopback HTTPの場合だけ内部file capabilityを送り、外部backendへ転送せずredirectを追わない。",
       "evidence": [
         {
-          "resource": "repo://crates/mcp/src/task_server/mod.rs#L247-L274",
+          "resource": "repo://crates/mcp/src/task_server/mod.rs#L211-L238",
           "version": "repo-lines-v1:sha256:9468cdad2f797907e39fbf186ced07c7922387df87c01bbf7791ef066215af7a:eyJzZWxlY3RlZExpbmVDb3VudCI6MjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY2MzNmMjE3MTQ5NGMwZDNjOWZiNmMyMDhlMGI0YjdiMDllMWEzZDgyYTczNjE0ZTZkNGE0NjRiYmRjYzBlMTgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE5ZTc2MzU1Y2YxMTk5NDgwYzNmOTk4MzZiMTQ4NmM4NDFkODkxZmFhZDkwNGM2MDhlMDkzMDIyZDM3NTdhZWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
         }
       ]
@@ -290,7 +286,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/remote_mcp/mod.rs",
-          "version": "repo-file-v1:sha256:b95190531437f420376bccb7aa018c9b83bed560f0433c18410180e6ae77e370"
+          "version": "repo-file-v1:sha256:c19fbe8e768fcc60788782a980f010088afd23062d26124d8d0212d2d50d92aa"
         },
         {
           "resource": "repo://crates/server/src/routes/mod.rs",
@@ -300,11 +296,15 @@
     },
     {
       "id": "claim_4a75bdc4e07d475199a1bec6382ffe45",
-      "statement": "Project Todo操作はGlobal stdio MCP routerに含まれ、限定Orchestrator routerには含まれない。",
+      "statement": "Project Todo操作はGlobal stdio MCP routerに含まれる。専用Orchestrator routerは廃止済み。",
       "evidence": [
         {
+          "resource": "repo://crates/mcp/src/bin/vibe_kanban_mcp.rs",
+          "version": "repo-file-v1:sha256:2d8e90745d1bd7783e8c01c91c1d77b316e58a21eccec0338c8d50927241ce17"
+        },
+        {
           "resource": "repo://crates/mcp/src/task_server/tools/mod.rs",
-          "version": "repo-file-v1:sha256:bcb0685c42272543cd57ff27d76fb190a26fd34ae03440a1d1d6c10d23ac1fe2"
+          "version": "repo-file-v1:sha256:7115b8131d0150d05bdb488aa4cc06d3d31d74acddffeb2a3900e101742c4610"
         }
       ]
     },
@@ -430,25 +430,25 @@
     },
     {
       "id": "claim_c7f9bef8d930419a82fc3bc7631581a7",
-      "statement": "GlobalとOrchestratorのstdio MCPはget_workspace_tokensを公開し、明示またはcontext由来Workspace IDを使う。Orchestratorは別Workspaceを拒否し、tokens APIを読むだけでAgentRunを起動しない。",
+      "statement": "stdio MCPのget_workspace_tokensは明示またはcontext由来Workspace IDで既存tokens APIを読むだけで、AgentRunを起動しない。",
       "evidence": [
         {
-          "resource": "repo://crates/mcp/src/task_server/tools/mod.rs",
-          "version": "repo-file-v1:sha256:bcb0685c42272543cd57ff27d76fb190a26fd34ae03440a1d1d6c10d23ac1fe2"
-        },
-        {
-          "resource": "repo://crates/mcp/src/task_server/tools/workspaces.rs",
-          "version": "repo-file-v1:sha256:8c0f17d033c1dcac90b46fbedf0b375fc75a3299f8f7677637dfcc81747c0b66"
+          "resource": "repo://crates/mcp/src/task_server/tools/workspaces.rs#L110-L130",
+          "version": "repo-lines-v1:sha256:342b138082aee3f2590ee5d8d7abf75377962ec368af8f31271d0cbd759ad0c7:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZlMzI2MzJiNGFlMTJmOTRiNTFjOWQyMGQ3ODE0MTY0NTViMGUwN2MxNTlhMDdjZWEwN2MyYWJjOTJlYmFkZDQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI1MmMwZjA0ZTgzYmE5N2VmY2I1ZGY0NTU5Y2E5ZTViYmNhYjUzYjY3MTBmMzVmMzkyZGRkM2VkZDU0YTk4MzAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNkZGU1ZTcwYWIyZDg4ZTlkZmMzZDZhNDVjYTRhMTA3NTgxZDBmNWQ4NjNmM2RiMjQ2YmRmNjdiY2Y3NzUyZTIifQ"
         }
       ]
     },
     {
       "id": "claim_1dc8a3ace89d48bcaaf4d34629130ed0",
-      "statement": "設計メモ操作はGlobal stdio routerに含まれ限定Orchestrator routerには含まれない。",
+      "statement": "設計メモ操作はGlobal stdio routerに含まれる。専用Orchestrator routerは廃止済み。",
       "evidence": [
         {
-          "resource": "repo://crates/mcp/src/task_server/tools/mod.rs#L71-L114",
-          "version": "repo-lines-v1:sha256:2043499f4457747d78e330a8aab9dae89603f97f292f4c4d20b55e9dfa5ffcea:eyJzZWxlY3RlZExpbmVDb3VudCI6NDQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZlMzI2MzJiNGFlMTJmOTRiNTFjOWQyMGQ3ODE0MTY0NTViMGUwN2MxNTlhMDdjZWEwN2MyYWJjOTJlYmFkZDQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZjMDMzYzY1MDc3NGIyNDc2Zjc5MDA0YWMxMTJkOWIwY2Q4Mzg2YTdiNTk3MDM4M2E3MjYwODMwMjExNjlkY2YiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFjNmExYWM5ZDc4YmZhYTI3NTNjYWQwYzk0ODYxNGNmMTc2YjAxNTZkYmEzYjc2MjFkMTE0NjFkZGQwZmUwMTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjljN2EwMjg3MTkzZjllOGE1OGJmMTNhNWMxOWFkNjI3YzdjNTZkM2U3YWNjMmFkYTZlN2Q3Njg3Yzc5NDM4ZGIifQ"
+          "resource": "repo://crates/mcp/src/bin/vibe_kanban_mcp.rs",
+          "version": "repo-file-v1:sha256:2d8e90745d1bd7783e8c01c91c1d77b316e58a21eccec0338c8d50927241ce17"
+        },
+        {
+          "resource": "repo://crates/mcp/src/task_server/tools/mod.rs",
+          "version": "repo-file-v1:sha256:7115b8131d0150d05bdb488aa4cc06d3d31d74acddffeb2a3900e101742c4610"
         }
       ]
     },
@@ -806,7 +806,7 @@
       "evidence": [
         {
           "resource": "repo://crates/mcp/src/task_server/tools/mod.rs",
-          "version": "repo-file-v1:sha256:bcb0685c42272543cd57ff27d76fb190a26fd34ae03440a1d1d6c10d23ac1fe2"
+          "version": "repo-file-v1:sha256:7115b8131d0150d05bdb488aa4cc06d3d31d74acddffeb2a3900e101742c4610"
         },
         {
           "resource": "repo://crates/utils/src/mcp_error.rs",
@@ -963,6 +963,6 @@
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-09T20:29:18.834Z"
+    "at": "2026-11-10T13:43:59.705Z"
   }
 }

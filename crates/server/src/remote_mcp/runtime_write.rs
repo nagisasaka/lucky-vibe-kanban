@@ -291,7 +291,10 @@ impl RuntimeActions for ExistingRuntime {
                         resume_session_id: None,
                         resume_scope_path: None,
                     },
-                    Some((target.agent_run_id, target.project_id)),
+                    Some((
+                        target.agent_run_id,
+                        (!target.project_id.is_nil()).then_some(target.project_id),
+                    )),
                 )
                 .await?
                 .0
@@ -389,7 +392,16 @@ async fn validate_target(
 ) -> Result<(), ApiError> {
     let belongs: bool = sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM local_workspace_links l JOIN local_issues i ON i.id=l.issue_id AND i.project_id=l.project_id WHERE l.workspace_id=? AND l.project_id=?)")
         .bind(target.workspace_id).bind(target.project_id).fetch_one(pool).await?;
-    if !belongs {
+    let unlinked_internal_target = target.project_id.is_nil()
+        && !sqlx::query_scalar::<_, bool>(
+            "SELECT EXISTS(SELECT 1 FROM local_workspace_links WHERE workspace_id=?)",
+        )
+        .bind(target.workspace_id)
+        .fetch_one(pool)
+        .await?;
+    // Remote adapters require a real Project first. Only the internal adapter
+    // can retain the legacy unlinked Workspace case; this is not a scope grant.
+    if !belongs && !unlinked_internal_target {
         return Err(ApiError::Conflict(
             "Workspace no longer belongs to the selected Project".into(),
         ));

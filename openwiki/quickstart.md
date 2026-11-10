@@ -38,8 +38,12 @@ sources:
     resource: repo://crates/server/src/remote_mcp/execution_approvals.rs
   - id: openwiki-source-a43253b5be9686da077b8067
     resource: repo://crates/server/src/remote_mcp/issue_comments.rs
+  - id: openwiki-source-9e15762bf7a432b7605f8466
+    resource: repo://crates/server/src/remote_mcp/issue_write.rs
   - id: openwiki-source-71f837a8aa36443ad9688945
     resource: repo://crates/server/src/remote_mcp/mod.rs
+  - id: openwiki-source-2ac65265d4518e3d0e1d338e
+    resource: repo://crates/server/src/remote_mcp/repository_read.rs
   - id: openwiki-source-0545bff1ae2507a92137efaf
     resource: repo://crates/server/src/remote_mcp/repository_wiki.rs
   - id: openwiki-source-0987a696c656ec0d4f318f44
@@ -102,10 +106,10 @@ sources:
     resource: repo://packages/web-core/src/shared/providers/TerminalProvider.tsx
   - id: openwiki-source-23775c3de52f3ab95a13cb8b
     resource: repo://README.md
-generated: { by: "codex", at: "2026-11-09T18:10:41.827Z" }
+generated: { by: "codex", at: "2026-11-10T13:43:59.705Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-09T18:10:41.827Z
+    at: 2026-11-10T13:43:59.705Z
 ---
 
 # クイックスタートと調査案内
@@ -428,3 +432,10 @@ Issue固有の要求は通常本文で閲覧・編集し、旧Card Contextの専
 通常起動は現在identity/draft_pathと短い契約を届け、Manifest・parallel・資源/Runnerの詳細はMCPなしでも読める実ガイドファイルへ置く。任意get_context guideも同じ定義を返す。Codex継続は履歴保持の推測をせず現在developer指示を明示injectし、Claudeは既存user suffixを使う。[配信境界](integrations/agent-providers.md#codex-resume-の固定指示と現在-identity)・[Manifest](concepts/repository-memory.md#現在identityとオンデマンドのmanifest形式)
 
 コード候補は `da8f775878924b833971888e7c8ee28586cdf84b`。Gとtree一致の無競合merge、実frontend/最適化3binary build、sourceアクセス拒否下の隔離bundle試験を管理記録で確認した。重複検証は既存SHAの証拠と差分riskから理由付き省略であり、新しいpassではない。実Auth0/browser/modelとdev切替・再起動は今回未実施。Wikiは別commitとし、mainへの正式反映はRun終了後のhost結果を確認する。[検証範囲](operations/development.md#local-361の統合検証とbundle)
+
+
+## LOCAL-365のMCP契約移行
+
+stdio/remoteのIssue mutation・開始継続・receipt保証、priority:null保持、旧Workspaceファイル4toolからquery_repositoryへの移行は[接続契約](integrations/remote-access.md#stdioとremoteのmutation保証local-365)と[範囲read](integrations/remote-access.md#同じ本文を確認して周辺行を読む)を参照する。orchestrator modeは案内付き明示エラーで、globalへの設定変更では旧Workspace制限がなくなる。[stdio起動](integrations/agent-providers.md#外部-mcp-client--lvk)
+
+コード候補は `bacddc9c01995713ef063df85de18835815c05d8`。固定baseの直接子を競合なく採用し、同一SHAの公開Memoryにある代表試験とClippy証拠を再利用した。ユーザー指定で重複suiteを省略した記録は新たな試験passではない。実Auth0/provider/native・全組合せE2Eと稼働版反映は未確認で、ignored添付fixtureの追従課題は[検証入口](operations/development.md)に残す。Wikiは別commit、正式公開はRun終了後のhost結果で確認する。サーバーの停止・切替・再起動はこの担当では行わない。

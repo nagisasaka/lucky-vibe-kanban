@@ -8,8 +8,8 @@ For an independent re-review, use `query_repository` with explicit reviewed/new
 full SHAs and `comparison:"direct"` to exclude current dirty changes. Use
 `comparison:"merge_base"` only when intended; merge commits require explicit
 parent selection when no base is provided. Follow cursors and check exclusions.
-`list_workspace_diff` and `get_workspace_diff` expose current per-path changes;
-`list_workspace_files` and `get_workspace_file` expose tracked reference code.
+`list_workspace_diff` and `get_workspace_diff` expose current per-path changes.
+Use `query_repository` with explicit Project/repository and target. `operation.kind=list` discovers paths, `grep` searches, and `read` accepts either the existing single path/start_line/end_line or 1–8 `ranges` (200 lines each, 64 KiB item budget). Check each item status and content revision, complete/exclusions/stop_reason, and follow list/grep cursors. Workspace targets are live and may include index/worktree/untracked data; commit targets are immutable. Retired Workspace file tool revisions/cursors are not interchangeable with query_repository revisions/cursors. Diff tools remain available.
 Binary, oversized or unreadable content is not an empty diff. Renames are shown
 as separate source/destination paths. `list_workspace_wiki` and
 `get_workspace_wiki_page` read the selected checkout; they do not prove that the
@@ -27,3 +27,5 @@ status, verification outcomes/exceptions, target publication and current Wiki
 receipts. Missing, skipped, incomplete or unknown checks are not passes. A
 partial publication is not whole-operation success. Report unresolved states and
 the returned LVK link without filling gaps from the conversation's memory.
+
+Issue update priority: omitted or null preserves the current priority. Use `priority:"medium"` explicitly to reset; create defaults to medium. Parent null preserves the parent; only `clear_parent:true` detaches it.

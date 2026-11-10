@@ -75,7 +75,7 @@ impl McpServer {
                 super::Outcome::Failed,
             ));
         }
-        self.scope_allows_workspace(id)
+        Ok(())
     }
 }
 

@@ -60,10 +60,10 @@ sources:
     resource: repo://package.json
   - id: openwiki-source-d64d3c5fa2f722c3a06ba2e6
     resource: repo://tests/embedded-browser-removal/controls.test.mjs
-generated: { by: "codex", at: "2026-11-07T09:46:42.639Z" }
+generated: { by: "codex", at: "2026-11-10T13:43:59.705Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-09T18:10:41.827Z
+    at: 2026-11-10T13:43:59.705Z
 ---
 
 # 単一サーバーコンテナーの運用境界
@@ -108,7 +108,7 @@ LVKのsource開発入口は同梱sccacheを探索・起動・設定せず、rust
 
 直接 build では `pnpm install --frozen-lockfile`、`pnpm --dir packages/local-web run build` の後、`node scripts/dev-cargo.mjs --purpose stable build --locked --bin server --bin agent-process-host --bin vibe-kanban-mcp` で同じcheckoutから三binaryを作る。`target/release/server` を意図したinstance設定で起動し、stdio clientには `target/release/vibe-kanban-mcp --mode global` の絶対pathを指定する。[開発時の検証範囲](development.md#検証の対象を取り違えない)と配布 image の検証を区別する。Docker もこの三つの binary を同梱する。[build と配置](../../Dockerfile#L98-L101)・[server image](../../Dockerfile#L199-L202)
 
-stdio binary は既存 HTTP backend に接続するため、ランチャーの代わりに backend を自動起動するものではない。`--mode` 省略時は global、orchestrator は明示指定する。接続先の `VIBE_BACKEND_URL` / host・port 解決、内部資格情報と router の制約は [MCP client の接続境界](../integrations/agent-providers.md#外部-mcp-client--lvk)を参照する。[起動処理](../../crates/mcp/src/bin/vibe_kanban_mcp.rs#L23-L49)・[mode の検証](../../crates/mcp/src/bin/vibe_kanban_mcp.rs#L56-L97)。起動方法の移行は [HTTP MCP の認証・scope](../integrations/remote-access.md#認証付き外部-mcp)を免除しない。
+stdio binary は既存 HTTP backend に接続するため、ランチャーの代わりに backend を自動起動するものではない。`--mode` 省略時は global。LOCAL-365で `--mode orchestrator` は廃止され、移行案内付きの明示エラーになる。旧設定を見直し、適切な場合だけ `--mode global` を指定する。globalには旧Workspace制限がないため黙った置換はしない。接続先の `VIBE_BACKEND_URL` / host・port 解決、内部資格情報と router の制約は [MCP client の接続境界](../integrations/agent-providers.md#外部-mcp-client--lvk)を参照する。[起動処理](../../crates/mcp/src/bin/vibe_kanban_mcp.rs#L23-L49)・[mode の検証](../../crates/mcp/src/bin/vibe_kanban_mcp.rs#L56-L97)。起動方法の移行は [HTTP MCP の認証・scope](../integrations/remote-access.md#認証付き外部-mcp)を免除しない。
 
 撤去は既存アプリデータ・download 済み binary・`~/.vibe-kanban/bin` 等の cache の削除や、既存 launcher の遠隔無効化を行わない。agent CLI や第三者 MCP の npx 設定も別の責任範囲である。[保持する範囲](#旧-npx-ランチャーの撤去と移行)・[直接 LVK binary と第三者 preset](../../crates/executors/default_mcp.json)。古いローカル成果物が残ることと、現行 source がその launcher を提供することを混同しない。
 

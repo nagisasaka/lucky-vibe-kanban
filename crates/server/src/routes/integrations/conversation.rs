@@ -58,7 +58,37 @@ pub(crate) async fn worker(
         .map_err(super::error)
 }
 
-/// Bound to the calling runtime, not a user-selected integration or repository.
+/// Accidental ID mixing guard, not authentication of a caller Run. The internal
+/// capability is shared: a fully consistent other worker tuple is not rejected
+/// by this function merely because another internal caller supplied it.
+pub(crate) async fn require_worker_ids(
+    pool: &sqlx::SqlitePool,
+    workspace_id: Uuid,
+    agent_run_id: Uuid,
+    session_id: Option<Uuid>,
+    integration_id: Uuid,
+) -> anyhow::Result<AgentRunRecord> {
+    let agent = AgentRunRecord::find(pool, agent_run_id)
+        .await?
+        .context("Worker missing")?;
+    let latest: Uuid = sqlx::query_scalar(
+        "SELECT id FROM agent_runs WHERE session_id=? ORDER BY created_at DESC,id DESC LIMIT 1",
+    )
+    .bind(agent.session_id)
+    .fetch_one(pool)
+    .await?;
+    ensure!(latest == agent.id, "Stale worker");
+    ensure!(
+        agent.workspace_id == workspace_id
+            && Some(agent.session_id) == session_id
+            && agent.correlation_id == integration_id,
+        "Worker ownership mismatch"
+    );
+    Ok(agent)
+}
+
+/// The runtime adapter supplies the selection. HTTP body IDs are checked for
+/// consistency, not authenticated as a distinct caller Run.
 pub(crate) async fn action(
     deployment: &DeploymentImpl,
     request: WorkerRequest,
@@ -70,22 +100,14 @@ pub(crate) async fn action(
             .fetch_one(pool)
             .await?;
     let _operation = runtime::reserve_action(run.id)?;
-    let agent = AgentRunRecord::find(pool, request.agent_run_id)
-        .await?
-        .context("Worker missing")?;
-    let latest: Uuid = sqlx::query_scalar(
-        "SELECT id FROM agent_runs WHERE session_id=? ORDER BY created_at DESC,id DESC LIMIT 1",
+    let agent = require_worker_ids(
+        pool,
+        request.workspace_id,
+        request.agent_run_id,
+        run.session_id,
+        run.id,
     )
-    .bind(agent.session_id)
-    .fetch_one(pool)
     .await?;
-    ensure!(latest == agent.id, "Stale worker");
-    ensure!(
-        agent.workspace_id == request.workspace_id
-            && Some(agent.session_id) == run.session_id
-            && agent.correlation_id == run.id,
-        "Worker ownership mismatch"
-    );
     // Immutable request receipt in existing history, persisted before any process side effect.
     let input = serde_json::to_value(&request)?;
     let mut resume_publication = false;

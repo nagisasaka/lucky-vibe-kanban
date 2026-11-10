@@ -52,9 +52,6 @@ impl McpServer {
         t: Target,
         action: &str,
     ) -> Result<CallToolResult, ErrorData> {
-        if let Err(error) = self.scope_allows_workspace(t.workspace_id) {
-            return Ok(Self::tool_error(error));
-        }
         let url = self.url(&format!(
             "/api/workspaces/{}/managed-dev-server/{action}",
             t.workspace_id
@@ -93,35 +90,8 @@ impl McpServer {
 mod tests {
     use super::*;
     #[tokio::test]
-    async fn dev_server_scoped_target_cannot_be_overridden() {
-        let id = Uuid::new_v4();
-        let mut server = McpServer::new_orchestrator("http://127.0.0.1:1");
-        server.context = Some(crate::task_server::McpContext {
-            organization_id: None,
-            project_id: None,
-            issue_id: None,
-            orchestrator_session_id: None,
-            workspace_id: id,
-            workspace_branch: "fixture".into(),
-            workspace_repos: vec![],
-        });
-        for action in ["status", "start", "stop"] {
-            let result = server
-                .managed_dev_server(
-                    Target {
-                        project_id: Uuid::new_v4(),
-                        workspace_id: Uuid::new_v4(),
-                    },
-                    action,
-                )
-                .await
-                .unwrap();
-            assert_eq!(result.is_error, Some(true));
-        }
-        for router in [
-            McpServer::global_mode_router(),
-            McpServer::orchestrator_mode_router(),
-        ] {
+    async fn dev_server_tools_remain_global() {
+        for router in [McpServer::global_mode_router()] {
             let tools = router.list_all();
             for name in [
                 "start_dev_server",

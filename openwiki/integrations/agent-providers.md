@@ -110,10 +110,10 @@ sources:
     resource: repo://tests/claude-subscription/subscription.spec.ts
   - id: openwiki-source-141584dac09cf0f93be6bff5
     resource: repo://tests/codex-process-cleanup/README.md
-generated: { by: "codex", at: "2026-11-09T20:29:18.834Z" }
+generated: { by: "codex", at: "2026-11-10T13:43:59.705Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-09T20:29:18.834Z
+    at: 2026-11-10T13:43:59.705Z
 ---
 
 # Agent provider・設定・MCP・Skill
@@ -308,9 +308,9 @@ Reviewer は別の信頼済み role で、ReadOnly / approval Never を設定し
 
 ### 外部 MCP client → LVK
 
-LVK のローカル MCP server は stdio で動き、HTTP backend に要求を転送する。Global は Issue、Project、Repo、Workspace、Session などを扱い、Orchestrator は実行 context を必須とする限定 router で、list_workspaces と delete_workspace を公開しない。[起動](../../crates/mcp/src/bin/vibe_kanban_mcp.rs#L23-L49)・[context の取得](../../crates/mcp/src/task_server/mod.rs#L87-L119)・[公開 router](../../crates/mcp/src/task_server/tools/mod.rs#L52-L73)
+LVK のローカル MCP server は stdio で動き、HTTP backend に要求を転送する。既定globalはIssue、Project、Repo、Workspace、Sessionを扱う。LOCAL-365で `--mode orchestrator` と専用router、暫定Session由来contextを廃止した。旧指定は移行案内付きの明示エラーで、globalへ黙って置換しない。必要なら設定を見直して `--mode global` を明示するが、globalは旧Workspace制限を提供しない。[起動と拒否](../../crates/mcp/src/bin/vibe_kanban_mcp.rs#L59-L112)・[router](../../crates/mcp/src/task_server/tools/mod.rs)
 
-両 stdio router は `get_workspace_tokens` を公開する。Workspace ID を省略すると現在 context を使い、context がなければ明示 ID が必要になる。Orchestrator は別 Workspace を拒否し、既存 `/api/workspaces/{id}/tokens` の読取へ転送する。欠損を補う AgentRun は起動しない。[tool](../../crates/mcp/src/task_server/tools/workspaces.rs#L99-L130)・[scope](../../crates/mcp/src/task_server/tools/mod.rs#L182-L208)。値の契約は [Workspace 累積トークン](../concepts/workspace.md#workspace-累積トークン)、認証付き HTTP MCP の別入口は [get_workspace の集計](remote-access.md#workspace-の報告済みトークンを読む)にまとめる。
+`get_workspace_tokens` は明示Workspace IDまたは現在contextを解決して既存tokens APIを読む。欠損を補うAgentRunを起動しない。[tool](../../crates/mcp/src/task_server/tools/workspaces.rs#L110-L130)。値は [Workspace累積トークン](../concepts/workspace.md#workspace-累積トークン)、HTTPの別入口は [get_workspace](remote-access.md#workspace-の報告済みトークンを読む)を参照する。
 
 backend の解決は VIBE_BACKEND_URL が優先され、続いて host/port の環境変数と port file を用いる。したがって「stdio client で接続する」ことと「backend が必ず localhost に固定される」ことは別である。設定するclientには直接buildした `vibe-kanban-mcp --mode global` の絶対pathを指定する。binaryはbackendを起動しないため、意図したinstanceのURLとdata directoryを先に揃える。[binaryの準備](../operations/server-container.md#旧-npx-ランチャーの撤去と移行)を参照する。[backend URL の解決](../../crates/mcp/src/bin/vibe_kanban_mcp.rs#L100-L133)
 
@@ -320,7 +320,7 @@ loopback HTTPを選んだ場合だけ、stdio clientは同じdata directoryの`a
 
 認証付き Streamable HTTP `/mcp` は別の外部入口であり、旧 Cloud / relay ではない。Auth0の承認済みmember・scopeと公開 tool の制約は [外部 MCP](remote-access.md#認証付き外部-mcp)を参照する。内部 Astra の推論・認証経路は廃止された。[廃止後に残る共有機能](../concepts/project-chat.md)と coding provider の起動を区別する。
 
-Global stdio には [Project Todo](../concepts/project-todos.md)と[設計メモ](../concepts/design-notes.md)の操作も含む。設計メモの有界読取・確定版receipt・本文と独立追記の利用契約はリンク先を参照する。限定 Orchestrator router には含めない。Todo の REST / 外部 MCP の再送契約を、同じ tool 名だけで交換可能とみなさない。[router の分離](../../crates/mcp/src/task_server/tools/mod.rs#L49-L75)
+Global stdio には [Project Todo](../concepts/project-todos.md)と[設計メモ](../concepts/design-notes.md)の操作も含む。設計メモの有界読取・確定版receipt・本文と独立追記の利用契約はリンク先を参照する。orchestrator専用routerは廃止済みである。Todo の REST / 外部 MCP の再送契約を、同じ tool 名だけで交換可能とみなさない。[router の分離](../../crates/mcp/src/task_server/tools/mod.rs#L49-L75)
 
 Settings の「MCP連携」は LVK が外部へ公開する [Runtime Access の管理設定](../concepts/runtime-access.md#管理設定の保存適用取消)であり、上記のcoding agent向けnative MCP config editorとは別の入口である。直接アプリケーションを動かす権限・環境・停止の契約は同ページを参照する。[設定registry](../../packages/web-core/src/shared/dialogs/settings/settings/settingsRegistry.tsx#L95-L143)
 

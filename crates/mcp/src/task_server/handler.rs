@@ -4,7 +4,7 @@ use rmcp::{
     tool_handler,
 };
 
-use super::{McpMode, McpServer};
+use super::McpServer;
 
 #[tool_handler(router = self.tool_router)]
 impl ServerHandler for McpServer {
@@ -60,21 +60,14 @@ impl ServerHandler for McpServer {
     }
 
     fn get_info(&self) -> ServerInfo {
-        let preamble = match self.mode() {
-            McpMode::Global => {
-                "A Vibe Kanban MCP server for task, issue, repository, workspace, and session management."
-            }
-            McpMode::Orchestrator => {
-                "An orchestrator-scoped Vibe Kanban MCP server with tools limited to the configured workspace and orchestrator session context."
-            }
-        };
+        let preamble = "A Vibe Kanban MCP server for task, issue, repository, workspace, and session management.";
         let mut instruction = format!(
             "{} Use list/read tools first when you need IDs or current state.",
             preamble
         );
         if self.context.is_some() {
             instruction = format!(
-                "Use 'get_context' to fetch project, issue, workspace, and orchestrator-session metadata for the active MCP context when available. {}",
+                "Use 'get_context' to fetch project, issue, and workspace metadata for the active MCP context when available. {}",
                 instruction
             );
         }

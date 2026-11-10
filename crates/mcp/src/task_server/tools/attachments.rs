@@ -75,9 +75,6 @@ impl McpServer {
         &self,
         Parameters(args): Parameters<Place>,
     ) -> Result<CallToolResult, ErrorData> {
-        if let Err(error) = self.scope_allows_workspace(args.workspace_id) {
-            return Ok(Self::tool_error(error));
-        }
         let url = self.url("/api/attachment-transfer/place");
         match self
             .send_json::<serde_json::Value>(self.client.post(url).json(&args))

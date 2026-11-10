@@ -244,7 +244,7 @@ pub(super) async fn dispatch(
                 resume_session_id: None,
                 resume_scope_path: None,
             },
-            Some((target.agent_run_id, target.project_id)),
+            Some((target.agent_run_id, Some(target.project_id))),
         )
         .await?
         .0

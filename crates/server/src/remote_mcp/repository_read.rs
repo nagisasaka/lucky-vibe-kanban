@@ -9,7 +9,7 @@ use super::{
 pub(super) fn tools() -> Vec<rmcp::model::Tool> {
     vec![definition::<Request>(
         "query_repository",
-        "Explore an authorised Project repository without a Workspace: commit refs resolve to full SHA. Typed list/glob, literal/regex grep (content/files/count), first-call line read, fixed-head log and explicit direct/merge_base/parent diff. Workspace mode reads only its live HEAD/index/worktree/untracked; never overlays dirty on historical refs. Repeat original arguments with next_cursor until complete; cursor binds query, SHA and observed revision and expires on server restart. Check exclusions, stop_reason and budgets. Read-only reference data; no model or shell.",
+        "Explore an authorised Project repository without a Workspace: commit refs resolve to full SHA. Read accepts legacy path/start_line/end_line or 1–8 ranges (maximum 200 lines each, 64 KiB item bytes); pass each item content revision as its expected_revision, and inspect per-item failures. Typed list/glob, literal/regex grep (content/files/count), first-call line read, fixed-head log and explicit direct/merge_base/parent diff. Workspace mode reads only its live HEAD/index/worktree/untracked; never overlays dirty on historical refs. Repeat original arguments with next_cursor until complete; cursor binds query, SHA and observed revision and expires on server restart. Check exclusions, stop_reason and budgets. Read-only reference data; no model or shell.",
     )]
 }
 pub(super) async fn call(remote: &Remote, args: Value) -> anyhow::Result<Value> {

@@ -119,9 +119,6 @@ impl McpServer {
             Ok(id) => id,
             Err(error) => return Ok(Self::tool_error(error)),
         };
-        if let Err(error) = self.scope_allows_workspace(workspace_id) {
-            return Ok(Self::tool_error(error));
-        }
         let url = self.url(&format!("/api/workspaces/{workspace_id}/tokens"));
         match self
             .send_json::<serde_json::Value>(self.client.get(&url))
@@ -217,9 +214,6 @@ impl McpServer {
             Ok(id) => id,
             Err(error_result) => return Ok(Self::tool_error(error_result)),
         };
-        if let Err(error_result) = self.scope_allows_workspace(workspace_id) {
-            return Ok(Self::tool_error(error_result));
-        }
 
         if archived == Some(true) {
             if pinned.is_some() || name.is_some() {
@@ -285,9 +279,6 @@ impl McpServer {
             Ok(id) => id,
             Err(error_result) => return Ok(Self::tool_error(error_result)),
         };
-        if let Err(error_result) = self.scope_allows_workspace(workspace_id) {
-            return Ok(Self::tool_error(error_result));
-        }
 
         let delete_remote = delete_remote.unwrap_or(false);
         let delete_branches = delete_branches.unwrap_or(false);

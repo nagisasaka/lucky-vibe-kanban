@@ -161,10 +161,10 @@ sources:
     resource: repo://tests/terminal-latency/run.py
   - id: openwiki-source-966297deb875824dc95ee8d5
     resource: repo://tests/workflow/playwright.config.ts
-generated: { by: "codex", at: "2026-11-09T20:29:18.834Z" }
+generated: { by: "codex", at: "2026-11-10T13:43:59.705Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-09T20:29:18.834Z
+    at: 2026-11-10T13:43:59.705Z
 ---
 
 
@@ -513,7 +513,7 @@ busy_timeout=0 の port fixture では、独立した監視 SELECT の SQLITE_BU
 
 REVIEWは既存CODE経路を使うため、mode保存・復元、permission parity、通常会話の終了とsource finalisation抑制を一組で検証する。`tests/review-mode/selector.test.mjs` はChromiumの1440/390幅でREVIEW選択・再表示・送信とCODE/PLAN/GOALを確認する。`run_isolated.py` はUI/API/SQLite/hostを使いproviderだけをmockする。実モデルの指示遵守や外部承認改善は別の未検証事項である。[試験の範囲](../../tests/review-mode/README.md)
 
-添付は `isolated_attachment_remote_stdio_e2e` を新しい `attachment-fixture-*` instanceとその内側のXDG_CACHE_HOMEで実行する。実HTTP MCPとstdio codecから初回・続行まで通し、bytes・サイズ/hash・所属・再送・改変/部分失敗を確認する。native実行はmockで、実ChatGPT/Library fileParams・署名URL期限・host/proxy適合は公開後ゲートに残す。260の保存設定読取routeは267の隔離local routerにも必要であり、製品routeの追加時にfixtureのHTTP面も追従させる。[隔離fixture](../../crates/server/src/remote_mcp/attachment_tests.rs)・[公開後の確認](../integrations/remote-access.md#外部接続と素材搬送を受け入れる)
+添付は `isolated_attachment_remote_stdio_e2e` を新しい `attachment-fixture-*` instanceとその内側のXDG_CACHE_HOMEで実行する。実HTTP MCPとstdio codecから初回・続行まで通し、bytes・サイズ/hash・所属・再送・改変/部分失敗を確認する。native実行はmockで、実ChatGPT/Library fileParams・署名URL期限・host/proxy適合は公開後ゲートに残す。このignored fixtureのlocal routerは旧attachment/Session/executor-config入口を構成している。LOCAL-365のstdio開始・継続は `/api/mcp-stdio/` に移ったため、現行経路の受入証拠として再利用する前にfixtureのrouteとmock実行adapterの追従が必要である。今回このignored E2Eを再実行していない。[隔離fixture](../../crates/server/src/remote_mcp/attachment_tests.rs)・[公開後の確認](../integrations/remote-access.md#外部接続と素材搬送を受け入れる)
 
 Wiki継続proofのprotocol testsと `isolated_conversation_repair_publication_drift_and_idempotence` は、所有begin→中断→同じ会話の明示再開→finish→exact publication→archiveを確認する。実外部OpenWikiや実Codexを起動する試験ではない。[proof](../../crates/services/src/services/openwiki/completion.rs)・[server境界](../../crates/server/src/routes/openwiki/completion.rs)・[実Git/SQLite fixture](../../crates/server/src/routes/integrations/conversation_tests.rs)
 

@@ -53,10 +53,17 @@ pub enum Operation {
         #[serde(default)]
         filter: Filter,
     },
+    /// Supply either legacy path/start_line/end_line, or 1–8 ranges (not both).
     Read {
+        #[serde(default, skip_serializing_if = "String::is_empty")]
         path: String,
+        #[serde(default)]
         start_line: usize,
+        #[serde(default)]
         end_line: usize,
+        #[serde(default, skip_serializing_if = "Vec::is_empty")]
+        #[schemars(length(max = 8))]
+        ranges: Vec<ReadRange>,
     },
     Grep {
         query: String,
@@ -79,6 +86,15 @@ pub enum Operation {
         parent: Option<usize>,
         path: Option<String>,
     },
+}
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct ReadRange {
+    pub path: String,
+    pub start_line: usize,
+    pub end_line: usize,
+    /// Content revision from a query_repository read or grep item, not the page revision.
+    pub expected_revision: Option<String>,
 }
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
@@ -564,7 +580,7 @@ fn read_with_budget(root: &Path, request: &Request, duration: Duration) -> Resul
     );
     let mut skip_empty = prior.as_ref().is_some_and(|c| c.skip_empty);
     let mut partial_count = prior.as_ref().map_or(0, |c| c.partial_count);
-    let mut items = Vec::new();
+    let mut items: Vec<Value> = Vec::new();
     let mut exclusions = Vec::new();
     let mut exclusions_total = prior.as_ref().map_or(0, |c| c.exclusions);
     let mut used = 0;
@@ -598,42 +614,107 @@ fn read_with_budget(root: &Path, request: &Request, duration: Duration) -> Resul
             path,
             start_line,
             end_line,
+            ranges,
         } => {
             ensure!(
                 request.cursor.is_none(),
                 "Line read uses explicit ranges and expected_revision, not cursor"
             );
+            let batch = !ranges.is_empty();
             ensure!(
-                allowed_path(path)
-                    && *start_line > 0
-                    && end_line >= start_line
-                    && end_line - start_line < 200,
-                "Invalid path/range (maximum 200 lines)"
+                ranges.len() <= 8
+                    && (!batch || (path.is_empty() && *start_line == 0 && *end_line == 0)),
+                "Supply a single read or 1–8 ranges, not both"
             );
-            ensure!(
-                if workspace {
-                    all_paths.binary_search(path).is_ok()
+            let single = vec![ReadRange {
+                path: path.clone(),
+                start_line: *start_line,
+                end_line: *end_line,
+                expected_revision: None,
+            }];
+            let selected = if batch { ranges } else { &single };
+            let mut reserved: usize = selected
+                .iter()
+                .map(|r| json!(r.path).to_string().len() + 512)
+                .sum();
+            ensure!(reserved <= OUTPUT, "Batch metadata exceeds output limit");
+            for range in selected {
+                reserved -= json!(range.path).to_string().len() + 512;
+                let valid = allowed_path(&range.path)
+                    && range.start_line > 0
+                    && range.end_line >= range.start_line
+                    && range.end_line - range.start_line < 200;
+                if !batch {
+                    ensure!(valid, "Invalid path/range (maximum 200 lines)");
+                }
+                let listed = valid
+                    && if workspace {
+                        all_paths.binary_search(&range.path).is_ok()
+                    } else {
+                        tree.get_path(Path::new(&range.path))
+                            .is_ok_and(|e| matches!(e.filemode(), 0o100644 | 0o100755))
+                    };
+                if !batch {
+                    ensure!(listed, "Path is not a listed safe file");
+                }
+                let mut item = json!({"path":range.path,"start_line":range.start_line,"end_line":range.end_line});
+                if !listed {
+                    item["status"] = json!("unsafe_or_unlisted");
                 } else {
-                    tree.get_path(Path::new(path))
-                        .is_ok_and(|e| matches!(e.filemode(), 0o100644 | 0o100755))
-                },
-                "Path is not a listed safe file"
-            );
-            let c = get(path)?;
-            scanned = 1;
-            charged = charge(&c);
-            let mut item = json!({"path":path,"status":status(&c)});
-            if let Content::Text(t) = c {
-                let lines: Vec<_> = t.lines().collect();
-                ensure!(*end_line <= lines.len(), "Range out of bounds");
-                item["start_line"] = json!(start_line);
-                item["end_line"] = json!(end_line);
-                item["lines"] = json!(lines[start_line - 1..*end_line]);
+                    match get(&range.path) {
+                        Ok(Content::Text(text)) => {
+                            let current = hash(text.as_bytes());
+                            item["revision"] = json!(current);
+                            let lines: Vec<_> = text.lines().collect();
+                            if range
+                                .expected_revision
+                                .as_ref()
+                                .is_some_and(|v| v != &current)
+                            {
+                                item["status"] = json!("revision_mismatch");
+                            } else if range.end_line > lines.len() {
+                                if !batch {
+                                    anyhow::bail!("Range out of bounds");
+                                }
+                                item["status"] = json!("range_out_of_bounds");
+                            } else {
+                                item["status"] = json!("text");
+                                item["lines"] = json!(lines[range.start_line - 1..range.end_line]);
+                            }
+                            charged += text.len();
+                        }
+                        Ok(content) => {
+                            charged += charge(&content);
+                            item["status"] = json!(status(&content));
+                        }
+                        Err(error) => {
+                            if !batch {
+                                return Err(error);
+                            }
+                            item["status"] = json!("unsafe_or_unreadable");
+                        }
+                    }
+                }
+                scanned += 1;
+                if items.iter().map(|v| v.to_string().len() + 1).sum::<usize>()
+                    + item.to_string().len()
+                    + 1
+                    > OUTPUT - reserved
+                {
+                    if !batch {
+                        anyhow::bail!("Range exceeds output byte budget; request fewer lines");
+                    }
+                    item.as_object_mut().unwrap().remove("lines");
+                    item["status"] = json!("output_byte_limit");
+                }
+                if batch && item["status"] != "text" {
+                    stop = Some("range_failure");
+                }
+                ensure!(
+                    push(item, &mut items),
+                    "Batch metadata exceeds output limit"
+                );
             }
-            ensure!(
-                push(item, &mut items),
-                "Range exceeds output byte budget; request fewer lines"
-            );
         }
         Operation::Log { .. } => {
             let mut walk = repo.revwalk()?;
@@ -910,7 +991,7 @@ fn read_with_budget(root: &Path, request: &Request, duration: Duration) -> Resul
                                         .iter()
                                         .map(|l| l.chars().take(512).collect::<String>())
                                         .collect();
-                                    let item = json!({"path":p,"line":n+1,"column":line[..m.start()].chars().count()+1,"end_column_exclusive":line[..m.end()].chars().count()+1,"matched":m.as_str().chars().take(1024).collect::<String>(),"matched_truncated":m.as_str().chars().count()>1024,"context_start_line":first+1,"context":context,"context_truncated":lines[first..last].iter().any(|l|l.chars().count()>512)});
+                                    let item = json!({"revision":hash(t.as_bytes()),"path":p,"line":n+1,"column":line[..m.start()].chars().count()+1,"end_column_exclusive":line[..m.end()].chars().count()+1,"matched":m.as_str().chars().take(1024).collect::<String>(),"matched_truncated":m.as_str().chars().count()>1024,"context_start_line":first+1,"context":context,"context_truncated":lines[first..last].iter().any(|l|l.chars().count()>512)});
                                     if !push(item, &mut items) {
                                         stop = Some("output_byte_limit");
                                         break 'files;
@@ -976,6 +1057,7 @@ fn read_with_budget(root: &Path, request: &Request, duration: Duration) -> Resul
         end.to_string(),
     ))?);
     let next = stop
+        .filter(|_| !matches!(request.operation, Operation::Read { .. }))
         .map(|_| {
             Cursor {
                 signature: String::new(),
@@ -1124,6 +1206,7 @@ mod tests {
         let f = Fixture::new();
         fs::write(f.temp.path().join("src/入口.tsx"), "dirty\n").unwrap();
         let mut r = f.request(Operation::Read {
+            ranges: vec![],
             path: "src/入口.tsx".into(),
             start_line: 1,
             end_line: 2,
@@ -1259,6 +1342,7 @@ mod tests {
         assert!(items.iter().any(|i| i["path"] == "untracked.txt"));
         r.cursor = None;
         r.operation = Operation::Read {
+            ranges: vec![],
             path: "untracked.txt".into(),
             start_line: 1,
             end_line: 1,
@@ -1553,6 +1637,7 @@ mod tests {
             "key.pem",
         ] {
             r.operation = Operation::Read {
+                ranges: vec![],
                 path: path.into(),
                 start_line: 1,
                 end_line: 1,
@@ -1561,6 +1646,7 @@ mod tests {
         }
         for (path, status) in [("binary", "binary"), ("large", "too_large")] {
             r.operation = Operation::Read {
+                ranges: vec![],
                 path: path.into(),
                 start_line: 1,
                 end_line: 1,
@@ -1569,6 +1655,7 @@ mod tests {
         }
         for (start, end) in [(0, 1), (2, 1), (1, 201), (1, 2)] {
             r.operation = Operation::Read {
+                ranges: vec![],
                 path: "safe".into(),
                 start_line: start,
                 end_line: end,
@@ -1605,6 +1692,7 @@ mod tests {
         );
         assert!(items.iter().any(|i| i["line"] == 2));
         r.operation = Operation::Read {
+            ranges: vec![],
             path: "src/Board.tsx".into(),
             start_line: 1,
             end_line: 1,
@@ -1615,6 +1703,56 @@ mod tests {
                 .unwrap()
                 .contains("function Board")
         );
+    }
+    #[test]
+    fn batch_reads_preserve_legacy_and_bound_ranges_revisions_failures_and_output() {
+        let f = Fixture::new();
+        let legacy: Operation = serde_json::from_value(
+            json!({"kind":"read","path":"src/入口.tsx","start_line":1,"end_line":1}),
+        )
+        .unwrap();
+        let old = f.read(&f.request(legacy));
+        let revision = old["items"][0]["revision"].clone();
+        let mut ranges = vec![
+            json!({"path":"src/入口.tsx","start_line":1,"end_line":1,"expected_revision":revision});
+            8
+        ];
+        let mut request =
+            f.request(serde_json::from_value(json!({"kind":"read","ranges":ranges})).unwrap());
+        let full = f.read(&request);
+        assert_eq!(full["items"].as_array().unwrap().len(), 8);
+        assert_eq!(full["complete"], true);
+        assert_eq!(full["items"][0]["lines"], old["items"][0]["lines"]);
+        ranges[0]["expected_revision"] = json!("stale");
+        ranges[1]["path"] = json!(".git/config");
+        ranges[2]["path"] = json!("missing");
+        ranges[3]["end_line"] = json!(200);
+        request.operation = serde_json::from_value(json!({"kind":"read","ranges":ranges})).unwrap();
+        let partial = f.read(&request);
+        assert_eq!(partial["items"][0]["status"], "revision_mismatch");
+        assert_eq!(partial["items"][1]["status"], "unsafe_or_unlisted");
+        assert_eq!(partial["items"][2]["status"], "unsafe_or_unlisted");
+        assert_eq!(partial["items"][3]["status"], "range_out_of_bounds");
+        assert_eq!(partial["complete"], false);
+        assert!(partial["next_cursor"].is_null());
+        ranges.push(ranges[7].clone());
+        request.operation = serde_json::from_value(json!({"kind":"read","ranges":ranges})).unwrap();
+        assert!(read(f.temp.path(), &request).is_err());
+        request.operation=serde_json::from_value(json!({"kind":"read","path":"src/入口.tsx","start_line":1,"end_line":1,"ranges":[{"path":"src/入口.tsx","start_line":1,"end_line":1}]})).unwrap();
+        assert!(read(f.temp.path(), &request).is_err());
+        fs::write(f.temp.path().join("src/入口.tsx"), "x".repeat(40000)).unwrap();
+        request.target = Target::Workspace {
+            workspace_id: Uuid::from_u128(3),
+        };
+        request.operation=serde_json::from_value(json!({"kind":"read","ranges":[{"path":"src/入口.tsx","start_line":1,"end_line":1},{"path":"src/入口.tsx","start_line":1,"end_line":1}]})).unwrap();
+        let bounded = f.read(&request);
+        assert_eq!(bounded["items"][1]["status"], "output_byte_limit");
+        assert!(bounded["item_bytes"].as_u64().unwrap() <= 65536);
+        assert_eq!(bounded["complete"], false);
+        request.target = Target::Commit {
+            r#ref: "main".into(),
+        };
+        assert_eq!(f.read(&request)["complete"], true);
     }
 }
 
@@ -1678,6 +1816,7 @@ mod more_tests {
             r#ref: sha.to_string(),
         };
         r.operation = Operation::Read {
+            ranges: vec![],
             path: "large.txt".into(),
             start_line: 1,
             end_line: 1,
@@ -1731,6 +1870,7 @@ mod measurements {
             },
         };
         let range = |path: &str, start, end| Operation::Read {
+            ranges: vec![],
             path: path.into(),
             start_line: start,
             end_line: end,

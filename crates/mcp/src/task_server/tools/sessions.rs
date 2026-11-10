@@ -1,7 +1,7 @@
 use db::models::session::Session;
 use executors::{
     profile::{ExecutorConfig, NextRunOverrides},
-    runtime::{AgentRunPortSnapshot, AgentRunStatus, RunState},
+    runtime::{AgentRunStatus, RunState},
 };
 use rmcp::{
     ErrorData, handler::server::wrapper::Parameters, model::CallToolResult, schemars, tool,
@@ -14,8 +14,10 @@ use super::McpServer;
 
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 struct CreateSessionRequest {
+    request_id: Option<Uuid>,
+    project_id: Option<Uuid>,
     #[schemars(
-        description = "Workspace ID to create the session in. Optional when running inside a scoped orchestrator MCP."
+        description = "Workspace ID to create the session in. Optional when current Workspace context is available."
     )]
     workspace_id: Option<Uuid>,
     #[schemars(
@@ -47,19 +49,12 @@ struct SessionSummary {
     created_at: String,
     #[schemars(description = "Last update timestamp")]
     updated_at: String,
-    #[schemars(description = "True if this is the orchestrator session for this MCP server")]
-    is_orchestrator_session: bool,
-}
-
-#[derive(Debug, Serialize, schemars::JsonSchema)]
-struct CreateSessionResponse {
-    session: SessionSummary,
 }
 
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 struct ListSessionsRequest {
     #[schemars(
-        description = "Workspace ID to inspect. Optional when running inside a scoped orchestrator MCP."
+        description = "Workspace ID to inspect. Optional when current Workspace context is available."
     )]
     workspace_id: Option<Uuid>,
 }
@@ -77,7 +72,7 @@ struct RunCodingAgentInSessionRequest {
     project_id: Option<Uuid>,
     request_id: Option<Uuid>,
     #[schemars(
-        description = "Explicit latest terminal Run for checked continuation; requires project_id and request_id. Required when overrides are supplied."
+        description = "Optional caller-selected latest finished Run. Omitted selects the current Run at admission and gives no caller-observed Run guarantee."
     )]
     agent_run_id: Option<Uuid>,
     #[serde(default)]
@@ -91,21 +86,6 @@ struct RunCodingAgentInSessionRequest {
     session_id: Uuid,
     #[schemars(description = "Prompt for the coding agent")]
     prompt: String,
-}
-
-#[derive(Debug, Serialize)]
-struct FollowUpPayload {
-    prompt: String,
-    executor_config: ExecutorConfig,
-}
-
-#[derive(Debug, Serialize, schemars::JsonSchema)]
-struct RunCodingAgentInSessionResponse {
-    session_id: String,
-    agent_run_id: String,
-    status: String,
-    is_finished: bool,
-    state: serde_json::Value,
 }
 
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
@@ -159,7 +139,7 @@ struct GetExecutionResponse {
 #[tool_router(router = session_tools_router, vis = "pub")]
 impl McpServer {
     #[tool(
-        description = "Create a new conversation in an existing workspace, optionally selecting its engine. Does not inherit another Session native conversation; include relevant goals, decisions and remaining work in its first prompt."
+        description = "Create a new conversation. Optional request_id gives durable replay protection (requires a Project context or linked Workspace); omission gives none. Read get_operation after response loss. In an existing workspace, optionally selecting its engine. Does not inherit another Session native conversation; include relevant goals, decisions and remaining work in its first prompt."
     )]
     async fn create_session(
         &self,
@@ -167,15 +147,14 @@ impl McpServer {
             workspace_id,
             executor,
             name,
+            request_id,
+            project_id,
         }): Parameters<CreateSessionRequest>,
     ) -> Result<CallToolResult, ErrorData> {
         let workspace_id = match self.resolve_workspace_id(workspace_id) {
             Ok(id) => id,
             Err(error_result) => return Ok(Self::tool_error(error_result)),
         };
-        if let Err(error_result) = self.scope_allows_workspace(workspace_id) {
-            return Ok(Self::tool_error(error_result));
-        }
 
         let payload = CreateSessionPayload {
             workspace_id,
@@ -197,15 +176,22 @@ impl McpServer {
             }),
         };
 
-        let url = self.url("/api/sessions");
-        let session: Session = match self.send_json(self.client.post(&url).json(&payload)).await {
-            Ok(value) => value,
-            Err(error_result) => return Ok(Self::tool_error(error_result)),
-        };
-
-        Self::success(&CreateSessionResponse {
-            session: self.session_summary(session),
-        })
+        let mut body = serde_json::to_value(&payload).expect("Session input");
+        body["request_id"] = serde_json::json!(request_id);
+        body["project_id"] = serde_json::json!(
+            project_id.or_else(|| self.context.as_ref().and_then(|c| c.project_id))
+        );
+        match self
+            .send_json::<serde_json::Value>(
+                self.client
+                    .post(self.url("/api/mcp-stdio/create-session"))
+                    .json(&body),
+            )
+            .await
+        {
+            Ok(value) => Self::operation_result(value),
+            Err(error) => Ok(Self::tool_error(error)),
+        }
     }
 
     #[tool(description = "List all sessions for a workspace.")]
@@ -217,9 +203,6 @@ impl McpServer {
             Ok(id) => id,
             Err(error_result) => return Ok(Self::tool_error(error_result)),
         };
-        if let Err(error_result) = self.scope_allows_workspace(workspace_id) {
-            return Ok(Self::tool_error(error_result));
-        }
 
         let url = self.url(&format!("/api/sessions?workspace_id={workspace_id}"));
         let sessions: Vec<Session> = match self.send_json(self.client.get(&url)).await {
@@ -246,13 +229,10 @@ impl McpServer {
     ) -> Result<CallToolResult, ErrorData> {
         // Verify session exists and check scope
         let session_url = self.url(&format!("/api/sessions/{session_id}"));
-        let session: Session = match self.send_json(self.client.get(&session_url)).await {
+        let _session: Session = match self.send_json(self.client.get(&session_url)).await {
             Ok(value) => value,
             Err(error_result) => return Ok(Self::tool_error(error_result)),
         };
-        if let Err(error_result) = self.scope_allows_workspace(session.workspace_id) {
-            return Ok(Self::tool_error(error_result));
-        }
 
         let payload = UpdateSessionPayload {
             name: name.map(|value| value.trim().to_string()),
@@ -271,7 +251,7 @@ impl McpServer {
     }
 
     #[tool(
-        description = "Run a turn in an existing session. To change next-Run mode/reasoning, supply overrides plus the latest terminal agent_run_id, project_id and stable request_id. Omission preserves saved settings. Engine changes require create_session; REVIEW grants no additional permissions."
+        description = "Run a turn in an existing Session. Optional request_id provides durable replay protection independently of explicit Run/overrides/attachments; omission provides none. Continue requires a latest finished Run; use steering for running execution. To change next-Run mode/reasoning, supply overrides; explicitly pin agent_run_id for caller-observed latest-Run protection. Project context is required for durable receipts. Omission preserves saved settings. Engine changes require create_session; REVIEW grants no additional permissions."
     )]
     async fn run_session_prompt(
         &self,
@@ -290,95 +270,39 @@ impl McpServer {
             return Self::err("prompt must not be empty", None);
         }
 
-        let session_url = self.url(&format!("/api/sessions/{session_id}"));
-        let session: Session = match self.send_json(self.client.get(&session_url)).await {
-            Ok(value) => value,
-            Err(error_result) => return Ok(Self::tool_error(error_result)),
-        };
-        if let Err(error_result) = self.scope_allows_workspace(session.workspace_id) {
-            return Ok(Self::tool_error(error_result));
-        }
-        if self.orchestrator_session_id() == Some(session_id) {
-            return Self::err(
-                "Cannot run coding agent in the orchestrator session",
-                Some("Create or re-use a different session and run the coding agent there."),
-            );
-        }
-
-        if agent_run_id.is_some() || !overrides.is_empty() {
-            let (Some(agent_run_id), Some(project_id), Some(request_id)) =
-                (agent_run_id, project_id, request_id)
-            else {
-                return Self::err(
-                    "Checked continuation and overrides require agent_run_id, project_id and request_id",
-                    None::<&str>,
-                );
-            };
-            let url = self.url("/api/mcp-execution/continue");
-            return match self
-                .send_json::<serde_json::Value>(self.client.post(url).json(&serde_json::json!({
-                    "project_id": project_id,
-                    "workspace_id": session.workspace_id,
-                    "session_id": session_id,
-                    "agent_run_id": agent_run_id,
-                    "request_id": request_id,
-                    "prompt": prompt,
-                    "attachment_ids": attachment_ids,
-                    "overrides": overrides,
-                })))
-                .await
-            {
-                Ok(value) => Self::success(&value),
-                Err(error) => Ok(Self::tool_error(error)),
-            };
-        }
-
-        let executor_config = match self.executor_config_for_session(&session).await {
-            Ok(Some(config)) => config,
-            Ok(None) => {
-                let executor = match Self::normalize_executor_name(session.executor.as_deref())
-                    .and_then(|name| Self::parse_executor_agent(&name))
+        let body = serde_json::json!({"project_id":project_id.or_else(||self.context.as_ref().and_then(|c|c.project_id)),"request_id":request_id,"agent_run_id":agent_run_id,"session_id":session_id,"prompt":prompt,"attachment_ids":attachment_ids,"overrides":overrides});
+        match self
+            .send_json::<serde_json::Value>(
+                self.client
+                    .post(self.url("/api/mcp-stdio/continue"))
+                    .json(&body),
+            )
+            .await
+        {
+            Ok(mut value) => {
+                if value["status"] == "succeeded"
+                    && let Some(id) = value["agent_run_id"].as_str()
                 {
-                    Ok(executor) => executor,
-                    Err(error_result) => return Ok(Self::tool_error(error_result)),
-                };
-                ExecutorConfig::new(executor)
+                    let state: RunState = match self
+                        .send_json(self.client.get(self.url(&format!("/api/agent-runs/{id}"))))
+                        .await
+                    {
+                        Ok(state) => state,
+                        Err(mut e) => {
+                            e.diagnostic.outcome = utils::mcp_error::Outcome::Unknown;
+                            return Ok(Self::tool_error(e));
+                        }
+                    };
+                    value["operation_status"] = value["status"].clone();
+                    value["status"] = serde_json::json!(Self::agent_run_status_label(state.status));
+                    value["is_finished"] = serde_json::json!(state.status.is_terminal());
+                    value["state"] = serde_json::to_value(state).expect("Run state");
+                    return Self::success(&value);
+                }
+                Self::operation_result(value)
             }
-            Err(error_result) => return Ok(Self::tool_error(error_result)),
-        };
-
-        if !attachment_ids.is_empty() {
-            let (Some(project_id), Some(request_id)) = (project_id, request_id) else {
-                return Self::err(
-                    "Attachments require project_id and request_id",
-                    None::<&str>,
-                );
-            };
-            let url = self.url("/api/attachment-transfer/continue");
-            return match self.send_json::<serde_json::Value>(self.client.post(url).json(&serde_json::json!({"project_id":project_id,"request_id":request_id,"workspace_id":session.workspace_id,"session_id":session_id,"attachment_ids":attachment_ids,"prompt":prompt}))).await {
-                Ok(value)=>Self::success(&value),Err(error)=>Ok(Self::tool_error(error)),
-            };
+            Err(error) => Ok(Self::tool_error(error)),
         }
-        let payload = FollowUpPayload {
-            prompt: prompt.to_string(),
-            executor_config,
-        };
-
-        let url = self.url(&format!("/api/sessions/{session_id}/follow-up"));
-        let snapshot: AgentRunPortSnapshot =
-            match self.send_json(self.client.post(&url).json(&payload)).await {
-                Ok(value) => value,
-                Err(error_result) => return Ok(Self::tool_error(error_result)),
-            };
-        let state = snapshot.state;
-
-        Self::success(&RunCodingAgentInSessionResponse {
-            session_id: session_id.to_string(),
-            agent_run_id: snapshot.agent_run_id.to_string(),
-            status: Self::agent_run_status_label(state.status).to_string(),
-            is_finished: state.status.is_terminal(),
-            state: serde_json::to_value(&state).unwrap_or(serde_json::Value::Null),
-        })
     }
 
     #[tool(
@@ -391,13 +315,10 @@ impl McpServer {
         >,
     ) -> Result<CallToolResult, ErrorData> {
         let session_url = self.url(&format!("/api/sessions/{session_id}"));
-        let session: Session = match self.send_json(self.client.get(&session_url)).await {
+        let _session: Session = match self.send_json(self.client.get(&session_url)).await {
             Ok(value) => value,
             Err(error) => return Ok(Self::tool_error(error)),
         };
-        if let Err(error) = self.scope_allows_workspace(session.workspace_id) {
-            return Ok(Self::tool_error(error));
-        }
         let url = self.url(&format!("/api/sessions/{session_id}/execution-settings"));
         match self
             .send_json::<serde_json::Value>(self.client.get(url))
@@ -424,9 +345,6 @@ impl McpServer {
             Ok(value) => value,
             Err(error_result) => return Ok(Self::tool_error(error_result)),
         };
-        if let Err(error_result) = self.scope_allows_workspace(session.workspace_id) {
-            return Ok(Self::tool_error(error_result));
-        }
 
         let session_executor_config = match self.executor_config_for_session(&session).await {
             Ok(config) => config,
@@ -476,7 +394,6 @@ impl McpServer {
     }
 
     fn session_summary(&self, session: Session) -> SessionSummary {
-        let is_orchestrator_session = self.orchestrator_session_id() == Some(session.id);
         SessionSummary {
             id: session.id.to_string(),
             workspace_id: session.workspace_id.to_string(),
@@ -484,7 +401,6 @@ impl McpServer {
             executor: session.executor,
             created_at: session.created_at.to_rfc3339(),
             updated_at: session.updated_at.to_rfc3339(),
-            is_orchestrator_session,
         }
     }
 
@@ -556,76 +472,48 @@ mod review_tests {
     }
 
     #[tokio::test]
-    async fn review_followup_reads_and_preserves_saved_configuration() {
-        let session = session();
-        let config = json!({"executor":"CODEX","execution_mode":"review","permission_policy":"SUPERVISED","variant":"DEFAULT","model_id":"fixture-model"});
-        // Deliberately reject after the POST: no real provider is started.
-        let (url, task) = api_fixture(vec![
-            (200, json!({"success":true,"data":session})),
-            (200, json!({"success":true,"data":config})),
-            (409, json!({})),
-        ])
-        .await;
-        let result = McpServer::new_global(&url)
-            .run_session_prompt(Parameters(RunCodingAgentInSessionRequest {
-                session_id: session.id,
-                project_id: None,
-                request_id: None,
-                agent_run_id: None,
-                overrides: NextRunOverrides::default(),
-                attachment_ids: Vec::new(),
-                prompt: "Investigate and report".into(),
-            }))
-            .await
-            .unwrap();
-        assert_eq!(result.is_error, Some(true));
-        let requests = task.await.unwrap();
-        assert!(requests[1].starts_with(&format!(
-            "GET /api/sessions/{}/executor-config ",
-            session.id
-        )));
-        assert!(requests[2].starts_with(&format!("POST /api/sessions/{}/follow-up ", session.id)));
-        let posted: serde_json::Value =
-            serde_json::from_str(requests[2].split_once("\r\n\r\n").unwrap().1).unwrap();
-        assert_eq!(posted["executor_config"], config);
-    }
-
-    #[tokio::test]
-    async fn next_run_overrides_use_checked_receipt_route() {
-        let session = session();
-        let run_id = Uuid::new_v4();
-        let request_id = Uuid::new_v4();
-        let project_id = Uuid::new_v4();
-        let overrides = json!({"execution_mode":{"action":"set","value":"code"},"reasoning_id":{"action":"reset"}});
-        let (url, task) = api_fixture(vec![
-            (200, json!({"success":true,"data":session})),
-            (
+    async fn continuation_preserves_request_id_with_or_without_explicit_run_overrides_and_attachments()
+     {
+        for explicit in [false, true] {
+            let request = Uuid::new_v4();
+            let run = Uuid::new_v4();
+            let overrides = if explicit {
+                json!({"reasoning_id":{"action":"reset"}})
+            } else {
+                json!({})
+            };
+            let attachments = if explicit {
+                vec![Uuid::new_v4()]
+            } else {
+                vec![]
+            };
+            let (url, task) = api_fixture(vec![(
                 200,
-                json!({"success":true,"data":{"execution_accepted":true,"session_id":session.id}}),
-            ),
-        ])
-        .await;
-        let result = McpServer::new_global(&url)
-            .run_session_prompt(Parameters(RunCodingAgentInSessionRequest {
-                session_id: session.id,
-                project_id: Some(project_id),
-                request_id: Some(request_id),
-                agent_run_id: Some(run_id),
-                overrides: serde_json::from_value(overrides.clone()).unwrap(),
-                attachment_ids: Vec::new(),
-                prompt: "Continue implementation".into(),
-            }))
-            .await
-            .unwrap();
-        assert_ne!(result.is_error, Some(true));
-        let requests = task.await.unwrap();
-        assert!(requests[1].starts_with("POST /api/mcp-execution/continue "));
-        let posted: serde_json::Value =
-            serde_json::from_str(requests[1].split_once("\r\n\r\n").unwrap().1).unwrap();
-        assert_eq!(posted["overrides"], overrides);
-        assert_eq!(posted["agent_run_id"], run_id.to_string());
-        assert_eq!(posted["request_id"], request_id.to_string());
-        assert!(posted.get("executor_config").is_none());
+                json!({"success":true,"data":{"status":"accepted","request_id":request}}),
+            )])
+            .await;
+            let result = McpServer::new_global(&url)
+                .run_session_prompt(Parameters(RunCodingAgentInSessionRequest {
+                    session_id: Uuid::new_v4(),
+                    project_id: Some(Uuid::new_v4()),
+                    request_id: Some(request),
+                    agent_run_id: explicit.then_some(run),
+                    overrides: serde_json::from_value(overrides.clone()).unwrap(),
+                    attachment_ids: attachments.clone(),
+                    prompt: "Continue".into(),
+                }))
+                .await
+                .unwrap();
+            assert_ne!(result.is_error, Some(true));
+            let requests = task.await.unwrap();
+            assert_eq!(requests.len(), 1);
+            assert!(requests[0].starts_with("POST /api/mcp-stdio/continue "));
+            let posted: serde_json::Value =
+                serde_json::from_str(requests[0].split_once("\r\n\r\n").unwrap().1).unwrap();
+            assert_eq!(posted["request_id"], request.to_string());
+            assert_eq!(posted["overrides"], overrides);
+            assert_eq!(posted["attachment_ids"], json!(attachments));
+        }
     }
 
     #[tokio::test]

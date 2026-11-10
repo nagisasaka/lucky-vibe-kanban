@@ -12,10 +12,13 @@ use uuid::Uuid;
 use super::{
     Remote,
     auth::Principal,
+    issue_mutations::{Mutation, domain_failure, parse_revision},
     operations::{Operations, Receipt},
     read::{arguments, definition},
 };
-use crate::{error::ApiError, routes::local_remote};
+#[cfg(test)]
+use crate::error::ApiError;
+use crate::routes::local_remote;
 
 #[derive(Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
@@ -49,9 +52,8 @@ struct UpdateArgs {
     #[schemars(length(max = 64000))]
     description: Option<String>,
     status_id: Option<Uuid>,
-    /// Omit to preserve; explicit null resets to medium.
-    #[serde(default, deserialize_with = "api_types::some_if_present")]
-    priority: Option<Option<api_types::IssuePriority>>,
+    /// Omitted/null preserves priority. Set medium explicitly to reset.
+    priority: Option<api_types::IssuePriority>,
     /// Set or replace the parent. Omitted/null preserves the existing parent.
     parent_issue_id: Option<Uuid>,
     /// Explicitly detach only the parent relationship. Cannot combine with a parent ID.
@@ -83,7 +85,7 @@ pub(super) fn tools() -> Vec<Tool> {
         ),
         definition::<UpdateArgs>(
             "update_issue",
-            "Apply Issue changes, including conversation-based priority classification, against the revision from get_issue. Does not steer existing runs or start implementation. Omitted fields stay unchanged. parent_issue_id sets/replaces a parent; null preserves it. Only clear_parent:true detaches it. Read get_issue before and after; parent cycles are rejected.",
+            "Apply Issue changes, including conversation-based priority classification, against the revision from get_issue. Does not steer existing runs or start implementation. Omitted fields and priority:null stay unchanged; set priority:\"medium\" explicitly to reset. parent_issue_id sets/replaces a parent; null preserves it. Only clear_parent:true detaches it. Read get_issue before and after; parent cycles are rejected.",
         ),
     ];
     for tool in &mut tools {
@@ -128,83 +130,8 @@ impl Remote {
         Ok(())
     }
     pub(super) fn receipt_value(&self, receipt: Receipt) -> Value {
-        let object = |raw: &str| {
-            serde_json::from_str::<Value>(raw)
-                .ok()
-                .filter(Value::is_object)
-        };
-        let targets = object(&receipt.targets);
-        let result = receipt.result.as_deref().and_then(object);
-        // Older saved successful design-note receipts may contain full snapshots.
-        // Project at every delivery (including get_operation/retry), without rewriting
-        // the stored evidence or replacing committed revisions with current state.
-        let result = if receipt.operation == "write_design_note" && receipt.status == "succeeded" {
-            result
-                .and_then(|v| {
-                    serde_json::from_value::<db::models::design_note::DesignNoteReceipt>(v).ok()
-                })
-                .and_then(|v| serde_json::to_value(v).ok())
-        } else {
-            result
-        };
-        let unreadable = targets.is_none()
-            || (receipt.result.is_some() && result.is_none())
-            || (matches!(receipt.status.as_str(), "succeeded" | "failed") && result.is_none());
-        let status = if unreadable {
-            "uncertain"
-        } else {
-            &receipt.status
-        };
-        let result = if unreadable {
-            Some(
-                json!({"code":"receipt_unreadable","message":"Stored operation evidence is incomplete or unreadable. Inspect these targets and the original request ID before any new request."}),
-            )
-        } else {
-            result
-        };
-        let mut result = result;
-        let diagnostic = if matches!(status, "failed" | "uncertain") {
-            use utils::mcp_error::{Category, Diagnostic, Outcome};
-            let category = result
-                .as_ref()
-                .and_then(|v| v.get("error"))
-                .and_then(|v| v.get("category"))
-                .and_then(|v| serde_json::from_value::<Category>(v.clone()).ok());
-            let mut diagnostic = if status == "uncertain" {
-                Diagnostic::new(Category::OutcomeUnknown, Outcome::Unknown)
-            } else if let Some(category) = category {
-                Diagnostic::new(category, Outcome::Failed)
-            } else {
-                super::errors::receipt_diagnostic(status, result.as_ref())
-            };
-            diagnostic.correlation_id = receipt.id;
-            let diagnostic = diagnostic.value();
-            if let Some(result) = result.as_mut().and_then(Value::as_object_mut)
-                && result.contains_key("error")
-            {
-                result.insert("error".into(), diagnostic.clone());
-            }
-            Some(diagnostic)
-        } else {
-            None
-        };
-        let mut value = json!({"operation_id":receipt.id,"request_id":receipt.request_id,"project_id":receipt.project_id,"operation":receipt.operation,"targets":targets,"status":status,"result":result,"created_at":receipt.created_at,"updated_at":receipt.updated_at,"url":self.config.project_url(receipt.project_id)});
-        if let Some(diagnostic) = diagnostic {
-            value["error"] = diagnostic;
-            utils::mcp_error::redact_failure_context(&mut value);
-        }
-        value
+        super::issue_mutations::receipt_value(receipt, |project| self.config.project_url(project))
     }
-}
-
-pub(super) fn parse_revision(value: &str) -> anyhow::Result<chrono::DateTime<chrono::Utc>> {
-    value
-        .parse::<chrono::DateTime<chrono::Utc>>()
-        .or_else(|_| {
-            chrono::NaiveDateTime::parse_from_str(value, "%Y-%m-%d %H:%M:%S%.f")
-                .map(|v| v.and_utc())
-        })
-        .map_err(|_| super::errors::rejection(Category::Validation))
 }
 
 fn validate_text(text: &str, max: usize, required: bool) -> anyhow::Result<()> {
@@ -218,74 +145,6 @@ fn validate_text(text: &str, max: usize, required: bool) -> anyhow::Result<()> {
     Ok(())
 }
 
-// Only our explicit validation errors leave the boundary. Domain errors may
-// include SQL, filesystem paths or user-supplied data and are never forwarded.
-pub(super) fn domain_failure(error: local_remote::IssueMutationError) -> (&'static str, Value) {
-    use utils::mcp_error::{Category, Diagnostic, Outcome};
-    let (status, category, outcome, code, message) = match error {
-        local_remote::IssueMutationError::OutcomeUnknown(_) => (
-            "uncertain",
-            Category::OutcomeUnknown,
-            Outcome::Unknown,
-            "domain_outcome_unavailable",
-            "Inspect this receipt and the Issue using the original request ID before any new request.",
-        ),
-        local_remote::IssueMutationError::Failed(error) => {
-            let (category, code, message) = match error {
-                ApiError::Conflict(_) => (
-                    Category::Conflict,
-                    "revision_conflict",
-                    "Issue changed; read its current requirements before submitting a new update.",
-                ),
-                ApiError::BadRequest(ref message) if message == "Issue not found" => {
-                    (Category::NotFound, "not_found", "Issue was not found.")
-                }
-                ApiError::BadRequest(_) | ApiError::PayloadTooLarge => (
-                    Category::Validation,
-                    "validation_failed",
-                    "Issue changes failed validation.",
-                ),
-                ApiError::Unauthorized | ApiError::Forbidden(_) => (
-                    Category::Permission,
-                    "permission_denied",
-                    "Permission is required for this operation.",
-                ),
-                ApiError::Database(sqlx::Error::RowNotFound) => (
-                    Category::NotFound,
-                    "not_found",
-                    "The requested target was not found.",
-                ),
-                ApiError::Database(sqlx::Error::Database(ref error))
-                    if error
-                        .code()
-                        .and_then(|code| code.parse::<i32>().ok())
-                        .is_some_and(|code| matches!(code & 0xff, 5 | 6)) =>
-                {
-                    (
-                        Category::Busy,
-                        "resource_busy",
-                        "The database is busy; this Issue write was not committed.",
-                    )
-                }
-                ApiError::Database(sqlx::Error::PoolTimedOut | sqlx::Error::PoolClosed) => (
-                    Category::Unavailable,
-                    "unavailable",
-                    "The database is unavailable; this Issue write was not committed.",
-                ),
-                _ => (
-                    Category::Internal,
-                    "internal_error",
-                    "The Issue write failed before commit.",
-                ),
-            };
-            ("failed", category, Outcome::Failed, code, message)
-        }
-    };
-    (
-        status,
-        json!({"code":code,"message":message,"error":Diagnostic::new(category, outcome).value()}),
-    )
-}
 fn validation_failure(error: anyhow::Error) -> (&'static str, Value) {
     let error = match error.downcast::<sqlx::Error>() {
         Ok(error) => return domain_failure(local_remote::IssueMutationError::Failed(error.into())),
@@ -366,10 +225,9 @@ pub(super) async fn call(
                 if let Err(error) = owned.require_status(args.project_id, args.status_id).await { return validation_failure(error); }
                 // The receipt ID is also the domain's client-generated Issue ID.
                 let request: CreateIssueRequest = serde_json::from_value(json!({"id":id,"project_id":args.project_id,"status_id":args.status_id,"title":args.title,"description":args.description,"priority":args.priority,"sort_order":0.0,"extension_metadata":null,"parent_issue_id":args.parent_issue_id})).expect("Issue request fields");
-                match local_remote::create_local_issue_with_tags_outcome(&owned.pool, request, &args.tag_ids).await {
-                    Ok(issue) => ("succeeded", json!({"issue_id":issue.id,"url":owned.config.issue_url(issue.project_id, issue.id),"implementation_started":false})),
-                    Err(error) => domain_failure(error),
-                }
+                let (status, mut value) = Mutation::Create { request, tag_ids: args.tag_ids }.apply(&owned.pool, id).await;
+                if status == "succeeded" { value["url"] = json!(owned.config.issue_url(args.project_id, id)); }
+                (status, value)
             }).await?
         }
         "delete_issue" => {
@@ -385,19 +243,13 @@ pub(super) async fn call(
                     input,
                     json!({"project_id":args.project_id,"issue_id":args.issue_id}),
                     move |_| async move {
-                        match local_remote::delete_local_issue_outcome(
-                            &owned.pool,
-                            args.issue_id,
-                            Some(args.project_id),
-                        )
-                        .await
-                        {
-                            Ok(true) => ("succeeded", json!({"deleted_issue_id":args.issue_id})),
-                            Ok(false) => domain_failure(local_remote::IssueMutationError::Failed(
-                                ApiError::BadRequest("Issue not found".into()),
-                            )),
-                            Err(error) => domain_failure(error),
+                        Mutation::Delete {
+                            issue_id: args.issue_id,
+                            project_id: args.project_id,
+                            missing_is_success: false,
                         }
+                        .apply(&owned.pool, Uuid::nil())
+                        .await
                     },
                 )
                 .await?
@@ -414,7 +266,7 @@ pub(super) async fn call(
                 args.title.is_some()
                     || args.description.is_some()
                     || args.status_id.is_some()
-                    || args.priority.is_some()
+                    || input.get("priority").is_some()
                     || args.parent_issue_id.is_some()
                     || args.clear_parent == Some(true),
                 super::errors::rejection_with_message(
@@ -426,25 +278,64 @@ pub(super) async fn call(
                 !(args.parent_issue_id.is_some() && args.clear_parent == Some(true)),
                 super::errors::rejection(Category::Validation)
             );
-            let revision = parse_revision(&args.expected_revision)?;
+            parse_revision(&args.expected_revision)?;
             remote.require_project(args.project_id).await?;
-            remote.operations().submit(key, args.request_id, args.project_id, name.into(), input, json!({"project_id":args.project_id,"issue_id":args.issue_id}), move |_| async move {
-                if let Err(error) = owned.require_issue(args.project_id, args.issue_id).await { return validation_failure(error); }
-                if let Some(status) = args.status_id
-                    && let Err(error) = owned.require_status(args.project_id, status).await { return validation_failure(error); }
-                let mut changes = json!({});
-                if let Some(title) = args.title { changes["title"] = json!(title); }
-                if let Some(description) = args.description { changes["description"] = json!(description); }
-                if let Some(status) = args.status_id { changes["status_id"] = json!(status); }
-                if let Some(priority) = args.priority { changes["priority"] = json!(priority); }
-                if let Some(parent) = args.parent_issue_id { changes["parent_issue_id"] = json!(parent); }
-                if args.clear_parent == Some(true) { changes["parent_issue_id"] = Value::Null; }
-                let request: UpdateIssueRequest = serde_json::from_value(changes).expect("Issue update fields");
-                match local_remote::update_local_issue_checked_outcome(&owned.pool, args.issue_id, request, Some(revision)).await {
-                    Ok(issue) => ("succeeded", json!({"issue_id":issue.id,"url":owned.config.issue_url(issue.project_id, issue.id),"implementation_started":false})),
-                    Err(error) => domain_failure(error),
-                }
-            }).await?
+            remote
+                .operations()
+                .submit(
+                    key,
+                    args.request_id,
+                    args.project_id,
+                    name.into(),
+                    input,
+                    json!({"project_id":args.project_id,"issue_id":args.issue_id}),
+                    move |_| async move {
+                        if let Err(error) =
+                            owned.require_issue(args.project_id, args.issue_id).await
+                        {
+                            return validation_failure(error);
+                        }
+                        if let Some(status) = args.status_id
+                            && let Err(error) = owned.require_status(args.project_id, status).await
+                        {
+                            return validation_failure(error);
+                        }
+                        let mut changes = json!({});
+                        if let Some(title) = args.title {
+                            changes["title"] = json!(title);
+                        }
+                        if let Some(description) = args.description {
+                            changes["description"] = json!(description);
+                        }
+                        if let Some(status) = args.status_id {
+                            changes["status_id"] = json!(status);
+                        }
+                        if let Some(priority) = args.priority {
+                            changes["priority"] = json!(priority);
+                        }
+                        if let Some(parent) = args.parent_issue_id {
+                            changes["parent_issue_id"] = json!(parent);
+                        }
+                        if args.clear_parent == Some(true) {
+                            changes["parent_issue_id"] = Value::Null;
+                        }
+                        let request: UpdateIssueRequest =
+                            serde_json::from_value(changes).expect("Issue update fields");
+                        let (status, mut value) = Mutation::Update {
+                            issue_id: args.issue_id,
+                            changes: request,
+                            expected_revision: Some(args.expected_revision),
+                        }
+                        .apply(&owned.pool, Uuid::nil())
+                        .await;
+                        if status == "succeeded" {
+                            value["url"] =
+                                json!(owned.config.issue_url(args.project_id, args.issue_id));
+                        }
+                        (status, value)
+                    },
+                )
+                .await?
         }
         _ => return Err(super::errors::rejection(Category::Validation)),
     };

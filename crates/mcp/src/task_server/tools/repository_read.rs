@@ -1,14 +1,14 @@
-use git::repository_read::{Request, Target};
+use git::repository_read::Request;
 use rmcp::{
     ErrorData, handler::server::wrapper::Parameters, model::CallToolResult, tool, tool_router,
 };
 
-use super::{McpMode, McpServer};
+use super::McpServer;
 
 #[tool_router(router = repository_read_tools_router, vis = "pub")]
 impl McpServer {
     #[tool(
-        description = "Explore an authorised Project repository: commit refs (no Workspace required) or explicit live Workspace. Typed list/glob, literal/regex grep with content/files/count, line read, fixed-head log, direct/merge_base/parent diff. Returns full SHA/revision, budgets and exclusions. Repeat original arguments with next_cursor until complete; cursor expires on server restart. Workspace reads are non-atomic and revision mismatch requires restart. Same read service as remote MCP; no shell or model calls.",
+        description = "Explore an authorised Project repository: commit refs (no Workspace required) or explicit live Workspace. Read accepts legacy path/start_line/end_line or 1–8 ranges (maximum 200 lines each, 64 KiB item bytes); pass each item content revision as its expected_revision, and inspect per-item failures. Typed list/glob, literal/regex grep with content/files/count, line read, fixed-head log, direct/merge_base/parent diff. Returns full SHA/revision, budgets and exclusions. Repeat original arguments with next_cursor until complete; cursor expires on server restart. Workspace reads are non-atomic and revision mismatch requires restart. Same read service as remote MCP; no shell or model calls.",
         annotations(
             read_only_hint = true,
             destructive_hint = false,
@@ -19,20 +19,6 @@ impl McpServer {
         &self,
         Parameters(request): Parameters<Request>,
     ) -> Result<CallToolResult, ErrorData> {
-        if let Target::Workspace { workspace_id } = &request.target
-            && let Err(e) = self.scope_allows_workspace(*workspace_id)
-        {
-            return Ok(Self::tool_error(e));
-        }
-        if matches!(self.mode(), McpMode::Orchestrator)
-            && let Some(project) = self.context.as_ref().and_then(|c| c.project_id)
-            && project != request.project_id
-        {
-            return Ok(Self::tool_error(super::ToolError::classified(
-                super::Category::Permission,
-                super::Outcome::Failed,
-            )));
-        }
         match self
             .send_read_json::<serde_json::Value>(
                 self.client
@@ -43,49 +29,6 @@ impl McpServer {
         {
             Ok(value) => Self::success(&value),
             Err(e) => Ok(Self::tool_error(e)),
-        }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use serde_json::json;
-    use uuid::Uuid;
-
-    use super::*;
-    #[tokio::test]
-    async fn typed_tool_catalogues_and_scope_rejection_precede_http() {
-        let global = McpServer::global_mode_router();
-        let scoped = McpServer::orchestrator_mode_router();
-        let a = global.list_all();
-        let b = scoped.list_all();
-        let a = a.iter().find(|t| t.name == "query_repository").unwrap();
-        let b = b.iter().find(|t| t.name == "query_repository").unwrap();
-        assert_eq!(a.input_schema, b.input_schema);
-        for field in ["target", "operation", "cursor", "expected_revision"] {
-            assert!(a.input_schema["properties"].get(field).is_some());
-        }
-        let project = Uuid::new_v4();
-        let workspace = Uuid::new_v4();
-        let mut server = McpServer::new_orchestrator("http://127.0.0.1:1");
-        server.context = Some(crate::task_server::McpContext {
-            organization_id: None,
-            project_id: Some(project),
-            issue_id: None,
-            orchestrator_session_id: None,
-            workspace_id: workspace,
-            workspace_branch: "fixture".into(),
-            workspace_repos: vec![],
-        });
-        for target in [
-            json!({"mode":"workspace","workspace_id":Uuid::new_v4()}),
-            json!({"mode":"commit","ref":"main"}),
-        ] {
-            let request:Request=serde_json::from_value(json!({"project_id":Uuid::new_v4(),"repository_id":Uuid::new_v4(),"target":target,"operation":{"kind":"list"}})).unwrap();
-            let result = server.query_repository(Parameters(request)).await.unwrap();
-            assert_eq!(result.is_error, Some(true));
-            let text = serde_json::to_value(result).unwrap().to_string();
-            assert!(!text.contains("connect to VK"));
         }
     }
 }
