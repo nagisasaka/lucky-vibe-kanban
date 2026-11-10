@@ -247,9 +247,6 @@ pub fn publication_paths(
     if std::fs::read(&instructions_path)? != expected_instructions {
         anyhow::bail!("OpenWiki changed user-authored INSTRUCTIONS.md; publication refused");
     }
-    let generated = management::generated_paths(root, source)?;
-    let snapshot = git.snapshot(root, source)?;
-    let original_paths = snapshot.entries()?;
     let manifest_path = root.join("openwiki/.page-manifest.json");
     utils::repository_memory::reject_symlinks(&manifest_path)?;
     if manifest_path.exists() {
@@ -265,18 +262,16 @@ pub fn publication_paths(
         let pages = manifest["pages"]
             .as_object()
             .context("Invalid OpenWiki page manifest")?;
-        for entry in &original_paths {
-            if entry.path.starts_with("openwiki/")
-                && entry.path != management::INSTRUCTIONS
-                && !generated.contains(&entry.path)
-            {
-                anyhow::ensure!(
-                    !pages.contains_key(&entry.path)
-                        && !pages.contains_key(&format!("/{}", entry.path)),
-                    "OpenWiki adopted human-managed document {} as generated; publication refused. Exclude it with saved .openwikiignore before retrying",
-                    entry.path
-                );
-            }
+        for path in pages.keys() {
+            let path = path.strip_prefix('/').unwrap_or(path);
+            anyhow::ensure!(
+                path.starts_with("openwiki/")
+                    && path.ends_with(".md")
+                    && !management::configuration_path(path)
+                    && !path.contains(['\\', ':', '\0'])
+                    && !path.split('/').any(|part| matches!(part, "" | "." | "..")),
+                "Invalid OpenWiki page manifest path: {path}"
+            );
         }
     }
     let mut result = Vec::new();
@@ -293,12 +288,6 @@ pub fn publication_paths(
             );
         } else if !super::repository_memory::canonical_wiki_path(&path) {
             anyhow::bail!("OpenWiki modified source/configuration {path}; publication refused");
-        }
-        if path != management::INSTRUCTIONS
-            && original_paths.iter().any(|entry| entry.path == path)
-            && !generated.contains(&path)
-        {
-            anyhow::bail!("OpenWiki changed human-managed document {path}; publication refused");
         }
         result.push(path);
     }
@@ -603,13 +592,18 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn delete_and_rebuild_preserve_human_files_and_public_wiki_until_publication() {
+    async fn maintenance_region_preserves_configuration_until_publication() {
         for delete in [false, true] {
             let temp = tempfile::tempdir().unwrap();
             let root = temp.path().join("repo");
             let (store, _, maintenance) = publication_fixture(&root);
             std::fs::write(root.join(".openwikiignore"), "# saved policy\n").unwrap();
-            std::fs::write(root.join("openwiki/human.md"), "human knowledge\n").unwrap();
+            std::fs::create_dir(root.join("openwiki/integrations")).unwrap();
+            std::fs::write(
+                root.join("openwiki/integrations/index.md"),
+                "# Markerless structural index\n",
+            )
+            .unwrap();
             std::fs::create_dir(root.join("openwiki/retired")).unwrap();
             std::fs::write(
                 root.join("openwiki/retired/page.md"),
@@ -634,7 +628,7 @@ mod tests {
             assert!(!maintenance.join("openwiki/retired").exists());
             assert!(root.join("openwiki/retired/page.md").exists());
             assert!(paths.contains(&"openwiki/old.md".to_owned()));
-            assert!(!paths.contains(&"openwiki/human.md".to_owned()));
+            assert!(paths.contains(&"openwiki/integrations/index.md".to_owned()));
             let git = git::GitService::new();
             if delete {
                 let original = std::fs::read_to_string(maintenance.join("AGENTS.md")).unwrap();
@@ -667,30 +661,25 @@ mod tests {
                 run_id: uuid::Uuid::new_v4(),
             };
             if !delete {
+                std::fs::create_dir(maintenance.join("openwiki/integrations")).unwrap();
                 std::fs::write(
-                    maintenance.join("openwiki/human.md"),
-                    "modified by generator",
+                    maintenance.join("openwiki/integrations/index.md"),
+                    "# Regenerated structural index\n",
                 )
                 .unwrap();
                 assert!(
-                    publish_validated_wiki(&git, &store, &request)
-                        .await
-                        .is_err()
+                    publication_paths(&git, &maintenance, &source)
+                        .unwrap()
+                        .contains(&"openwiki/integrations/index.md".to_owned())
                 );
-                assert!(root.join("openwiki/old.md").exists());
-                std::fs::write(maintenance.join("openwiki/human.md"), "human knowledge\n").unwrap();
-                // Untouched human documents must not become future deletion
-                // targets through automatic manifest seeding either.
-                let manifest = maintenance.join("openwiki/.page-manifest.json");
+                // Manifest inclusion does not confer ownership; the region already does.
                 std::fs::write(
-                    &manifest,
-                    serde_json::to_vec(&serde_json::json!({
-                        "schemaVersion": 1,
-                        "pages": {"/openwiki/human.md": {"pageVersion": format!("sha256:{}", "a".repeat(64))}}
-                    })).unwrap(),
-                ).unwrap();
-                assert!(publication_paths(&git, &maintenance, &source).is_err());
-                std::fs::remove_file(manifest).unwrap();
+                    maintenance.join("openwiki/.page-manifest.json"),
+                    r#"{"schemaVersion":1,"pages":{"/openwiki/integrations/index.md":{}}}"#,
+                )
+                .unwrap();
+                let paths = publication_paths(&git, &maintenance, &source).unwrap();
+                assert!(paths.contains(&"openwiki/integrations/index.md".to_owned()));
             }
             let first = publish_repository_files(
                 &git,
@@ -710,10 +699,14 @@ mod tests {
             .unwrap();
             assert_eq!(first, replay);
             assert!(!root.join("openwiki/old.md").exists());
-            assert_eq!(
-                std::fs::read_to_string(root.join("openwiki/human.md")).unwrap(),
-                "human knowledge\n"
-            );
+            if delete {
+                assert!(!root.join("openwiki/integrations/index.md").exists());
+            } else {
+                assert_eq!(
+                    std::fs::read_to_string(root.join("openwiki/integrations/index.md")).unwrap(),
+                    "# Regenerated structural index\n"
+                );
+            }
             assert_eq!(
                 std::fs::read_to_string(root.join(".openwikiignore")).unwrap(),
                 "# saved policy\n"
@@ -1010,6 +1003,44 @@ mod tests {
         .unwrap();
         std::fs::write(maintenance.join("AGENTS.md"), "rewritten user rules\n").unwrap();
         assert!(publication_paths(&git, &maintenance, &source).is_err());
+    }
+
+    #[tokio::test]
+    async fn publication_keeps_configuration_and_manifest_boundary_checks() {
+        let temp = tempfile::tempdir().unwrap();
+        let root = temp.path().join("repo");
+        let (_, source, maintenance) = publication_fixture(&root);
+        let git = git::GitService::new();
+        // Ignore configuration is outside the generated region, even when newly added.
+        std::fs::write(maintenance.join(management::IGNORE), "new rule").unwrap();
+        assert!(publication_paths(&git, &maintenance, &source).is_err());
+        std::fs::remove_file(maintenance.join(management::IGNORE)).unwrap();
+        let manifest = maintenance.join("openwiki/.page-manifest.json");
+        for value in [
+            serde_json::json!({"schemaVersion": 2, "pages": {}}),
+            serde_json::json!({"schemaVersion": 1, "pages": []}),
+            serde_json::json!({"schemaVersion": 1, "pages": {"openwiki/../source.md": {}}}),
+            serde_json::json!({"schemaVersion": 1, "pages": {"openwiki/INSTRUCTIONS.md": {}}}),
+        ] {
+            std::fs::write(&manifest, value.to_string()).unwrap();
+            assert!(publication_paths(&git, &maintenance, &source).is_err());
+        }
+        std::fs::remove_file(manifest).unwrap();
+        #[cfg(unix)]
+        {
+            let link = maintenance.join("openwiki/escape.md");
+            std::os::unix::fs::symlink(root.join("source.txt"), &link).unwrap();
+            assert!(publication_paths(&git, &maintenance, &source).is_err());
+            command(&maintenance, &["add", "openwiki/escape.md"]);
+            command(&maintenance, &["commit", "-m", "unsafe fixture"]);
+            let unsafe_source = command(&maintenance, &["rev-parse", "HEAD"]);
+            assert!(management::remove_generated(&maintenance, &unsafe_source).is_err());
+            assert!(maintenance.join("openwiki/index.md").exists());
+            assert_eq!(
+                std::fs::read_to_string(root.join("source.txt")).unwrap(),
+                "integrated source"
+            );
+        }
     }
 
     #[test]

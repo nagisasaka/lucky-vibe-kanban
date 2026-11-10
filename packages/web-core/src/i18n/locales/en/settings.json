@@ -1115,7 +1115,7 @@
       "rebuild": "Rebuild using existing Wiki",
       "rebuildHint": "Uses saved instructions, exclusions and a fixed previous Wiki as reference. Reconsiders structure against current source and documents. The current Wiki stays published until review and publication succeed. Save edits before starting.",
       "delete": "Delete generated Wiki",
-      "deleteHint": "Delete generated pages and OpenWiki-managed guidance on {{repository}} / {{branch}}. Instructions, ignore rules, human-managed documents and Git history remain. This does not delete the repository or erase history, and does not start regeneration. Automatic Wiki generation stays off until you explicitly initialize again.",
+      "deleteHint": "Delete content, indexes and generated metadata under openwiki/ and OpenWiki-managed guidance on {{repository}} / {{branch}}. Instructions (INSTRUCTIONS.md), ignore rules (.openwikiignore) and Git history remain. This does not delete the repository or erase history, and does not start regeneration. Automatic Wiki generation stays off until you explicitly initialize again.",
       "confirm": "Type {{target}} exactly to delete"
     }
   },

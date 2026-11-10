@@ -231,11 +231,11 @@ fn installed_openwiki_072_forced_update_accepts_clean_reconstruction_target() {
     git(&root, &["config", "user.name", "Fixture"]);
     git(&root, &["config", "user.email", "fixture@example.invalid"]);
     fs::write(root.join("source.rs"), "// Current source\n").unwrap();
-    fs::write(root.join(".openwikiignore"), "openwiki/human.md\n").unwrap();
+    fs::write(root.join(".openwikiignore"), "private/\n").unwrap();
     fs::write(root.join("openwiki/INSTRUCTIONS.md"), "User instructions\n").unwrap();
     fs::write(
-        root.join("openwiki/human.md"),
-        "Human-owned documentation\n",
+        root.join("openwiki/unmarked.md"),
+        "Markerless generated documentation\n",
     )
     .unwrap();
     fs::write(root.join("openwiki/index.md"), "Old index\n").unwrap();
@@ -276,10 +276,7 @@ process.stdout.write(JSON.stringify({status:result.view.status}));
         fs::read_to_string(root.join("openwiki/INSTRUCTIONS.md")).unwrap(),
         "User instructions\n"
     );
-    assert_eq!(
-        fs::read_to_string(root.join("openwiki/human.md")).unwrap(),
-        "Human-owned documentation\n"
-    );
+    assert!(!root.join("openwiki/unmarked.md").exists());
     assert!(!root.join("openwiki/old.md").exists());
     assert!(git(&root, &["show", &format!("{source}:openwiki/old.md")]).contains("Old knowledge"));
 }

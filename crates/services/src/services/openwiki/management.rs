@@ -1,8 +1,7 @@
-//! Narrow repository maintenance operations. Human documents and configuration
-//! are never inferred to be generated merely because they live under openwiki/.
+//! OpenWiki owns its generated maintenance region, except explicit configuration.
 use std::path::Path;
 
-use anyhow::{Context, ensure};
+use anyhow::ensure;
 use git::GitService;
 use utils::repository_memory::reject_symlinks;
 
@@ -16,99 +15,39 @@ pub fn configuration_path(path: &str) -> bool {
     matches!(path, INSTRUCTIONS | IGNORE)
 }
 
-/// Enumerate the frozen generated set, including legacy generated pages. Never
-/// remove an entire directory: unknown/human-owned files survive both operations.
+/// Enumerate the frozen maintenance region without guessing ownership from content.
+/// Markerless indexes are included; configuration survives rebuild and deletion.
 pub fn generated_paths(root: &Path, source: &str) -> anyhow::Result<Vec<String>> {
     let snapshot = GitService::new().snapshot(root, source)?;
-    let mut pages = std::collections::BTreeSet::new();
-    let entries = snapshot.entries()?;
-    if let Some(entry) = entries
-        .iter()
-        .find(|entry| entry.path == "openwiki/.page-manifest.json")
-    {
-        let manifest: serde_json::Value = serde_json::from_slice(
-            &snapshot
-                .read_blob(entry, 8 * 1024 * 1024)?
-                .context("Page manifest too large")?,
-        )?;
-        ensure!(
-            manifest["schemaVersion"] == 1,
-            "Unsupported OpenWiki page manifest"
-        );
-        for path in manifest["pages"]
-            .as_object()
-            .context("Invalid page manifest")?
-            .keys()
-        {
-            let path = path.strip_prefix('/').unwrap_or(path);
-            ensure!(safe_generated_page(path), "Invalid generated page path");
-            pages.insert(path.to_owned());
-        }
-    }
-    let mut result = Vec::new();
-    for entry in entries {
-        let path = &entry.path;
-        if !path.starts_with("openwiki/") || path == INSTRUCTIONS {
-            continue;
-        }
-        let metadata = matches!(
-            path.as_str(),
-            "openwiki/.page-manifest.json" | "openwiki/.last-update.json" | "openwiki/.run.json"
-        ) || path.starts_with("openwiki/.claims/");
-        let mut generated = pages.contains(path)
-            || matches!(
-                path.as_str(),
-                "openwiki/index.md" | "openwiki/quickstart.md"
+    let mut paths = Vec::new();
+    for entry in snapshot.entries()? {
+        if entry.path.starts_with("openwiki/") && !configuration_path(&entry.path) {
+            ensure!(
+                matches!(entry.mode, 0o100644 | 0o100755),
+                "OpenWiki maintenance path is not a regular file: {}",
+                entry.path
             );
-        if !generated
-            && safe_generated_page(path)
-            && let Some(bytes) = snapshot.read_blob(&entry, 2 * 1024 * 1024)?
-            && let Ok(text) = std::str::from_utf8(&bytes)
-        {
-            let mut lines = text.lines();
-            if lines.next() == Some("---") {
-                let header = lines
-                    .take_while(|line| *line != "---")
-                    .collect::<Vec<_>>()
-                    .join("\n");
-                if let Ok(header) = serde_yaml::from_str::<serde_yaml::Value>(&header) {
-                    generated = (path.ends_with("/index.md")
-                        && header.get("okf_version").is_some())
-                        || header
-                            .get("generated")
-                            .and_then(|v| v.get("by"))
-                            .and_then(|v| v.as_str())
-                            .is_some();
-                }
-            }
-        }
-        if metadata || generated {
-            result.push(path.clone());
+            paths.push(entry.path);
         }
     }
-    Ok(result)
-}
-
-fn safe_generated_page(path: &str) -> bool {
-    path.starts_with("openwiki/")
-        && path.ends_with(".md")
-        && path != INSTRUCTIONS
-        && !path.contains(['\\', ':', '\0'])
-        && !path.split('/').any(|part| matches!(part, "" | "." | ".."))
+    Ok(paths)
 }
 
 pub fn remove_generated(root: &Path, source: &str) -> anyhow::Result<Vec<String>> {
     let paths = generated_paths(root, source)?;
+    // Check the complete set before mutating any files.
+    for path in &paths {
+        reject_symlinks(&root.join(path))?;
+    }
     for path in &paths {
         let path = root.join(path);
-        reject_symlinks(&path)?;
         match std::fs::remove_file(path) {
             Ok(()) => {}
             Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
             Err(e) => return Err(e.into()),
         }
     }
-    // Remove only empty parents of known generated files. Otherwise upstream
+    // Remove only empty parents of maintenance files. Otherwise upstream
     // index synchronisation would recreate obsolete, empty taxonomy directories.
     let wiki = root.join("openwiki");
     for path in &paths {
@@ -150,7 +89,7 @@ pub fn remove_managed_block(text: &str) -> anyhow::Result<String> {
 
 pub fn reference_prompt(source: &str) -> String {
     format!(
-        "\nThis is a full reconstruction using the saved instructions and ignore rules. The immutable previous Wiki is in this repository's Git commit {source}. Read it via git show {source}:openwiki/<path> (enumerate with git ls-tree -r {source} -- openwiki); never treat the changing working tree as the old version. Respect the saved .openwikiignore when consulting historical pages and report excluded reference paths as coverage limits. Reconsider structure and explanation order, not only wording. Compare important operational knowledge and design constraints from that fixed version against current source/tests/configuration and maintained README/docs. Retain evidenced knowledge, label uncertainty, never invent rationale or blindly inherit old claims. Verify main entry links from README/AGENTS and stable Wiki entry points. Preserve human-managed documents and configuration. Report remaining knowledge gaps; complete recovery of all old knowledge is not guaranteed.\n"
+        "\nThis is a full reconstruction using the saved instructions and ignore rules. The immutable previous Wiki is in this repository's Git commit {source}. Read it via git show {source}:openwiki/<path> (enumerate with git ls-tree -r {source} -- openwiki); never treat the changing working tree as the old version. Respect the saved .openwikiignore when consulting historical pages and report excluded reference paths as coverage limits. Reconsider structure and explanation order, not only wording. Compare important operational knowledge and design constraints from that fixed version against current source/tests/configuration and maintained README/docs. Retain evidenced knowledge, label uncertainty, never invent rationale or blindly inherit old claims. Verify main entry links from README/AGENTS and stable Wiki entry points. Preserve INSTRUCTIONS.md, saved configuration and stable operational entry paths. Report remaining knowledge gaps; complete recovery of all old knowledge is not guaranteed.\n"
     )
 }
 

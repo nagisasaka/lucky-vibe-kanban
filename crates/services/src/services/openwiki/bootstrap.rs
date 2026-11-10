@@ -434,7 +434,7 @@ pub fn review_prompt(root: &Path, language: &str) -> String {
 pub fn rebuild_prompt(root: &Path, language: &str, source: &str) -> String {
     let prompt = writer_prompt(root, language, None).replace(
         "Start init and complete it in this phase. A verified openwiki_finish status=complete is mandatory; begin-noop is not a successful initial generation.",
-        "Start openwiki_begin mode=\"update\" with force=true and complete a full reconstruction in this phase; never use init because it deletes human-managed documents. A verified openwiki_finish status=complete is mandatory. LVK has cleared only the previous generated artifacts in this dedicated worktree; the published Wiki remains intact and the frozen Git reference remains readable. Plan the entire desired generated Wiki anew, including quickstart.md, using the existing plan/page/finish lifecycle. Use deletePages for obsolete generated pages still present in this target; do not request deletion of already absent reference pages. Do not retain obsolete pages just because they existed. Preserve human-managed files and stable entry paths, repairing references as needed."
+        "Start openwiki_begin mode=\"update\" with force=true and complete a full reconstruction in this phase; use update to preserve saved instructions and configuration. A verified openwiki_finish status=complete is mandatory. LVK has cleared only the previous generated artifacts in this dedicated worktree; the published Wiki remains intact and the frozen Git reference remains readable. Plan the entire desired generated Wiki anew, including quickstart.md, using the existing plan/page/finish lifecycle. Use deletePages for obsolete generated pages still present in this target; do not request deletion of already absent reference pages. Do not retain obsolete pages just because they existed. Preserve saved instructions, configuration and stable entry paths, repairing references as needed."
     );
     prompt + &super::management::reference_prompt(source)
 }
@@ -502,7 +502,9 @@ mod tests {
                 .contains("deletePages for obsolete generated pages still present in this target")
         );
         assert!(prompt.contains(&format!("Git commit {source}")));
-        assert!(prompt.contains("Preserve human-managed files and stable entry paths"));
+        assert!(
+            prompt.contains("Preserve saved instructions, configuration and stable entry paths")
+        );
         assert!(prompt.contains("maintained canonical documents"));
         assert!(!prompt.contains("Start init and complete it in this phase"));
         let reference = super::super::management::reference_prompt(&source);

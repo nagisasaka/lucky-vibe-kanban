@@ -530,7 +530,10 @@ mod tests {
             root.join("openwiki/old.md"),
             "---\ngenerated: { by: codex }\n---\n# Operational knowledge",
         )?;
-        std::fs::write(root.join("openwiki/human.md"), "human documentation")?;
+        std::fs::write(
+            root.join("openwiki/unmarked.md"),
+            "markerless generated documentation",
+        )?;
         std::fs::write(
             root.join("AGENTS.md"),
             "prefix\n<!-- OPENWIKI:START -->generated<!-- OPENWIKI:END -->\nsuffix  \n",
@@ -690,10 +693,7 @@ mod tests {
             std::fs::read_to_string(root.join(files::IGNORE))?,
             "# saved exclusions\n"
         );
-        assert_eq!(
-            std::fs::read_to_string(root.join("openwiki/human.md"))?,
-            "human documentation"
-        );
+        assert!(!root.join("openwiki/unmarked.md").exists());
         assert_eq!(
             std::fs::read_to_string(root.join("AGENTS.md"))?,
             "prefix\n\nsuffix  \n"
