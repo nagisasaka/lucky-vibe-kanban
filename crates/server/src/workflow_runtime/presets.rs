@@ -88,7 +88,14 @@ pub async fn establish(
         .iter()
         .find(|n| n.id == node_id)
         .ok_or_else(|| ApiError::BadRequest("Preset node missing".into()))?;
-    let pinned:Option<String>=sqlx::query_scalar("SELECT source_base FROM node_executions WHERE run_id=(SELECT run_id FROM node_executions WHERE orchestration_node_execution_id IN (SELECT node_execution_id FROM orchestration_agent_run_links WHERE agent_run_id=?) LIMIT 1) AND node_id=? ORDER BY iteration DESC LIMIT 1").bind(agent_run_id).bind(node_id).fetch_optional(pool).await?.flatten();
+    let pinned: Option<String> = sqlx::query_scalar(
+        "SELECT source_base FROM node_executions WHERE agent_run_id=? AND node_id=? ORDER BY iteration DESC LIMIT 1",
+    )
+    .bind(agent_run_id)
+    .bind(node_id)
+    .fetch_optional(pool)
+    .await?
+    .flatten();
     let mut manifests = Vec::new();
     if node.data.source_read_only == Some(false) {
         // Reuse normal coding completion, including its bounded publication lock.

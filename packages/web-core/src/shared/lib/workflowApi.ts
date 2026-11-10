@@ -1,6 +1,7 @@
 import { makeLocalApiRequest } from '@/shared/lib/localApiTransport';
 import type {
-  StartPresetRequest, PresetDefaults,
+  StartPresetRequest,
+  PresetDefaults,
   WorkflowTemplateListResponse,
   WorkflowTemplateResponse,
   CreateWorkflowRequest,
@@ -52,9 +53,15 @@ async function parseError(
   try {
     const body = await response.json();
     const message = body?.message || body?.error || fallback;
-    return Object.assign(new Error(`${message} (${response.status} ${response.statusText})`), { status: response.status });
+    return Object.assign(
+      new Error(`${message} (${response.status} ${response.statusText})`),
+      { status: response.status }
+    );
   } catch {
-    return Object.assign(new Error(`${fallback} (${response.status} ${response.statusText})`), { status: response.status });
+    return Object.assign(
+      new Error(`${fallback} (${response.status} ${response.statusText})`),
+      { status: response.status }
+    );
   }
 }
 

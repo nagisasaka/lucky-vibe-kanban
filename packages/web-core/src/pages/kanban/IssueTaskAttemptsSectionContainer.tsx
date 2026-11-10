@@ -31,10 +31,7 @@ import {
   useWorkflowAttemptMutations,
   useWorkflowAttempts,
 } from '@/shared/hooks/useWorkflowAttempts';
-import {
-  buildTaskAttempts,
-  type TaskAttemptView,
-} from '@/features/workflow';
+import { buildTaskAttempts, type TaskAttemptView } from '@/features/workflow';
 import { ConfirmDialog } from '@vibe/ui/components/ConfirmDialog';
 import { DeleteWorkspaceDialog } from '@vibe/ui/components/DeleteWorkspaceDialog';
 import type { IssueTaskAttemptCardData } from '@vibe/ui/components/IssueTaskAttemptCard';
@@ -82,7 +79,8 @@ export function IssueTaskAttemptsSectionContainer({
   const { membersWithProfilesById, isLoading: orgLoading } = useOrgContext();
   const { data: workflowAttemptData, isLoading: workflowAttemptsLoading } =
     useWorkflowAttempts(projectId, issueId, { enabled: !!projectId });
-  const { deleteAttempt: deleteWorkflowAttempt } = useWorkflowAttemptMutations();
+  const { deleteAttempt: deleteWorkflowAttempt } =
+    useWorkflowAttemptMutations();
 
   const localWorkspacesById = useMemo(() => {
     const map = new Map<string, (typeof activeWorkspaces)[number]>();
@@ -161,10 +159,15 @@ export function IssueTaskAttemptsSectionContainer({
     starting.current = true;
     setError(null);
     try {
-      if (pendingPreset.current?.issue_id === issueId && pendingPreset.current.project_id === projectId) {
+      if (
+        pendingPreset.current?.issue_id === issueId &&
+        pendingPreset.current.project_id === projectId
+      ) {
         const run = await workflowPresetsApi.start(pendingPreset.current);
         pendingPreset.current = null;
-        await queryClient.invalidateQueries({ queryKey: ['workflow-attempts'] });
+        await queryClient.invalidateQueries({
+          queryKey: ['workflow-attempts'],
+        });
         appNavigation.goToProjectWorkflowRun(projectId, run.id);
         return;
       }
@@ -187,12 +190,13 @@ export function IssueTaskAttemptsSectionContainer({
       });
       if (result.kind !== 'confirmed') return;
       const selection = result.selection;
-      const repos = selection.mode === 'worktree'
-        ? selection.repos.map(v => ({
-            repo_id: v.repo.id,
-            target_branch: v.targetBranch,
-          }))
-        : [];
+      const repos =
+        selection.mode === 'worktree'
+          ? selection.repos.map((v) => ({
+              repo_id: v.repo.id,
+              target_branch: v.targetBranch,
+            }))
+          : [];
       if (result.workflow) {
         pendingPreset.current = {
           request_id: crypto.randomUUID(),
@@ -204,7 +208,9 @@ export function IssueTaskAttemptsSectionContainer({
         };
         const run = await workflowPresetsApi.start(pendingPreset.current);
         pendingPreset.current = null;
-        await queryClient.invalidateQueries({ queryKey: ['workflow-attempts'] });
+        await queryClient.invalidateQueries({
+          queryKey: ['workflow-attempts'],
+        });
         appNavigation.goToProjectWorkflowRun(projectId, run.id);
       } else {
         const stage = result.singleStage;
@@ -215,21 +221,32 @@ export function IssueTaskAttemptsSectionContainer({
             preferredDirectoryPath:
               selection.mode === 'direct_folder' ? selection.path : null,
           },
-          linkedIssue: buildLinkedIssueCreateState(getIssue(issueId), projectId),
+          linkedIssue: buildLinkedIssueCreateState(
+            getIssue(issueId),
+            projectId
+          ),
           executorConfig: {
-            executor: stage?.engine === 'CLAUDE_CODE'
-              ? BaseCodingAgent.CLAUDE_CODE : BaseCodingAgent.CODEX,
+            executor:
+              stage?.engine === 'CLAUDE_CODE'
+                ? BaseCodingAgent.CLAUDE_CODE
+                : BaseCodingAgent.CODEX,
             variant: stage?.variant,
             model_id: stage?.model,
           },
         });
-        if (!await openWorkspaceCreateFromState(state, { issueId })) {
+        if (!(await openWorkspaceCreateFromState(state, { issueId }))) {
           throw new Error('Failed to prepare single-agent input');
         }
       }
     } catch (e) {
-      if (e && typeof e === 'object' && 'status' in e &&
-          typeof e.status === 'number' && e.status >= 400 && e.status < 500) {
+      if (
+        e &&
+        typeof e === 'object' &&
+        'status' in e &&
+        typeof e.status === 'number' &&
+        e.status >= 400 &&
+        e.status < 500
+      ) {
         pendingPreset.current = null;
       }
       setError(errorDiagnostic(e));
@@ -237,9 +254,19 @@ export function IssueTaskAttemptsSectionContainer({
       starting.current = false;
     }
   }, [
-    projectId, issueId, issueTitle, issueDescription, config, workspaces,
-    activeWorkspaces, archivedWorkspaces, routeState.hostId, queryClient,
-    appNavigation, getIssue, openWorkspaceCreateFromState,
+    projectId,
+    issueId,
+    issueTitle,
+    issueDescription,
+    config,
+    workspaces,
+    activeWorkspaces,
+    archivedWorkspaces,
+    routeState.hostId,
+    queryClient,
+    appNavigation,
+    getIssue,
+    openWorkspaceCreateFromState,
   ]);
 
   const handleLinkWorkspace = useCallback(async () => {
@@ -263,8 +290,10 @@ export function IssueTaskAttemptsSectionContainer({
       const attempt = attemptData as TaskAttemptView;
 
       if (attempt.kind === 'workflow') {
-        if (attempt.latestRunId) appNavigation.goToProjectWorkflowRun(projectId, attempt.latestRunId);
-        else if (attempt.workflowId) appNavigation.goToProjectWorkflowEdit(projectId, attempt.workflowId);
+        if (attempt.latestRunId)
+          appNavigation.goToProjectWorkflowRun(projectId, attempt.latestRunId);
+        else if (attempt.workflowId)
+          appNavigation.goToProjectWorkflowEdit(projectId, attempt.workflowId);
         return;
       }
 

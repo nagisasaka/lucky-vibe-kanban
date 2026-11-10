@@ -12,7 +12,10 @@ export interface WorkflowTemplateListPageProps {
   projectId: string;
 }
 
-function DefaultsEditor({ projectId, value }: {
+function DefaultsEditor({
+  projectId,
+  value,
+}: {
   projectId: string;
   value: PresetDefaults;
 }) {
@@ -28,7 +31,10 @@ function DefaultsEditor({ projectId, value }: {
         {t(`workflow.presets.${value.preset}`, presetNames[value.preset])}
       </h2>
       <label className="block text-sm">
-        {t('workflow.presets.projectAdditions', 'Project additions (fixed at each launch)')}
+        {t(
+          'workflow.presets.projectAdditions',
+          'Project additions (fixed at each launch)'
+        )}
         <textarea
           className="w-full rounded border border-secondary bg-primary p-half"
           rows={3}
@@ -42,7 +48,10 @@ function DefaultsEditor({ projectId, value }: {
           setSaving(true);
           setError(null);
           try {
-            await workflowPresetsApi.save(projectId, { ...value, additions: text });
+            await workflowPresetsApi.save(projectId, {
+              ...value,
+              additions: text,
+            });
             await query.invalidateQueries({
               queryKey: ['workflow-preset-defaults', projectId],
             });
@@ -55,12 +64,18 @@ function DefaultsEditor({ projectId, value }: {
       >
         {t('buttons.save', 'Save')}
       </Button>
-      {error && <p role="alert" className="text-error">{error}</p>}
+      {error && (
+        <p role="alert" className="text-error">
+          {error}
+        </p>
+      )}
     </section>
   );
 }
 
-export function WorkflowTemplateListPage({ projectId }: WorkflowTemplateListPageProps) {
+export function WorkflowTemplateListPage({
+  projectId,
+}: WorkflowTemplateListPageProps) {
   const { t } = useTranslation('common');
   const { data: defaults, error } = useQuery({
     queryKey: ['workflow-preset-defaults', projectId],
@@ -71,11 +86,20 @@ export function WorkflowTemplateListPage({ projectId }: WorkflowTemplateListPage
 
   return (
     <main className="h-full space-y-base overflow-auto p-double text-normal">
-      <h1 className="text-xl text-high">{t('workflow.presets.title', 'Workflow presets')}</h1>
+      <h1 className="text-xl text-high">
+        {t('workflow.presets.title', 'Workflow presets')}
+      </h1>
       <p>
-        {t('workflow.presets.startAtIssue', 'Choose single agent or a preset in the Issue start dialog. Presets return their reports and stop.')}
+        {t(
+          'workflow.presets.startAtIssue',
+          'Choose single agent or a preset in the Issue start dialog. Presets return their reports and stop.'
+        )}
       </p>
-      {error && <p role="alert" className="text-error">{String(error)}</p>}
+      {error && (
+        <p role="alert" className="text-error">
+          {String(error)}
+        </p>
+      )}
       {defaults?.map((value) => (
         <DefaultsEditor
           key={`${value.preset}-${value.revision}`}
@@ -84,12 +108,16 @@ export function WorkflowTemplateListPage({ projectId }: WorkflowTemplateListPage
         />
       ))}
       <details>
-        <summary>{t('workflow.presets.history', 'Historical definitions')}</summary>
+        <summary>
+          {t('workflow.presets.history', 'Historical definitions')}
+        </summary>
         {history?.workflows.map((value) => (
           <div key={value.id}>
             <Button
               variant="outline"
-              onClick={() => navigation.goToProjectWorkflowEdit(projectId, value.id)}
+              onClick={() =>
+                navigation.goToProjectWorkflowEdit(projectId, value.id)
+              }
             >
               {value.name}
             </Button>

@@ -1,3 +1,4 @@
+import { WorkflowPresetHarness } from "./WorkflowPresetHarness";
 import { RepositoryWikiHarness } from "./RepositoryWikiHarness";
 import { GithubCredentialsHarness } from "./GithubCredentialsHarness";
 import { useMemo, useState } from "react";
@@ -550,7 +551,9 @@ Object.assign(window, {
 const mode = new URLSearchParams(window.location.search).get("mode");
 
 createRoot(document.getElementById("root")!).render(
-  mode === "repository-wiki" ? (
+  mode === "workflow-presets" ? (
+    <WorkflowPresetHarness />
+  ) : mode === "repository-wiki" ? (
     <RepositoryWikiHarness />
   ) : mode === "github-credentials" ? (
     <GithubCredentialsHarness />

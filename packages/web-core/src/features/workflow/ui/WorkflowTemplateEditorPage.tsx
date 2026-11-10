@@ -31,15 +31,18 @@ export function WorkflowTemplateEditorPage({
       <p>{t('workflow.presets.historyNotice')}</p>
       {attempt?.latest_run_id && (
         <Button
-          onClick={() => navigation.goToProjectWorkflowRun(
-            projectId,
-            attempt.latest_run_id!
-          )}
+          onClick={() =>
+            navigation.goToProjectWorkflowRun(projectId, attempt.latest_run_id!)
+          }
         >
           {t('workflow.presets.results')}
         </Button>
       )}
-      {error && <p role="alert" className="text-error">{String(error)}</p>}
+      {error && (
+        <p role="alert" className="text-error">
+          {String(error)}
+        </p>
+      )}
       <pre className="whitespace-pre-wrap rounded border border-secondary bg-panel p-base text-xs">
         {workflow?.graph_json}
       </pre>

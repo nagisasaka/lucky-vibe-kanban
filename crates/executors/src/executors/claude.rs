@@ -805,7 +805,7 @@ impl ClaudeCode {
                 serde_json::from_str(super::claude::command_adapter::SUBSCRIPTION_SETTINGS)
                     .expect("subscription settings")
             });
-            let settings = crate::source_protection::claude_settings(paths, auth);
+            let settings = crate::source_protection::claude_settings(paths, env, auth);
             // Host additions are not user command overrides. The original
             // authentication/profile validation above remains mandatory.
             command.args([
