@@ -28,6 +28,8 @@ sources:
     resource: repo://crates/executors/src/env.rs
   - id: openwiki-source-f4e0f9b2ce513d3f8b8b070e
     resource: repo://crates/executors/src/executors/provider_adapter.rs
+  - id: openwiki-source-5a8e26da42457b4b47bca3ee
+    resource: repo://crates/local-deployment/src/process_host/approvals.rs
   - id: openwiki-source-0a300791bc056c6eee6a577a
     resource: repo://crates/mcp/src/bin/vibe_kanban_mcp.rs
   - id: openwiki-source-076036ed7bdac82d628d39d1
@@ -106,10 +108,10 @@ sources:
     resource: repo://packages/web-core/src/shared/providers/TerminalProvider.tsx
   - id: openwiki-source-23775c3de52f3ab95a13cb8b
     resource: repo://README.md
-generated: { by: "codex", at: "2026-11-10T20:48:58.515Z" }
+generated: { by: "codex", at: "2026-11-10T21:23:07.231Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-10T20:48:58.515Z
+    at: 2026-11-10T21:23:07.231Z
 ---
 
 # クイックスタートと調査案内
@@ -455,3 +457,12 @@ WorkspaceのGit操作、Kanban、MCPは[同じ自動マージ](concepts/formal-i
 固定base `f042245ca8c8855a9b98ba16d378a0302bc6f219` にsource `90f4fcbc5432b834da76e1466d2e4aa54159d6c8` と `cd3edef7ba99de7cc9bf3f6f3262353315a81c0c` を採用し、コード検証SHAは `f9bd24b17bb2876a44f3ae6e56e457b058273514`。DisplayConversationEntryのimport競合は初回依頼概要と思考Markdownの両描画を保持して解消した。373の製品差分と既存Wikiを保持し、他Workspace/共有dev/preview2や外部pluginを操作していない。
 
 候補上のfrontend型・対象lint・会話/Markdown回帰・明暗狭幅fixture・build、DB/server/executor対象試験と影響crate Clippy、隔離3シナリオ（複数source、HEAD観測不能、Wiki receipt回復）は管理commandで成功した。全suite・型/SQLx再生成は既存SHAのManifest証拠と差分に基づくagent判断の省略であり、新たなpassではない。実provider/認証済UIは未確認で、旧devの今回worker実行を364新入力のprovider確認に数えない。Wikiはコード検証後の別commitであり、正式公開の成立はRun終了後のhost結果で確認する。
+
+
+## LOCAL-376：native質問の配送とdelivery保持
+
+質問UI/MCPからhost waiterを通って元native requestへ返す経路は[Sessionの質問契約](concepts/session-and-agent-run.md#plan一般質問との境界)、元deliveryと旧mapper互換は[runtime投影](architecture/agent-runtime.md#local-376のnative質問配送とdelivery保持)、複数質問のIDと回答形式は[MCP](integrations/remote-access.md#local-376のnative質問回答)、表示は[質問UI](architecture/web-and-sync.md#local-376のnative質問ui)を読む。372のasync発行・継続・元turn終了・失効を維持し、本文/DECISIONから状態を推論しない。
+
+固定base `43098c170a900fb7d8a5786ba3fc1a5a10d10a31`へ376 source `e7023f69df107099636fc94f37ee4b9a482dc475`を競合なく採用した。コード検証SHAは `2260c073ce179dbdb2bac0d2ebf75ef33f819d19`。364/368/373を保持し、372のworktreeと稼働devを変更していない。候補でfrontend型・会話回帰・質問Chromium・production build、Rustのmapper/配送/取消/終了/stale回帰・生成型を管理実行で成功確認した。[検証範囲](operations/development.md#local-376のnative質問回帰と統合検証)に、sourceの既存成功証拠を再利用したagent判断の包括suite省略と、未実施の実モデル・実認証一体E2Eを分けて記す。
+
+Wikiはコード検証後の別commitで、正式main反映は公開要求後にhostが確認する。稼働dev再起動・container再作成・security変更・適用は今夜の対象外であり、公開後の追加buildは後続指示で扱う。

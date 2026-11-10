@@ -192,10 +192,10 @@ sources:
     resource: repo://tests/supervised/README.md
   - id: openwiki-source-5184ef612e83b7ab35d62e7b
     resource: repo://tests/supervised/run_isolated.py
-generated: { by: "codex", at: "2026-11-09T20:29:18.834Z" }
+generated: { by: "codex", at: "2026-11-10T21:23:07.231Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-10T20:48:58.515Z
+    at: 2026-11-10T21:23:07.231Z
 ---
 
 # Session・AgentRun・RunAttempt
@@ -371,7 +371,9 @@ UI と MCP は同じ domain の ResolveApproval を使い、Session lock 下で�
 
 ### Plan・一般質問との境界
 
-Plan と一般質問はこの command/file 修正の対象外である。wrapper は Plan の tool approval を Noop に委譲し即 Approved、質問の待機は ServiceUnavailable のままにする。client は質問待機エラーを TimedOut として記録し、Plan 承認後は Default の実装 turn を始める。汎用 DirectControl の Input は引き続き Unsupported だが、Approve は host waiter に接続済みである。[wrapper](../../crates/local-deployment/src/process_host/approvals.rs#L26-L82)・[質問と Plan](../../crates/executors/src/executors/codex/client.rs#L1104-L1243)・[Input の制限](../../crates/executors/src/executors/codex/client.rs#L441-L465)
+Planのtool承認はNoopへ委譲して即Approvedとし、承認後にDefault実装turnを始める既存契約を維持する。一方、LOCAL-376で一般質問はhostのquestion waiterへ接続した。DirectControl Inputは元input IDと現在のpending質問を照合し、元native質問IDを使った回答を検証してwaiterを解決する。元request handlerが元数値/文字列request IDへ返し、Input制御そのものから別のnative応答は生成しない。[host](../../crates/local-deployment/src/process_host/approvals.rs#L26-L99)・[Input](../../crates/executors/src/executors/codex/client.rs#L463-L487)・[質問登録と解放](../../crates/executors/src/executors/codex/client.rs#L1146-L1264)
+
+UI/MCP共通入口はSession lock下で元Run/attempt/event・予約・回答内容を確認してからcommandを予約する。取消・期限切れ・turn終了はwaiterを解放し、重複・別attempt・stale回答を拒否する。明示isBlocking=falseは待機stateに変換しない。modeや本文でblockingを強制しない。[共通preflight](../../crates/server/src/routes/agent_runs.rs#L550-L635)・[native往復fixture](../../crates/local-deployment/src/process_host/approvals.rs#L252-L400)
 
 したがって 旧chat操作文書の計画レビュー手順を現在の人による Plan 停止点の証拠にはできない。[Workflow の HumanGate](workflow-attempt.md)と[非同期の仕様質問](#非同期質問への回答と配送証拠)も、それぞれ別の停止・回答契約である。
 
@@ -540,3 +542,8 @@ Claudeは実効設定がSupervised/Planまたは対話承認必須なら、CLI�
 Codexは履歴JSONL/threadを解析して固定文の保持を推測せず、短くした現在のdeveloper instructions全体を非空なら明示injectする。旧版条件や履歴によるidentityだけへの縮小は廃止した。初回と継続で現在Run/Repoのidentity・draft_pathとガイド参照を更新し、profile追加指示と選択Skill参照は保持する。Claudeは既存のuser prompt suffixで現在契約を届け、provider固有のroleを同一化しない。[resume](../../crates/executors/src/executors/codex/client.rs#L268-L301)・[共通契約](../../crates/executors/src/env.rs#L53-L90)
 
 通常のexecution_envはMCPなしでも読めるガイドを起動前に配置する。配置成功、provider設定への参照path到達、実モデルによる読取・遵守は異なる検証段階である。保存Cardの旧ON/OFFで必須のManifest・parallel・資源契約を切り替えない。[配置と通常起動fixture](../../crates/local-deployment/src/agent_run_port.rs)
+
+
+### LOCAL-376で維持するasync質問の寿命
+
+372初回のasync発行・実行継続・元turn終了・失効は正常挙動として維持する。mapper v8は元deliveryを保持し、asyncのfinal_answerをturn終了の証拠にしない。旧mapperや既存終了Runを遡及変更せず、DECISION/本文から待機や継続を推測しない。上記のnative InputRequested回答と、非同期inboxから元RunへSteerする受付は別経路であり、遅い回答を後続Runへ流用しない。[投影](../../crates/executors/src/executors/provider_adapter.rs#L2112-L2220)・[async受付](../../crates/server/src/routes/sessions/questions.rs)

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:c8480d7de7f46af71f4bfafe2140de298a825d5e6675e627020e02189eb5dc12",
+  "pageVersion": "sha256:4e37780ebdb1219151c76a98e56f33d84d1ffa1b837b5407f4b6a205b933e072",
   "claims": [
     {
       "id": "claim_cd547b65737e432fb2cf718c4992aa97",
@@ -57,7 +57,7 @@
       "statement": "AgentRun WebSocketはLive購読後に永続履歴をreplayし、Liveは永続cursorに影響せず最新usage snapshotも再送する。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/agent_runs.rs#L608-L680",
+          "resource": "repo://crates/server/src/routes/agent_runs.rs#L634-L706",
           "version": "repo-lines-v1:sha256:222adf548f63a92e0d624da597ca05a7c21ed3694b406d9a99cd1f2df8e48a7e:eyJzZWxlY3RlZExpbmVDb3VudCI6NzMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdhMTMzMjYzNGE0ZjNkMWM0YWE3NWRhYWVkNTUxOWIyOTczM2RjOTc0MDFlODY4Njc5YjhmOGRkMzQwMjFkMWYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE2OGNjOGMxZjliNzkwY2E0ZTYyMTJlY2EzYmJhZmRmMjk4NjIzZDFmNGVmZTdiMWQ3OTdlYWQ4NzA2ZTM3MjMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI3MDliOGY1ZDg0NzJmMmZlNjU5ZmRkZTkxOWUxZTA2ZjNmZmZjNDVjNTA3Y2E5ZWEyNzdiZWFmMDdmODNiNWEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjgxMDE1MjE0ODNjZjlmMDIzMDBlMGZiZTY4ZjQ3N2Y2ODg3ZGIwNGNmNjI3NDhhYThiNDJmMWJlMWE3ZmVjM2QifQ"
         }
       ]
@@ -175,7 +175,7 @@
       "statement": "AgentRun WebSocket は event が空でも変更された State を修復し、未配信履歴がある間は terminal State を先行送信しない。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/agent_runs.rs#L720-L779",
+          "resource": "repo://crates/server/src/routes/agent_runs.rs#L746-L805",
           "version": "repo-lines-v1:sha256:ace64703b26baa417a22de0f7e2f556631b90e1793245e10f4fef4832f2aaec0:eyJzZWxlY3RlZExpbmVDb3VudCI6NjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYxMGVmMTQzZTYyMTFhYTM1Zjc1MzczZjFmNTRjMGZiZTA5YWJhNzk1MjlmYjE3YzgyMTEzZGYyNGE2OTU3NDIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM1ODc2OWU2ZmZjMDI1NTU1ZTZiNjUxMzA4ODA1MWRkZDA5ZmVkZjU0ODFmZmVjNDdiMzU5MzkwYTIzZWM1NGYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjdlODk5NTdkNTRjZDgyM2E1Mjg3NmUxYjk2OGU0NTVmZDJlZWYzMTExNGZmMDY4MjZkNGZjYjI5YWE4OTgzN2EiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjY1YWM5ODE0MDkzZmEwODExMWVmZmE2NGI0ZDJiNGNkMzgxZjZmYTUzYTdlNTEyZmEzNDA0YjljM2MyZjE4ZmUifQ"
         }
       ]
@@ -335,7 +335,7 @@
           "version": "repo-lines-v1:sha256:0483a7451e1e4251ef8a95cad6bb5e0051fbf2e94e7608a0b95176329ab1df76:eyJzZWxlY3RlZExpbmVDb3VudCI6NDEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQzYTE5ZmRiZjJmMjFiMmMxOTg3MzgwNjE0NWM3ZjU4ZjlmOGFmYWYyNGUxNDQ0M2Y2NDBiOTkwMzIwYzI2NzciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU1MjJjNDJjZDE5YzZkMDNkODA4YzQ1MjcyMDU1MjgyNWI3ZWExYzViNDkxYjIxODUxMWNhYzc0MTVjZjlkOWIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjA3NjJhMTcwOGRiNjllNzlhMDMwNmVkNTEwOWVlYWY4ZTg2MjM5OTdmZTRmMTE4MTQ0MjUyY2E3MTE3MjU3YmMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjVlMmEyOWE4MGY1MGIxNjI4ZGNjNTM0MzA1MWE3MTVhM2I0MWJiNmUzYjI5ZDgzZmFmZWUzZDYyMjdkZDc1M2UifQ"
         },
         {
-          "resource": "repo://packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts#L29-L53",
+          "resource": "repo://packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts#L30-L54",
           "version": "repo-lines-v1:sha256:4f6f691713fc9944a9e6c3640a6831229192a0a198f36e0cc0dacc698c3e737d:eyJzZWxlY3RlZExpbmVDb3VudCI6MjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRhY2ZlNGU4NjlmZjg1MDAwNTFhNjI0ZDVhYWM0ZGQzY2Y1NGUxMjgzZjRlNGY1NTVkNDUwYWVhM2RlNTIyNjYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjlkOTgzNTQ5OWU1YmE5MWY4NzI2N2M5NTJiNzhlYWVkZDZjNDY2Zjk1YjY4ODFiMDdiNDZjY2FlYzBjZGYxNDYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijc3MjE5MTUwZDYxYTdjNjFlNjEyMDEzYjJmYTJkN2ZmMDQwOTRhZTg2YzBiMGIwNjcwMGQ3NWQ2Mjg4ZWVlZjIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImU1OTJkMTM3MjIyZDIwMGVhYTFhNDJlOTAzMjQ3ZjYyMTIyZTMwZDMwMGJiZTZlZjI0ZjRkYTg4NTAyYTlkNjIifQ"
         }
       ]
@@ -345,7 +345,7 @@
       "statement": "Live表示は永続列の最後の先行候補の後へ挿入し、同attemptでは候補のnative refsの有無に応じnative sequenceかtimestampを比較する。受信側はevent IDを重複排除し確定message IDの一時表示を除く。",
       "evidence": [
         {
-          "resource": "repo://packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts#L54-L79",
+          "resource": "repo://packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts#L55-L80",
           "version": "repo-lines-v1:sha256:6c824c49b8ef1ba4ec05f379f4237d553ab31bd1322059ef000bfa6474467f85:eyJzZWxlY3RlZExpbmVDb3VudCI6MjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM5NGVlZjI4OWM0M2FkYTU3MTlkY2YyN2QxYTZjYzRlNzEzOGEwYTdhNmM5MTQ1YzQ4ZmJlNzMzYWRiMTg0ZjkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgwNjZkMzY0NTMwMjM5OTY1ODg5NzViYjNhYjBmZWQ5YTZiYjVjNDliNGUyMmUxNzQzMzBjNTJhODE3Mzg2MWMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ0ODlhY2E2NTQ4Zjk0ZWU0Zjk4ZWRmNTg3M2RlNjQ2YTQ5MDk5YzMwY2JjZjdjMTk2NzE1NGM4M2IxZDViMDYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY1MGNlNjZhZTQyZTBiOGExZWYwMzk4MWI4N2FjMjgyZWI0OGM0ODUxMWMxYWFhNWJiNzg0MjFhYzYyYTgxZTcifQ"
         },
         {
@@ -415,7 +415,7 @@
       "statement": "layout試験はprepend後の遅延DOM resizeと遅いinitialで同一行座標を検査し、projection試験はuser/assistantだけのsteering順序とreplay重複・Run identityを検査する。built-app試験は合成履歴、mock follow-upと実Scratch、実Codex steeringの経路を分ける。",
       "evidence": [
         {
-          "resource": "repo://packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.test.ts#L275-L341",
+          "resource": "repo://packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.test.ts#L276-L342",
           "version": "repo-lines-v1:sha256:627d04f3ab8c64d7676b9a926e135c1c37b5792ec49c553ca390c386e9e5619f:eyJzZWxlY3RlZExpbmVDb3VudCI6NjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRiNmZlYThmNGMzYWNmMWM3MDlmNDVkNTBhY2Y5YjhkYWI1MmY2OTBlNGVkMTNkNDk0Y2I3NTVhZjNiYmFmMDUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI2OTU3ZTU3ZWNhOTg0Y2FmYTVkZTIzYWQzYWRlYjc5MTFkODYzOTMxM2E1NWQ4OTIyNWQ4ZjM3MGQyZmU0MzMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijc5N2IyZWMyZmViMDhjYTkxMDFiZTQ2MmQwM2QzMzIyZWE2Y2U4NDRhMmVjY2M0YTM5MTM5NzAyNmQxYjcyYzgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjA1YjgwNTJiMjEzZDM3MTQyMjY3NDdkMDMwYTUxM2FkOTcxZTdhMDU0ZWFiMTM5Yzk0ODI2Yjc5YjZlZWVjNWYifQ"
         },
         {
@@ -857,7 +857,7 @@
       "statement": "既存 tool_call_id に対応する承認要求は元の tool 名・action・identity と command/tool 引数を保持して pending approval に更新し、pending_approval entry は集約せず単独表示する。",
       "evidence": [
         {
-          "resource": "repo://packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts#L576-L681",
+          "resource": "repo://packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts#L577-L682",
           "version": "repo-lines-v1:sha256:d37a5ba9fa1b73151ee00ec9c0b830caf4c3709b969964b3fd3ee03e65d51ec8:eyJzZWxlY3RlZExpbmVDb3VudCI6MTA2LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI4N2IwYmVjZGVhNGZkZWNjYzk1Mjc1NWIwN2JhNTExY2Y0NjYyNTk0YTg5ZDRkZTg3Y2JmNjk2Y2I1MjFmYmYwIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIxMDY5YWJjMzRjMjIzMDVhZjEzMjk3MjdiYTIwODkxZDgzMzBkMzk1NDFkZmFiNDgzZjcyNWZkZDNlNjJhYmE5IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI1OTlhNzJkOWU4MWJlNmYxOGUwNjZiYjgzYTExOWVmNTQ1OGI1YTI2ZmU3MGIyZTE4NmE3ZGFkYzc5YTVjMmRjIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJjZmNkNDdhOTM1MGQzY2ZjMTU3YzQzNDNiOWYyYzhjMjY0MTkyNGRiYmYzMzFiMWQxYTc3OTQ0Yjc0MWU2NTZkIn0"
         },
         {
@@ -889,11 +889,11 @@
       "statement": "steeringのprojection回帰試験は3件のmessage順序・identityを維持し、4件目のsummary由来elapsed footerのkeyとtimingを別に検査する。",
       "evidence": [
         {
-          "resource": "repo://packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.test.ts#L525-L603",
+          "resource": "repo://packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.test.ts#L526-L604",
           "version": "repo-lines-v1:sha256:372d7f8de1697d8e091e8759a88fa72a4836e05f346039e22d84abd3ad16b866:eyJzZWxlY3RlZExpbmVDb3VudCI6NzksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJlZjQ1NGU4NzNmOTEzNzIyNmZhY2QyN2I0Y2JlNTdjNjk3YTY0ZTMyM2I3OTlmNWZkNTBiYmM5YmE3MDM3NDYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNhM2U0NmY5NDI3NmI2ZjZmNGVkMWYwMmFmNzhiZWY2YTJlZTFjNDM5ZGQ1NTg0Yjk3Mzk0ODMxMzIxNGQyYjciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjcyMGZjOWU2N2RiMDdlZDIzOWJiM2FkMjMxMmVhYWI5YTcwZTFmNmZiYTAxMjg4YjBiYTZlNjFkN2Y4ZWU3ODgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImI5NDVmOWMxNGU2NzliZjAwNzYxOGJlNGIzNjk1YTJmYTAzZDdiNzVkMTExYzUyNTZkNGFiMGI3NGY3ZTI0YmIifQ"
         },
         {
-          "resource": "repo://packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts#L953-L1006",
+          "resource": "repo://packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts#L956-L1009",
           "version": "repo-lines-v1:sha256:4d11fc7db0af8bbe73e638dc84c6cedceb8c053cefb95cc82b2cbe0fc1bd98e5:eyJzZWxlY3RlZExpbmVDb3VudCI6NTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVkODQ5ZjVhMGRjMGFkODFiMzIwZDY2OGMyZGU3Y2JkZDFkODEwNTY3MDkxNzNkNTBiMmNiNmZjZDY3YjIxMGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZiNGY0ZjU4ZWQ4NjY5ZGI3NzM0MjRlOWQ5Y2ZjNGY5ZjlhNDFkY2U1MjA5ZTVmN2E4ZTRiM2FhZjFlNGExNTAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRlOGM3NWU5MGNjYzdjZjI4NzhlMzdmN2MyM2QwNDExNjI2MTJlNmE5OTMzYTI3MDYyNzBjOGE5M2ViZWNhMTIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImYwMTZhY2QzMzA5MGVhNGQ3N2VhZjFjOWFlNTQyMjliM2MzY2M1MjBmYzU3MzViZWFmNjQyZjcxMGE1NzU1NDEifQ"
         }
       ]
@@ -1457,11 +1457,11 @@
           "version": "repo-lines-v1:sha256:df4c0aac31079b0387c20c25d2851562bf537639860bf7a9651e1254e5ee85c1:eyJzZWxlY3RlZExpbmVDb3VudCI6MiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYWI0YWM1ZTAzOTZiZWYyMjMyNDc3OWFmZTc1YTFjNGQxMjhiYTMwNjIyNDM4NTdiNDY0NDM4OGE4ODMyMTgwOCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOGQ1ZGNlOTI3NzdiODA3NWI3YTQyOTFlZmNhNTQ4NzdkMWYwN2JlZDYyMmVhZjIwZjc4NDFiN2JmZmY5ODNiMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMzRmODE4MjA0ZmY0YzE1ZmVjZmE5MDkxYTI1NzYwZTIwNTBmMzQ4M2NjNWNlM2U0ZTEwZTU3OTZiNmE1ZDAxMCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiM2MyZjI5ODRlMGUzZDZiOTVhYWFmODljMDIyNjM2NTI3OTVjMTU4OTI1MjdkZDM1ZDRjYWEwM2QzZGY3MmJmMSJ9"
         },
         {
-          "resource": "repo://crates/server/src/routes/agent_runs.rs#L683-L689",
+          "resource": "repo://crates/server/src/routes/agent_runs.rs#L709-L715",
           "version": "repo-lines-v1:sha256:3bebf15b51c4baf94aba3274ed79a74934bb5e21436d69891a0a95fb5041cce1:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMGMyODViOGM2YTdiNjQ5MTE5NzU4ZGY3YjY2ODcxMTBjNzdkZTc5NjU5NTAxNDAxMjk0YTBiOGNlMjFjMDBmZSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYTE4ODM1NDU4NzU4M2U2ZGY1ZGY1NDMxNmE1OTkxNmJjMDAwNTA3NmZmNGIxMGY2MWI2NmRmZWViN2ZlZmQ5YSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMTQ1ZDhjZTVkNGViMzY5Zjk5OTIwNDgxZmNkYzk1ZGY5MjNlNWExOThiMGMxY2M5NzQ1NDI1NjUyN2UwMDVjOSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZjY1MTg0ZjBkZWM3Njg4NzI4Y2I2M2RjMzlhYjhjNmFiYTYwZmI4MTQ3NTk2MDQxMDBiODJmYjZjNjlkYTc5OSJ9"
         },
         {
-          "resource": "repo://crates/server/src/routes/agent_runs.rs#L742-L765",
+          "resource": "repo://crates/server/src/routes/agent_runs.rs#L768-L791",
           "version": "repo-lines-v1:sha256:064bb870c7f2d9728c9eba1c5ba88496f33291497817d564eded317a6df78a7b:eyJzZWxlY3RlZExpbmVDb3VudCI6MjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImViMmU3MWM3YzAyMTQwZjU3ODNjZmNkYTk3ZmVkMjQxMDYzODE4YWE3YzcwNWJkM2UyYjA3YTBiNWU2NWNlYWEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU1MjJjNDJjZDE5YzZkMDNkODA4YzQ1MjcyMDU1MjgyNWI3ZWExYzViNDkxYjIxODUxMWNhYzc0MTVjZjlkOWIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImE3ZWRjNjNjNDZjYzQ0YzVlOTQ3N2VmYzlhZDgxYjIwOGU3NGNjYzYzYjc4NTdlMDc3M2JkODFhMzA1YWIwMmEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBkYzdkN2YyNDhjM2E1ZjllYWVlZWMwYzQ3YzBiOTg0NzUwMDEzZWJhM2U2OTI1N2EyZmE1ZjZmNTEwMDJiMzQifQ"
         }
       ]
@@ -1670,10 +1670,10 @@
       "evidence": [
         {
           "resource": "repo://packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.test.ts",
-          "version": "repo-file-v1:sha256:29d8cfe47c7382cd9e5b5797887bd1f6abda67ed7e86fd5d763529ac326e98ad"
+          "version": "repo-file-v1:sha256:83af79285de19badc0f08f7dce352d59f9a6aaf9ee9b950ebaac86b7eecbc589"
         },
         {
-          "resource": "repo://packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts#L420-L492",
+          "resource": "repo://packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts#L421-L493",
           "version": "repo-lines-v1:sha256:d6123a2a688468f9d19764ffac45bc3c47a2a1cd986d46d3c9c2ca6f5f6de4db:eyJzZWxlY3RlZExpbmVDb3VudCI6NzMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjlmNWU1OTQzMTEyM2Q1ZmVhMWY1NTZjMGU5ZTdhMTEyN2E0M2MyNzA3Y2JlNmY3OWZmZDVkNDM2MWEyNjk1ODciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE1ZWRjYmNlOTk5MzBkYTFiNjllZGQ1YjBmZTY2YWUzNmQwOTczYjNjOTAzOWQwMTE1M2FkMWMzMTBhNWNhODkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhhZmYwMTM1NDI0ZTY4YzBkNzFlNzg4ODM2MDM1N2M5NjUwZTgwMWQ4NDk2NmJkOTVmNjMxNzVhM2U4ZjU3YTYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNiMjg4ODhjMGMyMWFjMzFmNTAyMGM4ZjI5M2M4ZTFhM2RjZWUzMTAzMTk2NmJhZGExNzJjZWNlMDMyMDIxYTYifQ"
         }
       ]
@@ -1781,10 +1781,28 @@
           "version": "repo-lines-v1:sha256:b9678cc3f8d026846fcfd24a208ba390ec1c302ccc0c35e83cc2f95b128c5fca:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjJlNzg2ODE3ZmNmNzlkYjJjMDA4MDdmMDUyYWI5NTAzMDBiZjg1MjQ3MzZmM2UxOTBmMDA1ODcyZTIyNjk1MDYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImEwOGQyNGJjZDZiOTE3NDUxNWQ2ZGMwNGY1NGJiNTEyMTFmOWVmNmEwNWE2M2ZjYzhlZWFlZDZmZDc1ZDhkNzQifQ"
         }
       ]
+    },
+    {
+      "id": "claim_954fa1a132834478ac1a6d8865954966",
+      "statement": "native質問UIはprovider_metadataの質問IDを回答キーに優先して複数質問と選択肢説明を保持し、旧入力は本文キーにfallbackする。同文面の別IDとJS予約名IDを区別する。",
+      "evidence": [
+        {
+          "resource": "repo://packages/ui/src/components/AskUserQuestionBanner.tsx#L30-L65",
+          "version": "repo-lines-v1:sha256:d3bfc650bfa1d07e6a5a339551ee7899545177c9dddda5b9d37833e2536b2be0:eyJzZWxlY3RlZExpbmVDb3VudCI6MzYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJhZDYzZTFlMWUwZDA2Mjk0Y2NjYjM2NGE5OGI4NGM3MmQxNjk2MjA4ZjA3YjVjMTk0OWJlMTcxNzNmOWM4ODUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjEwYzJiOGE3YjViYTM5ZDJlOGQ3NjUzYWY0ZDM0N2EzYmM1Njc5ZmUyM2Y1NzI2YjBhZTRjMjcxOGMzYmE1NjUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM0ZmU1ZjFiMTY0NWNiNGI5NmVmZDA3MDc2ZjhiNTFjMzVkNTU2Nzc3ZDQ3ZmUwODM2ODI0MGUyN2VlMzJiMTUifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/agent-runtime/model/nativeAgentQuestions.ts",
+          "version": "repo-file-v1:sha256:99d31c6c47569dfa109d1bef380737f0703fc1c9017da277ebd512523347e3db"
+        },
+        {
+          "resource": "repo://tests/chat/native-questions.mjs",
+          "version": "repo-file-v1:sha256:21b8fdf37b04af9593c0304616df0a8b8c372e60deb5d55ed81c9142aa2d7345"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-10T20:48:58.515Z"
+    "at": "2026-11-10T21:23:07.231Z"
   }
 }

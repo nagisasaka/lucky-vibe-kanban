@@ -130,10 +130,10 @@ sources:
     resource: repo://crates/utils/src/mcp_error.rs
   - id: openwiki-source-3ecddc0be7b037ea6ab24381
     resource: repo://packages/local-web/vite.config.ts
-generated: { by: "codex", at: "2026-11-10T13:50:38.953Z" }
+generated: { by: "codex", at: "2026-11-10T21:23:07.231Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-10T20:48:58.515Z
+    at: 2026-11-10T21:23:07.231Z
 ---
 
 # 外部アクセス・MCP・Runner の境界
@@ -518,3 +518,12 @@ LOCAL-335と338の統合候補 `bd425027e2bf7ecf4de000597dea3c661d4195a7` では
 ### 作成用プリセットと既存Workspaceの関連Repo
 
 list_project_repositoriesは現在のプリセットと既存リンク済みGit WorkspaceのRepoを列挙し、creation_preset_memberで新規Issue Workspaceへ選べる範囲を区別する。integration_memberだけで新規作成可と判断しない。プリセット解除後も既存WorkspaceのRepo・保存target branchを保持し、自動マージはその実membershipとtarget一致を要求する。DirectFolderは旧Repo行が残っていても自動マージ不可である。Wiki保守の所属読取は関連Repo集合を用いるが、Project認可を迂回しない。ファイル/証拠読取は保存済みworktree配置名でrootを解決する。[実装](../../crates/server/src/remote_mcp/launch.rs)・[証拠root](../../crates/server/src/remote_mcp/evidence_read.rs)
+
+
+## LOCAL-376のnative質問回答
+
+`get_question`でrevisionと完全な元質問を確認してから回答する。native複数質問では`provider_metadata.params.questions`のすべての元IDを用い、answerに`{"answers":[{"question":"native question ID","answer":["selected label or text"]}]}`というJSON文字列を渡す。一問のplain textも受け付ける。本文一致だけで別の質問を同定しない。[入力schema](../../crates/server/src/remote_mcp/runtime_write.rs#L52-L70)・[native回答parser](../../crates/executors/src/executors/codex/client.rs)
+
+UI/MCP共通SubmitInputはSession lock下で元Run/attempt/eventと予約を照合し、不正な内容をcommand予約前に拒否する。元native要求への応答はhost waiterと元handlerが所有する。receipt受理をprovider配送完了とみなさず、不確実配送では元receiptとcommandを確認して新IDで盲目的に再送しない。取消・turn終了・期限切れ・重複・stale回答を後続Runへ配送しない。[共通入口](../../crates/server/src/routes/agent_runs.rs#L391-L408)・[preflight](../../crates/server/src/routes/agent_runs.rs#L550-L612)・[MCP回帰](../../crates/server/src/remote_mcp/runtime_write_tests.rs)
+
+一般質問は実行権限承認と別で、DECISIONや本文から承認を推定しない。async inboxの元turn終了時失効と履歴保持は変えず、終了Runに回答して自動継続する仕組みも加えない。実認証UI/MCPと実モデルを一体で通すlive E2Eは未実施である。

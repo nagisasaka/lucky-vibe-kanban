@@ -35,6 +35,8 @@ sources:
     resource: repo://crates/executors/src/executors/provider_adapter.rs
   - id: openwiki-source-788fa2f6f1a3d449a1a9efe4
     resource: repo://crates/local-deployment/src/agent_run_port.rs
+  - id: openwiki-source-5a8e26da42457b4b47bca3ee
+    resource: repo://crates/local-deployment/src/process_host/approvals.rs
   - id: openwiki-source-5d78398344c565f028fc5984
     resource: repo://crates/local-deployment/src/process_host/journal.rs
   - id: openwiki-source-c6b92f5dd86f9cc046935fa4
@@ -129,6 +131,8 @@ sources:
     resource: repo://tests/chat/external-editors.test.mjs
   - id: openwiki-source-0f4dd03aa48c30d7b96247f8
     resource: repo://tests/chat/mcp-approval.mjs
+  - id: openwiki-source-aad23dcb51eeb7000a6fbc28
+    resource: repo://tests/chat/native-questions.mjs
   - id: openwiki-source-6bda7be6a5c83fa82bbb1e39
     resource: repo://tests/chat/paste-markdown.test.mjs
   - id: openwiki-source-7cc1d248ce00f0c5ef61c76e
@@ -161,10 +165,10 @@ sources:
     resource: repo://tests/terminal-latency/run.py
   - id: openwiki-source-966297deb875824dc95ee8d5
     resource: repo://tests/workflow/playwright.config.ts
-generated: { by: "codex", at: "2026-11-10T13:43:59.705Z" }
+generated: { by: "codex", at: "2026-11-10T21:23:07.231Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-10T20:48:58.515Z
+    at: 2026-11-10T21:23:07.231Z
 ---
 
 
@@ -578,3 +582,14 @@ LOCAL-346単独のコード候補 `3b88263a13d2e15606ea445c1a6753919dc08303` は
 bundleとSHA256SUMS・code-commit.txt・試験ログはrepositoryの `.lvk/shared/persistent/auto-merge-366-368-9647311264878cc047f465fd05869597c1d524da/` へ保持した。Workspace archive後も読む成果物であり、通常の一時cleanup対象ではない。導入は[切替手順](../../deploy/developer/switch/README.md)の後続操作で、今回のbuild成功はdev切替や再起動の成功ではない。368 Workspaceは後続改善・preview2用に保持する。コード検証後のprepare_wikiで原本journal保存を確認してからWikiを開始し、Wikiだけを別commitとする。正式main publicationは担当Run終了後のhost結果で別に証明する。
 
 LOCAL-368はGit正本のorchestration Skillと既存Codex REVIEW指示へ、人間の判断事項を結論直後へ集約する指針を追加した。DECISIONは未決の選択だけに限定し、確定した人間の意図は通常のラベル付き引用で扱う。空欄の固定sectionや通常Runへの新規共通注入は増やしていない。[Skill](../../skills/lvk-orchestration/SKILL.md)・[REVIEW指示](../../crates/executors/src/executors/codex.rs#L1-L10)
+
+
+## LOCAL-376のnative質問回帰と統合検証
+
+質問配送の変更時は`node scripts/dev-cargo.mjs test -p local-deployment process_host::approvals --lib -j 4`を入口にする。親試験からnative subprocess fixtureを起動し、数値/文字列request ID、UI/MCP形式回答、明示nonblocking、native要求重複、取消・turn終了・期限切れを確認する。元質問IDの優先照合と旧turn拒否はexecutorsの`question`、旧mapperとdeliveryは`provider_adapter`、共通回答preflightとreceiptはserverの`question`、取消優先とsingle-useはservicesの`approvals::`が担当する。[host fixture](../../crates/local-deployment/src/process_host/approvals.rs#L252-L400)・[server回帰](../../crates/server/src/remote_mcp/runtime_write_tests.rs)
+
+`node tests/chat/native-questions.mjs`は本番質問componentと投影をoffline Chromiumで確認する。同文面の別ID、JS予約名ID、説明付き選択肢、複数回答と失効時操作禁止を対象にし、実server/DB/providerを利用しない。認証済み画面や実モデルを通すE2Eの証拠にはしない。[browser fixture](../../tests/chat/native-questions.mjs)
+
+今回の統合は固定base `43098c170a900fb7d8a5786ba3fc1a5a10d10a31`へsource `e7023f69df107099636fc94f37ee4b9a482dc475`を競合なくmergeしたコードSHA `2260c073ce179dbdb2bac0d2ebf75ef33f819d19`を対象とする。mainの364/368/373を保持し、372を組合せたり他worktreeを変更していない。管理commandでfrozen install・frontend三package型・会話/操作/async/control回帰・質問browser・production frontend build、上記Rust対象回帰・生成型check・空白/cleanを成功確認した。Rust batchのMCP呼出しは300秒でtimeoutしたが、元managed processの完了と同じrequest IDのpass証拠をinspectで確認しており、二重実行していない。
+
+source Manifestのexecutors347/local-deployment105/MCP148・workspace check・qa-mode Clippy等のSHA付き記録と競合/修復なしの差分に基づき、包括suiteと全量lint/checkの反復はagent判断で省略した。省略は今回のpassではない。既存hookのlint違反、実モデル・実認証UI/MCP一体E2Eは残る限界である。Wikiのみを後続commitにし、正式main反映はRun終了後のhost receiptで別確認する。稼働dev再起動・container再作成・security変更・実環境適用は行わない。公開後の追加buildは後続指示の範囲である。

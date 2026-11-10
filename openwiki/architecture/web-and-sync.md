@@ -44,6 +44,8 @@ sources:
     resource: repo://packages/ui/src/components/AppBar.tsx
   - id: openwiki-source-b2fc2a264ac3c8fd4fc0ac15
     resource: repo://packages/ui/src/components/AppBarSocialLink.tsx
+  - id: openwiki-source-00ed1c75a8c12669847d5a56
+    resource: repo://packages/ui/src/components/AskUserQuestionBanner.tsx
   - id: openwiki-source-6a6615932d0836983751ed06
     resource: repo://packages/ui/src/components/BuildInfoLabel.tsx
   - id: openwiki-source-0538c702500041c84ca85af7
@@ -92,6 +94,8 @@ sources:
     resource: repo://packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts
   - id: openwiki-source-fe9d810dccb0b777dfcb7ae4
     resource: repo://packages/web-core/src/features/agent-runtime/model/canonicalAgentTimeline.ts
+  - id: openwiki-source-38f8a0b0f369277e3b6c80d2
+    resource: repo://packages/web-core/src/features/agent-runtime/model/nativeAgentQuestions.ts
   - id: openwiki-source-540d9101351d47e89b2062b1
     resource: repo://packages/web-core/src/features/create-mode/model/CreateModeProvider.tsx
   - id: openwiki-source-db035046d01e3f24722812c8
@@ -270,6 +274,8 @@ sources:
     resource: repo://tests/chat/conversation-layout.test.mjs
   - id: openwiki-source-adbcc4477d532869e93682ad
     resource: repo://tests/chat/isolated.spec.ts
+  - id: openwiki-source-aad23dcb51eeb7000a6fbc28
+    resource: repo://tests/chat/native-questions.mjs
   - id: openwiki-source-6bda7be6a5c83fa82bbb1e39
     resource: repo://tests/chat/paste-markdown.test.mjs
   - id: openwiki-source-0a43f232c5a84b7f94378d02
@@ -300,10 +306,10 @@ sources:
     resource: repo://tests/workspace-navigation/run-isolated.py
   - id: openwiki-source-b87e3253bd1458a0091f8587
     resource: repo://tests/workspace-navigation/workspace-navigation.spec.ts
-generated: { by: "codex", at: "2026-11-10T20:48:58.515Z" }
+generated: { by: "codex", at: "2026-11-10T21:23:07.231Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-10T20:48:58.515Z
+    at: 2026-11-10T21:23:07.231Z
 ---
 
 # Web の実行環境と同期
@@ -705,3 +711,10 @@ Issue本文と設計メモはLexical、WikiとMarkdownファイルはMarkdownPre
 思考の折畳み見出しと一覧行は先頭の非空行を既存react-markdownのインライン表示へ渡す。strong/em/code/delだけを描画し、リンクは文字へ戻しHTMLをskipする。全文editorを重ねず、展開本文と開閉・切詰めは従来経路を保つ。[MarkdownInline](../../packages/web-core/src/shared/components/MarkdownInline.tsx)・[単独思考](../../packages/ui/src/components/ChatThinkingMessage.tsx)・[一覧](../../packages/ui/src/components/ChatCollapsedThinking.tsx)
 
 MarkdownPreviewの通常ソフト改行は折り畳み、明示hard breakは保持する。Lexicalのpre-wrapはmd-paragraph/md-quoteだけへ限定する。alert判定はinnerTextやCSSに依存せずtext node・br・段落境界を読み、引用先頭の単独markerだけを認識する。非引用の太字DECISIONは通常本文、人間の意図は通常引用＋太字の明示ラベルであり専用型ではない。DECISIONとIMPORTANTは紫を共有し、記号・ラベル・罫線で区別する。Issue主タイトル1.75rem、本文H1/H2/H3は1.5em/1.3em/1.15emとし共通CSSで閲覧/編集に適用する。[境界読取](../../packages/ui/src/components/MarkdownReadingSurface.tsx)・[marker](../../packages/ui/src/lib/markdownAlert.ts)・[CSS](../../packages/web-core/src/app/styles/new/index.css)・[回帰と限界](../../tests/markdown/README.md)
+
+
+## LOCAL-376のnative質問UI
+
+InputRequestedのprovider_metadataから既存の質問component用の項目を投影する。元question ID、複数質問、選択肢と説明を保持し、回答キーはIDを優先、旧入力では本文を使う。同文面でも異なるIDの質問をまとめない。`__proto__`や`constructor`もown-property判定で扱う。元attemptの失効後は操作を許可しない。[投影](../../packages/web-core/src/features/agent-runtime/model/nativeAgentQuestions.ts)・[回答component](../../packages/ui/src/components/AskUserQuestionBanner.tsx)・[offline browser](../../tests/chat/native-questions.mjs)
+
+この描画はRun状態を本文から推論しない。既存の初回message identity、final再掲防止、Markdown/DECISION表示を保持し、質問の正本・配送は[Sessionの契約](../concepts/session-and-agent-run.md#plan一般質問との境界)に従う。実認証済アプリと実モデルを通す一体E2Eは未確認である。

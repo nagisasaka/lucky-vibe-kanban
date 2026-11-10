@@ -5,7 +5,7 @@ description: AgentRun を独立プロセスで実行し、Native Audit から永
 tags: [agent-runtime, audit, persistence, recovery]
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-10T20:48:58.515Z
+    at: 2026-11-10T21:23:07.231Z
 sources:
   - id: openwiki-source-b85c3dc0eaacdffedf4e68ee
     resource: repo://crates/db/migrations/20261026180000_agent_starting_recovery.sql
@@ -27,8 +27,6 @@ sources:
     resource: repo://crates/executors/src/executors/claude/protocol.rs
   - id: openwiki-source-22b82518475034ade38104e6
     resource: repo://crates/executors/src/executors/codex.rs
-  - id: openwiki-source-d0244e39b6cb88790907b9b2
-    resource: repo://crates/executors/src/executors/codex/agent_scope.rs
   - id: openwiki-source-c88a7c6fabdac15166554032
     resource: repo://crates/executors/src/executors/codex/client.rs
   - id: openwiki-source-f4e0f9b2ce513d3f8b8b070e
@@ -79,7 +77,7 @@ sources:
     resource: repo://crates/workspace-manager/src/workspace_manager.rs
   - id: openwiki-source-141584dac09cf0f93be6bff5
     resource: repo://tests/codex-process-cleanup/README.md
-generated: { by: "codex", at: "2026-11-09T18:10:41.827Z" }
+generated: { by: "codex", at: "2026-11-10T21:23:07.231Z" }
 ---
 
 # Agent Runtime の監査・投影・回復
@@ -118,7 +116,7 @@ Starting 失敗では Failed の保存時にこの解放が先に成立する。
 
 Codex の command/file approval waiter は provider と同じ process host に置く。`ProcessHostApprovals` は既存 `ExecutorApprovalBridge` を DB・通知 service なしで再利用し、UI への記録は canonical event 経路に任せる。launch audit の `approval_behavior` も Codex では `host_tool_waiter`、他 provider では `noop` と区別する。人の判断と Plan/質問の違いは [Session の承認契約](../concepts/session-and-agent-run.md#承認質問と現在の接続状態)を正本とする。[host wrapper](../../crates/local-deployment/src/process_host/approvals.rs#L1-L82)・[bridge](../../crates/services/src/services/approvals/executor_approvals.rs#L40-L83)・[launch audit](../../crates/local-deployment/src/agent_run_port.rs#L190-L214)
 
-UI の ResolveApproval は host の waiter を解決する。Codex では port 側で解決 event を先行生成せず、request handler が待機結果（timeout・取消を含む）から `approval_resolved` を出す。`approval_requested` / `approval_resolved` と未解決件数の通知を adapter が canonical に投影し、件数が残る間は AwaitingApproval、0 で Running にする。native request ID への応答と semantic control の監査記録は異なるものであり、UI の回答受付だけを native 操作の実行成功と扱わない。[制御配送](../../crates/local-deployment/src/agent_run_port.rs#L3318-L3367)・[client の結果記録](../../crates/executors/src/executors/codex/client.rs#L971-L1092)・[件数の投影](../../crates/executors/src/executors/provider_adapter.rs#L1522-L1535)
+UI の ResolveApproval は host の waiter を解決する。Codex では port 側で解決 event を先行生成せず、request handler が待機結果（timeout・取消を含む）から `approval_resolved` を出す。`approval_requested` / `approval_resolved` と未解決件数の通知を adapter が canonical に投影し、承認件数が正なら AwaitingApproval、承認0かつblocking質問件数が正なら AwaitingInput、両方0なら Running にする。native request ID への応答と semantic control の監査記録は異なるものであり、UI の回答受付だけを native 操作の実行成功と扱わない。[制御配送](../../crates/local-deployment/src/agent_run_port.rs#L3318-L3367)・[client の結果記録](../../crates/executors/src/executors/codex/client.rs#L971-L1092)・[件数の投影](../../crates/executors/src/executors/provider_adapter.rs#L1522-L1535)
 
 Host の監視 loop を離れた際は、明示 Cancel でなく EOF・crash・protocol failure・通常終了でも cancellation token を cancel して承認 task を解放する。その後に既存 process cleanup、control 解放、出力 drain を行う。waiter の配置はアプリとの再接続を意図したものだが、この変更の fixture 試験はサーバー再起動越しの回復まで証明しない。[終了処理](../../crates/local-deployment/src/process_host.rs#L1061-L1085)・[検証の境界](../concepts/session-and-agent-run.md#承認の検証範囲)
 
@@ -149,7 +147,7 @@ Codex のメッセージ差分と完成メッセージは別の経路を通る�
 
 Codex の最新 context は `tokenUsage.last.totalTokens` と `modelContextWindow`、累積 usage は `total.inputTokens` / `total.outputTokens` から別々に得る。context の任意 field は既存 snapshot JSON に入り、host journal と DB の latest-value snapshot を通って replay される。context 用の専用 table や canonical token 履歴は増やさない。Workspace 累積トークンは別の thread 単位集計として保存する。[分類](../../crates/executors/src/executors/provider_adapter.rs#L1632-L1658)・[JSON 保存](../../crates/db/src/models/agent_runtime.rs#L1861-L1907)・[journal の選別](../../crates/local-deployment/src/process_host/journal.rs#L156-L175)。画面での未知値・新しい attempt の扱いは [Session の context 表示](../concepts/session-and-agent-run.md#context-使用量の意味)を参照する。
 
-現行 Codex mapper は v7 で、`AgentScope` が native thread の親子関係と観測を canonical AgentActivity へ投影する。root は開始・再開応答で確定し、子の通知や scope 不明の usage を親の会話・使用量にしない。v6 は明示 plan 導入前、v5 は実行表示 metadata 導入前、旧 v4 は collaboration 観測導入前の replay 用に残す。既存 canonical 履歴を新しい観測で推測補完する仕組みではない。[mapper 選択](../../crates/executors/src/executors/provider_adapter.rs#L280-L444)・[scope](../../crates/executors/src/executors/codex/agent_scope.rs#L24-L200)。子の終端証拠を要求する実行側 guard と表示 lifecycle は [native subagent](../concepts/session-and-agent-run.md#native-subagent-と旧実行モデル)に置く。
+現行 Codex mapper は v8 で、`AgentScope` が native thread の親子関係と観測を canonical AgentActivity へ投影する。root は開始・再開応答で確定し、子の通知や scope 不明の usage を親の会話・使用量にしない。v7 は delivery 解釈導入前、v6 は明示 plan 導入前、v5 は実行表示 metadata 導入前、旧 v4 は collaboration 観測導入前の replay 用に残す。既存 canonical 履歴を新しい観測で推測補完する仕組みではない。[mapper 選択](../../crates/executors/src/executors/provider_adapter.rs#L280-L444)・[scope](../../crates/executors/src/executors/codex/agent_scope.rs#L24-L200)。子の終端証拠を要求する実行側 guard と表示 lifecycle は [native subagent](../concepts/session-and-agent-run.md#native-subagent-と旧実行モデル)に置く。
 
 ## Host の再送記録と有界配信
 
@@ -284,3 +282,10 @@ Linuxのprocfs identity解析は不完全・不正なsampleを最大3回読む�
 LOCAL-361以後、通常起動は現在のRun/Repo identityと短い契約を合成し、Manifest形式・並列snapshot/preview・共有資源/Runnerの詳細は `.lvk/attachments/lvk-agent-guide-<内容hash>.md` に配置する。通常 `execution_env` がprovider起動前に実ファイルを準備し、両providerへ絶対参照pathを渡すため、LVK MCPの登録は前提ではない。内容が同じなら再利用し、不明な既存内容やsymlinkは上書きせず起動準備を失敗させる。[配置](../../crates/utils/src/agent_guides.rs)・[起動前準備](../../crates/local-deployment/src/agent_run_port.rs#L1037-L1043)
 
 通常codingのWiki read-only案内はExecutionEnvが一元合成し、保守・reviewer・資源調整役の境界を保つ。保存Issue由来の既知定型文除去は任意prompt全体には適用せず、[保存本文の保護](../concepts/card-context-and-llm-wiki.md)と分離する。ファイル配置とprovider設定の検証は、実モデルがガイドを読んで遵守した証明ではない。[合成](../../crates/executors/src/env.rs#L53-L102)
+
+
+## LOCAL-376のnative質問配送とdelivery保持
+
+一般質問のwaiterもproviderと同じhostが所有する。UI/MCPのSubmitInputはhost内の意味的制御としてwaiterを解決し、元request handlerだけが元の数値/文字列native request IDへ応答する。InputRequestedの任意provider_metadataに元ID・params・questionsを保持する。取消・期限切れ・元turn終了でwaiterを解放し、別attemptや遅い回答、同一native要求の再送から二重配送を作らない。[client](../../crates/executors/src/executors/codex/client.rs#L1146-L1264)・[host回帰](../../crates/local-deployment/src/process_host/approvals.rs#L252-L400)
+
+mapper v8は明示delivery=asyncだけをasync質問へ投影し、asyncのfinal_answerをturn最終報告としない。未知値・null・欠落と元item/thread/turn情報をmetadataに保持し、modeや本文・DECISIONから補わない。明示isBlocking=falseは待機件数へ入れず、欠落時は旧server-request契約を維持する。旧mapperの履歴と終了済みRunを書き換えない。[投影](../../crates/executors/src/executors/provider_adapter.rs#L2112-L2220)・[質問登録](../../crates/executors/src/executors/codex/client.rs#L1154-L1207)

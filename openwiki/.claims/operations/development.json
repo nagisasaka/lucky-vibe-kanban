@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:b481bab950bb8277e8da3b6f41314ab37dcbbbb495237bc023a9bfd6f29fde40",
+  "pageVersion": "sha256:51791438c3473cb19b16fc65cd41437794db5cb4eefd1e279377057fda198ab3",
   "claims": [
     {
       "id": "claim_1640e4eaeac94676a84eb3b9d9970d30",
@@ -351,7 +351,7 @@
           "version": "repo-lines-v1:sha256:2e18c6041f81c7359f613342e3e8540f0312af2e01fe0ca4a2ea819baf78f3bf:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMwLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI5MWNjNDA2ODdkMjQ0ZTlkYWY5MWNlZDQ2NTIzMjY1NjlhNGZiNmRmYzgxZDAzZmJlNzIzYTVlYTNjY2JlOWRmIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJlNmIwNDQ5MTQ2OTcyMmU4MzYzYTk0ZTQwNDQ1MzhlMDEzYTJhMjE3ZTM2YjFlNTY4YmE2MGFjYjdiNGM4ZjJlIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIxNWViN2EzYTk3MzI0MWU5YTQzMTQ3OTJhNTA5ZjhjMmQ1Mjg1ZWMxMzI1ZmQ2MTYxMzlkMDM1YmEwNzEyY2EzIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiIxN2E1ODAwNzBmNTU1YzRhOTViODNhNmUwNDU5NTc1ZDg4NTRkNWMxMzg0NTBiZDQzMGYxOTZjNjc3MDU3MmE5In0"
         },
         {
-          "resource": "repo://crates/executors/src/executors/provider_adapter.rs#L4177-L4220",
+          "resource": "repo://crates/executors/src/executors/provider_adapter.rs#L4315-L4358",
           "version": "repo-lines-v1:sha256:7d4571689c12c4b4be7740181ca27778c27c9e0be46850fbb0b177e257725bd7:eyJzZWxlY3RlZExpbmVDb3VudCI6NDQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkyYjVlZGY1OTQ5Y2ZlYTY3ODIyY2Y2OTExMzIzNjNkNjhkNmYxZTE2OWY1ZTBkNGY3YzE0ZTVmYTFlNmQ0ZTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE1ZWI3YTNhOTczMjQxZTlhNDMxNDc5MmE1MDlmOGMyZDUyODVlYzEzMjVmZDYxNjEzOWQwMzViYTA3MTJjYTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZjZTRmYzYyMzM3YjBjMWIyNjljZDU0ZTFjZWVjYzhkMzMzNTAxMWNjOWZmYzk2MTBiM2I5NDg5Yjk1MTY5ZmUifQ"
         },
         {
@@ -798,7 +798,7 @@
         },
         {
           "resource": "repo://crates/executors/src/executors/codex/client.rs",
-          "version": "repo-file-v1:sha256:591974c480af737776d69d60d32d352119e44df22b0c44d769a735a0ed473e48"
+          "version": "repo-file-v1:sha256:e610df1018a753c7d4bd8ab9e0d9b9d5b8743ffe747ce633ff122882209be016"
         },
         {
           "resource": "repo://tests/chat/mcp-approval.mjs",
@@ -1047,10 +1047,24 @@
           "version": "repo-lines-v1:sha256:e0e36aea59d50e709bd3482dff6e45b7bbea18015339d626bf364c9fec33117c:eyJzZWxlY3RlZExpbmVDb3VudCI6MjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYyZjYxNzhlNmY1NmJiYzAxODBhZTFjNGY2Yjk5ZjIzNmMzOGI3YTg4NmI3ODhmODQwYmIwM2E5ZWM5OTM3NDAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk1NWEzNTE3YWQyOThlYTY3Y2UwMjUzYjNmNzk3NzY5NjQzZTE1ZTVmYzM0ZmU4NGQ4ODA2NjBlYzk2MjJiZDAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjY2ZjU1OGIyYzk4Y2E2MjM2YTE2OGY5Y2VmMGQ5OTVhODFiOTI0NmE3YTM2YWZjOGQ0MDBiM2EzNjc3YjEyMzcifQ"
         }
       ]
+    },
+    {
+      "id": "claim_eeac9c736ea9463ba1b396ef7eb26fc7",
+      "statement": "native質問のhost回帰は元request IDへのsubprocess往復・重複要求・明示nonblocking・取消/終了/期限切れを扱い、offline browserは本番質問componentのID・複数回答・失効操作を検査してlive認証/model E2Eを証明しない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/local-deployment/src/process_host/approvals.rs#L252-L400",
+          "version": "repo-lines-v1:sha256:d0cb217f8e84e1fc364a35e8e447579ccdfaf9ebfb9c5df0eb845ac90fda6436:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQ5LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIwMWJhNDcxOWM4MGI2ZmU5MTFiMDkxYTdjMDUxMjRiNjRlZWVjZTk2NGUwOWMwNThlZjhmOTgwNWRhY2E1NDZiIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIwMWJhNDcxOWM4MGI2ZmU5MTFiMDkxYTdjMDUxMjRiNjRlZWVjZTk2NGUwOWMwNThlZjhmOTgwNWRhY2E1NDZiIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI1MGNlNWYzNzEwYjM2Y2YyN2NlOGViZmUxMzEyM2Y5ZTdhNDA3ZjIxMmY2ZDExNWFjZDIyMmEwZGY3MjE4NWM2IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJhMDUwZmZjYzZjMDFkNzQyNjU2YmNhMGVmOTQzNjc0NDk3MzEzMDA1Njg1ZTE3N2U2ZGQ4NTExNWQwNjZkNDRlIn0"
+        },
+        {
+          "resource": "repo://tests/chat/native-questions.mjs",
+          "version": "repo-file-v1:sha256:21b8fdf37b04af9593c0304616df0a8b8c372e60deb5d55ed81c9142aa2d7345"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-10T20:48:58.515Z"
+    "at": "2026-11-10T21:23:07.231Z"
   }
 }

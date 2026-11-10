@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:6324fc1d1f11e7612b3068acfc0021109517eaf9d42b1ed1d522ccaaf30b859c",
+  "pageVersion": "sha256:c1f88b9bf73dca00852a41e94ab2d1a3209d08130764810b89e949d8b0866f81",
   "claims": [
     {
       "id": "claim_edf1b78d3c7a4d978a6d8debcee4edd2",
@@ -353,7 +353,7 @@
           "version": "repo-lines-v1:sha256:6a5600788401406ab37db34cf1bda05bc6504719d6bc5c7e6dc35fd909a16701:eyJzZWxlY3RlZExpbmVDb3VudCI6MzgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjkwYmZhMzY4OWNiNWEwMDNmYmI4MTNiNDhlNzYwZDBhYzc4MTRlODY5NzkzOTNhYWYyMGJmNGIwYzllZDY3ZDQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjEyM2QyODY1OTgzYmRiOGIwNTMzOTU2YWIwNDlmNmFjNmRmZmZlOWRlYmIwMzU1YzA1MmY5OWE4MTBiMzhhM2QifQ"
         },
         {
-          "resource": "repo://crates/executors/src/executors/provider_adapter.rs#L2651-L2725",
+          "resource": "repo://crates/executors/src/executors/provider_adapter.rs#L2789-L2863",
           "version": "repo-lines-v1:sha256:fef2fbc255b8eb731d6a9ed6273abac35d884d93bd779bc84ae9edb900c2ddd7:eyJzZWxlY3RlZExpbmVDb3VudCI6NzUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZhMmVkNjM3NzkzOWFiZGY4MGRjNjVhMTk3ZjViYmY0MjY3NzdkNWRhMDA2NjIwODcyOTYzZjU1NWM1YWIzNjYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjgzNWM2ZDY3MDEwZmI4NjhkODk5ZTA3YzliMDNlZTRmNDM5NmVjMDZmYWZmMTZlZmUxNzFiMDNmMDc2NDA1OTIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZmNzFhYmNhMWJiOGVlZjBjZTY5NzVhYTFhMjY0ZDg4ZGY5ZTA5NmJmNWRhYzNkNGI5NGUzNjUwMTU0N2JhNGQifQ"
         },
         {
@@ -379,10 +379,24 @@
           "version": "repo-file-v1:sha256:b8621f0bc92b10d70a744c5f10041a8a6eeecac5be71744beb6dad3a2ab75274"
         }
       ]
+    },
+    {
+      "id": "claim_da87aacd592548b0b8d9387e0754c401",
+      "statement": "native質問のhost配送・元delivery保持・旧mapper互換を分離し、mapper v8でも本文/DECISIONから状態を推論しない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/executors/src/executors/provider_adapter.rs#L2112-L2220",
+          "version": "repo-lines-v1:sha256:f17e0cf23a2c07fba6d4ae65c6cd1e9856984ce9dcb78fdf9f1751ebb120229f:eyJzZWxlY3RlZExpbmVDb3VudCI6MTA5LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI5NzcxYjM2MWE0NDZiMjdkMTUxOTEyOGQ2NGYyNTYwM2Y4NmM0NDQwYjdjN2IyNjNkZDk5NDczNjY2ZGEwZmM1IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIwODMwZGI1ZDZlYjdjOWMxNTAzMDBmNGMzNGJmNmNkNTRhNTRmMzI5OTkyN2UwYjEwMzkxMDg5YmQyMDhhYzZmIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJhMmNjMGQ0NGRkZTM5MTAxOGE0NTljMDZiMDkwZWVlYzhkZjUwNDE4ODI5NzMyMDJkMGE3NjVmYzkzNTY0Y2E2IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlYTYzMjlhNjljN2Q4ZmVmYmMzODRhZDdhODIyMGMzNDQ5NmMxNjAzMmU4NjJkYzFhNGIzZjY5NjQzZjY0NWVlIn0"
+        },
+        {
+          "resource": "repo://crates/local-deployment/src/process_host/approvals.rs#L62-L99",
+          "version": "repo-lines-v1:sha256:bd07532f60cdd3e366ed6f4da5845ceb8a819178b5e1e475d10fa6aade5c6cf9:eyJzZWxlY3RlZExpbmVDb3VudCI6MzgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA5ZmJlZWQ1YzEwN2M3NWZiNGNlMWVhY2Y2MTQ1YWY0ZmM2NmE1NTdkYzZkNTA3MmZhYTNkY2FjZGI3ZmJhMzQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFlMGFmM2ZkNGE0YzNhMWQ0N2M3ZjQ3MGVkMGQ4NmQ5MGQ5ZGUyMTBhNWViMTQ1NWZiZDk0NDgyYTQ3NjViNzIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZiMjBlNzhiOGRlMmI1ZDBlYzRlNDgwN2I0ZTNhODFmYzIyYjczMTQ4Mzg2ZWVmNzM1ZjZjYzFlMTIyYjRkZWMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJjNDY3YjMwODU3YmZiOTQyNmFjMjk4ZGQ1MTQ5OTgwOGQ0MTIzYTUwZWI0ZjQ1YjI3YTBmOWViNjhkZmFhZDEifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-10T20:48:58.515Z"
+    "at": "2026-11-10T21:23:07.231Z"
   }
 }

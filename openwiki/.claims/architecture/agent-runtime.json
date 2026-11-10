@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:5b8ee94aa0ee0dbcb92cec92e8b472ea7e8b9525bd1a23203db0d637128a9716",
+  "pageVersion": "sha256:f993c0f387f936fbf81940acaa62d25ebb877f3a5c614d07cf71f5f1e101c8e2",
   "claims": [
     {
       "id": "claim_73d8e11679c6457aaf2e2b1a68fb767e",
@@ -36,7 +36,7 @@
       "evidence": [
         {
           "resource": "repo://crates/executors/src/executors/provider_adapter.rs",
-          "version": "repo-file-v1:sha256:d040272ca4d334518745926aca6a9b47968ab959733f5cabd79c995086ec9376"
+          "version": "repo-file-v1:sha256:bb48e3f480bd6de75db0b126332ae916857831b79357e52ecbc7d7dc95e0a0f9"
         },
         {
           "resource": "repo://crates/local-deployment/src/process_host/journal.rs",
@@ -269,7 +269,7 @@
           "version": "repo-lines-v1:sha256:91cf9149c3ca16e46f2ee84eba79b93442141845a44e0bd25fed127025deba17:eyJzZWxlY3RlZExpbmVDb3VudCI6NDcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ1NWM0MjBiZDRkYWM2MWU4ZWNiYjRhZmFiYzcxZDM2MDhiZWMwODhiNzA3ZDc3NzQ2MjZlYTYyMWFhNTJjMTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRhY2FkMTA1MjE0ODgyZjI3NDJlMTZjNGQ2ZDY3NjExZmY0ZGYxZGE4OThjMTc3Yjk2ZDE0NGUxYmU4NjI1NjgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhlYzkwMWQ4ODAxYjMxYjU0MjliZTk4ZjM1YTAzNTBiMDcxM2E2NDBhZmFhNDk3OGQyZDM5ODViMDExOGJmY2UiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImEzMTQ0ZTM0YzQ1MzNjMmQ1OTJjZDU5ZTJmYmU2NWE5MjEyMGNiMTViNzA3NzJlNTJlNTI0NjE2MTVhYmYzZDIifQ"
         },
         {
-          "resource": "repo://crates/executors/src/executors/provider_adapter.rs#L1637-L1663",
+          "resource": "repo://crates/executors/src/executors/provider_adapter.rs#L1654-L1680",
           "version": "repo-lines-v1:sha256:1f35db553a841c30dbd8d3f6fe7e3d42020b439c3edddaa69c4fe54f981aa1bf:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU0OGRiMDMxZmI2ZDRlNjM3YTI0ODdjMWFiODlhYjZmY2ExODU2MWVmOGYzNWQ0ODBhYzFhOWIxOTlhOTI5ZDQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjlmNjRkMzQzZmM3MTVkOTFkMDE0Njg3OTVjOWRmZDhmNzVjODgzYmQyM2NiZTBiZTk3N2M3ZjYwMTUzNDk0YjkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjVjYzhkYjMyMzAwYjIwODA1ZWYzOTA1Y2U2M2YzNzkyMDIzN2RiZmU3ZDE0N2ZmM2Y3NmFiOTg0MDMzZjAxODYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijg5YTI3MjBkYmRkZmRhYWE3YzQ5ZGIzYWZmNTA1NTdmZDg4MGZiNDIwMjBmNmEzMTU3NmVlNGU3N2E1NjBlZjAifQ"
         },
         {
@@ -280,15 +280,11 @@
     },
     {
       "id": "claim_6e2b45a7007744888b1e6278aeb6a864",
-      "statement": "現行Codex mapper v7はroot応答と子scopeを用いてAgentActivityを投影し、v6・v5・v4 mapperを各変更前のreplay意味論のために保存する。",
+      "statement": "現行Codex mapper v8はroot応答と子scopeからAgentActivityを投影し、v7をdelivery解釈導入前、v6・v5・v4を各変更前のreplay意味論のために保持する。",
       "evidence": [
         {
-          "resource": "repo://crates/executors/src/executors/codex/agent_scope.rs#L24-L200",
-          "version": "repo-lines-v1:sha256:7e692fd5d599d66ff861c29c1b05a3ac3901d646d6eb42bb8b1997ca3602fb72:eyJzZWxlY3RlZExpbmVDb3VudCI6MTc3LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIwMWJhNDcxOWM4MGI2ZmU5MTFiMDkxYTdjMDUxMjRiNjRlZWVjZTk2NGUwOWMwNThlZjhmOTgwNWRhY2E1NDZiIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJmYzEwZDg3NWEyMTU1ODZiNTk4YzM1NDY2Njc1Mzc0NmNlOWMzNzZjNmYxYWM2NDc1ZGE2NDdkNjE2MDYyOWY5IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI5NTA3OTA0MWI0ODMxMzBjNDhjMzA4ZWFhZWM0YThjODcwZDRkMTYxZjNhNTIyMmEwN2YxMWQzYzY0NGM0Y2M1IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI3MDU2NTExZWU0MjkyZTg0OTI0Y2E1ZjllMzQ1YjI4NGI0YTllNGEzZThjMTI5MDZhN2VlMGY5YTRkZjU1OTZmIn0"
-        },
-        {
           "resource": "repo://crates/executors/src/executors/provider_adapter.rs#L280-L444",
-          "version": "repo-lines-v1:sha256:d0ef49cb1cb6bfc01e76a42cdb50f061b02f831f092032553d159b3c84a32420:eyJzZWxlY3RlZExpbmVDb3VudCI6MTY1LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI1ODM5MDI3MjdjMWIwYmRkOGIyYjEwNDkyM2VlMjMzYWM5MzBhZmVjMTFkYzFkNGY1NzJmNDkzZjNjYTc4MzU0IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJiZGQxYWRiN2IyYjk2ZWYzZTk1YWE5NDQ2NDgwY2IxZjc2OWI5M2Q1MmNkZjdiNDY5YzgzZjc1ZDViYTQ0YjkyIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJmY2FjMTk4M2M5NTBjMjA2MzdlNDFjMDE4ZjRmYzVlMGFkODdmYjI5ZjY2ZTc1NWUwNzNlOTI1ZTA5ZGZlYjY2IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI1MGQ4OTE0ZjgxZDg0NThjZmY4ZWQzN2VlZTdlM2NjOTY1ZDRmNGMwN2QxNDU5MmIxYjY5ZGM2MTRkODA4NTAzIn0"
+          "version": "repo-lines-v1:sha256:0a3aec4255f410d1d1dd2e132e3aeee520f001b12c965d6d6b9ff29a051ec387:eyJzZWxlY3RlZExpbmVDb3VudCI6MTY1LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI1ODM5MDI3MjdjMWIwYmRkOGIyYjEwNDkyM2VlMjMzYWM5MzBhZmVjMTFkYzFkNGY1NzJmNDkzZjNjYTc4MzU0IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI0NjU3ZjZlODI5OTdhZTg5NGE3YWVjMjZlZjZlZmZjNmEwYzNmOTEzNzYzYmU1YzRmNWIxMDk0ZDUyYjcxMTkyIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJmY2FjMTk4M2M5NTBjMjA2MzdlNDFjMDE4ZjRmYzVlMGFkODdmYjI5ZjY2ZTc1NWUwNzNlOTI1ZTA5ZGZlYjY2IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiIwMTYxMjhhOGRmOTJiNTE0ZjJhNGQ4NjcwMDc2MDc1ZDQ4ZDE3NjllZjRlZGM2MjViMTIzZTdiNGZkODJiMTc0In0"
         }
       ]
     },
@@ -366,7 +362,7 @@
         },
         {
           "resource": "repo://crates/executors/src/executors/codex/client.rs",
-          "version": "repo-file-v1:sha256:591974c480af737776d69d60d32d352119e44df22b0c44d769a735a0ed473e48"
+          "version": "repo-file-v1:sha256:e610df1018a753c7d4bd8ab9e0d9b9d5b8743ffe747ce633ff122882209be016"
         },
         {
           "resource": "repo://crates/local-deployment/src/process_host.rs",
@@ -412,29 +408,25 @@
         },
         {
           "resource": "repo://crates/local-deployment/src/process_host/approvals.rs",
-          "version": "repo-file-v1:sha256:d401ec7a3e2417d1fdc7f833ee30ba08240f19cf962cb7adab1ff82e3cc1181c"
+          "version": "repo-file-v1:sha256:c8669f147a3f4a282c722540d60161b97021ca17b23fbbc105a757b2d784880c"
         },
         {
           "resource": "repo://crates/services/src/services/approvals/executor_approvals.rs",
-          "version": "repo-file-v1:sha256:2d502d5f8991e3f40536375073954bc3c19e81d6e432558630063f11d51eaa4d"
+          "version": "repo-file-v1:sha256:450d7f6c90780ffd7beac016c40349e194f0abacd8e3881f1fa5a274bef57a31"
         }
       ]
     },
     {
       "id": "claim_cbc86c062ec740f3b0c91b5dc438a773",
-      "statement": "Codex の承認解決は port で先行生成せず request handler の待機結果から記録し、未解決件数が正なら AwaitingApproval、0 なら Running を投影する。",
+      "statement": "Codexの承認解決はrequest handlerの待機結果から記録され、v8の状態通知は承認件数正ならAwaitingApproval、承認0かつblocking質問正ならAwaitingInput、両方0ならRunningを投影する。",
       "evidence": [
         {
-          "resource": "repo://crates/executors/src/executors/codex/client.rs#L1034-L1098",
-          "version": "repo-lines-v1:sha256:9a59a927a2a90e8931df5bb418bf7b26b5d43ccc3dbba1d982997501082135ad:eyJzZWxlY3RlZExpbmVDb3VudCI6NjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU1MDMyZTk2NGQwOTMyMzUxZTVkMTg1MjY5MjgxYjE3MWEzYTA5YjA4YjI4NmU2NjFlYTQ3MDMyM2M4MmViNGQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxOTBjNmVkYWUwNTI2MjYxMGM5Yjk2ZTQxM2EyM2Q0MGI4NWZkYjA4ZDY3Y2ZkOWJhZjQ2NTkyMWFjZDE1NWYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQxODEyOTJmYWZlOGM3YTM4M2NjYThlYjNhZjg5NTE4NGM0NjM1OWZkYzk2NmUyMWVhYWM5NmMxNWU0YTM2MTYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQyYmMwMjNmNDhmMjdkOWFiOTNkNzM3MjhiYTc3OGE1ZjM0NTVlOGVkNzMwM2MxMTc1NmQxMDQ2MjQ2NzkxN2QifQ"
+          "resource": "repo://crates/executors/src/executors/codex/client.rs#L1077-L1130",
+          "version": "repo-lines-v1:sha256:32e86b770dafa33fb0457a345f7b6ccd0152687a109530c02cac1d20b88961b2:eyJzZWxlY3RlZExpbmVDb3VudCI6NTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA5YTUxMTk3MTkyMWMzYjY4ZmUxMzVmNzRiZGE1NjJmYWZmNGQxODM2YzZiMTVhY2QwN2YzNWE2NjhiMWFiNGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU1MDMyZTk2NGQwOTMyMzUxZTVkMTg1MjY5MjgxYjE3MWEzYTA5YjA4YjI4NmU2NjFlYTQ3MDMyM2M4MmViNGQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjY4OTU1Yzk1NGViZWJkNWFjYTFkNTYxMTZlM2U2MDQ4ZjQzNjQ2OWM0MjFhNDA2MDE3YTk4MWEzOGI1ZGZjZWYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZiMjBlNzhiOGRlMmI1ZDBlYzRlNDgwN2I0ZTNhODFmYzIyYjczMTQ4Mzg2ZWVmNzM1ZjZjYzFlMTIyYjRkZWMifQ"
         },
         {
-          "resource": "repo://crates/executors/src/executors/provider_adapter.rs#L1528-L1541",
-          "version": "repo-lines-v1:sha256:099278fada1bd768eb77bf27f7ec1929d528b7d1a0f89c7a22cc593f40bf005b:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBkNjc2MGYxYjlmMjdkNTNlMjY4ZmZhYTYxYmU1MzJiOGVhZmQ2ZjUxOTc1ZTE2ODg2MWRlZmRiZTI3ZDJiNzQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUwMzk1YzgyZTJmZDA2MGZkNmE0NzI5NWM5ZWUzNGJmYTk0MTU0Nzg2ZjRjOGJkZjdmZWZkYTI1ZGI5Mzk3OGEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjU5NmYyOTM3YjI2Zjg0NGZmNDZkYTIzYWU5ZDFjZjFjY2NhZTgyY2Q0ZjE2NjhlMTJhYTZiZTQxZDg4OTBlOWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImZiYTRjNTY0ODBhODliYzI5ZmUyMzY3ZjQzZTc3OGVlYWEyYjFiODhhZWZhZDIzMDE0YTk0ODg3MTlmMjk0NjUifQ"
-        },
-        {
-          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L3643-L3692",
-          "version": "repo-lines-v1:sha256:3727bb0c1fd48944a289a161a303c73876c964c0c36bcdc5f43e11634f95970a:eyJzZWxlY3RlZExpbmVDb3VudCI6NTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA2M2FmZmU5MzQxYWIwYjk1OTQxNWNmMzg2ZDI3ZDMxMjFlNmM4YzY5MjkwZWQyNTMwNDQ5YjRlMjJmNzMxMTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNjMWVhNjgxZjEzZjgwYmMxM2RiOWQ2MmMyZjQxZWIyNTY5MzU3YjBjYmM2NTU4M2ZhNDg1ZWM5MDhmOWQ2MGMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjA3NjJhMTcwOGRiNjllNzlhMDMwNmVkNTEwOWVlYWY4ZTg2MjM5OTdmZTRmMTE4MTQ0MjUyY2E3MTE3MjU3YmMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjEzMTUyN2EwNTc2M2U4MmY5YzEyMzNmMThmZTdhYTA0MWUxNzdjOGYxNDYxMGQzMWY2MWM1ZTY3YmM4ZTE5MGIifQ"
+          "resource": "repo://crates/executors/src/executors/provider_adapter.rs#L2112-L2150",
+          "version": "repo-lines-v1:sha256:38195d18cad83498e52516df3110b0d6d908349f013d2601eda3153b45e74da2:eyJzZWxlY3RlZExpbmVDb3VudCI6MzksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk3NzFiMzYxYTQ0NmIyN2QxNTE5MTI4ZDY0ZjI1NjAzZjg2YzQ0NDBiN2M3YjI2M2RkOTk0NzM2NjZkYTBmYzUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhkNjlkZWJlMWFiZjA2MzIzNDk3YThjZGUzNmVmMTgxNDZiYzk5OWJmMTJkNWM5YjhkNWYxNjFlZTA4MGQ0ZDIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImEyY2MwZDQ0ZGRlMzkxMDE4YTQ1OWMwNmIwOTBlZWVjOGRmNTA0MTg4Mjk3MzIwMmQwYTc2NWZjOTM1NjRjYTYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNiMGQ5NzcxNWJiZDlmMDkwZTA4ZjYxZDViYjMwYzZjMTg0MWNjZmMzYzEwNjQ0NjlkNWQyNjM0YWZhMjY4ZWEifQ"
         }
       ]
     },
@@ -453,7 +445,7 @@
       "statement": "任意のcumulative_usageは検証済みCodex native thread総量だけに付与され、旧snapshotの欠落は互換として扱われる。",
       "evidence": [
         {
-          "resource": "repo://crates/executors/src/executors/provider_adapter.rs#L1974-L2030",
+          "resource": "repo://crates/executors/src/executors/provider_adapter.rs#L1991-L2047",
           "version": "repo-lines-v1:sha256:77dd2b524accb891169676bb5746a882b21eec42b753b94b2756b285a76a1810:eyJzZWxlY3RlZExpbmVDb3VudCI6NTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFlNTNlMjQ4ODZlZDg5OTFmZDZhMjdkNzhjM2Q3MDI2N2JjNTVjOWFhYjg1NWI5MDk4NzJkNzJlNDYzNmM1NGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjI3ZDJlZGY4MmVhNDVmZTNkZTk0ZDYxYmRlYjgxMTg2Y2JiN2IxY2IxMjk5Yzg4OTUyMTRhZDZmNzgwNGEzMGIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjY1NTY5NTQ5ZTdiNzE2ZmM1OGMyNmNhNDFmMDY3ZWFmMzA3MzVlODZkZmExN2EwY2IwMzdkZjNkZjFlMTgzZjUifQ"
         },
         {
@@ -735,7 +727,7 @@
       "statement": "Claude新規mapper v6は成功result本文の文字列・欠落・nullを許し、それ以外をProtocolFailedとFailedへ投影し、旧mapper再生意味を保持する。",
       "evidence": [
         {
-          "resource": "repo://crates/executors/src/executors/provider_adapter.rs#L1080-L1166",
+          "resource": "repo://crates/executors/src/executors/provider_adapter.rs#L1097-L1183",
           "version": "repo-lines-v1:sha256:fc0ea695d57caf5209710043371e68b276b59e9dbcc7fa28dc1706f32a233b76:eyJzZWxlY3RlZExpbmVDb3VudCI6ODcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFiODBhOWI1ZTI5ODVmY2QzM2M5YjM5ZmU1NGI0ZDU3YjczYTYwNDIyMDBlODJjZmU5OWZjYTM4NjAyZjE0N2QiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU1MDQzNzc5MWYwZTY5NWJiZTk5NmU3OTgyYWU4YTY3NGJjNGE0ODk1MzJjMjk0OTgxOTkyY2ZkZGViZTdhYWEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImVmOTIyOWFjMzY0NDU1NzgzNmIzMDcyYWVjY2JkNmY3MWE1MzI4YzQ4NTZkY2ZhNTliZDc4Zjg3YTQ5OGNjMDgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijg0OTE3NTI3ZjUyMDg0NWYyM2RhYWQ1NzlmZGRkYTkzZDZkMTY3NDIwZmU1MzRkYTExMDlkOWY2MTU1NzI1M2IifQ"
         }
       ]
@@ -787,10 +779,24 @@
           "version": "repo-lines-v1:sha256:b226841656f82f85956679ed1bef4c633b6d173e591e24f593e3b62d636e35d5:eyJzZWxlY3RlZExpbmVDb3VudCI6NTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBkZmQ4ODk4YzQ2YmQ4NjQwODIzNGQ4ZDdiN2IzOGQ4Mzg4NGQ3ZjZkNjY1OGY2NjQ3NzI2Njc5ZjZlNWQ2MTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjBiMmYzYmEyYTk2M2Q2MjAwZTY1N2MzNTJiMGI5MTBlODc5ZWZkYzZiNzgyZjE1YzQ4NDc1Yzg5ZWIwNTZkZDIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
         }
       ]
+    },
+    {
+      "id": "claim_7d3049c3c9ea4baa852a067acd5e0838",
+      "statement": "Codex一般質問はhost waiterを経由して元native requestへ回答し、元要求metadataを保持する。mapper v8は明示async deliveryと最終報告を分離し、未知/欠落値を推測しない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/executors/src/executors/codex/client.rs#L1146-L1264",
+          "version": "repo-lines-v1:sha256:1895809cbf1e1664b5924440957e431830ce3e09e0a2a777126e6b226d9aaad2:eyJzZWxlY3RlZExpbmVDb3VudCI6MTE5LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI0ODkzZjQwZTM3ODFlYjg5NmM4MmQwNDZhMDgwNjdhMTFlMzVjZGYyZjFkZmFmMjZmZWE5MGI4ZGI2Njc2NDEzIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI0ODkzZjQwZTM3ODFlYjg5NmM4MmQwNDZhMDgwNjdhMTFlMzVjZGYyZjFkZmFmMjZmZWE5MGI4ZGI2Njc2NDEzIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJjNGEyNDU4NzRhODFjMWNmYWIwN2JkOTgwOTEwM2ZkNDg0ZjViNzhjYTM5ZDUxMzc4MWQyOWU2ZTEzZDg2ZmEwIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJmZTE5Mjk2NDhlNDUyYWY3ODcwYmVhOTg1M2U4ZDJlNGQ3OWI1NjY0ZTg5NjY0ZDdkODcwNjZhOTMyY2U5MzE3In0"
+        },
+        {
+          "resource": "repo://crates/executors/src/executors/provider_adapter.rs#L2150-L2220",
+          "version": "repo-lines-v1:sha256:7b0c6aece25bee9b937d9c0e8b2d5547710a9ce2a139ec214b44a7d307ee347e:eyJzZWxlY3RlZExpbmVDb3VudCI6NzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhkNjlkZWJlMWFiZjA2MzIzNDk3YThjZGUzNmVmMTgxNDZiYzk5OWJmMTJkNWM5YjhkNWYxNjFlZTA4MGQ0ZDIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA4MzBkYjVkNmViN2M5YzE1MDMwMGY0YzM0YmY2Y2Q1NGE1NGYzMjk5OTI3ZTBiMTAzOTEwODliZDIwOGFjNmYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjYzYTQ0YzA0ZjdjMDM1MTk3N2M1NzUzM2EzOWRkZjk3ZmRkNDE1OWQxMjZmMGQ1YzFiMTM4YmQxMzAwMmYwOGQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImVhNjMyOWE2OWM3ZDhmZWZiYzM4NGFkN2E4MjIwYzM0NDk2YzE2MDMyZTg2MmRjMWE0YjNmNjk2NDNmNjQ1ZWUifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-10T20:48:58.515Z"
+    "at": "2026-11-10T21:23:07.231Z"
   }
 }

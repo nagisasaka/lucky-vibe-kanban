@@ -110,10 +110,10 @@ sources:
     resource: repo://tests/claude-subscription/subscription.spec.ts
   - id: openwiki-source-141584dac09cf0f93be6bff5
     resource: repo://tests/codex-process-cleanup/README.md
-generated: { by: "codex", at: "2026-11-10T13:43:59.705Z" }
+generated: { by: "codex", at: "2026-11-10T21:23:07.231Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-10T20:48:58.515Z
+    at: 2026-11-10T21:23:07.231Z
 ---
 
 # Agent provider・設定・MCP・Skill
@@ -262,7 +262,7 @@ Host を切り替えた後に古い応答を反映しないことも、この機
 
 実行可否の確認と実 launch は同じ executable 解決を使う。絶対パス指定は別の PATH 候補へ置き換えず、通常名は PATH、有限時間の login-shell refresh、利用者の一般的な bin 配置を調べる。検出のために CLI を自動インストールしない。[共通 resolver](../../crates/utils/src/shell.rs#L55-L90)、[command builder](../../crates/executors/src/command.rs)
 
-adapter は provider の nested message / tool block も解釈するが、raw frame は引き続き Audit に残す。現行 Codex mapper は v7、Claude の mixed-content mapper は v4、その他は v3 である。補正を古い Audit replay へ遡及適用せず、選んだ version の意味で再生する。Claude の一つの envelope 内の text/tool の展開も adapter 内で行い、UI に provider 固有解析を持ち込まない。[version 選択](../../crates/executors/src/executors/provider_adapter.rs)、[mixed content](../../crates/executors/src/executors/provider_adapter.rs)
+adapter は provider の nested message / tool block も解釈するが、raw frame は引き続き Audit に残す。現行 Codex mapper は v8、Claude の mixed-content mapper は v4、その他は v3 である。補正を古い Audit replay へ遡及適用せず、選んだ version の意味で再生する。Claude の一つの envelope 内の text/tool の展開も adapter 内で行い、UI に provider 固有解析を持ち込まない。[version 選択](../../crates/executors/src/executors/provider_adapter.rs)、[mixed content](../../crates/executors/src/executors/provider_adapter.rs)
 
 配布 image の CLI pin は `0.163.0`、Rust の `codex-protocol` / `codex-app-server-protocol` は `rust-v0.144.1` のままである。CLI version と消費する wire 型の version は一致を要求しない。[Docker pin](../../Dockerfile#L147-L150)・[依存](../../crates/executors/Cargo.toml#L42-L43)。移行した互換性判断の履歴は、より新しい protocol crate の rollout/otel/state と SQLite link 依存の衝突を理由に wire subset を維持したと説明する。これは記録された判断であり、この Sync で依存 upgrade を再実験した結果ではない。
 
@@ -380,3 +380,12 @@ metadata一覧、明示本文到達、自動選択、手順実行、親子/下�
 Claude利用枠は`in_progress`、`cleanup_unconfirmed`、`rate_limited`、`timeout`、`read_failed`の理由codeを区別する。回収失敗で閉鎖したSLOTは閉鎖のままにし、運用担当の復旧を要する。timeout理由は所有process回収完了後だけ返す。HTTP側の50秒期限は20秒read後の回収を待つためで、モデルturnや既存Run停止へのfallbackは行わない。[取得と回収](../../crates/executors/src/executors/claude/usage.rs)・[表示](../../packages/web-core/src/shared/lib/claudeQuotaView.ts)
 
 349の共通root/cwd・repository roots・同名skill拒否と359の承認guard/終了処理は同じClaude起動経路で両立する。今回の統合検証は型/check、frontend build、影響lint/Clippy、executors・host・owned-group回帰、会話/利用枠Vitestとquota browserを対象とし、source時点の実CLI証拠とは区別する。invalid identityの当時の発生契機と大量エラーの全内訳、稼働dev既存閉鎖の復旧は未確定・未実施である。
+
+
+## LOCAL-376の配送metadataと互換性
+
+Codexの新規監査はmapper v8を使う。元agentMessageのdelivery/questions、item/thread/turn identityを保持し、明示asyncだけを質問extensionへ投影する。async final_answerはturn最終報告ではなく、未知値・null・欠落を本文やmodeから補完しない。v7入口を含む旧mapperを残し、既存履歴を遡及変更しない。[v8投影](../../crates/executors/src/executors/provider_adapter.rs#L2112-L2220)・[旧入口](../../crates/executors/src/executors/provider_adapter.rs#L401-L444)
+
+一般質問の元native requestはcanonical InputRequestedの任意metadataに保持され、host waiterを経由して元request IDへ回答する。明示isBlocking=falseは待機stateへ変換せず、欠落時は旧server-request契約を保つ。Plan承認、実行権限承認、async inboxの寿命は別契約であり、Defaultの質問を強制blocking化しない。[質問登録](../../crates/executors/src/executors/codex/client.rs#L1146-L1264)・[Session](../concepts/session-and-agent-run.md#plan一般質問との境界)
+
+Claude側の今回の変更は互換な任意質問IDの初期化のみで、subscription login・同名skill拒否・承認serviceの境界を変更しない。CLI 0.163.0とRust protocol 0.144.1のversion差を全体upgradeで解消する変更でもない。実モデルと実認証UI/MCPの一体E2Eは未実施である。
