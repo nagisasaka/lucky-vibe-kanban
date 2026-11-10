@@ -1,11 +1,13 @@
 import assert from 'node:assert/strict';
+import { checkConversation } from './conversation.mjs';
+import { checkHeadingHierarchy } from './headings.mjs';
 import { build } from 'esbuild';
 import { chromium, expect } from '@playwright/test';
 import { createRequire } from 'node:module';
 import { readFile, mkdir, writeFile } from 'node:fs/promises';
 import { execFileSync } from 'node:child_process';
 const root = process.cwd();
-const output = `${root}/.build/markdown-reading`;
+const output = `${root}/.build/markdown-reading-review`;
 await mkdir(output, { recursive: true });
 const require = createRequire(`${root}/packages/web-core/package.json`);
 const baseline = process.env.MARKDOWN_BASELINE;
@@ -80,6 +82,8 @@ try {
   await page.addStyleTag({ content: css.css });
   await page.addScriptTag({ content: bundle.outputFiles[0].text });
   await expect(page.locator('#lexical h1')).toHaveCount(1);
+  if (process.env.MARKDOWN_HEADINGS) await checkHeadingHierarchy(page);
+  if (process.env.MARKDOWN_CONVERSATION) await checkConversation(page);
   if (!baseline) {
     await expect(
       page.locator('#lexical [data-markdown-alert="decision"]')
@@ -283,6 +287,158 @@ try {
     );
     await expect(page.locator('#lexical [data-markdown-alert]')).toHaveCount(0);
     await expect(page.locator('#preview [data-markdown-alert]')).toHaveCount(0);
+  }
+  // Layout regressions use the same authored Markdown in both real renderers.
+  // This inert fixture uses bg-primary; it is not the authenticated Issue pane's bg-secondary.
+  await page.evaluate(() => {
+    window.changes = [];
+    window.changeBody(window.lineBreakSource);
+  });
+  await expect(page.locator('#preview')).toContainText('SoftOne');
+  await expect(page.locator('#lexical')).toContainText('SoftOne');
+  await expect(page.locator('#preview [data-markdown-alert]')).toHaveCount(6);
+  await expect(page.locator('#lexical [data-markdown-alert]')).toHaveCount(6);
+  const linePositions = async (id) =>
+    page.locator(`#${id}`).evaluate((root) => {
+      const y = (token) => {
+        const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+        while (walker.nextNode()) {
+          const node = walker.currentNode;
+          const start = node.textContent.indexOf(token);
+          if (start < 0) continue;
+          const range = document.createRange();
+          range.setStart(node, start);
+          range.setEnd(node, start + token.length);
+          return range.getBoundingClientRect().top;
+        }
+        throw Error(`Missing token: ${token}`);
+      };
+      const alerts = [...root.querySelectorAll('[data-markdown-alert]')].map(
+        (quote) => {
+          const first = quote.querySelector('p');
+          const type = quote.getAttribute('data-markdown-alert').toUpperCase();
+          return {
+            type,
+            markerHidden:
+              getComputedStyle(quote.querySelector('[data-alert-marker]'))
+                .display === 'none',
+            softDelta: y(`${type}Second`) - y(`${type}First`),
+            paragraphDelta: y(`${type}Paragraph`) - y(`${type}First`),
+            // A hidden marker + its newline must not leave an extra rendered first line.
+            firstLineOffset: first
+              ? y(`${type}First`) - first.getBoundingClientRect().top
+              : null,
+            lineHeight: parseFloat(getComputedStyle(quote).lineHeight),
+          };
+        }
+      );
+      return {
+        softDelta: y('SoftTwo') - y('SoftOne'),
+        hardDelta: y('HardTwo') - y('HardOne'),
+        quoteDelta: y('QuoteTwo') - y('QuoteOne'),
+        alerts,
+      };
+    });
+  for (const dark of [false, true]) {
+    await page.evaluate((d) => {
+      document.documentElement.classList.toggle('dark', d);
+      window.setTheme(d ? 'dark' : 'light');
+    }, dark);
+    for (const width of [780, 1600]) {
+      await page.setViewportSize({ width, height: 1400 });
+      for (const id of ['lexical', 'preview'])
+        await page.locator(`#${id}`).evaluate((e) => (e.scrollTop = 0));
+      const lexical = await linePositions('lexical');
+      const preview = await linePositions('preview');
+      measurements.push({
+        sample: 'line-breaks',
+        dark,
+        width,
+        lexical,
+        preview,
+      });
+      if (!baseline) {
+        assert.equal(preview.softDelta, 0);
+        assert.equal(preview.quoteDelta, 0);
+        assert.ok(preview.hardDelta > 0);
+        assert.ok(lexical.softDelta > 0);
+        assert.ok(lexical.quoteDelta > 0);
+        assert.ok(lexical.hardDelta > 0);
+        for (const a of preview.alerts) {
+          assert.ok(a.markerHidden);
+          assert.equal(a.softDelta, 0);
+          assert.ok(a.paragraphDelta > 0);
+          assert.ok(a.firstLineOffset < a.lineHeight, JSON.stringify(a));
+        }
+        for (const a of lexical.alerts) {
+          assert.ok(a.markerHidden);
+          assert.ok(a.softDelta > 0);
+        }
+        assert.deepEqual(await page.evaluate(() => window.changes), []);
+      }
+      await page.screenshot({
+        path: `${output}/${baseline ? 'before' : 'after'}-breaks-${width}-${dark ? 'dark' : 'light'}.png`,
+      });
+      // Investigation-only border-color candidate; never changes product/background CSS.
+      if (!baseline && width === 780) {
+        const candidate = await page.addStyleTag({
+          content: `.markdown-body blockquote[data-markdown-alert='decision'] { border-inline-start-color: ${dark ? '#2dd4bf' : '#0f766e'}; }`,
+        });
+        await page.screenshot({
+          path: `${output}/candidate-teal-${dark ? 'dark' : 'light'}.png`,
+        });
+        await candidate.evaluate((e) => e.remove());
+      }
+    }
+  }
+  if (!baseline) {
+    await page
+      .locator('#lexical')
+      .getByRole('button', { name: 'Markdownとしてコピー', exact: true })
+      .click();
+    assert.equal(
+      await page.evaluate(() => window.copiedMarkdown),
+      await page.evaluate(() => window.lineBreakSource)
+    );
+    // Changing identity and theme re-runs decoration without changing authored content.
+    await page.evaluate(() => {
+      window.switchDocument('breaks-rerender');
+      window.setEditing(true);
+    });
+    await expect(page.locator('#lexical [data-markdown-alert]')).toHaveCount(0);
+    await page.locator('#lexical [contenteditable]').click();
+    await page.keyboard.press('Control+End');
+    await page.keyboard.type(' EDITED');
+    await expect
+      .poll(() => page.evaluate(() => window.currentValue))
+      .toContain('EDITED');
+    const saved = await page.evaluate(() => window.currentValue);
+    for (const type of [
+      'DECISION',
+      'IMPORTANT',
+      'NOTE',
+      'TIP',
+      'WARNING',
+      'CAUTION',
+    ])
+      assert.ok(saved.includes(`> [!${type}]`));
+    assert.ok(saved.includes('HardOne  \nHardTwo'));
+    await page.evaluate(() => {
+      window.setEditing(false);
+      window.changeBody('Reload placeholder');
+    });
+    await expect(page.locator('#preview')).toContainText('Reload placeholder');
+    await page.evaluate((saved) => window.changeBody(saved), saved);
+    await expect(page.locator('#lexical [data-markdown-alert]')).toHaveCount(6);
+    await expect(page.locator('#preview [data-markdown-alert]')).toHaveCount(6);
+    const restored = await linePositions('preview');
+    assert.equal(restored.softDelta, 0);
+    assert.ok(restored.hardDelta > 0);
+    await page
+      .locator('#lexical')
+      .getByRole('button', { name: 'Markdownとしてコピー', exact: true })
+      .click();
+    assert.equal(await page.evaluate(() => window.copiedMarkdown), saved);
   }
   assert.deepEqual(errors, []);
   await writeFile(

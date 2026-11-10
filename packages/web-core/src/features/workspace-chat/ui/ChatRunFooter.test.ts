@@ -3,6 +3,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, it, expect } from 'vitest';
 import i18next from 'i18next';
 import { initReactI18next } from 'react-i18next';
+import { MarkdownInline } from '@/shared/components/MarkdownInline';
 import { ChatRunFooter } from '@vibe/ui/components/ChatRunFooter';
 import { ChatCollapsedThinking } from '@vibe/ui/components/ChatCollapsedThinking';
 import { ChatThinkingMessage } from '@vibe/ui/components/ChatThinkingMessage';
@@ -11,7 +12,12 @@ void i18next.use(initReactI18next).init({
   initImmediate: false,
   interpolation: { escapeValue: false },
   resources: {
-    en: { tasks: { execution: { completedAt: 'Completed: {{time}}' } } },
+    en: {
+      tasks: {
+        execution: { completedAt: 'Completed: {{time}}' },
+        elapsedTime: { seconds: '{{seconds}}s' },
+      },
+    },
   },
 });
 const render = (props: Parameters<typeof ChatRunFooter>[0]) =>
@@ -106,4 +112,30 @@ it('shows the received summary line as its heading and only animates active text
     createElement(ChatThinkingMessage, { ...props, active: true })
   );
   expect(active).toContain('vk-activity-text');
+});
+
+describe('non-interactive thinking summaries', () => {
+  it('uses CommonMark inline formatting without creating nested controls', () => {
+    const markup = renderToStaticMarkup(
+      createElement(MarkdownInline, {
+        content:
+          '**Checking *sandbox* behavior** with `**literal**` and ~~old~~ [link](javascript:alert) <img src=x onerror=alert(1)>',
+      })
+    );
+    expect(markup).toContain(
+      '<strong>Checking <em>sandbox</em> behavior</strong>'
+    );
+    expect(markup).toContain('<code>**literal**</code>');
+    expect(markup).toContain('<del>old</del>');
+    expect(markup).toContain('link');
+    expect(markup).not.toMatch(/<(?:a|img|p|script|button)(?:\s|>)/);
+  });
+  it('keeps escaped or unfinished formatting as text', () => {
+    const markup = renderToStaticMarkup(
+      createElement(MarkdownInline, {
+        content: String.raw`\*\*literal\*\* and **unfinished`,
+      })
+    );
+    expect(markup).toBe('**literal** and **unfinished');
+  });
 });

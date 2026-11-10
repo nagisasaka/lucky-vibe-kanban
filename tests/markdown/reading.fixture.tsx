@@ -8,6 +8,10 @@ import { DragDropContext } from '@hello-pangea/dnd';
 import common from '../../packages/web-core/src/i18n/locales/ja/common.json';
 import WYSIWYGEditor from '../../packages/web-core/src/shared/components/WYSIWYGEditor';
 import { MarkdownPreview } from '../../packages/web-core/src/shared/components/MarkdownPreview';
+import { ChatThinkingMessage } from '../../packages/ui/src/components/ChatThinkingMessage';
+import { ChatCollapsedThinking } from '../../packages/ui/src/components/ChatCollapsedThinking';
+import { ChatMarkdown } from '../../packages/ui/src/components/ChatMarkdown';
+import { MarkdownInline } from '../../packages/web-core/src/shared/components/MarkdownInline';
 import { KanbanIssuePanel } from '../../packages/ui/src/components/KanbanIssuePanel';
 
 i18n
@@ -64,6 +68,19 @@ const result = "${'long-code-'.repeat(50)}";
 
 結論・主要要件・人間の判断待ちは折りたたみません。
 `;
+const lineBreakSource = `# 改行と引用の比較
+
+SoftOne
+SoftTwo
+
+HardOne\x20\x20
+HardTwo
+
+> QuoteOne
+> QuoteTwo
+
+${['DECISION', 'IMPORTANT', 'NOTE', 'TIP', 'WARNING', 'CAUTION'].map((type) => `> [!${type}]\n> ${type}First\n> ${type}Second\n>\n> ${type}Paragraph`).join('\n\n')}
+`;
 const attachments = [
   {
     path: '.lvk/attachments/sample.txt',
@@ -76,16 +93,72 @@ const attachments = [
 ];
 const client = new QueryClient();
 const noop = () => {};
+const referenceMarkdown = `> [!DECISION]
+> どちらの案を選びますか？
+
+> **人間の意図**
+> 本文幅を保ち、読みやすくしたい。
+
+**[!DECISION] Claudeの読み取り工程をどう扱うか**`;
+function ThinkingFixture() {
+  const [expanded, setExpanded] = useState(false);
+  const renderInlineMarkdown = (content: string) => (
+    <MarkdownInline content={content} />
+  );
+  const renderMarkdown = ({ content }: { content: string }) => (
+    <WYSIWYGEditor value={content} disabled />
+  );
+  return (
+    <section
+      id="thinking"
+      className="bg-secondary text-normal"
+      style={{ width: 390, padding: 16 }}
+    >
+      <ChatThinkingMessage
+        content={'**Checking sandbox behavior**\n展開本文はそのまま **太字**。'}
+        active={false}
+        renderInlineMarkdown={renderInlineMarkdown}
+        renderMarkdown={renderMarkdown}
+      />
+      <div id="thinking-group">
+        <ChatCollapsedThinking
+          entries={[
+            {
+              content: '**Checking sandbox behavior**\n元の展開本文',
+              expansionKey: 'one',
+            },
+            {
+              content:
+                '*Next step* with `code` and ~~old~~ [link](javascript:alert) <img src=x onerror=alert(1)> ' +
+                '長い見出し'.repeat(20),
+              expansionKey: 'two',
+            },
+          ]}
+          expanded={expanded}
+          isHovered={false}
+          onToggle={() => setExpanded((v) => !v)}
+          onHoverChange={noop}
+          renderInlineMarkdown={renderInlineMarkdown}
+          renderMarkdown={renderMarkdown}
+        />
+      </div>
+    </section>
+  );
+}
 function Fixture() {
   const [value, setValue] = useState(source);
+  const [title, setTitle] = useState('本文と目次');
   const [key, setKey] = useState('first');
   const [editing, setEditing] = useState(false);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const titleRef = useRef<HTMLTextAreaElement>(null);
   const api = window as any;
   api.source = source;
+  api.referenceMarkdown = referenceMarkdown;
+  api.lineBreakSource = lineBreakSource;
   api.changes ??= [];
   api.changeBody = setValue;
+  api.changeTitle = setTitle;
   api.switchDocument = (next = 'second') => setKey(next);
   api.setEditing = setEditing;
   api.setTheme = setTheme;
@@ -134,14 +207,18 @@ function Fixture() {
             />
           </section>
         </main>
-        <section id="issue" style={{ height: 650, width: 390 }}>
+        <section
+          id="issue"
+          className="bg-secondary text-normal"
+          style={{ height: 900, width: 390 }}
+        >
           <KanbanIssuePanel
             mode="edit"
             issueId={key}
             displayId="LOCAL-368"
             titleInputRef={titleRef}
             formData={{
-              title: '本文と目次',
+              title,
               description: value,
               statusId: 'todo',
               priority: 'medium',
@@ -155,8 +232,27 @@ function Fixture() {
             onSubmit={noop}
             onFormChange={(field, next) => {
               if (field === 'description') api.issueChanges = next;
+              if (field === 'title') setTitle(next);
             }}
             renderDescriptionEditor={(props) => <WYSIWYGEditor {...props} />}
+          />
+        </section>
+        <ThinkingFixture />
+        <section
+          id="conversation"
+          className="bg-secondary text-normal"
+          style={{ width: 390 }}
+        >
+          <ChatMarkdown
+            content={referenceMarkdown}
+            renderContent={({ content, className }) => (
+              <WYSIWYGEditor
+                value={content}
+                disabled
+                className={className}
+                preserveCopySource
+              />
+            )}
           />
         </section>
         <section id="composer">

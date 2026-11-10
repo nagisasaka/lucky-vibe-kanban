@@ -1,3 +1,4 @@
+import { getMarkdownAlert } from '@vibe/ui/lib/markdownAlert';
 import {
   useMemo,
   type ComponentProps,
@@ -42,17 +43,14 @@ export function MarkdownPreview({
       p: ({ children, ...props }: ComponentPropsWithoutRef<'p'>) => {
         const parts = Array.isArray(children) ? children : [children];
         const first = parts[0];
-        const marker =
-          typeof first === 'string' &&
-          /^(\[!(?:DECISION|NOTE|TIP|IMPORTANT|WARNING|CAUTION)\])(?:\n|$)/.exec(
-            first
-          );
+        const alert =
+          typeof first === 'string' ? getMarkdownAlert(first) : undefined;
         return (
           <p {...props}>
-            {marker ? (
+            {alert && typeof first === 'string' ? (
               <>
-                <span>{marker[0]}</span>
-                {first.slice(marker[0].length)}
+                <span>{alert.marker}</span>
+                {first.slice(alert.marker.length)}
                 {parts.slice(1)}
               </>
             ) : (

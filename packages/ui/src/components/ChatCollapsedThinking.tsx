@@ -31,6 +31,7 @@ interface ChatCollapsedThinkingProps {
   workspaceId?: string;
   startedAt?: string | null;
   endedAt?: string | null;
+  renderInlineMarkdown?: (content: string) => ReactNode;
   renderMarkdown: (props: ChatCollapsedThinkingRenderProps) => ReactNode;
 }
 
@@ -50,12 +51,18 @@ export function ChatCollapsedThinking({
   startedAt,
   endedAt,
   renderMarkdown,
+  renderInlineMarkdown,
 }: ChatCollapsedThinkingProps) {
   const { t } = useTranslation('common');
 
   if (entries.length === 0) return null;
   const visibleEntries = entries.filter((entry) => entry.content.trim());
   if (visibleEntries.length === 0) return null;
+
+  const renderFirstLine = (content: string) => {
+    const firstLine = content.split(/\r?\n/).find((line) => line.trim()) ?? '';
+    return renderInlineMarkdown ? renderInlineMarkdown(firstLine) : firstLine;
+  };
 
   return (
     <div className={cn('flex flex-col', className)}>
@@ -82,7 +89,7 @@ export function ChatCollapsedThinking({
           )}
         </span>
         <ActivityText active={false} className="min-w-0 flex-1 truncate">
-          {visibleEntries[0].content.split(/\r?\n/).find((line) => line.trim())}
+          {renderFirstLine(visibleEntries[0].content)}
         </ActivityText>
         <ChatElapsedTime startedAt={startedAt} endedAt={endedAt} />
       </button>
@@ -93,12 +100,7 @@ export function ChatCollapsedThinking({
             key={entry.expansionKey}
             className="ml-6 min-w-0 text-xs text-low"
           >
-            <p className="truncate">
-              {entry.content
-                .trim()
-                .split(/\r?\n/)
-                .find((line) => line.trim())}
-            </p>
+            <p className="truncate">{renderFirstLine(entry.content)}</p>
           </div>
         ))}
 

@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { integrationApi } from '@/shared/lib/integrationApi';
 import { IntegrationInitialMessage } from './IntegrationInitialMessage';
 import { isIntegrationInitialMessage } from '../model/integrationInitialMessage';
+import { MarkdownInline } from '@/shared/components/MarkdownInline';
 import { useMemo, useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
@@ -692,6 +693,9 @@ function DisplayConversationEntry(props: Props) {
       }
       return (
         <ChatThinkingMessage
+          renderInlineMarkdown={(content) => (
+            <MarkdownInline content={content} />
+          )}
           content={entry.content}
           workspaceId={workspaceWithSession?.id}
           label={
@@ -1731,6 +1735,7 @@ function AggregatedThinkingGroupEntry({
 
   return (
     <ChatCollapsedThinking
+      renderInlineMarkdown={(content) => <MarkdownInline content={content} />}
       entries={thinkingEntries}
       expanded={expanded}
       isHovered={isHovered}
