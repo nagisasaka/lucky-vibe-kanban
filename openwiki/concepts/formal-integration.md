@@ -12,14 +12,14 @@ sources:
     resource: repo://crates/db/migrations/20261025000000_issue_classification.sql
   - id: openwiki-source-3c57aab40b425fc8b5d0d5c5
     resource: repo://crates/db/migrations/20261027090000_generated_issue_status.sql
-  - id: openwiki-source-9bc71fe4f6cbbaa6fa9168e1
-    resource: repo://crates/db/src/models/agent_runtime_kanban_tests.rs
   - id: openwiki-source-c01fa644be961cb7ee12d2b5
     resource: repo://crates/db/src/models/integration.rs
   - id: openwiki-source-4f59e07f8850eb04105d5cb8
     resource: repo://crates/db/tests/generated_issue_status.rs
   - id: openwiki-source-d40a52c39b8604505b97c3e9
     resource: repo://crates/git/src/publication.rs
+  - id: openwiki-source-3ec71fa8cd8936e31e523736
+    resource: repo://crates/server/src/remote_mcp/integration_read.rs
   - id: openwiki-source-83d25ea893da220229c11f8b
     resource: repo://crates/server/src/remote_mcp/launch_tests.rs
   - id: openwiki-source-b5eef61c63c11d3fe10b3ccf
@@ -56,10 +56,10 @@ sources:
     resource: repo://packages/web-core/src/features/workspace-chat/ui/IntegrationFacts.tsx
   - id: openwiki-source-344aff2e68b53276f6be4e40
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/IntegrationValidationSettings.tsx
-generated: { by: "codex", at: "2026-11-09T07:03:14.304Z" }
+generated: { by: "codex", at: "2026-11-10T20:48:58.515Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-10T13:43:59.705Z
+    at: 2026-11-10T20:48:58.515Z
 ---
 
 # 自動マージの選択・検証・公開
@@ -133,7 +133,7 @@ Wiki有効時はコード検証後、同じ候補branchでOpenWikiの正規ラ�
 
 取消とpublication intentはDB transactionで排他する。Gitはref lockでbaseを比較し、新commitを作らず完成候補そのものを反映する。managed target checkoutのclean・path・一意性とignored file衝突も検査する。ref/index/filesとDBは一transactionではない。保存済みintentから実Gitを照合し、適用済みだけ後処理し、未適用や不明な部分適用を推測で再mergeしない。[exact publication](../../crates/git/src/publication.rs)・[回復](../../crates/server/src/routes/integrations/runtime.rs#L420-L480)
 
-公開後は採用元CardのDone処理とreceiptを記録する。Cancelledや公開後の再オープン、他run予約は上書きしない。新しい実開始によるDoneからの再着手に、旧receiptを再適用しない。生成Issueは進行/再開でIn Progress、停止でIn Review、公開済みでDoneへ投影する。成功後の専用Issue/Workspaceは通常archive契約に従い、採用元Workspaceを削除対象にしない。[完了](../../crates/db/src/models/integration.rs)・[生成状態](../../crates/db/migrations/20261027090000_generated_issue_status.sql)・[archive guard](../../crates/server/src/routes/local_remote/issue_archive.rs)
+公開後は採用元Workspaceの現在HEADと固定source SHAの単純不一致、または同Workspace内の非terminal Runがある場合、採用元Cardの現在列を維持して自動Doneだけを保留する。本文revisionや同Issueの別Workspaceは条件にしない。HEAD観測不能も当該sourceだけ保留receiptを記録し、他sourceのDoneと予約解放を続ける。DB照会・receipt保存の失敗は伝播する。公開成功自体は取り消さない。公開後は採用元CardのDone処理とreceiptを記録する。Cancelledや公開後の再オープン、他run予約は上書きしない。新しい実開始によるDoneからの再着手に、旧receiptを再適用しない。生成Issueは進行/再開でIn Progress、停止でIn Review、公開済みでDoneへ投影する。成功後の専用Issue/Workspaceは通常archive契約に従い、採用元Workspaceを削除対象にしない。[完了](../../crates/db/src/models/integration.rs)・[生成状態](../../crates/db/migrations/20261027090000_generated_issue_status.sql)・[archive guard](../../crates/server/src/routes/local_remote/issue_archive.rs)
 
 Wiki有効時の公開済みevent receiptと鮮度はinstance DB の repository_wiki_receipts / repository_wiki_state へ保存する。receipt・鮮度stateとintegrationのWiki結果は同じDB transactionで確定する。Manifestファイルとsetup原本journalは引き続きファイルで保持する。Git適用後のreceipt失敗は `Wiki receipt pending` として回復し、既に適用したGitを取り消さず、Card完了やarchiveを巻き戻さない。[後処理](../../crates/server/src/routes/integrations/runtime.rs#L480-L520)・[Wiki receipt](../../crates/server/src/routes/integrations/conversation.rs#L1048-L1100)
 
@@ -172,3 +172,14 @@ IntegrationFacts は対象IDがある間5秒周期で取得する。succeeded・
 ### Workspaceが所有する統合対象
 
 LOCAL-349ではProjectの作成用プリセットと統合対象を分離する。採用元はWorktree Workspaceに実際に記録されたRepoとtarget branchで検査し、DirectFolderは旧Repo行が残っていても拒否する。Projectからプリセットを解除しても既存Workspaceの対象を変えない。候補のcommand・公開・Wiki結果は保存済みworktree配置名で解決し、表示名や元Repo名から作業pathを推測しない。1回の自動マージは引き続き1 Repo・1 targetである。
+
+
+## 共通入口・採用資料・異常時の診断（LOCAL-364）
+
+LVKのWorkspace Git操作もKanban/MCPも共通の自動マージへ接続する。旧直接マージ専用route・request型・hook/actionとwriterを撤去し、PR作成/閲覧/追跡とrebase/共用競合解消、過去のマージ結果読取を保つ。複数選択は同じRepo/targetの固定source集合を一候補に統合して一回公開する意味であり、相互作用も検証するか理由・残リスクを記録する。単純な統合でも担当Codexの時間と利用枠を使う。[共通UI](../../packages/web-core/src/features/kanban/ui/IntegrationPanel.tsx)・[Git操作](../../packages/web-core/src/shared/components/tasks/Toolbar/GitOperations.tsx)・[削除後route](../../crates/server/src/routes/workspaces/git.rs)
+
+初回の実入力は採用時に保存したauto-merge Skill全文をそのまま使い、正確な候補branch・repository作業path・base/target/sourceと今回の追加指示・検証/Wiki方針を保持する。Skillを別の直書き契約で要約せず、欠落時は現在Skillから再生成しない。Issue本文と公開Manifestは既存payloadへ固定し、inspectのreference_section=sources/materialsから必要時に読む。過去資料の調査限定や公開禁止を今回の依頼へ無条件適用しない。継続・復旧でもhostの実行文脈が同じidentityを明示する。[入力構築](../../crates/server/src/routes/integrations/support.rs)・[実行文脈](../../crates/local-deployment/src/agent_run_port.rs)・[初回表示の区別](../architecture/web-and-sync.md#local-364の初回依頼表示とlocal-368の追加調整)
+
+inspectは対象整合を確認後、変更操作の受付・状態・候補branch guardより前にread-only診断を返す。停止後stdioがなくてもGET診断/上位AIの既存get_integrationから期待branch/pathと実branch/HEAD・取得エラーへ到達できる。変更操作のguardを弱めず、branchを自動修復しない。Wiki receipt pending: をUIの復旧表示条件と一致させ、公開済Gitを再統合しない。[診断](../../crates/server/src/routes/integrations/conversation.rs)・[HTTP入口](../../crates/server/src/routes/integrations/mod.rs)・[上位AI読取](../../crates/server/src/remote_mcp/integration_read.rs)
+
+今回のコード検証SHAは `f9bd24b17bb2876a44f3ae6e56e457b058273514`。候補上でfrontend型/lint/build、会話/Markdown回帰、DB/server/executor対象試験と影響crate Clippy、隔離multi-source・source-head-unavailable・wiki-receipt-crashを成功確認した。全suite・型/SQLx再生成は既存source SHAの証拠と統合差分によりagent判断で省略記録した。実provider/認証済UIは未確認で、旧devの今回worker起動を新初回入力のprovider検証とは扱わない。Wiki完了・公開要求・main適用はそれぞれ別の結果である。

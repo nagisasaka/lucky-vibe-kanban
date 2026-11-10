@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:2b64c36ee947d64c8656399ba1826be1fcae9371cc7d2957b95347c50f3598fd",
+  "pageVersion": "sha256:a2df6ccba3d05cffbf0996f344e365c7b33906ff426475a2162c50a10eaaa87f",
   "claims": [
     {
       "id": "claim_ef965d37641846bda42842bf4788c8cc",
@@ -76,7 +76,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/workspaces/git.rs",
-          "version": "repo-file-v1:sha256:19fafb7f0086934b3ba317706f7947bee0ed9723d4f0137ef78baf157e887633"
+          "version": "repo-file-v1:sha256:635c0f9b4ca1770df18fe5192c028f2c91f83a206e490e477b4ccd239a11ae75"
         },
         {
           "resource": "repo://crates/services/src/services/diff_stream.rs",
@@ -214,7 +214,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/integrations/runtime.rs",
-          "version": "repo-file-v1:sha256:1784bf32772537242b96048e935912e321e5c8f7edd23c4f000b9f4240a86133"
+          "version": "repo-file-v1:sha256:dfe206b14be0c75a8536bca67f813b9efdafdbef26ea7748d6190ce7e29b98b4"
         },
         {
           "resource": "repo://packages/web-core/src/features/workspace-chat/ui/ExecutionInspectionPanel.tsx",
@@ -378,7 +378,7 @@
       "evidence": [
         {
           "resource": "repo://packages/web-core/src/features/workspace-chat/ui/ConversationListContainer.tsx",
-          "version": "repo-file-v1:sha256:3c25a2292033f2de5334a5605f063897f1b833afb16455ed47ac0035d5e45362"
+          "version": "repo-file-v1:sha256:31609e5bcf9d3e4fa91bfeae865638e92f190ebc7e0a19549a04c29c42e31b40"
         },
         {
           "resource": "repo://packages/web-core/src/features/workspace-chat/ui/WorkspaceTokenSummary.tsx",
@@ -682,7 +682,7 @@
         },
         {
           "resource": "repo://packages/web-core/src/pages/workspaces/GitPanelContainer.tsx",
-          "version": "repo-file-v1:sha256:2f02d8bb792cce20058ab5e2addaa3347f228e5f99735f0f04469d8c8a4728ec"
+          "version": "repo-file-v1:sha256:e594e8a82a41d8c48193833bc281a7fca5ad3de2ade611e49c711df130fa27aa"
         }
       ]
     },
@@ -864,7 +864,7 @@
       "evidence": [
         {
           "resource": "repo://packages/web-core/src/i18n/locales/ja/common.json",
-          "version": "repo-file-v1:sha256:02231b725554ab1a40fb0a34a0810dabe411a4437a3fd8160799c9a85423b9ce"
+          "version": "repo-file-v1:sha256:0a7fe8e395564b39c5c623d3410dbb57e33b4e174ca27c258eee82f2db01ca5a"
         },
         {
           "resource": "repo://packages/web-core/src/shared/dialogs/settings/settings/SharedStorageSettings.tsx",
@@ -959,10 +959,24 @@
           "version": "repo-file-v1:sha256:769c5bcdbf0fa94633bc98cec7488b36b03a25d277d5125de96e0722c34deab5"
         }
       ]
+    },
+    {
+      "id": "claim_962f7caf2d444ec7b29c3f86ca09d0fb",
+      "statement": "Workspace Git操作は採用Workspace/Repoを選択した共通自動マージUIへ接続し、停止後の診断とWiki receipt pending回復条件を既存経路へ統合する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/routes/integrations/mod.rs#L145-L194",
+          "version": "repo-lines-v1:sha256:20c22405b1cb84c5d6a07ede637f11e80c0938244e5e6fa9feba319e0bf47522:eyJzZWxlY3RlZExpbmVDb3VudCI6NTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU4YzAxYjExZWE5YjEzZmM4MmRhYzgwYjkzYzUwMjM4OWZkY2EwNmEzNDJlZmM2YTdlMjRhZWU5YjM1MWQxMzIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI5NzQ2NTk0NGMzODhhMTU1ZDA3ZWZjYTU3NGI5OWM5ODdmMTFhOTk0YmIxNDJlMTU0YzhkYzI5ODRjZWY0NTQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNlMWI4MzY3ZTk4YzVkZDAxNjEyYjkyYzQzNGY2MzdiNjE4MDhmNzg5Y2ZjODQxMThmMDUxZTEzZTE4Njg1YzEifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/components/tasks/Toolbar/GitOperations.tsx",
+          "version": "repo-file-v1:sha256:0bc7152d3adc5254fc0a6d6026628223679a373d1d047e8244ce403af0c70f28"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-09T20:29:18.834Z"
+    "at": "2026-11-10T20:48:58.515Z"
   }
 }

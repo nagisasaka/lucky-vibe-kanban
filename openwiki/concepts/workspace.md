@@ -128,10 +128,10 @@ sources:
     resource: repo://scripts/dev-cargo.mjs
   - id: openwiki-source-c6d955097c4a7a9e7b1873ee
     resource: repo://tests/server/specs/workspace-search.spec.ts
-generated: { by: "codex", at: "2026-11-09T18:20:01.087Z" }
+generated: { by: "codex", at: "2026-11-10T20:48:58.515Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-10T13:43:59.705Z
+    at: 2026-11-10T20:48:58.515Z
 ---
 
 # Workspace と Repository
@@ -163,7 +163,7 @@ git config --local user.email "YOUR COMMIT EMAIL"
 
 最初の commit が停止した場合、初期化済みの空 Repo は残る。新規 Repo 作成 API の既存ディレクトリ拒否には、空で、workdir が要求 root と一致し、この案内 marker がある場合だけ再試行の例外がある。任意の既存フォルダーを上書きする許可ではない。[狭い再試行条件](../../crates/git/src/identity.rs#L11-L20)・[作成から登録まで](../../crates/services/src/services/repo.rs#L97-L135)
 
-初期 commit、通常 commit、source checkpoint、Wiki の指定 path commit、手動 squash と自動マージの新候補は同じ方針を使う。rebase は元 author を保持するため committer のみを要求し、agent の通常 Git コマンドによる明示 `--author` と cherry-pick の元 author を上書きしない。既存履歴の書換えや過去の自動 identity の移行は行わない。[Git 操作](../../crates/git/src/lib.rs#L268-L373)・[squash](../../crates/git/src/lib.rs#L780-L830)・[rebase](../../crates/git/src/lib.rs#L1338-L1343)。[自動マージ](formal-integration.md#b-から一件ずつ-r-を検証する)は候補作成時に再確認し、exact publication でも committer を使う。
+初期 commit、通常 commit、source checkpoint、Wiki の指定 path commitと自動マージの新候補は同じ方針を使う。rebase は元 author を保持するため committer のみを要求し、agent の通常 Git コマンドによる明示 `--author` と cherry-pick の元 author を上書きしない。既存履歴の書換えや過去の自動 identity の移行は行わない。[Git 操作](../../crates/git/src/lib.rs#L268-L373)・[squash](../../crates/git/src/lib.rs#L780-L830)・[rebase](../../crates/git/src/lib.rs#L1338-L1343)。[自動マージ](formal-integration.md#b-から一件ずつ-r-を検証する)は候補作成時に再確認し、exact publication でも committer を使う。
 
 agent には Repo ごとの案内を渡し、不足時は commit をせず調査・編集を許す。利用者に代わる設定・旧 identity 承認は禁止する。これは一律の `GIT_AUTHOR_*` / `GIT_COMMITTER_*` 注入ではない。[案内生成](../../crates/git/src/identity.rs#L109-L117)・[launch](../../crates/local-deployment/src/agent_run_port.rs#L859-L865)
 
@@ -380,3 +380,6 @@ WorkspaceRepoはtarget branchに加えてnullableなworktree_nameを保存する
 作成・再開・消失復旧・cleanupは相互Gitポインタで所有を確認する。保存名やstale Git登録だけで未知pathを採用・削除せず停止する。Git remove失敗後の無条件再帰削除は行わず、cleanup失敗なら共通root削除へ進めない。Repo情報取得不能や削除失敗を物理削除済みと記録しない。[所有確認](../../crates/worktree-manager/src/worktree_manager.rs)・[cleanup伝播](../../crates/workspace-manager/src/workspace_manager.rs)
 
 旧Sessionの保存cwd・添付・成果物を移動削除せず、今後のRunと添付コピーを共通rootへ揃える。Projectプリセット変更と孤立Workspaceの後付けリンクも既存Repo・branch・Session履歴を再構成しない。[Session継続](session-and-agent-run.md#共通rootと旧sessionの継続)
+
+
+LOCAL-364で旧Workspace直接マージの専用実行経路は撤去した。Gitパネルからは共通自動マージを採用Workspace/Repo選択付きで開く。過去のsquash/DirectMerge履歴、PR作成・追跡、rebaseと共用競合解消は維持し、通常Git操作まで禁止する方針ではない。PR mergeの観測だけでWorkspaceを自動archiveせず、自動マージの生成環境archiveとは区別する。[現行Git route](../../crates/server/src/routes/workspaces/git.rs)・[共通入口](../../packages/web-core/src/shared/components/tasks/Toolbar/GitOperations.tsx)・[統合契約](formal-integration.md)

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:d939f13569988565bb79012cee623025e4ad5cedc850c3a00f70a2a1539d650d",
+  "pageVersion": "sha256:ca1e0cde6b9e49b992b9c78137fcc11654d8dc736532636317abdf5f6c639d28",
   "claims": [
     {
       "id": "claim_ffe4663e40c94017ac81d224a196ad07",
@@ -72,7 +72,7 @@
       "evidence": [
         {
           "resource": "repo://packages/web-core/src/features/todos/model/todoViewStore.ts",
-          "version": "repo-file-v1:sha256:f4defa4cbc365465a35cbac58f52f7e0f4f529e9f0d75024e11e6191fecbae45"
+          "version": "repo-file-v1:sha256:368cc8b354efd4b68db724600b326c51c485114f380c12fb1a328bf2eebe6919"
         },
         {
           "resource": "repo://packages/web-core/src/features/todos/ui/TodoPanel.tsx#L299-L360",
@@ -246,7 +246,7 @@
         },
         {
           "resource": "repo://packages/web-core/src/i18n/locales/ja/common.json",
-          "version": "repo-file-v1:sha256:02231b725554ab1a40fb0a34a0810dabe411a4437a3fd8160799c9a85423b9ce"
+          "version": "repo-file-v1:sha256:0a7fe8e395564b39c5c623d3410dbb57e33b4e174ca27c258eee82f2db01ca5a"
         }
       ]
     },
@@ -489,6 +489,6 @@
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-10T13:43:59.705Z"
+    "at": "2026-11-10T20:48:58.515Z"
   }
 }

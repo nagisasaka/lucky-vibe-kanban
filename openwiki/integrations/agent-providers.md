@@ -113,7 +113,7 @@ sources:
 generated: { by: "codex", at: "2026-11-10T13:43:59.705Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-10T13:43:59.705Z
+    at: 2026-11-10T20:48:58.515Z
 ---
 
 # Agent provider・設定・MCP・Skill

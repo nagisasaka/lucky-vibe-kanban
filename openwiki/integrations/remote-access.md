@@ -133,7 +133,7 @@ sources:
 generated: { by: "codex", at: "2026-11-10T13:50:38.953Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-10T13:50:38.953Z
+    at: 2026-11-10T20:48:58.515Z
 ---
 
 # 外部アクセス・MCP・Runner の境界

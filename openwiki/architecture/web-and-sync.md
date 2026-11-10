@@ -124,6 +124,8 @@ sources:
     resource: repo://packages/web-core/src/features/workflow/ui/WorkflowRunPage.tsx
   - id: openwiki-source-b58899ddf6c6173903fabe61
     resource: repo://packages/web-core/src/features/workspace-chat/model/contexts/ApprovalFeedbackContext.tsx
+  - id: openwiki-source-4f54dbbd0a2db8e93ffc36e7
+    resource: repo://packages/web-core/src/features/workspace-chat/model/integrationInitialMessage.ts
   - id: openwiki-source-952ab4470659b6dc518fab38
     resource: repo://packages/web-core/src/features/workspace-chat/model/useConversationVirtualizer.ts
   - id: openwiki-source-d32b3d54fb9362eee85118ce
@@ -174,6 +176,8 @@ sources:
     resource: repo://packages/web-core/src/shared/components/EnvironmentPanel.tsx
   - id: openwiki-source-44823e238660c0c3c02d5a53
     resource: repo://packages/web-core/src/shared/components/EnvironmentQuota.tsx
+  - id: openwiki-source-2b99b26ebfc4cf2cd93937f0
+    resource: repo://packages/web-core/src/shared/components/MarkdownInline.tsx
   - id: openwiki-source-e43fc86a21c713666db8bb2b
     resource: repo://packages/web-core/src/shared/components/MarkdownPreview.tsx
   - id: openwiki-source-a7cac6e6f3abafbcf9390ddf
@@ -296,10 +300,10 @@ sources:
     resource: repo://tests/workspace-navigation/run-isolated.py
   - id: openwiki-source-b87e3253bd1458a0091f8587
     resource: repo://tests/workspace-navigation/workspace-navigation.spec.ts
-generated: { by: "codex", at: "2026-11-09T20:29:18.834Z" }
+generated: { by: "codex", at: "2026-11-10T20:48:58.515Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-09T20:29:18.834Z
+    at: 2026-11-10T20:48:58.515Z
 ---
 
 # Web の実行環境と同期
@@ -692,3 +696,12 @@ Issue本文と設計メモはLexical、WikiとMarkdownファイルはMarkdownPre
 目次は明示的にoutlineを有効にした本文で、描画されたh1〜h3が3件以上ある場合だけ表示する。初期は閉じ、contentKey変更で開閉と参照を更新する。閉じたdetails内の見出しを除き、日本語や同名見出しもDOM参照で移動する。URL hashや保存IDは作らず、最寄りの縦scroll paneだけを動かし、見出しへfocusを渡す。Issueのクリック編集から目次操作を分離し、編集中と短い会話には目次を出さない。
 
 変更時は [保存往復試験](../../tests/markdown/roundtrip.test.mjs) と [実コンポーネントfixture](../../tests/markdown/reading.mjs) を使う。後者は明暗・狭幅/広幅、通常引用/alert、見出し切替、閲覧無保存、原文copy、既存リンク・添付・ファイル操作を検査する。fixture成功を認証済アプリ、OS clipboard、実機mobileや外部preview/HMRの成功へ拡張しない。[実行方法と限界](../../tests/markdown/README.md)・[統合時の検証](../operations/development.md#local-366368の統合検証とbundle)
+
+
+## LOCAL-364の初回依頼表示とLOCAL-368の追加調整
+
+自動マージの初回入力だけは、保存済み `worker_dispatch` のRun ID・message ID・content全文が一致したときに「自動マージ」の依頼概要へ置き換えて表示する。採用対象・反映先・検証/Wiki方針と生成主体を示し、追加指示と当該Runの入力原文をdetailsから読める。現在のSkillやIssueから原文を再生成せず、後続入力は通常会話として扱う。canonical投影はこの識別用message IDを保持する。[識別](../../packages/web-core/src/features/workspace-chat/model/integrationInitialMessage.ts)・[描画](../../packages/web-core/src/features/workspace-chat/ui/IntegrationInitialMessage.tsx)・[両経路の接続](../../packages/web-core/src/features/workspace-chat/ui/DisplayConversationEntry.tsx)
+
+思考の折畳み見出しと一覧行は先頭の非空行を既存react-markdownのインライン表示へ渡す。strong/em/code/delだけを描画し、リンクは文字へ戻しHTMLをskipする。全文editorを重ねず、展開本文と開閉・切詰めは従来経路を保つ。[MarkdownInline](../../packages/web-core/src/shared/components/MarkdownInline.tsx)・[単独思考](../../packages/ui/src/components/ChatThinkingMessage.tsx)・[一覧](../../packages/ui/src/components/ChatCollapsedThinking.tsx)
+
+MarkdownPreviewの通常ソフト改行は折り畳み、明示hard breakは保持する。Lexicalのpre-wrapはmd-paragraph/md-quoteだけへ限定する。alert判定はinnerTextやCSSに依存せずtext node・br・段落境界を読み、引用先頭の単独markerだけを認識する。非引用の太字DECISIONは通常本文、人間の意図は通常引用＋太字の明示ラベルであり専用型ではない。DECISIONとIMPORTANTは紫を共有し、記号・ラベル・罫線で区別する。Issue主タイトル1.75rem、本文H1/H2/H3は1.5em/1.3em/1.15emとし共通CSSで閲覧/編集に適用する。[境界読取](../../packages/ui/src/components/MarkdownReadingSurface.tsx)・[marker](../../packages/ui/src/lib/markdownAlert.ts)・[CSS](../../packages/web-core/src/app/styles/new/index.css)・[回帰と限界](../../tests/markdown/README.md)

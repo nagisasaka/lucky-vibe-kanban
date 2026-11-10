@@ -90,10 +90,10 @@ sources:
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/ReposSettingsSection.tsx
   - id: openwiki-source-ffc55e6e31e6ce477ca57329
     resource: repo://packages/web-core/src/shared/hooks/useWorkflowRun.ts
-generated: { by: "codex", at: "2026-11-09T18:10:41.827Z" }
+generated: { by: "codex", at: "2026-11-10T20:48:58.515Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-10T19:52:54.465Z
+    at: 2026-11-10T20:48:58.515Z
 ---
 
 # Issue から実行・レビュー・統合まで
@@ -170,9 +170,9 @@ Git 操作は Repo 単位で target_branch を持つ。Rebase API は新 branch 
 
 Git safety tests は通常の untracked file の保存、tracked dirty change の拒否、base に上書きされる untracked file の保存を検証する。conflict を「とりあえず reset」で消すことを前提にしない。[Rebase tests](../../crates/git/tests/git_ops_safety.rs)
 
-手動 Direct merge は自動マージ とは別の入口で、その Repo に open PR がある場合と、target が remote branch の場合に拒否する。実際の統合は squash であり、base が先行していれば拒否する。base が別 checkout にあればその場所で CLI merge、checkout がなければ libgit2 の ref 操作を使う。統合後は task branch ref も新 squash commit へ更新し、続きの作業をそこから行えるようにする。[API の制約](../../crates/server/src/routes/workspaces/git.rs)・[Git の統合](../../crates/git/src/lib.rs)
+旧Workspace直接マージの専用実行経路はLOCAL-364で撤去済みである。現在はGitパネルもKanban/MCPも共通自動マージへ接続する。PR作成・閲覧・追跡、rebaseと共用競合解消は維持する。[共通入口](../../packages/web-core/src/shared/components/tasks/Toolbar/GitOperations.tsx)・[現行route](../../crates/server/src/routes/workspaces/git.rs)
 
-新しい squash commit の identity は、CLI 経路では base checkout、libgit2 経路では task worktree から解決する。rebase は元 author を保持して committer を解決する。identity エラー時は利用者が設定してから再試行し、agent が名前やメールを推測しない。[Repo の設定・legacy 承認・再試行](../concepts/workspace.md#git-commit-identity)・[両 squash 経路](../../crates/git/src/lib.rs#L780-L830)・[rebase guard](../../crates/git/src/lib.rs#L1338-L1343)
+歴史的な旧直接マージはsquash後にsource branchも更新し、open PR/remote target/base先行を拒否していた。現在の自動マージは固定source/baseをprivate branchで統合し、元Workspaceをそのsquashへ動かす契約ではない。通常Git操作とrebaseは引き続き有効なGit identityを使い、rebaseは元authorを保持する。[Git identity](../concepts/workspace.md#git-commit-identity)
 
 checkout 済み base の staged changes は拒否する。専用 test は staged file を残したまま merge が失敗することを検証する。[test](../../crates/git/tests/git_ops_safety.rs)
 
@@ -206,7 +206,7 @@ Direct merge の成功と PR の merged 観測では、通常の作業 Workspace
 
 通常成功coding RunはWiki有効化と独立してsemantic draftとGit証拠からファイルChange Manifestを作る。Wiki有効時は統合されたeventをmaintenanceの入力にする。source merge の成功と Wiki 更新の成功は別であり、Wiki 失敗は source を巻き戻さない。
 
-LVK 自身の手動 direct squash と自動マージ はそれぞれ明示的な event ID を記録できる。外部 PR の squash/rebase は元 commit の ancestry を証明できない場合があり、Workspace ID や時刻だけで event を消費しない。統合先 local branch を準備し、必要なら [Sync Wiki](../operations/openwiki-maintenance.md) で実 source を再確認する。[外部mergeの観測](../../crates/server/src/routes/openwiki.rs#L674-L700)・[sourceとWikiの統合契約](../concepts/repository-memory.md#source-統合と-wiki-反映を分ける)
+旧手動direct squashの履歴と、現行自動マージの固定event ID記録を区別する。外部 PR の squash/rebase は元 commit の ancestry を証明できない場合があり、Workspace ID や時刻だけで event を消費しない。統合先 local branch を準備し、必要なら [Sync Wiki](../operations/openwiki-maintenance.md) で実 source を再確認する。[外部mergeの観測](../../crates/server/src/routes/openwiki.rs#L674-L700)・[sourceとWikiの統合契約](../concepts/repository-memory.md#source-統合と-wiki-反映を分ける)
 
 Project 設定から手動同期すると、開始元 Project が保守 Issue の紐付け先として渡される。Repo 単独設定からの明示開始では Issue なしの互換経路もあるため、Card の有無だけで起動失敗と判断せず maintenance の状態を確認する。選択先の検証と status 不在時の対処は [開始元 Project と保守 Issue](../operations/openwiki-maintenance.md#開始元-project-と保守-issue)を参照する。[共通受付](../../crates/server/src/routes/openwiki.rs#L170-L202)・[保守Issueの所属](../operations/openwiki-maintenance.md#開始元-project-と保守-issue)
 
@@ -273,3 +273,10 @@ Gitは単一/複数Repoとも共通root配下のworktreeを使う。LVK親AGENTS
 ### 必須契約と必要時参照
 
 通常起動は現在Repo/RunのManifest・parallel identityと短い契約を配信し、詳細schema、snapshot/preview、資源/Runner手順は実ガイドファイルまたは任意stdio get_context guideから読む。旧Card設定のON/OFFでは必須案内を無効化しない。peerの私的会話・資格情報を読まず、採用sourceを固定し、試験用previewを正式publicationと混同しない。[現在identity](../../crates/services/src/services/parallel_context.rs#L145-L180)・[ガイド](../../crates/utils/src/agent_guides.rs)
+
+
+### 共通開始UIと公開後のsource判定（LOCAL-364）
+
+WorkspaceのGit操作から開く場合は当該Workspace/Repoを選択し、Kanbanからも同じUIへ進む。複数sourceは同一Repo/targetの一候補に統合して一回公開し、相互作用を検証または理由付きで省略する。初回はLVK生成の依頼概要と保存原文を区別し、その後の追加指示は通常会話で送る。停止後は期待branch/pathと実Git状態をread-only診断で確認し、変更guardを迂回しない。[表示と診断](../operations/workspace-inspection.md#workspaceから自動マージを依頼診断するlocal-364)
+
+固定候補公開後、採用元WorkspaceのHEADが採用SHAと異なるか、そのWorkspaceのSessionに非terminal Runがあれば、元Issueの現在列を維持して自動Doneだけ保留する。本文revisionは条件にしない。HEAD観測不能も当該sourceだけを保留し、他sourceのDone・予約解放を続ける。公開成功、source Done、Wiki receiptと生成環境archiveを別々に確認する。[判定とreceipt](../concepts/formal-integration.md#公開donewiki-は別の結果)

@@ -22,6 +22,8 @@ sources:
     resource: repo://crates/server/src/remote_mcp/dev_server.rs
   - id: openwiki-source-a9b6d4be264787a78357c9d6
     resource: repo://crates/server/src/routes/config.rs
+  - id: openwiki-source-ecfa47de2e3842c785820c9b
+    resource: repo://crates/server/src/routes/integrations/mod.rs
   - id: openwiki-source-b393e75029374eaf9cba5f7d
     resource: repo://crates/server/src/routes/integrations/runtime.rs
   - id: openwiki-source-65c0f36670a161dc05040e69
@@ -140,6 +142,8 @@ sources:
     resource: repo://packages/web-core/src/shared/components/EnvironmentPanel.tsx
   - id: openwiki-source-fac63ea2f2df3069fa2ed5c9
     resource: repo://packages/web-core/src/shared/components/SharedStorageBreakdown.tsx
+  - id: openwiki-source-24d3b93959be3c330f4ca02c
+    resource: repo://packages/web-core/src/shared/components/tasks/Toolbar/GitOperations.tsx
   - id: openwiki-source-867b74d482ff6cc365176503
     resource: repo://packages/web-core/src/shared/components/TerminalSection.tsx
   - id: openwiki-source-93851bff2ebf05ba57ca3277
@@ -182,10 +186,10 @@ sources:
     resource: repo://tests/server/specs/workspace-search.spec.ts
   - id: openwiki-source-dcac74ef871fd02e6315fa93
     resource: repo://tests/workflow/specs/diff-tree.spec.ts
-generated: { by: "codex", at: "2026-11-09T20:29:18.834Z" }
+generated: { by: "codex", at: "2026-11-10T20:48:58.515Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-09T20:29:18.834Z
+    at: 2026-11-10T20:48:58.515Z
 ---
 
 # ファイル・差分・プレビュー・端末の境界
@@ -483,3 +487,12 @@ Issue本文、設計メモ、Wiki、Markdownファイルの閲覧では、h1〜h
 Wikiは既存リンク捕捉とページ別scroll復元を維持し、scrollKeyを目次のcontentKeyにも使う。MarkdownファイルはWorkspace/Repo/pathをcontentKeyにする。行指定リンクは従来どおりsource viewerへ開くため、描画見出しをソース行番号と混同しない。[Wiki](../../packages/web-core/src/features/wiki/ui/WorkspaceWikiPanel.tsx#L348-L361)・[ファイル分岐](../../packages/web-core/src/features/workspace-files/ui/WorkspaceFilePreviewPanel.tsx#L105-L128)
 
 判断待ちは先頭に独立した `> [!DECISION]` を置いた引用だけが専用表示になる。標準alert5種も閲覧装飾されるが、人間の意図は通常引用に明示ラベルを付ける。表示器は原文を自動分類・保存せず、コピーにも元のMarkdownを使う。未決事項を解消してマーカーを外す場合は通常の権限のある編集として行う。新しいdetails記法や判断待ち件数の自動抽出は追加していない。[実コンポーネント検証と限界](../../tests/markdown/README.md)
+
+
+## Workspaceから自動マージを依頼・診断する（LOCAL-364）
+
+Git操作の自動マージを選ぶと、当該WorkspaceとRepoを選択した共通開始UIを開く。採用commit・target・検証/Wiki方針と追加指示を確認する。複数選択は一つの候補を一回公開する依頼で、単純な変更でも担当Codexを実行する。PR操作やrebase・共用競合解消は別用途として残る。[Git操作](../../packages/web-core/src/shared/components/tasks/Toolbar/GitOperations.tsx)・[開始UI](../../packages/web-core/src/features/kanban/ui/IntegrationPanel.tsx)
+
+開始後は割当Sessionの通常会話で追加指示・質問へ応答し、依頼概要のdetailsから保存済み初回入力原文を読む。停止時は公開commit、未公開理由と次操作を確認する。read-only診断は期待するrepository path/候補branchと観測branch/HEAD・取得エラーを返すため、誤branchや担当stdio終了後でも既存UI/上位AI読取から確認できる。診断はbranch自動修復やmutation許可ではない。[診断API](../../crates/server/src/routes/integrations/mod.rs)・[対象整合とguard](../../crates/server/src/routes/integrations/conversation.rs)・[初回概要](../../packages/web-core/src/features/workspace-chat/ui/IntegrationInitialMessage.tsx)
+
+Wiki receipt pending: はGit適用後のreceipt回復待ちとしてUIの復旧条件と揃える。公開要求受付をmain適用成功へ読み替えず、Gitを再mergeする代わりに既存の回復操作と結果を確認する。sourceのDone保留と公開成功も別結果として扱う。[回復と公開](../concepts/formal-integration.md)

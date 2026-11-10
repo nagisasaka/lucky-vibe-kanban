@@ -106,10 +106,10 @@ sources:
     resource: repo://packages/web-core/src/shared/providers/TerminalProvider.tsx
   - id: openwiki-source-23775c3de52f3ab95a13cb8b
     resource: repo://README.md
-generated: { by: "codex", at: "2026-11-10T19:52:54.465Z" }
+generated: { by: "codex", at: "2026-11-10T20:48:58.515Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-10T19:52:54.465Z
+    at: 2026-11-10T20:48:58.515Z
 ---
 
 # クイックスタートと調査案内
@@ -444,3 +444,14 @@ stdio/remoteのIssue mutation・開始継続・receipt保証、priority:null保�
 ## LOCAL-373の独立したWiki領域管理
 
 マーカーのない子indexを含むopenwiki/の生成保守契約と、INSTRUCTIONS/.openwikiignoreの明示保護は[削除・再構築の運用](operations/openwiki-maintenance.md#danger-zoneで生成wikiを削除する)を読む。[独立成果の検証と残課題](operations/openwiki-maintenance.md#local-373の独立領域管理と残課題)ではコードSHA 45f0e390574614129023baba11e3b01c396b205aの107件既存成功・重複省略と、実OpenWiki依存4件および標準i18n/Prettier未成立を区別する。372接続・専用進行管理撤去・独立再Review・品質警告伝播は未実装であり、373全体の完了を意味しない。Wikiはコード検証後の別commit、main正式公開はRun終了後のhost結果で確認する。
+
+
+## LOCAL-364/368：共通自動マージと会話・Markdown表示
+
+WorkspaceのGit操作、Kanban、MCPは[同じ自動マージ](concepts/formal-integration.md#共通入口採用資料異常時の診断local-364)へ進む。旧直接マージ専用経路を撤去し、PR/rebase/共用競合解消と歴史的読取を維持する。複数sourceは一候補で一回公開し、sourceのHEAD差・実行中Run・HEAD観測不能による自動Done保留を公開成功から分ける。[開始と停止後診断](operations/workspace-inspection.md#workspaceから自動マージを依頼診断するlocal-364)で期待branch/pathと実Git状態を確認する。
+
+[初回依頼・思考見出し・引用](architecture/web-and-sync.md#local-364の初回依頼表示とlocal-368の追加調整)は、保存済み初回原文のidentity、非操作のインラインMarkdown、正規DECISION引用と太字の通常意図ラベル、Previewのソフト改行とLexicalの保持を説明する。[検証fixtureと限界](../tests/markdown/README.md)を使い、認証済み実アプリの確認とは区別する。
+
+固定base `f042245ca8c8855a9b98ba16d378a0302bc6f219` にsource `90f4fcbc5432b834da76e1466d2e4aa54159d6c8` と `cd3edef7ba99de7cc9bf3f6f3262353315a81c0c` を採用し、コード検証SHAは `f9bd24b17bb2876a44f3ae6e56e457b058273514`。DisplayConversationEntryのimport競合は初回依頼概要と思考Markdownの両描画を保持して解消した。373の製品差分と既存Wikiを保持し、他Workspace/共有dev/preview2や外部pluginを操作していない。
+
+候補上のfrontend型・対象lint・会話/Markdown回帰・明暗狭幅fixture・build、DB/server/executor対象試験と影響crate Clippy、隔離3シナリオ（複数source、HEAD観測不能、Wiki receipt回復）は管理commandで成功した。全suite・型/SQLx再生成は既存SHAのManifest証拠と差分に基づくagent判断の省略であり、新たなpassではない。実provider/認証済UIは未確認で、旧devの今回worker実行を364新入力のprovider確認に数えない。Wikiはコード検証後の別commitであり、正式公開の成立はRun終了後のhost結果で確認する。

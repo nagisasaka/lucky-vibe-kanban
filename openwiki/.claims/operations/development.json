@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:686ef4f8acf00a431f3c0c33baa64e25704394968c65e033cfa52ab5f229d447",
+  "pageVersion": "sha256:b481bab950bb8277e8da3b6f41314ab37dcbbbb495237bc023a9bfd6f29fde40",
   "claims": [
     {
       "id": "claim_1640e4eaeac94676a84eb3b9d9970d30",
@@ -74,7 +74,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/bin/generate_types.rs",
-          "version": "repo-file-v1:sha256:9e271b5a9c0dc08a3f5366dfb8ecbe51b5eb65297e08e88b8817b4f04d3ef9b4"
+          "version": "repo-file-v1:sha256:02c827bcbb2b7bc55a9cc6fbb2a0e0da61d5804fc0d8a6352180712f7500b9c9"
         }
       ]
     },
@@ -511,7 +511,7 @@
       "statement": "launch.jsonを唯一の起動設定、current.jsonをinstance内release選択とし、固定launcherはinstance cwd・loopback・絶対agenthost・release優先PATHと実設定hashをserverへ渡す。明示hostは絶対の既存fileでなければfallbackせず失敗する。",
       "evidence": [
         {
-          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L3981-L3993",
+          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L3995-L4007",
           "version": "repo-lines-v1:sha256:5eaa8f1d1d4d428b66c95a286a4a9c576672ce80d864fbf126b6b6054c8bb34f:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY0NWRiMmZjYTRkYTNjOGQ3ZWU1MjBiNzJmNThkMzc2Njg3OTdiM2UxZDE1MDFkNTQwMDhmMWE1NGEyYWQ5NDkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQzYTBhNTZjODgyZTQ2OWNlMWJiYTJjZGY1MmQwMWJjZDdiZmIzZjdjMjM5MTFkM2U4NTI2NzEyMjI5MThhNjYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE5ZTc2MzU1Y2YxMTk5NDgwYzNmOTk4MzZiMTQ4NmM4NDFkODkxZmFhZDkwNGM2MDhlMDkzMDIyZDM3NTdhZWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJhY2M1MDY0ZWRkZDdlNDU2MTNhMTIzZWRiZGNhYWUyNGUwYzI5NDUwOTMzNjQ4ZmUzYWM4YjUyNDNlMDZiZjUifQ"
         },
         {
@@ -829,11 +829,11 @@
       "statement": "port fixtureはnot_startedのStarting診断をDB再open後に冪等完了する回帰を持ち、busy_timeout=0試験の監視SELECTだけはSQLITE_BUSYを既存2秒上限内で再観測しwriterの失敗・予算・identity検査を維持する。",
       "evidence": [
         {
-          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L4739-L4795",
+          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L4753-L4809",
           "version": "repo-lines-v1:sha256:34f34d3815683b480f877666cdd6b5b01b1f9934109177079ad2687c3bcde2ea:eyJzZWxlY3RlZExpbmVDb3VudCI6NTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFhODlmZDQwMzBiMGZlNzQyZGM4ZDFjMzM2OTZkZjBhMGRiMjJiMWYxYTQ0YzRiYTlkMTAwODg4YWYyM2E1NGYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE3YTU4MDA3MGY1NTVjNGE5NWI4M2E2ZTA0NTk1NzVkODg1NGQ1YzEzODQ1MGJkNDMwZjE5NmM2NzcwNTcyYTkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQ4ZGJiOTZkNDA5YmZiMGUzNzU3YzYzZTJhMTFhZGZkZWE2MzVjY2JiYWQ1ZmUzYzIyNTE1OGI3N2NiMTk3ZWQifQ"
         },
         {
-          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L4900-L4988",
+          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L4914-L5002",
           "version": "repo-lines-v1:sha256:431beda9573b2f34cdb2503c3f631c27d217a7447fbbeb74c7802703dfc77406:eyJzZWxlY3RlZExpbmVDb3VudCI6ODksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImViOTZhZjIxMzllYWRmNGJkYWU2NDc2NDlmMGZmNzIxYWMzZmMzNGVmNTlmNzcwODAyODI1Mjk5ZGRlMjljMjkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE3YTU4MDA3MGY1NTVjNGE5NWI4M2E2ZTA0NTk1NzVkODg1NGQ1YzEzODQ1MGJkNDMwZjE5NmM2NzcwNTcyYTkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjRiNWVlOTlhNWQyZTYwYTlmNDZhOGJjNDVjY2JjZmZhOTJjZmY1OTE4MGE4MjE1YjM3NzY4N2JiMDA2NzA5YTcifQ"
         }
       ]
@@ -948,7 +948,7 @@
       "evidence": [
         {
           "resource": "repo://skills/lvk-orchestration/SKILL.md",
-          "version": "repo-file-v1:sha256:609c18d4af7f7a7ce04c0281f38f05beffaceae1022da5900c8b2102288e4fc2"
+          "version": "repo-file-v1:sha256:985f14f41b2d1bf800ada0e71f40f274c280adc25e86d68c58a79371ad785568"
         }
       ]
     },
@@ -977,8 +977,8 @@
       "statement": "orchestration Skillは上位AIにbuildとmanaged Workspace変更の担当coding agentへの委譲を求め、既に割り当てられたcoding agent自身は自Workspaceで実装・検証すると区別する。",
       "evidence": [
         {
-          "resource": "repo://skills/lvk-orchestration/SKILL.md#L10-L18",
-          "version": "repo-lines-v1:sha256:3d2c55f6cf82cf255a0b588d1fe47166d06e752cd6e979c194d0219d061b17e4:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNjJmNjE3OGU2ZjU2YmJjMDE4MGFlMWM0ZjZiOTlmMjM2YzM4YjdhODg2Yjc4OGY4NDBiYjAzYTllYzk5Mzc0MCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYmY2NzQ3MjhjZjg0ZTZlOWE2ODZmMzI3NTUyNTk4YjNiYjNiMWI2MzA5OGM1NzEyYzdjYTM0NjY4MzNlMjBkNyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOTU1YTM1MTdhZDI5OGVhNjdjZTAyNTNiM2Y3OTc3Njk2NDNlMTVlNWZjMzRmZTg0ZDg4MDY2MGVjOTYyMmJkMCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNWEzMThjOTdhYjYyMTE5YTkwOWExOTIxNjA3ZDhkNDgxODFhNjA5NmY1MjM3MjBmY2ZkYmNhNzE4NmQ4ZTQxZiJ9"
+          "resource": "repo://skills/lvk-orchestration/SKILL.md#L10-L28",
+          "version": "repo-lines-v1:sha256:bc79c91bc367d0c88ed0580d4bd067b5e2fac8bfe1fe699601d5304137798916:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYyZjYxNzhlNmY1NmJiYzAxODBhZTFjNGY2Yjk5ZjIzNmMzOGI3YTg4NmI3ODhmODQwYmIwM2E5ZWM5OTM3NDAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ3YzA2YzU2MWQ1YzMyNzM0MzY4NTI2OGE0NmIzMzkxZjM5OThlZWU4OTBkMmJlNTFmMGQyMWNjNGE1M2FlNmQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk1NWEzNTE3YWQyOThlYTY3Y2UwMjUzYjNmNzk3NzY5NjQzZTE1ZTVmYzM0ZmU4NGQ4ODA2NjBlYzk2MjJiZDAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjVhMzE4Yzk3YWI2MjExOWE5MDlhMTkyMTYwN2Q4ZDQ4MTgxYTYwOTZmNTIzNzIwZmNmZGJjYTcxODZkOGU0MWYifQ"
         }
       ]
     },
@@ -1040,17 +1040,17 @@
       "evidence": [
         {
           "resource": "repo://crates/executors/src/executors/codex.rs#L1-L10",
-          "version": "repo-lines-v1:sha256:53513d72190602fbb8b2a4616dc95e51b98edbad471f52c7c6ba1ede7467cedd:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI1ZGQxMzBhYTRlOTQzNDIzN2MzNjJlMjc3ZWMzZTQwYTlkYTJjOTNlNjAwMGVlYzFmMTI5ZmM3OTk3Y2U1ZjEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ5OTY3ZWMxZWQzODM2ZjhlYjE3YWZmMTcyYjViZmVmN2RlNjA0ODVhNDM5YzZjYTExYzU5MWUxNzU1NzM5YWUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdkNDVjODJiM2Q5NGJhYTI1OTk4NDdmMDYwMGQzOTU5MjYxZDVhODkzZDk1YjgxYjBhMTJlNTlhY2I5NWYzODYifQ"
+          "version": "repo-lines-v1:sha256:b747750ece296cbc26a0717ae42bab548edc66e47928e6c2bd1414a59b8a9353:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI1ZGQxMzBhYTRlOTQzNDIzN2MzNjJlMjc3ZWMzZTQwYTlkYTJjOTNlNjAwMGVlYzFmMTI5ZmM3OTk3Y2U1ZjEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ5OTY3ZWMxZWQzODM2ZjhlYjE3YWZmMTcyYjViZmVmN2RlNjA0ODVhNDM5YzZjYTExYzU5MWUxNzU1NzM5YWUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdkNDVjODJiM2Q5NGJhYTI1OTk4NDdmMDYwMGQzOTU5MjYxZDVhODkzZDk1YjgxYjBhMTJlNTlhY2I5NWYzODYifQ"
         },
         {
-          "resource": "repo://skills/lvk-orchestration/SKILL.md#L10-L23",
-          "version": "repo-lines-v1:sha256:50f81b47e9683855f9f6e9529661f288e93d3a8dc7b94db524bb7f788a2a4dfe:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYyZjYxNzhlNmY1NmJiYzAxODBhZTFjNGY2Yjk5ZjIzNmMzOGI3YTg4NmI3ODhmODQwYmIwM2E5ZWM5OTM3NDAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk1NWEzNTE3YWQyOThlYTY3Y2UwMjUzYjNmNzk3NzY5NjQzZTE1ZTVmYzM0ZmU4NGQ4ODA2NjBlYzk2MjJiZDAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjY2ZjU1OGIyYzk4Y2E2MjM2YTE2OGY5Y2VmMGQ5OTVhODFiOTI0NmE3YTM2YWZjOGQ0MDBiM2EzNjc3YjEyMzcifQ"
+          "resource": "repo://skills/lvk-orchestration/SKILL.md#L10-L33",
+          "version": "repo-lines-v1:sha256:e0e36aea59d50e709bd3482dff6e45b7bbea18015339d626bf364c9fec33117c:eyJzZWxlY3RlZExpbmVDb3VudCI6MjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYyZjYxNzhlNmY1NmJiYzAxODBhZTFjNGY2Yjk5ZjIzNmMzOGI3YTg4NmI3ODhmODQwYmIwM2E5ZWM5OTM3NDAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk1NWEzNTE3YWQyOThlYTY3Y2UwMjUzYjNmNzk3NzY5NjQzZTE1ZTVmYzM0ZmU4NGQ4ODA2NjBlYzk2MjJiZDAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjY2ZjU1OGIyYzk4Y2E2MjM2YTE2OGY5Y2VmMGQ5OTVhODFiOTI0NmE3YTM2YWZjOGQ0MDBiM2EzNjc3YjEyMzcifQ"
         }
       ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-10T13:43:59.705Z"
+    "at": "2026-11-10T20:48:58.515Z"
   }
 }

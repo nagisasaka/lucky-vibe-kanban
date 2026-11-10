@@ -12,6 +12,8 @@ sources:
     resource: repo://crates/mcp/src/task_server/tools/context.rs
   - id: openwiki-source-a13fe4db1eee073d0a7e2c4d
     resource: repo://crates/server/src/main.rs
+  - id: openwiki-source-62a076acbf3183e887b184c1
+    resource: repo://crates/server/src/remote_mcp/merge_read.rs
   - id: openwiki-source-0545bff1ae2507a92137efaf
     resource: repo://crates/server/src/remote_mcp/repository_wiki.rs
   - id: openwiki-source-5720d865d1c837f0e6b7dab7
@@ -50,10 +52,10 @@ sources:
     resource: repo://crates/utils/src/agent_guides.rs
   - id: openwiki-source-a171e1a170f941fa2a4ba003
     resource: repo://crates/utils/src/repository_memory.rs
-generated: { by: "codex", at: "2026-11-10T19:52:54.465Z" }
+generated: { by: "codex", at: "2026-11-10T20:48:58.515Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-10T19:52:54.465Z
+    at: 2026-11-10T20:48:58.515Z
 ---
 
 # Change Manifest・Run完了とWikiの責務
@@ -101,7 +103,7 @@ flowchart LR
 
 通常 Workspace の `openwiki/` 変更は、commit 済み・未 commit・削除・rename を含めて完了/統合 guard が拒否する。ファイルを勝手に破棄して通す処理ではない。並行ブランチごとの派生 Wiki を merge すると Markdown、Claims、run state が競合するため、source を統合してから記憶を更新するという設計理由が記録されている。[guard](../../crates/services/src/services/repository_memory.rs)、[現行のsource guard](../../crates/services/src/services/repository_memory.rs)
 
-既存の手動直接 merge は squash を使うため、元 commit の祖先関係だけではイベントの所属を再現できない。統合前に明示的な event ID 集合と before commit を保存し、統合結果を対応付ける。Wiki の処理対象は、対象ブランチへ統合済みと確認でき、成功 receipt がまだないイベントである。[統合準備](../../crates/services/src/services/repository_memory.rs)、[イベント選択](../../crates/services/src/services/repository_memory.rs)
+旧手動直接mergeのsquash履歴は、元commitの祖先関係だけではイベント所属を再現できない歴史的記録として読む。LOCAL-364で旧直接マージ専用の実行route・Memory準備writerを撤去した。過去のDirectMerge/PR結果の読取は維持し、旧記録だけから現在HEADの公開や検証/Wiki成功を推定しない。現行の自動マージは固定sourceと明示event IDを公開結果へ結び付ける。Wikiの処理対象は統合済みと確認でき成功receiptがないイベントである。[現行writerと履歴](../../crates/services/src/services/repository_memory.rs)・[現在HEADと履歴の区別](../../crates/server/src/remote_mcp/merge_read.rs)
 
 [自動マージ](formal-integration.md)は、同じ専用会話でコード候補と有効なWiki更新を作り、code SHA・Wiki SHA・完成候補を別々に固定してhostへ公開要求する。検証実行と省略はcode SHAへ記録し、失敗をpassへ変換しない。公開後に選択source eventへのreceiptをinstance DBへ保存し、後処理の失敗は適用済みGit/Doneを巻き戻さない。旧step summaryからの統合Manifest生成や後続Wiki agentを前提にしない。[現行契約](../../crates/server/src/routes/integrations/conversation.rs)・[後処理](../../crates/server/src/routes/integrations/runtime.rs)
 

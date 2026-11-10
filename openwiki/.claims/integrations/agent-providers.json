@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:310823e5bfc36892357822f5cd49c2e3d86349125d5894edbf94c2f4ec661e10",
+  "pageVersion": "sha256:42267ba9c1e3e2f8c009cd5fc8d8672616163a5e330817130ba0053292bbfac7",
   "claims": [
     {
       "id": "claim_8c3b7b704cee45f0ad83d4207da34794",
@@ -194,7 +194,7 @@
       "evidence": [
         {
           "resource": "repo://crates/executors/src/executors/codex.rs",
-          "version": "repo-file-v1:sha256:d3ebf24a533bb448dd39e7cc7acaf31490676949085278fb707073f43dbf58ae"
+          "version": "repo-file-v1:sha256:77d88cf3fd15af7e7e0f4e8691dea1b598c6303f9c6e0cf2005af97cde5f6e9c"
         },
         {
           "resource": "repo://crates/executors/src/executors/codex/client/openwiki.rs",
@@ -208,7 +208,7 @@
       "evidence": [
         {
           "resource": "repo://crates/executors/src/executors/codex.rs",
-          "version": "repo-file-v1:sha256:d3ebf24a533bb448dd39e7cc7acaf31490676949085278fb707073f43dbf58ae"
+          "version": "repo-file-v1:sha256:77d88cf3fd15af7e7e0f4e8691dea1b598c6303f9c6e0cf2005af97cde5f6e9c"
         }
       ]
     },
@@ -576,7 +576,7 @@
       "evidence": [
         {
           "resource": "repo://crates/executors/src/executors/codex.rs",
-          "version": "repo-file-v1:sha256:d3ebf24a533bb448dd39e7cc7acaf31490676949085278fb707073f43dbf58ae"
+          "version": "repo-file-v1:sha256:77d88cf3fd15af7e7e0f4e8691dea1b598c6303f9c6e0cf2005af97cde5f6e9c"
         },
         {
           "resource": "repo://crates/executors/src/executors/codex.rs#L489-L582",
@@ -604,7 +604,7 @@
       "evidence": [
         {
           "resource": "repo://crates/executors/src/executors/codex.rs",
-          "version": "repo-file-v1:sha256:d3ebf24a533bb448dd39e7cc7acaf31490676949085278fb707073f43dbf58ae"
+          "version": "repo-file-v1:sha256:77d88cf3fd15af7e7e0f4e8691dea1b598c6303f9c6e0cf2005af97cde5f6e9c"
         },
         {
           "resource": "repo://crates/executors/src/executors/codex/jsonrpc.rs",
@@ -700,7 +700,7 @@
         },
         {
           "resource": "repo://crates/executors/src/executors/codex.rs",
-          "version": "repo-file-v1:sha256:d3ebf24a533bb448dd39e7cc7acaf31490676949085278fb707073f43dbf58ae"
+          "version": "repo-file-v1:sha256:77d88cf3fd15af7e7e0f4e8691dea1b598c6303f9c6e0cf2005af97cde5f6e9c"
         },
         {
           "resource": "repo://crates/executors/src/executors/codex/account_read.rs",
@@ -754,7 +754,7 @@
       "evidence": [
         {
           "resource": "repo://crates/executors/src/executors/codex.rs",
-          "version": "repo-file-v1:sha256:d3ebf24a533bb448dd39e7cc7acaf31490676949085278fb707073f43dbf58ae"
+          "version": "repo-file-v1:sha256:77d88cf3fd15af7e7e0f4e8691dea1b598c6303f9c6e0cf2005af97cde5f6e9c"
         }
       ]
     },
@@ -764,7 +764,7 @@
       "evidence": [
         {
           "resource": "repo://crates/executors/src/executors/codex.rs#L1-L10",
-          "version": "repo-lines-v1:sha256:53513d72190602fbb8b2a4616dc95e51b98edbad471f52c7c6ba1ede7467cedd:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI1ZGQxMzBhYTRlOTQzNDIzN2MzNjJlMjc3ZWMzZTQwYTlkYTJjOTNlNjAwMGVlYzFmMTI5ZmM3OTk3Y2U1ZjEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ5OTY3ZWMxZWQzODM2ZjhlYjE3YWZmMTcyYjViZmVmN2RlNjA0ODVhNDM5YzZjYTExYzU5MWUxNzU1NzM5YWUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdkNDVjODJiM2Q5NGJhYTI1OTk4NDdmMDYwMGQzOTU5MjYxZDVhODkzZDk1YjgxYjBhMTJlNTlhY2I5NWYzODYifQ"
+          "version": "repo-lines-v1:sha256:b747750ece296cbc26a0717ae42bab548edc66e47928e6c2bd1414a59b8a9353:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI1ZGQxMzBhYTRlOTQzNDIzN2MzNjJlMjc3ZWMzZTQwYTlkYTJjOTNlNjAwMGVlYzFmMTI5ZmM3OTk3Y2U1ZjEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ5OTY3ZWMxZWQzODM2ZjhlYjE3YWZmMTcyYjViZmVmN2RlNjA0ODVhNDM5YzZjYTExYzU5MWUxNzU1NzM5YWUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdkNDVjODJiM2Q5NGJhYTI1OTk4NDdmMDYwMGQzOTU5MjYxZDVhODkzZDk1YjgxYjBhMTJlNTlhY2I5NWYzODYifQ"
         },
         {
           "resource": "repo://crates/executors/src/executors/codex.rs#L1222-L1244",
@@ -782,7 +782,7 @@
       "evidence": [
         {
           "resource": "repo://crates/executors/src/executors/codex.rs",
-          "version": "repo-file-v1:sha256:d3ebf24a533bb448dd39e7cc7acaf31490676949085278fb707073f43dbf58ae"
+          "version": "repo-file-v1:sha256:77d88cf3fd15af7e7e0f4e8691dea1b598c6303f9c6e0cf2005af97cde5f6e9c"
         },
         {
           "resource": "repo://crates/executors/src/executors/provider_adapter.rs",
@@ -820,7 +820,7 @@
       "evidence": [
         {
           "resource": "repo://crates/executors/src/executors/codex.rs",
-          "version": "repo-file-v1:sha256:d3ebf24a533bb448dd39e7cc7acaf31490676949085278fb707073f43dbf58ae"
+          "version": "repo-file-v1:sha256:77d88cf3fd15af7e7e0f4e8691dea1b598c6303f9c6e0cf2005af97cde5f6e9c"
         }
       ]
     },
@@ -963,6 +963,6 @@
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-10T13:43:59.705Z"
+    "at": "2026-11-10T20:48:58.515Z"
   }
 }

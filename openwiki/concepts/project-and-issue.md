@@ -108,10 +108,10 @@ sources:
     resource: repo://tests/kanban/issue-detail.mjs
   - id: openwiki-source-62d93277f2c37df9b3fcebae
     resource: repo://tests/kanban/README.md
-generated: { by: "codex", at: "2026-11-10T13:43:59.705Z" }
+generated: { by: "codex", at: "2026-11-10T20:48:58.515Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-10T13:43:59.705Z
+    at: 2026-11-10T20:48:58.515Z
 ---
 
 # Project・Issue と実施の関係
@@ -326,10 +326,15 @@ remote MCPの `delete_issue(project_id, issue_id, request_id)` は既存Boardの
 
 ## Issue 詳細の読み幅と試行方法
 
-編集する Issue 詳細はペインを container とし、本文の外枠を最大64rem、左右余白を `clamp(1rem, 3cqi, 2rem)` にする。ヘッダーは全幅を保ち、本文内のセクションは左右の二重 padding を除く。主タイトルは1.5rem・行高1.35・太さ600。作成モードはこの読み幅の対象外である。[パネル](../../packages/ui/src/components/KanbanIssuePanel.tsx#L260-L375)・[幅と文字階層](../../packages/web-core/src/app/styles/new/index.css#L1217-L1269)
+編集する Issue 詳細はペインを container とし、本文の外枠を最大64rem、左右余白を `clamp(1rem, 3cqi, 2rem)` にする。ヘッダーは全幅を保ち、本文内のセクションは左右の二重 padding を除く。主タイトルは1.75rem・行高1.35・太さ600。作成モードはこの読み幅の対象外である。[パネル](../../packages/ui/src/components/KanbanIssuePanel.tsx#L260-L375)・[幅と文字階層](../../packages/web-core/src/app/styles/new/index.css#L1217-L1269)
 
 関連行には区切り線を設け、削除ボタンは hover に加え focus-within でも見える。32rem以下の Issue ペインではサブ課題タイトルを次行へ回す。長い表はセルの最小幅を維持して表内を横スクロールさせる。[関連](../../packages/ui/src/components/IssueRelationshipsSection.tsx)・[サブ課題と表](../../packages/web-core/src/app/styles/new/index.css#L1250-L1293)
 
 ワークフロー・単一エージェント・アリーナは「タスクの試行」内の同じ説明付き選択肢として並べ、利用幅に応じて列数を変える。アリーナは表示スロット経由で既存 container を使い、開始・既存への遷移・状態判断を保持する。見た目をそろえても実行機構やデータ取得を統合したものではなく、カードコンテキストも維持する。[選択肢](../../packages/ui/src/components/IssueTaskAttemptsSection.tsx)・[接続](../../packages/web-core/src/pages/kanban/IssueTaskAttemptsSectionContainer.tsx#L410-L445)・[アリーナ](../../packages/web-core/src/pages/kanban/IssueArenaSectionContainer.tsx)
 
 表示変更の検査入口は `PLAYWRIGHT_BROWSERS_PATH=/opt/lvk-browsers node tests/kanban/issue-detail.mjs`。本番コンポーネントと inert fixture で5幅×明暗、長文・表・複数コメント・関連・サブ課題と操作を検査する。live ConversationList / SessionChatBoxContainer は mount せず、認証済みアプリ・実機・VSCode E2E の証明にはしない。[試験の範囲](../../tests/kanban/README.md#issue-detail-and-split-conversation-reading-surfaces) 今回の統合保守では既存source証拠を参照し、描画試験を再実行していない。
+
+
+### 採用後もsource作業が続く場合（LOCAL-364）
+
+公開後の自動Doneは、採用元Workspaceの現在HEADと固定source SHAの単純比較、同Workspace内の非terminal Runだけで保留する。本文revisionの変化や同Issueの別Workspaceは条件にしない。HEADを観測できないsourceも現在列を維持し、理由をreceiptへ保存する。他sourceのDoneと全体の予約解放は継続するが、DB照会やreceipt保存の失敗は伝播する。公開成功とsourceのDone成立は別の事実として表示する。[Done判定](../../crates/db/src/models/integration.rs#L346-L436)・[HEAD観測](../../crates/server/src/routes/integrations/runtime.rs#L545-L587)

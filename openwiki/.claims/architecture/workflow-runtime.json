@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:811e99867b7da90d190570a51fdc19cc246f8f14cd6cb5bc0b923f037f5a7443",
+  "pageVersion": "sha256:2f2204297eb913a6617755d4ce81a5d906390c34fe55097252d7bc56861be5a0",
   "claims": [
     {
       "id": "claim_82dcbc35b88a441daa22355016e0d3f8",
@@ -259,8 +259,8 @@
       "statement": "新規自動マージは専用会話のAgentRunを直接dispatchし、専用Orchestration nodeを作らない。orchestration startupはproduct_kind=integrationを通常回復対象から外す。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/integrations/conversation.rs#L755-L828",
-          "version": "repo-lines-v1:sha256:9ecb04d3710c574354aaec74ff7ad27e83c873388774e2d9e8827e37b93fda34:eyJzZWxlY3RlZExpbmVDb3VudCI6NzQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY0NTdjYjhlMjc0ZTA2ZmY2ZjQwNmRjZjJlZDQzOWFjMjVjMWQ1NzkxMTQxNTMwNjc5ZDlkYTNkNzEwZjkxMWQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY3YjNiMTVmZjZhZjViYWFiYTAyOTMzZGIwYmQwYWM2NGJjMDRjMDMxNzQ4N2M5ZWNiMThiNzMxZGVkZTQ3NmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjNlZGVhNWZmOGE2NjBmMDEwM2IwNGM0NmIwNjBjNzRkOTgyMDFjMWI3NjkwNjY5OTZmMWUwNTQxOTU4MjdlZGIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUwYzdjZDZiNDRiNGMzYjQ0Y2Y3Y2Q0ZGY2ODQ5OTk0NTVkYTFiYzI2Mzg4NTUwM2U4OGU3M2VmMzUxMDUyMDkifQ"
+          "resource": "repo://crates/server/src/routes/integrations/conversation.rs#L848-L915",
+          "version": "repo-lines-v1:sha256:1f8d050c69ef0e87cfce925c554b57f6f6d79a63d137a0734a88284138276eaf:eyJzZWxlY3RlZExpbmVDb3VudCI6NjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY0NTdjYjhlMjc0ZTA2ZmY2ZjQwNmRjZjJlZDQzOWFjMjVjMWQ1NzkxMTQxNTMwNjc5ZDlkYTNkNzEwZjkxMWQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY3YjNiMTVmZjZhZjViYWFiYTAyOTMzZGIwYmQwYWM2NGJjMDRjMDMxNzQ4N2M5ZWNiMThiNzMxZGVkZTQ3NmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjNlZGVhNWZmOGE2NjBmMDEwM2IwNGM0NmIwNjBjNzRkOTgyMDFjMWI3NjkwNjY5OTZmMWUwNTQxOTU4MjdlZGIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUwYzdjZDZiNDRiNGMzYjQ0Y2Y3Y2Q0ZGY2ODQ5OTk0NTVkYTFiYzI2Mzg4NTUwM2U4OGU3M2VmMzUxMDUyMDkifQ"
         },
         {
           "resource": "repo://crates/services/src/services/orchestration.rs#L1148-L1163",
@@ -327,6 +327,6 @@
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-09T07:12:52.696Z"
+    "at": "2026-11-10T20:48:58.515Z"
   }
 }
