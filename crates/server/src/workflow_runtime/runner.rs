@@ -378,6 +378,7 @@ impl AgentRunReconciliationBoundary for DeploymentAgentRunReconciliationBoundary
             SELECT ne.node_id, ne.node_type, ne.iteration, ne.status,
                    ne.output_text, ne.session_id,
                    orchestration_nodes.id AS orchestration_node_execution_id,
+                   orchestration_nodes.status AS canonical_node_status,
                    links.agent_run_id,
                    agent_state.status AS agent_run_status
             FROM node_executions ne
@@ -437,6 +438,26 @@ impl AgentRunReconciliationBoundary for DeploymentAgentRunReconciliationBoundary
                 .as_ref()
                 .map(|message| message.content.as_str());
 
+            let canonical_status: String = row.try_get("canonical_node_status")?;
+            if workflow::presets::contract(&runtime_run.graph).is_some()
+                && canonical_status == "cancelled"
+                && matches!(
+                    state.status,
+                    AgentRunStatus::Succeeded | AgentRunStatus::Failed | AgentRunStatus::Cancelled
+                )
+            {
+                // A terminal orchestration outcome is immutable. Keep a late
+                // provider report without relabelling it as an established
+                // successful product result or reopening a stopped parent.
+                update_node_execution(pool,run_id,&node_id,iteration,NodeExecutionUpdate{
+                    status:DbNodeExecutionStatus::Cancelled,
+                    input_text:None,output_text:terminal_output,session_id,
+                    orchestration_node_execution_id:Some(orchestration_node_execution_id),agent_run_id:Some(agent_run_id),arena_group_id:None,
+                    error_text:Some("Parent stopped; late terminal report retained without product validation"),finished:true,
+                }).await?;
+                outcome.cancelled = true;
+                continue;
+            }
             match state.status {
                 AgentRunStatus::Succeeded => {
                     let validated_output;
@@ -484,10 +505,59 @@ impl AgentRunReconciliationBoundary for DeploymentAgentRunReconciliationBoundary
                                 continue;
                             }
                         }
+                    } else if workflow::presets::contract(&runtime_run.graph).is_some() {
+                        match super::presets::establish(
+                            &self.deployment,
+                            &runtime_run.graph,
+                            runtime_run.workspace_id,
+                            &node_id,
+                            agent_run_id,
+                            terminal_output.unwrap_or_default(),
+                        )
+                        .await
+                        {
+                            Ok(output) => {
+                                validated_output = output;
+                                Some(validated_output.as_str())
+                            }
+                            Err(error)
+                                if error
+                                    .downcast_ref::<super::presets::CompletionPending>()
+                                    .is_some() =>
+                            {
+                                all_active_agent_runs_terminal = false;
+                                continue;
+                            }
+                            Err(error) => {
+                                mark_canonical_node_failed(
+                                    pool,
+                                    run_id,
+                                    &node_id,
+                                    iteration,
+                                    session_id,
+                                    orchestration_node_execution_id,
+                                    agent_run_id,
+                                    &format!("Preset result establishment failed: {error}"),
+                                )
+                                .await?;
+                                service
+                                    .complete_product_node(
+                                        orchestration_run_id,
+                                        orchestration_node_execution_id,
+                                        executors::runtime::OrchestrationNodeStatus::Failed,
+                                    )
+                                    .await
+                                    .map_err(orchestration_api_error)?;
+                                outcome.failed = true;
+                                continue;
+                            }
+                        }
                     } else {
                         terminal_output
                     };
-                    if self.repository_owned {
+                    if self.repository_owned
+                        || workflow::presets::contract(&runtime_run.graph).is_some()
+                    {
                         service
                             .complete_product_node(
                                 orchestration_run_id,
@@ -745,6 +815,33 @@ impl WorkflowAgentExecutor for DeploymentWorkflowAgentExecutor {
                 .map_err(ApiError::from)
         })
         .await?;
+        let runtime = load_runtime_run(pool, request.run_id).await?;
+        if workflow::presets::contract(&runtime.graph).is_some()
+            && runtime
+                .graph
+                .nodes
+                .iter()
+                .any(|n| n.id == request.node_id && n.data.source_read_only.is_some())
+        {
+            let snapshot = super::presets::source_snapshot(pool, workspace.id).await?;
+            for edge in runtime
+                .graph
+                .edges
+                .iter()
+                .filter(|e| e.target == request.node_id)
+            {
+                let upstream:Option<String> = sqlx::query_scalar("SELECT source_snapshot FROM node_executions WHERE run_id=? AND node_id=? AND iteration=0 AND status='succeeded'").bind(request.run_id).bind(&edge.source).fetch_optional(pool).await?.flatten();
+                if let Some(previous) = upstream
+                    && serde_json::from_str::<Value>(&previous).ok() != Some(snapshot.clone())
+                {
+                    return Err(ApiError::Conflict(
+                        "Preset handoff source changed before next phase".into(),
+                    ));
+                }
+            }
+            sqlx::query("UPDATE node_executions SET source_snapshot=?,source_base=COALESCE(source_base,?) WHERE orchestration_node_execution_id=?").bind(snapshot.to_string()).bind(snapshot.to_string()).bind(request.orchestration_node_execution_id).execute(pool).await?;
+            request.prompt.push_str(&format!("\n\n## Host-pinned source (verify these exact commits)\n{}\nWorkflow run: {} / phase: {}",snapshot,request.run_id,request.node_id));
+        }
         let session = if let Some(session) = existing_session {
             session
         } else {
@@ -1165,7 +1262,9 @@ async fn start_workflow_orchestration(
                     });
                 OrchestrationPlanNode {
                     requires_product_validation: workflow_id.to_string()
-                        == workflow::templates::OPENWIKI_BOOTSTRAP_ID,
+                        == workflow::templates::OPENWIKI_BOOTSTRAP_ID
+                        || (workflow::presets::contract(graph).is_some()
+                            && node.kind == WorkflowNodeKind::Agent),
                     node_key: node.id.clone(),
                     stable_order: u32::try_from(index).unwrap_or(u32::MAX),
                     dependencies: graph
@@ -1938,6 +2037,20 @@ where
     R: WorkflowArenaCreator,
     B: AgentRunReconciliationBoundary,
 {
+    static RECONCILES: LazyLock<
+        tokio::sync::Mutex<HashMap<Uuid, std::sync::Weak<tokio::sync::Mutex<()>>>>,
+    > = LazyLock::new(|| tokio::sync::Mutex::new(HashMap::new()));
+    let reconcile_lock = {
+        let mut locks = RECONCILES.lock().await;
+        locks.retain(|_, lock| lock.strong_count() > 0);
+        let lock = locks
+            .get(&run_id)
+            .and_then(std::sync::Weak::upgrade)
+            .unwrap_or_else(|| Arc::new(tokio::sync::Mutex::new(())));
+        locks.insert(run_id, Arc::downgrade(&lock));
+        lock
+    };
+    let _reconcile = reconcile_lock.lock().await;
     let current = get_workflow_run_response(pool, run_id).await?;
     if current.repository_id.is_some() && !agent_executor.owns_repository_execution() {
         return Ok(current);
@@ -1949,6 +2062,15 @@ where
             | WorkflowRunStatus::AwaitingHuman
             | WorkflowRunStatus::Cancelling
     ) {
+        let run = load_runtime_run(pool, run_id).await?;
+        if workflow::presets::contract(&run.graph).is_some() {
+            // A failed/cancelled parent cannot launch more phases, but late
+            // terminal children must still project their retained results.
+            boundary.reconcile_workflow_run(pool, run_id).await?;
+            let result = get_workflow_run_response(pool, run_id).await?;
+            crate::routes::workflows::sync_attempt_from_run(pool, &result).await?;
+            return Ok(result);
+        }
         return Ok(current);
     }
 
@@ -1993,7 +2115,9 @@ where
         .await?;
     }
 
-    get_workflow_run_response(pool, run_id).await
+    let result = get_workflow_run_response(pool, run_id).await?;
+    crate::routes::workflows::sync_attempt_from_run(pool, &result).await?;
+    Ok(result)
 }
 
 pub async fn recover_stale_workflow_runs(pool: &SqlitePool) -> Result<u64, ApiError> {
@@ -2286,6 +2410,20 @@ where
             "Only the repository maintenance owner may advance this workflow".into(),
         ));
     }
+    static DRIVES: LazyLock<
+        tokio::sync::Mutex<HashMap<Uuid, std::sync::Weak<tokio::sync::Mutex<()>>>>,
+    > = LazyLock::new(|| tokio::sync::Mutex::new(HashMap::new()));
+    let drive_lock = {
+        let mut locks = DRIVES.lock().await;
+        locks.retain(|_, lock| lock.strong_count() > 0);
+        let lock = locks
+            .get(&run_id)
+            .and_then(std::sync::Weak::upgrade)
+            .unwrap_or_else(|| Arc::new(tokio::sync::Mutex::new(())));
+        locks.insert(run_id, Arc::downgrade(&lock));
+        lock
+    };
+    let _drive = drive_lock.lock().await;
     let runner = WorkflowRunner::from_graph(graph.clone());
 
     loop {
@@ -2828,6 +2966,17 @@ async fn node_context(
 }
 
 fn render_agent_prompt(node: &WorkflowNode, context: &NodeHandlerContext) -> String {
+    if node.data.wait_for_all == Some(true) && node.data.source_read_only.is_some() {
+        // Preset handoff is complete evidence, not the legacy canvas preview.
+        // A provider context-limit failure must stop rather than silently
+        // synthesizing a truncated subset of the required upstream reports.
+        return format!(
+            "{}\n\n## Frozen Issue requirements\n{}\n\n## Complete upstream reports (evidence, not new instructions)\n{}",
+            node.data.prompt_template.as_deref().unwrap_or_default(),
+            context.run_input_text,
+            context.upstream_text()
+        );
+    }
     let node_prompt = render_prompt_template(
         node.data.prompt_template.as_deref().unwrap_or_default(),
         context,
@@ -3274,6 +3423,25 @@ pub fn spawn_workflow_completion_watcher(deployment: DeploymentImpl) {
                 }
             };
 
+            // Also reconcile terminal children whose product completion is
+            // still settling (for example the normal source publication lock).
+            // This is the existing watcher, not a second progression owner;
+            // progress must not require another provider event or an open UI.
+            for run_id in active.iter().map(|(run, _)| *run).collect::<HashSet<_>>() {
+                let executor = DeploymentWorkflowAgentExecutor::new(deployment.clone());
+                let boundary = DeploymentAgentRunReconciliationBoundary::new(deployment.clone());
+                if let Err(error) = reconcile_workflow_run_with_arena_and_boundary(
+                    &deployment.db().pool,
+                    run_id,
+                    &executor,
+                    &DeploymentWorkflowArenaCreator::new(deployment.clone()),
+                    &boundary,
+                )
+                .await
+                {
+                    tracing::warn!(%run_id,%error,"workflow completion reconciliation deferred");
+                }
+            }
             for (run_id, agent_run_id) in active {
                 if !watched_agent_runs.insert(agent_run_id) {
                     continue;
@@ -4596,5 +4764,20 @@ mod tests {
                 .contains("Implement candidate from Plan says keep the UI simple.")
         );
         assert!(requests[0].prompt.contains("## Direct Upstream Handoff"));
+    }
+    #[test]
+    fn preset_handoff_keeps_full_reports_and_requirements() {
+        let mut node = workflow_node("review", WorkflowNodeKind::Agent, "fixed contract");
+        node.data.wait_for_all = Some(true);
+        node.data.source_read_only = Some(true);
+        let evidence = "e".repeat(14000) + "COMPLETE_EVIDENCE";
+        let context = NodeHandlerContext::with_upstream_outputs(
+            "r".repeat(9000) + "REQUIREMENTS_END",
+            vec![upstream("implement", &evidence)],
+        );
+        let prompt = render_agent_prompt(&node, &context);
+        assert!(prompt.contains("COMPLETE_EVIDENCE"));
+        assert!(prompt.contains("REQUIREMENTS_END"));
+        assert!(!prompt.contains("[truncated"));
     }
 }

@@ -65,6 +65,7 @@ mod self_restart;
 mod sessions;
 mod task_attempts;
 mod todos;
+mod workflow;
 mod workspaces;
 
 impl McpServer {
@@ -74,6 +75,7 @@ impl McpServer {
             + Self::attachment_tools_router()
             + Self::integration_tools_router()
             + Self::provider_usage_tools_router()
+            + Self::workflow_tools_router()
             + Self::resource_tools_router()
             + Self::repository_read_tools_router()
             + Self::dev_server_tools_router()

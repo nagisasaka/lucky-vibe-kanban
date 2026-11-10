@@ -2798,6 +2798,7 @@ async fn create_arena_group(
     Path(issue_id): Path<Uuid>,
     Json(payload): Json<CreateArenaRequest>,
 ) -> Result<ResponseJson<MutationResponse<ArenaGroupResponse>>, ApiError> {
+    super::workflows::require_preset_entry()?;
     let CreateArenaRequest {
         project_id,
         base_branch,

@@ -122,6 +122,17 @@ pub fn triggered_execution_count(
 ) -> i64 {
     let executions = execution_snapshots(graph, snapshot);
     let incoming = incoming_edges(graph);
+    if let Some(node) = graph.nodes.iter().find(|n| n.id == target_node_id)
+        && node.data.wait_for_all == Some(true)
+    {
+        return i64::from(execution_is_ready(
+            node,
+            0,
+            incoming.get(target_node_id).map(Vec::as_slice),
+            graph,
+            &executions,
+        ));
+    }
     incoming
         .get(target_node_id)
         .map(|edges| {
@@ -161,6 +172,17 @@ fn execution_is_ready(
         return node.kind == WorkflowNodeKind::Start && iteration == 0;
     }
 
+    if node.data.wait_for_all == Some(true) {
+        return iteration == 0
+            && incoming.iter().all(|edge| {
+                executions.iter().any(|execution| {
+                    execution.iteration == 0
+                        && execution.node_id == edge.source
+                        && execution.status == NodeExecutionStatus::Succeeded
+                        && execution_triggers_edge(graph, edge, execution)
+                })
+            });
+    }
     incoming
         .iter()
         .any(|edge| succeeded_trigger_count_for_edge(graph, edge, executions) > 0)

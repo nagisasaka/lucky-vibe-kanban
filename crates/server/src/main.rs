@@ -11,6 +11,7 @@ use server::{
     startup::finish_http_shutdown,
     workflow_runtime::runner::{
         DeploymentAgentRunReconciliationBoundary, recover_stale_workflow_runs_with_boundary,
+        spawn_workflow_completion_watcher,
     },
 };
 use services::services::{
@@ -150,6 +151,7 @@ async fn main() -> Result<(), VibeKanbanError> {
     routes::openwiki::spawn_recovery_monitor(deployment.clone());
     routes::integrations::spawn_monitor(deployment.clone());
     routes::resource_coordination::spawn_monitor(deployment.clone());
+    spawn_workflow_completion_watcher(deployment.clone());
     spawn_scheduled_task_loop(deployment.clone());
     deployment
         .container()

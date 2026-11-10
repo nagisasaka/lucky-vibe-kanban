@@ -841,6 +841,28 @@ impl LocalAgentRunPort {
                 workspace_manager::shared_resources::writable_roots(&repo.name, repo.id)
             })
             .collect();
+        // Read-only is bound to the persisted Workflow Session, including later
+        // continuations, rather than a user-selectable REVIEW label.
+        let reporting: bool = sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM workflow_runs wr, json_each(CASE WHEN json_valid(wr.graph_snapshot) THEN wr.graph_snapshot ELSE '{}' END, '$.nodes') n WHERE wr.workspace_id=? AND json_extract(n.value, '$.data.session_id')=? AND json_extract(n.value, '$.data.source_read_only')=1)")
+            .bind(workspace.id).bind(request.session_id.to_string()).fetch_one(&self.db.pool).await.map_err(port_database)?;
+        let protected_roots = if reporting {
+            let mut protected = vec![
+                std::fs::canonicalize(&request.workspace.path)
+                    .map_err(|e| AgentRunPortError::Rejected(e.to_string()))?,
+            ];
+            for repo in &repos {
+                protected.push(
+                    std::fs::canonicalize(&repo.path)
+                        .map_err(|e| AgentRunPortError::Rejected(e.to_string()))?,
+                );
+            }
+            Some(
+                serde_json::to_string(&protected)
+                    .map_err(|e| AgentRunPortError::Rejected(e.to_string()))?,
+            )
+        } else {
+            None
+        };
         let mut memory_instructions = Vec::new();
         let mut coding_runs = Vec::new();
         let mut parallel_contexts = Vec::new();
@@ -870,7 +892,8 @@ impl LocalAgentRunPort {
                 memory_instructions.push("この統合のコード検証後、最初のopenwiki_beginより前にintegration_action prepare_wiki(expected_commit=コード検証SHA)を成功させる。再開・複数beginでも同じ原本journalを使い、後付けしない。復元済み候補から新writer phaseへ進む際は新request_idでprepare_wikiを成功させる。復元途中のprepare拒否はbegin許可ではない。同じ最終SHAを再publishしhostで復元を収束させる。同じ候補branchでcanonical openwiki/を更新しWikiだけを別commitにする。AGENTS.md/CLAUDE.md等のsetup生成差分はstage/commit/手動復元せず残す。hostが公開要求後の全writer終了を確認して限定復元する。OpenWiki skillは ~/.agents/skills/openwiki/SKILL.md（projectに配置済みならそちら）を読む。Wiki専用Issue/Workspaceは作らない。コード検証SHAとWiki/公開SHAを区別する。".into());
             }
         }
-        let source_completion_allowed = !workspace.is_execution_only()
+        let source_completion_allowed = !reporting
+            && !workspace.is_execution_only()
             && integration.is_none()
             && executors::executors::provider_adapter::memory_source_completion_allowed(
                 provider,
@@ -1030,6 +1053,9 @@ impl LocalAgentRunPort {
             PathBuf::from(&request.workspace.path),
             repo_names,
         ));
+        if let Some(protected) = protected_roots {
+            env.insert(executors::source_protection::ROOTS, protected);
+        }
         if !workspace.is_direct_folder()
             && std::fs::read_to_string(Path::new(&request.workspace.path).join("AGENTS.md"))
                 .is_ok_and(|s| s.starts_with("<!-- LVK WORKSPACE INSTRUCTIONS v1 -->"))

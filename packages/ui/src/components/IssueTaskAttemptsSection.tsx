@@ -19,6 +19,7 @@ export interface IssueTaskAttemptsSectionProps {
   onRunAttempt?: (attempt: IssueTaskAttemptCardData) => void;
   onUnlinkAttempt?: (attempt: IssueTaskAttemptCardData) => void;
   onDeleteAttempt?: (attempt: IssueTaskAttemptCardData) => void;
+  onStartAttempt?: () => void;
   onCreateWorkflowAttempt?: () => void;
   onCreateSingleAgentAttempt?: () => void;
 }
@@ -33,12 +34,13 @@ export function IssueTaskAttemptsSection({
   onRunAttempt,
   onUnlinkAttempt,
   onDeleteAttempt,
+  onStartAttempt,
   onCreateWorkflowAttempt,
   onCreateSingleAgentAttempt,
 }: IssueTaskAttemptsSectionProps) {
   const { t } = useTranslation('common');
   const hasCreateActions =
-    !!onCreateWorkflowAttempt || !!onCreateSingleAgentAttempt || !!arenaOption;
+    !!onStartAttempt || !!onCreateWorkflowAttempt || !!onCreateSingleAgentAttempt || !!arenaOption;
 
   return (
     <CollapsibleSectionHeader
@@ -60,6 +62,7 @@ export function IssueTaskAttemptsSection({
           <>
             {hasCreateActions && (
               <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,16rem),1fr))] gap-base">
+                {onStartAttempt && <IssueAttemptOption title={t('workflow.presets.start', 'Start work')} description={t('workflow.presets.startDescription', 'Single agent or a fixed Workflow preset')} disabledReason={createDisabledReason} onClick={onStartAttempt} />}
                 {onCreateWorkflowAttempt && (
                   <IssueAttemptOption
                     title={t('attempts.newWorkflow')}

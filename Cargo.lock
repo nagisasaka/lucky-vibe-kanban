@@ -4359,6 +4359,7 @@ dependencies = [
  "tracing-subscriber",
  "utils",
  "uuid",
+ "workflow",
 ]
 
 [[package]]
@@ -9843,8 +9844,11 @@ version = "0.1.0"
 dependencies = [
  "api-types",
  "regex",
+ "schemars 1.2.1",
  "serde",
  "serde_json",
+ "ts-rs 11.0.1",
+ "uuid",
 ]
 
 [[package]]

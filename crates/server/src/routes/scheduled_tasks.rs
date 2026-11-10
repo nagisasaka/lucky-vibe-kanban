@@ -447,6 +447,7 @@ async fn dispatch_workflow_scheduled_task(
     task: &ScheduledTaskResponse,
     manual: bool,
 ) -> Result<(WorkflowAttemptResponse, WorkflowRunResponse), ApiError> {
+    super::workflows::require_preset_entry()?;
     ensure_workflow_target(&deployment.db().pool, task.project_id, task.target_id).await?;
 
     let workflow = get_workflow_template(&deployment.db().pool, task.target_id).await?;
