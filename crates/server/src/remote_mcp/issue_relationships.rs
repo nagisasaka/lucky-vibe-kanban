@@ -12,7 +12,7 @@ use uuid::Uuid;
 use super::{
     Remote,
     auth::Principal,
-    issue_write::{domain_failure, parse_revision},
+    issue_mutations::{domain_failure, parse_revision},
     read::{arguments, definition, page},
 };
 use crate::routes::local_remote::issue_relations::{self, Guard};

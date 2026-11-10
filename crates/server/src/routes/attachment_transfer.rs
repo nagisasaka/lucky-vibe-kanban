@@ -401,7 +401,7 @@ impl Execution for ExistingExecution {
                 resume_session_id: None,
                 resume_scope_path: None,
             },
-            Some((latest, p.project_id)),
+            Some((latest, Some(p.project_id))),
         )
         .await?
         .0

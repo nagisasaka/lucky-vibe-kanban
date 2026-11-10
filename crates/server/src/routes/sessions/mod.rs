@@ -266,7 +266,7 @@ pub(crate) async fn follow_up_checked(
     deployment: DeploymentImpl,
     session: Session,
     payload: CreateFollowUpAttempt,
-    expected_run: Option<(Uuid, Uuid)>,
+    expected_run: Option<(Uuid, Option<Uuid>)>,
 ) -> Result<ResponseJson<ApiResponse<AgentRunPortSnapshot>>, ApiError> {
     let _queue_lock = deployment
         .queued_message_service()
@@ -278,11 +278,13 @@ pub(crate) async fn follow_up_checked(
         ));
     }
     if let Some((expected, project)) = expected_run {
-        let belongs: bool = sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM local_workspace_links l JOIN local_issues i ON i.id=l.issue_id AND i.project_id=l.project_id WHERE l.workspace_id=? AND l.project_id=?)").bind(session.workspace_id).bind(project).fetch_one(&deployment.db().pool).await?;
-        if !belongs {
-            return Err(ApiError::Conflict(
-                "Workspace is no longer in this Project".into(),
-            ));
+        if let Some(project) = project {
+            let belongs: bool = sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM local_workspace_links l JOIN local_issues i ON i.id=l.issue_id AND i.project_id=l.project_id WHERE l.workspace_id=? AND l.project_id=?)").bind(session.workspace_id).bind(project).fetch_one(&deployment.db().pool).await?;
+            if !belongs {
+                return Err(ApiError::Conflict(
+                    "Workspace is no longer in this Project".into(),
+                ));
+            }
         }
         let latest: Option<(Uuid, String)> = sqlx::query_as("SELECT id,status FROM agent_runs WHERE session_id=? ORDER BY created_at DESC,rowid DESC LIMIT 1")
             .bind(session.id).fetch_optional(&deployment.db().pool).await?;

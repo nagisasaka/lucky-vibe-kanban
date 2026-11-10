@@ -281,7 +281,10 @@ mod tests {
         let summaries = read::call(&remote, "list_issues", json!({"project_id":project}))
             .await
             .unwrap();
-        assert_eq!(summaries["items"][0]["priority"], "medium");
+        assert_eq!(
+            summaries["items"][0]["priority"], "high",
+            "null preserves priority; use explicit medium to reset"
+        );
         let mut add =
             json!({"project_id":project,"issue_id":issue,"tag_id":bug,"request_id":Uuid::new_v4()});
         let original = write(&remote, &principal, "add_issue_tag", add.clone()).await;

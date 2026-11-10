@@ -1,7 +1,5 @@
 //! Bounded code and per-path diff evidence, reusing GitService identities,
 //! merge-base discovery and the normal unified-diff formatter.
-#[path = "code_query.rs"]
-mod query;
 
 use anyhow::ensure;
 use git::{
@@ -30,53 +28,32 @@ struct FileArgs {
 }
 
 pub(super) fn tools() -> Vec<rmcp::model::Tool> {
-    let mut tools = vec![
-        definition::<query::FileListArgs>(
-            "list_workspace_files",
-            "List tracked reference-code paths in one Workspace repository, up to 50. Private paths, Git symlink entries and submodules are excluded. Optional directory_prefix and filename_contains filter before paging. Use get_workspace_file for content.",
-        ),
-        definition::<FileArgs>(
-            "get_workspace_file",
-            "Read one tracked reference file in character pages up to 16000. Binary, oversized, missing or unsupported files are explicit. Only safe regular files below the selected checkout are readable.",
-        ),
+    vec![
         definition::<ListArgs>(
             "list_workspace_diff",
-            "List changed reference paths against the existing Workspace target merge base, up to 50. Includes untracked changes; private paths are excluded. Renames expose separate old/new paths. This is not merge eligibility or test evidence.",
+            "List changed reference paths against the Workspace target merge base. Includes untracked changes; private paths are excluded. Not merge eligibility or test evidence.",
         ),
         definition::<FileArgs>(
             "get_workspace_diff",
-            "Read one changed path's unified text diff in character pages up to 16000. Includes source head and base. Binary/oversized/unreadable content is not reported as an empty successful diff. Renames are compared per path.",
+            "Read one changed path unified diff in character pages up to 16000. Binary/oversized/unreadable content is explicit. Includes source head and base.",
         ),
-    ];
-    tools.extend(query::tools());
-    tools
+    ]
 }
 
 pub(super) async fn call(remote: &Remote, name: &str, args: Value) -> anyhow::Result<Value> {
     let mut result;
     let target;
-    if matches!(name, "search_workspace_files" | "get_workspace_file_ranges") {
-        return query::call(remote, name, args).await;
-    }
-    if name == "list_workspace_files" {
-        let args: query::FileListArgs = arguments(args)?;
-        let (args, filter) = args.into_parts();
-        filter.validate()?;
-        target = args.target.clone();
-        let source = remote.evidence_source(&target).await?;
-        result = tokio::task::spawn_blocking(move || list(&source, &args, false, Some(&filter)))
-            .await??;
-    } else if name == "list_workspace_diff" {
+    if name == "list_workspace_diff" {
         let args: ListArgs = arguments(args)?;
         target = args.target.clone();
         let source = remote.evidence_source(&target).await?;
         let diff = name == "list_workspace_diff";
-        result = tokio::task::spawn_blocking(move || list(&source, &args, diff, None))
+        result = tokio::task::spawn_blocking(move || list(&source, &args, diff))
             .await
             .map_err(|_| anyhow::anyhow!("Code read interrupted; retry this read"))??;
     } else {
         ensure!(
-            matches!(name, "get_workspace_file" | "get_workspace_diff"),
+            name == "get_workspace_diff",
             super::errors::rejection_with_message(
                 utils::mcp_error::Category::Validation,
                 "Unknown code read tool"
@@ -85,8 +62,7 @@ pub(super) async fn call(remote: &Remote, name: &str, args: Value) -> anyhow::Re
         let args: FileArgs = arguments(args)?;
         target = args.target.clone();
         let source = remote.evidence_source(&target).await?;
-        let diff = name == "get_workspace_diff";
-        result = tokio::task::spawn_blocking(move || detail(&source, &args, diff))
+        result = tokio::task::spawn_blocking(move || detail(&source, &args))
             .await
             .map_err(|_| anyhow::anyhow!("Code read interrupted; retry this read"))??;
     }
@@ -116,12 +92,7 @@ fn heads(source: &Source, root: &std::path::Path) -> anyhow::Result<(GitService,
     );
     Ok((git, head.oid))
 }
-fn list(
-    source: &Source,
-    args: &ListArgs,
-    diff: bool,
-    filter: Option<&query::PathFilter>,
-) -> anyhow::Result<Value> {
+fn list(source: &Source, args: &ListArgs, diff: bool) -> anyhow::Result<Value> {
     let root = source.root()?;
     let (git, head) = heads(source, &root)?;
     let base = if diff {
@@ -145,17 +116,9 @@ fn list(
     } else {
         git.reference_files(&root).map_err(unavailable)?
     };
-    if let Some(filter) = filter {
-        paths.retain(|path| filter.matches(path));
-    }
     paths.sort();
     let base = base.map(|b| b.to_string());
-    let filter_identity = filter.filter(|f| f.is_active());
-    let identity = if let Some(filter) = filter_identity {
-        serde_json::to_vec(&(&head, &base, &paths, filter))?
-    } else {
-        serde_json::to_vec(&(&head, &base, &paths))?
-    };
+    let identity = serde_json::to_vec(&(&head, &base, &paths))?;
     let current = revision(
         &args.target,
         if diff { "diff-list" } else { "file-list" },
@@ -190,7 +153,7 @@ fn text(content: &Content) -> Option<&str> {
         _ => None,
     }
 }
-fn detail(source: &Source, args: &FileArgs, diff: bool) -> anyhow::Result<Value> {
+fn detail(source: &Source, args: &FileArgs) -> anyhow::Result<Value> {
     ensure!(
         allowed_path(&args.path),
         super::errors::rejection_with_message(
@@ -200,7 +163,7 @@ fn detail(source: &Source, args: &FileArgs, diff: bool) -> anyhow::Result<Value>
     );
     let root = source.root()?;
     let (git, head) = heads(source, &root)?;
-    let mut result = if diff {
+    let mut result = {
         let base = git
             .get_base_commit(
                 &source.repo.path,
@@ -239,20 +202,6 @@ fn detail(source: &Source, args: &FileArgs, diff: bool) -> anyhow::Result<Value>
         value["changed_path"] = json!(true);
         value["text_equal"] = json!(text(&old).zip(text(&new)).map(|(a, b)| a == b));
         value["non_text_changes_require_review"] = json!(true);
-        value
-    } else {
-        let content = git.reference_file(&root, &args.path).map_err(unavailable)?;
-        let body = match &content {
-            Content::Text(text) => Some(text.as_str()),
-            _ => None,
-        };
-        let mut value = text_page(
-            &args.target,
-            &format!("file:{}:{}:{}", args.path, head, status(&content)),
-            body,
-            &args.page,
-        )?;
-        value["status"] = json!(status(&content));
         value
     };
     // Detect a concurrently checked-out commit; working-file edits are detected
@@ -350,7 +299,22 @@ pub(super) mod tests {
     }
 
     #[tokio::test]
-    async fn code_and_diff_reads_page_real_git_changes_and_keep_evidence_states_distinct() {
+    async fn diff_routes_remain_and_file_routes_are_removed() {
+        let (_temp, remote, args) = fixture().await;
+        let names: Vec<_> = tools().iter().map(|t| t.name.to_string()).collect();
+        assert_eq!(names, ["list_workspace_diff", "get_workspace_diff"]);
+        assert!(call(&remote, "list_workspace_diff", args).await.is_ok());
+        for name in [
+            "list_workspace_files",
+            "get_workspace_file",
+            "search_workspace_files",
+            "get_workspace_file_ranges",
+        ] {
+            assert!(!super::super::tools().iter().any(|t| t.name == name));
+        }
+    }
+    #[tokio::test]
+    async fn diff_reads_page_real_git_changes_and_keep_evidence_states_distinct() {
         let (temp, remote, args) = fixture().await;
         let original_index = fs::read(temp.path().join(".git/index")).unwrap();
         fs::write(
@@ -370,49 +334,7 @@ pub(super) mod tests {
             temp.path(),
             &["config", "diff.external", "touch .git/diff-was-run"],
         );
-        let first = call(&remote, "list_workspace_files", args.clone())
-            .await
-            .unwrap();
-        assert_eq!(first["items"].as_array().unwrap().len(), 20);
-        assert!(!first.to_string().contains(".env"));
-        let mut next = args.clone();
-        next["offset"] = first["next_offset"].clone();
-        assert!(
-            call(&remote, "list_workspace_files", next.clone())
-                .await
-                .is_err()
-        );
-        next["expected_revision"] = first["revision"].clone();
-        next["limit"] = json!(50);
-        assert_eq!(
-            call(&remote, "list_workspace_files", next.clone())
-                .await
-                .unwrap()["items"]
-                .as_array()
-                .unwrap()
-                .len(),
-            50
-        );
-        next["limit"] = json!(51);
-        assert!(call(&remote, "list_workspace_files", next).await.is_err());
-        let mut file = args.clone();
-        file["path"] = json!("src/000.txt");
-        file["limit"] = json!(3);
-        let first = call(&remote, "get_workspace_file", file.clone())
-            .await
-            .unwrap();
-        assert_eq!(first["content"], "bef");
-        assert_eq!(first["next_offset"], 3);
-        file["offset"] = json!(3);
-        file["expected_revision"] = first["revision"].clone();
-        assert_eq!(
-            call(&remote, "get_workspace_file", file.clone())
-                .await
-                .unwrap()["content"],
-            "ore"
-        );
         fs::write(temp.path().join("src/000.txt"), "direct Codex change\n").unwrap();
-        assert!(call(&remote, "get_workspace_file", file).await.is_err());
         for i in 1..105 {
             fs::write(
                 temp.path().join(format!("src/{i:03}.txt")),
@@ -454,11 +376,6 @@ pub(super) mod tests {
         assert_eq!(detail["base_commit"], first["base_commit"]);
         fs::write(temp.path().join("untracked.txt"), "new implementation\n").unwrap();
         diff["path"] = json!("untracked.txt");
-        assert!(
-            call(&remote, "get_workspace_file", diff.clone())
-                .await
-                .is_err()
-        );
         let added = call(&remote, "get_workspace_diff", diff.clone())
             .await
             .unwrap();
@@ -473,14 +390,6 @@ pub(super) mod tests {
             "missing"
         );
         fs::write(temp.path().join("binary.dat"), [0, 4, 5]).unwrap();
-        for (path, status) in [("binary.dat", "binary"), ("huge.txt", "too_large")] {
-            diff["path"] = json!(path);
-            let value = call(&remote, "get_workspace_file", diff.clone())
-                .await
-                .unwrap();
-            assert_eq!(value["status"], status);
-            assert_eq!(value["available"], false);
-        }
         diff["path"] = json!("binary.dat");
         let binary = call(&remote, "get_workspace_diff", diff).await.unwrap();
         assert_eq!(binary["available"], false);
@@ -521,7 +430,7 @@ pub(super) mod tests {
             ":(glob)**",
         ] {
             file["path"] = json!(path);
-            for name in ["get_workspace_file", "get_workspace_diff"] {
+            for name in ["get_workspace_diff"] {
                 assert!(
                     call(&remote, name, file.clone()).await.is_err(),
                     "{name}: {path}"
@@ -537,7 +446,7 @@ pub(super) mod tests {
         )
         .unwrap();
         file["path"] = json!("src/000.txt");
-        for name in ["get_workspace_file", "get_workspace_diff"] {
+        for name in ["get_workspace_diff"] {
             let error = call(&remote, name, file.clone())
                 .await
                 .unwrap_err()
@@ -550,17 +459,17 @@ pub(super) mod tests {
         fs::remove_dir_all(temp.path().join("src")).unwrap();
         std::os::unix::fs::symlink(outside.path(), temp.path().join("src")).unwrap();
         assert!(
-            call(&remote, "get_workspace_file", file.clone())
+            call(&remote, "get_workspace_diff", file.clone())
                 .await
                 .is_err()
         );
         for key in ["project_id", "workspace_id", "repository_id"] {
             let mut wrong = file.clone();
             wrong[key] = json!(Uuid::new_v4());
-            assert!(call(&remote, "get_workspace_file", wrong).await.is_err());
+            assert!(call(&remote, "get_workspace_diff", wrong).await.is_err());
         }
         // Switch to a different registered branch without changing stored Workspace identity.
         git(temp.path(), &["symbolic-ref", "HEAD", "refs/heads/main"]);
-        assert!(call(&remote, "list_workspace_files", args).await.is_err());
+        assert!(call(&remote, "list_workspace_diff", args).await.is_err());
     }
 }

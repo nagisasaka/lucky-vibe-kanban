@@ -268,10 +268,7 @@ mod tests {
             invalid[field] = json!("override");
             assert!(serde_json::from_value::<Restart>(invalid).is_err());
         }
-        for router in [
-            McpServer::global_mode_router(),
-            McpServer::orchestrator_mode_router(),
-        ] {
+        for router in [McpServer::global_mode_router()] {
             let tools = router.list_all();
             for name in ["self_restart", "get_self_restart_operation"] {
                 assert!(tools.iter().any(|t| t.name == name));

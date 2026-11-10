@@ -11,7 +11,6 @@ const WORKSPACE_NAME_MAX_LEN: usize = 60;
 
 use super::{
     arena_group::{ArenaGroup, ArenaStatus},
-    session::Session,
     workspace_repo::{RepoWithTargetBranch, WorkspaceRepo},
     workspace_usage::{WorkspaceExecutionOwner, WorkspaceUsage},
 };
@@ -129,7 +128,6 @@ pub struct CreateFollowUpAttempt {
 pub struct WorkspaceContext {
     pub workspace: Workspace,
     pub workspace_repos: Vec<RepoWithTargetBranch>,
-    pub orchestrator_session_id: Option<Uuid>,
 }
 
 #[derive(Debug, Deserialize, TS)]
@@ -192,14 +190,10 @@ impl Workspace {
 
         let workspace_repos =
             WorkspaceRepo::find_repos_with_target_branch_for_workspace(pool, workspace_id).await?;
-        let orchestrator_session_id = Session::find_first_by_workspace_id(pool, workspace_id)
-            .await?
-            .map(|session| session.id);
 
         Ok(WorkspaceContext {
             workspace,
             workspace_repos,
-            orchestrator_session_id,
         })
     }
 

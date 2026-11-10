@@ -12,7 +12,6 @@ const PORT_ENV: &str = "MCP_PORT";
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum McpLaunchMode {
     Global,
-    Orchestrator,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -43,7 +42,6 @@ fn main() -> anyhow::Result<()> {
 
             let server = match mode {
                 McpLaunchMode::Global => McpServer::new_global(&base_url),
-                McpLaunchMode::Orchestrator => McpServer::new_orchestrator(&base_url),
             };
 
             let service = server.init().await?.serve(stdio()).await.map_err(|error| {
@@ -70,16 +68,24 @@ where
         match arg.as_str() {
             "--mode" => {
                 mode = Some(args.next().ok_or_else(|| {
-                    anyhow::anyhow!("Missing value for --mode. Expected 'global' or 'orchestrator'")
+                    anyhow::anyhow!("Missing value for --mode. Expected 'global'")
                 })?);
+                if mode
+                    .as_deref()
+                    .is_some_and(|value| value.trim().eq_ignore_ascii_case("orchestrator"))
+                {
+                    anyhow::bail!(
+                        "orchestrator mode has been removed. Remove --mode orchestrator from your configuration; explicitly select --mode global if appropriate. Global does not provide the former Workspace restrictions."
+                    );
+                }
             }
             "-h" | "--help" => {
-                println!("Usage: vibe-kanban-mcp --mode <global|orchestrator>");
+                println!("Usage: vibe-kanban-mcp --mode <global>");
                 std::process::exit(0);
             }
             _ => {
                 return Err(anyhow::anyhow!(
-                    "Unknown argument '{arg}'. Usage: vibe-kanban-mcp --mode <global|orchestrator>"
+                    "Unknown argument '{arg}'. Usage: vibe-kanban-mcp --mode <global>"
                 ));
             }
         }
@@ -93,10 +99,12 @@ where
         .as_str()
     {
         "global" => McpLaunchMode::Global,
-        "orchestrator" => McpLaunchMode::Orchestrator,
+        "orchestrator" => anyhow::bail!(
+            "orchestrator mode has been removed. Remove --mode orchestrator from your configuration; explicitly select --mode global if appropriate. Global does not provide the former Workspace restrictions."
+        ),
         value => {
             return Err(anyhow::anyhow!(
-                "Invalid MCP mode '{value}'. Expected 'global' or 'orchestrator'"
+                "Invalid MCP mode '{value}'. Expected 'global'"
             ));
         }
     };
@@ -165,20 +173,19 @@ fn init_process_logging(log_prefix: &str, version: &str) {
 
 #[cfg(test)]
 mod tests {
-    use super::{LaunchConfig, McpLaunchMode, resolve_launch_config_from_iter};
+    use super::{McpLaunchMode, resolve_launch_config_from_iter};
 
     #[test]
-    fn orchestrator_mode_does_not_require_session_id() {
-        let config = resolve_launch_config_from_iter(
-            ["--mode".to_string(), "orchestrator".to_string()].into_iter(),
-        )
-        .expect("config should parse");
-
+    fn removed_orchestrator_is_an_explicit_error_and_default_is_global() {
+        let error =
+            resolve_launch_config_from_iter(["--mode".into(), "orchestrator".into()].into_iter())
+                .unwrap_err();
+        assert!(error.to_string().contains("has been removed"));
         assert_eq!(
-            config,
-            LaunchConfig {
-                mode: McpLaunchMode::Orchestrator
-            }
+            resolve_launch_config_from_iter(Vec::<String>::new().into_iter())
+                .unwrap()
+                .mode,
+            McpLaunchMode::Global
         );
     }
 
@@ -187,7 +194,7 @@ mod tests {
         let error = resolve_launch_config_from_iter(
             [
                 "--mode".to_string(),
-                "orchestrator".to_string(),
+                "global".to_string(),
                 "--session-id".to_string(),
                 "x".to_string(),
             ]

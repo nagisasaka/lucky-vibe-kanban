@@ -1,10 +1,9 @@
 use std::collections::HashMap;
 
 use api_types::{
-    CreateIssueRequest, FilterIssuesRequest, Issue, IssueFilters, IssuePriority,
-    IssueRelationshipType, IssueSortField, ListIssueRelationshipsResponse, ListIssueTagsResponse,
-    ListIssuesResponse, ListPullRequestsResponse, ListTagsResponse, MutationResponse,
-    PullRequestStatus, SortDirection, UpdateIssueRequest,
+    FilterIssuesRequest, Issue, IssueFilters, IssuePriority, IssueRelationshipType, IssueSortField,
+    ListIssueRelationshipsResponse, ListIssueTagsResponse, ListIssuesResponse,
+    ListPullRequestsResponse, ListTagsResponse, PullRequestStatus, SortDirection,
 };
 use rmcp::{
     ErrorData, handler::server::wrapper::Parameters, model::CallToolResult, schemars, tool,
@@ -15,8 +14,10 @@ use uuid::Uuid;
 
 use super::{McpServer, ToolError};
 
-#[derive(Debug, Deserialize, schemars::JsonSchema)]
+#[derive(Debug, Deserialize, Serialize, schemars::JsonSchema)]
 struct McpCreateIssueRequest {
+    /// Stable caller ID enables same-principal durable replay protection. Omitted: no replay guarantee.
+    request_id: Option<Uuid>,
     #[schemars(
         description = "The ID of the project to create the issue in. Optional if running inside a workspace linked to a remote project."
     )]
@@ -31,11 +32,6 @@ struct McpCreateIssueRequest {
     priority: Option<String>,
     #[schemars(description = "Optional parent issue ID to create a subissue")]
     parent_issue_id: Option<Uuid>,
-}
-
-#[derive(Debug, Serialize, schemars::JsonSchema)]
-struct McpCreateIssueResponse {
-    issue_id: String,
 }
 
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
@@ -210,8 +206,12 @@ struct McpListIssuesResponse {
     project_id: String,
 }
 
-#[derive(Debug, Deserialize, schemars::JsonSchema)]
+#[derive(Debug, Deserialize, Serialize, schemars::JsonSchema)]
 struct McpUpdateIssueRequest {
+    /// Stable caller ID enables same-principal durable replay protection. Omitted: no replay guarantee.
+    request_id: Option<Uuid>,
+    /// Caller-observed Issue revision. Omitted: no protection since the caller read. Independent of request_id.
+    expected_revision: Option<String>,
     #[schemars(description = "The ID of the issue to update")]
     issue_id: Uuid,
     #[schemars(description = "New title for the issue")]
@@ -231,20 +231,12 @@ struct McpUpdateIssueRequest {
     clear_parent: Option<bool>,
 }
 
-#[derive(Debug, Serialize, schemars::JsonSchema)]
-struct McpUpdateIssueResponse {
-    issue: IssueDetails,
-}
-
-#[derive(Debug, Deserialize, schemars::JsonSchema)]
+#[derive(Debug, Deserialize, Serialize, schemars::JsonSchema)]
 struct McpDeleteIssueRequest {
+    /// Stable caller ID enables same-principal durable replay protection. Omitted: no replay guarantee.
+    request_id: Option<Uuid>,
     #[schemars(description = "The ID of the issue to delete")]
     issue_id: Uuid,
-}
-
-#[derive(Debug, Serialize, schemars::JsonSchema)]
-struct McpDeleteIssueResponse {
-    deleted_issue_id: Option<String>,
 }
 
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
@@ -359,67 +351,39 @@ impl McpServer {
         }
     }
     #[tool(
-        description = "Create a new issue in a project. `project_id` is optional if running inside a workspace linked to a remote project."
+        description = "Create an Issue. Optional request_id gives durable same-principal deduplication; omission gives no replay guarantee. Read get_operation after response loss. Create a new issue in a project. `project_id` is optional if running inside a workspace linked to a remote project."
     )]
     async fn create_issue(
         &self,
-        Parameters(McpCreateIssueRequest {
-            project_id,
-            title,
-            description,
-            priority,
-            parent_issue_id,
-        }): Parameters<McpCreateIssueRequest>,
+        Parameters(mut args): Parameters<McpCreateIssueRequest>,
     ) -> Result<CallToolResult, ErrorData> {
-        let project_id = match self.resolve_project_id(project_id) {
-            Ok(id) => id,
-            Err(e) => return Ok(McpServer::tool_error(e)),
+        args.project_id = match self.resolve_project_id(args.project_id) {
+            Ok(id) => Some(id),
+            Err(e) => return Ok(Self::tool_error(e)),
         };
-
-        let expanded_description = match description {
-            Some(desc) => Some(self.expand_tags(&desc).await),
-            None => None,
+        let input = serde_json::to_value(&args).expect("Issue input");
+        let mut value = match self
+            .send_json::<serde_json::Value>(
+                self.client
+                    .post(self.url("/api/mcp-stdio/issues/create_issue"))
+                    .json(&input),
+            )
+            .await
+        {
+            Ok(value) => value,
+            Err(error) => return Ok(Self::tool_error(error)),
         };
-
-        let status_id = match self.default_status_id(project_id).await {
-            Ok(id) => id,
-            Err(e) => return Ok(McpServer::tool_error(e)),
-        };
-
-        let priority = match priority {
-            Some(p) => match Self::parse_issue_priority(&p) {
-                Ok(priority) => Some(priority),
-                Err(e) => return Ok(McpServer::tool_error(e)),
-            },
-            None => None,
-        };
-
-        let payload = CreateIssueRequest {
-            id: None,
-            project_id,
-            status_id,
-            title,
-            description: expanded_description,
-            priority,
-            start_date: None,
-            target_date: None,
-            completed_at: None,
-            sort_order: 0.0,
-            parent_issue_id,
-            parent_issue_sort_order: None,
-            extension_metadata: serde_json::json!({}),
-        };
-
-        let url = self.url("/api/board/issues");
-        let response: MutationResponse<Issue> =
-            match self.send_json(self.client.post(&url).json(&payload)).await {
-                Ok(r) => r,
-                Err(e) => return Ok(McpServer::tool_error(e)),
-            };
-
-        McpServer::success(&McpCreateIssueResponse {
-            issue_id: response.data.id.to_string(),
-        })
+        if value["status"] != "succeeded" {
+            if matches!(value["status"].as_str(), Some("failed" | "uncertain")) {
+                let mut result =
+                    CallToolResult::error(vec![rmcp::model::Content::text(value.to_string())]);
+                result.structured_content = Some(value);
+                return Ok(result);
+            }
+            return Self::success(&value);
+        }
+        value["issue_id"] = value["result"]["issue_id"].clone();
+        Self::success(&value)
     }
 
     #[tool(
@@ -541,94 +505,55 @@ impl McpServer {
     }
 
     #[tool(
-        description = "Update an Issue without starting implementation. Omitted fields and null parent IDs preserve existing values. parent_issue_id sets/replaces the parent; clear_parent:true explicitly removes only that link. Read get_issue before/after. Parent cycles are rejected."
+        description = "Update an Issue without starting implementation. Optional request_id gives durable deduplication; optional expected_revision checks the caller-observed revision. Either guarantee works independently; omission gives no corresponding protection. priority:null preserves it; set medium explicitly. Omitted fields and null parent IDs preserve existing values. parent_issue_id sets/replaces the parent; clear_parent:true explicitly removes only that link. Read get_issue before/after. Parent cycles are rejected."
     )]
     async fn update_issue(
         &self,
-        Parameters(McpUpdateIssueRequest {
-            issue_id,
-            title,
-            description,
-            status,
-            priority,
-            parent_issue_id,
-            clear_parent,
-        }): Parameters<McpUpdateIssueRequest>,
+        Parameters(args): Parameters<McpUpdateIssueRequest>,
     ) -> Result<CallToolResult, ErrorData> {
-        if parent_issue_id.is_some() && clear_parent == Some(true) {
-            return Self::err("Specify a parent or clear_parent, not both", None);
+        let input = serde_json::to_value(&args).expect("Issue input");
+        let mut value = match self
+            .send_json::<serde_json::Value>(
+                self.client
+                    .post(self.url("/api/mcp-stdio/issues/update_issue"))
+                    .json(&input),
+            )
+            .await
+        {
+            Ok(value) => value,
+            Err(error) => return Ok(Self::tool_error(error)),
+        };
+        if value["status"] != "succeeded" {
+            if matches!(value["status"].as_str(), Some("failed" | "uncertain")) {
+                let mut result =
+                    CallToolResult::error(vec![rmcp::model::Content::text(value.to_string())]);
+                result.structured_content = Some(value);
+                return Ok(result);
+            }
+            return Self::success(&value);
         }
-        // First get the issue to know its project_id for status resolution
-        let get_url = self.url(&format!("/api/board/issues/{}", issue_id));
-        let existing_issue: Issue = match self.send_json(self.client.get(&get_url)).await {
-            Ok(i) => i,
-            Err(e) => return Ok(McpServer::tool_error(e)),
-        };
-
-        // Resolve status name to status_id if provided
-        let status_id = if let Some(ref status_name) = status {
-            match self
-                .resolve_status_id(existing_issue.project_id, status_name)
-                .await
-            {
-                Ok(id) => Some(id),
-                Err(e) => return Ok(McpServer::tool_error(e)),
-            }
-        } else {
-            None
-        };
-
-        // Expand @tagname references in description
-        let expanded_description = match description {
-            Some(desc) => Some(Some(self.expand_tags(&desc).await)),
-            None => None,
-        };
-
-        let priority = if let Some(priority) = priority {
-            match Self::parse_issue_priority(&priority) {
-                Ok(parsed) => Some(Some(parsed)),
-                Err(e) => return Ok(McpServer::tool_error(e)),
-            }
-        } else {
-            None
-        };
-
-        let payload = UpdateIssueRequest {
-            status_id,
-            title,
-            description: expanded_description,
-            priority,
-            start_date: None,
-            target_date: None,
-            completed_at: None,
-            sort_order: None,
-            parent_issue_id: if clear_parent == Some(true) {
-                Some(None)
-            } else {
-                parent_issue_id.map(Some)
-            },
-            parent_issue_sort_order: None,
-            extension_metadata: None,
-        };
-
-        let url = self.url(&format!("/api/board/issues/{}", issue_id));
-        let response: MutationResponse<Issue> =
-            match self.send_json(self.client.patch(&url).json(&payload)).await {
-                Ok(r) => r,
-                Err(e) => return Ok(McpServer::tool_error(e)),
-            };
-
-        let pull_requests = self.fetch_pull_requests(issue_id).await;
-        let details = match self.issue_to_details(&response.data, pull_requests).await {
-            Ok(details) => details,
+        let issue: Issue = match self
+            .send_json(
+                self.client
+                    .get(self.url(&format!("/api/board/issues/{}", args.issue_id))),
+            )
+            .await
+        {
+            Ok(v) => v,
             Err(mut e) => {
-                // The PATCH completed; a subsequent relation read failure does
-                // not prove that the update failed.
                 e.diagnostic.outcome = utils::mcp_error::Outcome::Unknown;
                 return Ok(Self::tool_error(e));
             }
         };
-        McpServer::success(&McpUpdateIssueResponse { issue: details })
+        let prs = self.fetch_pull_requests(args.issue_id).await;
+        match self.issue_to_details(&issue, prs).await {
+            Ok(details) => value["issue"] = serde_json::to_value(details).expect("Issue details"),
+            Err(mut e) => {
+                e.diagnostic.outcome = utils::mcp_error::Outcome::Unknown;
+                return Ok(Self::tool_error(e));
+            }
+        }
+        Self::success(&value)
     }
 
     #[tool(description = "List allowed issue priority values.")]
@@ -641,19 +566,36 @@ impl McpServer {
         })
     }
 
-    #[tool(description = "Delete an issue. `issue_id` is required.")]
+    #[tool(
+        description = "Permanently delete an Issue with existing Board constraints; no worktree deletion. Optional request_id gives durable same-principal receipt/replay protection; omission gives none. Use get_operation after uncertainty. `issue_id` is required."
+    )]
     async fn delete_issue(
         &self,
-        Parameters(McpDeleteIssueRequest { issue_id }): Parameters<McpDeleteIssueRequest>,
+        Parameters(args): Parameters<McpDeleteIssueRequest>,
     ) -> Result<CallToolResult, ErrorData> {
-        let url = self.url(&format!("/api/board/issues/{}", issue_id));
-        if let Err(e) = self.send_empty_json(self.client.delete(&url)).await {
-            return Ok(McpServer::tool_error(e));
+        let input = serde_json::to_value(&args).expect("Issue input");
+        let mut value = match self
+            .send_json::<serde_json::Value>(
+                self.client
+                    .post(self.url("/api/mcp-stdio/issues/delete_issue"))
+                    .json(&input),
+            )
+            .await
+        {
+            Ok(value) => value,
+            Err(error) => return Ok(Self::tool_error(error)),
+        };
+        if value["status"] != "succeeded" {
+            if matches!(value["status"].as_str(), Some("failed" | "uncertain")) {
+                let mut result =
+                    CallToolResult::error(vec![rmcp::model::Content::text(value.to_string())]);
+                result.structured_content = Some(value);
+                return Ok(result);
+            }
+            return Self::success(&value);
         }
-
-        McpServer::success(&McpDeleteIssueResponse {
-            deleted_issue_id: Some(issue_id.to_string()),
-        })
+        value["deleted_issue_id"] = value["result"]["deleted_issue_id"].clone();
+        Self::success(&value)
     }
 }
 
@@ -901,18 +843,6 @@ impl McpServer {
                 }
             })
             .collect()
-    }
-
-    fn parse_issue_priority(priority: &str) -> Result<IssuePriority, ToolError> {
-        match priority.trim().to_ascii_lowercase().as_str() {
-            "urgent" => Ok(IssuePriority::Urgent),
-            "high" => Ok(IssuePriority::High),
-            "medium" => Ok(IssuePriority::Medium),
-            "low" => Ok(IssuePriority::Low),
-            _ => Err(ToolError::message(
-                "Unknown priority. Allowed values: urgent, high, medium, low",
-            )),
-        }
     }
 
     fn issue_priority_label(priority: IssuePriority) -> &'static str {

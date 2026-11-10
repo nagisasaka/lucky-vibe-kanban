@@ -33,6 +33,7 @@ mod issue_comment_text;
 mod issue_comments;
 #[cfg(all(test, unix))]
 mod issue_comments_browser;
+mod issue_mutations;
 mod issue_relationships;
 mod issue_tags;
 mod issue_write;
@@ -49,6 +50,7 @@ mod resource_observation;
 mod run_events;
 mod runtime_read;
 mod runtime_write;
+mod stdio;
 mod todos;
 mod workspace_archive;
 
@@ -98,7 +100,7 @@ pub fn configured_router(
 /// Authenticated stdio adapter: use the same scope, operation receipts and
 /// domain continuation as remote MCP rather than a second execution path.
 pub(crate) fn execution_router() -> Router<DeploymentImpl> {
-    Router::new().route(
+    Router::new().merge(stdio::router()).route(
         "/mcp-execution/continue",
         axum::routing::post(continue_route),
     )

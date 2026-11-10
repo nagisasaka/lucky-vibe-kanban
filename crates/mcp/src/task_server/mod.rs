@@ -29,9 +29,6 @@ pub struct McpContext {
     pub project_id: Option<Uuid>,
     #[schemars(description = "The remote issue ID (if workspace is linked to a remote issue)")]
     pub issue_id: Option<Uuid>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    #[schemars(description = "The orchestrator session ID when running in orchestrator mode")]
-    pub orchestrator_session_id: Option<Uuid>,
     pub workspace_id: Uuid,
     pub workspace_branch: String,
     #[schemars(
@@ -41,18 +38,11 @@ pub struct McpContext {
 }
 
 #[derive(Debug, Clone)]
-pub enum McpMode {
-    Global,
-    Orchestrator,
-}
-
-#[derive(Debug, Clone)]
 pub struct McpServer {
     client: reqwest::Client,
     base_url: String,
     tool_router: ToolRouter<McpServer>,
     context: Option<McpContext>,
-    mode: McpMode,
 }
 
 impl McpServer {
@@ -62,17 +52,6 @@ impl McpServer {
             base_url: base_url.to_string(),
             tool_router: Self::global_mode_router(),
             context: None,
-            mode: McpMode::Global,
-        }
-    }
-
-    pub fn new_orchestrator(base_url: &str) -> Self {
-        Self {
-            client: internal_client(base_url),
-            base_url: base_url.to_string(),
-            tool_router: Self::orchestrator_mode_router(),
-            context: None,
-            mode: McpMode::Orchestrator,
         }
     }
 
@@ -98,10 +77,6 @@ impl McpServer {
         Ok(self)
     }
 
-    pub fn mode(&self) -> &McpMode {
-        &self.mode
-    }
-
     async fn fetch_context_at_startup(&self) -> anyhow::Result<Option<McpContext>> {
         let current_dir = std::env::current_dir().context("Failed to resolve current directory")?;
         let canonical_path = current_dir.canonicalize().unwrap_or(current_dir);
@@ -111,11 +86,7 @@ impl McpServer {
             Ok(Some(ctx)) => Ok(Some(
                 self.build_mcp_context_from_workspace_context(&ctx).await,
             )),
-            Ok(None) | Err(_) if matches!(self.mode(), McpMode::Global) => Ok(None),
-            Ok(None) => anyhow::bail!(
-                "Failed to load orchestrator MCP context from /api/containers/attempt-context"
-            ),
-            Err(error) => Err(error.context("Failed to load orchestrator MCP context")),
+            Ok(None) | Err(_) => Ok(None),
         }
     }
 
@@ -165,12 +136,6 @@ impl McpServer {
 
         let workspace_id = ctx.workspace.id;
         let workspace_branch = ctx.workspace.branch.clone();
-        let orchestrator_session_id = if matches!(self.mode(), McpMode::Orchestrator) {
-            ctx.orchestrator_session_id
-        } else {
-            None
-        };
-
         let (project_id, issue_id, organization_id) = self
             .fetch_remote_workspace_context(workspace_id)
             .await
@@ -180,7 +145,6 @@ impl McpServer {
             organization_id,
             project_id,
             issue_id,
-            orchestrator_session_id,
             workspace_id,
             workspace_branch,
             workspace_repos,

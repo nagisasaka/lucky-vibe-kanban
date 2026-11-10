@@ -238,11 +238,17 @@
     ]
   },
   {
-    "tool": "list_workspace_files",
+    "tool": "query_repository",
     "arguments": {
       "project_id": "00000000-0000-0000-0000-000000000001",
-      "workspace_id": "00000000-0000-0000-0000-000000000002",
-      "repository_id": "00000000-0000-0000-0000-000000000003"
+      "repository_id": "00000000-0000-0000-0000-000000000003",
+      "target": {
+        "mode": "workspace",
+        "workspace_id": "00000000-0000-0000-0000-000000000002"
+      },
+      "operation": {
+        "kind": "list"
+      }
     },
     "scopes": [
       "lvk:read"
@@ -272,12 +278,24 @@
     ]
   },
   {
-    "tool": "get_workspace_file",
+    "tool": "query_repository",
     "arguments": {
       "project_id": "00000000-0000-0000-0000-000000000001",
-      "workspace_id": "00000000-0000-0000-0000-000000000002",
       "repository_id": "00000000-0000-0000-0000-000000000003",
-      "path": "index.md"
+      "target": {
+        "mode": "workspace",
+        "workspace_id": "00000000-0000-0000-0000-000000000002"
+      },
+      "operation": {
+        "kind": "read",
+        "ranges": [
+          {
+            "path": "index.md",
+            "start_line": 1,
+            "end_line": 1
+          }
+        ]
+      }
     },
     "scopes": [
       "lvk:read"

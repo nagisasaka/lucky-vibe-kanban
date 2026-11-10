@@ -259,6 +259,36 @@ impl Operations {
         Ok((receipt, inserted))
     }
 
+    /// Check an owned replay before resolving mutable domain targets. Uses the
+    /// same canonical fingerprint as admission; never creates or re-executes work.
+    pub async fn replay(
+        &self,
+        principal: &str,
+        request_id: Uuid,
+        operation: &str,
+        input: &Value,
+    ) -> anyhow::Result<Option<Receipt>> {
+        let exists: bool = sqlx::query_scalar(
+            "SELECT EXISTS(SELECT 1 FROM remote_mcp_operations WHERE principal=? AND request_id=?)",
+        )
+        .bind(principal)
+        .bind(request_id)
+        .fetch_one(&self.pool)
+        .await?;
+        if !exists {
+            return Ok(None);
+        }
+        let receipt = self.by_request(principal, request_id).await?;
+        if receipt.operation != operation || receipt.input_hash != fingerprint(input) {
+            return Err(utils::mcp_error::Diagnostic::new(
+                utils::mcp_error::Category::Conflict,
+                utils::mcp_error::Outcome::Unknown,
+            )
+            .into());
+        }
+        Ok(Some(receipt))
+    }
+
     pub async fn by_request(&self, principal: &str, request_id: Uuid) -> anyhow::Result<Receipt> {
         let mut receipt: Receipt = sqlx::query_as(
             "SELECT * FROM remote_mcp_operations WHERE principal=? AND request_id=?",
@@ -374,6 +404,63 @@ mod tests {
             },
             project,
         )
+    }
+
+    #[tokio::test]
+    async fn replay_checks_owner_operation_and_content_before_domain_resolution() {
+        let (store, project) = isolated_store().await;
+        let key = Uuid::new_v4();
+        let input = json!({"session_id":Uuid::new_v4(),"prompt":"continue"});
+        assert!(
+            store
+                .replay("owner", key, "continue_execution", &input)
+                .await
+                .unwrap()
+                .is_none()
+        );
+        let first = store
+            .submit_and_wait(
+                "owner".into(),
+                key,
+                project,
+                "continue_execution".into(),
+                input.clone(),
+                json!({}),
+                |_| async { ("succeeded", json!({"execution_accepted":true})) },
+            )
+            .await
+            .unwrap();
+        // There need not be a surviving Session/Workspace row to recover its receipt.
+        let replay = store
+            .replay("owner", key, "continue_execution", &input)
+            .await
+            .unwrap()
+            .unwrap();
+        assert_eq!(first.id, replay.id);
+        assert!(
+            store
+                .replay("another-owner", key, "continue_execution", &input)
+                .await
+                .unwrap()
+                .is_none()
+        );
+        assert!(
+            store
+                .replay("owner", key, "start_session", &input)
+                .await
+                .is_err()
+        );
+        assert!(
+            store
+                .replay(
+                    "owner",
+                    key,
+                    "continue_execution",
+                    &json!({"prompt":"different"})
+                )
+                .await
+                .is_err()
+        );
     }
 
     #[tokio::test]

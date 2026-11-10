@@ -105,14 +105,13 @@ async fn stdio_codec_initialises_lists_existing_tools_and_calls_the_existing_api
 }
 
 #[tokio::test]
-async fn coding_context_details_are_readable_over_stdio_without_orchestrator_delegation() {
+async fn coding_context_details_remain_available_over_global_stdio() {
     super::tests::install_rustls_provider();
     tokio::time::timeout(Duration::from_secs(10), async {
         let workspace = Uuid::new_v4();
-        let mut server = McpServer::new_orchestrator("http://127.0.0.1:1");
+        let mut server = McpServer::new_global("http://127.0.0.1:1");
         server.context = Some(crate::task_server::McpContext {
-            organization_id: None, project_id: None, issue_id: None,
-            orchestrator_session_id: Some(Uuid::new_v4()), workspace_id: workspace,
+            organization_id: None, project_id: None, issue_id: None, workspace_id: workspace,
             workspace_branch: "fixture".into(), workspace_repos: vec![],
         });
         let (client, transport) = tokio::io::duplex(65536);

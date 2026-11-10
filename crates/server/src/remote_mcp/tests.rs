@@ -1607,6 +1607,21 @@ fn plugin_tool_catalog() {
             "Missing merged tool {name}"
         );
     }
+    let examples: Vec<Value> = serde_json::from_str(include_str!(
+        "../../../../scripts/chatgpt-mcp/examples.json"
+    ))
+    .unwrap();
+    for example in examples {
+        let name = example["tool"].as_str().unwrap();
+        assert!(
+            tools.iter().any(|tool| tool.name == name),
+            "Retired/unknown managed example: {name}"
+        );
+        if name == "query_repository" {
+            serde_json::from_value::<git::repository_read::Request>(example["arguments"].clone())
+                .expect("typed query_repository example");
+        }
+    }
     if let Some(path) = std::env::var_os("LVK_MCP_TOOL_CATALOG") {
         std::fs::write(path, serde_json::to_vec_pretty(&tools).unwrap()).unwrap();
     }
