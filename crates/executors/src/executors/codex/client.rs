@@ -42,7 +42,7 @@ use tokio::{
     sync::Mutex,
 };
 use tokio_util::sync::CancellationToken;
-use workspace_utils::approvals::{ApprovalStatus, QuestionStatus};
+use workspace_utils::approvals::{ApprovalStatus, QuestionAnswer, QuestionStatus};
 
 use super::{
     goal_lifecycle::GoalLifecycle,
@@ -59,6 +59,12 @@ use crate::{
 
 mod mcp_approval;
 pub(super) mod openwiki;
+
+struct PendingQuestion {
+    questions: Vec<ToolRequestUserInputQuestion>,
+    cancel: CancellationToken,
+    blocking: bool,
+}
 
 struct PendingPlan {
     item_id: String,
@@ -103,6 +109,8 @@ pub struct AppServerClient {
     turn_id: Arc<Mutex<Option<String>>>,
     pending_feedback: Mutex<VecDeque<String>>,
     pending_tool_approvals: Mutex<usize>,
+    pending_questions: Mutex<HashMap<String, PendingQuestion>>,
+    question_request_ids: StdMutex<std::collections::HashSet<String>>,
     child_completion: StdMutex<HashMap<String, (Option<String>, bool)>>,
     mcp_approvals: StdMutex<mcp_approval::State>,
     auto_approve: bool,
@@ -157,6 +165,8 @@ impl AppServerClient {
             turn_id: Arc::new(Mutex::new(None)),
             pending_feedback: Mutex::new(VecDeque::new()),
             pending_tool_approvals: Mutex::new(0),
+            pending_questions: Mutex::new(HashMap::new()),
+            question_request_ids: StdMutex::new(Default::default()),
             child_completion: StdMutex::new(HashMap::new()),
             mcp_approvals: StdMutex::new(Default::default()),
             cancel,
@@ -449,10 +459,26 @@ impl AppServerClient {
                     },
                 )?)
             }
-            DirectControl::Input { .. } => Err(ExecutorError::Io(io::Error::new(
-                io::ErrorKind::Unsupported,
-                "Codex input responses must use the original server request id",
-            ))),
+            DirectControl::Input { request_id, text } => {
+                let pending = self.pending_questions.lock().await;
+                let question = pending
+                    .get(&request_id)
+                    .filter(|q| !q.cancel.is_cancelled())
+                    .ok_or_else(|| {
+                        ExecutorApprovalError::request_failed(
+                            "question is stale or belongs to another attempt",
+                        )
+                    })?;
+                let answers = parse_question_answers(&text, &question.questions)?;
+                self.approvals
+                    .as_ref()
+                    .ok_or(ExecutorApprovalError::ServiceUnavailable)?
+                    .resolve_question_answer(&request_id, answers)
+                    .await?;
+                Ok(super::command_adapter::encode_control(
+                    DirectControl::Input { request_id, text },
+                )?)
+            }
         }
     }
 
@@ -809,6 +835,7 @@ impl AppServerClient {
         &self,
         peer: &JsonRpcPeer,
         request: ServerRequest,
+        original_request: Value,
     ) -> Result<(), ExecutorError> {
         match request {
             ServerRequest::FileChangeRequestApproval { request_id, params } => {
@@ -885,11 +912,10 @@ impl AppServerClient {
             }
             ServerRequest::ToolRequestUserInput { request_id, params } => {
                 let call_id = params.item_id.clone();
-                let question_count = params.questions.len();
                 let status = self
                     .request_question_answer(
-                        question_count,
-                        &call_id,
+                        &params.questions,
+                        original_request,
                         params.auto_resolution_ms.map(Duration::from_millis),
                     )
                     .await
@@ -903,7 +929,14 @@ impl AppServerClient {
                                 call_id
                             );
                         }
-                    })?;
+                    });
+                let status = match status {
+                    Ok(status) => status,
+                    Err(ExecutorError::ExecutorApprovalError(ExecutorApprovalError::Cancelled)) => {
+                        QuestionStatus::TimedOut
+                    }
+                    Err(error) => return Err(error),
+                };
                 self.log_writer
                     .log_raw(&Approval::question_response(call_id.clone(), status.clone()).raw())
                     .await?;
@@ -1083,10 +1116,15 @@ impl AppServerClient {
     }
 
     async fn log_tool_approval_count(&self, pending: usize) -> Result<(), ExecutorError> {
+        let question_guard = self.pending_questions.lock().await;
+        let questions = question_guard
+            .values()
+            .filter(|q| q.blocking && !q.cancel.is_cancelled())
+            .count();
         self.log_writer
             .log_raw(
                 &serde_json::json!({
-                    "method": "lucky-vibe/approval/status", "params": { "pending": pending },
+                    "method": "lucky-vibe/approval/status", "params": { "pending": pending, "questionPending":questions },
                 })
                 .to_string(),
             )
@@ -1109,53 +1147,120 @@ impl AppServerClient {
 
     async fn request_question_answer(
         &self,
-        question_count: usize,
-        tool_call_id: &str,
+        questions: &[ToolRequestUserInputQuestion],
+        original_request: Value,
         timeout: Option<Duration>,
     ) -> Result<QuestionStatus, ExecutorError> {
-        let approval_service = self
+        // Serialize registration against turn completion. A late request must
+        // never survive the turn which owns its original native request ID.
+        let turn = self.turn_id.lock().await;
+        if self.thread_id.lock().await.as_deref()
+            != original_request
+                .pointer("/params/threadId")
+                .and_then(Value::as_str)
+            || turn.as_deref()
+                != original_request
+                    .pointer("/params/turnId")
+                    .and_then(Value::as_str)
+            || turn.is_none()
+        {
+            // Reply only to this stale native request. It cannot create a UI
+            // question or terminate the newer active turn.
+            return Ok(QuestionStatus::TimedOut);
+        }
+        if questions.is_empty() {
+            return Err(
+                ExecutorApprovalError::request_failed("empty native question request").into(),
+            );
+        }
+        // Missing isBlocking retains the legacy server-request contract. Only
+        // explicit false suppresses the waiting lifecycle; never infer a mode.
+        let blocking = match original_request.pointer("/params/isBlocking") {
+            None => true,
+            Some(Value::Bool(blocking)) => *blocking,
+            Some(_) => {
+                return Err(ExecutorApprovalError::request_failed(
+                    "invalid native isBlocking field",
+                )
+                .into());
+            }
+        };
+        let service = self
             .approvals
             .as_ref()
             .ok_or(ExecutorApprovalError::ServiceUnavailable)?;
-
-        let approval_id = approval_service
-            .create_question_approval_with_timeout("question", question_count, timeout)
-            .or_else(|err| async {
-                self.handle_question_error(tool_call_id).await;
-                Err(err)
-            })
+        let id = service
+            .create_question_approval_with_timeout("question", questions.len(), timeout)
             .await?;
-
-        let _ = self
-            .log_writer
-            .log_raw(
-                &Approval::approval_requested(
-                    tool_call_id.to_string(),
-                    "codex.question".to_string(),
-                    approval_id.clone(),
+        let cancel = self.cancel.child_token();
+        self.pending_questions.lock().await.insert(
+            id.clone(),
+            PendingQuestion {
+                questions: questions.to_vec(),
+                cancel: cancel.clone(),
+                blocking,
+            },
+        );
+        drop(turn);
+        let prompt = questions
+            .iter()
+            .map(|q| q.question.as_str())
+            .collect::<Vec<_>>()
+            .join("\n");
+        let result = async {
+            self.log_writer
+                .log_raw(
+                    &serde_json::json!({
+                        "type":"input_requested", "input_id":id, "prompt":prompt,
+                        "provider_metadata":original_request,
+                    })
+                    .to_string(),
                 )
-                .raw(),
+                .await?;
+            self.log_question_count().await?;
+            service
+                .wait_question_answer(&id, cancel.clone())
+                .await
+                .map_err(ExecutorError::from)
+        }
+        .await;
+        self.pending_questions.lock().await.remove(&id);
+        // Even log/transport failure must release the host-owned waiter.
+        if result.is_err() {
+            cancel.cancel();
+            let _ = service.wait_question_answer(&id, cancel).await;
+        }
+        self.log_writer
+            .log_raw(
+                &serde_json::json!({
+                    "type":"input_resolved", "input_id":id,
+                    "answered":matches!(&result, Ok(QuestionStatus::Answered { .. })),
+                })
+                .to_string(),
             )
-            .await;
-
-        approval_service
-            .wait_question_answer(&approval_id, self.cancel.clone())
-            .or_else(|err| async {
-                self.handle_question_error(tool_call_id).await;
-                Err(err)
-            })
-            .await
-            .map_err(ExecutorError::from)
+            .await?;
+        self.log_question_count().await?;
+        result
     }
 
-    async fn handle_question_error(&self, tool_call_id: &str) {
-        let _ = self
-            .log_writer
+    async fn log_question_count(&self) -> Result<(), ExecutorError> {
+        // Both status publishers take tool -> question locks and keep them
+        // through emission, so a concurrent completion cannot publish a stale
+        // Running after another blocking request has registered.
+        let tools = self.pending_tool_approvals.lock().await;
+        let questions = self.pending_questions.lock().await;
+        let pending = questions
+            .values()
+            .filter(|q| q.blocking && !q.cancel.is_cancelled())
+            .count();
+        self.log_writer
             .log_raw(
-                &Approval::question_response(tool_call_id.to_string(), QuestionStatus::TimedOut)
-                    .raw(),
+                &serde_json::json!({
+                    "method":"lucky-vibe/question/status", "params":{"pending":pending,"toolPending":*tools},
+                })
+                .to_string(),
             )
-            .await;
+            .await
     }
 
     async fn handle_plan_completed(&self, plan: PendingPlan) -> Result<bool, ExecutorError> {
@@ -1544,10 +1649,28 @@ impl JsonRpcCallbacks for AppServerClient {
         self.log_writer.log_raw(raw).await?;
         match ServerRequest::try_from(request.clone()) {
             Ok(server_request) => {
+                if let ServerRequest::ToolRequestUserInput { request_id, params } = &server_request
+                {
+                    let key = serde_json::json!([params.thread_id, params.turn_id, request_id])
+                        .to_string();
+                    if !self.question_request_ids.lock().unwrap().insert(key) {
+                        return Ok(());
+                    }
+                }
                 let client = self.self_ref.upgrade().expect("live client");
                 let peer = peer.clone();
+                let original_request = serde_json::from_str(raw)?;
                 tokio::spawn(async move {
-                    if let Err(error) = client.handle_server_request(&peer, server_request).await {
+                    if let Err(error) = client
+                        .handle_server_request(&peer, server_request, original_request)
+                        .await
+                    {
+                        if matches!(
+                            error,
+                            ExecutorError::ExecutorApprovalError(ExecutorApprovalError::Cancelled)
+                        ) {
+                            return;
+                        }
                         let _ = client
                             .log_writer
                             .log_raw(&format!("Codex server request failed: {error}"))
@@ -1838,6 +1961,9 @@ impl AppServerClient {
                     return Ok(JsonRpcControlFlow::Continue);
                 }
                 clear_completed_turn(&mut turn_id, &completed.turn.id);
+                for question in self.pending_questions.lock().await.values() {
+                    question.cancel.cancel();
+                }
             }
 
             match completed.turn.status {
@@ -1927,6 +2053,79 @@ where
 }
 
 /// Convert our `HashMap<question_text, Vec<answer_labels>>` answer format to
+/// Validate native structured input before a UI/MCP command is reserved.
+/// Legacy generic inputs retain their existing free-text contract.
+pub fn validate_question_answer_content(
+    metadata: &Value,
+    content: &str,
+) -> Result<(), ExecutorError> {
+    if metadata["method"] != "item/tool/requestUserInput" {
+        return Ok(());
+    }
+    let questions: Vec<ToolRequestUserInputQuestion> =
+        serde_json::from_value(metadata["params"]["questions"].clone())?;
+    parse_question_answers(content, &questions).map(|_| ())
+}
+
+/// UI sends structured answers; MCP may send plain text for a single question.
+/// Validate before consuming the waiter, so malformed input cannot answer it.
+fn parse_question_answers(
+    text: &str,
+    questions: &[ToolRequestUserInputQuestion],
+) -> Result<Vec<QuestionAnswer>, ExecutorError> {
+    #[derive(Deserialize)]
+    struct Answers {
+        answers: Vec<QuestionAnswer>,
+    }
+    let structured = serde_json::from_str::<Value>(text)
+        .ok()
+        .is_some_and(|v| v.as_object().is_some_and(|v| v.contains_key("answers")));
+    let mut answers = if structured {
+        serde_json::from_str::<Answers>(text)
+            .map_err(|_| {
+                ExecutorApprovalError::request_failed("invalid structured question answers")
+            })?
+            .answers
+    } else if questions.len() == 1 {
+        vec![QuestionAnswer {
+            question: questions[0].id.clone(),
+            answer: vec![text.to_owned()],
+        }]
+    } else {
+        return Err(ExecutorApprovalError::request_failed(
+            "multiple questions require structured answers",
+        )
+        .into());
+    };
+    if questions.is_empty() {
+        return Err(ExecutorApprovalError::request_failed("empty native question request").into());
+    }
+    let mut seen = std::collections::HashSet::new();
+    for answer in &mut answers {
+        let question = questions
+            .iter()
+            .find(|q| q.id == answer.question)
+            .or_else(|| questions.iter().find(|q| q.question == answer.question))
+            .ok_or_else(|| ExecutorApprovalError::request_failed("unknown question"))?;
+        if !seen.insert(question.id.clone())
+            || answer.answer.is_empty()
+            || answer.answer.iter().any(|s| s.trim().is_empty())
+        {
+            return Err(ExecutorApprovalError::request_failed(
+                "duplicate or empty question answer",
+            )
+            .into());
+        }
+        answer.question = question.id.clone();
+    }
+    if seen.len() != questions.len() {
+        return Err(
+            ExecutorApprovalError::request_failed("answer every question in the request").into(),
+        );
+    }
+    Ok(answers)
+}
+
 /// Codex's `HashMap<question_id, ToolRequestUserInputAnswer>` format.
 fn answers_to_codex_format(
     questions: &[ToolRequestUserInputQuestion],
@@ -1935,14 +2134,17 @@ fn answers_to_codex_format(
     let codex_answers = questions
         .iter()
         .filter_map(|q| {
-            answers.get(&q.question).map(|answer_vec| {
-                (
-                    q.id.clone(),
-                    ToolRequestUserInputAnswer {
-                        answers: answer_vec.clone(),
-                    },
-                )
-            })
+            answers
+                .get(&q.id)
+                .or_else(|| answers.get(&q.question))
+                .map(|answer_vec| {
+                    (
+                        q.id.clone(),
+                        ToolRequestUserInputAnswer {
+                            answers: answer_vec.clone(),
+                        },
+                    )
+                })
         })
         .collect();
 
@@ -2052,6 +2254,59 @@ mod version_check_tests {
     };
     // Run the test executable itself as a deterministic stdio provider. No Codex
     // account, model calls, shell, Python, or timing-based sleeps are required.
+    #[test]
+    fn native_question_ids_precede_text_and_malformed_answers_do_not_consume_input() {
+        let questions =
+            serde_json::from_value::<Vec<super::ToolRequestUserInputQuestion>>(serde_json::json!([
+                {"id":"q1","header":"One","question":"q2","options":null},
+                {"id":"q2","header":"Two","question":"Same?","options":null}
+            ]))
+            .unwrap();
+        let valid = serde_json::json!({"answers":[{"question":"q1","answer":["A"]},{"question":"q2","answer":["B"]}]}).to_string();
+        let parsed = super::parse_question_answers(&valid, &questions).unwrap();
+        assert_eq!(parsed[0].question, "q1");
+        assert_eq!(parsed[1].question, "q2");
+        assert_eq!(parsed[1].answer, vec!["B"]);
+        for invalid in [
+            serde_json::json!({"answers":[{"question":"q1","answer":["A"]}]}),
+            serde_json::json!({"answers":[{"question":"q1","answer":["A"]},{"question":"q1","answer":["B"]}]}),
+            serde_json::json!({"answers":[{"question":"foreign","answer":["A"]},{"question":"q2","answer":["B"]}]}),
+            serde_json::json!({"answers":[{"question":"q1","answer":[]},{"question":"q2","answer":["B"]}]}),
+        ] {
+            assert!(super::parse_question_answers(&invalid.to_string(), &questions).is_err());
+        }
+    }
+
+    #[tokio::test]
+    async fn stale_native_question_does_not_create_waiters_or_disturb_a_new_turn() {
+        use super::QuestionStatus;
+        let client = AppServerClient::new(
+            LogWriter::new(tokio::io::sink()),
+            None,
+            false,
+            false,
+            ExecutionMode::Code,
+            None,
+            None,
+            CancellationToken::new(),
+        );
+        client.register_session("root").await.unwrap();
+        for active in [None, Some("new-turn".to_string())] {
+            *client.turn_id.lock().await = active.clone();
+            let request =
+                serde_json::json!({"id":73,"params":{"threadId":"root","turnId":"old-turn"}});
+            assert!(matches!(
+                client
+                    .request_question_answer(&[], request, None)
+                    .await
+                    .unwrap(),
+                QuestionStatus::TimedOut
+            ));
+            assert!(client.pending_questions.lock().await.is_empty());
+            assert_eq!(*client.turn_id.lock().await, active);
+        }
+    }
+
     #[test]
     fn supported_cli_responses_remain_compatible_with_wire_types() {
         let fixture: Value = serde_json::from_str(include_str!(

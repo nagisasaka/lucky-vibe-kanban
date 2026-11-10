@@ -6,7 +6,8 @@ use executors::approvals::{ExecutorApprovalError, ExecutorApprovalService};
 use tokio::sync::Mutex;
 use tokio_util::sync::CancellationToken;
 use utils::approvals::{
-    ApprovalOutcome, ApprovalRequest, ApprovalResponse, ApprovalStatus, QuestionStatus,
+    ApprovalOutcome, ApprovalRequest, ApprovalResponse, ApprovalStatus, QuestionAnswer,
+    QuestionStatus,
 };
 use uuid::Uuid;
 
@@ -158,6 +159,24 @@ impl ExecutorApprovalService for ExecutorApprovalBridge {
                     } else {
                         ApprovalOutcome::Denied { reason }
                     },
+                },
+            )
+            .await
+            .map_err(ExecutorApprovalError::request_failed)?;
+        Ok(())
+    }
+
+    async fn resolve_question_answer(
+        &self,
+        id: &str,
+        answers: Vec<QuestionAnswer>,
+    ) -> Result<(), ExecutorApprovalError> {
+        self.approvals
+            .respond(
+                id,
+                ApprovalResponse {
+                    execution_process_id: self.execution_process_id,
+                    status: ApprovalOutcome::Answered { answers },
                 },
             )
             .await

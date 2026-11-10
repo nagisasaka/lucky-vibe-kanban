@@ -86,12 +86,12 @@ impl FixtureRuntime {
             }
             Kind::BlockingSpecification => {
                 let _guard = self.queue.lock_session(target.session_id).await;
-                agent_runs::validate_pending_input(
+                agent_runs::validate_pending_input_answer(
                     &self.pool,
                     target.workspace_id,
                     target.agent_run_id,
                     operation,
-                    &question,
+                    (&question, &answer),
                     event,
                 )
                 .await?;
@@ -543,6 +543,69 @@ async fn question_answers_share_real_reservations_and_reject_direct_duplicates()
         runtime_write::call(&remote, &principal, "answer_question", blocking)
             .await
             .is_err()
+    );
+}
+
+#[tokio::test]
+async fn native_question_content_is_checked_before_ui_or_mcp_reservation() {
+    let (remote, dispatch, principal, target, _) = fixture().await;
+    emit_questions(&remote.pool, &target).await;
+    let metadata = json!({"id":73,"method":"item/tool/requestUserInput","params":{
+        "threadId":"root","turnId":"turn","itemId":"native-item","isBlocking":true,
+        "questions":[{"id":"q1","header":"One","question":"Same?","options":null},
+                     {"id":"q2","header":"Two","question":"Same?","options":null}]}});
+    sqlx::query("UPDATE agent_events SET event_envelope=json_set(event_envelope,'$.payload.data.provider_metadata',json(?)) WHERE json_extract(event_envelope,'$.payload.type')='input_requested'")
+        .bind(metadata.to_string()).execute(&remote.pool).await.unwrap();
+    let mut read = input(&target);
+    read.as_object_mut().unwrap().remove("request_id");
+    read["question_id"] = json!("blocking");
+    read["kind"] = json!("blocking_specification");
+    let detail = questions::call(&remote, "get_question", read.clone())
+        .await
+        .unwrap();
+    assert!(detail.to_string().contains("native-item"));
+    assert!(
+        dispatch
+            .answer_impl(
+                target.clone(),
+                Uuid::new_v4(),
+                "blocking".into(),
+                "incomplete".into(),
+                Kind::BlockingSpecification,
+                "local-user".into(),
+                None
+            )
+            .await
+            .is_err()
+    );
+    assert!(dispatch.calls.lock().await.is_empty());
+    let mut args = read;
+    args["request_id"] = json!(Uuid::new_v4());
+    args["expected_revision"] = detail["revision"].clone();
+    args["answer"] = json!(
+        json!({"answers":[{"question":"q1","answer":["A"]},{"question":"q2","answer":["B"]}]})
+            .to_string()
+    );
+    runtime_write::call(&remote, &principal, "answer_question", args.clone())
+        .await
+        .unwrap();
+    assert_eq!(
+        settle(&remote, &principal, &target, &args).await["status"],
+        "succeeded"
+    );
+    assert_eq!(dispatch.calls.lock().await.len(), 1);
+    // Same receipt retries reuse its result; another request cannot answer it.
+    runtime_write::call(&remote, &principal, "answer_question", args.clone())
+        .await
+        .unwrap();
+    assert_eq!(dispatch.calls.lock().await.len(), 1);
+    args["request_id"] = json!(Uuid::new_v4());
+    runtime_write::call(&remote, &principal, "answer_question", args.clone())
+        .await
+        .unwrap();
+    assert_eq!(
+        settle(&remote, &principal, &target, &args).await["status"],
+        "failed"
     );
 }
 

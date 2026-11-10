@@ -507,6 +507,10 @@ pub enum AgentEventPayload {
     InputRequested {
         input_id: String,
         prompt: String,
+        /// Original provider request identity and structured question fields.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional)]
+        provider_metadata: Option<serde_json::Value>,
     },
     InputResolved {
         input_id: String,

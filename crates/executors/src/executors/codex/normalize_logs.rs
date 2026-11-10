@@ -1013,6 +1013,7 @@ fn question_state_from_questions<T: QuestionLike>(questions: &[T]) -> UserInputR
     let questions: Vec<AskUserQuestionItem> = questions
         .iter()
         .map(|q| AskUserQuestionItem {
+            id: None,
             question: q.question().to_string(),
             header: q.header().to_string(),
             options: q

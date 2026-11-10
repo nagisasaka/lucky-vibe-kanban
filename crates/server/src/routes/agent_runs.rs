@@ -388,17 +388,17 @@ pub(crate) async fn dispatch_control_for_input(
     } else {
         None
     };
-    let _input_guard = if let AgentRunPortCommand::SubmitInput { input_id, .. } = &command {
+    let _input_guard = if let AgentRunPortCommand::SubmitInput { input_id, content } = &command {
         let guard = deployment
             .queued_message_service()
             .lock_session(run.session_id)
             .await;
-        validate_pending_input(
+        validate_pending_input_answer(
             &deployment.db().pool,
             run.workspace_id,
             agent_run_id,
             identity.command_id,
-            input_id,
+            (input_id, content),
             expected_input_event,
         )
         .await?;
@@ -543,6 +543,32 @@ pub(crate) async fn validate_pending_approval(
         return Err(ApiError::Conflict(
             "Approval resolved, reserved, cancelled or expired; refresh the Session".into(),
         ));
+    }
+    Ok(())
+}
+
+/// Validate structured answers before reserving a command in either UI or MCP.
+pub(crate) async fn validate_pending_input_answer(
+    pool: &sqlx::SqlitePool,
+    workspace: Uuid,
+    run: Uuid,
+    command_id: Uuid,
+    input: (&str, &str),
+    expected_event: Option<Uuid>,
+) -> Result<(), ApiError> {
+    validate_pending_input(pool, workspace, run, command_id, input.0, expected_event).await?;
+    if let Some(metadata) = super::sessions::questions::pending_blocking(pool, workspace)
+        .await
+        .map_err(|_| ApiError::Conflict("Input state unavailable".into()))?
+        .iter()
+        .find(|event| {
+            event["agent_run_id"] == serde_json::json!(run)
+                && event["payload"]["data"]["input_id"] == input.0
+        })
+        .and_then(|event| event.pointer("/payload/data/provider_metadata"))
+    {
+        executors::executors::codex::client::validate_question_answer_content(metadata, input.1)
+            .map_err(|error| ApiError::BadRequest(error.to_string()))?;
     }
     Ok(())
 }

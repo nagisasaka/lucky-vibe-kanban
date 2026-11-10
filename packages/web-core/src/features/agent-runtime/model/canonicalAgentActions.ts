@@ -148,15 +148,44 @@ export function deriveCanonicalAgentRunActionPolicy(
     };
   }
 
-  const input = findLatestUnresolvedCanonicalControl(events, 'input');
-  const approval = findLatestUnresolvedCanonicalControl(events, 'approval');
+  const currentEvents = events.filter(
+    (event) => event.run_attempt_id === state.last_run_attempt_id
+  );
+  const input = findLatestUnresolvedCanonicalControl(currentEvents, 'input');
+  const approval = findLatestUnresolvedCanonicalControl(
+    currentEvents,
+    'approval'
+  );
 
   return {
     cancel: canCancel
       ? allow('cancel')
       : block('cancel', terminal ? 'runtime_terminal' : 'runtime_busy'),
     submit_input:
-      state.status === 'awaiting_input' && input
+      (state.status === 'awaiting_input' ||
+        (state.status === 'running' &&
+          currentEvents.some((event) => {
+            if (
+              event.payload.type !== 'input_requested' ||
+              event.payload.data.input_id !== input?.controlId
+            )
+              return false;
+            const metadata = event.payload.data.provider_metadata;
+            if (
+              !metadata ||
+              typeof metadata !== 'object' ||
+              Array.isArray(metadata)
+            )
+              return false;
+            const params = metadata.params;
+            return (
+              params &&
+              typeof params === 'object' &&
+              !Array.isArray(params) &&
+              params.isBlocking === false
+            );
+          }))) &&
+      input
         ? allow('submit_input', input.controlId)
         : block('submit_input', 'input_not_requested'),
     resolve_approval:
