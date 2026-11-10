@@ -1343,6 +1343,7 @@ impl ClaudeLogProcessor {
                 questions: questions
                     .iter()
                     .map(|q| AskUserQuestionItem {
+                        id: None,
                         question: q.question.clone(),
                         header: q.header.clone(),
                         options: q

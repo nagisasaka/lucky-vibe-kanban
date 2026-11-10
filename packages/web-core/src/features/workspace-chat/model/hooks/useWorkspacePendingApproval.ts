@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import type { AskUserQuestionItem } from 'shared/types';
 import {
   deriveCanonicalAgentRunActionPolicy,
+  nativeInputQuestions,
   findLatestUnresolvedCanonicalControl,
 } from '@/features/agent-runtime';
 import { useCanonicalAgentSession } from '../contexts/EntriesContext';
@@ -89,13 +90,22 @@ export function useWorkspacePendingApproval(): WorkspacePendingApproval | null {
     if (policy.submit_input.allowed) {
       const control = findLatestUnresolvedCanonicalControl(events, 'input');
       if (control?.kind === 'input') {
+        const requested = events.findLast(
+          (event) =>
+            event.payload.type === 'input_requested' &&
+            event.payload.data.input_id === control.controlId
+        );
+        const questions =
+          requested?.payload.type === 'input_requested'
+            ? nativeInputQuestions(requested.payload.data.provider_metadata)
+            : null;
         return {
           kind: 'input',
           agentRunId,
           inputId: control.controlId,
           controlId: control.controlId,
           prompt: control.prompt,
-          questions: [
+          questions: questions ?? [
             {
               question: control.prompt,
               header: 'Agent input',

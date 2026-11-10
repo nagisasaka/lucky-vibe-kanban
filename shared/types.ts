@@ -1340,7 +1340,11 @@ export type ActionType = { "action": "file_read", path: string, } | { "action": 
 
 export type AnsweredQuestion = { question: string, answer: Array<string>, };
 
-export type AskUserQuestionItem = { question: string, header: string, options: Array<AskUserQuestionOption>, multiSelect: boolean, };
+export type AskUserQuestionItem = {
+/**
+ * Provider question identity, when supplied; text remains display content.
+ */
+id?: string, question: string, header: string, options: Array<AskUserQuestionOption>, multiSelect: boolean, };
 
 export type AskUserQuestionOption = { label: string, description: string, };
 
@@ -1468,7 +1472,11 @@ export type RunAttemptRequest = { schema_version: number, payload_version: numbe
 
 export type NativeAuditReference = { stream_id: string, sequence: bigint, checksum?: string | null, };
 
-export type AgentEventPayload = { "type": "agent_activity", "data": { activity: AgentActivity, } } | { "type": "lifecycle_changed", "data": { status: AgentRunStatus, } } | { "type": "session_observed", "data": { provider_session: ProviderSessionReference, } } | { "type": "message", "data": { message: CanonicalMessage, final_output: boolean, } } | { "type": "thinking", "data": { content: string, } } | { "type": "tool_call", "data": { tool_call_id?: string | null, tool_name: string, status: AgentRuntimeToolStatus, arguments?: JsonValue | null, result?: JsonValue | null, } } | { "type": "approval_requested", "data": { approval_id: string, tool_call_id?: string | null, tool_name: string, } } | { "type": "approval_resolved", "data": { approval_id: string, approved: boolean, reason?: string | null, } } | { "type": "input_requested", "data": { input_id: string, prompt: string, } } | { "type": "input_resolved", "data": { input_id: string, answered: boolean, } } | { "type": "token_usage", "data": { input_tokens: bigint, output_tokens: bigint, cached_input_tokens?: bigint | null,
+export type AgentEventPayload = { "type": "agent_activity", "data": { activity: AgentActivity, } } | { "type": "lifecycle_changed", "data": { status: AgentRunStatus, } } | { "type": "session_observed", "data": { provider_session: ProviderSessionReference, } } | { "type": "message", "data": { message: CanonicalMessage, final_output: boolean, } } | { "type": "thinking", "data": { content: string, } } | { "type": "tool_call", "data": { tool_call_id?: string | null, tool_name: string, status: AgentRuntimeToolStatus, arguments?: JsonValue | null, result?: JsonValue | null, } } | { "type": "approval_requested", "data": { approval_id: string, tool_call_id?: string | null, tool_name: string, } } | { "type": "approval_resolved", "data": { approval_id: string, approved: boolean, reason?: string | null, } } | { "type": "input_requested", "data": { input_id: string, prompt: string,
+/**
+ * Original provider request identity and structured question fields.
+ */
+provider_metadata?: JsonValue, } } | { "type": "input_resolved", "data": { input_id: string, answered: boolean, } } | { "type": "token_usage", "data": { input_tokens: bigint, output_tokens: bigint, cached_input_tokens?: bigint | null,
 /**
  * Latest context occupancy, distinct from cumulative billing usage.
  */

@@ -59,6 +59,9 @@ struct AnswerArgs {
     kind: Kind,
     /// Revision from get_question; a listed preview is not the complete question.
     expected_revision: String,
+    /// Plain text for one question; for a native multi-question request use
+    /// JSON {"answers":[{"question":"native question ID","answer":["selected label or text"]}]}.
+    /// Include every question from get_question's provider_metadata.params.questions.
     #[schemars(length(min = 1, max = 32000))]
     answer: String,
 }

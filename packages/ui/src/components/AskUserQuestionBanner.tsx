@@ -30,21 +30,25 @@ export const AskUserQuestionBanner = forwardRef<
   ref
 ) {
   const { t } = useTranslation('common');
-  // Track completed answers: question text -> selected labels array
+  // Track completed answers: question identity (legacy: text) -> selected labels array
   const [answers, setAnswers] = useState<Record<string, string[]>>({});
 
   // Convert internal state to ordered QuestionAnswer[] for submission
   const toQuestionAnswers = useCallback(
     (rec: Record<string, string[]>): QuestionAnswer[] =>
       questions
-        .filter((q) => rec[q.question] !== undefined)
-        .map((q) => ({ question: q.question, answer: rec[q.question] })),
+        .filter((q) => Object.hasOwn(rec, q.id ?? q.question))
+        .map((q) => ({
+          question: q.id ?? q.question,
+          answer: rec[q.id ?? q.question],
+        })),
     [questions]
   );
   // Track which question index we're currently showing
   const currentIndex = useMemo(() => {
     for (let i = 0; i < questions.length; i++) {
-      if (answers[questions[i].question] === undefined) return i;
+      if (!Object.hasOwn(answers, questions[i].id ?? questions[i].question))
+        return i;
     }
     return questions.length; // all answered
   }, [questions, answers]);
@@ -79,7 +83,7 @@ export const AskUserQuestionBanner = forwardRef<
         // Single select → record answer and advance
         const newAnswers = {
           ...answers,
-          [currentQuestion.question]: [label],
+          [currentQuestion.id ?? currentQuestion.question]: [label],
         };
         setAnswers(newAnswers);
 
@@ -109,7 +113,7 @@ export const AskUserQuestionBanner = forwardRef<
 
     const newAnswers = {
       ...answers,
-      [currentQuestion.question]: labels,
+      [currentQuestion.id ?? currentQuestion.question]: labels,
     };
     setAnswers(newAnswers);
     setMultiSelectLabels(new Set());
@@ -135,7 +139,7 @@ export const AskUserQuestionBanner = forwardRef<
         if (disabled || !currentQuestion || !text.trim()) return;
         const newAnswers = {
           ...answers,
-          [currentQuestion.question]: [text.trim()],
+          [currentQuestion.id ?? currentQuestion.question]: [text.trim()],
         };
         setAnswers(newAnswers);
         if (currentIndex === questions.length - 1) {

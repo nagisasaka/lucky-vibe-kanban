@@ -8,6 +8,7 @@ import type {
 } from 'shared/types';
 import { AgentRuntimeToolStatus } from 'shared/types';
 import { newestRunState } from './canonicalAgentTimeline';
+import { nativeInputQuestions } from './nativeAgentQuestions';
 
 import type {
   CanonicalConversationIdentity,
@@ -689,7 +690,9 @@ function appendRunEntries(
                 tool_name: 'Agent input',
                 action_type: {
                   action: 'ask_user_question',
-                  questions: [
+                  questions: nativeInputQuestions(
+                    payload.data.provider_metadata
+                  ) ?? [
                     {
                       question: payload.data.prompt,
                       header: 'Agent input',

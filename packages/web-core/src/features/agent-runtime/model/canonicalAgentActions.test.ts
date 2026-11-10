@@ -166,3 +166,56 @@ describe('deriveCanonicalAgentRunActionPolicy', () => {
     ).toMatchObject({ controlId: 'input-1', prompt: 'First?' });
   });
 });
+
+it('answers explicit native nonblocking input while running without inventing a wait state', () => {
+  const request = event(1, {
+    type: 'input_requested',
+    data: {
+      input_id: 'native-input',
+      prompt: 'Color?',
+      provider_metadata: { params: { isBlocking: false } },
+    },
+  });
+  expect(
+    deriveCanonicalAgentRunActionPolicy(state, [request]).submit_input.allowed
+  ).toBe(true);
+  expect(
+    deriveCanonicalAgentRunActionPolicy({ ...state, status: 'succeeded' }, [
+      request,
+    ]).submit_input.allowed
+  ).toBe(false);
+  expect(
+    deriveCanonicalAgentRunActionPolicy(state, [
+      request,
+      event(2, {
+        type: 'input_resolved',
+        data: { input_id: 'native-input', answered: true },
+      }),
+    ]).submit_input.allowed
+  ).toBe(false);
+  const unknown = event(1, {
+    type: 'input_requested',
+    data: { input_id: 'native-input', prompt: 'Color?' },
+  });
+  expect(
+    deriveCanonicalAgentRunActionPolicy(state, [unknown]).submit_input.allowed
+  ).toBe(false);
+});
+
+it('does not revive an unresolved control from an earlier attempt', () => {
+  const old = event(1, {
+    type: 'input_requested',
+    data: { input_id: 'old-input', prompt: 'Old?' },
+  });
+  expect(
+    deriveCanonicalAgentRunActionPolicy(
+      {
+        ...state,
+        status: 'awaiting_input',
+        last_run_attempt_id: 'retry',
+        last_run_attempt_number: 2,
+      },
+      [old]
+    ).submit_input.allowed
+  ).toBe(false);
+});

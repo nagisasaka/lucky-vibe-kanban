@@ -4,7 +4,7 @@ use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use tokio_util::sync::CancellationToken;
-use workspace_utils::approvals::{ApprovalStatus, QuestionStatus};
+use workspace_utils::approvals::{ApprovalStatus, QuestionAnswer, QuestionStatus};
 
 /// Errors emitted by executor approval services.
 #[derive(Debug, Error)]
@@ -35,6 +35,15 @@ pub trait ExecutorApprovalService: Send + Sync {
         _approval_id: &str,
         _approved: bool,
         _reason: Option<String>,
+    ) -> Result<(), ExecutorApprovalError> {
+        Err(ExecutorApprovalError::ServiceUnavailable)
+    }
+
+    /// Answer only a question owned by this service, never a permission request.
+    async fn resolve_question_answer(
+        &self,
+        _id: &str,
+        _answers: Vec<QuestionAnswer>,
     ) -> Result<(), ExecutorApprovalError> {
         Err(ExecutorApprovalError::ServiceUnavailable)
     }

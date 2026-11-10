@@ -72,12 +72,10 @@ pub(crate) fn encode_control(control: DirectControl) -> Result<Vec<u8>, serde_js
             "method":"lucky-vibe/approval/resolve",
             "params":{"approvalId":request_id,"approved":approved,"reason":reason}
         }),
-        DirectControl::Input { .. } => {
-            return Err(serde_json::Error::io(std::io::Error::new(
-                std::io::ErrorKind::Unsupported,
-                "Codex input responses require the original server request id",
-            )));
-        }
+        DirectControl::Input { request_id, text } => serde_json::json!({
+            "method":"lucky-vibe/question/resolve",
+            "params":{"inputId":request_id,"content":text}
+        }),
     };
     encode_stdio_rpc(&request)
 }

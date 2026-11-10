@@ -228,6 +228,10 @@ pub enum ActionType {
 /// A single question in an AskUserQuestion tool call.
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct AskUserQuestionItem {
+    /// Provider question identity, when supplied; text remains display content.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub id: Option<String>,
     pub question: String,
     pub header: String,
     pub options: Vec<AskUserQuestionOption>,

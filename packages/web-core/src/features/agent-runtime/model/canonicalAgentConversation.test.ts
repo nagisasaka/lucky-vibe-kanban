@@ -7,6 +7,7 @@ import {
   type RunState,
 } from 'shared/types';
 import { projectCanonicalAgentConversation } from './canonicalAgentConversation';
+import { nativeInputQuestions } from './nativeAgentQuestions';
 import { buildCanonicalAgentSessionTimeline } from './canonicalAgentSessionTimeline';
 import {
   emptyCanonicalAgentTimeline,
@@ -1721,5 +1722,51 @@ it('starts elapsed time from durable Running evidence rather than acceptance', (
     startedAt: '2026-08-14T00:00:04Z',
     endedAt: null,
     active: true,
+  });
+});
+
+describe('native structured input projection', () => {
+  it('preserves multiple questions and option descriptions from the original request', () => {
+    expect(
+      nativeInputQuestions({
+        id: 73,
+        params: {
+          isBlocking: true,
+          questions: [
+            {
+              id: 'q1',
+              header: 'Color',
+              question: 'Color?',
+              options: [{ label: 'Blue', description: 'Cool' }],
+            },
+            {
+              id: 'q2',
+              header: 'Other',
+              question: 'Constraints?',
+              options: null,
+            },
+          ],
+        },
+      })
+    ).toEqual([
+      {
+        id: 'q1',
+        header: 'Color',
+        question: 'Color?',
+        multiSelect: false,
+        options: [{ label: 'Blue', description: 'Cool' }],
+      },
+      {
+        id: 'q2',
+        header: 'Other',
+        question: 'Constraints?',
+        multiSelect: false,
+        options: [],
+      },
+    ]);
+    expect(nativeInputQuestions(undefined)).toBeNull();
+    expect(
+      nativeInputQuestions({ params: { questions: ['plain text'] } })
+    ).toBeNull();
   });
 });

@@ -283,7 +283,7 @@ impl DirectProvider {
                 runtime: None,
                 protocol: Some("rust-v0.144.1"),
                 adapter: "codex-adapter-v1",
-                mapper: "codex-mapper-v7",
+                mapper: "codex-mapper-v8",
             },
             Self::ClaudeCode => DirectAdapterVersions {
                 executable: "claude",
@@ -402,9 +402,19 @@ impl DirectProvider {
         DirectProviderMapper {
             provider: self,
             semantics: match self {
-                Self::Codex => MapperSemantics::V7,
+                Self::Codex => MapperSemantics::V8,
                 Self::ClaudeCode => MapperSemantics::V6,
             },
+            scope: Default::default(),
+            replay_sequence: Default::default(),
+        }
+    }
+
+    /// Preserve the published delivery-agnostic question and final-message mapping.
+    pub fn v7_mapper(self) -> DirectProviderMapper {
+        DirectProviderMapper {
+            provider: self,
+            semantics: MapperSemantics::V7,
             scope: Default::default(),
             replay_sequence: Default::default(),
         }
@@ -810,6 +820,7 @@ enum MapperSemantics {
     V5,
     V6,
     V7,
+    V8,
 }
 
 impl NativeAuditReplayMapper for DirectProviderMapper {
@@ -823,6 +834,7 @@ impl NativeAuditReplayMapper for DirectProviderMapper {
             MapperSemantics::V5 => "v5",
             MapperSemantics::V6 => "v6",
             MapperSemantics::V7 => "v7",
+            MapperSemantics::V8 => "v8",
         };
         if let Some((prefix, _)) = versions.mapper_version.rsplit_once('-') {
             versions.mapper_version = format!("{prefix}-{suffix}");
@@ -867,7 +879,8 @@ impl NativeAuditReplayMapper for DirectProviderMapper {
             | MapperSemantics::V4
             | MapperSemantics::V5
             | MapperSemantics::V6
-            | MapperSemantics::V7 => {
+            | MapperSemantics::V7
+            | MapperSemantics::V8 => {
                 let mut scope = self.scope.lock().expect("replay scope lock");
                 if event.sequence == 1 {
                     *scope = Default::default();
@@ -875,7 +888,10 @@ impl NativeAuditReplayMapper for DirectProviderMapper {
                 if self.provider == DirectProvider::Codex {
                     if matches!(
                         self.semantics,
-                        MapperSemantics::V5 | MapperSemantics::V6 | MapperSemantics::V7
+                        MapperSemantics::V5
+                            | MapperSemantics::V6
+                            | MapperSemantics::V7
+                            | MapperSemantics::V8
                     ) {
                         scope.apply(&mut decoded);
                     } else {
@@ -891,6 +907,7 @@ impl NativeAuditReplayMapper for DirectProviderMapper {
                             | MapperSemantics::V5
                             | MapperSemantics::V6
                             | MapperSemantics::V7
+                            | MapperSemantics::V8
                     )
                 {
                     // Non-Codex v3 and Codex v4 frames can expand into several semantic
@@ -2092,6 +2109,113 @@ fn project_typed_event(
         });
     }
 
+    // Delivery was introduced independently of message phase. Only explicit
+    // async delivery is an async inbox question; phase alone cannot supply it.
+    if provider == DirectProvider::Codex
+        && manifest.mapper_version.ends_with("-v8")
+        && let Some(raw) = &event.raw.payload_json
+    {
+        if matches!(
+            raw["method"].as_str(),
+            Some("lucky-vibe/question/status" | "lucky-vibe/approval/status")
+        ) {
+            let pending = raw
+                .pointer("/params/pending")
+                .and_then(Value::as_u64)
+                .ok_or(NativeAuditError::MalformedFrame(event.raw.sequence))?;
+            let question_status = raw["method"] == "lucky-vibe/question/status";
+            let tools = if question_status {
+                raw.pointer("/params/toolPending")
+                    .and_then(Value::as_u64)
+                    .unwrap_or(0)
+            } else {
+                pending
+            };
+            let questions = if question_status {
+                pending
+            } else {
+                raw.pointer("/params/questionPending")
+                    .and_then(Value::as_u64)
+                    .unwrap_or(0)
+            };
+            let mut status = event.clone();
+            status.raw.payload_json = None;
+            status.typed = TypedProviderEvent::Lifecycle(if tools > 0 {
+                AgentRunStatus::AwaitingApproval
+            } else if questions > 0 {
+                AgentRunStatus::AwaitingInput
+            } else {
+                AgentRunStatus::Running
+            });
+            return project_typed_event(provider, &status, manifest);
+        }
+        if let TypedProviderEvent::Message {
+            provider_message_id: Some(id),
+            role: AgentRuntimeMessageRole::Assistant,
+            ..
+        } = &event.typed
+            && raw["method"] == "item/completed"
+            && let Some(item) = raw.pointer("/params/item")
+            && item["type"] == "agentMessage"
+        {
+            let mut text_event = event.clone();
+            text_event.raw.payload_json = None;
+            if let TypedProviderEvent::Message { final_output, .. } = &mut text_event.typed {
+                // null/absent delivery carries no special delivery semantics.
+                // Explicit unknown delivery is preserved without assuming finality.
+                *final_output = item["phase"] == "final_answer"
+                    && item.get("delivery").is_none_or(Value::is_null);
+            }
+            let mut projection = project_typed_event(provider, &text_event, manifest)?;
+            if item.get("delivery").is_some() || item.get("questions").is_some() {
+                let questions: Vec<Value> = item["questions"]
+                    .as_array()
+                    .into_iter()
+                    .flatten()
+                    .filter_map(|q| {
+                        let title = q["title"].as_str()?.trim();
+                        if title.is_empty() {
+                            return None;
+                        }
+                        let options: Vec<&str> = q["options"]
+                            .as_array()
+                            .into_iter()
+                            .flatten()
+                            .filter_map(Value::as_str)
+                            .collect();
+                        Some(serde_json::json!({"title":title,"options":options}))
+                    })
+                    .collect();
+                let is_async = item["delivery"] == "async" && !questions.is_empty();
+                let mut metadata = raw["params"].clone();
+                if let Some(item) = metadata.get_mut("item").and_then(Value::as_object_mut) {
+                    item.remove("text");
+                    item.remove("message");
+                    item.remove("content");
+                }
+                let mut extension = projection.durable_events[0].clone();
+                extension.event_id = canonical_provider_message_id(
+                    manifest.run_attempt_id,
+                    &format!("message-metadata:{id}"),
+                );
+                extension.payload = AgentEventPayload::ProviderExtension {
+                    provider_namespace: "codex".into(),
+                    provider_event: if is_async {
+                        "async_questions"
+                    } else {
+                        "agent_message_metadata"
+                    }
+                    .into(),
+                    payload: serde_json::json!({"schema_version":1,
+                            "message_id": canonical_provider_message_id(manifest.run_attempt_id, id),
+                            "questions":questions, "native":metadata}),
+                };
+                projection.durable_events.push(extension);
+            }
+            return Ok(projection);
+        }
+    }
+
     // Codex 0.154 emits asynchronous questions on completed agent messages,
     // not as blocking server requests. Keep the text and persist an optional
     // extension for clients which support the question inbox. Older audit
@@ -2099,8 +2223,8 @@ fn project_typed_event(
     if provider == DirectProvider::Codex
         && (manifest.mapper_version.ends_with("-v4")
             || manifest.mapper_version.ends_with("-v5")
-            || (manifest.mapper_version.ends_with("-v6")
-                || manifest.mapper_version.ends_with("-v7")))
+            || manifest.mapper_version.ends_with("-v6")
+            || manifest.mapper_version.ends_with("-v7"))
         && let TypedProviderEvent::Message {
             provider_message_id: Some(message_id),
             role: AgentRuntimeMessageRole::Assistant,
@@ -2294,7 +2418,8 @@ fn project_typed_event(
             delta: delta.clone(),
             summary_index: if provider == DirectProvider::Codex
                 && (manifest.mapper_version.ends_with("-v6")
-                    || manifest.mapper_version.ends_with("-v7"))
+                    || (manifest.mapper_version.ends_with("-v7")
+                        || manifest.mapper_version.ends_with("-v8")))
             {
                 event
                     .raw
@@ -2356,7 +2481,7 @@ fn project_typed_event(
     // A turn plan is a structured snapshot, not a reasoning summary or plan-mode text.
     // Keep old audit replay unchanged and preserve only fields actually supplied.
     let plan_update = if provider == DirectProvider::Codex
-        && manifest.mapper_version.ends_with("-v7")
+        && (manifest.mapper_version.ends_with("-v7") || manifest.mapper_version.ends_with("-v8"))
         && matches!(&event.typed, TypedProviderEvent::Unknown { .. })
     {
         event.raw.payload_json.as_ref().and_then(|raw| {
@@ -2470,7 +2595,8 @@ fn project_typed_event(
             tool_name: name.clone(),
             status: if provider == DirectProvider::Codex
                 && (manifest.mapper_version.ends_with("-v6")
-                    || manifest.mapper_version.ends_with("-v7"))
+                    || (manifest.mapper_version.ends_with("-v7")
+                        || manifest.mapper_version.ends_with("-v8")))
             {
                 let item = event
                     .raw
@@ -2528,6 +2654,16 @@ fn project_typed_event(
         TypedProviderEvent::InputRequested { id, prompt } => AgentEventPayload::InputRequested {
             input_id: id.clone(),
             prompt: prompt.clone(),
+            provider_metadata: if manifest.mapper_version.ends_with("-v8") {
+                event
+                    .raw
+                    .payload_json
+                    .as_ref()
+                    .and_then(|raw| raw.get("provider_metadata"))
+                    .cloned()
+            } else {
+                None
+            },
         },
         TypedProviderEvent::InputResolved { id, answered } => AgentEventPayload::InputResolved {
             input_id: id.clone(),
@@ -2550,7 +2686,9 @@ fn project_typed_event(
         | TypedProviderEvent::Unknown { .. } => unreachable!("handled above"),
     };
     if provider == DirectProvider::Codex
-        && (manifest.mapper_version.ends_with("-v6") || manifest.mapper_version.ends_with("-v7"))
+        && (manifest.mapper_version.ends_with("-v6")
+            || (manifest.mapper_version.ends_with("-v7")
+                || manifest.mapper_version.ends_with("-v8")))
         && let AgentEventPayload::Thinking { content } = &payload
         && let Some(item) = event
             .raw
@@ -4486,7 +4624,7 @@ mod tests {
         .unwrap();
         let mut frames = vec![
             json!({"result":{"thread":{"id":"root"}}}),
-            json!({"method":"item/completed","params":{"threadId":"root","item":{"type":"agentMessage","id":"parent","text":"parent answer"}}}),
+            json!({"method":"item/completed","params":{"threadId":"root","item":{"type":"agentMessage","id":"parent","text":"parent answer","phase":"final_answer"}}}),
             json!({"method":"item/completed","params":{"threadId":"root","item":{"type":"subAgentActivity","id":"s","kind":"started","agentThreadId":"child","agentPath":"/root/research"}}}),
         ];
         for _ in 0..1000 {
@@ -4547,6 +4685,112 @@ mod tests {
     }
 
     #[test]
+    fn codex_v8_delivery_is_lossless_and_v7_replay_is_unchanged() {
+        let provider = DirectProvider::Codex;
+        for delivery in [
+            None,
+            Some(Value::Null),
+            Some(json!("async")),
+            Some(json!("future")),
+        ] {
+            for phase in [
+                None,
+                Some("commentary"),
+                Some("final_answer"),
+                Some("future"),
+            ] {
+                let mut item = json!({"type":"agentMessage","id":"native-message","text":"Question text",
+                    "questions":[{"id":"native-question","title":"Choice?","options":["A"],"future":42}]});
+                if let Some(value) = &delivery {
+                    item["delivery"] = value.clone();
+                }
+                if let Some(value) = phase {
+                    item["phase"] = json!(value);
+                }
+                let frame = frame_at(
+                    provider,
+                    2,
+                    json!({"method":"item/completed","params":{"threadId":"root","turnId":"native-turn","item":item}}),
+                );
+                let decoded = provider.decode_native_frame(&frame).unwrap();
+                let manifest = fixture_manifest(provider);
+                let current = provider
+                    .project_provider_event(&decoded, &manifest)
+                    .unwrap();
+                let AgentEventPayload::Message { final_output, .. } =
+                    current.durable_events[0].payload
+                else {
+                    panic!("message missing")
+                };
+                assert_eq!(
+                    final_output,
+                    phase == Some("final_answer") && delivery.as_ref().is_none_or(Value::is_null)
+                );
+                let AgentEventPayload::ProviderExtension {
+                    provider_event,
+                    payload,
+                    ..
+                } = &current.durable_events[1].payload
+                else {
+                    panic!("metadata missing")
+                };
+                assert_eq!(
+                    provider_event == "async_questions",
+                    delivery == Some(json!("async"))
+                );
+                assert_eq!(payload["native"]["item"]["id"], "native-message");
+                assert_eq!(payload["native"]["turnId"], "native-turn");
+                assert_eq!(payload["native"]["item"]["questions"], item["questions"]);
+                assert_eq!(payload["native"]["item"].get("delivery"), delivery.as_ref());
+                let mut old = manifest.clone();
+                old.mapper_version = provider.v7_mapper().versions().mapper_version;
+                let old_mapper = provider.v7_mapper();
+                let root = provider
+                    .decode_native_frame(&frame_at(
+                        provider,
+                        1,
+                        json!({"result":{"thread":{"id":"root"}}}),
+                    ))
+                    .unwrap();
+                old_mapper.map(&root.raw, &old).unwrap();
+                let old_event = old_mapper.map(&decoded.raw, &old).unwrap();
+                assert!(
+                    matches!(old_event[0].payload, AgentEventPayload::Message { final_output, .. } if final_output == (phase != Some("commentary")))
+                );
+                assert!(
+                    matches!(&old_event[1].payload, AgentEventPayload::ProviderExtension { provider_event, payload, .. } if provider_event == "async_questions" && payload.get("native").is_none())
+                );
+            }
+        }
+        let metadata = json!({"id":73,"method":"item/tool/requestUserInput","params":{"threadId":"root","turnId":"turn","itemId":"item","isBlocking":true,"questions":[{"id":"native-q","question":"Choice?"}]}});
+        let decoded = provider.decode_native_frame(&frame_at(provider, 3, json!({"type":"input_requested","input_id":"host-waiter","prompt":"Choice?","provider_metadata":metadata}))).unwrap();
+        let current = provider
+            .project_provider_event(&decoded, &fixture_manifest(provider))
+            .unwrap();
+        assert!(
+            matches!(&current.durable_events[0].payload, AgentEventPayload::InputRequested { input_id, provider_metadata:Some(value), .. } if input_id == "host-waiter" && value == &metadata)
+        );
+        for (count, expected) in [
+            (1, AgentRunStatus::AwaitingInput),
+            (0, AgentRunStatus::Running),
+        ] {
+            let event = provider
+                .decode_native_frame(&frame_at(
+                    provider,
+                    4,
+                    json!({"method":"lucky-vibe/question/status","params":{"pending":count}}),
+                ))
+                .unwrap();
+            let result = provider
+                .project_provider_event(&event, &fixture_manifest(provider))
+                .unwrap();
+            assert!(
+                matches!(result.durable_events[0].payload, AgentEventPayload::LifecycleChanged { status } if status == expected)
+            );
+        }
+    }
+
+    #[test]
     fn codex_async_questions_are_durable_nonblocking_and_preserve_v3_replay() {
         let provider = DirectProvider::Codex;
         let frame = frame_at(
@@ -4555,7 +4799,7 @@ mod tests {
             serde_json::json!({
                 "method": "item/completed", "params": {"threadId": "root", "item": {
                     "type": "agentMessage", "id": "question-message", "text": "I will continue checking.",
-                    "phase": "commentary", "questions": [
+                    "phase": "commentary", "delivery":"async", "questions": [
                         {"title": "Which port?", "options": ["8443", "9443"]},
                         {"title": "Any constraints?", "options": null},
                         {"title": ""}
@@ -4696,7 +4940,7 @@ mod tests {
         for provider in DirectProvider::ALL {
             assert!(provider.mapper().versions().mapper_version.ends_with(
                 if provider == DirectProvider::Codex {
-                    "-v7"
+                    "-v8"
                 } else if provider == DirectProvider::ClaudeCode {
                     "-v6"
                 } else {

@@ -34,3 +34,5 @@ export {
   type AgentRunSessionContextValue,
 } from './model/AgentRunSessionContext';
 export { projectCanonicalAgentConversation } from './model/canonicalAgentConversation';
+
+export { nativeInputQuestions } from './model/nativeAgentQuestions';
