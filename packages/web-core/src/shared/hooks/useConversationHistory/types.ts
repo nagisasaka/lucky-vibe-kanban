@@ -19,6 +19,7 @@ export interface CanonicalConversationIdentity {
 export type PatchTypeWithKey = PatchType & {
   /** Stable local row identity retained when a sent message is acknowledged. */
   displayIdentity?: string;
+  messageId?: string;
   pendingDelivery?: {
     state: 'sending' | 'accepted' | 'failed' | 'unconfirmed';
     error?: string;

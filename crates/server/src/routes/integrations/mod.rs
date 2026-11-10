@@ -152,6 +152,18 @@ async fn status(
     Ok(Json(ApiResponse::success(run)))
 }
 
+async fn inspect(
+    State(deployment): State<DeploymentImpl>,
+    Path(id): Path<Uuid>,
+) -> Result<Json<ApiResponse<serde_json::Value>>, ApiError> {
+    let run = IntegrationRun::find(&deployment.db().pool, id).await?;
+    Ok(Json(ApiResponse::success(
+        conversation::inspection(&deployment.db().pool, &run)
+            .await
+            .map_err(error)?,
+    )))
+}
+
 pub(crate) async fn cancel(
     State(deployment): State<DeploymentImpl>,
     Path(id): Path<Uuid>,
@@ -193,6 +205,7 @@ pub fn router() -> Router<DeploymentImpl> {
         .route("/integrations", get(list).post(create))
         .route("/integrations/repositories", get(repositories))
         .route("/integrations/{id}", get(status))
+        .route("/integrations/{id}/inspect", get(inspect))
         .route("/integrations/{id}/cancel", post(cancel))
         .route("/integrations/{id}/recover", post(recover))
 }

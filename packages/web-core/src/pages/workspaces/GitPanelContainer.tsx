@@ -224,7 +224,7 @@ export function GitPanelContainer({
       const actionMap = {
         'pull-request': Actions.GitCreatePR,
         'link-pr': Actions.GitLinkPR,
-        merge: Actions.GitMerge,
+        'auto-merge': Actions.GitAutoMerge,
         rebase: Actions.GitRebase,
         'change-target': Actions.GitChangeTarget,
         push: Actions.GitPush,

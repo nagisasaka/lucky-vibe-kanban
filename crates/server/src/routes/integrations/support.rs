@@ -31,10 +31,17 @@ pub(super) fn require_private_branch(
     target: &str,
 ) -> anyhow::Result<()> {
     let expected = format!("refs/heads/{branch}");
+    let observed = git(root, &["symbolic-ref", "HEAD"])
+        .unwrap_or_else(|error| format!("unavailable: {error}"));
     ensure!(
-        expected != target && git(root, &["symbolic-ref", "HEAD"])? == expected,
-        "Auto-merge worktree is not on its private branch; refusing a Git mutation"
+        expected != target && observed == expected,
+        "Auto-merge worktree is not on its private branch; refusing a Git mutation: path={}, expected={}, observed={}, target={}",
+        root.display(),
+        expected,
+        observed,
+        target
     );
+
     Ok(())
 }
 
@@ -60,6 +67,37 @@ pub(super) fn validation_suggestions(
             })
         })
         .collect()
+}
+
+/// Shared UI/MCP input: the immutable dispatch retains this exact text. Full
+/// adopted reference material stays in the existing payload, readable by inspect.
+pub(super) fn worker_content(run: &IntegrationRun, identity: &str) -> anyhow::Result<String> {
+    let targets = run
+        .payload
+        .sources
+        .iter()
+        .map(|source| {
+            serde_json::json!({
+                "issue_id":source.selection.card_id,"workspace_id":source.selection.workspace_id,
+                "commit":source.commit,"branch":source.branch,"title":source.title
+            })
+        })
+        .collect::<Vec<_>>();
+    let skill = run
+        .payload
+        .reference_materials
+        .as_ref()
+        .and_then(|materials| materials.get("auto_merge_skill"))
+        .and_then(serde_json::Value::as_str)
+        .context("Missing adopted Auto-merge Skill")?;
+    Ok(format!(
+        "{skill}\n{identity}\n固定対象: {}\n追加指示（依頼経路から保存した原文）:\n{}\n検証省略の指定: {} / 参考検証: {} / OpenWiki有効: {}",
+        serde_json::to_string(&targets)?,
+        run.payload.instructions,
+        run.payload.skip_validation,
+        serde_json::to_string(&run.payload.validation_suggestions)?,
+        run.payload.wiki_enabled
+    ))
 }
 
 pub(super) fn worker_request(

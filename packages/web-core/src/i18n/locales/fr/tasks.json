@@ -241,8 +241,6 @@
     },
     "states": {
       "merged": "Fusionné !",
-      "merging": "Fusion en cours...",
-      "merge": "Fusionner",
       "rebasing": "Rebasage en cours...",
       "rebase": "Rebaser",
       "pushed": "Poussé !",

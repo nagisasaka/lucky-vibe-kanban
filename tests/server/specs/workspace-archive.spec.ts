@@ -286,11 +286,6 @@ with sqlite3.connect(root/'data/db.v2.sqlite') as db: db.execute(sys.argv[2],arg
     "committed work\n",
   );
 
-  // Merge only inside this throwaway repository, never the development repo.
-  await api(`/api/workspaces/${ws.id}/git/merge`, { repo_id: repo.id });
-  expect((await api(`/api/workspaces/${ws.id}`)).archived).toBe(false);
-  expect(existsSync(tree)).toBe(true);
-
   // UI preflight rejects before displaying a confirmation; MCP uses the same gate.
   const busy = await create("Busy fixture");
   const processId = crypto.randomUUID();

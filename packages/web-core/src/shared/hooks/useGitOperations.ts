@@ -1,6 +1,5 @@
 import { errorDiagnostic } from '@/shared/lib/errorDiagnostic';
 import { useRebase } from '@/shared/hooks/useRebase';
-import { useMerge } from '@/shared/hooks/useMerge';
 import { usePush } from '@/shared/hooks/usePush';
 import { useForcePush } from '@/shared/hooks/useForcePush';
 import { useChangeTargetBranch } from '@/shared/hooks/useChangeTargetBranch';
@@ -30,12 +29,6 @@ export function useGitOperations(
         }
       }
     }
-  );
-
-  const merge = useMerge(
-    workspaceId,
-    () => setError(null),
-    (error) => setError('merge', errorDiagnostic(error))
   );
 
   const forcePush = useForcePush(
@@ -70,7 +63,6 @@ export function useGitOperations(
 
   const isAnyLoading =
     rebase.isPending ||
-    merge.isPending ||
     push.isPending ||
     forcePush.isPending ||
     changeTargetBranch.isPending;
@@ -78,7 +70,6 @@ export function useGitOperations(
   return {
     actions: {
       rebase: rebase.mutateAsync,
-      merge: merge.mutateAsync,
       push: push.mutateAsync,
       forcePush: forcePush.mutateAsync,
       changeTargetBranch: changeTargetBranch.mutateAsync,
@@ -86,7 +77,6 @@ export function useGitOperations(
     isAnyLoading,
     states: {
       rebasePending: rebase.isPending,
-      mergePending: merge.isPending,
       pushPending: push.isPending,
       forcePushPending: forcePush.isPending,
       changeTargetBranchPending: changeTargetBranch.isPending,

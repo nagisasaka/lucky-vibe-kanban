@@ -125,6 +125,16 @@ impl Remote {
             )
         );
         let mut result = json!({"integration_id":run.id,"project_id":run.project_id,"revision":run.updated_at,"status":run.status,"published":run.payload.published,"skip_validation":run.payload.skip_validation,"url":self.config.project_url(run.project_id)});
+        result["diagnostics"] = match crate::routes::integrations::conversation::inspection(
+            &self.pool, &run,
+        )
+        .await
+        {
+            Ok(value) => {
+                json!({"repository_path":value["repository_path"],"candidate_branch":value["candidate_branch"],"observed_branch":value["observed_branch"],"branch_error":value["branch_error"],"observed_head":value["observed_head"],"head_error":value["head_error"]})
+            }
+            Err(error) => json!({"unavailable":error.to_string()}),
+        };
         result["conversation"] = json!({"issue_id":run.payload.card_id,"workspace_id":run.workspace_id,"session_id":run.session_id,"agent_run_id":run.agent_run_id,"candidate_commit":run.payload.result_commit,"evidence_count":run.payload.evidence.len(),"publication_request":run.payload.publication_request,"wiki_enabled":run.payload.wiki_enabled,"stop":run.payload.stop});
         if matches!(args.section, Section::Summary) {
             ensure!(

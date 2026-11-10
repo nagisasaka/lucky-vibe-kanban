@@ -416,15 +416,9 @@ mod tests {
         let newer = remote.merge_status(target.clone()).await.unwrap();
         assert_eq!(newer["status"], "unmerged");
         assert_eq!(newer["matching_integration_id"], Value::Null);
-        db::models::merge::Merge::create_direct(
-            &remote.pool,
-            target.workspace_id,
-            target.repository_id,
-            "main",
-            &git(temp.path(), &["rev-parse", "main"]),
-        )
-        .await
-        .unwrap();
+        // Historical row fixture: the retired direct-merge writer no longer exists.
+        sqlx::query("INSERT INTO merges(id,workspace_id,repo_id,merge_type,merge_commit,target_branch_name) VALUES(?,?,?,'direct',?,'main')")
+            .bind(Uuid::new_v4()).bind(target.workspace_id).bind(target.repository_id).bind(git(temp.path(), &["rev-parse", "main"])).execute(&remote.pool).await.unwrap();
         assert_eq!(
             remote.merge_status(target.clone()).await.unwrap()["status"],
             "unknown"
@@ -443,15 +437,9 @@ mod tests {
             after_publication["post_legacy_publication_changes_observed"],
             true
         );
-        db::models::merge::Merge::create_direct(
-            &remote.pool,
-            target.workspace_id,
-            target.repository_id,
-            "main",
-            &"f".repeat(40),
-        )
-        .await
-        .unwrap();
+        // Historical row fixture: the retired direct-merge writer no longer exists.
+        sqlx::query("INSERT INTO merges(id,workspace_id,repo_id,merge_type,merge_commit,target_branch_name) VALUES(?,?,?,'direct',?,'main')")
+            .bind(Uuid::new_v4()).bind(target.workspace_id).bind(target.repository_id).bind("f".repeat(40)).execute(&remote.pool).await.unwrap();
         // Do not let an older, readable record hide a later ambiguous publication.
         assert_eq!(
             remote.merge_status(target.clone()).await.unwrap()["status"],

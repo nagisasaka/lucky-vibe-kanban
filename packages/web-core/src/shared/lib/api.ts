@@ -67,7 +67,6 @@ import {
   PushError,
   QueueStatus,
   PrCommentsResponse,
-  MergeWorkspaceRequest,
   PushWorkspaceRequest,
   RepoBranchStatus,
   AbortConflictsRequest,
@@ -684,20 +683,6 @@ export const workspacesApi = {
       );
       return handleApiResponse<WorkspaceWikiSnapshot>(response);
     },
-  },
-
-  merge: async (
-    workspaceId: string,
-    data: MergeWorkspaceRequest
-  ): Promise<void> => {
-    const response = await makeRequest(
-      `/api/workspaces/${workspaceId}/git/merge`,
-      {
-        method: 'POST',
-        body: JSON.stringify(data),
-      }
-    );
-    return handleApiResponse<void>(response);
   },
 
   push: async (

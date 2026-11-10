@@ -12,6 +12,7 @@ vi.mock('@/shared/lib/api', () => ({
 import {
   integrationApi,
   integrationCanCancel,
+  integrationCanRecover,
   integrationStatusLabel,
   integrationWikiLabel,
   integrationDoneLabel,
@@ -108,6 +109,37 @@ describe('formal Integration selection and controls', () => {
   });
   it('does not cancel a blocked publication reconciliation', () => {
     expect(integrationCanCancel('blocked', true)).toBe(false);
+  });
+  it('offers receipt recovery for the exact backend prefix and eligible state', () => {
+    expect(
+      integrationCanRecover('succeeded', true, 'Wiki receipt pending: retry')
+    ).toBe(true);
+    expect(
+      integrationCanRecover('succeeded', false, 'Wiki receipt pending: retry')
+    ).toBe(false);
+    expect(
+      integrationCanRecover('blocked', true, 'Wiki receipt pending: retry')
+    ).toBe(false);
+    expect(
+      integrationCanRecover(
+        'succeeded',
+        true,
+        'Wiki included in published candidate'
+      )
+    ).toBe(false);
+    expect(integrationCanRecover('post_processing', true, null)).toBe(true);
+    expect(integrationCanRecover('recovery_required', false, null)).toBe(true);
+  });
+  it('describes published work and Done held for source changes separately', () => {
+    for (const reason of [
+      'source HEAD changed',
+      'source Run active',
+      'source HEAD changed and Run active',
+    ]) {
+      expect(doneLabel('succeeded', true, `not changed: ${reason}`)).toContain(
+        'Published; Done held'
+      );
+    }
   });
   beforeEach(() => transport.mockReset());
   it('follows activity pagination without selecting or starting anything', async () => {

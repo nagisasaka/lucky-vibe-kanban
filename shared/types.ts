@@ -221,6 +221,10 @@ export type IntegrationPayload = { wiki_enabled: boolean, evidence: Array<Integr
  */
 worker_dispatch: JsonValue | null,
 /**
+ * Adopted reference Skill and public Manifests, saved alongside the initial dispatch.
+ */
+reference_materials: JsonValue | null,
+/**
  * Initial user instruction to omit validation; actual decisions are recorded in evidence.
  */
 skip_validation: boolean, card_id: string | null, card_done_result: string | null, stop: IntegrationStop | null, history: Array<JsonValue>, sources: Array<IntegrationSource>, observed_target: string, base_commit: string | null, result_commit: string | null, validation_suggestions: Array<IntegrationValidationSuggestion>, semantic_summary: string | null, publication_intent: boolean, published: boolean, wiki_result: string | null, executor_config: JsonValue | null, };
@@ -739,8 +743,6 @@ export type ChangeTargetBranchResponse = { repo_id: string, new_target_branch: s
 export type AddWorkspaceRepoRequest = { repo_id: string, target_branch: string, };
 
 export type AddWorkspaceRepoResponse = { workspace: Workspace, repo: RepoWithTargetBranch, };
-
-export type MergeWorkspaceRequest = { repo_id: string, };
 
 export type PushWorkspaceRequest = { repo_id: string, };
 

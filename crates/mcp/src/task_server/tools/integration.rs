@@ -15,6 +15,8 @@ struct IntegrationAction {
     request_id: Uuid,
     /// inspect, verify (managed command), skip (reason/risk), prepare_wiki (journal before begin), publish (deferred until writer settlement).
     action: String,
+    /// inspect only: sources (adopted Issue snapshots) or materials (saved Skill/public Manifests). Omit for compact diagnostics.
+    reference_section: Option<String>,
     expected_commit: Option<String>,
     code_commit: Option<String>,
     wiki_commit: Option<String>,
@@ -30,7 +32,7 @@ struct IntegrationAction {
 #[tool_router(router = integration_tools_router, vis = "pub")]
 impl McpServer {
     #[tool(
-        description = "Worker-only Auto-merge operation in the current Workspace. inspect reads frozen targets/evidence; verify executes a command on expected clean SHA; skip records reason and remaining risk; prepare_wiki durably journals original setup files on the evidenced clean code SHA BEFORE any OpenWiki begin (retain originals on resume; a fresh request opens a new writer phase only after restoration is complete; unfinished restoration refuses begin); publish saves a request for host execution AFTER this Run and all children settle. Never use shell to update the target. Reuse request_id and identical input after uncertainty; inspect existing receipt/process, never blindly rerun. Publication acceptance is not publication success. Leave generated AGENTS.md/CLAUDE.md changes unstaged: host restores only known setup changes after writer exit. Wiki-enabled work supplies code_commit and wiki_commit separately. Ordinary commands/skip decisions need no repeated approval."
+        description = "Worker-only Auto-merge operation in the current Workspace. inspect reads branch/path, frozen targets/evidence even after exit or on a wrong branch; request reference_section=sources or materials only when their adopted content is needed; verify executes a command on expected clean SHA; skip records reason and remaining risk; prepare_wiki durably journals original setup files on the evidenced clean code SHA BEFORE any OpenWiki begin (retain originals on resume; a fresh request opens a new writer phase only after restoration is complete; unfinished restoration refuses begin); publish saves a request for host execution AFTER this Run and all children settle. Never use shell to update the target. Reuse request_id and identical input after uncertainty; inspect existing receipt/process, never blindly rerun. Publication acceptance is not publication success. Leave generated AGENTS.md/CLAUDE.md changes unstaged: host restores only known setup changes after writer exit. Wiki-enabled work supplies code_commit and wiki_commit separately. Ordinary commands/skip decisions need no repeated approval."
     )]
     async fn integration_action(
         &self,
@@ -46,7 +48,10 @@ impl McpServer {
             Some(id) => id,
             None => return Self::err("Current AgentRun binding required", None),
         };
-        let body = serde_json::json!({"workspace_id":context.workspace_id,"agent_run_id":agent,"request_id":input.request_id,"action":input.action,"expected_commit":input.expected_commit,"code_commit":input.code_commit,"wiki_commit":input.wiki_commit,"command":input.command,"decision_actor":input.decision_actor,"reason":input.reason,"remaining_risk":input.remaining_risk});
+        let mut body = serde_json::json!({"workspace_id":context.workspace_id,"agent_run_id":agent,"request_id":input.request_id,"action":input.action,"expected_commit":input.expected_commit,"code_commit":input.code_commit,"wiki_commit":input.wiki_commit,"command":input.command,"decision_actor":input.decision_actor,"reason":input.reason,"remaining_risk":input.remaining_risk});
+        if let Some(section) = input.reference_section {
+            body["reference_section"] = serde_json::json!(section);
+        }
         let read_only = input.action == "inspect";
         match self
             .send_json_with_effects::<serde_json::Value>(

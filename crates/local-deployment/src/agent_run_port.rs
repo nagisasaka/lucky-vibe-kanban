@@ -864,6 +864,20 @@ impl LocalAgentRunPort {
                 .await
                 .map_err(port_database)?;
         if let Some(product) = &integration {
+            let repository = repos
+                .iter()
+                .find(|repo| repo.id == product.repository_id)
+                .ok_or_else(|| {
+                    AgentRunPortError::Unavailable(
+                        "Auto-merge repository missing from Workspace".into(),
+                    )
+                })?;
+            let root = repository.worktree_dir(Path::new(&request.workspace.path));
+            memory_instructions.push(services::services::integration_admission::worker_context(
+                product,
+                &workspace.branch,
+                &root,
+            ));
             memory_instructions.push(format!("自動マージ担当: {}。同一Sessionで作業を継続し、integration_actionで候補・検証/省略・公開要求を記録する。公開要求後はRunを終了しhostの収束確認に引き渡す。通常codingの自動commitやread-only Wiki指示はこの専用担当には適用しない。Wiki有効: {}。", product.id, product.payload.wiki_enabled));
             if product.payload.wiki_enabled {
                 openwiki_maintenance = true;

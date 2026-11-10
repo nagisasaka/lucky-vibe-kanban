@@ -196,9 +196,7 @@
     },
     "states": {
       "createPr": "PRを作成",
-      "merge": "マージ",
       "merged": "マージ完了！",
-      "merging": "マージ中...",
       "push": "プッシュ",
       "pushed": "プッシュ完了！",
       "pushing": "プッシュ中...",
@@ -735,7 +733,6 @@
     "start_dev_server": "開発サーバーを起動",
     "create_pull_request": "Pull Requestを作成",
     "link_pull_request": "Pull Requestをリンク",
-    "merge": "マージ",
     "rebase": "リベース",
     "change_target_branch": "ターゲットブランチを変更",
     "push": "プッシュ",
@@ -798,12 +795,6 @@
     "linkedPr": "PR #{{number}} をリンクしました",
     "noPr": "プルリクエストが見つかりません",
     "noPrBody": "このブランチに対応するオープンなプルリクエストが見つかりません。リモートにこのブランチのPRがあることを確認してください。",
-    "cannotMerge": "マージできません",
-    "openPrBody": "このリポジトリにはオープンなプルリクエストがあります。直接マージする前にPRを閉じるか、マージしてください。",
-    "rebaseRequired": "リベースが必要です",
-    "mergeBranch": "ブランチをマージ",
-    "mergeBody": "このブランチを対象ブランチにマージしますか？",
-    "behind": "このブランチは対象ブランチより{{formattedCount}}コミット遅れています。先にリベースしますか？",
     "deleteIssues": "{{formattedCount}}件のIssueを削除",
     "deleteIssuesBody": "{{formattedCount}}件のIssueを削除しますか？この操作は取り消せません。"
   },
@@ -872,7 +863,7 @@
   "repoCard": {
     "openPullRequest": "プルリクエストを作成",
     "linkPullRequest": "プルリクエストをリンク",
-    "merge": "マージ"
+    "autoMerge": "自動マージ"
   },
   "sessionRuntime": {
     "blocked": {
@@ -938,7 +929,6 @@
   },
   "gitNotice": {
     "rebaseUnconfirmed": "リベースの結果を確認できません。リポジトリの状態を確認してから再操作してください。",
-    "mergeUnconfirmed": "マージの結果を確認できません。リポジトリの状態を確認してから再操作してください。",
     "forcePushUnconfirmed": "強制プッシュの結果を確認できません。リモートブランチを確認してから再操作してください。",
     "pushUnconfirmed": "プッシュの結果を確認できません。リモートブランチを確認してから再操作してください。",
     "targetUnconfirmed": "対象ブランチの変更結果を確認できません。現在のブランチを確認してから再操作してください。",

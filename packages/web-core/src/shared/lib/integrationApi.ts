@@ -21,6 +21,8 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const integrationApi = {
+  inspect: (id: string) =>
+    request<Record<string, unknown>>(`/api/integrations/${id}/inspect`),
   steer: (agent: string, body: SteerAgentRunRequest) =>
     request<RunState>(`/api/agent-runs/${agent}/steer`, {
       method: 'POST',
@@ -62,6 +64,19 @@ export const integrationApi = {
   },
 };
 
+export function integrationCanRecover(
+  status: string,
+  published: boolean,
+  wikiResult: string | null
+): boolean {
+  return (
+    ['recovery_required', 'post_processing'].includes(status) ||
+    (status === 'succeeded' &&
+      published &&
+      !!wikiResult?.startsWith('Wiki receipt pending:'))
+  );
+}
+
 export function integrationCanCancel(
   status: string,
   publicationIntent = false
@@ -78,6 +93,12 @@ export function integrationDoneLabel(
   doneResult: string | null,
   t: (key: string) => string
 ): string {
+  if (doneResult === 'not changed: source HEAD changed')
+    return t('common:integrationPanel.doneHeadChanged');
+  if (doneResult === 'not changed: source Run active')
+    return t('common:integrationPanel.doneRunActive');
+  if (doneResult === 'not changed: source HEAD changed and Run active')
+    return t('common:integrationPanel.doneBoth');
   if (doneResult === 'done') return t('common:integrationPanel.doneApplied');
   if (doneResult === 'not changed: Card reserved by another Auto-merge')
     return t('common:integrationPanel.doneReserved');

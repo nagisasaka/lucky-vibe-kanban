@@ -401,42 +401,6 @@ async fn observe_already_integrated_source(
     Ok(())
 }
 
-pub async fn prepare_integration(
-    store: &RepositoryMemoryStore,
-    workspace_id: Uuid,
-    target_branch: &str,
-    before_commit: String,
-) -> anyhow::Result<MemoryIntegration> {
-    let events = store.events()?;
-    let integrated: HashSet<_> = store
-        .integrations()
-        .await?
-        .into_iter()
-        .filter(|record| record.integrated_commit.is_some())
-        .flat_map(|record| record.event_ids)
-        .collect();
-    let integration = MemoryIntegration {
-        id: Uuid::new_v4(),
-        target_branch: target_branch.into(),
-        before_commit,
-        integrated_commit: None,
-        source_error: None,
-        event_ids: events
-            .into_iter()
-            .filter(|event| {
-                event.workspace_id == workspace_id && !integrated.contains(&event.event_id)
-            })
-            .map(|event| event.event_id)
-            .collect(),
-    };
-    store.save_integration(&integration).await?;
-    Ok(integration)
-}
-
-pub fn integration_commit_message(summary: &str, integration_id: Uuid) -> String {
-    format!("{summary}\n\nLVK-Memory-Integration: {integration_id}")
-}
-
 /// External PR observations have no LVK-owned merge transaction carrying an
 /// explicit event set. Use ancestry only as a conservative fallback: timestamps
 /// or shared workspace membership do not prove that a later/unpushed change was
@@ -633,6 +597,43 @@ pub async fn pending_events(
 
 #[cfg(test)]
 mod tests {
+    // Historical publication fixtures; no production direct-merge execution path.
+    async fn prepare_integration(
+        store: &RepositoryMemoryStore,
+        workspace_id: Uuid,
+        target_branch: &str,
+        before_commit: String,
+    ) -> anyhow::Result<MemoryIntegration> {
+        let events = store.events()?;
+        let integrated: HashSet<_> = store
+            .integrations()
+            .await?
+            .into_iter()
+            .filter(|record| record.integrated_commit.is_some())
+            .flat_map(|record| record.event_ids)
+            .collect();
+        let integration = MemoryIntegration {
+            id: Uuid::new_v4(),
+            target_branch: target_branch.into(),
+            before_commit,
+            integrated_commit: None,
+            source_error: None,
+            event_ids: events
+                .into_iter()
+                .filter(|event| {
+                    event.workspace_id == workspace_id && !integrated.contains(&event.event_id)
+                })
+                .map(|event| event.event_id)
+                .collect(),
+        };
+        store.save_integration(&integration).await?;
+        Ok(integration)
+    }
+
+    fn integration_commit_message(summary: &str, integration_id: Uuid) -> String {
+        format!("{summary}\n\nLVK-Memory-Integration: {integration_id}")
+    }
+
     use utils::repository_memory::{SemanticChanges, WikiReconciliationReceipt};
 
     use super::*;
