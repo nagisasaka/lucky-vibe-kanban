@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { checkConversation } from './conversation.mjs';
 import { checkHeadingHierarchy } from './headings.mjs';
 import { build } from 'esbuild';
 import { chromium, expect } from '@playwright/test';
@@ -82,6 +83,7 @@ try {
   await page.addScriptTag({ content: bundle.outputFiles[0].text });
   await expect(page.locator('#lexical h1')).toHaveCount(1);
   if (process.env.MARKDOWN_HEADINGS) await checkHeadingHierarchy(page);
+  if (process.env.MARKDOWN_CONVERSATION) await checkConversation(page);
   if (!baseline) {
     await expect(
       page.locator('#lexical [data-markdown-alert="decision"]')

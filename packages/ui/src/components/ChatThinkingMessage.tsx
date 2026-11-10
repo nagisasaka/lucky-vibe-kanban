@@ -21,6 +21,7 @@ interface ChatThinkingMessageProps {
   label?: string;
   provider?: string | null;
   partial?: boolean;
+  renderInlineMarkdown?: (content: string) => ReactNode;
   renderMarkdown: (props: ChatThinkingMessageRenderProps) => ReactNode;
 }
 
@@ -35,9 +36,12 @@ export function ChatThinkingMessage({
   provider,
   partial,
   renderMarkdown,
+  renderInlineMarkdown,
 }: ChatThinkingMessageProps) {
   const { t } = useTranslation('common');
   if (!content.trim()) return null;
+
+  const firstLine = content.split(/\r?\n/).find((line) => line.trim()) ?? '';
 
   return (
     <div
@@ -52,7 +56,9 @@ export function ChatThinkingMessage({
               className="min-w-0 flex-1 truncate text-sm"
               title={label}
             >
-              {content.split(/\r?\n/).find((line) => line.trim())}
+              {renderInlineMarkdown
+                ? renderInlineMarkdown(firstLine)
+                : firstLine}
             </ActivityText>
             {provider && (
               <span className="text-xs">

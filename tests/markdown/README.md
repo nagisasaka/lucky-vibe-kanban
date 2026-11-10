@@ -60,3 +60,16 @@ checks title text/scroll dimensions, heading order and title/body editing, and
 compares document heading sizes between both renderers in view/edit states.
 Images and measurements go to ignored `.build/markdown-heading-review/`. Candidate
 CSS is injected only into the test browser; no saved Markdown or backend is used.
+
+For thinking disclosure headings and canonical quote-label checks:
+
+```sh
+PLAYWRIGHT_BROWSERS_PATH=/opt/lvk-browsers MARKDOWN_CONVERSATION=1 node tests/markdown/reading.mjs
+```
+
+This adds a small real-component fixture for thinking summaries (single/grouped,
+keyboard/click toggle, inline formatting, ellipsis and no nested links/HTML), plus
+canonical DECISION and bold ordinary intent labels on chat, Issue and Wiki/file
+renderer paths. A bold DECISION marker in a normal paragraph stays ordinary text.
+Two thinking theme screenshots and one quote example go to ignored `.build/markdown-conversation-review/`.
+This remains synthetic UI verification, not an authenticated live conversation.
