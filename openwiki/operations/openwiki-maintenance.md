@@ -96,10 +96,10 @@ sources:
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/RepositoryWikiFilesSettings.tsx
   - id: openwiki-source-7fd9452d5e666180c50f8cb7
     resource: repo://tests/openwiki/recovery.sh
-generated: { by: "codex", at: "2026-11-09T07:12:52.696Z" }
+generated: { by: "codex", at: "2026-11-10T19:52:54.465Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-10T13:43:59.705Z
+    at: 2026-11-10T19:52:54.465Z
 ---
 
 # OpenWiki の初期生成・同期・回復
@@ -348,7 +348,7 @@ Review は generator の選んだ資料や Wiki の分類だけを範囲とせ�
 ## 設定から保守を開始する
 
 1. Project の **Configure project working location** から対象 Repo の **Local execution configuration** を開く。OpenWiki の有効化、統合先 local branch、出力言語を保存する。フォームに未保存の変更がある間は開始できず、実行は保存済み値を使う。[設定と開始抑制](../../packages/web-core/src/shared/dialogs/settings/settings/RepositoryMemorySettings.tsx#L57-L139)
-2. 統合済みbranchにINSTRUCTIONS以外のtracked Wikiファイルがなければ明示初期生成、あれば既存Wikiのadoption / Syncを選ぶ。削除後は抑止状態により生成物の有無を使い、保持した人間文書だけで既存生成Wikiと判定しない。全体比較か、指定 commit 以後の比較を選択する。指定 SHA は選択 branch の履歴上に必要である。部分 import を初期化し直さない。[受付と scope](../../crates/server/src/routes/openwiki.rs#L235-L285)・[scope 検査](../../crates/services/src/services/openwiki/sync_scope.rs)
+2. 統合済みbranchにINSTRUCTIONS以外のtracked Wikiファイルがなければ明示初期生成、あれば既存Wikiのadoption / Syncを選ぶ。削除後は抑止状態により生成物の有無を使い、設定だけで既存生成Wikiと判定しない。全体比較か、指定 commit 以後の比較を選択する。指定 SHA は選択 branch の履歴上に必要である。部分 import を初期化し直さない。[受付と scope](../../crates/server/src/routes/openwiki.rs#L235-L285)・[scope 検査](../../crates/services/src/services/openwiki/sync_scope.rs)
 3. maintenance の状態、Bootstrap の現在 phase、**View Workflow** の Canvas / Dashboard を確認する。Current になるまで、会話の終了と公開成功を区別する。範囲限定 adoption はそれ以前の未検証範囲を残すため、全体比較の成功と同じ鮮度保証ではない。[設定画面](../../packages/web-core/src/shared/dialogs/settings/settings/RepositoryMemorySettings.tsx)・[receipt と scope の確定](../../crates/server/src/routes/openwiki.rs#L608-L650)
 4. エラー時は保存された owner・会話・tool error を確認する。preflight なら pinned CLI、実行 PATH、MCP の allow/deny と必要10toolの有無を調べる。改変した MCP block、custom 設定、曖昧な marker は `--force` で上書きせず、競合を解消して cleanup 後に明示的に再試行する。[起動前確認](../../crates/executors/src/executors/codex/client/openwiki.rs)・[非強制の準備](../../crates/services/src/services/openwiki.rs#L148-L172)
 
@@ -384,7 +384,7 @@ LOCAL-336で一度限りの移行CLI・importer・旧JSON decoder・未移行互
 
 1. 対象リポジトリ・branchと削除範囲を確認し、未保存の設定編集を解消する。既存Wikiがある場合のDanger Zoneで削除を選ぶ。
 2. 確認欄に `<repository-name>/openwiki` を完全入力する。例は `lucky-vibe-kanban/openwiki`。入力不一致とbranch/sourceの変化は実行を拒否する。
-3. 正規公開後の状態を確認する。manifest・生成frontmatter・管理索引/メタデータで識別した生成物とAGENTS/CLAUDEのOpenWiki案内ブロックを削除し、両設定、人間管理文書、ブロック外のバイト列、Git履歴を保持する。openwiki全体やリポジトリを削除する操作ではない。
+3. 正規公開後の状態を確認する。固定sourceのopenwiki/配下の本文・index・管理metadataをマーカーの有無によらず対象とし、AGENTS/CLAUDEのOpenWiki案内ブロックも削除する。INSTRUCTIONS.md・.openwikiignore、ブロック外のバイト列、Git履歴を保持する。全対象のsymlink境界と通常ファイルであることを削除前に検査する。リポジトリやGit履歴を削除する操作ではない。
 4. 成功後は未生成表示となる。source/Wiki成功履歴・checkpointを整理し、generation_suppressedにより通常Syncと自動マージからの自動再生成を抑止する。必要になったら設定画面のInitializeを明示実行する。削除自体ではAgentRunを起動しない。
 
 公開未確定ではfile_operation ownerを保持し、既存monitorが保存checkpointと実Gitを照合する。checkpoint前の失敗は未公開候補として確定できるが、checkpoint後のエラーは未実行と断定せず、同じ操作の回復を待つ。保守準備中・公開未確定のWorkspaceは、AgentRunがなくてもarchive・用途解放・共有cache/tmp cleanupから保護される。[限定削除](../../crates/services/src/services/openwiki/management.rs)・[公開結果と回復](../../crates/server/src/routes/openwiki/management.rs)・[既存cleanup保護](../concepts/workspace.md#agentrunのないwiki設定削除の保護)
@@ -393,11 +393,11 @@ LOCAL-336で一度限りの移行CLI・importer・旧JSON decoder・未移行互
 
 1. 新しいINSTRUCTIONSとignoreを保存し、未保存編集を解消する。対象branch/sourceを再確認し、既存WikiのDanger Zoneから再構築を明示実行する。保存だけでは開始しない。
 2. 開始時公開先SHAを固定し、専用Workspaceから同じGit objectを読めることを確認する。旧ページは `git show <SHA>:openwiki/<path>`、一覧は `git ls-tree -r <SHA> -- openwiki` で参照できる。書換え中の作業木を旧版にしない。保存済みignoreも歴史資料の参照に適用し、除外で確認できない知識は限界として報告する。
-3. 専用Workspace内の既知生成物だけを取り除き、既存bootstrapのGenerateで強制updateを使って構成から計画し直す。本家initは人間文書も置換するため使わない。現在のコード・テスト・設定、保守中のREADME/docsと固定旧Wikiを照合し、重要な運用知識・設計制約とREADME/AGENTSの入口を確認する。旧記述を無条件に継承せず、不明な理由を創作しない。完全な知識復元の保証はない。
-4. 既存の独立Review、必要なRefine、完了監査、setup復元とsource drift検査を通して公開する。安定入口quickstartは必須。新生成物に含まれない旧生成ページの削除も反映し、両設定と人間文書を保持する。人間文書の変更や生成manifestへの取り込みは拒否し、必要なら保存済みignoreで対象外にする。
+3. 専用Workspace内の明示設定例外以外のWiki領域ファイルを取り除き、既存bootstrapのGenerateで強制updateを使って構成から計画し直す。保存済み指示・設定を保つためinitは使わない。現在のコード・テスト・設定、保守中のREADME/docsと固定旧Wikiを照合し、重要な運用知識・設計制約とREADME/AGENTSの入口を確認する。旧記述を無条件に継承せず、不明な理由を創作しない。完全な知識復元の保証はない。
+4. 既存の独立Review、必要なRefine、完了監査、setup復元とsource drift検査を通して公開する。安定入口quickstartは必須。新生成物に含まれない旧生成ページの削除も反映し、両設定を保持する。人間管理文書の推測・manifest取り込み拒否は撤去したが、manifestのサイズ・schema・安全なページパス、INSTRUCTIONS原本一致、Wiki外変更とsymlink境界の検査は維持する。
 5. 公開checkpointとDB結果を確認して完了を判断する。新しいWikiの正規公開成功まで現行公開Wikiを残し、生成・レビューの失敗や取消で先に削除しない。旧版のGit履歴を残す。失敗時は旧Wikiを使い続け、保守ownerと実processの収束・回復を確認してから次の明示要求を判断する。
 
-削除後の明示Initializeも、人間文書を保つためこの強制update経路を使う。新しいwriterモデル・バックアップ世代管理・恒久監視を作らず、既存bootstrapとpublication/reconciliationを再利用する。[準備と固定参照](../../crates/server/src/routes/openwiki.rs)・[再構築prompt](../../crates/services/src/services/openwiki/bootstrap.rs)・[公開前の入口確認](../../crates/server/src/workflow_runtime/bootstrap.rs)
+削除後の明示Initializeも、保存済み指示・設定を保つためこの強制update経路を使う。新しいwriterモデル・バックアップ世代管理・恒久監視を作らず、既存bootstrapとpublication/reconciliationを再利用する。[準備と固定参照](../../crates/server/src/routes/openwiki.rs)・[再構築prompt](../../crates/services/src/services/openwiki/bootstrap.rs)・[公開前の入口確認](../../crates/server/src/workflow_runtime/bootstrap.rs)
 
 ### LOCAL-344の検証範囲
 
@@ -410,3 +410,12 @@ LOCAL-336で一度限りの移行CLI・importer・旧JSON decoder・未移行互
 保守Workspaceの作業rootはWorkspaceRepoに保存した配置名で解決し、元Repo名や表示名から組み立てない。setup復元、Bootstrap、設定保存/削除の回復も同じ配置を使う。Repo sharedの正本は従来の元Repo名/IDのままで移動しない。開始元Projectの関連検査は作成プリセットと既存リンク済みGit Workspaceの実Repoを含み、プリセット解除で既存の保守対象を無効化しない。新規Issue Workspaceの作成選択制約とは分ける。DirectFolderは旧Repo行や配下Gitの存在によってRepo Wiki管理対象へ自動変換しない。[配置利用](../../crates/server/src/routes/openwiki.rs)・[関連検査](../../crates/server/src/routes/openwiki/project_context.rs)
 
 この統合内の保守は別のWiki専用Workspaceを起動せず、コード検証後の同じ候補で行う。prepare_wikiの原本journalをbegin前に保存し、生成setup差分は手動復元/commitせずhostへ残す。完了proof・Wiki-only commit・公開要求・実Git適用は別々の事実として報告する。[自動マージの契約](../concepts/formal-integration.md#begin-前の原本準備と-host-の限定復元)
+
+
+### LOCAL-373の独立領域管理と残課題
+
+openwiki/は生成・保守専用とし、manifest/frontmatter/generated.byからの所有権推測と既存Wiki全走査を撤去した。マーカーのない子indexをhuman-managedと推測して拒否する経路はない。設定変更は明示操作に限定し、通常codingからcanonical Wikiを編集できるようにはしていない。[領域列挙](../../crates/services/src/services/openwiki/management.rs)・[公開境界](../../crates/services/src/services/openwiki.rs#L225-L297)
+
+コード候補は45f0e390574614129023baba11e3b01c396b205a、固定baseは122d84bf0b03803085c1e38a4ca203fa72cd99ce。sourceをそのまま採用し競合・修復はない。Manifest ce410a4d-87d0-4672-a935-38f50595237eの対象107成功、services Clippy、変更Rust整形、差分・日英JSON構造検査を既存SHAの証拠として参照した。今回の管理検証は同一source/tree・祖先・差分空白・clean確認であり、ユーザー指定で包括suiteの重複実行を省略した。実OpenWiki依存4件はignored、標準i18n/Prettierは依存不足で未成立であり、合格とはしない。
+
+373全体は未完了である。372共通基盤接続・専用進行管理撤去・Refine後の独立再Review・品質警告付き公開と伝播は今回の実装に含まれない。既存Generate/Review/Refine/Publishと決定的検査は継続する。今回の保守lifecycle完了、コード検証、hostによるmain正式公開は別の結果である。371失敗成果の救済・再開・採用やデータ削除、dev/previewの停止・再起動・切替、外部pushは実施しない。

@@ -93,7 +93,7 @@ sources:
 generated: { by: "codex", at: "2026-11-09T18:10:41.827Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-10T13:43:59.705Z
+    at: 2026-11-10T19:52:54.465Z
 ---
 
 # Issue から実行・レビュー・統合まで

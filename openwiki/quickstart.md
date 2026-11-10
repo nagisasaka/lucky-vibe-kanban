@@ -106,10 +106,10 @@ sources:
     resource: repo://packages/web-core/src/shared/providers/TerminalProvider.tsx
   - id: openwiki-source-23775c3de52f3ab95a13cb8b
     resource: repo://README.md
-generated: { by: "codex", at: "2026-11-10T13:43:59.705Z" }
+generated: { by: "codex", at: "2026-11-10T19:52:54.465Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-10T13:43:59.705Z
+    at: 2026-11-10T19:52:54.465Z
 ---
 
 # クイックスタートと調査案内
@@ -439,3 +439,8 @@ Issue固有の要求は通常本文で閲覧・編集し、旧Card Contextの専
 stdio/remoteのIssue mutation・開始継続・receipt保証、priority:null保持、旧Workspaceファイル4toolからquery_repositoryへの移行は[接続契約](integrations/remote-access.md#stdioとremoteのmutation保証local-365)と[範囲read](integrations/remote-access.md#同じ本文を確認して周辺行を読む)を参照する。orchestrator modeは案内付き明示エラーで、globalへの設定変更では旧Workspace制限がなくなる。[stdio起動](integrations/agent-providers.md#外部-mcp-client--lvk)
 
 コード候補は `bacddc9c01995713ef063df85de18835815c05d8`。固定baseの直接子を競合なく採用し、同一SHAの公開Memoryにある代表試験とClippy証拠を再利用した。ユーザー指定で重複suiteを省略した記録は新たな試験passではない。実Auth0/provider/native・全組合せE2Eと稼働版反映は未確認で、ignored添付fixtureの追従課題は[検証入口](operations/development.md)に残す。Wikiは別commit、正式公開はRun終了後のhost結果で確認する。サーバーの停止・切替・再起動はこの担当では行わない。
+
+
+## LOCAL-373の独立したWiki領域管理
+
+マーカーのない子indexを含むopenwiki/の生成保守契約と、INSTRUCTIONS/.openwikiignoreの明示保護は[削除・再構築の運用](operations/openwiki-maintenance.md#danger-zoneで生成wikiを削除する)を読む。[独立成果の検証と残課題](operations/openwiki-maintenance.md#local-373の独立領域管理と残課題)ではコードSHA 45f0e390574614129023baba11e3b01c396b205aの107件既存成功・重複省略と、実OpenWiki依存4件および標準i18n/Prettier未成立を区別する。372接続・専用進行管理撤去・独立再Review・品質警告伝播は未実装であり、373全体の完了を意味しない。Wikiはコード検証後の別commit、main正式公開はRun終了後のhost結果で確認する。

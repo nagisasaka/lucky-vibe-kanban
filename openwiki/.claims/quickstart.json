@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:9eec0893ac142fae11402eb7aaa3cc0f28896a64a2cb033467f493525dc5f472",
+  "pageVersion": "sha256:06926f57a6944605077ca1150dee1c745bfa73071ba9e712739ea427fbe4f476",
   "claims": [
     {
       "id": "claim_edf1b78d3c7a4d978a6d8debcee4edd2",
@@ -318,7 +318,7 @@
         },
         {
           "resource": "repo://crates/server/src/routes/openwiki/management.rs",
-          "version": "repo-file-v1:sha256:612bd23a829a1114a7fe674ff6d931d816f74638e07e61b369ea810027cf6629"
+          "version": "repo-file-v1:sha256:5ff0f08ace8541d79399f940a03259d893f1366ee443ec508751d4fe91fc879b"
         }
       ]
     },
@@ -383,6 +383,6 @@
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-10T13:43:59.705Z"
+    "at": "2026-11-10T19:52:54.465Z"
   }
 }

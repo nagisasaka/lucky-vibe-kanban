@@ -50,10 +50,10 @@ sources:
     resource: repo://crates/utils/src/agent_guides.rs
   - id: openwiki-source-a171e1a170f941fa2a4ba003
     resource: repo://crates/utils/src/repository_memory.rs
-generated: { by: "codex", at: "2026-11-09T18:10:41.827Z" }
+generated: { by: "codex", at: "2026-11-10T19:52:54.465Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-10T13:43:59.705Z
+    at: 2026-11-10T19:52:54.465Z
 ---
 
 # Change Manifest・Run完了とWikiの責務
@@ -178,7 +178,7 @@ repository shared storage の `integration-wiki-setups/<integration UUID>.json` 
 
 LOCAL-344は利用者の決定として、執筆指示 `openwiki/INSTRUCTIONS.md` と探索除外 `.openwikiignore` を同じ操作体系で実ファイルへ全文保存し、保存・削除・再構築を分ける。保存は次回以降の入力変更であり、生成や同期を開始しない。共通既定はリセット元に限り、設定差分の階層合成は行わない。[設定保存](../../crates/server/src/routes/openwiki/management.rs)
 
-削除・置換する生成集合は既存manifest、生成frontmatter、管理索引・メタデータから識別し、openwiki全体を消さない。設定と不明な人間管理文書を保持し、通常writerによる人間文書の本文変更や生成manifestへの取り込みも公開前に拒否する。対象文書が本家の生成対象になる場合は、保存済みignoreで除外してから再試行する。[生成集合](../../crates/services/src/services/openwiki/management.rs)・[公開前検査](../../crates/services/src/services/openwiki.rs)
+LOCAL-373では `openwiki/` を生成・保守専用領域とし、固定sourceの通常ファイルを設定例外以外すべて管理する。manifest・frontmatter・生成マーカーによる所有権推測と、人間管理文書と推測した変更・manifest取り込みの拒否は撤去した。マーカーのない子indexも削除・再構築対象になる。`openwiki/INSTRUCTIONS.md` と `.openwikiignore` は明示設定として保護する。公開候補manifestのサイズ・schema・ページパス、INSTRUCTIONS原本一致、Wiki外変更拒否、symlink境界は維持する。削除は全対象の境界検査後に行う。通常codingのcanonical Wiki書込権限は変わらない。[領域列挙](../../crates/services/src/services/openwiki/management.rs)・[公開前検査](../../crates/services/src/services/openwiki.rs)
 
 削除成功はDBのsource/Wiki鮮度とcheckpointを未生成へ戻し、generation_suppressedで通常Syncと自動マージからの再生成を抑止する。設定保存・削除のfile_operationは既存専用Workspaceと公開checkpointを使い、結果とstateを同一DB transactionで確定する。再構築は開始時公開先SHAをrebuild_referenceとして固定し、旧Wikiの知識を現在のコード・テスト・設定へ照合する。コードだけでは失われた運用知識や理由を完全復元できないという利用者の意図を保ち、旧記述を無条件に継承しない。[操作と復旧手順](../operations/openwiki-maintenance.md)
 
