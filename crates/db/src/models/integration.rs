@@ -373,11 +373,12 @@ impl IntegrationRun {
             }
             sqlx::query("DELETE FROM integration_reservations WHERE run_id=? AND resource_kind='card' AND resource_key=?")
                 .bind(id).bind(resource_key(source.selection.card_id)).execute(&mut *tx).await?;
-            let head = source_heads
-                .get(&source.selection.workspace_id)
-                .ok_or_else(|| sqlx::Error::Protocol("Source HEAD observation missing".into()))?;
             let active: bool = sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM agent_runs WHERE workspace_id=? AND status NOT IN ('succeeded','failed','cancelled','crashed','audit_failed'))")
                 .bind(source.selection.workspace_id).fetch_one(&mut *tx).await?;
+            let Some(head) = source_heads.get(&source.selection.workspace_id) else {
+                source.done_result = Some("not changed: source HEAD unavailable".into());
+                continue;
+            };
             if head != &source.commit || active {
                 source.done_result = Some(
                     match (head != &source.commit, active) {
@@ -684,19 +685,24 @@ pub(crate) mod tests {
         let (pool, mut run, _) = fixture().await;
         run.payload.published = true;
         run.save(&pool).await.unwrap();
-        assert!(
-            IntegrationRun::complete_cards(&pool, run.id, &Default::default())
-                .await
-                .is_err()
+        let original = run.payload.sources[0].status_id;
+        let result = IntegrationRun::complete_cards(&pool, run.id, &Default::default())
+            .await
+            .unwrap();
+        assert_eq!(
+            result.payload.sources[0].done_result.as_deref(),
+            Some("not changed: source HEAD unavailable")
         );
-        assert!(
-            IntegrationRun::find(&pool, run.id)
-                .await
-                .unwrap()
-                .payload
-                .sources[0]
-                .done_result
-                .is_none()
+        let status: Uuid = sqlx::query_scalar("SELECT status_id FROM local_issues WHERE id=?")
+            .bind(run.payload.sources[0].selection.card_id)
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+        assert_eq!(status, original);
+        let replay = complete_cards(&pool, run.id).await.unwrap();
+        assert_eq!(
+            replay.payload.sources[0].done_result,
+            result.payload.sources[0].done_result
         );
     }
 

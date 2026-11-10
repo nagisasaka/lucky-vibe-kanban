@@ -410,11 +410,15 @@ async fn direct_folder_parent_uses_member_checkout_and_remains_a_target_writer()
 }
 
 #[tokio::test]
-async fn compact_worker_input_keeps_fixed_identity_and_adopted_references_separate() {
+async fn worker_input_uses_frozen_skill_and_keeps_adopted_references_separate() {
     let (_pool, mut run, _, _) = fixture().await;
     run.payload.sources[0].description = Some("historical: investigation only".into());
-    run.payload.reference_materials =
-        Some(serde_json::json!({"public_manifests":"historical: do not publish"}));
+    let skill = include_str!("../../../../../assets/skills/auto-merge/SKILL.md");
+    let frozen_skill = format!("{skill}\n採用時Skillの固定marker");
+    run.payload.reference_materials = Some(serde_json::json!({
+        "auto_merge_skill": frozen_skill,
+        "public_manifests":"historical: do not publish"
+    }));
     run.payload.instructions = "今回の追加指示を原文で保持".into();
     let mut second = run.payload.sources[0].clone();
     second.commit = "b".repeat(40);
@@ -435,7 +439,13 @@ async fn compact_worker_input_keeps_fixed_identity_and_adopted_references_separa
     assert!(content.contains("reference_section=sources"));
     assert!(content.contains("相互作用") && content.contains("remaining_risk"));
     assert!(!content.contains("historical:"));
-    assert!(!content.contains("---\nname:"));
+    assert!(content.starts_with(&frozen_skill));
+    assert_eq!(content.matches(skill).count(), 1);
+    assert!(content.contains(&run.target_ref));
+    assert!(content.contains(&run.payload.observed_target));
+    assert!(content.contains("OpenWiki有効: false"));
+    run.payload.reference_materials = None;
+    assert!(super::super::support::worker_content(&run, &identity).is_err());
     assert_eq!(
         run.payload.sources[0].description.as_deref(),
         Some("historical: investigation only")

@@ -48,6 +48,7 @@ async fn exercise(deployment: &DeploymentImpl, instance: &std::path::Path) -> an
     for (index, mode) in [
         "success",
         "multi-source",
+        "source-head-unavailable",
         "safe-drift",
         "drift",
         "wiki-error",
@@ -121,7 +122,7 @@ async fn exercise(deployment: &DeploymentImpl, instance: &std::path::Path) -> an
             "source",
         )
         .await?;
-        let second_source = if mode == "multi-source" {
+        let second_source = if matches!(mode, "multi-source" | "source-head-unavailable") {
             git(&["checkout", "-b", "source-two", &base])?;
             std::fs::write(root.join("second-code"), "second source")?;
             git(&["add", "second-code"])?;
@@ -195,8 +196,37 @@ async fn exercise(deployment: &DeploymentImpl, instance: &std::path::Path) -> an
             selected.branch = ws.branch.clone();
             run.payload.sources.push(selected);
         }
+        if mode == "source-head-unavailable" {
+            let progress: Uuid = sqlx::query_scalar(
+                "SELECT id FROM local_project_statuses WHERE project_id=? AND name='In Progress'",
+            )
+            .bind(project)
+            .fetch_one(pool)
+            .await?;
+            for (i, selected) in run.payload.sources.iter_mut().enumerate() {
+                selected.status_id = progress;
+                sqlx::query("INSERT INTO local_issues(id,project_id,issue_number,simple_id,status_id,title,sort_order) VALUES(?,?,?,?,?,'source',0)")
+                    .bind(selected.selection.card_id).bind(project).bind(i as i64 + 1)
+                    .bind(format!("FIX{index}-{}", i+1)).bind(progress).execute(pool).await?;
+            }
+        }
         run.create_with_card(pool, &format!("candidate-{id}"), "conversation fixture")
             .await?;
+        if mode == "source-head-unavailable" {
+            for selected in &run.payload.sources {
+                for (kind, resource) in [
+                    ("card", selected.selection.card_id),
+                    ("workspace", selected.selection.workspace_id),
+                ] {
+                    sqlx::query("INSERT INTO integration_reservations VALUES(?,?,?)")
+                        .bind(kind)
+                        .bind(db::models::integration::resource_key(resource))
+                        .bind(id)
+                        .execute(pool)
+                        .await?;
+                }
+            }
+        }
         let ws = Workspace::find_by_id(pool, workspace).await?.unwrap();
         deployment
             .git()
@@ -727,6 +757,12 @@ async fn exercise(deployment: &DeploymentImpl, instance: &std::path::Path) -> an
         if mode.ends_with("receipt-crash") {
             sqlx::query(&format!("CREATE TRIGGER fixture_receipt_failure BEFORE UPDATE ON integration_runs WHEN NEW.id=X'{}' AND json_extract(NEW.payload,'$.published')=1 BEGIN SELECT RAISE(FAIL,'injected receipt failure'); END",id.simple())).execute(pool).await?;
         }
+        if mode == "source-head-unavailable" {
+            sqlx::query("UPDATE workspaces SET container_ref=NULL WHERE id=?")
+                .bind(source_workspace.id)
+                .execute(pool)
+                .await?;
+        }
         let result = advance(deployment, next).await;
         if mode.ends_with("receipt-crash") {
             ensure!(result.is_err() && git(&["rev-parse", "main"])? == candidate);
@@ -812,6 +848,51 @@ async fn exercise(deployment: &DeploymentImpl, instance: &std::path::Path) -> an
                     && end.payload.published
                     && git(&["rev-parse", "main"])? == candidate
             );
+            if mode == "source-head-unavailable" {
+                ensure!(
+                    end.payload.sources[0].done_result.as_deref()
+                        == Some("not changed: source HEAD unavailable")
+                );
+                ensure!(end.payload.sources[1].done_result.as_deref() == Some("done"));
+                for (i, selected) in end.payload.sources.iter().enumerate() {
+                    let actual: Uuid =
+                        sqlx::query_scalar("SELECT status_id FROM local_issues WHERE id=?")
+                            .bind(selected.selection.card_id)
+                            .fetch_one(pool)
+                            .await?;
+                    ensure!(actual == if i == 0 { selected.status_id } else { status });
+                }
+                let reservations: i64 = sqlx::query_scalar(
+                    "SELECT COUNT(*) FROM integration_reservations WHERE run_id=?",
+                )
+                .bind(id)
+                .fetch_one(pool)
+                .await?;
+                ensure!(reservations == 0);
+                // A receipt replay must preserve both the held source and a
+                // successfully completed source that a human later reopens.
+                sqlx::query("UPDATE local_issues SET status_id=? WHERE id=?")
+                    .bind(end.payload.sources[1].status_id)
+                    .bind(end.payload.sources[1].selection.card_id)
+                    .execute(pool)
+                    .await?;
+                let heads = end
+                    .payload
+                    .sources
+                    .iter()
+                    .map(|source| (source.selection.workspace_id, source.commit.clone()))
+                    .collect();
+                let replay = IntegrationRun::complete_cards(pool, id, &heads).await?;
+                ensure!(
+                    replay.payload.sources[0].done_result == end.payload.sources[0].done_result
+                );
+                let actual: Uuid =
+                    sqlx::query_scalar("SELECT status_id FROM local_issues WHERE id=?")
+                        .bind(end.payload.sources[1].selection.card_id)
+                        .fetch_one(pool)
+                        .await?;
+                ensure!(actual == end.payload.sources[1].status_id);
+            }
             let diagnostic = action(
                 deployment,
                 call(Uuid::new_v4(), "inspect", &candidate, None),
