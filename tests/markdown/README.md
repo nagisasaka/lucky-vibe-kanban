@@ -38,11 +38,25 @@ IMPORTANT sample produces an investigation-only teal-border candidate image;
 that candidate is never written to product CSS.
 
 Visual context: this inert fixture uses `bg-primary` for the comparison surface.
-It does not reproduce the authenticated application's `bg-secondary` Issue pane;
-these screenshots cannot establish that parent surface's contrast. Product and
-fixture background colors are not changed by the break fix.
+The Issue component below it now has a `bg-secondary` outer surface matching
+the Issue pane token; it still uses synthetic data and inert callbacks, not an
+authenticated application session. Product background colors remain unchanged.
 
 These are regression fixtures, not a public preview server. Use the existing
 managed DevServer workflow for preview2; verify its authentication, isolated
 backend data context and ownership before startup. Do not expose this fixture
 through a new unauthenticated route or connect it to shared development data.
+
+For Issue title / body heading comparisons and wrapping measurements:
+
+```sh
+PLAYWRIGHT_BROWSERS_PATH=/opt/lvk-browsers MARKDOWN_HEADINGS=1 node tests/markdown/reading.mjs
+```
+
+This also runs the existing reading regressions. The additional comparison uses
+the actual Issue panel with a long Japanese title at 390/800px in both themes.
+It captures the original scale, two candidate scales and the final product CSS,
+checks title text/scroll dimensions, heading order and title/body editing, and
+compares document heading sizes between both renderers in view/edit states.
+Images and measurements go to ignored `.build/markdown-heading-review/`. Candidate
+CSS is injected only into the test browser; no saved Markdown or backend is used.

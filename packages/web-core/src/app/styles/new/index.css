@@ -1263,7 +1263,7 @@ html {
 }
 
 .issue-detail-title {
-  font-size: 1.5rem;
+  font-size: 1.75rem;
   line-height: 1.35;
   font-weight: 600;
 }
@@ -1331,13 +1331,13 @@ html {
   color: hsl(var(--text-high));
 }
 .markdown-body h1 {
-  font-size: 1.8em;
+  font-size: 1.5em;
 }
 .markdown-body h2 {
-  font-size: 1.45em;
+  font-size: 1.3em;
 }
 .markdown-body h3 {
-  font-size: 1.2em;
+  font-size: 1.15em;
 }
 .markdown-body h4 {
   font-size: 1.05em;

@@ -91,6 +91,7 @@ const client = new QueryClient();
 const noop = () => {};
 function Fixture() {
   const [value, setValue] = useState(source);
+  const [title, setTitle] = useState('本文と目次');
   const [key, setKey] = useState('first');
   const [editing, setEditing] = useState(false);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
@@ -100,6 +101,7 @@ function Fixture() {
   api.lineBreakSource = lineBreakSource;
   api.changes ??= [];
   api.changeBody = setValue;
+  api.changeTitle = setTitle;
   api.switchDocument = (next = 'second') => setKey(next);
   api.setEditing = setEditing;
   api.setTheme = setTheme;
@@ -148,14 +150,18 @@ function Fixture() {
             />
           </section>
         </main>
-        <section id="issue" style={{ height: 650, width: 390 }}>
+        <section
+          id="issue"
+          className="bg-secondary text-normal"
+          style={{ height: 900, width: 390 }}
+        >
           <KanbanIssuePanel
             mode="edit"
             issueId={key}
             displayId="LOCAL-368"
             titleInputRef={titleRef}
             formData={{
-              title: '本文と目次',
+              title,
               description: value,
               statusId: 'todo',
               priority: 'medium',
@@ -169,6 +175,7 @@ function Fixture() {
             onSubmit={noop}
             onFormChange={(field, next) => {
               if (field === 'description') api.issueChanges = next;
+              if (field === 'title') setTitle(next);
             }}
             renderDescriptionEditor={(props) => <WYSIWYGEditor {...props} />}
           />
