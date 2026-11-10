@@ -369,12 +369,20 @@ async fn generated_integration_post_processing_cannot_override_manual_cancel_or_
             .bind(f.project).bind(name).bind(f.issue).execute(&f.pool).await.unwrap();
         sqlx::query("UPDATE integration_runs SET payload=json_set(payload,'$.published',json('true')) WHERE id=?")
             .bind(f.run).execute(&f.pool).await.unwrap();
-        db::models::integration::IntegrationRun::complete_cards(&f.pool, f.run)
-            .await
-            .unwrap();
-        db::models::integration::IntegrationRun::complete_cards(&f.pool, f.run)
-            .await
-            .unwrap();
+        db::models::integration::IntegrationRun::complete_cards(
+            &f.pool,
+            f.run,
+            &Default::default(),
+        )
+        .await
+        .unwrap();
+        db::models::integration::IntegrationRun::complete_cards(
+            &f.pool,
+            f.run,
+            &Default::default(),
+        )
+        .await
+        .unwrap();
         f.assert_status(name).await;
     }
 }
@@ -433,7 +441,7 @@ async fn generated_status_upgrade_preserves_reopened_published_active_issue() {
     sqlx::migrate!("./migrations").run(&f.pool).await.unwrap();
     f.assert_status("In Review").await;
     f.product_status("succeeded").await;
-    db::models::integration::IntegrationRun::complete_cards(&f.pool, f.run)
+    db::models::integration::IntegrationRun::complete_cards(&f.pool, f.run, &Default::default())
         .await
         .unwrap();
     f.assert_status("In Review").await;
@@ -447,7 +455,7 @@ async fn generated_status_legacy_dedicated_card_preserves_whole_issue_cancellati
     sqlx::migrate!("./migrations").run(&f.pool).await.unwrap();
     sqlx::query("UPDATE integration_runs SET payload=json_set(payload,'$.published',json('true')) WHERE id=?")
         .bind(f.run).execute(&f.pool).await.unwrap();
-    db::models::integration::IntegrationRun::complete_cards(&f.pool, f.run)
+    db::models::integration::IntegrationRun::complete_cards(&f.pool, f.run, &Default::default())
         .await
         .unwrap();
     f.assert_status("Cancelled").await;

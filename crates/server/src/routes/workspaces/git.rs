@@ -57,11 +57,6 @@ pub enum GitOperationError {
 }
 
 #[derive(Debug, Deserialize, Serialize, TS)]
-pub struct MergeWorkspaceRequest {
-    pub repo_id: Uuid,
-}
-
-#[derive(Debug, Deserialize, Serialize, TS)]
 pub struct PushWorkspaceRequest {
     pub repo_id: Uuid,
 }
@@ -138,7 +133,6 @@ pub fn router() -> Router<DeploymentImpl> {
     Router::new()
         .route("/status", get(get_workspace_branch_status))
         .route("/diff/ws", get(stream_diff_ws))
-        .route("/merge", post(merge_workspace))
         .route("/push", post(push_workspace_branch))
         .route("/push/force", post(force_push_workspace_branch))
         .route("/rebase", post(rebase_workspace))
@@ -162,22 +156,6 @@ async fn require_git_workspace(
     Ok(next.run(request).await)
 }
 
-async fn resolve_vibe_kanban_identifier(
-    deployment: &DeploymentImpl,
-    local_workspace_id: Uuid,
-) -> String {
-    match sqlx::query_scalar::<_, String>(
-        "SELECT i.simple_id FROM local_workspace_links l JOIN local_issues i ON i.id = l.issue_id WHERE l.workspace_id = ?",
-    ).bind(local_workspace_id).fetch_optional(&deployment.db().pool).await {
-        Ok(Some(simple_id)) => simple_id,
-        Ok(None) => local_workspace_id.to_string(),
-        Err(error) => {
-            tracing::warn!(%error, "Failed to resolve linked issue for merge message");
-            local_workspace_id.to_string()
-        }
-    }
-}
-
 #[axum::debug_handler]
 pub async fn stream_diff_ws(
     ws: LocalWsUpgrade,
@@ -186,141 +164,6 @@ pub async fn stream_diff_ws(
     deployment: State<DeploymentImpl>,
 ) -> impl IntoResponse {
     stream_workspace_diff_ws(ws, query, workspace, deployment).await
-}
-
-#[axum::debug_handler]
-pub async fn merge_workspace(
-    Extension(workspace): Extension<Workspace>,
-    State(deployment): State<DeploymentImpl>,
-    Json(request): Json<MergeWorkspaceRequest>,
-) -> Result<ResponseJson<ApiResponse<()>>, ApiError> {
-    let pool = &deployment.db().pool;
-    db::models::integration::guard_workspace(pool, workspace.id).await?;
-
-    let workspace_repo =
-        WorkspaceRepo::find_by_workspace_and_repo_id(pool, workspace.id, request.repo_id)
-            .await?
-            .ok_or(RepoError::NotFound)?;
-
-    let repo = WorkspaceRepo::find_repo_for_workspace(pool, workspace.id, workspace_repo.repo_id)
-        .await?
-        .ok_or(RepoError::NotFound)?;
-
-    let merges = Merge::find_by_workspace_and_repo_id(pool, workspace.id, request.repo_id).await?;
-    let has_open_pr = merges
-        .iter()
-        .any(|m| matches!(m, Merge::Pr(pr) if matches!(pr.pr_info.status, MergeStatus::Open)));
-    if has_open_pr {
-        return Err(ApiError::BadRequest(
-            "Cannot merge directly when a pull request is open for this repository.".to_string(),
-        ));
-    }
-
-    let is_target_remote = deployment
-        .git()
-        .is_remote_branch(&repo.path, &workspace_repo.target_branch)?;
-    if is_target_remote {
-        return Err(ApiError::BadRequest(
-            "Cannot merge directly into a remote branch. Please create a pull request instead."
-                .to_string(),
-        ));
-    }
-
-    let container_ref = deployment
-        .container()
-        .ensure_container_exists(&workspace)
-        .await?;
-    let workspace_path = Path::new(&container_ref);
-    let worktree_path = repo.worktree_dir(workspace_path);
-
-    let workspace_label = workspace.name.as_deref().unwrap_or(&workspace.branch);
-    let vk_id = resolve_vibe_kanban_identifier(&deployment, workspace.id).await;
-    let commit_message = format!("{} (vibe-kanban {})", workspace_label, vk_id);
-
-    let memory = db::models::repository_state::RepositoryMemoryStore::existing_for_repository(
-        &deployment.db().pool,
-        &repo.name,
-        repo.id,
-    )
-    .await?;
-    let _integration_lock = memory
-        .as_ref()
-        .map(|store| store.try_integration_lock())
-        .transpose()?;
-    let mut memory_integration = None;
-    let mut semantic_message = None;
-    if let Some(store) = &memory {
-        semantic_message = services::services::repository_memory::prepare_workspace_source(
-            pool,
-            deployment.git(),
-            &repo,
-            &workspace,
-            &worktree_path,
-            &workspace_repo.target_branch,
-            deployment.config().read().await.manifest_in_commit_body,
-        )
-        .await
-        .map_err(|error| ApiError::BadRequest(error.to_string()))?;
-        memory_integration = Some(
-            services::services::repository_memory::prepare_integration(
-                store,
-                workspace.id,
-                &workspace_repo.target_branch,
-                deployment
-                    .git()
-                    .get_branch_oid(&repo.path, &workspace_repo.target_branch)?,
-            )
-            .await
-            .map_err(|error| ApiError::BadRequest(error.to_string()))?,
-        );
-    }
-
-    let summary = semantic_message.as_deref().unwrap_or(&commit_message);
-    let integration_message = memory_integration.as_ref().map(|record| {
-        services::services::repository_memory::integration_commit_message(summary, record.id)
-    });
-    let merge_result = deployment.git().merge_changes(
-        &repo.path,
-        &worktree_path,
-        &workspace.branch,
-        &workspace_repo.target_branch,
-        integration_message.as_deref().unwrap_or(summary),
-    );
-    let merge_commit_id = match merge_result {
-        Ok(commit) => commit,
-        Err(error) => {
-            if let (Some(store), Some(integration)) = (&memory, &mut memory_integration) {
-                integration.source_error = Some(error.to_string());
-                store.save_integration(integration).await?;
-            }
-            return Err(error.into());
-        }
-    };
-
-    if let (Some(store), Some(integration)) = (&memory, &mut memory_integration) {
-        integration.integrated_commit = Some(merge_commit_id.clone());
-        store.save_integration(integration).await?;
-    }
-
-    Merge::create_direct(
-        pool,
-        workspace.id,
-        workspace_repo.repo_id,
-        &workspace_repo.target_branch,
-        &merge_commit_id,
-    )
-    .await?;
-
-    deployment
-        .track_if_analytics_allowed(
-            "task_attempt_merged",
-            serde_json::json!({
-                "workspace_id": workspace.id.to_string(),
-            }),
-        )
-        .await;
-
-    Ok(ResponseJson(ApiResponse::success(())))
 }
 
 pub async fn push_workspace_branch(

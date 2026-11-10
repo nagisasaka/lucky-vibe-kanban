@@ -82,6 +82,9 @@ pub struct IntegrationPayload {
     /// Immutable initial worker Create envelope for restart/redelivery.
     #[serde(default)]
     pub worker_dispatch: Option<serde_json::Value>,
+    /// Adopted reference Skill and public Manifests, saved alongside the initial dispatch.
+    #[serde(default)]
+    pub reference_materials: Option<serde_json::Value>,
     /// Initial user instruction to omit validation; actual decisions are recorded in evidence.
     #[serde(default)]
     pub skip_validation: bool,
@@ -340,7 +343,11 @@ impl IntegrationRun {
     }
     /// Card effect and its durable receipt commit together. Reload under the
     /// SQLite writer lock, so concurrent recovery cannot re-Done a reopened Card.
-    pub async fn complete_cards(pool: &SqlitePool, id: Uuid) -> Result<Self, sqlx::Error> {
+    pub async fn complete_cards(
+        pool: &SqlitePool,
+        id: Uuid,
+        source_heads: &std::collections::HashMap<Uuid, String>,
+    ) -> Result<Self, sqlx::Error> {
         let mut tx = pool.begin_with("BEGIN IMMEDIATE").await?;
         let mut run: Self = sqlx::query_as("SELECT * FROM integration_runs WHERE id=?")
             .bind(id)
@@ -366,6 +373,23 @@ impl IntegrationRun {
             }
             sqlx::query("DELETE FROM integration_reservations WHERE run_id=? AND resource_kind='card' AND resource_key=?")
                 .bind(id).bind(resource_key(source.selection.card_id)).execute(&mut *tx).await?;
+            let head = source_heads
+                .get(&source.selection.workspace_id)
+                .ok_or_else(|| sqlx::Error::Protocol("Source HEAD observation missing".into()))?;
+            let active: bool = sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM agent_runs WHERE workspace_id=? AND status NOT IN ('succeeded','failed','cancelled','crashed','audit_failed'))")
+                .bind(source.selection.workspace_id).fetch_one(&mut *tx).await?;
+            if head != &source.commit || active {
+                source.done_result = Some(
+                    match (head != &source.commit, active) {
+                        (true, true) => "not changed: source HEAD changed and Run active",
+                        (true, false) => "not changed: source HEAD changed",
+                        (false, true) => "not changed: source Run active",
+                        _ => unreachable!(),
+                    }
+                    .into(),
+                );
+                continue;
+            }
             let count = if let Some(done) = done {
                 sqlx::query("UPDATE local_issues SET status_id=?,completed_at=datetime('now','subsec'),updated_at=datetime('now','subsec') WHERE id=? AND project_id=?")
                     .bind(done).bind(source.selection.card_id).bind(run.project_id).execute(&mut *tx).await?.rows_affected()
@@ -530,6 +554,152 @@ pub(crate) mod tests {
         )
     }
 
+    async fn complete_cards(pool: &SqlitePool, id: Uuid) -> Result<IntegrationRun, sqlx::Error> {
+        let run = IntegrationRun::find(pool, id).await?;
+        let heads = run
+            .payload
+            .sources
+            .iter()
+            .map(|s| (s.selection.workspace_id, s.commit.clone()))
+            .collect();
+        IntegrationRun::complete_cards(pool, id, &heads).await
+    }
+
+    #[tokio::test]
+    async fn done_is_held_only_for_adopted_head_or_active_run() {
+        for (changed, active) in [(true, false), (false, true), (true, true), (false, false)] {
+            let (pool, mut run, done) = fixture().await;
+            let source = run.payload.sources[0].clone();
+            run.payload.published = true;
+            run.save(&pool).await.unwrap();
+            // Source reservations are historical fixture data; normal admission has none.
+            sqlx::query("DELETE FROM integration_reservations")
+                .execute(&pool)
+                .await
+                .unwrap();
+            if active {
+                let session = Session::create(
+                    &pool,
+                    &CreateSession {
+                        executor: None,
+                        name: None,
+                    },
+                    Uuid::new_v4(),
+                    source.selection.workspace_id,
+                )
+                .await
+                .unwrap();
+                let agent = Uuid::new_v4();
+                sqlx::query("INSERT INTO agent_runs(id,session_id,workspace_id,request_id,idempotency_key,correlation_id,schema_version,payload_version,runtime_profile_id,provider_id,workspace_mode,workspace_path,status,request_envelope) VALUES(?,?,?,?,?,?,1,1,'CODEX','codex','isolated_worktree','/fixture','running','{}')")
+                    .bind(agent).bind(session.id).bind(source.selection.workspace_id).bind(Uuid::new_v4()).bind(agent.to_string()).bind(Uuid::new_v4()).execute(&pool).await.unwrap();
+            }
+            // Text/revision changes are irrelevant, including alongside both negative checks.
+            sqlx::query("UPDATE local_issues SET title='recorded decision',description='new text' WHERE id=?").bind(source.selection.card_id).execute(&pool).await.unwrap();
+            let heads = [(
+                source.selection.workspace_id,
+                if changed {
+                    "b".repeat(40)
+                } else {
+                    source.commit.clone()
+                },
+            )]
+            .into_iter()
+            .collect();
+            let completed = IntegrationRun::complete_cards(&pool, run.id, &heads)
+                .await
+                .unwrap();
+            assert!(completed.payload.published);
+            let status: Uuid = sqlx::query_scalar("SELECT status_id FROM local_issues WHERE id=?")
+                .bind(source.selection.card_id)
+                .fetch_one(&pool)
+                .await
+                .unwrap();
+            assert_eq!(
+                status,
+                if changed || active {
+                    source.status_id
+                } else {
+                    done
+                }
+            );
+            assert_eq!(
+                completed.payload.sources[0].done_result.as_deref() == Some("done"),
+                !changed && !active
+            );
+        }
+    }
+
+    #[tokio::test]
+    async fn active_run_in_another_workspace_of_same_issue_does_not_hold_done() {
+        let (pool, mut run, _) = fixture().await;
+        sqlx::query("DELETE FROM integration_reservations")
+            .execute(&pool)
+            .await
+            .unwrap();
+        let peer = Workspace::create(
+            &pool,
+            &CreateWorkspace {
+                branch: "other".into(),
+                name: None,
+            },
+            Uuid::new_v4(),
+        )
+        .await
+        .unwrap();
+        let session = Session::create(
+            &pool,
+            &CreateSession {
+                executor: None,
+                name: None,
+            },
+            Uuid::new_v4(),
+            peer.id,
+        )
+        .await
+        .unwrap();
+        sqlx::query(
+            "INSERT INTO local_workspace_links(workspace_id,issue_id,project_id) VALUES(?,?,?)",
+        )
+        .bind(peer.id)
+        .bind(run.payload.sources[0].selection.card_id)
+        .bind(run.project_id)
+        .execute(&pool)
+        .await
+        .unwrap();
+        let agent = Uuid::new_v4();
+        sqlx::query("INSERT INTO agent_runs(id,session_id,workspace_id,request_id,idempotency_key,correlation_id,schema_version,payload_version,runtime_profile_id,provider_id,workspace_mode,workspace_path,status,request_envelope) VALUES(?,?,?,?,?,?,1,1,'CODEX','codex','isolated_worktree','/fixture','running','{}')")
+            .bind(agent).bind(session.id).bind(peer.id).bind(Uuid::new_v4()).bind(agent.to_string()).bind(Uuid::new_v4()).execute(&pool).await.unwrap();
+        run.workspace_id = Some(peer.id); // Even the Auto-merge Workspace is outside Done eligibility.
+        run.payload.published = true;
+        run.save(&pool).await.unwrap();
+        let completed = complete_cards(&pool, run.id).await.unwrap();
+        assert_eq!(
+            completed.payload.sources[0].done_result.as_deref(),
+            Some("done")
+        );
+    }
+
+    #[tokio::test]
+    async fn missing_head_observation_does_not_mean_unchanged() {
+        let (pool, mut run, _) = fixture().await;
+        run.payload.published = true;
+        run.save(&pool).await.unwrap();
+        assert!(
+            IntegrationRun::complete_cards(&pool, run.id, &Default::default())
+                .await
+                .is_err()
+        );
+        assert!(
+            IntegrationRun::find(&pool, run.id)
+                .await
+                .unwrap()
+                .payload
+                .sources[0]
+                .done_result
+                .is_none()
+        );
+    }
+
     #[tokio::test]
     async fn instruction_permission_is_limited_to_exact_owned_integration_execution() {
         let (pool, mut run, _) = fixture().await;
@@ -618,7 +788,7 @@ pub(crate) mod tests {
             .await
             .is_err()
         );
-        assert!(IntegrationRun::complete_cards(&pool, run.id).await.is_err());
+        assert!(complete_cards(&pool, run.id).await.is_err());
         assert!(
             sqlx::query("INSERT INTO integration_reservations VALUES('workspace',?,?)")
                 .bind(resource_key(s.selection.workspace_id))
@@ -786,7 +956,7 @@ pub(crate) mod tests {
             .execute(&pool)
             .await
             .unwrap();
-        let complete = IntegrationRun::complete_cards(&pool, run.id).await.unwrap();
+        let complete = complete_cards(&pool, run.id).await.unwrap();
         assert!(
             complete.payload.sources[0]
                 .done_result
@@ -807,7 +977,7 @@ pub(crate) mod tests {
         let (pool, mut run, done) = fixture().await;
         run.payload.published = true;
         run.save(&pool).await.unwrap();
-        let completed = IntegrationRun::complete_cards(&pool, run.id).await.unwrap();
+        let completed = complete_cards(&pool, run.id).await.unwrap();
         let source = &completed.payload.sources[0];
         assert_eq!(source.done_result.as_deref(), Some("done"));
         let status: Uuid = sqlx::query_scalar("SELECT status_id FROM local_issues WHERE id=?")
@@ -822,7 +992,7 @@ pub(crate) mod tests {
             .execute(&pool)
             .await
             .unwrap();
-        IntegrationRun::complete_cards(&pool, run.id).await.unwrap();
+        complete_cards(&pool, run.id).await.unwrap();
         let status: Uuid = sqlx::query_scalar("SELECT status_id FROM local_issues WHERE id=?")
             .bind(source.selection.card_id)
             .fetch_one(&pool)
@@ -845,7 +1015,7 @@ pub(crate) mod tests {
             .execute(&pool)
             .await
             .unwrap();
-        let completed = IntegrationRun::complete_cards(&pool, run.id).await.unwrap();
+        let completed = complete_cards(&pool, run.id).await.unwrap();
         assert!(
             completed.payload.sources[0]
                 .done_result
@@ -890,7 +1060,7 @@ pub(crate) mod tests {
                     .await
                     .unwrap();
             }
-            let completed = IntegrationRun::complete_cards(&pool, run.id).await.unwrap();
+            let completed = complete_cards(&pool, run.id).await.unwrap();
             assert!(
                 completed.payload.sources[0]
                     .done_result
@@ -984,7 +1154,7 @@ pub(crate) mod tests {
                 .await
                 .unwrap();
         }
-        let result = IntegrationRun::complete_cards(&pool, run.id).await.unwrap();
+        let result = complete_cards(&pool, run.id).await.unwrap();
         assert!(
             result.payload.sources[0]
                 .done_result
@@ -1000,7 +1170,7 @@ pub(crate) mod tests {
         run.payload.published = true;
         run.save(&pool).await.unwrap();
         sqlx::query("CREATE TRIGGER fail_integration_receipt BEFORE UPDATE OF payload ON integration_runs BEGIN SELECT RAISE(ABORT,'injected receipt failure'); END;").execute(&pool).await.unwrap();
-        assert!(IntegrationRun::complete_cards(&pool, run.id).await.is_err());
+        assert!(complete_cards(&pool, run.id).await.is_err());
         let status: Uuid = sqlx::query_scalar("SELECT status_id FROM local_issues WHERE id=?")
             .bind(run.payload.sources[0].selection.card_id)
             .fetch_one(&pool)
@@ -1021,11 +1191,7 @@ pub(crate) mod tests {
             .await
             .unwrap();
         assert_eq!(
-            IntegrationRun::complete_cards(&pool, run.id)
-                .await
-                .unwrap()
-                .payload
-                .sources[0]
+            complete_cards(&pool, run.id).await.unwrap().payload.sources[0]
                 .done_result
                 .as_deref(),
             Some("done")
@@ -1174,7 +1340,7 @@ pub(crate) mod tests {
         );
         run.payload.published = true;
         run.save(&pool).await.unwrap();
-        let completed = IntegrationRun::complete_cards(&pool, run.id).await.unwrap();
+        let completed = complete_cards(&pool, run.id).await.unwrap();
         assert_eq!(completed.payload.card_done_result.as_deref(), Some("done"));
         for card in [linked, original.payload.sources[0].selection.card_id] {
             assert_eq!(

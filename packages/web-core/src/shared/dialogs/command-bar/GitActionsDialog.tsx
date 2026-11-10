@@ -28,9 +28,13 @@ export interface GitActionsDialogProps {
 
 interface GitActionsDialogContentProps {
   attempt: WorkspaceWithSession;
+  onAutoMerge: () => void;
 }
 
-function GitActionsDialogContent({ attempt }: GitActionsDialogContentProps) {
+function GitActionsDialogContent({
+  attempt,
+  onAutoMerge,
+}: GitActionsDialogContentProps) {
   const { t } = useTranslation('tasks');
   const { data: branchStatus, error: branchStatusError } = useBranchStatus(
     attempt.id
@@ -80,6 +84,7 @@ function GitActionsDialogContent({ attempt }: GitActionsDialogContentProps) {
       )}
       <GitOperations
         selectedAttempt={attempt}
+        onAutoMerge={onAutoMerge}
         branchStatus={branchStatus ?? null}
         branchStatusError={branchStatusError}
         isAttemptRunning={isAttemptRunning}
@@ -122,7 +127,10 @@ const GitActionsDialogImpl = create<GitActionsDialogProps>(
                 key={attempt.id}
                 sessionId={attempt.session?.id}
               >
-                <GitActionsDialogContent attempt={attempt} />
+                <GitActionsDialogContent
+                  attempt={attempt}
+                  onAutoMerge={() => modal.hide()}
+                />
               </ExecutionProcessesProvider>
             </GitOperationsProvider>
           )}

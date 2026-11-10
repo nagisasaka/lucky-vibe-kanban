@@ -169,6 +169,8 @@ function renderRowContent(
       <DisplayConversationEntry
         expansionKey={entry.displayIdentity ?? entry.patchKey}
         canonicalEntryKey={entry.patchKey}
+        messageId={entry.messageId}
+        agentRunId={entry.canonical?.agentRunId}
         entry={entry.content}
         aggregatedGroup={null}
         aggregatedDiffGroup={null}

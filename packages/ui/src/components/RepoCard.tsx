@@ -26,7 +26,7 @@ import { SplitButton, type SplitButtonOption } from './SplitButton';
 export type RepoAction =
   | 'pull-request'
   | 'link-pr'
-  | 'merge'
+  | 'auto-merge'
   | 'change-target'
   | 'rebase'
   | 'push';
@@ -85,7 +85,7 @@ export function RepoCard({
 
   // Hide "Open pull request" and "Link pull request" when PR is already open
   // Hide "Link pull request" when any PR is already linked (open or merged)
-  // Hide "merge" option when PR is already open or target branch is remote
+  // Auto-merge publishes to local targets; PR tracking remains independent.
   const hasPrOpen = prStatus === 'open';
   const hasPrLinked = !!prNumber;
   const availableActionOptions = useMemo(() => {
@@ -100,12 +100,12 @@ export function RepoCard({
         label: t('repoCard.linkPullRequest'),
         icon: LinkIcon,
       },
-      { value: 'merge', label: t('repoCard.merge'), icon: GitMergeIcon },
+      { value: 'auto-merge', label: t('repoCard.autoMerge'), icon: GitMergeIcon },
     ];
     return options.filter((opt) => {
       if (opt.value === 'pull-request' && hasPrOpen) return false;
       if (opt.value === 'link-pr' && hasPrLinked) return false;
-      if (opt.value === 'merge' && (hasPrOpen || isTargetRemote)) return false;
+      if (opt.value === 'auto-merge' && isTargetRemote) return false;
       return true;
     });
   }, [hasPrOpen, hasPrLinked, isTargetRemote, t]);

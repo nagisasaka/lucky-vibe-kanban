@@ -1,3 +1,7 @@
+import { useQuery } from '@tanstack/react-query';
+import { integrationApi } from '@/shared/lib/integrationApi';
+import { IntegrationInitialMessage } from './IntegrationInitialMessage';
+import { isIntegrationInitialMessage } from '../model/integrationInitialMessage';
 import { useMemo, useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
@@ -82,6 +86,8 @@ import {
 type Props = {
   expansionKey: string;
   canonicalEntryKey?: string;
+  messageId?: string;
+  agentRunId?: string;
   executionProcessId?: string;
   canonicalActive?: boolean;
   toolTiming?: PatchTypeWithKey['toolTiming'];
@@ -526,6 +532,17 @@ function DisplayConversationEntry(props: Props) {
       null)
     : null;
   const sessionId = workspaceWithSession?.session?.id;
+  const integrationId =
+    workspaceWithSession.execution_owner?.kind === 'integration'
+      ? workspaceWithSession.execution_owner.run_id
+      : null;
+  const integration = useQuery({
+    queryKey: ['integrations', integrationId],
+    queryFn: () => integrationApi.get(integrationId!),
+    enabled: !!integrationId,
+    staleTime: Infinity,
+  });
+
   const executorCanFork = !!(
     workspaceWithSession?.session?.executor &&
     capabilities?.[workspaceWithSession.session.executor]?.includes(
@@ -593,6 +610,35 @@ function DisplayConversationEntry(props: Props) {
       return renderToolUseEntry(entryType, entry, props, t, executionProcess);
 
     case 'user_message':
+      if (integrationId && integration.isPending)
+        return (
+          <p>
+            {t('integrationPanel.title')} · {t('integrationPanel.waiting')}
+          </p>
+        );
+      if (integrationId && integration.isError)
+        return (
+          <div role="alert">
+            <p>{t('integrationPanel.loadError')}</p>
+            <details>
+              <summary>{t('integrationPanel.savedInput')}</summary>
+              <pre className="whitespace-pre-wrap break-words">
+                {entry.content}
+              </pre>
+            </details>
+          </div>
+        );
+      if (
+        integration.data &&
+        isIntegrationInitialMessage(
+          integration.data,
+          props.agentRunId,
+          props.messageId,
+          entry.content
+        )
+      ) {
+        return <IntegrationInitialMessage run={integration.data} />;
+      }
       return (
         <UserMessageEntry
           pendingDelivery={props.pendingDelivery}

@@ -71,40 +71,6 @@ impl Merge {
         }
     }
 
-    /// Create a direct merge record
-    pub async fn create_direct(
-        pool: &SqlitePool,
-        workspace_id: Uuid,
-        repo_id: Uuid,
-        target_branch_name: &str,
-        merge_commit: &str,
-    ) -> Result<DirectMerge, sqlx::Error> {
-        let id = Uuid::new_v4();
-        let now = Utc::now();
-
-        sqlx::query!(
-            "INSERT INTO merges (id, workspace_id, repo_id, merge_type, merge_commit, created_at, target_branch_name)
-            VALUES (?, ?, ?, 'direct', ?, ?, ?)",
-            id,
-            workspace_id,
-            repo_id,
-            merge_commit,
-            now,
-            target_branch_name,
-        )
-        .execute(pool)
-        .await?;
-
-        Ok(DirectMerge {
-            id,
-            workspace_id,
-            repo_id,
-            merge_commit: merge_commit.to_string(),
-            target_branch_name: target_branch_name.to_string(),
-            created_at: now,
-        })
-    }
-
     /// Find all merges for a workspace (returns both direct merges and PRs).
     /// Direct merges come from the `merges` table, PRs from `pull_requests`.
     pub async fn find_by_workspace_id(

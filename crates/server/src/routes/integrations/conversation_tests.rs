@@ -34,6 +34,11 @@ async fn isolated_conversation_repair_publication_drift_and_idempotence() -> any
             .await?;
         ensure!(response.status() == axum::http::StatusCode::NOT_FOUND);
     }
+    let retired = crate::routes::workspaces::git::router()
+        .with_state(deployment.clone())
+        .oneshot(axum::http::Request::post("/merge").body(axum::body::Body::from("{}"))?)
+        .await?;
+    ensure!(retired.status() == axum::http::StatusCode::NOT_FOUND);
     let result = exercise(&deployment, &instance).await;
     shutdown.cancel();
     result
@@ -42,6 +47,7 @@ async fn isolated_conversation_repair_publication_drift_and_idempotence() -> any
 async fn exercise(deployment: &DeploymentImpl, instance: &std::path::Path) -> anyhow::Result<()> {
     for (index, mode) in [
         "success",
+        "multi-source",
         "safe-drift",
         "drift",
         "wiki-error",
@@ -62,6 +68,11 @@ async fn exercise(deployment: &DeploymentImpl, instance: &std::path::Path) -> an
     .into_iter()
     .enumerate()
     {
+        if let Ok(selected) = std::env::var("LVK_INTEGRATION_TEST_MODES")
+            && !selected.split(',').any(|value| value == mode)
+        {
+            continue;
+        }
         eprintln!("isolated integration scenario: {mode}");
         let drift = mode == "drift";
         let wiki_error = mode == "wiki-error";
@@ -79,6 +90,7 @@ async fn exercise(deployment: &DeploymentImpl, instance: &std::path::Path) -> an
         std::fs::write(root.join("code"), "base")?;
         std::fs::write(root.join("AGENTS.md"), "# User rules\n")?;
         std::fs::write(root.join("CLAUDE.md"), "@AGENTS.md\n")?;
+        utils::lvk_directory::LvkDirectory::open(&root)?.ensure_runtime_ignores()?;
         git(&["add", "."])?;
         git(&["commit", "-m", "base"])?;
         let base = git(&["rev-parse", "HEAD"])?;
@@ -102,6 +114,31 @@ async fn exercise(deployment: &DeploymentImpl, instance: &std::path::Path) -> an
         ] {
             sqlx::query("INSERT INTO local_project_statuses(id,project_id,name,color,sort_order) VALUES(?,?,?,'blue',?)").bind(id).bind(project).bind(name).bind(order).execute(pool).await?;
         }
+        let source_workspace = frozen_source_workspace(
+            pool,
+            &repo,
+            &instance.join(format!("{mode}-source")),
+            "source",
+        )
+        .await?;
+        let second_source = if mode == "multi-source" {
+            git(&["checkout", "-b", "source-two", &base])?;
+            std::fs::write(root.join("second-code"), "second source")?;
+            git(&["add", "second-code"])?;
+            git(&["commit", "-m", "second source"])?;
+            let commit = git(&["rev-parse", "HEAD"])?;
+            git(&["checkout", "main"])?;
+            let ws = frozen_source_workspace(
+                pool,
+                &repo,
+                &instance.join(format!("{mode}-source-two")),
+                "source-two",
+            )
+            .await?;
+            Some((commit, ws))
+        } else {
+            None
+        };
         let id = Uuid::new_v4();
         let workspace = Uuid::new_v4();
         let mut run = IntegrationRun {
@@ -126,7 +163,7 @@ async fn exercise(deployment: &DeploymentImpl, instance: &std::path::Path) -> an
                 sources: vec![IntegrationSource {
                     selection: IntegrationSelection {
                         card_id: Uuid::new_v4(),
-                        workspace_id: Uuid::new_v4(),
+                        workspace_id: source_workspace.id,
                         expected_commit: source.clone(),
                     },
                     branch: "source".into(),
@@ -149,6 +186,15 @@ async fn exercise(deployment: &DeploymentImpl, instance: &std::path::Path) -> an
             created_at: String::new(),
             updated_at: String::new(),
         };
+        if let Some((commit, ws)) = &second_source {
+            let mut selected = run.payload.sources[0].clone();
+            selected.selection.card_id = Uuid::new_v4();
+            selected.selection.workspace_id = ws.id;
+            selected.selection.expected_commit = commit.clone();
+            selected.commit = commit.clone();
+            selected.branch = ws.branch.clone();
+            run.payload.sources.push(selected);
+        }
         run.create_with_card(pool, &format!("candidate-{id}"), "conversation fixture")
             .await?;
         let ws = Workspace::find_by_id(pool, workspace).await?.unwrap();
@@ -183,11 +229,18 @@ async fn exercise(deployment: &DeploymentImpl, instance: &std::path::Path) -> an
         run.agent_run_id = Some(agent);
         run.save(pool).await?;
         support::git(&checkout, &["merge", "--ff-only", &source])?;
+        let source = if let Some((commit, _)) = &second_source {
+            support::git(&checkout, &["merge", "--no-edit", commit])?;
+            support::git(&checkout, &["rev-parse", "HEAD"])?
+        } else {
+            source
+        };
         let call = |request_id, action: &str, sha: &str, command: Option<&str>| WorkerRequest {
             workspace_id: workspace,
             agent_run_id: agent,
             request_id,
             action: action.into(),
+            reference_section: None,
             expected_commit: Some(sha.into()),
             code_commit: None,
             wiki_commit: None,
@@ -196,6 +249,22 @@ async fn exercise(deployment: &DeploymentImpl, instance: &std::path::Path) -> an
             reason: "fixture decision".into(),
             remaining_risk: "fixture only".into(),
         };
+        if mode == "success" {
+            support::git(&checkout, &["checkout", "--detach"])?;
+            let diagnostic =
+                action(deployment, call(Uuid::new_v4(), "inspect", &source, None)).await?;
+            ensure!(diagnostic["candidate_branch"] == format!("refs/heads/{}", ws.branch));
+            ensure!(diagnostic["repository_path"] == checkout.to_string_lossy().as_ref());
+            ensure!(diagnostic["branch_error"].is_string());
+            ensure!(
+                action(deployment, call(Uuid::new_v4(), "skip", &source, None))
+                    .await
+                    .unwrap_err()
+                    .to_string()
+                    .contains("private branch")
+            );
+            support::git(&checkout, &["checkout", &ws.branch])?;
+        }
         let failed = call(Uuid::new_v4(), "verify", &source, Some("test -f repaired"));
         action(deployment, failed).await?;
         ensure!(IntegrationRun::find(pool, id).await?.payload.evidence[0].result == "failed");
@@ -743,6 +812,32 @@ async fn exercise(deployment: &DeploymentImpl, instance: &std::path::Path) -> an
                     && end.payload.published
                     && git(&["rev-parse", "main"])? == candidate
             );
+            let diagnostic = action(
+                deployment,
+                call(Uuid::new_v4(), "inspect", &candidate, None),
+            )
+            .await?;
+            ensure!(diagnostic["published"] == true);
+            if mode == "success" {
+                use tower::ServiceExt;
+                let response = super::super::router()
+                    .with_state(deployment.clone())
+                    .oneshot(
+                        axum::http::Request::get(format!("/integrations/{id}/inspect"))
+                            .body(axum::body::Body::empty())?,
+                    )
+                    .await?;
+                ensure!(response.status() == axum::http::StatusCode::OK);
+                let body = axum::body::to_bytes(response.into_body(), 65536).await?;
+                let read: serde_json::Value = serde_json::from_slice(&body)?;
+                ensure!(read["data"]["candidate_branch"] == format!("refs/heads/{}", ws.branch));
+                ensure!(read["data"]["published"] == true);
+            }
+            ensure!(
+                action(deployment, call(Uuid::new_v4(), "skip", &candidate, None))
+                    .await
+                    .is_err()
+            );
             let ws = Workspace::find_by_id(pool, workspace).await?.unwrap();
             let detail: Option<String> = sqlx::query_scalar(
                 "SELECT attempt_result FROM generated_issue_workspaces WHERE workspace_id=?",
@@ -751,9 +846,58 @@ async fn exercise(deployment: &DeploymentImpl, instance: &std::path::Path) -> an
             .fetch_one(pool)
             .await?;
             ensure!(ws.archived, "archive receipt: {detail:?}");
+            if let Some((commit, _)) = &second_source {
+                ensure!(deployment.git().is_ancestor(&root, commit, &candidate)?);
+                ensure!(std::fs::read_to_string(root.join("second-code"))? == "second source");
+                ensure!(
+                    git(&["reflog", "show", "main", "--format=%H"])?
+                        .lines()
+                        .filter(|line| *line == candidate)
+                        .count()
+                        == 1
+                );
+            }
         }
     }
     anyhow::Ok(())
+}
+
+async fn frozen_source_workspace(
+    pool: &sqlx::SqlitePool,
+    repo: &Repo,
+    container: &std::path::Path,
+    branch: &str,
+) -> anyhow::Result<Workspace> {
+    let workspace = Workspace::create(
+        pool,
+        &db::models::workspace::CreateWorkspace {
+            branch: branch.into(),
+            name: None,
+        },
+        Uuid::new_v4(),
+    )
+    .await?;
+    db::models::workspace_repo::WorkspaceRepo::create_many(
+        pool,
+        workspace.id,
+        &[db::models::workspace_repo::CreateWorkspaceRepo {
+            repo_id: repo.id,
+            target_branch: "main".into(),
+        }],
+    )
+    .await?;
+    std::fs::create_dir_all(container)?;
+    let checkout = container.join(repo.worktree_name());
+    support::git(
+        &repo.path,
+        &["worktree", "add", checkout.to_str().unwrap(), branch],
+    )?;
+    sqlx::query("UPDATE workspaces SET container_ref=? WHERE id=?")
+        .bind(container.to_str().unwrap())
+        .bind(workspace.id)
+        .execute(pool)
+        .await?;
+    Ok(workspace)
 }
 
 /// Audits belong to the isolated instance and are removed with that instance.

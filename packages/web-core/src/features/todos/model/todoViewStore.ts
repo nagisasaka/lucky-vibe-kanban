@@ -4,6 +4,17 @@ type Draft = { id: string; body: string; category: string };
 interface TodoViewState {
   projectViews: Record<string, 'kanban' | 'todos' | 'design-notes'>;
   integrationProject: string | null;
+  integrationSelection: {
+    projectId: string;
+    workspaceId: string;
+    repositoryId: string;
+  } | null;
+  openWorkspaceIntegration: (selection: {
+    projectId: string;
+    workspaceId: string;
+    repositoryId: string;
+  }) => void;
+  clearIntegrationSelection: () => void;
   drafts: Record<string, Draft>;
   workspaceProjects: Record<string, string>;
   setProjectView: (
@@ -19,6 +30,13 @@ interface TodoViewState {
 export const useTodoViewStore = create<TodoViewState>((set) => ({
   projectViews: {},
   integrationProject: null,
+  integrationSelection: null,
+  openWorkspaceIntegration: (integrationSelection) =>
+    set({
+      integrationSelection,
+      integrationProject: integrationSelection.projectId,
+    }),
+  clearIntegrationSelection: () => set({ integrationSelection: null }),
   drafts: {},
   workspaceProjects: {},
   setProjectView: (project, view) =>

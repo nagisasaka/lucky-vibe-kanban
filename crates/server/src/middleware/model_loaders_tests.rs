@@ -67,7 +67,6 @@ async fn public_workspace_and_session_routes_reject_before_handler_side_effects(
     };
     let workspace_paths = [
         "",
-        "/git/merge",
         "/git/rebase",
         "/git/push",
         "/repos",
@@ -159,7 +158,7 @@ async fn public_workspace_and_session_routes_reject_before_handler_side_effects(
         ),
         (
             reqwest::Method::POST,
-            format!("workspaces/{}/git/merge", ordinary.id),
+            format!("workspaces/{}/git/push", ordinary.id),
         ),
     ] {
         assert_eq!(

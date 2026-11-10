@@ -251,7 +251,6 @@ fn generate_types_content() -> String {
         server::routes::workspaces::git::ChangeTargetBranchResponse::decl(),
         server::routes::workspaces::repos::AddWorkspaceRepoRequest::decl(),
         server::routes::workspaces::repos::AddWorkspaceRepoResponse::decl(),
-        server::routes::workspaces::git::MergeWorkspaceRequest::decl(),
         server::routes::workspaces::git::PushWorkspaceRequest::decl(),
         server::routes::workspaces::git::RenameBranchRequest::decl(),
         server::routes::workspaces::git::RenameBranchResponse::decl(),

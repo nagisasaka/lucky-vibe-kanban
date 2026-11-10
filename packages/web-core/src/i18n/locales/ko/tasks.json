@@ -136,8 +136,6 @@
     },
     "states": {
       "merged": "병합됨!",
-      "merging": "병합 중...",
-      "merge": "병합",
       "rebasing": "리베이스 중...",
       "rebase": "리베이스",
       "pushed": "푸시됨!",

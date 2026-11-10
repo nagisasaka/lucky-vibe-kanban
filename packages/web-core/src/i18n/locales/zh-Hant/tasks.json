@@ -106,8 +106,6 @@
     },
     "states": {
       "merged": "已合併！",
-      "merging": "合併中...",
-      "merge": "合併",
       "rebasing": "重基底中...",
       "rebase": "重基底",
       "pushed": "已推送！",

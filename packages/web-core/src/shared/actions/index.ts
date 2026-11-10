@@ -1,3 +1,4 @@
+import { useTodoViewStore } from '@/features/todos/model/todoViewStore';
 import { isProjectDestination } from '@/shared/lib/routes/appNavigation';
 import { errorDiagnostic } from '@/shared/lib/errorDiagnostic';
 import {
@@ -75,7 +76,6 @@ import { ConfirmDialog } from '@vibe/ui/components/ConfirmDialog';
 import { ChangeTargetDialog } from '@vibe/ui/components/ChangeTargetDialog';
 import { DeleteWorkspaceDialog } from '@vibe/ui/components/DeleteWorkspaceDialog';
 import { RebaseDialog } from '@/shared/dialogs/command-bar/RebaseDialog';
-import { ResolveConflictsDialog } from '@/shared/dialogs/tasks/ResolveConflictsDialog';
 import { RenameWorkspaceDialog } from '@vibe/ui/components/RenameWorkspaceDialog';
 import { ProjectsGuideDialog } from '@vibe/ui/components/ProjectsGuideDialog';
 import { CreatePRDialog } from '@/shared/dialogs/command-bar/CreatePRDialog';
@@ -1013,100 +1013,26 @@ export const Actions = {
     },
   },
 
-  GitMerge: {
-    id: 'git-merge',
-    label: (_workspace, t = i18n.getFixedT(null, 'tasks')) =>
-      t('tasks:actionLabels.merge'),
+  GitAutoMerge: {
+    id: 'git-auto-merge',
+    label: () => i18n.t('common:integrationPanel.title'),
     icon: GitMergeIcon,
     shortcut: 'X M',
     requiresTarget: ActionTargetType.GIT,
     isVisible: (ctx) => ctx.hasWorkspace && ctx.hasGitRepos,
     execute: async (ctx, workspaceId, repoId) => {
-      // Check for existing conflicts first
-      const branchStatus = await workspacesApi.getBranchStatus(workspaceId);
-      const repoStatus = branchStatus?.find((s) => s.repo_id === repoId);
-
-      // Check if repo has an open PR - cannot merge directly
-      const hasOpenPR = repoStatus?.merges?.some(
-        (m: Merge) => m.type === 'pr' && m.pr_info.status === 'open'
+      const linked = await resolveLinkedIssue(
+        workspaceId,
+        ctx.remoteWorkspaces
       );
-      if (hasOpenPR) {
-        await ConfirmDialog.show({
-          title: () => i18n.t('tasks:actionDialogs.cannotMerge'),
-          message: () => i18n.t('tasks:actionDialogs.openPrBody'),
-          confirmText: () => i18n.t('common:ok'),
-          showCancelButton: false,
-        });
-        return;
-      }
-
-      const hasConflicts =
-        repoStatus?.is_rebase_in_progress ||
-        (repoStatus?.conflicted_files?.length ?? 0) > 0;
-
-      if (hasConflicts && repoStatus) {
-        // Skip showing the dialog if a process is already running
-        // (e.g. an AI session is already resolving these conflicts)
-        const isRunning = ctx.activeWorkspaces.find(
-          (w) => w.id === workspaceId
-        )?.isRunning;
-        if (isRunning) return;
-
-        // Show resolve conflicts dialog
-        const workspace = await getWorkspace(ctx.queryClient, workspaceId);
-        const result = await ResolveConflictsDialog.show({
-          workspaceId,
-          conflictOp: repoStatus.conflict_op ?? 'merge',
-          sourceBranch: workspace.branch,
-          targetBranch: repoStatus.target_branch_name,
-          conflictedFiles: repoStatus.conflicted_files ?? [],
-          repoName: repoStatus.repo_name,
-        });
-
-        if (result.action === 'resolved') {
-          invalidateWorkspaceQueries(ctx.queryClient, workspaceId);
-        }
-        return;
-      }
-
-      // Check if branch is behind - need to rebase first
-      const commitsBehind = repoStatus?.commits_behind ?? 0;
-      if (commitsBehind > 0) {
-        // Prompt user to rebase first
-        const confirmRebase = await ConfirmDialog.show({
-          title: () => i18n.t('tasks:actionDialogs.rebaseRequired'),
-          message: () =>
-            i18n.t('tasks:actionDialogs.behind', {
-              count: commitsBehind,
-              formattedCount: new Intl.NumberFormat(
-                i18n.resolvedLanguage || 'en'
-              ).format(commitsBehind),
-            }),
-          confirmText: () => i18n.t('tasks:actionLabels.rebase'),
-          cancelText: () => i18n.t('common:buttons.cancel'),
-        });
-
-        if (confirmRebase === 'confirmed') {
-          // Open rebase dialog - it loads branches/status internally
-          await RebaseDialog.show({
-            workspaceId: workspaceId,
-            repoId,
-          });
-        }
-        return;
-      }
-
-      const confirmResult = await ConfirmDialog.show({
-        title: () => i18n.t('tasks:actionDialogs.mergeBranch'),
-        message: () => i18n.t('tasks:actionDialogs.mergeBody'),
-        confirmText: () => i18n.t('tasks:actionLabels.merge'),
-        cancelText: () => i18n.t('common:buttons.cancel'),
+      if (!linked)
+        throw new Error(i18n.t('common:integrationPanel.linkRequired'));
+      useTodoViewStore.getState().openWorkspaceIntegration({
+        projectId: linked.remoteProjectId,
+        workspaceId,
+        repositoryId: repoId,
       });
-
-      if (confirmResult === 'confirmed') {
-        await workspacesApi.merge(workspaceId, { repo_id: repoId });
-        invalidateWorkspaceQueries(ctx.queryClient, workspaceId);
-      }
+      ctx.appNavigation.goToProject(linked.remoteProjectId);
     },
   },
 

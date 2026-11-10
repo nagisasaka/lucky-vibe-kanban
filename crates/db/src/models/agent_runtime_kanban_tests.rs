@@ -582,6 +582,9 @@ async fn kanban_done_followup_and_integration_receipts_use_shared_lifecycle() {
         let (pool, mut integration, done) = fixture().await;
         let issue = integration.payload.sources[0].selection.card_id;
         let workspace = integration.payload.sources[0].selection.workspace_id;
+        let heads = [(workspace, integration.payload.sources[0].commit.clone())]
+            .into_iter()
+            .collect();
         let session = sqlx::query_scalar("SELECT id FROM sessions WHERE workspace_id=?")
             .bind(workspace)
             .fetch_one(&pool)
@@ -611,7 +614,7 @@ async fn kanban_done_followup_and_integration_receipts_use_shared_lifecycle() {
         .await;
         integration.payload.published = true;
         integration.save(&pool).await.unwrap();
-        IntegrationRun::complete_cards(&pool, integration.id)
+        IntegrationRun::complete_cards(&pool, integration.id, &heads)
             .await
             .unwrap();
         assert_eq!(board_status(&pool, issue).await, "Done");
@@ -651,7 +654,7 @@ async fn kanban_done_followup_and_integration_receipts_use_shared_lifecycle() {
         .await;
         assert_eq!(board_status(&pool, issue).await, "In Progress");
         // A past publication's repeated completion must not undo the new run.
-        IntegrationRun::complete_cards(&pool, integration.id)
+        IntegrationRun::complete_cards(&pool, integration.id, &heads)
             .await
             .unwrap();
         assert_eq!(board_status(&pool, issue).await, "In Progress");
@@ -665,7 +668,7 @@ async fn kanban_done_followup_and_integration_receipts_use_shared_lifecycle() {
         )
         .await;
         assert_eq!(board_status(&pool, issue).await, "In Review");
-        IntegrationRun::complete_cards(&pool, integration.id)
+        IntegrationRun::complete_cards(&pool, integration.id, &heads)
             .await
             .unwrap();
         assert_eq!(board_status(&pool, issue).await, "In Review");
@@ -676,7 +679,7 @@ async fn kanban_done_followup_and_integration_receipts_use_shared_lifecycle() {
         sqlx::query("INSERT INTO integration_runs(id,request_key,project_id,repository_id,storage_identity,target_ref,status,payload) VALUES(?,?,?,?, '/git/common','refs/heads/test','queued',?)")
             .bind(next_id).bind(next_id.to_string()).bind(integration.project_id)
             .bind(integration.repository_id).bind(&integration.payload).execute(&pool).await.unwrap();
-        let completed = IntegrationRun::complete_cards(&pool, next_id)
+        let completed = IntegrationRun::complete_cards(&pool, next_id, &heads)
             .await
             .unwrap();
         assert_eq!(

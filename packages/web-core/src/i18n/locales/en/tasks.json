@@ -287,8 +287,6 @@
     },
     "states": {
       "merged": "Merged!",
-      "merging": "Merging...",
-      "merge": "Merge",
       "rebasing": "Rebasing...",
       "rebase": "Rebase",
       "pushed": "Pushed!",
@@ -736,7 +734,6 @@
     "start_dev_server": "Start dev server",
     "create_pull_request": "Create Pull Request",
     "link_pull_request": "Link Pull Request",
-    "merge": "Merge",
     "rebase": "Rebase",
     "change_target_branch": "Change Target Branch",
     "push": "Push",
@@ -799,13 +796,6 @@
     "linkedPr": "Linked PR #{{number}}",
     "noPr": "No Pull Request Found",
     "noPrBody": "No open pull request was found matching this branch. Make sure a PR exists for this branch on the remote.",
-    "cannotMerge": "Cannot Merge",
-    "openPrBody": "This repository has an open pull request. Close or merge the PR before merging directly.",
-    "rebaseRequired": "Rebase Required",
-    "behind_one": "Your branch is {{formattedCount}} commit behind the target branch. Would you like to rebase first?",
-    "behind_other": "Your branch is {{formattedCount}} commits behind the target branch. Would you like to rebase first?",
-    "mergeBranch": "Merge Branch",
-    "mergeBody": "Are you sure you want to merge this branch into the target branch?",
     "deleteIssues_one": "Delete {{formattedCount}} Issue",
     "deleteIssues_other": "Delete {{formattedCount}} Issues",
     "deleteIssuesBody_one": "Are you sure you want to delete {{formattedCount}} issue? This action cannot be undone.",
@@ -876,7 +866,7 @@
   "repoCard": {
     "openPullRequest": "Open pull request",
     "linkPullRequest": "Link pull request",
-    "merge": "Merge"
+    "autoMerge": "Auto-merge"
   },
   "sessionRuntime": {
     "blocked": {
@@ -942,7 +932,6 @@
   },
   "gitNotice": {
     "rebaseUnconfirmed": "The rebase result could not be confirmed. Check the repository state before retrying.",
-    "mergeUnconfirmed": "The merge result could not be confirmed. Check the repository state before retrying.",
     "forcePushUnconfirmed": "The force-push result could not be confirmed. Check the remote branch before retrying.",
     "pushUnconfirmed": "The push result could not be confirmed. Check the remote branch before retrying.",
     "targetUnconfirmed": "The target branch change could not be confirmed. Check the current branch before retrying.",

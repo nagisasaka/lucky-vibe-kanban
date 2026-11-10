@@ -547,7 +547,35 @@ async fn complete_cards(
     deployment: &DeploymentImpl,
     run: IntegrationRun,
 ) -> anyhow::Result<IntegrationRun> {
-    let result = IntegrationRun::complete_cards(&deployment.db().pool, run.id).await?;
+    let mut heads = std::collections::HashMap::new();
+    for source in &run.payload.sources {
+        if source.done_result.is_some() {
+            continue;
+        }
+        let repo = db::models::workspace_repo::WorkspaceRepo::find_repo_for_workspace(
+            &deployment.db().pool,
+            source.selection.workspace_id,
+            run.repository_id,
+        )
+        .await?
+        .context("Source repository missing during Done reconciliation")?;
+        let workspace = Workspace::find_by_id(&deployment.db().pool, source.selection.workspace_id)
+            .await?
+            .context("Source Workspace missing during Done reconciliation")?;
+        let container = workspace
+            .container_ref
+            .as_ref()
+            .context("Source checkout missing during Done reconciliation")?;
+        let root = super::repository_checkout(
+            Path::new(container),
+            workspace.is_direct_folder(),
+            &repo.path,
+            repo.worktree_name(),
+        );
+        let head = super::support::git(&root, &["rev-parse", "HEAD"])?;
+        heads.insert(workspace.id, head);
+    }
+    let result = IntegrationRun::complete_cards(&deployment.db().pool, run.id, &heads).await?;
     admission::release(&deployment.db().pool, run.id).await?;
     Ok(result)
 }

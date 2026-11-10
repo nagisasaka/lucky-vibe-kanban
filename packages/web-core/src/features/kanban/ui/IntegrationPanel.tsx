@@ -1,7 +1,8 @@
+import { readUtility } from '@/shared/lib/projectUtilitiesApi';
 import { formatUtcDateTime } from '@/shared/lib/date';
 import { useTranslation } from 'react-i18next';
 import { useTodoViewStore } from '@/features/todos/model/todoViewStore';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@vibe/ui/components/Button';
 import {
@@ -28,6 +29,7 @@ import {
 import {
   integrationApi,
   integrationCanCancel,
+  integrationCanRecover,
   integrationDoneLabel,
   integrationStatusLabel,
   integrationWikiLabel,
@@ -113,6 +115,13 @@ export function IntegrationPanel({
     queryFn: () => integrationApi.repositories(projectId),
     enabled: open,
   });
+  const wiki = useQuery({
+    queryKey: ['repository-wiki-enabled', repositoryId],
+    queryFn: () =>
+      readUtility<{ enabled: boolean }>(`/api/repos/${repositoryId}/memory`),
+    enabled: open && !!repositoryId,
+    staleTime: 30000,
+  });
   const branches = useQuery({
     queryKey: ['integration-branches', repositoryId],
     queryFn: () => repoApi.getBranches(repositoryId),
@@ -124,6 +133,43 @@ export function IntegrationPanel({
     enabled: open && !!repositoryId,
     refetchInterval: open ? 10000 : false,
   });
+  const workspaceSelection = useTodoViewStore((s) => s.integrationSelection);
+  const clearWorkspaceSelection = useTodoViewStore(
+    (s) => s.clearIntegrationSelection
+  );
+  useEffect(() => {
+    if (workspaceSelection?.projectId !== projectId) return;
+    setRepositoryId(workspaceSelection.repositoryId);
+    if (!activities.data || repositoryId !== workspaceSelection.repositoryId)
+      return;
+    const activity = activities.data.find(
+      (a) => a.workspace_id === workspaceSelection.workspaceId
+    );
+    if (
+      activity?.current_issue_id &&
+      activity.observed_head_oid &&
+      activity.target_branch
+    ) {
+      pendingRequest.current = null;
+      setError(null);
+      setErrorDetail(null);
+      setTarget(activity.target_branch);
+      setSelected({
+        [activity.current_issue_id]: {
+          card_id: activity.current_issue_id,
+          workspace_id: activity.workspace_id,
+          expected_commit: activity.observed_head_oid,
+        },
+      });
+      clearWorkspaceSelection();
+    }
+  }, [
+    workspaceSelection,
+    projectId,
+    repositoryId,
+    activities.data,
+    clearWorkspaceSelection,
+  ]);
   const runs = useQuery({
     queryKey,
     queryFn: () => integrationApi.list(projectId),
@@ -200,6 +246,7 @@ export function IntegrationPanel({
           if (!value) {
             onClearFocus();
             setRequestedProject(null);
+            clearWorkspaceSelection();
           }
         }}
       >
@@ -207,7 +254,8 @@ export function IntegrationPanel({
           <DialogHeader>
             <DialogTitle>{t('integrationPanel.title')}</DialogTitle>
             <DialogDescription>
-              {t('integrationPanel.description')}
+              {t('integrationPanel.description')}{' '}
+              {t('integrationPanel.combinedCandidate')}
             </DialogDescription>
           </DialogHeader>
           <div className="overflow-y-auto space-y-base min-h-0">
@@ -500,6 +548,20 @@ export function IntegrationPanel({
                 </span>
               </span>
             </label>
+            <p>
+              {t('integrationPanel.validationPolicy')}:{' '}
+              {skipValidation
+                ? t('integrationPanel.skipRequested')
+                : t('integrationPanel.riskBased')}
+            </p>
+            <p>
+              {t('integrationPanel.wikiPolicy')}:{' '}
+              {wiki.data
+                ? wiki.data.enabled
+                  ? t('integrationPanel.wikiSameCandidate')
+                  : t('integrationPanel.wikiDisabled')
+                : t('integrationPanel.wikiUnknown')}
+            </p>
             <Button
               onClick={start}
               disabled={
@@ -563,6 +625,7 @@ export function IntegrationPanel({
                       <p>{run.payload.semantic_summary}</p>
                     </div>
                   )}
+                  <IntegrationDiagnostics id={run.id} />
                   <details>
                     <summary>{t('integrationPanel.candidateDetails')}</summary>
                     <p className="break-all">
@@ -582,6 +645,18 @@ export function IntegrationPanel({
                         : t('integrationPanel.notPublished')}{' '}
                     · Wiki: {integrationWikiLabel(run.payload.wiki_result, t)}
                   </p>
+                  {run.payload.published && (
+                    <p className="break-all">
+                      {t('integrationPanel.resultCommit')}:{' '}
+                      <code>{run.payload.result_commit}</code>
+                    </p>
+                  )}
+                  {run.payload.stop && (
+                    <div role="status" className="space-y-base">
+                      <p>{run.error}</p>
+                      <p>{run.payload.stop.next_action}</p>
+                    </div>
+                  )}
                   {(run.error ||
                     run.payload.stop ||
                     run.payload.wiki_result) && (
@@ -654,13 +729,11 @@ export function IntegrationPanel({
                           : t('integrationPanel.cancel')}
                       </Button>
                     )}
-                    {(['recovery_required', 'post_processing'].includes(
-                      run.status
-                    ) ||
-                      (run.payload.published &&
-                        run.payload.wiki_result?.startsWith(
-                          'semantic outbox pending:'
-                        ))) && (
+                    {integrationCanRecover(
+                      run.status,
+                      run.payload.published,
+                      run.payload.wiki_result
+                    ) && (
                       <Button
                         size="sm"
                         variant="outline"
@@ -682,5 +755,28 @@ export function IntegrationPanel({
         </DialogContent>
       </Dialog>
     </>
+  );
+}
+
+function IntegrationDiagnostics({ id }: { id: string }) {
+  const { t } = useTranslation('common');
+  const [open, setOpen] = useState(false);
+  const query = useQuery({
+    queryKey: ['integration-inspect', id],
+    queryFn: () => integrationApi.inspect(id),
+    enabled: open,
+    refetchInterval: open ? 5000 : false,
+  });
+  return (
+    <details onToggle={(event) => setOpen(event.currentTarget.open)}>
+      <summary>{t('integrationPanel.diagnostics')}</summary>
+      {query.error ? (
+        <p role="alert">{String(query.error)}</p>
+      ) : (
+        <pre className="whitespace-pre-wrap break-all">
+          {JSON.stringify(query.data, null, 2)}
+        </pre>
+      )}
+    </details>
   );
 }

@@ -1,3 +1,5 @@
+import { useActions } from '@/shared/hooks/useActions';
+import { Actions } from '@/shared/actions';
 import {
   ArrowRight,
   GitBranch as GitBranchIcon,
@@ -35,6 +37,7 @@ interface GitOperationsProps {
   selectedBranch: string | null;
   layout?: 'horizontal' | 'vertical';
   issueIdentifier?: string;
+  onAutoMerge?: () => void;
 }
 
 export type GitOperationsInputs = Omit<GitOperationsProps, 'selectedAttempt'>;
@@ -47,8 +50,10 @@ function GitOperations({
   selectedBranch,
   layout = 'horizontal',
   issueIdentifier,
+  onAutoMerge,
 }: GitOperationsProps) {
   const { t } = useTranslation('tasks');
+  const { executeAction } = useActions();
 
   const { repos, selectedRepoId, setSelectedRepoId } = useWorkspaceRepo(
     selectedAttempt.id
@@ -58,10 +63,8 @@ function GitOperations({
   const isChangingTargetBranch = git.states.changeTargetBranchPending;
 
   // Local state for git operations
-  const [merging, setMerging] = useState(false);
   const [pushing, setPushing] = useState(false);
   const [rebasing, setRebasing] = useState(false);
-  const [mergeSuccess, setMergeSuccess] = useState(false);
   const [pushSuccess, setPushSuccess] = useState(false);
 
   // Target branch change handlers
@@ -144,11 +147,7 @@ function GitOperations({
     };
   }, [getSelectedRepoStatus]);
 
-  const mergeButtonLabel = useMemo(() => {
-    if (mergeSuccess) return t('git.states.merged');
-    if (merging) return t('git.states.merging');
-    return t('git.states.merge');
-  }, [mergeSuccess, merging, t]);
+  const mergeButtonLabel = t('common:integrationPanel.title');
 
   const rebaseButtonLabel = useMemo(() => {
     if (rebasing) return t('git.states.rebasing');
@@ -167,8 +166,11 @@ function GitOperations({
   }, [mergeInfo.hasOpenPR, pushSuccess, pushing, t]);
 
   const handleMergeClick = async () => {
-    // Directly perform merge without checking branch status
-    await performMerge();
+    const repoId = getSelectedRepoId();
+    if (repoId) {
+      await executeAction(Actions.GitAutoMerge, selectedAttempt.id, repoId);
+      onAutoMerge?.();
+    }
   };
 
   const handlePushClick = async () => {
@@ -181,21 +183,6 @@ function GitOperations({
       setTimeout(() => setPushSuccess(false), 2000);
     } finally {
       setPushing(false);
-    }
-  };
-
-  const performMerge = async () => {
-    try {
-      setMerging(true);
-      const repoId = getSelectedRepoId();
-      if (!repoId) return;
-      await git.actions.merge({
-        repoId,
-      });
-      setMergeSuccess(true);
-      setTimeout(() => setMergeSuccess(false), 2000);
-    } finally {
-      setMerging(false);
     }
   };
 
@@ -471,15 +458,10 @@ function GitOperations({
             <Button
               onClick={handleMergeClick}
               disabled={
-                mergeInfo.hasMergedPR ||
-                mergeInfo.hasOpenPR ||
-                merging ||
                 hasConflictsCalculated ||
                 isAttemptRunning ||
                 selectedRepoStatus?.is_target_remote ||
-                ((selectedRepoStatus?.commits_ahead ?? 0) === 0 &&
-                  !pushSuccess &&
-                  !mergeSuccess)
+                ((selectedRepoStatus?.commits_ahead ?? 0) === 0 && !pushSuccess)
               }
               variant="outline"
               size="xs"
@@ -501,8 +483,7 @@ function GitOperations({
                   (selectedRepoStatus?.remote_commits_ahead ?? 0) === 0) ||
                 ((selectedRepoStatus?.commits_ahead ?? 0) === 0 &&
                   (selectedRepoStatus?.remote_commits_ahead ?? 0) === 0 &&
-                  !pushSuccess &&
-                  !mergeSuccess)
+                  !pushSuccess)
               }
               variant="outline"
               size="xs"

@@ -408,3 +408,36 @@ async fn direct_folder_parent_uses_member_checkout_and_remains_a_target_writer()
     assert!(targets.contains(&peer_root));
     assert_eq!(writers, vec![peer.id]);
 }
+
+#[tokio::test]
+async fn compact_worker_input_keeps_fixed_identity_and_adopted_references_separate() {
+    let (_pool, mut run, _, _) = fixture().await;
+    run.payload.sources[0].description = Some("historical: investigation only".into());
+    run.payload.reference_materials =
+        Some(serde_json::json!({"public_manifests":"historical: do not publish"}));
+    run.payload.instructions = "今回の追加指示を原文で保持".into();
+    let mut second = run.payload.sources[0].clone();
+    second.commit = "b".repeat(40);
+    second.selection.workspace_id = Uuid::new_v4();
+    run.payload.sources.push(second);
+    let identity = services::services::integration_admission::worker_context(
+        &run,
+        "candidate",
+        Path::new("/candidate/repo"),
+    );
+    assert!(identity.contains("repository作業path=/candidate/repo"));
+    assert!(identity.contains("候補branch=refs/heads/candidate"));
+    assert!(identity.contains(&run.payload.observed_target));
+    let content = super::super::support::worker_content(&run, &identity).unwrap();
+    assert!(content.contains(&identity));
+    assert!(content.contains(&"a".repeat(40)) && content.contains(&"b".repeat(40)));
+    assert!(content.contains(&run.payload.instructions));
+    assert!(content.contains("reference_section=sources"));
+    assert!(content.contains("相互作用") && content.contains("remaining_risk"));
+    assert!(!content.contains("historical:"));
+    assert!(!content.contains("---\nname:"));
+    assert_eq!(
+        run.payload.sources[0].description.as_deref(),
+        Some("historical: investigation only")
+    );
+}

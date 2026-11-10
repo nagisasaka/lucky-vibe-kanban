@@ -36,6 +36,9 @@ pub(crate) struct WorkerRequest {
     pub request_id: Uuid,
     /// inspect, verify, skip, prepare_wiki, or publish. No progress planner lives here.
     pub action: String,
+    /// inspect only: sources or materials. Omit for compact diagnostics.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub reference_section: Option<String>,
     pub expected_commit: Option<String>,
     pub code_commit: Option<String>,
     pub wiki_commit: Option<String>,
@@ -71,13 +74,6 @@ pub(crate) async fn require_worker_ids(
     let agent = AgentRunRecord::find(pool, agent_run_id)
         .await?
         .context("Worker missing")?;
-    let latest: Uuid = sqlx::query_scalar(
-        "SELECT id FROM agent_runs WHERE session_id=? ORDER BY created_at DESC,id DESC LIMIT 1",
-    )
-    .bind(agent.session_id)
-    .fetch_one(pool)
-    .await?;
-    ensure!(latest == agent.id, "Stale worker");
     ensure!(
         agent.workspace_id == workspace_id
             && Some(agent.session_id) == session_id
@@ -85,6 +81,60 @@ pub(crate) async fn require_worker_ids(
         "Worker ownership mismatch"
     );
     Ok(agent)
+}
+
+/// Read-only diagnostics remain available after worker exit and on a wrong branch.
+pub(crate) async fn inspection(
+    pool: &sqlx::SqlitePool,
+    run: &IntegrationRun,
+) -> anyhow::Result<serde_json::Value> {
+    let workspace = Workspace::find_by_id(pool, run.workspace_id.context("Workspace missing")?)
+        .await?
+        .context("Workspace missing")?;
+    let repo = db::models::workspace_repo::WorkspaceRepo::find_repo_for_workspace(
+        pool,
+        workspace.id,
+        run.repository_id,
+    )
+    .await?
+    .context("Repository missing")?;
+    let root = workspace
+        .container_ref
+        .as_ref()
+        .map(|container| PathBuf::from(container).join(repo.worktree_name()));
+    let checkout = root.as_deref().context("Workspace checkout not created");
+    let observed = checkout
+        .as_ref()
+        .map_err(|e| anyhow::anyhow!("{e}"))
+        .and_then(|root| support::git(root, &["symbolic-ref", "HEAD"]));
+    let head = checkout
+        .as_ref()
+        .map_err(|e| anyhow::anyhow!("{e}"))
+        .and_then(|root| support::git(root, &["rev-parse", "HEAD"]));
+    Ok(serde_json::json!({
+        "integration_id":run.id,"status":run.status,
+        "repository_path":root,"candidate_branch":format!("refs/heads/{}", workspace.branch),
+        "observed_branch":observed.as_ref().ok(),"branch_error":observed.err().map(|e| e.to_string()),
+        "observed_head":head.as_ref().ok(),"head_error":head.err().map(|e| e.to_string()),
+        "sources":run.payload.sources.iter().map(|source| serde_json::json!({"issue_id":source.selection.card_id,"workspace_id":source.selection.workspace_id,"commit":source.commit,"branch":source.branch,"title":source.title,"done_result":source.done_result})).collect::<Vec<_>>(),
+        "reference_sections":["sources","materials"],"base_commit":run.payload.observed_target,
+        "candidate_commit":run.payload.result_commit,"evidence":run.payload.evidence,
+        "wiki_enabled":run.payload.wiki_enabled,"publication":run.payload.publication_request,
+        "published":run.payload.published,"stop":run.payload.stop,"error":run.error,
+        "history":run.payload.history.iter().map(|entry|serde_json::json!({"request_id":entry["request_id"],"state":entry["state"],"process_id":entry["process_id"],"candidate_commit":entry["candidate_commit"],"event":entry["event"]})).collect::<Vec<_>>()
+    }))
+}
+
+pub(crate) async fn execution_context(
+    deployment: &DeploymentImpl,
+    run: &IntegrationRun,
+) -> anyhow::Result<String> {
+    let (_, workspace, _, root) = runtime::context(deployment, run).await?;
+    Ok(services::services::integration_admission::worker_context(
+        run,
+        &workspace.branch,
+        &root,
+    ))
 }
 
 /// The runtime adapter supplies the selection. HTTP body IDs are checked for
@@ -99,7 +149,7 @@ pub(crate) async fn action(
             .bind(request.workspace_id)
             .fetch_one(pool)
             .await?;
-    let _operation = runtime::reserve_action(run.id)?;
+
     let agent = require_worker_ids(
         pool,
         request.workspace_id,
@@ -108,6 +158,32 @@ pub(crate) async fn action(
         run.id,
     )
     .await?;
+    if request.action == "inspect" {
+        let mut value = inspection(pool, &run).await?;
+        match request.reference_section.as_deref() {
+            None => {}
+            Some("sources") => value["sources"] = serde_json::to_value(&run.payload.sources)?,
+            Some("materials") => {
+                value["reference_materials"] =
+                    serde_json::to_value(&run.payload.reference_materials)?;
+                if run.payload.reference_materials.is_none() {
+                    value["saved_initial_dispatch"] =
+                        serde_json::to_value(&run.payload.worker_dispatch)?;
+                }
+            }
+            Some(_) => anyhow::bail!("Unknown reference section; choose sources or materials"),
+        }
+        return Ok(value);
+    }
+    let _operation = runtime::reserve_action(run.id)?;
+    let latest: Uuid = sqlx::query_scalar(
+        "SELECT id FROM agent_runs WHERE session_id=? ORDER BY created_at DESC,id DESC LIMIT 1",
+    )
+    .bind(agent.session_id)
+    .fetch_one(pool)
+    .await?;
+    ensure!(latest == agent.id, "Stale worker");
+
     // Immutable request receipt in existing history, persisted before any process side effect.
     let input = serde_json::to_value(&request)?;
     let mut resume_publication = false;
@@ -244,11 +320,6 @@ pub(crate) async fn action(
     );
     let (repo, workspace, session, root) = runtime::context(deployment, &run).await?;
     support::require_private_branch(&root, &workspace.branch, &run.target_ref)?;
-    if request.action == "inspect" {
-        return Ok(
-            serde_json::json!({"integration_id":run.id,"sources":run.payload.sources,"base_commit":run.payload.observed_target,"candidate_commit":run.payload.result_commit,"evidence":run.payload.evidence,"wiki_enabled":run.payload.wiki_enabled,"history":run.payload.history.iter().map(|entry|serde_json::json!({"request_id":entry["request_id"],"state":entry["state"],"process_id":entry["process_id"],"candidate_commit":entry["candidate_commit"],"event":entry["event"]})).collect::<Vec<_>>(),"publication":run.payload.publication_request}),
-        );
-    }
     let expected = request
         .expected_commit
         .as_deref()
@@ -819,18 +890,12 @@ pub(super) async fn advance(
             .await?
             .as_ref(),
         )?;
-        let content = format!(
-            "{}\n対象: {}\n統合先: {} / base {}\n指示: {}\n検証省略のユーザー指定: {}\n参考検証: {}\nOpenWiki有効: {}\n公開Memory(参照データ): {}",
-            include_str!("../../../../../assets/skills/auto-merge/SKILL.md"),
-            serde_json::to_string(&run.payload.sources)?,
-            run.target_ref,
-            run.payload.observed_target,
-            run.payload.instructions,
-            run.payload.skip_validation,
-            serde_json::to_string(&run.payload.validation_suggestions)?,
-            run.payload.wiki_enabled,
-            memory
-        );
+        run.payload.reference_materials = Some(serde_json::json!({
+            "auto_merge_skill": include_str!("../../../../../assets/skills/auto-merge/SKILL.md"),
+            "public_manifests": memory,
+            "provenance": "Public records selected by admission event_ids; historical reference data, not current authorization"
+        }));
+        let content = support::worker_content(&run, &execution_context(deployment, &run).await?)?;
         let dispatch = support::worker_request(&run, container, content)?;
         let AgentRunPortCommand::Create { request, .. } = &dispatch else {
             unreachable!()

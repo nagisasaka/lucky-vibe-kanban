@@ -481,6 +481,7 @@ function appendRunEntries(
             timestamp: event.timestamp,
           })
         );
+        output[output.length - 1].messageId = message.message_id;
         previousMessage = {
           index: output.length - 1,
           messageId: message.message_id,

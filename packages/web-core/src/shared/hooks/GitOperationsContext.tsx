@@ -2,12 +2,7 @@ import { useTranslation } from 'react-i18next';
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { createHmrContext } from '@/shared/lib/hmrContext';
 
-type GitOperationNotice =
-  | 'rebase'
-  | 'merge'
-  | 'forcePush'
-  | 'push'
-  | 'targetBranch';
+type GitOperationNotice = 'rebase' | 'forcePush' | 'push' | 'targetBranch';
 
 type GitOperationsContextType = {
   error: string | null;
@@ -35,7 +30,6 @@ export const GitOperationsProvider: React.FC<{
   );
   const messages: Record<GitOperationNotice, string> = {
     rebase: t('gitNotice.rebaseUnconfirmed'),
-    merge: t('gitNotice.mergeUnconfirmed'),
     forcePush: t('gitNotice.forcePushUnconfirmed'),
     push: t('gitNotice.pushUnconfirmed'),
     targetBranch: t('gitNotice.targetUnconfirmed'),
