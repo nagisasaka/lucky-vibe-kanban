@@ -1049,7 +1049,8 @@ impl Codex {
         let reviewer = env
             .get("LVK_OPENWIKI_REVIEWER")
             .is_some_and(|value| value == "1");
-        if reviewer {
+        let workflow_read_only = env.get(crate::source_protection::ROOTS).is_some();
+        if reviewer || workflow_read_only {
             // A trusted server role, not a prompt or user profile preference.
             // Overrides apply to this fresh thread only; inherited user/project
             // MCP and Skill installation remains untouched for other workspaces.
@@ -1058,6 +1059,18 @@ impl Codex {
             params.permissions = None;
             params.runtime_workspace_roots = None;
             let config = params.config.get_or_insert_with(HashMap::new);
+            if workflow_read_only {
+                if let Ok(Some(protected)) = crate::source_protection::roots(env) {
+                    let name = format!("lvk-reporting-{}", uuid::Uuid::new_v4().simple());
+                    let mut profiles = serde_json::Map::new();
+                    profiles.insert(name.clone(),serde_json::json!({"extends":":read-only","filesystem":crate::source_protection::codex_filesystem(env,&protected)}));
+                    params.sandbox = None;
+                    params.permissions = Some(name);
+                    config.insert("permissions".into(), Value::Object(profiles));
+                }
+                config.insert("features.multi_agent".into(), Value::Bool(false));
+                config.insert("include_apply_patch_tool".into(), Value::Bool(false));
+            }
             config.insert("mcp_servers.openwiki.enabled".into(), Value::Bool(false));
             config.insert(
                 "skills.config".into(),
@@ -1305,6 +1318,10 @@ impl Codex {
         let extra_roots = crate::repo_skills::codex_roots(&env.repository_roots());
         let mut params = self.build_thread_start_params_with_resources(current_dir, env);
         let resource_mediator = env.get("LVK_RESOURCE_MEDIATOR").is_some_and(|v| v == "1");
+        let workflow_read_only = crate::source_protection::roots(env)?.is_some();
+        if workflow_read_only {
+            crate::source_protection::validate_launcher(&self.cmd, false)?;
+        }
         let resume_session = resume_session.map(|s| s.to_string());
 
         self.spawn_app_server(
@@ -1325,7 +1342,7 @@ impl Codex {
                             .map_err(|e| ExecutorError::Io(std::io::Error::other(e)))?;
                     let config = params.config.get_or_insert_with(HashMap::new);
                     omit_absent_openwiki_disable(config, &effective);
-                    if resource_mediator {
+                    if resource_mediator || workflow_read_only {
                         for section in ["mcp_servers", "plugins"] {
                             if let Some(entries) = effective.get(section).and_then(Value::as_object)
                             {

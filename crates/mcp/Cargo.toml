@@ -12,6 +12,7 @@ path = "src/bin/vibe_kanban_mcp.rs"
 uninlined-format-args = "allow"
 
 [dependencies]
+workflow = { path = "../workflow" }
 git = { path = "../git" }
 api-types = { path = "../api-types" }
 db = { path = "../db" }

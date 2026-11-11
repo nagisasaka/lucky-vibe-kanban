@@ -86,6 +86,12 @@ export function useWorkflowAttempts(
     queryFn: () =>
       workflowApi.listAttempts(projectId as string, issueId as string),
     enabled: !!projectId && !!issueId && enabled,
+    refetchInterval: (query) =>
+      query.state.data?.attempts.some((v) =>
+        ['ready', 'running', 'cancelling'].includes(v.status)
+      )
+        ? 5000
+        : false,
   });
 }
 

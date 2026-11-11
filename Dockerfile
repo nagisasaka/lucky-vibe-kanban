@@ -160,10 +160,12 @@ RUN apt-get update \
  && apt-get install -y --no-install-recommends \
     nginx apache2-utils openssl curl bash git git-lfs gh ripgrep less \
     build-essential libclang-dev libssl-dev pkg-config cmake ninja-build nasm \
-    python3 python3-venv unzip zip \
+    python3 python3-venv unzip zip bubblewrap socat \
  && rm -rf /var/lib/apt/lists/* \
  && npm install --global --omit=dev "@openai/codex@${CODEX_VERSION}" pnpm@10.13.1 \
- && codex --version
+ && codex --version \
+ && bwrap --version \
+ && socat -V
 
 # Pin the native Claude Code binary outside HOME so mounted user homes cannot
 # hide it. Verify the official release checksum before executing it.

@@ -554,6 +554,28 @@ export type ArenaWorkspaceExecutorConfig = { workspace_id: string, executor_conf
 
 export type ArenaMessageRequest = { target: ArenaMessageTarget, prompt: string, executor_config: ExecutorConfig, executor_configs: Array<ArenaWorkspaceExecutorConfig>, };
 
+export type Preset = "implement_review" | "research_synthesize" | "inventory_reduce";
+
+export type Engine = "CODEX" | "CLAUDE_CODE";
+
+export type Stage = { engine: Engine, model: string | null, variant: string | null, scope?: string, additions?: string, };
+
+export type PresetRequest = { preset: Preset, scope: string, additions: string,
+/**
+ * Frozen project default and source revision, filled by the server.
+ */
+project_additions: string, project_revision: number, perspectives: Array<string>,
+/**
+ * Keys: implement/review, research-1..N/synthesize, inventory/reduce.
+ */
+stages: { [key in string]?: Stage }, };
+
+export type PresetRepository = { repo_id: string, target_branch: string, };
+
+export type StartPresetRequest = { request_id: string, project_id: string, issue_id: string, workspace_id: string | null, repos: Array<PresetRepository>, parameters: PresetRequest, };
+
+export type PresetDefaults = { preset: Preset, additions: string, revision: number, };
+
 export type WorkflowTemplateResponse = { id: string, source: WorkflowSource, project_id: string | null, name: string, description: string | null, graph_json: string, revision: number, created_at: string, updated_at: string, };
 
 export type WorkflowTemplateListResponse = { workflows: Array<WorkflowTemplateResponse>, };

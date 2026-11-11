@@ -83,7 +83,7 @@ export function workflowAttemptToTaskAttempt(
     statusLabel: workflowAttemptStatusLabel(attempt.status, t),
     statusTone: workflowAttemptStatusTone(attempt.status),
     updatedAt: attempt.updated_at,
-    primaryActionLabel: t('attempts.openCanvas'),
+    primaryActionLabel: t('workflow.presets.results', 'Open results'),
     workflowId: attempt.workflow_id,
     workflowAttemptId: attempt.id,
     latestRunId: attempt.latest_run_id,

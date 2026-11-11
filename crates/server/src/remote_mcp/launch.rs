@@ -149,6 +149,9 @@ struct DefaultsArgs {
 
 #[async_trait]
 pub(super) trait LaunchActions: Send + Sync {
+    async fn workflow(&self, _args: super::workflow::WorkflowArgs) -> anyhow::Result<Value> {
+        Err(super::errors::rejection(Category::Unavailable))
+    }
     async fn attachment_transfer(
         &self,
         _name: &str,
@@ -198,6 +201,9 @@ pub(super) trait LaunchActions: Send + Sync {
 pub(super) struct ExistingLaunch(pub DeploymentImpl);
 #[async_trait]
 impl LaunchActions for ExistingLaunch {
+    async fn workflow(&self, args: super::workflow::WorkflowArgs) -> anyhow::Result<Value> {
+        super::workflow::execute(&self.0, args).await
+    }
     async fn attachment_transfer(
         &self,
         name: &str,

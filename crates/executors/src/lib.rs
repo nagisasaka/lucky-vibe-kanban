@@ -21,3 +21,5 @@ pub mod account_usage;
 mod account_usage_tests;
 
 pub mod repo_skills;
+
+pub mod source_protection;

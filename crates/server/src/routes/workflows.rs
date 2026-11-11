@@ -355,8 +355,13 @@ impl From<WorkflowRouteError> for ApiError {
     }
 }
 
+pub(super) fn require_preset_entry() -> Result<(), ApiError> {
+    Err(ApiError::BadRequest("New arbitrary Workflow/Arena launches are retired. Start a fixed preset from the Issue start dialog or workflow MCP tool; existing Run history and retry remain available.".into()))
+}
+
 pub fn router(deployment: &DeploymentImpl) -> Router<DeploymentImpl> {
     Router::new()
+        .merge(super::workflow_presets::router())
         .route(
             "/v1/projects/{project_id}/workflows",
             get(list_workflows).post(create_workflow),
@@ -450,6 +455,7 @@ async fn create_workflow(
     Path(project_id): Path<Uuid>,
     Json(request): Json<CreateWorkflowRequest>,
 ) -> Result<ResponseJson<MutationResponse<WorkflowTemplateResponse>>, ApiError> {
+    require_preset_entry()?;
     let data = create_project_workflow(&deployment.db().pool, project_id, request).await?;
     Ok(ResponseJson(MutationResponse { data, txid: txid() }))
 }
@@ -469,6 +475,7 @@ async fn create_workflow_attempt(
     Path((project_id, issue_id)): Path<(Uuid, Uuid)>,
     Json(request): Json<CreateWorkflowAttemptRequest>,
 ) -> Result<ResponseJson<MutationResponse<WorkflowAttemptResponse>>, ApiError> {
+    require_preset_entry()?;
     let workspace_resolver = DeploymentWorkflowWorkspaceResolver::new(deployment.clone());
     let data = create_issue_workflow_attempt_with_resources(
         &deployment.db().pool,
@@ -514,6 +521,7 @@ async fn run_workflow_attempt(
     Path(attempt_id): Path<Uuid>,
     Json(request): Json<RunWorkflowAttemptRequest>,
 ) -> Result<ResponseJson<MutationResponse<WorkflowRunResponse>>, ApiError> {
+    require_preset_entry()?;
     let workspace_resolver = DeploymentWorkflowWorkspaceResolver::new(deployment.clone());
     let agent_executor = DeploymentWorkflowAgentExecutor::new(deployment.clone());
     let arena_creator = DeploymentWorkflowArenaCreator::new(deployment.clone());
@@ -544,6 +552,7 @@ async fn update_workflow(
     Path(workflow_id): Path<Uuid>,
     Json(request): Json<UpdateWorkflowRequest>,
 ) -> Result<ResponseJson<MutationResponse<WorkflowTemplateResponse>>, ApiError> {
+    require_preset_entry()?;
     let data = update_workflow_template(&deployment.db().pool, workflow_id, request).await?;
     Ok(ResponseJson(MutationResponse { data, txid: txid() }))
 }
@@ -1387,14 +1396,12 @@ async fn workflow_by_id(
 
 async fn ensure_system_workflows(pool: &SqlitePool) -> Result<(), ApiError> {
     let templates = built_in_templates();
-    let mut active_workflow_ids = Vec::with_capacity(templates.len());
 
     for template in templates {
         validate_graph(&template.graph).map_err(|err| {
             ApiError::BadRequest(format!("Invalid built-in workflow graph: {err}"))
         })?;
         let workflow_id = parse_system_template_id(template.id)?;
-        active_workflow_ids.push(workflow_id);
         let graph_json = serde_json::to_string(&template.graph).map_err(|err| {
             ApiError::BadRequest(format!("Invalid built-in workflow graph JSON: {err}"))
         })?;
@@ -1457,7 +1464,7 @@ async fn ensure_system_workflows(pool: &SqlitePool) -> Result<(), ApiError> {
         .await?;
     }
 
-    prune_removed_system_workflows(pool, &active_workflow_ids).await?;
+    // Retired definitions remain readable, even without an existing Run.
 
     Ok(())
 }
@@ -1476,37 +1483,6 @@ fn parse_system_template_id(template_id: &str) -> Result<Uuid, ApiError> {
             "Invalid built-in workflow id `{template_id}`: {err}",
         ))
     })
-}
-
-async fn prune_removed_system_workflows(
-    pool: &SqlitePool,
-    active_workflow_ids: &[Uuid],
-) -> Result<(), ApiError> {
-    if active_workflow_ids.is_empty() {
-        return Ok(());
-    }
-
-    let mut query = QueryBuilder::<Sqlite>::new(
-        r#"
-        DELETE FROM workflows
-        WHERE source = 'system'
-          AND id NOT IN (
-        "#,
-    );
-    let mut separated = query.separated(", ");
-    for workflow_id in active_workflow_ids {
-        separated.push_bind(*workflow_id);
-    }
-    separated.push_unseparated(
-        r#"
-          )
-          AND id NOT IN (SELECT workflow_id FROM workflow_attempts)
-          AND id NOT IN (SELECT workflow_id FROM workflow_runs)
-        "#,
-    );
-
-    query.build().execute(pool).await?;
-    Ok(())
 }
 
 fn parse_graph_json(graph_json: &str) -> Result<WorkflowGraph, WorkflowRouteError> {
@@ -2054,6 +2030,7 @@ async fn trigger_workflow(
     Path(workflow_id): Path<Uuid>,
     Json(request): Json<TriggerWorkflowRequest>,
 ) -> Result<ResponseJson<MutationResponse<WorkflowRunResponse>>, ApiError> {
+    require_preset_entry()?;
     let workspace_resolver = DeploymentWorkflowWorkspaceResolver::new(deployment.clone());
     let agent_executor = DeploymentWorkflowAgentExecutor::new(deployment.clone());
     let arena_creator = DeploymentWorkflowArenaCreator::new(deployment.clone());

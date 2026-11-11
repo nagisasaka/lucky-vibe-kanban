@@ -705,6 +705,28 @@
     "answeredCount_other": "Respondió {{count}} preguntas"
   },
   "workflow": {
+    "presets": {
+      "title": "Workflow presets",
+      "method": "How to proceed",
+      "single": "Single agent (default)",
+      "implement_review": "Implement → independent review → stop",
+      "research_synthesize": "Research perspectives → synthesize → stop",
+      "inventory_reduce": "Inventory → reduction proposal → stop",
+      "scope": "Scope",
+      "perspectives": "Perspectives (one per line, 1–8)",
+      "additions": "Additions for this launch",
+      "projectSource": "Project additions and source revision",
+      "projectAdditions": "Project additions (fixed at each launch)",
+      "model": "Model (provider default when empty)",
+      "profile": "Profile (default when empty)",
+      "history": "Historical definitions",
+      "historyNotice": "Saved definitions remain available. Start new work from an Issue using single agent or one of the three presets. Existing Run retry uses its saved graph.",
+      "results": "Open results",
+      "start": "Start work",
+      "startDescription": "Single agent or a fixed Workflow preset",
+      "startAtIssue": "Choose single agent or a preset in the Issue start dialog. Presets return their reports and stop.",
+      "stopContract": "Reports may recommend. Adoption, fixes, deletion, merge and publication require a separate instruction. Reporting phases protect source; unavailable protection stops the phase. Temporary/cache writes needed for supported verification remain separate."
+    },
     "entry": {
       "title": "Workflow attempt",
       "subtitle": "Design the task attempt before running agents",

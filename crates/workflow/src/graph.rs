@@ -126,6 +126,14 @@ pub enum WorkflowEdgeKind {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq)]
 pub struct WorkflowNodeData {
+    /// Present only on server-compiled preset graphs. Legacy graphs keep their
+    /// original ANY/iteration semantics.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub preset_contract: Option<crate::presets::PresetRequest>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub wait_for_all: Option<bool>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub source_read_only: Option<bool>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub display_name: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]

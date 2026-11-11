@@ -33,6 +33,7 @@ struct IssueArgs {
 }
 pub(super) fn router() -> Router<DeploymentImpl> {
     Router::new()
+        .route("/mcp-stdio/workflow", post(workflow))
         .route("/mcp-stdio/issues/{operation}", post(issue))
         .route("/mcp-stdio/operation", post(operation))
         .route("/mcp-stdio/start-workspace", post(start_workspace))
@@ -717,6 +718,55 @@ async fn continue_session(
         value["session_id"] = json!(args.session_id);
     }
     Ok(Json(ApiResponse::success(value)))
+}
+
+async fn workflow(
+    State(d): State<DeploymentImpl>,
+    Json(value): Json<Value>,
+) -> Result<Json<ApiResponse<Value>>, ApiError> {
+    let actor = server_access::ACTOR
+        .try_with(Clone::clone)
+        .map_err(|_| ApiError::Forbidden("Authenticated actor required".into()))?;
+    let args: super::workflow::WorkflowArgs =
+        serde_json::from_value(value).map_err(|e| ApiError::BadRequest(e.to_string()))?;
+    // Apply the same project/Issue/Workspace authorization as the remote adapter.
+    let ids = sqlx::query_scalar::<_, Uuid>("SELECT id FROM projects")
+        .fetch_all(&d.db().pool)
+        .await?
+        .into_iter()
+        .collect();
+    let principal = super::auth::Principal {
+        subject: actor.subject.clone(),
+        scopes: actor.scopes.clone(),
+    };
+    let remote = super::Remote {
+        pool: d.db().pool.clone(),
+        runtime: None,
+        launch: Some(std::sync::Arc::new(super::launch::ExistingLaunch(d))),
+        environment: None,
+        process_instance: Uuid::new_v4(),
+        config: std::sync::Arc::new(super::config::Config {
+            public_base_url: String::new(),
+            issuer: actor.issuer,
+            #[cfg(test)]
+            introspection_endpoint: String::new(),
+            #[cfg(test)]
+            introspection_client_id: String::new(),
+            #[cfg(test)]
+            introspection_secret_env: String::new(),
+            #[cfg(test)]
+            owner_subject: actor.subject,
+            project_ids: ids,
+        }),
+    };
+    let result = super::workflow::call(
+        &remote,
+        &principal,
+        serde_json::to_value(args).map_err(|e| ApiError::BadRequest(e.to_string()))?,
+    )
+    .await
+    .map_err(|e| ApiError::BadRequest(e.to_string()))?;
+    Ok(Json(ApiResponse::success(result)))
 }
 
 #[cfg(test)]

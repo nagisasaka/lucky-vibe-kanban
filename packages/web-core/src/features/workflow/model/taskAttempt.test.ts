@@ -62,7 +62,7 @@ describe('task attempt view model', () => {
       kind: 'workflow',
       title: 'Plan -> Implement',
       statusLabel: 'Running',
-      primaryActionLabel: 'Open workflow',
+      primaryActionLabel: 'Open results',
     });
     expect(attempts[1]).toMatchObject({
       kind: 'single_agent',

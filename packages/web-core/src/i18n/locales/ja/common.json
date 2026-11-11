@@ -920,6 +920,28 @@
     "answeredCount_other": "{{count}}件の質問に回答済み"
   },
   "workflow": {
+    "presets": {
+      "title": "Workflow preset",
+      "method": "進め方",
+      "single": "単一Agent（既定）",
+      "implement_review": "実装 → 独立レビュー → 停止",
+      "research_synthesize": "多角調査 → 統合 → 停止",
+      "inventory_reduce": "棚卸し → 削減案 → 停止",
+      "scope": "対象範囲",
+      "perspectives": "観点（1行1観点、1〜8件）",
+      "additions": "今回の起動だけの追記",
+      "projectSource": "Projectの既定追記とrevision",
+      "projectAdditions": "Projectの既定追記（起動ごとに固定）",
+      "model": "モデル（空欄ならproviderの既定）",
+      "profile": "profile（空欄なら既定）",
+      "history": "過去の定義",
+      "historyNotice": "保存済み定義は閲覧できます。新しい仕事はIssueから単一Agentまたは3 presetで開始します。既存Runのretryは当時の保存済みgraphを使います。",
+      "results": "結果を確認",
+      "start": "実行を開始",
+      "startDescription": "単一Agentまたは固定Workflow preset",
+      "startAtIssue": "Issueの開始ダイアログで単一Agentまたはpresetを選びます。presetは報告を返して停止します。",
+      "stopContract": "根拠付きの推奨は可能です。採用・修正・削除・マージ・公開には別の指示が必要です。報告工程ではソースを保護し、保護が使えなければ停止します。対応する検証に必要な一時領域・キャッシュの書き込みは別に扱います。"
+    },
     "entry": {
       "title": "ワークフロー試行",
       "subtitle": "エージェントを実行する前に、タスク試行の流れを設計します",

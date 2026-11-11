@@ -1,13 +1,13 @@
-import type { ReactNode } from 'react';
-import { useTranslation } from 'react-i18next';
+import type { ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import {
   CollapsibleSectionHeader,
   type SectionAction,
-} from './CollapsibleSectionHeader';
+} from "./CollapsibleSectionHeader";
 import {
   IssueTaskAttemptCard,
   type IssueTaskAttemptCardData,
-} from './IssueTaskAttemptCard';
+} from "./IssueTaskAttemptCard";
 
 export interface IssueTaskAttemptsSectionProps {
   attempts: IssueTaskAttemptCardData[];
@@ -19,6 +19,7 @@ export interface IssueTaskAttemptsSectionProps {
   onRunAttempt?: (attempt: IssueTaskAttemptCardData) => void;
   onUnlinkAttempt?: (attempt: IssueTaskAttemptCardData) => void;
   onDeleteAttempt?: (attempt: IssueTaskAttemptCardData) => void;
+  onStartAttempt?: () => void;
   onCreateWorkflowAttempt?: () => void;
   onCreateSingleAgentAttempt?: () => void;
 }
@@ -33,17 +34,21 @@ export function IssueTaskAttemptsSection({
   onRunAttempt,
   onUnlinkAttempt,
   onDeleteAttempt,
+  onStartAttempt,
   onCreateWorkflowAttempt,
   onCreateSingleAgentAttempt,
 }: IssueTaskAttemptsSectionProps) {
-  const { t } = useTranslation('common');
+  const { t } = useTranslation("common");
   const hasCreateActions =
-    !!onCreateWorkflowAttempt || !!onCreateSingleAgentAttempt || !!arenaOption;
+    !!onStartAttempt ||
+    !!onCreateWorkflowAttempt ||
+    !!onCreateSingleAgentAttempt ||
+    !!arenaOption;
 
   return (
     <CollapsibleSectionHeader
       className="issue-detail-section"
-      title={t('attempts.title', 'Task Attempts')}
+      title={t("attempts.title", "Task Attempts")}
       persistKey="kanban-issue-task-attempts"
       defaultExpanded={true}
       actions={actions}
@@ -54,24 +59,35 @@ export function IssueTaskAttemptsSection({
       <div className="flex flex-col gap-base border-t issue-section-inset p-base px-base">
         {isLoading ? (
           <p className="py-half text-low">
-            {t('attempts.loading', 'Loading attempts...')}
+            {t("attempts.loading", "Loading attempts...")}
           </p>
         ) : (
           <>
             {hasCreateActions && (
               <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,16rem),1fr))] gap-base">
+                {onStartAttempt && (
+                  <IssueAttemptOption
+                    title={t("workflow.presets.start", "Start work")}
+                    description={t(
+                      "workflow.presets.startDescription",
+                      "Single agent or a fixed Workflow preset",
+                    )}
+                    disabledReason={createDisabledReason}
+                    onClick={onStartAttempt}
+                  />
+                )}
                 {onCreateWorkflowAttempt && (
                   <IssueAttemptOption
-                    title={t('attempts.newWorkflow')}
-                    description={t('attempts.workflowDescription')}
+                    title={t("attempts.newWorkflow")}
+                    description={t("attempts.workflowDescription")}
                     disabledReason={createDisabledReason}
                     onClick={onCreateWorkflowAttempt}
                   />
                 )}
                 {onCreateSingleAgentAttempt && (
                   <IssueAttemptOption
-                    title={t('attempts.newSingleAgent')}
-                    description={t('attempts.singleAgentDescription')}
+                    title={t("attempts.newSingleAgent")}
+                    description={t("attempts.singleAgentDescription")}
                     disabledReason={createDisabledReason}
                     onClick={onCreateSingleAgentAttempt}
                   />
@@ -81,7 +97,7 @@ export function IssueTaskAttemptsSection({
             )}
             {attempts.length === 0 ? (
               <p className="py-half text-xs text-low">
-                {t('attempts.empty', 'No task attempts yet.')}
+                {t("attempts.empty", "No task attempts yet.")}
               </p>
             ) : (
               attempts.map((attempt) => (
@@ -90,12 +106,12 @@ export function IssueTaskAttemptsSection({
                   attempt={attempt}
                   onOpen={() => onOpenAttempt?.(attempt)}
                   onRun={
-                    attempt.kind === 'workflow' && onRunAttempt
+                    attempt.kind === "workflow" && onRunAttempt
                       ? () => onRunAttempt(attempt)
                       : undefined
                   }
                   onUnlink={
-                    attempt.kind === 'single_agent' && onUnlinkAttempt
+                    attempt.kind === "single_agent" && onUnlinkAttempt
                       ? () => onUnlinkAttempt(attempt)
                       : undefined
                   }

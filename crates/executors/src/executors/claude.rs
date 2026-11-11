@@ -780,10 +780,17 @@ impl ClaudeCode {
     ) -> Result<SpawnedChild, ExecutorError> {
         self.validate_permission_support()?;
         self.check_subscription_login(current_dir, env).await?;
+        let protected_roots = crate::source_protection::roots(env)?;
+        if protected_roots.is_some() {
+            crate::source_protection::validate_launcher(
+                &self.cmd,
+                self.claude_code_router.unwrap_or(false),
+            )?;
+        }
         let (program_path, args) = command_parts.into_resolved().await?;
         let combined_prompt = self.append_prompt.combine_prompt(prompt);
 
-        let mut command = Command::new(program_path);
+        let mut command = crate::source_protection::claude_command(&program_path, env)?;
         command
             .kill_on_drop(true)
             .stdin(Stdio::piped())
@@ -793,6 +800,28 @@ impl ClaudeCode {
             .env("NPM_CONFIG_LOGLEVEL", "error")
             .args(&args);
 
+        if let Some(paths) = &protected_roots {
+            let auth = self.require_subscription_login.unwrap_or(false).then(|| {
+                serde_json::from_str(super::claude::command_adapter::SUBSCRIPTION_SETTINGS)
+                    .expect("subscription settings")
+            });
+            let settings = crate::source_protection::claude_settings(paths, env, auth);
+            // Host additions are not user command overrides. The original
+            // authentication/profile validation above remains mandatory.
+            command.args([
+                "--tools",
+                "Read,Glob,Grep,Bash",
+                "--disallowedTools",
+                "AskUserQuestion,Edit,Write,NotebookEdit,Agent,Task,Skill,mcp__*",
+                "--strict-mcp-config",
+                "--mcp-config",
+                "{\"mcpServers\":{}}",
+                "--setting-sources",
+                "",
+                "--settings",
+                &settings.to_string(),
+            ]);
+        }
         let repository_roots = env.repository_roots();
         let conflicts = crate::repo_skills::ambiguous_claude_names(&repository_roots);
         for name in &conflicts {

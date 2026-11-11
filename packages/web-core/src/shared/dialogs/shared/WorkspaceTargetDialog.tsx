@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { create, useModal } from '@ebay/nice-modal-react';
 import { useTranslation } from 'react-i18next';
-import type { GitBranch, Repo } from 'shared/types';
+import type { PresetRequest, Stage, GitBranch, Repo } from 'shared/types';
 import { Button } from '@vibe/ui/components/Button';
 import { Input } from '@vibe/ui/components/Input';
 import {
@@ -16,6 +16,10 @@ import BranchSelector from '@/shared/components/tasks/BranchSelector';
 import { ServerFolderPickerDialog } from './ServerFolderPickerDialog';
 import { fileSystemApi, repoApi } from '@/shared/lib/api';
 import { getProjectWorkspaceDefaultOrThrow } from '@/shared/hooks/useProjectRepoDefaults';
+import {
+  WorkflowPresetFields,
+  StageFields,
+} from '@/features/workflow/ui/WorkflowPresetFields';
 import { defineModal } from '@/shared/lib/modals';
 
 export type WorkspaceTargetMode = 'worktree' | 'direct_folder';
@@ -25,9 +29,16 @@ export type WorkspaceTargetSelection =
   | ({ mode: 'worktree'; path: string; repos: GitSelection[] } & GitSelection)
   | { mode: 'direct_folder'; path: string };
 export type WorkspaceTargetDialogResult =
-  | { kind: 'confirmed'; selection: WorkspaceTargetSelection }
+  | {
+      kind: 'confirmed';
+      selection: WorkspaceTargetSelection;
+      workflow?: PresetRequest | null;
+      singleStage?: Stage;
+    }
   | { kind: 'canceled' };
 export interface WorkspaceTargetDialogProps {
+  workflowProjectId?: string;
+  initialStage?: Stage;
   initialPath?: string;
   initialMode?: WorkspaceTargetMode;
   initialBranch?: string | null;
@@ -125,6 +136,8 @@ function RepositoryChoice({
 
 const WorkspaceTargetDialogImpl = create<WorkspaceTargetDialogProps>(
   ({
+    workflowProjectId,
+    initialStage,
     initialPath = '',
     initialMode = 'worktree',
     initialBranch,
@@ -139,6 +152,11 @@ const WorkspaceTargetDialogImpl = create<WorkspaceTargetDialogProps>(
   }) => {
     const modal = useModal();
     const { t } = useTranslation('common');
+    const [workflow, setWorkflow] = useState<PresetRequest | null>(null);
+    const [singleStage, setSingleStage] = useState<Stage>(
+      initialStage ?? { engine: 'CODEX', model: null, variant: null }
+    );
+    const [workflowReady, setWorkflowReady] = useState(true);
     const projectDefault = purpose === 'project_default';
     const [mode, setMode] = useState<WorkspaceTargetMode>(initialMode);
     const [path, setPath] = useState(initialPath);
@@ -156,6 +174,10 @@ const WorkspaceTargetDialogImpl = create<WorkspaceTargetDialogProps>(
     useEffect(() => {
       if (!modal.visible) return;
       const id = ++generation.current;
+      setWorkflow(null);
+      setSingleStage(
+        initialStage ?? { engine: 'CODEX', model: null, variant: null }
+      );
       setMode(projectDefault ? 'worktree' : initialMode);
       setPath(initialPath);
       setError(null);
@@ -218,6 +240,7 @@ const WorkspaceTargetDialogImpl = create<WorkspaceTargetDialogProps>(
       initialPath,
       initialBranch,
       initialRepos,
+      initialStage,
       singleRepository,
     ]);
 
@@ -270,6 +293,8 @@ const WorkspaceTargetDialogImpl = create<WorkspaceTargetDialogProps>(
       if (mode === 'direct_folder')
         modal.resolve({
           kind: 'confirmed',
+          workflow,
+          singleStage,
           selection: { mode, path: path.trim() },
         } satisfies WorkspaceTargetDialogResult);
       else {
@@ -277,6 +302,8 @@ const WorkspaceTargetDialogImpl = create<WorkspaceTargetDialogProps>(
         if (!first || (singleRepository && choices.length !== 1)) return;
         modal.resolve({
           kind: 'confirmed',
+          workflow,
+          singleStage,
           selection: { mode, path: first.repo.path, ...first, repos: choices },
         } satisfies WorkspaceTargetDialogResult);
       }
@@ -302,6 +329,23 @@ const WorkspaceTargetDialogImpl = create<WorkspaceTargetDialogProps>(
               {description ?? t('createMode.workspaceDialog.description')}
             </DialogDescription>
           </DialogHeader>
+          {workflowProjectId && (
+            <>
+              <WorkflowPresetFields
+                projectId={workflowProjectId}
+                value={workflow}
+                onChange={setWorkflow}
+                onReady={setWorkflowReady}
+              />
+              {!workflow && (
+                <StageFields
+                  name="Agent"
+                  value={singleStage}
+                  onChange={setSingleStage}
+                />
+              )}
+            </>
+          )}
           {!projectDefault && (
             <div
               role="tablist"
@@ -412,6 +456,8 @@ const WorkspaceTargetDialogImpl = create<WorkspaceTargetDialogProps>(
               onClick={confirm}
               disabled={
                 busy ||
+                !workflowReady ||
+                (mode === 'direct_folder' && !!workflow) ||
                 (mode === 'direct_folder'
                   ? !path.trim()
                   : choices.length === 0 ||

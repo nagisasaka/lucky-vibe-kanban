@@ -1,5 +1,7 @@
 import { makeLocalApiRequest } from '@/shared/lib/localApiTransport';
 import type {
+  StartPresetRequest,
+  PresetDefaults,
   WorkflowTemplateListResponse,
   WorkflowTemplateResponse,
   CreateWorkflowRequest,
@@ -51,9 +53,15 @@ async function parseError(
   try {
     const body = await response.json();
     const message = body?.message || body?.error || fallback;
-    return new Error(`${message} (${response.status} ${response.statusText})`);
+    return Object.assign(
+      new Error(`${message} (${response.status} ${response.statusText})`),
+      { status: response.status }
+    );
   } catch {
-    return new Error(`${fallback} (${response.status} ${response.statusText})`);
+    return Object.assign(
+      new Error(`${fallback} (${response.status} ${response.statusText})`),
+      { status: response.status }
+    );
   }
 }
 
@@ -324,6 +332,33 @@ export const workflowApi = {
         }
       ),
       'Failed to select condition branch'
+    );
+  },
+};
+
+export const workflowPresetsApi = {
+  async defaults(projectId: string): Promise<PresetDefaults[]> {
+    return getJson(
+      await localFetch(`/projects/${projectId}/workflow-preset-defaults`),
+      'Failed to load preset defaults'
+    );
+  },
+  async save(projectId: string, value: PresetDefaults): Promise<void> {
+    await getJson(
+      await localFetch(`/projects/${projectId}/workflow-preset-defaults`, {
+        method: 'PUT',
+        body: JSON.stringify(value),
+      }),
+      'Failed to save preset defaults'
+    );
+  },
+  async start(value: StartPresetRequest): Promise<WorkflowRunResponse> {
+    return getJson(
+      await localFetch('/workflow-presets/start', {
+        method: 'POST',
+        body: JSON.stringify(value),
+      }),
+      'Failed to start Workflow'
     );
   },
 };
