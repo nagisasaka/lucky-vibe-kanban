@@ -404,10 +404,10 @@ async function maybeRefreshFallbackAfterMutation(
 export function refreshShapeFallback<TRow extends ElectricRow>(
   shape: ShapeDefinition<TRow>,
   params: Record<string, string>
-): void {
+): Promise<void> {
   const sourceKey = buildSourceKey(shape.table, params);
   invalidateFallbackCache(sourceKey);
-  void refreshFallbackSource(sourceKey);
+  return refreshFallbackSource(sourceKey);
 }
 
 function buildMutationHandlers(
@@ -438,6 +438,24 @@ function buildMutationHandlers(
     },
 
     onUpdate: async ({ transaction }: MutationFnParams): Promise<void> => {
+      // Description is a compatibility write to the observed current version.
+      // Bind it to the original Issue revision, including queued mutations.
+      const checkedChanges = (
+        item: MutationFnParams['transaction']['mutations'][number]
+      ) => {
+        const changes = item.changes as Record<string, unknown>;
+        if (
+          mutation.url === '/v1/issues' &&
+          Object.prototype.hasOwnProperty.call(changes, 'description')
+        ) {
+          return {
+            ...changes,
+            expected_updated_at: (item.original as Record<string, unknown>)
+              ?.updated_at,
+          };
+        }
+        return changes;
+      };
       if (transaction.mutations.length > 1) {
         const updates = transaction.mutations.map((mutationItem) => {
           if (!mutationItem.key) {
@@ -446,7 +464,7 @@ function buildMutationHandlers(
 
           return {
             id: String(mutationItem.key),
-            ...(mutationItem.changes as Record<string, unknown>),
+            ...checkedChanges(mutationItem),
           };
         });
 
@@ -472,7 +490,7 @@ function buildMutationHandlers(
           `${mutation.url}/${mutationItem.key}`,
           {
             method: 'PATCH',
-            body: JSON.stringify(mutationItem.changes),
+            body: JSON.stringify(checkedChanges(mutationItem)),
           }
         );
 

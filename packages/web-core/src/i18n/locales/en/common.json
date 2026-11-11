@@ -2414,5 +2414,21 @@
     "important": "Important",
     "warning": "Warning",
     "caution": "Caution"
+  },
+  "issueVersions": {
+    "loading": "Loading versions…",
+    "tabs": "Description versions",
+    "current": "Current specification",
+    "name": "Version name",
+    "save": "Save this version",
+    "busy": "Saving…",
+    "saved": "Saved",
+    "unsaved": "Unsaved",
+    "makeCurrent": "Use this saved version as the current specification",
+    "newName": "New version name",
+    "copy": "Copy the saved version",
+    "empty": "Create an empty version",
+    "reload": "Reload versions (keep unsaved text for resaving)",
+    "saveFailed": "Could not save ({{status}}). Your unsaved text is retained."
   }
 }

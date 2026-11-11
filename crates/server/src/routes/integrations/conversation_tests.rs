@@ -374,7 +374,7 @@ async fn exercise(deployment: &DeploymentImpl, instance: &std::path::Path) -> an
                 action(deployment, prepare).await?;
             }
             let snippet =
-                include_str!("../../../../services/src/services/openwiki/setup/agents-0.7.2.txt");
+                include_str!("../../../../services/src/services/openwiki/setup/agents-0.9.0.txt");
             std::fs::write(
                 checkout.join("AGENTS.md"),
                 format!("# User rules\n\n{snippet}\n"),
@@ -660,7 +660,7 @@ async fn exercise(deployment: &DeploymentImpl, instance: &std::path::Path) -> an
                         >= 2
                 );
                 let snippet = include_str!(
-                    "../../../../services/src/services/openwiki/setup/agents-0.7.2.txt"
+                    "../../../../services/src/services/openwiki/setup/agents-0.9.0.txt"
                 );
                 std::fs::write(
                     checkout.join("AGENTS.md"),

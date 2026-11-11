@@ -192,6 +192,19 @@ async fn issue(
     Path(name): Path<String>,
     Json(input): Json<Value>,
 ) -> Result<Json<ApiResponse<Value>>, ApiError> {
+    if super::issue_versions::tools()
+        .iter()
+        .any(|tool| tool.name == name)
+    {
+        let write = !matches!(name.as_str(), "list_issue_versions" | "get_issue_version");
+        let principal = owner(&actor, write)?;
+        return super::issue_versions::execute(store(&d), principal, &name, input)
+            .await
+            .map(|value| Json(ApiResponse::success(value)))
+            .map_err(|_| {
+                ApiError::Conflict("Inspect original operation and state before any retry".into())
+            });
+    }
     let principal = owner(&actor, true)?;
     if !matches!(
         name.as_str(),

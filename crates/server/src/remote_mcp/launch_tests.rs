@@ -377,6 +377,97 @@ async fn review_launch_preserves_intent_and_permissions_without_goal_budget() {
 }
 
 #[tokio::test]
+async fn manual_versions_feed_current_launch_without_rewriting_dispatched_prompts() {
+    use crate::routes::local_remote::issue_versions as versions;
+    let (_directory, remote, dispatch, principal, target, issue, repo) = fixture(false).await;
+    let old_input = start_args(&remote, &target, issue, repo).await;
+    let created = versions::create(
+        &remote.pool,
+        issue,
+        versions::CreateVersion {
+            name: "proposal".into(),
+            source_version_id: None,
+        },
+    )
+    .await
+    .unwrap();
+    let draft = created
+        .versions
+        .iter()
+        .find(|v| v.name == "proposal")
+        .unwrap()
+        .id;
+    versions::edit(
+        &remote.pool,
+        issue,
+        draft,
+        versions::EditVersion {
+            expected_revision: 0,
+            name: None,
+            description: Some(Some("Saved selected specification".into())),
+        },
+    )
+    .await
+    .unwrap();
+    versions::select(
+        &remote.pool,
+        issue,
+        versions::SelectVersion {
+            version_id: draft,
+            expected_current_revision: created.current_revision,
+            expected_version_revision: 1,
+        },
+    )
+    .await
+    .unwrap();
+    assert!(dispatch.starts.lock().await.is_empty());
+    let stale = launch::call(&remote, &principal, "start_workspace", old_input)
+        .await
+        .unwrap();
+    assert_eq!(stale["status"], "failed");
+    assert!(dispatch.starts.lock().await.is_empty());
+    let input = start_args(&remote, &target, issue, repo).await;
+    let started = launch::call(&remote, &principal, "start_workspace", input.clone())
+        .await
+        .unwrap();
+    assert_eq!(started["status"], "succeeded");
+    let dispatched = {
+        let starts = dispatch.starts.lock().await;
+        assert_eq!(starts.len(), 1);
+        let prompt = starts[0]["prompt"].as_str().unwrap();
+        assert!(prompt.contains("Saved selected specification"));
+        assert!(!prompt.contains("Agreed behavior and acceptance criteria"));
+        starts[0].clone()
+    };
+    versions::edit(
+        &remote.pool,
+        issue,
+        draft,
+        versions::EditVersion {
+            expected_revision: 1,
+            name: None,
+            description: Some(Some("Later edited specification".into())),
+        },
+    )
+    .await
+    .unwrap();
+    let replay = launch::call(&remote, &principal, "start_workspace", input)
+        .await
+        .unwrap();
+    assert_eq!(replay["operation_id"], started["operation_id"]);
+    assert_eq!(replay["result"], started["result"]);
+    let starts = dispatch.starts.lock().await;
+    assert_eq!(starts.len(), 1);
+    assert_eq!(starts[0], dispatched);
+    assert!(
+        !starts[0]["prompt"]
+            .as_str()
+            .unwrap()
+            .contains("Later edited specification")
+    );
+}
+
+#[tokio::test]
 async fn launch_uses_agreed_revision_native_goal_and_stable_admission_identity() {
     let (_directory, remote, dispatch, principal, target, issue, repo) = fixture(false).await;
     let input = start_args(&remote, &target, issue, repo).await;
