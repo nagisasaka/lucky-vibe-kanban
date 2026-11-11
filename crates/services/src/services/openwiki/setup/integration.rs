@@ -367,9 +367,9 @@ fn validate_exact_generated(entry: &WikiSetupEntry, current: &WikiSetupFile) -> 
         "OpenWiki changed a file begin should leave untouched"
     );
     let snippet = if entry.path == "AGENTS.md" {
-        include_str!("agents-0.7.2.txt")
+        include_str!("agents-0.9.0.txt")
     } else {
-        include_str!("claude-0.7.2.txt")
+        include_str!("claude-0.9.0.txt")
     };
     super::super::without_managed_block(original)?;
     let expected = if let Some(start) = original.find("<!-- OPENWIKI:START -->") {
@@ -480,9 +480,9 @@ mod tests {
                     panic!()
                 };
                 let snippet = if entry.path == "AGENTS.md" {
-                    include_str!("agents-0.7.2.txt")
+                    include_str!("agents-0.9.0.txt")
                 } else {
-                    include_str!("claude-0.7.2.txt")
+                    include_str!("claude-0.9.0.txt")
                 };
                 fs::write(
                     self.root.join(entry.path),
@@ -588,7 +588,7 @@ mod tests {
             raw_git(&f.root, &["commit", "-m", "instruction fixture"]).unwrap();
             f.code = super::super::super::git_text(&f.root, &["rev-parse", "HEAD"]).unwrap();
             f.prepare();
-            let snippet = include_str!("agents-0.7.2.txt");
+            let snippet = include_str!("agents-0.9.0.txt");
             let generated = if absent {
                 format!("{snippet}\n")
             } else {

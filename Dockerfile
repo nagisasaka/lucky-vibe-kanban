@@ -109,11 +109,11 @@ FROM node:22-bookworm-slim AS runtime-base
 
 # The adapter and image read the same version pin. Installation of the Codex
 # host integration happens at runtime, against the actual user's mounted home.
-COPY assets/openwiki-version /usr/local/share/lvk/openwiki-version
+COPY assets/openwiki-version assets/openwiki-probe.mjs /usr/local/share/lvk/
 ENV OPENWIKI_TELEMETRY_DISABLED=1
 RUN node -e 'const [major,minor]=process.versions.node.split(".").map(Number);if(major<22||(major===22&&minor<22))throw new Error("OpenWiki requires Node.js >=22.22.0")' \
  && npm install --global --omit=dev "openwiki@$(tr -d '\n' </usr/local/share/lvk/openwiki-version)" \
- && node -e 'const p=require("node:fs").readFileSync("/usr/local/share/lvk/openwiki-version","utf8").trim();const r=require("node:child_process").spawnSync("openwiki",["--help"],{encoding:"utf8"});if(r.status!==0||r.stdout.match(/OpenWiki v(\S+)/)?.[1]!==p)process.exit(1)'
+ && node /usr/local/share/lvk/openwiki-probe.mjs openwiki "$(tr -d '\n' </usr/local/share/lvk/openwiki-version)"
 
 RUN apt-get update \
   && apt-get install -y --no-install-recommends \

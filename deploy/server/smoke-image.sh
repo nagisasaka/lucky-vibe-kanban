@@ -32,7 +32,7 @@ docker run --rm --entrypoint sh "$image" -ec '
   rustc --version; cargo --version; cargo watch --version
   sccache --version
   cargo clippy --version; cargo fmt --version
-  codex --version; claude --version; openwiki --help >/dev/null
+  codex --version; claude --version; node /usr/local/share/lvk/openwiki-probe.mjs openwiki "$(tr -d '\n' </usr/local/share/lvk/openwiki-version)"
   cc --version; cmake --version; python3 --version
   bash -lc "cargo --version && rustc --version && sccache --version && pnpm --version && codex --version && claude --version"
 '

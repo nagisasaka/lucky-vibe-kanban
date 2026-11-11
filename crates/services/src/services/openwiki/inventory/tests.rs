@@ -339,7 +339,7 @@ fn absent_empty_and_comment_only_ignore_keep_document_inventory() {
 }
 
 #[test]
-#[ignore = "requires the pinned installed OpenWiki 0.7.2 package and Node.js; no model calls"]
+#[ignore = "requires the pinned installed OpenWiki 0.9.0 package and Node.js; no model calls"]
 fn installed_openwiki_ignore_blank_and_comment_detection_matches_inventory() {
     let cases = [
         "",
@@ -355,7 +355,7 @@ import {pathToFileURL} from 'node:url';
 import {readFile} from 'node:fs/promises';
 const root = process.argv[1];
 const pkg = JSON.parse(await readFile(`${root}/package.json`, 'utf8'));
-if (pkg.version !== '0.7.2') throw Error('Pinned version mismatch');
+if (pkg.version !== '0.9.0') throw Error('Pinned version mismatch');
 const {OpenWikiIgnore} = await import(pathToFileURL(`${root}/dist/agent/openwiki-ignore.js`));
 process.stdout.write(JSON.stringify(JSON.parse(process.argv[2]).map(value => OpenWikiIgnore.parse(value).isActive)));
 "#;

@@ -1,5 +1,5 @@
 // Public package upgrade and configuration conflicts. No global installation.
-// OPENWIKI_PREVIOUS_BIN=/.../0.5.1/openwiki OPENWIKI_BIN=/.../0.7.2/openwiki
+// OPENWIKI_PREVIOUS_BIN=/.../0.7.2/openwiki OPENWIKI_BIN=/.../0.9.0/openwiki
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { mkdtemp, mkdir, readFile, writeFile, rm } from "node:fs/promises";
@@ -9,7 +9,7 @@ import { randomUUID } from "node:crypto";
 const binary = process.env.OPENWIKI_BIN ?? "openwiki";
 assert.ok(
   process.env.OPENWIKI_PREVIOUS_BIN,
-  "Set OPENWIKI_PREVIOUS_BIN to the public 0.5.1 CLI",
+  "Set OPENWIKI_PREVIOUS_BIN to the public 0.7.2 CLI",
 );
 const root = await mkdtemp(path.join(tmpdir(), "lvk-openwiki-host-"));
 const memory = await mkdtemp(path.join(tmpdir(), "lvk-openwiki-memory-"));
@@ -80,7 +80,7 @@ try {
     assert.equal(await readFile(config, "utf8"), conflict);
   }
   console.log(
-    "PASS: public 0.5.1→0.7.2 upgrade/reinstall, shared host ownership, custom config conflict preservation, production marker repair.",
+    "PASS: public 0.7.2→0.9.0 upgrade/reinstall, shared host ownership, custom config conflict preservation, production marker repair.",
   );
 } finally {
   await rm(root, { recursive: true, force: true });

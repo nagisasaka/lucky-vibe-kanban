@@ -106,27 +106,34 @@ impl OpenWikiAdapter {
     }
 
     pub async fn verify_version(&self, root: &Path) -> Result<(), OpenWikiError> {
-        // The pinned CLI has no --version flag; its supported help banner reports the
-        // executing package version. Never mistake exit(0) on an unknown flag
-        // for a successful compatibility check.
-        let help = self.command(root, &["--help"]).await?;
-        Self::validate_help_version(&help)
-    }
-
-    fn validate_help_version(help: &str) -> Result<(), OpenWikiError> {
-        // The supported help banner is terminal output, not a machine-readable
-        // version endpoint. Normalise styling even if a CLI ignores NO_COLOR.
-        let help = strip_ansi_escapes::strip_str(help);
-        let actual = help
-            .split_once("OpenWiki v")
-            .and_then(|(_, tail)| tail.split_whitespace().next())
-            .ok_or_else(|| {
-                OpenWikiError::VersionProbe(
-                    "CLI help did not report its OpenWiki version; Wiki generation has not started"
-                        .into(),
-                )
-            })?;
-        Self::validate_version(actual)
+        // Help renders an interactive TUI in 0.9.0, even without a TTY.
+        // Probe the public MCP identity without beginning a generation run.
+        let output = tokio::time::timeout(
+            Duration::from_secs(30),
+            Command::new("node")
+                .args([
+                    "--input-type=module",
+                    "--eval",
+                    include_str!("../../../../assets/openwiki-probe.mjs"),
+                    "--",
+                    "lvk-openwiki-probe",
+                ])
+                .arg(&self.executable)
+                .arg(OPENWIKI_VERSION.trim())
+                .current_dir(root)
+                .env("OPENWIKI_TELEMETRY_DISABLED", "1")
+                .kill_on_drop(true)
+                .output(),
+        )
+        .await
+        .map_err(|_| OpenWikiError::Timeout)?
+        .map_err(|error| OpenWikiError::VersionProbe(error.to_string()))?;
+        if !output.status.success() {
+            return Err(OpenWikiError::VersionProbe(
+                "Public MCP identity/version probe failed; Wiki generation has not started".into(),
+            ));
+        }
+        Self::validate_version(String::from_utf8_lossy(&output.stdout).trim())
     }
 
     fn validate_version(actual: &str) -> Result<(), OpenWikiError> {
@@ -189,7 +196,7 @@ impl OpenWikiAdapter {
             ", force=true. This explicit reconciliation must review the requested scope even if OpenWiki's previous source checkpoint matches. Complete the update lifecycle, using an empty plan if no corrections are needed; a begin-noop is not sufficient"
         };
         let protocol = format!(
-            "Call openwiki_begin with root={}, mode=\"update\", language={}{update_policy}. Follow the installed Skill's plan / next_page / submit_page / finish protocol. Process pages sequentially in this host; do not create a competing scheduler. Success requires openwiki_finish status=complete with no sourceChanged=true unless the unforced begin-noop policy applies. Never merely declare completion after writing Markdown. Do not edit OpenWiki-managed metadata directly.",
+            "Call openwiki_begin with root={}, mode=\"update\", language={}{update_policy}. Follow the installed Skill's plan / next_page / submit_page / finish protocol. Begin path/Claim lists may be truncated: use exact totals and truncation flags, inspect omitted source changes through Git and page-local Claims through next_page; commit messages are planning hints, not evidence. For a focused Sync, set deferUnplannedClaimIssues=true only for unrelated Claim pages outside the requested scope. Their evidence debt remains pending; finish does not prove whole-Wiki reconciliation. A complete-current-source review must include all affected Claim pages. Process pages sequentially in this host; do not create a competing scheduler. Success requires openwiki_finish status=complete with no sourceChanged=true unless the unforced begin-noop policy applies. Never merely declare completion after writing Markdown. Do not edit OpenWiki-managed metadata directly.",
             serde_json::to_string(&root.to_string_lossy()).expect("path"),
             serde_json::to_string(language).expect("language")
         );
@@ -1048,57 +1055,6 @@ mod tests {
         assert!(OpenWikiAdapter::validate_version(OPENWIKI_VERSION).is_ok());
         assert!(OpenWikiAdapter::validate_version("0.5.2").is_err());
         assert!(OpenWikiAdapter::validate_version("").is_err());
-        assert!(
-            OpenWikiAdapter::validate_help_version(&format!(
-                "│ >_ OpenWiki v{} agent docs",
-                OPENWIKI_VERSION.trim()
-            ))
-            .is_ok()
-        );
-        assert!(OpenWikiAdapter::validate_help_version("Unknown option: --version").is_err());
-    }
-
-    #[test]
-    fn help_version_accepts_terminal_styling_without_weakening_the_pin() {
-        // Real 0.5.1 banner under the dev server's FORCE_COLOR=1: both
-        // the product name and the version are separately styled spans.
-        for version in [OPENWIKI_VERSION.trim(), "0.5.2", "0.5.1-preview"] {
-            let banner = format!(
-                "\u{1b}[36m│\u{1b}[39m \u{1b}[36m>_ \u{1b}[39m\u{1b}[1mOpenWiki\u{1b}[22m \u{1b}[90mv{version}\u{1b}[39m agent docs"
-            );
-            let result = OpenWikiAdapter::validate_help_version(&banner);
-            if version == OPENWIKI_VERSION.trim() {
-                assert!(result.is_ok());
-            } else {
-                assert!(
-                    matches!(result, Err(OpenWikiError::Version { actual, .. }) if actual == version)
-                );
-            }
-        }
-        let compact = format!(
-            "\u{1b}]0;OpenWiki\u{7}>_ \u{1b}[1mOpenWiki\u{1b}[0m \u{1b}[38;2;120;120;120mv{}\u{1b}[0m provider: OpenAI\r\n",
-            OPENWIKI_VERSION.trim()
-        );
-        assert!(OpenWikiAdapter::validate_help_version(&compact).is_ok());
-    }
-
-    #[test]
-    fn missing_help_version_is_not_a_finalisation_error() {
-        for help in [
-            "",
-            "Unknown option: --version",
-            "\u{1b}[31mNo version\u{1b}[0m",
-        ] {
-            let error = OpenWikiAdapter::validate_help_version(help).unwrap_err();
-            assert!(matches!(error, OpenWikiError::VersionProbe(_)));
-            assert!(error.to_string().contains("CLI version check failed"));
-            assert!(!error.to_string().contains("finalisation"));
-        }
-        assert!(
-            OpenWikiError::Protocol("missing finish".into())
-                .to_string()
-                .contains("did not prove successful finalisation")
-        );
     }
 
     #[cfg(unix)]
@@ -1145,7 +1101,7 @@ mod tests {
         };
         assert!(matches!(
             adapter.prepare_codex(root.path(), true).await,
-            Err(OpenWikiError::Command(_))
+            Err(OpenWikiError::VersionProbe(_))
         ));
         assert_eq!(std::fs::read_dir(root.path()).unwrap().count(), 0);
     }

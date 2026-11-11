@@ -20,8 +20,8 @@ fn git(root: &Path, args: &[&str]) -> String {
 }
 
 #[test]
-#[ignore = "requires the real locally installed OpenWiki 0.7.2 and Node.js"]
-fn installed_openwiki_072_setup_matches_strict_integration_validator() {
+#[ignore = "requires the real locally installed OpenWiki 0.9.0 and Node.js"]
+fn installed_openwiki_090_setup_matches_strict_integration_validator() {
     let package_root = std::env::var_os("OPENWIKI_TEST_PACKAGE_ROOT")
         .map(PathBuf::from)
         .unwrap_or_else(|| PathBuf::from("/usr/local/lib/node_modules/openwiki"));
@@ -31,7 +31,7 @@ fn installed_openwiki_072_setup_matches_strict_integration_validator() {
     .unwrap();
     assert_eq!(package["name"], "openwiki");
     assert_eq!(
-        package["version"], "0.7.2",
+        package["version"], "0.9.0",
         "validator is intentionally version pinned"
     );
     let script = r#"
@@ -41,7 +41,7 @@ await ensureCodeModeRepoSetup(process.argv[2], {createWorkflow: false});
 "#;
     let block = "<!-- OPENWIKI:START -->\r\nold generated instructions\r\n<!-- OPENWIKI:END -->";
     let existing = format!("# User prefix\r\n\r\n{block}\r\n\r\nUser suffix.  \r\n");
-    let canonical = format!("{}\n", include_str!("agents-0.7.2.txt"));
+    let canonical = format!("{}\n", include_str!("agents-0.9.0.txt"));
     let cases = [
         ("missing", None, None),
         (
@@ -219,8 +219,8 @@ await ensureCodeModeRepoSetup(process.argv[2], {createWorkflow: false});
 }
 
 #[test]
-#[ignore = "requires installed OpenWiki 0.7.2 and Node.js; provider-free admission fixture only"]
-fn installed_openwiki_072_forced_update_accepts_clean_reconstruction_target() {
+#[ignore = "requires installed OpenWiki 0.9.0 and Node.js; provider-free admission fixture only"]
+fn installed_openwiki_090_forced_update_accepts_clean_reconstruction_target() {
     let package = std::env::var_os("OPENWIKI_TEST_PACKAGE_ROOT")
         .map(PathBuf::from)
         .unwrap_or_else(|| PathBuf::from("/usr/local/lib/node_modules/openwiki"));
@@ -252,7 +252,7 @@ fn installed_openwiki_072_forced_update_accepts_clean_reconstruction_target() {
 import {pathToFileURL} from 'node:url';
 import {readFile} from 'node:fs/promises';
 const pkg = JSON.parse(await readFile(`${process.argv[1]}/package.json`, 'utf8'));
-if (pkg.version !== '0.7.2') throw Error('Pinned OpenWiki version mismatch');
+if (pkg.version !== '0.9.0') throw Error('Pinned OpenWiki version mismatch');
 const {beginRepositoryRun} = await import(pathToFileURL(`${process.argv[1]}/dist/generation/repository-run.js`));
 const result = await beginRepositoryRun({root:process.argv[2], mode:'update', force:true, language:'en', actor:{producerActor:'codex',metadataModel:'codex'}});
 process.stdout.write(JSON.stringify({status:result.view.status}));

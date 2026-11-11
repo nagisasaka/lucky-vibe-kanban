@@ -17,7 +17,6 @@ import { fileURLToPath } from "node:url";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { openWikiMcp } from "./lib/openwiki-mcp.mjs";
-import { stripVTControlCharacters } from "node:util";
 
 const pin = (
   await readFile(new URL("../assets/openwiki-version", import.meta.url), "utf8")
@@ -54,17 +53,21 @@ const env = {
 // Exercise both LVK's normalised child environment and the colour-forcing
 // environment inherited from concurrently. NO_COLOR alone is insufficient.
 for (const forceColor of ["0", "1"]) {
-  const help = spawnSync(binary, ["--help"], {
-    encoding: "utf8",
-    env: { ...env, FORCE_COLOR: forceColor },
-    timeout: 30000,
-  });
-  assert.equal(help.status, 0, "OpenWiki CLI must be installed");
-  assert.equal(
-    stripVTControlCharacters(help.stdout).match(/OpenWiki v(\S+)/)?.[1],
-    pin,
-    `OpenWiki version pin with FORCE_COLOR=${forceColor}`,
+  const probe = spawnSync(
+    "node",
+    [
+      new URL("../assets/openwiki-probe.mjs", import.meta.url).pathname,
+      binary,
+      pin,
+    ],
+    {
+      encoding: "utf8",
+      env: { ...env, FORCE_COLOR: forceColor },
+      timeout: 30000,
+    },
   );
+  assert.equal(probe.status, 0, probe.stderr);
+  assert.equal(probe.stdout.trim(), pin);
 }
 const root = await mkdtemp(path.join(tmpdir(), "lvk-openwiki-host-"));
 const persistent = lvkSetup
@@ -159,7 +162,12 @@ try {
   const tools = await call("tools/list", {});
   const schemas = {
     openwiki_begin: ["root", "mode", "language", "force"],
-    openwiki_submit_plan: ["runId", "pages", "deletePages"],
+    openwiki_submit_plan: [
+      "runId",
+      "pages",
+      "deletePages",
+      "deferUnplannedClaimIssues",
+    ],
     openwiki_next_page: ["runId"],
     openwiki_inspect_page_claims: ["runId", "jobId"],
     openwiki_submit_page: [
@@ -171,7 +179,7 @@ try {
     ],
     openwiki_finish: ["runId"],
     openwiki_search: ["root", "query", "paths", "limit", "workspace"],
-    openwiki_read: ["root", "page", "sections", "wiki"],
+    openwiki_read: ["root", "page", "sections", "wiki", "includeProvenance"],
     openwiki_list_workspaces: ["root", "wiki"],
     openwiki_list_wikis: ["root", "workspace"],
   };
@@ -365,7 +373,7 @@ try {
     instructions,
   );
   console.log(
-    `PASS: OpenWiki ${pin}; plain/coloured CLI version, install/reinstall, host MCP, init, rejected premature finish, plan/page/claims/finalisation, user instructions and source preservation.${lvkSetup ? " LVK production alias isolation, duplicate restoration and Wiki-only publication guards passed." : ""} Update begin status=${update.status}; supported no-change finalisation verified, not a guarantee of begin-noop. No model call.`,
+    `PASS: OpenWiki ${pin}; public MCP version, install/reinstall, host MCP, init, rejected premature finish, plan/page/claims/finalisation, user instructions and source preservation.${lvkSetup ? " LVK production alias isolation, duplicate restoration and Wiki-only publication guards passed." : ""} Update begin status=${update.status}; supported no-change finalisation verified, not a guarantee of begin-noop. No model call.`,
   );
   if (!lvkSetup) {
     // Include setup by-products only in this disposable upstream fixture, so
