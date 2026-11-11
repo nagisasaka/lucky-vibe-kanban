@@ -20,6 +20,8 @@ sources:
     resource: repo://crates/server/src/workflow_runtime/bootstrap.rs
   - id: openwiki-source-864d86b798cce4d7e451a363
     resource: repo://crates/server/src/workflow_runtime/condition_router.rs
+  - id: openwiki-source-28ba6f0a94db33f3977b34d2
+    resource: repo://crates/server/src/workflow_runtime/presets.rs
   - id: openwiki-source-6f2595571056199f0f83415c
     resource: repo://crates/server/src/workflow_runtime/runner.rs
   - id: openwiki-source-424fb004ecd8c2fe0a368131
@@ -30,6 +32,10 @@ sources:
     resource: repo://crates/services/src/services/orchestration_dispatch_tests.rs
   - id: openwiki-source-b19d02455156008b43c210c8
     resource: repo://crates/services/src/services/orchestration.rs
+  - id: openwiki-source-5bd46b87a60accbf6cd6da13
+    resource: repo://crates/workflow/src/planner.rs
+  - id: openwiki-source-63d2b16e8e208dce3e2032ac
+    resource: repo://crates/workflow/src/presets.rs
   - id: openwiki-source-886d46158b33599d038c5bfa
     resource: repo://packages/web-core/src/features/workflow/ui/WorkflowRunPage.tsx
   - id: openwiki-source-ffc55e6e31e6ce477ca57329
@@ -38,10 +44,10 @@ sources:
     resource: repo://packages/web-core/src/shared/hooks/useWorkspaceRepositoryWorkflow.ts
   - id: openwiki-source-23775c3de52f3ab95a13cb8b
     resource: repo://README.md
-generated: { by: "codex", at: "2026-11-09T07:12:52.696Z" }
+generated: { by: "codex", at: "2026-11-11T09:36:22.928Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-10T20:48:58.515Z
+    at: 2026-11-11T09:36:22.928Z
 ---
 
 # Workflow の実行と耐久オーケストレーション
@@ -98,7 +104,7 @@ Tauri shell は廃止されたが `server::startup` は公開 API として残�
 | 起動・要求 | 通常 Workflow を進める主体 |
 | --- | --- |
 | 残存 library API の `startup::initialize_deployment` | 起動時回復の後に completion watcher を開始する |
-| standalone `main.rs` | 起動時回復と ScheduledTask loop はあるが、通常 completion watcher の起動呼出しはない |
+| standalone `main.rs` | 起動時回復後に completion watcher と ScheduledTask loop を開始する |
 | Run 取得 GET / Run events の SSE 接続 | handler 自身が reconciliation を実行する |
 | 活動中の Run を表示する UI | `useWorkflowRun` は既定4秒ごとに GET する。設定で停止・変更可能 |
 
@@ -108,9 +114,17 @@ Tauri shell は廃止されたが `server::startup` は公開 API として残�
 
 Workspace の Repository Workflow 関連付け探索は別 hook が所有する。未発見時30秒、活動中の関連付けがあるとき5秒、終端では停止し、remote host への local DB 取得を禁止する。detail の4秒 reconcile 周期とは混同しない。[関連付け探索](../../packages/web-core/src/shared/hooks/useWorkspaceRepositoryWorkflow.ts)・[通信削減と検証限界](web-and-sync.md#workflow-の重複購読と旧-ui-の整理316-ef)
 
-したがって Run の取得は純粋な表示読み取りではない。画面経由では前進しても、standalone を画面なしで動かす場合に同じ継続駆動を保証する根拠にはならない。ScheduledTask loop は定時の起動を担い、完了後の全ノード連鎖を監視する watcher の代わりではない。[定時実行の skip 条件](../workflows/task-to-integration.md#定時に-workflow-を起動する)と併せて、起動に成功した run が進行し続けるかを別に確認する。
+Runの取得もreconciliationを伴うが、LOCAL-372以後はstandaloneにも既存watcherを配線している。UI pollingや外部AIの待機を後続開始の前提にしない。ScheduledTask loopは起動受付、watcherは完了追従を担当する。実providerでのpreset完走を実証したという意味ではない。[standalone](../../crates/server/src/main.rs#L145-L156)・[watcher](../../crates/server/src/workflow_runtime/runner.rs#L3389-L3535)
 
-移行した2026-05-16の製品設計確認稿は「ノード完了後に自動で後続を起動する」という意図を記録する。上表は現行呼出し経路の適用差であり、無人運転での停止を再現した試験結果ではない。起動形態を問わない保証へ変更する意図や時期は、この証拠からは確定できない。
+## 固定presetの成果成立と一度だけの合流
+
+3 presetは[共通開始サービス](../../crates/server/src/routes/workflow_presets.rs)から固定graphを作り、同じWorkspace内に工程ごとの独立Sessionを確保する。実装工程は通常codingの後処理とcommitを待ち、report・確定SHA・phase開始snapshot・Change Manifest参照を引き渡す。report空やclean source不成立は失敗、commit出版中は同じ実行の完了待ちであり、新しいagentを起動し直さない。[成果成立](../../crates/server/src/workflow_runtime/presets.rs#L80-L166)
+
+報告工程は開始snapshotと終了snapshotの一致を検査し、事前のproviderソース保護も適用する。後からのSHA比較だけを防御にはしない。多角調査の合流はwait_for_allを持ち、必要な全入力の成功後に一度だけ成立する。一部失敗なら統合を始めず成果を保持する。旧graphの既定ANY判定とは区別する。[planner](../../crates/workflow/src/planner.rs)・[固定graph](../../crates/workflow/src/presets.rs)・[権限制御](../integrations/agent-providers.md)
+
+presetはrequires_product_validationと既存complete_product_nodeを使う。下流の報告工程へは要件と全上流reportを渡し、legacy envelopeの文字数切詰めを使わない。providerのcontext上限で失敗すれば停止する。停止後に遅れて届いたreportは保持するが、成功へ再ラベルせず親を再開しない。[runner](../../crates/server/src/workflow_runtime/runner.rs#L440-L572)・[完全report](../../crates/server/src/workflow_runtime/runner.rs#L2968-L2985)
+
+Repository-owned Wikiの品質・Refine・公開判断は既存owner側に残る。372は共通の開始/完了/引渡し接続であり、373の専用進行管理撤去・品質警告伝播等の完成を意味しない。
 
 ## Condition と人の判断
 

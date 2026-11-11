@@ -52,8 +52,8 @@ sources:
     resource: repo://crates/server/src/routes/sessions/review.rs
   - id: openwiki-source-1043187ef1285c84335110a0
     resource: repo://crates/server/src/routes/sessions/setup_gate.rs
-  - id: openwiki-source-a517c0f8e44d2cf0c440fbfc
-    resource: repo://crates/server/src/routes/workflows.rs
+  - id: openwiki-source-b873a3d2c5d7749c538e03eb
+    resource: repo://crates/server/src/routes/workflow_presets.rs
   - id: openwiki-source-bdb4dae5722fe76ec5e44001
     resource: repo://crates/server/src/routes/workspaces/create.rs
   - id: openwiki-source-303d74f74def684d4690dea9
@@ -82,18 +82,22 @@ sources:
     resource: repo://crates/worktree-manager/src/worktree_manager.rs
   - id: openwiki-source-db035046d01e3f24722812c8
     resource: repo://packages/web-core/src/features/kanban/ui/IntegrationPanel.tsx
+  - id: openwiki-source-101baca38dc55130dbd4ffea
+    resource: repo://packages/web-core/src/features/workflow/ui/WorkflowPresetFields.tsx
   - id: openwiki-source-bfe4f914c0604a66edc02213
     resource: repo://packages/web-core/src/i18n/locales/ja/settings.json
   - id: openwiki-source-2fab4d75b959f83ee7aaf538
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/RepositoryMemorySettings.tsx
   - id: openwiki-source-d6bd59c0727afcf22386a8f5
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/ReposSettingsSection.tsx
+  - id: openwiki-source-5d2382a0f231c830f95f103c
+    resource: repo://packages/web-core/src/shared/dialogs/shared/WorkspaceTargetDialog.tsx
   - id: openwiki-source-ffc55e6e31e6ce477ca57329
     resource: repo://packages/web-core/src/shared/hooks/useWorkflowRun.ts
-generated: { by: "codex", at: "2026-11-10T20:48:58.515Z" }
+generated: { by: "codex", at: "2026-11-11T09:36:22.928Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-10T20:48:58.515Z
+    at: 2026-11-11T09:36:22.928Z
 ---
 
 # Issue から実行・レビュー・統合まで
@@ -109,6 +113,12 @@ Git新規作成はProjectの全Repoプリセットを初期選択し、減らせ
 Session に渡す local File と作業先のコピーは [Workspace の添付](../operations/workspace-inspection.md#session-の添付)、Board の file 参照は [Issue の共同作業](../concepts/issue-collaboration.md) を参照する。
 
 Issue要求は通常descriptionへ保存し、廃止したCard Context専用欄やhidden分離は使わない。保存Issue由来だけに限定した既知5hashの送信時除去と独自文保護は[保存本文](../concepts/card-context-and-llm-wiki.md)を参照する。Workflow の graph を実行する場合は、通常 Session の起動と別に [WorkflowAttempt の準備・Run snapshot](../concepts/workflow-attempt.md) を作る。
+
+### Issueから単一Agentまたは固定presetを開始する
+
+Issueの開始操作で共通Workspace dialogを開く。通常は単一Agentを使い、工程間の引渡しが必要なときだけ[3 preset](../concepts/workflow-attempt.md#現行の3-presetと共通開始)を選ぶ。Repo/branchを選び、各工程のengine/model/profile、対象範囲、今回追記、多角調査の観点を指定する。Project既定追記とrevisionを確認して開始し、revision競合ならreloadして再確認する。空観点等の不完全parameterでは開始できない。[dialog](../../packages/web-core/src/shared/dialogs/shared/WorkspaceTargetDialog.tsx)・[fields](../../packages/web-core/src/features/workflow/ui/WorkflowPresetFields.tsx)
+
+開始受付後は既存Workflow Runの結果を確認する。実装後の確定SHA・report・Manifest、必要な全調査成果、失敗/残件を照合する。報告工程のsource保護が不成立なら停止し、無保護fallbackを使わない。推奨を採用するか、修正を実装Sessionへ返すか、削減を実行するか、Git統合するかは別の指示で判断する。presetが終了しても実装完成や公開成功を自動認定しない。[runtime](../architecture/workflow-runtime.md)・[MCPの同じ開始](../integrations/remote-access.md#固定workflow-presetの共通toollocal-372)
 
 ## 2. Setup の依存を満たす
 
@@ -216,15 +226,18 @@ Wiki 保守 Card も Agent 終了と host 公開を分けて読み、検証済�
 
 ## 定時に Workflow を起動する
 
+LOCAL-372以後、旧任意Workflowのscheduled dispatchは冒頭のpreset入口guardで拒否する。既存設定・時刻計算・履歴は保持するが、以下の旧ロジックを現行の新規起動手順として使わない。固定presetの定時開始機能を追加したものでもない。[dispatch guard](../../crates/server/src/routes/scheduled_tasks.rs#L445-L455)
+
 ScheduledTask は既存 Workflow template を日次・週次で起動する設定である。現行 target は Workflow のみ、concurrency policy は SkipIfRunning のみ。時刻になった task を期限付き DB claim で取得する。[型](../../crates/server/src/routes/scheduled_tasks.rs)・[claim](../../crates/server/src/routes/scheduled_tasks.rs)
 
-毎回 template の Agent node の session_id を消した graph から新しい WorkflowAttempt を作る。実行は [通常の Workflow lifecycle](../concepts/workflow-attempt.md) に入り、trigger_source は schedule / schedule_manual を使う。[起動](../../crates/server/src/routes/scheduled_tasks.rs)・[Session binding の初期化](../../crates/server/src/routes/scheduled_tasks.rs)
+guard以後に残る旧ロジックは、templateのAgent nodeのsession_idを消したgraphから新しい WorkflowAttempt を作る。実行は [通常の Workflow lifecycle](../concepts/workflow-attempt.md) に入り、trigger_source は schedule / schedule_manual を使う。[起動](../../crates/server/src/routes/scheduled_tasks.rs)・[Session binding の初期化](../../crates/server/src/routes/scheduled_tasks.rs)
 
 前回の last_run_id が pending / running / awaiting_human / awaiting_arena なら今回は skipped とし次回時刻へ進める。人や Arena の待ち時間も「前回が active」に含まれ、同じ slot を無期限 queue に積む契約ではない。[skip](../../crates/server/src/routes/scheduled_tasks.rs)・[active の範囲](../../crates/server/src/routes/scheduled_tasks.rs)
 
 時刻計算は IANA timezone を用い、daily/weekly と DST の focused tests がある。server のローカル timezone や固定 UTC offset だけで schedule を再実装しない。[tests](../../crates/server/src/routes/scheduled_tasks.rs)
 
-定時 task の起動と、その後に Agent 完了を検知して graph を進めることも別である。この checkout では completion watcher は embedded backend の startup で登録され、standalone main には登録がない。GET/SSE は reconciliation を行い、UI は active run を既定 4 秒で poll する。無人の standalone 運用で予定通り起動したことだけを根拠に、後続段階まで自動進行すると判断しない。[起動形態と前進の契機](../architecture/workflow-runtime.md#起動形態と前進の契機) に登録箇所・read 側の処理・文書の自動連鎖という意図との差をまとめる。[embedded 登録](../../crates/server/src/startup.rs)、[standalone 入口](../../crates/server/src/main.rs)、[poll](../../packages/web-core/src/shared/hooks/useWorkflowRun.ts)
+起動受付とAgent完了後の前進は別である。LOCAL-372はstandaloneにも既存completion watcherを配線し、embeddedと同様にUI/外部AIの待機なしに追従する。GET/SSEのreconciliationとUIの既定4秒pollは残る。[起動形態と前進の契機](../architecture/workflow-runtime.md#起動形態と前進の契機)・[standalone](../../crates/server/src/main.rs#L145-L156)
+
 
 ## 仕事をarchiveし、必要なら再開する
 

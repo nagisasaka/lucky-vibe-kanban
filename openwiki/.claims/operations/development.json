@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:51791438c3473cb19b16fc65cd41437794db5cb4eefd1e279377057fda198ab3",
+  "pageVersion": "sha256:1ad2e64d3fb21259f57125dba60596129c79fbc567edcd35a1e0dc882b4f7eff",
   "claims": [
     {
       "id": "claim_1640e4eaeac94676a84eb3b9d9970d30",
@@ -74,7 +74,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/bin/generate_types.rs",
-          "version": "repo-file-v1:sha256:02c827bcbb2b7bc55a9cc6fbb2a0e0da61d5804fc0d8a6352180712f7500b9c9"
+          "version": "repo-file-v1:sha256:f653a46c8f91e6871fde147d2802e4a1d8c1089626f4dd626135413c8f25fd45"
         }
       ]
     },
@@ -511,7 +511,7 @@
       "statement": "launch.jsonを唯一の起動設定、current.jsonをinstance内release選択とし、固定launcherはinstance cwd・loopback・絶対agenthost・release優先PATHと実設定hashをserverへ渡す。明示hostは絶対の既存fileでなければfallbackせず失敗する。",
       "evidence": [
         {
-          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L3995-L4007",
+          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L4021-L4033",
           "version": "repo-lines-v1:sha256:5eaa8f1d1d4d428b66c95a286a4a9c576672ce80d864fbf126b6b6054c8bb34f:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY0NWRiMmZjYTRkYTNjOGQ3ZWU1MjBiNzJmNThkMzc2Njg3OTdiM2UxZDE1MDFkNTQwMDhmMWE1NGEyYWQ5NDkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQzYTBhNTZjODgyZTQ2OWNlMWJiYTJjZGY1MmQwMWJjZDdiZmIzZjdjMjM5MTFkM2U4NTI2NzEyMjI5MThhNjYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE5ZTc2MzU1Y2YxMTk5NDgwYzNmOTk4MzZiMTQ4NmM4NDFkODkxZmFhZDkwNGM2MDhlMDkzMDIyZDM3NTdhZWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJhY2M1MDY0ZWRkZDdlNDU2MTNhMTIzZWRiZGNhYWUyNGUwYzI5NDUwOTMzNjQ4ZmUzYWM4YjUyNDNlMDZiZjUifQ"
         },
         {
@@ -829,11 +829,11 @@
       "statement": "port fixtureはnot_startedのStarting診断をDB再open後に冪等完了する回帰を持ち、busy_timeout=0試験の監視SELECTだけはSQLITE_BUSYを既存2秒上限内で再観測しwriterの失敗・予算・identity検査を維持する。",
       "evidence": [
         {
-          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L4753-L4809",
+          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L4779-L4835",
           "version": "repo-lines-v1:sha256:34f34d3815683b480f877666cdd6b5b01b1f9934109177079ad2687c3bcde2ea:eyJzZWxlY3RlZExpbmVDb3VudCI6NTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFhODlmZDQwMzBiMGZlNzQyZGM4ZDFjMzM2OTZkZjBhMGRiMjJiMWYxYTQ0YzRiYTlkMTAwODg4YWYyM2E1NGYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE3YTU4MDA3MGY1NTVjNGE5NWI4M2E2ZTA0NTk1NzVkODg1NGQ1YzEzODQ1MGJkNDMwZjE5NmM2NzcwNTcyYTkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQ4ZGJiOTZkNDA5YmZiMGUzNzU3YzYzZTJhMTFhZGZkZWE2MzVjY2JiYWQ1ZmUzYzIyNTE1OGI3N2NiMTk3ZWQifQ"
         },
         {
-          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L4914-L5002",
+          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L4940-L5028",
           "version": "repo-lines-v1:sha256:431beda9573b2f34cdb2503c3f631c27d217a7447fbbeb74c7802703dfc77406:eyJzZWxlY3RlZExpbmVDb3VudCI6ODksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImViOTZhZjIxMzllYWRmNGJkYWU2NDc2NDlmMGZmNzIxYWMzZmMzNGVmNTlmNzcwODAyODI1Mjk5ZGRlMjljMjkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE3YTU4MDA3MGY1NTVjNGE5NWI4M2E2ZTA0NTk1NzVkODg1NGQ1YzEzODQ1MGJkNDMwZjE5NmM2NzcwNTcyYTkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjRiNWVlOTlhNWQyZTYwYTlmNDZhOGJjNDVjY2JjZmZhOTJjZmY1OTE4MGE4MjE1YjM3NzY4N2JiMDA2NzA5YTcifQ"
         }
       ]
@@ -1061,10 +1061,30 @@
           "version": "repo-file-v1:sha256:21b8fdf37b04af9593c0304616df0a8b8c372e60deb5d55ed81c9142aa2d7345"
         }
       ]
+    },
+    {
+      "id": "claim_9970be19893e4a9d8e89607c60498e02",
+      "statement": "presetのUI回帰fixtureはAPIをmockして1280/390pxで固定工程・Project revision・parameterと不完全観点の起動拒否を検査し、実provider完走や認証UIの証明ではない。",
+      "evidence": [
+        {
+          "resource": "repo://tests/workflow/specs/workflow-presets.spec.ts",
+          "version": "repo-file-v1:sha256:22e7cf4e4c84af809b078041790af63b64ae2b6344160cbdedfda5bf9d8504c0"
+        }
+      ]
+    },
+    {
+      "id": "claim_3176739468a84c32beee070063e21bbe",
+      "statement": "ソース保護の実環境acceptanceは実adapterでsource操作拒否とtmp/cache成功、source/HEAD保持、後続へ一度の引渡しを確認する必要があり、binary存在や単体policy検査とは別である。",
+      "evidence": [
+        {
+          "resource": "repo://deploy/server/workflow-source-protection.md",
+          "version": "repo-file-v1:sha256:3b6c34bcd60166bf77d91ec11608f9c79f3071a659a6da5c6161aa4a6d506587"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-10T21:23:07.231Z"
+    "at": "2026-11-11T09:36:22.928Z"
   }
 }

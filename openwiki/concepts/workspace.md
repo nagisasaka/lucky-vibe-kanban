@@ -104,6 +104,8 @@ sources:
     resource: repo://crates/workspace-manager/src/workspace_manager.rs
   - id: openwiki-source-08b3f4dcb1a91c97b6d127f8
     resource: repo://crates/worktree-manager/src/worktree_manager.rs
+  - id: openwiki-source-efd2346cc808d71c75e004b0
+    resource: repo://packages/web-core/src/pages/kanban/IssueTaskAttemptsSectionContainer.tsx
   - id: openwiki-source-3c7b1a2410e6c04380babfb7
     resource: repo://packages/web-core/src/pages/workspaces/workspaceSearch.test.ts
   - id: openwiki-source-cf9a630f7915909bbd487245
@@ -128,10 +130,10 @@ sources:
     resource: repo://scripts/dev-cargo.mjs
   - id: openwiki-source-c6d955097c4a7a9e7b1873ee
     resource: repo://tests/server/specs/workspace-search.spec.ts
-generated: { by: "codex", at: "2026-11-10T20:48:58.515Z" }
+generated: { by: "codex", at: "2026-11-11T09:36:22.928Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-10T20:48:58.515Z
+    at: 2026-11-11T09:36:22.928Z
 ---
 
 # Workspace と Repository
@@ -242,7 +244,7 @@ Project / PR filter を先に適用し、Active / Archived の区分を保った
 
 通常の Workspace 入口は既存一覧を表示する。新しい作業を始めるときは「＋」から作成先 chooser を開く。create 画面で再び「＋」を押しても chooser を開き直せ、取消で本文 draft や確定済みの作成先を捨てない。route と再選択要求の伝達は [Web の一覧遷移と作成要求](../architecture/web-and-sync.md#workspace-の一覧遷移と作成要求)にまとめる。[一覧入口](../../packages/web-core/src/pages/workspaces/WorkspacesLanding.tsx#L1-L5)・[選択の適用](../../packages/web-core/src/shared/components/CreateChatBoxContainer.tsx#L210-L250)
 
-新規作成はGit/その他ディレクトリのタブを分け、Gitを既定とする。Git側は複数Repoと各基準branchを選ぶ。Issue起点はProjectの全プリセットを初期選択し、減らせるが外部追加できない。孤立作成は自由選択する。空のGit選択は確定不可で、直接フォルダへ自動変換しない。WorkflowはsingleRepositoryモードで最大1件を初期化・手動選択・確定の全境界で守り、preferred Repoを明示する。[選択画面](../../packages/web-core/src/shared/dialogs/shared/WorkspaceTargetDialog.tsx)・[Workflow](../../packages/web-core/src/features/workflow/ui/useWorkflowRepositorySelection.ts)
+新規作成はGit/その他ディレクトリのタブを分け、Gitを既定とする。Git側は複数Repoと各基準branchを選ぶ。Issue起点はProjectの全プリセットを初期選択し、減らせるが外部追加できない。孤立作成は自由選択する。空のGit選択は確定不可で、直接フォルダへ自動変換しない。singleRepositoryオプションは最大1件を初期化・手動選択・確定の境界で守る。LOCAL-372のIssue開始は同じDialogで単一Agentと固定presetを扱い、旧Workflow専用の単一Repo選択とは区別する。[選択画面](../../packages/web-core/src/shared/dialogs/shared/WorkspaceTargetDialog.tsx)・[Workflow](../../packages/web-core/src/features/workflow/ui/useWorkflowRepositorySelection.ts)
 
 直接フォルダ側は非空pathを確定し、存在・Git内外等の検証は作成APIが行う。Git側のbranch候補はRepo既定、現在branch、先頭候補の順で初期化し、一覧に存在しない選択を置換する。取消は既存の選択とmessage draftを適用し直さない。
 

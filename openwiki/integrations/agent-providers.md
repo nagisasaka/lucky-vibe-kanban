@@ -58,6 +58,8 @@ sources:
     resource: repo://crates/executors/src/provider_policy.rs
   - id: openwiki-source-83a4482f2da34ab38737b161
     resource: repo://crates/executors/src/repo_skills.rs
+  - id: openwiki-source-f23c89ae54db56391783fef4
+    resource: repo://crates/executors/src/source_protection.rs
   - id: openwiki-source-8fd7f4fe2d73e778cc63c256
     resource: repo://crates/local-deployment/src/process_host.rs
   - id: openwiki-source-0a300791bc056c6eee6a577a
@@ -90,6 +92,8 @@ sources:
     resource: repo://crates/utils/src/shell.rs
   - id: openwiki-source-c5de8230bc8ac4c0c0000287
     resource: repo://deploy/server/release.test.mjs
+  - id: openwiki-source-26f2b454d009a5c3d05be35a
+    resource: repo://deploy/server/workflow-source-protection.md
   - id: openwiki-source-bb1ebe868e35e9e500714501
     resource: repo://Dockerfile
   - id: openwiki-source-223410809ba8bde718d60d3b
@@ -110,10 +114,10 @@ sources:
     resource: repo://tests/claude-subscription/subscription.spec.ts
   - id: openwiki-source-141584dac09cf0f93be6bff5
     resource: repo://tests/codex-process-cleanup/README.md
-generated: { by: "codex", at: "2026-11-10T21:23:07.231Z" }
+generated: { by: "codex", at: "2026-11-11T09:36:22.928Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-10T21:23:07.231Z
+    at: 2026-11-11T09:36:22.928Z
 ---
 
 # Agent provider・設定・MCP・Skill
@@ -389,3 +393,16 @@ Codexの新規監査はmapper v8を使う。元agentMessageのdelivery/questions
 一般質問の元native requestはcanonical InputRequestedの任意metadataに保持され、host waiterを経由して元request IDへ回答する。明示isBlocking=falseは待機stateへ変換せず、欠落時は旧server-request契約を保つ。Plan承認、実行権限承認、async inboxの寿命は別契約であり、Defaultの質問を強制blocking化しない。[質問登録](../../crates/executors/src/executors/codex/client.rs#L1146-L1264)・[Session](../concepts/session-and-agent-run.md#plan一般質問との境界)
 
 Claude側の今回の変更は互換な任意質問IDの初期化のみで、subscription login・同名skill拒否・承認serviceの境界を変更しない。CLI 0.163.0とRust protocol 0.144.1のversion差を全体upgradeで解消する変更でもない。実モデルと実認証UI/MCPの一体E2Eは未実施である。
+
+
+## 固定presetの事前ソース保護（LOCAL-372）
+
+通常REVIEWの意図・作業内検証と、presetの報告工程に必要なsource書込防止は別である。hostは保存Workflow Sessionにsource_read_onlyがあるか照合し、Workspaceと登録Repoのcanonical rootをLVK_WORKFLOW_PROTECTED_ROOTSに渡す。報告Sessionの継続でも同じ制限を適用し、通常coding完了対象から外す。任意launcher/追加引数による上書きは拒否する。[host](../../crates/local-deployment/src/agent_run_port.rs#L844-L920)・[policy](../../crates/executors/src/source_protection.rs)
+
+Codexはthread限定のread-only継承native permission profileを作り、source readとhost提供tmp/cache writeを設定する。multi-agent・apply_patch・外部MCP/pluginの利用を制限する。通常threadや保存profileを変更しない。[Codex](../../crates/executors/src/executors/codex.rs#L1048-L1084)・[有効設定との照合](../../crates/executors/src/executors/codex.rs#L1318-L1375)
+
+Claudeは認証guardを先に通し、Linuxの/usr/bin/bwrapで公式provider process全体を囲み、Workspace/Repoをread-only mountにする。native Bash sandboxも有効にし、failIfUnavailable・unsandboxed fallback禁止・source denyWriteを維持する。Read/Glob/Grep/Bashだけを許し、ファイル編集・Agent/Task/Skill/MCP等を使わせない。認証のsubscription設定と管理設定は維持する。[Claude](../../crates/executors/src/executors/claude.rs#L780-L825)・[wrapper/settings](../../crates/executors/src/source_protection.rs#L37-L138)
+
+両providerの追加write候補はsystem tempとhost提供shared tmp/cacheだけで、symlinkを解決しsource配下を除く。persistentを追加write rootにしない。source内に生成物を書くbuildはそのまま実行できるとは限らず、必要な出力は許可済み一時/cacheへ分ける。後からのclean/SHA比較を事前防御の代替にはしない。[共通root選別](../../crates/executors/src/source_protection.rs#L45-L89)
+
+Dockerfileはbubblewrap/socatとbinary存在検査を配布案へ含むが、image内の存在と実行時namespace成立は別である。現行環境でのbwrap/socat不足・既存namespace拒否は成功側の証拠ではなく、単独原因も断定できない。実provider経由でsource read成功・create/edit/rename/unlink拒否・tmp/cache write成功・source/HEAD不変とpreset完走を同時に確かめる検証は未実施。単体policy試験やmock UI成功では代用しない。[前提・隔離fixtureの手順と停止条件](../../deploy/server/workflow-source-protection.md)を読み、拒否時は原文を保持して停止する。security緩和・無保護fallback・既存拒否の根拠ない再試行は行わない。

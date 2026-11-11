@@ -1,17 +1,17 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:2f2204297eb913a6617755d4ce81a5d906390c34fe55097252d7bc56861be5a0",
+  "pageVersion": "sha256:08f0af5acd96c6bcbad689693ee9dd9d20d03e34bec430018033a88231f1331e",
   "claims": [
     {
       "id": "claim_82dcbc35b88a441daa22355016e0d3f8",
       "statement": "Workflowは開始時に検証したgraph snapshot、orchestrationとnodeのidentityを保存してから駆動し、再読込はsnapshotを優先する。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/workflow_runtime/runner.rs#L2058-L2133",
+          "resource": "repo://crates/server/src/workflow_runtime/runner.rs#L2182-L2257",
           "version": "repo-lines-v1:sha256:b6438acfa07615bb7503cc893cb246477630082bcf62c0820f38388231ddc88b:eyJzZWxlY3RlZExpbmVDb3VudCI6NzYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZjZTg0MDFhYjE5NzQ5YmE1NjE0MWIwNWVjMWI4YjBmNWI0NDRlYzdjYWE5NTU4OGI1ZGZjYzgzM2IzMWQwNzYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRkM2UzYzRjMGZmYzYzMDQ2MWNjYWM5YjZhNjBmZThmNDg2NWVjMjM1MWQ5YTk5ZTEwMDFhMjQ4Y2Q1MWYyYzgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhmNjg3NTdhMjkwOTJiYjlmYjRmZWIwOTI5ZDNkOTE0ODVjY2Q1NzcyNDY3ZGM4ZTRkMTczMjYzOWYxOTNkMDgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImZjY2Y1ZGMwNzY5YTJiMWZiNzMxNTI3YTQwZTQyODI3NTU0NDQwNzNiOGQxN2UzMDJjOGEzMDBiNjE5MTY2NzQifQ"
         },
         {
-          "resource": "repo://crates/server/src/workflow_runtime/runner.rs#L995-L1065",
+          "resource": "repo://crates/server/src/workflow_runtime/runner.rs#L1092-L1162",
           "version": "repo-lines-v1:sha256:6448501d95bedf4a9eea5aff5a19fd144de9233dfa621ad372eb9681008586d5:eyJzZWxlY3RlZExpbmVDb3VudCI6NzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjliYjhjNWExZjRiNjQ0ZGM0ODU4MzI4OGQwODQxNGNhMmIyNjkxNzI1ZGQwMWNjY2MxMTc3YjBjZmUwMzg4MjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVjN2RkYTY0MjM1OGI3OGY5MDIwNzFmYWVkOTMyMDYyMDIxNjE1ZWNhNGIyZWJiMDBkNjljYjg5OGE2OTQ5MjMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFiYjIzNzE1MDdkMDFmOTdhZmRmZTVhY2MyNTNjNmMzOGQxYTcxZTI3OWFkMDBlZjUwMDE3N2FjMDJhNjUzOTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjEzZmIxNTg2MWFmZWM5NWE3ZjE0MzY3ZTY1MGFmZDE2NDk2MzllNGRhYjNlNTdjM2Q0NTQ2ZjdjMTdjY2MyM2IifQ"
         }
       ]
@@ -21,8 +21,8 @@
       "statement": "orchestration inboxの終端事実の消費と製品WorkflowのReady計画は別の責任である。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/workflow_runtime/runner.rs#L1150-L1191",
-          "version": "repo-lines-v1:sha256:5be1acc816ce91e19db7a1516b1727866ae96355b8deed94068b0ae8d9657323:eyJzZWxlY3RlZExpbmVDb3VudCI6NDIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE3ZTQ1NmU5YzdlOTljZjYwMGQxOGZiMTQ1NjVhNmI3MjgxMmIwNWE4ZDhjYmM0ZGYwOWIxYmM5Mzc5YzQzNGEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFkYWRhNmRiYjdiMDlkNWZkOTU4OTY1Njg3NjAxMDljYjRlYzg5ZDIzOWM3NjcyNDZjMTc5OWQ2ZWM2ZWQ0MWEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFiZjgyY2Q1ZWZkNTc1ZTQ3MmQ3MjUyM2UwZjQxZmE5Yjg2MWQ1YzY0MzRmMzVhYTA2NzJmZWQzNjExZmExMTEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImRhODlkYjMyMDRjNmY3M2E1MTk4YjgxYTk4OTBjZThhNDg3YTNjNGViOGVlY2ZjZGZlYzczZDcwYmI1MDk1NDAifQ"
+          "resource": "repo://crates/server/src/workflow_runtime/runner.rs#L1247-L1290",
+          "version": "repo-lines-v1:sha256:10c31e1e2e3c2ed067adef90e332246ca16c041d36941322df6fce7dafd88024:eyJzZWxlY3RlZExpbmVDb3VudCI6NDQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE3ZTQ1NmU5YzdlOTljZjYwMGQxOGZiMTQ1NjVhNmI3MjgxMmIwNWE4ZDhjYmM0ZGYwOWIxYmM5Mzc5YzQzNGEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFkYWRhNmRiYjdiMDlkNWZkOTU4OTY1Njg3NjAxMDljYjRlYzg5ZDIzOWM3NjcyNDZjMTc5OWQ2ZWM2ZWQ0MWEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFiZjgyY2Q1ZWZkNTc1ZTQ3MmQ3MjUyM2UwZjQxZmE5Yjg2MWQ1YzY0MzRmMzVhYTA2NzJmZWQzNjExZmExMTEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImRhODlkYjMyMDRjNmY3M2E1MTk4YjgxYTk4OTBjZThhNDg3YTNjNGViOGVlY2ZjZGZlYzczZDcwYmI1MDk1NDAifQ"
         },
         {
           "resource": "repo://crates/services/src/services/orchestration.rs#L503-L535",
@@ -45,7 +45,7 @@
       "statement": "Agent nodeのStarted結果はSession・AgentRun・orchestration nodeのIDを記録してdriverを待機へ戻す。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/workflow_runtime/runner.rs#L2414-L2438",
+          "resource": "repo://crates/server/src/workflow_runtime/runner.rs#L2552-L2576",
           "version": "repo-lines-v1:sha256:63e21858de0201e33d297b05b3a20a1600fc07d06b14b8589713deb0138dc157:eyJzZWxlY3RlZExpbmVDb3VudCI6MjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZkYzcxYmQ5N2RmZjBjZDE3ZTljNmZlOWYzOTk4ZTdiOGI2MTI0ODAwNzRmZjVjM2Y1YmZlNTRjMzVmMDg1MDciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFjODFhNmZjODM5ZmQ3ZTA2OTZiZDlmZmU0YTA5MzE0MWE4NTQ2NGQ0YzkzNmQyM2MxMzJmNzU4YTlkMTY3NzMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ3MTE2YjhiYjJjM2E3ZjBiNDdhYmZmOGIyNjZiMzAzZGZlOTE1ZTYxNDA4Y2IxMjU3YWVjMTFhMGFhMzZlMTQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQ5MDcyMzY3ZTM4YmUzOGI1YmY2OGY4ZDZhODdhOGEzNDhhOTk0ZTdjYmM5ZmYxNGZkODIzZDI2NmJmZjg4M2YifQ"
         }
       ]
@@ -55,8 +55,8 @@
       "statement": "通常Workflow watcherはRepository scopeのrunを除外する。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/workflow_runtime/runner.rs#L3240-L3296",
-          "version": "repo-lines-v1:sha256:6b4fa41abd63115feb2d64d16bce3aa63ff8eea0ec7ffb28de8bf0c4e26da6ef:eyJzZWxlY3RlZExpbmVDb3VudCI6NTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU5YzdkODZhM2ZmNDUxZWQwNzZiNWQyYmM5MzdlNWQ4NWEzYWUwNWYxYWUzZjllZWFjYjMxNzU1ODY0NDRkN2MiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZlMDkzNGYxNjgyZTQ3MWRhZTgxOGI0ZDBiNjA4NzJmZjUwOTc0ZjVjYzIyZWM2ZTBkOWZjNDdhOTBjYjRmYzciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjA3NjQ0YTg4Y2I5ZjMxNjQyZWUzMmVkNDA4MjRjNTAwZjM3YWFjNDYwMDA4ODNkNWU0ZTBlNDQ2NTA3MDBjMzEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijc2OGQ2MWVjOTE1YzNlZTc3MzRlZDQyZmQ3YjVkOGQxYTkwYmM2ODI1ZDcyMWQ0ZDNhMmU2MTkyYWRjODcxYTAifQ"
+          "resource": "repo://crates/server/src/workflow_runtime/runner.rs#L3389-L3464",
+          "version": "repo-lines-v1:sha256:3d2599261d7f10cfc1e99a1b2433efe5da7d39e713959cba299e97fa048dfe03:eyJzZWxlY3RlZExpbmVDb3VudCI6NzYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU5YzdkODZhM2ZmNDUxZWQwNzZiNWQyYmM5MzdlNWQ4NWEzYWUwNWYxYWUzZjllZWFjYjMxNzU1ODY0NDRkN2MiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZlMDkzNGYxNjgyZTQ3MWRhZTgxOGI0ZDBiNjA4NzJmZjUwOTc0ZjVjYzIyZWM2ZTBkOWZjNDdhOTBjYjRmYzciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjA3NjQ0YTg4Y2I5ZjMxNjQyZWUzMmVkNDA4MjRjNTAwZjM3YWFjNDYwMDA4ODNkNWU0ZTBlNDQ2NTA3MDBjMzEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijc2OGQ2MWVjOTE1YzNlZTc3MzRlZDQyZmQ3YjVkOGQxYTkwYmM2ODI1ZDcyMWQ0ZDNhMmU2MTkyYWRjODcxYTAifQ"
         }
       ]
     },
@@ -73,7 +73,7 @@
           "version": "repo-lines-v1:sha256:d6ecc959e5b6dbf41915a24ab240ac5892361705ed78da13da55cfa92afd52a8:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEwMzdiYWMxZWViZmEyMTY0MDI3MTEyNmM4YjkyMmVlZGM2ZmJiNDczOTQxZDRhNDI1NmJmMWJmYjdkNWQ4MjIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFlNzVjNzBkOTQ2MzYyNWUxMDc5ZmQ4ZmM4ZWU2MmFkMmU5MmM0MmJlYWFiZmQ4NWI3OGQ4ZTBhNDk3OWI5NGEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImEwMGRiMDQwZjI5MDliZjk3OGZmMGE5NTZhNTVlODNjNjUzNDE4ZGU2YmI2OGY4MDQxZGE5NzZmOGQzZDIyNzAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImEwMGRiMDQwZjI5MDliZjk3OGZmMGE5NTZhNTVlODNjNjUzNDE4ZGU2YmI2OGY4MDQxZGE5NzZmOGQzZDIyNzAifQ"
         },
         {
-          "resource": "repo://crates/server/src/workflow_runtime/runner.rs#L3445-L3487",
+          "resource": "repo://crates/server/src/workflow_runtime/runner.rs#L3613-L3655",
           "version": "repo-lines-v1:sha256:825879b756f2e724befd30bcacc1be5328b56ac3a133f4d4de87f4fec1bd9bc1:eyJzZWxlY3RlZExpbmVDb3VudCI6NDMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUyN2Q2N2JjYWEyYzYzZDY1NmE4NDAyMmI3MzQzYmE0ZjJiODA4YzE3ZTU3Y2RmYTg3NWZkMzc5NjBlM2YzNjEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNhNTNmNTJmZjA5OWE4MTRiMDc5ZWYyYTdlODNlZGRjZjgxNTQwMmFjZWJkMTgzYjYxNjdiMWFlMWY3ZGRlM2EiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjgyZjk5NjQyZmJhZWQ5NGYyOTVlNGJlMjRjZDE0ODFkN2MwMzMwODYyNTE5ZTI2M2JmMTZkNWQ5YjMxM2YyMDkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY0MzVlNTkxODI3NDJkN2FmOTIzNjY4MTYxNDczOGEyYjhjOWI2NzI2MDdkOGU2NWMwZmI1NWQ2NmYzNmEyNzAifQ"
         }
       ]
@@ -83,7 +83,7 @@
       "statement": "Workflow取消はCancellingを永続化し、outboxは親取消後のCreate/Retry起動を配送時にも阻止する。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/workflow_runtime/runner.rs#L1696-L1744",
+          "resource": "repo://crates/server/src/workflow_runtime/runner.rs#L1795-L1843",
           "version": "repo-lines-v1:sha256:5cd1168a2b7f0bef22600c33948dd8263538bfa93728cc8cb9adfb0bb1ba41ac:eyJzZWxlY3RlZExpbmVDb3VudCI6NDksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM2NTQwNzZmYmY4NTI0MmQzYzAxODYzYmEwNWVhZjNlZDBjNDcxYjNlNzRjODY1ODMwNzY1MDYwOWZjMzQ3YWEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU2YjQwOWMxYTE2YWY3ZDU0NWQzMzdmYzJkMmQ3ZmFmZThlZWY0MWIzMzIwNWVlNTVkOGVlODY5NGI4ZjY5ODUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjdlOWViNDQ3Njc1ZTI4ZTI4ZWIxMDBhZDcwOTIxYjllYjgzNDljNzdlZTI4Y2JhMGYyOWUzZWU2NjlhM2MzMTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBlN2UwODlmYjBiMTMyMTg1ZmI4ZmZhYThiN2Y1MmZhNjgyZDIxYzZmYzYzOTAxMWQyZjdiNDI5ZDRlY2RhMTYifQ"
         },
         {
@@ -97,26 +97,26 @@
       "statement": "Repository Workflowはmaintenance ownerだけが前進でき、bootstrap nodeには追加の製品完了検証flagがある。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/workflow_runtime/runner.rs#L1166-L1188",
-          "version": "repo-lines-v1:sha256:3815f6af8a8655a99bcdf90c0c602ac5c193aa88e8729939f2a0ad9e0a8d129c:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg4ZmM2YWQ4YzBjNTAyMTgyYTVhZWJiNWEzYjdjNWU4MDk3MzUyNzMzNmExYzk2NTc0YzEzNmYwYzNkNmNlZGMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZlNGNlZmUxOGM2MDRlY2ZjNjNlYzE5NjkxNTU2ZGVkZTNiYTFkY2NiNzhhYmNhYmQyMDI4MjM0YjI3MjE0MTAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ5NTAyMWFiYTFlNGIyYTFkODUxN2JlOWVkNzZjYjkxMDgxMGI1NWQyZjFiODQ1MTk1YmNjNTM4NWU0OTQzOWIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNkYTY5ZWY3YTE0MDhlMDYxM2EyZGEwZjVmNGU1NmE3YjE2OWQ0ZTQ0MmMxZGI1MjQ2NjY2ZjdmOGUxOWFmMTQifQ"
+          "resource": "repo://crates/server/src/workflow_runtime/runner.rs#L1263-L1287",
+          "version": "repo-lines-v1:sha256:6e8b35c42b7751d9f1e14be11523dcc19082068f1b6e12144bc894c25c67cf7f:eyJzZWxlY3RlZExpbmVDb3VudCI6MjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg4ZmM2YWQ4YzBjNTAyMTgyYTVhZWJiNWEzYjdjNWU4MDk3MzUyNzMzNmExYzk2NTc0YzEzNmYwYzNkNmNlZGMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZlNGNlZmUxOGM2MDRlY2ZjNjNlYzE5NjkxNTU2ZGVkZTNiYTFkY2NiNzhhYmNhYmQyMDI4MjM0YjI3MjE0MTAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ5NTAyMWFiYTFlNGIyYTFkODUxN2JlOWVkNzZjYjkxMDgxMGI1NWQyZjFiODQ1MTk1YmNjNTM4NWU0OTQzOWIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNkYTY5ZWY3YTE0MDhlMDYxM2EyZGEwZjVmNGU1NmE3YjE2OWQ0ZTQ0MmMxZGI1MjQ2NjY2ZjdmOGUxOWFmMTQifQ"
         },
         {
-          "resource": "repo://crates/server/src/workflow_runtime/runner.rs#L2284-L2287",
+          "resource": "repo://crates/server/src/workflow_runtime/runner.rs#L2408-L2411",
           "version": "repo-lines-v1:sha256:29dc6cc7f66a59cde5aa8fc3c614920553f168dd3de4084d4a2cd2d0b4919419:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYzVhOGI1ZGVhNzgwMmYwMWIyNmY1OTUyNGZiYjJhMWFhNTIyNDdiMzIyNzM2MjQzMGQ4YjVmOWUyYzI1NGFkYSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZThjMDFiMTFlYTliMTNmYzgyZGFjODBiOTNjNTAyMzg5ZmRjYTA2YTM0MmVmYzZhN2UyNGFlZTliMzUxZDEzMiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMWIzM2YzZjdiZTkwNzgzMTkxMGU3NTg3N2QwNTlkYmE5NGQyMzU0MWNiNWQ2MTkxY2M3ZWU5OTRlMjUzMzQ4MiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMjQwNmFhNjk4OWIxZTk1ZWUxNDhmYjJiM2I3YzdjNjg1NzFjZmMxNWM5MjE4OTliMGQ2OGFiMGQ1YzI4ODQ3OCJ9"
         }
       ]
     },
     {
       "id": "claim_f167f529f3514f288ec2c65b8e249948",
-      "statement": "通常Workflow completion watcherはstartup::initialize_deploymentから起動されるがstandalone mainには呼出しがなく、両者の起動時回復・ScheduledTask loopと継続的な完了監視は別である。",
+      "statement": "通常Workflow completion watcherはstandalone mainとlibrary startupの両方で起動され、ScheduledTaskの起動loopとは別に完了追従する。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/main.rs",
-          "version": "repo-file-v1:sha256:eb2c1c4c310ab0d9fe1fecd5ab95439d432cee67af88661cc6d373cfb8308dbe"
+          "resource": "repo://crates/server/src/main.rs#L145-L156",
+          "version": "repo-lines-v1:sha256:3eb43562fc0c403b43a70b0af343c9358859dbe13a113491c9413e638aab168d:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY2MjNhYmNkNzk4M2NhZWVlZDViOGUzN2IwNjEzNzBmNGMwMDU5NjQ2MGJhZmRhNTdlZWQ5YjIwMWEyZWM0NGQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUwOTc4ZmI3ZTEyMDQzNzJhYmNlNzU3M2FiOTk0MjIxZTM3MDU0MWQ0MjQ5ZmQ3NDNjYTYwZDFlMzRkMWRmNDIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjI1Mjk4YmE2NDU3MmNhODkwODg0YTFiMWViNmE1MjA2YmI3NWJkMWE3Mzk5Mzk3YWVjOGQ4NGVkMDVhMWQ4ODAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImU2YTMwZDlkZmEyNWZlNTViMjljYTc2OGViMjRkZWFlNTdiMzA3NDNiOWQyNjk1MTQzZjVhMGQ2NjA0NDZmMTcifQ"
         },
         {
-          "resource": "repo://crates/server/src/startup.rs#L222-L235",
-          "version": "repo-lines-v1:sha256:cad71a2d6351ca2a2b95407ebbccd1420b4fd14a7122e9cc078a59038b4a33c2:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg0ZTQyMDhjZDZmZmI4YzRhMzU0N2IyZjU0YWRhMTk5NzhjM2YzNjVlNzhmOTUwMmVmNTE0NWNkZDJhYTg1NDMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE1NmJlMmVlMTcwMDQwNjhjMTg2YmU4MjNlMzJjYzUxMWM0OWE4MDc1ZWYxYWQwMDI5MjJkZTBjNTk5OGMzMTQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjBhZDI2OGMyOGY3YTI3OTY2ODljZmEwOWJmMGY0NGZkNTUyMWUwZDEyNDgwMWY0ZTJiOWVjODg4MGVkYmViMzAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImZjNzhlNTM5NTdiOTFiM2E4YTM4MmQwNTc5MTU2ZjJiNWFmODkxOWMzMWVhOWY1M2ZjMjY0MjgxZjljOTBjZjUifQ"
+          "resource": "repo://crates/server/src/startup.rs#L223-L238",
+          "version": "repo-lines-v1:sha256:5285d4983125f7c4f6dfee1e43b61c06a12dab5b205958574a49b0beed269f7b:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY2MjNhYmNkNzk4M2NhZWVlZDViOGUzN2IwNjEzNzBmNGMwMDU5NjQ2MGJhZmRhNTdlZWQ5YjIwMWEyZWM0NGQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjlhYzA0M2NlYTlmZDg5NTY4NDFlODljYTQ2YTAyNTYzZWM4NWJhMDM5ZTJmYWIwYTI3NmNkOTRlMjgzYTEwNTYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjI1Mjk4YmE2NDU3MmNhODkwODg0YTFiMWViNmE1MjA2YmI3NWJkMWE3Mzk5Mzk3YWVjOGQ4NGVkMDVhMWQ4ODAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNjYTBkMDlkN2VhYjRhMDRlOTExMjc0NWI4NjAzZjcwMDdjMDRmZDk2NDQ0ODUwMTJiZjVmNzhlNWFhMGVjMzkifQ"
         }
       ]
     },
@@ -125,30 +125,16 @@
       "statement": "Workflow Run GETとSSE接続handlerはreconciliationを行い、UIは活動中Runを既定4秒周期でGETするため、表示経路もWorkflowを前進させる契機となる。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/workflows.rs#L2100-L2117",
+          "resource": "repo://crates/server/src/routes/workflows.rs#L2077-L2094",
           "version": "repo-lines-v1:sha256:84898fe8738d02011f5892cc30f11cde3dc561765bca3e9ef573981bfce8b4ed:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQwNDlmZTU2YjYyYTJmOGZhY2ZhZTFjMWYyMmJmZmZkNWRjZDNhNjM5YWVkNzY3ZDU4NDk0ODBjNmU3NjY3MGEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjA3ODVlNzA5NWEwYmE2NDE3ZGFjNzk5N2UyNjM4Y2MwNDgyOWM4ZjA0OGFkYWNkZmE3NzgwZTMwOTc2MGJhYWMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjA4NmZjNGQ4ODlhYjAwOGQyODczODNjYjIzZjRlZDI1MzdmYzdkYmIwMjY4ZTM4ZjY5OGViODJkNWI0Y2Q3NzIifQ"
         },
         {
-          "resource": "repo://crates/server/src/routes/workflows.rs#L2138-L2157",
+          "resource": "repo://crates/server/src/routes/workflows.rs#L2115-L2134",
           "version": "repo-lines-v1:sha256:eb31b51869cbd035f6218583ecc899efb3173f10326373ee1081ca9691c09e27:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxNjMzMjMwNDZiYWJhNzgwZWIxZjRjYzViNDc3M2Y3M2VmZmRlMTQ5MWE4M2M0YzI1OGFhMzgzOWE0MGM1YTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQyYjMxYzE1ZTMzYmI3MjY2OWRmOWMyYjgwMzBiNDEzNTQzMzE0N2U1N2FhMTMzZTkzMTE0ZjBhMGM2OTdlMDkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM4MTk1NTdmYjYyYTc3MDRhMWE0OTI0ZTZkNWNhM2M3MjAyODBjMDFkYTYxYjA3MmUyNjFiNDJiZDk1ZjgyN2UifQ"
         },
         {
           "resource": "repo://packages/web-core/src/shared/hooks/useWorkflowRun.ts#L26-L56",
           "version": "repo-lines-v1:sha256:1a553d0d023590b88aa055de8a237b6f51c75419c7e93a32bfdb684ecc49eb48:eyJzZWxlY3RlZExpbmVDb3VudCI6MzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVkYmVjYmNkYWFiNzdhZjIxZTNiN2Q0YmEzZGUyZjQ3MTUxNzZiZmQ3M2MxNDY2M2I5MDNjNDFjN2Q0MDNjMWQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY3OTA3MTUxYWMxNzY1MTUxM2I4YTY3M2YwMmI3OTljMzQ2ZTZhMjU2ZGU5YzU1N2MwOGM4MTU0ZTc4NmZhYWEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijk5MTg2ZjVlYjUzN2IxZDRjMmFhNDVhNmZlM2YwZGY5ZTI5ZDc0NGQ5ZGI4NmRkYmI1MTNkNjEwZDNlMWZjNmYifQ"
-        }
-      ]
-    },
-    {
-      "id": "claim_2ad7fe1fb0994cda8f3600b3d76854ae",
-      "statement": "通常Workflow completion watcherはlibrary startupで開始されるがstandalone mainには同じ起動呼出しがなく、画面なしの同じ継続駆動を保証できない。",
-      "evidence": [
-        {
-          "resource": "repo://crates/server/src/main.rs",
-          "version": "repo-file-v1:sha256:eb2c1c4c310ab0d9fe1fecd5ab95439d432cee67af88661cc6d373cfb8308dbe"
-        },
-        {
-          "resource": "repo://crates/server/src/startup.rs#L226-L234",
-          "version": "repo-lines-v1:sha256:81f75c93110ae7018bfcaea7a94e30e241427c6b6608d5acd9b67113b3917ba5:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMTViNjIwYjI0ZDQ4ODZlZTM3Yjc2M2NmMTcwZTdkODgxNTI0ZjAwZDVjYWVjODgzZjZiNjVjYjg2Njc5ZjExMiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiODVjZmFkN2UyNDUwNjcyNDZmZTgzZWMwMmI2NzRmZTZjNjE3ZWM1ZDZkMjhlNTNhNGEzZmI0Mzk4N2VmNGNlMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMTEyMDY5OWZjNTM3ZTc0Zjg1MDQzYzBkN2FkMDRmM2I0MDJlY2VkZjgzYjQ4NDQ4NmEyYzZmYTllNGRjYmViMyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOThlY2Y4MzI5OTM2MTFmZjk0Y2IwYWRiY2JmM2RkYzA0MWU3ZTdlODEyMDZkYTFjYjYxODkxODE5Yjk5OGFhZiJ9"
         }
       ]
     },
@@ -165,7 +151,7 @@
           "version": "repo-lines-v1:sha256:f0d783f57365904ff5d2d998572305503b892b0188ab7b34d149e233cb7b80d6:eyJzZWxlY3RlZExpbmVDb3VudCI6MzAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY3OThiNDFlMmE3NDg0NWM3YjIxNTgwMWI4MGUyYmVjODBiOGJhODNhYTE1NTY2YTM1ZjlhMDU4ZWFmNTc1MmEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRlOTQxMmZlMjY2MTc1MjAwY2Q5ZTg0Y2JlOThmZDMzZmYwNzRmOWU3NzQ1YzJmZmZiNjRjZGQxOWQyZTUxYzciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFhZGJmY2U2MzVlOWU2OGNlN2RjODZmZWRiY2VmMzAzYzRmNmE4MDM4Nzc2N2E3NmRhMjgwMzkwOGRiYTFmMDAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFkNGI2NDcyMGUxNzRmYmE4YWFjNDhmMmJjYTQ3ZDdmNjFmM2IwMmIwNzhlZTc5ZTg5YWQ3MjNlMzEyYTJlMTYifQ"
         },
         {
-          "resource": "repo://crates/server/src/workflow_runtime/runner.rs#L2457-L2486",
+          "resource": "repo://crates/server/src/workflow_runtime/runner.rs#L2595-L2624",
           "version": "repo-lines-v1:sha256:addf151713fe498c3817b308cbc585e7a3e8422e00f747627cb1b1d327042c12:eyJzZWxlY3RlZExpbmVDb3VudCI6MzAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE2MGM2ZjA5OTcwZDQ0N2RlODhiOGVlODAwOWI2Njk3OGI5NjkxNjU1ZGM5MWM0N2FiYTg0ZTY4MWZlNzU1YTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcxOWY0NmE3MmQ2Y2I5NGM0MTNhODYwZjI1NjBmOWUwMDQ3ZDcxYzA1YjQyMWY0ZjcxOGQ2MzY3MTJkMjU2ZTUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImZjZThkMTM3ZmE0NGFjNjY0OGIzYTRhNmY1NmY1MGJhYmE2NzczNDE0NWQwNDc0YTRlNTU1Njk3ZmQyNmJlYzgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhhOGY3OTZiNGM3ODU4YmEzN2I2MGYxM2YwYmY2NzRmODNjNTY1NjI2ODJhMTJmNWE3ODg1ZTE3OTE0ZDczZDYifQ"
         }
       ]
@@ -185,7 +171,7 @@
       "statement": "Bootstrap は execution-only Workspace を Workflow run に束縛し、owner 専用の Session 作成と phase ごとの child 委任を通して起動する。通常 Workflow の node Session 作成は interactive を要求する。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/workflows.rs#L752-L796",
+          "resource": "repo://crates/server/src/routes/workflows.rs#L761-L805",
           "version": "repo-lines-v1:sha256:1b9dd4886a3678fb2da1814583c0806d11f78bb112555a28a5a460ae915f7599:eyJzZWxlY3RlZExpbmVDb3VudCI6NDUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBlZTI2N2M5OThkNWU2MDdiZTVjM2FlZjIxZjRlNjA2YzA5NzllZjMxNzUxOGEzNjM1ZDE1ZTk4ZjAyODg0MzkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImExMTdmYzAyMWZkNzM0ZGExY2EyMTE4MzY2NWM0MDUxNzUyNjMyZWJkMDhlODQ2YzAzOWU2ZDU0YmM0ZmVlYTUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ4ODU5MjEwZWJjYjEyY2Y2OGM2MTYyMjJmYzU2MGMxZjY4ZTJmYTMxZjYzMDQ5M2RmODA5NTg4ODdkNTdhZjkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNkZTU5ZjBmODRmYmNmNjhhOTM2YmFhYjg1M2IxYjdmOTY1NjY4NWMwMWZiYWUzZWJmODIyMGJiNDNmYTA2ZjkifQ"
         },
         {
@@ -203,8 +189,8 @@
       "statement": "通常 Workflow は Agent dispatch で worktree を準備するが、execution_only は owner 準備済み root の検査だけを行い欠落時には再作成しない。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/workflow_runtime/runner.rs#L722-L748",
-          "version": "repo-lines-v1:sha256:b0954cee8aebd3eed38f2e6923f4308f4b8c0554e8603083681c0682780a29a0:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImYyZGM4ZDRmODRmZDc5OTJlNmQ4MWQzZGFhZTA3NDVmMzZmNzNmNzcwMmU3NDFhYjFmMGI4ZmYwYjYyNGJlOWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZmZDMxOWZiYjMwN2JkZGU5MjI1NThiM2MxMGM5ZTU0N2I4ZDZmZWZkNWU1MDE5ZWZlMzBmYmM5ODlhOGQ1ZTkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijc2MTMxNmMyY2JjZjlhZWEyY2NiMGRiYzMwZTY5NjA0MzNjZjJmYzkwZDc3OTJmZGRkZjYxNzhmMDVlZjBhNzUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE3NzFhZGMyODVjNjI4N2Q1NTQ3M2UwYzlmYzY2NThjNDg2YzkxMGIyNjUxODM2MzJmZWY0OWM0ODAwNmE5MGQifQ"
+          "resource": "repo://crates/server/src/workflow_runtime/runner.rs#L792-L845",
+          "version": "repo-lines-v1:sha256:86a871851d903a6c6752bf52087e2d87026f0bfe5661dcd9f1361e4410515dfb:eyJzZWxlY3RlZExpbmVDb3VudCI6NTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImYyZGM4ZDRmODRmZDc5OTJlNmQ4MWQzZGFhZTA3NDVmMzZmNzNmNzcwMmU3NDFhYjFmMGI4ZmYwYjYyNGJlOWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZmZDMxOWZiYjMwN2JkZGU5MjI1NThiM2MxMGM5ZTU0N2I4ZDZmZWZkNWU1MDE5ZWZlMzBmYmM5ODlhOGQ1ZTkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijc2MTMxNmMyY2JjZjlhZWEyY2NiMGRiYzMwZTY5NjA0MzNjZjJmYzkwZDc3OTJmZGRkZjYxNzhmMDVlZjBhNzUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE3NzFhZGMyODVjNjI4N2Q1NTQ3M2UwYzlmYzY2NThjNDg2YzkxMGIyNjUxODM2MzJmZWY0OWM0ODAwNmE5MGQifQ"
         },
         {
           "resource": "repo://crates/server/src/workflow_runtime/workspace.rs#L13-L31",
@@ -231,7 +217,7 @@
       "statement": "Workflow dispatchは特定Createのoutbox配送、親状態、durable linkとportのagent/session/turn identityを検証してStartedを返す。並行配送を待つがPendingの受理はprovider準備完了を意味しない。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/workflow_runtime/runner.rs#L865-L900",
+          "resource": "repo://crates/server/src/workflow_runtime/runner.rs#L962-L997",
           "version": "repo-lines-v1:sha256:149ffbbd010d0868e06be0bb17f3a75c3f1cb85b6a22b32a934f15a0c0b0d324:eyJzZWxlY3RlZExpbmVDb3VudCI6MzYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI5MTFmMzJiMjc3ZWI2MDFjZDFiN2IzYzI0ZmQwMDhlMjMzNzMwOTNiMDQ2MjYxMjk0NTg4NWM0YWZlN2VmYmEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjljNGEwMjQ0ZWY4MjM1NmE4MTc0OGFhMWJiOWJjZWEyODBhZTFiYjk2YjVkNjhkZmM3OTM4YTcyYWU1MDY2MDUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjgzY2UzZjNmN2VjNGUzNzE0YmIzZTg2ZmUyNzY0OGU5OTgxNTI3YTdkMjU3NGYyMTYxODM2N2E3NDliN2RmZjUifQ"
         },
         {
@@ -291,7 +277,7 @@
       "statement": "WorkflowRunPageはSSEを購読せずGET hookに依存するが、backendのGETおよび公開SSE接続時のreconciliationは維持されている。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/workflows.rs#L2088-L2160",
+          "resource": "repo://crates/server/src/routes/workflows.rs#L2065-L2137",
           "version": "repo-lines-v1:sha256:189e3cc1f580745985ddce92c1f89eec12874bf33e5530d7de814e90478ecc56:eyJzZWxlY3RlZExpbmVDb3VudCI6NzMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgzMThkYzM2OWI4MTdkMDZlZmZmZmNmMGU0YjVjM2NmNTVhZWMxOGZiYzc5ZjIxNzMyNjE4ZmZjMDEzYmYyNTciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVlOTA2YzE2NjkzN2JkODhhYmFkNzU1ZTZhOTIwNDlkYTlkYWJjYWM4NzAyMmIwZGRmNTFhZDBmN2QzNzE3NjQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImVmZjNjNjM3MWNmMDA5MjM1NDAyNmI0ZGVhNTM1MWViNmRhZmI3NjZjMzg5Mzg3Y2ExZjk4M2FkMGE5NmE3ZTYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFkZGFhYTMxNjBkMGVlNDM5YTEzZjYwZmVkZjRjZjI4MGJiMDI5YzlkMTYyM2MzM2IyOWMwN2JjM2I1MWE5NTkifQ"
         },
         {
@@ -323,10 +309,38 @@
           "version": "repo-lines-v1:sha256:581177e42fe607358e27e4dc98f1e2796a0875a5f86d847f66ed2ea57a837a16:eyJzZWxlY3RlZExpbmVDb3VudCI6NzUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZkNTIzYzhkYzliZDM1ZTg5MjQwOTc5MGRkYjY2NDM4NmZkYmM0Nzg0NmE1MjNjOTQxYzY1NmFhOTgwOGUxYzkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI1Y2Y1ZmMyM2YyYTZkMjNjM2VhNTFlNzJmNWU4OTZjNzU1NWZiYWEwNWNkNWIxZWExODJiZjk2MThhOGU4MWIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijc3MGNlYTBlMTk2ZWRhNTZlYWE1NzhhM2Q2MTljZGZiZjI5MmNkYmFmZjZmNjJjZjMwNjYyOTA0ZDM2YmU0OGIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjViODM0NjQ4Y2U5MWJjYTllMTNlMGU4NzRhMWE5NGEwZDBiN2M4YTk5ZmMyNjllNjJmZTY1ZGUxODEwNGI3MzAifQ"
         }
       ]
+    },
+    {
+      "id": "claim_021214a35fe942688fec79da588917a5",
+      "statement": "固定presetの成果成立は通常coding完了後のclean sourceとreportを確認し、実装SHA・phase開始snapshot・Change Manifestを引き渡す。報告工程は開始終了sourceの一致を検査する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/workflow_runtime/presets.rs#L80-L166",
+          "version": "repo-lines-v1:sha256:f5d9a48d260b365dff6dd896900c3572d5acb6151a39e39b9b7afaaa239c8023:eyJzZWxlY3RlZExpbmVDb3VudCI6ODcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjczNWY1Y2NmZDQzMDY3YjEzMzQzOTg3OWE4ZjFjMTAzMjFiMzZkODdhOWQxOGYzNmRhMmRkZmI5MjE2MmYwYjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg4MzEyMzNkMjhkOTUzNWQ3YjM3NjFkMjFhM2U5YWU0M2Q4MTYwZmQ1MTAzNWExNTM3ZDAxODJlODY4OGY4OWEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI5MGMyMTUyOGFhOTZjZTU0M2YzY2IxNTk4OGQ1NTgyYmExNGVkZmM5MWUyNWZiNWM0NjZjYjViNzNjMzIzNGMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE1MjE2MDRiMzVmYzQwYWYwMGNiYTRlZWEyZmQ1ZTJjM2FmMTg2M2IzOTExODVkN2JmNGJiMDllNzJkMGM4YjMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_a6c0dfe23c324ea7874915b21add55b4",
+      "statement": "固定presetは全上流reportを切り詰めず渡し、必要な全成果成立後の一度だけの合流をwait_for_allと製品完了検証で接続する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/workflow_runtime/runner.rs#L2968-L2985",
+          "version": "repo-lines-v1:sha256:cb3bd6e1888a4be1f762eaf2d19d2cb85c340bb3704a297f227604bf3f92e834:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE4YzczZmMyZjBkNGIwZDIyZWIwNWRlM2YyZmE0ODcwNDQ4NmEwNWM0NGY4Zjc2NmY2NGNiNDlkZjY2Mzg4NmYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcyYTU4ZmVkYmRkNzg5ZjA0ODljN2ExNDM3Y2M4YmM4YWViZDRmYzMyOWZmNWZiMDRjMzdiOWQwYmIzZDEzNDUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjgzZTlkYWU1NDA4YzZhYWZjM2IzMGFjNzUwMGFjY2QzOTIxYTVhZmM4MjMyZWI3OWI2ZDY0MWNjOTBlODRmOTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijk3YTZlNWQyNWU3YzdhMGI5NTgwNGRmNTg3MGFkZTQyNmZmNzAzNDlmYjhmNDYwNzFmYWY3ZjkzYjUzYzhkMDEifQ"
+        },
+        {
+          "resource": "repo://crates/workflow/src/planner.rs",
+          "version": "repo-file-v1:sha256:ac43034e2afced70b3a8eb39946edec753ef7462f61031d6063a4c9c99645704"
+        },
+        {
+          "resource": "repo://crates/workflow/src/presets.rs",
+          "version": "repo-file-v1:sha256:02b746acf53b62df51aee665b777c78bcd64e25396b607403ac6fc825b94cc86"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-10T20:48:58.515Z"
+    "at": "2026-11-11T09:36:22.928Z"
   }
 }

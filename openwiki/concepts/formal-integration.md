@@ -59,7 +59,7 @@ sources:
 generated: { by: "codex", at: "2026-11-10T20:48:58.515Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-10T20:48:58.515Z
+    at: 2026-11-11T09:36:22.928Z
 ---
 
 # 自動マージの選択・検証・公開

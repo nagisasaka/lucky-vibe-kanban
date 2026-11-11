@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:0b8feb1316750fed3cee35aaae0ddc03607138423b01d1e3c6ae6147c55769c6",
+  "pageVersion": "sha256:a8c4d744d3d55b4f8d3993f8d10ad7952e68a41753d0d6946274d4374493a985",
   "claims": [
     {
       "id": "claim_8c3b7b704cee45f0ad83d4207da34794",
@@ -126,7 +126,7 @@
         },
         {
           "resource": "repo://crates/mcp/src/task_server/tools/mod.rs",
-          "version": "repo-file-v1:sha256:7115b8131d0150d05bdb488aa4cc06d3d31d74acddffeb2a3900e101742c4610"
+          "version": "repo-file-v1:sha256:bfecaa6410e299847e01256c7d4c6e0f288bdf16266b7a4c46694a1df7109083"
         }
       ]
     },
@@ -146,7 +146,7 @@
       "evidence": [
         {
           "resource": "repo://crates/mcp/src/task_server/tools/mod.rs",
-          "version": "repo-file-v1:sha256:7115b8131d0150d05bdb488aa4cc06d3d31d74acddffeb2a3900e101742c4610"
+          "version": "repo-file-v1:sha256:bfecaa6410e299847e01256c7d4c6e0f288bdf16266b7a4c46694a1df7109083"
         }
       ]
     },
@@ -155,11 +155,11 @@
       "statement": "Codexは選択Skillを通常chatでは本文より前のUserInput::Skill、直接Goalでは既存developer instructionsを保持したname/path参照として渡す。旧Wiki同梱Skillの特別除外は行わない。",
       "evidence": [
         {
-          "resource": "repo://crates/executors/src/executors/codex.rs#L1380-L1388",
+          "resource": "repo://crates/executors/src/executors/codex.rs#L1397-L1405",
           "version": "repo-lines-v1:sha256:96e621a41c2aed83499b8f9cb5ed84d520cbe0cae7d7853dc1460ea785bf9634:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMTdiMzc2MTA4MDAwNWE0NjgyODg2NWY4Y2U1Y2Y4MTA2MDlhM2ZkMTEyODRhYmM3YmQxZGI5ZmJjMzE0YWJlOCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMWJkNDZlNGFmYzZhZTFiYzVjY2JiMmMzZWQ0OGIyZDEyZTlkZjUwNGQ1NTQ0NTE2MjRhNzk4MmVlMmU4ZjZjOSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMzMxYjZlNjJhNWRiMWUwNDNkMTU2MGEyMDI1Y2E4OGI0OTkxYmY2YWY3MGU0YzNiYjljYWUxN2NiZjk3MjlhMSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOGNlNjExNWJjNDg0YWZkZWY1YzkwNDc2OTU3NjM3MTA5ZWE0YjAyZTQwOWNhYTRmOWI0YmVmZjFkY2I2MmY5ZSJ9"
         },
         {
-          "resource": "repo://crates/executors/src/executors/codex.rs#L1571-L1596",
+          "resource": "repo://crates/executors/src/executors/codex.rs#L1588-L1613",
           "version": "repo-lines-v1:sha256:7bcf92343ff3be6a013e3fbee44e321445298a91de55350729bb049f00b7ccd2:eyJzZWxlY3RlZExpbmVDb3VudCI6MjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUwNzY5Yzk4ZDE3ZDM2MGRmOTg3ZTIyYmYxZDRmNDQ0ODkxZDUxYTRmMTcyMWYyMjRiMmM2YTJiNDkyOGQyZTIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRmZWJkYzQ5MzgwNTcxNDYxYjI2YTUwM2M5NTUwYTk0NDU0MzEyYjA0NjdmMjFkOTFmN2IzMmY2MmMzYjZkMjEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjA2NTNlNTUwMGFmOTM3MjI4MjU1ZDY3N2UxYTE1NWU2ZmNiZjI0MzQ5MmY0ZmI0ZjgxNjEwZDQ4OGEzZDcxNjQifQ"
         }
       ]
@@ -194,7 +194,7 @@
       "evidence": [
         {
           "resource": "repo://crates/executors/src/executors/codex.rs",
-          "version": "repo-file-v1:sha256:77d88cf3fd15af7e7e0f4e8691dea1b598c6303f9c6e0cf2005af97cde5f6e9c"
+          "version": "repo-file-v1:sha256:d466d556a35446197638f415019f9349dfc0926e33ed34c7d702fe5ac0aaddeb"
         },
         {
           "resource": "repo://crates/executors/src/executors/codex/client/openwiki.rs",
@@ -208,7 +208,7 @@
       "evidence": [
         {
           "resource": "repo://crates/executors/src/executors/codex.rs",
-          "version": "repo-file-v1:sha256:77d88cf3fd15af7e7e0f4e8691dea1b598c6303f9c6e0cf2005af97cde5f6e9c"
+          "version": "repo-file-v1:sha256:d466d556a35446197638f415019f9349dfc0926e33ed34c7d702fe5ac0aaddeb"
         }
       ]
     },
@@ -221,7 +221,7 @@
           "version": "repo-lines-v1:sha256:6a5600788401406ab37db34cf1bda05bc6504719d6bc5c7e6dc35fd909a16701:eyJzZWxlY3RlZExpbmVDb3VudCI6MzgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjkwYmZhMzY4OWNiNWEwMDNmYmI4MTNiNDhlNzYwZDBhYzc4MTRlODY5NzkzOTNhYWYyMGJmNGIwYzllZDY3ZDQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjEyM2QyODY1OTgzYmRiOGIwNTMzOTU2YWIwNDlmNmFjNmRmZmZlOWRlYmIwMzU1YzA1MmY5OWE4MTBiMzhhM2QifQ"
         },
         {
-          "resource": "repo://crates/executors/src/executors/codex.rs#L1101-L1129",
+          "resource": "repo://crates/executors/src/executors/codex.rs#L1114-L1142",
           "version": "repo-lines-v1:sha256:23c62d41a718ccc116b398667f419137e86e1f6b4f86f7ec176dda6c2d1d02c1:eyJzZWxlY3RlZExpbmVDb3VudCI6MjksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkzYjA1OTc4OTYyMWM0YjJhYTk2NTk3ZGJkNTQ0MWY1MjEwNmU0OWY1YmZiN2FiZjVlNzdjODlhNDQ0M2VjMDAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcxN2VmNzlhZjJjMTU5YTQ2M2I2ODE4YWFhYTVjMjgyODQzYTEwYTBiNDI4MDhhNmFmZTczM2ViNjQzYTk1ZWMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJhMzMxMTY5YWUxNDRhZDM0NDNmZjI2ZjAyZDU0MzZiNDNhM2MwM2RkYjIwMjBkZWQyZmUxYjhlMjE2MTFhZGUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQ5Y2MwNDExODdlYTJmZTUyZmE3MGI2YzkwNjBiMjRlMmUyNGNhMDZjNjM0ZWMzYWNiZWM0MTI5NDg2YTQzMzIifQ"
         }
       ]
@@ -286,11 +286,11 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/remote_mcp/mod.rs",
-          "version": "repo-file-v1:sha256:c19fbe8e768fcc60788782a980f010088afd23062d26124d8d0212d2d50d92aa"
+          "version": "repo-file-v1:sha256:a388c234074074704611983107aa075599cef072c24d87bfdcc9b1198415e8ee"
         },
         {
           "resource": "repo://crates/server/src/routes/mod.rs",
-          "version": "repo-file-v1:sha256:4b23d2ceaa859e28c22477309b8bca7cf08ff65f70ba4be32ec6d64c92ed0fcd"
+          "version": "repo-file-v1:sha256:8902bcab2995a8d4e066dfa6a9eeba0aa69519d372d2ad9054cb50e65f9d2809"
         }
       ]
     },
@@ -304,7 +304,7 @@
         },
         {
           "resource": "repo://crates/mcp/src/task_server/tools/mod.rs",
-          "version": "repo-file-v1:sha256:7115b8131d0150d05bdb488aa4cc06d3d31d74acddffeb2a3900e101742c4610"
+          "version": "repo-file-v1:sha256:bfecaa6410e299847e01256c7d4c6e0f288bdf16266b7a4c46694a1df7109083"
         }
       ]
     },
@@ -419,7 +419,7 @@
       "statement": "Codex Supervised override は未指定/Never だけを UnlessTrusted に変え、別の明示 policy と sandbox は保持する。自動承認は DangerFullAccess と未指定/Never の組合せに限定する。",
       "evidence": [
         {
-          "resource": "repo://crates/executors/src/executors/codex.rs#L2077-L2098",
+          "resource": "repo://crates/executors/src/executors/codex.rs#L2094-L2115",
           "version": "repo-lines-v1:sha256:afd5f49a0932d252eedded051c48eca614b16af9cb9c884a7f315e5efdc47be9:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkyYjVlZGY1OTQ5Y2ZlYTY3ODIyY2Y2OTExMzIzNjNkNjhkNmYxZTE2OWY1ZTBkNGY3YzE0ZTVmYTFlNmQ0ZTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkyYjVlZGY1OTQ5Y2ZlYTY3ODIyY2Y2OTExMzIzNjNkNjhkNmYxZTE2OWY1ZTBkNGY3YzE0ZTVmYTFlNmQ0ZTUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImYyZDgyOGEwMzdhYzFjODE1MzViMWQ1NTAwODMyMzIzYmZiYjg2NmEzYTNmODdlN2E2OGMxM2EyYmFlNTZmZmYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijc1YmVkMjUwNGYxMzc0MTkyMGI2ZWRjZTRhMDdlYzI3OGY2MWZkZGZjYTZkM2Y1ODViMzUxY2Q2MzJkZmIwNzkifQ"
         },
         {
@@ -448,7 +448,7 @@
         },
         {
           "resource": "repo://crates/mcp/src/task_server/tools/mod.rs",
-          "version": "repo-file-v1:sha256:7115b8131d0150d05bdb488aa4cc06d3d31d74acddffeb2a3900e101742c4610"
+          "version": "repo-file-v1:sha256:bfecaa6410e299847e01256c7d4c6e0f288bdf16266b7a4c46694a1df7109083"
         }
       ]
     },
@@ -472,7 +472,7 @@
       "evidence": [
         {
           "resource": "repo://crates/executors/src/executors/claude.rs",
-          "version": "repo-file-v1:sha256:bc19698ed6a8b22680c2de33f9c1507ed33e7c89eedbf0bdc2b7cc39375a1677"
+          "version": "repo-file-v1:sha256:28b13bd24b2e69baa93bee5f19280b322b914ee440003e934d7fdecf9d2df6fe"
         },
         {
           "resource": "repo://crates/executors/src/executors/claude/auth.rs",
@@ -494,7 +494,7 @@
       "evidence": [
         {
           "resource": "repo://crates/executors/src/executors/claude.rs",
-          "version": "repo-file-v1:sha256:bc19698ed6a8b22680c2de33f9c1507ed33e7c89eedbf0bdc2b7cc39375a1677"
+          "version": "repo-file-v1:sha256:28b13bd24b2e69baa93bee5f19280b322b914ee440003e934d7fdecf9d2df6fe"
         },
         {
           "resource": "repo://crates/executors/src/executors/claude/auth.rs#L43-L85",
@@ -544,7 +544,7 @@
       "evidence": [
         {
           "resource": "repo://crates/executors/src/executors/claude.rs",
-          "version": "repo-file-v1:sha256:bc19698ed6a8b22680c2de33f9c1507ed33e7c89eedbf0bdc2b7cc39375a1677"
+          "version": "repo-file-v1:sha256:28b13bd24b2e69baa93bee5f19280b322b914ee440003e934d7fdecf9d2df6fe"
         },
         {
           "resource": "repo://crates/executors/src/executors/claude/auth.rs",
@@ -576,7 +576,7 @@
       "evidence": [
         {
           "resource": "repo://crates/executors/src/executors/codex.rs",
-          "version": "repo-file-v1:sha256:77d88cf3fd15af7e7e0f4e8691dea1b598c6303f9c6e0cf2005af97cde5f6e9c"
+          "version": "repo-file-v1:sha256:d466d556a35446197638f415019f9349dfc0926e33ed34c7d702fe5ac0aaddeb"
         },
         {
           "resource": "repo://crates/executors/src/executors/codex.rs#L489-L582",
@@ -604,7 +604,7 @@
       "evidence": [
         {
           "resource": "repo://crates/executors/src/executors/codex.rs",
-          "version": "repo-file-v1:sha256:77d88cf3fd15af7e7e0f4e8691dea1b598c6303f9c6e0cf2005af97cde5f6e9c"
+          "version": "repo-file-v1:sha256:d466d556a35446197638f415019f9349dfc0926e33ed34c7d702fe5ac0aaddeb"
         },
         {
           "resource": "repo://crates/executors/src/executors/codex/jsonrpc.rs",
@@ -617,7 +617,7 @@
       "statement": "Linuxのdiscovery fixtureは通常・timeout・future drop・caller abortの4ケースでwrapper/native終了、leader reap、無関係process生存を検査するが実WebSocket router切断や実providerの試験ではない。",
       "evidence": [
         {
-          "resource": "repo://crates/executors/src/executors/codex.rs#L1859-L1973",
+          "resource": "repo://crates/executors/src/executors/codex.rs#L1876-L1990",
           "version": "repo-lines-v1:sha256:baf1dd3f0c1d3b7139049e837d315ee7700ab084c30b337075d72a413d537043:eyJzZWxlY3RlZExpbmVDb3VudCI6MTE1LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJhYjEzNmRjYmEzZDUyMWZmZjc4OWQwZWI5MzgzYmMyZTkxMWVkMDg1Njk0MGZhYTgyOGEyOWU3NTM2NWVhOGQ3IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI0MjZkZGFkYmNmMWQyOTBhM2VlNzY2YzBjM2E1ZmI0OTc1MDA0ZDFjZWU2YmE0ODA4ZDU1M2U4Nzg4MzJiMTY4IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIzYTkyMWMzZGMwN2ZiNDBjOWU1ZGQ5NDJhOGVjYTM4MzQwOGI2NzcxMzA4ZjY4MTExNGVmMmEzMmQ3ZGYzMGE4IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI2YzI2OTY4Njc3Mzk5ZWI4MzFhNWUwNjUxZGE5YTU0ZjZiNWQyMmU5ODRhYWUyYTkzYjNkYTBmY2RiZDIyZjNjIn0"
         },
         {
@@ -700,7 +700,7 @@
         },
         {
           "resource": "repo://crates/executors/src/executors/codex.rs",
-          "version": "repo-file-v1:sha256:77d88cf3fd15af7e7e0f4e8691dea1b598c6303f9c6e0cf2005af97cde5f6e9c"
+          "version": "repo-file-v1:sha256:d466d556a35446197638f415019f9349dfc0926e33ed34c7d702fe5ac0aaddeb"
         },
         {
           "resource": "repo://crates/executors/src/executors/codex/account_read.rs",
@@ -754,7 +754,7 @@
       "evidence": [
         {
           "resource": "repo://crates/executors/src/executors/codex.rs",
-          "version": "repo-file-v1:sha256:77d88cf3fd15af7e7e0f4e8691dea1b598c6303f9c6e0cf2005af97cde5f6e9c"
+          "version": "repo-file-v1:sha256:d466d556a35446197638f415019f9349dfc0926e33ed34c7d702fe5ac0aaddeb"
         }
       ]
     },
@@ -767,7 +767,7 @@
           "version": "repo-lines-v1:sha256:b747750ece296cbc26a0717ae42bab548edc66e47928e6c2bd1414a59b8a9353:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI1ZGQxMzBhYTRlOTQzNDIzN2MzNjJlMjc3ZWMzZTQwYTlkYTJjOTNlNjAwMGVlYzFmMTI5ZmM3OTk3Y2U1ZjEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ5OTY3ZWMxZWQzODM2ZjhlYjE3YWZmMTcyYjViZmVmN2RlNjA0ODVhNDM5YzZjYTExYzU5MWUxNzU1NzM5YWUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdkNDVjODJiM2Q5NGJhYTI1OTk4NDdmMDYwMGQzOTU5MjYxZDVhODkzZDk1YjgxYjBhMTJlNTlhY2I5NWYzODYifQ"
         },
         {
-          "resource": "repo://crates/executors/src/executors/codex.rs#L1222-L1244",
+          "resource": "repo://crates/executors/src/executors/codex.rs#L1235-L1257",
           "version": "repo-lines-v1:sha256:e8b569ccfd79dcf5e44841d01ec5d0e3a26c117bb73f88e575d6e075d0eb7cc6:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJmODgzMTA2NzE3ODNhOTBiN2U3NDI5MGU3YWIzMTIwMTU3ZmQxNWQ4ZmE1OTMwMDZhYzEwZGVkNTc3ZTdjMTUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImYzZTQ0MDNiMWJiNDE3Y2ZkOGM4NTVhZWMzY2NlNmVlZDU5ZTc1YTRiMTdkNjIwODk5NWIxMzhmZThlMWFiZTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImRiYmRkM2YyMDM0NjM5YTU0NWMwNjUxZWM1MjYwYTBiNjIyZjA2NjBkYTVkNzRjNDFmYTdkMWMyMTBhZDBkMmUifQ"
         },
         {
@@ -782,7 +782,7 @@
       "evidence": [
         {
           "resource": "repo://crates/executors/src/executors/codex.rs",
-          "version": "repo-file-v1:sha256:77d88cf3fd15af7e7e0f4e8691dea1b598c6303f9c6e0cf2005af97cde5f6e9c"
+          "version": "repo-file-v1:sha256:d466d556a35446197638f415019f9349dfc0926e33ed34c7d702fe5ac0aaddeb"
         },
         {
           "resource": "repo://crates/executors/src/executors/provider_adapter.rs",
@@ -795,7 +795,7 @@
       "statement": "maintenance threadは利用者のOPENWIKI_CONFIG_DIRをMCPへ引き継ぎ、公開registryの場所を尊重する。",
       "evidence": [
         {
-          "resource": "repo://crates/executors/src/executors/codex.rs#L1098-L1114",
+          "resource": "repo://crates/executors/src/executors/codex.rs#L1111-L1127",
           "version": "repo-lines-v1:sha256:1050f4af03d9da13c7e5a7039f2936c8b8b780faa7501bdea5e8b15db0f53a0d:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI5YWZmY2E1ZThkZWVlYjM5MDVkOWQ5ZjNkMzMyY2QzMzVkYzkwMGRmM2EzNjQyMmEyMzc5ZDBkYzIzOGJlNjYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM2OGM4NjJjZGNmZDAyYjllYTZkOGVkZjM5NjY0YjBiNjQ1MWViZGY4ZDhjYTVhZTFiNDJkYWM2MTY3NTNjMDYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjVkMDRmZWFiM2RlMDM2ZWE5OWUxYWU1MTA1NmY5NjkxMDcxZjVhYjQ4NGIyMWVkZDUxZDE2N2JmODAwYTVmMzQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImYwNWQ1OWQ3Yzc3ZjMzMzQxYzRjY2MyMWIxM2Q5MmRiZWM4OTU0NTM5YTExMDU0OTVjMTQxY2ExZjEwNjUxNjAifQ"
         }
       ]
@@ -806,7 +806,7 @@
       "evidence": [
         {
           "resource": "repo://crates/mcp/src/task_server/tools/mod.rs",
-          "version": "repo-file-v1:sha256:7115b8131d0150d05bdb488aa4cc06d3d31d74acddffeb2a3900e101742c4610"
+          "version": "repo-file-v1:sha256:bfecaa6410e299847e01256c7d4c6e0f288bdf16266b7a4c46694a1df7109083"
         },
         {
           "resource": "repo://crates/utils/src/mcp_error.rs",
@@ -820,7 +820,7 @@
       "evidence": [
         {
           "resource": "repo://crates/executors/src/executors/codex.rs",
-          "version": "repo-file-v1:sha256:77d88cf3fd15af7e7e0f4e8691dea1b598c6303f9c6e0cf2005af97cde5f6e9c"
+          "version": "repo-file-v1:sha256:d466d556a35446197638f415019f9349dfc0926e33ed34c7d702fe5ac0aaddeb"
         }
       ]
     },
@@ -895,8 +895,8 @@
           "version": "repo-file-v1:sha256:a969a70a8604236e7bd6c650499e084d93683d6d57b75ce683a2cab6ee1e4699"
         },
         {
-          "resource": "repo://crates/executors/src/executors/codex.rs#L1302-L1317",
-          "version": "repo-lines-v1:sha256:b85992bb8c8093f40628d0fb8fb4c449b51d924b8a8b594105c4899e36bfe7d5:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ0MDU2MGU1MTZmZjA3MzY0OWQwNGEyZTMxY2UwYzA2NjZhNDBiMDJkODc0NWNjNTkzMjU5ZTk1YzM1MWZhYWYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjljMGZlNTc1MjU4YzJiZmJmZjU0MDU5Y2JlNDQzMWQ2MjE3Yjg1M2MxYjM2NTg0ZDlkNzg3OWEwZjFkMGNiZDciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImExYjIyYjAwZGZhYTcwZDNmZmUwYWZjMWQ5NmU4YWQ0YjhkNzg4ZWRjMDU0MGNlZjAxYjIyMzY3OTE5ZGE5NWMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNiYjljZmRkZTY1YjUzNzNjYjNjNzkxMmUzZDJhNDI5Mjg2NjM1N2ZlMzUyNjBkMjRkZGJlY2E1ZDg3ZWYxYTUifQ"
+          "resource": "repo://crates/executors/src/executors/codex.rs#L1315-L1334",
+          "version": "repo-lines-v1:sha256:1a5601a3eed21bc39d154f87ba0b449ae17fe968ada708049da7eee82d639e5f:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ0MDU2MGU1MTZmZjA3MzY0OWQwNGEyZTMxY2UwYzA2NjZhNDBiMDJkODc0NWNjNTkzMjU5ZTk1YzM1MWZhYWYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjljMGZlNTc1MjU4YzJiZmJmZjU0MDU5Y2JlNDQzMWQ2MjE3Yjg1M2MxYjM2NTg0ZDlkNzg3OWEwZjFkMGNiZDciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImExYjIyYjAwZGZhYTcwZDNmZmUwYWZjMWQ5NmU4YWQ0YjhkNzg4ZWRjMDU0MGNlZjAxYjIyMzY3OTE5ZGE5NWMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNiYjljZmRkZTY1YjUzNzNjYjNjNzkxMmUzZDJhNDI5Mjg2NjM1N2ZlMzUyNjBkMjRkZGJlY2E1ZDg3ZWYxYTUifQ"
         },
         {
           "resource": "repo://crates/executors/src/executors/codex.rs#L825-L838",
@@ -910,7 +910,7 @@
       "evidence": [
         {
           "resource": "repo://crates/executors/src/executors/claude.rs",
-          "version": "repo-file-v1:sha256:bc19698ed6a8b22680c2de33f9c1507ed33e7c89eedbf0bdc2b7cc39375a1677"
+          "version": "repo-file-v1:sha256:28b13bd24b2e69baa93bee5f19280b322b914ee440003e934d7fdecf9d2df6fe"
         },
         {
           "resource": "repo://crates/executors/src/repo_skills.rs#L53-L143",
@@ -969,10 +969,52 @@
           "version": "repo-lines-v1:sha256:7b0c6aece25bee9b937d9c0e8b2d5547710a9ce2a139ec214b44a7d307ee347e:eyJzZWxlY3RlZExpbmVDb3VudCI6NzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhkNjlkZWJlMWFiZjA2MzIzNDk3YThjZGUzNmVmMTgxNDZiYzk5OWJmMTJkNWM5YjhkNWYxNjFlZTA4MGQ0ZDIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA4MzBkYjVkNmViN2M5YzE1MDMwMGY0YzM0YmY2Y2Q1NGE1NGYzMjk5OTI3ZTBiMTAzOTEwODliZDIwOGFjNmYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjYzYTQ0YzA0ZjdjMDM1MTk3N2M1NzUzM2EzOWRkZjk3ZmRkNDE1OWQxMjZmMGQ1YzFiMTM4YmQxMzAwMmYwOGQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImVhNjMyOWE2OWM3ZDhmZWZiYzM4NGFkN2E4MjIwYzM0NDk2YzE2MDMyZTg2MmRjMWE0YjNmNjk2NDNmNjQ1ZWUifQ"
         }
       ]
+    },
+    {
+      "id": "claim_ea73c00c2ffd458e915cbc369ca8c56a",
+      "statement": "固定presetの報告工程はhost指定source rootをCodex thread限定native read-only profileとClaude Linux outer bwrap/native sandboxで保護し、launcher上書きや無保護fallbackを拒否する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/executors/src/executors/claude.rs#L780-L825",
+          "version": "repo-lines-v1:sha256:30100806fb86b922ed3a034f97504fa0f5eb5988854bfb17da28a9b716c4c341:eyJzZWxlY3RlZExpbmVDb3VudCI6NDYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM4MmRmOTFlZDU0MjI4N2M2N2IxNzAyNmZiYzU4NDU0ODg4YjdiZDcwMjY4ZWQwOTQyN2RkYmYzZDkzMjM4Y2MiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEzMGFhZDVkM2EzYzc1ZGNjMDc3MDJmZTQ5MjVjNGUyZjVmZDJmYjZmZWE4MTIyODRiNDc3NTY5MjM3NTIwNTUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjAxM2NmMzZjNjBiOTk1NDVmZGRiYTY3YmQyMTdhY2NlZWI2MjA2ZDQ3Zjg2ZGYxNDc3OGUxMmI5MzlhNDI5NTkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhiZWM0Yzk4OTAzNDBjMzFmMWNkODAzNGVhMzU4ZDM2Y2VkNTlhODU2NzAyYjVlNDQ0NGRmYzA2NjdhYmE3MTEifQ"
+        },
+        {
+          "resource": "repo://crates/executors/src/executors/codex.rs#L1048-L1084",
+          "version": "repo-lines-v1:sha256:ada6c49ea9d9750ba404cc7a4a38bcbbc1da27ff178d58a559609ffead6474c0:eyJzZWxlY3RlZExpbmVDb3VudCI6MzcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YjA0NDkxNDY5NzIyZTgzNjNhOTRlNDA0NDUzOGUwMTNhMmEyMTdlMzZiMWU1NjhiYTYwYWNiN2I0YzhmMmUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJmM2ZlNDNmMTBmODYwYzk4YjM5YWVkNjJhZDhkOTI5MDFiMzgzZWQ2NGUwYjcwMzAyMzNhN2Q4ZGVlNDczNzgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjUxM2QyMzZkMzM2MzFkMTgwOGQxYThiOTI5MTEwYTYyOWU4ZDUyZGFkZmIzZGZiNDIxNmYyMDcwMjcxMjAyYWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjMzNjMxZDlhZTQ3ZWZiOGEzNWY1NmZjNjk4MzMwNzFhOGVmNDQ2MjQ4YTBmODk3ZWJhMTc3ZWMzNWUwZTYzY2UifQ"
+        },
+        {
+          "resource": "repo://crates/executors/src/source_protection.rs",
+          "version": "repo-file-v1:sha256:9102a4370cda2234c87453b01d4c106699a1fee50aee06507727bf5299d7341b"
+        }
+      ]
+    },
+    {
+      "id": "claim_37cad747627b474d84fcab6d33df5600",
+      "statement": "報告sandboxへの追加writeはcanonical化したsystem tempとhost shared tmp/cacheに限定し、source配下やpersistentを追加許可しない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/executors/src/source_protection.rs#L45-L89",
+          "version": "repo-lines-v1:sha256:3d91661d2d25f4b09f393fde4bab547fa3e026ca5c4672bed8b8f47ecbb2e3dc:eyJzZWxlY3RlZExpbmVDb3VudCI6NDUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIyMWQxZTk3ZGFiM2QzMmEzNWE3ZTE3MTVkZmJjYWY5OTA3MGUwYTIwNWNhMzUwZjgyZDY3ZjgyYTYzNTc4YWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM5NDBhZWVhZjc4MDQ3MTIzYzI1NjIzMmFmNzI3ZDBmMDY1YmYxMDY2N2VjOTcyNDM0ZWI1N2FhNjg5NzAyMTAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjdkZGI0YWNjNmU5MjY1OTY0NmQyNTIxYTczYmUzZTAwMTYwZjgyYWIzYzJhMmVjY2U2NDE3YWM4ZTg1ZmNkZmIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjUwZDQxZjY5M2E0MzEyYmE4NWFmY2ZlYzViNGYyZjgyZjlmMDNkMjcxNjYxYTUyZDY2MTkyYjc4ZGYyMjkxZmYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_0e6d590ca84f4d72a5118441abf2166a",
+      "statement": "配布依存のbinary存在確認とruntime namespace成功は別であり、実providerでのsource拒否とtmp/cache成功およびpreset完走は未実証である。",
+      "evidence": [
+        {
+          "resource": "repo://Dockerfile",
+          "version": "repo-file-v1:sha256:252d78faa7413184017861f5e1b898afdc6d759f05cd97475463b7b5bf39208a"
+        },
+        {
+          "resource": "repo://deploy/server/workflow-source-protection.md",
+          "version": "repo-file-v1:sha256:3b6c34bcd60166bf77d91ec11608f9c79f3071a659a6da5c6161aa4a6d506587"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-10T21:23:07.231Z"
+    "at": "2026-11-11T09:36:22.928Z"
   }
 }

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:15f68b1285a1b162d97589a3fe84de25a00f13cecbe7f09347b490e1a02c0957",
+  "pageVersion": "sha256:0c2622ccc4df8aa75a90acee162f5f13c75aa143515e26e47ecb9dc8aa2eb27f",
   "claims": [
     {
       "id": "claim_94623b4df5d444f5b2804c9e2c2025c7",
@@ -246,11 +246,15 @@
     },
     {
       "id": "claim_1b79b1853137487c98e5b2e57f3a8f95",
-      "statement": "Workspace新規DialogはGit/直接folderタブを分け、Gitは選択Repoと各branchが揃うまで確定不可、Project起点ではpreset内に限定する。Workflowの単一モードは複数選択を確定させない。",
+      "statement": "Workspace DialogはGit/直接folderを分け、Repoとbranchが揃うまで確定不可でProject起点はプリセット内に限定する。singleRepositoryオプションは単一選択を強制するが、372のIssue開始は同じDialogで単一Agent/固定presetを扱う。",
       "evidence": [
         {
+          "resource": "repo://packages/web-core/src/pages/kanban/IssueTaskAttemptsSectionContainer.tsx#L140-L190",
+          "version": "repo-lines-v1:sha256:1ef776578aabec9e6c9263d7154322ff5341a21d52d7fe21631b69f0573d141a:eyJzZWxlY3RlZExpbmVDb3VudCI6NTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA0MjdiODdlZjI0NmEyOWY0YWIwZjE2YzkxYWU2YjIzZDM1OTAzOTRiMmJkZGIzODE5OTgzZGRiOTU1NzhhOGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcxN2FmMTEwMWM5N2I3YzJmNTI1NDA3ODJlNjM0Y2M0NDQwZjBlOTcwMzQxZTUyZjk3NTIzMTFkNzhiN2Q3ZDAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUwNDZjNzIwZjE5Y2QyODVkZDE0YTk0NzU5ZDNmNzJiOGE2MDIwZDQxNGE3ZjY4YTczNTU1OWI4NTkwYWNiOGUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBhZjJjZGQ0YzlmYmVkNTMyMmQ5YzI0NjBmYTczMTEyZDRiZWViN2RlMzFlYTVkNTQ5ZmNhYWQxNGIwMDM2NDMifQ"
+        },
+        {
           "resource": "repo://packages/web-core/src/shared/dialogs/shared/WorkspaceTargetDialog.tsx",
-          "version": "repo-file-v1:sha256:4bb1f35cf5a86acb10cd8a10097c894f44a6f5af8874f5a057d38a2c2b5aa305"
+          "version": "repo-file-v1:sha256:ecfc882877cd8569884fe24dc9151c99443f83c801cf871e2145b7f71203b4a7"
         }
       ]
     },
@@ -302,7 +306,7 @@
         },
         {
           "resource": "repo://packages/web-core/src/shared/dialogs/shared/WorkspaceTargetDialog.tsx",
-          "version": "repo-file-v1:sha256:4bb1f35cf5a86acb10cd8a10097c894f44a6f5af8874f5a057d38a2c2b5aa305"
+          "version": "repo-file-v1:sha256:ecfc882877cd8569884fe24dc9151c99443f83c801cf871e2145b7f71203b4a7"
         }
       ]
     },
@@ -343,7 +347,7 @@
           "version": "repo-lines-v1:sha256:6bb72f8a1767eeecb43e9216f23bf4c57a08f512db8ae807c4ff5b71a1537567:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRhNmEwZjM4YmQ0NGU4MGZkZjI2MDUwZTkxZjJlZTI5ZWZhNTkxOTAyZjYxNDYzNTlmNTY0MmU1MGUxMWNmNDYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZjMTBkODc1YTIxNTU4NmI1OThjMzU0NjY2NzUzNzQ2Y2U5YzM3NmM2ZjFhYzY0NzVkYTY0N2Q2MTYwNjI5ZjkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRhOWY4NmQyOGU3ODRmOWZkMzFmYjcyZDE1ZjYwY2JjZWFhZmRkNjY5Y2JkNWI2ZGE3ODg4YTAyMzMyMWViYjkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjcwNTY1MTFlZTQyOTJlODQ5MjRjYTVmOWUzNDViMjg0YjRhOWU0YTNlOGMxMjkwNmE3ZWUwZjlhNGRmNTU5NmYifQ"
         },
         {
-          "resource": "repo://crates/executors/src/executors/provider_adapter.rs#L1974-L2030",
+          "resource": "repo://crates/executors/src/executors/provider_adapter.rs#L1991-L2047",
           "version": "repo-lines-v1:sha256:77dd2b524accb891169676bb5746a882b21eec42b753b94b2756b285a76a1810:eyJzZWxlY3RlZExpbmVDb3VudCI6NTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFlNTNlMjQ4ODZlZDg5OTFmZDZhMjdkNzhjM2Q3MDI2N2JjNTVjOWFhYjg1NWI5MDk4NzJkNzJlNDYzNmM1NGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjI3ZDJlZGY4MmVhNDVmZTNkZTk0ZDYxYmRlYjgxMTg2Y2JiN2IxY2IxMjk5Yzg4OTUyMTRhZDZmNzgwNGEzMGIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjY1NTY5NTQ5ZTdiNzE2ZmM1OGMyNmNhNDFmMDY3ZWFmMzA3MzVlODZkZmExN2EwY2IwMzdkZjNkZjFlMTgzZjUifQ"
         }
       ]
@@ -597,7 +601,7 @@
       "statement": "Workspace検索の回帰は比較unit、両一覧のRust SQLite fixture、専用instanceの実UI/API Chromium specで分担し、browser specは失敗から通常pollingでの回復、filter、50件境界、識別子更新を扱う。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/local_remote.rs#L4881-L4951",
+          "resource": "repo://crates/server/src/routes/local_remote.rs#L4882-L4952",
           "version": "repo-lines-v1:sha256:cf1cb807c6806e7d401ad8f3a65814e84ff37df16aaf9fd1a417125ede6325bf:eyJzZWxlY3RlZExpbmVDb3VudCI6NzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjljNmZmZWY4YjFkNGI2NDYwMzU1OWRlYmRiNDA2MTNmNzUzOThiZGRmOGEwYjRlMmUwMDRkMTU3MjI0MmY2ZTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk1OThlYmY3NjA3MzFkMTc1ZDE2OTg3MzY2MThiMDUwMjMyY2U5MmRmZGJiYzgwOWYxOGRmNzA1YWY5ZjQ1M2QiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUwZWRmNmY1ZmY2Y2QyYmUyYjQwMzY5NTU5YmE3NzRmYmVhMDUwYTY0OWY4MjYyODI1ZjUzYmZjYTY3ODVhNTciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImM5ODQ2N2Q0YzBiNTc1MWQ4MGM3NmVkZDM3OTlmYTRkMzdjNTg1NDg0NzhjODEzMmMzOGRlYjE3N2VlYTRmMDYifQ"
         },
         {
@@ -869,6 +873,6 @@
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-10T20:48:58.515Z"
+    "at": "2026-11-11T09:36:22.928Z"
   }
 }

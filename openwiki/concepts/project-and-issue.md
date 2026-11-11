@@ -88,8 +88,6 @@ sources:
     resource: repo://packages/web-core/src/features/kanban/ui/KanbanCardDetails.tsx
   - id: openwiki-source-e0c2de9e01617a8949b78360
     resource: repo://packages/web-core/src/features/kanban/ui/KanbanContainer.tsx
-  - id: openwiki-source-1e12225eda0d52cdd64d9939
-    resource: repo://packages/web-core/src/pages/kanban/IssueArenaSectionContainer.tsx
   - id: openwiki-source-efd2346cc808d71c75e004b0
     resource: repo://packages/web-core/src/pages/kanban/IssueTaskAttemptsSectionContainer.tsx
   - id: openwiki-source-8bf9c53954166f4a7e70ae94
@@ -98,6 +96,8 @@ sources:
     resource: repo://packages/web-core/src/shared/components/ProjectWorkspaceDefaultContext.tsx
   - id: openwiki-source-00110cdcfec890895b99690a
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/RemoteProjectsSettingsSection.tsx
+  - id: openwiki-source-5d2382a0f231c830f95f103c
+    resource: repo://packages/web-core/src/shared/dialogs/shared/WorkspaceTargetDialog.tsx
   - id: openwiki-source-b885bc17dfe85c4ca45223e9
     resource: repo://packages/web-core/src/shared/hooks/useUiPreferencesScratch.ts
   - id: openwiki-source-44d596f923fda7620210296d
@@ -108,10 +108,10 @@ sources:
     resource: repo://tests/kanban/issue-detail.mjs
   - id: openwiki-source-62d93277f2c37df9b3fcebae
     resource: repo://tests/kanban/README.md
-generated: { by: "codex", at: "2026-11-10T20:48:58.515Z" }
+generated: { by: "codex", at: "2026-11-11T09:36:22.928Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-10T20:48:58.515Z
+    at: 2026-11-11T09:36:22.928Z
 ---
 
 # Project・Issue と実施の関係
@@ -330,7 +330,7 @@ remote MCPの `delete_issue(project_id, issue_id, request_id)` は既存Boardの
 
 関連行には区切り線を設け、削除ボタンは hover に加え focus-within でも見える。32rem以下の Issue ペインではサブ課題タイトルを次行へ回す。長い表はセルの最小幅を維持して表内を横スクロールさせる。[関連](../../packages/ui/src/components/IssueRelationshipsSection.tsx)・[サブ課題と表](../../packages/web-core/src/app/styles/new/index.css#L1250-L1293)
 
-ワークフロー・単一エージェント・アリーナは「タスクの試行」内の同じ説明付き選択肢として並べ、利用幅に応じて列数を変える。アリーナは表示スロット経由で既存 container を使い、開始・既存への遷移・状態判断を保持する。見た目をそろえても実行機構やデータ取得を統合したものではなく、カードコンテキストも維持する。[選択肢](../../packages/ui/src/components/IssueTaskAttemptsSection.tsx)・[接続](../../packages/web-core/src/pages/kanban/IssueTaskAttemptsSectionContainer.tsx#L410-L445)・[アリーナ](../../packages/web-core/src/pages/kanban/IssueArenaSectionContainer.tsx)
+Issueの「タスクの試行」から共通開始ダイアログを開き、単一Agentを既定に[3 preset](workflow-attempt.md)を選ぶ。Repo/branchと工程parameterを同じ開始で指定し、Workflowの結果は既存Runへ遷移する。既存Attempt/Workspace一覧は保持する。共有UIには任意のarenaOption slotが残るが、現行Issue containerは新規Arena選択を接続しない。新規Arena APIも拒否する。[共通表示](../../packages/ui/src/components/IssueTaskAttemptsSection.tsx)・[開始](../../packages/web-core/src/pages/kanban/IssueTaskAttemptsSectionContainer.tsx)・[旧Arena](arena.md)
 
 表示変更の検査入口は `PLAYWRIGHT_BROWSERS_PATH=/opt/lvk-browsers node tests/kanban/issue-detail.mjs`。本番コンポーネントと inert fixture で5幅×明暗、長文・表・複数コメント・関連・サブ課題と操作を検査する。live ConversationList / SessionChatBoxContainer は mount せず、認証済みアプリ・実機・VSCode E2E の証明にはしない。[試験の範囲](../../tests/kanban/README.md#issue-detail-and-split-conversation-reading-surfaces) 今回の統合保守では既存source証拠を参照し、描画試験を再実行していない。
 

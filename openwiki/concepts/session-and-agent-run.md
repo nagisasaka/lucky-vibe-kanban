@@ -192,10 +192,10 @@ sources:
     resource: repo://tests/supervised/README.md
   - id: openwiki-source-5184ef612e83b7ab35d62e7b
     resource: repo://tests/supervised/run_isolated.py
-generated: { by: "codex", at: "2026-11-10T21:23:07.231Z" }
+generated: { by: "codex", at: "2026-11-11T09:36:22.928Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-10T21:23:07.231Z
+    at: 2026-11-11T09:36:22.928Z
 ---
 
 # Session・AgentRun・RunAttempt
@@ -547,3 +547,8 @@ Codexは履歴JSONL/threadを解析して固定文の保持を推測せず、短
 ### LOCAL-376で維持するasync質問の寿命
 
 372初回のasync発行・実行継続・元turn終了・失効は正常挙動として維持する。mapper v8は元deliveryを保持し、asyncのfinal_answerをturn終了の証拠にしない。旧mapperや既存終了Runを遡及変更せず、DECISION/本文から待機や継続を推測しない。上記のnative InputRequested回答と、非同期inboxから元RunへSteerする受付は別経路であり、遅い回答を後続Runへ流用しない。[投影](../../crates/executors/src/executors/provider_adapter.rs#L2112-L2220)・[async受付](../../crates/server/src/routes/sessions/questions.rs)
+
+
+## 固定presetの報告Session
+
+LOCAL-372の報告工程は通常REVIEWという表示名だけに依存せず、保存済みWorkflow graphのSession IDとsource_read_onlyを起動時・継続時に照合する。hostはWorkspaceとRepoを保護対象として渡し、そのSessionでは通常codingのsource commit/Manifest完了を抑制する。実装工程は通常coding完了経路を使い、別の新Sessionへ確定成果を渡す。[host設定](../../crates/local-deployment/src/agent_run_port.rs#L844-L920)・[成果成立](../../crates/server/src/workflow_runtime/presets.rs)・[provider保護](../integrations/agent-providers.md)

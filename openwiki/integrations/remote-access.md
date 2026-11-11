@@ -26,6 +26,8 @@ sources:
     resource: repo://crates/mcp/src/task_server/tools/sessions.rs
   - id: openwiki-source-28437ab4b181623345af79bc
     resource: repo://crates/mcp/src/task_server/tools/stdio_tests.rs
+  - id: openwiki-source-4a43ce8570a825e0b8c21ff1
+    resource: repo://crates/mcp/src/task_server/tools/workflow.rs
   - id: openwiki-source-7083ce2acf66599ca4b7a3c8
     resource: repo://crates/server/src/host_display_name.rs
   - id: openwiki-source-c2eaddb5c69f49c5ee934a63
@@ -92,6 +94,8 @@ sources:
     resource: repo://crates/server/src/remote_mcp/stdio.rs
   - id: openwiki-source-43c18ae2d53a6d4bee6c33b2
     resource: repo://crates/server/src/remote_mcp/tests.rs
+  - id: openwiki-source-f9b6f7aadd7c915cd19fa5ef
+    resource: repo://crates/server/src/remote_mcp/workflow.rs
   - id: openwiki-source-0ce0e179a46d5c36c5f05ecf
     resource: repo://crates/server/src/remote_mcp/workspace_archive.rs
   - id: openwiki-source-47f0a8c78f8e76d48dfdd192
@@ -120,6 +124,8 @@ sources:
     resource: repo://crates/server/src/routes/sessions/executor_config.rs
   - id: openwiki-source-4d617b0e2fa188c6ad63ae56
     resource: repo://crates/server/src/routes/sessions/questions.rs
+  - id: openwiki-source-b873a3d2c5d7749c538e03eb
+    resource: repo://crates/server/src/routes/workflow_presets.rs
   - id: openwiki-source-af328071d51bff75b5246d3b
     resource: repo://crates/server/src/routes/workspaces/usage.rs
   - id: openwiki-source-7d8384e54754a811ab7ab92e
@@ -130,10 +136,10 @@ sources:
     resource: repo://crates/utils/src/mcp_error.rs
   - id: openwiki-source-3ecddc0be7b037ea6ab24381
     resource: repo://packages/local-web/vite.config.ts
-generated: { by: "codex", at: "2026-11-10T21:23:07.231Z" }
+generated: { by: "codex", at: "2026-11-11T09:36:22.928Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-10T21:23:07.231Z
+    at: 2026-11-11T09:36:22.928Z
 ---
 
 # 外部アクセス・MCP・Runner の境界
@@ -527,3 +533,14 @@ list_project_repositoriesは現在のプリセットと既存リンク済みGit 
 UI/MCP共通SubmitInputはSession lock下で元Run/attempt/eventと予約を照合し、不正な内容をcommand予約前に拒否する。元native要求への応答はhost waiterと元handlerが所有する。receipt受理をprovider配送完了とみなさず、不確実配送では元receiptとcommandを確認して新IDで盲目的に再送しない。取消・turn終了・期限切れ・重複・stale回答を後続Runへ配送しない。[共通入口](../../crates/server/src/routes/agent_runs.rs#L391-L408)・[preflight](../../crates/server/src/routes/agent_runs.rs#L550-L612)・[MCP回帰](../../crates/server/src/remote_mcp/runtime_write_tests.rs)
 
 一般質問は実行権限承認と別で、DECISIONや本文から承認を推定しない。async inboxの元turn終了時失効と履歴保持は変えず、終了Runに回答して自動継続する仕組みも加えない。実認証UI/MCPと実モデルを一体で通すlive E2Eは未実施である。
+
+
+## 固定Workflow presetの共通tool（LOCAL-372）
+
+stdio globalとHTTP MCPのworkflowは、Issue UIと同じ固定presetサービスを使う。actionはlist/start/status/stop/defaults/save_defaults。startはstart.request_id、project_id、issue_id、既存workspace_idまたはreposとtarget_branch、parametersを指定する。parametersはpreset、scope/additions、Project追記revision、1〜8のperspectives、工程別engine/model/variant/scope/additionsを扱う。任意graphは受け付けない。[共通型](../../crates/workflow/src/presets.rs)・[stdio](../../crates/mcp/src/task_server/tools/workflow.rs)・[HTTP adapter](../../crates/server/src/remote_mcp/workflow.rs)
+
+全actionはreadとProject認可、start/stop/save_defaultsは明示的write scopeを要求する。Issue/WorkspaceとProjectの関係、runのIssue帰属を検査し、Repository-owned Wikiはowner APIへ分離する。stdioも認証actorから同じadapterへ渡す。[同じ認可](../../crates/server/src/remote_mcp/stdio.rs#L723-L773)
+
+開始時は保存Project defaultsのrevisionを照合し、実際の追記を固定する。同じrequest_idの異なる入力はConflict、同じ入力と保存runがあれば既存結果を返す。受付中のcrashでWorkspace等が残りrun未保存なら自動的に別Workspaceを作らず復旧確認を求める。不明な受付は新IDで反復しない。[開始receipt](../../crates/server/src/routes/workflow_presets.rs#L114-L205)
+
+statusは既存Run/NodeExecution/Sessionを読み、報告、確定source、失敗と残件を返す。stopは既存取消経路を使い成功済み成果を消さない。受付、provider終了、成果成立、Workflow完了を区別する。推奨後の採用・修正・削除・Git merge/公開は別指示で、独自の上位AI監視を前提にしない。[結果/停止](../../crates/server/src/routes/workflow_presets.rs)・[利用ガイド](../../assets/skills/workflow-presets/SKILL.md)

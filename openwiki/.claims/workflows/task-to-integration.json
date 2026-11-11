@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:635633e615895427f21a54538c5fbe8a32b412ea33af452ed5bf89c79fe6e957",
+  "pageVersion": "sha256:08bd4b8047c74c1aafc127049a3ebfd923ddbead661282daad789e6717f360d2",
   "claims": [
     {
       "id": "claim_62fc79a5c9fd478cbd529ca6222d3af2",
@@ -162,15 +162,11 @@
     },
     {
       "id": "claim_dd291413fbd34d0f99c1b2eedf6daaaf",
-      "statement": "ScheduledTaskはAgent Session bindingを消したtemplateから新WorkflowAttemptを作りschedule/schedule_manualで実行する。",
+      "statement": "旧Workflow ScheduledTask dispatchはpreset入口guardで拒否する。Session bindingを消した新Attemptを作る旧ロジックと保存設定・履歴は残るが、固定preset定時起動を追加していない。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/scheduled_tasks.rs#L445-L489",
-          "version": "repo-lines-v1:sha256:6e79f7617ded7bd8dd46e602f50327a5762521031ccc693540ef940a9c797bd0:eyJzZWxlY3RlZExpbmVDb3VudCI6NDUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE1OTI2NmY5NzM0NjAyZWRjZjNhYjU0ZWJkNjU5YjA0MTUwYTRhZmVlNjBjMTA5ODdmZDFiMDMzN2EwN2M5ZDQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE5ZTc2MzU1Y2YxMTk5NDgwYzNmOTk4MzZiMTQ4NmM4NDFkODkxZmFhZDkwNGM2MDhlMDkzMDIyZDM3NTdhZWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjgwZDk5ZmIyM2I0ZjNhOTY1MjZmNmRlMDJmYWFhZTQwYjc4ODVmOWE1YTZkMjBiMmFiNDBmNmM2Zjg2OWZkMjgifQ"
-        },
-        {
-          "resource": "repo://crates/server/src/routes/scheduled_tasks.rs#L927-L939",
-          "version": "repo-lines-v1:sha256:180cfe37e3b0d97b857b0b718eddf02150b8eeef5c99776042882a4cb7ef626c:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIwMGI2ZjZjODI1NDkzMTJjYTI4YmIzNzgwMTI3ODlmMTY2ODAzNmZjNzViYjlhYjEzZmZiY2YyMTMwYmRiZWQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM1ZjZmNDY2ZTU5Y2ZjMzA3MDNjNDVmNzJhZjY1ZGU1NGFjMzYzZDM1NGNjMWEzMzMwMzUwYWNkNDUyNDM0YzQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijg0NTAwYjdmMmQ1MzM1M2RhYjYxMWFkNzdlZGNlZTExM2E3YWE5OGVhMjU0ZTQzOTQ4MTQ0ZDkzNmE2MmJmMzQifQ"
+          "resource": "repo://crates/server/src/routes/scheduled_tasks.rs#L445-L490",
+          "version": "repo-lines-v1:sha256:0fc5f44f9c4fea93af73da89d3b7b8ef194b5f5f961c44c2632b5d5547d72867:eyJzZWxlY3RlZExpbmVDb3VudCI6NDYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE1OTI2NmY5NzM0NjAyZWRjZjNhYjU0ZWJkNjU5YjA0MTUwYTRhZmVlNjBjMTA5ODdmZDFiMDMzN2EwN2M5ZDQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE5ZTc2MzU1Y2YxMTk5NDgwYzNmOTk4MzZiMTQ4NmM4NDFkODkxZmFhZDkwNGM2MDhlMDkzMDIyZDM3NTdhZWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjgwZDk5ZmIyM2I0ZjNhOTY1MjZmNmRlMDJmYWFhZTQwYjc4ODVmOWE1YTZkMjBiMmFiNDBmNmM2Zjg2OWZkMjgifQ"
         }
       ]
     },
@@ -179,7 +175,7 @@
       "statement": "Scheduleは前回pending/running/awaiting_human/awaiting_arenaならskipして次回へ進め、timezone/DSTを含む日次週次testがある。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/scheduled_tasks.rs#L1219-L1275",
+          "resource": "repo://crates/server/src/routes/scheduled_tasks.rs#L1220-L1276",
           "version": "repo-lines-v1:sha256:68df7d0ba471abd174eb975b3978215d4405ce040377f43dc8d3f816c2c9f8bb:eyJzZWxlY3RlZExpbmVDb3VudCI6NTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZiYTBhZjcyODkxZDEwMmRlNWMyNDY4OTQxNWQ4OWQ0MjUxMjQzOTg5ZmNjMDYyYzdlZjU1ZTc2MWY0YTkxNzQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUyZGJkN2M2NzAyYWYwYzdkMjQ4MzYwMTVjYjUxNjEzMGViNmU3OTRmMTBjNTNjYmRkZGM0ZGY0MmM4OWFkMjYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhiZTk5NjVjZTRhMzJmOTdmOWYzM2M1NTM4Y2VmOWQxNDY3OGIxNDRkODg4NWQ2NjI5OGE2ZGUyYzg4NzU2ZTEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImEwMGRiMDQwZjI5MDliZjk3OGZmMGE5NTZhNTVlODNjNjUzNDE4ZGU2YmI2OGY4MDQxZGE5NzZmOGQzZDIyNzAifQ"
         },
         {
@@ -187,26 +183,22 @@
           "version": "repo-lines-v1:sha256:70b365a21fa002df5abd8adb0b483cb06fb145a6cd66586f71e0cdbe2c9e109a:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM5MDA1MDQyY2I5ZTIwYzgxYTZlYTk5NWU5MTdjYWNhY2Q3NjZhNGE2YTBlYzJhMWJiNDJmOTEzZWU2OTIzMGUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU5YzEzNTkwNjY1NjMyM2QxYzVlYTQxNjU0ZWU2NmFmYjU4NWFjZGNmYWVhY2ExMjFkNWUzMGJmMTkzZWVkZDciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImEyY2MwZDQ0ZGRlMzkxMDE4YTQ1OWMwNmIwOTBlZWVjOGRmNTA0MTg4Mjk3MzIwMmQwYTc2NWZjOTM1NjRjYTYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJiYTdiZDRhZDA1MTg2NTdkMDNiY2E1YjQ4ZTExMzEyODNjNjU0NWZlZjEzZGFmNDk4YTY5OTdmYTVkYzc5MTgifQ"
         },
         {
-          "resource": "repo://crates/server/src/routes/scheduled_tasks.rs#L728-L745",
+          "resource": "repo://crates/server/src/routes/scheduled_tasks.rs#L729-L746",
           "version": "repo-lines-v1:sha256:fc964d726754b1125fca84483794d1dd94b4c36796b94e37e4a569d5f0cb2533:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE2MjJlYmFiZTY4YzNmNDliNDE2YjlhZGZmM2NjYmE1YTU3NzVhZDU3ZjEzZjg1ZTRkYmZmMDU5YTYxOTE4ZDAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg4MzEyMzNkMjhkOTUzNWQ3YjM3NjFkMjFhM2U5YWU0M2Q4MTYwZmQ1MTAzNWExNTM3ZDAxODJlODY4OGY4OWEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE5YTBiM2YzZDFiZGEyMmJjYzYxZjI3YjQwZmM1YmQ1OGY0Yjg3ZGEwMzkyYWJhNmZlYjdkNGUzZTc4MjM5MWQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjUxODI0MmNiODQ2ZjQ3ZTUyNGI3NjgzNjdiMWI5NTc1NDhjMWJiOGQwMzdmZjQ2NGIwNDRiODMxNmIzMTIxODgifQ"
         }
       ]
     },
     {
       "id": "claim_d9921d30abf54d6cb92518115b3d7168",
-      "statement": "定時Workflow起動と完了検知は別でembeddedにcompletion watcher登録がありstandalone mainにはなく、GET/SSE reconciliationとUI4秒pollが進行契機になる。",
+      "statement": "Workflow完了追従watcherはstandaloneとembeddedの両方に配線され、GET/SSE reconciliationとUI4秒pollも残る。起動受付と成果完了は別である。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/main.rs",
-          "version": "repo-file-v1:sha256:eb2c1c4c310ab0d9fe1fecd5ab95439d432cee67af88661cc6d373cfb8308dbe"
+          "resource": "repo://crates/server/src/main.rs#L145-L156",
+          "version": "repo-lines-v1:sha256:3eb43562fc0c403b43a70b0af343c9358859dbe13a113491c9413e638aab168d:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY2MjNhYmNkNzk4M2NhZWVlZDViOGUzN2IwNjEzNzBmNGMwMDU5NjQ2MGJhZmRhNTdlZWQ5YjIwMWEyZWM0NGQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUwOTc4ZmI3ZTEyMDQzNzJhYmNlNzU3M2FiOTk0MjIxZTM3MDU0MWQ0MjQ5ZmQ3NDNjYTYwZDFlMzRkMWRmNDIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjI1Mjk4YmE2NDU3MmNhODkwODg0YTFiMWViNmE1MjA2YmI3NWJkMWE3Mzk5Mzk3YWVjOGQ4NGVkMDVhMWQ4ODAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImU2YTMwZDlkZmEyNWZlNTViMjljYTc2OGViMjRkZWFlNTdiMzA3NDNiOWQyNjk1MTQzZjVhMGQ2NjA0NDZmMTcifQ"
         },
         {
-          "resource": "repo://crates/server/src/routes/workflows.rs",
-          "version": "repo-file-v1:sha256:7612dab197a66150dd7d82e3a9872369e70af33059864fe6eb7cb4a62a99f40a"
-        },
-        {
-          "resource": "repo://crates/server/src/startup.rs",
-          "version": "repo-file-v1:sha256:b919f58007bb502c87be5755596f22119dbd3ed119fa36321189c83b0be8b85a"
+          "resource": "repo://crates/server/src/startup.rs#L223-L238",
+          "version": "repo-lines-v1:sha256:5285d4983125f7c4f6dfee1e43b61c06a12dab5b205958574a49b0beed269f7b:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY2MjNhYmNkNzk4M2NhZWVlZDViOGUzN2IwNjEzNzBmNGMwMDU5NjQ2MGJhZmRhNTdlZWQ5YjIwMWEyZWM0NGQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjlhYzA0M2NlYTlmZDg5NTY4NDFlODljYTQ2YTAyNTYzZWM4NWJhMDM5ZTJmYWIwYTI3NmNkOTRlMjgzYTEwNTYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjI1Mjk4YmE2NDU3MmNhODkwODg0YTFiMWViNmE1MjA2YmI3NWJkMWE3Mzk5Mzk3YWVjOGQ4NGVkMDVhMWQ4ODAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNjYTBkMDlkN2VhYjRhMDRlOTExMjc0NWI4NjAzZjcwMDdjMDRmZDk2NDQ0ODUwMTJiZjVmNzhlNWFhMGVjMzkifQ"
         },
         {
           "resource": "repo://packages/web-core/src/shared/hooks/useWorkflowRun.ts",
@@ -304,7 +296,7 @@
         },
         {
           "resource": "repo://crates/server/src/remote_mcp/launch.rs",
-          "version": "repo-file-v1:sha256:a39e58fb89e0bf5d94aa4132e20005a7acc79fbeabbc822e06d5b3d91350ece2"
+          "version": "repo-file-v1:sha256:99f74b16e96e71c7f5ea98911251b824e1527bb15d7a476e711c60523d77cec9"
         }
       ]
     },
@@ -507,10 +499,28 @@
           "version": "repo-lines-v1:sha256:8b95c49dcc98f723c9632fb899e20a80273416254f8571934847cc5b1bb2bb95:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE5YmE4N2NhYmU3N2RhOWVjZTZkNjY5MzRmOTA1ZWJmNDE2ZTg3MTBkZmMzMGIxZGY2NmU0Njk4YWYyOTI2MDQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZkODQwZTZiZTMxNTY5ZWRlZWNjNzQwOTM4ZDQyMjg2NjhiZTc2ZjVlMWZhYTYxYzkzMzA3Njc4ODE1NTYyNjkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjMwYTJkZTMwYzE3YzBjOWUyMGJlODllNTAxNjM0M2U2Y2E2ZDZiZGM2ZmFiNzQ3M2M1YmViNWQ1ZTMzZmI0MjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNjNGIxYmE2MDEyYmE4Njk2NTMxNmJlMDE5NTU2ZTk5MTE4MGQ5NjE0MzU1OGE2NDIwODdlYzRjMzBkOGE2ZmYifQ"
         }
       ]
+    },
+    {
+      "id": "claim_731f22aa100b4058a7578812fba91ef4",
+      "statement": "Issueの共通開始dialogは単一Agent既定と3presetを扱い、Repo/branchと工程parameterを同じ開始で指定し、Project追記revisionと観点完全性を確認する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/routes/workflow_presets.rs",
+          "version": "repo-file-v1:sha256:1793a953c79f26c002d7cd8cb8fb047d1d8255b538d350ea545750f9f290c220"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/workflow/ui/WorkflowPresetFields.tsx",
+          "version": "repo-file-v1:sha256:caae3befa520f0241341028a10b8156f5247759ff6ea0e403606f0ffafe2d681"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/dialogs/shared/WorkspaceTargetDialog.tsx",
+          "version": "repo-file-v1:sha256:ecfc882877cd8569884fe24dc9151c99443f83c801cf871e2145b7f71203b4a7"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-10T20:48:58.515Z"
+    "at": "2026-11-11T09:36:22.928Z"
   }
 }

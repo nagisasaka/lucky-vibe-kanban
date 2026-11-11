@@ -89,6 +89,8 @@ sources:
     resource: repo://deploy/server/release.test.mjs
   - id: openwiki-source-229e22cb29e176ae1fe594e1
     resource: repo://deploy/server/server.test.mjs
+  - id: openwiki-source-26f2b454d009a5c3d05be35a
+    resource: repo://deploy/server/workflow-source-protection.md
   - id: openwiki-source-bb1ebe868e35e9e500714501
     resource: repo://Dockerfile
   - id: openwiki-source-5b54a58d1b51cd490b0e7162
@@ -165,10 +167,12 @@ sources:
     resource: repo://tests/terminal-latency/run.py
   - id: openwiki-source-966297deb875824dc95ee8d5
     resource: repo://tests/workflow/playwright.config.ts
-generated: { by: "codex", at: "2026-11-10T21:23:07.231Z" }
+  - id: openwiki-source-7ff1b0a7c2af3c41dc6b3d55
+    resource: repo://tests/workflow/specs/workflow-presets.spec.ts
+generated: { by: "codex", at: "2026-11-11T09:36:22.928Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-10T21:23:07.231Z
+    at: 2026-11-11T09:36:22.928Z
 ---
 
 
@@ -593,3 +597,27 @@ LOCAL-368はGit正本のorchestration Skillと既存Codex REVIEW指示へ、人�
 今回の統合は固定base `43098c170a900fb7d8a5786ba3fc1a5a10d10a31`へsource `e7023f69df107099636fc94f37ee4b9a482dc475`を競合なくmergeしたコードSHA `2260c073ce179dbdb2bac0d2ebf75ef33f819d19`を対象とする。mainの364/368/373を保持し、372を組合せたり他worktreeを変更していない。管理commandでfrozen install・frontend三package型・会話/操作/async/control回帰・質問browser・production frontend build、上記Rust対象回帰・生成型check・空白/cleanを成功確認した。Rust batchのMCP呼出しは300秒でtimeoutしたが、元managed processの完了と同じrequest IDのpass証拠をinspectで確認しており、二重実行していない。
 
 source Manifestのexecutors347/local-deployment105/MCP148・workspace check・qa-mode Clippy等のSHA付き記録と競合/修復なしの差分に基づき、包括suiteと全量lint/checkの反復はagent判断で省略した。省略は今回のpassではない。既存hookのlint違反、実モデル・実認証UI/MCP一体E2Eは残る限界である。Wikiのみを後続commitにし、正式main反映はRun終了後のhost receiptで別確認する。稼働dev再起動・container再作成・security変更・実環境適用は行わない。公開後の追加buildは後続指示の範囲である。
+
+
+## LOCAL-372の統合検証と未実証の保護成功経路
+
+固定base `74317e4409957dfe726a61c55f9fe4c8fb811d5f`へsource `6a8c43a66e02ab4ee07e27c8ce3e3726a5bfee59`を無競合mergeしたコード検証SHAは `23ac54d4c270a71274e8c6c631180877fd6d2eb7`。既存mainの364/368/373/376を保持し、373固有品質処理は追加していない。targetの直接Git操作、dev停止/再起動/切替、image構築、container再作成、security変更、共有データ操作は行っていない。
+
+同SHAの管理検証記録は次の範囲でpassedとなった。これは後続Wiki commit上でのコード再実行ではない。
+
+| 範囲 | command / 実行証跡 |
+| --- | --- |
+| 依存 | pnpm install --frozen-lockfile / process c97e5bde-53d3-4726-a26a-7ece67c4c081 |
+| build・型・workspace check | pnpm --dir packages/local-web run build、pnpm run check / a119c21c-b9bd-4070-a1a6-18b8675ce6e5 |
+| 配布・状態・UI fixture | pnpm run server:check（39成功、Compose不在1skip）、taskAttempt Vitest 7成功、workflow-presets Playwright 1280/390pxの2成功 / 734229e2-a208-48af-b762-56ec6fd8473b |
+| Rust回帰 | workflow --lib、executors source_protection、server preset、server workflow_runtime / 47f6f070-e425-46d6-9774-e1ebdea5e7c6 |
+| lint・型/SQLx | 同processでworkflow/executors/local-deployment/mcp/server全target Clippy -D warnings、generate-types:check、prepare-db:check。SQLx一時DBはcleanup済み |
+| 対象frontend lint・空白 | 変更web-core製品8ファイルとUI componentを既存ESLintで検査、git diff --check / 8962693b-7aeb-4dc8-9a93-3ed5e312633c |
+
+Rust batchのtool待機は300秒でtimeoutしたが、実processは継続し、元request `08ca3daf-4e36-4401-bdda-b5ccf6bffbe5` のcompleted/exit 0/passを正式inspectと同一入力replayで確認した。新requestで重複起動していない。UI batchの一時的な結果不明も元receipt未登録を照合して同一ID/同一入力で再送した。fixtureサーバー終了と4175 idleを確認した。production buildのlarge chunk等の警告を機能成功と混同しない。
+
+包括 `pnpm run lint` / `pnpm run backend:test` の残りは、source `367f3cf6` / `6a8c43a6`の公開Manifestと無競合diff、候補上の上記影響回帰を根拠にagent判断で省略した。ユーザー省略指定ではなく、新たな全suite passでもない。既存Memoryの報告だけに頼らず、重要な対象は今回候補上で再検証している。[fixture定義](../../tests/workflow/specs/workflow-presets.spec.ts)・[保護単体試験](../../crates/executors/src/source_protection.rs)・[合流試験](../../crates/workflow/src/presets.rs)
+
+main取り込み時の残リスクは、実providerのsource create/edit/rename/unlink拒否とtmp/cache write成功の同時成立、実provider preset完走、認証付き実UI/MCP、全suiteが未確認であること。UIはAPI mock fixtureで、native policy単体試験も実namespace成功を示さない。実装完成・実環境検証完了は認定しない。
+
+デプロイ前には[配布/runtime前提と隔離fixture手順](../../deploy/server/workflow-source-protection.md)に従い、承認済みの依存と既存namespace policyが成立する環境で成功側を実証する必要がある。bwrap/socat不足と過去のnamespace拒否原因未確定を理由に、拒否probe再試行・無保護fallback・security緩和は行っていない。image存在検査とruntime成功は別である。Wikiはprepareで原本journalを保存してから同じ候補branchで保守し、正式main反映はRun終了後のhost公開結果によって確認する。

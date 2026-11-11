@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:8c492dfdb863fcee91ac4211367b456c2a1c5e97acb143ea754d517d4d1f19fd",
+  "pageVersion": "sha256:7e7918c000d034bdbb175037a4f985e66d949072109701bff1bdb4d05a63f937",
   "claims": [
     {
       "id": "claim_82c340b0bbd240889908ea6c2c5be423",
@@ -46,7 +46,7 @@
       "evidence": [
         {
           "resource": "repo://crates/local-deployment/src/agent_run_port.rs",
-          "version": "repo-file-v1:sha256:9da2c69395d9c52cb06c65a3df8f99d904d176e50edcc4db3b855f8c113d22fd"
+          "version": "repo-file-v1:sha256:811cce537463e795ad9c9690ec201fa86d4f4851b41b7fdd2b9881e0ce7ed676"
         }
       ]
     },
@@ -79,11 +79,11 @@
       "statement": "Cancelは終端runで無操作、活動中はCancellingを保存する。projection degradedでは通常制御を拒否し、Cancelと既知startup collisionの証拠検証付き明示Retryを回復経路として残す。",
       "evidence": [
         {
-          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L1655-L1691",
+          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L1681-L1717",
           "version": "repo-lines-v1:sha256:0988a8e0b30521f5b2de085a6bab25621c781fb3c1ef2f2330eef2a45d84950f:eyJzZWxlY3RlZExpbmVDb3VudCI6MzcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZiNDAxMGM2NzRlNjgyZmM3OTE1YzZhMTNjNzJkMjBiMTIwOGYyOWFkMGFhYWI2MDc2YmFmMWNiODczYzYwMGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImU5ZmIzZGIzZTA1YjRlMTQ4NWQ4OWQzYWQxMjFkNzM4Nzk2ODMwOGMzYWE3ZWI3NzNlNDExNzgzYTRjNWY5ZjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFhMjZkZmEyZjY0OWQ2OTQ3ZDhhYzE3ODJlOWM5OTEyM2Q2MjllNzFiZThjZDkyM2M1M2JiNmE5NzdmYjA2OGYifQ"
         },
         {
-          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L3550-L3569",
+          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L3576-L3595",
           "version": "repo-lines-v1:sha256:9f5aba64c4698530bd2c111dfc8aa04e2e773b813819b3f10f533cfc8136f88b:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk1M2ViNjY4ZDNmMTk3OGNhMTJlNDNlODNhZTg4Nzk2YWE5ZjAxOGFkNGEyYzcxMWVlZGQzNDk4MTlkYTBjYWUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU1MjJjNDJjZDE5YzZkMDNkODA4YzQ1MjcyMDU1MjgyNWI3ZWExYzViNDkxYjIxODUxMWNhYzc0MTVjZjlkOWIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImIyOWVmN2YyOTMxMTI0YTEwYTIwZDdlYTA5ZWViN2RiNTE1Nzg0ZjcxZjI0ZjMxNTZjNTBiODIxMzE3NDM5NmMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFhMzFmZjZkMTk3MWJkNGE5OTZlODY3MDRiMjIwNGM5MTI0NjM4YzMyYjA5ZGYxM2UwZjE1YjZiNTFiYzU3MzUifQ"
         }
       ]
@@ -131,7 +131,7 @@
       "statement": "Goalのsubagent上限は0で無効化、未指定でCodex既定となる。",
       "evidence": [
         {
-          "resource": "repo://crates/executors/src/executors/codex.rs#L2190-L2209",
+          "resource": "repo://crates/executors/src/executors/codex.rs#L2207-L2226",
           "version": "repo-lines-v1:sha256:1d1f66bc0a94f686110e92e25bc67a3492adae0c9dd2dfd19e6552b2c523d9ee:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkyYjVlZGY1OTQ5Y2ZlYTY3ODIyY2Y2OTExMzIzNjNkNjhkNmYxZTE2OWY1ZTBkNGY3YzE0ZTVmYTFlNmQ0ZTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFlNzVjNzBkOTQ2MzYyNWUxMDc5ZmQ4ZmM4ZWU2MmFkMmU5MmM0MmJlYWFiZmQ4NWI3OGQ4ZTBhNDk3OWI5NGEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImYyZDgyOGEwMzdhYzFjODE1MzViMWQ1NTAwODMyMzIzYmZiYjg2NmEzYTNmODdlN2E2OGMxM2EyYmFlNTZmZmYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImEwMGRiMDQwZjI5MDliZjk3OGZmMGE5NTZhNTVlODNjNjUzNDE4ZGU2YmI2OGY4MDQxZGE5NzZmOGQzZDIyNzAifQ"
         },
         {
@@ -446,7 +446,7 @@
       "evidence": [
         {
           "resource": "repo://crates/local-deployment/src/agent_run_port.rs",
-          "version": "repo-file-v1:sha256:9da2c69395d9c52cb06c65a3df8f99d904d176e50edcc4db3b855f8c113d22fd"
+          "version": "repo-file-v1:sha256:811cce537463e795ad9c9690ec201fa86d4f4851b41b7fdd2b9881e0ce7ed676"
         },
         {
           "resource": "repo://crates/server/src/routes/integrations/conversation.rs",
@@ -962,7 +962,7 @@
       "evidence": [
         {
           "resource": "repo://crates/local-deployment/src/agent_run_port.rs",
-          "version": "repo-file-v1:sha256:9da2c69395d9c52cb06c65a3df8f99d904d176e50edcc4db3b855f8c113d22fd"
+          "version": "repo-file-v1:sha256:811cce537463e795ad9c9690ec201fa86d4f4851b41b7fdd2b9881e0ce7ed676"
         },
         {
           "resource": "repo://crates/server/src/routes/integrations/conversation.rs",
@@ -1045,7 +1045,7 @@
           "version": "repo-lines-v1:sha256:fc967c37005a5190690f07fcbcf944616345ad3e1c13b71522745d8fcb70917e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFjYzYyNzBlN2M5YmUyNWFhZGEwZGE5MWJmMzYzYTJkYzRhMTQxZGU0Mjc4YWU2NzMzODk3YTA2YjRlYTc2MmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjNmZGY1MjFmMjgzNWFiZTdiZjk1NmE1YmQ4MDhiYTRmN2M5YzA4ZmVkNzBlOGQwNDcxODY2NmYxZGNmZjAwMTIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZjYWEzNDIwNGQ1NTQ2ZGRiNDdkYWI0YmU1YzI2NGMxY2EzYzlmZDA3YmQ4YTVhMjBlZGRhZTQ2MDI0OWFjOWUifQ"
         },
         {
-          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L911-L921",
+          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L934-L944",
           "version": "repo-lines-v1:sha256:63e7cf0095f13a659325f44208b725491f1310d4a8eaff401547231e801c39da:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA2YzEyMTY2MTdlNGY3MWM3YjQyMzg1NWRjMWQ0ZTZmYTdlNzVlMmI5ZTY3N2UzYWE3ZDlhZDJlN2VhNzE0MTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBmNGU4ZDQ3MzhmZjkyNDhlYWE0ZmFhNmMxMzBlZjRhZmZiMjg5YTE5ZGNmNGZjYTFkMDdhMjIxOGZmMDQ5MTciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImIzY2EyNzM0YjQ3YTE4NjdjN2M0YTEwNzY1MWRkOGUzMDA3MjY5ZjM5ZjQ0YmVmODQ1ZTYxNmEzZTY3YTQyODIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjAyNDYxMWEzNjM1YWMwYTM1Y2VjZjcyYzY3Zjk1MmI5YzY3Yzc1ODg1NzBjYWJhNDQ5YTBkN2U0ZjdkNzVmNWEifQ"
         }
       ]
@@ -1078,7 +1078,7 @@
         },
         {
           "resource": "repo://crates/server/src/remote_mcp/stdio.rs",
-          "version": "repo-file-v1:sha256:c3a1942e1bcec179fae452d18fbd169799a045a319cfcb8e43cdadc0ba42aec4"
+          "version": "repo-file-v1:sha256:c5ff3826b97b3b5d439771de5caa2cf42e97fb9ce0465ba2ee3dc17f5bb61fc0"
         }
       ]
     },
@@ -1162,7 +1162,7 @@
       "evidence": [
         {
           "resource": "repo://crates/executors/src/executors/codex.rs",
-          "version": "repo-file-v1:sha256:77d88cf3fd15af7e7e0f4e8691dea1b598c6303f9c6e0cf2005af97cde5f6e9c"
+          "version": "repo-file-v1:sha256:d466d556a35446197638f415019f9349dfc0926e33ed34c7d702fe5ac0aaddeb"
         },
         {
           "resource": "repo://crates/server/src/routes/sessions/executor_config.rs",
@@ -1180,7 +1180,7 @@
         },
         {
           "resource": "repo://crates/server/src/remote_mcp/launch.rs",
-          "version": "repo-file-v1:sha256:a39e58fb89e0bf5d94aa4132e20005a7acc79fbeabbc822e06d5b3d91350ece2"
+          "version": "repo-file-v1:sha256:99f74b16e96e71c7f5ea98911251b824e1527bb15d7a476e711c60523d77cec9"
         }
       ]
     },
@@ -1189,8 +1189,8 @@
       "statement": "Worktree Workspaceの通常成功coding Runのsource commit/ManifestはWiki有効化と独立し、DirectFolder・REVIEW・制御・自動マージ等は適用除外される。no-change専用検証記録は生成しない。",
       "evidence": [
         {
-          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L887-L1021",
-          "version": "repo-lines-v1:sha256:140a01d91692ad62a5e9c1b44f6d9b88166fb158f1b3304b99af1d49b4d2423c:eyJzZWxlY3RlZExpbmVDb3VudCI6MTM1LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIyMjhjODA4NTQ0YjI0NmY0ZTU2MDkwNDJlNmZhZDdhZDI5YmEzZDkwYThkM2M4ZDFmYjNmZTE0ZDc1NDk1OWVkIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI1MTAzNDgxYzU3ZDBmMGRjMGY3NmNkMmNjOGIzNjA0YzRlODI5NmRhNDEyMmFkZDE5ZTgxNzQ1ZGM3ZTMzMWE2IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJjYTU4ZjY5MDdiZTA5NzA2NGIxOGFmNmRiY2Y4MDhjNDkwYTA0ZThkNjg5Y2M5NGQ4ZTVlZDg3ZjA5MjQwMTE2IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI4OTFkN2NiZmIyZTk0YWJhZjA3MGQ0OWQ4NGEwNzc0NDczMjZhZDVhMDFiNWJjYTIxNzEzZmI0ZmI3NTMxMjVhIn0"
+          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L909-L1044",
+          "version": "repo-lines-v1:sha256:128e45196916a2babb2b5b0d4eca2e3c5ae7560a964e5d261a5fa19c46f10919:eyJzZWxlY3RlZExpbmVDb3VudCI6MTM2LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJkNmE5YTQ0MTA2YzEzYjcxMWJiZDc0OWNlZTk4ZjEzM2VkMzEwYzgzZDBlMDgxM2Q4YjYyYTA3NGEwYzBhZjAzIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI1MTAzNDgxYzU3ZDBmMGRjMGY3NmNkMmNjOGIzNjA0YzRlODI5NmRhNDEyMmFkZDE5ZTgxNzQ1ZGM3ZTMzMWE2IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJjYTU4ZjY5MDdiZTA5NzA2NGIxOGFmNmRiY2Y4MDhjNDkwYTA0ZThkNjg5Y2M5NGQ4ZTVlZDg3ZjA5MjQwMTE2IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI4OTFkN2NiZmIyZTk0YWJhZjA3MGQ0OWQ4NGEwNzc0NDczMjZhZDVhMDFiNWJjYTIxNzEzZmI0ZmI3NTMxMjVhIn0"
         },
         {
           "resource": "repo://crates/local-deployment/src/container.rs#L449-L501",
@@ -1261,8 +1261,8 @@
       "statement": "画面用profile-policyはClaudeのauth statusを実行せずinstallation情報で応答し、Claude InstallationFoundだけでは認証未確認診断を出さない。実起動前の認証確認とは別の責務である。",
       "evidence": [
         {
-          "resource": "repo://crates/executors/src/executors/claude.rs#L780-L815",
-          "version": "repo-lines-v1:sha256:2129662e7a4b4a5854a6031f2445f332077c72a85a503f87fd1926bc52970b4b:eyJzZWxlY3RlZExpbmVDb3VudCI6MzYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM4MmRmOTFlZDU0MjI4N2M2N2IxNzAyNmZiYzU4NDU0ODg4YjdiZDcwMjY4ZWQwOTQyN2RkYmYzZDkzMjM4Y2MiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEwYTUyMjUzODhjMTU4YWRiZDk0MDVlNWQzMmVjMDdhNzcyOTg1Y2VmMzk5OTQ0YjAyNDI5ZDg3MTJlY2YwZTkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjAxM2NmMzZjNjBiOTk1NDVmZGRiYTY3YmQyMTdhY2NlZWI2MjA2ZDQ3Zjg2ZGYxNDc3OGUxMmI5MzlhNDI5NTkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImVmMGE2YzdjMTA5NTU1MTU2ZWY4NjllYjhjNjgyZTBiNmZjMGE1MmE5YWUxMjcyMjYwMDk1YmQwNmFlZjhhYTYifQ"
+          "resource": "repo://crates/executors/src/executors/claude.rs#L780-L844",
+          "version": "repo-lines-v1:sha256:1d1473608323290557d7255a4fdfba42f2879bbc5256eae5ef5b4a54ff72f520:eyJzZWxlY3RlZExpbmVDb3VudCI6NjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM4MmRmOTFlZDU0MjI4N2M2N2IxNzAyNmZiYzU4NDU0ODg4YjdiZDcwMjY4ZWQwOTQyN2RkYmYzZDkzMjM4Y2MiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEwYTUyMjUzODhjMTU4YWRiZDk0MDVlNWQzMmVjMDdhNzcyOTg1Y2VmMzk5OTQ0YjAyNDI5ZDg3MTJlY2YwZTkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjAxM2NmMzZjNjBiOTk1NDVmZGRiYTY3YmQyMTdhY2NlZWI2MjA2ZDQ3Zjg2ZGYxNDc3OGUxMmI5MzlhNDI5NTkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImVmMGE2YzdjMTA5NTU1MTU2ZWY4NjllYjhjNjgyZTBiNmZjMGE1MmE5YWUxMjcyMjYwMDk1YmQwNmFlZjhhYTYifQ"
         },
         {
           "resource": "repo://crates/executors/src/provider_policy.rs#L206-L225",
@@ -1287,10 +1287,20 @@
           "version": "repo-lines-v1:sha256:b5b9a69c48f60d30cc283409250ecbecf51241df77903917a0214b999f9a2f37:eyJzZWxlY3RlZExpbmVDb3VudCI6ODYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc3YmRiY2UyZDdlZmFkOGZmYWMwOWFlZTAxNzQ1ZWFkZDM4N2YwYjEyMzFjMDkwODYyZmQxMzY4MzQzNTRmMTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJkOWMwNjM0ZDUyMjUxYmFmNDAxZTM3MGU1ODUwYzc1ZTI2MTdiYzIwZTA1YzFlZDkwMzgyMmE1YThiOGVjYjEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM1ZjZmNDY2ZTU5Y2ZjMzA3MDNjNDVmNzJhZjY1ZGU1NGFjMzYzZDM1NGNjMWEzMzMwMzUwYWNkNDUyNDM0YzQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjA1NThlMGI3NzUwNjZiMzdhZDkzNTYwOWI4MzI3OTc2YzJkNmQ5YTMxM2E4ZmNhMTkwNDgxNmE0OGJjNWVjN2IifQ"
         }
       ]
+    },
+    {
+      "id": "claim_a8d3f80307154e6c82c5ffb876813289",
+      "statement": "固定presetの報告Sessionは保存graphのSession IDとsource_read_onlyで起動・継続時に保護対象を決め、通常codingのsource完了から除外する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L844-L920",
+          "version": "repo-lines-v1:sha256:a8a938c490a803581aa41e93347dfcea7bb131ee09a3def18da6edf8efe3d294:eyJzZWxlY3RlZExpbmVDb3VudCI6NzcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQwMGU3NzYzNjA3YTEyYjJlYmYxMmQ2ZDVhOTYxNjk3N2Y5ZGI1ZGY2N2M2YjdmOTAyYzA0Yjc4OGY3NzVjMzYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcwZDc4N2ExNGVmMTczNDg5OGM0NzM0YThlMGJmYWQzYWEwOTEyNGM1MjBjOGRiYWY4OTRhZjcwMzEyOWI1YTgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjYyYmY3MzU1N2ZlMDhlYjk4MzNmN2MzYzZkOWU5ZjIwOGE3YjA4ODg0MzgzM2M0ZjU2NDhmNDI0ZjIyODg1MzMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFmYjE5OGRiOTc3M2FiNjllZjU4ZjRkNDVkMjU3NzhlODUxMGI4YzRlMzgzNzkwODVjZGE4OWYwYjM0YzRjMzUifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-10T21:23:07.231Z"
+    "at": "2026-11-11T09:36:22.928Z"
   }
 }

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:0aae0b10955aa6ec71d8d6c65db69994b8a0befc6099ba4af88319d6559ac000",
+  "pageVersion": "sha256:93460452158d7b3c3d6f0c8deff36af5f0813b3bd7828b005442eacc106ff838",
   "claims": [
     {
       "id": "claim_03c1cc7bf36a458cbd38b13499335f6b",
@@ -26,7 +26,7 @@
         },
         {
           "resource": "repo://crates/server/src/routes/local_remote.rs",
-          "version": "repo-file-v1:sha256:8b661c0765ae30724ed29819246a92c8be7e9ffe7a7f286095548d843be4fcba"
+          "version": "repo-file-v1:sha256:a5742cb33e522eabb7e4b4343e2487e1b0ef9965ebaa28e6c5f70501e078937a"
         },
         {
           "resource": "repo://packages/web-core/src/shared/hooks/useNotifications.ts#L1-L27",
@@ -64,7 +64,7 @@
       "evidence": [
         {
           "resource": "repo://crates/mcp/src/task_server/tools/mod.rs",
-          "version": "repo-file-v1:sha256:7115b8131d0150d05bdb488aa4cc06d3d31d74acddffeb2a3900e101742c4610"
+          "version": "repo-file-v1:sha256:bfecaa6410e299847e01256c7d4c6e0f288bdf16266b7a4c46694a1df7109083"
         },
         {
           "resource": "repo://crates/server/src/remote_mcp/issue_comments.rs",
@@ -193,7 +193,7 @@
       "statement": "Tauri shell は廃止されたが OS notifier 差替え API は残り、未登録時は DefaultPushNotifier を使う。Linux 通知は services の notify-rust に依存し、lockfile の tauri-winrt-notification はその推移依存である。",
       "evidence": [
         {
-          "resource": "repo://Cargo.lock#L4669-L4680",
+          "resource": "repo://Cargo.lock#L4670-L4681",
           "version": "repo-lines-v1:sha256:94eb5387195d22cefd00f6b50b73d77ef8f45ec35407bc625613dcba6b7af546:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQwNmY5MDI5ODUxYjEwZGJmZDliYWJkMzA5MWEwYjQwNDZmZjBiZTAwNTlmMTA4NWY4ZjlhZDg3OWY3ZGQwZGEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY5NDE2ZTA5Zjc4YmEzMTZjMDMyNTY4MjEzYjg1NWVlNzU2ZTQxNTY1ZDkxOGYwOTUxOWM4MWZkNjIwZjQwNjAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjI2NTkyMGJhMmUzYzAwYjVkMGU1NzUzYjEyY2EzYTYxMDRjNmE3MDMxYjMwZDk3NGE3YTE3Y2UyOTE0NWMyM2UiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjlhZTAxY2NmMjM0Yzc3MGY1ZTVjMWY2MjU5NzQ1MmZlZTZjZTM2NDc4YWU5NmQ5NzE5YzhmZGMyNDUwMGIxNDIifQ"
         },
         {
@@ -247,6 +247,6 @@
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-10T13:43:59.705Z"
+    "at": "2026-11-11T09:36:22.928Z"
   }
 }

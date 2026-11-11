@@ -64,6 +64,8 @@ sources:
     resource: repo://crates/server/src/routes/openwiki/management.rs
   - id: openwiki-source-4d617b0e2fa188c6ad63ae56
     resource: repo://crates/server/src/routes/sessions/questions.rs
+  - id: openwiki-source-a517c0f8e44d2cf0c440fbfc
+    resource: repo://crates/server/src/routes/workflows.rs
   - id: openwiki-source-6c4d6d22a9d50e0def61c50d
     resource: repo://crates/server/src/routes/workspaces/integration.rs
   - id: openwiki-source-5590f47e4cee001a35a42117
@@ -78,6 +80,8 @@ sources:
     resource: repo://crates/utils/src/lvk_directory.rs
   - id: openwiki-source-19419edea1d312cc9f07ef2d
     resource: repo://crates/utils/src/path.rs
+  - id: openwiki-source-63d2b16e8e208dce3e2032ac
+    resource: repo://crates/workflow/src/presets.rs
   - id: openwiki-source-df6b7819295f53fc2381f23d
     resource: repo://deploy/server/compose.yaml
   - id: openwiki-source-89d0fb22262f0a0ac1df7d1e
@@ -92,6 +96,8 @@ sources:
     resource: repo://packages/ui/src/components/FileTagTypeaheadPlugin.tsx
   - id: openwiki-source-cbfe71b82135aa5496989f7e
     resource: repo://packages/web-core/src/features/pets/SidebarPet.tsx
+  - id: openwiki-source-39fe27949ccee837db47d1b9
+    resource: repo://packages/web-core/src/features/workflow/ui/WorkflowTemplateEditorPage.tsx
   - id: openwiki-source-5b956d3d9d7f17c236d42ebb
     resource: repo://packages/web-core/src/pages/kanban/ProjectUtilities.tsx
   - id: openwiki-source-235a3eb75f22fdecdbd66a8f
@@ -100,6 +106,8 @@ sources:
     resource: repo://packages/web-core/src/shared/components/TerminalSection.tsx
   - id: openwiki-source-7e0da77c31130e66a4b635a5
     resource: repo://packages/web-core/src/shared/dialogs/command-bar/EditorSelectionDialog.tsx
+  - id: openwiki-source-5d2382a0f231c830f95f103c
+    resource: repo://packages/web-core/src/shared/dialogs/shared/WorkspaceTargetDialog.tsx
   - id: openwiki-source-ab4a5800fcfc16d8494e494a
     resource: repo://packages/web-core/src/shared/lib/localIdentity.ts
   - id: openwiki-source-d4726fdd33da0f7c2f1ae1ee
@@ -108,10 +116,10 @@ sources:
     resource: repo://packages/web-core/src/shared/providers/TerminalProvider.tsx
   - id: openwiki-source-23775c3de52f3ab95a13cb8b
     resource: repo://README.md
-generated: { by: "codex", at: "2026-11-10T21:23:07.231Z" }
+generated: { by: "codex", at: "2026-11-11T09:36:22.928Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-10T21:23:07.231Z
+    at: 2026-11-11T09:36:22.928Z
 ---
 
 # クイックスタートと調査案内
@@ -122,7 +130,7 @@ lucky-vibe-kanban（LVK）は、Issue で仕事を整理し、Workspace 内で c
 
 1. [サーバーコンテナー](operations/server-container.md)の手順で LVK の Docker image を起動し、公開配置では [LVKの初回認証設定](concepts/server-access.md#初回設定と方式変更)、続いて実行環境内で coding agent の認証を済ませる。LVK は npm パッケージを公開しない。ソースから開発する場合は [開発環境と検証範囲](operations/development.md) を参照する。[配布版の案内](../README.md)
 2. [Project / Issue](concepts/project-and-issue.md) と、変更先の [Repo / Workspace](concepts/workspace.md) を確認する。仕事の分類と、実ファイルを置く場所は別の設定である。
-3. 通常 Session、[WorkflowAttempt](concepts/workflow-attempt.md)、または [Arena](concepts/arena.md) を選び、[Setup → 実行 → レビュー → 統合](workflows/task-to-integration.md) を進める。local Board で複数 Card の採用成果を統合する場合は [自動マージ](concepts/formal-integration.md)を使う。同じ割当Issue / Workspace / Sessionの担当が候補・必要な検証/根拠付き省略・同候補Wiki・公開要求まで進める。Wiki有効時はbegin前に正式prepareで原本を保存し、生成setup差分は未stageで残す。担当Run終了後にhostがwriter収束・限定復元・cleanを含む安全条件を検査してlocal targetへ公開する。検証省略は成功したテストを意味しない。
+3. 単一Agent（通常Session）を既定とし、工程の引渡しが必要なら[固定Workflow preset](concepts/workflow-attempt.md)を選び、[Setup → 実行 → レビュー → 統合](workflows/task-to-integration.md) を進める。local Board で複数 Card の採用成果を統合する場合は [自動マージ](concepts/formal-integration.md)を使う。同じ割当Issue / Workspace / Sessionの担当が候補・必要な検証/根拠付き省略・同候補Wiki・公開要求まで進める。Wiki有効時はbegin前に正式prepareで原本を保存し、生成setup差分は未stageで残す。担当Run終了後にhostがwriter収束・限定復元・cleanを含む安全条件を検査してlocal targetへ公開する。検証省略は成功したテストを意味しない。
 4. canonical repository memory は [OpenWiki 初期生成・Sync](operations/openwiki-maintenance.md)を Repo ごとに設定する。保存Issue本文とは独立しており、Card Context専用UI・Pipeline供給・旧Wiki互換は廃止した。[本文保護と必要時ガイド](concepts/card-context-and-llm-wiki.md)を参照する。成果物は [OpenWiki Viewer の表示元](operations/workspace-inspection.md#wiki-の本文ツリーと表示元を確認する)を確認し、閲覧可能と publication 成功を区別する。
 
 サーバーに常駐させる場合は [単一サーバーコンテナー](operations/server-container.md)を参照する。信頼された一チーム向けHTTPS配布であり、データ永続化と実行プロセスの継続を区別する。旧 Cloud / relay は退役している。
@@ -466,3 +474,14 @@ WorkspaceのGit操作、Kanban、MCPは[同じ自動マージ](concepts/formal-i
 固定base `43098c170a900fb7d8a5786ba3fc1a5a10d10a31`へ376 source `e7023f69df107099636fc94f37ee4b9a482dc475`を競合なく採用した。コード検証SHAは `2260c073ce179dbdb2bac0d2ebf75ef33f819d19`。364/368/373を保持し、372のworktreeと稼働devを変更していない。候補でfrontend型・会話回帰・質問Chromium・production build、Rustのmapper/配送/取消/終了/stale回帰・生成型を管理実行で成功確認した。[検証範囲](operations/development.md#local-376のnative質問回帰と統合検証)に、sourceの既存成功証拠を再利用したagent判断の包括suite省略と、未実施の実モデル・実認証一体E2Eを分けて記す。
 
 Wikiはコード検証後の別commitで、正式main反映は公開要求後にhostが確認する。稼働dev再起動・container再作成・security変更・適用は今夜の対象外であり、公開後の追加buildは後続指示で扱う。
+
+
+## LOCAL-372：固定presetと共通実行
+
+新規開始はIssueの共通Workspace dialogから単一Agentまたは「実装→独立レビュー」「多角調査→統合」「棚卸し→削減案」を選ぶ。各presetは報告を返して停止し、推奨後の採用・修正・削除・Git merge/公開は別指示で判断する。[使い分けと固定parameter](concepts/workflow-attempt.md#現行の3-presetと共通開始)・[MCPの同じサービス](integrations/remote-access.md#固定workflow-presetの共通toollocal-372)
+
+[実装commit後の引渡し・全成功合流・watcher](architecture/workflow-runtime.md#固定presetの成果成立と一度だけの合流)と、[通常REVIEWと異なる事前ソース保護](integrations/agent-providers.md#固定presetの事前ソース保護local-372)を確認する。旧任意graph/editorとArenaの新規入口は終了し、既存定義・Run・retryと[Arena互換履歴](concepts/arena.md)は保持する。373固有品質や専用処理撤去を完成扱いにはしない。
+
+固定base74317e44へsource6a8c43a6を無競合採用したコード検証SHAは `23ac54d4c270a71274e8c6c631180877fd6d2eb7`。[候補上の管理検証・省略理由・未実証事項](operations/development.md#local-372の統合検証と未実証の保護成功経路)に、build/check、Workflow/provider制限/runtime回帰、Clippy、生成型/SQLx、配布検査とmock UI成功を記録する。実provider完走、source書込拒否＋tmp/cache成功の同時成立、認証付き実UI/MCP、image/runtimeは未検証であり、実装完成・実環境検証完了は認定しない。
+
+Wikiはコード検証後の正式prepareによる原本journal保存後に同じ候補branchで更新する。Wiki完了とmain公開は別で、正式公開要求の保存後に担当Runを終了し、hostがwriter収束・既知setup差分の限定復元・clean検査とGit反映を確認する。dev/server停止・再起動・切替、デプロイ、image構築、container再作成、権限/共有データ変更は今回行っていない。

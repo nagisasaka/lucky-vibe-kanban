@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:936759ef2d523630105812b3c4036006cfeda5720efc20da8d4e81d2873476f0",
+  "pageVersion": "sha256:f5513569fbefe46385440fdcc952805b4a2ad4038a0a392420ac855396c8d544",
   "claims": [
     {
       "id": "claim_7239e619508e4a2785f62b8f23fd0a74",
@@ -54,7 +54,7 @@
       "evidence": [
         {
           "resource": "repo://crates/executors/src/executors/codex.rs",
-          "version": "repo-file-v1:sha256:77d88cf3fd15af7e7e0f4e8691dea1b598c6303f9c6e0cf2005af97cde5f6e9c"
+          "version": "repo-file-v1:sha256:d466d556a35446197638f415019f9349dfc0926e33ed34c7d702fe5ac0aaddeb"
         },
         {
           "resource": "repo://crates/services/src/services/openwiki.rs",
@@ -150,7 +150,7 @@
       "evidence": [
         {
           "resource": "repo://crates/executors/src/executors/codex.rs",
-          "version": "repo-file-v1:sha256:77d88cf3fd15af7e7e0f4e8691dea1b598c6303f9c6e0cf2005af97cde5f6e9c"
+          "version": "repo-file-v1:sha256:d466d556a35446197638f415019f9349dfc0926e33ed34c7d702fe5ac0aaddeb"
         },
         {
           "resource": "repo://crates/server/src/workflow_runtime/bootstrap.rs",
@@ -567,7 +567,7 @@
       "statement": "明示Projectの実在と対象Repoの関連を受付時・紐付け直前に確認する。関連集合は作成用Gitプリセットと既存Git Workspace実Repoを含み、保存済み空プリセットを優先しdirectory既定値の残存Repoや削除ProjectのScratchだけでは認めない。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/local_remote.rs#L3614-L3661",
+          "resource": "repo://crates/server/src/routes/local_remote.rs#L3615-L3662",
           "version": "repo-lines-v1:sha256:fbd1bca44a4228fe6b793f04e1522541350a80ebe643b0a904ea959950f89560:eyJzZWxlY3RlZExpbmVDb3VudCI6NDgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAyNWYxZWQ4MjkyZWZhMzY4MjNlY2M5Nzk4Njc1NWQ0MzNjYzhjMjUxYTcxYTEzNGQ4MWQyMGM5ZTA3Y2ZlZTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM1ZTM0NDVkMDA4MTNlMWIyM2QxZTgxYTBlZjU0NDE0NDMyY2RjYjc4OTg5Y2IyNTJlMzcyMGU1ODZiMWEzZmMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFiNzhjMGIxMzc3Mjc5MTAyYzM0ODFjMjMxNTNmY2FjNDEyZmJmZWZkYjgwMDRmMjhhOTUyOGQ5MGIzNzQ1NjAifQ"
         },
         {
@@ -605,7 +605,7 @@
       "statement": "Bootstrapのworkflow_runsはissue_idとattempt_idを設定しないrepository所有形式であり、Workspaceに付く通常Board Issue linkとは別である。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/workflow_runtime/runner.rs#L1070-L1105",
+          "resource": "repo://crates/server/src/workflow_runtime/runner.rs#L1167-L1202",
           "version": "repo-lines-v1:sha256:105ebec9506b2fc6d28a1fe9b053ac69150f52d7e062f0fffe0ce31546a842db:eyJzZWxlY3RlZExpbmVDb3VudCI6MzYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBhNDYyMTIzOTI1NDc0MzY2MzVhMjVkMGI0NDJkZWQ1ZGY4NDZmMzE3MGY2ZDkzMzkwMDU0MDFjNmZhODc1YmQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ4OTc3MWZlMWI2NjI4ODc1YWEyM2U3ZGJlNGFhNzE0NjFkMDBjZGZiNjZkZGYxMWI5ZDgyMGFjNTg5N2ZkZjYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFiMTliY2M5M2RiMjRkYjZiZTlhYzRkMDk2Y2ZhN2FmYWY1OWM1NGY2NDUxNmE5NmQxOWI3NDU3MTdlMTIxNzAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE2NjhkMWU4MGFhZjhkNWQ1ZTkxYTE1OTU5MjdmZTZkZmQ1ZDdiMjE1MmNiNjM1YmU3YmQ3ZjI4ZGQ2NGViMmMifQ"
         },
         {
@@ -771,7 +771,7 @@
       "statement": "maintenance writerのpreflightとthread-local承認はlifecycle6toolと読取4toolを同じ集合として扱い、OPENWIKI_CONFIG_DIRをMCPに引き継ぐ。",
       "evidence": [
         {
-          "resource": "repo://crates/executors/src/executors/codex.rs#L1072-L1116",
+          "resource": "repo://crates/executors/src/executors/codex.rs#L1085-L1129",
           "version": "repo-lines-v1:sha256:c0dc55b97b39cdd68c0dcb43c3fb3f3d53b0ad128337e9c68e68f5102bca5306:eyJzZWxlY3RlZExpbmVDb3VudCI6NDUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ2ZjJmZWMwNGUzYzhlN2Y2MTNhYzFiMzNlYjE1ZDMzNjAzZDU2YmQyYmE3ZDU1N2NjZDhhODk3MTUzZGU2NmQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFmMzc0ZTZkMWYzYmI2OWZjMWY1ZjYyZTg4MThkYzAyN2MwNzAyYjNhNDliM2UxYTY5ODYxMmFjM2UzZDllZTkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjMwNzRkNTdhMTM0ODk1ZjZiNzZhOTg2YzUwY2E3YWE3NGE5MmQ3MDgxODc0ZWYwOTFkNTFkNzZmMmMyOTA3Y2MiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNhY2RjM2MyMmQ3ZjY1NzZlOGNmMGI1ZTUyNjc5Nzk0N2I1MzZhOWUyNDE0ODJiODBkZDVlMWY0ZDk5OGE0ZDUifQ"
         },
         {
@@ -851,7 +851,7 @@
           "version": "repo-lines-v1:sha256:a94dd3ea8d052cbbf2259e37b87c0f6d4cc858d7e6ca57e47a4d96b91b0d7ff6:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIwLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI1MzI2ZDI3MTE1M2E1NGRhZjNhZmI5YTViYzJmNjMwODhhMWY1NTYyYTlkYjE0MDI4N2Y4NDlkZDdhM2ZiMjk0IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIwMWJhNDcxOWM4MGI2ZmU5MTFiMDkxYTdjMDUxMjRiNjRlZWVjZTk2NGUwOWMwNThlZjhmOTgwNWRhY2E1NDZiIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MCwicHJlY2VkaW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI4Njg0NjY5NWY0YjM3YTM2MTA0NDAzNjM2NTU0ZjE0MTBkYmQ4OWE2OWRjYWQwMGFkMzRkYjUwNzBmNDRiNmQyIn0"
         },
         {
-          "resource": "repo://crates/server/src/main.rs#L42-L70",
+          "resource": "repo://crates/server/src/main.rs#L43-L71",
           "version": "repo-lines-v1:sha256:a9397e441e6e5753bd1860d2b33a91412a48c8e4512afe043eabe4ea434f6e49:eyJzZWxlY3RlZExpbmVDb3VudCI6MjksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI2ZmQzYWNlMzE1MTVjMTA3OTc4ODBjOWIxY2EzYjU3N2VjMTI4MWZjYmFkODcyMzRiZTUwYmRhYjI3MWFiMTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRkOTk0NzZmMzI2NzhiODA1MGE5NWQ4MjY1ZWIzMDFhNGNlZWM1MzY3OTc5ZWI0MzdhZmQyYjAxZDk4MzdhMTIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE1N2ZlN2M1M2FiYTVlMmEyMDQ4MGQ2ZmRmNTc4MzliOWZkMTAyZmI0NzU0ZmMzMmVmYmNhMTdjOGQ0MzNmZTQifQ"
         },
         {
@@ -947,7 +947,7 @@
       "statement": "Wiki保守のrootはWorkspaceRepoの保存配置を用い、Project関連検査は作成プリセットと既存Git Workspace実Repoを含む。プリセット解除は既存保守対象を無効化しない。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/local_remote.rs#L3649-L3661",
+          "resource": "repo://crates/server/src/routes/local_remote.rs#L3650-L3662",
           "version": "repo-lines-v1:sha256:e6dab0801d4e3e8aea9fe6ead29d3baba07268d43a87034956f9e0e21b8c5081:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY1ODA3OTkyMzI3OThjN2JmZGU0ZWM1ODI4MWNiYzAzMTk5OTA4YjY3ZGZhNzFiMzJkYTQxYmQ1OTNmZjllMzkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImIxYmIzOTUyZGZjOTdkYWQ1ZjAyMTgwMzhjNGQ5MTk0ZmI1Yjk4MWM0OTU5YWUwOTI0YTUyYTQ5OTVjMzhjYTEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFiNzhjMGIxMzc3Mjc5MTAyYzM0ODFjMjMxNTNmY2FjNDEyZmJmZWZkYjgwMDRmMjhhOTUyOGQ5MGIzNzQ1NjAifQ"
         },
         {
@@ -963,6 +963,6 @@
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-10T20:48:58.515Z"
+    "at": "2026-11-11T09:36:22.928Z"
   }
 }

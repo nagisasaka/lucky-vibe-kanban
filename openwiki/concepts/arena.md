@@ -10,15 +10,19 @@ sources:
     resource: repo://crates/local-deployment/src/container.rs
   - id: openwiki-source-1ffb01d1ba3953937e0771bf
     resource: repo://crates/server/src/routes/local_remote.rs
+  - id: openwiki-source-a517c0f8e44d2cf0c440fbfc
+    resource: repo://crates/server/src/routes/workflows.rs
   - id: openwiki-source-13bc408495036974093d65eb
     resource: repo://crates/server/src/workflow_runtime/arena.rs
-generated: { by: "codex", at: "2026-11-04T20:14:29.223Z" }
+generated: { by: "codex", at: "2026-11-11T09:36:22.928Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-09T07:03:14.304Z
+    at: 2026-11-11T09:36:22.928Z
 ---
 
 # Arena による比較と選択
+
+LOCAL-372以後、新規Arena作成入口は終了し、Issue開始は単一Agentまたは[3つの固定preset](workflow-attempt.md)を使う。本ページは既存group・Runの履歴と互換操作を読むための説明である。旧データやwinner適用runtimeを一括削除したり、複数候補Workspace生成をpresetへ移植したりはしていない。[入口guard](../../crates/server/src/routes/local_remote.rs#L2795-L2803)
 
 Arena は、一つのローカル [Issue](project-and-issue.md)について複数の実施候補を保持する group である。各 candidate は独立した [Workspace](workspace.md)と会話を持つ。group の選択状態と agent の稼働状態は別であり、差分が空でも会話としての成果があり得る。[モデル](../../crates/db/src/models/arena_group.rs#L25-L86)、[candidate 作成](../../crates/server/src/routes/local_remote.rs#L2337-L2386)
 
@@ -43,7 +47,7 @@ Arena の Archived は負けた候補・置き換えられた候補を示し、�
 
 ## 作成・追問・選択
 
-通常の Arena 作成 API は 2 候補以上、project ごとの上限（2〜6 に制限）、空でない prompt、少なくとも一つの Repository、Issue と Project の整合性を検証する。同じ Issue に active group があれば拒否する。候補は順番に作成・起動するため、全候補の構築が単一 transaction で成功するわけではない。[検証と作成](../../crates/server/src/routes/local_remote.rs#L2480-L2574)
+新規作成handlerは冒頭のpreset入口guardで拒否する。その後に残る旧作成ロジックは 2 候補以上、project ごとの上限（2〜6 に制限）、空でない prompt、少なくとも一つの Repository、Issue と Project の整合性を検証する。同じ Issue に active group があれば拒否する。候補は順番に作成・起動するため、全候補の構築が単一 transaction で成功するわけではない。[検証と作成](../../crates/server/src/routes/local_remote.rs#L2480-L2574)
 
 message API の操作として AskAll、特定 Workspace、Challenge、Synthesize を記録できる。Start implementation は既存候補 Workspace を group の実装対象として記録し、非空の follow-up がある場合に実行を開始する。「実装開始」を新規 worktree 作成や merge と解釈しない。[操作型](../../crates/server/src/routes/local_remote.rs#L1955-L1976)、[実装開始](../../crates/server/src/routes/local_remote.rs#L2990-L3045)
 
@@ -59,7 +63,7 @@ Close は Open group を Closed にする。Dissolve は未 promote group の候
 
 ## Workflow 内の Arena
 
-[Workflow](workflow-attempt.md) の Arena node は Implementation group を作る。winner 選択では candidate と主 Workspace の Repository を対応させ、candidate の base からの patch を主作業木へ適用する。通常 Arena の Promote と異なりコード反映を伴う。複数 Repository は順に適用し、途中の失敗時にはそれ以前の反映を一括 rollback する transaction はこのループにない。[winner 反映](../../crates/server/src/workflow_runtime/arena.rs#L712-L793)
+既存[Workflow](workflow-attempt.md)の履歴互換runtimeではArena nodeがImplementation groupを作る。新しい固定presetにはArena nodeを含めない。winner 選択では candidate と主 Workspace の Repository を対応させ、candidate の base からの patch を主作業木へ適用する。通常 Arena の Promote と異なりコード反映を伴う。複数 Repository は順に適用し、途中の失敗時にはそれ以前の反映を一括 rollback する transaction はこのループにない。[winner 反映](../../crates/server/src/workflow_runtime/arena.rs#L712-L793)
 
 Workflow 側の winner 確定・失敗 cleanup も通常の Workspace を自動 archive しない。候補の選択状態と保存領域の解放を独立して扱う。[Workflow の状態更新](../../crates/server/src/workflow_runtime/arena.rs#L910-L929)
 

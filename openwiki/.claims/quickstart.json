@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:c1f88b9bf73dca00852a41e94ab2d1a3209d08130764810b89e949d8b0866f81",
+  "pageVersion": "sha256:8bcb5ded0f32b7441fa3921c3a652cc30e56c7d63515c14280cb431b09b6ee8a",
   "claims": [
     {
       "id": "claim_edf1b78d3c7a4d978a6d8debcee4edd2",
@@ -100,7 +100,7 @@
         },
         {
           "resource": "repo://crates/server/src/remote_mcp/mod.rs",
-          "version": "repo-file-v1:sha256:c19fbe8e768fcc60788782a980f010088afd23062d26124d8d0212d2d50d92aa"
+          "version": "repo-file-v1:sha256:a388c234074074704611983107aa075599cef072c24d87bfdcc9b1198415e8ee"
         },
         {
           "resource": "repo://crates/server/src/routes/sessions/questions.rs",
@@ -331,7 +331,7 @@
           "version": "repo-lines-v1:sha256:d34d03d9470ee23e8ecd3a50a6ecd0d48db6129857074494f99bcc7d26f162d1:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImE4YTliNmVjZTNjOWJkMzExZTkzMjE4ZDBhMTdiMWI1ODVjZmM1NmU4Y2YzMDVmYmQ1MzQ0ZGE2ZTkwNjU2ZTIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImZmOTA3MGEzMzI5OWVmNjBkODAyYzM0ZTc1MDY5ZTQ2MWEyMTZmNTIwNTRkMDRjMjU2NzdkZTU0ZjBiYzRjNmYifQ"
         },
         {
-          "resource": "repo://crates/server/src/routes/local_remote.rs#L3614-L3661",
+          "resource": "repo://crates/server/src/routes/local_remote.rs#L3615-L3662",
           "version": "repo-lines-v1:sha256:fbd1bca44a4228fe6b793f04e1522541350a80ebe643b0a904ea959950f89560:eyJzZWxlY3RlZExpbmVDb3VudCI6NDgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAyNWYxZWQ4MjkyZWZhMzY4MjNlY2M5Nzk4Njc1NWQ0MzNjYzhjMjUxYTcxYTEzNGQ4MWQyMGM5ZTA3Y2ZlZTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM1ZTM0NDVkMDA4MTNlMWIyM2QxZTgxYTBlZjU0NDE0NDMyY2RjYjc4OTg5Y2IyNTJlMzcyMGU1ODZiMWEzZmMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFiNzhjMGIxMzc3Mjc5MTAyYzM0ODFjMjMxNTNmY2FjNDEyZmJmZWZkYjgwMDRmMjhhOTUyOGQ5MGIzNzQ1NjAifQ"
         },
         {
@@ -393,10 +393,32 @@
           "version": "repo-lines-v1:sha256:bd07532f60cdd3e366ed6f4da5845ceb8a819178b5e1e475d10fa6aade5c6cf9:eyJzZWxlY3RlZExpbmVDb3VudCI6MzgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA5ZmJlZWQ1YzEwN2M3NWZiNGNlMWVhY2Y2MTQ1YWY0ZmM2NmE1NTdkYzZkNTA3MmZhYTNkY2FjZGI3ZmJhMzQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFlMGFmM2ZkNGE0YzNhMWQ0N2M3ZjQ3MGVkMGQ4NmQ5MGQ5ZGUyMTBhNWViMTQ1NWZiZDk0NDgyYTQ3NjViNzIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZiMjBlNzhiOGRlMmI1ZDBlYzRlNDgwN2I0ZTNhODFmYzIyYjczMTQ4Mzg2ZWVmNzM1ZjZjYzFlMTIyYjRkZWMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJjNDY3YjMwODU3YmZiOTQyNmFjMjk4ZGQ1MTQ5OTgwOGQ0MTIzYTUwZWI0ZjQ1YjI3YTBmOWViNjhkZmFhZDEifQ"
         }
       ]
+    },
+    {
+      "id": "claim_f56bd1b81bf4487297fdad81689df07d",
+      "statement": "新規Issue開始は単一Agent既定と3固定presetを扱い、報告後に停止する。旧任意graph/editorと新規Arena入口は終了し、既存定義・Runとretryを保持する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/routes/workflows.rs",
+          "version": "repo-file-v1:sha256:f3571538fc7625234389144c663707cf8517f3c4d0bee395f934214d5cf75c1f"
+        },
+        {
+          "resource": "repo://crates/workflow/src/presets.rs",
+          "version": "repo-file-v1:sha256:02b746acf53b62df51aee665b777c78bcd64e25396b607403ac6fc825b94cc86"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/workflow/ui/WorkflowTemplateEditorPage.tsx",
+          "version": "repo-file-v1:sha256:71e2ea8d7a04e258db8571d3543d6182fdc756c0ce4e718d384f5c657fce95d3"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/dialogs/shared/WorkspaceTargetDialog.tsx",
+          "version": "repo-file-v1:sha256:ecfc882877cd8569884fe24dc9151c99443f83c801cf871e2145b7f71203b4a7"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-10T21:23:07.231Z"
+    "at": "2026-11-11T09:36:22.928Z"
   }
 }

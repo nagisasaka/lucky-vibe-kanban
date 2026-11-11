@@ -54,16 +54,18 @@ sources:
     resource: repo://deploy/server/server.test.mjs
   - id: openwiki-source-8d57c3092adc3c7e7de33c02
     resource: repo://deploy/server/smoke-image.sh
+  - id: openwiki-source-26f2b454d009a5c3d05be35a
+    resource: repo://deploy/server/workflow-source-protection.md
   - id: openwiki-source-bb1ebe868e35e9e500714501
     resource: repo://Dockerfile
   - id: openwiki-source-5b54a58d1b51cd490b0e7162
     resource: repo://package.json
   - id: openwiki-source-d64d3c5fa2f722c3a06ba2e6
     resource: repo://tests/embedded-browser-removal/controls.test.mjs
-generated: { by: "codex", at: "2026-11-10T13:43:59.705Z" }
+generated: { by: "codex", at: "2026-11-11T09:36:22.928Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-10T13:43:59.705Z
+    at: 2026-11-11T09:36:22.928Z
 ---
 
 # 単一サーバーコンテナーの運用境界
@@ -300,3 +302,10 @@ docker compose run --rm --no-deps -T --entrypoint tar lvk -C /var/tmp -czf - . >
 退避確認後に新image digestを選び、pull/up後のhealthとログ、既存Card・会話・Repo・共有file、使い捨てCardでの通常agent応答を確認する。割込みGoalは状態を調べて意図的に再開し、再起動だけでの継続を約束しない。
 
 手動rollbackでは新コンテナーを止め、対応する旧image/binaryと**同じ時点の全volume・設定**を、同じ内部pathを持つ別のrecovery deploymentへ復元する。元volumeを同時にwriterへmountしない。そこでDB整合性、認証、Repo/worktree、会話と小さいagent実行を確認してからtrafficを切り替える。migration済みDBへ旧binaryだけを向けない。復元確認が済むまで元deploymentとbackupを保持する。任意host updaterの自動rollbackは閉じたmaintenance gateと保存済みbackupを使う独自transactionであり、この手動回復手順と混同しない。[自動rollbackの順序](../../deploy/developer/updater.py#L298-L339)
+
+
+## 固定Workflow報告工程の配布依存
+
+LOCAL-372のserver-tools stageはbubblewrap/socatを導入し、/usr/bin/bwrap --versionとsocat -Vで存在を確認する。server imageがこれを継承する。稼働中containerへのbinary配置やbundle置換だけで依存を導入したことにはならず、新しいimage構築・container切替は別の明示許可を必要とする。[Dockerfile](../../Dockerfile#L145-L178)
+
+実行時には既存hostのuser/PID/IPC/UTS/mount namespace、native sandboxのnested/network条件も成立しなければならない。binaryの存在はnamespace成立の証明ではない。承認済み環境で使う前に[ソース保護とtmp/cacheの同時検証手順](../../deploy/server/workflow-source-protection.md)を実adapterで確認し、拒否時はerrorを保持して停止する。原因未確定の拒否を繰り返したり、seccomp/AppArmor/capabilityを緩和して通したりしない。今回の統合ではimage構築・container起動・実provider完走は未実施である。[検証範囲](development.md#local-372の統合検証と未実証の保護成功経路)

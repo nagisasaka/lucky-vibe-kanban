@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:a2df6ccba3d05cffbf0996f344e365c7b33906ff426475a2162c50a10eaaa87f",
+  "pageVersion": "sha256:4ef55c5bceff29cda4241e8a7a33ce80440886f9c4f392d120a986fd11e3a1ba",
   "claims": [
     {
       "id": "claim_ef965d37641846bda42842bf4788c8cc",
@@ -130,7 +130,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/mod.rs",
-          "version": "repo-file-v1:sha256:4b23d2ceaa859e28c22477309b8bca7cf08ff65f70ba4be32ec6d64c92ed0fcd"
+          "version": "repo-file-v1:sha256:8902bcab2995a8d4e066dfa6a9eeba0aa69519d372d2ad9054cb50e65f9d2809"
         }
       ]
     },
@@ -674,7 +674,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/mod.rs",
-          "version": "repo-file-v1:sha256:4b23d2ceaa859e28c22477309b8bca7cf08ff65f70ba4be32ec6d64c92ed0fcd"
+          "version": "repo-file-v1:sha256:8902bcab2995a8d4e066dfa6a9eeba0aa69519d372d2ad9054cb50e65f9d2809"
         },
         {
           "resource": "repo://deploy/server/server.mjs",
@@ -864,7 +864,7 @@
       "evidence": [
         {
           "resource": "repo://packages/web-core/src/i18n/locales/ja/common.json",
-          "version": "repo-file-v1:sha256:0a7fe8e395564b39c5c623d3410dbb57e33b4e174ca27c258eee82f2db01ca5a"
+          "version": "repo-file-v1:sha256:802665c4201c3f552865d1a6ceedd6289f2f7369e93a3935037e4c47fe210e45"
         },
         {
           "resource": "repo://packages/web-core/src/shared/dialogs/settings/settings/SharedStorageSettings.tsx",
@@ -977,6 +977,6 @@
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-10T20:48:58.515Z"
+    "at": "2026-11-11T09:36:22.928Z"
   }
 }

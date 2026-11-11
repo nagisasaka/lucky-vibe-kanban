@@ -56,10 +56,10 @@ sources:
     resource: repo://README.md
   - id: openwiki-source-8ea6c46d63953a7104f5dd97
     resource: repo://scripts/dev-cargo.mjs
-generated: { by: "codex", at: "2026-11-04T20:14:29.223Z" }
+generated: { by: "codex", at: "2026-11-11T09:36:22.928Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-10T13:43:59.705Z
+    at: 2026-11-11T09:36:22.928Z
 ---
 
 # システム境界と起動順序
@@ -138,3 +138,8 @@ API 型は Rust から TypeScript へ生成するため、Rust と Web の変更
 外部 HTTP MCP の [Runtime Access](../concepts/runtime-access.md) は、管理者が許可した Linux 上で既存プログラムを直接動かす。file rootsは直接file APIだけを制限し、実行programのアクセス先を閉じ込めない別の経路である。`remote_mcp` が共有する process registry は AgentRun を作らず、起動・停止は既存 operation receipt を使う。設定は SQLite、出力と寿命監視はプロセス内にあり、AgentRun の再接続・回復契約を流用できない。[結線](../../crates/server/src/remote_mcp/mod.rs#L55-L72)・[registry と監視](../../crates/server/src/remote_mcp/environment_process.rs#L1-L34)・[実行と receipt](../../crates/server/src/remote_mcp/environment_process.rs)
 
 `server runtime-payload` は通常の DB・認証・listener 初期化前に終了し、frontend・sounds・scripts の実埋込み bytes の hash を調べる専用 probe である。`developer-runtime` feature は debug でもそれらを埋め込む。これは通常起動の回復を実行するコマンドではなく、[開発bundle切替](../operations/development.md#開発用成果物切替と復旧)の停止前検査に使う。[早期分岐](../../crates/server/src/main.rs#L45-L52)・[payload検査](../../crates/server/src/runtime_payload.rs#L9-L34)・[feature](../../crates/server/Cargo.toml#L72-L76)
+
+
+## 固定presetの完了追従
+
+LOCAL-372でstandaloneにもWorkflow completion watcherを配線した。standaloneとembeddedの両方で終了eventを受けて既存runtimeを進めるため、UIや外部AIの待機を工程間の前提にしない。Agent終了後の成果成立とpresetの停止契約は[Workflow runtime](workflow-runtime.md)を参照する。[起動](../../crates/server/src/main.rs)・[embedded起動](../../crates/server/src/startup.rs)
