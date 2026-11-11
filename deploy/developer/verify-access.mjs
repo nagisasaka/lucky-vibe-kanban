@@ -55,7 +55,8 @@ const setup = await request(
 );
 assert.equal(setup.status, 200);
 assert.equal(
-  (await request("/api/access/setup", { key }, { "X-LVK-CSRF": "setup" })).status,
+  (await request("/api/access/setup", { key }, { "X-LVK-CSRF": "setup" }))
+    .status,
   401,
   "A setup key cannot be reused",
 );
@@ -66,7 +67,44 @@ const result = await request(
   { Cookie: cookie, "X-LVK-CSRF": setup.body.csrf },
 );
 assert.equal(result.status, 200);
-assert.equal((await request("/api/info")).status, 200);
+// The real server/libgit2 read path runs as UID 10001 with HOME and /repos
+// named volumes mounted. No root-only git check or hidden Project substitutes.
+assert.equal(process.getuid(), 10001);
+const info = await request("/api/info");
+assert.equal(info.status, 200);
+const revision = info.body.data.build_info.revision;
+const sourcePath = "/opt/lvk/source";
+const gitSource = (...args) =>
+  execFileSync("git", ["-C", sourcePath, ...args], { encoding: "utf8" }).trim();
+assert.equal(gitSource("rev-parse", "HEAD"), revision);
+assert.equal(gitSource("rev-parse", "--is-shallow-repository"), "false");
+assert.match(gitSource("log", "-2", "--format=%H %s"), /[0-9a-f]{40} /);
+const ancestor = gitSource("rev-parse", "HEAD^");
+assert(gitSource("show", "--format=fuller", ancestor).length > 0);
+for (const operation of [
+  { kind: "list" },
+  { kind: "log" },
+  { kind: "diff", comparison: "direct" },
+]) {
+  const response = await request(
+    "/api/repository/read",
+    {
+      source: "lvk",
+      target: { mode: "commit", ref: ancestor },
+      operation,
+    },
+    { Cookie: cookie, "X-LVK-CSRF": setup.body.csrf },
+  );
+  assert.equal(response.status, 200);
+  assert.equal(response.body.success, true, JSON.stringify(response.body));
+  assert.equal(response.body.data.source.build_revision, revision);
+  assert.equal(response.body.data.source.commit, revision);
+  assert.equal(response.body.data.source.path, sourcePath);
+  assert.equal(response.body.data.end_commit, ancestor);
+}
+console.log(
+  "PASS: mounted-HOME non-root Git CLI + authenticated LVK libgit2 list/log/diff, bundled source matches binary",
+);
 assert.equal((await request("/mcp", {})).status, 404);
 console.log(
   "PASS: public locked setup, CLI one-use key, backend Basic, remote MCP disabled (disposable image)",

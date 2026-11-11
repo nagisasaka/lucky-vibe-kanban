@@ -72,6 +72,10 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Verify the binary source matches the public source revision
+        run: |
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git diff --exit-code HEAD --
       - name: Build (not yet published)
         uses: docker/build-push-action@v6
         with:

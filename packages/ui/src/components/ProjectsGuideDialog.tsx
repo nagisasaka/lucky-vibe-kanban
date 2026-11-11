@@ -1,11 +1,17 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import NiceModal, { useModal } from '@ebay/nice-modal-react';
-import { defineModal, type NoProps } from '../lib/modals';
+import { defineModal } from '../lib/modals';
 import { GuideDialogShell, type GuideDialogTopic } from './GuideDialogShell';
 
-const ProjectsGuideDialogImpl = NiceModal.create<NoProps>(() => {
+interface GuideProps {
+  interactiveHelp?: ReactNode;
+  interactiveHelpTitle?: string;
+}
+
+const ProjectsGuideDialogImpl = NiceModal.create<GuideProps>((props) => {
+  const { interactiveHelp, interactiveHelpTitle } = props;
   const modal = useModal();
   const { t } = useTranslation('common');
   const container = typeof document !== 'undefined' ? document.body : null;
@@ -72,6 +78,14 @@ const ProjectsGuideDialogImpl = NiceModal.create<NoProps>(() => {
     },
   ];
 
+  if (interactiveHelp) {
+    topics.unshift({
+      id: 'interactive-help',
+      title: interactiveHelpTitle ?? 'Ask LVK',
+      content: interactiveHelp,
+    });
+  }
+
   return createPortal(
     <GuideDialogShell
       topics={topics}
@@ -82,6 +96,6 @@ const ProjectsGuideDialogImpl = NiceModal.create<NoProps>(() => {
   );
 });
 
-export const ProjectsGuideDialog = defineModal<void, void>(
+export const ProjectsGuideDialog = defineModal<GuideProps, void>(
   ProjectsGuideDialogImpl
 );

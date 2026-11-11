@@ -13,4 +13,5 @@ pub mod runtime_payload;
 
 pub(crate) mod provider_usage;
 
+pub(crate) mod bundled_source;
 pub(crate) mod repository_read;

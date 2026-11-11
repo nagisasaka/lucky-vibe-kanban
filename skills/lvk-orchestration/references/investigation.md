@@ -32,3 +32,23 @@ REVIEW uses the same Issue/Workspace/Session/AgentRun model and permission bound
 - For investigation: choose the least invasive reliable method, allowing necessary Workspace-local scripts, reproduction code, fixtures, and tests within the agreed scope. An independent worktree does not isolate databases, credentials, background processes, or external services; verify their targets and avoid unauthorized shared or live-state changes. Report exact file paths, any investigation changes, and verifiable evidence.
 
 - **Keep investigation-only artifacts out of Git commits by default.** Investigation reports, raw logs/JSON dumps, third-party source copies, and temporary reproduction scripts or fixtures belong in Git-untracked storage, with a concise findings summary and evidence references in the coding-agent Session's normal response; the coordinating assistant should summarize retrieved findings in the user's chat when requested or useful; use Issue comments only under applicable review-sharing authorization. Before creating them, verify that the chosen location or exclusion keeps them out of LVK's automatic commits; merely leaving files unstaged is not enough. At the end, inspect Git status and the final diff (including staged changes and commit contents when applicable) for accidental inclusion. Distinguish these temporary artifacts from product source, adopted regression tests/fixtures, and maintained documentation legitimately included in authorized implementation. Honor an explicit user request to preserve specific investigation artifacts in Git; do not interpret this rule as banning all non-product-code files.
+
+## Help and bundled distribution source
+
+For ordinary LVK usage, prefer `ask_help` / `get_help_conversation` when an agent
+answer is useful; continuation uses the returned `session_id`. Report starting,
+running, answered, failed and cancelled distinctly. Existing provider auth and
+costs apply. This is the same REVIEW-based service as the Help UI, without a
+hidden Project. Help is guidance, not authorization to edit/build/restart LVK or
+create development work.
+
+For direct evidence use `query_repository` with `source:"lvk"` and the existing
+read/grep/list/log/diff operation, without Project registration or a host path.
+Default commit is the bundled distribution revision; pin returned `source_head`
+and show the version/revision. Explicit history/diff targets distinguish past
+intent from current behaviour. Cite real commit messages/diffs and label your
+interpretation; absent contribution documents do not justify invented PR rules.
+GitHub and normal Project reads remain available. Workspace agents can also read
+the bundled path exposed in their LVK guide. For requested development, explain
+normal Project / Issue / Workspace and an independent public upstream clone at
+the bundled commit; a help question alone does not start this work.

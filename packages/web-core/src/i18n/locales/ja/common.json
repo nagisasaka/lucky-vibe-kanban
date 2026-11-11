@@ -2405,5 +2405,34 @@
     "important": "重要",
     "warning": "警告",
     "caution": "注意"
+  },
+  "interactiveHelp": {
+    "currentSource": "現在の配布版",
+    "answerSource": "この質問・回答の参照版",
+    "unknownRevision": "版不明",
+    "openWorkspace": "入力・承認と実行詳細を開く",
+    "title": "LVKに質問",
+    "description": "設定済みの既定agentが、この版の公開ソース・資料・Git履歴を調べて回答します。既存のagent認証と利用料金が適用されます。",
+    "conversation": "会話",
+    "new": "新しい会話",
+    "loading": "読み込み中…",
+    "question": "質問",
+    "ask": "質問する",
+    "cancel": "回答をキャンセル",
+    "delete": "会話を削除",
+    "retention": "会話は削除するまで保持されます。ヘルプを閉じても回答はキャンセルされません。開発する場合は通常のProject・Workspaceを使ってください。",
+    "status": {
+      "pending": "待機中",
+      "starting": "開始中",
+      "running": "調査中…",
+      "awaiting_input": "入力待ち",
+      "awaiting_approval": "承認待ち",
+      "cancelling": "キャンセル中…",
+      "succeeded": "回答済み",
+      "failed": "失敗",
+      "cancelled": "キャンセル済み",
+      "crashed": "agent異常終了",
+      "audit_failed": "監査失敗"
+    }
   }
 }

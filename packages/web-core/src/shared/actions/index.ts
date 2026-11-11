@@ -77,6 +77,7 @@ import { ChangeTargetDialog } from '@vibe/ui/components/ChangeTargetDialog';
 import { DeleteWorkspaceDialog } from '@vibe/ui/components/DeleteWorkspaceDialog';
 import { RebaseDialog } from '@/shared/dialogs/command-bar/RebaseDialog';
 import { RenameWorkspaceDialog } from '@vibe/ui/components/RenameWorkspaceDialog';
+import { InteractiveHelp } from '@/shared/components/InteractiveHelp';
 import { ProjectsGuideDialog } from '@vibe/ui/components/ProjectsGuideDialog';
 import { CreatePRDialog } from '@/shared/dialogs/command-bar/CreatePRDialog';
 import { EditorSelectionDialog } from '@/shared/dialogs/command-bar/EditorSelectionDialog';
@@ -503,7 +504,10 @@ export const Actions = {
     requiresTarget: ActionTargetType.NONE,
     isVisible: (ctx) => ctx.layoutMode === 'kanban',
     execute: async () => {
-      await ProjectsGuideDialog.show();
+      await ProjectsGuideDialog.show({
+        interactiveHelp: createElement(InteractiveHelp),
+        interactiveHelpTitle: i18n.t('common:interactiveHelp.title'),
+      });
     },
   } satisfies GlobalActionDefinition,
 

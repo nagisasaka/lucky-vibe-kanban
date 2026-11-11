@@ -105,6 +105,16 @@ RUN CARGO_PROFILE_RELEASE_DEBUG=0 CARGO_PROFILE_RELEASE_STRIP=symbols \
  && cp /app/target/release/agent-process-host /usr/local/bin/agent-process-host \
  && cp /app/target/release/vibe-kanban-mcp /usr/local/bin/vibe-kanban-mcp
 
+# Never copy the caller's .git/config, hooks, alternates, credentials or
+# unpublished objects. A shallow CI checkout and .dockerignore's .git exclusion
+# are intentional: fetch the exact public build commit with all its ancestors.
+FROM rust-toolchain AS bundled-source
+ARG LVK_BUILD_REVISION=""
+COPY deploy/server/bundle-source.sh /usr/local/bin/lvk-bundle-source
+RUN sh /usr/local/bin/lvk-bundle-source \
+    https://github.com/nagisasaka/lucky-vibe-kanban.git \
+    "$LVK_BUILD_REVISION" /opt/lvk/source
+
 FROM node:22-bookworm-slim AS runtime-base
 
 # The adapter and image read the same version pin. Installation of the Codex
@@ -125,6 +135,11 @@ RUN apt-get update \
   && rm -rf /var/lib/apt/lists/* \
   && groupadd --gid 10001 appuser \
   && useradd --create-home --uid 10001 --gid 10001 --shell /bin/bash appuser
+
+# Owned by the actual server/agent UID, independent of mounted HOME settings.
+# Outside all persistent volumes, so image updates replace the reference repo.
+COPY --from=bundled-source --chown=10001:10001 /opt/lvk/source /opt/lvk/source
+ENV LVK_SOURCE_PATH=/opt/lvk/source
 
 WORKDIR /repos
 

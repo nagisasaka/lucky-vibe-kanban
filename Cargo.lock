@@ -7173,6 +7173,7 @@ dependencies = [
  "futures-util",
  "git",
  "git-host",
+ "git2",
  "http 1.4.0",
  "jsonwebtoken",
  "libc",

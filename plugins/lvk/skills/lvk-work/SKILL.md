@@ -267,3 +267,30 @@ None of these operations creates a Workspace or starts implementation.
 If the connected public MCP does not expose these operations, report the relation
 as unregistered/unverified. Another MCP's implementation does not prove the
 connected service registered it. Do not bulk-link or migrate existing prose.
+
+## Help for the running LVK version
+
+For ordinary usage questions, `ask_help` starts the configured default agent in
+REVIEW with the bundled public source, Wiki and Git history. Continue by passing
+its `session_id`; use `get_help_conversation` for progress, answers and failures.
+A started run is not a completed answer. Existing provider authentication,
+permissions and costs apply. The Help UI uses the same service. Explain missing
+source, unknown revision, absent documentation, provider errors and cancellation
+explicitly. Use `cancel_help_conversation` / `delete_help_conversation` when
+requested; closing a panel does not cancel a run.
+
+For direct evidence, use `query_repository` with `source:"lvk"` and the usual
+`operation` (`read`, `grep`, `list`, `log` or `diff`), without a Project or host
+path. The default commit is the bundled distribution revision. Pin the returned
+`source_head` for subsequent history/diff queries and report the target version.
+Commit mode reads Git objects, so local edits do not change this evidence.
+Registered Project queries retain their existing IDs and authorization. Ordinary
+Workspace agents may also read the bundled source path given in their LVK guide.
+GitHub remains an option when explicitly comparing other versions.
+
+Base PR instructions on actual contribution documents. Cite commit messages and
+diffs for historical author intent, label interpretation, and distinguish that
+history from current behaviour. Do not invent missing rules or rationale. General
+help does not authorize product edits, builds, restart, cloning or Project
+creation. If the user wants development, explain the normal Project / Issue /
+Workspace flow and an independent clone at the bundled commit and public upstream.

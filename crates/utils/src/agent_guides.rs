@@ -30,7 +30,7 @@ pub fn prepare(workspace: &Path) -> io::Result<PathBuf> {
         ));
     }
     let content = format!(
-        "# LVK on-demand execution guide\n\n## Coding and Manifest\n{}\n\n## Parallel discovery\n{}\n\n## Shared resources and Runner\n{}\n",
+        "# LVK on-demand execution guide\n\n## Coding and Manifest\n{}\n\n## Parallel discovery\n{}\n\n## Shared resources and Runner\n{}\n\n## LVK product help\nThe image ships public LVK source and ancestor history at /opt/lvk/source (server override LVK_SOURCE_PATH). It is reference material, separate from the running binary. query_repository with source:\"lvk\" and an operation reads the distribution commit without creating a Project; omit target for that commit, or select an explicit commit for history. Existing Project reads keep their IDs and authorization. For conversational general help use ask_help / get_help_conversation when exposed. Check returned build_revision and source commit; missing source or unknown revision is not success. Cite actual source/Wiki/commit/diff, distinguish author quotations from your interpretation, and never invent contribution rules. User repositories and secrets require their own authorization. Do not edit/build/restart LVK or start development merely because help was requested. For development, propose the normal Project/Issue/Workspace flow; an independent clone needs explicit instruction. GitHub remains an optional source; distinguish its version from the running build.\n",
         crate::repository_memory::CODING_RUN_GUIDE,
         PARALLEL_GUIDE,
         resource_guide()

@@ -74,6 +74,10 @@ pub(super) enum Change {
 
 #[async_trait]
 pub(super) trait RuntimeActions: Send + Sync {
+    async fn help(&self, _action: &str, _args: Value) -> Result<Value, ApiError> {
+        Err(ApiError::Conflict("Help runtime unavailable".into()))
+    }
+
     async fn decide_approval(
         &self,
         _target: Target,
@@ -150,6 +154,25 @@ pub(super) fn identity(operation: Uuid, key: String) -> agent_runs::AgentRunCont
 
 #[async_trait]
 impl RuntimeActions for ExistingRuntime {
+    async fn help(&self, action: &str, args: Value) -> Result<Value, ApiError> {
+        if action == "ask_help" {
+            let request =
+                serde_json::from_value(args).map_err(|e| ApiError::BadRequest(e.to_string()))?;
+            return crate::routes::help::ask(&self.0, request).await;
+        }
+        let id = args
+            .get("session_id")
+            .and_then(Value::as_str)
+            .and_then(|id| Uuid::parse_str(id).ok())
+            .ok_or_else(|| ApiError::BadRequest("Help session_id required".into()))?;
+        match action {
+            "get_help_conversation" => crate::routes::help::conversation(&self.0, id).await,
+            "cancel_help_conversation" => crate::routes::help::cancel(&self.0, id).await,
+            "delete_help_conversation" => crate::routes::help::delete(&self.0, id).await,
+            _ => Err(ApiError::BadRequest("Unknown help action".into())),
+        }
+    }
+
     async fn decide_approval(
         &self,
         target: Target,

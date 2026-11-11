@@ -1,4 +1,5 @@
 import { useEffect, useCallback } from 'react';
+import { InteractiveHelp } from '@/shared/components/InteractiveHelp';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { create, useModal } from '@ebay/nice-modal-react';
@@ -37,6 +38,12 @@ const WorkspacesGuideDialogImpl = create<NoProps>(() => {
     content: t(`workspacesGuide.${topicId}.content`),
     imageSrc: TOPIC_IMAGES[topicId],
   }));
+
+  topics.unshift({
+    id: 'interactive-help',
+    title: t('interactiveHelp.title'),
+    content: <InteractiveHelp />,
+  });
 
   const handleClose = useCallback(() => {
     modal.hide();

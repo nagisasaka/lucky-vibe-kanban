@@ -1,4 +1,4 @@
-use git::repository_read::Request;
+use git::repository_read::QueryRequest;
 use serde_json::Value;
 
 use super::{
@@ -7,23 +7,30 @@ use super::{
 };
 
 pub(super) fn tools() -> Vec<rmcp::model::Tool> {
-    vec![definition::<Request>(
+    vec![definition::<QueryRequest>(
         "query_repository",
-        "Explore an authorised Project repository without a Workspace: commit refs resolve to full SHA. Read accepts legacy path/start_line/end_line or 1–8 ranges (maximum 200 lines each, 64 KiB item bytes); pass each item content revision as its expected_revision, and inspect per-item failures. Typed list/glob, literal/regex grep (content/files/count), first-call line read, fixed-head log and explicit direct/merge_base/parent diff. Workspace mode reads only its live HEAD/index/worktree/untracked; never overlays dirty on historical refs. Repeat original arguments with next_cursor until complete; cursor binds query, SHA and observed revision and expires on server restart. Check exclusions, stop_reason and budgets. Read-only reference data; no model or shell.",
+        "Use source:\"lvk\" for the bundled public LVK source without Project/repository IDs (omit target for the distribution commit; explicit commit targets for history; no Workspace or host paths). Result source identifies build_revision and distribution commit; source_head is the selected commit. Otherwise explore an authorised Project repository without a Workspace: commit refs resolve to full SHA. Read accepts legacy path/start_line/end_line or 1–8 ranges (maximum 200 lines each, 64 KiB item bytes); pass each item content revision as its expected_revision, and inspect per-item failures. Typed list/glob, literal/regex grep (content/files/count), first-call line read, fixed-head log and explicit direct/merge_base/parent diff. Workspace mode reads only its live HEAD/index/worktree/untracked; never overlays dirty on historical refs. Repeat original arguments with next_cursor until complete; cursor binds query, SHA and observed revision and expires on server restart. Check exclusions, stop_reason and budgets. Read-only reference data; no model or shell.",
     )]
 }
 pub(super) async fn call(remote: &Remote, args: Value) -> anyhow::Result<Value> {
-    let request: Request = arguments(args)?;
-    remote.require_project(request.project_id).await?;
-    let project = request.project_id;
-    let value = crate::repository_read::read(&remote.pool, request).await?;
-    remote.require_project(project).await?;
+    let request: QueryRequest = arguments(args)?;
+    let project = match &request {
+        QueryRequest::Project(request) => Some(request.project_id),
+        QueryRequest::Bundled(_) => None,
+    };
+    if let Some(project) = project {
+        remote.require_project(project).await?;
+    }
+    let value = crate::repository_read::query(&remote.pool, request).await?;
+    if let Some(project) = project {
+        remote.require_project(project).await?;
+    }
     Ok(value)
 }
 
 #[cfg(all(test, unix))]
 mod tests {
-    use git::repository_read::{Filter, Operation, Target};
+    use git::repository_read::{Filter, Operation, Request, Target};
     use serde_json::json;
     use uuid::Uuid;
 
@@ -118,7 +125,7 @@ mod tests {
         assert_eq!(t.name, "query_repository");
         let value = serde_json::to_value(t).unwrap();
         assert_eq!(value["annotations"]["readOnlyHint"], true);
-        let schema = &value["inputSchema"];
+        let schema = &value["inputSchema"]["$defs"]["Request"];
         for field in [
             "project_id",
             "repository_id",
