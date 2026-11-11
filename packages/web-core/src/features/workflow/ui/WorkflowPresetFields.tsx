@@ -8,11 +8,11 @@ import type {
 } from 'shared/types';
 import { workflowPresetsApi } from '@/shared/lib/workflowApi';
 
-export const presetNames: Record<Preset, string> = {
-  implement_review: 'Implement → independent review → stop',
-  research_synthesize: 'Research perspectives → synthesize → stop',
-  inventory_reduce: 'Inventory → reduction proposal → stop',
-};
+export const presetTranslationKeys = {
+  implement_review: 'workflow.presets.implement_review',
+  research_synthesize: 'workflow.presets.research_synthesize',
+  inventory_reduce: 'workflow.presets.inventory_reduce',
+} as const satisfies Record<Preset, string>;
 
 export function initialPreset(preset: Preset): PresetRequest {
   return {
@@ -57,8 +57,8 @@ export function StageFields({
           })
         }
       >
-        <option value="CODEX">Codex</option>
-        <option value="CLAUDE_CODE">Claude Code</option>
+        <option value="CODEX">{t('environment.codex')}</option>
+        <option value="CLAUDE_CODE">{t('environment.claude')}</option>
       </select>
       <input
         aria-label={`${name} model`}
@@ -173,9 +173,9 @@ export function WorkflowPresetFields({
           }}
         >
           <option value="single">{t('workflow.presets.single')}</option>
-          {Object.entries(presetNames).map(([id, name]) => (
+          {Object.entries(presetTranslationKeys).map(([id, key]) => (
             <option key={id} value={id} disabled={!defaults}>
-              {t(`workflow.presets.${id}`, name)}
+              {t(key)}
             </option>
           ))}
         </select>

@@ -6,7 +6,7 @@ import { workflowPresetsApi } from '@/shared/lib/workflowApi';
 import { useAppNavigation } from '@/shared/hooks/useAppNavigation';
 import { Button } from '@vibe/ui/components/Button';
 import type { PresetDefaults } from 'shared/types';
-import { presetNames } from './WorkflowPresetFields';
+import { presetTranslationKeys } from './WorkflowPresetFields';
 
 export interface WorkflowTemplateListPageProps {
   projectId: string;
@@ -27,9 +27,7 @@ function DefaultsEditor({
 
   return (
     <section className="space-y-half rounded border border-secondary p-base">
-      <h2 className="text-high">
-        {t(`workflow.presets.${value.preset}`, presetNames[value.preset])}
-      </h2>
+      <h2 className="text-high">{t(presetTranslationKeys[value.preset])}</h2>
       <label className="block text-sm">
         {t(
           'workflow.presets.projectAdditions',
