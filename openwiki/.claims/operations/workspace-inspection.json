@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:4ef55c5bceff29cda4241e8a7a33ce80440886f9c4f392d120a986fd11e3a1ba",
+  "pageVersion": "sha256:6e0b4975986e0747b8d00de2f0af816f3c0d28f2f36008b74c349e25011baa70",
   "claims": [
     {
       "id": "claim_ef965d37641846bda42842bf4788c8cc",
@@ -864,7 +864,7 @@
       "evidence": [
         {
           "resource": "repo://packages/web-core/src/i18n/locales/ja/common.json",
-          "version": "repo-file-v1:sha256:802665c4201c3f552865d1a6ceedd6289f2f7369e93a3935037e4c47fe210e45"
+          "version": "repo-file-v1:sha256:e83a10fac349fa781f84dd44c8d32ca22147ab52051ada89bd2fa4e530a0f822"
         },
         {
           "resource": "repo://packages/web-core/src/shared/dialogs/settings/settings/SharedStorageSettings.tsx",
@@ -977,6 +977,6 @@
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-11T09:36:22.928Z"
+    "at": "2026-11-11T22:39:59.377Z"
   }
 }

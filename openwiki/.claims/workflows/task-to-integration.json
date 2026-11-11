@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:08bd4b8047c74c1aafc127049a3ebfd923ddbead661282daad789e6717f360d2",
+  "pageVersion": "sha256:b1c5e458e480aa20200e2f8192503f0118ab72de5536ddb10d0b3416915ea1a4",
   "claims": [
     {
       "id": "claim_62fc79a5c9fd478cbd529ca6222d3af2",
@@ -510,17 +510,35 @@
         },
         {
           "resource": "repo://packages/web-core/src/features/workflow/ui/WorkflowPresetFields.tsx",
-          "version": "repo-file-v1:sha256:caae3befa520f0241341028a10b8156f5247759ff6ea0e403606f0ffafe2d681"
+          "version": "repo-file-v1:sha256:a596994672f468e3c5c7cdb8acdd4695c0f2280fadfd2a17a3529706a60bcb8d"
         },
         {
           "resource": "repo://packages/web-core/src/shared/dialogs/shared/WorkspaceTargetDialog.tsx",
           "version": "repo-file-v1:sha256:ecfc882877cd8569884fe24dc9151c99443f83c801cf871e2145b7f71203b4a7"
         }
       ]
+    },
+    {
+      "id": "claim_119c9d7065d74c7c9a6df5cea0b29dd5",
+      "statement": "Workflow開始フォームとProject既定設定は共通の型付き静的翻訳キー表で3preset名を表示し、工程engine名は既存environment.codex/environment.claudeを参照する。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/features/workflow/ui/WorkflowPresetFields.tsx#L11-L15",
+          "version": "repo-lines-v1:sha256:93886ae754d9ce52f352ea9661a237375f56cc3aca177b5bd4242539424871d3:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiM2Q3YzVmZmZlYTJiMzJmODIyOWRiZTdmNzk1NjhiZTRlNTgyZjliY2EyYjJjOTI1YTA3NzJjYzU3YTMyZDUyMCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYjM4ZmJiYTE1NGFkOGRhMWRhM2ZlZTdjOWQxZjIxZDlhM2U2NTk5YTc5ZDEzYmNhOTFkMzJlMDdmYzExYmY5MyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNDAwNjk2YzNlNDU3YjUzMzJhYmM1M2NlNjBlMjUwNWQxZDhiNmQ3Mzc1ZGMwYjdhZjdjMDA5ZWQzNDQ1Y2FjMSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYTYxMTQwYzAyM2E3Zjg1YzkwMjIzZjQ3ZGUyYzRlMDZhM2VmYWQxYjU2MGEwYjgwY2JmMzg4ZWQxNmQ5MjE4YiJ9"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/workflow/ui/WorkflowPresetFields.tsx#L60-L61",
+          "version": "repo-lines-v1:sha256:9af7b89b29f7694ef1270c5ba947e84b64c1a905037aa8400e73707949d70272:eyJzZWxlY3RlZExpbmVDb3VudCI6MiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMjAwOGEyYzVjOWRlMWU1YjRkZDVkN2YzMjIwMmJkMDFkZjgwOTQ0NjE5MzkwNzA4NTI1NGVhMjM0NjRhMTZkMSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiODQzOTI2ZjdkNWVlZTU3YjgzYjkzZTM3MmI0OWM5NDJlY2M0YTIzMGU5ZTBmNjU2MjdiYTkzNTljODA0MWY1MSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMzkxOTQ2YzI3OTYxZmIwZmI2NTFkMTk1MzRmNjlhMzVhNjEyYWQ0Njc0NWUxY2NlNzg1NDZhNWM5ZTRiNjlkMCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOWI3ZmFhNjFmZGY1MDkzMTIwY2I1MGJiYjkzYmY1N2QzOGI4NWU3MjE0ZWQwMDJjMjEwZDBkMmRjMWQzMDg0OCJ9"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/workflow/ui/WorkflowTemplateListPage.tsx#L30-L30",
+          "version": "repo-lines-v1:sha256:237d17a7c92806a4dad14375933c4a339c3ad2cfbb7dec3d832129f5835f1c00:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMjM3ZDE3YTdjOTI4MDZhNGRhZDE0Mzc1OTMzYzRhMzM5YzNhZDJjZmJiN2RlYzNkODMyMTI5ZjU4MzVmMWMwMCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMjM3ZDE3YTdjOTI4MDZhNGRhZDE0Mzc1OTMzYzRhMzM5YzNhZDJjZmJiN2RlYzNkODMyMTI5ZjU4MzVmMWMwMCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOTVhODY3ZWFmMDAyMGY0ZjZlZTdkMjkzMzI1YmJkYmUzNzY3Zjg0MDc2ZjYyYmJmNTA0YWU0NGFhY2ZiMzczZSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZGY3OWYyZWNjMDdhZDhkNGIyMGIyOGZhNzI4YzA0YTVlMzk3ODYzODU2YjU0MzBmZTU4MzY0YmYzOGIyYjZkZiJ9"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-11T09:36:22.928Z"
+    "at": "2026-11-11T22:39:59.377Z"
   }
 }

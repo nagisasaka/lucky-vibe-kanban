@@ -84,6 +84,8 @@ sources:
     resource: repo://packages/web-core/src/features/kanban/ui/IntegrationPanel.tsx
   - id: openwiki-source-101baca38dc55130dbd4ffea
     resource: repo://packages/web-core/src/features/workflow/ui/WorkflowPresetFields.tsx
+  - id: openwiki-source-a117fa30a26a45f54f1d1c84
+    resource: repo://packages/web-core/src/features/workflow/ui/WorkflowTemplateListPage.tsx
   - id: openwiki-source-bfe4f914c0604a66edc02213
     resource: repo://packages/web-core/src/i18n/locales/ja/settings.json
   - id: openwiki-source-2fab4d75b959f83ee7aaf538
@@ -94,10 +96,10 @@ sources:
     resource: repo://packages/web-core/src/shared/dialogs/shared/WorkspaceTargetDialog.tsx
   - id: openwiki-source-ffc55e6e31e6ce477ca57329
     resource: repo://packages/web-core/src/shared/hooks/useWorkflowRun.ts
-generated: { by: "codex", at: "2026-11-11T09:36:22.928Z" }
+generated: { by: "codex", at: "2026-11-11T22:39:59.377Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-11T09:36:22.928Z
+    at: 2026-11-11T22:39:59.377Z
 ---
 
 # Issue から実行・レビュー・統合まで
@@ -293,3 +295,10 @@ Gitは単一/複数Repoとも共通root配下のworktreeを使う。LVK親AGENTS
 WorkspaceのGit操作から開く場合は当該Workspace/Repoを選択し、Kanbanからも同じUIへ進む。複数sourceは同一Repo/targetの一候補に統合して一回公開し、相互作用を検証または理由付きで省略する。初回はLVK生成の依頼概要と保存原文を区別し、その後の追加指示は通常会話で送る。停止後は期待branch/pathと実Git状態をread-only診断で確認し、変更guardを迂回しない。[表示と診断](../operations/workspace-inspection.md#workspaceから自動マージを依頼診断するlocal-364)
 
 固定候補公開後、採用元WorkspaceのHEADが採用SHAと異なるか、そのWorkspaceのSessionに非terminal Runがあれば、元Issueの現在列を維持して自動Doneだけ保留する。本文revisionは条件にしない。HEAD観測不能も当該sourceだけを保留し、他sourceのDone・予約解放を続ける。公開成功、source Done、Wiki receiptと生成環境archiveを別々に確認する。[判定とreceipt](../concepts/formal-integration.md#公開donewiki-は別の結果)
+
+
+### Workflow表示名と翻訳検査
+
+開始フォームとProject既定設定の3 preset名は、共通の型付き静的キー表を通して同じ翻訳を読む。工程のengine選択肢も既存の `environment.codex` / `environment.claude` を使う。動的な文字列連結でpresetの翻訳キーを生成しない。[開始フォーム](../../packages/web-core/src/features/workflow/ui/WorkflowPresetFields.tsx#L11-L15)・[engine表示](../../packages/web-core/src/features/workflow/ui/WorkflowPresetFields.tsx#L60-L61)・[Project設定](../../packages/web-core/src/features/workflow/ui/WorkflowTemplateListPage.tsx#L30-L30)
+
+翻訳変更の公開前検査は `pnpm run i18n:test`、`pnpm run i18n:check`、`node scripts/check-unused-i18n-keys.mjs` で確認する。未使用候補の削除では現行参照とnamespace・fallbackを照合し、検査条件の緩和で代用しない。コード候補 `46ed9ab94c42b00762cc006933f3493f88da7230` では依存配置後に3コマンドが成功した。これはDocker imageや実provider/namespace成功側の検証ではなく、それらの既知の未検証は残る。
