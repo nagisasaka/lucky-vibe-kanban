@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:cf674472456192f138a20f7855cdf7ed4c368421fc19950d8af0e34f69310dd8",
+  "pageVersion": "sha256:75d9df8c57f46d3219a361fd659eb63e75dd67eea82e63db2e64c6b18c2865ff",
   "claims": [
     {
       "id": "claim_58a31267fd284cf6b691efe1ca720bfe",
@@ -220,7 +220,7 @@
       "evidence": [
         {
           "resource": "repo://deploy/server/smoke-image.sh#L24-L38",
-          "version": "repo-lines-v1:sha256:24a71153c44f5ef285f4187973b176433d4ff5dc194dfb3a9f09fda4249553a7:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIyM2U5ZGY1N2IwMzE4MzBiODJkMDIyNzNjZDI0MzM1MzlmNjJkNmM3MzFhMzU3M2Y5OWJiYWIwZWY2NzI0MTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YWIyNTNjNWY5NjAxN2VhNmU1ODhkYjUxMWMyM2Q2MTAyNDhhZTdhNDExZDI1MzJiYWNiMjIwMGNiYTU3MjkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjliNzU2ZWZjNTU0N2IyYzEzM2I1MjZlZjcwM2MyNjgxNWFjNDNjOWJhNzU4ZmJlMDkwZDgxMjgxNWRjMmE0OGEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFhZmJlYjE3MmUyMmI1NWE0NjIzODE1ZDU2NzE3YmQxYjExZTAyYTUwNTllMDBhZTAwYWNjNzBjMjNkYzM5ZmUifQ"
+          "version": "repo-lines-v1:sha256:1545dece5b02d6a9301933c41b1d9231d1475920b82f4354aac6d44d8417661e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIyM2U5ZGY1N2IwMzE4MzBiODJkMDIyNzNjZDI0MzM1MzlmNjJkNmM3MzFhMzU3M2Y5OWJiYWIwZWY2NzI0MTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YWIyNTNjNWY5NjAxN2VhNmU1ODhkYjUxMWMyM2Q2MTAyNDhhZTdhNDExZDI1MzJiYWNiMjIwMGNiYTU3MjkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjliNzU2ZWZjNTU0N2IyYzEzM2I1MjZlZjcwM2MyNjgxNWFjNDNjOWJhNzU4ZmJlMDkwZDgxMjgxNWRjMmE0OGEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFhZmJlYjE3MmUyMmI1NWE0NjIzODE1ZDU2NzE3YmQxYjExZTAyYTUwNTllMDBhZTAwYWNjNzBjMjNkYzM5ZmUifQ"
         }
       ]
     },
@@ -292,7 +292,7 @@
       "evidence": [
         {
           "resource": "repo://Dockerfile",
-          "version": "repo-file-v1:sha256:252d78faa7413184017861f5e1b898afdc6d759f05cd97475463b7b5bf39208a"
+          "version": "repo-file-v1:sha256:87e598250ba5c51a2a257ffa5019a902a7154125b400486a3de51831d7d998d2"
         },
         {
           "resource": "repo://crates/mcp/src/bin/vibe_kanban_mcp.rs",
@@ -432,7 +432,7 @@
         },
         {
           "resource": "repo://deploy/server/smoke-image.sh",
-          "version": "repo-file-v1:sha256:cd2928234a13cf25f198e6a9d3a2e039c2cbb73f9cb702a8925be8c68b95b562"
+          "version": "repo-file-v1:sha256:332452fa4d99e63835ba72b68a935da967952a38c594415cae294b7a9802b020"
         }
       ]
     },
@@ -442,7 +442,7 @@
       "evidence": [
         {
           "resource": "repo://deploy/server/smoke-image.sh#L24-L38",
-          "version": "repo-lines-v1:sha256:24a71153c44f5ef285f4187973b176433d4ff5dc194dfb3a9f09fda4249553a7:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIyM2U5ZGY1N2IwMzE4MzBiODJkMDIyNzNjZDI0MzM1MzlmNjJkNmM3MzFhMzU3M2Y5OWJiYWIwZWY2NzI0MTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YWIyNTNjNWY5NjAxN2VhNmU1ODhkYjUxMWMyM2Q2MTAyNDhhZTdhNDExZDI1MzJiYWNiMjIwMGNiYTU3MjkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjliNzU2ZWZjNTU0N2IyYzEzM2I1MjZlZjcwM2MyNjgxNWFjNDNjOWJhNzU4ZmJlMDkwZDgxMjgxNWRjMmE0OGEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFhZmJlYjE3MmUyMmI1NWE0NjIzODE1ZDU2NzE3YmQxYjExZTAyYTUwNTllMDBhZTAwYWNjNzBjMjNkYzM5ZmUifQ"
+          "version": "repo-lines-v1:sha256:1545dece5b02d6a9301933c41b1d9231d1475920b82f4354aac6d44d8417661e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIyM2U5ZGY1N2IwMzE4MzBiODJkMDIyNzNjZDI0MzM1MzlmNjJkNmM3MzFhMzU3M2Y5OWJiYWIwZWY2NzI0MTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YWIyNTNjNWY5NjAxN2VhNmU1ODhkYjUxMWMyM2Q2MTAyNDhhZTdhNDExZDI1MzJiYWNiMjIwMGNiYTU3MjkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjliNzU2ZWZjNTU0N2IyYzEzM2I1MjZlZjcwM2MyNjgxNWFjNDNjOWJhNzU4ZmJlMDkwZDgxMjgxNWRjMmE0OGEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFhZmJlYjE3MmUyMmI1NWE0NjIzODE1ZDU2NzE3YmQxYjExZTAyYTUwNTllMDBhZTAwYWNjNzBjMjNkYzM5ZmUifQ"
         },
         {
           "resource": "repo://deploy/server/smoke-image.sh#L64-L70",
@@ -507,6 +507,6 @@
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-11T09:36:22.928Z"
+    "at": "2026-11-11T14:47:52.070Z"
   }
 }

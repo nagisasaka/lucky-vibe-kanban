@@ -56,10 +56,10 @@ sources:
     resource: repo://packages/web-core/src/features/workspace-chat/ui/IntegrationFacts.tsx
   - id: openwiki-source-344aff2e68b53276f6be4e40
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/IntegrationValidationSettings.tsx
-generated: { by: "codex", at: "2026-11-10T20:48:58.515Z" }
+generated: { by: "codex", at: "2026-11-11T14:47:52.070Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-11T09:36:22.928Z
+    at: 2026-11-11T14:47:52.070Z
 ---
 
 # 自動マージの選択・検証・公開
@@ -123,7 +123,7 @@ Wiki有効時はコード検証後、同じ候補branchでOpenWikiの正規ラ�
 
 コード検証・省略の証拠を確定後、最初の `openwiki_begin` より前に `integration_action prepare_wiki(expected_commit=code SHA)` を成功させる。host は証拠とwriter収束を照合し、integration/repository/storage/Session/Workspace/root/code SHAに結び付く原本journalとdigest receiptを保存する。begin-noopでも事前準備は必要で、後から作ったjournalで先行beginを正当化できない。[準備](../../crates/server/src/routes/integrations/conversation.rs#L526-L627)・[監査との順序照合](../../crates/server/src/routes/integrations/conversation.rs#L644-L713)
 
-同じ候補branchでWikiだけを別commitにし、ユーザー所有 `openwiki/INSTRUCTIONS.md` とsourceは変更しない。生成されたAGENTS.md/CLAUDE.mdをstage・commit・手動restoreしない。公開受付はjournalの原本かOpenWiki 0.7.2の既知の正確な変換だけを認める。履歴の各commit/parent、index、Git操作状態も検査し、後で取り消したsource編集や別parent、管理節内外の後編集、リンク、不明なdirtyを拒否する。[履歴と作業木](../../crates/services/src/services/openwiki/setup/integration.rs#L105-L227)・[限定変換](../../crates/services/src/services/openwiki/setup/integration.rs#L336-L395)
+同じ候補branchでWikiだけを別commitにし、ユーザー所有 `openwiki/INSTRUCTIONS.md` とsourceは変更しない。生成されたAGENTS.md/CLAUDE.mdをstage・commit・手動restoreしない。公開受付はjournalの原本かOpenWiki 0.9.0の既知の正確な変換だけを認める。履歴の各commit/parent、index、Git操作状態も検査し、後で取り消したsource編集や別parent、管理節内外の後編集、リンク、不明なdirtyを拒否する。[履歴と作業木](../../crates/services/src/services/openwiki/setup/integration.rs#L105-L227)・[限定変換](../../crates/services/src/services/openwiki/setup/integration.rs#L336-L395)
 
 担当Runと全writer終了・Wiki完了proofの確認後、hostはtarget writerもidleであることを確かめ、journalに最終Wiki SHAを固定する。Prepared → Restoring → Restoredを永続化して既知setup差分だけを原状へ戻し、cleanを検査してから既存公開guardへ進む。原本欠損・改変・identity不一致では候補を保全して停止する。[復元](../../crates/services/src/services/openwiki/setup/integration.rs#L230-L258)・[公開順](../../crates/server/src/routes/integrations/runtime.rs#L319-L410)
 
@@ -157,7 +157,7 @@ OpenWikiの永続runとCodexのAgentRunは別の寿命を持つ。自動マー�
 
 ### 検索・読取と operation の閉鎖
 
-maintenance writer は OpenWiki 0.7.2 の検索・読取・workspace/Wiki一覧を利用できる。読取は lifecycle の前後・重なりを許すが、成功も失敗も active run を閉じず、未完了 writer を隠さない。root/thread・call ID・引数・duplicate の監査は維持され、lifecycle 同士の重なりと未知 tool は拒否する。横断参照先の情報は参考資料であり、書込み先はこの候補の canonical Wiki に限る。[監査分類](../../crates/services/src/services/openwiki/completion.rs#L196-L323)・[保守の正本](../operations/openwiki-maintenance.md)
+maintenance writer は OpenWiki 0.9.0 の検索・読取・workspace/Wiki一覧を利用できる。読取は lifecycle の前後・重なりを許すが、成功も失敗も active run を閉じず、未完了 writer を隠さない。root/thread・call ID・引数・duplicate の監査は維持され、lifecycle 同士の重なりと未知 tool は拒否する。横断参照先の情報は参考資料であり、書込み先はこの候補の canonical Wiki に限る。[監査分類](../../crates/services/src/services/openwiki/completion.rs#L196-L323)・[保守の正本](../operations/openwiki-maintenance.md)
 
 
 ## 公開事実の継続取得

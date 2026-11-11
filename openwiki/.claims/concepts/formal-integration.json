@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:b871ca014246ab6f9ae762fd04b1df6b73e8b7419729d652bccae76a49c0738e",
+  "pageVersion": "sha256:182130d20443ce5615d507cbeeecdc41c4368584e5cff50962c0e260dfefd29c",
   "claims": [
     {
       "id": "claim_12101e4e85524a9280291b25d4812f5f",
@@ -460,15 +460,15 @@
     },
     {
       "id": "claim_917c9041a9fa422d8c16cf5deb9dcc2b",
-      "statement": "公開受付で許可するdirtyは真正原本またはOpenWiki0.7.2の既知の正確なsetup変換だけで、各Wiki commitのsource/INSTRUCTIONS不変、parent ancestry、indexと後編集も検査する。",
+      "statement": "公開受付で許可するdirtyは真正原本またはOpenWiki0.9.0の既知の正確なsetup変換だけで、各Wiki commitのsource/INSTRUCTIONS不変、parent ancestry、indexと後編集も検査する。",
       "evidence": [
         {
           "resource": "repo://crates/services/src/services/openwiki/setup/integration.rs#L105-L227",
           "version": "repo-lines-v1:sha256:b5989d401275002d87b38fbfbd5c9f2257bc2abf9421e1fba3f6553223702294:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIzLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJiN2M2OWU3NTNiM2U3YjFkYTkyY2Y3YjNmOTYxMmI2NTkzMGMwMjQ5YmZiYTI5OGY1Mzg4MzlkYjJkYmNmN2M2IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI0MTkwODdlNGYwYjk2NmJhMzViZjMxN2ViZjkxMGViYTA2NzliYjczMjJmN2Y4NWRlZjBjOTQxNGM5M2JlN2RiIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI5YWJlNGI1NDVjMDc4MGQ1ZTcyZTU1OGRmZDBlNGNhYmE1OWE2ZjkxNzliMjc0NTI2NTdlNzAwNGEwNTFmZGQzIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI5YmZmZGU4ZjFjZDg2YzIxYzA2MmZmMzVmYmQzYmM0NjE0MzBkZTg3MTYxZGM0YTAwZjkwYTcyMTM5ZWIxMjBiIn0"
         },
         {
-          "resource": "repo://crates/services/src/services/openwiki/setup/integration.rs#L336-L395",
-          "version": "repo-lines-v1:sha256:57c27d4d3c91875e6e5bd64417d03a4fbacf839dd30f631ceaf0e2e7254b3ced:eyJzZWxlY3RlZExpbmVDb3VudCI6NjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNhNTc4MzAxMTY1YWFmODFkNzcxMDA4YTNlNzZkZmQ0ZjJiZmJiMTUzOGZhMjhmZWIyNmNhYmYxNmE4YTcwNzkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAwMzUzODM0MWFlYjRjNzQ4MDZiZDZiY2UyYTI1YjNjNjUxMGFlZjg4YzI0YjRhNWFiNWU1MDI0YjlkNTljZDciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM1ZjZmNDY2ZTU5Y2ZjMzA3MDNjNDVmNzJhZjY1ZGU1NGFjMzYzZDM1NGNjMWEzMzMwMzUwYWNkNDUyNDM0YzQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImEwMjdkODVkZDA2Y2QzMDNmNTMyOTU4ZmJmMzg3YmM0MGM0YTM0Y2QyNzgzOWFjMTM0Mzk5MTU5ZDE1YmE3ZjQifQ"
+          "resource": "repo://crates/services/src/services/openwiki/setup/integration.rs#L350-L405",
+          "version": "repo-lines-v1:sha256:d0fdee6dd2ec0a42b41cadde85bcc9dfaf283c23e562c42aeb18fca1a18576ad:eyJzZWxlY3RlZExpbmVDb3VudCI6NTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg0ZTQyMDhjZDZmZmI4YzRhMzU0N2IyZjU0YWRhMTk5NzhjM2YzNjVlNzhmOTUwMmVmNTE0NWNkZDJhYTg1NDMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFlMGFmM2ZkNGE0YzNhMWQ0N2M3ZjQ3MGVkMGQ4NmQ5MGQ5ZGUyMTBhNWViMTQ1NWZiZDk0NDgyYTQ3NjViNzIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI4OWNmOWRhNjQ4NDM2OTczY2Q2YTA1ODc5YjYzOTAxYTFhOWY0NGYwYjY0YzVjMjQwYTRjMjcyOGM5MjkyMDUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE1YmUwY2VlNDY0ZTI4YmI4MTg5OTVkNjk2Yzg1YzViZGUwMGI1MTc2MTFmZGI2YzNiOWMwMmE2YTRhMjI4MzcifQ"
         }
       ]
     },
@@ -573,6 +573,6 @@
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-11T09:36:22.928Z"
+    "at": "2026-11-11T14:47:52.070Z"
   }
 }

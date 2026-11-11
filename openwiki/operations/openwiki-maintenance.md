@@ -4,6 +4,8 @@ title: OpenWiki の初期生成・同期・回復
 description: Bootstrap の独立した Generate/Review/Refine と通常 Sync の違い、完了証拠、公開条件、失敗時に保持すべき所有権を説明する。
 tags: [openwiki, bootstrap, maintenance, recovery, validation]
 sources:
+  - id: openwiki-source-3aef057947a1ecdaa5b46d56
+    resource: repo://assets/openwiki-probe.mjs
   - id: openwiki-source-8c6a3e8eeb36684980688a9a
     resource: repo://assets/openwiki-version
   - id: openwiki-source-124913f65e422092e3ffbd4a
@@ -86,6 +88,8 @@ sources:
     resource: repo://crates/workflow/src/templates.rs
   - id: openwiki-source-7d5590729f3e0f42d994b0e8
     resource: repo://crates/workspace-manager/src/shared_resources.rs
+  - id: openwiki-source-8d57c3092adc3c7e7de33c02
+    resource: repo://deploy/server/smoke-image.sh
   - id: openwiki-source-bb1ebe868e35e9e500714501
     resource: repo://Dockerfile
   - id: openwiki-source-bee9097e5e4cc326bebf14ff
@@ -94,12 +98,14 @@ sources:
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/RepositoryMemorySettings.tsx
   - id: openwiki-source-356ecdff44076964061792a9
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/RepositoryWikiFilesSettings.tsx
+  - id: openwiki-source-363542a3dc69dfa609d69670
+    resource: repo://scripts/test-openwiki-focused.mjs
   - id: openwiki-source-7fd9452d5e666180c50f8cb7
     resource: repo://tests/openwiki/recovery.sh
-generated: { by: "codex", at: "2026-11-10T19:52:54.465Z" }
+generated: { by: "codex", at: "2026-11-11T14:47:52.070Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-11T09:36:22.928Z
+    at: 2026-11-11T14:47:52.070Z
 ---
 
 # OpenWiki の初期生成・同期・回復
@@ -118,7 +124,7 @@ Repository settings で有効化し、統合先の **local branch** と出力言
 
 開始時の存在判定と公開時の完成条件は異なる。公開候補には finalised `openwiki/index.md` が必要であり、部分importを既存Wikiとして受け入れることは、そのまま公開可能という意味ではない。[公開条件](../../crates/services/src/services/openwiki.rs#L333-L346)
 
-実行環境には pinned OpenWiki と Node.js 22.22.0 以上、既存 Codex 認証を用意する。保存・開始・状態確認は [設定から保守を開始する](#設定から保守を開始する)に従う。LVK の version 検査は CLI の help banner を読み、固定版との完全一致を要求する。--version が exit 0 になるだけでは互換性の確認にならない。[配布pin](../../assets/openwiki-version)・[version 検査](../../crates/services/src/services/openwiki.rs)
+実行環境には pinned OpenWiki と Node.js 22.22.0 以上、既存 Codex 認証を用意する。保存・開始・状態確認は [設定から保守を開始する](#設定から保守を開始する)に従う。LVK の version 検査は公開 MCP の initialize.serverInfo を使い、name=openwiki と固定版の完全一致を要求する。0.9.0 の非TTY help は Ink raw-mode error でも exit 0 になり得るため、help や --version の終了値を版証明に使わない。[配布pin](../../assets/openwiki-version)・[version 検査](../../crates/services/src/services/openwiki.rs)
 
 LVK の準備処理は public Codex integration を --force なしで準備する。変更された user 設定を上書きせず conflict とする方針が code comment に記録されている。maintenance thread は public MCP の `openwiki mcp --host codex` を必須として設定し、turn / Goal 開始前に実際の lifecycle 6tool と読取4tool の catalog を確認する。[準備境界](../../crates/services/src/services/openwiki.rs)・[thread 設定](../../crates/executors/src/executors/codex.rs)・[起動前確認](../integrations/agent-providers.md#coding-agent--外部-mcp-server)
 
@@ -327,13 +333,15 @@ Bootstrap は同じ repository Workflow の成功、Sync は同じ AgentRun の�
 
 ## 0.7.2 の読取・横断参照と検証
 
-配布pinは `openwiki` 0.7.2。Docker runtime は Node.js 22.22.0 以上を最低版検査する。CLI は色付き help banner を正規化して版を検証し、未対応の `--version` に頼らない。TOML marker 限定修復は共同owner対応とは別の互換処理として保持する。[配布](../../Dockerfile#L108-L116)・[adapter](../../crates/services/src/services/openwiki.rs)・[設定修復](../../crates/services/src/services/openwiki/codex_config.rs)
+読取4toolは0.7.2で採用し、現行0.9.0でも維持する。次節は現在のpinと検証入口を示す。
+
+配布pinは `openwiki` 0.9.0。Docker runtime は Node.js 22.22.0 以上を最低版検査する。Rust adapter・Docker install・image smoke は同じ `assets/openwiki-probe.mjs` で公開MCP identity/versionを検証し、生成runを開始しない。TOML marker 限定修復は共同owner対応とは別の互換処理として保持する。[配布](../../Dockerfile#L108-L116)・[adapter](../../crates/services/src/services/openwiki.rs)・[設定修復](../../crates/services/src/services/openwiki/codex_config.rs)
 
 writer には lifecycle 6tool に加え `openwiki_search`、`openwiki_read`、`openwiki_list_workspaces`、`openwiki_list_wikis` を公開し、preflight と thread-local 承認も同じ10toolを使う。利用者が公開registryでリンクした workspace の Wiki は upstream の scope/到達可能性検査に従って参考にできる。`OPENWIKI_CONFIG_DIR` は指定済みの公開場所を引き継ぐ。maintenance worktree の canonical root が登録rootと違う場合の登録・接続は公開機構を使い、private registryを書き換えない。参照先は対象sourceの証拠を代替せず、更新対象は現在候補の canonical `openwiki/` のみである。[writer設定](../../crates/executors/src/executors/codex.rs#L1061-L1105)・[host指示](../../crates/services/src/services/openwiki.rs)
 
 読取は active run の前後や lifecycle と重なってよい。成功・失敗とも writer の begin/finish、未完了operation、source drift を帳消しにしない。root/thread・call ID・引数・不整合duplicate の検査は維持し、未知toolとlifecycle相互の重なりは拒否する。未解決の読取callもwriter境界で拒否する。[監査分類](../../crates/services/src/services/openwiki/completion.rs#L196-L323)・[読取の回帰](../../crates/services/src/services/openwiki/completion.rs#L860-L997)
 
-検証は種類を分ける。`scripts/test-openwiki-host.mjs` と `--lvk-setup`（symlink / `--claude-file` / `--claude-absent`）はモデル不要で公開protocol、setup復元、source/config/INSTRUCTIONS保護、Wiki-only候補を扱う。`scripts/test-openwiki-install.mjs` は公開0.5.1/0.7.2を用意してupgrade/reinstall、共同owner、custom conflict、marker修復を確認する。`openwiki_live_fixture` は隔離した実Codexの2 turnでlinked検索・読取、owned begin再開、finishとNative Auditを確認する有料のopt-inで、DB所有・receipt・正式公開guardとは別である。移行した過去の「試験方法と限界」
+検証は種類を分ける。`scripts/test-openwiki-host.mjs` と `--lvk-setup`（symlink / `--claude-file` / `--claude-absent`）はモデル不要で公開protocol、setup復元、source/config/INSTRUCTIONS保護、Wiki-only候補を扱う。`scripts/test-openwiki-install.mjs` は公開0.7.2/0.9.0を隔離してupgrade/reinstall、共同owner、custom conflict、marker修復を確認する。`openwiki_live_fixture` は隔離した実Codexの2 turnでlinked検索・読取、owned begin再開、finishとNative Auditを確認する有料のopt-inで、DB所有・receipt・正式公開guardとは別である。移行した過去の「試験方法と限界」
 
 ## 文書方針の継承と移行の判定
 
@@ -419,3 +427,14 @@ openwiki/は生成・保守専用とし、manifest/frontmatter/generated.byか�
 コード候補は45f0e390574614129023baba11e3b01c396b205a、固定baseは122d84bf0b03803085c1e38a4ca203fa72cd99ce。sourceをそのまま採用し競合・修復はない。Manifest ce410a4d-87d0-4672-a935-38f50595237eの対象107成功、services Clippy、変更Rust整形、差分・日英JSON構造検査を既存SHAの証拠として参照した。今回の管理検証は同一source/tree・祖先・差分空白・clean確認であり、ユーザー指定で包括suiteの重複実行を省略した。実OpenWiki依存4件はignored、標準i18n/Prettierは依存不足で未成立であり、合格とはしない。
 
 373全体は未完了である。372共通基盤接続・専用進行管理撤去・Refine後の独立再Review・品質警告付き公開と伝播は今回の実装に含まれない。既存Generate/Review/Refine/Publishと決定的検査は継続する。今回の保守lifecycle完了、コード検証、hostによるmain正式公開は別の結果である。371失敗成果の救済・再開・採用やデータ削除、dev/previewの停止・再起動・切替、外部pushは実施しない。
+
+
+## LOCAL-281: 0.9.0 の公開protocolと検証範囲
+
+0.8.0以降のbeginはchanged pathsを最大200、Claim issuesを最大50に省略し得る。総数とtruncated flagsを確認し、省略された差分はGit、ページごとのClaimはnext_pageで調べる。commit情報は計画のヒントでありsourceの証拠ではない。0.9.0のfocused Syncでは、要求範囲外のClaim pagesだけを `deferUnplannedClaimIssues=true` で保留できる。保留はevidence debtを消さず、finish成功も全Wikiの照合済みを意味しない。全現行sourceを確認する保守では影響Claim pagesをすべて扱う。[host指示](../../crates/services/src/services/openwiki.rs#L182-L205)・[公開fixture](../../scripts/test-openwiki-focused.mjs)
+
+`read.includeProvenance` と `submit_plan.deferUnplannedClaimIssues` は任意schema追加であり、lifecycle6toolと読取4toolの公開集合、単一owner・逐次writer、Native Auditの閉鎖、source drift/未完writer拒否は維持する。setupの厳密照合は0.9.0生成snippetに追従し、user設定・INSTRUCTIONSと原本journalを保護する。[検証入口](../../tests/openwiki/README.md)・[setup validator](../../crates/services/src/services/openwiki/setup/integration.rs#L350-L405)
+
+この統合は固定base `4a4f68f58a6ffaa31bd57d3e2f681f18130cb17b` からsourceを競合なく採用し、コード検証SHAは `b5563ce25a291a2867a6eaa67e55adb05f6df183`。管理commandでlocked install、probe/配布/admissionの7件、隔離した公開npm0.9.0の10schema・lifecycle・検索読取・noop/resume/source drift、begin上限/commit情報・focused保留と次回debtを独立再実行して成功した。初回のyaml依存不足による失敗は依存導入後に同一commandで成功し、失敗記録も保持する。
+
+同じsource SHAの実装Manifestにあるservices103件・all-target Clippy・installer/setup復元成功は既存証拠として参照し、包括frontend/build/check/lint/backend suiteとその重複試験はagent判断で理由・残リスクを記録して省略した。今回の新規passへ付け替えない。0.9.0の実Codex linked Wiki E2E、image実行・配布・稼働反映は未検証。この候補のWiki writer自体は既存runtimeの0.7.2を使用しており、0.9.0での実writer完走を示さない。共有runtimeやglobal設定を更新せず、Wiki完了SHAとコードSHA、正式main適用とGitHub pushの成立はそれぞれ別に確認する。

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:880e7c659094878b7775ede925a740361ad904a310d838dd34f47894da49e543",
+  "pageVersion": "sha256:762061ac083c2921a48633ba783566e0081cacab01e601715aca1ad4ac7d6828",
   "claims": [
     {
       "id": "claim_be2584d6229c4001870388b8bb27ec00",
@@ -92,7 +92,7 @@
         },
         {
           "resource": "repo://crates/services/src/services/openwiki.rs",
-          "version": "repo-file-v1:sha256:17cd6959c29d3e5b58782e2ad6791a28af92bf99043a721b20ffdf118a8dd882"
+          "version": "repo-file-v1:sha256:7867fa1fb0b752257b56b67f0b2c3cab7059b8dcbd985bb14dd1c1f880e371c3"
         }
       ]
     },
@@ -243,7 +243,7 @@
       "statement": "共通hostはrepository固有の文書方針を尊重し、維持文書へのリンクと移行文書のWiki内への知識保存を区別する。意図・理由はsourceと利用可能なManifestで裏付け、Design Noteを補助とし、不明な理由を創作しない。",
       "evidence": [
         {
-          "resource": "repo://crates/services/src/services/openwiki.rs#L200-L224",
+          "resource": "repo://crates/services/src/services/openwiki.rs#L207-L231",
           "version": "repo-lines-v1:sha256:7ca923e8ef1c4dbaee754df97a021f9e97ad119b84fd6cda4631fdc1fe36faad:eyJzZWxlY3RlZExpbmVDb3VudCI6MjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgwMmY5ZDRjOTc3MTA0MzE4ODk0Yzk3MWIxNWI0MDgzYTRiMmVlNWRmOTFlZGViMDFhMGE4NWRhNmJjYzA4MzEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ0MmMxYjhmNTg2N2Q5YmI0N2ZjMjc5NjRkNzRjMWY0NzdkOThhNjFlMWEyMDE5MTQ5ZWUyOWJjYTYwN2RlNTIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUwMGFmODFhMWE1N2Y0NWIxZjE0ZDQwNjRlYzI4ZWY4YTMzMzVkNzRjMzkyYjEzODdmOTZkMWZkZTY4YzViMTEifQ"
         },
         {
@@ -353,7 +353,7 @@
           "version": "repo-lines-v1:sha256:a94dd3ea8d052cbbf2259e37b87c0f6d4cc858d7e6ca57e47a4d96b91b0d7ff6:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIwLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI1MzI2ZDI3MTE1M2E1NGRhZjNhZmI5YTViYzJmNjMwODhhMWY1NTYyYTlkYjE0MDI4N2Y4NDlkZDdhM2ZiMjk0IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIwMWJhNDcxOWM4MGI2ZmU5MTFiMDkxYTdjMDUxMjRiNjRlZWVjZTk2NGUwOWMwNThlZjhmOTgwNWRhY2E1NDZiIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MCwicHJlY2VkaW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI4Njg0NjY5NWY0YjM3YTM2MTA0NDAzNjM2NTU0ZjE0MTBkYmQ4OWE2OWRjYWQwMGFkMzRkYjUwNzBmNDRiNmQyIn0"
         },
         {
-          "resource": "repo://crates/server/src/main.rs#L42-L70",
+          "resource": "repo://crates/server/src/main.rs#L43-L71",
           "version": "repo-lines-v1:sha256:a9397e441e6e5753bd1860d2b33a91412a48c8e4512afe043eabe4ea434f6e49:eyJzZWxlY3RlZExpbmVDb3VudCI6MjksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI2ZmQzYWNlMzE1MTVjMTA3OTc4ODBjOWIxY2EzYjU3N2VjMTI4MWZjYmFkODcyMzRiZTUwYmRhYjI3MWFiMTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRkOTk0NzZmMzI2NzhiODA1MGE5NWQ4MjY1ZWIzMDFhNGNlZWM1MzY3OTc5ZWI0MzdhZmQyYjAxZDk4MzdhMTIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE1N2ZlN2M1M2FiYTVlMmEyMDQ4MGQ2ZmRmNTc4MzliOWZkMTAyZmI0NzU0ZmMzMmVmYmNhMTdjOGQ0MzNmZTQifQ"
         }
       ]
@@ -409,7 +409,7 @@
       "statement": "openwiki/は設定例外以外を生成保守対象とし、所有権マーカーを要求しない。削除前に全対象symlink境界を検査し、公開時のINSTRUCTIONS原本・manifestとWiki外変更検査を維持する。",
       "evidence": [
         {
-          "resource": "repo://crates/services/src/services/openwiki.rs#L225-L299",
+          "resource": "repo://crates/services/src/services/openwiki.rs#L232-L306",
           "version": "repo-lines-v1:sha256:c34876ba31199d85ac057097d125dcb23beee967905eecd7c2b9eae7569bd005:eyJzZWxlY3RlZExpbmVDb3VudCI6NzUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFiMzc4NTY2ZTEzMmY5NzdjMzc0YTgyZmI1NzdmY2UyMTRkMDJkNjZjNmUzODk2MTZlYTA2YWIxZmZjMmE5YWEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE5MDBmZWI1ZjhiZDI4NDhkMmEwYjIxMTI5ZjhmYzhjNTg0NDU1ZTYyMzllNGQzYWM2MmRiNGUzMTc0YTc4ZTQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ4MzdlZTE5ZWRmNzNmZDBlNTA2MWY4ZmFkZGI2YTIyODY4MDY2ZDUwMDc0MjgzODMzNDMyN2M2ZjZiOTQ1ZmUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY4Njg2MDhlYTRkNWM1MTllNDA3MWRkMDgxMTA1ZTQ2ZmMxMGI2ZDI2ZWVhZDkxNTFmOWY0OGJkZjBiYzcwNTQifQ"
         },
         {
@@ -435,6 +435,6 @@
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-10T20:48:58.515Z"
+    "at": "2026-11-11T14:47:52.070Z"
   }
 }

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:a8c4d744d3d55b4f8d3993f8d10ad7952e68a41753d0d6946274d4374493a985",
+  "pageVersion": "sha256:40ac5ef8b97e64159beb94917ecee1a6e7d7bfd44f51428ed28eb2e7bc051a7a",
   "claims": [
     {
       "id": "claim_8c3b7b704cee45f0ad83d4207da34794",
@@ -1004,7 +1004,7 @@
       "evidence": [
         {
           "resource": "repo://Dockerfile",
-          "version": "repo-file-v1:sha256:252d78faa7413184017861f5e1b898afdc6d759f05cd97475463b7b5bf39208a"
+          "version": "repo-file-v1:sha256:87e598250ba5c51a2a257ffa5019a902a7154125b400486a3de51831d7d998d2"
         },
         {
           "resource": "repo://deploy/server/workflow-source-protection.md",
@@ -1015,6 +1015,6 @@
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-11T09:36:22.928Z"
+    "at": "2026-11-11T14:47:52.070Z"
   }
 }
