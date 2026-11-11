@@ -81,37 +81,7 @@
   },
   "processes": {
     "noLogsAvailable": "No logs available",
-    "selectAttempt": "Select an attempt to view execution processes.",
-    "errorLoadingUpdates": "Failed to load live updates for processes.",
-    "reconnecting": "Reconnecting...",
-    "loading": "Loading execution processes...",
-    "noProcesses": "No execution processes found for this attempt.",
-    "processId": "Process ID: {{id}}",
-    "deleted": "Deleted",
-    "deletedTooltip": "Deleted by restore: timeline was restored to a checkpoint and later executions were removed",
-    "exit": "Exit: {{code}}",
-    "started": "Started: {{date}}",
-    "completed": "Completed: {{date}}",
-    "detailsTitle": "Process Details",
-    "backToList": "Back to list",
-    "loadingDetails": "Loading process details...",
-    "errorLoadingDetails": "Failed to load process details. Please try again.",
-    "copyLogs": "Copy logs",
-    "logsCopied": "Copied!",
-    "status": {
-      "running": "Running",
-      "completed": "Completed",
-      "failed": "Failed",
-      "killed": "Stopped"
-    },
-    "reason": {
-      "setupscript": "Setup script",
-      "cleanupscript": "Cleanup script",
-      "archivescript": "Archive script",
-      "devserver": "Preview server",
-      "integrationvalidation": "Integration validation",
-      "resourcecommand": "Resource command"
-    }
+    "noProcesses": "No execution processes found for this attempt."
   },
   "followUp": {
     "queuedMessage": "Message queued - will execute when current run finishes"
@@ -339,9 +309,6 @@
   },
   "repoBranchSelector": {
     "label": "Base branch"
-  },
-  "viewProcessesDialog": {
-    "title": "Execution processes"
   },
   "editBranchName": {
     "dialog": {
@@ -841,17 +808,6 @@
     "restoreUnconfirmed": "Unarchiving could not be confirmed. Check the current issue and the existing request before retrying. Request ID: {{requestId}}"
   },
   "approval": {
-    "submittingApproval": "Submitting approval",
-    "approve": "Approve",
-    "submitting": "Submitting…",
-    "approveRequest": "Approve request",
-    "submittingDenial": "Submitting denial",
-    "deny": "Deny",
-    "provideReason": "Provide denial reason",
-    "reasonPlaceholder": "Let the agent know why this request was denied... Type @ to insert tags or search files.",
-    "cancel": "Cancel",
-    "prompt": "Would you like to approve this?",
-    "missingExecution": "The execution context for this request is missing. Reopen the session before responding.",
     "responseUnconfirmed": "Your response could not be confirmed. Check the request and current session before retrying.",
     "detailsTitle": "Execution approval details",
     "singleRequest": "Pending: allow this requested operation once. This grants no session or permanent permission and does not approve publication or prove execution success.",

@@ -53,23 +53,7 @@
   },
   "processes": {
     "noLogsAvailable": "没有可用的日志",
-    "selectAttempt": "选择执行以查看执行进程。",
-    "errorLoadingUpdates": "加载进程的实时更新失败。",
-    "reconnecting": "重新连接中...",
-    "loading": "加载执行进程中...",
-    "noProcesses": "未找到此执行的执行进程。",
-    "processId": "进程 ID：{{id}}",
-    "deleted": "已删除",
-    "deletedTooltip": "因恢复而删除：时间轴已恢复到检查点，后续执行已被移除",
-    "exit": "退出：{{code}}",
-    "started": "开始：{{date}}",
-    "completed": "完成：{{date}}",
-    "detailsTitle": "进程详情",
-    "backToList": "返回列表",
-    "loadingDetails": "加载进程详情中...",
-    "errorLoadingDetails": "加载进程详情失败。请重试。",
-    "copyLogs": "复制日志",
-    "logsCopied": "已复制！"
+    "noProcesses": "未找到此执行的执行进程。"
   },
   "followUp": {
     "queuedMessage": "消息已排队 - 将在当前运行完成时执行"
@@ -169,9 +153,6 @@
         "creating": "创建中..."
       }
     }
-  },
-  "viewProcessesDialog": {
-    "title": "执行进程"
   },
   "editBranchName": {
     "dialog": {

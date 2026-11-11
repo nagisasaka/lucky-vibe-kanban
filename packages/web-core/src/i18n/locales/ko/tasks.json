@@ -203,23 +203,7 @@
   "loading": "작업 로딩 중...",
   "processes": {
     "noLogsAvailable": "로그가 없습니다",
-    "backToList": "Back to list",
-    "completed": "Completed: {{date}}",
-    "deleted": "Deleted",
-    "deletedTooltip": "Deleted by restore: timeline was restored to a checkpoint and later executions were removed",
-    "detailsTitle": "Process Details",
-    "errorLoadingDetails": "Failed to load process details. Please try again.",
-    "errorLoadingUpdates": "Failed to load live updates for processes.",
-    "exit": "Exit: {{code}}",
-    "loading": "Loading execution processes...",
-    "loadingDetails": "Loading process details...",
-    "noProcesses": "No execution processes found for this attempt.",
-    "processId": "Process ID: {{id}}",
-    "reconnecting": "Reconnecting...",
-    "selectAttempt": "Select an attempt to view execution processes.",
-    "started": "Started: {{date}}",
-    "copyLogs": "로그 복사",
-    "logsCopied": "복사됨!"
+    "noProcesses": "No execution processes found for this attempt."
   },
   "rebase": {
     "common": {
@@ -240,9 +224,6 @@
     "title": "작업",
     "progress": "{{completed}}/{{total}} 완료",
     "noTasks": "작업 없음"
-  },
-  "viewProcessesDialog": {
-    "title": "Execution processes"
   },
   "prComments": {
     "dialog": {

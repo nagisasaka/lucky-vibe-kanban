@@ -2,7 +2,6 @@
   "buttons": {
     "save": "保存",
     "cancel": "取消",
-    "send": "发送",
     "delete": "删除",
     "edit": "编辑",
     "create": "创建",
@@ -312,7 +311,6 @@
     "workflowRun": "运行 {{id}}",
     "workspace": "工作区 {{id}}",
     "remoteWorkspace": "远程工作区",
-    "openCanvas": "打开工作流",
     "openSession": "打开会话",
     "runWorkflow": "运行工作流执行",
     "deleteAttempt": "删除执行",

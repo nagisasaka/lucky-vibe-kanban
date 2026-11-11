@@ -218,37 +218,7 @@
   "loading": "タスクを読み込み中...",
   "processes": {
     "noLogsAvailable": "ログがありません",
-    "backToList": "一覧に戻る",
-    "completed": "完了: {{date}}",
-    "deleted": "削除済み",
-    "deletedTooltip": "復元により削除：タイムラインをチェックポイントまで戻したため、それ以降の実行は削除されました",
-    "detailsTitle": "プロセスの詳細",
-    "errorLoadingDetails": "プロセスの詳細を読み込めませんでした。再試行してください。",
-    "errorLoadingUpdates": "プロセスの更新情報を読み込めませんでした。",
-    "exit": "終了コード: {{code}}",
-    "loading": "実行プロセスを読み込み中…",
-    "loadingDetails": "プロセスの詳細を読み込み中…",
-    "noProcesses": "この試行の実行プロセスはありません。",
-    "processId": "プロセスID: {{id}}",
-    "reconnecting": "再接続中…",
-    "selectAttempt": "実行プロセスを表示する試行を選択してください。",
-    "started": "開始: {{date}}",
-    "copyLogs": "ログをコピー",
-    "logsCopied": "コピーしました！",
-    "status": {
-      "running": "実行中",
-      "completed": "完了",
-      "failed": "失敗",
-      "killed": "停止済み"
-    },
-    "reason": {
-      "setupscript": "セットアップスクリプト",
-      "cleanupscript": "クリーンアップスクリプト",
-      "archivescript": "アーカイブスクリプト",
-      "devserver": "プレビューサーバー",
-      "integrationvalidation": "統合検証",
-      "resourcecommand": "リソースコマンド"
-    }
+    "noProcesses": "この試行の実行プロセスはありません。"
   },
   "rebase": {
     "common": {
@@ -269,9 +239,6 @@
     "title": "タスク",
     "progress": "{{completed}}/{{total}} 完了",
     "noTasks": "タスクなし"
-  },
-  "viewProcessesDialog": {
-    "title": "実行プロセス"
   },
   "prComments": {
     "dialog": {
@@ -838,17 +805,6 @@
     "restoreUnconfirmed": "アーカイブ解除の結果を確認できませんでした。再試行する前に課題の現在の状態と既存のリクエストを確認してください。リクエストID：{{requestId}}"
   },
   "approval": {
-    "submittingApproval": "承認を送信中",
-    "approve": "承認",
-    "submitting": "送信中…",
-    "approveRequest": "リクエストを承認",
-    "submittingDenial": "拒否を送信中",
-    "deny": "拒否",
-    "provideReason": "拒否理由を入力",
-    "reasonPlaceholder": "このリクエストを拒否する理由をエージェントに伝えてください。@でタグの挿入やファイルの検索ができます。",
-    "cancel": "キャンセル",
-    "prompt": "このリクエストを承認しますか？",
-    "missingExecution": "このリクエストの実行情報がありません。応答する前にセッションを開き直してください。",
     "responseUnconfirmed": "応答結果を確認できませんでした。再試行する前にリクエストと現在のセッションを確認してください。",
     "detailsTitle": "実行承認の詳細",
     "singleRequest": "承認待ち：この要求の操作を一回だけ許可します。Session・恒久許可にはならず、公開の承認や実行成功も意味しません。",

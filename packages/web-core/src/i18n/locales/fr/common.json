@@ -2,7 +2,6 @@
   "buttons": {
     "save": "Enregistrer",
     "cancel": "Annuler",
-    "send": "Envoyer",
     "delete": "Supprimer",
     "edit": "Modifier",
     "create": "Créer",
@@ -295,7 +294,6 @@
     "workflowRun": "Run {{id}}",
     "workspace": "Workspace {{id}}",
     "remoteWorkspace": "Remote workspace",
-    "openCanvas": "Open workflow",
     "openSession": "Open session",
     "runWorkflow": "Run workflow attempt",
     "deleteAttempt": "Delete attempt",
