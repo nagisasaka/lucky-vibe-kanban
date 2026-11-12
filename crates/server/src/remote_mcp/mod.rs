@@ -36,6 +36,7 @@ mod issue_comments_browser;
 mod issue_mutations;
 mod issue_relationships;
 mod issue_tags;
+mod issue_versions;
 mod issue_write;
 mod launch;
 mod merge_read;
@@ -264,6 +265,9 @@ fn operation_scope(name: &str) -> Option<&'static str> {
         | "update_todo"
         | "delete_todo"
         | "create_issue"
+        | "create_issue_version"
+        | "update_issue_version"
+        | "set_current_issue_version"
         | "update_issue"
         | "delete_issue"
         | "create_issue_relationship"
@@ -466,6 +470,7 @@ fn tools() -> Vec<Tool> {
     tools.extend(code_read::tools());
     tools.extend(repository_read::tools());
     tools.extend(issue_write::tools());
+    tools.extend(issue_versions::tools());
     tools.extend(issue_tags::tools());
     tools.extend(issue_relationships::tools());
     tools.extend(issue_comments::tools());
@@ -619,6 +624,9 @@ impl Remote {
             }
             name if issue_tags::tools().iter().any(|tool| tool.name == name) => {
                 issue_tags::call(self, principal, name, args).await
+            }
+            name if issue_versions::tools().iter().any(|tool| tool.name == name) => {
+                issue_versions::call(self, principal, name, args).await
             }
             name if issue_write::tools().iter().any(|tool| tool.name == name) => {
                 issue_write::call(self, principal, name, args).await

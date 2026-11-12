@@ -15,6 +15,52 @@ use uuid::Uuid;
 use super::{McpServer, ToolError};
 
 #[derive(Debug, Deserialize, Serialize, schemars::JsonSchema)]
+#[serde(deny_unknown_fields)]
+struct McpVersionRead {
+    project_id: Uuid,
+    issue_id: Uuid,
+}
+#[derive(Debug, Deserialize, Serialize, schemars::JsonSchema)]
+#[serde(deny_unknown_fields)]
+struct McpVersionGet {
+    project_id: Uuid,
+    issue_id: Uuid,
+    version_id: Uuid,
+}
+#[derive(Debug, Deserialize, Serialize, schemars::JsonSchema)]
+#[serde(deny_unknown_fields)]
+struct McpVersionCreate {
+    project_id: Uuid,
+    issue_id: Uuid,
+    request_id: Uuid,
+    name: String,
+    source_version_id: Option<Uuid>,
+}
+#[derive(Debug, Deserialize, Serialize, schemars::JsonSchema)]
+#[serde(deny_unknown_fields)]
+struct McpVersionEdit {
+    project_id: Uuid,
+    issue_id: Uuid,
+    request_id: Uuid,
+    version_id: Uuid,
+    expected_revision: i64,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    description: Option<String>,
+}
+#[derive(Debug, Deserialize, Serialize, schemars::JsonSchema)]
+#[serde(deny_unknown_fields)]
+struct McpVersionSelect {
+    project_id: Uuid,
+    issue_id: Uuid,
+    request_id: Uuid,
+    version_id: Uuid,
+    expected_current_revision: i64,
+    expected_version_revision: i64,
+}
+
+#[derive(Debug, Deserialize, Serialize, schemars::JsonSchema)]
 struct McpCreateIssueRequest {
     /// Stable caller ID enables same-principal durable replay protection. Omitted: no replay guarantee.
     request_id: Option<Uuid>,
@@ -210,7 +256,7 @@ struct McpListIssuesResponse {
 struct McpUpdateIssueRequest {
     /// Stable caller ID enables same-principal durable replay protection. Omitted: no replay guarantee.
     request_id: Option<Uuid>,
-    /// Caller-observed Issue revision. Omitted: no protection since the caller read. Independent of request_id.
+    /// Caller-observed Issue revision. Required when updating description; otherwise optional. Independent of request_id.
     expected_revision: Option<String>,
     #[schemars(description = "The ID of the issue to update")]
     issue_id: Uuid,
@@ -484,6 +530,139 @@ impl McpServer {
     }
 
     #[tool(
+        description = "List editable manual Issue body versions and the explicit current specification."
+    )]
+    async fn list_issue_versions(
+        &self,
+        Parameters(args): Parameters<McpVersionRead>,
+    ) -> Result<CallToolResult, ErrorData> {
+        let value = match self
+            .send_json::<serde_json::Value>(
+                self.client
+                    .post(self.url("/api/mcp-stdio/issues/list_issue_versions"))
+                    .json(&args),
+            )
+            .await
+        {
+            Ok(value) => value,
+            Err(error) => return Ok(Self::tool_error(error)),
+        };
+        if matches!(value["status"].as_str(), Some("failed" | "uncertain")) {
+            let mut result =
+                CallToolResult::error(vec![rmcp::model::Content::text(value.to_string())]);
+            result.structured_content = Some(value);
+            return Ok(result);
+        }
+        Self::success(&value)
+    }
+
+    #[tool(description = "Read a stable Issue version and revision without selecting it.")]
+    async fn get_issue_version(
+        &self,
+        Parameters(args): Parameters<McpVersionGet>,
+    ) -> Result<CallToolResult, ErrorData> {
+        let value = match self
+            .send_json::<serde_json::Value>(
+                self.client
+                    .post(self.url("/api/mcp-stdio/issues/get_issue_version"))
+                    .json(&args),
+            )
+            .await
+        {
+            Ok(value) => value,
+            Err(error) => return Ok(Self::tool_error(error)),
+        };
+        if matches!(value["status"].as_str(), Some("failed" | "uncertain")) {
+            let mut result =
+                CallToolResult::error(vec![rmcp::model::Content::text(value.to_string())]);
+            result.structured_content = Some(value);
+            return Ok(result);
+        }
+        Self::success(&value)
+    }
+
+    #[tool(
+        description = "Explicitly create a named empty version or copy source_version_id. Does not select it or start execution. Reuse request_id after response loss. Receipt has metadata only; use list_issue_versions or get_issue_version to read bodies."
+    )]
+    async fn create_issue_version(
+        &self,
+        Parameters(args): Parameters<McpVersionCreate>,
+    ) -> Result<CallToolResult, ErrorData> {
+        let value = match self
+            .send_json::<serde_json::Value>(
+                self.client
+                    .post(self.url("/api/mcp-stdio/issues/create_issue_version"))
+                    .json(&args),
+            )
+            .await
+        {
+            Ok(value) => value,
+            Err(error) => return Ok(Self::tool_error(error)),
+        };
+        if matches!(value["status"].as_str(), Some("failed" | "uncertain")) {
+            let mut result =
+                CallToolResult::error(vec![rmcp::model::Content::text(value.to_string())]);
+            result.structured_content = Some(value);
+            return Ok(result);
+        }
+        Self::success(&value)
+    }
+
+    #[tool(
+        description = "Edit one version with expected_revision. Omitted fields preserve content; empty description clears it. Does not create versions or steer runs. Receipt has metadata only; use list_issue_versions or get_issue_version to read bodies."
+    )]
+    async fn update_issue_version(
+        &self,
+        Parameters(args): Parameters<McpVersionEdit>,
+    ) -> Result<CallToolResult, ErrorData> {
+        let value = match self
+            .send_json::<serde_json::Value>(
+                self.client
+                    .post(self.url("/api/mcp-stdio/issues/update_issue_version"))
+                    .json(&args),
+            )
+            .await
+        {
+            Ok(value) => value,
+            Err(error) => return Ok(Self::tool_error(error)),
+        };
+        if matches!(value["status"].as_str(), Some("failed" | "uncertain")) {
+            let mut result =
+                CallToolResult::error(vec![rmcp::model::Content::text(value.to_string())]);
+            result.structured_content = Some(value);
+            return Ok(result);
+        }
+        Self::success(&value)
+    }
+
+    #[tool(
+        description = "Explicitly select the current specification with observed current and target revisions. Does not change version contents or steer existing runs. Receipt has metadata only; use list_issue_versions or get_issue_version to read bodies."
+    )]
+    async fn set_current_issue_version(
+        &self,
+        Parameters(args): Parameters<McpVersionSelect>,
+    ) -> Result<CallToolResult, ErrorData> {
+        let value = match self
+            .send_json::<serde_json::Value>(
+                self.client
+                    .post(self.url("/api/mcp-stdio/issues/set_current_issue_version"))
+                    .json(&args),
+            )
+            .await
+        {
+            Ok(value) => value,
+            Err(error) => return Ok(Self::tool_error(error)),
+        };
+        if matches!(value["status"].as_str(), Some("failed" | "uncertain")) {
+            let mut result =
+                CallToolResult::error(vec![rmcp::model::Content::text(value.to_string())]);
+            result.structured_content = Some(value);
+            return Ok(result);
+        }
+        Self::success(&value)
+    }
+
+    #[tool(
         description = "Get detailed information about a specific issue. You can use `list_issues` to find issue IDs. `issue_id` is required."
     )]
     async fn get_issue(
@@ -505,7 +684,7 @@ impl McpServer {
     }
 
     #[tool(
-        description = "Update an Issue without starting implementation. Optional request_id gives durable deduplication; optional expected_revision checks the caller-observed revision. Either guarantee works independently; omission gives no corresponding protection. priority:null preserves it; set medium explicitly. Omitted fields and null parent IDs preserve existing values. parent_issue_id sets/replaces the parent; clear_parent:true explicitly removes only that link. Read get_issue before/after. Parent cycles are rejected."
+        description = "Update an Issue without starting implementation. Optional request_id gives durable deduplication; expected_revision checks the caller-observed revision and is required for description updates. request_id provides independent deduplication. priority:null preserves it; set medium explicitly. Omitted fields and null parent IDs preserve existing values. parent_issue_id sets/replaces the parent; clear_parent:true explicitly removes only that link. Read get_issue before/after. Parent cycles are rejected."
     )]
     async fn update_issue(
         &self,
@@ -858,6 +1037,92 @@ impl McpServer {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[tokio::test]
+    async fn stdio_manual_version_tools_forward_targets_revisions_and_receipts() {
+        use serde_json::{Value, json};
+        use tokio::io::{AsyncBufReadExt, AsyncReadExt, AsyncWriteExt, BufReader};
+        super::super::tests::install_rustls_provider();
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let address = listener.local_addr().unwrap();
+        let project = Uuid::new_v4();
+        let issue = Uuid::new_v4();
+        let version = Uuid::new_v4();
+        let request = Uuid::new_v4();
+        let operation = Uuid::new_v4();
+        let read = json!({"project_id":project,"issue_id":issue});
+        let get = json!({"project_id":project,"issue_id":issue,"version_id":version});
+        let create = json!({"project_id":project,"issue_id":issue,"request_id":request,"name":"proposal","source_version_id":version});
+        let edit = json!({"project_id":project,"issue_id":issue,"request_id":request,"version_id":version,"expected_revision":7,"description":"proposal body"});
+        let select = json!({"project_id":project,"issue_id":issue,"request_id":request,"version_id":version,"expected_current_revision":3,"expected_version_revision":8});
+        let response = json!({"operation_id":operation,"request_id":request,"status":"succeeded","result":{"state":{"current_version_id":version,"current_revision":4},"implementation_started":false}});
+        let cases = vec![
+            ("list_issue_versions", read.clone()),
+            ("get_issue_version", get.clone()),
+            ("create_issue_version", create.clone()),
+            ("update_issue_version", edit.clone()),
+            ("set_current_issue_version", select.clone()),
+        ];
+        let backend_response = response.clone();
+        let backend = tokio::spawn(async move {
+            for (name, expected) in cases {
+                let (socket, _) = listener.accept().await.unwrap();
+                let mut socket = BufReader::new(socket);
+                let mut first = String::new();
+                socket.read_line(&mut first).await.unwrap();
+                assert_eq!(
+                    first,
+                    format!("POST /api/mcp-stdio/issues/{name} HTTP/1.1\r\n")
+                );
+                let mut length = 0;
+                loop {
+                    let mut header = String::new();
+                    socket.read_line(&mut header).await.unwrap();
+                    if header == "\r\n" {
+                        break;
+                    }
+                    if let Some(value) = header.to_lowercase().strip_prefix("content-length:") {
+                        length = value.trim().parse::<usize>().unwrap();
+                    }
+                }
+                let mut bytes = vec![0; length];
+                socket.read_exact(&mut bytes).await.unwrap();
+                assert_eq!(serde_json::from_slice::<Value>(&bytes).unwrap(), expected);
+                let body = json!({"success":true,"data":backend_response}).to_string();
+                socket.get_mut().write_all(format!("HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",body.len()).as_bytes()).await.unwrap();
+            }
+        });
+        let server = McpServer::new_global(&format!("http://{address}"));
+        let results = [
+            server
+                .list_issue_versions(Parameters(serde_json::from_value(read).unwrap()))
+                .await
+                .unwrap(),
+            server
+                .get_issue_version(Parameters(serde_json::from_value(get).unwrap()))
+                .await
+                .unwrap(),
+            server
+                .create_issue_version(Parameters(serde_json::from_value(create).unwrap()))
+                .await
+                .unwrap(),
+            server
+                .update_issue_version(Parameters(serde_json::from_value(edit).unwrap()))
+                .await
+                .unwrap(),
+            server
+                .set_current_issue_version(Parameters(serde_json::from_value(select).unwrap()))
+                .await
+                .unwrap(),
+        ];
+        for result in results {
+            assert_ne!(result.is_error, Some(true));
+            let value: Value =
+                serde_json::from_str(&result.content[0].as_text().unwrap().text).unwrap();
+            assert_eq!(value, response);
+        }
+        backend.await.unwrap();
+    }
 
     #[tokio::test]
     async fn stdio_relationship_reads_resolve_incoming_and_propagate_failure() {

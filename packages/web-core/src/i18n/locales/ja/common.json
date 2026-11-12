@@ -2296,5 +2296,21 @@
     "important": "重要",
     "warning": "警告",
     "caution": "注意"
+  },
+  "issueVersions": {
+    "loading": "版を読み込み中…",
+    "tabs": "本文の版",
+    "current": "現在の仕様",
+    "name": "版名",
+    "save": "この版を保存",
+    "busy": "処理中…",
+    "saved": "保存済み",
+    "unsaved": "未保存",
+    "makeCurrent": "保存済みのこの版を現在の仕様にする",
+    "newName": "新しい版の名前",
+    "copy": "保存済みの版をコピー",
+    "empty": "空の版を作成",
+    "reload": "最新の版情報を取得（未保存文を保持して再保存）",
+    "saveFailed": "保存できませんでした ({{status}})。未保存文は保持されています。"
   }
 }

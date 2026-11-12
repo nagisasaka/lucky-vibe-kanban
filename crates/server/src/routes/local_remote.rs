@@ -3,6 +3,7 @@ pub(crate) mod issue_archive;
 pub(crate) mod issue_relations;
 #[cfg(test)]
 mod issue_update_tests;
+pub(crate) mod issue_versions;
 use api_types::{
     CreateIssueAssigneeRequest, CreateIssueCommentReactionRequest, CreateIssueCommentRequest,
     CreateIssueFollowerRequest, CreateIssueRelationshipRequest, CreateIssueRequest,
@@ -213,6 +214,7 @@ pub fn router(deployment: &DeploymentImpl) -> Router<DeploymentImpl> {
         )
         .route("/v1/issues", post(create_issue))
         .route("/v1/issues/bulk", post(bulk_update_issues))
+        .merge(issue_versions::router())
         .route(
             "/v1/issues/{issue_id}",
             patch(update_issue).delete(delete_issue),
@@ -988,11 +990,28 @@ async fn update_local_issue_with_order_guard_outcome(
     expected_sort_order: Option<f64>,
 ) -> Result<Issue, IssueMutationError> {
     let body_saved = changes.description.is_some();
+    let expected_updated_at = expected_updated_at.or(changes.expected_updated_at);
+    if body_saved && expected_updated_at.is_none() {
+        return Err(ApiError::Conflict(
+            "Read the Issue before updating its description; expected_updated_at is required"
+                .into(),
+        )
+        .into());
+    }
     // Reserve the writer before reading: a DEFERRED read transaction can fail
     // its write upgrade immediately despite busy_timeout when another writer
     // is reserved. Keep revision/rank checks on the snapshot acquired here.
     let mut tx = pool.begin_with("BEGIN IMMEDIATE").await?;
     let existing = get_local_issue_on(&mut *tx, issue_id).await?;
+    if expected_updated_at.is_some_and(|revision| revision != existing.updated_at) {
+        return Err(ApiError::Conflict(
+            "Issue changed while the update was being submitted".into(),
+        )
+        .into());
+    }
+    if let Some(description) = &changes.description {
+        issue_versions::save_current_on(&mut tx, issue_id, description.clone()).await?;
+    }
     if let Some(parent) = changes.parent_issue_id {
         issue_relations::validate_parent(&mut tx, issue_id, existing.project_id, parent).await?;
     }
@@ -3895,7 +3914,7 @@ mod tests {
             &pool,
             second.id,
             update(serde_json::json!({"description":"saved"})),
-            None,
+            Some(title_only.updated_at),
         )
         .await
         .unwrap();
@@ -3906,7 +3925,7 @@ mod tests {
             &pool,
             second.id,
             update(serde_json::json!({"description":"saved", "status_id":statuses[1].id})),
-            None,
+            Some(body.updated_at),
         )
         .await
         .unwrap();
@@ -3932,7 +3951,7 @@ mod tests {
             &pool,
             second.id,
             update(serde_json::json!({"description":"saved during explicit sort"})),
-            None,
+            Some(manual.updated_at),
         )
         .await
         .unwrap();

@@ -153,3 +153,49 @@ it('stops polling with no subscribers during GC grace and fetches on resubscript
     vi.useRealTimers();
   }
 });
+
+it('binds compatibility description updates to the observed issue revision', async () => {
+  type IssueRow = { id: string; description: string; updated_at: string };
+  const shape = {
+    table: 'issues',
+    params: [],
+    fallbackUrl: '/v1/fallback/issues',
+  } as ShapeDefinition<IssueRow>;
+  const mutation = { name: 'Issue', url: '/v1/issues' } as MutationDefinition<
+    IssueRow,
+    IssueRow,
+    Partial<IssueRow>
+  >;
+  const row = {
+    id: 'compat-description',
+    description: 'before',
+    updated_at: 'observed-revision',
+  };
+  request.mockImplementation((_path: string, options: RequestInit) =>
+    options.method === 'PATCH'
+      ? Promise.resolve(Response.json({}))
+      : Promise.resolve(Response.json({ issues: [row] }))
+  );
+  const collection = createShapeCollection(
+    shape,
+    { project_id: 'description-revision-test' },
+    undefined,
+    mutation
+  );
+  collections.push(collection);
+  await collection.preload();
+  const transaction = collection.update(row.id, (item) => {
+    item.description = 'after';
+  });
+  await transaction.isPersisted.promise;
+  expect(request).toHaveBeenCalledWith(
+    '/v1/issues/compat-description',
+    expect.objectContaining({
+      method: 'PATCH',
+      body: JSON.stringify({
+        description: 'after',
+        expected_updated_at: 'observed-revision',
+      }),
+    })
+  );
+});

@@ -16,6 +16,7 @@ import { useProjectContext } from '@/shared/hooks/useProjectContext';
 import { useOrgContext } from '@/shared/hooks/useOrgContext';
 import { useProjectWorkspaceCreateDraft } from '@/shared/hooks/useProjectWorkspaceCreateDraft';
 import WYSIWYGEditor from '@/shared/components/WYSIWYGEditor';
+import { IssueVersionEditor } from './IssueVersionEditor';
 import { SearchableTagDropdownContainer } from '@/shared/components/SearchableTagDropdownContainer';
 import { ProjectWorkspaceDefaultContext } from '@/shared/components/ProjectWorkspaceDefaultContext';
 import { IssueCommentsSectionContainer } from './IssueCommentsSectionContainer';
@@ -108,6 +109,17 @@ export function KanbanIssuePanelContainer({
     isLoading: projectLoading,
   } = useProjectContext();
   const selectedKanbanIssueId = routeState.issueId;
+  const [versionDescription, setVersionDescription] = useState<{
+    issueId: string;
+    description: string | null;
+  } | null>(null);
+  const handleCurrentVersionDescription = useCallback(
+    (description: string | null) => {
+      if (selectedKanbanIssueId)
+        setVersionDescription({ issueId: selectedKanbanIssueId, description });
+    },
+    [selectedKanbanIssueId]
+  );
   const issueComposerKey = useMemo(
     () => buildKanbanIssueComposerKey(routeState.hostId, projectId),
     [routeState.hostId, projectId]
@@ -322,7 +334,10 @@ export function KanbanIssuePanelContainer({
       currentAssigneeIds,
       currentTagIds,
     });
-    return data;
+    return mode === 'edit' &&
+      versionDescription?.issueId === selectedKanbanIssueId
+      ? { ...data, description: versionDescription.description }
+      : data;
   }, [
     formState,
     mode,
@@ -330,6 +345,8 @@ export function KanbanIssuePanelContainer({
     selectedIssue,
     currentAssigneeIds,
     currentTagIds,
+    versionDescription,
+    selectedKanbanIssueId,
   ]);
   const isCreateDraftDirty = useMemo(() => {
     return selectIsCreateDraftDirty({
@@ -349,11 +366,6 @@ export function KanbanIssuePanelContainer({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  // Save status for description (shown in WYSIWYG toolbar)
-  const [descriptionSaveStatus, setDescriptionSaveStatus] = useState<
-    'idle' | 'saved'
-  >('idle');
-
   // Debounced save for title changes
   const { debounced: debouncedSaveTitle, cancel: cancelDebouncedTitle } =
     useDebouncedCallback((title: string) => {
@@ -361,23 +373,6 @@ export function KanbanIssuePanelContainer({
         updateIssue(selectedKanbanIssueId, { title });
       }
     }, 500);
-
-  // Debounced save for description changes
-  const {
-    debounced: debouncedSaveDescription,
-    cancel: cancelDebouncedDescription,
-  } = useDebouncedCallback((description: string | null) => {
-    if (selectedKanbanIssueId && !kanbanCreateMode) {
-      updateIssue(selectedKanbanIssueId, { description });
-      setDescriptionSaveStatus('saved');
-      setTimeout(() => setDescriptionSaveStatus('idle'), 1500);
-    }
-  }, 500);
-
-  // Reset save status only when switching to a different issue or mode
-  useEffect(() => {
-    setDescriptionSaveStatus('idle');
-  }, [selectedKanbanIssueId, kanbanCreateMode]);
 
   const createFormFallback = useMemo(
     () =>
@@ -402,7 +397,6 @@ export function KanbanIssuePanelContainer({
 
     // Cancel any pending debounced saves when switching issues
     cancelDebouncedTitle();
-    cancelDebouncedDescription();
 
     let nextCreateFormData: IssueFormData | null = null;
     let restoredFromScratch = false;
@@ -449,7 +443,6 @@ export function KanbanIssuePanelContainer({
     createFormData,
     selectedKanbanIssueId,
     cancelDebouncedTitle,
-    cancelDebouncedDescription,
     createModeDefaults,
     issueComposerKey,
   ]);
@@ -553,15 +546,6 @@ export function KanbanIssuePanelContainer({
           title: value as string,
         });
         debouncedSaveTitle(value as string);
-      } else if (field === 'description') {
-        // Text field: update local state, then debounced save
-        dispatchFormState({
-          type: 'setEditDescription',
-          description: value as string | null,
-        });
-        {
-          debouncedSaveDescription(value as string | null);
-        }
       } else if (field === 'statusId') {
         // Status changes go through the command bar status selection
         openStatusSelection(projectId, [selectedKanbanIssueId]);
@@ -613,7 +597,6 @@ export function KanbanIssuePanelContainer({
       createFormFallback,
       createFormData,
       debouncedSaveTitle,
-      debouncedSaveDescription,
       openStatusSelection,
       openPrioritySelection,
       openAssigneeSelection,
@@ -862,16 +845,26 @@ export function KanbanIssuePanelContainer({
           : null
       }
       onDismissSubmitError={() => setSubmitError(null)}
-      descriptionSaveStatus={
-        mode === 'edit' ? descriptionSaveStatus : undefined
-      }
       titleInputRef={titleInputRef}
       onDeleteDraft={
         mode === 'create' && isCreateDraftDirty ? handleDeleteDraft : undefined
       }
       onCopyLink={mode === 'edit' ? handleCopyLink : undefined}
       onMoreActions={mode === 'edit' ? handleMoreActions : undefined}
-      renderDescriptionEditor={(props) => <WYSIWYGEditor {...props} />}
+      renderDescriptionEditor={(props) =>
+        mode === 'edit' && selectedKanbanIssueId ? (
+          <IssueVersionEditor
+            key={selectedKanbanIssueId}
+            issueId={selectedKanbanIssueId}
+            projectId={projectId}
+            editorProps={props}
+            observedIssueRevision={selectedIssue?.updated_at}
+            onCurrentDescription={handleCurrentVersionDescription}
+          />
+        ) : (
+          <WYSIWYGEditor {...props} />
+        )
+      }
       renderProjectWorkspaceContext={
         mode === 'create'
           ? () => (

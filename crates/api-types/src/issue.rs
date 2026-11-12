@@ -82,6 +82,10 @@ pub struct CreateIssueRequest {
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct UpdateIssueRequest {
+    /// Observed Issue revision, required for compatibility description updates.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub expected_updated_at: Option<DateTime<Utc>>,
     #[serde(
         default,
         deserialize_with = "some_if_present",
