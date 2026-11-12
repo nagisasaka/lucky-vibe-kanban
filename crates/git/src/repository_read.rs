@@ -23,6 +23,54 @@ const FILES: usize = 1000;
 const MATCH_VISITS: usize = 100_000;
 const DEADLINE: Duration = Duration::from_secs(2);
 
+/// The public source is an allowlisted product resource, never a host path.
+/// Keep the existing Project request shape intact for older clients.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum QueryRequest {
+    Project(Request),
+    Bundled(BundledRequest),
+}
+
+impl JsonSchema for QueryRequest {
+    fn schema_name() -> std::borrow::Cow<'static, str> {
+        "QueryRequest".into()
+    }
+
+    fn json_schema(generator: &mut schemars::SchemaGenerator) -> schemars::Schema {
+        schemars::json_schema!({
+            "type": "object",
+            "anyOf": [generator.subschema_for::<Request>(), generator.subschema_for::<BundledRequest>()]
+        })
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum BundledSource {
+    Lvk,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct BundledRequest {
+    pub source: BundledSource,
+    /// Omit to read the commit shipped with the running binary. Historical
+    /// investigation may select an explicit commit; Workspace mode is rejected.
+    pub target: Option<Target>,
+    pub operation: Operation,
+    #[serde(default = "default_limit")]
+    pub limit: usize,
+    pub cursor: Option<String>,
+    pub expected_revision: Option<String>,
+}
+
+impl From<Request> for QueryRequest {
+    fn from(request: Request) -> Self {
+        Self::Project(request)
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct Request {

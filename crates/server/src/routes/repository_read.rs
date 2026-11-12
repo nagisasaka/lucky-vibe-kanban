@@ -5,7 +5,7 @@ use axum::{
     routing::post,
 };
 use deployment::Deployment;
-use git::repository_read::Request;
+use git::repository_read::QueryRequest;
 use utils::response::ApiResponse;
 
 use crate::DeploymentImpl;
@@ -21,7 +21,7 @@ fn pool_router<S: Clone + Send + Sync + 'static>(pool: sqlx::SqlitePool) -> Rout
 async fn read(
     State(pool): State<sqlx::SqlitePool>,
     Extension(actor): Extension<server_access::Principal>,
-    Json(request): Json<Request>,
+    Json(request): Json<QueryRequest>,
 ) -> Result<
     (
         [(header::HeaderName, &'static str); 1],
@@ -32,7 +32,7 @@ async fn read(
     if !actor.scopes.contains("lvk:read") {
         return Err((StatusCode::FORBIDDEN, "Read permission required".into()));
     }
-    let result = match crate::repository_read::read(&pool, request).await {
+    let result = match crate::repository_read::query(&pool, request).await {
         Ok(value) => ApiResponse::success(value),
         Err(error) => ApiResponse::error(&format!("Repository read failed: {error}")),
     };

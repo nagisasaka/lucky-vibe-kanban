@@ -41,6 +41,17 @@ pub async fn start_review(
     State(deployment): State<DeploymentImpl>,
     Json(payload): Json<StartReviewRequest>,
 ) -> Result<ResponseJson<ApiResponse<AgentRunPortSnapshot, ReviewError>>, ApiError> {
+    launch_review(deployment, session, payload, None).await
+}
+
+/// Shared Session lifecycle. A purpose prompt uses a normal conversational turn;
+/// ordinary code review retains the provider's native review operation.
+pub(crate) async fn launch_review(
+    deployment: DeploymentImpl,
+    session: Session,
+    payload: StartReviewRequest,
+    purpose_prompt: Option<String>,
+) -> Result<ResponseJson<ApiResponse<AgentRunPortSnapshot, ReviewError>>, ApiError> {
     let pool = &deployment.db().pool;
 
     let workspace = Workspace::find_by_id(pool, session.workspace_id)
@@ -96,7 +107,10 @@ pub async fn start_review(
         None
     };
 
-    let prompt = build_review_prompt(context.as_deref(), payload.additional_prompt.as_deref());
+    let purpose_help = purpose_prompt.is_some();
+    let prompt = purpose_prompt.unwrap_or_else(|| {
+        build_review_prompt(context.as_deref(), payload.additional_prompt.as_deref())
+    });
     let resumed_session = provider_session.is_some();
     let agent_run = super::agent_run::create_agent_run(
         &deployment,
@@ -104,7 +118,7 @@ pub async fn start_review(
         &workspace,
         container_ref,
         super::agent_run::AgentRunLaunch {
-            intent: AgentRunIntent::Review,
+            intent: run_intent(purpose_help, resumed_session),
             mode: RunAttemptMode::Launch,
             prompt,
             selected_skills: None,
@@ -129,4 +143,27 @@ pub async fn start_review(
         .await;
 
     Ok(ResponseJson(ApiResponse::success(agent_run)))
+}
+
+fn run_intent(purpose_help: bool, resumed: bool) -> AgentRunIntent {
+    if purpose_help {
+        if resumed {
+            AgentRunIntent::FollowUp
+        } else {
+            AgentRunIntent::Initial
+        }
+    } else {
+        AgentRunIntent::Review
+    }
+}
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn help_uses_conversational_review_mode_without_native_code_review() {
+        assert_eq!(run_intent(true, false), AgentRunIntent::Initial);
+        assert_eq!(run_intent(true, true), AgentRunIntent::FollowUp);
+        assert_eq!(run_intent(false, false), AgentRunIntent::Review);
+        assert_eq!(run_intent(false, true), AgentRunIntent::Review);
+    }
 }

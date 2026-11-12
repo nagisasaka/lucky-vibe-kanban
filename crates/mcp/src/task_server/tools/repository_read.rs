@@ -1,4 +1,4 @@
-use git::repository_read::Request;
+use git::repository_read::QueryRequest;
 use rmcp::{
     ErrorData, handler::server::wrapper::Parameters, model::CallToolResult, tool, tool_router,
 };
@@ -8,7 +8,7 @@ use super::McpServer;
 #[tool_router(router = repository_read_tools_router, vis = "pub")]
 impl McpServer {
     #[tool(
-        description = "Explore an authorised Project repository: commit refs (no Workspace required) or explicit live Workspace. Read accepts legacy path/start_line/end_line or 1–8 ranges (maximum 200 lines each, 64 KiB item bytes); pass each item content revision as its expected_revision, and inspect per-item failures. Typed list/glob, literal/regex grep with content/files/count, line read, fixed-head log, direct/merge_base/parent diff. Returns full SHA/revision, budgets and exclusions. Repeat original arguments with next_cursor until complete; cursor expires on server restart. Workspace reads are non-atomic and revision mismatch requires restart. Same read service as remote MCP; no shell or model calls.",
+        description = "Use source:\"lvk\" for the bundled public LVK source without Project/repository IDs (omit target for the distribution commit; explicit commit targets for history; no Workspace or host paths). Result source identifies build_revision and distribution commit; source_head is the selected commit. Otherwise explore an authorised Project repository: commit refs (no Workspace required) or explicit live Workspace. Read accepts legacy path/start_line/end_line or 1–8 ranges (maximum 200 lines each, 64 KiB item bytes); pass each item content revision as its expected_revision, and inspect per-item failures. Typed list/glob, literal/regex grep with content/files/count, line read, fixed-head log, direct/merge_base/parent diff. Returns full SHA/revision, budgets and exclusions. Repeat original arguments with next_cursor until complete; cursor expires on server restart. Workspace reads are non-atomic and revision mismatch requires restart. Same read service as remote MCP; no shell or model calls.",
         annotations(
             read_only_hint = true,
             destructive_hint = false,
@@ -17,7 +17,7 @@ impl McpServer {
     )]
     async fn query_repository(
         &self,
-        Parameters(request): Parameters<Request>,
+        Parameters(request): Parameters<QueryRequest>,
     ) -> Result<CallToolResult, ErrorData> {
         match self
             .send_read_json::<serde_json::Value>(
@@ -96,7 +96,7 @@ mod transport_tests {
             .build()
             .unwrap();
         let args = json!({"project_id":uuid::Uuid::from_u128(1),"repository_id":uuid::Uuid::from_u128(2),"target":{"mode":"commit","ref":"main"},"operation":{"kind":"grep","query":"猫","syntax":"regex","case_sensitive":false,"output":"count","filter":{"glob":"src/**"}},"limit":3});
-        let request: Request = serde_json::from_value(args).unwrap();
+        let request: QueryRequest = serde_json::from_value(args).unwrap();
         let ok = mcp
             .query_repository(Parameters(request.clone()))
             .await

@@ -1235,5 +1235,34 @@
     "important": "Important",
     "warning": "Avertissement",
     "caution": "Attention"
+  },
+  "interactiveHelp": {
+    "currentSource": "Current distribution",
+    "answerSource": "Source for this question and answer",
+    "unknownRevision": "Unknown revision",
+    "openWorkspace": "Open input, approvals and execution details",
+    "title": "Ask LVK",
+    "description": "Ask the configured default agent about this version of LVK. It reads bundled public source, documentation and Git history. Existing agent authentication and usage costs apply.",
+    "conversation": "Conversation",
+    "new": "New conversation",
+    "loading": "Loading…",
+    "question": "Your question",
+    "ask": "Ask",
+    "cancel": "Cancel answer",
+    "delete": "Delete conversation",
+    "retention": "Conversations are retained until deleted. Closing help does not cancel an answer. To develop LVK, use a normal Project and Workspace.",
+    "status": {
+      "pending": "Queued",
+      "starting": "Starting",
+      "running": "Investigating…",
+      "awaiting_input": "Waiting for input",
+      "awaiting_approval": "Waiting for approval",
+      "cancelling": "Cancelling…",
+      "succeeded": "Answered",
+      "failed": "Failed",
+      "cancelled": "Cancelled",
+      "crashed": "Agent crashed",
+      "audit_failed": "Audit failed"
+    }
   }
 }

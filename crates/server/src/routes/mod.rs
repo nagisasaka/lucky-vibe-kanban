@@ -1,4 +1,5 @@
 pub mod github_credentials;
+pub mod help;
 mod shared_storage;
 use axum::{
     Router,
@@ -82,6 +83,7 @@ pub fn router(
         .merge(search::router(&deployment))
         .merge(releases::router())
         .merge(sessions::router(&deployment))
+        .merge(help::router())
         .merge(terminal::router())
         .nest("/local", local_remote::router(&deployment))
         .nest("/board", local_remote::board_api::router())

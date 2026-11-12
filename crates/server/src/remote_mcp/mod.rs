@@ -24,6 +24,7 @@ mod execution_approvals;
 pub(crate) use errors::database_category;
 mod evidence_read;
 mod goals;
+mod help;
 mod integration_read;
 mod integration_write;
 #[cfg(test)]
@@ -255,7 +256,10 @@ fn operation_scope(name: &str) -> Option<&'static str> {
         | "read_runtime_path"
         | "observe_process"
         | "get_self_restart_operation" => Some("lvk:runtime:read"),
-        "decide_execution_approval" => Some("lvk:write"),
+        "decide_execution_approval"
+        | "ask_help"
+        | "cancel_help_conversation"
+        | "delete_help_conversation" => Some("lvk:write"),
         "start_integration" | "cancel_integration" => Some("lvk:merge"),
         "change_runtime_path"
         | "edit_issue_comment"
@@ -469,6 +473,7 @@ fn tools() -> Vec<Tool> {
     tools.extend(evidence_read::tools());
     tools.extend(code_read::tools());
     tools.extend(repository_read::tools());
+    tools.extend(help::tools());
     tools.extend(issue_write::tools());
     tools.extend(issue_versions::tools());
     tools.extend(issue_tags::tools());
@@ -599,6 +604,7 @@ impl Remote {
             }
             "get_resource_observation" => resource_observation::call(args).await,
             "query_repository" => repository_read::call(self, args).await,
+            "ask_help" | "get_help_conversation" | "cancel_help_conversation" | "delete_help_conversation" => help::call(self, request.name.as_ref(), args).await,
             "list_run_events" => run_events::call(self, args).await,
             "get_connection" if args.as_object().is_some_and(|args| args.is_empty()) => {
                 Ok(crate::host_display_name::connection_metadata(json!({"server":"LVK", "permissions":principal.scopes, "automatic_notifications":false, "monitoring":false})).await)

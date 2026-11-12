@@ -18,6 +18,7 @@ executors = { path = "../executors" }
 local-deployment = { path = "../local-deployment" }
 utils = { path = "../utils" }
 git = { path = "../git" }
+git2 = { workspace = true }
 git-host = { path = "../git-host" }
 db = { path = "../db" }
 services = { path = "../services" }
