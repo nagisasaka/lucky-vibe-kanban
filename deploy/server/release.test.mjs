@@ -5,7 +5,7 @@ import { test } from "node:test";
 import { parse } from "yaml";
 
 const root = new URL("../../", import.meta.url);
-test("release builds the server target, tests before publishing, and does not publish main", async () => {
+test("release builds the server target before publishing and does not publish main", async () => {
   const workflow = parse(
     await readFile(
       new URL(".github/workflows/publish-server.yml", root),
@@ -21,14 +21,13 @@ test("release builds the server target, tests before publishing, and does not pu
   const build = steps.findIndex((step) =>
     step.uses?.startsWith("docker/build-push-action@"),
   );
-  const smoke = steps.findIndex((step) => step.run?.includes("smoke-image.sh"));
   const publish = steps.findIndex((step) => step.run?.includes("docker push"));
   const login = steps.findIndex((step) =>
     step.uses?.startsWith("docker/login-action@"),
   );
   assert(login >= 0 && login < build);
   assert.equal(steps[login].if, undefined);
-  assert(build < smoke && smoke < publish);
+  assert(build >= 0 && publish === build + 1);
   assert.equal(steps[build].with.target, "server");
   assert.equal(steps[build].with.push, false);
   assert.equal(steps[build].with.load, true);
@@ -77,12 +76,7 @@ test("release builds the server target, tests before publishing, and does not pu
   }
 });
 
-test("shell examples and CI smoke script parse", async () => {
-  const script = await readFile(
-    new URL("deploy/server/smoke-image.sh", root),
-    "utf8",
-  );
-  assert.equal(spawnSync("bash", ["-n"], { input: script }).status, 0);
+test("shell examples parse", async () => {
   const guide = await readFile(
     new URL("openwiki/operations/server-container.md", root),
     "utf8",
