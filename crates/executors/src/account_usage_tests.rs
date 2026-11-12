@@ -223,7 +223,9 @@ async fn live_provider_usage_observations() {
             CodingAgent::Codex(agent) => agent.read_account(None, true).await,
             CodingAgent::ClaudeCode(agent) => agent.read_account_usage(false, true).await,
             #[cfg(feature = "qa-mode")]
-            CodingAgent::QaMock(_) => unreachable!("live diagnostics only select official providers"),
+            CodingAgent::QaMock(_) => {
+                unreachable!("live diagnostics only select official providers")
+            }
         };
         let auth_inference = if profile.executor == BaseCodingAgent::Codex
             && value.pointer("/quota/status").and_then(Value::as_str) == Some("fresh")
