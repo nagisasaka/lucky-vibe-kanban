@@ -173,6 +173,79 @@ fn response_cookie(r: &Response, name: &str) -> String {
 }
 
 #[tokio::test]
+async fn configured_basic_posts_require_basic_csrf_after_setup_revocation() {
+    let f = Fixture::new(true).await;
+    let (cookie, csrf) = f.setup().await;
+    assert_eq!(
+        f.call(
+            "POST",
+            "/api/access/basic",
+            &[("cookie", &cookie), ("x-lvk-csrf", &csrf)],
+            json!({"username":"owner","password":"a long test password"})
+        )
+        .await
+        .status(),
+        StatusCode::OK
+    );
+    let authorization = format!(
+        "Basic {}",
+        base64::engine::general_purpose::STANDARD.encode("owner:a long test password")
+    );
+    for headers in [
+        vec![
+            ("cookie", cookie.as_str()),
+            ("x-lvk-csrf", csrf.as_str()),
+            ("authorization", authorization.as_str()),
+        ],
+        vec![("authorization", authorization.as_str())],
+        vec![
+            ("authorization", authorization.as_str()),
+            ("x-lvk-csrf", "wrong"),
+        ],
+    ] {
+        assert_eq!(
+            f.call("POST", "/api/projects", &headers, Value::Null)
+                .await
+                .status(),
+            StatusCode::FORBIDDEN
+        );
+    }
+    assert_eq!(
+        f.call(
+            "POST",
+            "/api/projects",
+            &[("x-lvk-csrf", "basic")],
+            Value::Null
+        )
+        .await
+        .status(),
+        StatusCode::UNAUTHORIZED
+    );
+    assert_eq!(
+        f.call(
+            "GET",
+            "/api/access/configuration",
+            &[("cookie", &cookie)],
+            Value::Null
+        )
+        .await
+        .status(),
+        StatusCode::UNAUTHORIZED
+    );
+    assert_eq!(
+        f.call(
+            "POST",
+            "/api/projects",
+            &[("authorization", &authorization), ("x-lvk-csrf", "basic")],
+            Value::Null
+        )
+        .await
+        .status(),
+        StatusCode::OK
+    );
+}
+
+#[tokio::test]
 async fn public_lock_origin_setup_keys_and_recovery_boundaries() {
     let f = Fixture::new(true).await;
     assert_eq!(
