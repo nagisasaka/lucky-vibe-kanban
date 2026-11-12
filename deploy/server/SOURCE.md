@@ -38,14 +38,13 @@ commit, its ancestor message/diff and no branch/tag refs, then removes the input
 repositories and reads history again. Invalid/unavailable revisions must fail.
 This is a Docker-free test, not proof of a final distribution image.
 
-CI's existing `smoke-image.sh` invokes `deploy/developer/verify-access.mjs` in
-the disposable image with mounted HOME/repos volumes. The added checks require
-UID 10001, compare `/api/info` build revision with bundled Git HEAD, run Git
-log/show, and use authenticated `/api/repository/read` list/log/diff through
-server libgit2, including an explicit ancestor commit. These checks run before
-publishing. Their presence does not imply that they were executed locally.
-Actual image builds, ownership/libgit2 inside that image and image-update
-volume reuse must be reported separately when performed.
+Public image CI publishes after a successful build without post-build smoke,
+fresh-install or formatting checks. It does not verify image startup,
+authentication boundaries or retained-volume upgrades before publication.
+The host updater still uses `deploy/developer/verify-image.sh` and
+`verify-access.mjs` for its separate candidate verification; those scripts are
+not invoked by public image CI. Actual image, ownership/libgit2 and retained-volume
+upgrade checks must be reported separately when performed.
 
 No history size cap is imposed. To measure a built image as its runtime user:
 
