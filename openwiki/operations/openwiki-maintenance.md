@@ -4,6 +4,8 @@ title: OpenWiki の初期生成・同期・回復
 description: Bootstrap の独立した Generate/Review/Refine と通常 Sync の違い、完了証拠、公開条件、失敗時に保持すべき所有権を説明する。
 tags: [openwiki, bootstrap, maintenance, recovery, validation]
 sources:
+  - id: openwiki-source-b28e4ff9d0efb53d7fe91df4
+    resource: repo://.github/workflows/publish-server.yml
   - id: openwiki-source-3aef057947a1ecdaa5b46d56
     resource: repo://assets/openwiki-probe.mjs
   - id: openwiki-source-8c6a3e8eeb36684980688a9a
@@ -88,8 +90,6 @@ sources:
     resource: repo://crates/workflow/src/templates.rs
   - id: openwiki-source-7d5590729f3e0f42d994b0e8
     resource: repo://crates/workspace-manager/src/shared_resources.rs
-  - id: openwiki-source-8d57c3092adc3c7e7de33c02
-    resource: repo://deploy/server/smoke-image.sh
   - id: openwiki-source-bb1ebe868e35e9e500714501
     resource: repo://Dockerfile
   - id: openwiki-source-bee9097e5e4cc326bebf14ff
@@ -102,10 +102,10 @@ sources:
     resource: repo://scripts/test-openwiki-focused.mjs
   - id: openwiki-source-7fd9452d5e666180c50f8cb7
     resource: repo://tests/openwiki/recovery.sh
-generated: { by: "codex", at: "2026-11-11T14:47:52.070Z" }
+generated: { by: "codex", at: "2026-11-12T15:26:52.299Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-12T03:32:18.680Z
+    at: 2026-11-12T15:26:52.299Z
 ---
 
 # OpenWiki の初期生成・同期・回復
@@ -335,7 +335,7 @@ Bootstrap は同じ repository Workflow の成功、Sync は同じ AgentRun の�
 
 読取4toolは0.7.2で採用し、現行0.9.0でも維持する。次節は現在のpinと検証入口を示す。
 
-配布pinは `openwiki` 0.9.0。Docker runtime は Node.js 22.22.0 以上を最低版検査する。Rust adapter・Docker install・image smoke は同じ `assets/openwiki-probe.mjs` で公開MCP identity/versionを検証し、生成runを開始しない。TOML marker 限定修復は共同owner対応とは別の互換処理として保持する。[配布](../../Dockerfile#L108-L116)・[adapter](../../crates/services/src/services/openwiki.rs)・[設定修復](../../crates/services/src/services/openwiki/codex_config.rs)
+配布pinは `openwiki` 0.9.0。Docker runtime は Node.js 22.22.0 以上を最低版検査する。Rust adapter・Docker install は同じ `assets/openwiki-probe.mjs` で公開MCP identity/versionを検証し、生成runを開始しない。公開CIのbuild後image smokeは撤去され、完成imageのprobe成功を公開条件にはしていない。TOML marker 限定修復は共同owner対応とは別の互換処理として保持する。[配布](../../Dockerfile#L108-L116)・[adapter](../../crates/services/src/services/openwiki.rs)・[設定修復](../../crates/services/src/services/openwiki/codex_config.rs)
 
 writer には lifecycle 6tool に加え `openwiki_search`、`openwiki_read`、`openwiki_list_workspaces`、`openwiki_list_wikis` を公開し、preflight と thread-local 承認も同じ10toolを使う。利用者が公開registryでリンクした workspace の Wiki は upstream の scope/到達可能性検査に従って参考にできる。`OPENWIKI_CONFIG_DIR` は指定済みの公開場所を引き継ぐ。maintenance worktree の canonical root が登録rootと違う場合の登録・接続は公開機構を使い、private registryを書き換えない。参照先は対象sourceの証拠を代替せず、更新対象は現在候補の canonical `openwiki/` のみである。[writer設定](../../crates/executors/src/executors/codex.rs#L1061-L1105)・[host指示](../../crates/services/src/services/openwiki.rs)
 

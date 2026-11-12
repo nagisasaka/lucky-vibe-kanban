@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:10000d36009b807c82a5be90db83e482c635e2cac6adbb7e870afe82a6796d46",
+  "pageVersion": "sha256:28e269bf9d47c3e1d5733f30e62e2090ff57c7bfb8d18236d26b9ae3241403f6",
   "claims": [
     {
       "id": "claim_7239e619508e4a2785f62b8f23fd0a74",
@@ -28,11 +28,15 @@
     },
     {
       "id": "claim_55cb132ca19b4bdea79948d6df009867",
-      "statement": "運用はpinned OpenWiki 0.9.0と既存Codex認証を使い、Docker runtimeはNode.js 22.22.0以上を検査する。adapter・Docker install・image smokeは共通probeで公開MCP initialize.serverInfoのname/version完全一致を検査し生成runを開始しない。",
+      "statement": "運用はpinned OpenWiki 0.9.0と既存Codex認証を使い、Docker runtimeはNode.js 22.22.0以上を検査する。adapter・Docker installは共通probeで公開MCP initialize.serverInfoのname/version完全一致を検査し生成runを開始しない。公開CIにはbuild後image smokeを置かない。",
       "evidence": [
         {
-          "resource": "repo://Dockerfile#L108-L116",
-          "version": "repo-lines-v1:sha256:5cab63735aa8f9781832ae3107f8327ce31c3822531e07a4c40f6cc09605ac15:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZDQ4NDcwNjZmMjE0YmJmMTg0MjYxZGYzYzdiMzNiYmRmOTE0ZTUxYjlmYTdmOGQzYzNhZmM4NzM0OTkzMjQzZSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDkxZWU1MzZkNDkwZjY4NmU2ZTAwMGU1M2QxZGMzOWEzZGZjZjkxZTM2MmEzZjQ3NzgwMzE0MTZkMDMzODhjYSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMzg2ODczM2Q3OTVmNzZlMDBiZTNlMDgxZDY3YzVlZGY0NmI1MjQwNmQwZTA4NmUzODM5OTQ1OGE5YWM4ZjcwMyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiM2JiMDk4MjcyNTM1NjE0YzgzZjNkOWZkNWE5M2RmMzk0MTAxM2M1ZDViOTgzZmQzMzI1OGY1YWI0N2JiMTY1ZCJ9"
+          "resource": "repo://.github/workflows/publish-server.yml",
+          "version": "repo-file-v1:sha256:396368a88c2c847ddbd6f39c6575f924f5623a4d13b59de71e9d4a14ed9342c9"
+        },
+        {
+          "resource": "repo://Dockerfile",
+          "version": "repo-file-v1:sha256:b974d699d0fc4f34d0f90aa582897b5a86e146487a4cd219ff7a75eef0725e54"
         },
         {
           "resource": "repo://assets/openwiki-probe.mjs",
@@ -45,10 +49,6 @@
         {
           "resource": "repo://crates/services/src/services/openwiki.rs#L108-L153",
           "version": "repo-lines-v1:sha256:b553b2cc8d8b8146c8b8b0b66ffd69a4b06240b54dec6cd337b49b37eda3b45e:eyJzZWxlY3RlZExpbmVDb3VudCI6NDYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIyNzMzMzFlYTQ3N2RiNjA5YTE1NGM4NDY1ZDkxOWVmN2QxNmZhOWVjMzU1OTI3MTE4MGJmZTIyNjM2NmRlY2QiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAwZjMwYmM4YWU2YmM1ZGQ3YjkxMTRjMjAwZTFhMjQ1ZTcwYTViODZkNjMwNzAxYzgwZjQwMzVjZDQ0N2QyNTUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQ3OThjYTg2NGQ0MGRmZjQyZDI5NDk3YTRiYmRiZTdkMGE4NDU2OThhYTI4OGFlODNmYmQyYTUwY2M2YTcyYzUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijg1YjhlNTg2ZWFiNmQ3ZTBjZTMwYzRjNGM4ZTgxY2Q4ZDI1NTVmMTJjYThiN2JkOWI3ZjAwOTQ3YjFiNTIwMjUifQ"
-        },
-        {
-          "resource": "repo://deploy/server/smoke-image.sh#L24-L38",
-          "version": "repo-lines-v1:sha256:1545dece5b02d6a9301933c41b1d9231d1475920b82f4354aac6d44d8417661e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIyM2U5ZGY1N2IwMzE4MzBiODJkMDIyNzNjZDI0MzM1MzlmNjJkNmM3MzFhMzU3M2Y5OWJiYWIwZWY2NzI0MTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YWIyNTNjNWY5NjAxN2VhNmU1ODhkYjUxMWMyM2Q2MTAyNDhhZTdhNDExZDI1MzJiYWNiMjIwMGNiYTU3MjkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjliNzU2ZWZjNTU0N2IyYzEzM2I1MjZlZjcwM2MyNjgxNWFjNDNjOWJhNzU4ZmJlMDkwZDgxMjgxNWRjMmE0OGEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFhZmJlYjE3MmUyMmI1NWE0NjIzODE1ZDU2NzE3YmQxYjExZTAyYTUwNTllMDBhZTAwYWNjNzBjMjNkYzM5ZmUifQ"
         }
       ]
     },
@@ -981,6 +981,6 @@
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-12T03:32:18.680Z"
+    "at": "2026-11-12T15:26:52.299Z"
   }
 }

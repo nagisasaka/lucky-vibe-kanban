@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:f795953f081700cde4b8c096baaa362a9c32a7b3168c643cc0f8be7be8498545",
+  "pageVersion": "sha256:b44909dcca2b156ea1b03b13ab7d7b531f9556836d9b12913339f26e4f65150c",
   "claims": [
     {
       "id": "claim_58a31267fd284cf6b691efe1ca720bfe",
@@ -215,16 +215,6 @@
       ]
     },
     {
-      "id": "claim_caf8fb0e99714e3bb111efb353dd3f6d",
-      "statement": "image smoke は UID 10001 のコンテナーで less --version と非TTY pipeの文字列出力を検査し、sh -ec で失敗時に停止する。対話端末でのページ操作はこの検査の対象ではない。",
-      "evidence": [
-        {
-          "resource": "repo://deploy/server/smoke-image.sh#L24-L38",
-          "version": "repo-lines-v1:sha256:1545dece5b02d6a9301933c41b1d9231d1475920b82f4354aac6d44d8417661e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIyM2U5ZGY1N2IwMzE4MzBiODJkMDIyNzNjZDI0MzM1MzlmNjJkNmM3MzFhMzU3M2Y5OWJiYWIwZWY2NzI0MTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YWIyNTNjNWY5NjAxN2VhNmU1ODhkYjUxMWMyM2Q2MTAyNDhhZTdhNDExZDI1MzJiYWNiMjIwMGNiYTU3MjkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjliNzU2ZWZjNTU0N2IyYzEzM2I1MjZlZjcwM2MyNjgxNWFjNDNjOWJhNzU4ZmJlMDkwZDgxMjgxNWRjMmE0OGEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFhZmJlYjE3MmUyMmI1NWE0NjIzODE1ZDU2NzE3YmQxYjExZTAyYTUwNTllMDBhZTAwYWNjNzBjMjNkYzM5ZmUifQ"
-        }
-      ]
-    },
-    {
       "id": "claim_15d6394b5148488cb35af8a824a80649",
       "statement": "server build identityはbuild.rsのrustc-envで固定され、APIはenv!から読むためruntimeのcheckoutやLVK_BUILD_*に依存しない。versionはCARGO_PKG_VERSIONを維持し、revision不明では任意build_infoを省略する。",
       "evidence": [
@@ -281,7 +271,7 @@
           "version": "repo-lines-v1:sha256:08a755ad3a1bb3ba217a0aded0707048c9877cc6fd568002661571e2883bb584:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQwODQ4OGVmYTQ2YzhmZGFiNWY2OWYwZTk3YzllNmQyYmI2OTA3NTc4NDEwOGNiZmExMjY1MzNkMTU5ZjVlMGUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk5NDUwNzEyNWNiMjlmNmRiN2FhOGRiODQyOWE3ODMxNGQyOGRmNTcyNTg3NjRjY2QzMjE4NDRhMDI5ZjI3M2IiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjkxNWNmYjBiZjc2MDNhZTQ3Y2ZmYjQ5YjQ0MDkzMWE0NmVmYzdhYjFlZDQ3Y2RmNzQ0OTdiNDhhOTkyN2RkZDAifQ"
         },
         {
-          "resource": "repo://deploy/server/release.test.mjs#L37-L58",
+          "resource": "repo://deploy/server/release.test.mjs#L36-L57",
           "version": "repo-lines-v1:sha256:9e5ba43b35549452a4e20f00ba29aa4aee25f24eac35cf334f7d35a70d5c0058:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZkMTg2NjFhNWMwODJmMWM5OGI0MmY3YjE4NGM3YzMzMDQ2Zjk1ODlkYjYwZGZjNTY3ZThkMjJmMzAyMjM2NzciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIwNDFlNjczZGYwNjUwMTJkZDYwMjg1MWFiZTU4MmY3OTBmMGEyOWE1NDBhZTk2NjUwZGFmMmMwMmYwNjBlYzYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjAzNzFmNDEyYjNlNzliNzkzYzgxNjcxNjQzOTU2NWI0YjY3YzdlY2NiOGEwODE4YjVmNGU5ZGY5MWNiOTY1ZTQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE5MmMwMTFkNGQ2MmNjYjQ1ZTE0NjM2NjZjNTIyODRhZmVlZmM4OTRiNDJmNDQxYzdjODc0OTAzMWRlZmM0ZTcifQ"
         }
       ]
@@ -424,29 +414,11 @@
       "evidence": [
         {
           "resource": "repo://Dockerfile#L186-L196",
-          "version": "repo-lines-v1:sha256:c61156373ce2229458805dc0efe5aaadd3472d6e55fec4cbb021f029c3acbe5d:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUyZjg3Y2M1OTgyMzc1MDZmOWJlZmFhYTFhZWIxYzdiNTY3NzNhM2IxYmFlZTI3MzU5NTRkYmUyN2Y5ODZmMzYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImIxOTdjZGMyOTNhN2U2MzQzZTYzZjUwNzBhYTM5Y2Y4ZTdkOTY0MDkwMDk5YjI0ZGFlZjkwNjA1ZWUzMjY4NTciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhlY2Y5ZGY3Zjc4ODYzMzU5NmQxYjcxOWRkNGU2ODVhOGQxNDE1YTc5ZjEyNWJlYTRhY2Q3Yjk5MTY2ZjhhNTcifQ"
+          "version": "repo-lines-v1:sha256:c61156373ce2229458805dc0efe5aaadd3472d6e55fec4cbb021f029c3acbe5d:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUyZjg3Y2M1OTgyMzc1MDZmOWJlZmFhYTFhZWIxYzdiNTY3NzNhM2IxYmFlZTI3MzU5NTRkYmUyN2Y5ODZmMzYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjU3MjBjYTdhZmM5MTViMmY4YWEwMDAxMmJjMzliNTI3Y2Y3YzA4OWY2YWNlZWZiODA1ZTFlZjI2YTY1NzRhZjIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhlY2Y5ZGY3Zjc4ODYzMzU5NmQxYjcxOWRkNGU2ODVhOGQxNDE1YTc5ZjEyNWJlYTRhY2Q3Yjk5MTY2ZjhhNTcifQ"
         },
         {
           "resource": "repo://deploy/server/compose.yaml#L18-L21",
           "version": "repo-lines-v1:sha256:1708b49e4c5466fb915acc64c7b301cb591eeb601871dd24ee6d1c8169c67cef:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNDEzZjRkOTY2MWU5ZDJjM2UxYTI4OWU1ODMyMjk5YmVhMTRjZGI2NGJmODg2NjFkZjcxN2IxMmZhMDJkMDExZSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOGNlYTU4NGY4MWUwMjY1NjhjZTQzNWFmMjE1MmVlY2Q3YjE4N2VmYWMxMDBhNDIwOGZjYjIzNGNhMzU0ZDEwNyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiM2UyM2ViZjFiMDE1YzZjZGE1YzA4MjcxMzE5YjE2OTlhMDhmNzZhNzZkZGRhMDAzNzg4ZjA0ZTZlMzBiYTAxOSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYzlkNjNkYmQ3ZTYwODlmMTFlZmU1YzFiNzZhYTc2YWEyYzc5MDM1ODU3NTAwZmU2NjU3M2QwYzQ0NzUzZDRhMCJ9"
-        },
-        {
-          "resource": "repo://deploy/server/smoke-image.sh",
-          "version": "repo-file-v1:sha256:332452fa4d99e63835ba72b68a935da967952a38c594415cae294b7a9802b020"
-        }
-      ]
-    },
-    {
-      "id": "claim_8d02b30f7ec54ef5a367b8c3300d10b8",
-      "statement": "Claude Codeのimage smokeは通常shell・login shell・永続home mount後のversion確認を行うが実アカウントloginとモデル実行は行わない。",
-      "evidence": [
-        {
-          "resource": "repo://deploy/server/smoke-image.sh#L24-L38",
-          "version": "repo-lines-v1:sha256:1545dece5b02d6a9301933c41b1d9231d1475920b82f4354aac6d44d8417661e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIyM2U5ZGY1N2IwMzE4MzBiODJkMDIyNzNjZDI0MzM1MzlmNjJkNmM3MzFhMzU3M2Y5OWJiYWIwZWY2NzI0MTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YWIyNTNjNWY5NjAxN2VhNmU1ODhkYjUxMWMyM2Q2MTAyNDhhZTdhNDExZDI1MzJiYWNiMjIwMGNiYTU3MjkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjliNzU2ZWZjNTU0N2IyYzEzM2I1MjZlZjcwM2MyNjgxNWFjNDNjOWJhNzU4ZmJlMDkwZDgxMjgxNWRjMmE0OGEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFhZmJlYjE3MmUyMmI1NWE0NjIzODE1ZDU2NzE3YmQxYjExZTAyYTUwNTllMDBhZTAwYWNjNzBjMjNkYzM5ZmUifQ"
-        },
-        {
-          "resource": "repo://deploy/server/smoke-image.sh#L64-L70",
-          "version": "repo-lines-v1:sha256:02da8195b57acaf88a40ed2ee2ac13d121f4ec621c00889509cb35633cdd8dbd:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMmZkODBkN2E0YzZiMzA5ODUxOWI3NmYyY2M2NzY1MDcyMzMzNzk5MGEwNzcxNDM4ZTg4OTIzYzg4MGMyMGY1MCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZTZhYjI1M2M1Zjk2MDE3ZWE2ZTU4OGRiNTExYzIzZDYxMDI0OGFlN2E0MTFkMjUzMmJhY2IyMjAwY2JhNTcyOSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZWYzNzAyZTIxNDAzOTc1YzI0NWRiNzA3NjkxODYxMmM1OGZhODk4YWI5OGE4MDJlMzA3YjNkMWQ0MjE4NDQ0NyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZGZlNzg0NmY1OTMxNTEzNTc0OTc0MWI0ZDI0OTUwOWU3OGNhNzcyODA5NTgzOTYwY2Q5Mjc3NDhmZDAzYzgyZSJ9"
         }
       ]
     },
@@ -524,19 +496,19 @@
     },
     {
       "id": "claim_e796783ffba84974b24750dfd7fcec94",
-      "statement": "image probeはUID10001とHOME/repos mountの下でbinary/source版一致、Git log/showと認証付きHTTP libgit2のlist/log/diff・祖先commitを検査するが、Docker-free fixtureは完成image/異なるimageへのvolume更新の実証ではない。",
+      "statement": "host updaterはverify-image.sh経由で非root・使い捨てvolume上のverify-access.mjsを実行しbinary/source一致と認証付き履歴読取を試みるが、公開CIでは実行しない。Docker-free fixtureは完成imageや保持volume更新の実証ではない。",
       "evidence": [
         {
-          "resource": "repo://deploy/developer/verify-access.mjs#L70-L116",
-          "version": "repo-lines-v1:sha256:ca1d131abd809b5120ca7d60ab43c488478b0128601f0392e812ea72651e55e2:eyJzZWxlY3RlZExpbmVDb3VudCI6NDcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM3ZTdlY2YyMWE3MTU2NGU1YTI0NTIyYzA0MTVlNGY2ZjVhMTlkNDE5OWViYWIzYzUzY2M4MTQxNDJkMzBlYWUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ5OTY3ZWMxZWQzODM2ZjhlYjE3YWZmMTcyYjViZmVmN2RlNjA0ODVhNDM5YzZjYTExYzU5MWUxNzU1NzM5YWUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImYwZDRiMGQ0ODhmNGY3YTE5NTEyYTJkN2ExYmJlOTVhODY4YzhkZTMyMTE3ODY2YTdlYWQwNTI4YjA3NjdiOWMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjUzYTA5YzY1NzdiYWVhNTgwY2M1MTA2NGY1NzhiNGMyZmI0MTBmYzdiMWYzMzk2NWU3OTQyNGY1NTBhNWI2MjIifQ"
+          "resource": "repo://deploy/developer/updater.py#L213-L213",
+          "version": "repo-lines-v1:sha256:c20c891eb68d67ccab3d2d8c422c74350f3f8779f5432bc5e02998a8d64c288b:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYzIwYzg5MWViNjhkNjdjY2FiM2QyZDhjNDIyYzc0MzUwZjNmODc3OWY1NDMyYmM1ZTAyOTk4YThkNjRjMjg4YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYzIwYzg5MWViNjhkNjdjY2FiM2QyZDhjNDIyYzc0MzUwZjNmODc3OWY1NDMyYmM1ZTAyOTk4YThkNjRjMjg4YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMWVmMDIwMzdiZGE2NWQ4YzBjZGRmNmExZGEzYjAxMTkzZjY5YmM1NWM3YTlmZjI1OWUxNjA4ZDBjYmVmMmJhOCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYWMxNjU4YWEzZTMxMmVhMDUzM2Q1MGQwNmRmNTZiMWJhNzNlODA4YTJiZDU3MjM4ODc4NGFhNzFjMjJhM2U3OSJ9"
+        },
+        {
+          "resource": "repo://deploy/developer/verify-image.sh",
+          "version": "repo-file-v1:sha256:495488818b523e9723debd469e2148654a6b7d27afa34b505bcd831436c3e0d1"
         },
         {
           "resource": "repo://deploy/server/SOURCE.md",
-          "version": "repo-file-v1:sha256:496c64b891331462f84cdd85419a5936c843460fd541dec3373937519ed9eae1"
-        },
-        {
-          "resource": "repo://deploy/server/smoke-image.sh#L41-L76",
-          "version": "repo-lines-v1:sha256:f2dc33fd3b9ac47425e0efe52fdd1cc6c00ca9f1a5024175f3cc12a7cb5913be:eyJzZWxlY3RlZExpbmVDb3VudCI6MzYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBlMmM5NmI2MjYxOWNlNGM0ODc5ZTEzOWI0ZjVkZGFhNDA2ZGQ0MmMwYTA5ZGQ1ZGNkZDZhNjY3ZDk0MDA1YTgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI0M2ZlMWE4YjFhYzM3NmEwODdiN2JkYjkxMDlmNDc4OGU0MDcxOGI2ZWRlZWUxZGEyMDQ0Y2VmYjUzODQ3ZDIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQxMzM5Mzc4ZDU5MGUxNGVlZjVhYTA3ZjIxZmUwZDNmNTc2N2U2ZGUyNWFhMDU0MWViZDVlZGQxOWNlNDNlOGYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNhNjhkZTNkNTAxZjEyMWYyZTc5NDk1YTFiZjdjNzhiODUyNGIyOWJlMGU2MjAyMmMxZGEzMmUwMDI0ZmFhNzIifQ"
+          "version": "repo-file-v1:sha256:e1a9bc6df85b9c109ad48312c9033f1dd9c41cdc3ba7184927aa419784d4f43f"
         }
       ]
     },
@@ -557,10 +529,38 @@
           "version": "repo-lines-v1:sha256:a69612b0a42d5e7a508f2db80d5ca60b2ce88911591b809792723d2801763b15:eyJzZWxlY3RlZExpbmVDb3VudCI6MzMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA4MWZlYTUwMThmNTY2ZDY0NDBiNzdkODU2Zjc2OTZhNGRiNzc0ZmQ2N2VhNGI0Nzk0NDQxYzQ2NzAzYzNiYzAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ5OTY3ZWMxZWQzODM2ZjhlYjE3YWZmMTcyYjViZmVmN2RlNjA0ODVhNDM5YzZjYTExYzU5MWUxNzU1NzM5YWUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFhMDdhMjgyMjU3MDU5OTJkYTkwM2Q0ZjhhZjJjZGY0YmEzMmE1YzkzZjExMzY3OTBkYmRjNTUyM2IxMDZlMmYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
         }
       ]
+    },
+    {
+      "id": "claim_a0ed8672ea3c45968e9d762391711906",
+      "statement": "公開CIはbuild前検査とbuildを維持し、build成功直後にtag push条件でpublishする。build後smoke・fresh install・format検査はなくmanual dispatchはpublishしない。",
+      "evidence": [
+        {
+          "resource": "repo://.github/workflows/publish-server.yml",
+          "version": "repo-file-v1:sha256:396368a88c2c847ddbd6f39c6575f924f5623a4d13b59de71e9d4a14ed9342c9"
+        },
+        {
+          "resource": "repo://deploy/server/release.test.mjs",
+          "version": "repo-file-v1:sha256:457cbb0cf2562e983a77321336280684b9e7f82e1303610b575a2fa050fe97e3"
+        }
+      ]
+    },
+    {
+      "id": "claim_d64020a547e24395b44ababbba9ee70a",
+      "statement": "verify-accessの祖先commit direct diff要求にはbase/parent指定がなく、祖先がmerge commitなら明示parent必須のGit読取契約と合わず失敗し得る。",
+      "evidence": [
+        {
+          "resource": "repo://crates/git/src/repository_read.rs#L556-L577",
+          "version": "repo-lines-v1:sha256:602e70350884f9d7015152a5ce67b83a3c25961a1458420a7b8869bf761a2980:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUyYmIyNGJiODA1NWY3MjczNjg4MTEyNjg5OGY0ODJmNzk5YTViN2UzNDA0MGRjZmI5MTJmYmY2OTA5YWRiOTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgzZWZkZDc3MjdhNDBmYzYwMjcwMzQzNGYxYjhkMDQ0M2FjMjRiMGUyMjczNjA4ZjgzYmZlNzk3YzVmNWUwMjIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjU5Zjc4ZWFiY2JhNDgzMThlZDY0Y2I4MmZhNGJkOTk2ZjkzNjExOTAzZDMzMmU4NjUzNjk3ZmUwMmQ5N2ZlYWEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijc1MWEzOGM3ZjQyZDIyMzI3MmU1MTI4ZTA3MWM0YmZhMWJmOWJhMGRmNjM0YThmNjAzZGUyZmM0Y2YzOTcyNjMifQ"
+        },
+        {
+          "resource": "repo://deploy/developer/verify-access.mjs#L88-L120",
+          "version": "repo-lines-v1:sha256:a69612b0a42d5e7a508f2db80d5ca60b2ce88911591b809792723d2801763b15:eyJzZWxlY3RlZExpbmVDb3VudCI6MzMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA4MWZlYTUwMThmNTY2ZDY0NDBiNzdkODU2Zjc2OTZhNGRiNzc0ZmQ2N2VhNGI0Nzk0NDQxYzQ2NzAzYzNiYzAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ5OTY3ZWMxZWQzODM2ZjhlYjE3YWZmMTcyYjViZmVmN2RlNjA0ODVhNDM5YzZjYTExYzU5MWUxNzU1NzM5YWUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFhMDdhMjgyMjU3MDU5OTJkYTkwM2Q0ZjhhZjJjZGY0YmEzMmE1YzkzZjExMzY3OTBkYmRjNTUyM2IxMDZlMmYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-12T12:23:18.004Z"
+    "at": "2026-11-12T15:26:52.299Z"
   }
 }

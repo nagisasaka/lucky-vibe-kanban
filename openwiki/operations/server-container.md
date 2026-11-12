@@ -12,6 +12,8 @@ sources:
     resource: repo://crates/git-host/src/github/cli.rs
   - id: openwiki-source-040941dd1546f1e0a90b6c5f
     resource: repo://crates/git/src/cli.rs
+  - id: openwiki-source-b688f8904e0728c38535a521
+    resource: repo://crates/git/src/repository_read.rs
   - id: openwiki-source-0a300791bc056c6eee6a577a
     resource: repo://crates/mcp/src/bin/vibe_kanban_mcp.rs
   - id: openwiki-source-a6cad3d930b299ebbbd793a3
@@ -38,6 +40,8 @@ sources:
     resource: repo://deploy/developer/updater.py
   - id: openwiki-source-63e502af7564c9aae1780fd6
     resource: repo://deploy/developer/verify-access.mjs
+  - id: openwiki-source-149ec24c22379256388dd413
+    resource: repo://deploy/developer/verify-image.sh
   - id: openwiki-source-eaf96aacdc40d6db8dae4f8e
     resource: repo://deploy/server/acme.py
   - id: openwiki-source-83ada096aaf457a8ce0ab3cb
@@ -60,8 +64,6 @@ sources:
     resource: repo://deploy/server/server.mjs
   - id: openwiki-source-229e22cb29e176ae1fe594e1
     resource: repo://deploy/server/server.test.mjs
-  - id: openwiki-source-8d57c3092adc3c7e7de33c02
-    resource: repo://deploy/server/smoke-image.sh
   - id: openwiki-source-5fe6396817bf95b4040eebdb
     resource: repo://deploy/server/SOURCE.md
   - id: openwiki-source-26f2b454d009a5c3d05be35a
@@ -72,10 +74,10 @@ sources:
     resource: repo://package.json
   - id: openwiki-source-d64d3c5fa2f722c3a06ba2e6
     resource: repo://tests/embedded-browser-removal/controls.test.mjs
-generated: { by: "codex", at: "2026-11-12T12:23:18.004Z" }
+generated: { by: "codex", at: "2026-11-12T15:26:52.299Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-12T12:23:18.004Z
+    at: 2026-11-12T15:26:52.299Z
 ---
 
 # 単一サーバーコンテナーの運用境界
@@ -98,13 +100,13 @@ Node 22、固定版 Codex/pnpm、repository の Rust toolchain などを image �
 
 CLI 同梱はアカウント認証を含まない。利用者はコンテナー内で `claude --version` を確認し、`claude auth login` の browser 案内に従う。設定・認証情報は永続 home に保持する。LVK の Basic/Auth0 と provider 認証は別であり、[Claude profile の実行前診断](../integrations/agent-providers.md#claude-のサブスクリプション専用-profile)も CLI の存在だけでは成功しない。[利用手順](#provider-の実行アカウントを準備する)
 
-image smoke は通常 shell、login shell、永続 home を mount した稼働コンテナー内で `claude --version` を確認する。実アカウント login やモデル実行の検証ではない。この Sync は source と試験定義の照合であり、Docker build / run や Claude login は実施していない。[smoke 定義](../../deploy/server/smoke-image.sh#L24-L38)・[mount 後](../../deploy/server/smoke-image.sh#L64-L70)
+公開CIのbuild後image smokeは撤去済みであり、通常shell・login shell・永続home mount後のClaude起動を公開前に検査しない。CLIの同梱と実アカウントlogin・モデル実行の成功は別に確認する。[現在のworkflow](../../.github/workflows/publish-server.yml)
 
 LVK 自身の開発向けに、`server-tools` は sccache 0.18.0 を locked dependencies・`--no-default-features` で導入し、`/usr/local/bin/sccache` に置く。local disk cache 用の executable 同梱であり、global Cargo wrapper・cache directory・incremental 設定を自動変更しない。home volume に隠されない配置と、各 repository が利用を設定する境界を維持する。[同梱と意図](../../Dockerfile#L173-L180)。実 image での利用可否と cache hit は別途の検証対象である。
 
 `less` は `server-tools` の apt package として導入され、`server-browser` を経て最終 `server` image に継承される。小型 `runtime` は `runtime-base` から分岐するため、この開発 toolchain の追加を継承しない。[stage の境界](../../Dockerfile#L136-L156)、[server への継承](../../Dockerfile#L182-L201)。任意の旧 development Compose も `LVK_IMAGE` を参照するため、利用できる toolchain は選択した image に依存する。checkout の変更だけで稼働中 image に追加されるわけではない。[開発 Compose の image 選択](../../deploy/server/compose.development.yaml#L1-L8)
 
-image smoke は UID 10001 のコンテナー内で `less --version` と、非 TTY の pipe 入力が同じ文字列として出力されることを検査し、失敗すれば `sh -ec` により検査を止める。この検査は対話端末でのページ操作を扱わない。[実行条件と検査](../../deploy/server/smoke-image.sh#L24-L38)。[配布 kit の静的・native 検証](development.md#サーバー配布-kit-の検証)と image の実行確認は別である。この Sync では検査定義をソースで確認しており、Docker build/run や `less` の実行成功は確認していない。
+公開CIには `less --version` や非TTY pipe出力を確認する後段smokeはない。配布kitの静的・native検証と完成imageの実行確認は別であり、今回Docker build/runや対話端末でのページ操作は確認していない。[配布kit検証](development.md#サーバー配布-kit-の検証)
 
 LVKのsource開発入口は同梱sccacheを探索・起動・設定せず、rustcを直接使う。明示compiler wrapperは拒否し、既存tool・daemon・共有cacheは変更しない。image同梱やCIの利用方針とは別である。[現行入口](../../scripts/dev-cargo.mjs)・[廃止範囲](../../scripts/dev-cargo.mjs)。
 
@@ -329,7 +331,11 @@ runtime-baseに `/opt/lvk/source` を `10001:10001` 所有で配置し、server�
 
 binaryとsourceは同じrevision引数を使い、CIはimage build直前にcheckout HEADと `GITHUB_SHA` の一致、tracked/index差分の不在を検査する。manual Docker buildではclean contextと公開SHAの対応を利用者が保つ必要があり、helperだけでcontext全体の一致を証明できない。ローカルmainにしかない未公開SHAは公開upstreamから取得できないため、今回の統合完了からimage build可能とは推定しない。[配布workflow](../../.github/workflows/publish-server.yml)・[契約と容量測定](../../deploy/server/SOURCE.md)
 
-CI image smokeは保持用HOME/repos volumeをmountしたUID10001で `git log/show` と認証付きHTTPのlibgit2 list/log/diff・祖先commitを検査する。定義の存在と実image成功は別である。今回候補ではDocker-free kitのみ成功しCompose検査1件は環境不在でskip、完成imageと異なるimageへのvolume引継ぎ更新は未実施である。同一image再起動smokeも異なるimage更新の証明ではない。[image probe](../../deploy/developer/verify-access.mjs#L70-L107)・[smokeの寿命](../../deploy/server/smoke-image.sh)・[別環境の ordered 手順と停止条件](../concepts/interactive-help.md#別環境で残る受入検証)
+公開CIはbuild前の翻訳・設定・source照合とbuildを維持し、成功後は既存のtag push条件で直ちにpublishする。build後のimage smoke・fresh install・format検査と公開CI専用smoke scriptは撤去済みであり、代替の後段検査を追加していない。manual dispatchはbuildだけでpublishしない。[workflow](../../.github/workflows/publish-server.yml)・[既存構成試験](../../deploy/server/release.test.mjs)
+
+host updaterは別経路の `verify-image.sh` → `verify-access.mjs` を保持する。使い捨てHOME/repos/work volumeと非root userでbinary/source版一致、Git履歴、正規Basic認証のlibgit2読取を試みる。これは公開CIの保証ではない。既知の未解決事項として、`HEAD^` がmerge commitの場合、direct diff要求にbase/parent指定がなく「Merge commit requires explicit 1-based parent」で失敗し得る。今回この問題は修復・再現試験の対象外とし、host検証成功とは報告しない。[updater呼出](../../deploy/developer/updater.py#L213)・[保持script](../../deploy/developer/verify-image.sh)・[読取要求](../../deploy/developer/verify-access.mjs#L88-L120)・[parent契約](../../crates/git/src/repository_read.rs#L556-L577)
+
+今回のコード検証SHAは `b92bb02795fd16dc64972357f94bd1678975a6be`。固定base `3b57177b` へsource `51f6f9ba` を競合・修復なしで統合し、sourceとtreeが一致する。管理検証で既存release3件、対象3file整形、tree一致と差分空白が成功した。初回yaml依存不足はlocked install後に同一コマンド成功で解消した。包括build/check/lint/backendとDocker/E2Eは差分と既存SHA付き証拠に基づくagent判断のskipであり、新しいpassではない。完成image起動・認証・保持volume更新は未検証で、公開CIからその保証が減る。製品認証変更はない。Wikiはprepareで原本journal保存成功後の別commitであり、main反映は担当Run終了後のhost結果で確認する。GitHub push・tag・配布公開・デプロイ・稼働変更は実施しない。
 
 同梱sourceは稼働binaryから独立した参照checkoutであり、編集しても稼働版は変わらない。UI/MCPの一般ヘルプは既存providerの認証・料金・REVIEW会話を使い、無指示の開発・build・再起動に進まない。履歴countとGit pack/checkoutサイズは [SOURCE.md](../../deploy/server/SOURCE.md) の実行user向けcommandで測定し、image layer/downloadサイズとは分けて記録する。
 
