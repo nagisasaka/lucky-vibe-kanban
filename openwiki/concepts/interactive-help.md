@@ -5,7 +5,7 @@ description: UIとremote MCPから使う一般ヘルプ、Project不要の版固
 tags: [help, source, mcp, distribution, testing]
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-12T04:13:28.445Z
+    at: 2026-11-12T12:23:18.004Z
 sources:
   - id: openwiki-source-b688f8904e0728c38535a521
     resource: repo://crates/git/src/repository_read.rs
@@ -35,7 +35,7 @@ sources:
     resource: repo://packages/web-core/src/shared/components/InteractiveHelp.tsx
   - id: openwiki-source-84b875ef198dd7cc343720cd
     resource: repo://tests/help/README.md
-generated: { by: "codex", at: "2026-11-12T04:13:28.445Z" }
+generated: { by: "codex", at: "2026-11-12T12:23:18.004Z" }
 ---
 
 # 稼働版のソースに基づく対話ヘルプ
@@ -67,6 +67,8 @@ serverは同梱sourceをプロセス内で一度検査する。build revisionが
 Dockerは公開upstreamから指定SHAと全祖先を独立fetchする。CI shallow checkoutやcontextの `.git`除外に依存せず、callerのGit設定・hooks・credentials・alternatesを持ち込まない。全branch/tagは約束しない。sourceはHOMEと `/repos` volume外に置きUID/GID `10001:10001` 所有とする。参照sourceを変更しても稼働binaryは変わらない。[配布構成](../../Dockerfile)・[取得helper](../../deploy/server/bundle-source.sh)・[同梱範囲と測定](../../deploy/server/SOURCE.md)
 
 ## 別環境で残る受入検証
+
+配布smokeのBasic設定はsetup sessionを失効させる。以降のrepository/read POSTは既存のBasic Authorizationと `X-LVK-CSRF: basic` を使い、setup Cookie/CSRFを再利用しない。失敗診断はmethod/path・operation kind・HTTP statusに限定し、response body全体や認証値を出さない。このclient修正は認証・CSRF製品実装の緩和ではない。[probe](../../deploy/developer/verify-access.mjs)・[失効後の境界回帰](../../crates/server-access/src/tests.rs#L175-L247)
 
 今回の統合はローカルmainへのソース公開とWiki更新である。以下は未実施で、Docker-free kit・mock browser・以前のdevelopment dirty binaryのHTTP成功を代用しない。実行は別途許可された隔離環境で行い、共有資源がある場合はsnapshotと正式な一括予約を先に行う。
 

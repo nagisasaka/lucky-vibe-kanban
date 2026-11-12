@@ -14,6 +14,8 @@ sources:
     resource: repo://crates/git/src/cli.rs
   - id: openwiki-source-0a300791bc056c6eee6a577a
     resource: repo://crates/mcp/src/bin/vibe_kanban_mcp.rs
+  - id: openwiki-source-a6cad3d930b299ebbbd793a3
+    resource: repo://crates/server-access/src/tests.rs
   - id: openwiki-source-d4130322a85c68ce2ddc220a
     resource: repo://crates/server/build_metadata.rs
   - id: openwiki-source-f72d699e94c301e4e47d097c
@@ -70,10 +72,10 @@ sources:
     resource: repo://package.json
   - id: openwiki-source-d64d3c5fa2f722c3a06ba2e6
     resource: repo://tests/embedded-browser-removal/controls.test.mjs
-generated: { by: "codex", at: "2026-11-12T04:13:28.445Z" }
+generated: { by: "codex", at: "2026-11-12T12:23:18.004Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-12T04:13:28.445Z
+    at: 2026-11-12T12:23:18.004Z
 ---
 
 # 単一サーバーコンテナーの運用境界
@@ -330,3 +332,9 @@ binaryとsourceは同じrevision引数を使い、CIはimage build直前にcheck
 CI image smokeは保持用HOME/repos volumeをmountしたUID10001で `git log/show` と認証付きHTTPのlibgit2 list/log/diff・祖先commitを検査する。定義の存在と実image成功は別である。今回候補ではDocker-free kitのみ成功しCompose検査1件は環境不在でskip、完成imageと異なるimageへのvolume引継ぎ更新は未実施である。同一image再起動smokeも異なるimage更新の証明ではない。[image probe](../../deploy/developer/verify-access.mjs#L70-L107)・[smokeの寿命](../../deploy/server/smoke-image.sh)・[別環境の ordered 手順と停止条件](../concepts/interactive-help.md#別環境で残る受入検証)
 
 同梱sourceは稼働binaryから独立した参照checkoutであり、編集しても稼働版は変わらない。UI/MCPの一般ヘルプは既存providerの認証・料金・REVIEW会話を使い、無指示の開発・build・再起動に進まない。履歴countとGit pack/checkoutサイズは [SOURCE.md](../../deploy/server/SOURCE.md) の実行user向けcommandで測定し、image layer/downloadサイズとは分けて記録する。
+
+### Basic設定後のsmoke認証
+
+`verify-access.mjs` は初回Basic設定まで有効なsetup Cookie/CSRFを使う。設定保存でsessionが失効するため、それ以後のrepository/read POSTではCookieを送らず、request共通のBasic Authorizationと `X-LVK-CSRF: basic` を使う。失効setup CSRFの再利用やCSRFの不足・誤りは403、無認証は401、正規Basic/CSRFだけ200となる契約を既存Access fixtureで検査する。[client](../../deploy/developer/verify-access.mjs#L14-L31)・[read](../../deploy/developer/verify-access.mjs#L88-L120)・[境界回帰](../../crates/server-access/src/tests.rs#L175-L247)
+
+read失敗のassert診断はmethod/path、operation kind、HTTP statusを示し、response body全体やpassword/Cookie/CSRF/Authorization値を出さない。認証・CSRF製品コードを緩和する修正ではない。新規候補 `4aee2d1277a39dafc753d806566b68648e04b732` 上の認証23件と配布3件、整形/Clippyは成功したが、完成imageと新版実HTTPは未検証で次CI/ホスト隔離環境へ残す。[検証と省略の詳細](development.md#basic-smokeと整形の追加統合)

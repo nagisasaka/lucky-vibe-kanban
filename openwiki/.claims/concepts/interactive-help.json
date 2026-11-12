@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:3d707af461f40a0862647f1793f532d1bd8cad32e180cb555aafe0593d024a53",
+  "pageVersion": "sha256:87c04cb7d877d9144a8f2b772f44ef0c8f93142b4e0c9167164cb5795f7374e8",
   "claims": [
     {
       "id": "claim_d8c84a79ed5e4ef4938641341ac9c565",
@@ -86,7 +86,7 @@
       "evidence": [
         {
           "resource": "repo://deploy/developer/verify-access.mjs",
-          "version": "repo-file-v1:sha256:017df5320e0210d52993ef4783b271ff013794d05f7fd85c30509e58b5d418dd"
+          "version": "repo-file-v1:sha256:fba2b788d0aecef1792bac8bb5f30d3f72dd627ba0e32aa17b13428606a7f24d"
         },
         {
           "resource": "repo://deploy/server/source.test.mjs",
@@ -97,10 +97,24 @@
           "version": "repo-file-v1:sha256:af903721707978b10a0807e0495c94c382eb0645bc16e1dc7b89b4bdf9c1f308"
         }
       ]
+    },
+    {
+      "id": "claim_001f64f70e0e437a8586cf9f63a2207d",
+      "statement": "配布smokeはBasic設定後のrepository/readでsetup Cookie/CSRFを再利用せずBasic AuthorizationとX-LVK-CSRF:basicを送信し、読取失敗時にresponse body全体を出力しない。",
+      "evidence": [
+        {
+          "resource": "repo://deploy/developer/verify-access.mjs#L14-L31",
+          "version": "repo-lines-v1:sha256:d0859db720024cc856575b6720e21be512357adb2d37a138faf491be8767b00b:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ5NWI4YzViZjg2Mzc0MzY3MWRlZjNmNjMwZWIyMzJkNTlhN2E2MzRhMDcwZmM0MzZlZWMzN2E4Njc0ZTZjMzAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJiM2FkYTViN2ZhOGZhNzI1MzFjYjk3YTJjM2JjMjhmNDA4ZTY5MTZlZGNkMmMxMGM4MzIwYTEzNDhiN2VjZGIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImM5MmRiMDg2OWQ1NjI0OTgxY2Y1MGVhYjI3OGQ0Y2I3MDE0MWVmZTA1M2U5Y2NhOTMxOWNiYzcyZjZhZmUzZDYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijk5NWVjZGVjMzNlYTA5Yzg0ZmQxZDgzNTEzMzAxNmUxYzUzM2IyNmFmYWE2YjZmOTFiMDc5NDY5YWVjMjI1NmYifQ"
+        },
+        {
+          "resource": "repo://deploy/developer/verify-access.mjs#L88-L111",
+          "version": "repo-lines-v1:sha256:d85c3dd0df2163aa27bf6df97e953444dfb67d99593e31cbbd32833f02ea7c33:eyJzZWxlY3RlZExpbmVDb3VudCI6MjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA4MWZlYTUwMThmNTY2ZDY0NDBiNzdkODU2Zjc2OTZhNGRiNzc0ZmQ2N2VhNGI0Nzk0NDQxYzQ2NzAzYzNiYzAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRkZmI1NDQwNDRhMzM5YWNiOTY0MWRhMDVmMmUwYmFiMzBiOGY0Y2FkMWQ4NTQwMTI3ZjhkOGYwMjEzNzhkNGUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFhMDdhMjgyMjU3MDU5OTJkYTkwM2Q0ZjhhZjJjZGY0YmEzMmE1YzkzZjExMzY3OTBkYmRjNTUyM2IxMDZlMmYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhkZTY3Yjk1ZDE1MDZiNDQ2NzUyOWI0NGQzNTI4NDY2ZjA4MjA1OGI2NDJhNGY3N2MzNzk3YTYzNDVjYzY2NDMifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-12T04:13:28.445Z"
+    "at": "2026-11-12T12:23:18.004Z"
   }
 }

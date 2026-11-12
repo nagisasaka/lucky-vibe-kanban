@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:a913f47cfc6d96cecea2876b1ccd88fc1556b01af32d2ccb8313e86f13cf222c",
+  "pageVersion": "sha256:4d7757795baae513401e381941c74a0efbdc1e845b6d14d25e732d6a323e0ae7",
   "claims": [
     {
       "id": "claim_1640e4eaeac94676a84eb3b9d9970d30",
@@ -794,7 +794,7 @@
       "evidence": [
         {
           "resource": "repo://crates/executors/src/account_usage_tests.rs",
-          "version": "repo-file-v1:sha256:45cfc9a4097e3f1a2b1c2d9359c462e0f26edc499ca4d63680beb9f81933a4e4"
+          "version": "repo-file-v1:sha256:c739f7e3d5b360ae794b0144d44ffe4fc95b7e59319b7873ebbc5cfb744ab766"
         },
         {
           "resource": "repo://crates/executors/src/executors/codex/client.rs",
@@ -1113,10 +1113,20 @@
           "version": "repo-lines-v1:sha256:dc30210f5a203fb3a2f00eb1bfc4a5c579cbe579f004cab4d073528febf2e4d7:eyJzZWxlY3RlZExpbmVDb3VudCI6NjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNiNmUyNjYxMjljODVlOTNmMjhlNDQwMmMzZDBiOTQ3ZjhiYjNiNmNkZGJhNmJiY2M4Y2U2NWIzNjM0MjRkOWUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE3NzZlYWM1OWZiNzQ0ZGYzNjNhNGMyM2I3NDcwNTM2ZjhmM2UyNzU2N2ZlNjkzYTRiZmI2M2FjMjg4NjYwOTAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImZjOGI2MmZjMGQ2ZWEzNGU5ZTU4MzA4ZmQ1YWI4Y2I4ZDRmN2QwNzc2YzJiYWI3ZjIyN2ZkNGNjMjY1YTU3MjciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEifQ"
         }
       ]
+    },
+    {
+      "id": "claim_7377879ad9494d5f8ac5f650eb1221c5",
+      "statement": "server-accessの失効後Basic POST回帰は失効setup CSRF・不足/誤CSRFを403、無認証を401、正規Basicとbasic CSRFを200として検証する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server-access/src/tests.rs#L175-L247",
+          "version": "repo-lines-v1:sha256:ad19df93aa7570f6262b9a11dbcccf1680d8cd2df07084c66f8adb64076ca384:eyJzZWxlY3RlZExpbmVDb3VudCI6NzMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUxOTQ4NGVlZGYzNjRmYjhjMTJmMWViOThmYmY2YTliNGY2NTBmNDI3ODc0YThkNzM1OTAxMGFhZGU0MzFiYzgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjMzZWM3NGE5MjM5ZWVhYzU5ZGQxNDJiYzc0ODQ1YmVhNDkzYzBiYjcxNjJhYmVlNTEzNTM4ZGQ3OGM0NzM2MTAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjUzODYzNTA4ODg5YzU2ZmM1YzA3MDhiMGY1NzZhNDY5MmRmNjRhZGZjNGI5NWJjZDY3YzBiOGYyYWQ0MmU1YTUifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-12T04:13:28.445Z"
+    "at": "2026-11-12T12:23:18.004Z"
   }
 }

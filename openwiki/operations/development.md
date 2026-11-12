@@ -41,6 +41,8 @@ sources:
     resource: repo://crates/local-deployment/src/process_host/journal.rs
   - id: openwiki-source-c6b92f5dd86f9cc046935fa4
     resource: repo://crates/mcp/src/task_server/tools/sessions.rs
+  - id: openwiki-source-a6cad3d930b299ebbbd793a3
+    resource: repo://crates/server-access/src/tests.rs
   - id: openwiki-source-d4130322a85c68ce2ddc220a
     resource: repo://crates/server/build_metadata.rs
   - id: openwiki-source-32657d5732db65a52d550bc6
@@ -179,10 +181,10 @@ sources:
     resource: repo://tests/workflow/playwright.config.ts
   - id: openwiki-source-7ff1b0a7c2af3c41dc6b3d55
     resource: repo://tests/workflow/specs/workflow-presets.spec.ts
-generated: { by: "codex", at: "2026-11-12T04:13:28.445Z" }
+generated: { by: "codex", at: "2026-11-12T12:23:18.004Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-12T04:13:28.445Z
+    at: 2026-11-12T12:23:18.004Z
 ---
 
 
@@ -663,3 +665,13 @@ MCP待機は300秒でtimeoutしたが、保存済みprocess identityを読取API
 [対話ヘルプ](../concepts/interactive-help.md#別環境で残る受入検証)に別環境の前提・手順・失敗時の停止とcleanupをまとめた。完成imageの非root Git/libgit2、binary/source一致、HOME/repos/work volumeを保持した異なるimageへの更新、実OAuth/MCP、実browser-provider結合、回答生成中取消、unknown revision binaryは未検証。今回の「別環境テストは準備だけ」というユーザー境界に基づく未実施は、重複検証を省いたagent判断と別のskip記録にした。375の既存source Memoryが報告したHTTP/provider成功も今回候補の実測へ置換しない。
 
 最初のOpenWiki begin前に `prepare_wiki` request `78632bfb-d7ec-4df6-91ac-d07f2cd1234d` でコードSHA `e5cddb51` の原本journal保存に成功した。同じ候補branchでWikiだけを別commitにする。コード検証・Wiki完了・公開要求保存・hostによるローカルmainへの実Git適用は別の事実であり、反映成立はRun終了後のhost結果を確認する。GitHub push、タグ、認証変更、デプロイ、稼働devの停止/切替/再起動、別環境テスト実行は行っていない。
+
+### Basic smokeと整形の追加統合
+
+固定base `7c1e69b877b4adc36c897be7512d05a9b3a27f63` へ最新source `18d6ffc5cda5bfb687686b6572ec86619cb7597e` を無競合mergeしたコード検証SHAは `4aee2d1277a39dafc753d806566b68648e04b732`。sourceとtreeは一致し、差分はverify-accessのBasic CSRF・秘密を含めないassert診断、server-accessの回帰、account_usage_testsのrustfmt改行だけである。認証/CSRF製品実装とUIは変更していない。旧391候補・旧Wiki run/journalを再利用していない。
+
+候補上の管理commandでfrozen install、source tree一致、差分空白、smoke構文、配布release試験3件、全Rustfmt、server-access全23件と同crate全target Clippy `-D warnings`、smoke Prettierが成功した。初回batchはyaml未導入で途中停止したが、install後にexact command全体を再実行してexit 0を記録した（request `f43b3f77-b372-47e4-9aab-e219c993c7c7`）。失敗履歴を消したり、後半の未実行をpassにしていない。
+
+frontend build・包括check/lint/backend:testは、上記3ファイル差分と公開Memoryの元SHA対応検証、baseに含まれる既存統合検証を根拠にagent判断で理由・残リスク付きskipとした。ユーザー省略指定ではなく、候補上の包括passでもない。完成Docker image・新版実HTTP・保持volume更新は未検証であり、次CI/ホスト隔離環境で確認する。過去のdirty binary実測は新候補のimage成功ではない。
+
+新規統合 `b9b75d2d-9c69-4fb2-9ca4-ba6e0562226d` のprepare request `c8a618b3-bdaa-42d3-8020-375e49bb14be` はbegin前に原本journal digest付きrecorded receiptを保存し、同一入力で再取得した。固有Wiki runで同じ候補branchを更新し、Wikiだけ別commitにする。正式main反映はRun終了後のhost結果で区別する。push/tag/外部公開・稼働環境変更は行わない。
