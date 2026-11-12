@@ -93,10 +93,19 @@ for (const operation of [
       target: { mode: "commit", ref: ancestor },
       operation,
     },
-    { Cookie: cookie, "X-LVK-CSRF": setup.body.csrf },
+    // Basic configuration revokes the setup session. Use direct Basic auth.
+    { "X-LVK-CSRF": "basic" },
   );
-  assert.equal(response.status, 200);
-  assert.equal(response.body.success, true, JSON.stringify(response.body));
+  assert.equal(
+    response.status,
+    200,
+    `POST /api/repository/read (${operation.kind}): HTTP ${response.status}`,
+  );
+  assert.equal(
+    response.body.success,
+    true,
+    `POST /api/repository/read (${operation.kind}): repository read failed`,
+  );
   assert.equal(response.body.data.source.build_revision, revision);
   assert.equal(response.body.data.source.commit, revision);
   assert.equal(response.body.data.source.path, sourcePath);
