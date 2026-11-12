@@ -105,7 +105,7 @@ sources:
 generated: { by: "codex", at: "2026-11-11T14:47:52.070Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-11T14:47:52.070Z
+    at: 2026-11-12T03:32:18.680Z
 ---
 
 # OpenWiki の初期生成・同期・回復

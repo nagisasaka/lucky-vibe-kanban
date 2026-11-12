@@ -64,6 +64,8 @@ sources:
     resource: repo://crates/server/src/remote_mcp/issue_relationships.rs
   - id: openwiki-source-a6a66833efdc90f958755f54
     resource: repo://crates/server/src/remote_mcp/issue_tags.rs
+  - id: openwiki-source-11ea08ba9dccc66b6167e1c9
+    resource: repo://crates/server/src/remote_mcp/issue_versions.rs
   - id: openwiki-source-9e15762bf7a432b7605f8466
     resource: repo://crates/server/src/remote_mcp/issue_write.rs
   - id: openwiki-source-83d25ea893da220229c11f8b
@@ -112,6 +114,8 @@ sources:
     resource: repo://crates/server/src/routes/integrations/conversation.rs
   - id: openwiki-source-b393e75029374eaf9cba5f7d
     resource: repo://crates/server/src/routes/integrations/runtime.rs
+  - id: openwiki-source-1ffb01d1ba3953937e0771bf
+    resource: repo://crates/server/src/routes/local_remote.rs
   - id: openwiki-source-2100c29dd665b0f698970419
     resource: repo://crates/server/src/routes/local_remote/board_api/issue_filter.rs
   - id: openwiki-source-65c0f36670a161dc05040e69
@@ -136,10 +140,10 @@ sources:
     resource: repo://crates/utils/src/mcp_error.rs
   - id: openwiki-source-3ecddc0be7b037ea6ab24381
     resource: repo://packages/local-web/vite.config.ts
-generated: { by: "codex", at: "2026-11-11T09:36:22.928Z" }
+generated: { by: "codex", at: "2026-11-12T03:32:18.680Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-11T09:36:22.928Z
+    at: 2026-11-12T03:32:18.680Z
 ---
 
 # 外部アクセス・MCP・Runner の境界
@@ -272,7 +276,7 @@ Workspaceはmetadata/indexとHEADを前後照合するが、複数範囲は独�
 
 ## stdioとremoteのmutation保証（LOCAL-365）
 
-Issue作成・更新・削除は共通Mutation/CAS/receipt処理を使い、認証と既存入力解決はadapterに残す。remoteの必須request_id/revisionとOAuth/Project範囲は維持する。stdioの `request_id` と更新 `expected_revision` は独立に省略可能で、指定した保証だけを適用する。request_idなしでは応答喪失後の同一要求の重複排除を、expected_revisionなしでは利用者の読取後の競合検出を保証しない。応答の `guarantees` と旧成功JSONのmeaningを確認する。自動生成IDや更新直前のrevision取得をその保証と呼ばない。[共通mutation](../../crates/server/src/remote_mcp/issue_mutations.rs#L1-L85)・[stdio保証](../../crates/server/src/remote_mcp/stdio.rs#L190-L290)
+Issue作成・更新・削除は共通Mutation/CAS/receipt処理を使い、認証と既存入力解決はadapterに残す。remoteの必須request_id/revisionとOAuth/Project範囲は維持する。stdioの `request_id` と更新 `expected_revision` は基本的に独立任意だが、LOCAL-377以降はdescription更新に観測した `expected_revision` が必須である。本文以外の旧更新では指定した保証だけを適用する。request_idなしでは応答喪失後の同一要求の重複排除を、expected_revisionなしでは利用者の読取後の競合検出を保証しない。応答の `guarantees` と旧成功JSONのmeaningを確認する。自動生成IDや更新直前のrevision取得をその保証と呼ばない。[共通mutation](../../crates/server/src/remote_mcp/issue_mutations.rs#L1-L85)・[stdio保証](../../crates/server/src/remote_mcp/stdio.rs#L190-L290)
 
 stdioの `get_operation` は元request_idを共有内部principalのowner境界で照会する。別principalや内部/外部間のreceipt共有はしない。内部principalはRun別隔離ではなく、request_id省略で初回応答を失うとreceipt特定を保証しない。受付・domain完了・実装完了・結果不明を区別し、不明な操作を新IDで重ねない。[照会](../../crates/server/src/remote_mcp/stdio.rs#L38-L85)・[stdio tool](../../crates/mcp/src/task_server/tools/operations.rs)
 
@@ -544,3 +548,14 @@ stdio globalとHTTP MCPのworkflowは、Issue UIと同じ固定presetサービ�
 開始時は保存Project defaultsのrevisionを照合し、実際の追記を固定する。同じrequest_idの異なる入力はConflict、同じ入力と保存runがあれば既存結果を返す。受付中のcrashでWorkspace等が残りrun未保存なら自動的に別Workspaceを作らず復旧確認を求める。不明な受付は新IDで反復しない。[開始receipt](../../crates/server/src/routes/workflow_presets.rs#L114-L205)
 
 statusは既存Run/NodeExecution/Sessionを読み、報告、確定source、失敗と残件を返す。stopは既存取消経路を使い成功済み成果を消さない。受付、provider終了、成果成立、Workflow完了を区別する。推奨後の採用・修正・削除・Git merge/公開は別指示で、独自の上位AI監視を前提にしない。[結果/停止](../../crates/server/src/routes/workflow_presets.rs)・[利用ガイド](../../assets/skills/workflow-presets/SKILL.md)
+
+
+## 手動本文版のMCP操作（LOCAL-377）
+
+stdioとremoteは同じ版サービスへ接続する。`get_issue.description` は従来どおり保存済み現在仕様であり、途中案を読むだけでは現在指定を変えない。Project/Issueを指定して `list_issue_versions` で版ID・本文・revisionと `current_version_id` / `current_revision` を読み、`get_issue_version` は `version_id` を指定して一版を読む。[公開catalogと認可](../../crates/server/src/remote_mcp/issue_versions.rs#L16-L145)・[stdio接続](../../crates/server/src/remote_mcp/stdio.rs#L189-L207)
+
+変更には安定した `request_id` を渡す。`create_issue_version` は任意名と任意の `source_version_id` を受け、指定時はコピー、未指定時は空版を作る。`update_issue_version` は `version_id` / `expected_revision` と任意のname/descriptionで同版を更新する。MCPでは省略/nullのdescriptionを保持し、本文を空にする場合は空文字を明示する。`set_current_issue_version` は対象 `version_id` と `expected_current_revision` / `expected_version_revision` を要求する。どの操作も実行開始や既存Runへの再指示を行わない。[mutationの共通処理](../../crates/server/src/remote_mcp/issue_versions.rs#L145-L245)・[版モデル](../concepts/project-and-issue.md#手動の本文版と現在仕様local-377)
+
+変更receiptは本文を含まないmetadataであり、保存ごとの全版本文snapshotを蓄積しない。結果を読み返すには版一覧またはID指定読取を使う。応答喪失時は同じrequest_idと同一入力、元operation・対象状態を照合し、新IDで重ねない。remoteでは既存Project認可とread/write scope、stdioでは既存内部actor境界を保つ。[receiptと失敗分類](../../crates/server/src/remote_mcp/issue_versions.rs#L145-L280)
+
+既存 `update_issue` によるdescription更新も現在版への互換操作である。観測したIssue revisionを送らず更新する旧clientは拒否されるため、先に `get_issue` で読み直す。現在版切替後に古い要求を別の版へ保存しない。版revisionをIssue.updated_at形式のexpected_revisionへ流用しない。既送信promptのreplayは後日の版本文を再解決しない。[共通更新](../../crates/server/src/routes/local_remote.rs#L985-L1109)・[起動と過去prompt回帰](../../crates/server/src/remote_mcp/launch_tests.rs#L380-L469)

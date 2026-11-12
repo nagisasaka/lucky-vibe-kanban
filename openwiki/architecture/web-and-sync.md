@@ -154,6 +154,8 @@ sources:
     resource: repo://packages/web-core/src/i18n/languages.ts
   - id: openwiki-source-efd2346cc808d71c75e004b0
     resource: repo://packages/web-core/src/pages/kanban/IssueTaskAttemptsSectionContainer.tsx
+  - id: openwiki-source-b8d01ec27647e9c180f0e8bc
+    resource: repo://packages/web-core/src/pages/kanban/IssueVersionEditor.tsx
   - id: openwiki-source-5b956d3d9d7f17c236d42ebb
     resource: repo://packages/web-core/src/pages/kanban/ProjectUtilities.tsx
   - id: openwiki-source-89a716f39968e2030cf296c0
@@ -290,6 +292,8 @@ sources:
     resource: repo://tests/header/README.md
   - id: openwiki-source-823cc976bdb2bdcb610e746f
     resource: repo://tests/integration-skip/history.spec.ts
+  - id: openwiki-source-73a5bd0edbaa761e30d263e4
+    resource: repo://tests/issue-versions/browser.mjs
   - id: openwiki-source-249425b2ca74a9cd2211b712
     resource: repo://tests/kanban/isolated.mjs
   - id: openwiki-source-83f6dac5589f86d65b4628c7
@@ -306,10 +310,10 @@ sources:
     resource: repo://tests/workspace-navigation/run-isolated.py
   - id: openwiki-source-b87e3253bd1458a0091f8587
     resource: repo://tests/workspace-navigation/workspace-navigation.spec.ts
-generated: { by: "codex", at: "2026-11-10T21:23:07.231Z" }
+generated: { by: "codex", at: "2026-11-12T03:32:18.680Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-10T21:23:07.231Z
+    at: 2026-11-12T03:32:18.680Z
 ---
 
 # Web の実行環境と同期
@@ -718,3 +722,14 @@ MarkdownPreviewの通常ソフト改行は折り畳み、明示hard breakは保�
 InputRequestedのprovider_metadataから既存の質問component用の項目を投影する。元question ID、複数質問、選択肢と説明を保持し、回答キーはIDを優先、旧入力では本文を使う。同文面でも異なるIDの質問をまとめない。`__proto__`や`constructor`もown-property判定で扱う。元attemptの失効後は操作を許可しない。[投影](../../packages/web-core/src/features/agent-runtime/model/nativeAgentQuestions.ts)・[回答component](../../packages/ui/src/components/AskUserQuestionBanner.tsx)・[offline browser](../../tests/chat/native-questions.mjs)
 
 この描画はRun状態を本文から推論しない。既存の初回message identity、final再掲防止、Markdown/DECISION表示を保持し、質問の正本・配送は[Sessionの契約](../concepts/session-and-agent-run.md#plan一般質問との境界)に従う。実認証済アプリと実モデルを通す一体E2Eは未確認である。
+
+
+## 手動版タブと現在仕様（LOCAL-377）
+
+Issue本文は `IssueVersionEditor` がIssue単位の版APIから取得する。閲覧タブの選択はローカル状態であり、現在仕様の指定を変えない。任意名で保存済み版をコピーする操作と空版の作成、名前変更、選択版の手動保存を提供する。debounceによる本文の自動保存はこの編集画面では使わない。[編集画面](../../packages/web-core/src/pages/kanban/IssueVersionEditor.tsx)・[版の正本](../concepts/project-and-issue.md#手動の本文版と現在仕様local-377)
+
+未保存文と名前・保存状態は版IDごとのdraftに保持する。要求対象IDとrevisionを捕捉し、mutationを直列化する。保存応答後も新しい編集があればsavedへ戻さず、409等の失敗は対象版のdraftとエラーを残す。応答順序の古い取得はsequenceで除外し、mutation中に到着した同期通知の取りこぼしは終了時の再取得で補う。作成後は一覧の末尾を推測せず `created_version_id` を選ぶ。[draft acknowledgement](../../packages/web-core/src/pages/kanban/issue-version-drafts.ts)・[遅延/競合回帰](../../tests/issue-versions/browser.mjs)
+
+現在仕様の本文は取得した現在版から親パネルへ渡し、Issue snapshotもrefreshする。既存collectionからdescriptionを更新する場合は `original.updated_at` を `expected_updated_at` として単件・bulkとも送る。`refreshShapeFallback` はPromiseを返すため、新鮮なsnapshotの取得完了を待てる。全版本文をProject全体の同期対象には追加していない。[互換書込とrefresh](../../packages/web-core/src/shared/lib/electric/collections.ts#L395-L510)・[起動入力側の接続](../../packages/web-core/src/pages/kanban/KanbanIssuePanelContainer.tsx)
+
+狭幅明暗のfixtureはmock APIを使う。実認証済みアプリの一体E2Eや実provider実行を証明するものではない。[再実行と範囲](../../tests/issue-versions/README.md)

@@ -49,6 +49,8 @@ sources:
     resource: repo://crates/server/src/remote_mcp/attachment_tests.rs
   - id: openwiki-source-3651b7ce4535b584634e8bc8
     resource: repo://crates/server/src/remote_mcp/runtime_read.rs
+  - id: openwiki-source-8cfc9e9e42e1bce7ff48a47e
+    resource: repo://crates/server/src/routes/local_remote/issue_update_tests.rs
   - id: openwiki-source-6c4d6d22a9d50e0def61c50d
     resource: repo://crates/server/src/routes/workspaces/integration.rs
   - id: openwiki-source-66c6304230dff031e0d0b855
@@ -139,6 +141,10 @@ sources:
     resource: repo://tests/chat/paste-markdown.test.mjs
   - id: openwiki-source-7cc1d248ce00f0c5ef61c76e
     resource: repo://tests/chat/prompt-context.test.mjs
+  - id: openwiki-source-73a5bd0edbaa761e30d263e4
+    resource: repo://tests/issue-versions/browser.mjs
+  - id: openwiki-source-1a64d7ccf57099c453630fcb
+    resource: repo://tests/issue-versions/README.md
   - id: openwiki-source-e023073a2ead0d2a5b8304d5
     resource: repo://tests/project-keys/migration_compat.py
   - id: openwiki-source-27c3f21856d770e96494e465
@@ -169,10 +175,10 @@ sources:
     resource: repo://tests/workflow/playwright.config.ts
   - id: openwiki-source-7ff1b0a7c2af3c41dc6b3d55
     resource: repo://tests/workflow/specs/workflow-presets.spec.ts
-generated: { by: "codex", at: "2026-11-11T09:36:22.928Z" }
+generated: { by: "codex", at: "2026-11-12T03:32:18.680Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-11T09:36:22.928Z
+    at: 2026-11-12T03:32:18.680Z
 ---
 
 
@@ -621,3 +627,20 @@ Rust batchのtool待機は300秒でtimeoutしたが、実processは継続し、�
 main取り込み時の残リスクは、実providerのsource create/edit/rename/unlink拒否とtmp/cache write成功の同時成立、実provider preset完走、認証付き実UI/MCP、全suiteが未確認であること。UIはAPI mock fixtureで、native policy単体試験も実namespace成功を示さない。実装完成・実環境検証完了は認定しない。
 
 デプロイ前には[配布/runtime前提と隔離fixture手順](../../deploy/server/workflow-source-protection.md)に従い、承認済みの依存と既存namespace policyが成立する環境で成功側を実証する必要がある。bwrap/socat不足と過去のnamespace拒否原因未確定を理由に、拒否probe再試行・無保護fallback・security緩和は行っていない。image存在検査とruntime成功は別である。Wikiはprepareで原本journalを保存してから同じ候補branchで保守し、正式main反映はRun終了後のhost公開結果によって確認する。
+
+
+## LOCAL-377の手動版回帰と統合検証
+
+固定base `5d3e625d9731923e948f8054c1ea21db4c13003d`（372を含む）へ377 source `d858490f9da0da094b87febecfc0790b40ac5735` だけを無競合mergeした。コード検証SHAは `00817c5e2c8edb1d5a26f9adcd86fdfb2ebf3fd6`。375は今回の採用対象ではない。en/ja commonの自動統合を保持し、競合解消や追加コード修復は発生しなかった。
+
+同SHAでfrozen install、production frontend build、全 `pnpm run check` / `pnpm run lint` / `pnpm run i18n:check` が管理記録で成功した（process `3b87b1ea-2121-44d2-ae1f-0fd43bc2f872`）。版draftとcollectionのVitest 7件、production editor + mock APIのChromium回帰、狭幅明暗画像、diff空白チェックも成功した（`08b148a8-33cc-4b0b-8655-52cf598215b3`）。[再実行手順とfixtureの限界](../../tests/issue-versions/README.md)
+
+全 `pnpm run backend:test` の初回は非変更範囲の `local-deployment::process_host::tests::terminal_drain_releases_control_owned_output` で終了状態assertionが失敗した（`28ebb73b-5fbe-4a01-8f3c-89b9ff517788`、該当suite104成功・1失敗・1無視）。同テストの単独再実行、`generate-types:check` と `prepare-db:check` は成功した（`fedde904-a75d-4c3e-8773-12614559804e`）。一時SQLiteは削除され、metadata差分はない。コードを変えず全backendを再実行し、server/MCP/DB/workflowを含む全workspaceが成功した（`91de8dee-f3fa-4e4c-ac5c-a9c3534c45fc`）。初回失敗は消さず、終了順序依存の再発可能性は残す。
+
+長い管理commandはMCPの300秒応答期限を超えたが実processは続行した。OS上の終了を確認し、元request_id・同一入力のreceipt replayでcompleted/exit 0またはfailedを回収した。応答期限超過をpassや再起動理由にはしない。一時的なinspect入力エラーと追加verify結果不明は、元receiptと対象状態を照合した後に同一IDだけで復旧した。
+
+版サービス回帰は既存NULL/空文字の移行、コピー/空作成、版数不変、現在指定のABA、同版並行編集、Integration予約拒否時のrollbackを扱う。MCP/起動試験は版操作だけでdispatchせず、現在仕様からの起動と既送信promptの保持を扱う。[保存・移行回帰](../../crates/server/src/routes/local_remote/issue_update_tests.rs#L265-L690)・[起動回帰](../../crates/server/src/remote_mcp/launch_tests.rs#L380-L469)
+
+source SHAのscoped Rustfmt/Prettier成功証拠と無競合の内容保持により、その重複再実行はagent判断でskip記録した。実Auth0/provider、認証済み実アプリ一体E2E、本番規模migration性能、別環境での実行は未確認であり、成功扱いしない。別環境テストは手順・前提の準備までとし、実providerや稼働DBには向けていない。一般suiteのignored隔離試験は実行したと扱わない。
+
+コード検証後にprepare_wikiで原本journalを保存してから同じ候補branchのWikiを更新し、Wikiだけを別commitにする。コードSHA、Wiki完了、公開要求、hostによるローカルmainへの実Git適用は別の結果である。GitHub push、認証変更、tag、deployment、共有devの停止/切替/再起動は行っていない。

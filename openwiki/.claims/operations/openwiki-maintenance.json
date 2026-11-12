@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:6527006573275e7cfb58938bb395078d3ff505864f3767cfdc52ca554c596a87",
+  "pageVersion": "sha256:10000d36009b807c82a5be90db83e482c635e2cac6adbb7e870afe82a6796d46",
   "claims": [
     {
       "id": "claim_7239e619508e4a2785f62b8f23fd0a74",
@@ -512,7 +512,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/remote_mcp/launch_tests.rs",
-          "version": "repo-file-v1:sha256:ba89e27d339d06fa53cf06b9a8d7c9b2db999734965e86f3a4b3a926dc67f984"
+          "version": "repo-file-v1:sha256:84fc1624ad9ec8047e4f2fd4c4cf2d2f8450c8e0589f9ea324f27bd7b6474317"
         },
         {
           "resource": "repo://crates/server/src/remote_mcp/operations.rs",
@@ -571,7 +571,7 @@
       "statement": "明示Projectの実在と対象Repoの関連を受付時・紐付け直前に確認する。関連集合は作成用Gitプリセットと既存Git Workspace実Repoを含み、保存済み空プリセットを優先しdirectory既定値の残存Repoや削除ProjectのScratchだけでは認めない。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/local_remote.rs#L3615-L3662",
+          "resource": "repo://crates/server/src/routes/local_remote.rs#L3634-L3681",
           "version": "repo-lines-v1:sha256:fbd1bca44a4228fe6b793f04e1522541350a80ebe643b0a904ea959950f89560:eyJzZWxlY3RlZExpbmVDb3VudCI6NDgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAyNWYxZWQ4MjkyZWZhMzY4MjNlY2M5Nzk4Njc1NWQ0MzNjYzhjMjUxYTcxYTEzNGQ4MWQyMGM5ZTA3Y2ZlZTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM1ZTM0NDVkMDA4MTNlMWIyM2QxZTgxYTBlZjU0NDE0NDMyY2RjYjc4OTg5Y2IyNTJlMzcyMGU1ODZiMWEzZmMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFiNzhjMGIxMzc3Mjc5MTAyYzM0ODFjMjMxNTNmY2FjNDEyZmJmZWZkYjgwMDRmMjhhOTUyOGQ5MGIzNzQ1NjAifQ"
         },
         {
@@ -623,7 +623,7 @@
       "statement": "Project文脈のfixtureはin-memory DBでBootstrap/SyncのIssue紐付けとSession作成、defaults・削除・無関連・共有Repo・未指定・statusなしを検査し、UIとMCP fixtureは伝播・認可を検査する。実モデル生成や公開の成功検証ではない。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/remote_mcp/launch_tests.rs#L750-L814",
+          "resource": "repo://crates/server/src/remote_mcp/launch_tests.rs#L841-L905",
           "version": "repo-lines-v1:sha256:adbdf4068c790a46c15f7817c54ff816400bb833adf33cc7ee73e93158405310:eyJzZWxlY3RlZExpbmVDb3VudCI6NjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUxOTQ4NGVlZGYzNjRmYjhjMTJmMWViOThmYmY2YTliNGY2NTBmNDI3ODc0YThkNzM1OTAxMGFhZGU0MzFiYzgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg0ZTQyMDhjZDZmZmI4YzRhMzU0N2IyZjU0YWRhMTk5NzhjM2YzNjVlNzhmOTUwMmVmNTE0NWNkZDJhYTg1NDMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImEzYjNlZTBkNGY5M2ZiZDhkMzYxNTM5ZDFlYzk3M2Q5OTVjMzAzOTZiMDY0ODJjNTBlOWIzMmRjMGQ3MDEyNTYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNjNmZiNWViYmFkNTRkMDkzNGQ3Y2Q5MDhjNjk5NzJjMjMwMmJjYjI5MzU5NTc3YTk3MWQyNmUzMDIzZWM4MmYifQ"
         },
         {
@@ -951,7 +951,7 @@
       "statement": "Wiki保守のrootはWorkspaceRepoの保存配置を用い、Project関連検査は作成プリセットと既存Git Workspace実Repoを含む。プリセット解除は既存保守対象を無効化しない。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/local_remote.rs#L3650-L3662",
+          "resource": "repo://crates/server/src/routes/local_remote.rs#L3669-L3681",
           "version": "repo-lines-v1:sha256:e6dab0801d4e3e8aea9fe6ead29d3baba07268d43a87034956f9e0e21b8c5081:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY1ODA3OTkyMzI3OThjN2JmZGU0ZWM1ODI4MWNiYzAzMTk5OTA4YjY3ZGZhNzFiMzJkYTQxYmQ1OTNmZjllMzkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImIxYmIzOTUyZGZjOTdkYWQ1ZjAyMTgwMzhjNGQ5MTk0ZmI1Yjk4MWM0OTU5YWUwOTI0YTUyYTQ5OTVjMzhjYTEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFiNzhjMGIxMzc3Mjc5MTAyYzM0ODFjMjMxNTNmY2FjNDEyZmJmZWZkYjgwMDRmMjhhOTUyOGQ5MGIzNzQ1NjAifQ"
         },
         {
@@ -981,6 +981,6 @@
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-11T14:47:52.070Z"
+    "at": "2026-11-12T03:32:18.680Z"
   }
 }

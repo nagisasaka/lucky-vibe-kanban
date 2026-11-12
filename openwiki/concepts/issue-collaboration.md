@@ -26,6 +26,8 @@ sources:
     resource: repo://crates/server/src/remote_mcp/sql/comment_previews.sql
   - id: openwiki-source-1ffb01d1ba3953937e0771bf
     resource: repo://crates/server/src/routes/local_remote.rs
+  - id: openwiki-source-db663c02905b9785eff4f4af
+    resource: repo://crates/server/src/routes/local_remote/issue_versions.rs
   - id: openwiki-source-1b60b440460908f618460dff
     resource: repo://crates/services/Cargo.toml
   - id: openwiki-source-4251300987fd63068dbcfd5d
@@ -42,10 +44,10 @@ sources:
     resource: repo://tests/server/run-issue-comments.mjs
   - id: openwiki-source-24d832f3cec15712d984861e
     resource: repo://tests/server/specs/issue-comment-reviews.spec.ts
-generated: { by: "codex", at: "2026-11-07T12:36:43.233Z" }
+generated: { by: "codex", at: "2026-11-12T03:32:18.680Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-11T09:36:22.928Z
+    at: 2026-11-12T03:32:18.680Z
 ---
 
 # Issue のコメント・レビュー・添付・通知
@@ -126,3 +128,8 @@ Linux の既定 notifier は `notify-rust` を使う。services の依存であ�
 ## コメントの視覚的な区切り
 
 各コメントは独立した article として下余白と区切り線を持ち、最後の項目だけ線を省く。著者名は高コントラストの太字、相対時刻は小さな補助文字にし、長い著者名は折り返す。レビュー来歴・本文編集・reaction・返信の既存機能は同じ項目内に保持する。[表示](../../packages/ui/src/components/IssueCommentsSection.tsx#L280-L430)
+
+
+## 手動版本文とレビュー対象の境界（LOCAL-377）
+
+コメント・レビューはIssue全体に属し、名前付き本文版へ移し替えない。`review_target` と `targets_current_revision` は引き続きIssueの `updated_at` の観測・比較であり、版IDや版revision、厳密な過去本文snapshotではない。現在仕様を切り替えたり後日版を編集したりしても、旧レビューの保存済み対象値は現在版へ付け替えない。[レビュー比較](../../crates/server/src/remote_mcp/issue_comments.rs)・[手動版の更新境界](../../crates/server/src/routes/local_remote/issue_versions.rs)・[版モデル](project-and-issue.md#手動の本文版と現在仕様local-377)

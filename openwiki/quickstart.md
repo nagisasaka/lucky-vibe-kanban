@@ -58,6 +58,8 @@ sources:
     resource: repo://crates/server/src/routes/integrations/runtime.rs
   - id: openwiki-source-1ffb01d1ba3953937e0771bf
     resource: repo://crates/server/src/routes/local_remote.rs
+  - id: openwiki-source-db663c02905b9785eff4f4af
+    resource: repo://crates/server/src/routes/local_remote/issue_versions.rs
   - id: openwiki-source-231241ac3c842dcd67525890
     resource: repo://crates/server/src/routes/openwiki.rs
   - id: openwiki-source-3b873a675f85754e9183d162
@@ -98,6 +100,8 @@ sources:
     resource: repo://packages/web-core/src/features/pets/SidebarPet.tsx
   - id: openwiki-source-39fe27949ccee837db47d1b9
     resource: repo://packages/web-core/src/features/workflow/ui/WorkflowTemplateEditorPage.tsx
+  - id: openwiki-source-b8d01ec27647e9c180f0e8bc
+    resource: repo://packages/web-core/src/pages/kanban/IssueVersionEditor.tsx
   - id: openwiki-source-5b956d3d9d7f17c236d42ebb
     resource: repo://packages/web-core/src/pages/kanban/ProjectUtilities.tsx
   - id: openwiki-source-235a3eb75f22fdecdbd66a8f
@@ -116,10 +120,10 @@ sources:
     resource: repo://packages/web-core/src/shared/providers/TerminalProvider.tsx
   - id: openwiki-source-23775c3de52f3ab95a13cb8b
     resource: repo://README.md
-generated: { by: "codex", at: "2026-11-11T09:36:22.928Z" }
+generated: { by: "codex", at: "2026-11-12T03:32:18.680Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-11T09:36:22.928Z
+    at: 2026-11-12T03:32:18.680Z
 ---
 
 # クイックスタートと調査案内
@@ -485,3 +489,12 @@ Wikiはコード検証後の別commitで、正式main反映は公開要求後に
 固定base74317e44へsource6a8c43a6を無競合採用したコード検証SHAは `23ac54d4c270a71274e8c6c631180877fd6d2eb7`。[候補上の管理検証・省略理由・未実証事項](operations/development.md#local-372の統合検証と未実証の保護成功経路)に、build/check、Workflow/provider制限/runtime回帰、Clippy、生成型/SQLx、配布検査とmock UI成功を記録する。実provider完走、source書込拒否＋tmp/cache成功の同時成立、認証付き実UI/MCP、image/runtimeは未検証であり、実装完成・実環境検証完了は認定しない。
 
 Wikiはコード検証後の正式prepareによる原本journal保存後に同じ候補branchで更新する。Wiki完了とmain公開は別で、正式公開要求の保存後に担当Runを終了し、hostがwriter収束・既知setup差分の限定復元・clean検査とGit反映を確認する。dev/server停止・再起動・切替、デプロイ、image構築、container再作成、権限/共有データ変更は今回行っていない。
+
+
+## LOCAL-377：Issue本文の手動版と現在仕様
+
+Issueの本文は自由な名前の編集可能な版として保持し、閲覧タブと現在仕様を分ける。通常保存で版は増えず、コピー/空作成と現在指定は明示操作で行う。[正本・移行・競合](concepts/project-and-issue.md#手動の本文版と現在仕様local-377)・[版別draftと手動保存](architecture/web-and-sync.md#手動版タブと現在仕様local-377)・[stdio/remoteの5toolと旧clientのrevision要件](integrations/remote-access.md#手動本文版のmcp操作local-377)
+
+現在仕様のdescription互換コピーは既存読取・将来の起動・自動マージsnapshotへ流れる。既送信promptと旧レビュー参照を後日の版へ読み替えない。[コメント・レビューの境界](concepts/issue-collaboration.md#手動版本文とレビュー対象の境界local-377)
+
+372を含む固定base `5d3e625d9731923e948f8054c1ea21db4c13003d` へ377だけを無競合統合し、コード検証SHAは `00817c5e2c8edb1d5a26f9adcd86fdfb2ebf3fd6`。候補上でbuild・check・lint・i18n・生成型/SQLx・版browser/Vitest・全backend再実行が成功した。初回backendの既存終了状態テスト失敗、単独/全suite再実行成功と残る再発可能性、実認証/provider・稼働DB・別環境未実施は[検証記録](operations/development.md#local-377の手動版回帰と統合検証)へ分けて記す。375は次回対象である。Wikiは別commit、正式main反映はRun終了後にhostが確認する。push・tag・認証変更・デプロイ・稼働環境操作は行わない。

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:4e37780ebdb1219151c76a98e56f33d84d1ffa1b837b5407f4b6a205b933e072",
+  "pageVersion": "sha256:1eef118849d9d5d3f0280ee09567579b3c84954ce70c0dfb26d392ee0d9fd59f",
   "claims": [
     {
       "id": "claim_cd547b65737e432fb2cf718c4992aa97",
@@ -37,8 +37,8 @@
       "statement": "collection mutationはREST後にcacheを破棄し、古い進行中取得の終了後に開始するsnapshot取得を待って楽観更新を収束させる。",
       "evidence": [
         {
-          "resource": "repo://packages/web-core/src/shared/lib/electric/collections.ts#L362-L471",
-          "version": "repo-lines-v1:sha256:755213d2292e882ac29420117dfcb8c94a1bd3a27ad2ec5559635d7719f04282:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEwLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJlZmQ3YzUzYTI2MTg5MTM1NTkzMzkzM2E3N2YzNDI2Y2FhMjc2ZDljMzFiYWJmMjExYTg5OTZkOGQwMzM5Nzk0IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI4NTIyYTM2NWE1NTgzZDkzODBjMTQ0ZTFhNzViN2YzMDQyOGU1ZWEzNTBjMzRmYmU0NjhmMzNmNGE5Zjg0MjY0IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI1Yjk2NmM0OThmMWZiYzQxZGMzOTk2MGFjZGY1ZDcxMjA2NTMwYzQ0ZDIxZGEzZmVmZTU3MDgxODlkZGQyNTk0IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiIxNmFiNDQ5YzdjYTU3NTljMGRmOGY0MzY4NmU1OThmMzRlYjYxZGQ3N2FkNWYwYjE5OGJkODZiMmQyZDA1MjczIn0"
+          "resource": "repo://packages/web-core/src/shared/lib/electric/collections.ts#L362-L489",
+          "version": "repo-lines-v1:sha256:5fd65f064251cfa2011ee7919cfd958558f1a79c07fb9276634a0f27ff14b773:eyJzZWxlY3RlZExpbmVDb3VudCI6MTI4LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJlZmQ3YzUzYTI2MTg5MTM1NTkzMzkzM2E3N2YzNDI2Y2FhMjc2ZDljMzFiYWJmMjExYTg5OTZkOGQwMzM5Nzk0IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI4NTIyYTM2NWE1NTgzZDkzODBjMTQ0ZTFhNzViN2YzMDQyOGU1ZWEzNTBjMzRmYmU0NjhmMzNmNGE5Zjg0MjY0IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI1Yjk2NmM0OThmMWZiYzQxZGMzOTk2MGFjZGY1ZDcxMjA2NTMwYzQ0ZDIxZGEzZmVmZTU3MDgxODlkZGQyNTk0IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiIxNmFiNDQ5YzdjYTU3NTljMGRmOGY0MzY4NmU1OThmMzRlYjYxZGQ3N2FkNWYwYjE5OGJkODZiMmQyZDA1MjczIn0"
         }
       ]
     },
@@ -331,7 +331,7 @@
       "statement": "会話の永続イベントはattempt番号とcanonical sequenceで並べ、native audit番号と混在ソートしない。Steerはprovider制御送信後にcommand IDのUser messageをnative refsなしで保存する。",
       "evidence": [
         {
-          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L3694-L3734",
+          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L3720-L3760",
           "version": "repo-lines-v1:sha256:0483a7451e1e4251ef8a95cad6bb5e0051fbf2e94e7608a0b95176329ab1df76:eyJzZWxlY3RlZExpbmVDb3VudCI6NDEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQzYTE5ZmRiZjJmMjFiMmMxOTg3MzgwNjE0NWM3ZjU4ZjlmOGFmYWYyNGUxNDQ0M2Y2NDBiOTkwMzIwYzI2NzciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU1MjJjNDJjZDE5YzZkMDNkODA4YzQ1MjcyMDU1MjgyNWI3ZWExYzViNDkxYjIxODUxMWNhYzc0MTVjZjlkOWIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjA3NjJhMTcwOGRiNjllNzlhMDMwNmVkNTEwOWVlYWY4ZTg2MjM5OTdmZTRmMTE4MTQ0MjUyY2E3MTE3MjU3YmMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjVlMmEyOWE4MGY1MGIxNjI4ZGNjNTM0MzA1MWE3MTVhM2I0MWJiNmUzYjI5ZDgzZmFmZWUzZDYyMjdkZDc1M2UifQ"
         },
         {
@@ -1391,7 +1391,7 @@
           "version": "repo-lines-v1:sha256:023ff2aa24f35cf812dd0dfe590949c1d806ad3ca7736d6327e66ac241659674:eyJzZWxlY3RlZExpbmVDb3VudCI6OTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc2MzhjYTJiNjM4OGJjNmEzNjBjZDU3NjkxZTA0ZTcwYTlhMGZlMWQxZDljMjJiYTg4ZTllMzM1NzQ2ZWJlM2YiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjBlMmU5YmVjNzYyMTgwNTBiYjNiNGM2YTA3MGRhMGZmMGI3MTE0YjA2YWNhMTJhZGVjZjZjODIxMWRmNDVkZjgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijg1OWEwMTgwYjEzMWU1ZGFmYzAzOTMxOWNhMDgxZWE1Zjc2NDEwNGY4OTUzMjM3ZWE5NDNmYzNkZjY5YzI0YTQifQ"
         },
         {
-          "resource": "repo://crates/server/src/remote_mcp/mod.rs#L596-L599",
+          "resource": "repo://crates/server/src/remote_mcp/mod.rs#L603-L606",
           "version": "repo-lines-v1:sha256:d2da0a3a0382b837b01bef8e99df1fa81cfde7178cd424085338a25c947a4a4a:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDI1NGFmMDRhOGM3NjI5NTcyMTAwYTg5YzZhZDcxNjM2OWVmYTM2YjhkZjBkZjBhNDE4NDkzYWEwMTIxM2IyYyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZTE1ZTVlNDRiYTdjODAyMGE1NGY1OTA1ZGRmZDg1MzkxMWUxOTBkNWVmZjRhMDdmMmM0MTQyYTk1MDAxYzNhMSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYjE5MjA2ZTE5N2U0N2E3Yzc2ZmU0YmYzYjQ0NWUxNGU3YTZlMDUyMTExM2VkMWI3ZjM1NmVhYThjNjVlYTM4NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTI3NzljOWVhMTFmZTFjZGFjYmY1OTc5OGNkY2EyNTFlMzE3N2JiNTQzZDRmMDMyYWI4ZjUyNGJiMWVkZjdhZCJ9"
         },
         {
@@ -1553,7 +1553,7 @@
       "statement": "archive欄表示・archive対象遷移・Issue Workspace一覧表示でhost付き既存summary queryを無効化する。",
       "evidence": [
         {
-          "resource": "repo://packages/web-core/src/pages/kanban/IssueTaskAttemptsSectionContainer.tsx#L59-L65",
+          "resource": "repo://packages/web-core/src/pages/kanban/IssueTaskAttemptsSectionContainer.tsx#L54-L60",
           "version": "repo-lines-v1:sha256:43919b92c8383d3b1814a58c9e55fc3722482c8f1813c3d8da4549d7ec8c77f1:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZGRjMzJhZTY4YWU1MDE2ZGExNjc1ZTVhOWU5YWRjODY2MjBmNDQ0MTgyNjIyNjNhYWM0NTAxNzc1ODk5Y2IxZCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMzRkNDY5MmM2ZGFhZTJiNWY4MzQwZTg2YmNmOGMzZGE5YWY4ODgxZDQ5Y2ZkMjhmODNjNWFkNjE1MDdkMTgyZSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYTdlMGZmYmEwMWRjZjY3NTQ5ZmY4N2EwZmMzOTRmMWVhYmNmNTAxOWZhMTY0YzU3NzgwOGRkNWIwODQzNmQ5NiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMmUwMmY5NGYxNWNiNWE1ODJmODQ1MzA4OWFkYzE3OTZiYTlkNDc5Yjc3ODIzNTcwMmZmYjRjNmM4MDkwNTMyYSJ9"
         },
         {
@@ -1575,7 +1575,7 @@
           "version": "repo-file-v1:sha256:f63972ace937624cb8b448234a0ba062eb1aa274ac283fadca408f07a0c7947f"
         },
         {
-          "resource": "repo://crates/server/src/routes/local_remote.rs#L156-L196",
+          "resource": "repo://crates/server/src/routes/local_remote.rs#L157-L197",
           "version": "repo-lines-v1:sha256:8548a2ff911200831b54b7c254cf94bde2f7adfb68a7baf5f56c8fa59484e668:eyJzZWxlY3RlZExpbmVDb3VudCI6NDEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU5MDlhNTNhNjE4ZDAyOGUxZDMwMDBjMGE3YWJjZWVjYmU1ZmIzN2Y0ZTUxMWVmZTQ2NjQzZmFkNmU2Njg3MmYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU5MDlhNTNhNjE4ZDAyOGUxZDMwMDBjMGE3YWJjZWVjYmU1ZmIzN2Y0ZTUxMWVmZTQ2NjQzZmFkNmU2Njg3MmYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImMxYzQ1N2VhMGE5YWU1NWU3ZmRhOTM0YjcwYWM0OTU1YjFmMjMwNmZmN2IzZjA0NTk5Y2ZlN2RjYzUyNDNjM2UiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjU2ZDkwMmU1NTVjZDE5NjFhNWNiZjJlZDkzOTE4MTNkZTI0MzY0ZTI1ODZkNjYzNzUzYWI0MmYyZDNmN2EzNjkifQ"
         },
         {
@@ -1799,10 +1799,34 @@
           "version": "repo-file-v1:sha256:21b8fdf37b04af9593c0304616df0a8b8c372e60deb5d55ed81c9142aa2d7345"
         }
       ]
+    },
+    {
+      "id": "claim_7344c2610a0a4b4cad117cd9a9fec2a0",
+      "statement": "Issue本文UIは版IDごとに未保存draftと保存状態を持ち、手動保存の対象を固定し、競合時に未保存文を保持する。閲覧タブの変更だけでは現在仕様を切り替えない。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/pages/kanban/IssueVersionEditor.tsx",
+          "version": "repo-file-v1:sha256:88248b368459e38bbd8567984e36e94e0ae6d32374c2ee4943e0bc0bd9275a06"
+        },
+        {
+          "resource": "repo://tests/issue-versions/browser.mjs",
+          "version": "repo-file-v1:sha256:2ff60c6a8a52d70aa16d7593386906b5ce01b350d1c75b16413f0c97a705e731"
+        }
+      ]
+    },
+    {
+      "id": "claim_3cb7eede90d548d49af90805193f239b",
+      "statement": "Issue descriptionのcollection更新はoriginal.updated_atをexpected_updated_atとして単件・bulkに付加し、refreshShapeFallbackはsnapshot更新のPromiseを返す。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/shared/lib/electric/collections.ts#L395-L510",
+          "version": "repo-lines-v1:sha256:e7a4c01158dd54ba4d6bd6942cb4c40989ab42063ddeacc41c76381990c8775b:eyJzZWxlY3RlZExpbmVDb3VudCI6MTE2LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI0MTJjYTM0NWNjZjc1YmY5YzA4MDZiY2U2OTViZThkZTgwOGI3OTk4NDI1MWE3YTU0ZDIwMmNmNjEwMWRkNDUxIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI1NmI0ZWUxZWY3OTkxYTIwYWYzMGIwODUyODQ4YWNkMWFiOTlkN2FjMjQwZWMxY2VjNjVhMzUzMWIxNzIxOTJhIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJhMDMxZWI0YTI1OTI2MDA5MmJkOWRhZGZkOTZkZDIxOTEyMTllYzA2MjdjNWU5NWIwOTg0ZTdmNTBmYmRlMGQ3IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJiMzczZWY2YWZjNjM5OTk3MzRkMDRiYTdmMjUyODc3M2FhODg0N2FjNzU3ZjQ4Y2UzMGY4ZjhhNWVmNTgwYTljIn0"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-10T21:23:07.231Z"
+    "at": "2026-11-12T03:32:18.680Z"
   }
 }

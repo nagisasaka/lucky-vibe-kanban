@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:1ad2e64d3fb21259f57125dba60596129c79fbc567edcd35a1e0dc882b4f7eff",
+  "pageVersion": "sha256:983f9d2fff319c68efbdff517661465495ab554a3df60ee392d33e2ca2694652",
   "claims": [
     {
       "id": "claim_1640e4eaeac94676a84eb3b9d9970d30",
@@ -1081,10 +1081,28 @@
           "version": "repo-file-v1:sha256:3b6c34bcd60166bf77d91ec11608f9c79f3071a659a6da5c6161aa4a6d506587"
         }
       ]
+    },
+    {
+      "id": "claim_6279fce719a94ba3b88e42ac9c08cb95",
+      "statement": "手動本文版の回帰fixtureはproduction editorとmock APIで遅延保存・タブ分離・競合draft保持・外部revision・作成ID・名前のみ保存を検査し、server回帰は移行・ABA・予約rollback・並行編集を扱う。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/routes/local_remote/issue_update_tests.rs#L265-L690",
+          "version": "repo-lines-v1:sha256:7aa68861f84710bd11db5a5e542ac09fc5534de9410af2915126102f48afebc8:eyJzZWxlY3RlZExpbmVDb3VudCI6NDI2LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJmNTZhNzdmODIxMzQzNTQ1MjdiODcyYjkwOTU1YmE3ZGE4MzQ1YTQ2NGUzNjVmYWMyNGFjNjBhZTkwZjRjOWJkIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI0MTJjYTM0NWNjZjc1YmY5YzA4MDZiY2U2OTViZThkZTgwOGI3OTk4NDI1MWE3YTU0ZDIwMmNmNjEwMWRkNDUxIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIzNmEyMmNhZmEwMjc3YWUwOWE5YzEyNWM3ODE2NGEzMjQ3OGYyMzg1NzVlNzNhNmYwZDhlNGE5YTIxNjQ1YjkwIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MCwiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1In0"
+        },
+        {
+          "resource": "repo://tests/issue-versions/README.md",
+          "version": "repo-file-v1:sha256:3dd45761b23409a7f03c230f3cec3ff6e5c63eb3ffca83b649568e5541aa67d5"
+        },
+        {
+          "resource": "repo://tests/issue-versions/browser.mjs",
+          "version": "repo-file-v1:sha256:2ff60c6a8a52d70aa16d7593386906b5ce01b350d1c75b16413f0c97a705e731"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-11T09:36:22.928Z"
+    "at": "2026-11-12T03:32:18.680Z"
   }
 }

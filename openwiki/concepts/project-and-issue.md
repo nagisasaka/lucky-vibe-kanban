@@ -26,6 +26,8 @@ sources:
     resource: repo://crates/db/migrations/20261027090000_generated_issue_status.sql
   - id: openwiki-source-4fe58481730f861df4628448
     resource: repo://crates/db/migrations/20261027090100_issue_number_high_water.sql
+  - id: openwiki-source-9bf50baebc6a9d4f59193172
+    resource: repo://crates/db/migrations/20261111220000_issue_versions.sql
   - id: openwiki-source-9bc71fe4f6cbbaa6fa9168e1
     resource: repo://crates/db/src/models/agent_runtime_kanban_tests.rs
   - id: openwiki-source-5c693a62e6ccf09ccb60592f
@@ -52,6 +54,8 @@ sources:
     resource: repo://crates/server/src/remote_mcp/issue_mutations.rs
   - id: openwiki-source-9e15762bf7a432b7605f8466
     resource: repo://crates/server/src/remote_mcp/issue_write.rs
+  - id: openwiki-source-83d25ea893da220229c11f8b
+    resource: repo://crates/server/src/remote_mcp/launch_tests.rs
   - id: openwiki-source-ab70a43b3f61734a8322478b
     resource: repo://crates/server/src/remote_mcp/stdio.rs
   - id: openwiki-source-5720d865d1c837f0e6b7dab7
@@ -62,6 +66,10 @@ sources:
     resource: repo://crates/server/src/routes/local_remote/issue_archive.rs
   - id: openwiki-source-03dd6dd9ecb241eb669cb49c
     resource: repo://crates/server/src/routes/local_remote/issue_relations.rs
+  - id: openwiki-source-8cfc9e9e42e1bce7ff48a47e
+    resource: repo://crates/server/src/routes/local_remote/issue_update_tests.rs
+  - id: openwiki-source-db663c02905b9785eff4f4af
+    resource: repo://crates/server/src/routes/local_remote/issue_versions.rs
   - id: openwiki-source-a517c0f8e44d2cf0c440fbfc
     resource: repo://crates/server/src/routes/workflows.rs
   - id: openwiki-source-38de6ae4b89edddb12325c18
@@ -108,10 +116,10 @@ sources:
     resource: repo://tests/kanban/issue-detail.mjs
   - id: openwiki-source-62d93277f2c37df9b3fcebae
     resource: repo://tests/kanban/README.md
-generated: { by: "codex", at: "2026-11-11T09:36:22.928Z" }
+generated: { by: "codex", at: "2026-11-12T03:32:18.680Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-11T09:36:22.928Z
+    at: 2026-11-12T03:32:18.680Z
 ---
 
 # Project・Issue と実施の関係
@@ -256,7 +264,7 @@ Issue 集約の承認・入力・実行・失敗・未確認・DevServer 文字�
 
 ### Activity による手動順序の更新
 
-本文保存、新規コメント、canonical の Succeeded / Failed / Cancelled / Crashed / AuditFailed の初回終端は、対象 Issue だけを現在列の先頭へ移す。stream の文字追加、単なる Running、同じ終端の再送では順位を変えない。全カードを更新日時で並べ替えたり、他カードを renumber したりしない。列の status 同期とは独立で、失敗・取消でも activity rank は更新できる。[共通順位処理](../../crates/db/src/models/issue_order.rs#L1-L83)・[本文保存](../../crates/server/src/routes/local_remote.rs#L879-L963)・[全終端の条件](../../crates/db/src/models/agent_runtime_kanban.rs#L7-L23)・[両保存経路の回帰](../../crates/db/src/models/agent_runtime_kanban_tests.rs#L750-L865)
+現在仕様の本文保存、新規コメント、canonical の Succeeded / Failed / Cancelled / Crashed / AuditFailed の初回終端は、対象 Issue だけを現在列の先頭へ移す。stream の文字追加、単なる Running、同じ終端の再送では順位を変えない。全カードを更新日時で並べ替えたり、他カードを renumber したりしない。列の status 同期とは独立で、失敗・取消でも activity rank は更新できる。[共通順位処理](../../crates/db/src/models/issue_order.rs#L1-L83)・[本文保存](../../crates/server/src/routes/local_remote.rs#L879-L963)・[全終端の条件](../../crates/db/src/models/agent_runtime_kanban.rs#L7-L23)・[両保存経路の回帰](../../crates/db/src/models/agent_runtime_kanban_tests.rs#L750-L865)
 
 共通の global UI_PREFERENCES Scratch に保存された Project / active view / sort をイベントの transaction 内で読む。Manual (`sort_order`) のときだけ rank を変え、降順では最大側を先頭にする。title / priority / created_at / updated_at の明示 sort 中は、裏の手動 rank も更新しない。Board 非表示中も保存済み値が基準となり、複数 browser の違う選択や設定保存失敗時には、各画面の未保存の意図まで保証しない。[保存済み sort の解釈](../../crates/db/src/models/issue_order.rs#L5-L83)
 
@@ -338,3 +346,16 @@ Issueの「タスクの試行」から共通開始ダイアログを開き、単
 ### 採用後もsource作業が続く場合（LOCAL-364）
 
 公開後の自動Doneは、採用元Workspaceの現在HEADと固定source SHAの単純比較、同Workspace内の非terminal Runだけで保留する。本文revisionの変化や同Issueの別Workspaceは条件にしない。HEADを観測できないsourceも現在列を維持し、理由をreceiptへ保存する。他sourceのDoneと全体の予約解放は継続するが、DB照会やreceipt保存の失敗は伝播する。公開成功とsourceのDone成立は別の事実として表示する。[Done判定](../../crates/db/src/models/integration.rs#L346-L436)・[HEAD観測](../../crates/server/src/routes/integrations/runtime.rs#L545-L587)
+
+
+## 手動の本文版と現在仕様（LOCAL-377）
+
+Issue本文の正本は `issue_versions` に保存する。各版は安定したID・Issue ID・自由な名前・nullable本文・編集revisionを持つ。利用者が明示的にコピーまたは空作成するときだけ版が増え、通常保存は同じ版を更新する。draft/fixという固定段階や確定操作はない。Issueの `current_version_id` は将来の実行で使う仕様を示し、閲覧タブとは別である。切替で版名と本文を交換しない。[版サービス](../../crates/server/src/routes/local_remote/issue_versions.rs)・[UIの保存状態](../architecture/web-and-sync.md#手動版タブと現在仕様local-377)
+
+`local_issues.description` は現在版本文の互換コピーであり、二つ目の正本ではない。既存の読取・起動入力・自動マージ採用snapshotはこの現在仕様を読む。`BEGIN IMMEDIATE` 内で対象とrevisionを検証し、現在版の保存/現在指定/description更新を既存Integration triggerと同じtransactionでcommitする。予約による拒否時は全体を戻す。途中版の編集や名前だけの保存では現在本文、Issue.updated_at、integration_revisionを変えず、activity順位も昇格させない。[同一transaction](../../crates/server/src/routes/local_remote/issue_versions.rs#L136-L245)・[予約時rollback回帰](../../crates/server/src/routes/local_remote/issue_update_tests.rs#L500-L600)
+
+同版編集には版revision、現在指定には現在指定専用 `current_version_revision` と対象版revisionを照合する。既存description更新は観測したIssue.updated_atを必須とし、現在版を切替後に古い要求が別版へ保存されることや、切替往復のABAを拒否する。これらはreview_targetやintegration_revisionと別の値である。[互換更新](../../crates/server/src/routes/local_remote.rs#L985-L1109)・[競合回帰](../../crates/server/src/routes/local_remote/issue_update_tests.rs#L370-L495)・[MCP手順](../integrations/remote-access.md#手動本文版のmcp操作local-377)
+
+migrationは既存本文をNULL/空文字も含めてInitialという初期1版へ移し、それを現在版にする。新規IssueもINSERT triggerで初期版と現在指定を作り、過去に存在しなかった版は生成しない。各版は編集可能であり、厳密な本文履歴や任意時点snapshotを提供するものではない。[schemaと移行](../../crates/db/migrations/20261111220000_issue_versions.sql)・[既存本文移行と並行編集](../../crates/server/src/routes/local_remote/issue_update_tests.rs#L607-L690)
+
+版の作成・編集・指定だけではRunを開始せず、稼働Agentへ再指示しない。既送信promptや採用済snapshotは後日の版編集で書き換えない。コメント・レビューはIssue全体のままであり、[レビュー対象の観測値](issue-collaboration.md#手動版本文とレビュー対象の境界local-377)を版IDへ読み替えない。[起動とreplayの回帰](../../crates/server/src/remote_mcp/launch_tests.rs#L380-L469)
