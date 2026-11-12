@@ -50,6 +50,8 @@ sources:
     resource: repo://crates/server/src/remote_mcp/goals.rs
   - id: openwiki-source-0a439773e44e2649541571be
     resource: repo://crates/server/src/remote_mcp/goals/tests.rs
+  - id: openwiki-source-cb711830e5a5d11f35f1d1c7
+    resource: repo://crates/server/src/remote_mcp/help.rs
   - id: openwiki-source-3ec71fa8cd8936e31e523736
     resource: repo://crates/server/src/remote_mcp/integration_read.rs
   - id: openwiki-source-1083b3cf6ec502f1c6eb3811
@@ -82,6 +84,8 @@ sources:
     resource: repo://crates/server/src/remote_mcp/questions.rs
   - id: openwiki-source-ccbefbdb32b7223afc06bb2b
     resource: repo://crates/server/src/remote_mcp/read.rs
+  - id: openwiki-source-2ac65265d4518e3d0e1d338e
+    resource: repo://crates/server/src/remote_mcp/repository_read.rs
   - id: openwiki-source-0545bff1ae2507a92137efaf
     resource: repo://crates/server/src/remote_mcp/repository_wiki.rs
   - id: openwiki-source-3ef7bc8590ef87216eade432
@@ -100,6 +104,8 @@ sources:
     resource: repo://crates/server/src/remote_mcp/workflow.rs
   - id: openwiki-source-0ce0e179a46d5c36c5f05ecf
     resource: repo://crates/server/src/remote_mcp/workspace_archive.rs
+  - id: openwiki-source-4936f3b3e77c32b1d6e30fb0
+    resource: repo://crates/server/src/repository_read.rs
   - id: openwiki-source-47f0a8c78f8e76d48dfdd192
     resource: repo://crates/server/src/resource_observation.rs
   - id: openwiki-source-8eb245a586a88c8ce0dfd2b5
@@ -110,6 +116,8 @@ sources:
     resource: repo://crates/server/src/routes/agent_runs.rs
   - id: openwiki-source-a98b89b4828bd8f76e2ca9bf
     resource: repo://crates/server/src/routes/attachment_transfer.rs
+  - id: openwiki-source-d40201a53108a0c612f229ef
+    resource: repo://crates/server/src/routes/help.rs
   - id: openwiki-source-5720d865d1c837f0e6b7dab7
     resource: repo://crates/server/src/routes/integrations/conversation.rs
   - id: openwiki-source-b393e75029374eaf9cba5f7d
@@ -140,10 +148,10 @@ sources:
     resource: repo://crates/utils/src/mcp_error.rs
   - id: openwiki-source-3ecddc0be7b037ea6ab24381
     resource: repo://packages/local-web/vite.config.ts
-generated: { by: "codex", at: "2026-11-12T03:32:18.680Z" }
+generated: { by: "codex", at: "2026-11-12T04:13:28.445Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-12T03:32:18.680Z
+    at: 2026-11-12T04:13:28.445Z
 ---
 
 # 外部アクセス・MCP・Runner の境界
@@ -162,7 +170,7 @@ local-web は `/api` を backend へ送り、WebSocket も同じ経路を使う�
 
 公開配置は初回にロックされる。初回setup、Basic/Auth0切替、Web sessionと復旧は [サーバー認証](../concepts/server-access.md)を正本とし、ここでは外部MCPの委任範囲を扱う。
 
-Streamable HTTP `/mcp` はAuth0でMCPを有効化した場合のみ利用できる。Local/Basicでは使えない。旧 `LVK_MCP_CONFIG` と外部introspection設定は起動時に拒否し、設定画面へ移行する。metadataは `/.well-known/oauth-protected-resource/mcp`。これは stdio MCP とは独立しており、内部会話モデルを起動しない。[旧 Astra の廃止](../concepts/project-chat.md)後も外部 MCP と Workspace 質問回答は残る。[HTTP入口](../../crates/server/src/remote_mcp/mod.rs)、[認証設定と復旧](../concepts/server-access.md)。
+Streamable HTTP `/mcp` はAuth0でMCPを有効化した場合のみ利用できる。Local/Basicでは使えない。旧 `LVK_MCP_CONFIG` と外部introspection設定は起動時に拒否し、設定画面へ移行する。metadataは `/.well-known/oauth-protected-resource/mcp`。これは stdio MCP とは独立しており、廃止済みAstraの専用内部モデルを持たない。対話ヘルプは既存coding agentのSessionを使う。[旧 Astra の廃止](../concepts/project-chat.md)後も外部 MCP と Workspace 質問回答は残る。[HTTP入口](../../crates/server/src/remote_mcp/mod.rs)、[認証設定と復旧](../concepts/server-access.md)。
 
 共通認証はAuth0 discovery/JWKS、JWT署名、issuer、resource audience、有効期限、承認済みメンバーを検証する。全操作に `lvk:read`、Issue/Todo・設計メモ・agent起動/制御・既存Wiki同期・Workspace archiveの準備/確定などの変更に `lvk:write`、自動マージの開始・取消に `lvk:merge` を要求する。Runtime Access の観測には追加で `lvk:runtime:read`、起動・停止にはさらに `lvk:runtime:execute` が必要で、一般のwrite scopeとは独立する。HTTP入口とtool処理の両方でscopeを確認する。承認済みメンバーは全プロジェクトを使い、旧owner単独・静的Project allowlist方式ではない。[JWT検証とissuerの制限](../concepts/server-access.md#webmcp内部agentを同じ資格情報にしない)、[scope](../../crates/server/src/remote_mcp/mod.rs)、[実体の関係検証](../../crates/server/src/remote_mcp/launch.rs)。
 
@@ -232,7 +240,7 @@ prepare の対象・branch と正確なメッセージ「ワークツリーが�
 
 返すコード・diff・Wiki・Manifestは参照データであり、命令や承認ではない。参照はページ上限とrevisionを持ち、コードは許可されたregular fileに限定し、private path・symlink・submodule等を除外する。binary / oversized / unavailableを空の成功diffとして扱わない。[code read](../../crates/server/src/remote_mcp/code_read.rs)。実行状態・検証・公開・Wiki receiptは別の証拠として返す。[自動マージ read](../../crates/server/src/remote_mcp/integration_read.rs)、[通常Run読取](../../crates/server/src/remote_mcp/runtime_read.rs)。
 
-mutation は principal + request ID と入力hashを固定した永続 receipt を作る。同じkeyで異なる入力は拒否し、再送は保存済み結果を参照する。MCP client切断は受理済み操作を取り消さず、domain受付を待つ経路もcoding完了を待たない。server再起動後の旧accepted/runningはuncertainとして見せ、自動replayしない。結果不明時に新request IDで同じ副作用を重ねず、既存receiptと対象状態を照合する。[操作寿命](../../crates/server/src/remote_mcp/operations.rs)、[lost responseのテスト](../../crates/server/src/remote_mcp/runtime_write_tests.rs#L479-L502)。
+既存Operations経由のmutation は principal + request ID と入力hashを固定した永続 receipt を作る。同じkeyで異なる入力は拒否し、再送は保存済み結果を参照する。MCP client切断は受理済み操作を取り消さず、domain受付を待つ経路もcoding完了を待たない。server再起動後の旧accepted/runningはuncertainとして見せ、自動replayしない。結果不明時に新request IDで同じ副作用を重ねず、既存receiptと対象状態を照合する。[操作寿命](../../crates/server/src/remote_mcp/operations.rs)、[lost responseのテスト](../../crates/server/src/remote_mcp/runtime_write_tests.rs#L479-L502)。
 
 受付を所有する非同期taskには検証済みactorを明示継承し、HTTP要求の終了後も業務書込の帰属を保つ。受理済み作業の寿命と新規要求の認証失効は別である。[actorの継承](../../crates/server/src/remote_mcp/operations.rs#L134-L190)
 
@@ -250,7 +258,7 @@ LOCAL-365では `list_workspace_files` / `get_workspace_file` / `search_workspac
 
 ### 対象と一覧の継続
 
-`project_id`、`repository_id`、`target`、`operation`を指定する。`target:{mode:"commit",ref:"..."}` はrefをSHAへ固定し、Workspaceなしでも登録Repoを読む。`target:{mode:"workspace",workspace_id:"..."}` はlive HEAD/index/worktreeを読み、追跡済みファイルに加えて無視されていない安全なuntrackedも含む。dirty内容を過去commitへ重ねない。Project/Repo/Workspaceの関係はI/Oの前後で確認する。[共有サービス](../../crates/server/src/repository_read.rs)・[対象と観測](../../crates/git/src/repository_read.rs#L300-L400)
+登録Projectの読取では `project_id`、`repository_id`、`target`、`operation`を指定する。`target:{mode:"commit",ref:"..."}` はrefをSHAへ固定し、Workspaceなしでも登録Repoを読む。`target:{mode:"workspace",workspace_id:"..."}` はlive HEAD/index/worktreeを読み、追跡済みファイルに加えて無視されていない安全なuntrackedも含む。dirty内容を過去commitへ重ねない。Project/Repo/Workspaceの関係はI/Oの前後で確認する。[共有サービス](../../crates/server/src/repository_read.rs)・[対象と観測](../../crates/git/src/repository_read.rs#L300-L400)
 
 private path、symlink、submoduleは対象外で、regular fileのconfined readを用いる。任意root、shell、検索用常駐index、過去本文の保存を追加しない。[除外](../../crates/git/src/reference.rs)・[安全な読取](../../crates/utils/src/reference_file.rs)
 
@@ -559,3 +567,12 @@ stdioとremoteは同じ版サービスへ接続する。`get_issue.description` 
 変更receiptは本文を含まないmetadataであり、保存ごとの全版本文snapshotを蓄積しない。結果を読み返すには版一覧またはID指定読取を使う。応答喪失時は同じrequest_idと同一入力、元operation・対象状態を照合し、新IDで重ねない。remoteでは既存Project認可とread/write scope、stdioでは既存内部actor境界を保つ。[receiptと失敗分類](../../crates/server/src/remote_mcp/issue_versions.rs#L145-L280)
 
 既存 `update_issue` によるdescription更新も現在版への互換操作である。観測したIssue revisionを送らず更新する旧clientは拒否されるため、先に `get_issue` で読み直す。現在版切替後に古い要求を別の版へ保存しない。版revisionをIssue.updated_at形式のexpected_revisionへ流用しない。既送信promptのreplayは後日の版本文を再解決しない。[共通更新](../../crates/server/src/routes/local_remote.rs#L985-L1109)・[起動と過去prompt回帰](../../crates/server/src/remote_mcp/launch_tests.rs#L380-L469)
+
+
+## 稼働版sourceと対話ヘルプ（LOCAL-375）
+
+`query_repository({source:"lvk",operation:{kind:"list"}})` はProject作成なしで公開同梱repoを読む。target省略は配布commit、履歴は明示commitを指定する。応答の `source.build_revision` / `source.commit` は配布版、`source_head` は選択したcommitである。Workspace target、任意host path、Project IDとの混在を拒否し、既存readerの予算・除外・cursorとGit object読取を共有する。既存Project付き読取の認可は維持する。[共通read](../../crates/server/src/repository_read.rs#L76-L131)・[remote認可](../../crates/server/src/remote_mcp/repository_read.rs#L15-L35)
+
+一般質問は `ask_help({prompt,session_id?})` で開始・継続し、`get_help_conversation({session_id})` で実行状態・回答・失敗を読む。`cancel_help_conversation` / `delete_help_conversation` も同じSessionを指定する。全toolにread、変更に追加write scopeが必要で、UIと共通のruntimeへ委譲する。ヘルプ対象以外のSessionは拒否し、実行中削除は不可。askは冪等ではなくrequest ID/Operations receiptを要求する既存mutationと異なるため、応答不明時に自動再送しない。受付を回答成功と扱わない。[4tool契約](../../crates/server/src/remote_mcp/help.rs)・[共通service](../../crates/server/src/routes/help.rs)
+
+既存provider認証・料金・承認を使い、専用の内部会話モデルを追加しない。一般ヘルプから無指示の開発へ進まず、引用・事実・解釈と参照revisionを分ける。通常Workspace向けガイドとSkillも直接参照・対話質問の使い分けを案内する。詳しい寿命・欠落sourceの扱い・別環境の未実証項目は[対話ヘルプ](../concepts/interactive-help.md)を参照する。実OAuth/MCPと実provider結合はmock成功から推定しない。

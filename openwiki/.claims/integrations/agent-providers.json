@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:a46e3eb4f33a9da96b66781fbd6cbd1a4f909d01cbf3d84314d841c894a374ff",
+  "pageVersion": "sha256:3a3d8256f23b0a333a0479ddb5f1a18e14592088d5261bd2ed7d98df9cc68c21",
   "claims": [
     {
       "id": "claim_8c3b7b704cee45f0ad83d4207da34794",
@@ -282,15 +282,23 @@
     },
     {
       "id": "claim_aa00edb70b7f4efaa259d63ebeaf1e94",
-      "statement": "内部Astraの推論経路は廃止され、外部MCP transport自身は内部モデルやmodel sessionを作らない。",
+      "statement": "内部Astraの推論経路は廃止され、remote MCPの対話ヘルプは専用内部モデルを追加せず既定coding providerの既存SessionとREVIEW会話を使う。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/remote_mcp/mod.rs",
-          "version": "repo-file-v1:sha256:4e279faadb65d4d2a53865829ed7469d500d2273bd9a16afe716343167ec953d"
+          "resource": "repo://crates/server/src/remote_mcp/help.rs",
+          "version": "repo-file-v1:sha256:9d3006a52f41570bc7b108afd70eb48f5ec985d250321549a7990352506cb88a"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/help.rs#L84-L160",
+          "version": "repo-lines-v1:sha256:62a6dcd5347fc4f9cb592e6b22d6e3028b4352edef3ce2b7344457709d074b25:eyJzZWxlY3RlZExpbmVDb3VudCI6NzcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAzODI5MDkwYmM5YzBjOTg3YjVhYzczMjg0MzQ1MGFhMmNhYTZkZjliZDVlMzYyMzIyODE1YWY3M2YxOTMyYWQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNjMWVhNjgxZjEzZjgwYmMxM2RiOWQ2MmMyZjQxZWIyNTY5MzU3YjBjYmM2NTU4M2ZhNDg1ZWM5MDhmOWQ2MGMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQ2YmRkZDBlNjYzOWQ2NjNjODU5MTEwMzUxYTE0MTE4ZGFhOGM3ZjI1MWI2YmNkODc1ZGMyMmM3YzNlYWQ3M2MiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjlhNWQxMjc1ZTY1YzgxZjhjZDEyMjk5NjI2YjZmMjExZGI5MTk4YzBjODdjZWQ1Nzg0MWM4YjFkYjUwZWY0NjIifQ"
         },
         {
           "resource": "repo://crates/server/src/routes/mod.rs",
-          "version": "repo-file-v1:sha256:8902bcab2995a8d4e066dfa6a9eeba0aa69519d372d2ad9054cb50e65f9d2809"
+          "version": "repo-file-v1:sha256:fc0ba78cf0f3b4d8fefd890cd997e82df821d8c34bb70cb464975badc4107d1b"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/sessions/review.rs",
+          "version": "repo-file-v1:sha256:8ebc7ac441ecdae5896facdbb61709a615e40280381bde8a45ebc5d5df98c7a7"
         }
       ]
     },
@@ -313,7 +321,7 @@
       "statement": "配布Codex CLI pinは0.163.0でRust wire型はrust-v0.144.1を維持する。CLI版とwire依存版は別である。",
       "evidence": [
         {
-          "resource": "repo://Dockerfile#L157-L160",
+          "resource": "repo://Dockerfile#L172-L175",
           "version": "repo-lines-v1:sha256:5a7b911bbeb87c2db63b9bbafd9418ae5ffe05f241b8f0e3152c37226016f8dd:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiM2IxZWY4NWVjY2NmY2MxMDdkYTUwNmE0ZWU3OWUzOTM0NGI4YWJlNDQxMTZiZjRjN2JkYTFjMzAxY2NlMWY4YyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNzUyOTQ5YWViNDczMzIzYzkwMzVmMmVkODNlMDg1OTVmYmQ1MTQxZmI4NDE0OGFmOTg0NjQ0MWE5YmNkYWQ2NSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMWI0NjQyYjZjZTYzMDJiYjZmMTI5ZTczMzMyZWIzNjcyMjQwNDJkZWMwM2EzMzEwMTcyMzMzMmFkMjBhZjA3ZSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMTdmZjI2MDVhNGE2Y2I1N2NlY2VlNTg0OTc2ZTEwODVkZGYxMDQ1M2NlYjRhMzJlOTlkOTQ0OWFhZGFmNDYxYiJ9"
         },
         {
@@ -1004,7 +1012,7 @@
       "evidence": [
         {
           "resource": "repo://Dockerfile",
-          "version": "repo-file-v1:sha256:87e598250ba5c51a2a257ffa5019a902a7154125b400486a3de51831d7d998d2"
+          "version": "repo-file-v1:sha256:b974d699d0fc4f34d0f90aa582897b5a86e146487a4cd219ff7a75eef0725e54"
         },
         {
           "resource": "repo://deploy/server/workflow-source-protection.md",
@@ -1015,6 +1023,6 @@
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-12T03:32:18.680Z"
+    "at": "2026-11-12T04:13:28.445Z"
   }
 }

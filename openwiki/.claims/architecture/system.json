@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:fd3f6edcd26fed9f12386b00cfeb3743166010f0b1f69a5f7f595fe7ed78d107",
+  "pageVersion": "sha256:a9383f51515387122822871d2f264ebacc07f9bfd2b25f560a39891a4beafe00",
   "claims": [
     {
       "id": "claim_040b4779a7b24b2da362496e3236ffd7",
@@ -11,8 +11,8 @@
           "version": "repo-lines-v1:sha256:60088692475c06321e52c93ec95a7e43732b38d50f4621ffa90ca46b366809ea:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQzNGUxMDJjODYxZjk5NGQyYWFjZTkxMTRkMzkyZGJjMTYyMTkwZTAwYmU4ZmUzNTdkNDcyMTUwY2E0Mzk2MTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRiZjgwNzg4ODAzMTFkZmQ0MDc0YWMwYjNlMjBiMTdjMjVkNDAwZmRiMWM1ZjQyMDNmOGE3NjE3NTgyNjE0NGIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE3ODgyY2FiM2NlY2NjNDMyN2ZiMDc1OWI0NDVkN2ZlY2UxZTEwNGNkNzkzYWY0NTg5MzMxMjYwMzM3ZjJhOWIifQ"
         },
         {
-          "resource": "repo://crates/server/src/lib.rs#L1-L16",
-          "version": "repo-lines-v1:sha256:a2e71acfab995e42f966c8c796aa302126d79d923a1384180e9b6fb8a43192bd:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNlM2IzOGU1MDZjY2JhODIxMDJkMDBlZjA2YTgzZDI1ZjVjZjc3ODlhM2VkOGFiOGY5MjMzNTg0YjM1Nzc5OWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ1ZTM3OTg3M2ZiNmZlNTk1ZDQxMjMxYzA2MzM4NmY1ZGQxNDVmYmMxMTdhMzI1MmNiNjYxMzNjNzdjNjBmNmEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+          "resource": "repo://crates/server/src/lib.rs#L1-L17",
+          "version": "repo-lines-v1:sha256:95d2ef84aed7fce2bbc073ad9d7b58d7c0a35b1b79492e5cfc24747d56954b83:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNlM2IzOGU1MDZjY2JhODIxMDJkMDBlZjA2YTgzZDI1ZjVjZjc3ODlhM2VkOGFiOGY5MjMzNTg0YjM1Nzc5OWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ1ZTM3OTg3M2ZiNmZlNTk1ZDQxMjMxYzA2MzM4NmY1ZGQxNDVmYmMxMTdhMzI1MmNiNjYxMzNjNzdjNjBmNmEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
         }
       ]
     },
@@ -83,7 +83,7 @@
       "statement": "単一サーバーコンテナーはlocal LVKを遠隔利用する配布でありPostgreSQL/Electric/relayを必要としない。",
       "evidence": [
         {
-          "resource": "repo://Dockerfile#L217-L235",
+          "resource": "repo://Dockerfile#L232-L250",
           "version": "repo-lines-v1:sha256:de51fa9428d7497154a8762dab1c5306c44da7dceaa64f75babc062d9d06bd07:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQyNjMyYmZlYzRmMzhlNTUzMDU4MzE3ODVjNzI2NDhlZTRkOGNiMjllMDEzNzg0NDc0OTk5YzYxYTcwYjg2ZjQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEzYTY3Y2FlYzdkZWIzYzhmZWFhMDQ2NTNiNTA5YzlkZmYyMzAxNTVkYzViYjAzYjliZGY4ODYzN2I5MGJiMjIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjBmNzU3YzQ4NzRlM2JhZTNjMjhkYjdhNzNkMTM2NDg1MDgwNjE4NmE4MzdlZThhOWQ2ZTcyZmIyNTIwMzgwOWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
         },
         {
@@ -123,8 +123,8 @@
       "statement": "local Boardへの入口はWeb向け/api/localとstdio MCP向け/api/boardを同じローカルrouterに構成する。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/mod.rs#L84-L91",
-          "version": "repo-lines-v1:sha256:93540dc9d293bdd955571452e8c93cb728119b86aad8f09338a5d5c27346424f:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNDAwOTc4ZmM2NDAwNzczMzU5NDFmNzYwNmQ4OTZjOTRkOWNjODBkNzU5YjJlNGEyYTgwNDA1MTcwMjE3ZjZlYiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYzllZWM4ZTVmZDcyNDFiZmM3OTdmNzQ4NWM0MjVkMzhiNTkzNjA4MjJlZDFmYjk5NTc0MmZkMzg0NTk3YWI5OCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNGZlNTcyMTBlOThmM2U0MGEzNTg3NTU5YWUwODMyNGU0ZjQ5OWFiMDQyY2Y3NjZjOTIzMjA5YjU2NjA3YTljNSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNjIwYTU5ZTlhYzBhNTljYzhiMzdjNjY1YzljZTE0YTE0OWM3Nzc2Yjk5Y2FiMzk3OGJlZDA3Yzk2ZmY2YjcxNCJ9"
+          "resource": "repo://crates/server/src/routes/mod.rs#L85-L93",
+          "version": "repo-lines-v1:sha256:af59c3208214bc1a772f9fde6b9d53d1f45b4c5d67a3112706751add94684ec1:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNDAwOTc4ZmM2NDAwNzczMzU5NDFmNzYwNmQ4OTZjOTRkOWNjODBkNzU5YjJlNGEyYTgwNDA1MTcwMjE3ZjZlYiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYzllZWM4ZTVmZDcyNDFiZmM3OTdmNzQ4NWM0MjVkMzhiNTkzNjA4MjJlZDFmYjk5NTc0MmZkMzg0NTk3YWI5OCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNGZlNTcyMTBlOThmM2U0MGEzNTg3NTU5YWUwODMyNGU0ZjQ5OWFiMDQyY2Y3NjZjOTIzMjA5YjU2NjA3YTljNSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNjIwYTU5ZTlhYzBhNTljYzhiMzdjNjY1YzljZTE0YTE0OWM3Nzc2Yjk5Y2FiMzk3OGJlZDA3Yzk2ZmY2YjcxNCJ9"
         }
       ]
     },
@@ -144,11 +144,15 @@
     },
     {
       "id": "claim_dd50df74f7434b40b5e8e36e2c3877ec",
-      "statement": "内部Astraは廃止され、ProjectはBoard・Todo・設計メモを切り替え、外部MCP transportは内部会話モデルを起動しない。",
+      "statement": "内部Astraは廃止されProjectはBoard・Todo・設計メモを切り替える。remote MCPのask_helpは専用の内部会話モデルを追加せず既存coding agent・Sessionを使う。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/remote_mcp/mod.rs#L1-L38",
-          "version": "repo-lines-v1:sha256:9f3d23d016350591586fb0367ff6cc4f141124367660a329428cea5b63025e1d:eyJzZWxlY3RlZExpbmVDb3VudCI6MzgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc5MjVhYmY2ZWM1YWIyYjU3YjAwMGJjNDRjZjNhMTVjNDY2ZTQ1ZDU3OTIxYzI4ZTQ0ZDczZDgxMGFkN2FjYTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdlYTRkNzIzNTYxNWUxMzIzNTFmNTkxMTRjNjMxMWEwYzEwMTExNjc5YTYxNmVkZGFhNTRhNzY0Y2ZkZTg5NDgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBkYTE5ZGQ0YTgxNDc1MjJmZDEyNTg4NThmNjllNjdhNjhmMTcyYTY4NDUyMzM5MzE2Yzc5MmY2YWE5NmJmNTkifQ"
+          "resource": "repo://crates/server/src/remote_mcp/help.rs#L58-L72",
+          "version": "repo-lines-v1:sha256:df0f092f0dc257743287eaa08ac81aa927e88a8964d0c0ac3250520f1c82c390:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc3Zjc2NGY5ZjhiNDY5MDAyMmJiNzg4YTI0NDJiYTYxMjYzYzAxZTA1M2UyYTEwNmZjYjViZDNiZGIxYWZhMmYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY5NmNlNTNjNmZmMmFkNzRiMWU2NTQ0MzljZTlmMzYyNjU3OWE1YWJiNDc5MTEzN2ZlZDZmNTU0NmY5YjhhNTYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjY1MjFhODNkOTNmMWQ2MDhkYTBlOWI4Mjk1YmQwMzhlYTZkMDdjOTJlM2I1ZDg3YmYxZDdlMmE1OGUxOWQ5M2YiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNmMDg3MWVmZWI0ZjhjM2U5NjcyZmYzMjhjYTk5NTE3NjAwM2U2NjNlMjhhMmQ0YmVjMWYyODgwYTJlN2M4MDYifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/help.rs#L84-L160",
+          "version": "repo-lines-v1:sha256:62a6dcd5347fc4f9cb592e6b22d6e3028b4352edef3ce2b7344457709d074b25:eyJzZWxlY3RlZExpbmVDb3VudCI6NzcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAzODI5MDkwYmM5YzBjOTg3YjVhYzczMjg0MzQ1MGFhMmNhYTZkZjliZDVlMzYyMzIyODE1YWY3M2YxOTMyYWQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNjMWVhNjgxZjEzZjgwYmMxM2RiOWQ2MmMyZjQxZWIyNTY5MzU3YjBjYmM2NTU4M2ZhNDg1ZWM5MDhmOWQ2MGMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQ2YmRkZDBlNjYzOWQ2NjNjODU5MTEwMzUxYTE0MTE4ZGFhOGM3ZjI1MWI2YmNkODc1ZGMyMmM3YzNlYWQ3M2MiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjlhNWQxMjc1ZTY1YzgxZjhjZDEyMjk5NjI2YjZmMjExZGI5MTk4YzBjODdjZWQ1Nzg0MWM4YjFkYjUwZWY0NjIifQ"
         },
         {
           "resource": "repo://packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L1068-L1089",
@@ -225,7 +229,7 @@
       "statement": "server runtime-payload は通常のDB・認証・listener初期化前に終了し、frontend・sounds・scriptsが実際に埋込みであることとbytesのhashを検査する。developer-runtime featureはdebugでも埋込みを有効にする。",
       "evidence": [
         {
-          "resource": "repo://crates/server/Cargo.toml#L72-L76",
+          "resource": "repo://crates/server/Cargo.toml#L73-L77",
           "version": "repo-lines-v1:sha256:b9ef1d4ea9b42d340b2ae5d265b504be4d45daf1a7656f6e648acd36051b7488:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYjZmNmMxYzczZTQ2ODViNmY1NTc5MmFlNTM5MjU1M2ZmNzlkM2NjMDY3YjBiNzRlMDY4Njk4ZjZiMmM3NmI4MiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMTQzMjNhOWJkZTIyMDBhOGYzYmZhNWNkNTVkMmFiMTgzNmU1N2E0YTNmNjFhZGNmMzU1NmEwOWNmNTE2NGVhOCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZDk5M2ZhODJmMTFjZmRlYzRmZWUzZGQ5OWI2M2Q2ZWQ0YTRhNTZlNmQ5NGRkMmY2YTYzZWNjYTEwZTllZGJiZCJ9"
         },
         {
@@ -309,6 +313,6 @@
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-11T09:36:22.928Z"
+    "at": "2026-11-12T04:13:28.445Z"
   }
 }

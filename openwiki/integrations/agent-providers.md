@@ -72,16 +72,20 @@ sources:
     resource: repo://crates/mcp/src/task_server/tools/workspaces.rs
   - id: openwiki-source-e1757d002aa325145a915b38
     resource: repo://crates/server/src/provider_usage.rs
-  - id: openwiki-source-71f837a8aa36443ad9688945
-    resource: repo://crates/server/src/remote_mcp/mod.rs
+  - id: openwiki-source-cb711830e5a5d11f35f1d1c7
+    resource: repo://crates/server/src/remote_mcp/help.rs
   - id: openwiki-source-202693827acda4283453b799
     resource: repo://crates/server/src/remote_mcp/provider_usage.rs
   - id: openwiki-source-a9b6d4be264787a78357c9d6
     resource: repo://crates/server/src/routes/config.rs
+  - id: openwiki-source-d40201a53108a0c612f229ef
+    resource: repo://crates/server/src/routes/help.rs
   - id: openwiki-source-65c0f36670a161dc05040e69
     resource: repo://crates/server/src/routes/mod.rs
   - id: openwiki-source-964398afc466561a57ac7d34
     resource: repo://crates/server/src/routes/provider_usage.rs
+  - id: openwiki-source-2b4c7ad36a9b595e1991b189
+    resource: repo://crates/server/src/routes/sessions/review.rs
   - id: openwiki-source-379c8cd3e1e9932f9adda9ee
     resource: repo://crates/services/src/services/container.rs
   - id: openwiki-source-605a3efdc11efae80ada92b1
@@ -114,10 +118,10 @@ sources:
     resource: repo://tests/claude-subscription/subscription.spec.ts
   - id: openwiki-source-141584dac09cf0f93be6bff5
     resource: repo://tests/codex-process-cleanup/README.md
-generated: { by: "codex", at: "2026-11-11T09:36:22.928Z" }
+generated: { by: "codex", at: "2026-11-12T04:13:28.445Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-12T03:32:18.680Z
+    at: 2026-11-12T04:13:28.445Z
 ---
 
 # Agent provider・設定・MCP・Skill
@@ -322,7 +326,7 @@ loopback HTTPを選んだ場合だけ、stdio clientは同じdata directoryの`a
 
 失敗は MCP の error result と `success:false` / `error` / `diagnostic` で返す。診断は分類・確定性・復旧方法・相関IDを持ち、backend自由文や入力値を転送しない。HTTP 2xx でも backend envelope の success と data を確認してから成功扱いにする。自動操作を追加するときは transport の成功だけで Issue や Session の操作完了を判定しない。[エラー境界](../../crates/mcp/src/task_server/tools/mod.rs#L94-L143)
 
-認証付き Streamable HTTP `/mcp` は別の外部入口であり、旧 Cloud / relay ではない。Auth0の承認済みmember・scopeと公開 tool の制約は [外部 MCP](remote-access.md#認証付き外部-mcp)を参照する。内部 Astra の推論・認証経路は廃止された。[廃止後に残る共有機能](../concepts/project-chat.md)と coding provider の起動を区別する。
+認証付き Streamable HTTP `/mcp` は別の外部入口であり、旧 Cloud / relay ではない。Auth0の承認済みmember・scopeと公開 tool の制約は [外部 MCP](remote-access.md#認証付き外部-mcp)を参照する。内部 Astra の推論・認証経路は廃止された。LOCAL-375の [対話ヘルプ](../concepts/interactive-help.md) は専用内部モデルを追加せず、既定coding providerの既存Session/REVIEW会話を使う。[廃止後に残る共有機能](../concepts/project-chat.md)と coding provider の起動を区別する。
 
 Global stdio には [Project Todo](../concepts/project-todos.md)と[設計メモ](../concepts/design-notes.md)の操作も含む。設計メモの有界読取・確定版receipt・本文と独立追記の利用契約はリンク先を参照する。orchestrator専用routerは廃止済みである。Todo の REST / 外部 MCP の再送契約を、同じ tool 名だけで交換可能とみなさない。[router の分離](../../crates/mcp/src/task_server/tools/mod.rs#L49-L75)
 

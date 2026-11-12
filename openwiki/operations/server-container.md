@@ -4,6 +4,8 @@ title: 単一サーバーコンテナーの運用境界
 description: local LVK をサーバー上で動かす配布構成。HTTPS、認証、preview origin、永続化、停止と回復の契約。
 tags: [server, docker, deployment, preview, persistence]
 sources:
+  - id: openwiki-source-b28e4ff9d0efb53d7fe91df4
+    resource: repo://.github/workflows/publish-server.yml
   - id: openwiki-source-b50585f67dac89cd8eecc75d
     resource: repo://crates/executors/default_mcp.json
   - id: openwiki-source-d254ecaf5a9cc6c431ef182a
@@ -32,8 +34,12 @@ sources:
     resource: repo://deploy/developer/test_updater.py
   - id: openwiki-source-353b77936aed6c3d486f5cb9
     resource: repo://deploy/developer/updater.py
+  - id: openwiki-source-63e502af7564c9aae1780fd6
+    resource: repo://deploy/developer/verify-access.mjs
   - id: openwiki-source-eaf96aacdc40d6db8dae4f8e
     resource: repo://deploy/server/acme.py
+  - id: openwiki-source-83ada096aaf457a8ce0ab3cb
+    resource: repo://deploy/server/bundle-source.sh
   - id: openwiki-source-394060232279d0ae0be019c2
     resource: repo://deploy/server/compose.acme.yaml
   - id: openwiki-source-fd822232d9aac9030c892c92
@@ -54,6 +60,8 @@ sources:
     resource: repo://deploy/server/server.test.mjs
   - id: openwiki-source-8d57c3092adc3c7e7de33c02
     resource: repo://deploy/server/smoke-image.sh
+  - id: openwiki-source-5fe6396817bf95b4040eebdb
+    resource: repo://deploy/server/SOURCE.md
   - id: openwiki-source-26f2b454d009a5c3d05be35a
     resource: repo://deploy/server/workflow-source-protection.md
   - id: openwiki-source-bb1ebe868e35e9e500714501
@@ -62,10 +70,10 @@ sources:
     resource: repo://package.json
   - id: openwiki-source-d64d3c5fa2f722c3a06ba2e6
     resource: repo://tests/embedded-browser-removal/controls.test.mjs
-generated: { by: "codex", at: "2026-11-11T09:36:22.928Z" }
+generated: { by: "codex", at: "2026-11-12T04:13:28.445Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-11T14:47:52.070Z
+    at: 2026-11-12T04:13:28.445Z
 ---
 
 # 単一サーバーコンテナーの運用境界
@@ -309,3 +317,16 @@ docker compose run --rm --no-deps -T --entrypoint tar lvk -C /var/tmp -czf - . >
 LOCAL-372のserver-tools stageはbubblewrap/socatを導入し、/usr/bin/bwrap --versionとsocat -Vで存在を確認する。server imageがこれを継承する。稼働中containerへのbinary配置やbundle置換だけで依存を導入したことにはならず、新しいimage構築・container切替は別の明示許可を必要とする。[Dockerfile](../../Dockerfile#L145-L178)
 
 実行時には既存hostのuser/PID/IPC/UTS/mount namespace、native sandboxのnested/network条件も成立しなければならない。binaryの存在はnamespace成立の証明ではない。承認済み環境で使う前に[ソース保護とtmp/cacheの同時検証手順](../../deploy/server/workflow-source-protection.md)を実adapterで確認し、拒否時はerrorを保持して停止する。原因未確定の拒否を繰り返したり、seccomp/AppArmor/capabilityを緩和して通したりしない。今回の統合ではimage構築・container起動・実provider完走は未実施である。[検証範囲](development.md#local-372の統合検証と未実証の保護成功経路)
+
+
+## 稼働版ヘルプ用の公開source同梱（LOCAL-375）
+
+Dockerの `bundled-source` stageは固定された公開upstreamから `LVK_BUILD_REVISION` の完全SHAをfetchし、そのcommitの全祖先とtree/blobを同梱する。全branch/tagの同梱や先行shallow制限は行わない。取得不能、非完全SHA、版不一致、欠損objectは失敗にし、最新HEADへfallbackしない。`.dockerignore` の `.git` 除外とCI shallow checkoutは維持し、callerのcredentials/hooks/configや外部object依存をコピーしない。[取得helper](../../deploy/server/bundle-source.sh)・[shallow/no-.git回帰](../../deploy/server/source.test.mjs)
+
+runtime-baseに `/opt/lvk/source` を `10001:10001` 所有で配置し、serverとagentのGit CLI/libgit2が同じ非root実行userで読む。HOME・`/repos`・`/var/tmp` volume外なので新imageがsourceを置き換える。wildcard safe.directoryや所有者検査の一律無効化は追加しない。`LVK_SOURCE_PATH` はserver側の参照path overrideであり、APIから任意rootを受けるものではない。[配置](../../Dockerfile#L120-L166)・[serverの版検査](../../crates/server/src/bundled_source.rs)
+
+binaryとsourceは同じrevision引数を使い、CIはimage build直前にcheckout HEADと `GITHUB_SHA` の一致、tracked/index差分の不在を検査する。manual Docker buildではclean contextと公開SHAの対応を利用者が保つ必要があり、helperだけでcontext全体の一致を証明できない。ローカルmainにしかない未公開SHAは公開upstreamから取得できないため、今回の統合完了からimage build可能とは推定しない。[配布workflow](../../.github/workflows/publish-server.yml)・[契約と容量測定](../../deploy/server/SOURCE.md)
+
+CI image smokeは保持用HOME/repos volumeをmountしたUID10001で `git log/show` と認証付きHTTPのlibgit2 list/log/diff・祖先commitを検査する。定義の存在と実image成功は別である。今回候補ではDocker-free kitのみ成功しCompose検査1件は環境不在でskip、完成imageと異なるimageへのvolume引継ぎ更新は未実施である。同一image再起動smokeも異なるimage更新の証明ではない。[image probe](../../deploy/developer/verify-access.mjs#L70-L107)・[smokeの寿命](../../deploy/server/smoke-image.sh)・[別環境の ordered 手順と停止条件](../concepts/interactive-help.md#別環境で残る受入検証)
+
+同梱sourceは稼働binaryから独立した参照checkoutであり、編集しても稼働版は変わらない。UI/MCPの一般ヘルプは既存providerの認証・料金・REVIEW会話を使い、無指示の開発・build・再起動に進まない。履歴countとGit pack/checkoutサイズは [SOURCE.md](../../deploy/server/SOURCE.md) の実行user向けcommandで測定し、image layer/downloadサイズとは分けて記録する。

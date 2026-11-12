@@ -10,25 +10,27 @@ sources:
     resource: repo://crates/db/tests/retire_project_chat.rs
   - id: openwiki-source-a13fe4db1eee073d0a7e2c4d
     resource: repo://crates/server/src/main.rs
-  - id: openwiki-source-71f837a8aa36443ad9688945
-    resource: repo://crates/server/src/remote_mcp/mod.rs
+  - id: openwiki-source-cb711830e5a5d11f35f1d1c7
+    resource: repo://crates/server/src/remote_mcp/help.rs
+  - id: openwiki-source-d40201a53108a0c612f229ef
+    resource: repo://crates/server/src/routes/help.rs
   - id: openwiki-source-65c0f36670a161dc05040e69
     resource: repo://crates/server/src/routes/mod.rs
   - id: openwiki-source-4d617b0e2fa188c6ad63ae56
     resource: repo://crates/server/src/routes/sessions/questions.rs
   - id: openwiki-source-e0c2de9e01617a8949b78360
     resource: repo://packages/web-core/src/features/kanban/ui/KanbanContainer.tsx
-generated: { by: "codex", at: "2026-11-04T20:14:29.223Z" }
+generated: { by: "codex", at: "2026-11-12T04:13:28.445Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-12T03:32:18.680Z
+    at: 2026-11-12T04:13:28.445Z
 ---
 
 # Astra 廃止と共有機能の移行境界
 
 内蔵 Astra / Project Chat は廃止された。Project 画面は Board を直接表示し、server router と起動処理に専用 chat API・設定 API・worker はない。以前の discuss / operate、モデル設定、Codex ChatGPT login による内部推論は現行機能ではない。[Project 画面](../../packages/web-core/src/features/kanban/ui/KanbanContainer.tsx)・[API の構成](../../crates/server/src/routes/mod.rs)・[起動](../../crates/server/src/main.rs)
 
-会話から LVK を操作する外部入口は [認証付き MCP](../integrations/remote-access.md)である。その transport は内部会話モデルや model session を作らず、既存の製品操作に接続する。外部クライアントの認証・scope を、旧 Astra の server 内 Codex 認証で代替しない。[MCP の責任](../../crates/server/src/remote_mcp/mod.rs#L1-L58)
+会話から LVK を操作する外部入口は [認証付き MCP](../integrations/remote-access.md)である。その transport は廃止済みAstraの専用会話モデルを復活させず、既存の製品操作に接続する。LOCAL-375の [対話ヘルプ](interactive-help.md) は公開同梱sourceを調べる既存coding agentのSessionを使い、旧Project Chatとは異なる。外部クライアントの認証・scope を、旧 Astra の server 内 Codex 認証で代替しない。[MCP の責任](../../crates/server/src/remote_mcp/mod.rs#L1-L58)
 
 ## 専用履歴の削除と残る状態
 

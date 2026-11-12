@@ -38,6 +38,8 @@ sources:
     resource: repo://crates/server/src/remote_mcp/environment.rs
   - id: openwiki-source-235c61e44e26d792cb34ab1d
     resource: repo://crates/server/src/remote_mcp/execution_approvals.rs
+  - id: openwiki-source-cb711830e5a5d11f35f1d1c7
+    resource: repo://crates/server/src/remote_mcp/help.rs
   - id: openwiki-source-a43253b5be9686da077b8067
     resource: repo://crates/server/src/remote_mcp/issue_comments.rs
   - id: openwiki-source-9e15762bf7a432b7605f8466
@@ -50,6 +52,10 @@ sources:
     resource: repo://crates/server/src/remote_mcp/repository_wiki.rs
   - id: openwiki-source-0987a696c656ec0d4f318f44
     resource: repo://crates/server/src/remote_mcp/run_events.rs
+  - id: openwiki-source-4936f3b3e77c32b1d6e30fb0
+    resource: repo://crates/server/src/repository_read.rs
+  - id: openwiki-source-d40201a53108a0c612f229ef
+    resource: repo://crates/server/src/routes/help.rs
   - id: openwiki-source-595d5d0308d670e38ef27fbf
     resource: repo://crates/server/src/routes/integrations/admission.rs
   - id: openwiki-source-5720d865d1c837f0e6b7dab7
@@ -110,6 +116,8 @@ sources:
     resource: repo://packages/web-core/src/shared/components/TerminalSection.tsx
   - id: openwiki-source-7e0da77c31130e66a4b635a5
     resource: repo://packages/web-core/src/shared/dialogs/command-bar/EditorSelectionDialog.tsx
+  - id: openwiki-source-6ffd002a557f8328086cf8ea
+    resource: repo://packages/web-core/src/shared/dialogs/shared/WorkspacesGuideDialog.tsx
   - id: openwiki-source-5d2382a0f231c830f95f103c
     resource: repo://packages/web-core/src/shared/dialogs/shared/WorkspaceTargetDialog.tsx
   - id: openwiki-source-ab4a5800fcfc16d8494e494a
@@ -120,15 +128,17 @@ sources:
     resource: repo://packages/web-core/src/shared/providers/TerminalProvider.tsx
   - id: openwiki-source-23775c3de52f3ab95a13cb8b
     resource: repo://README.md
-generated: { by: "codex", at: "2026-11-12T03:32:18.680Z" }
+generated: { by: "codex", at: "2026-11-12T04:13:28.445Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-12T03:32:18.680Z
+    at: 2026-11-12T04:13:28.445Z
 ---
 
 # クイックスタートと調査案内
 
 lucky-vibe-kanban（LVK）は、Issue で仕事を整理し、Workspace 内で coding agent を動かし、成果物をレビューして Git に統合する製品である。README はカンバンでの計画、agent 実行と変更のレビューを目的として掲げ、Git worktree・複数Session・visual agent workflow・local integration・OpenWikiを紹介する。[製品の目的](../README.md) 実装の境界は [システム構成](architecture/system.md)、一連の操作は [Issue から統合まで](workflows/task-to-integration.md) から読む。
+
+稼働版の使い方を質問する場合は [対話ヘルプ](concepts/interactive-help.md) を読む。既存ガイドUIまたはremote MCPから既定coding agentへ質問でき、上位AIは `query_repository` の `source:"lvk"` でProjectを作らず同梱公開sourceを直接調べることもできる。開発開始・配布・稼働反映は別の指示で扱う。
 
 ## 最初の作業
 
@@ -498,3 +508,12 @@ Issueの本文は自由な名前の編集可能な版として保持し、閲覧
 現在仕様のdescription互換コピーは既存読取・将来の起動・自動マージsnapshotへ流れる。既送信promptと旧レビュー参照を後日の版へ読み替えない。[コメント・レビューの境界](concepts/issue-collaboration.md#手動版本文とレビュー対象の境界local-377)
 
 372を含む固定base `5d3e625d9731923e948f8054c1ea21db4c13003d` へ377だけを無競合統合し、コード検証SHAは `00817c5e2c8edb1d5a26f9adcd86fdfb2ebf3fd6`。候補上でbuild・check・lint・i18n・生成型/SQLx・版browser/Vitest・全backend再実行が成功した。初回backendの既存終了状態テスト失敗、単独/全suite再実行成功と残る再発可能性、実認証/provider・稼働DB・別環境未実施は[検証記録](operations/development.md#local-377の手動版回帰と統合検証)へ分けて記す。375は次回対象である。Wikiは別commit、正式main反映はRun終了後にhostが確認する。push・tag・認証変更・デプロイ・稼働環境操作は行わない。
+
+
+## LOCAL-375：稼働版を根拠にする一般ヘルプ
+
+UI/MCPの共通会話、質問ごとの参照版、失敗・取消・削除、REVIEWの目的と権限境界は[対話ヘルプ](concepts/interactive-help.md)を参照する。Project不要の公開source読取と既存Project認可、非冪等askの再送境界は[MCP契約](integrations/remote-access.md#稼働版sourceと対話ヘルプlocal-375)、公開SHAの全祖先とUID10001・volume外配置は[同梱配布](operations/server-container.md#稼働版ヘルプ用の公開source同梱local-375)に記す。
+
+固定base `1b511168` に375 source `78fb649b` を採用し、en/ja末尾の競合で377本文版と375ヘルプを両方保持した。広域検証を実行したSHAは `69f9f382c74316d2c7f872826d00ab11f348450d`。画像fixtureの撮影だけを補正した最終コード検証SHAは `e5cddb5128e878ce0f0d9bd37bb0c150ea88268a` で、そのSHAでは差分限定とmock Chromiumを再実行した。重複広域suiteのagent省略と別環境試験を準備に留めるユーザー境界を区別して記録した。[検証結果と未実施](operations/development.md#local-375の対話ヘルプ統合検証)
+
+完成image・異なるimageへの保持volume更新、実OAuth/MCP、実browser/provider結合、回答生成中取消等は未検証である。[別環境手順](concepts/interactive-help.md#別環境で残る受入検証)を準備し、今回は実行していない。コード検証後のprepareで原本journalを保存してから同じ候補branchでWikiを別commitにする。Wiki完了・公開要求・hostのローカルmain実Git反映を区別し、GitHub push・tag・認証変更・デプロイ・稼働環境操作は行わない。

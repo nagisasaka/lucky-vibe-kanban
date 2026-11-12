@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:983f9d2fff319c68efbdff517661465495ab554a3df60ee392d33e2ca2694652",
+  "pageVersion": "sha256:a913f47cfc6d96cecea2876b1ccd88fc1556b01af32d2ccb8313e86f13cf222c",
   "claims": [
     {
       "id": "claim_1640e4eaeac94676a84eb3b9d9970d30",
@@ -1099,10 +1099,24 @@
           "version": "repo-file-v1:sha256:2ff60c6a8a52d70aa16d7593386906b5ce01b350d1c75b16413f0c97a705e731"
         }
       ]
+    },
+    {
+      "id": "claim_34c0a0df9d6144e390947e5f2a62acaa",
+      "statement": "ヘルプのmock browserは実UIと合成APIを使い開始・進行・回答・継続・取消・失敗・削除を検査するが、実server/provider/OAuthや完成imageを実証しない。撮影は有限animationを停止する。",
+      "evidence": [
+        {
+          "resource": "repo://tests/help/README.md#L1-L24",
+          "version": "repo-lines-v1:sha256:a1485eb130180d0dd63f3be3769eaac87c7582d0070808524863845a915e20a2:eyJzZWxlY3RlZExpbmVDb3VudCI6MjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU2ZmI1MDMwYzBkZDI0YWVjMzMyMGJmNjcyMzBkOGE2OWZiYzEwNTQwZWZhYzQ1Zjk4ZjIwZDE2NDljYTIzYTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI5YTI4YWMzNGM1ODgwNWZhZTg4ZTViYTY1NGEwMDZlMWFhYTQ3ZDVjZmU0ZTc4YzFiNWY5NzlmN2RhOTlmMGEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQyMTM4MGJiODFkZjQzMDg1MGM0M2M0ZTRmMzI1NjE5MmNjN2RmYzU0NmZjOGEyOTJhMzM5MzJhNzdjN2Q2ZmYifQ"
+        },
+        {
+          "resource": "repo://tests/help/reading.mjs#L147-L208",
+          "version": "repo-lines-v1:sha256:dc30210f5a203fb3a2f00eb1bfc4a5c579cbe579f004cab4d073528febf2e4d7:eyJzZWxlY3RlZExpbmVDb3VudCI6NjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNiNmUyNjYxMjljODVlOTNmMjhlNDQwMmMzZDBiOTQ3ZjhiYjNiNmNkZGJhNmJiY2M4Y2U2NWIzNjM0MjRkOWUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE3NzZlYWM1OWZiNzQ0ZGYzNjNhNGMyM2I3NDcwNTM2ZjhmM2UyNzU2N2ZlNjkzYTRiZmI2M2FjMjg4NjYwOTAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImZjOGI2MmZjMGQ2ZWEzNGU5ZTU4MzA4ZmQ1YWI4Y2I4ZDRmN2QwNzc2YzJiYWI3ZjIyN2ZkNGNjMjY1YTU3MjciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-12T03:32:18.680Z"
+    "at": "2026-11-12T04:13:28.445Z"
   }
 }

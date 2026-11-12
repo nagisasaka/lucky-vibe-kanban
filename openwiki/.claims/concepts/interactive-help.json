@@ -1,0 +1,106 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:3d707af461f40a0862647f1793f532d1bd8cad32e180cb555aafe0593d024a53",
+  "claims": [
+    {
+      "id": "claim_d8c84a79ed5e4ef4938641341ac9c565",
+      "statement": "対話ヘルプはProjectを作らず専用DirectFolder WorkspaceとSessionで既存REVIEW設定の会話を開始・継続し、通常nativeコードレビューを維持する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/routes/help.rs#L40-L160",
+          "version": "repo-lines-v1:sha256:1fd6f787afa4d7734072c0a9cfa6cca028e1303e4f0b06a777b141181342be55:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIxLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIzMGMxZjE4OGYxNDJlZDdhODI0NjgwYjIwNzE3MmM1NTE5YmM2MTRhNDhmZGE3Y2YxNjdlZGI4ZGRmNzk5NTZjIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJjYzFlYTY4MWYxM2Y4MGJjMTNkYjlkNjJjMmY0MWViMjU2OTM1N2IwY2JjNjU1ODNmYTQ4NWVjOTA4ZjlkNjBjIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJmMDczOWEwYTkyZGYxMjYzZDY3MDRlYWY0OWY0ZjM3MDc1YjUxYWM2YTMyNzU4M2MwNjIwZWZiN2RmZjQ1NDBlIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI5YTVkMTI3NWU2NWM4MWY4Y2QxMjI5OTYyNmI2ZjIxMWRiOTE5OGMwYzg3Y2VkNTc4NDFjOGIxZGI1MGVmNDYyIn0"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/sessions/review.rs",
+          "version": "repo-file-v1:sha256:8ebc7ac441ecdae5896facdbb61709a615e40280381bde8a45ebc5d5df98c7a7"
+        }
+      ]
+    },
+    {
+      "id": "claim_f0a6254bd94e4a4fb5a5eab454c6b5b5",
+      "statement": "ヘルプは既存認証scopeを使い実行中削除を拒否し、UIは終端状態と質問ごとのsource revisionを区別して表示する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/routes/help.rs#L162-L340",
+          "version": "repo-lines-v1:sha256:c560c0c33be86b7da5dd40c67fe6649395b73fcab7b660752d004d2b842584c9:eyJzZWxlY3RlZExpbmVDb3VudCI6MTc5LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI1OTA5YTUzYTYxOGQwMjhlMWQzMDAwYzBhN2FiY2VlY2JlNWZiMzdmNGU1MTFlZmU0NjY0M2ZhZDZlNjY4NzJmIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJhNjNjZmY3YmY1YTJlODE3MDYyMDRiOTg3ZDg4OWMxZWMyN2UzYzBiNzYyZDlkYjdkMzJiNzZjOTkxZjI1ZWUzIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJlNmZlNTg4ZmJjOGVhYzNlNWNiNjJhNzEzYzhlOWRjMjk5ZTcwYmZhZGM0ZWQxODk3ZDY1Yjc1YTI2Y2JmNjE3IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI1NDlmMWMwMTY1ZWY2ZmQ4ZmNkNmRhZjE4ZGJlMTUwMTliYzZiNGJhZTkyMmZmMWYyMWQyOWMyNWFiMDhlZDRkIn0"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/components/InteractiveHelp.tsx",
+          "version": "repo-file-v1:sha256:94f45d53485b395f95438c76b75c4aa22bd4110b56a465ba57655faa37aabaf7"
+        }
+      ]
+    },
+    {
+      "id": "claim_79208103c6c34313aa687cef9ad4347a",
+      "statement": "source:lvkはProject不要の固定同梱repo selectorでありcommit modeだけを既存readerへ渡し、Project付き読取の認可を保持する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/git/src/repository_read.rs#L28-L96",
+          "version": "repo-lines-v1:sha256:91fd64ddeb3c5ece7c9dbe0a367134b1114e06b9d86dd1d70396d4ee7ef0ff57:eyJzZWxlY3RlZExpbmVDb3VudCI6NjksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjljZDhjZDQ3M2EwZThhNTI5MjUxNmJlMGE4Y2NmY2JkZWM0ZGNkNWRlZmU0NmI3ZTgzMTBmMjUxMjliNzUyMTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjY2MTU1ZjA3ZGVlOTE0MDMwY2Y4YjUzYTFhZDc3ZWQ3MTUyODkwODYyZjc4ZTJlNGQwNjZkOTVkOWNiMTQzNTYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQ0YjBkNTI2OThkZjcwZTQxN2VhN2RhOWQ0N2NlMDk5NDIzZTI5MTA5NTgzNzQ1OGIyZDhmM2UxNDdkNmI1OWMifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/remote_mcp/repository_read.rs#L15-L35",
+          "version": "repo-lines-v1:sha256:878f857d9790d7f47b4f8443e6b9ddeac93684c49a9cb9bc10b2888a810d72ce:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI4Y2FmYmUzZWZlNDk1MmE5Y2I5ODk5ZjMwNjc2MDljYzc0MDk3NDY2OTkzMGI4MzQ4NzJjY2Y4ZDE4NDNkYTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ0ODY0ZDhmOWRjNmY4OGU4YmE0MDczNmNjY2QwNDIxNWE2OTUzMDg1MTRkNzllMDcwYjQ0NGFhM2Y4OGRhZDUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijg1NmIzODBlOThmODQxMzJjYjAxNGNhMjUxYmM2NTJmOTk2MDNhNjFkZWY4NTUyMTliMTc1MGVjMjA1ZTgyYWYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjgzNTY4ZDhkZTZkMTkwYWFmY2FkNjczOWY1NTdkNmM3MWQ2OGE0ODIzODhjNThkODAyYmQwMGI1NGEwOTUxYzAifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/repository_read.rs#L76-L131",
+          "version": "repo-lines-v1:sha256:e58a669cc0e3303a809f23d1a287f3abcf971c91377ddfbcf3dce14716630001:eyJzZWxlY3RlZExpbmVDb3VudCI6NTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YjA0NDkxNDY5NzIyZTgzNjNhOTRlNDA0NDUzOGUwMTNhMmEyMTdlMzZiMWU1NjhiYTYwYWNiN2I0YzhmMmUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRkYTU5NzA1NDYxNTc4YjIxNWQzZjEwYTQ2M2FjY2FhM2E5NDRmNTlmY2Q3ZTY4MzNlYzY2ODEzYjcyYTcxNmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY2NWU4MTMyOWQ5NGU5ZDRlY2FhYjRlZDU1M2E1ZDhiYTcwMGMzZGEzMjJhYTU4Y2QzODU3MDk2MDFkMmJhMTAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImM0MDIwMGQ3ZjI1ZTM4MDQ5ZDBjYWQzZjgxYjEyODVhNWI2MGMwMTYzYTkyZDFhZjgxZGQxZTgxMzEzODQ5YTQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_025e9fff9c484c55988593401da20ba3",
+      "statement": "同梱sourceは既知build SHAとHEAD一致・非shallowを要求し、Dockerで公開全祖先を独立取得して永続volume外へUID10001所有で配置する。",
+      "evidence": [
+        {
+          "resource": "repo://Dockerfile#L120-L163",
+          "version": "repo-lines-v1:sha256:ec67e4b78517b1576bfaffb431ad885db387d4313b02417e4e8841341b47cae5:eyJzZWxlY3RlZExpbmVDb3VudCI6NDQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJhNjlhMGI4ZWY1ZjVkNmNhNTZmODkxYTYyNTM0NmNmMGRmZDgyYWRiNDMzMGY1YzkxMjAyNzM5MDk5ZmFiYTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY0ODRhYmQ3MTU1NDVhNDY5YzYwYjYzYjI3N2M3MTAzODE4MDQ0NGRlMWM1YTZhZDcwZTBjZWMzZWEyNjFlYjUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjJjZmEyYjZkZmFmMmY1YmYwOWM1ZTJiZWU0ZTk4MjI1NzNhOTE0MDU2ZjczYzNjNjg4NTFmMjcxZjdlMzYzOGUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdiZjE2Nzk4MzA0YTNiMjY1NTg0YmQxMzI3Njc5OGI2ZTNjNGFmY2VjYzhhNDkwZWUwY2M0NjhhN2RmNTk1YWUifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/bundled_source.rs#L17-L63",
+          "version": "repo-lines-v1:sha256:4594e21e848247343eba54de0749c82ed17a800c0fb2f3d819ae4b7dcb3277e8:eyJzZWxlY3RlZExpbmVDb3VudCI6NDcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRkYTU5NzA1NDYxNTc4YjIxNWQzZjEwYTQ2M2FjY2FhM2E5NDRmNTlmY2Q3ZTY4MzNlYzY2ODEzYjcyYTcxNmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjY0MzNiMmYzMDc5ZmYxOThhNWE5MGE0NTYwZDgyMWNkOGU1YTYyZjgxZWE1MTFlNWNiODRmNWE5ZjViMWQ5YTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM0NGMxNmE4ZjE5MjI3Zjc0YmU3OGE4YWM5ZGYzZDI2NGMwYWI0YjU2OTEwZDc4MDI3OGRkYzRhOWNkODgzOTgifQ"
+        },
+        {
+          "resource": "repo://deploy/server/bundle-source.sh",
+          "version": "repo-file-v1:sha256:18073869108d7d97382d4cf64d99bc544e4b371aaa0760a3692a3e45c6efd18d"
+        }
+      ]
+    },
+    {
+      "id": "claim_f48410daa02e420f9dbaece4de04e37a",
+      "statement": "ask_helpは冪等ではなく既存runtimeへ委譲し、help変更toolにはlvk:write、読取にはlvk:readを用いる。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/remote_mcp/help.rs",
+          "version": "repo-file-v1:sha256:9d3006a52f41570bc7b108afd70eb48f5ec985d250321549a7990352506cb88a"
+        },
+        {
+          "resource": "repo://crates/server/src/remote_mcp/mod.rs#L250-L266",
+          "version": "repo-lines-v1:sha256:217c3e3e2fb41f7c33308d35ff514b469b112252adbd5719613a29a4300b4103:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk0ZDhiNmU3YjUwOTRmNDU3NDU1ZjZlZmI4ZGZiMGE0M2Q5N2Y0OTkwM2MwOGYyZWY4MmY4MDg4NzhmOTlkYTgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMwMjRhM2EyNmYwYzlkYTQzOTdmMWE0YWU1MzkxYzI2ZDc5MTRkZTlkY2MwNTNiN2RjNGU0ZDEwMmQxZmU4YWMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImIxMmE3ZmExNjE4YzFhY2E4ZjUxZDRjY2I1ZjFiMDYyMjVmNmJlMDY2MThjMzk1OTc2ZjIzNzYzMjg3MDRjMTQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFjNTY0MjdjZTAxNzQ3ODdlZDEwN2JjOWIwMjg2YzI1ZGUzMjczMGFiYzQ1ODExNjg0NTU0ZmZiNTE0MTM0YWMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_c59366ff56ac4c9c814e1f85274792c3",
+      "statement": "Docker-free source fixtureとmock help browserは完成image/volume更新や実OAuth/provider結合を実証せず、image probeは非rootGit CLIとlibgit2で版と履歴を検査する。",
+      "evidence": [
+        {
+          "resource": "repo://deploy/developer/verify-access.mjs",
+          "version": "repo-file-v1:sha256:017df5320e0210d52993ef4783b271ff013794d05f7fd85c30509e58b5d418dd"
+        },
+        {
+          "resource": "repo://deploy/server/source.test.mjs",
+          "version": "repo-file-v1:sha256:4b63a1383570673163f8f0dd02859b05f25193aefaaed04d482d0e57721f1215"
+        },
+        {
+          "resource": "repo://tests/help/README.md",
+          "version": "repo-file-v1:sha256:af903721707978b10a0807e0495c94c382eb0645bc16e1dc7b89b4bdf9c1f308"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.7.2",
+    "at": "2026-11-12T04:13:28.445Z"
+  }
+}

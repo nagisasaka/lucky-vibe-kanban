@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:caf8bad4801ecdc3114076fe12ed282b90696e25c03e630bf9c0a8c342863198",
+  "pageVersion": "sha256:f56d2b8d58c312da2b7397ba4431651815cd42aecdaca1fea534b8a885f8711a",
   "claims": [
     {
       "id": "claim_edf1b78d3c7a4d978a6d8debcee4edd2",
@@ -100,7 +100,7 @@
         },
         {
           "resource": "repo://crates/server/src/remote_mcp/mod.rs",
-          "version": "repo-file-v1:sha256:4e279faadb65d4d2a53865829ed7469d500d2273bd9a16afe716343167ec953d"
+          "version": "repo-file-v1:sha256:c145e88a9b1d867edb77b90f75ec4c627e501d0f4601067d6b4809fc00fa852b"
         },
         {
           "resource": "repo://crates/server/src/routes/sessions/questions.rs",
@@ -358,7 +358,7 @@
         },
         {
           "resource": "repo://crates/utils/src/agent_guides.rs#L25-L62",
-          "version": "repo-lines-v1:sha256:c3c54cdb15d94bbc8556514cb976ff71a82288183e11473856f3647f8cc478ee:eyJzZWxlY3RlZExpbmVDb3VudCI6MzgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBkZmQ4ODk4YzQ2YmQ4NjQwODIzNGQ4ZDdiN2IzOGQ4Mzg4NGQ3ZjZkNjY1OGY2NjQ3NzI2Njc5ZjZlNWQ2MTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjBiMmYzYmEyYTk2M2Q2MjAwZTY1N2MzNTJiMGI5MTBlODc5ZWZkYzZiNzgyZjE1YzQ4NDc1Yzg5ZWIwNTZkZDIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQxMzYwZTc4OTM3Mjc0OTA3NjlhYzM4ZTYxMjRhNzZhMGIyOGZkZGJiZjFlYTM1ZDJiOTk4MDYzMjNiMWZjODUifQ"
+          "version": "repo-lines-v1:sha256:06950fd9195111a900ebcc7756a8ecb9e9fd8588d2d47943ed77909e820fbcf8:eyJzZWxlY3RlZExpbmVDb3VudCI6MzgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBkZmQ4ODk4YzQ2YmQ4NjQwODIzNGQ4ZDdiN2IzOGQ4Mzg4NGQ3ZjZkNjY1OGY2NjQ3NzI2Njc5ZjZlNWQ2MTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjBiMmYzYmEyYTk2M2Q2MjAwZTY1N2MzNTJiMGI5MTBlODc5ZWZkYzZiNzgyZjE1YzQ4NDc1Yzg5ZWIwNTZkZDIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQxMzYwZTc4OTM3Mjc0OTA3NjlhYzM4ZTYxMjRhNzZhMGIyOGZkZGJiZjFlYTM1ZDJiOTk4MDYzMjNiMWZjODUifQ"
         }
       ]
     },
@@ -376,7 +376,7 @@
         },
         {
           "resource": "repo://crates/server/src/remote_mcp/repository_read.rs",
-          "version": "repo-file-v1:sha256:b8621f0bc92b10d70a744c5f10041a8a6eeecac5be71744beb6dad3a2ab75274"
+          "version": "repo-file-v1:sha256:1bdba308ef11a1b4a4de985cac7b8bece4b6c01688f34a5e103c6cb9a4bcdcd6"
         }
       ]
     },
@@ -429,10 +429,32 @@
           "version": "repo-file-v1:sha256:88248b368459e38bbd8567984e36e94e0ae6d32374c2ee4943e0bc0bd9275a06"
         }
       ]
+    },
+    {
+      "id": "claim_9ffc6bc760d54422839c435a00f85c94",
+      "statement": "一般対話ヘルプは既存UIとremote MCPから既定coding agentを使い、上位AIはsource:lvkのquery_repositoryでProject不要の版固定公開sourceを直接読める。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/remote_mcp/help.rs",
+          "version": "repo-file-v1:sha256:9d3006a52f41570bc7b108afd70eb48f5ec985d250321549a7990352506cb88a"
+        },
+        {
+          "resource": "repo://crates/server/src/repository_read.rs#L76-L131",
+          "version": "repo-lines-v1:sha256:e58a669cc0e3303a809f23d1a287f3abcf971c91377ddfbcf3dce14716630001:eyJzZWxlY3RlZExpbmVDb3VudCI6NTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YjA0NDkxNDY5NzIyZTgzNjNhOTRlNDA0NDUzOGUwMTNhMmEyMTdlMzZiMWU1NjhiYTYwYWNiN2I0YzhmMmUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRkYTU5NzA1NDYxNTc4YjIxNWQzZjEwYTQ2M2FjY2FhM2E5NDRmNTlmY2Q3ZTY4MzNlYzY2ODEzYjcyYTcxNmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY2NWU4MTMyOWQ5NGU5ZDRlY2FhYjRlZDU1M2E1ZDhiYTcwMGMzZGEzMjJhYTU4Y2QzODU3MDk2MDFkMmJhMTAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImM0MDIwMGQ3ZjI1ZTM4MDQ5ZDBjYWQzZjgxYjEyODVhNWI2MGMwMTYzYTkyZDFhZjgxZGQxZTgxMzEzODQ5YTQifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/help.rs#L84-L160",
+          "version": "repo-lines-v1:sha256:62a6dcd5347fc4f9cb592e6b22d6e3028b4352edef3ce2b7344457709d074b25:eyJzZWxlY3RlZExpbmVDb3VudCI6NzcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAzODI5MDkwYmM5YzBjOTg3YjVhYzczMjg0MzQ1MGFhMmNhYTZkZjliZDVlMzYyMzIyODE1YWY3M2YxOTMyYWQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNjMWVhNjgxZjEzZjgwYmMxM2RiOWQ2MmMyZjQxZWIyNTY5MzU3YjBjYmM2NTU4M2ZhNDg1ZWM5MDhmOWQ2MGMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQ2YmRkZDBlNjYzOWQ2NjNjODU5MTEwMzUxYTE0MTE4ZGFhOGM3ZjI1MWI2YmNkODc1ZGMyMmM3YzNlYWQ3M2MiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjlhNWQxMjc1ZTY1YzgxZjhjZDEyMjk5NjI2YjZmMjExZGI5MTk4YzBjODdjZWQ1Nzg0MWM4YjFkYjUwZWY0NjIifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/dialogs/shared/WorkspacesGuideDialog.tsx",
+          "version": "repo-file-v1:sha256:bfccc9401fd96f515dfd8131c05758a65d51d749c23660a306dc434eb1d58ac1"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-12T03:32:18.680Z"
+    "at": "2026-11-12T04:13:28.445Z"
   }
 }

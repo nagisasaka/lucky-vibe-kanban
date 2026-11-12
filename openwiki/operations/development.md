@@ -141,6 +141,10 @@ sources:
     resource: repo://tests/chat/paste-markdown.test.mjs
   - id: openwiki-source-7cc1d248ce00f0c5ef61c76e
     resource: repo://tests/chat/prompt-context.test.mjs
+  - id: openwiki-source-1a5fb8d4b9f9c4afdbc0b072
+    resource: repo://tests/help/reading.mjs
+  - id: openwiki-source-84b875ef198dd7cc343720cd
+    resource: repo://tests/help/README.md
   - id: openwiki-source-73a5bd0edbaa761e30d263e4
     resource: repo://tests/issue-versions/browser.mjs
   - id: openwiki-source-1a64d7ccf57099c453630fcb
@@ -175,10 +179,10 @@ sources:
     resource: repo://tests/workflow/playwright.config.ts
   - id: openwiki-source-7ff1b0a7c2af3c41dc6b3d55
     resource: repo://tests/workflow/specs/workflow-presets.spec.ts
-generated: { by: "codex", at: "2026-11-12T03:32:18.680Z" }
+generated: { by: "codex", at: "2026-11-12T04:13:28.445Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-12T03:32:18.680Z
+    at: 2026-11-12T04:13:28.445Z
 ---
 
 
@@ -644,3 +648,18 @@ main取り込み時の残リスクは、実providerのsource create/edit/rename/
 source SHAのscoped Rustfmt/Prettier成功証拠と無競合の内容保持により、その重複再実行はagent判断でskip記録した。実Auth0/provider、認証済み実アプリ一体E2E、本番規模migration性能、別環境での実行は未確認であり、成功扱いしない。別環境テストは手順・前提の準備までとし、実providerや稼働DBには向けていない。一般suiteのignored隔離試験は実行したと扱わない。
 
 コード検証後にprepare_wikiで原本journalを保存してから同じ候補branchのWikiを更新し、Wikiだけを別commitにする。コードSHA、Wiki完了、公開要求、hostによるローカルmainへの実Git適用は別の結果である。GitHub push、認証変更、tag、deployment、共有devの停止/切替/再起動は行っていない。
+
+
+## LOCAL-375の対話ヘルプ統合検証
+
+固定base `1b5111685e97de7da37279a4b841f869c3196375`（372・377を含む）へ375 source `78fb649bd68615724c289068468943786f81a9c3` を採用した。en/ja `common.json` の末尾競合は、377の `issueVersions` と375の `interactiveHelp` を両方残して解消した。merge候補は `69f9f382c74316d2c7f872826d00ab11f348450d`。追加修復はmock browserの撮影時に `animations:"disabled"` を指定する一行で、切替直後の新旧テーマ色が混ざる画像を避ける。製品コードは同じで、最終コード検証SHAは `e5cddb5128e878ce0f0d9bd37bb0c150ea88268a` である。
+
+`69f9f382` の管理process `8316fcf5-3f25-4919-aec9-19ad4bc684db`（request `dc08887d-4a1b-41a4-9982-85d17ae00cf4`）で、frozen install、production frontend build、全 `check` / `lint` / `i18n:check`、`server:check`、ヘルプVitest 13件、mock Chromium、`generate-types:check`、`prepare-db:check`、全 `backend:test` を順次実行しexit 0となった。配布kitは42成功・Docker Compose不在1skip。backendの既存ignored試験は未実施であり、server452成功/14ignored、executors355成功/7ignored、local-deployment105成功/1ignored、services187成功/4ignored等を全受入完了へ広げない。前段377で一度失敗した `terminal_drain_releases_control_owned_output` は今回全suite内で成功したが、時序依存の再発可能性は残る。
+
+MCP待機は300秒でtimeoutしたが、保存済みprocess identityを読取APIで確認し、一つの検証processが終了するまで待った。稼働版の実行中ロックはstdio inspectで汎用validationエラーとなったが、完了後の正式inspectで元requestのrecorded/passを確認した。新requestで同じ検証を二重起動していない。一時SQLx DBは検査側でcleanupされ、コード候補はcleanのままだった。
+
+`e5cddb51` では差分が上記撮影一行だけであることと `git diff --check`、mock Chromiumを管理process `9fe7e9c8-89bf-4979-a76d-bc57db33bb5e` で再実行し成功した。明暗・390/1100幅の画像を生成し、light狭幅/dark広幅の静止画像も読取確認した。広域suiteの反復は製品tree不変と `69f9f382` のpass証拠を根拠にagent判断でskip記録した。新SHAで広域suiteを実行したとは扱わない。fixtureは実UI/transportを使うがAPI応答は合成で、実認証・server・provider結合を証明しない。[fixtureと範囲](../../tests/help/README.md)・[撮影](../../tests/help/reading.mjs)
+
+[対話ヘルプ](../concepts/interactive-help.md#別環境で残る受入検証)に別環境の前提・手順・失敗時の停止とcleanupをまとめた。完成imageの非root Git/libgit2、binary/source一致、HOME/repos/work volumeを保持した異なるimageへの更新、実OAuth/MCP、実browser-provider結合、回答生成中取消、unknown revision binaryは未検証。今回の「別環境テストは準備だけ」というユーザー境界に基づく未実施は、重複検証を省いたagent判断と別のskip記録にした。375の既存source Memoryが報告したHTTP/provider成功も今回候補の実測へ置換しない。
+
+最初のOpenWiki begin前に `prepare_wiki` request `78632bfb-d7ec-4df6-91ac-d07f2cd1234d` でコードSHA `e5cddb51` の原本journal保存に成功した。同じ候補branchでWikiだけを別commitにする。コード検証・Wiki完了・公開要求保存・hostによるローカルmainへの実Git適用は別の事実であり、反映成立はRun終了後のhost結果を確認する。GitHub push、タグ、認証変更、デプロイ、稼働devの停止/切替/再起動、別環境テスト実行は行っていない。

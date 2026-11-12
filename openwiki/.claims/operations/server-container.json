@@ -1,22 +1,22 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:75d9df8c57f46d3219a361fd659eb63e75dd67eea82e63db2e64c6b18c2865ff",
+  "pageVersion": "sha256:516ffba52acd053d5748ea80845aeb4f26ba2192cb8a715cd0ad8e75ca870255",
   "claims": [
     {
       "id": "claim_58a31267fd284cf6b691efe1ca720bfe",
       "statement": "server配布は信頼された一チーム向けlocal LVKの遠隔配置で、Basic ownerや承認済みAuth0メンバーは同じappuserのagent/nginxと全repositoryを共有する。checkoutのbuildは稼働binaryを置換しない。",
       "evidence": [
         {
-          "resource": "repo://Dockerfile#L120-L137",
-          "version": "repo-lines-v1:sha256:79108643d2188a629f5fb9deed4ec4d7e517a7b3d672555fe880c80edeacd889:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJjMDNlYzAwZDZkM2FiN2IxNzBlZjljYjExZDMwZjE3ZDdkY2ViODNhMjg0NjU2NDk1NGRiYzVkYzQ1MjkyOTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjlhYTY2OTRlMGYxNzAwMzk5ZWQ1ODE4YzNkN2ZmMGQwZWI2OGFhNjdlN2RkZWE5NWViZjM4NWM4NDk3ZWRlNWUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjNiYjA5ODI3MjUzNTYxNGM4M2YzZDlmZDVhOTNkZjM5NDEwMTNjNWQ1Yjk4M2ZkMzMyNThmNWFiNDdiYjE2NWQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjMzNGU0ZTc3MmY1ODJhNDNlNGExMmU5OGQ4NjU3NTkwYzE3ODkzMjUxYTZjOWVlZmFlOGM4Yjk0ODVhMDQwMWIifQ"
+          "resource": "repo://Dockerfile#L135-L166",
+          "version": "repo-lines-v1:sha256:de752626a1f4f0fcdddb4bb9392883e5c193b720d12a9f38c727ee0d772d0e86:eyJzZWxlY3RlZExpbmVDb3VudCI6MzIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjllZmU4OGY4M2E2MzRiNjVmOGJiMzA2YWY5MGE5MTA3ZDFlMjEzYjZjZGViODQ5MzQzMDQ5OGQyZThmY2M1MDgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk2MTVlODdlNWQxMmQ3MjI1YzlmZjUyNDQ1Y2U0ZmQwMzZiMzkwNWE5NmEyZDYzNTE5OWY2YmY2NDIyYWZkZTQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY2NjkxMzYwNzZkNDM5OTdmZjIxYjZhN2Y3ZTk2N2RkYWE4NDY4YWRmZWQ3NzM3ZmFkY2I5YWJjYTVmZjE2OTEifQ"
         },
         {
-          "resource": "repo://Dockerfile#L217-L235",
+          "resource": "repo://Dockerfile#L232-L250",
           "version": "repo-lines-v1:sha256:de51fa9428d7497154a8762dab1c5306c44da7dceaa64f75babc062d9d06bd07:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQyNjMyYmZlYzRmMzhlNTUzMDU4MzE3ODVjNzI2NDhlZTRkOGNiMjllMDEzNzg0NDc0OTk5YzYxYTcwYjg2ZjQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEzYTY3Y2FlYzdkZWIzYzhmZWFhMDQ2NTNiNTA5YzlkZmYyMzAxNTVkYzViYjAzYjliZGY4ODYzN2I5MGJiMjIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjBmNzU3YzQ4NzRlM2JhZTNjMjhkYjdhNzNkMTM2NDg1MDgwNjE4NmE4MzdlZThhOWQ2ZTcyZmIyNTIwMzgwOWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
         },
         {
           "resource": "repo://crates/server/src/routes/mod.rs#L54-L109",
-          "version": "repo-lines-v1:sha256:dbf3c0f897fe3bad1f374e098c8759e20590f81619e3fd7d705e071aecf635b4:eyJzZWxlY3RlZExpbmVDb3VudCI6NTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgyZWE1YTIxYzAyMGYwMTM0MTY3MGZmZjkxODJlYmQ1ZjhjNDZiNzcwZTczYTEwMjRhNDkwYjg5YTA0ZDk1NTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJhYzBhYTYxNGU3MGM1ODk5ZDAzMDlmYzA5ZGE5ZDliMTE5ZmUwM2Y0ZmQ2Y2QzNzU3NzYzYTFhODZlOTE3YjEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+          "version": "repo-lines-v1:sha256:3f55e9bf3bb624eb23b5a21ba33f8465b4a6a852a4c1cdf3f8560f4dcbff85da:eyJzZWxlY3RlZExpbmVDb3VudCI6NTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE1NGJkMzAyMjAwOWM0ZDU2YzQxYjE5ZTIyNjA5ZmIzMWMwZTc4ZTEwMTFiNjdlMjU3ZTJlYWRkZGQ2MDVjNjEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcyNmM1MTE3NzdkNjhiYTQwMDM2MTA1MDIzMjFlMTU5ZDI2MmRhYWJhMDk3MTJkMTY2MzFiNjg5NDA5Y2I3ZDMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjU3ZDkzMGQxNmE3ZDQ2NGIwMDdiNjkyMjgzODhjZWNjOTI0YWU2MDcwZGE3ZjM2YTNhYzhlMDBjODA4OWVmMjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZmOTA4ZmUyMDRjMjRiMjk3N2YzYTI1NmYyM2YyMDQyNjlhNGU0Y2UwMWE0MzZjNTI0NjE5NDZjNjAyMTg3YjEifQ"
         },
         {
           "resource": "repo://deploy/server/compose.yaml",
@@ -145,7 +145,7 @@
       "statement": "server-toolsはsccache0.18.0をlocked・no-default-featuresで/usr/local/binへ同梱するが、global Cargo wrapper/cache/incremental設定は変更せずrepository側に利用設定を委ねる。",
       "evidence": [
         {
-          "resource": "repo://Dockerfile#L197-L204",
+          "resource": "repo://Dockerfile#L212-L219",
           "version": "repo-lines-v1:sha256:6339b1ac553b5f7a22494b2803f27d67487bcc59fd98b200eac806dcdfd46f3a:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZTVjY2FlMGFkMGMxN2Y2YjI4YTI2ZDk2MTE5ZTQ2ZGUwZjNkMDdlNjdkYmI5NzMwOGUyYzUwYjEyMjY2NWM1NyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOTU1NGM2MjhkOGE2NzM2OTVkYTM1YjA5ODQ1OWMzNWVjZjNiZTIyMTEzYjQ3ZjEwYTg4MzFkMWNhMDA1ODlhOCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMzA1MzYyNDIzOTAwNzJkOWQwMmFjNDViMWI0ZmZmNjNhYTMyYWVmOTljYjA2ZmRmOTRjY2M3ZDNjYmI5ODcwNiJ9"
         }
       ]
@@ -195,11 +195,11 @@
       "statement": "less は server-tools の apt package として導入され、server-browser を経て server image に継承されるが、runtime-base から分岐する小型 runtime はこの追加を継承しない。",
       "evidence": [
         {
-          "resource": "repo://Dockerfile#L146-L180",
+          "resource": "repo://Dockerfile#L161-L195",
           "version": "repo-lines-v1:sha256:3679b4dc021ff1b0e5b060787ffdead1cad1ea81c20b52bf021aaa87e5e55d64:eyJzZWxlY3RlZExpbmVDb3VudCI6MzUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQzZmM4OWI3MmU2MDNkYWU4NmJmMzRmYzAwYWY1ZjgwMmU0MzZiODY3OTE1YzFmZTZjMmIzYjkxN2E1NTJmOTgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIzYTQyODJmOGM5OWY2NzJkODIxMzg3OWU3M2E4YWQ0NjI4YzIwMzc1MTE2ZTVkMDkwYWQ4MjZiMmU3OGVhYjgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY3Y2MwYTU0NWUwYzFlY2MxNjc0NDA0ZGZjOWEzYTYyMzExNmU3NjIwN2U3YjExZWU1YWFjNjVkOTgzMjI5MGMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImU2MGQ2NjY3MDkyZWIxMGY1ZTE3ZmQwNDAyM2UxYWNhOWMzNjg2ZGQ3YTU3MDk0MDI5YjU0YjVjZGM5M2RkZjEifQ"
         },
         {
-          "resource": "repo://Dockerfile#L206-L225",
+          "resource": "repo://Dockerfile#L221-L240",
           "version": "repo-lines-v1:sha256:c1b6caa8f9cdbf91d234b0232d6d561e95e350b0a69974f397480f49bcf4c8fb:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFhYTdjOTI5OGE2ODlhZmMwMzFjNzE3OGJmZjYxOGUwNWMzMmFhYjJhZDBjYzQ3Y2NlMTRkNDk5NGVkN2UyY2QiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcxYjMzN2VlNWJlMjI0ZGM0ZmI4N2ZiZmE0YTNlY2Q1NTBlOTU5MDMzMmNkY2YyMDE2OTIzMzRlZDRmOWJiZjgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRjOTI0YzgyMzRjZmIzYjIwMzJhY2MxOTE2OTA0YzllZmY2ZmZiY2NiM2JlYjk4Mzk2ZDU0YTFlYTA3NDgzOWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZhYjhmY2ZkNGJhZWNlZjJjYTRlMTkyMjYxZTg4YzgwYTljZGMzZDlhYjJiMmZhNjM1ZWY5MTAwYThmYmJhZWYifQ"
         }
       ]
@@ -292,7 +292,7 @@
       "evidence": [
         {
           "resource": "repo://Dockerfile",
-          "version": "repo-file-v1:sha256:87e598250ba5c51a2a257ffa5019a902a7154125b400486a3de51831d7d998d2"
+          "version": "repo-file-v1:sha256:b974d699d0fc4f34d0f90aa582897b5a86e146487a4cd219ff7a75eef0725e54"
         },
         {
           "resource": "repo://crates/mcp/src/bin/vibe_kanban_mcp.rs",
@@ -423,7 +423,7 @@
       "statement": "server-toolsはamd64向けnative Claude Codeを版とSHA-256で固定して検証後に/usr/local/bin/claudeへ導入し、home mountから分離する。CLI同梱はアカウント認証を含まず、利用者が別途loginし認証情報を永続homeに保持する。",
       "evidence": [
         {
-          "resource": "repo://Dockerfile#L171-L181",
+          "resource": "repo://Dockerfile#L186-L196",
           "version": "repo-lines-v1:sha256:c61156373ce2229458805dc0efe5aaadd3472d6e55fec4cbb021f029c3acbe5d:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUyZjg3Y2M1OTgyMzc1MDZmOWJlZmFhYTFhZWIxYzdiNTY3NzNhM2IxYmFlZTI3MzU5NTRkYmUyN2Y5ODZmMzYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImIxOTdjZGMyOTNhN2U2MzQzZTYzZjUwNzBhYTM5Y2Y4ZTdkOTY0MDkwMDk5YjI0ZGFlZjkwNjA1ZWUzMjY4NTciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhlY2Y5ZGY3Zjc4ODYzMzU5NmQxYjcxOWRkNGU2ODVhOGQxNDE1YTc5ZjEyNWJlYTRhY2Q3Yjk5MTY2ZjhhNTcifQ"
         },
         {
@@ -474,7 +474,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/mod.rs",
-          "version": "repo-file-v1:sha256:8902bcab2995a8d4e066dfa6a9eeba0aa69519d372d2ad9054cb50e65f9d2809"
+          "version": "repo-file-v1:sha256:fc0ba78cf0f3b4d8fefd890cd997e82df821d8c34bb70cb464975badc4107d1b"
         },
         {
           "resource": "repo://crates/server/src/startup.rs#L133-L147",
@@ -495,7 +495,7 @@
       "statement": "server-toolsはbubblewrap/socatの導入とbinary存在検査を含みserver imageへ継承するが、runtime namespace成功や稼働container更新を保証しない。",
       "evidence": [
         {
-          "resource": "repo://Dockerfile#L145-L178",
+          "resource": "repo://Dockerfile#L160-L193",
           "version": "repo-lines-v1:sha256:7cac804802422456d58b51c6ae8beaef4f6abd31440407bb40fb6da74843622e:eyJzZWxlY3RlZExpbmVDb3VudCI6MzQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIwMWZhZDY4YmJjMzRhYTdjZDI0YTIyZGM3ZTg0NDA0MzYyZGYxNDVjOTJjYTgxNzM2MGI2Y2U1MmYxN2ZkMmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFlNzcwMDk0ZmQ0NDgyYTIxMDcwMDE3MGI2MDU1ODA2MDVlMDk1OGYzNjFlZDgzYzQ4ZDI4NDhlY2ZkMTYwM2UiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImIxZDNmZTc2M2JkMmE1MzE3OGM1OGQ1ZTZlMWVhNWUzMGQxZDg5MmIzNjkxNGI3ZDliYjI2MzVhNjI4YjZjNDkifQ"
         },
         {
@@ -503,10 +503,46 @@
           "version": "repo-file-v1:sha256:3b6c34bcd60166bf77d91ec11608f9c79f3071a659a6da5c6161aa4a6d506587"
         }
       ]
+    },
+    {
+      "id": "claim_2c94dc47bc1742dbbb059af1b51ffe9c",
+      "statement": "Dockerは公開完全SHAと全祖先を独立fetchして非shallow・独立objectのsourceを永続volume外へUID10001所有で置き、CIはbuild前にHEAD/revisionとtracked cleanを検査する。",
+      "evidence": [
+        {
+          "resource": "repo://.github/workflows/publish-server.yml#L75-L88",
+          "version": "repo-lines-v1:sha256:817c807dfe70c511e307b4ba17872abb9b6dff8d5b7577553dc32cfa3af6800a:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBlZjA2MzU2YWNkYmY4YTQ2MDBiNDM0ZmUxZjMxZjBkOWExYmMyNzE4M2ZkN2JhZmZmYjg5NTE5OGY2NzAyY2QiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE3MGY3ZmFhOTg4ZTg1YzNlOGRiMjA2ZGRlOTM1MjYyMDdmNzk4Nzg5YWEwNGUyZjI5Mzg1ZjRmMDMzZjM5ZmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjgzOWFhYmM5MmNjYmNlNjM5YzdhZjRlYzdkMTM3NWE5YWY4NGJkMjFhYzViZDY0NmY2YTM0NzM3OWNmODZkYmYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijc3NDA0YzVlOTUyNDZmNWViNTU5NWQ0ODI4ZGUyOTIxODllOWMxODI4ZWZlYzIwOWQ3NjRhOGRhMjc4MzgzNjQifQ"
+        },
+        {
+          "resource": "repo://Dockerfile#L120-L166",
+          "version": "repo-lines-v1:sha256:ab51838034e9a3a0dc6b35e9240a3137c2110cda1089b7ee299abf75e62f1c15:eyJzZWxlY3RlZExpbmVDb3VudCI6NDcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJhNjlhMGI4ZWY1ZjVkNmNhNTZmODkxYTYyNTM0NmNmMGRmZDgyYWRiNDMzMGY1YzkxMjAyNzM5MDk5ZmFiYTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjJjZmEyYjZkZmFmMmY1YmYwOWM1ZTJiZWU0ZTk4MjI1NzNhOTE0MDU2ZjczYzNjNjg4NTFmMjcxZjdlMzYzOGUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY2NjkxMzYwNzZkNDM5OTdmZjIxYjZhN2Y3ZTk2N2RkYWE4NDY4YWRmZWQ3NzM3ZmFkY2I5YWJjYTVmZjE2OTEifQ"
+        },
+        {
+          "resource": "repo://deploy/server/bundle-source.sh",
+          "version": "repo-file-v1:sha256:18073869108d7d97382d4cf64d99bc544e4b371aaa0760a3692a3e45c6efd18d"
+        }
+      ]
+    },
+    {
+      "id": "claim_e796783ffba84974b24750dfd7fcec94",
+      "statement": "image probeはUID10001とHOME/repos mountの下でbinary/source版一致、Git log/showと認証付きHTTP libgit2のlist/log/diff・祖先commitを検査するが、Docker-free fixtureは完成image/異なるimageへのvolume更新の実証ではない。",
+      "evidence": [
+        {
+          "resource": "repo://deploy/developer/verify-access.mjs#L70-L107",
+          "version": "repo-lines-v1:sha256:0b25827b137e37c764708ca5eeabaf0f5926c0efa6aff4edf9a61e8178f60689:eyJzZWxlY3RlZExpbmVDb3VudCI6MzgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM3ZTdlY2YyMWE3MTU2NGU1YTI0NTIyYzA0MTVlNGY2ZjVhMTlkNDE5OWViYWIzYzUzY2M4MTQxNDJkMzBlYWUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ5OTY3ZWMxZWQzODM2ZjhlYjE3YWZmMTcyYjViZmVmN2RlNjA0ODVhNDM5YzZjYTExYzU5MWUxNzU1NzM5YWUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImYwZDRiMGQ0ODhmNGY3YTE5NTEyYTJkN2ExYmJlOTVhODY4YzhkZTMyMTE3ODY2YTdlYWQwNTI4YjA3NjdiOWMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjUzYTA5YzY1NzdiYWVhNTgwY2M1MTA2NGY1NzhiNGMyZmI0MTBmYzdiMWYzMzk2NWU3OTQyNGY1NTBhNWI2MjIifQ"
+        },
+        {
+          "resource": "repo://deploy/server/SOURCE.md",
+          "version": "repo-file-v1:sha256:496c64b891331462f84cdd85419a5936c843460fd541dec3373937519ed9eae1"
+        },
+        {
+          "resource": "repo://deploy/server/smoke-image.sh#L41-L76",
+          "version": "repo-lines-v1:sha256:f2dc33fd3b9ac47425e0efe52fdd1cc6c00ca9f1a5024175f3cc12a7cb5913be:eyJzZWxlY3RlZExpbmVDb3VudCI6MzYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBlMmM5NmI2MjYxOWNlNGM0ODc5ZTEzOWI0ZjVkZGFhNDA2ZGQ0MmMwYTA5ZGQ1ZGNkZDZhNjY3ZDk0MDA1YTgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI0M2ZlMWE4YjFhYzM3NmEwODdiN2JkYjkxMDlmNDc4OGU0MDcxOGI2ZWRlZWUxZGEyMDQ0Y2VmYjUzODQ3ZDIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQxMzM5Mzc4ZDU5MGUxNGVlZjVhYTA3ZjIxZmUwZDNmNTc2N2U2ZGUyNWFhMDU0MWViZDVlZGQxOWNlNDNlOGYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNhNjhkZTNkNTAxZjEyMWYyZTc5NDk1YTFiZjdjNzhiODUyNGIyOWJlMGU2MjAyMmMxZGEzMmUwMDI0ZmFhNzIifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-11T14:47:52.070Z"
+    "at": "2026-11-12T04:13:28.445Z"
   }
 }
