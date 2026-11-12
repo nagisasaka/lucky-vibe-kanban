@@ -161,6 +161,7 @@ try {
       await expect(input).toBeVisible();
       await page.screenshot({
         path: `${output}/${theme}-${width}.png`,
+        animations: "disabled",
         fullPage: true,
       });
       assert.equal(
