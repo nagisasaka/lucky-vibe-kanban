@@ -92,6 +92,8 @@ interface KanbanFilterBarProps<
   showSubIssues: boolean;
   showWorkspaces: boolean;
   hasActiveFilters: boolean;
+  includeRelatedIssues?: boolean;
+  onIncludeRelatedIssuesChange?: (include: boolean) => void;
   onSearchQueryChange: (searchQuery: string) => void;
   onPrioritiesChange: (priorities: PriorityLevel[]) => void;
   onAssigneesChange: (assigneeIds: string[]) => void;
@@ -131,6 +133,8 @@ export function KanbanFilterBar<
   showSubIssues,
   showWorkspaces,
   hasActiveFilters,
+  includeRelatedIssues = true,
+  onIncludeRelatedIssuesChange,
   onSearchQueryChange,
   onPrioritiesChange,
   onAssigneesChange,
@@ -154,10 +158,22 @@ export function KanbanFilterBar<
     onSearchQueryChange('');
   };
 
+  const relatedIssuesCheckbox = onIncludeRelatedIssuesChange && (
+    <label className="flex shrink-0 items-center gap-half whitespace-nowrap text-sm text-normal cursor-pointer">
+      <input
+        type="checkbox"
+        checked={includeRelatedIssues}
+        onChange={(event) => onIncludeRelatedIssuesChange(event.target.checked)}
+        className="accent-brand focus-visible:ring-2 focus-visible:ring-brand"
+      />
+      {t('kanban.includeRelatedIssues', 'Include related issues')}
+    </label>
+  );
+
   return (
     <>
       {isMobile && mobileSearchExpanded ? (
-        <div className="flex items-center gap-half">
+        <div className="flex flex-wrap items-center gap-half">
           <button
             type="button"
             onClick={() => {
@@ -176,6 +192,7 @@ export function KanbanFilterBar<
             variant="search"
             className="min-w-0 flex-1"
           />
+          {relatedIssuesCheckbox}
         </div>
       ) : (
         <div
@@ -234,6 +251,8 @@ export function KanbanFilterBar<
                 className="min-w-[160px] w-[220px] max-w-full shrink"
               />
             )}
+
+            {relatedIssuesCheckbox}
 
             <button
               type="button"

@@ -344,8 +344,10 @@ export function KanbanContainer() {
   const archiveScope = useKanbanDisplayStore((s) =>
     s.projectId === projectId ? s.scope : 'active'
   );
+  const [includeRelatedIssues, setIncludeRelatedIssues] = useState(true);
   const setArchiveScope = useKanbanDisplayStore((s) => s.setScope);
   const { filteredIssues: matchingIssues } = useKanbanFilters({
+    includeRelatedIssues,
     issues,
     issueAssignees,
     issueTags,
@@ -1154,6 +1156,8 @@ export function KanbanContainer() {
               showSubIssues={showSubIssues}
               showWorkspaces={showWorkspaces}
               hasActiveFilters={hasActiveFilters}
+              includeRelatedIssues={includeRelatedIssues}
+              onIncludeRelatedIssuesChange={setIncludeRelatedIssues}
               onSearchQueryChange={setKanbanSearchQuery}
               onPrioritiesChange={setKanbanPriorities}
               onAssigneesChange={setKanbanAssignees}

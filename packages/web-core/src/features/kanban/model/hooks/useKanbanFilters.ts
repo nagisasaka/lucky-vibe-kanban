@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { searchKanbanIssues } from '../searchKanbanIssues';
 import {
   KANBAN_ASSIGNEE_FILTER_VALUES,
   type KanbanFilterState,
@@ -12,6 +13,7 @@ import type {
 } from 'shared/remote-types';
 
 type UseKanbanFiltersParams = {
+  includeRelatedIssues?: boolean;
   issues: Issue[];
   issueAssignees: IssueAssignee[];
   issueTags: IssueTag[];
@@ -36,6 +38,7 @@ export const PRIORITY_ORDER: Record<IssuePriority, number> = {
 };
 
 export function useKanbanFilters({
+  includeRelatedIssues = true,
   issues,
   issueAssignees,
   issueTags,
@@ -79,23 +82,14 @@ export function useKanbanFilters({
       result = result.filter((issue) => issue.parent_issue_id === null);
     }
 
-    // Text search (title + short ID)
-    const query = filters.searchQuery.trim().toLowerCase();
-    if (query) {
-      result = result.filter((issue) => {
-        if (issue.title.toLowerCase().includes(query)) {
-          return true;
-        }
-
-        const simpleId = issue.simple_id.toLowerCase();
-        if (simpleId.includes(query)) {
-          return true;
-        }
-
-        const issueNumber = String(issue.issue_number);
-        return issueNumber.includes(query);
-      });
-    }
+    // Search all authorised project issues before applying display filters.
+    const searchIds = searchKanbanIssues(
+      issues,
+      issueRelationships,
+      filters.searchQuery,
+      includeRelatedIssues
+    );
+    result = result.filter((issue) => searchIds.has(issue.id));
 
     // Priority filter (OR within)
     if (filters.priorities.length > 0) {
@@ -164,6 +158,7 @@ export function useKanbanFilters({
 
     return result;
   }, [
+    includeRelatedIssues,
     issues,
     filters,
     assigneesByIssue,

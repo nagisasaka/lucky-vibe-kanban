@@ -16,6 +16,7 @@
     "currentDisabled": "現在のブランチは選択できません",
     "empty": "ブランチが見つかりません",
     "placeholder": "ブランチを選択",
+    "includeRelatedIssues": "関連イシューを含む",
     "searchPlaceholder": "ブランチを検索..."
   },
   "buttons": {
