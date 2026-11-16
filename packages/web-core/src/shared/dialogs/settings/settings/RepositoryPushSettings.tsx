@@ -27,7 +27,6 @@ export function RepositoryPushSettings({
   projects: { id: string; name: string }[];
 }) {
   const { t } = useTranslation('settings');
-  const label = (key: string) => t(`settings.repositoryPush.${key}`);
   const [project, setProject] = useState(projectId ?? '');
   const [branch, setBranch] = useState('');
   const [remote, setRemote] = useState('');
@@ -70,7 +69,11 @@ export function RepositoryPushSettings({
         })
       );
     } catch (error) {
-      setError(error instanceof Error ? error.message : label('unknown'));
+      setError(
+        error instanceof Error
+          ? error.message
+          : t('settings.repositoryPush.unknown')
+      );
     } finally {
       setBusy(false);
     }
@@ -109,11 +112,15 @@ export function RepositoryPushSettings({
           'outcome' in error.error_data &&
             typeof error.error_data.outcome === 'string'
             ? error.error_data.outcome
-            : label('unknown')
+            : t('settings.repositoryPush.unknown')
         );
         return;
       }
-      setError(error instanceof Error ? error.message : label('unknown'));
+      setError(
+        error instanceof Error
+          ? error.message
+          : t('settings.repositoryPush.unknown')
+      );
     } finally {
       setBusy(false);
     }
@@ -128,7 +135,11 @@ export function RepositoryPushSettings({
       setObserved(result.source_present);
       setError(result.verification_error);
     } catch (error) {
-      setError(error instanceof Error ? error.message : label('unknown'));
+      setError(
+        error instanceof Error
+          ? error.message
+          : t('settings.repositoryPush.unknown')
+      );
     } finally {
       setBusy(false);
     }
@@ -142,7 +153,10 @@ export function RepositoryPushSettings({
       (receipt?.status === 'succeeded' || receipt?.status === 'failed')) ||
     (observed === true && receipt?.status === 'uncertain');
   return (
-    <SettingsCard title={label('title')} description={label('description')}>
+    <SettingsCard
+      title={t('settings.repositoryPush.title')}
+      description={t('settings.repositoryPush.description')}
+    >
       <p className="break-all text-sm text-normal">
         {repo.display_name} · {repo.id} · {repo.path}
       </p>
@@ -158,7 +172,7 @@ export function RepositoryPushSettings({
               invalidate();
             }}
           >
-            <option value="">{label('choose')}</option>
+            <option value="">{t('settings.repositoryPush.choose')}</option>
             {projects.map((item) => (
               <option key={item.id} value={item.id}>
                 {item.name}
@@ -167,7 +181,10 @@ export function RepositoryPushSettings({
           </select>
         </SettingsField>
       )}
-      <SettingsField label={label('branch')} htmlFor="repository-push-branch">
+      <SettingsField
+        label={t('settings.repositoryPush.branch')}
+        htmlFor="repository-push-branch"
+      >
         <select
           id="repository-push-branch"
           className={selectClass}
@@ -178,7 +195,7 @@ export function RepositoryPushSettings({
             invalidate();
           }}
         >
-          <option value="">{label('choose')}</option>
+          <option value="">{t('settings.repositoryPush.choose')}</option>
           {branches.data
             ?.filter((item) => !item.is_remote)
             .map((item) => (
@@ -188,7 +205,10 @@ export function RepositoryPushSettings({
             ))}
         </select>
       </SettingsField>
-      <SettingsField label={label('remote')} htmlFor="repository-push-remote">
+      <SettingsField
+        label={t('settings.repositoryPush.remote')}
+        htmlFor="repository-push-remote"
+      >
         <select
           id="repository-push-remote"
           className={selectClass}
@@ -199,7 +219,7 @@ export function RepositoryPushSettings({
             invalidate();
           }}
         >
-          <option value="">{label('choose')}</option>
+          <option value="">{t('settings.repositoryPush.choose')}</option>
           {Array.from(new Set(remotes.data?.map((item) => item.name))).map(
             (name) => (
               <option key={name} value={name}>
@@ -211,11 +231,11 @@ export function RepositoryPushSettings({
       </SettingsField>
       {(error || branches.isError || remotes.isError) && (
         <p role="alert" className="text-sm text-error">
-          {label('error')} {error}
+          {t('settings.repositoryPush.error')} {error}
         </p>
       )}
       <PrimaryButton
-        value={label('preview')}
+        value={t('settings.repositoryPush.preview')}
         onClick={review}
         disabled={locked || !project || !branch || !remote}
       />
@@ -228,17 +248,25 @@ export function RepositoryPushSettings({
             {shownPreview.remote} · {shownPreview.remote_url}
           </p>
           <p>
-            {label('source')}: <code>{shownPreview.source_sha}</code>
+            {t('settings.repositoryPush.source')}:{' '}
+            <code>{shownPreview.source_sha}</code>
           </p>
           <p>
-            {label('destination')}: {shownPreview.destination_branch}
+            {t('settings.repositoryPush.destination')}:{' '}
+            {shownPreview.destination_branch}
           </p>
           <p>
-            {label('remoteSha')}:{' '}
-            <code>{shownPreview.remote_sha ?? label('absent')}</code>
+            {t('settings.repositoryPush.remoteSha')}:{' '}
+            <code>
+              {shownPreview.remote_sha ?? t('settings.repositoryPush.absent')}
+            </code>
           </p>
-          <p>{label('history')}</p>
-          <p>{shownPreview.unpublished_commits} commits</p>
+          <p>{t('settings.repositoryPush.history')}</p>
+          <p>
+            {t('settings.repositoryPush.commitCount', {
+              count: shownPreview.unpublished_commits,
+            })}
+          </p>
           {shownPreview.issue_archive_paths.length > 0 && (
             <ul className="list-disc pl-double">
               {shownPreview.issue_archive_paths.map((path) => (
@@ -248,13 +276,13 @@ export function RepositoryPushSettings({
           )}
           <SettingsCheckbox
             id="repository-push-confirm"
-            label={label('confirm')}
+            label={t('settings.repositoryPush.confirm')}
             checked={confirmed}
             onChange={setConfirmed}
             disabled={locked}
           />
           <PrimaryButton
-            value={label('push')}
+            value={t('settings.repositoryPush.push')}
             onClick={push}
             disabled={locked || !confirmed}
           />
@@ -263,24 +291,29 @@ export function RepositoryPushSettings({
       {requestId && (
         <div className="space-y-base text-sm text-normal" aria-live="polite">
           <p className="break-all">
-            {label('request')}: {requestId}
+            {t('settings.repositoryPush.request')}: {requestId}
           </p>
           <p>
-            {label('status')}: {receipt?.status ?? label('unknown')}
+            {t('settings.repositoryPush.status')}:{' '}
+            {receipt?.status ?? t('settings.repositoryPush.unknown')}
           </p>
           {receipt?.result && <p>{receipt.result.outcome}</p>}
           {observed !== null && (
-            <p>{label(observed ? 'published' : 'unpublished')}</p>
+            <p>
+              {observed
+                ? t('settings.repositoryPush.published')
+                : t('settings.repositoryPush.unpublished')}
+            </p>
           )}
           <PrimaryButton
-            value={label('recheck')}
+            value={t('settings.repositoryPush.recheck')}
             onClick={verify}
             disabled={busy}
           />
           {canReviewAnother && (
             <PrimaryButton
               variant="tertiary"
-              value={label('newReview')}
+              value={t('settings.repositoryPush.newReview')}
               disabled={busy}
               onClick={() => {
                 try {

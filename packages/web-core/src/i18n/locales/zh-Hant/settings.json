@@ -571,6 +571,7 @@
       "selectMachineHint": "選擇一台機器以開啟機器設定。"
     },
     "repositoryPush": {
+      "commitCount": "未發布提交數：{{count}}",
       "title": "Push repository branch",
       "description": "Publish a local repository branch using the registered GitHub authentication.",
       "branch": "Local branch",

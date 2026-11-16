@@ -645,6 +645,7 @@
       "host-pet": "このインスタンスの表示名とペットを設定します。"
     },
     "repositoryPush": {
+      "commitCount": "未公開コミット数: {{count}}",
       "title": "Repositoryブランチをpush",
       "description": "登録済みGitHub認証でローカルブランチを公開します。",
       "branch": "ローカルブランチ",

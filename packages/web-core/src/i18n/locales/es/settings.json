@@ -566,6 +566,7 @@
       "selectMachineHint": "Select a machine to open machine settings."
     },
     "repositoryPush": {
+      "commitCount": "Commits sin publicar: {{count}}",
       "title": "Push repository branch",
       "description": "Publish a local repository branch using the registered GitHub authentication.",
       "branch": "Local branch",

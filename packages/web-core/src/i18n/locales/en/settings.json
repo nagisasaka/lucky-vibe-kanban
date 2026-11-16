@@ -645,6 +645,7 @@
       "host-pet": "Display name and pet settings for this instance."
     },
     "repositoryPush": {
+      "commitCount": "Unpublished commits: {{count}}",
       "title": "Push repository branch",
       "description": "Publish a local repository branch using the registered GitHub authentication.",
       "branch": "Local branch",
