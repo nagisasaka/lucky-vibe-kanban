@@ -35,7 +35,7 @@ pub async fn begin_coding_run(
     if workspace.is_execution_only() && state.maintenance_workspace_id == Some(workspace.id) {
         return Ok(None);
     }
-    if let Some(existing) = store.run(run_id)? {
+    if let Some(existing) = store.run(run_id).await? {
         return Ok(Some(existing));
     }
     let base_commit = GitService::new().get_head_info(root)?.oid;
@@ -74,7 +74,7 @@ pub async fn begin_coding_run(
         wiki_status,
         finalize_source,
     };
-    store.save_run(&run)?;
+    store.save_run(&run).await?;
     Ok(Some(run))
 }
 
@@ -116,8 +116,36 @@ pub async fn complete_coding_run(
     include_manifest: bool,
 ) -> anyhow::Result<Option<ChangeManifest>> {
     let _lock = store.try_workspace_completion_lock(run.workspace_id)?;
-    let result = complete_coding_run_inner(store, run, include_manifest).await;
-    store.record_coding_result(run, result.as_ref().err().map(|error| format!("{error:#}")))?;
+    store.save_run(run).await?;
+    let result = async {
+        let event = complete_coding_run_inner(store, run, include_manifest).await?;
+        // Both the immutable DB event and the exact Git tree precede cleanup.
+        if let Some(event) = &event
+            && let Some(publication) = store.source_publication(run.run_id)?
+        {
+            let mut expected = publication.manifest;
+            expected.source_commit = event.source_commit.clone();
+            if expected != *event
+                || git_text(
+                    &run.repository_path,
+                    &["rev-parse", &format!("{}^{{tree}}", event.source_commit)],
+                )? != publication.staged_tree
+            {
+                bail!(
+                    "Recovery snapshot differs from the confirmed Git/DB result; artifacts retained"
+                );
+            }
+        }
+        let keep_draft = store.read_draft(run.run_id).is_err();
+        store
+            .cleanup_coding(run.run_id, keep_draft)
+            .context("Source completed; artifact cleanup pending")?;
+        Ok(event)
+    }
+    .await;
+    store
+        .record_coding_result(run, result.as_ref().err().map(|error| format!("{error:#}")))
+        .await?;
     result
 }
 
@@ -147,7 +175,8 @@ pub async fn complete_successful_coding_runs(
     .into_iter()
     .collect();
     let mut runs: Vec<_> = store
-        .runs()?
+        .runs()
+        .await?
         .into_iter()
         .filter(|run| {
             run.workspace_id == workspace_id
@@ -204,11 +233,11 @@ async fn complete_coding_run_inner(
         observe_already_integrated_source(store, run, &existing).await?;
         return Ok(Some(existing));
     }
-    if store.completed_without_change(run.run_id)? {
+    if store.completed_without_change(run.run_id).await? {
         return Ok(None);
     }
     if !run.finalize_source {
-        store.mark_no_source_change(run.run_id)?;
+        store.mark_no_source_change(run.run_id).await?;
         return Ok(None);
     }
     if let Some(publication) = store.source_publication(run.run_id)? {
@@ -246,7 +275,7 @@ async fn complete_coding_run_inner(
         .collect();
     paths.sort();
     if paths.is_empty() {
-        store.mark_no_source_change(run.run_id)?;
+        store.mark_no_source_change(run.run_id).await?;
         return Ok(None);
     }
     // Preserve unusable drafts for inspection, but do not require the coding
@@ -694,7 +723,7 @@ mod tests {
         repository(&root);
         let persistent = temp.path().join("persistent");
         std::fs::create_dir(&persistent).unwrap();
-        let store = RepositoryMemoryStore::at_persistent(&persistent).unwrap();
+        let store = RepositoryMemoryStore::at_artifacts(&persistent).unwrap();
         let a_path = temp.path().join("a");
         let b_path = temp.path().join("b");
         git_command(
@@ -807,7 +836,7 @@ mod tests {
         .unwrap();
         git_command(&root, &["add", "openwiki/INSTRUCTIONS.md"]);
         git_command(&root, &["commit", "-m", "user Wiki instructions"]);
-        let store = RepositoryMemoryStore::at_persistent(temp.path()).unwrap();
+        let store = RepositoryMemoryStore::at_artifacts(temp.path()).unwrap();
         let git = GitService::new();
         let mut runs = Vec::new();
         for name in ["a", "b"] {
@@ -952,7 +981,7 @@ mod tests {
         let temp = tempfile::tempdir().unwrap();
         let root = temp.path().join("repo");
         repository(&root);
-        let store = RepositoryMemoryStore::at_persistent(temp.path()).unwrap();
+        let store = RepositoryMemoryStore::at_artifacts(temp.path()).unwrap();
         assert!(!store.state().await.unwrap().enabled);
         let semantics = SemanticChanges {
             goal: "Keep LVK thin; development context belongs to the coding session".into(),
@@ -1023,7 +1052,7 @@ mod tests {
         repository(&root);
         let persistent = temp.path().join("persistent");
         std::fs::create_dir(&persistent).unwrap();
-        let store = RepositoryMemoryStore::at_persistent(&persistent).unwrap();
+        let store = RepositoryMemoryStore::at_artifacts(&persistent).unwrap();
         let mut context = run(&store, &root);
         context.finalize_source = false;
         std::fs::write(root.join("source.txt"), "uncommitted work").unwrap();
@@ -1048,12 +1077,13 @@ mod tests {
         repository(&root);
         let persistent = temp.path().join("persistent");
         std::fs::create_dir(&persistent).unwrap();
-        let store = RepositoryMemoryStore::at_persistent(&persistent).unwrap();
+        let store = RepositoryMemoryStore::at_artifacts(&persistent).unwrap();
         let context = run(&store, &root);
         std::fs::write(root.join("source.txt"), "updated direct-folder source").unwrap();
         // A stale diagnostic from an older server must not keep blocking retries.
         store
             .record_coding_result(&context, Some("Missing semantic draft".into()))
+            .await
             .unwrap();
         let event = complete_coding_run(&store, &context, false)
             .await
@@ -1071,7 +1101,7 @@ mod tests {
             complete_coding_run(&store, &context, false).await.unwrap(),
             Some(event.clone())
         );
-        assert!(store.coding_errors().unwrap().is_empty());
+        assert!(store.coding_errors().await.unwrap().is_empty());
         assert_eq!(
             pending_events(&store, "main").await.unwrap()[0].event_id,
             event.event_id
@@ -1096,7 +1126,7 @@ mod tests {
             let temp = tempfile::tempdir().unwrap();
             let root = temp.path().join("repo");
             repository(&root);
-            let store = RepositoryMemoryStore::at_persistent(temp.path()).unwrap();
+            let store = RepositoryMemoryStore::at_artifacts(temp.path()).unwrap();
             let context = run(&store, &root);
             std::fs::write(root.join("source.txt"), "updated source").unwrap();
             std::fs::write(&context.draft_path, draft).unwrap();
@@ -1113,7 +1143,7 @@ mod tests {
                 complete_coding_run(&store, &context, false).await.unwrap(),
                 Some(event)
             );
-            assert!(store.coding_errors().unwrap().is_empty());
+            assert!(store.coding_errors().await.unwrap().is_empty());
         }
     }
 
@@ -1124,7 +1154,7 @@ mod tests {
         repository(&root);
         let persistent = temp.path().join("persistent");
         std::fs::create_dir(&persistent).unwrap();
-        let store = RepositoryMemoryStore::at_persistent(&persistent).unwrap();
+        let store = RepositoryMemoryStore::at_artifacts(&persistent).unwrap();
         let context = run(&store, &root);
         std::fs::write(root.join("openwiki/index.md"), "unexpected edit").unwrap();
         git_command(&root, &["commit", "-am", "unexpected wiki change"]);
@@ -1139,7 +1169,7 @@ mod tests {
         repository(&root);
         let persistent = temp.path().join("persistent");
         std::fs::create_dir(&persistent).unwrap();
-        let store = RepositoryMemoryStore::at_persistent(&persistent).unwrap();
+        let store = RepositoryMemoryStore::at_artifacts(&persistent).unwrap();
         let b_path = temp.path().join("b");
         git_command(
             &root,
@@ -1214,7 +1244,7 @@ mod tests {
         let temp = tempfile::tempdir().unwrap();
         let root = temp.path().join("repo");
         repository(&root);
-        let store = RepositoryMemoryStore::at_persistent(temp.path()).unwrap();
+        let store = RepositoryMemoryStore::at_artifacts(temp.path()).unwrap();
         let a = run(&store, &root);
         assert!(
             complete_coding_run(&store, &a, false)
@@ -1254,7 +1284,7 @@ mod tests {
         let root = temp.path().join("repo");
         repository(&root);
         git_command(&root, &["checkout", "-b", "feature"]);
-        let store = RepositoryMemoryStore::at_persistent(temp.path()).unwrap();
+        let store = RepositoryMemoryStore::at_artifacts(temp.path()).unwrap();
         let context = run(&store, &root);
         std::fs::write(root.join("source.txt"), "first task\n").unwrap();
         let publication = SourcePublication {
@@ -1301,6 +1331,10 @@ mod tests {
             .execute(&pool).await.unwrap();
         assert!(complete_coding_run(&store, &context, true).await.is_err());
         assert!(store.event(context.run_id).await.unwrap().is_none());
+        assert!(
+            store.source_publication(context.run_id).unwrap().is_some(),
+            "DB failure must retain the recovery snapshot"
+        );
         assert_eq!(git_command(&root, &["rev-parse", "HEAD"]), first_commit);
         sqlx::query("DROP TRIGGER fail_manifest")
             .execute(&pool)
@@ -1308,8 +1342,8 @@ mod tests {
             .unwrap();
         pool.close().await;
         drop(store);
-        let store = RepositoryMemoryStore::at_persistent(temp.path()).unwrap();
-        std::fs::remove_dir_all(temp.path().join("knowledge/events")).unwrap();
+        let store = RepositoryMemoryStore::at_artifacts(temp.path()).unwrap();
+        assert!(!temp.path().join("knowledge/events").exists());
         // Server died after Git, before publishing its event. Another task then
         // committed and the mutable draft was overwritten. Recovery must not
         // derive either source or semantics from that new task.
@@ -1325,6 +1359,8 @@ mod tests {
         assert_eq!(event.source_commit, first_commit);
         assert_eq!(event.changed_paths, vec!["source.txt"]);
         assert_eq!(event.semantics.summary, "fix: first task");
+        assert!(store.source_publication(context.run_id).unwrap().is_none());
+        assert!(store.run(context.run_id).await.unwrap().is_some());
         assert_eq!(event.created_at, context.created_at);
         assert_eq!(git_command(&root, &["rev-parse", "HEAD"]), second_commit);
         assert_eq!(
@@ -1341,7 +1377,7 @@ mod tests {
             let root = temp.path().join("repo");
             repository(&root);
             git_command(&root, &["checkout", "-b", "feature"]);
-            let store = RepositoryMemoryStore::at_persistent(temp.path()).unwrap();
+            let store = RepositoryMemoryStore::at_artifacts(temp.path()).unwrap();
             let context = run(&store, &root);
             std::fs::write(root.join("source.txt"), "frozen result\n").unwrap();
             let mut publication = SourcePublication {
@@ -1412,7 +1448,7 @@ mod tests {
         let root = temp.path().join("repo");
         repository(&root);
         git_command(&root, &["checkout", "-b", "feature"]);
-        let store = RepositoryMemoryStore::at_persistent(temp.path()).unwrap();
+        let store = RepositoryMemoryStore::at_artifacts(temp.path()).unwrap();
         let pool = sqlx::sqlite::SqlitePoolOptions::new()
             .max_connections(1)
             .connect("sqlite::memory:")
@@ -1448,7 +1484,7 @@ mod tests {
             (&unrelated_workspace, "succeeded"),
             (&failed, "failed"),
         ] {
-            store.save_run(run).unwrap();
+            store.save_run(run).await.unwrap();
             sqlx::query("INSERT INTO agent_runs VALUES (?, ?, ?)")
                 .bind(run.run_id)
                 .bind(run.workspace_id)
@@ -1475,14 +1511,14 @@ mod tests {
                 .is_none()
         );
         assert!(store.event(failed.run_id).await.unwrap().is_none());
-        assert!(!store.completed_without_change(failed.run_id).unwrap());
-        assert!(store.coding_errors().unwrap().is_empty());
+        assert!(!store.completed_without_change(failed.run_id).await.unwrap());
+        assert!(store.coding_errors().await.unwrap().is_empty());
 
         let mut second = run(&store, &root);
         second.run_id = next;
         second.workspace_id = first.workspace_id;
         second.draft_path = store.draft_path(next);
-        store.save_run(&second).unwrap();
+        store.save_run(&second).await.unwrap();
         sqlx::query("INSERT INTO agent_runs VALUES (?, ?, 'succeeded')")
             .bind(next)
             .bind(second.workspace_id)
@@ -1520,7 +1556,7 @@ mod tests {
         assert_eq!(store.events().await.unwrap().len(), 2);
         let mut unchanged = run(&store, &root);
         unchanged.workspace_id = first.workspace_id;
-        store.save_run(&unchanged).unwrap();
+        store.save_run(&unchanged).await.unwrap();
         sqlx::query("INSERT INTO agent_runs VALUES (?, ?, 'succeeded')")
             .bind(unchanged.run_id)
             .bind(unchanged.workspace_id)
@@ -1533,7 +1569,12 @@ mod tests {
                 .unwrap(),
             Some("feat: second".into())
         );
-        assert!(store.completed_without_change(unchanged.run_id).unwrap());
+        assert!(
+            store
+                .completed_without_change(unchanged.run_id)
+                .await
+                .unwrap()
+        );
     }
 
     #[test]
@@ -1560,7 +1601,7 @@ mod tests {
                 feature.to_str().unwrap(),
             ],
         );
-        let store = RepositoryMemoryStore::at_persistent(temp.path()).unwrap();
+        let store = RepositoryMemoryStore::at_artifacts(temp.path()).unwrap();
         let first = run(&store, &feature);
         std::fs::write(feature.join("first.txt"), "pushed first task").unwrap();
         std::fs::write(

@@ -70,7 +70,7 @@ impl Fixture {
         let persistent = temp.path().join("persistent");
         std::fs::create_dir(&persistent).unwrap();
         let files =
-            utils::repository_memory::RepositoryMemoryStore::at_persistent(&persistent).unwrap();
+            utils::repository_memory::RepositoryMemoryStore::at_artifacts(&persistent).unwrap();
         let pool = sqlx::sqlite::SqlitePoolOptions::new()
             .max_connections(1)
             .connect("sqlite::memory:")

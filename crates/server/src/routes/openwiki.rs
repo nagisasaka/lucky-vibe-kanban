@@ -103,7 +103,7 @@ pub(crate) async fn status_snapshot(
         ),
     };
     if let Some(store) = &store {
-        state.coding_errors = store.coding_errors()?;
+        state.coding_errors = store.coding_errors().await?;
     }
     let mut current_source = None;
     if let Some(branch) = &state.target_branch {
@@ -290,6 +290,10 @@ fn check_sync_target(
     initial: bool,
     expected: Option<(&str, &str)>,
 ) -> anyhow::Result<()> {
+    anyhow::ensure!(
+        state.artifact_cleanup.is_none(),
+        "Repository artifact cleanup is pending; let the existing monitor retry before new Wiki work"
+    );
     if let Some((branch, commit)) = expected {
         anyhow::ensure!(
             state.target_branch.as_deref() == Some(branch) && source == commit,
@@ -699,6 +703,7 @@ async fn recover_repository(deployment: &DeploymentImpl, repo: &Repo) -> anyhow:
         return crate::workflow_runtime::bootstrap::recover_locked(deployment, repo, &store).await;
     }
     let Some(run_id) = state.active_run_id else {
+        finish_artifact_cleanup(&store, &mut state).await?;
         // Recovery only resumes an already reserved owner. Source publication,
         // pending events and direct branch changes never admit new maintenance.
         return Ok(());
@@ -768,6 +773,27 @@ async fn recover_repository(deployment: &DeploymentImpl, repo: &Repo) -> anyhow:
         .save_reconciliation_on(&mut tx, &state, &receipts)
         .await?;
     tx.commit().await?;
+    finish_artifact_cleanup(&store, &mut state).await?;
+    Ok(())
+}
+
+/// Called with the repository lock after Git/DB publication has been confirmed.
+/// The existing state row retains the exact cleanup identity across crashes.
+pub(crate) async fn finish_artifact_cleanup(
+    store: &RepositoryMemoryStore,
+    state: &mut RepositoryMemoryState,
+) -> anyhow::Result<()> {
+    let Some(pending) = &state.artifact_cleanup else {
+        return Ok(());
+    };
+    if let Err(error) = store.cleanup_wiki(pending.workspace_id, pending.bootstrap_run_id) {
+        state.error = Some(format!("Artifact cleanup pending: {error}"));
+        store.save_state(state).await?;
+        return Err(error.into());
+    }
+    state.artifact_cleanup = None;
+    state.error = None;
+    store.save_state(state).await?;
     Ok(())
 }
 
@@ -791,6 +817,16 @@ fn reconciliation_records(
     let mut receipts = Vec::new();
     match result {
         Ok((wiki_commit, no_op)) => {
+            if let Some(workspace_id) = state.maintenance_workspace_id {
+                state.artifact_cleanup =
+                    Some(utils::repository_memory::RepositoryArtifactCleanup {
+                        workspace_id,
+                        bootstrap_run_id: state
+                            .bootstrap
+                            .as_ref()
+                            .map(|owner| owner.workflow_run_id),
+                    });
+            }
             for id in &state.active_event_ids {
                 receipts.push(WikiReconciliationReceipt {
                     event_id: *id,
@@ -1134,7 +1170,7 @@ mod adoption_tests {
     #[tokio::test]
     async fn scoped_coverage_survives_repeated_sync_and_failed_full_review() {
         let temp = tempfile::tempdir().unwrap();
-        let store = RepositoryMemoryStore::at_persistent(temp.path()).unwrap();
+        let store = RepositoryMemoryStore::at_artifacts(temp.path()).unwrap();
         let mut state = RepositoryMemoryState {
             active_source_commit: Some("b".repeat(40)),
             active_sync_scope: RepositoryWikiSyncScope::SinceCommit {
@@ -1177,3 +1213,72 @@ mod adoption_tests {
 
 #[cfg(test)]
 mod recovery_tests;
+
+#[cfg(test)]
+mod artifact_cleanup_tests {
+    use utils::repository_memory::{
+        RepositoryArtifactCleanup, WikiSetupCheckpoint, WikiSetupPhase,
+    };
+
+    use super::*;
+
+    #[tokio::test]
+    async fn confirmed_cleanup_retries_from_db_identity_after_restoration_and_partial_failure() {
+        let temp = tempfile::tempdir().unwrap();
+        let store = RepositoryMemoryStore::at_artifacts(temp.path()).unwrap();
+        let workspace = Uuid::new_v4();
+        let mut setup = WikiSetupCheckpoint {
+            version: 1,
+            workspace_id: workspace,
+            repository_path: temp.path().join("worktree"),
+            source_commit: "a".repeat(40),
+            phase: WikiSetupPhase::Prepared,
+            files: vec![],
+        };
+        store.save_wiki_setup(&setup).unwrap();
+        let mut state = RepositoryMemoryState {
+            status: RepositoryWikiStatus::Current,
+            artifact_cleanup: Some(RepositoryArtifactCleanup {
+                workspace_id: workspace,
+                bootstrap_run_id: None,
+            }),
+            ..Default::default()
+        };
+        store.save_state(&state).await.unwrap();
+        assert!(finish_artifact_cleanup(&store, &mut state).await.is_err());
+        assert!(store.state().await.unwrap().artifact_cleanup.is_some());
+        assert!(store.wiki_setup(workspace).unwrap().is_some());
+        setup.phase = WikiSetupPhase::Restored;
+        store.save_wiki_setup(&setup).unwrap();
+        #[cfg(unix)]
+        {
+            let user = temp.path().join("user-retained");
+            std::fs::create_dir(&user).unwrap();
+            std::fs::write(user.join("keep"), b"user artifact").unwrap();
+            let path = store
+                .sync_input_path(workspace, None)
+                .parent()
+                .unwrap()
+                .to_path_buf();
+            std::os::unix::fs::symlink(&user, &path).unwrap();
+            // Journal deletion succeeds, then unsafe input cleanup fails. The exact
+            // DB cleanup identity must survive this partial filesystem outcome.
+            assert!(finish_artifact_cleanup(&store, &mut state).await.is_err());
+            assert!(store.wiki_setup(workspace).unwrap().is_none());
+            assert!(store.state().await.unwrap().artifact_cleanup.is_some());
+            assert_eq!(std::fs::read(user.join("keep")).unwrap(), b"user artifact");
+            std::fs::remove_file(path).unwrap();
+        }
+        // Simulate a server restart: reuse only committed DB state and retained files.
+        let reopened = RepositoryMemoryStore::at_artifacts(temp.path()).unwrap();
+        let mut state = reopened.state().await.unwrap();
+        finish_artifact_cleanup(&reopened, &mut state)
+            .await
+            .unwrap();
+        assert!(reopened.state().await.unwrap().artifact_cleanup.is_none());
+        assert!(reopened.wiki_setup(workspace).unwrap().is_none());
+        finish_artifact_cleanup(&reopened, &mut state)
+            .await
+            .unwrap();
+    }
+}

@@ -545,8 +545,7 @@ mod tests {
         let persistent = root.parent().unwrap().join("persistent");
         std::fs::create_dir(&persistent).unwrap();
         (
-            db::models::repository_state::RepositoryMemoryStore::at_persistent(&persistent)
-                .unwrap(),
+            db::models::repository_state::RepositoryMemoryStore::at_artifacts(&persistent).unwrap(),
             source,
             maintenance,
         )

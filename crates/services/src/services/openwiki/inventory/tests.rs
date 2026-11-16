@@ -40,7 +40,7 @@ impl Fixture {
         let source = git(&root, &["rev-parse", "HEAD"]);
         let persistent = temp.path().join("persistent");
         std::fs::create_dir(&persistent).unwrap();
-        let store = RepositoryMemoryStore::at_persistent(&persistent).unwrap();
+        let store = RepositoryMemoryStore::at_artifacts(&persistent).unwrap();
         Self {
             _temp: temp,
             root,
@@ -384,4 +384,17 @@ process.stdout.write(JSON.stringify(JSON.parse(process.argv[2]).map(value => Ope
             .map(|value| has_additional_ignore_rules(value.as_bytes()).unwrap())
             .collect::<Vec<_>>()
     );
+}
+
+#[test]
+fn cache_can_be_regenerated_from_the_same_frozen_source_without_changing_identity() {
+    let f = Fixture::new(&[("README.md", "# Stable source\n\n## Frozen heading\n")]);
+    let first = f.generate();
+    let manifest = f.store.document_inventory_path(f.identity.run_id, None);
+    // Only this fixture-owned generated cache is deleted; recovery tmp stays.
+    std::fs::remove_dir_all(manifest.parent().unwrap()).unwrap();
+    assert!(first.validate(&f.store, &f.identity).is_err());
+    let regenerated = f.generate();
+    assert_eq!(regenerated, first);
+    regenerated.validate(&f.store, &f.identity).unwrap();
 }

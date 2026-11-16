@@ -478,7 +478,7 @@ impl LocalContainerService {
             else {
                 continue;
             };
-            if let Some(run) = store.run(run_id)? {
+            if let Some(run) = store.run(run_id).await? {
                 let (owned_store, owned_run) = (store.clone(), run.clone());
                 let include_manifest = self.config.read().await.manifest_in_commit_body;
                 tokio::task::spawn_blocking(move || {
@@ -1642,7 +1642,7 @@ impl ContainerService for LocalContainerService {
                 &repos
                     .iter()
                     .flat_map(|repo| {
-                        workspace_manager::shared_resources::writable_roots(&repo.name, repo.id)
+                        workspace_manager::shared_resources::writable_roots(&repo.name, repo.id).into_iter().chain(utils::repository_memory::RepositoryMemoryStore::writable_artifact_roots(repo.id))
                     })
                     .collect::<Vec<_>>(),
             )

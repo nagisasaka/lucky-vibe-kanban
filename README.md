@@ -56,7 +56,8 @@ LVK-specific repository files live under `.lvk/`: shareable configuration includ
 `integration-validation.json`, `.gitignore`, and LVK's own development `preview/`.
 Within `shared/`, `tmp/` is for temporary handoffs between Workspaces of the same
 registered repository, `cache/` for reproducible reusable data, and `persistent/`
-for retained shared data. Run completion does not delete `tmp/`; clean up only
+exclusively for user-retained artifacts. LVK internal processing data uses separate
+managed tmp/cache. Run completion does not delete `tmp/`; clean up only
 completed handoffs that are no longer needed or in use. Humans may bulk-clean
 unneeded contents under the same conditions. There is no TTL or automatic cleanup;
 keep required results in an appropriate retained destination.

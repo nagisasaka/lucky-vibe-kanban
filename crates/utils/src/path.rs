@@ -35,7 +35,7 @@ pub fn should_skip_path(path: &Path) -> bool {
 }
 
 /// Core storage guidance accompanies the host-provided writable roots, including resumes.
-pub const SHARED_RESOURCE_GUIDANCE: &str = "LVK repository-scoped shared storage: when present and permitted, use .lvk/shared/tmp/ for temporary handoffs of artifacts or information between Workspaces of the same registered repository; .lvk/shared/cache/ for reproducible reusable data; and .lvk/shared/persistent/ for shared data that must be retained. Paths are relative to each attached repository, not necessarily the agent working directory. Different repositories have separate storage. These entries link to repository-scoped storage outside the Workspace. Never commit their contents or expose secrets. tmp contents are not durable records: preserve required results in an appropriate retained destination. Run completion does not delete tmp contents, because a recipient may read them later. Clean up only after the handoff is complete and the contents are no longer needed or in use; never delete another task's pending handoff or active data. Humans may bulk-clean unneeded tmp contents under the same conditions. There is no automatic Run-end cleanup, TTL or periodic cleanup. Check availability before use; direct-folder workspaces may not provide these links.";
+pub const SHARED_RESOURCE_GUIDANCE: &str = "LVK repository-scoped shared storage: when present and permitted, use .lvk/shared/tmp/ for temporary handoffs of artifacts or information between Workspaces of the same registered repository; .lvk/shared/cache/ for reproducible reusable data; and .lvk/shared/persistent/ exclusively for user-retained artifacts. LVK internal recovery files use separately managed tmp/cache, not these user artifacts. Paths are relative to each attached repository, not necessarily the agent working directory. Different repositories have separate storage. These entries link to repository-scoped storage outside the Workspace. Never commit their contents or expose secrets. tmp contents are not durable records: preserve required results in an appropriate retained destination. Run completion does not delete tmp contents, because a recipient may read them later. Clean up only after the handoff is complete and the contents are no longer needed or in use; never delete another task's pending handoff or active data. Humans may bulk-clean unneeded tmp contents under the same conditions. There is no automatic Run-end cleanup, TTL or periodic cleanup. Check availability before use; direct-folder workspaces may not provide these links.";
 
 /// Convert absolute paths to relative paths based on worktree path
 /// This is a robust implementation that handles symlinks and edge cases
@@ -139,6 +139,11 @@ pub fn normalize_macos_private_alias<P: AsRef<Path>>(p: P) -> PathBuf {
 
 pub fn get_vibe_kanban_temp_dir() -> std::path::PathBuf {
     temp_dir_for_instance(crate::instance::instance_dir())
+}
+
+/// Pure path projection for DB-only observers. No stat, mkdir or instance setup.
+pub fn get_vibe_kanban_temp_dir_uninitialized() -> PathBuf {
+    temp_dir_for_instance(std::env::var_os("LVK_INSTANCE_DIR").map(PathBuf::from))
 }
 
 /// Resolve runtime storage without initialising an instance directory.

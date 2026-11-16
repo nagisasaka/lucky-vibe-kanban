@@ -15,7 +15,7 @@ async fn fixture() -> (tempfile::TempDir, SqlitePool, RepositoryMemoryStore) {
         .await
         .unwrap();
     crate::run_migrations(&pool).await.unwrap();
-    let files = files::RepositoryMemoryStore::at_persistent(temp.path()).unwrap();
+    let files = files::RepositoryMemoryStore::at_artifacts(temp.path()).unwrap();
     let store = RepositoryMemoryStore::with_artifacts(&pool, Uuid::new_v4(), files);
     (temp, pool, store)
 }

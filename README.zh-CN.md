@@ -48,7 +48,7 @@ LVK专用的仓库管理文件放在 `.lvk/` 中。`integration-validation.json`
 以及LVK自身开发用的 `preview/` 可通过Git共享。只有本地的 `shared/` 链接和
 `attachments/` 副本由 `.lvk/.gitignore` 排除；该文件不排除自身，保留用户规则并按需追加运行时规则。
 `shared/tmp/` 用于同一注册仓库的Workspace间临时交接，`cache/` 用于可再生成的复用数据，
-`persistent/` 用于持续保存的共享数据。Run结束不会删除tmp；仅在交接完成、不再需要且无人使用后整理。
+`persistent/` 专用于用户保留的成果，不存放 LVK 内部处理数据。Run结束不会删除tmp；仅在交接完成、不再需要且无人使用后整理。
 人类批量整理也遵守相同条件。不设TTL或自动清理；必要成果应保存在适当的长期位置。
 仓库外的共享存储和中央附件缓存保持原位。附件以Session的agent工作目录为基准，
 未指定时使用Workspace根目录；共享链接按仓库隔离。

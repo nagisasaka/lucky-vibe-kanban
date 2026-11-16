@@ -132,7 +132,15 @@ export type ResourceRecovery = { evidence: string,
  */
 claims: Array<ResourceClaim>, };
 
-export type RepositoryMemoryState = { version: number, enabled: boolean, status: RepositoryWikiStatus, target_branch: string | null, source_commit: string | null, wiki_commit: string | null, last_success: string | null, active_run_id: string | null, bootstrap: OpenWikiBootstrapOwner | null, maintenance_workspace_id: string | null, maintenance_session_id: string | null, error: string | null, output_language: string, active_source_commit: string | null, active_event_ids: Array<string>, active_sync_input_digest: string | null, coding_errors: Array<string>,
+export type RepositoryMemoryState = { version: number, enabled: boolean, status: RepositoryWikiStatus, target_branch: string | null, source_commit: string | null, wiki_commit: string | null, last_success: string | null, active_run_id: string | null, bootstrap: OpenWikiBootstrapOwner | null, maintenance_workspace_id: string | null, maintenance_session_id: string | null, error: string | null,
+/**
+ * Existing monitor retries only this confirmed, no-longer-consumed artifact set.
+ */
+artifact_cleanup?: RepositoryArtifactCleanup,
+/**
+ * Missing means pre-cutover. New registrations never inspect user persistent.
+ */
+artifact_layout?: number, output_language: string, active_source_commit: string | null, active_event_ids: Array<string>, active_sync_input_digest: string | null, coding_errors: Array<string>,
 /**
  * Read-side detection on the saved target branch, independent of receipts.
  */
@@ -150,6 +158,8 @@ file_operation?: RepositoryWikiFileOperation, rebuild_reference?: string,
  * Explicit deletion suppresses automatic integrations until explicit init.
  */
 generation_suppressed: boolean, };
+
+export type RepositoryArtifactCleanup = { workspace_id: string, bootstrap_run_id: string | null, };
 
 export type RepositoryWikiFileOperation = { id: string, workspace_id: string, source: string, branch: string, paths: Array<string>, delete: boolean, };
 

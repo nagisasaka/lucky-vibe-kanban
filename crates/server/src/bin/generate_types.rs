@@ -46,6 +46,7 @@ fn generate_types_content() -> String {
         db::models::resource_coordination::ResourceDecision::decl(),
         db::models::resource_coordination::ResourceRecovery::decl(),
         utils::repository_memory::RepositoryMemoryState::decl(),
+        utils::repository_memory::RepositoryArtifactCleanup::decl(),
         utils::repository_memory::RepositoryWikiFileOperation::decl(),
         server::routes::openwiki::management::RepositoryWikiFile::decl(),
         server::routes::openwiki::management::RepositoryWikiFiles::decl(),

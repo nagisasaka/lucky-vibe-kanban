@@ -1,5 +1,8 @@
 //! Final Manifests and Wiki/integration operational state in the instance DB.
-//! Drafts and frozen Git/filesystem inputs remain in the shared folder.
+//! Recovery inputs remain files in protected, volume-backed managed tmp.
+mod coding_runs;
+mod cutover;
+pub use cutover::verify_retired_artifacts;
 mod manifests;
 use std::{io, ops::Deref, path::Path};
 
@@ -52,10 +55,9 @@ impl RepositoryMemoryStore {
 
     pub async fn read_only_configured_for_repository(
         pool: &SqlitePool,
-        name: &str,
+        _name: &str,
         id: Uuid,
     ) -> io::Result<Option<Self>> {
-        let persistent = utils::path::shared_resources_dir(name, id).join("persistent");
         let configured: bool = sqlx::query_scalar(
             "SELECT EXISTS(SELECT 1 FROM repository_wiki_state WHERE repository_id=?)",
         )
@@ -66,8 +68,7 @@ impl RepositoryMemoryStore {
         if !configured {
             return Ok(None);
         }
-        let files = files::RepositoryMemoryStore::read_only_at_persistent(&persistent)?
-            .ok_or_else(|| invalid("Configured repository artifact directory is missing"))?;
+        let files = files::RepositoryMemoryStore::paths_for_repository(id);
         Ok(Some(Self {
             files,
             pool: pool.clone(),
@@ -77,7 +78,7 @@ impl RepositoryMemoryStore {
     }
 
     /// Isolated fixtures only: never resolves the instance DB or a live Repo.
-    pub fn at_persistent(persistent: &Path) -> io::Result<Self> {
+    pub fn at_artifacts(persistent: &Path) -> io::Result<Self> {
         let pool = sqlx::sqlite::SqlitePoolOptions::new()
             .max_connections(1)
             .connect_lazy_with(
@@ -86,7 +87,7 @@ impl RepositoryMemoryStore {
                     .create_if_missing(true),
             );
         Ok(Self {
-            files: files::RepositoryMemoryStore::at_persistent(persistent)?,
+            files: files::RepositoryMemoryStore::at_artifacts(persistent)?,
             pool,
             repository_id: Uuid::nil(),
             fixture: true,
@@ -110,9 +111,10 @@ impl RepositoryMemoryStore {
         let mut conn = self.pool.acquire().await.map_err(invalid)?;
         if self.fixture {
             let schema = format!(
-                "{}\n{}",
+                "{}\n{}\n{}",
                 include_str!("../../migrations/20261106140000_repository_operational_state.sql"),
-                include_str!("../../migrations/20261116000000_change_manifests.sql")
+                include_str!("../../migrations/20261116000000_change_manifests.sql"),
+                include_str!("../../migrations/20261117000000_repository_coding_runs.sql")
             )
             .replace("CREATE TABLE ", "CREATE TABLE IF NOT EXISTS ")
             .replace("CREATE INDEX ", "CREATE INDEX IF NOT EXISTS ");
@@ -325,7 +327,7 @@ mod tests {
     #[tokio::test]
     async fn new_repository_memory_is_enabled_without_starting_maintenance_and_preserves_opt_out() {
         let temp = tempfile::tempdir().unwrap();
-        let store = RepositoryMemoryStore::at_persistent(temp.path()).unwrap();
+        let store = RepositoryMemoryStore::at_artifacts(temp.path()).unwrap();
         store
             .initialize_defaults(Some("main".into()))
             .await
@@ -355,7 +357,7 @@ mod tests {
             ChangeManifest, ReconciliationResult, RepositoryWikiStatus, SemanticChanges,
         };
         let temp = tempfile::tempdir().unwrap();
-        let files = files::RepositoryMemoryStore::at_persistent(temp.path()).unwrap();
+        let files = files::RepositoryMemoryStore::at_artifacts(temp.path()).unwrap();
         let pool = sqlx::sqlite::SqlitePoolOptions::new()
             .max_connections(1)
             .connect_with(
@@ -470,9 +472,7 @@ mod tests {
         let durable = RepositoryMemoryStore::with_artifacts(
             &reopened,
             repo,
-            files::RepositoryMemoryStore::read_only_at_persistent(temp.path())
-                .unwrap()
-                .unwrap(),
+            files::RepositoryMemoryStore::paths_for_repository(repo),
         );
         assert_eq!(
             durable.state().await.unwrap().status,

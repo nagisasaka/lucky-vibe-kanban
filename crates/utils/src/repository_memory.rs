@@ -1,6 +1,6 @@
 //! Repository memory contracts shared by the host, executors and API.
-//! Final Change Manifests live in the instance DB. Drafts and frozen
-//! Git/filesystem journals retain the existing persistent shared folder.
+//! Final records live in the instance DB. Recovery files use volume-backed managed
+//! tmp, reproducible inventories use cache, and process locks use container /tmp.
 
 use std::{
     fs::{self, File, OpenOptions},
@@ -165,7 +165,7 @@ impl SemanticChanges {
             .take(200)
             .collect()
     }
-    /// Only the host's normal source commit uses this projection. The file
+    /// Only the host's normal source commit uses this projection. The DB
     /// Manifest stays authoritative; Git bodies are never parsed back into it.
     pub fn source_commit_message(&self, run_id: Uuid, include_manifest: bool) -> String {
         let mut message = self.commit_message();
@@ -324,6 +324,14 @@ pub struct RepositoryMemoryState {
     #[serde(default)]
     pub maintenance_session_id: Option<Uuid>,
     pub error: Option<String>,
+    /// Existing monitor retries only this confirmed, no-longer-consumed artifact set.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub artifact_cleanup: Option<RepositoryArtifactCleanup>,
+    /// Missing means pre-cutover. New registrations never inspect user persistent.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub artifact_layout: Option<u32>,
     #[serde(default = "default_memory_language")]
     pub output_language: String,
     #[serde(default)]
@@ -359,6 +367,12 @@ pub struct RepositoryMemoryState {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
+pub struct RepositoryArtifactCleanup {
+    pub workspace_id: Uuid,
+    pub bootstrap_run_id: Option<Uuid>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct RepositoryWikiFileOperation {
     pub id: Uuid,
     pub workspace_id: Uuid,
@@ -387,6 +401,8 @@ impl Default for RepositoryMemoryState {
             maintenance_workspace_id: None,
             maintenance_session_id: None,
             error: None,
+            artifact_cleanup: None,
+            artifact_layout: Some(2),
             output_language: default_memory_language(),
             active_source_commit: None,
             active_event_ids: Vec::new(),
@@ -565,13 +581,6 @@ pub struct SourcePublication {
     pub commit_message: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct CodingCompletionError {
-    pub run_id: Uuid,
-    pub workspace_id: Uuid,
-    pub error: Option<String>,
-}
-
 /// Frozen host identity for a coding run. The agent only authors its separate
 /// semantic draft; revisions and membership cannot come from that draft.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -648,6 +657,8 @@ pub fn validate_publication(value: &WikiPublication) -> io::Result<()> {
 #[derive(Debug, Clone)]
 pub struct RepositoryMemoryStore {
     root: PathBuf,
+    inventory_root: PathBuf,
+    lock_root: PathBuf,
 }
 
 /// Explicitly release ownership, not just its file descriptor. On Unix a
@@ -665,55 +676,133 @@ impl Drop for RepositoryMemoryLock {
 }
 
 impl RepositoryMemoryStore {
-    pub fn read_only_at_persistent(persistent: &Path) -> io::Result<Option<Self>> {
-        let root = persistent.join("knowledge");
-        reject_symlinks(&root)?;
-        match fs::metadata(&root) {
-            Ok(metadata) if metadata.is_dir() => Ok(Some(Self { root })),
-            Ok(_) => Err(invalid("Repository memory root is not a directory")),
-            Err(error) if error.kind() == io::ErrorKind::NotFound => Ok(None),
-            Err(error) => Err(error),
-        }
-    }
-
-    pub fn for_repository(repo_name: &str, repo_id: Uuid) -> io::Result<Self> {
-        Self::at_persistent(
-            &crate::path::shared_resources_dir(repo_name, repo_id).join("persistent"),
+    /// Resolve paths only: DB observers neither require nor create artifact storage.
+    pub fn paths_for_repository(repo_id: Uuid) -> Self {
+        Self::paths_at(
+            crate::path::get_vibe_kanban_temp_dir_uninitialized(),
+            repo_id,
         )
     }
 
-    /// The shared-folder provisioner must already have created this root.
-    pub fn at_persistent(persistent: &Path) -> io::Result<Self> {
-        reject_symlinks(persistent)?;
-        if !persistent.is_dir() {
-            return Err(invalid(
-                "Repository persistent shared folder is not provisioned",
-            ));
+    fn paths_at(runtime: PathBuf, repo_id: Uuid) -> Self {
+        Self {
+            root: runtime
+                .join("tmp/repository-memory")
+                .join(repo_id.to_string())
+                .join("knowledge"),
+            inventory_root: runtime
+                .join("cache/repository-memory")
+                .join(repo_id.to_string())
+                .join("document-inventories"),
+            lock_root: PathBuf::from("/tmp/lvk-repository-locks").join(repo_id.to_string()),
         }
-        let store = Self {
-            root: persistent.join("knowledge"),
-        };
-        real_directory(&store.root)?;
-        for directory in [
-            "drafts",
-            "runs",
-            "completed-runs",
-            "completion-errors",
-            "source-publications",
-            "wiki-setups",
-            "integration-wiki-setups",
-            "document-inventories",
-            "bootstrap-reports",
-            "sync-inputs",
-            "locks",
-        ] {
-            real_directory(&store.root.join(directory))?;
-        }
+    }
+
+    pub fn for_repository(_repo_name: &str, repo_id: Uuid) -> io::Result<Self> {
+        // Writers retain instance validation; DB-only observers never do filesystem I/O.
+        let store = Self::paths_at(crate::path::get_vibe_kanban_temp_dir(), repo_id);
+        store.provision()?;
         Ok(store)
     }
 
+    /// Isolated fixture roots only; never resolves user shared storage.
+    pub fn at_artifacts(base: &Path) -> io::Result<Self> {
+        let store = Self {
+            root: base.join("knowledge"),
+            inventory_root: base.join("cache/document-inventories"),
+            lock_root: base.join("container-tmp/locks"),
+        };
+        store.provision()?;
+        Ok(store)
+    }
+
+    pub fn writable_artifact_roots(repo_id: Uuid) -> Vec<PathBuf> {
+        let store = Self::paths_at(crate::path::get_vibe_kanban_temp_dir(), repo_id);
+        vec![store.root, store.inventory_root]
+    }
+
+    /// Caller has confirmed durable completion and no remaining artifact readers.
+    /// Locks are deliberately outside this tree and are never removed.
+    pub fn cleanup_coding(&self, id: Uuid, keep_draft: bool) -> io::Result<()> {
+        if !keep_draft {
+            self.remove_artifact(&self.draft_path(id))?;
+        }
+        self.remove_artifact(
+            &self
+                .root
+                .join("source-publications")
+                .join(format!("{id}.json")),
+        )
+    }
+
+    pub fn cleanup_wiki(&self, workspace: Uuid, bootstrap: Option<Uuid>) -> io::Result<()> {
+        if let Some(setup) = self.wiki_setup(workspace)?
+            && setup.phase != WikiSetupPhase::Restored
+        {
+            return Err(invalid(
+                "Wiki original restoration is unfinished; recovery artifacts retained",
+            ));
+        }
+        self.remove_artifact(
+            &self
+                .root
+                .join("wiki-setups")
+                .join(format!("{workspace}.json")),
+        )?;
+        self.remove_artifact(&self.root.join("sync-inputs").join(workspace.to_string()))?;
+        if let Some(id) = bootstrap {
+            self.remove_artifact(&self.inventory_root.join(id.to_string()))?;
+            self.remove_artifact(&self.root.join("bootstrap-reports").join(id.to_string()))?;
+        }
+        Ok(())
+    }
+
+    pub fn cleanup_integration(&self, id: Uuid) -> io::Result<()> {
+        if let Some(setup) = self.integration_wiki_setup(id)? {
+            if setup.checkpoint.phase != WikiSetupPhase::Restored || setup.final_commit.is_none() {
+                return Err(invalid(
+                    "Integration original restoration is unfinished; journal retained",
+                ));
+            }
+            self.remove_artifact(
+                &self
+                    .root
+                    .join("integration-wiki-setups")
+                    .join(format!("{id}.json")),
+            )?;
+        }
+        Ok(())
+    }
+
+    fn remove_artifact(&self, path: &Path) -> io::Result<()> {
+        // A substituted symlink is an error, not permission to clean its target.
+        reject_symlinks(path)?;
+        match fs::symlink_metadata(path) {
+            Ok(meta) if meta.is_dir() => fs::remove_dir_all(path),
+            Ok(meta) if meta.is_file() => fs::remove_file(path),
+            Ok(_) => Err(invalid("Unexpected recovery artifact type; retained")),
+            Err(e) if e.kind() == io::ErrorKind::NotFound => Ok(()),
+            Err(e) => Err(e),
+        }
+    }
+
+    fn provision(&self) -> io::Result<()> {
+        managed_directory(&self.root)?;
+        for directory in [
+            "drafts",
+            "source-publications",
+            "wiki-setups",
+            "integration-wiki-setups",
+            "bootstrap-reports",
+            "sync-inputs",
+        ] {
+            real_directory(&self.root.join(directory))?;
+        }
+        managed_directory(&self.inventory_root)
+    }
+
     /// Maintenance workspace identity is unique per Sync; records are retained
-    /// under the same shared-folder lifecycle as events and Bootstrap inputs.
+    /// under the same managed artifact lifecycle as Bootstrap inputs.
     pub fn sync_input_path(&self, workspace_id: Uuid, chunk: Option<u32>) -> PathBuf {
         self.root
             .join("sync-inputs")
@@ -728,7 +817,7 @@ impl RepositoryMemoryStore {
         value: &T,
     ) -> io::Result<()> {
         let path = self.sync_input_path(workspace_id, chunk);
-        real_directory(path.parent().unwrap())?;
+        managed_directory(path.parent().unwrap())?;
         self.publish(&path, value, false)
     }
 
@@ -737,11 +826,10 @@ impl RepositoryMemoryStore {
             .ok_or_else(|| invalid("Sync input record is missing"))
     }
 
-    /// Bootstrap-only input records reuse shared-folder atomic, bounded I/O.
+    /// Bootstrap inputs use the same atomic, bounded I/O in managed cache.
     /// Trust/digests belong to the host's Workflow input, not to this writable folder.
     pub fn document_inventory_path(&self, run_id: Uuid, chunk: Option<u32>) -> PathBuf {
-        self.root
-            .join("document-inventories")
+        self.inventory_root
             .join(run_id.to_string())
             .join(chunk.map_or_else(|| "manifest.json".into(), |n| format!("chunk-{n:06}.json")))
     }
@@ -753,7 +841,7 @@ impl RepositoryMemoryStore {
         value: &T,
     ) -> io::Result<()> {
         let path = self.document_inventory_path(run_id, chunk);
-        real_directory(path.parent().unwrap())?;
+        managed_directory(path.parent().unwrap())?;
         self.publish(&path, value, false)
     }
 
@@ -772,7 +860,7 @@ impl RepositoryMemoryStore {
             })
     }
 
-    /// Host-published once, retained with the existing persistent shared folder.
+    /// Host-published once, retained until the owning Workflow no longer needs it.
     /// The caller freezes its digest in NodeExecution, outside agent-writable files.
     pub fn save_bootstrap_report<T: Serialize>(
         &self,
@@ -781,7 +869,7 @@ impl RepositoryMemoryStore {
         report: &T,
     ) -> io::Result<()> {
         let path = self.bootstrap_report_path(run_id, kind);
-        real_directory(path.parent().unwrap())?;
+        managed_directory(path.parent().unwrap())?;
         self.publish_limited(&path, report, false, MAX_BOOTSTRAP_REPORT_BYTES as u64)
     }
 
@@ -856,80 +944,6 @@ impl RepositoryMemoryStore {
         Ok(result)
     }
 
-    pub fn save_run(&self, run: &RepositoryMemoryRun) -> io::Result<()> {
-        self.publish(
-            &self.root.join("runs").join(format!("{}.json", run.run_id)),
-            run,
-            false,
-        )
-    }
-
-    pub fn runs(&self) -> io::Result<Vec<RepositoryMemoryRun>> {
-        self.list_json("runs")
-    }
-
-    pub fn run(&self, run_id: Uuid) -> io::Result<Option<RepositoryMemoryRun>> {
-        self.read_json(&self.root.join("runs").join(format!("{run_id}.json")))
-    }
-
-    pub fn completed_without_change(&self, run_id: Uuid) -> io::Result<bool> {
-        Ok(self.read_json::<Uuid>(
-            &self
-                .root
-                .join("completed-runs")
-                .join(format!("{run_id}.json")),
-        )? == Some(run_id))
-    }
-
-    pub fn mark_no_source_change(&self, run_id: Uuid) -> io::Result<()> {
-        self.publish(
-            &self
-                .root
-                .join("completed-runs")
-                .join(format!("{run_id}.json")),
-            &run_id,
-            false,
-        )
-    }
-
-    pub fn record_coding_result(
-        &self,
-        run: &RepositoryMemoryRun,
-        error: Option<String>,
-    ) -> io::Result<()> {
-        let path = self
-            .root
-            .join("completion-errors")
-            .join(format!("{}.json", run.run_id));
-        if error.is_none() && self.read_optional(&path)?.is_none() {
-            return Ok(());
-        }
-        self.publish(
-            &path,
-            &CodingCompletionError {
-                run_id: run.run_id,
-                workspace_id: run.workspace_id,
-                error,
-            },
-            true,
-        )
-    }
-
-    pub fn coding_errors(&self) -> io::Result<Vec<String>> {
-        Ok(self
-            .list_json::<CodingCompletionError>("completion-errors")?
-            .into_iter()
-            .filter_map(|entry| {
-                entry.error.map(|error| {
-                    format!(
-                        "Workspace {} / run {}: {error}",
-                        entry.workspace_id, entry.run_id
-                    )
-                })
-            })
-            .collect())
-    }
-
     pub fn source_publication(&self, run_id: Uuid) -> io::Result<Option<SourcePublication>> {
         let publication: Option<SourcePublication> = self
             .read_optional_limited(
@@ -989,46 +1003,28 @@ impl RepositoryMemoryStore {
     }
 
     fn lock_file(&self, name: &str) -> io::Result<RepositoryMemoryLock> {
-        let directory = self.root.join("locks");
-        real_directory(&directory)?;
+        let directory = &self.lock_root;
+        managed_directory(directory)?;
         let path = directory.join(name);
         reject_symlinks(&path)?;
-        let file = OpenOptions::new()
-            .read(true)
-            .write(true)
-            .create(true)
-            .truncate(false)
-            .open(path)?;
+        let mut options = OpenOptions::new();
+        options.read(true).write(true).create(true).truncate(false);
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::OpenOptionsExt;
+            options
+                .mode(0o600)
+                .custom_flags(nix::libc::O_NOFOLLOW | nix::libc::O_NONBLOCK);
+        }
+        let file = options.open(path)?;
+        if !file.metadata()?.is_file() {
+            return Err(invalid("Repository lock is not a regular file"));
+        }
         file.try_lock().map_err(|error| match error {
             std::fs::TryLockError::WouldBlock => io::Error::from(io::ErrorKind::WouldBlock),
             std::fs::TryLockError::Error(error) => error,
         })?;
         Ok(RepositoryMemoryLock(file))
-    }
-
-    fn list_json<T: DeserializeOwned>(&self, directory: &str) -> io::Result<Vec<T>> {
-        let dir = self.root.join(directory);
-        reject_symlinks(&dir)?;
-        // Older stores may not have every record category. Observers must not
-        // create empty directories just to report an empty collection.
-        if !dir.try_exists()? {
-            return Ok(Vec::new());
-        }
-        let mut result = Vec::new();
-        for entry in fs::read_dir(dir)? {
-            let path = entry?.path();
-            if path.extension().is_some_and(|ext| ext == "json") {
-                let stem = path
-                    .file_stem()
-                    .and_then(|name| name.to_str())
-                    .unwrap_or_default();
-                Uuid::parse_str(stem).map_err(|_| invalid("Invalid memory record filename"))?;
-                if let Some(value) = self.read_json(&path)? {
-                    result.push(value);
-                }
-            }
-        }
-        Ok(result)
     }
 
     fn read_json<T: DeserializeOwned>(&self, path: &Path) -> io::Result<Option<T>> {
@@ -1111,6 +1107,19 @@ impl RepositoryMemoryStore {
     }
 }
 
+fn managed_directory(path: &Path) -> io::Result<()> {
+    reject_symlinks(path)?;
+    let mut builder = fs::DirBuilder::new();
+    builder.recursive(true);
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::DirBuilderExt;
+        builder.mode(0o700);
+    }
+    builder.create(path)?;
+    reject_symlinks(path)
+}
+
 fn real_directory(path: &Path) -> io::Result<()> {
     reject_symlinks(path)?;
     match fs::create_dir(path) {
@@ -1186,29 +1195,130 @@ mod tests {
         }
     }
 
+    #[cfg(target_os = "linux")]
     #[test]
-    fn read_only_observation_does_not_provision_directories() {
+    fn managed_artifacts_survive_container_replacement_and_user_cleanup() {
         let temp = tempfile::tempdir().unwrap();
-        assert!(
-            RepositoryMemoryStore::read_only_at_persistent(temp.path())
-                .unwrap()
-                .is_none()
-        );
-        assert!(!temp.path().join("knowledge").exists());
-        let root = temp.path().join("knowledge");
-        fs::create_dir(&root).unwrap();
-        let store = RepositoryMemoryStore::read_only_at_persistent(temp.path())
-            .unwrap()
+        let base = temp.path().join("volume-tmp");
+        let store = RepositoryMemoryStore::at_artifacts(&base).unwrap();
+        let user = temp.path().join("shared");
+        for kind in ["persistent", "tmp", "cache"] {
+            fs::create_dir_all(user.join(kind)).unwrap();
+        }
+        fs::write(user.join("persistent/result"), b"user artifact").unwrap();
+        let id = Uuid::new_v4();
+        let publication = SourcePublication {
+            manifest: fixture_event(),
+            staged_tree: "c".repeat(40),
+            commit_message: None,
+        };
+        store.save_source_publication(&publication).unwrap();
+        store
+            .save_sync_input(id, None, &serde_json::json!({"frozen":true}))
             .unwrap();
-        assert!(store.coding_errors().unwrap().is_empty());
-        assert!(store.runs().unwrap().is_empty());
-        assert_eq!(fs::read_dir(&root).unwrap().count(), 0);
+        let guard = store.try_lock().unwrap();
+        crate::shared_storage::clear(&user, crate::shared_storage::SharedStorageKind::Tmp).unwrap();
+        crate::shared_storage::clear(&user, crate::shared_storage::SharedStorageKind::Cache)
+            .unwrap();
+        assert!(store.try_lock().is_err());
+        drop(guard);
+        // Container /tmp disappears only after processes exit. Recovery volume stays.
+        fs::remove_dir_all(base.join("container-tmp")).unwrap();
+        let reopened = RepositoryMemoryStore::at_artifacts(&base).unwrap();
+        assert!(
+            reopened
+                .source_publication(publication.manifest.event_id)
+                .unwrap()
+                .is_some()
+        );
+        assert!(!reopened.read_sync_input(id, None).unwrap().is_empty());
+        let guard = reopened.try_lock().unwrap();
+        reopened
+            .cleanup_coding(publication.manifest.event_id, false)
+            .unwrap();
+        assert!(
+            reopened.try_lock().is_err(),
+            "cleanup must not replace a held lock inode"
+        );
+        drop(guard);
+        assert_eq!(
+            fs::read(user.join("persistent/result")).unwrap(),
+            b"user artifact"
+        );
+    }
+
+    #[test]
+    fn originals_are_retained_until_restored_and_cleanup_refuses_symlink_roots() {
+        let temp = tempfile::tempdir().unwrap();
+        let store = RepositoryMemoryStore::at_artifacts(temp.path()).unwrap();
+        let id = Uuid::new_v4();
+        let mut setup = WikiSetupCheckpoint {
+            version: 1,
+            workspace_id: id,
+            repository_path: temp.path().join("worktree"),
+            source_commit: "a".repeat(40),
+            phase: WikiSetupPhase::Prepared,
+            files: vec![],
+        };
+        store.save_wiki_setup(&setup).unwrap();
+        assert!(store.cleanup_wiki(id, None).is_err());
+        assert!(store.wiki_setup(id).unwrap().is_some());
+        setup.phase = WikiSetupPhase::Restored;
+        store.save_wiki_setup(&setup).unwrap();
+        store.cleanup_wiki(id, None).unwrap();
+        assert!(store.wiki_setup(id).unwrap().is_none());
+        store.cleanup_wiki(id, None).unwrap();
+        #[cfg(unix)]
+        {
+            let outside = temp.path().join("user-artifacts");
+            fs::create_dir(&outside).unwrap();
+            fs::write(outside.join("keep"), b"user").unwrap();
+            let input = store.root.join("sync-inputs").join(id.to_string());
+            std::os::unix::fs::symlink(&outside, &input).unwrap();
+            assert!(store.cleanup_wiki(id, None).is_err());
+            assert_eq!(fs::read(outside.join("keep")).unwrap(), b"user");
+        }
+    }
+
+    #[test]
+    fn subprocess_lock_probe() {
+        let Ok(base) = std::env::var("LVK_TEST_LOCK_BASE") else {
+            return;
+        };
+        let store = RepositoryMemoryStore::at_artifacts(Path::new(&base)).unwrap();
+        assert_eq!(
+            store.try_lock().is_ok(),
+            std::env::var("LVK_TEST_LOCK_AVAILABLE").unwrap() == "yes"
+        );
+    }
+
+    #[test]
+    fn repo_locks_are_shared_by_processes_and_never_deleted_during_cleanup() {
+        let temp = tempfile::tempdir().unwrap();
+        let store = RepositoryMemoryStore::at_artifacts(temp.path()).unwrap();
+        let probe = |available| {
+            assert!(
+                std::process::Command::new(std::env::current_exe().unwrap())
+                    .args(["--exact", "repository_memory::tests::subprocess_lock_probe"])
+                    .env("LVK_TEST_LOCK_BASE", temp.path())
+                    .env("LVK_TEST_LOCK_AVAILABLE", available)
+                    .status()
+                    .unwrap()
+                    .success()
+            );
+        };
+        let lock = store.try_lock().unwrap();
+        probe("no");
+        store.cleanup_coding(Uuid::new_v4(), false).unwrap();
+        probe("no");
+        drop(lock);
+        probe("yes");
     }
 
     #[test]
     fn full_report_limit_does_not_expand_other_shared_records() {
         let temp = tempfile::tempdir().unwrap();
-        let store = RepositoryMemoryStore::at_persistent(temp.path()).unwrap();
+        let store = RepositoryMemoryStore::at_artifacts(temp.path()).unwrap();
         let run = Uuid::new_v4();
         let large = "x".repeat(160 * 1024);
         store
@@ -1304,7 +1414,7 @@ mod tests {
     #[test]
     fn workspace_completion_locks_are_independent() {
         let temp = tempfile::tempdir().unwrap();
-        let store = RepositoryMemoryStore::at_persistent(temp.path()).unwrap();
+        let store = RepositoryMemoryStore::at_artifacts(temp.path()).unwrap();
         let a = Uuid::new_v4();
         let lock = store.try_workspace_completion_lock(a).unwrap();
         assert_eq!(
@@ -1319,7 +1429,7 @@ mod tests {
     #[test]
     fn dropping_guard_unlocks_even_with_an_inherited_open_file_description() {
         let temp = tempfile::tempdir().unwrap();
-        let store = RepositoryMemoryStore::at_persistent(temp.path()).unwrap();
+        let store = RepositoryMemoryStore::at_artifacts(temp.path()).unwrap();
         let guard = store.try_lock().unwrap();
         // dup shares flock ownership just like a descriptor inherited by fork.
         let inherited = guard.0.try_clone().unwrap();
@@ -1427,7 +1537,7 @@ mod tests {
         assert!(!message.contains(&manifest.source_commit));
         assert!(!message.contains(&manifest.base_commit));
         let temp = tempfile::tempdir().unwrap();
-        let store = RepositoryMemoryStore::at_persistent(temp.path()).unwrap();
+        let store = RepositoryMemoryStore::at_artifacts(temp.path()).unwrap();
         let publication = SourcePublication {
             staged_tree: "c".repeat(40),
             commit_message: Some(message.clone()),
@@ -1497,7 +1607,7 @@ mod tests {
     fn refuses_fifo_inventory_without_waiting_for_a_writer() {
         use std::{ffi::CString, os::unix::ffi::OsStrExt};
         let temp = tempfile::tempdir().unwrap();
-        let store = RepositoryMemoryStore::at_persistent(temp.path()).unwrap();
+        let store = RepositoryMemoryStore::at_artifacts(temp.path()).unwrap();
         let run = Uuid::new_v4();
         store
             .save_document_inventory(run, None, &serde_json::json!({}))

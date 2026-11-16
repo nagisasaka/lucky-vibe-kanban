@@ -84,7 +84,7 @@ await ensureCodeModeRepoSetup(process.argv[2], {createWorkflow: false});
             .unwrap()
             .to_string_lossy()
             .into_owned();
-        let store = RepositoryMemoryStore::at_persistent(&temp.path().join("persistent")).unwrap();
+        let store = RepositoryMemoryStore::at_artifacts(&temp.path().join("persistent")).unwrap();
         let id = integration::Identity {
             integration_id: Uuid::new_v4(),
             repository_id: Uuid::new_v4(),

@@ -273,7 +273,7 @@ mod tests {
     #[test]
     fn typed_reports_keep_semantic_and_size_checks_on_save_and_load() {
         let dir = tempfile::tempdir().unwrap();
-        let store = RepositoryMemoryStore::at_persistent(dir.path()).unwrap();
+        let store = RepositoryMemoryStore::at_artifacts(dir.path()).unwrap();
         let id = identity();
         let mut review = review();
         review.verdict = CoverageVerdict::Pass;
@@ -322,7 +322,7 @@ mod tests {
     #[test]
     fn file_handoff_preserves_reports_beyond_old_field_ceilings() {
         let dir = tempfile::tempdir().unwrap();
-        let store = RepositoryMemoryStore::at_persistent(dir.path()).unwrap();
+        let store = RepositoryMemoryStore::at_artifacts(dir.path()).unwrap();
         let id = identity();
         let mut review = review();
         review.findings.truncate(1);
@@ -354,7 +354,7 @@ mod tests {
     #[test]
     fn full_reports_are_immutable_while_references_stay_small() {
         let dir = tempfile::tempdir().unwrap();
-        let store = RepositoryMemoryStore::at_persistent(dir.path()).unwrap();
+        let store = RepositoryMemoryStore::at_artifacts(dir.path()).unwrap();
         let id = identity();
         let review = review();
         let reference = save_review(&store, id.clone(), &review).unwrap();
@@ -399,7 +399,7 @@ mod tests {
     #[test]
     fn refinement_file_preserves_all_resolutions_and_legacy_inline_verdict() {
         let dir = tempfile::tempdir().unwrap();
-        let store = RepositoryMemoryStore::at_persistent(dir.path()).unwrap();
+        let store = RepositoryMemoryStore::at_artifacts(dir.path()).unwrap();
         let mut id = identity();
         id.phase = BootstrapReportKind::Refine;
         let review = review();
@@ -436,7 +436,7 @@ mod tests {
     fn report_io_rejects_symlinks_and_non_regular_files() {
         use std::os::unix::fs::symlink;
         let dir = tempfile::tempdir().unwrap();
-        let store = RepositoryMemoryStore::at_persistent(dir.path()).unwrap();
+        let store = RepositoryMemoryStore::at_artifacts(dir.path()).unwrap();
         let id = identity();
         let reference = save_review(&store, id.clone(), &review()).unwrap();
         let path = reference.prompt_path(&store);

@@ -423,7 +423,7 @@ mod tests {
             fs::create_dir_all(root.join("openwiki")).unwrap();
             fs::create_dir(temp.path().join("persistent")).unwrap();
             let store =
-                RepositoryMemoryStore::at_persistent(&temp.path().join("persistent")).unwrap();
+                RepositoryMemoryStore::at_artifacts(&temp.path().join("persistent")).unwrap();
             raw_git(&root, &["init", "-b", "main"]).unwrap();
             raw_git(&root, &["config", "user.name", "Fixture"]).unwrap();
             raw_git(&root, &["config", "user.email", "fixture@example.invalid"]).unwrap();

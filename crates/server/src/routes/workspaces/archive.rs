@@ -650,8 +650,7 @@ pub(crate) mod tests {
             let store = RepositoryMemoryStore::with_artifacts(
                 &pool,
                 repo.id,
-                utils::repository_memory::RepositoryMemoryStore::at_persistent(&persistent)
-                    .unwrap(),
+                utils::repository_memory::RepositoryMemoryStore::at_artifacts(&persistent).unwrap(),
             );
             let owner = db::models::workspace_usage::WorkspaceExecutionOwner::new(
                 kind,
