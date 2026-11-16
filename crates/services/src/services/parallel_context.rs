@@ -121,8 +121,9 @@ pub async fn discover(
             page.wiki_target = state.target_branch;
             page.wiki_source_commit = state.source_commit;
             page.wiki_publication_commit = state.wiki_commit;
-            page.manifests =
-                store.discover_events(repo.id, query.after_manifest.as_deref(), limit)?;
+            page.manifests = store
+                .discover_events(repo.id, query.after_manifest.as_deref(), limit)
+                .await?;
         }
         Ok(())
     }

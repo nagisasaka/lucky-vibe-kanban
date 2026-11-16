@@ -72,7 +72,7 @@ pub(super) async fn request_recovery(
 
 // Admission freezes event IDs after checking source ancestry. Resolve only those
 // immutable public records, never another Workspace's private memory or history.
-pub(super) fn integration_memory(
+pub(super) async fn integration_memory(
     run: &IntegrationRun,
     store: Option<&RepositoryMemoryStore>,
 ) -> anyhow::Result<serde_json::Value> {
@@ -81,7 +81,10 @@ pub(super) fn integration_memory(
         let mut events = Vec::new();
         let mut unavailable = Vec::new();
         for id in &source.event_ids {
-            let event = store.and_then(|store| store.event(*id).ok().flatten());
+            let event = match store {
+                Some(store) => store.event(*id).await.ok().flatten(),
+                None => None,
+            };
             if let Some(event) = event {
                 ensure!(
                     event.repository_id == run.repository_id

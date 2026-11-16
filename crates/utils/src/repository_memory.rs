@@ -1,6 +1,6 @@
 //! Repository memory contracts shared by the host, executors and API.
-//! Semantic artifacts and Git/filesystem journals use the existing persistent
-//! shared folder. Wiki/integration operational state lives in the instance DB.
+//! Final Change Manifests live in the instance DB. Drafts and frozen
+//! Git/filesystem journals retain the existing persistent shared folder.
 
 use std::{
     fs::{self, File, OpenOptions},
@@ -105,7 +105,7 @@ pub struct ManifestReference {
     pub source_commit: String,
     pub target_branch: Option<String>,
     pub created_at: DateTime<Utc>,
-    pub path: String,
+    pub url: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
@@ -624,6 +624,15 @@ pub fn coding_run_instructions(runs: &[RepositoryMemoryRun]) -> Option<String> {
     Some(parts.join("\n\n"))
 }
 
+pub fn validate_receipt_identity(value: &WikiReconciliationReceipt) -> io::Result<()> {
+    if !commit_id(&value.target_commit)
+        || value.wiki_commit.as_ref().is_some_and(|id| !commit_id(id))
+    {
+        return Err(invalid("Receipt contains invalid Git identity"));
+    }
+    Ok(())
+}
+
 pub fn validate_publication(value: &WikiPublication) -> io::Result<()> {
     if !commit_id(&value.source_commit)
         || value
@@ -922,7 +931,8 @@ impl RepositoryMemoryStore {
             .collect())
     }
 
-    pub fn publish_event(&self, event: &ChangeManifest) -> io::Result<()> {
+    /// Fixture/import compatibility only. Normal hosts publish through the DB store.
+    pub fn legacy_publish_event(&self, event: &ChangeManifest) -> io::Result<()> {
         event.validate()?;
         self.publish(
             &self
@@ -972,7 +982,7 @@ impl RepositoryMemoryStore {
         )
     }
 
-    pub fn events(&self) -> io::Result<Vec<ChangeManifest>> {
+    pub fn legacy_events(&self) -> io::Result<Vec<ChangeManifest>> {
         let mut events: Vec<ChangeManifest> = self.list_json("events")?;
         for event in &events {
             event.validate()?;
@@ -981,7 +991,17 @@ impl RepositoryMemoryStore {
         Ok(events)
     }
 
-    pub fn discover_events(
+    /// Cutover must distinguish an empty legacy outbox from missing storage.
+    pub fn require_legacy_event_directory(&self) -> io::Result<()> {
+        let directory = self.root.join("events");
+        reject_symlinks(&directory)?;
+        if !fs::metadata(&directory)?.is_dir() {
+            return Err(invalid("Legacy Manifest directory is not a directory"));
+        }
+        Ok(())
+    }
+
+    pub fn legacy_discover_events(
         &self,
         repository_id: Uuid,
         after: Option<&str>,
@@ -993,7 +1013,7 @@ impl RepositoryMemoryStore {
             return Ok(ManifestDiscoveryPage::default());
         }
         // Only filenames are enumerated. Bodies are read after pagination and
-        // through event(), retaining bounded I/O, symlink and identity checks.
+        // through legacy_event(), retaining bounded I/O, symlink and identity checks.
         let mut names = Vec::new();
         for entry in fs::read_dir(&directory)? {
             let name = entry?
@@ -1013,8 +1033,11 @@ impl RepositoryMemoryStore {
         for name in names.into_iter().take(limit) {
             let result = (|| {
                 let id = Uuid::parse_str(name.trim_end_matches(".json")).map_err(invalid)?;
+                if name != format!("{id}.json") {
+                    return Err(invalid("Non-canonical legacy Manifest filename"));
+                }
                 let event = self
-                    .event(id)?
+                    .legacy_event(id)?
                     .ok_or_else(|| invalid("Manifest disappeared during discovery"))?;
                 if event.repository_id != repository_id {
                     return Err(invalid("Manifest belongs to another registered repository"));
@@ -1027,7 +1050,10 @@ impl RepositoryMemoryStore {
                     source_commit: event.source_commit,
                     target_branch: event.target_branch,
                     created_at: event.created_at,
-                    path: directory.join(&name).to_string_lossy().into_owned(),
+                    url: format!(
+                        "/api/repos/{repository_id}/change-manifests/{}",
+                        event.event_id
+                    ),
                 })
             })();
             match result {
@@ -1041,7 +1067,7 @@ impl RepositoryMemoryStore {
         Ok(page)
     }
 
-    pub fn event(&self, event_id: Uuid) -> io::Result<Option<ChangeManifest>> {
+    pub fn legacy_event(&self, event_id: Uuid) -> io::Result<Option<ChangeManifest>> {
         let event: Option<ChangeManifest> =
             self.read_json(&self.root.join("events").join(format!("{event_id}.json")))?;
         if let Some(event) = &event {
@@ -1051,18 +1077,6 @@ impl RepositoryMemoryStore {
             }
         }
         Ok(event)
-    }
-
-    pub fn validate_receipt(&self, value: &WikiReconciliationReceipt) -> io::Result<()> {
-        if !commit_id(&value.target_commit)
-            || value.wiki_commit.as_ref().is_some_and(|id| !commit_id(id))
-        {
-            return Err(invalid("Receipt contains invalid Git identity"));
-        }
-        if self.event(value.event_id)?.is_none() {
-            return Err(invalid("Cannot acknowledge an unknown semantic event"));
-        }
-        Ok(())
     }
 
     /// OS lock, released on process death. Durable active_run_id must also be
@@ -1299,10 +1313,10 @@ mod tests {
             .unwrap();
         assert!(store.coding_errors().unwrap().is_empty());
         assert!(store.runs().unwrap().is_empty());
-        assert!(store.events().unwrap().is_empty());
+        assert!(store.legacy_events().unwrap().is_empty());
         assert!(
             store
-                .discover_events(Uuid::new_v4(), None, 10)
+                .legacy_discover_events(Uuid::new_v4(), None, 10)
                 .unwrap()
                 .records
                 .is_empty()
@@ -1312,8 +1326,12 @@ mod tests {
         assert!(root.join("locks").is_dir());
         assert_eq!(fs::read_dir(&root).unwrap().count(), 1);
         fs::write(root.join("events"), "not a directory").unwrap();
-        assert!(store.events().is_err());
-        assert!(store.discover_events(Uuid::new_v4(), None, 10).is_err());
+        assert!(store.legacy_events().is_err());
+        assert!(
+            store
+                .legacy_discover_events(Uuid::new_v4(), None, 10)
+                .is_err()
+        );
     }
 
     #[test]
@@ -1393,7 +1411,7 @@ mod tests {
         );
     }
 
-    fn event() -> ChangeManifest {
+    fn legacy_event() -> ChangeManifest {
         ChangeManifest {
             version: 1,
             event_id: Uuid::new_v4(),
@@ -1416,12 +1434,12 @@ mod tests {
     fn discovery_reports_corruption_and_pages_without_weakening_publication() {
         let temp = tempfile::tempdir().unwrap();
         let store = RepositoryMemoryStore::at_persistent(temp.path()).unwrap();
-        let mut a = event();
+        let mut a = legacy_event();
         a.event_id = Uuid::from_u128(1);
         let mut b = a.clone();
         b.event_id = Uuid::from_u128(3);
-        store.publish_event(&a).unwrap();
-        store.publish_event(&b).unwrap();
+        store.legacy_publish_event(&a).unwrap();
+        store.legacy_publish_event(&b).unwrap();
         std::fs::write(
             store
                 .root
@@ -1430,26 +1448,33 @@ mod tests {
             "{",
         )
         .unwrap();
-        let first = store.discover_events(a.repository_id, None, 1).unwrap();
+        let first = store
+            .legacy_discover_events(a.repository_id, None, 1)
+            .unwrap();
         assert_eq!(first.records[0].event_id, a.event_id);
         let second = store
-            .discover_events(a.repository_id, first.next_after.as_deref(), 1)
+            .legacy_discover_events(a.repository_id, first.next_after.as_deref(), 1)
             .unwrap();
         assert!(second.records.is_empty());
         assert_eq!(second.errors.len(), 1);
         let third = store
-            .discover_events(a.repository_id, second.next_after.as_deref(), 1)
+            .legacy_discover_events(a.repository_id, second.next_after.as_deref(), 1)
             .unwrap();
         assert_eq!(third.records[0].event_id, b.event_id);
         assert!(third.next_after.is_none());
-        assert!(store.events().is_err(), "publication must remain strict");
-        let wrong_repo = store.discover_events(Uuid::new_v4(), None, 10).unwrap();
+        assert!(
+            store.legacy_events().is_err(),
+            "publication must remain strict"
+        );
+        let wrong_repo = store
+            .legacy_discover_events(Uuid::new_v4(), None, 10)
+            .unwrap();
         assert!(wrong_repo.records.is_empty());
         assert_eq!(wrong_repo.errors.len(), 3);
         // Cursor is compared to filenames, never resolved as a filesystem path.
         assert!(
             store
-                .discover_events(a.repository_id, Some("../../../"), 10)
+                .legacy_discover_events(a.repository_id, Some("../../../"), 10)
                 .is_ok()
         );
     }
@@ -1462,11 +1487,11 @@ mod tests {
         std::fs::create_dir(&persistent).unwrap();
         std::fs::create_dir(&cache).unwrap();
         let store = RepositoryMemoryStore::at_persistent(&persistent).unwrap();
-        let manifest = event();
-        store.publish_event(&manifest).unwrap();
+        let manifest = legacy_event();
+        store.legacy_publish_event(&manifest).unwrap();
         std::fs::write(cache.join("reproducible-output"), "disposable").unwrap();
         let before = store
-            .discover_events(manifest.repository_id, None, 10)
+            .legacy_discover_events(manifest.repository_id, None, 10)
             .unwrap();
         assert_eq!(before.records.len(), 1);
         // Only this test-owned cache is removed. The durable sibling and its
@@ -1474,12 +1499,12 @@ mod tests {
         std::fs::remove_dir_all(&cache).unwrap();
         drop(store);
         let reopened = RepositoryMemoryStore::at_persistent(&persistent).unwrap();
-        assert_eq!(reopened.events().unwrap(), vec![manifest.clone()]);
+        assert_eq!(reopened.legacy_events().unwrap(), vec![manifest.clone()]);
         let after = reopened
-            .discover_events(manifest.repository_id, None, 10)
+            .legacy_discover_events(manifest.repository_id, None, 10)
             .unwrap();
         assert_eq!(after.records[0].event_id, manifest.event_id);
-        assert_eq!(after.records[0].path, before.records[0].path);
+        assert_eq!(after.records[0].url, before.records[0].url);
         assert!(after.errors.is_empty());
         assert!(after.next_after.is_none());
         assert!(!cache.exists(), "discovery must not require a cache index");
@@ -1490,7 +1515,7 @@ mod tests {
     fn discovery_never_follows_symlinked_or_mismatched_events() {
         let temp = tempfile::tempdir().unwrap();
         let store = RepositoryMemoryStore::at_persistent(temp.path()).unwrap();
-        let a = event();
+        let a = legacy_event();
         let external = temp.path().join("outside.json");
         std::fs::write(&external, serde_json::to_vec(&a).unwrap()).unwrap();
         std::os::unix::fs::symlink(
@@ -1509,7 +1534,9 @@ mod tests {
             serde_json::to_vec(&a).unwrap(),
         )
         .unwrap();
-        let page = store.discover_events(a.repository_id, None, 100).unwrap();
+        let page = store
+            .legacy_discover_events(a.repository_id, None, 100)
+            .unwrap();
         assert!(page.records.is_empty());
         assert_eq!(page.errors.len(), 2);
     }
@@ -1518,21 +1545,21 @@ mod tests {
     fn parallel_immutable_outbox_and_workspace_isolation() {
         let temp = tempfile::tempdir().unwrap();
         let store = RepositoryMemoryStore::at_persistent(temp.path()).unwrap();
-        let a = event();
-        let b = event();
+        let a = legacy_event();
+        let b = legacy_event();
         std::thread::scope(|scope| {
-            scope.spawn(|| store.publish_event(&a).unwrap());
-            scope.spawn(|| store.publish_event(&b).unwrap());
+            scope.spawn(|| store.legacy_publish_event(&a).unwrap());
+            scope.spawn(|| store.legacy_publish_event(&b).unwrap());
         });
-        assert_eq!(store.events().unwrap().len(), 2);
-        store.publish_event(&a).unwrap();
+        assert_eq!(store.legacy_events().unwrap().len(), 2);
+        store.legacy_publish_event(&a).unwrap();
         let mut conflicting = a.clone();
         conflicting.semantics.summary = "different".into();
-        assert!(store.publish_event(&conflicting).is_err());
+        assert!(store.legacy_publish_event(&conflicting).is_err());
         let lock = store.try_lock().unwrap();
         assert!(store.try_lock().is_err());
         // Locks do not serialise unrelated coding-event publication.
-        store.publish_event(&event()).unwrap();
+        store.legacy_publish_event(&legacy_event()).unwrap();
         drop(lock);
         assert!(store.try_lock().is_ok());
         let completion = store.try_workspace_completion_lock(a.workspace_id).unwrap();
@@ -1574,7 +1601,7 @@ mod tests {
 
     #[test]
     fn readable_source_message_preserves_semantics_without_metadata_or_test_payloads() {
-        let mut manifest = event();
+        let mut manifest = legacy_event();
         let reason = format!("{}最後の重要な設計理由", "理由\n".repeat(7600));
         manifest.semantics = SemanticChanges {
             goal: "GitHub上でも人とAIが変更の目的を読めるようにする".into(),
@@ -1679,7 +1706,7 @@ mod tests {
 
     #[test]
     fn manifest_validation_and_commit_projection() {
-        let mut a = event();
+        let mut a = legacy_event();
         a.validate().unwrap();
         assert_eq!(
             a.semantics.commit_message(),
@@ -1730,7 +1757,7 @@ mod tests {
         let temp = tempfile::tempdir().unwrap();
         let store = RepositoryMemoryStore::at_persistent(temp.path()).unwrap();
         let outside = tempfile::NamedTempFile::new().unwrap();
-        let a = event();
+        let a = legacy_event();
         std::os::unix::fs::symlink(
             outside.path(),
             store
@@ -1739,7 +1766,7 @@ mod tests {
                 .join(format!("{}.json", a.event_id)),
         )
         .unwrap();
-        assert!(store.publish_event(&a).is_err());
+        assert!(store.legacy_publish_event(&a).is_err());
     }
 
     #[cfg(unix)]

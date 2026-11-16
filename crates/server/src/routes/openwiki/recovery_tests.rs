@@ -116,7 +116,7 @@ async fn exercise(deployment: &DeploymentImpl, instance: &FsPath) -> anyhow::Res
                         ..Default::default()
                     },
                 };
-                store.publish_event(&event)?;
+                store.publish_event(&event).await?;
                 store
                     .save_integration(&MemoryIntegration {
                         id: Uuid::new_v4(),

@@ -6,7 +6,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-pub const PARALLEL_GUIDE: &str = "Use CURRENT discovery_url for public repository activity. Follow next_workspace as after_workspace and manifests.next_after as after_manifest only for needed ranges; errors are not zero activity. Read pinned source at /api/repos/{repository_id}/snapshot?commit=<full-oid>&path=<url-encoded-path>; omit path to enumerate, follow next_after as after_path. For a test-only combination POST /api/workspaces/{workspace_id}/integration/preview with repository_id, base_commit (clean full HEAD), peers [{workspace_id,commit}]. Only combine in its returned detached trial path. Preview is not formal publication or Auto-merge.";
+pub const PARALLEL_GUIDE: &str = "Use CURRENT discovery_url for public repository activity. Follow next_workspace as after_workspace and manifests.next_after as after_manifest only for needed ranges; errors are not zero activity. Read pinned source at /api/repos/{repository_id}/snapshot?commit=<full-oid>&path=<url-encoded-path>; omit path to enumerate, follow next_after as after_path. Manifest references use url; GET that repository-scoped /api/repos/{repository_id}/change-manifests/{event_id} URL to read the DB record (with the same authentication). Do not treat it as a filesystem path. For a test-only combination POST /api/workspaces/{workspace_id}/integration/preview with repository_id, base_commit (clean full HEAD), peers [{workspace_id,commit}]. Only combine in its returned detached trial path. Preview is not formal publication or Auto-merge.";
 
 pub fn resource_guide() -> String {
     let token = crate::assets::asset_dir().join("access-internal.token");

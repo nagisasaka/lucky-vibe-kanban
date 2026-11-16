@@ -113,11 +113,6 @@ pub async fn establish(
                             "Implementation has no coding completion context".into(),
                         )
                     })?;
-                let manifest_path = store
-                    .draft_path(agent_run_id)
-                    .parent()
-                    .and_then(|p| p.parent())
-                    .map(|p| p.join("events").join(format!("{agent_run_id}.json")));
                 let include = deployment.config().read().await.manifest_in_commit_body;
                 let completion = tokio::task::spawn_blocking(move || {
                     tokio::runtime::Handle::current().block_on(
@@ -128,7 +123,13 @@ pub async fn establish(
                 })
                 .await?;
                 if let Ok(Some(event)) = &completion {
-                    manifests.push(json!({"event_id":event.event_id,"source_commit":event.source_commit,"path":manifest_path}));
+                    manifests.push(json!({
+                        "repository_id": event.repository_id,
+                        "workspace_id": event.workspace_id,
+                        "event_id": event.event_id,
+                        "source_commit": event.source_commit,
+                        "url": format!("/api/repos/{}/change-manifests/{}", event.repository_id, event.event_id),
+                    }));
                 }
                 if let Err(error) = completion {
                     if error

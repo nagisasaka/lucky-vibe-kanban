@@ -1,7 +1,9 @@
-//! Wiki/integration operational state in the instance DB. Semantic artifacts and
-//! frozen Git/filesystem inputs remain in the repository's shared folder.
+//! Final Manifests and Wiki/integration operational state in the instance DB.
+//! Drafts and frozen Git/filesystem inputs remain in the shared folder.
+mod manifests;
 use std::{io, ops::Deref, path::Path};
 
+pub use manifests::import_registered_repositories;
 use sqlx::{Connection, SqliteConnection, SqlitePool};
 use utils::repository_memory::{
     self as files, MemoryIntegration, RepositoryMemoryState, WikiPublication,
@@ -79,8 +81,11 @@ impl RepositoryMemoryStore {
     pub fn at_persistent(persistent: &Path) -> io::Result<Self> {
         let pool = sqlx::sqlite::SqlitePoolOptions::new()
             .max_connections(1)
-            .connect_lazy("sqlite::memory:")
-            .map_err(invalid)?;
+            .connect_lazy_with(
+                sqlx::sqlite::SqliteConnectOptions::new()
+                    .filename(persistent.join("memory-fixture.sqlite"))
+                    .create_if_missing(true),
+            );
         Ok(Self {
             files: files::RepositoryMemoryStore::at_persistent(persistent)?,
             pool,
@@ -105,9 +110,13 @@ impl RepositoryMemoryStore {
     async fn connection(&self) -> io::Result<sqlx::pool::PoolConnection<sqlx::Sqlite>> {
         let mut conn = self.pool.acquire().await.map_err(invalid)?;
         if self.fixture {
-            let schema =
-                include_str!("../../migrations/20261106140000_repository_operational_state.sql")
-                    .replace("CREATE TABLE ", "CREATE TABLE IF NOT EXISTS ");
+            let schema = format!(
+                "{}\n{}",
+                include_str!("../../migrations/20261106140000_repository_operational_state.sql"),
+                include_str!("../../migrations/20261116000000_change_manifests.sql")
+            )
+            .replace("CREATE TABLE ", "CREATE TABLE IF NOT EXISTS ")
+            .replace("CREATE INDEX ", "CREATE INDEX IF NOT EXISTS ");
             for statement in schema.split(';').filter(|s| !s.trim().is_empty()) {
                 sqlx::query(statement)
                     .execute(&mut *conn)
@@ -177,7 +186,7 @@ impl RepositoryMemoryStore {
             return Err(invalid("Unsupported repository state version"));
         }
         for receipt in receipts {
-            self.files.validate_receipt(receipt)?;
+            self.validate_receipt_on(conn, receipt).await?;
             self.save_on(
                 conn,
                 "repository_wiki_receipts",
@@ -296,9 +305,18 @@ impl RepositoryMemoryStore {
         Ok(value)
     }
     pub async fn acknowledge(&self, value: &WikiReconciliationReceipt) -> io::Result<()> {
-        self.files.validate_receipt(value)?;
-        self.save("repository_wiki_receipts", value.event_id, value, true)
-            .await
+        let mut conn = self.connection().await?;
+        let mut tx = conn.begin_with("BEGIN IMMEDIATE").await.map_err(invalid)?;
+        self.validate_receipt_on(&mut tx, value).await?;
+        self.save_on(
+            &mut tx,
+            "repository_wiki_receipts",
+            value.event_id,
+            value,
+            true,
+        )
+        .await?;
+        tx.commit().await.map_err(invalid)
     }
 }
 
@@ -373,7 +391,7 @@ mod tests {
                 ..Default::default()
             },
         };
-        files.publish_event(&event).unwrap();
+        files.legacy_publish_event(&event).unwrap();
         let state = RepositoryMemoryState::enabled_defaults(Some("main".into()));
         let integration = MemoryIntegration {
             id: Uuid::new_v4(),
@@ -399,6 +417,7 @@ mod tests {
             error: Some("retry needed".into()),
         };
         let store = RepositoryMemoryStore::with_artifacts(&pool, repo, files);
+        store.import_legacy_manifests().await.unwrap();
         store.save_state(&state).await.unwrap();
         store.save_integration(&integration).await.unwrap();
         store.save_publication(&publication).await.unwrap();
