@@ -123,7 +123,7 @@ sources:
 generated: { by: "codex", at: "2026-11-16T15:12:08.330Z" }
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-16T15:12:08.330Z
+    at: 2026-11-16T18:11:18.484Z
 ---
 
 # Project・Issue と実施の関係

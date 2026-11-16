@@ -51,7 +51,7 @@ sources:
 generated: { by: "codex", at: "2026-11-04T20:22:03.096Z" }
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-16T15:12:08.330Z
+    at: 2026-11-16T18:11:18.484Z
 ---
 
 # Web Push・通知同意・会話への復帰

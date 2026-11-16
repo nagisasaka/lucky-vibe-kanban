@@ -143,6 +143,10 @@ sources:
     resource: repo://tests/chat/paste-markdown.test.mjs
   - id: openwiki-source-7cc1d248ce00f0c5ef61c76e
     resource: repo://tests/chat/prompt-context.test.mjs
+  - id: openwiki-source-d6d91c27c46da6525c95c966
+    resource: repo://tests/color-themes/browser.mjs
+  - id: openwiki-source-ae255b29093698d4f5669fbf
+    resource: repo://tests/color-themes/fixture.tsx
   - id: openwiki-source-1a5fb8d4b9f9c4afdbc0b072
     resource: repo://tests/help/reading.mjs
   - id: openwiki-source-84b875ef198dd7cc343720cd
@@ -181,10 +185,10 @@ sources:
     resource: repo://tests/workflow/playwright.config.ts
   - id: openwiki-source-7ff1b0a7c2af3c41dc6b3d55
     resource: repo://tests/workflow/specs/workflow-presets.spec.ts
-generated: { by: "codex", at: "2026-11-16T15:12:08.330Z" }
+generated: { by: "codex", at: "2026-11-16T18:11:18.484Z" }
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-16T15:12:08.330Z
+    at: 2026-11-16T18:11:18.484Z
 ---
 
 
@@ -690,3 +694,18 @@ frontend build・包括check/lint/backend:testは、上記3ファイル差分と
 先行隔離REVIEW `b156b8e6-347b-4f73-8315-479dd00d1291` は同じbase/source組合せで、398の2 Repo起動時取込関数の途中停止・再試行・冪等性、399 OFF/ONと固定本文再試行、DB正本を使うWiki receiptの関連14件成功を報告している。これは先行証拠であり今回候補上での再実行と混同しない。各source公開ManifestのSQLx/単独suite証拠と無競合delta、今回の境界検証から、包括 `check/lint/backend:test`、SQLx再生成/再check、先行起動関数fixtureの重複試験と失敗したバッチ全体の再実行をagent判断でskip記録した。ユーザー省略指定によるものではない。
 
 実DB取込・設定変更・稼働dev/stable再起動・実認証browser/provider・完成image/別環境は未実施。実OpenWiki CLIを含む製品E2E成功も主張しない。この担当のOpenWiki lifecycle完了、Wiki専用commit、公開要求保存とRun終了後のhostによるローカルmain適用は独立した結果として確認する。prepare_wiki request `6060beed-d871-4f92-a450-52a119630ca5` は最初のbegin前にコードSHAの原本journalを保存した。GitHub push・リリース・配備は行っていない。
+
+
+## LOCAL-382のテーマ統合と証拠
+
+固定base `515f0e50b07e5f473885c7bb12b5c13d20d8295d` へLOCAL-382 source `1f7ddf51a571e950a17198bf2ad6e8e826bb6425` だけを無競合mergeした。merge SHAは `5edea132274f5aaf8e1b9fc78eeea2e01ec9f87a`、正式prepare_archiveが作ったコード検証SHAは `2f6fe0b5e72127cefcb5609ea73e110bc013a0fe`。sourceからのtree差分はIssueアーカイブ1件で、追加コード修復はない。
+
+採用資料のDB確定Manifestはevent/Run `572a1c92-de89-4a8f-95d0-eca6b59050a8`、Repo `40384b04-3346-4f93-a96e-8b42696b0aaa`、Workspace `73a1102a-b4d4-4c9c-aeeb-672fc75fb949`、source SHAは上記と一致する。admissionで固定された公開記録をinspect materialsで確認した証拠であり、今回DBを直接編集していない。既存記録の型/lint/i18n・production build・services Clippy・生成型成功はsource上の実績として扱う。
+
+Issueアーカイブは [固定本文](../../docs/changes/2026-11-16-LOCAL-382-110eb7a6.md) 1件で、版 `b4e1b19c-ceef-4027-902b-2cd28ca1a1f6` rev1と原文が一致する。専用commitには `LVK-Issue: LOCAL-382` と `LVK-Issue-UUID: 110eb7a6-5679-4b45-90a7-00c96e03c73a` を確認した。アーカイブは当時の意図であり、ManifestやWikiと別の証拠である。
+
+候補上のmanaged verifyでは初回Vitest未導入で失敗し、`pnpm install --frozen-lockfile` 成功後に再実行した。テーマVitest 36件、`node tests/color-themes/browser.mjs`、`node scripts/dev-cargo.mjs test -p services services::config::versions::v9::tests` の12件と差分空白検査が成功した。旧設定のモード/他設定保持、不正値fallback、全9配色組合せの実ファイルsave/load、OS明暗追従、保存前非適用、固定モード、独立選択、キーボード/focus、6配色の計算済みボタンコントラストを対象とする。[実行入口とfixtureの境界](../../tests/color-themes/README.md)・[設定試験](../../crates/services/src/services/config/versions/v9.rs#L375-L475)
+
+agent判断で広域check/lint/backend suite・build・生成型の重複再実行を省略記録した。単一sourceと同じコードtree、固定Manifestの既存成功、候補での対象再実行を根拠とし、省略を新たなpassに数えない。複数sourceの相互作用はない。Chromiumの保存はfixture状態であり、実APIとの一体E2E、認証済み全画面、実providerは未検証である。
+
+コード検証後、最初のbegin前にprepare_wikiで原本journalを保存した。同じ候補branchでWikiを別commitにし、setup生成差分は未stageのままhostの限定復元へ渡す。Wiki完了・公開要求・Run終了後のhostによるローカルmain実Git適用は別の結果であり、本記録は適用済みの宣言ではない。GitHub push、再起動、本番反映、稼働DB変更は行わない。

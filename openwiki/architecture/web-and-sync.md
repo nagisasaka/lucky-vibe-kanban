@@ -28,6 +28,8 @@ sources:
     resource: repo://crates/server/src/routes/workspaces/workspace_summary.rs
   - id: openwiki-source-7151ac14cb4570c5c04781dd
     resource: repo://crates/services/src/services/agent_runtime.rs
+  - id: openwiki-source-ae8c631b5b4385c934e47d60
+    resource: repo://crates/services/src/services/config/versions/v9.rs
   - id: openwiki-source-10897c55284ee23ee2d4e388
     resource: repo://packages/local-web/src/app/auth/pushReturn.ts
   - id: openwiki-source-a4deecf361e70bd3b2703d13
@@ -40,6 +42,8 @@ sources:
     resource: repo://packages/local-web/src/app/entry/Bootstrap.tsx
   - id: openwiki-source-2bc26d0169842f4566548104
     resource: repo://packages/local-web/src/app/providers/ConfigProvider.tsx
+  - id: openwiki-source-ddff528856c735c2b2939318
+    resource: repo://packages/local-web/src/app/providers/ThemeProvider.tsx
   - id: openwiki-source-5345acc0f5e557e263435988
     resource: repo://packages/ui/src/components/AppBar.tsx
   - id: openwiki-source-b2fc2a264ac3c8fd4fc0ac15
@@ -310,10 +314,10 @@ sources:
     resource: repo://tests/workspace-navigation/run-isolated.py
   - id: openwiki-source-b87e3253bd1458a0091f8587
     resource: repo://tests/workspace-navigation/workspace-navigation.spec.ts
-generated: { by: "codex", at: "2026-11-12T03:32:18.680Z" }
+generated: { by: "codex", at: "2026-11-16T18:11:18.484Z" }
 verified:
-  - by: openwiki/0.7.2
-    at: 2026-11-12T03:32:18.680Z
+  - by: openwiki/0.9.0
+    at: 2026-11-16T18:11:18.484Z
 ---
 
 # Web の実行環境と同期
@@ -733,3 +737,14 @@ Issue本文は `IssueVersionEditor` がIssue単位の版APIから取得する。
 現在仕様の本文は取得した現在版から親パネルへ渡し、Issue snapshotもrefreshする。既存collectionからdescriptionを更新する場合は `original.updated_at` を `expected_updated_at` として単件・bulkとも送る。`refreshShapeFallback` はPromiseを返すため、新鮮なsnapshotの取得完了を待てる。全版本文をProject全体の同期対象には追加していない。[互換書込とrefresh](../../packages/web-core/src/shared/lib/electric/collections.ts#L395-L510)・[起動入力側の接続](../../packages/web-core/src/pages/kanban/KanbanIssuePanelContainer.tsx)
 
 狭幅明暗のfixtureはmock APIを使う。実認証済みアプリの一体E2Eや実provider実行を証明するものではない。[再実行と範囲](../../tests/issue-versions/README.md)
+
+
+## 保存後に適用するM2カラーテーマ（LOCAL-382）
+
+ThemeModeはSystem/Light/Darkの3種を維持する。明側のStandard/Paper/Linenと暗側のStandard/Navy/Indigoをそれぞれ `light_color_theme` / `dark_color_theme` に保存する。既存config v9へdefault付きで追加し、旧v9・v8移行ではモードと他設定を保持して両側Standardを補う。未知・不正な配色値もStandardへ戻す。[設定と互換試験](../../crates/services/src/services/config/versions/v9.rs)
+
+設定画面は固定モードなら該当側1行、SystemならOS明暗の2行を表示する。選択はdraftだけを更新し、既存のインスタンス共通保存が成功した後でThemeProviderへ渡す。破棄や保存失敗でdraftを本適用しない。[保存順序](../../packages/web-core/src/shared/dialogs/settings/settings/GeneralSettingsSection.tsx#L190-L220)・[カードとキーボード](../../packages/web-core/src/shared/dialogs/settings/settings/ColorThemeSettings.tsx)
+
+ThemeProviderはmatchMediaの変更を購読し、SystemだけがOSに追従する。解決した明暗をhtmlのクラスへ、配色を `data-color-theme` へ反映し、Standardは属性を除去する。共通CSSトークンとTailwindの意味色が主要surfaceへ伝わり、画面別の分岐は増やさない。ブランドオレンジのfill/hoverは6配色で共通、塗りボタンは濃い文字、ライトのリンク/focusは専用アクセントを使う。[provider](../../packages/local-web/src/app/providers/ThemeProvider.tsx)・[rootへの適用](../../packages/web-core/src/shared/lib/theme.ts)・[CSS](../../packages/web-core/src/app/styles/new/index.css)・[対応token](../../packages/local-web/tailwind.new.config.js)
+
+[テーマ回帰](../../tests/color-themes/README.md)は実コンポーネントとCSSの隔離fixtureで、保存前非適用・OS追従・キーボード/focusと6配色のコントラストを検査する。fixtureの保存は模擬状態であり、実設定API一体E2Eとは区別する。[候補の検証と証拠](../operations/development.md#local-382のテーマ統合と証拠)

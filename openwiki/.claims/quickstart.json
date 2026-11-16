@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:60f94e5f13d93fea2d34c34770a7f0f9c66511f3edbb8a3a90b19ea683cc913a",
+  "pageVersion": "sha256:87e179b9f76665d688c08d2b137e9b2ea4254c4446ddb9b8f16f0f380d3a72b8",
   "claims": [
     {
       "id": "claim_edf1b78d3c7a4d978a6d8debcee4edd2",
@@ -278,7 +278,7 @@
         },
         {
           "resource": "repo://crates/services/src/services/config/versions/v9.rs",
-          "version": "repo-file-v1:sha256:6b1318074371587027f1f9b981d6e47501c536d93bb2663c3048cc99a87be83d"
+          "version": "repo-file-v1:sha256:0bc905c2030f20a351a44e44dc2e5f07e4a5af61fa2a5784d360f4c898bc97b7"
         },
         {
           "resource": "repo://crates/services/src/services/repository_memory.rs",
@@ -465,10 +465,28 @@
           "version": "repo-file-v1:sha256:831fd858730316e41e1db5a8d5490d4e7c7fd4dd1412027c456402fe75a79445"
         }
       ]
+    },
+    {
+      "id": "claim_d08241887b9d4329ad62b2909e465fb8",
+      "statement": "カラーテーマは既存3モードを維持し明暗各3配色を独立保存する。保存成功後に反映し、SystemではOS明暗へ追従する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/services/src/services/config/versions/v9.rs#L30-L78",
+          "version": "repo-lines-v1:sha256:9d8a21b9811c2c7d9d4ca062bcf8596bd128e4b27b78d8a38a4615af47e087b2:eyJzZWxlY3RlZExpbmVDb3VudCI6NDksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZmMTBjOWM0ODNkNzZlNDQzYzIwMDJiOGRkYjNhZWE5N2NjN2RkZWQzMjgxN2MxMThjNGQwZmE4NjljNDJkOWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRmOWNiNjgwMmU1ZmFmY2YwYmEzMWFlNDMzYTc5NmViZjZkMTVjZDBiNDU3N2EwNDNhMjdhYzhhMzc1ODU2MDgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk2YTgwOWQ2ZjliZWQyNjAyNzhlYjI2ZGVjOGRmZDVjOWUwMDVhMzAxNzI4MmU1YjNlMmZhYjZkOTBiMGZhYWIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUyYjI3ZGY1ZDExN2Y2ZWVhMmJjYjE3NzQ0Y2RiZDgwMmE2OWYwMDNmY2Y5MTUyMjU1ZWQ4NmJlODI4ZDY5ZGMifQ"
+        },
+        {
+          "resource": "repo://packages/local-web/src/app/providers/ThemeProvider.tsx",
+          "version": "repo-file-v1:sha256:9c74b37383d5e229e41067a97aaabc53203bb069ec424d74704be8c1da379776"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/dialogs/settings/settings/GeneralSettingsSection.tsx#L190-L220",
+          "version": "repo-lines-v1:sha256:54cbacfc1d6ffbb4532e8b931b192544a837e5098c4346d93e07efa8a35fd4f6:eyJzZWxlY3RlZExpbmVDb3VudCI6MzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE1ZTM0NTQwZTJhOTk0YjQwMWVmYzYyMjBkZDNkOThkYjc4NGYyMjI0ODE3OTI4NDlmODhhMjJkOWM0N2IyZGYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ3NWY1MzcxOWQ0ZDkxNjhjZjM2ZWZkMTM1NDYwYzA0MDVkZjUzN2VkNjA3YTA5MDlkNTRiMmM1ZTZiYTg2ODEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjUxZTM3MjVkYTAwMmI0NmVkOGI0ZGU4ODAwM2FkOTcxMGRjYWYxOGQ1N2M0NzAxZGMzYmVmZjBiMmM1Y2IxM2YiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImI3NzVjNWU4OGU3ZDkyNGQxNWYyMzFiMDBjODZiYThkMmExNmE4YWQ4ZTViMjE3OWM4ZWQwNTY0MzhlZDY1MDEifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.9.0",
-    "at": "2026-11-16T15:12:08.330Z"
+    "at": "2026-11-16T18:11:18.484Z"
   }
 }

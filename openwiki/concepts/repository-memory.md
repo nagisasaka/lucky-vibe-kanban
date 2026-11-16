@@ -61,7 +61,7 @@ sources:
 generated: { by: "codex", at: "2026-11-16T15:12:08.330Z" }
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-16T15:12:08.330Z
+    at: 2026-11-16T18:11:18.484Z
 ---
 
 # Change Manifest・Run完了とWikiの責務

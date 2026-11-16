@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:511363a46d6971c3eb00bb09ace1789a3ccdd1fbe9c70a071e4aaa2f29821bea",
+  "pageVersion": "sha256:98ec942748325c38882a70fa5562ad0ddbecb8b2194c65852bc877d4319a3382",
   "claims": [
     {
       "id": "claim_ef965d37641846bda42842bf4788c8cc",
@@ -462,7 +462,7 @@
       "evidence": [
         {
           "resource": "repo://packages/web-core/src/shared/dialogs/settings/settings/GeneralSettingsSection.tsx",
-          "version": "repo-file-v1:sha256:3aef1e1168cfad3137be13e801dba83f946d1137faba7eb4e513b37ab6736602"
+          "version": "repo-file-v1:sha256:3728f02f70ba9967ca14bd2195df289bf669c1d765de86f5e59da0f8babf1e8d"
         }
       ]
     },
@@ -991,6 +991,6 @@
   ],
   "verification": {
     "by": "openwiki/0.9.0",
-    "at": "2026-11-16T15:12:08.330Z"
+    "at": "2026-11-16T18:11:18.484Z"
   }
 }

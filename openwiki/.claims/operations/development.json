@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:6b780585c8a35db052d2a2e10265e1ed3d317aaba0135ad996b772788e47e7fe",
+  "pageVersion": "sha256:a579ab1d8907f5ea5fac58034d09a05261201494a6eb54ed3ee6b364bad81a2e",
   "claims": [
     {
       "id": "claim_1640e4eaeac94676a84eb3b9d9970d30",
@@ -74,7 +74,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/bin/generate_types.rs",
-          "version": "repo-file-v1:sha256:d5f0b68f19edf3b032b0f1bbe56fb16e8ed056840a3b8640ef397eca0d93b89d"
+          "version": "repo-file-v1:sha256:5c5f40d2d028ac4624bff7506d9e477317ec95146354e8034f7b154b74adfd15"
         }
       ]
     },
@@ -616,7 +616,7 @@
         },
         {
           "resource": "repo://crates/services/src/services/config/versions/v9.rs",
-          "version": "repo-file-v1:sha256:6b1318074371587027f1f9b981d6e47501c536d93bb2663c3048cc99a87be83d"
+          "version": "repo-file-v1:sha256:0bc905c2030f20a351a44e44dc2e5f07e4a5af61fa2a5784d360f4c898bc97b7"
         }
       ]
     },
@@ -1123,10 +1123,28 @@
           "version": "repo-lines-v1:sha256:ad19df93aa7570f6262b9a11dbcccf1680d8cd2df07084c66f8adb64076ca384:eyJzZWxlY3RlZExpbmVDb3VudCI6NzMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUxOTQ4NGVlZGYzNjRmYjhjMTJmMWViOThmYmY2YTliNGY2NTBmNDI3ODc0YThkNzM1OTAxMGFhZGU0MzFiYzgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjMzZWM3NGE5MjM5ZWVhYzU5ZGQxNDJiYzc0ODQ1YmVhNDkzYzBiYjcxNjJhYmVlNTEzNTM4ZGQ3OGM0NzM2MTAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjUzODYzNTA4ODg5YzU2ZmM1YzA3MDhiMGY1NzZhNDY5MmRmNjRhZGZjNGI5NWJjZDY3YzBiOGYyYWQ0MmU1YTUifQ"
         }
       ]
+    },
+    {
+      "id": "claim_d1117557b3e34b34a8bf5cd9afda4b81",
+      "statement": "テーマ回帰は本番コンポーネント/CSSの隔離Chromiumと、設定の全9配色組合せのファイルsave/load試験を分けて持ち、fixture保存は実API保存ではない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/services/src/services/config/versions/v9.rs#L429-L460",
+          "version": "repo-lines-v1:sha256:0bcb023017225cf31d0f340b015ac75a2a092eb8d61ef58177380548c75e531d:eyJzZWxlY3RlZExpbmVDb3VudCI6MzIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkxY2M0MDY4N2QyNDRlOWRhZjkxY2VkNDY1MjMyNjU2OWE0ZmI2ZGZjODFkMDNmYmU3MjNhNWVhM2NjYmU5ZGYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjMyZGM1M2ZiM2JhMzQ3OTc2ODc4NTE4MjA1OGFlYTRmN2U2ODJiYjVjZmI1ZTNiN2RiOTczZmM3ZjhiOTc3NGQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImU0MjhjYjgxNzU1NDZmMWY3YTg3NzAwZWM0NDViNTU5MGY0NTYyZGE2MmE2Nzg0YTI3MmExOGNmNWU2MzVjMDgifQ"
+        },
+        {
+          "resource": "repo://tests/color-themes/browser.mjs",
+          "version": "repo-file-v1:sha256:351eff08c9d11ba62948f4e0fd8805ea5c70a22061e333975d13caab705792e5"
+        },
+        {
+          "resource": "repo://tests/color-themes/fixture.tsx",
+          "version": "repo-file-v1:sha256:e9a84e1085caf042b8d60fb9fb421980fa40464244fdd1365a208ae6dfc98803"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.9.0",
-    "at": "2026-11-16T15:12:08.330Z"
+    "at": "2026-11-16T18:11:18.484Z"
   }
 }

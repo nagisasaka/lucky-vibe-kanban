@@ -102,6 +102,8 @@ sources:
     resource: repo://packages/local-web/src/app/auth/serverAccess.ts
   - id: openwiki-source-f5c8f8cc45fdf36d98b214ce
     resource: repo://packages/local-web/src/app/entry/Bootstrap.tsx
+  - id: openwiki-source-ddff528856c735c2b2939318
+    resource: repo://packages/local-web/src/app/providers/ThemeProvider.tsx
   - id: openwiki-source-8e332afc7e2a06fab23f3226
     resource: repo://packages/ui/src/components/FileTagTypeaheadPlugin.tsx
   - id: openwiki-source-cbfe71b82135aa5496989f7e
@@ -118,6 +120,8 @@ sources:
     resource: repo://packages/web-core/src/shared/components/TerminalSection.tsx
   - id: openwiki-source-7e0da77c31130e66a4b635a5
     resource: repo://packages/web-core/src/shared/dialogs/command-bar/EditorSelectionDialog.tsx
+  - id: openwiki-source-6d0dfae3c1582e1af83405d4
+    resource: repo://packages/web-core/src/shared/dialogs/settings/settings/GeneralSettingsSection.tsx
   - id: openwiki-source-6ffd002a557f8328086cf8ea
     resource: repo://packages/web-core/src/shared/dialogs/shared/WorkspacesGuideDialog.tsx
   - id: openwiki-source-5d2382a0f231c830f95f103c
@@ -130,10 +134,10 @@ sources:
     resource: repo://packages/web-core/src/shared/providers/TerminalProvider.tsx
   - id: openwiki-source-23775c3de52f3ab95a13cb8b
     resource: repo://README.md
-generated: { by: "codex", at: "2026-11-16T15:12:08.330Z" }
+generated: { by: "codex", at: "2026-11-16T18:11:18.484Z" }
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-16T15:12:08.330Z
+    at: 2026-11-16T18:11:18.484Z
 ---
 
 # クイックスタートと調査案内
@@ -528,3 +532,10 @@ UI/MCPの共通会話、質問ごとの参照版、失敗・取消・削除、RE
 [Issue本文アーカイブ](concepts/formal-integration.md#採用issue本文の任意アーカイブlocal-399)は全体設定 `issue_archive_enabled` が既定OFFの独立機能である。ONで受付した場合だけ、保存済み現在版の原文を検証/Wiki前の専用追加commitへ残す。後日の本文/設定変更やretry補足で置換しない。表示から外すIssue archiveとは異なる。操作順は[統合手順](workflows/task-to-integration.md#issue本文アーカイブを有効にした正式統合local-399)、失敗回復は同契約を読む。
 
 固定base `da8273ef` へ398/399を無競合統合したコード検証SHAは `e7f46db7fe09883223fa562ce3677734618f5e6a`。[管理検証と省略・未実施](operations/development.md#local-398399の統合検証)では正式候補の対象試験/型/対象lint/build/隔離4モード/Clippy/生成型成功、前提不足とlint呼出しの失敗履歴、先行REVIEWと単独source証拠の再利用を区別する。実DB移行・設定変更・稼働再起動・実モデル/認証UI E2Eは未実施で、396は含まない。Wikiは事前prepare済みの同候補で別commitにし、Wiki完了・公開要求・Run終了後のhostのローカルmain適用は独立して確認する。GitHub push・リリース・配備は行わない。
+
+
+## LOCAL-382：保存後に反映するカラーテーマ
+
+設定の外観ではSystem/Light/Darkを維持し、明側Standard/Paper/Linenと暗側Standard/Navy/Indigoを独立に選ぶ。インスタンス共通で保存成功後に反映し、SystemはOS明暗へ追従する。[保存・互換・CSSの契約](architecture/web-and-sync.md#保存後に適用するm2カラーテーマlocal-382)
+
+コード検証SHA `2f6fe0b5e72127cefcb5609ea73e110bc013a0fe` でテーマ36試験・設定12試験・隔離Chromiumが成功した。[検証と省略、DB Manifest・Issueアーカイブの個別証拠](operations/development.md#local-382のテーマ統合と証拠)を参照する。実設定API一体E2Eと認証済み全画面は未検証。Wikiはコード検証後に同じ候補で別commitにし、mainの実Git適用は公開要求後にhostが確認する。
