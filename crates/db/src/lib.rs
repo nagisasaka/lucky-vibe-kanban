@@ -9,6 +9,7 @@ use utils::assets::asset_dir;
 
 mod migration_compat;
 pub mod models;
+pub mod project_transfer;
 
 /// Long enough to absorb ordinary short writer overlap without making a UI
 /// command appear hung. Semantic compaction and batch transactions remain the
