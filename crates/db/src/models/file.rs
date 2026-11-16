@@ -159,7 +159,7 @@ impl File {
 
     pub async fn find_orphaned_files(pool: &SqlitePool) -> Result<Vec<Self>, sqlx::Error> {
         sqlx::query_as::<_, File>(&format!(
-            "SELECT attachments.* FROM attachments LEFT JOIN workspace_attachments wa ON attachments.id=wa.attachment_id WHERE wa.workspace_id IS NULL AND NOT EXISTS (SELECT 1 FROM project_attachments pa WHERE pa.attachment_id=attachments.id) AND {NO_PET_ATTACHMENT_REFERENCE}"
+            "SELECT attachments.* FROM attachments LEFT JOIN workspace_attachments wa ON attachments.id=wa.attachment_id WHERE wa.workspace_id IS NULL AND NOT EXISTS (SELECT 1 FROM project_attachments pa WHERE pa.attachment_id=attachments.id) AND NOT EXISTS (SELECT 1 FROM issue_attachments ia WHERE ia.attachment_id=attachments.id) AND {NO_PET_ATTACHMENT_REFERENCE}"
         ))
         .fetch_all(pool)
         .await
@@ -181,7 +181,21 @@ impl WorkspaceAttachment {
         workspace_id: Uuid,
         attachment_ids: &[Uuid],
     ) -> Result<(), sqlx::Error> {
+        if attachment_ids.is_empty() {
+            return Ok(());
+        }
+        // Serialize admission and association with ownership changes.
+        let mut tx = pool.begin_with("BEGIN IMMEDIATE").await?;
         for &attachment_id in attachment_ids {
+            // New Issue-only files have no legacy Workspace placement contract.
+            // Do not allow arbitrary UUID association to bypass their Issue scope.
+            let issue_only: bool = sqlx::query_scalar(&format!("SELECT EXISTS(SELECT 1 FROM attachments WHERE id=?1 AND EXISTS(SELECT 1 FROM issue_attachments WHERE attachment_id=?1) AND NOT EXISTS(SELECT 1 FROM workspace_attachments WHERE attachment_id=?1) AND NOT EXISTS(SELECT 1 FROM project_attachments WHERE attachment_id=?1) AND {NO_PET_ATTACHMENT_REFERENCE})"))
+                .bind(attachment_id).fetch_one(&mut *tx).await?;
+            if issue_only {
+                return Err(sqlx::Error::Protocol(
+                    "Issue attachment requires explicit Issue placement".into(),
+                ));
+            }
             let id = Uuid::new_v4();
             sqlx::query!(
                 r#"INSERT INTO workspace_attachments (id, workspace_id, attachment_id)
@@ -193,9 +207,10 @@ impl WorkspaceAttachment {
                 workspace_id,
                 attachment_id
             )
-            .execute(pool)
+            .execute(&mut *tx)
             .await?;
         }
+        tx.commit().await?;
         Ok(())
     }
 }

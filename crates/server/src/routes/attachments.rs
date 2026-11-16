@@ -137,11 +137,25 @@ pub async fn serve_file(
     Path(file_id): Path<Uuid>,
     State(deployment): State<DeploymentImpl>,
 ) -> Result<Response, ApiError> {
+    let issue_only: bool = sqlx::query_scalar(&format!("SELECT EXISTS(SELECT 1 FROM attachments WHERE id=?1 AND EXISTS(SELECT 1 FROM issue_attachments WHERE attachment_id=?1) AND NOT EXISTS(SELECT 1 FROM workspace_attachments WHERE attachment_id=?1) AND NOT EXISTS(SELECT 1 FROM project_attachments WHERE attachment_id=?1) AND {})", db::models::file::NO_PET_ATTACHMENT_REFERENCE))
+        .bind(file_id).fetch_one(&deployment.db().pool).await?;
+    if issue_only {
+        return Err(ApiError::File(FileError::NotFound));
+    }
     let file_service = deployment.file();
     let file_record = file_service
         .get_file(file_id)
         .await?
         .ok_or_else(|| ApiError::File(FileError::NotFound))?;
+    serve_file_record(&deployment, file_record, "public, max-age=31536000").await
+}
+
+pub(crate) async fn serve_file_record(
+    deployment: &DeploymentImpl,
+    file_record: File,
+    cache_control: &str,
+) -> Result<Response, ApiError> {
+    let file_service = deployment.file();
     let file_path = file_service.get_absolute_path(&file_record);
 
     let file = TokioFile::open(&file_path).await?;
@@ -161,7 +175,7 @@ pub async fn serve_file(
         .status(StatusCode::OK)
         .header(header::CONTENT_TYPE, content_type)
         .header(header::CONTENT_LENGTH, metadata.len())
-        .header(header::CACHE_CONTROL, "public, max-age=31536000")
+        .header(header::CACHE_CONTROL, cache_control)
         .header(header::X_CONTENT_TYPE_OPTIONS, "nosniff");
     if let Some(content_disposition) = content_disposition {
         response = response.header(header::CONTENT_DISPOSITION, content_disposition);
@@ -177,6 +191,16 @@ pub async fn delete_file(
     Path(file_id): Path<Uuid>,
     State(deployment): State<DeploymentImpl>,
 ) -> Result<ResponseJson<ApiResponse<()>>, ApiError> {
+    let issue_reference: bool =
+        sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM issue_attachments WHERE attachment_id=?)")
+            .bind(file_id)
+            .fetch_one(&deployment.db().pool)
+            .await?;
+    if issue_reference {
+        return Err(ApiError::BadRequest(
+            "Issue attachment cannot be deleted here".into(),
+        ));
+    }
     let file_service = deployment.file();
     file_service.delete_file(file_id).await?;
     Ok(ResponseJson(ApiResponse::success(())))

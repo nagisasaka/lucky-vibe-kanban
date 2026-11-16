@@ -247,6 +247,14 @@ async fn isolated_attachment_remote_stdio_e2e() -> anyhow::Result<()> {
     }
     let repo = db::models::repo::Repo::find_or_create(&remote.pool, &repo_root, "material-fixture")
         .await?;
+    // Native start admission uses the Project creation preset, not merely an
+    // existing Workspace's repository association.
+    sqlx::query("INSERT INTO project_repos(id,project_id,repo_id) VALUES(?,?,?)")
+        .bind(Uuid::new_v4())
+        .bind(target.project_id)
+        .bind(repo.id)
+        .execute(&remote.pool)
+        .await?;
     db::models::workspace_repo::WorkspaceRepo::create_many(
         &remote.pool,
         target.workspace_id,
@@ -407,7 +415,7 @@ async fn isolated_attachment_remote_stdio_e2e() -> anyhow::Result<()> {
         let ws=db::models::workspace::Workspace::find_by_id(&remote.pool,first_workspace).await?.unwrap();
         let sess=db::models::session::Session::find_by_id(&remote.pool,first_session).await?.unwrap();
         let base=crate::routes::workspaces::attachments::resolve_session_base_path(&deployment,&ws,first_session).await?;
-        ensure!(sess.agent_working_dir.is_some());ensure!(std::fs::read(base.join(path))?==svg);ensure!(std::fs::read(base.join(binary_path))?==png);
+        ensure!(sess.agent_working_dir.is_none());ensure!(std::fs::read(base.join(path))?==svg);ensure!(std::fs::read(base.join(binary_path))?==png);
         let mut mismatch=place.clone();mismatch["request_id"]=json!(Uuid::new_v4());mismatch["session_id"]=json!(first_session);
         ensure!(http.value("place_attachments",mismatch).await["status"]=="failed");
         sqlx::query("UPDATE agent_runs SET status='succeeded' WHERE id=?").bind(first_run).execute(&remote.pool).await?;

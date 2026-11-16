@@ -775,6 +775,15 @@
       "created": "作成日時",
       "updated": "更新日時"
     },
+    "attachments": {
+      "title": "添付ファイル",
+      "add": "ファイルを追加",
+      "empty": "添付ファイルはありません",
+      "loadFailed": "添付ファイルを読み込めませんでした。",
+      "uploadFailed": "アップロードを確認できませんでした。ファイル名・サイズ・形式・アクセス権を確認し、一覧を更新してください。",
+      "downloadFailed": "添付ファイルを取得できませんでした。",
+      "retry": "更新"
+    },
     "attachmentUploading": "アップロード中",
     "selectStatus": "ステータスを選択",
     "previewWorkspacesSidebar": "ワークスペースサイドバーをプレビュー",

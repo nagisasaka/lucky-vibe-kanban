@@ -19,6 +19,7 @@ import WYSIWYGEditor from '@/shared/components/WYSIWYGEditor';
 import { IssueVersionEditor } from './IssueVersionEditor';
 import { SearchableTagDropdownContainer } from '@/shared/components/SearchableTagDropdownContainer';
 import { ProjectWorkspaceDefaultContext } from '@/shared/components/ProjectWorkspaceDefaultContext';
+import { IssueAttachmentsSection } from './IssueAttachmentsSection';
 import { IssueCommentsSectionContainer } from './IssueCommentsSectionContainer';
 import { IssueSubIssuesSectionContainer } from './IssueSubIssuesSectionContainer';
 import { IssueRelationshipsSectionContainer } from './IssueRelationshipsSectionContainer';
@@ -891,6 +892,13 @@ export function KanbanIssuePanelContainer({
       )}
       renderSubIssuesSection={(issueId) => (
         <IssueSubIssuesSectionContainer issueId={issueId} />
+      )}
+      renderAttachmentsSection={(issueId) => (
+        <IssueAttachmentsSection
+          key={`${projectId}:${issueId}`}
+          projectId={projectId}
+          issueId={issueId}
+        />
       )}
       renderCommentsSection={(issueId) => (
         <IssueCommentsSectionContainer issueId={issueId} />

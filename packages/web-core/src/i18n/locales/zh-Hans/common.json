@@ -1094,6 +1094,15 @@
     "noCommands": "此代理没有可用的命令。"
   },
   "kanban": {
+    "attachments": {
+      "title": "附件",
+      "add": "添加文件",
+      "empty": "暂无附件",
+      "loadFailed": "无法加载附件。",
+      "uploadFailed": "无法确认上传。请检查文件名、大小、格式和访问权限，然后刷新列表。",
+      "downloadFailed": "无法下载附件。",
+      "retry": "刷新"
+    },
     "noVisibleStatuses": "所有状态已隐藏。请使用显示设置或切换到其他标签页查看问题。",
     "noProjectFound": "未找到项目",
     "unassigned": "未分配",

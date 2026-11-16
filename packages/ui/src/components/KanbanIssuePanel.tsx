@@ -159,6 +159,7 @@ export interface KanbanIssuePanelProps {
   renderWorkspacesSection?: (issueId: string) => ReactNode;
   renderRelationshipsSection?: (issueId: string) => ReactNode;
   renderSubIssuesSection?: (issueId: string) => ReactNode;
+  renderAttachmentsSection?: (issueId: string) => ReactNode;
   renderCommentsSection?: (issueId: string) => ReactNode;
 }
 
@@ -202,6 +203,7 @@ export function KanbanIssuePanel({
   renderWorkspacesSection,
   renderRelationshipsSection,
   renderSubIssuesSection,
+  renderAttachmentsSection,
   renderCommentsSection,
 }: KanbanIssuePanelProps) {
   const { t } = useTranslation('common');
@@ -576,6 +578,10 @@ export function KanbanIssuePanel({
           {/* Sub-Issues Section (Edit mode only) */}
           {!isCreateMode && issueId && renderSubIssuesSection && (
             <div className="border-t">{renderSubIssuesSection(issueId)}</div>
+          )}
+
+          {!isCreateMode && issueId && renderAttachmentsSection && (
+            <div className="border-t">{renderAttachmentsSection(issueId)}</div>
           )}
 
           {/* Comments Section (Edit mode only) */}
