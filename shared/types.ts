@@ -710,6 +710,20 @@ export type OrganizationMemberWithProfile = { user_id: string, role: MemberRole,
 
 export type ListMembersResponse = { members: Array<OrganizationMemberWithProfile>, };
 
+export type PushObservation = { remote: string, remote_url: string, branch: string, source_sha: string, destination_branch: string, remote_sha: string | null, unpublished_commits: number, issue_archive_paths: Array<string>, };
+
+export type RepositoryPushSelection = { project_id: string, remote: string, branch: string, };
+
+export type RepositoryPushPreview = { repository_id: string, repository_name: string, project_id: string, remote: string, remote_url: string, branch: string, source_sha: string, destination_branch: string, remote_sha: string | null, unpublished_commits: number, issue_archive_paths: Array<string>, };
+
+export type RepositoryPushRequest = { request_id: string, preview: RepositoryPushPreview, };
+
+export type RepositoryPushResult = { outcome: string, };
+
+export type RepositoryPushReceipt = { request_id: string, status: string, result: RepositoryPushResult | null, preview: RepositoryPushPreview, };
+
+export type RepositoryPushVerification = { receipt: RepositoryPushReceipt, remote_sha: string | null, source_present: boolean | null, verification_error: string | null, };
+
 export type GithubCredentialStatus = { repository: string, configured: boolean, };
 
 export type SaveGithubCredential = { repository: string, token: string, };

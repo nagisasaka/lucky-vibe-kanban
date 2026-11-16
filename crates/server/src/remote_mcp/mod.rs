@@ -46,6 +46,7 @@ mod project_read;
 mod provider_usage;
 mod questions;
 mod read;
+mod repository_push;
 mod repository_read;
 mod repository_wiki;
 mod resource_observation;
@@ -260,6 +261,7 @@ fn operation_scope(name: &str) -> Option<&'static str> {
         | "ask_help"
         | "cancel_help_conversation"
         | "delete_help_conversation" => Some("lvk:write"),
+        "preview_repository_push" | "push_repository_branch" => Some("lvk:write"),
         "start_integration" | "cancel_integration" => Some("lvk:merge"),
         "change_runtime_path"
         | "edit_issue_comment"
@@ -473,6 +475,7 @@ fn tools() -> Vec<Tool> {
     tools.extend(evidence_read::tools());
     tools.extend(code_read::tools());
     tools.extend(repository_read::tools());
+    tools.extend(repository_push::tools());
     tools.extend(help::tools());
     tools.extend(issue_write::tools());
     tools.extend(issue_versions::tools());
@@ -604,6 +607,7 @@ impl Remote {
             }
             "get_resource_observation" => resource_observation::call(args).await,
             "query_repository" => repository_read::call(self, args).await,
+            "preview_repository_push" | "push_repository_branch" | "verify_repository_push" => repository_push::call(self, principal, context.extensions.get::<http::request::Parts>().and_then(|parts| parts.extensions.get::<server_access::Lease>()).cloned(), request.name.as_ref(), args).await,
             "ask_help" | "get_help_conversation" | "cancel_help_conversation" | "delete_help_conversation" => help::call(self, request.name.as_ref(), args).await,
             "list_run_events" => run_events::call(self, args).await,
             "get_connection" if args.as_object().is_some_and(|args| args.is_empty()) => {
