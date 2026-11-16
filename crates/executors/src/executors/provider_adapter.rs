@@ -283,7 +283,7 @@ impl DirectProvider {
                 runtime: None,
                 protocol: Some("rust-v0.144.1"),
                 adapter: "codex-adapter-v1",
-                mapper: "codex-mapper-v8",
+                mapper: "codex-mapper-v9",
             },
             Self::ClaudeCode => DirectAdapterVersions {
                 executable: "claude",
@@ -402,9 +402,19 @@ impl DirectProvider {
         DirectProviderMapper {
             provider: self,
             semantics: match self {
-                Self::Codex => MapperSemantics::V8,
+                Self::Codex => MapperSemantics::V9,
                 Self::ClaudeCode => MapperSemantics::V6,
             },
+            scope: Default::default(),
+            replay_sequence: Default::default(),
+        }
+    }
+
+    /// Preserve notification/error semantics for existing Native Audit bundles.
+    pub fn v8_mapper(self) -> DirectProviderMapper {
+        DirectProviderMapper {
+            provider: self,
+            semantics: MapperSemantics::V8,
             scope: Default::default(),
             replay_sequence: Default::default(),
         }
@@ -821,6 +831,7 @@ enum MapperSemantics {
     V6,
     V7,
     V8,
+    V9,
 }
 
 impl NativeAuditReplayMapper for DirectProviderMapper {
@@ -835,6 +846,7 @@ impl NativeAuditReplayMapper for DirectProviderMapper {
             MapperSemantics::V6 => "v6",
             MapperSemantics::V7 => "v7",
             MapperSemantics::V8 => "v8",
+            MapperSemantics::V9 => "v9",
         };
         if let Some((prefix, _)) = versions.mapper_version.rsplit_once('-') {
             versions.mapper_version = format!("{prefix}-{suffix}");
@@ -863,6 +875,8 @@ impl NativeAuditReplayMapper for DirectProviderMapper {
                 }
                 _ => classify_payload_legacy(self.provider, event)?,
             }
+        } else if matches!(self.semantics, MapperSemantics::V9) {
+            classify_payload(self.provider, event)?
         } else {
             classify_payload_legacy(self.provider, event)?
         };
@@ -880,7 +894,8 @@ impl NativeAuditReplayMapper for DirectProviderMapper {
             | MapperSemantics::V5
             | MapperSemantics::V6
             | MapperSemantics::V7
-            | MapperSemantics::V8 => {
+            | MapperSemantics::V8
+            | MapperSemantics::V9 => {
                 let mut scope = self.scope.lock().expect("replay scope lock");
                 if event.sequence == 1 {
                     *scope = Default::default();
@@ -892,6 +907,7 @@ impl NativeAuditReplayMapper for DirectProviderMapper {
                             | MapperSemantics::V6
                             | MapperSemantics::V7
                             | MapperSemantics::V8
+                            | MapperSemantics::V9
                     ) {
                         scope.apply(&mut decoded);
                     } else {
@@ -908,6 +924,7 @@ impl NativeAuditReplayMapper for DirectProviderMapper {
                             | MapperSemantics::V6
                             | MapperSemantics::V7
                             | MapperSemantics::V8
+                            | MapperSemantics::V9
                     )
                 {
                     // Non-Codex v3 and Codex v4 frames can expand into several semantic
@@ -1120,6 +1137,11 @@ fn classify_payload(
     provider: DirectProvider,
     event: &ProviderEvent,
 ) -> Result<TypedProviderEvent, NativeAuditError> {
+    if provider == DirectProvider::Codex
+        && let Some(typed) = classify_codex_error(event)
+    {
+        return Ok(typed);
+    }
     let typed = classify_payload_v5(provider, event)?;
     if provider == DirectProvider::ClaudeCode
         && matches!(
@@ -1151,6 +1173,80 @@ fn classify_payload(
         });
     }
     Ok(typed)
+}
+
+/// Closed vocabulary shared by persistence and the public diagnostic projection.
+/// Never return an unknown provider value, message, URL or additionalDetails.
+pub fn safe_codex_error_code(value: &str) -> Option<&'static str> {
+    match value {
+        "responseStreamDisconnected" => Some("responseStreamDisconnected"),
+        "responseStreamConnectionFailed" => Some("responseStreamConnectionFailed"),
+        "responseTooManyFailedAttempts" => Some("responseTooManyFailedAttempts"),
+        "contextWindowExceeded" => Some("contextWindowExceeded"),
+        "usageLimitExceeded" => Some("usageLimitExceeded"),
+        "httpConnectionFailed" => Some("httpConnectionFailed"),
+        "internalServerError" => Some("internalServerError"),
+        "serverOverloaded" => Some("serverOverloaded"),
+        "badRequest" => Some("badRequest"),
+        _ => None,
+    }
+}
+
+fn classify_codex_error(event: &ProviderEvent) -> Option<TypedProviderEvent> {
+    let raw = event.payload_json.as_ref()?;
+    let params = raw.get("params")?;
+    let method = raw.get("method")?.as_str()?;
+    let (native, will_retry) = match method {
+        "error" => (
+            params.get("error")?,
+            params.get("willRetry").and_then(Value::as_bool),
+        ),
+        "turn/completed" if params.pointer("/turn/status")?.as_str()? == "failed" => (
+            params.pointer("/turn/error").unwrap_or(&Value::Null),
+            Some(false),
+        ),
+        _ => return None,
+    };
+    let info = native.get("codexErrorInfo");
+    let code = info
+        .and_then(|info| {
+            info.as_str().or_else(|| {
+                let object = info.as_object()?;
+                (object.len() == 1).then(|| object.keys().next().unwrap().as_str())
+            })
+        })
+        .and_then(safe_codex_error_code);
+    let message = code.map_or_else(
+        || "provider error".to_owned(),
+        |code| format!("Codex {code}"),
+    );
+    if will_retry == Some(true) {
+        // Recoverable provider retries are progress, not terminal errors. The
+        // provider owns retry policy; a later turn/completed owns the outcome.
+        return Some(TypedProviderEvent::Message {
+            provider_message_id: Some(format!("codex-retry:{}", event.sequence)),
+            role: AgentRuntimeMessageRole::System,
+            content: format!("{message}; retrying"),
+            final_output: false,
+        });
+    }
+    let mut error = AgentRuntimeError::new(
+        match code {
+            Some(
+                "responseStreamDisconnected"
+                | "responseStreamConnectionFailed"
+                | "responseTooManyFailedAttempts"
+                | "httpConnectionFailed",
+            ) => AgentRuntimeErrorKind::ProtocolFailed,
+            _ => AgentRuntimeErrorKind::Unknown,
+        },
+        message,
+    )
+    .with_provider(Some("codex"));
+    error.provider_code = code.map(str::to_owned);
+    error.will_retry = will_retry;
+    // Native terminal control remains owned by the existing process host.
+    Some(TypedProviderEvent::Error(error))
 }
 
 fn classify_payload_v5(
@@ -2112,7 +2208,7 @@ fn project_typed_event(
     // Delivery was introduced independently of message phase. Only explicit
     // async delivery is an async inbox question; phase alone cannot supply it.
     if provider == DirectProvider::Codex
-        && manifest.mapper_version.ends_with("-v8")
+        && (manifest.mapper_version.ends_with("-v8") || manifest.mapper_version.ends_with("-v9"))
         && let Some(raw) = &event.raw.payload_json
     {
         if matches!(
@@ -2419,7 +2515,8 @@ fn project_typed_event(
             summary_index: if provider == DirectProvider::Codex
                 && (manifest.mapper_version.ends_with("-v6")
                     || (manifest.mapper_version.ends_with("-v7")
-                        || manifest.mapper_version.ends_with("-v8")))
+                        || (manifest.mapper_version.ends_with("-v8")
+                            || manifest.mapper_version.ends_with("-v9"))))
             {
                 event
                     .raw
@@ -2481,7 +2578,9 @@ fn project_typed_event(
     // A turn plan is a structured snapshot, not a reasoning summary or plan-mode text.
     // Keep old audit replay unchanged and preserve only fields actually supplied.
     let plan_update = if provider == DirectProvider::Codex
-        && (manifest.mapper_version.ends_with("-v7") || manifest.mapper_version.ends_with("-v8"))
+        && (manifest.mapper_version.ends_with("-v7")
+            || (manifest.mapper_version.ends_with("-v8")
+                || manifest.mapper_version.ends_with("-v9")))
         && matches!(&event.typed, TypedProviderEvent::Unknown { .. })
     {
         event.raw.payload_json.as_ref().and_then(|raw| {
@@ -2596,7 +2695,8 @@ fn project_typed_event(
             status: if provider == DirectProvider::Codex
                 && (manifest.mapper_version.ends_with("-v6")
                     || (manifest.mapper_version.ends_with("-v7")
-                        || manifest.mapper_version.ends_with("-v8")))
+                        || (manifest.mapper_version.ends_with("-v8")
+                            || manifest.mapper_version.ends_with("-v9"))))
             {
                 let item = event
                     .raw
@@ -2654,7 +2754,9 @@ fn project_typed_event(
         TypedProviderEvent::InputRequested { id, prompt } => AgentEventPayload::InputRequested {
             input_id: id.clone(),
             prompt: prompt.clone(),
-            provider_metadata: if manifest.mapper_version.ends_with("-v8") {
+            provider_metadata: if manifest.mapper_version.ends_with("-v8")
+                || manifest.mapper_version.ends_with("-v9")
+            {
                 event
                     .raw
                     .payload_json
@@ -2688,7 +2790,8 @@ fn project_typed_event(
     if provider == DirectProvider::Codex
         && (manifest.mapper_version.ends_with("-v6")
             || (manifest.mapper_version.ends_with("-v7")
-                || manifest.mapper_version.ends_with("-v8")))
+                || (manifest.mapper_version.ends_with("-v8")
+                    || manifest.mapper_version.ends_with("-v9"))))
         && let AgentEventPayload::Thinking { content } = &payload
         && let Some(item) = event
             .raw
@@ -3145,6 +3248,159 @@ mod tests {
         executors::BaseCodingAgent,
         runtime::{NativeAuditChannel, PROVIDER_SESSION_REFERENCE_SCHEMA_VERSION},
     };
+
+    #[test]
+    fn codex_nested_errors_are_safe_and_v8_replay_is_unchanged() {
+        let provider = DirectProvider::Codex;
+        for info in [
+            json!({"responseStreamDisconnected":{"httpStatusCode":401,"details":"secret-fixture"}}),
+            json!("responseStreamDisconnected"),
+            json!("secret-fixture"),
+            json!({"secret-fixture":{}}),
+            json!({"responseStreamDisconnected":{},"secret-fixture":{}}),
+            Value::Null,
+        ] {
+            let raw = frame(
+                provider,
+                json!({"method":"error","params":{"error":{"message":"secret-fixture","additionalDetails":"secret-fixture","codexErrorInfo":info},"willRetry":false}}),
+            );
+            let decoded = provider.decode_native_frame(&raw).unwrap();
+            let projected = provider
+                .map_provider_event(&decoded, &fixture_manifest(provider))
+                .unwrap();
+            assert!(
+                !serde_json::to_string(&projected)
+                    .unwrap()
+                    .contains("secret-fixture")
+            );
+            let TypedProviderEvent::Error(error) = decoded.typed else {
+                panic!("error missing")
+            };
+            assert_eq!(error.will_retry, Some(false));
+            let known = info == json!("responseStreamDisconnected")
+                || info.get("responseStreamDisconnected").is_some()
+                    && info.as_object().unwrap().len() == 1;
+            assert_eq!(
+                error.provider_code.as_deref(),
+                known.then_some("responseStreamDisconnected")
+            );
+            assert_eq!(
+                error.message,
+                if known {
+                    "Codex responseStreamDisconnected"
+                } else {
+                    "provider error"
+                }
+            );
+            let mapper = provider.v8_mapper();
+            let mut manifest = fixture_manifest(provider);
+            manifest.mapper_version = mapper.versions().mapper_version;
+            let old = mapper.map(&decoded.raw, &manifest).unwrap();
+            assert!(
+                matches!(&old[0].payload,AgentEventPayload::Error{error} if error.message=="provider error" && error.provider_code.is_none() && error.will_retry.is_none())
+            );
+        }
+        // Old stored errors still deserialize without the added optional metadata.
+        let old: AgentRuntimeError =
+            serde_json::from_value(json!({"kind":"unknown","message":"legacy"})).unwrap();
+        assert!(old.provider_code.is_none() && old.will_retry.is_none());
+    }
+
+    #[test]
+    fn codex_retry_progress_can_recover_and_only_failed_turn_terminates() {
+        use crate::runtime::{
+            ProjectionStatus, RUN_STATE_REDUCER_VERSION, RUN_STATE_SCHEMA_VERSION, RunState,
+            reduce_agent_event,
+        };
+        let provider = DirectProvider::Codex;
+        for failed in [false, true] {
+            let manifest = fixture_manifest(provider);
+            let mapper = provider.mapper();
+            let mut state = RunState {
+                state_schema_version: RUN_STATE_SCHEMA_VERSION,
+                reducer_version: RUN_STATE_REDUCER_VERSION,
+                session_id: manifest.session_id,
+                agent_run_id: manifest.agent_run_id,
+                turn_id: manifest.turn_id,
+                status: AgentRunStatus::Running,
+                projection_status: ProjectionStatus::Current,
+                last_run_attempt_id: None,
+                last_run_attempt_number: 0,
+                last_event_sequence: 0,
+                last_event_id: None,
+                provider_session: None,
+                terminal_output: None,
+                last_error: None,
+                goal: None,
+                unknown_event_count: 0,
+                updated_at: manifest.created_at,
+            };
+            let mut frames = vec![
+                json!({"result":{"thread":{"id":"root"}}}),
+                json!({"method":"error","params":{"threadId":"root","error":{"message":"secret-fixture","codexErrorInfo":{"responseStreamDisconnected":{}}},"willRetry":true}}),
+                json!({"method":"error","params":{"threadId":"root","error":{"message":"secret-fixture","codexErrorInfo":"unknown-secret-fixture"},"willRetry":true}}),
+                json!({"method":"turn/completed","params":{"threadId":"child","turn":{"id":"child-turn","status":"failed","error":{"codexErrorInfo":"responseStreamDisconnected"}}}}),
+            ];
+            if !failed {
+                frames.push(json!({"method":"item/completed","params":{"threadId":"root","turnId":"turn","item":{"type":"agentMessage","id":"report","phase":"final_answer","text":"recovered report"}}}));
+            }
+            frames.push(json!({"method":"turn/completed","params":{"threadId":"root","turn":{"id":"turn","status":if failed {"failed"} else {"completed"},"error":if failed {json!({"message":"secret-fixture","codexErrorInfo":{"responseStreamDisconnected":{}}})} else {Value::Null}}}}));
+            let frame_count = frames.len();
+            for (index, payload) in frames.into_iter().enumerate() {
+                let raw = mapper
+                    .decode(&frame_at(provider, index as u64 + 1, payload))
+                    .unwrap();
+                let events = mapper.map(&raw, &manifest).unwrap();
+                assert!(
+                    !serde_json::to_string(&events)
+                        .unwrap()
+                        .contains("secret-fixture")
+                );
+                for event in events {
+                    reduce_agent_event(&mut state, &event).unwrap();
+                }
+                // Recoverable retries and child failures do not terminate the
+                // parent. Terminal lifecycle stays with the existing host.
+                assert_eq!(state.status, AgentRunStatus::Running);
+                if index + 1 < frame_count || !failed {
+                    assert!(state.last_error.is_none());
+                }
+            }
+            let status = if failed {
+                AgentRunStatus::Failed
+            } else {
+                AgentRunStatus::Succeeded
+            };
+            let mut host = provider
+                .decode_native_frame(&frame_at(
+                    provider,
+                    frame_count as u64 + 1,
+                    json!({"type":"completed"}),
+                ))
+                .unwrap();
+            host.typed = TypedProviderEvent::Lifecycle(status);
+            for mut event in provider.map_provider_event(&host, &manifest).unwrap() {
+                event.sequence = state.last_event_sequence + 1;
+                reduce_agent_event(&mut state, &event).unwrap();
+            }
+            assert_eq!(state.status, status);
+            if failed {
+                let error = state.last_error.unwrap();
+                assert_eq!(
+                    error.provider_code.as_deref(),
+                    Some("responseStreamDisconnected")
+                );
+                assert_eq!(error.will_retry, Some(false));
+            } else {
+                assert!(state.last_error.is_none());
+                assert_eq!(
+                    state.terminal_output.as_ref().unwrap().content,
+                    "recovered report"
+                );
+            }
+            assert_eq!(state.projection_status, ProjectionStatus::Current);
+        }
+    }
 
     fn frame(provider: DirectProvider, payload: Value) -> NativeAuditFrame {
         frame_at(provider, 1, payload)
@@ -4940,13 +5196,20 @@ mod tests {
         for provider in DirectProvider::ALL {
             assert!(provider.mapper().versions().mapper_version.ends_with(
                 if provider == DirectProvider::Codex {
-                    "-v8"
+                    "-v9"
                 } else if provider == DirectProvider::ClaudeCode {
                     "-v6"
                 } else {
                     "-v3"
                 }
             ));
+            assert!(
+                provider
+                    .v8_mapper()
+                    .versions()
+                    .mapper_version
+                    .ends_with("-v8")
+            );
             assert!(
                 provider
                     .v4_mapper()

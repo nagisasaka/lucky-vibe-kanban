@@ -39,6 +39,13 @@ struct FixtureLaunch {
 }
 #[async_trait]
 impl LaunchActions for FixtureLaunch {
+    async fn workflow(&self, args: super::workflow::WorkflowArgs) -> anyhow::Result<Value> {
+        assert!(matches!(args.action, super::workflow::Action::Defaults));
+        Ok(serde_json::to_value(
+            crate::routes::workflow_presets::defaults(&self.pool, args.project_id).await?,
+        )?)
+    }
+
     async fn wiki_status(&self, repository: Uuid) -> anyhow::Result<Value> {
         Ok(
             json!({"repository_id":repository,"status":"stale","current_source_commit":"a".repeat(40)}),
@@ -1043,5 +1050,66 @@ async fn workspace_engine_selection_does_not_silently_accept_claude_modes() {
     assert_eq!(
         dispatch.starts.lock().await[0]["executor_config"]["executor"],
         "CLAUDE_CODE"
+    );
+}
+
+#[tokio::test]
+async fn workflow_defaults_mcp_wraps_the_unchanged_revisioned_service_array() {
+    let (_directory, remote, dispatch, mut principal, target, _, _) = fixture(false).await;
+    principal.scopes = std::collections::BTreeSet::from(["lvk:read".into()]);
+    for saved in [false, true] {
+        if saved {
+            crate::routes::workflow_presets::save_defaults(
+                &remote.pool,
+                target.project_id,
+                workflow::presets::PresetDefaults {
+                    preset: workflow::presets::Preset::InventoryReduce,
+                    additions: "keep public contracts".into(),
+                    revision: 0,
+                },
+            )
+            .await
+            .unwrap();
+        }
+        let service = crate::routes::workflow_presets::defaults(&remote.pool, target.project_id)
+            .await
+            .unwrap();
+        let result = super::workflow::call(
+            &remote,
+            &principal,
+            json!({"project_id":target.project_id,"action":"defaults"}),
+        )
+        .await
+        .unwrap();
+        let mcp = serde_json::to_value(rmcp::model::CallToolResult::structured(result)).unwrap();
+        assert!(mcp["structuredContent"].is_object());
+        assert_eq!(
+            mcp["structuredContent"]["items"],
+            serde_json::to_value(&service).unwrap()
+        );
+        assert_eq!(
+            mcp["structuredContent"]["items"].as_array().unwrap().len(),
+            3
+        );
+        let inventory = service
+            .iter()
+            .find(|v| v.preset == workflow::presets::Preset::InventoryReduce)
+            .unwrap();
+        assert_eq!(inventory.revision, i64::from(saved));
+        let text = mcp["content"][0]["text"].as_str().unwrap();
+        assert_eq!(
+            serde_json::from_str::<Value>(text).unwrap(),
+            mcp["structuredContent"]
+        );
+    }
+    assert!(dispatch.starts.lock().await.is_empty());
+    assert!(
+        super::workflow::call(
+            &remote,
+            &principal,
+            json!({"project_id":Uuid::new_v4(),"action":"defaults"})
+        )
+        .await
+        .is_err()
     );
 }

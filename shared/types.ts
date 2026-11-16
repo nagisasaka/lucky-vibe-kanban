@@ -1474,7 +1474,11 @@ export type ExecutorDiscoveredOptions = { model_selector: ModelSelectorConfig, s
 
 export enum AgentRunLifecycle { starting = "starting", running = "running", waiting_approval = "waiting_approval", waiting_input = "waiting_input", cancelling = "cancelling", completed = "completed", failed = "failed", crashed = "crashed" }
 
-export type AgentRuntimeError = { kind: AgentRuntimeErrorKind, message: string, provider?: string | null, launch_phase?: AgentRuntimeLaunchPhase | null, exit_code?: number | null, };
+export type AgentRuntimeError = { kind: AgentRuntimeErrorKind, message: string, provider?: string | null, launch_phase?: AgentRuntimeLaunchPhase | null, exit_code?: number | null,
+/**
+ * Allowlisted provider classification, never a native message or detail.
+ */
+provider_code?: string | null, will_retry?: boolean | null, };
 
 export enum AgentRuntimeErrorKind { executable_not_found = "executable_not_found", command_build_failed = "command_build_failed", auth_required = "auth_required", startup_failed = "startup_failed", protocol_failed = "protocol_failed", process_crashed = "process_crashed", output_parse_failed = "output_parse_failed", approval_cancelled = "approval_cancelled", approval_timed_out = "approval_timed_out", cancelled = "cancelled", unknown = "unknown" }
 
