@@ -185,7 +185,7 @@ export type MemoryTestResult = "passed" | "failed" | "not-run";
 
 export type ChangeManifest = { version: number, event_id: string, repository_id: string, workspace_id: string, task_id: string | null, created_at: string, base_commit: string, source_commit: string, target_branch: string | null, changed_paths: Array<string>, goal: string, summary: string, behavioral_changes: Array<string>, architectural_changes: Array<string>, invariants_affected: Array<string>, decisions: Array<MemoryDecision>, rejected_alternatives: Array<RejectedAlternative>, unresolved_questions: Array<string>, tests: Array<MemoryTest>, };
 
-export type ManifestReference = { event_id: string, repository_id: string, workspace_id: string, base_commit: string, source_commit: string, target_branch: string | null, created_at: string, path: string, };
+export type ManifestReference = { event_id: string, repository_id: string, workspace_id: string, base_commit: string, source_commit: string, target_branch: string | null, created_at: string, url: string, };
 
 export type ManifestDiscoveryError = { filename: string, error: string, };
 

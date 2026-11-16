@@ -60,6 +60,43 @@ pub(super) async fn idle(deployment: &DeploymentImpl, workspace: Uuid) -> anyhow
     Ok(())
 }
 
+/// Freeze only this Workspace's semantic records already contained in the
+/// selected source commit. Later commits cannot enter a retry's event set.
+pub(super) async fn selected_manifest_ids(
+    store: &RepositoryMemoryStore,
+    git: &git::GitService,
+    repo: &Repo,
+    workspace_id: Uuid,
+    commit: &str,
+) -> Vec<Uuid> {
+    let mut event_ids = Vec::new();
+    let mut after = None;
+    loop {
+        let page = match store.discover_events(repo.id, after.as_deref(), 100).await {
+            Ok(page) => page,
+            Err(error) => {
+                tracing::warn!(%error, "Auto-merge memory discovery unavailable");
+                break;
+            }
+        };
+        for event in page.records {
+            if event.workspace_id == workspace_id
+                && git
+                    .is_ancestor(&repo.path, &event.source_commit, commit)
+                    .unwrap_or(false)
+            {
+                event_ids.push(event.event_id);
+            }
+        }
+        after = page.next_after;
+        if after.is_none() {
+            break;
+        }
+    }
+    event_ids.sort();
+    event_ids
+}
+
 pub(super) async fn source(
     deployment: &DeploymentImpl,
     request: &CreateIntegrationRequest,
@@ -111,30 +148,8 @@ async fn inspect_source(
         )
         .await?
     {
-        let mut after = None;
-        loop {
-            let page = match store.discover_events(repo.id, after.as_deref(), 100) {
-                Ok(page) => page,
-                Err(error) => {
-                    tracing::warn!(%error, "Auto-merge memory discovery unavailable");
-                    break;
-                }
-            };
-            for event in page.records {
-                if event.workspace_id == workspace.id
-                    && deployment
-                        .git()
-                        .is_ancestor(&repo.path, &event.source_commit, &commit)
-                        .unwrap_or(false)
-                {
-                    event_ids.push(event.event_id);
-                }
-            }
-            after = page.next_after;
-            if after.is_none() {
-                break;
-            }
-        }
+        event_ids =
+            selected_manifest_ids(&store, deployment.git(), &repo, workspace.id, &commit).await;
     }
     let mut description: Option<String> = row.try_get("description")?;
     let previous: Option<IntegrationRun> =

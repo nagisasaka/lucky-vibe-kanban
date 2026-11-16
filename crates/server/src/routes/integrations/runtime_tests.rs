@@ -451,3 +451,47 @@ async fn worker_input_uses_frozen_skill_and_keeps_adopted_references_separate() 
         Some("historical: investigation only")
     );
 }
+
+#[tokio::test]
+async fn integration_memory_reads_only_frozen_db_ids_without_legacy_event_files() {
+    use utils::repository_memory::{ChangeManifest, SemanticChanges};
+    let (pool, mut run, _, _) = fixture().await;
+    let temp = tempfile::tempdir().unwrap();
+    let files =
+        utils::repository_memory::RepositoryMemoryStore::at_persistent(temp.path()).unwrap();
+    let store = RepositoryMemoryStore::with_artifacts(&pool, run.repository_id, files);
+    let source = &mut run.payload.sources[0];
+    let event = ChangeManifest {
+        version: 1,
+        event_id: Uuid::new_v4(),
+        repository_id: run.repository_id,
+        workspace_id: source.selection.workspace_id,
+        task_id: None,
+        created_at: chrono::Utc::now(),
+        base_commit: "a".repeat(40),
+        source_commit: source.commit.clone(),
+        target_branch: Some("main".into()),
+        changed_paths: vec!["source.rs".into()],
+        semantics: SemanticChanges {
+            summary: "selected public intent".into(),
+            ..Default::default()
+        },
+    };
+    store.publish_event(&event).await.unwrap();
+    let mut unrelated = event.clone();
+    unrelated.event_id = Uuid::new_v4();
+    unrelated.workspace_id = Uuid::new_v4();
+    store.publish_event(&unrelated).await.unwrap();
+    let missing = Uuid::new_v4();
+    source.event_ids = vec![event.event_id, missing];
+    std::fs::remove_dir_all(temp.path().join("knowledge/events")).unwrap();
+    let material = integration_memory(&run, Some(&store)).await.unwrap();
+    assert_eq!(material[0]["events"].as_array().unwrap().len(), 1);
+    assert_eq!(
+        material[0]["events"][0]["event_id"],
+        event.event_id.to_string()
+    );
+    assert_eq!(material[0]["unavailable_event_ids"][0], missing.to_string());
+    run.payload.sources[0].event_ids = vec![unrelated.event_id];
+    assert!(integration_memory(&run, Some(&store)).await.is_err());
+}

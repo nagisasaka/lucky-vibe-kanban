@@ -889,7 +889,8 @@ pub(super) async fn advance(
             )
             .await?
             .as_ref(),
-        )?;
+        )
+        .await?;
         run.payload.reference_materials = Some(serde_json::json!({
             "auto_merge_skill": include_str!("../../../../../assets/skills/auto-merge/SKILL.md"),
             "public_manifests": memory,

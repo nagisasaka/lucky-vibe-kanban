@@ -196,7 +196,11 @@ async fn complete_coding_run_inner(
     run: &RepositoryMemoryRun,
     include_manifest: bool,
 ) -> anyhow::Result<Option<ChangeManifest>> {
-    if let Some(existing) = store.event(run.run_id)? {
+    if let Some(existing) = store.event(run.run_id).await? {
+        if existing.repository_id != run.repository_id || existing.workspace_id != run.workspace_id
+        {
+            bail!("Final Manifest does not belong to this Run's repository/Workspace");
+        }
         observe_already_integrated_source(store, run, &existing).await?;
         return Ok(Some(existing));
     }
@@ -367,7 +371,7 @@ async fn finish_source_publication(
         }
         event.source_commit = commit;
     }
-    store.publish_event(&event)?;
+    store.publish_event(&event).await?;
     observe_already_integrated_source(store, run, &event).await?;
     Ok(event)
 }
@@ -420,10 +424,10 @@ pub async fn observe_external_integration(
         .flat_map(|record| record.event_ids.iter().copied())
         .collect();
     let mut applicable = Vec::new();
-    for event in store
-        .events()?
-        .into_iter()
-        .filter(|event| event.workspace_id == workspace_id && !integrated.contains(&event.event_id))
+    for event in
+        store.events().await?.into_iter().filter(|event| {
+            event.workspace_id == workspace_id && !integrated.contains(&event.event_id)
+        })
     {
         // A remote merge object may not have been fetched yet. No filesystem or
         // remote write is needed; defer its membership proof until it is local.
@@ -580,7 +584,8 @@ pub async fn pending_events(
         .collect();
     let mut pending = Vec::new();
     for event in store
-        .events()?
+        .events()
+        .await?
         .into_iter()
         .filter(|event| integrated.contains(&event.event_id))
     {
@@ -604,7 +609,7 @@ mod tests {
         target_branch: &str,
         before_commit: String,
     ) -> anyhow::Result<MemoryIntegration> {
-        let events = store.events()?;
+        let events = store.events().await?;
         let integrated: HashSet<_> = store
             .integrations()
             .await?
@@ -669,7 +674,7 @@ mod tests {
         let workspace_id = Uuid::new_v4();
         RepositoryMemoryRun {
             run_id,
-            repository_id: Uuid::new_v4(),
+            repository_id: store.repository_id(),
             workspace_id,
             task_id: None,
             created_at: chrono::Utc::now(),
@@ -722,7 +727,7 @@ mod tests {
         );
         a_result.unwrap();
         b_result.unwrap();
-        assert_eq!(store.events().unwrap().len(), 2);
+        assert_eq!(store.events().await.unwrap().len(), 2);
         assert!(pending_events(&store, "main").await.unwrap().is_empty());
         for (run, branch) in [(&a, "a"), (&b, "b")] {
             assert_eq!(
@@ -832,7 +837,7 @@ mod tests {
         {
             result.unwrap();
         }
-        let original_b = store.event(runs[1].1.run_id).unwrap().unwrap();
+        let original_b = store.event(runs[1].1.run_id).await.unwrap().unwrap();
         let mut expected_wiki = "canonical snapshot\n".to_string();
         for (name, context) in runs {
             // B started before A's source and Wiki publication. Rebasing brings
@@ -939,7 +944,7 @@ mod tests {
                 "Keep user instructions.\n"
             );
         }
-        assert_eq!(store.events().unwrap().len(), 2);
+        assert_eq!(store.events().await.unwrap().len(), 2);
     }
 
     #[tokio::test]
@@ -998,7 +1003,10 @@ mod tests {
             if let Some(existing) = existing {
                 assert_eq!(event.source_commit, existing);
             }
-            assert_eq!(store.event(context.run_id).unwrap(), Some(event.clone()));
+            assert_eq!(
+                store.event(context.run_id).await.unwrap(),
+                Some(event.clone())
+            );
             assert_eq!(
                 complete_coding_run(&store, &context, include_manifest)
                     .await
@@ -1030,7 +1038,7 @@ mod tests {
             context.base_commit
         );
         assert!(!git_command(&root, &["status", "--porcelain"]).is_empty());
-        assert!(store.events().unwrap().is_empty());
+        assert!(store.events().await.unwrap().is_empty());
     }
 
     #[tokio::test]
@@ -1121,7 +1129,7 @@ mod tests {
         std::fs::write(root.join("openwiki/index.md"), "unexpected edit").unwrap();
         git_command(&root, &["commit", "-am", "unexpected wiki change"]);
         assert!(complete_coding_run(&store, &context, false).await.is_err());
-        assert!(store.events().unwrap().is_empty());
+        assert!(store.events().await.unwrap().is_empty());
     }
 
     #[tokio::test]
@@ -1214,7 +1222,7 @@ mod tests {
                 .unwrap()
                 .is_none()
         );
-        assert!(store.events().unwrap().is_empty());
+        assert!(store.events().await.unwrap().is_empty());
         assert!(!temp.path().join("knowledge/verification-starts").exists());
         assert!(!temp.path().join("knowledge/verifications").exists());
         assert!(!temp.path().join("knowledge/workspace-memory").exists());
@@ -1280,6 +1288,28 @@ mod tests {
             )
             .unwrap();
         let first_commit = git_command(&root, &["rev-parse", "HEAD"]);
+        // Fail the DB acknowledgement after the Git commit exists. All files
+        // and DB connections below belong exclusively to this temporary fixture.
+        store.state().await.unwrap();
+        let pool = sqlx::SqlitePool::connect_with(
+            sqlx::sqlite::SqliteConnectOptions::new()
+                .filename(temp.path().join("memory-fixture.sqlite")),
+        )
+        .await
+        .unwrap();
+        sqlx::query("CREATE TRIGGER fail_manifest BEFORE INSERT ON repository_change_manifests BEGIN SELECT RAISE(ABORT,'simulated DB save failure'); END")
+            .execute(&pool).await.unwrap();
+        assert!(complete_coding_run(&store, &context, true).await.is_err());
+        assert!(store.event(context.run_id).await.unwrap().is_none());
+        assert_eq!(git_command(&root, &["rev-parse", "HEAD"]), first_commit);
+        sqlx::query("DROP TRIGGER fail_manifest")
+            .execute(&pool)
+            .await
+            .unwrap();
+        pool.close().await;
+        drop(store);
+        let store = RepositoryMemoryStore::at_persistent(temp.path()).unwrap();
+        std::fs::remove_dir_all(temp.path().join("knowledge/events")).unwrap();
         // Server died after Git, before publishing its event. Another task then
         // committed and the mutable draft was overwritten. Recovery must not
         // derive either source or semantics from that new task.
@@ -1301,7 +1331,7 @@ mod tests {
             complete_coding_run(&store, &context, true).await.unwrap(),
             Some(event)
         );
-        assert_eq!(store.events().unwrap().len(), 1);
+        assert_eq!(store.events().await.unwrap().len(), 1);
     }
 
     #[tokio::test]
@@ -1362,7 +1392,10 @@ mod tests {
             assert!(root.join("next.txt").is_file());
             assert!(!git_command(&root, &["status", "--porcelain"]).is_empty());
             assert_eq!(git_command(&root, &["log", "-1", "--format=%B"]), message);
-            assert_eq!(store.event(context.run_id).unwrap(), Some(event.clone()));
+            assert_eq!(
+                store.event(context.run_id).await.unwrap(),
+                Some(event.clone())
+            );
             // Replay after Git/event publication also keeps SHA and message unchanged.
             assert_eq!(
                 complete_coding_run(&store, &context, include_manifest)
@@ -1432,10 +1465,16 @@ mod tests {
         complete_successful_coding_runs(&pool, &store, first.workspace_id, Some(next), false)
             .await
             .unwrap();
-        let first_event = store.event(first.run_id).unwrap().unwrap();
+        let first_event = store.event(first.run_id).await.unwrap().unwrap();
         assert_eq!(first_event.changed_paths, vec!["first.txt"]);
-        assert!(store.event(unrelated_workspace.run_id).unwrap().is_none());
-        assert!(store.event(failed.run_id).unwrap().is_none());
+        assert!(
+            store
+                .event(unrelated_workspace.run_id)
+                .await
+                .unwrap()
+                .is_none()
+        );
+        assert!(store.event(failed.run_id).await.unwrap().is_none());
         assert!(!store.completed_without_change(failed.run_id).unwrap());
         assert!(store.coding_errors().unwrap().is_empty());
 
@@ -1455,7 +1494,7 @@ mod tests {
             .await
             .unwrap();
         assert!(
-            store.event(next).unwrap().is_none(),
+            store.event(next).await.unwrap().is_none(),
             "incoming run must be excluded"
         );
         std::fs::write(
@@ -1473,12 +1512,12 @@ mod tests {
                 .unwrap(),
             Some("feat: second".into())
         );
-        assert_eq!(store.event(first.run_id).unwrap(), Some(first_event));
+        assert_eq!(store.event(first.run_id).await.unwrap(), Some(first_event));
         assert_eq!(
-            store.event(next).unwrap().unwrap().changed_paths,
+            store.event(next).await.unwrap().unwrap().changed_paths,
             vec!["second.txt"]
         );
-        assert_eq!(store.events().unwrap().len(), 2);
+        assert_eq!(store.events().await.unwrap().len(), 2);
         let mut unchanged = run(&store, &root);
         unchanged.workspace_id = first.workspace_id;
         store.save_run(&unchanged).unwrap();
@@ -1592,7 +1631,7 @@ mod tests {
         let mut delayed = first_event.clone();
         delayed.event_id = Uuid::new_v4();
         delayed.created_at = chrono::Utc::now() + chrono::Duration::days(1);
-        store.publish_event(&delayed).unwrap();
+        store.publish_event(&delayed).await.unwrap();
         observe_external_integration(&store, &root, pr, first.workspace_id, "main", &merged)
             .await
             .unwrap();
@@ -1615,7 +1654,7 @@ mod tests {
         let mut unknown = first_event;
         unknown.event_id = Uuid::new_v4();
         unknown.workspace_id = Uuid::new_v4();
-        store.publish_event(&unknown).unwrap();
+        store.publish_event(&unknown).await.unwrap();
         observe_external_integration(
             &store,
             &root,

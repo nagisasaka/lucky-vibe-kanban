@@ -271,6 +271,9 @@ impl DBService {
             .busy_timeout(SQLITE_BUSY_TIMEOUT);
         let pool = SqlitePool::connect_with(options).await?;
         run_migrations(&pool).await?;
+        models::repository_state::import_registered_repositories(&pool)
+            .await
+            .map_err(Error::Io)?;
         Ok(DBService { pool })
     }
 
@@ -339,6 +342,9 @@ impl DBService {
         };
 
         run_migrations(&pool).await?;
+        models::repository_state::import_registered_repositories(&pool)
+            .await
+            .map_err(Error::Io)?;
         Ok(pool)
     }
 }

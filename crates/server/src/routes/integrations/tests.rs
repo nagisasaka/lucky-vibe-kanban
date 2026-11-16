@@ -318,3 +318,68 @@ fn omitted_validation_choice_preserves_default_and_rejects_non_boolean() {
     value["skip_validation"] = serde_json::json!("true");
     assert!(serde_json::from_value::<super::CreateIntegrationRequest>(value).is_err());
 }
+
+#[tokio::test]
+async fn manifest_admission_preserves_workspace_and_ancestry_selection_without_event_files() {
+    use db::models::repository_state::RepositoryMemoryStore;
+    use utils::repository_memory::{ChangeManifest, SemanticChanges};
+    let temp = tempfile::tempdir().unwrap();
+    let root = temp.path().join("repo");
+    std::fs::create_dir(&root).unwrap();
+    let git = |args: &[&str]| super::support::git(&root, args).unwrap();
+    git(&["init", "-b", "main"]);
+    git(&["config", "user.name", "Manifest fixture"]);
+    git(&["config", "user.email", "fixture@example.test"]);
+    git(&["commit", "--allow-empty", "-m", "selected"]);
+    let selected = git(&["rev-parse", "HEAD"]);
+    git(&["commit", "--allow-empty", "-m", "later task"]);
+    let later = git(&["rev-parse", "HEAD"]);
+    let pool = SqlitePool::connect("sqlite::memory:").await.unwrap();
+    db::run_migrations(&pool).await.unwrap();
+    let repo = Repo::find_or_create(&pool, &root, "manifest fixture")
+        .await
+        .unwrap();
+    std::fs::create_dir(temp.path().join("memory")).unwrap();
+    let files =
+        utils::repository_memory::RepositoryMemoryStore::at_persistent(&temp.path().join("memory"))
+            .unwrap();
+    let store = RepositoryMemoryStore::with_artifacts(&pool, repo.id, files);
+    let workspace = Uuid::new_v4();
+    let event = ChangeManifest {
+        version: 1,
+        event_id: Uuid::new_v4(),
+        repository_id: repo.id,
+        workspace_id: workspace,
+        task_id: None,
+        created_at: chrono::Utc::now(),
+        base_commit: selected.clone(),
+        source_commit: selected.clone(),
+        target_branch: Some("main".into()),
+        changed_paths: vec!["source".into()],
+        semantics: SemanticChanges {
+            summary: "selected".into(),
+            ..Default::default()
+        },
+    };
+    store.publish_event(&event).await.unwrap();
+    let mut future = event.clone();
+    future.event_id = Uuid::new_v4();
+    future.source_commit = later;
+    store.publish_event(&future).await.unwrap();
+    let mut peer = event.clone();
+    peer.event_id = Uuid::new_v4();
+    peer.workspace_id = Uuid::new_v4();
+    store.publish_event(&peer).await.unwrap();
+    std::fs::remove_dir_all(temp.path().join("memory/knowledge/events")).unwrap();
+    assert_eq!(
+        admission::selected_manifest_ids(
+            &store,
+            &git::GitService::new(),
+            &repo,
+            workspace,
+            &selected
+        )
+        .await,
+        vec![event.event_id]
+    );
+}

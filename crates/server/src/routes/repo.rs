@@ -103,6 +103,37 @@ pub async fn get_parallel_context(
     Ok(ResponseJson(ApiResponse::success(page)))
 }
 
+/// The same public semantic record selected by parallel discovery; no worktree
+/// file path or private Session data participates in resolving this identity.
+pub async fn get_change_manifest(
+    State(deployment): State<DeploymentImpl>,
+    Path((repo_id, event_id)): Path<(Uuid, Uuid)>,
+) -> Result<
+    (
+        StatusCode,
+        ResponseJson<ApiResponse<utils::repository_memory::ChangeManifest>>,
+    ),
+    ApiError,
+> {
+    deployment
+        .repo()
+        .get_by_id(&deployment.db().pool, repo_id)
+        .await?;
+    let event = db::models::repository_state::RepositoryMemoryStore::read_event(
+        &deployment.db().pool,
+        repo_id,
+        event_id,
+    )
+    .await?;
+    Ok(match event {
+        Some(event) => (StatusCode::OK, ResponseJson(ApiResponse::success(event))),
+        None => (
+            StatusCode::NOT_FOUND,
+            ResponseJson(ApiResponse::error("Change Manifest not found")),
+        ),
+    })
+}
+
 pub async fn get_repo_remotes(
     State(deployment): State<DeploymentImpl>,
     Path(repo_id): Path<Uuid>,
@@ -390,6 +421,10 @@ pub fn router() -> Router<DeploymentImpl> {
         .route(
             "/repos/{repo_id}/parallel-context",
             get(get_parallel_context),
+        )
+        .route(
+            "/repos/{repo_id}/change-manifests/{event_id}",
+            get(get_change_manifest),
         )
         .route(
             "/repos/{repo_id}/snapshot",
