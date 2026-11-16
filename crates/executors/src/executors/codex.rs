@@ -2699,6 +2699,46 @@ mod goal_skill_tests {
 mod integration_worker_tests {
     use super::*;
     #[test]
+    fn approval_overrides_match_for_fresh_normal_and_integration_threads() {
+        for (profile, expected) in [
+            (serde_json::json!({}), Some(V2AskForApproval::OnRequest)),
+            (
+                serde_json::json!({"ask_for_approval":"never"}),
+                Some(V2AskForApproval::Never),
+            ),
+            (
+                serde_json::json!({"ask_for_approval":"on-request"}),
+                Some(V2AskForApproval::OnRequest),
+            ),
+            (serde_json::json!({"sandbox":"workspace-write"}), None),
+            (serde_json::json!({"sandbox":"danger-full-access"}), None),
+            (
+                serde_json::json!({"profile":"native-profile"}),
+                Some(V2AskForApproval::OnRequest),
+            ),
+        ] {
+            let codex: Codex = serde_json::from_value(profile).unwrap();
+            let mut env = ExecutionEnv::new(RepoContext::default());
+            env.insert("VK_AGENT_RUN_ID", "fixture");
+            let normal =
+                codex.build_thread_start_params_with_resources(Path::new("/fixture"), &env);
+            env.insert("LVK_INTEGRATION_WORKER", "1");
+            let worker =
+                codex.build_thread_start_params_with_resources(Path::new("/fixture"), &env);
+            assert_eq!(normal.approval_policy, expected);
+            assert_eq!(worker.approval_policy, expected);
+            let config = worker.config.unwrap();
+            assert!(
+                !config.contains_key("mcp_servers.vibe_kanban.tools.get_context.approval_mode")
+            );
+            assert!(
+                !config
+                    .contains_key("mcp_servers.vibe_kanban.tools.delete_workspace.approval_mode")
+            );
+        }
+    }
+
+    #[test]
     fn worker_stdio_binding_is_thread_scoped_and_retained_on_resume() {
         let codex: Codex = serde_json::from_value(serde_json::json!({
             "profile": "worker-profile"

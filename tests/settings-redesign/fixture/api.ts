@@ -52,6 +52,12 @@ export function installFixtureApi() {
   let loginAuthenticated = params.get("fixtureSignedIn") === "true";
   const nativeFetch = window.fetch.bind(window);
   window.fetch = async (input, init) => {
+    if (
+      params.get("approvalBridge") === "true" &&
+      String(input).startsWith("/api/agent-settings")
+    ) {
+      return nativeFetch(input, init);
+    }
     const url = new URL(
       input instanceof Request ? input.url : String(input),
       location.href,

@@ -9,7 +9,9 @@ use std::{
 pub const PARALLEL_GUIDE: &str = "Use CURRENT discovery_url for public repository activity. Follow next_workspace as after_workspace and manifests.next_after as after_manifest only for needed ranges; errors are not zero activity. Read pinned source at /api/repos/{repository_id}/snapshot?commit=<full-oid>&path=<url-encoded-path>; omit path to enumerate, follow next_after as after_path. Manifest references use url; GET that repository-scoped /api/repos/{repository_id}/change-manifests/{event_id} URL to read the DB record (with the same authentication). Do not treat it as a filesystem path. For a test-only combination POST /api/workspaces/{workspace_id}/integration/preview with repository_id, base_commit (clean full HEAD), peers [{workspace_id,commit}]. Only combine in its returned detached trial path. Preview is not formal publication or Auto-merge.";
 
 pub fn resource_guide() -> String {
-    let token = crate::assets::asset_dir().join("access-internal.token");
+    let token = crate::assets::asset_dir_path()
+        .expect("LVK_INSTANCE_DIR must identify an existing isolated instance")
+        .join("access-internal.token");
     format!(
         "Prefer stdio MCP resource and execution-bridge tools, whose contracts and schemas describe atomic claims, waiting, recovery and Runner finish. For raw loopback HTTP only, read {} and send X-LVK-Internal-Token in memory; never print it, put it in URLs/command arguments, send it to other hosts or follow redirects. This capability cannot manage server authentication. Resource API: /api/resource-coordination (snapshot, operations, operations/{{id}}?wait_seconds=25, operations/{{id}}/events and operations/{{id}}/cancel). Runner API: /api/execution-bridge/runners, /sources and /operations/{{id}}/commands. Capture an immutable source with session_id and repository working_dir; select runner_id explicitly and claim its execution slot and every device in the same bundle. Runner working_dir is snapshot-relative; Windows uses PowerShell. Interactive commands require stable id, kind step or finish, and script. Finish runs cleanup and verification; disconnect/cancel/timeout do not prove remote termination. Do not complete with an open operation; only the operator confirms recovery after settled containment.",
         token.display()
@@ -63,6 +65,43 @@ pub fn prepare(workspace: &Path) -> io::Result<PathBuf> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn resource_guide_does_not_create_instance_data() {
+        // A child process isolates environment selection from parallel tests.
+        if std::env::var_os("LVK_RESOURCE_GUIDE_TEST_CHILD").is_some() {
+            let instance = PathBuf::from(std::env::var_os("LVK_INSTANCE_DIR").unwrap());
+            assert!(!instance.join("data").exists());
+            let guide = resource_guide();
+            assert!(
+                guide.contains(
+                    instance
+                        .join("data/access-internal.token")
+                        .to_str()
+                        .unwrap()
+                )
+            );
+            assert!(!instance.join("data").exists());
+            return;
+        }
+        let root = tempfile::tempdir().unwrap();
+        let result = std::process::Command::new(std::env::current_exe().unwrap())
+            .args([
+                "--exact",
+                "agent_guides::tests::resource_guide_does_not_create_instance_data",
+                "--nocapture",
+            ])
+            .env("LVK_INSTANCE_DIR", root.path())
+            .env("LVK_RESOURCE_GUIDE_TEST_CHILD", "1")
+            .output()
+            .unwrap();
+        assert!(
+            result.status.success(),
+            "{}",
+            String::from_utf8_lossy(&result.stderr)
+        );
+        assert!(!root.path().join("data").exists());
+    }
+
     #[test]
     fn guide_is_reused_without_overwriting_unknown_content() {
         let root = tempfile::tempdir().unwrap();

@@ -141,6 +141,14 @@ async fn coding_context_details_remain_available_over_global_stdio() {
                 }
                 2 => {
                     let catalog = reply["result"]["tools"].as_array().unwrap();
+                    let context = catalog.iter().find(|t| t["name"] == "get_context").unwrap();
+                    assert_eq!(context["annotations"]["readOnlyHint"], true);
+                    assert_eq!(context["annotations"]["destructiveHint"], false);
+                    assert_eq!(context["annotations"]["openWorldHint"], false);
+                    for name in ["run_resource_operation", "delete_workspace", "confirm_issue_archive"] {
+                        let tool = catalog.iter().find(|t| t["name"] == name).unwrap();
+                        assert_ne!(tool["annotations"]["readOnlyHint"], true, "{name}");
+                    }
                     let operation = catalog.iter().find(|t| t["name"] == "run_resource_operation").unwrap();
                     let contract = operation["description"].as_str().unwrap();
                     for term in ["atomic", "cleanup", "verification", "owners", "same request_id"] { assert!(contract.contains(term)); }

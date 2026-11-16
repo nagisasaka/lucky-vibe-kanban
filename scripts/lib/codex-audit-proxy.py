@@ -3,6 +3,7 @@
 The fixture supplies LVK_FIXTURE_WIRE and launches this in its managed group.
 """
 import os
+import json
 import signal
 import subprocess
 import sys
@@ -22,6 +23,15 @@ signal.signal(signal.SIGTERM, stop)
 def forward():
     try:
         for line in sys.stdin.buffer:
+            approval_input = os.environ.get('LVK_FIXTURE_APPROVAL_INPUT')
+            if approval_input:
+                event = json.loads(line)
+                if event.get('method') == 'thread/start':
+                    params = event.get('params', {})
+                    # Only policy fields, never instructions, env or full config.
+                    observed = {key: params.get(key) for key in ('approvalPolicy', 'sandbox')}
+                    with open(approval_input, 'a') as output:
+                        output.write(json.dumps(observed) + '\n')
             process.stdin.write(line)
             process.stdin.flush()
     except (BrokenPipeError, ValueError):
