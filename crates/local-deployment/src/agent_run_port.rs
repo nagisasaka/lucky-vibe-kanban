@@ -151,6 +151,16 @@ impl FrozenDirectProviderLaunchSpec {
         provider: DirectProvider,
         mut env: ExecutionEnv,
     ) -> Self {
+        if provider == DirectProvider::ClaudeCode {
+            env.insert(
+                "LVK_CLAUDE_NORMAL_CODE",
+                if request.intent == AgentRunIntent::Review {
+                    "0"
+                } else {
+                    "1"
+                },
+            );
+        }
         let prompt = executors::executors::provider_adapter::prompt_with_repository_memory(
             provider,
             &request.input.content,
@@ -5811,6 +5821,39 @@ mod tests {
             bootstrap_child_is_reviewer(&state, &request, &attempt, DirectProvider::Codex, true)
                 .is_err()
         );
+    }
+
+    #[tokio::test]
+    async fn claude_instruction_scope_preserves_human_input_and_excludes_review() {
+        let db = setup_runtime_db().await;
+        let (mut request, attempt) = persisted_codex_run(&db).await;
+        let human = "あなたの原文\n\n  trailing spaces  ";
+        request.input.content = human.into();
+        for intent in [
+            AgentRunIntent::Initial,
+            AgentRunIntent::FollowUp,
+            AgentRunIntent::Review,
+        ] {
+            request.intent = intent;
+            let mut env = test_execution_env(&attempt.workspace.path);
+            env.insert("LVK_REPOSITORY_MEMORY_INSTRUCTIONS", "fixed + current");
+            let launch = FrozenDirectProviderLaunchSpec::new(
+                &request,
+                &attempt,
+                DirectProvider::ClaudeCode,
+                env,
+            );
+            assert_eq!(
+                launch.env.get("LVK_CLAUDE_NORMAL_CODE").map(String::as_str),
+                Some(if intent == AgentRunIntent::Review {
+                    "0"
+                } else {
+                    "1"
+                })
+            );
+            let suffix = launch.env.get("LVK_DELIVERED_USER_SUFFIX").unwrap();
+            assert_eq!(launch.prompt, format!("{human}{suffix}"));
+        }
     }
 
     #[tokio::test]

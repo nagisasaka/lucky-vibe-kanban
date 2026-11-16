@@ -27,6 +27,7 @@ const TOOL_DENY_PREFIX: &str = "The user doesn't want to proceed with this tool 
 
 /// Claude Agent client with control protocol support
 pub struct ClaudeAgentClient {
+    pub(super) instructions: tokio::sync::Mutex<Option<super::instructions::Instructions>>,
     instruction_delivery:
         tokio::sync::Mutex<Option<(String, crate::instruction_delivery::InstructionDelivery)>>,
     log_writer: LogWriter,
@@ -44,6 +45,7 @@ impl ClaudeAgentClient {
     ) -> Arc<Self> {
         let auto_approve = approvals.is_none();
         Arc::new(Self {
+            instructions: tokio::sync::Mutex::new(None),
             instruction_delivery: tokio::sync::Mutex::new(None),
             log_writer,
             approvals,
@@ -357,6 +359,12 @@ impl ClaudeAgentClient {
     pub async fn log_message(&self, line: &str) -> Result<(), ExecutorError> {
         self.log_writer.log_raw(line).await?;
         if let Ok(value) = serde_json::from_str::<serde_json::Value>(line)
+            && value["subtype"] == "compact_boundary"
+            && let Some(instructions) = self.instructions.lock().await.as_mut()
+        {
+            instructions.observe_boundary(&value)?;
+        }
+        if let Ok(value) = serde_json::from_str::<serde_json::Value>(line)
             && value["type"] == "user"
         {
             let content = value.pointer("/message/content");
@@ -381,10 +389,54 @@ impl ClaudeAgentClient {
                 .is_some_and(|(expected, _)| text.as_ref() == Some(expected))
             {
                 let (_, mut delivery) = pending.take().expect("matched pending delivery");
+                let mut instructions = self.instructions.lock().await;
+                if let Some(instructions) = instructions.as_mut() {
+                    let validation = value["session_id"]
+                        .as_str()
+                        .ok_or_else(|| {
+                            ExecutorError::Io(std::io::Error::other("Missing instruction session"))
+                        })
+                        .and_then(|session| instructions.check_session(session));
+                    if let Err(error) = validation {
+                        delivery.status = "unconfirmed".into();
+                        delivery.log(&self.log_writer).await?;
+                        return Err(error);
+                    }
+                }
                 delivery.status = "accepted".into();
                 delivery.native_session_id = value["session_id"].as_str().map(str::to_owned);
                 delivery.log(&self.log_writer).await?;
+                if let Some(instructions) = instructions.as_mut()
+                    && let Some(session) = value["session_id"].as_str()
+                {
+                    instructions.acknowledge_user(session)?;
+                }
             }
+        }
+        Ok(())
+    }
+
+    pub async fn instruction_callback(
+        &self,
+        request_id: &str,
+        input: &serde_json::Value,
+    ) -> Result<serde_json::Value, ExecutorError> {
+        let mut instructions = self.instructions.lock().await;
+        instructions
+            .as_mut()
+            .ok_or_else(|| std::io::Error::other("Instruction callback unavailable"))?
+            .callback(request_id, input, &self.log_writer)
+            .await
+    }
+
+    pub async fn acknowledge_instruction_callback(
+        &self,
+        value: &serde_json::Value,
+    ) -> Result<(), ExecutorError> {
+        if let Some(instructions) = self.instructions.lock().await.as_mut() {
+            instructions
+                .acknowledge_callback(value, &self.log_writer)
+                .await?;
         }
         Ok(())
     }
@@ -397,10 +449,21 @@ impl ClaudeAgentClient {
         if additional.is_empty() {
             return Ok(());
         }
+        let reason = if self
+            .instructions
+            .lock()
+            .await
+            .as_ref()
+            .is_some_and(|i| additional.starts_with(&format!("\n\n{}", i.receipt.current)))
+        {
+            "current_values"
+        } else {
+            "full_fallback"
+        };
         let delivery = crate::instruction_delivery::InstructionDelivery::new(
             "stream-json.user_suffix",
             "user",
-            "full_fallback",
+            reason,
             None,
             additional,
         );
@@ -410,6 +473,9 @@ impl ClaudeAgentClient {
     }
 
     pub async fn finish_instruction_delivery(&self) -> Result<(), ExecutorError> {
+        if let Some(instructions) = self.instructions.lock().await.as_mut() {
+            instructions.finish(&self.log_writer).await?;
+        }
         if let Some((_, mut delivery)) = self.instruction_delivery.lock().await.take() {
             delivery.status = "unconfirmed".into();
             delivery.log(&self.log_writer).await?;
@@ -423,6 +489,47 @@ mod instruction_delivery_tests {
     use tokio::io::AsyncReadExt;
 
     use super::*;
+
+    #[tokio::test]
+    async fn instruction_echo_for_wrong_session_never_becomes_accepted() {
+        let dir = tempfile::tempdir().unwrap();
+        let (writer, mut reader) = tokio::io::duplex(65536);
+        let client = ClaudeAgentClient::new(LogWriter::new(writer), None, CancellationToken::new());
+        let state = super::super::instructions::Instructions::new(
+            crate::instruction_delivery::ResumeInstructions::new(dir.path(), "fixed", "R2".into()),
+            "fixed R2".into(),
+            Some("expected".into()),
+        );
+        state.prepare().unwrap();
+        *client.instructions.lock().await = Some(state);
+        client
+            .begin_instruction_delivery("human fixed".into(), "fixed".into())
+            .await
+            .unwrap();
+        assert!(
+            client
+                .log_message(
+                    r#"{"type":"user","session_id":"other","message":{"content":"human fixed"}}"#
+                )
+                .await
+                .is_err()
+        );
+        assert!(
+            !client
+                .instructions
+                .lock()
+                .await
+                .as_ref()
+                .unwrap()
+                .receipt
+                .matches("expected")
+        );
+        drop(client);
+        let mut output = String::new();
+        reader.read_to_string(&mut output).await.unwrap();
+        assert!(!output.contains("\"status\":\"accepted\""));
+        assert!(output.contains("\"status\":\"unconfirmed\""));
+    }
 
     #[tokio::test]
     async fn instruction_receipt_requires_exact_native_echo_not_generic_success() {

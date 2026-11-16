@@ -63,6 +63,7 @@ pub struct ResumeInstructions {
 struct Receipt {
     fingerprint: Option<String>,
     last_compaction_id: Option<String>,
+    last_compaction_fingerprint: Option<String>,
 }
 
 impl ResumeInstructions {
@@ -104,6 +105,20 @@ impl ResumeInstructions {
         }
         receipt.fingerprint = None;
         receipt.last_compaction_id = Some(id.to_owned());
+        receipt.last_compaction_fingerprint = None;
+        self.write(session, &receipt)
+    }
+
+    pub fn compaction_matches(&self, session: &str, id: &str) -> bool {
+        let receipt = self.read(session);
+        receipt.last_compaction_id.as_deref() == Some(id)
+            && receipt.last_compaction_fingerprint.as_ref() == Some(&self.fingerprint)
+    }
+
+    pub fn acknowledge_compaction(&self, session: &str) -> std::io::Result<()> {
+        let mut receipt = self.read(session);
+        receipt.fingerprint = Some(self.fingerprint.clone());
+        receipt.last_compaction_fingerprint = Some(self.fingerprint.clone());
         self.write(session, &receipt)
     }
 

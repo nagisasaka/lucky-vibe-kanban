@@ -25,6 +25,31 @@ use crate::{
     },
 };
 
+/// Safe diagnostic categories only; never serialize native error bodies or credentials.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
+#[serde(rename_all = "snake_case")]
+pub(super) enum ControlFailureKind {
+    Rejected,
+    Timeout,
+    Closed,
+    Io,
+    Protocol,
+}
+
+impl ControlFailureKind {
+    pub fn from_error(error: &ExecutorError) -> Self {
+        match error {
+            ExecutorError::Io(error) => match error.kind() {
+                std::io::ErrorKind::Unsupported => Self::Rejected,
+                std::io::ErrorKind::TimedOut => Self::Timeout,
+                std::io::ErrorKind::UnexpectedEof | std::io::ErrorKind::BrokenPipe => Self::Closed,
+                _ => Self::Io,
+            },
+            _ => Self::Protocol,
+        }
+    }
+}
+
 type ControlWaiters =
     Arc<StdMutex<HashMap<String, oneshot::Sender<Result<serde_json::Value, ()>>>>>;
 
@@ -109,9 +134,11 @@ impl ProtocolPeer {
                 .read_loop(stdout, Some(client.clone()), cancel)
                 .await
             {
-                let _ = client.finish_instruction_delivery().await;
                 tracing::error!("Protocol reader loop error: {}", e);
                 let _ = client.log_message(&serde_json::json!({"type":"error","message":"Claude control stream closed or failed before a result"}).to_string()).await;
+                reader_peer.fail_runtime();
+            }
+            if client.finish_instruction_delivery().await.is_err() {
                 reader_peer.fail_runtime();
             }
             reader_peer.closed.store(true, Ordering::Release);
@@ -272,6 +299,11 @@ impl ProtocolPeer {
                             }
                             // Correlate before execution logging: usage snapshots
                             // never become transcript/log messages.
+                            if let Some(client) = &client
+                                && let Ok(value) = serde_json::from_str::<serde_json::Value>(line)
+                                && value["type"] == "control_response" {
+                                client.acknowledge_instruction_callback(&value).await?;
+                            }
                             if let Ok(CLIMessage::ControlResponse { response }) = serde_json::from_str::<CLIMessage>(line) {
                                 let (id, result) = match response {
                                     ControlResponseType::Success { request_id, response } => (request_id, Ok(response.unwrap_or(serde_json::Value::Null))),
@@ -291,10 +323,16 @@ impl ProtocolPeer {
                                 }
                                 continue;
                             };
+                            let message = serde_json::from_str::<CLIMessage>(line);
+                            // Do not publish a native success result while a known
+                            // compaction delivery is still unconfirmed/incomplete.
+                            if matches!(&message, Ok(CLIMessage::Result(_))) {
+                                client.finish_instruction_delivery().await?;
+                            }
                             client.log_message(line).await?;
 
                             // Parse and handle control messages
-                            match serde_json::from_str::<CLIMessage>(line) {
+                            match message {
                                 Ok(CLIMessage::ControlRequest {
                                     request_id,
                                     request,
@@ -303,7 +341,6 @@ impl ProtocolPeer {
                                         .await;
                                 }
                                 Ok(CLIMessage::Result(_)) => {
-                                    client.finish_instruction_delivery().await?;
                                     break;
                                 }
                                 _ => {
@@ -371,6 +408,19 @@ impl ProtocolPeer {
                 input,
                 tool_use_id,
             } => {
+                if callback_id == super::instructions::CALLBACK {
+                    let result = async {
+                        let output = client.instruction_callback(&request_id, &input).await?;
+                        self.send_hook_response(request_id.clone(), output).await
+                    }
+                    .await;
+                    if let Err(error) = result {
+                        let _ = client.finish_instruction_delivery().await;
+                        let _ = self.send_error(request_id, error.to_string()).await;
+                        self.fail_runtime();
+                    }
+                    return;
+                }
                 match client
                     .on_hook_callback(callback_id, input, tool_use_id)
                     .await
@@ -484,5 +534,271 @@ impl ProtocolPeer {
         self.request_control(SDKControlRequestType::SetPermissionMode { mode })
             .await
             .map(|_| ())
+    }
+}
+
+#[cfg(test)]
+mod instruction_protocol_tests {
+    use tokio::{io::AsyncReadExt, process::Command};
+
+    use super::*;
+    use crate::instruction_delivery::ResumeInstructions;
+
+    // No network, credentials, settings or real provider. The mock only speaks stdio RPC.
+    const MOCK: &str = r#"
+import json,sys
+mode=sys.argv[1]
+turn=sys.argv[2] if len(sys.argv)>2 else "one"
+def emit(x): print(json.dumps(x),flush=True)
+def read(): return json.loads(sys.stdin.readline())
+def hook(id,event,source=None):
+    inp={'session_id':'mock-s','prompt_id':'turn-1','hook_event_name':event}
+    if source: inp['source']=source
+    emit({'type':'control_request','request_id':id,'request':{'subtype':'hook_callback','callback_id':'lvk_compact_context_v1','input':inp}})
+    reply=read(); assert reply['response']['request_id']==id
+    if not (mode=='unconfirmed' and event=='SessionStart'): emit(reply)
+    return reply
+while True:
+    line=sys.stdin.readline()
+    if not line: break
+    q=json.loads(line)
+    if q['type']=='control_request':
+        subtype=q['request']['subtype']
+        if subtype=='set_permission_mode' and mode=='reject':
+            emit({'type':'control_response','response':{'subtype':'error','request_id':q['request_id'],'error':'SENSITIVE_MOCK_BODY'}})
+        elif subtype=='set_permission_mode' and mode=='timeout': pass
+        else: emit({'type':'control_response','response':{'subtype':'success','request_id':q['request_id'],'response':{}}})
+    elif q['type']=='user':
+        emit(dict(q,session_id='mock-s'))
+        if mode in ['compact','duplicate','missing','unconfirmed']:
+            if mode!='missing':
+                hook('pre-'+turn,'PreCompact')
+                reply=hook('compact-'+turn,'SessionStart','compact')
+                assert 'FIXED' in reply['response']['response']['hookSpecificOutput']['additionalContext']
+                if mode=='duplicate':
+                    reply=hook('compact-'+turn,'SessionStart','compact')
+                    assert reply['response']['response']=={}
+            boundary={'type':'system','subtype':'compact_boundary','uuid':'boundary-'+turn,'session_id':'mock-s','compact_metadata':{'trigger':'auto'}}
+            if mode!='unconfirmed': emit(boundary)
+            if mode=='duplicate': emit(boundary)
+        emit({'type':'result','subtype':'success','is_error':False,'session_id':'mock-s','result':'mock result, not model evidence'})
+        break
+"#;
+
+    #[tokio::test]
+    async fn instruction_mock_stdio_first_resume_compact_duplicates_and_missing_callback() {
+        let dir = tempfile::tempdir().unwrap();
+        for (index, mode, expected_reduced) in [
+            (1, "normal", false),
+            (2, "normal", true),
+            (3, "compact", true),
+            (4, "duplicate", true),
+            (5, "unconfirmed", true),
+            (6, "missing", false),
+            (7, "normal", false),
+        ] {
+            let receipt = ResumeInstructions::new(
+                dir.path(),
+                "fixed-contract",
+                format!("RUN={index} DRAFT=fixture/{index}.json"),
+            );
+            let state = super::super::instructions::Instructions::new(
+                receipt,
+                format!("FIXED RUN={index} DRAFT=fixture/{index}.json"),
+                (index > 1).then(|| "mock-s".to_owned()),
+            );
+            let reduced = state.prepare().unwrap();
+            assert_eq!(reduced, expected_reduced);
+            let additional = if reduced {
+                format!("\n\nRUN={index} DRAFT=fixture/{index}.json")
+            } else {
+                format!("FIXED RUN={index} DRAFT=fixture/{index}.json")
+            };
+            let prompt = format!("human{additional}");
+            let mut child = Command::new("python3")
+                .args(["-u", "-c", MOCK, mode, &index.to_string()])
+                .stdin(std::process::Stdio::piped())
+                .stdout(std::process::Stdio::piped())
+                .stderr(std::process::Stdio::null())
+                .kill_on_drop(true)
+                .spawn()
+                .unwrap();
+            let (writer, mut reader) = tokio::io::duplex(65536);
+            let cancel = CancellationToken::new();
+            let client = ClaudeAgentClient::new(
+                super::super::super::codex::client::LogWriter::new(writer),
+                None,
+                cancel.clone(),
+            );
+            *client.instructions.lock().await = Some(state);
+            let (peer, signal) = ProtocolPeer::spawn(
+                child.stdin.take().unwrap(),
+                child.stdout.take().unwrap(),
+                client.clone(),
+                cancel.clone(),
+            );
+            peer.initialize(Some(serde_json::json!({"SessionStart":[{"matcher":"compact","hookCallbackIds":[super::super::instructions::CALLBACK]}]}))).await.unwrap();
+            peer.set_permission_mode(PermissionMode::BypassPermissions)
+                .await
+                .unwrap();
+            client
+                .begin_instruction_delivery(prompt.clone(), additional)
+                .await
+                .unwrap();
+            peer.send_user_message(prompt).await.unwrap();
+            let status = tokio::time::timeout(std::time::Duration::from_secs(5), child.wait())
+                .await
+                .unwrap()
+                .unwrap();
+            assert!(
+                status.success() || mode == "missing",
+                "mock step {index} {mode}: {status}"
+            );
+            for _ in 0..1000 {
+                if peer.closed.load(Ordering::Acquire) {
+                    break;
+                }
+                tokio::task::yield_now().await;
+            }
+            assert!(peer.closed.load(Ordering::Acquire));
+            let state = client.instructions.lock().await;
+            assert_eq!(
+                state.as_ref().unwrap().receipt.matches("mock-s"),
+                !matches!(mode, "missing" | "unconfirmed")
+            );
+            drop(state);
+            if matches!(mode, "missing" | "unconfirmed") {
+                assert!(matches!(signal.await.unwrap(), ExecutorExitResult::Failure));
+            }
+            drop(peer);
+            drop(client);
+            cancel.cancel();
+            let mut output = String::new();
+            reader.read_to_string(&mut output).await.unwrap();
+            let deliveries: Vec<serde_json::Value> = output
+                .lines()
+                .filter_map(|l| {
+                    serde_json::from_str::<serde_json::Value>(l)
+                        .ok()?
+                        .get("lvk_instruction_delivery")
+                        .cloned()
+                })
+                .collect();
+            if matches!(mode, "missing" | "unconfirmed") {
+                assert!(
+                    !output
+                        .lines()
+                        .filter_map(|l| serde_json::from_str::<serde_json::Value>(l).ok())
+                        .any(|v| v["type"] == "result"),
+                    "incomplete delivery must not publish native success"
+                );
+            }
+            let compact: Vec<_> = deliveries
+                .iter()
+                .filter(|v| v["reason"] == "compaction")
+                .collect();
+            assert_eq!(
+                compact.len(),
+                if matches!(mode, "compact" | "duplicate" | "unconfirmed") {
+                    2
+                } else {
+                    0
+                }
+            );
+            if !compact.is_empty() {
+                assert_eq!(compact[0]["status"], "attempted");
+                assert_eq!(
+                    compact[1]["status"],
+                    if mode == "unconfirmed" {
+                        "unconfirmed"
+                    } else {
+                        "accepted"
+                    }
+                );
+                assert_eq!(
+                    compact[0]["content"],
+                    format!("FIXED RUN={index} DRAFT=fixture/{index}.json")
+                );
+            }
+            assert!(!output.contains("SENSITIVE_MOCK_BODY"));
+        }
+    }
+
+    #[tokio::test]
+    async fn instruction_mock_startup_failure_exits_before_any_user_message() {
+        use tokio::io::{AsyncBufReadExt, BufReader};
+        let dir = tempfile::tempdir().unwrap();
+        let agent: super::super::ClaudeCode = serde_json::from_value(
+            serde_json::json!({"approvals":false,"base_command_override":"python3"}),
+        )
+        .unwrap();
+        let parts = crate::command::CommandParts::new(
+            "python3".into(),
+            vec!["-u".into(), "-c".into(), MOCK.into(), "reject".into()],
+        );
+        let env = crate::env::ExecutionEnv::new(crate::env::RepoContext::new(
+            dir.path().to_owned(),
+            vec![],
+        ));
+        let mut spawned = agent
+            .spawn_internal(dir.path(), "must not be sent", parts, &env)
+            .await
+            .unwrap();
+        let mut lines = BufReader::new(spawned.child.inner().stdout.take().unwrap()).lines();
+        let event: serde_json::Value = serde_json::from_str(
+            &tokio::time::timeout(std::time::Duration::from_secs(10), lines.next_line())
+                .await
+                .unwrap()
+                .unwrap()
+                .unwrap(),
+        )
+        .unwrap();
+        assert_eq!(event["type"], "error");
+        assert_eq!(event["phase"], "set_permission_mode");
+        assert_eq!(event["failure_kind"], "rejected");
+        assert!(!event.to_string().contains("SENSITIVE_MOCK_BODY"));
+        assert!(matches!(
+            spawned.exit_signal.take().unwrap().await.unwrap(),
+            ExecutorExitResult::Failure
+        ));
+        if let Some(cancel) = spawned.cancel.take() {
+            cancel.cancel();
+        }
+        let _ = spawned.child.kill().await;
+        let _ = spawned.child.wait().await;
+    }
+
+    #[tokio::test]
+    async fn instruction_mock_control_rejection_and_timeout_are_distinct_safe_categories() {
+        for (mode, expected) in [
+            ("reject", ControlFailureKind::Rejected),
+            ("timeout", ControlFailureKind::Timeout),
+        ] {
+            let mut child = Command::new("python3")
+                .args(["-u", "-c", MOCK, mode])
+                .stdin(std::process::Stdio::piped())
+                .stdout(std::process::Stdio::piped())
+                .stderr(std::process::Stdio::null())
+                .kill_on_drop(true)
+                .spawn()
+                .unwrap();
+            let cancel = CancellationToken::new();
+            let (peer, task) = ProtocolPeer::spawn_passive(
+                child.stdin.take().unwrap(),
+                child.stdout.take().unwrap(),
+                cancel.clone(),
+            );
+            peer.initialize_passive().await.unwrap();
+            let error = peer
+                .set_permission_mode(PermissionMode::BypassPermissions)
+                .await
+                .unwrap_err();
+            assert_eq!(ControlFailureKind::from_error(&error), expected);
+            assert!(!error.to_string().contains("SENSITIVE_MOCK_BODY"));
+            cancel.cancel();
+            let _ = child.kill().await;
+            let _ = child.wait().await;
+            task.await.unwrap();
+        }
     }
 }
