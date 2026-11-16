@@ -872,6 +872,7 @@ export function KanbanIssuePanelContainer({
       tags={tags}
       issueId={selectedKanbanIssueId}
       creatorUser={issueCreator}
+      createdAt={selectedIssue?.created_at}
       parentIssue={parentIssue}
       onParentIssueClick={handleParentIssueClick}
       onRemoveParentIssue={handleRemoveParentIssue}

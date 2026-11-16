@@ -24,6 +24,7 @@ import WYSIWYGEditor from '../../packages/web-core/src/shared/components/WYSIWYG
 i18n
   .use(initReactI18next)
   .init({ lng: 'ja', resources: { ja: { common } }, initImmediate: false });
+(window as any).setLocale = (locale: string) => i18n.changeLanguage(locale);
 const noop = () => {};
 const record = (action: string) => {
   (window as any).lastAction = action;
@@ -61,6 +62,7 @@ function Fixture() {
               mode={createMode ? 'create' : 'edit'}
               displayId="LOCAL-339"
               issueId="339"
+              createdAt="2026-11-16T23:24:59Z"
               formData={data as any}
               onFormChange={(k, v) => setData((d) => ({ ...d, [k]: v }))}
               statuses={[{ id: 'todo', name: '未着手', color: '#777' }] as any}

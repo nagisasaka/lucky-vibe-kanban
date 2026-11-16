@@ -42,7 +42,7 @@ const browser = await chromium.launch({
 });
 const measurements = [];
 try {
-  const page = await browser.newPage();
+  const page = await browser.newPage({ timezoneId: 'Asia/Tokyo' });
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
   await page.route('https://fixture.invalid/**', (r) =>
@@ -52,6 +52,9 @@ try {
   await page.addStyleTag({ content: css.css });
   await page.addScriptTag({ content: bundle.outputFiles[0].text });
   await expect(page.locator('#issue article')).toHaveCount(3);
+  const createdAt = page.locator('#issue time');
+  await expect(createdAt).toHaveText('2026/11/17 08:24');
+  await expect(createdAt).toHaveAttribute('datetime', '2026-11-16T23:24:59Z');
   for (const dark of [false, true]) {
     await page.evaluate(
       (d) => document.documentElement.classList.toggle('dark', d),
@@ -89,6 +92,9 @@ try {
           },
         };
       });
+      await expect(createdAt).toHaveText('2026/11/17 08:24');
+      const dateGeometry = await createdAt.boundingBox();
+      assert.ok(dateGeometry.width <= pane);
       assert.equal(geometry.title, '24px');
       assert.ok(geometry.gutter >= 16 && geometry.gutter <= 32);
       assert.ok(geometry.reading.width <= 1024);
@@ -150,7 +156,20 @@ try {
       .evaluate((e) => getComputedStyle(e).maxWidth),
     '800px'
   );
+  // Mobile uses the full viewport; the timestamp follows the title without clipping.
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.locator('#workspace').evaluate((e) => (e.style.display = 'none'));
+  await page.locator('#issue').evaluate((e) => (e.style.width = '100%'));
+  await createdAt.scrollIntoViewIfNeeded();
+  await expect(createdAt).toBeInViewport();
+  assert.ok(await createdAt.evaluate((e) => e.scrollWidth <= e.clientWidth));
+  await page.screenshot({ path: `${output}/created-at-mobile.png` });
+  await page.evaluate(() => window.setLocale('en-US'));
+  await expect(createdAt).toHaveText('11/17/2026, 08:24 AM');
+  await page.evaluate(() => window.setLocale('ja'));
+  await expect(createdAt).toHaveText('2026/11/17 08:24');
   await page.evaluate(() => window.setCreateMode(true));
+  await expect(createdAt).toHaveCount(0);
   await expect(page.locator('.issue-detail-content')).toHaveCount(0);
   assert.equal(
     await page
