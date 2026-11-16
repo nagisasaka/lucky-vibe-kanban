@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:61f366e454ef9b4674a4836b93f811bc6b608eae841ec18230892f4c41e0efe0",
+  "pageVersion": "sha256:bbf7a1cfd5f72c7789241965c74820d1e912ca5b491f2d96dbb0d6a41169bf50",
   "claims": [
     {
       "id": "claim_e25f3fd7a5434288a0e3798cf317080d",
@@ -8,7 +8,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/mod.rs",
-          "version": "repo-file-v1:sha256:fc0ba78cf0f3b4d8fefd890cd997e82df821d8c34bb70cb464975badc4107d1b"
+          "version": "repo-file-v1:sha256:d133367592ee5230d597157061de2831dcc145422e49637da4773f84bf187b34"
         },
         {
           "resource": "repo://crates/server/src/routes/workspaces/pr.rs",
@@ -67,7 +67,7 @@
           "version": "repo-lines-v1:sha256:bea5b83539584ce13fe48b8c882b287bc0da50a2165e6c29ac3f19ff1d5a4f75:eyJzZWxlY3RlZExpbmVDb3VudCI6ODcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAyYTMxMWVkYzcyOTYzM2Y0MmM4OWVjZjNkMDk5NWNiM2YxNWEyYjRlMjEyODRmYjI2MWFiYzQwYWMwOTEzNDciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE2MmVlNTdlNDFhOGMyMGFlMDE2NGRmMjYxNDM5ZGNjNDk5ZDM1MjA4MzQxNTE1MTZkMDQ3ZThkZWFlOGE0NjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjY2YTE4NDU1NWQyMDVmYTBiNTdiMjY3YjM0NDg2MTk2ZDFjZjE2MzdmMzY4Yzg1MWY0MGU4ODQ3YWEyMTI4MzIifQ"
         },
         {
-          "resource": "repo://crates/git/src/cli.rs#L889-L983",
+          "resource": "repo://crates/git/src/cli.rs#L931-L1025",
           "version": "repo-lines-v1:sha256:44883de0e24d7bb2c86eb9a88658376c2b310d24adff0f20c802196f565fdb5f:eyJzZWxlY3RlZExpbmVDb3VudCI6OTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY4Y2JhNDQ0Njg0ZmZjYTdlYTA2ZWJhODllMzViMWIwMGUxZTljNzA4NmE0YTUyNWM3ZjJmYmVlZWJiMWRkN2QiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEzMGVlMmYwNjc5ODJjMGE4NzE2ZGJiODE1NDE4ZjAxZDkzMDcyZTc0ZTc3Mjc0ZjAwYjI5MzM2MDA5MGU2MDYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRhOWY4NmQyOGU3ODRmOWZkMzFmYjcyZDE1ZjYwY2JjZWFhZmRkNjY5Y2JkNWI2ZGE3ODg4YTAyMzMyMWViYjkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZmMDEyMTMyNDYzOGIzNDU5N2Q0MDM4NWNjMzFlY2RkMzdhMGE0YTBhZmZiM2JmMjdiZDMzMTIwOGNmMDAwOTkifQ"
         },
         {
@@ -85,7 +85,7 @@
           "version": "repo-lines-v1:sha256:bea5b83539584ce13fe48b8c882b287bc0da50a2165e6c29ac3f19ff1d5a4f75:eyJzZWxlY3RlZExpbmVDb3VudCI6ODcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAyYTMxMWVkYzcyOTYzM2Y0MmM4OWVjZjNkMDk5NWNiM2YxNWEyYjRlMjEyODRmYjI2MWFiYzQwYWMwOTEzNDciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE2MmVlNTdlNDFhOGMyMGFlMDE2NGRmMjYxNDM5ZGNjNDk5ZDM1MjA4MzQxNTE1MTZkMDQ3ZThkZWFlOGE0NjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjY2YTE4NDU1NWQyMDVmYTBiNTdiMjY3YjM0NDg2MTk2ZDFjZjE2MzdmMzY4Yzg1MWY0MGU4ODQ3YWEyMTI4MzIifQ"
         },
         {
-          "resource": "repo://crates/git/src/cli.rs#L889-L929",
+          "resource": "repo://crates/git/src/cli.rs#L931-L971",
           "version": "repo-lines-v1:sha256:1804f0b09b352c396d4fdb5f32e0fa0a548787a8652b589895ab12524f6fbf70:eyJzZWxlY3RlZExpbmVDb3VudCI6NDEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY4Y2JhNDQ0Njg0ZmZjYTdlYTA2ZWJhODllMzViMWIwMGUxZTljNzA4NmE0YTUyNWM3ZjJmYmVlZWJiMWRkN2QiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YjA0NDkxNDY5NzIyZTgzNjNhOTRlNDA0NDUzOGUwMTNhMmEyMTdlMzZiMWU1NjhiYTYwYWNiN2I0YzhmMmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRhOWY4NmQyOGU3ODRmOWZkMzFmYjcyZDE1ZjYwY2JjZWFhZmRkNjY5Y2JkNWI2ZGE3ODg4YTAyMzMyMWViYjkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJmNTdkZmQyM2EwN2YwOWViNmIwMDFmMmFhN2Q4ZGUzYmY4YThkOTIxZGRkMWI1ZGRmYjQ0MzJlNGFkNWFmNzAifQ"
         }
       ]
@@ -105,7 +105,7 @@
       "statement": "pushは既定remoteのpushurlを尊重し、PR baseはtarget branchのremoteまたは既定fetch remote、head repositoryはpush先を使用する。",
       "evidence": [
         {
-          "resource": "repo://crates/git/src/lib.rs#L1651-L1660",
+          "resource": "repo://crates/git/src/lib.rs#L1652-L1661",
           "version": "repo-lines-v1:sha256:6242d2e64920d2775827e46fa203133e3cd48e290ef52f5f8e9451ee75f003c0:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY5MWUxOTI1ZjZlMDliNjZmNzczOGIzZjExOTdlN2ZlMWY2M2Y5M2NmYjQwYjI2OTIwZmE0NDE3NTE3MWUwN2QiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJkN2E4YTdlMDU4NDI0ODE5ODAzOGJiMmQ5OWJhYzBiMjU0YmJmY2FlZDNjNDMxZTU0MTAxMTYwNTU3MGU3ZDIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImVlODhiYmM5YjY1MjIyYmIyODFkNWY1M2JlOTRkNDhjZTRhMzkyYjVkMzc0ZGY0NjQzYjE3ZjJhNzA2ZDczN2IifQ"
         },
         {
@@ -117,10 +117,52 @@
           "version": "repo-lines-v1:sha256:e40fa3bacf4643349113727d5db4ef50929970fa7fb9de26d96dd06af48d492a:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJkZDFjNTg3NTljZjAzZjY4NDkwN2IzM2RmM2RkZGY4YTY3MGMyZWY1ZGE2YjkyMGM2MTg4MDRkNzU4M2E2MWQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM5YmZkZjAwZTliOTRlOTRkMDhiMDY0ZGVhMzY3MTc0MDYwMjA1ODk2MzhkZjEwOTlmMmNiZjIxMmIyNDFiNmYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhkYjE4ZThmNWE5YzBiOWNjNThhYzE1MDBlY2RiZmI4NGQxNjM4YjRkOTQ5Y2M1NmMyMTIzODdhMGIxOTI1MjciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImVhNGYxMDI0MTMzMjcyNTkzOGYyODUzOTlmNzhlZTE0Njc4NTIyMzIyZDY1NTNlNGZkYzM2N2Q1NGFhZGI5YzcifQ"
         }
       ]
+    },
+    {
+      "id": "claim_84dcc9aba53e4e9f8c031474928debea",
+      "statement": "登録Repository pushはread+writeと関連Project・Leaseを検証する共通HTTP/MCP serviceで、previewを再構成して確認済み値だけを保存し、Workspace/PR/統合と別に明示公開する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/remote_mcp/repository_push.rs#L36-L63",
+          "version": "repo-lines-v1:sha256:8676a51129fc8bb6a1e9a9602ba6b1b3e8cdb18a291a40f1a9125ad4edf3cba7:eyJzZWxlY3RlZExpbmVDb3VudCI6MjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjlmNWZkZTRiYmZhMGFiZTAxYTFjNmY4Mjg2MjBhZDEwNDNjYjM3NDZmNzZiNzBlNWVlMzc3ZWEwNDYwNmEwZmQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFjZWU0NGE3YjU4YmRhMDQ0NmQ2MzQ5MzBhMDkzNGEwYTM4OTAzZGQ1YTIwOTM4MzI5MWRjY2M0Y2Q2Y2VkYWEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRmZTQwOWI3Y2UyZjRiNjJmMzk3M2UxYjhiNGE3MjQ5ZDk3YjkzMGU3NDVjNGRlYWY2NWU5OGYyYjU2NTJkNDciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImEwYjRlM2VjMTkyYTAzYmE5NzQ5MmY3NWRlYjllZDJiYmNmMDk5NzJjOGExMDdjNDhjMzJhMWRmYzgzYzk0MjcifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/repository_push.rs#L58-L213",
+          "version": "repo-lines-v1:sha256:e004090ddfcc2dd0a8ca1bc06a44e2aaa0af96499137b6fd28f2a87f48bf37f3:eyJzZWxlY3RlZExpbmVDb3VudCI6MTU2LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIxNGNkMmE5NmQwMjNhZThhMWI0NGE1YzNjYjZhMmYyNGFlMmU1NTIzMjYxZDFmNWUxM2U4MjU5M2YwOGQ3MTIwIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJkZDNlM2M0YzBmZmM2MzA0NjFjY2FjOWI2YTYwZmU4ZjQ4NjVlYzIzNTFkOWE5OWUxMDAxYTI0OGNkNTFmMmM4IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJhZWFmMzc2YWQxYTkxOGU3ZjZlNDBiMTg4OGFkODFkNGYyNzA0NTdhN2Y2Y2ZmZDc5ZWFjYjFlMDRlMWE4MmRkIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJhZDY5ZjYyNTdjYjFmZGUwYWY5YTliMDhiYmVkNGYxYmE2ODZlODBlMGJjN2YzZDk0YmViNjQ5MTVhMzMxNTkxIn0"
+        }
+      ]
+    },
+    {
+      "id": "claim_87114325fdaf404990d475801d607676",
+      "statement": "Repository pushは単一構成済みGitHub URLと同名branchの固定SHAだけを通常pushし、曖昧remote・driftを拒否する。previewは自動fetchせず履歴とarchive候補に上限を設ける。",
+      "evidence": [
+        {
+          "resource": "repo://crates/git/src/repository_push.rs#L186-L239",
+          "version": "repo-lines-v1:sha256:18413bfbaa4ee6b9fad2663b67db26bd1d1822d97911e948235ca91d2e5ab471:eyJzZWxlY3RlZExpbmVDb3VudCI6NTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZiNGQ1ZGFiYjg4ZmNkNWI0YWRlNjBhMGRiNjM4NDVlZDdlMzQyOGIwZGYwY2NmMGQ0MWUzOWQ1NDVmZjczZWUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImViMmU4MTQxNTk5ZTE0Y2MwNDVlMWJhZDc1YjYwNDFmNDY3YWFmZTY5NWJkNGU1MGM2YjkxYjY0ODI4MTVkZmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjI5ZGEwMjJjYzE4NDZjYTg0NTA1ZDI2NjZkYTYwNTBkM2Q2ZmE0ZTBlMDcxMzUyM2FkZGJlNWY1OWQwZWY3ODgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjVmOWVmNmNlZWM1ZTRhODM0NDZmZDhlNjRjZGYzMTBiMmIzYzQ2YzEyYzczODZmMTdmZjIwY2Q4MWJmOTJkMzgifQ"
+        },
+        {
+          "resource": "repo://crates/git/src/repository_push.rs#L22-L152",
+          "version": "repo-lines-v1:sha256:f5f517eee7d280f178586416c24700c93ae49cb9c6fa5c5f6932b1f38f13888d:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMxLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJmNDkyMjRiYWIzNmFmNTU5ZmZiNWFlY2M0NzhjMTQwOGZkZmMxYTBkNTZmMDBhMDRkYTVmZGE5OWYzNmY0NzFjIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIxY2E1ZTk2ZmQyYWI3NWNkN2Y1MDJiMzI3NDdiYTdmZjkwOGZlNjAyODhlNGQ3NTI5Njc3ODYzMmIyNWQ2YzUwIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJjZmRmMmFjODI4NTAwNTRiNDMwNWZjNjYzNGZiYjA4NzU2ZTExYTVkNTA2YTMxY2RkZjc0NjBkM2U0MWU3OGI4IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJkM2QyNGJhNjQ3MDM5MmJlNzQ0NTRlOGJlMWE4NGNmMGI2NDgyZDk1MmI1ZWU2Nzc5MWY2NmVlYzI1YmRiNjQ1In0"
+        }
+      ]
+    },
+    {
+      "id": "claim_66e5aea721764a27a070b4739e4e3d95",
+      "statement": "Repository push再確認は元receiptとremote観測を分離し、source_present nullを未観測として保持する。uncertainは書き換えず、UIはremote一致が確認できた場合だけ別対象reviewを許す。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/repository_push.rs#L214-L264",
+          "version": "repo-lines-v1:sha256:b8f6116b7f2523d2dd0d76c1214d94dc7b783d07a29f428dcc17af36a3beaf7d:eyJzZWxlY3RlZExpbmVDb3VudCI6NTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc4NTNjNTQzMWE0MjM3MWVhMmJkNTE4NDNmMmNkNzNmODc5NDViZjFhZGE4OGVjMGY1OTljOTQ5N2MxNzFiZjEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJhYjg1NmE3MDM1ZWVkODA0NmU5YWUzMmFmMGUwMzAyZWE4M2E2ZWZhNDRjZTU4Zjk2NWJkMGNiYWY0ZmQ5MDMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/dialogs/settings/settings/RepositoryPushSettings.tsx#L120-L155",
+          "version": "repo-lines-v1:sha256:24c867c7a98cbd9d784838433284bfa7c9a5a751f2e1598d930416e7889c18ca:eyJzZWxlY3RlZExpbmVDb3VudCI6MzYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBkYTk0ZGZmNGI0NTMwYTQwZDBlYTQ4YzczZDViODQ4OTNhZDQ4YjZkMjVlOTgwNWE0ZWE2ZjM2M2Q3OTYyMTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU3MjE2ZThlOWMwYTFhNjhkMDZjMmZiYWE1ZmQyMTM5NDgyYjhlZmQwYTE5MzE1YjkxNWU2Y2NlODQ5ZDg5ZGMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImU0NDlkMTVkZGFiMjMzYTQ4N2ZhNTBkZGFkNDU4ZDAxYzYzZjVjZmM0NWVmZDk5Njg1NTBmZmM0MTRiOGUxOTQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJlYzk4MjIyZTFiYzFhZjZhNWZmYzZmMTBjYWQyODZlMmY0OTcyMDMxMWQ1NTVmNWQ5ZWE1NjUyOGI5N2NhMzUifQ"
+        }
+      ]
     }
   ],
   "verification": {
-    "by": "openwiki/0.7.2",
-    "at": "2026-11-12T04:13:28.445Z"
+    "by": "openwiki/0.9.0",
+    "at": "2026-11-16T23:50:22.756Z"
   }
 }

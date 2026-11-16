@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:d33fa0dc276767d4545e101e35af15969357fe648b491d20ea79cd3e8bef774c",
+  "pageVersion": "sha256:d27cfdc07bbc7a0d99c4241200a58bf834b941d18ae7eee824d531f66df35d6b",
   "claims": [
     {
       "id": "claim_6831267bb1984baabffe65be3d6b8400",
@@ -242,7 +242,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/remote_mcp/workflow.rs",
-          "version": "repo-file-v1:sha256:fac15b0327b3334b110a94a85a663d2840d419ee89deceb2479b232499c60d14"
+          "version": "repo-file-v1:sha256:ee6af0ab5cc40bb6d19505daaf3c52554587825be1474346fad84b2321656061"
         },
         {
           "resource": "repo://crates/server/src/routes/workflow_presets.rs",
@@ -257,10 +257,24 @@
           "version": "repo-file-v1:sha256:ecfc882877cd8569884fe24dc9151c99443f83c801cf871e2145b7f71203b4a7"
         }
       ]
+    },
+    {
+      "id": "claim_40af0f84b8674ebeb3d93ccf5d8ef49a",
+      "statement": "公開MCP workflow defaultsはrevision付き既定追記配列をitemsに包むobjectを返すが、共通サービスとHTTP/UIの配列契約および認可を維持する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/remote_mcp/workflow.rs#L24-L87",
+          "version": "repo-lines-v1:sha256:29c869ddf4113b2853b6f68191c4ddf402d02dbd8f8fad0770c288bc7fcef2fb:eyJzZWxlY3RlZExpbmVDb3VudCI6NjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ3NDdkZDYwOWI0ZmU2YjdjMWU2ZWFkNjE0NGEwNjYxMTM1Mzc0MzdiOTI5ZTUzOWM1YjRiMGU0MTIzMDM5NzciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY2NTlkY2M2N2Y2OWE2ODg5MGQxMDUzZDllOTIyOTMxNWUwYTg4YjMxY2I1ZTM5N2RlMGEyYTNhZTU2ODg4ZTciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFjYzRjMTdkZWNhODM3MTI1MTE2YTY0NGY4YzhjYWE0YjNjNzZlNjU3OWE2NDBmYjc3ZmRlMzg4Y2I5MjcyZTQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjIwMzY3MDdhZTVmZDMyNGJmYWI2Yjk1ODI0ZjdmYjYyOWVhMTQ2ODBhZmZkYzc0MThjOWNiNjMwZjVkMDRhOWQifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/workflow_presets.rs#L46-L74",
+          "version": "repo-lines-v1:sha256:f7ea842cb75ae6fbbae65e986d130a488d642bcc5ac820df41ab4d855ee5b91f:eyJzZWxlY3RlZExpbmVDb3VudCI6MjksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVmYjRmZjY0NWRmYjU2MDBkOTRmY2MwY2I4YzJhMGYxNzE4N2JlNDQ0NTk5ZDc0ZTVlZWY3YTVhZmZkMTYzYzUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVlOTI4MTExOTYyYmVmMjk1ZjM0YThkY2QwNDQwNzYwYTUyNzY1YTg5NDUyYzcxM2U3ZmE3ZjkxZTNhYWFkM2EiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijc4YzRkNDVlYjRhNTA2NDRhYmJhOGFjMDQzYTliMGRkYjI3NDM4MTA2ZGI1MzZhYjFlYTdmZWRjNTEzZDM3MmIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY1ZDQ5OGJlZGQwNTZiNGNhMmY0MDNmMDRhYjIwYmQ1NmVhZDJiYmFkMmQ1OGFkODAxOWRkOWM5NWRmZTZiYzQifQ"
+        }
+      ]
     }
   ],
   "verification": {
-    "by": "openwiki/0.7.2",
-    "at": "2026-11-11T09:36:22.928Z"
+    "by": "openwiki/0.9.0",
+    "at": "2026-11-16T23:50:22.756Z"
   }
 }

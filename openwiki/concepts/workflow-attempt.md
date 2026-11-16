@@ -34,10 +34,10 @@ sources:
     resource: repo://packages/web-core/src/features/workflow/ui/WorkflowTemplateEditorPage.tsx
   - id: openwiki-source-5d2382a0f231c830f95f103c
     resource: repo://packages/web-core/src/shared/dialogs/shared/WorkspaceTargetDialog.tsx
-generated: { by: "codex", at: "2026-11-11T09:36:22.928Z" }
+generated: { by: "codex", at: "2026-11-16T23:50:22.756Z" }
 verified:
-  - by: openwiki/0.7.2
-    at: 2026-11-11T09:36:22.928Z
+  - by: openwiki/0.9.0
+    at: 2026-11-16T23:50:22.756Z
 ---
 
 # Workflow Attempt とグラフの契約
@@ -56,7 +56,7 @@ LOCAL-372以後、新しい仕事はIssueの共通開始ダイアログで単一
 
 固定契約・LVK既定指示・利用者追記を分け、Project既定追記のrevisionと今回/工程追記を開始時に固定する。Project revision競合はreloadが必要。利用者追記で停止契約やgraph構造を置換しない。推奨は可能だが、採用・修正・削除・Git merge/公開は別指示であり、報告中のDECISIONだけでruntime待機状態にはしない。[preset compiler](../../crates/workflow/src/presets.rs)・[defaults/start](../../crates/server/src/routes/workflow_presets.rs)
 
-MCPのworkflow toolも同じlist/start/status/stop/defaults/save_defaultsサービスを使う。startのrequest_idは同じ入力でのみ再送し、不明な受付から新しいIDで再起動しない。statusは既存Run/Session報告・成功済み成果・失敗・残件を返す。報告工程には事前の[ソース保護](../integrations/agent-providers.md)が必要で、不成立時は起動を拒否する。[MCP](../../crates/server/src/remote_mcp/workflow.rs)
+MCPのworkflow toolも同じlist/start/status/stop/defaults/save_defaultsサービスを使う。公開MCPのdefaults応答はstructuredContentのobject契約に合わせて `{ "items": [...] }` とし、各要素にProject既定追記とrevisionを保持する。HTTP/UIと共通defaultsサービスは配列のままであり、認可やrevision照合を包装で迂回しない。startのrequest_idは同じ入力でのみ再送し、不明な受付から新しいIDで再起動しない。statusは既存Run/Session報告・成功済み成果・失敗・残件を返す。報告工程には事前の[ソース保護](../integrations/agent-providers.md)が必要で、不成立時は起動を拒否する。[MCP](../../crates/server/src/remote_mcp/workflow.rs)
 
 旧任意graph作成・編集・起動と新規Arena入口は終了した。定義・Run・保存snapshotと既存retry/resumeは保持し、旧URLは定義viewerとして読む。以下の汎用node/editor説明は保存履歴と残る互換実装の調査用で、自由editorを提供する現行手順ではない。[入口guard](../../crates/server/src/routes/workflows.rs)・[viewer](../../packages/web-core/src/features/workflow/ui/WorkflowTemplateEditorPage.tsx)
 

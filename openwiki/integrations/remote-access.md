@@ -18,6 +18,8 @@ sources:
     resource: repo://crates/git/src/repository_read.rs
   - id: openwiki-source-237b255ffafe7ecea55eefc6
     resource: repo://crates/mcp/src/task_server/tools/attachments.rs
+  - id: openwiki-source-dc107dec6d46a1dcc08d0a9b
+    resource: repo://crates/mcp/src/task_server/tools/context.rs
   - id: openwiki-source-c1a99ab3d402970b84e3cc23
     resource: repo://crates/mcp/src/task_server/tools/dev_server.rs
   - id: openwiki-source-49a828d687d86bf3842e528d
@@ -86,6 +88,8 @@ sources:
     resource: repo://crates/server/src/remote_mcp/questions.rs
   - id: openwiki-source-ccbefbdb32b7223afc06bb2b
     resource: repo://crates/server/src/remote_mcp/read.rs
+  - id: openwiki-source-aa8d534133f70921d097bb65
+    resource: repo://crates/server/src/remote_mcp/repository_push.rs
   - id: openwiki-source-2ac65265d4518e3d0e1d338e
     resource: repo://crates/server/src/remote_mcp/repository_read.rs
   - id: openwiki-source-0545bff1ae2507a92137efaf
@@ -146,14 +150,16 @@ sources:
     resource: repo://crates/services/src/services/approvals.rs
   - id: openwiki-source-4294e32943918c50b31813b6
     resource: repo://crates/services/src/services/file.rs
+  - id: openwiki-source-8dd059d50335f535b6d49e83
+    resource: repo://crates/utils/src/agent_guides.rs
   - id: openwiki-source-605a3efdc11efae80ada92b1
     resource: repo://crates/utils/src/mcp_error.rs
   - id: openwiki-source-3ecddc0be7b037ea6ab24381
     resource: repo://packages/local-web/vite.config.ts
-generated: { by: "codex", at: "2026-11-16T15:12:08.330Z" }
+generated: { by: "codex", at: "2026-11-16T23:50:22.756Z" }
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-16T15:12:08.330Z
+    at: 2026-11-16T23:50:22.756Z
 ---
 
 # 外部アクセス・MCP・Runner の境界
@@ -585,3 +591,17 @@ stdioとremoteは同じ版サービスへ接続する。`get_issue.description` 
 Manifest参照はDB正本を読む `/api/repos/{repo_id}/change-manifests/{event_id}` のURLへ変わり、旧ファイルpathを公開参照として要求しない。外部の統合状態読取も既存のRepo/Workspace認可を保ってDBを参照する。[API](../../crates/server/src/routes/repo.rs)・[状態読取](../../crates/server/src/remote_mcp/merge_read.rs)
 
 worker専用stdio `integration_action` に `prepare_archive` を追加した。受付時に固定された `issue_archive_enabled` がONの場合、候補作成後・検証/Wiki前に固定Issue本文を追加commitへ保存し、返された候補SHAを以後のcode SHAに用いる。retryは元request_id・元expected_commitを保持する。外部AIに候補branchやruntime対象のoverride権限を追加せず、OFFを今回の依頼で勝手にONへ変更しない。[worker tool](../../crates/mcp/src/task_server/tools/integration.rs)・[設定/停止回復の詳細](../concepts/formal-integration.md#採用issue本文の任意アーカイブlocal-399)
+
+## stdio contextの読み取り専用契約（LOCAL-401）
+
+stdio `get_context` はidentity情報と任意のcoding/parallel/resources guideを返し、readOnlyHint=true、destructiveHint=false、openWorldHint=falseを宣言する。guideなしも従来どおりで、resources guideのpath解決はdataディレクトリを作成しない。起動前guide配置と読取toolの処理を分離し、代表的な書込toolの注釈・認可は維持する。read-only宣言は他toolの実行許可ではなく、Codexの承認設定が全操作を自動許可する意味でもない。[context](../../crates/mcp/src/task_server/tools/context.rs#L24-L56)・[guide](../../crates/utils/src/agent_guides.rs#L15-L29)・[stdio回帰](../../crates/mcp/src/task_server/tools/stdio_tests.rs)
+
+通常Sessionと正式自動マージworkerは同じ承認パラメータを送る。保存・送信・provider実効値の検証範囲は [Agent Runtime](../architecture/agent-runtime.md#codex承認設定と読み取りガイド)と[隔離承認検証記録](../../tests/settings-redesign/APPROVAL-VERIFICATION.md)を参照する。今回の統合回帰はstdio/guide/承認のfixtureであり、実モデル・実Auth0・接続client全体E2Eの再実施ではない。
+
+## Repository pushと追加の診断・defaults応答
+
+公開MCPの`preview_repository_push` / `push_repository_branch`はread+write、`verify_repository_push`はreadを要求し、Projectと登録Repositoryの所属を確認してSettingsと同じserviceへ渡す。pushは全履歴の明示確認を前提とする。preview全体とstable request_idを保持し、結果不明時は元receiptとremote観測を照合する。Workspace作成、PR、自動マージ、forceや自動retryは行わない。stdioにpush専用toolは増やさない。[手順・制限・回復](github-review.md#登録repositoryのローカルbranchを明示pushする)・[adapter](../../crates/server/src/remote_mcp/repository_push.rs#L36-L135)
+
+`get_execution` は旧`error_code`を保持し、`error_kind`、`error_provider_code`、`error_will_retry`を加える。保存値でもkind enum・provider code allowlist・boolean型を再検査し、未知/不正型は公開しない。native message・URL・detailsは診断に含めない。これはruntime状態と別の診断情報で、retry通知を最終失敗と同一視しない。[公開投影](../../crates/server/src/remote_mcp/runtime_read.rs#L219-L235)・[retry終端分類](../architecture/agent-runtime.md#codexのretry進捗と安全な診断)
+
+公開MCPの`workflow(action=defaults)`は `{ "items": [...] }` のobjectを返し、各要素のrevisionを保持する。HTTP/UIと共通defaults serviceは従来の配列を返す。包装はProject認可・write scope・revision照合や固定presetの停止契約を変えない。[MCP包装](../../crates/server/src/remote_mcp/workflow.rs#L24-L87)・[Workflowの契約](../concepts/workflow-attempt.md#現行の3-presetと共通開始)

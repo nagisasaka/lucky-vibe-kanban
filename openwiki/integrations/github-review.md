@@ -10,6 +10,12 @@ sources:
     resource: repo://crates/git/src/cli.rs
   - id: openwiki-source-bd15422ef1716eca23408f1f
     resource: repo://crates/git/src/lib.rs
+  - id: openwiki-source-ab16f75e6c404bee0fa0eb59
+    resource: repo://crates/git/src/repository_push.rs
+  - id: openwiki-source-aa8d534133f70921d097bb65
+    resource: repo://crates/server/src/remote_mcp/repository_push.rs
+  - id: openwiki-source-d5a46b0d63ef3823cfab4ff2
+    resource: repo://crates/server/src/repository_push.rs
   - id: openwiki-source-16bb0bc0baa397cce8e201b1
     resource: repo://crates/server/src/routes/github_credentials.rs
   - id: openwiki-source-65c0f36670a161dc05040e69
@@ -20,10 +26,12 @@ sources:
     resource: repo://crates/services/src/services/pr_monitor.rs
   - id: openwiki-source-5837e5316279163dd8bfbfd3
     resource: repo://crates/utils/src/github_credentials.rs
-generated: { by: "codex", at: "2026-11-04T20:35:55.356Z" }
+  - id: openwiki-source-bbef1040208c4a3ecf8b1e75
+    resource: repo://packages/web-core/src/shared/dialogs/settings/settings/RepositoryPushSettings.tsx
+generated: { by: "codex", at: "2026-11-16T23:50:22.756Z" }
 verified:
-  - by: openwiki/0.7.2
-    at: 2026-11-12T04:13:28.445Z
+  - by: openwiki/0.9.0
+    at: 2026-11-16T23:50:22.756Z
 ---
 
 # GitHub 認証・PR とレビューの境界
@@ -79,3 +87,20 @@ storage の置換・Unix permission・破損拒否、header/helper の対象制�
 PR操作にはLVK実行環境のPATHに `gh` が必要である。未登録repositoryではその実行accountで `gh auth login` を完了し、`gh auth status` とGit remoteの対象を確認する。hostだけの認証はcontainerに自動配達されない。[CLI検出と実行](../../crates/git-host/src/github/cli.rs)
 
 repository別tokenを使う場合は Settings → Repositories で対象RepoのGitHub資格情報を開く。表示された正規化owner/repositoryとpush先を確認し、GitHubで対象Repoに限定したfine-grained PATを用意する。Git push/pullにはContents read/write、PR操作にはPull requests read/writeを与え、必要なIssue操作やworkflow定義のpushには対応する追加権限と組織承認・期限条件も確認してから、LVKへ保存して接続を確認する。token本文の再表示は行わない。置換後は次の操作で再確認し、削除後はsystem認証へ戻る。GitHub側の失効は別に行う。[管理API](../../crates/server/src/routes/github_credentials.rs)・[保存モデル](../../crates/utils/src/github_credentials.rs)
+
+## 登録Repositoryのローカルbranchを明示pushする
+
+LOCAL-385のRepository pushは、統合済みローカルmain/dev等を同名のGitHub branchへ公開する独立操作である。Workspaceの作成・checkout・source後処理・PR作成や自動マージは行わない。ローカル統合の許可からGitHub公開を推論しない。HTTPと公開MCPは共通serviceを使い、preview/pushにはread+writeとProject/Repository関連付けを要求する。push直前にもLeaseの期限・失効・membership・設定revisionを再確認する。merge権限とは別である。[共通service](../../crates/server/src/repository_push.rs)・[MCP入口](../../crates/server/src/remote_mcp/repository_push.rs#L36-L63)
+
+前提は、Projectに関連付く登録Repository、存在するローカルbranch、単一の構成済みGitHub.com push URLと有効な実行環境の認証である。URL rewrite・mirror・複数push URL・曖昧なremoteは拒否する。通常操作ではローカルfilesystem remoteを受け付けない。remote SHAのobjectがローカルにないと履歴比較不能として拒否し、自動fetchはしない。previewは未公開10,000 commitとIssue archive候補200 pathを上限とする。[対象とpreview](../../crates/git/src/repository_push.rs#L22-L152)
+
+1. Settings → Repositoriesの対象Repoを開き、関連Project・構成済みremote・ローカルbranchを選び、Review push targetを実行する。
+2. Repository identity、push URL、source SHA、同名destination branch、観測remote SHA、未公開件数、履歴内のIssue archive候補を確認する。本文archiveも履歴とともに外部公開されるため、履歴全体を確認してチェックを入れる。
+3. Push confirmed commitを明示実行する。サーバーはpreviewを再構成して全項目一致を検証し、その確認済み値だけをreceiptへ保存する。直前のsource/remote driftなら拒否し、利用者が対象を再確認する。
+4. 応答が不明ならrequest IDを保持し、Check remote resultで元receiptとremote branchを読み直す。新request IDでpushし直さない。reloadでもsessionStorageのIDから再確認導線を保つ。
+
+Gitはsource refをlockし、固定SHAの単一refspecで通常pushする。force、tag/submodule追加push、pre-push hook、upstream/tracking変更は行わない。fast-forward可否はremote側のGitも判定する。認証拒否、権限不足、保護branch、non-fast-forward、drift、結果不明は固定codeで区別し、raw Git診断や秘密を公開しない。[publish](../../crates/git/src/repository_push.rs#L154-L239)・[CLI](../../crates/git/src/cli.rs)
+
+永続receiptは同じactor・request ID・入力の重複実行を防ぐ。明確な`not_admitted`だけはIDを解放して再reviewできる。その他の応答喪失は受付済みの可能性を残す。再確認はreceiptを保持したままremote観測を別に返し、`source_present:null`は未観測、falseは現在一致しないことを示す。trueでも誰がpushしたかの証明ではない。uncertain receiptは観測で書き換えず、remoteが確認済みSHAに一致したときだけUIから別対象の明示reviewへ進める。running/acceptedや未観測では再pushを解除しない。[receiptとverify](../../crates/server/src/repository_push.rs#L150-L264)・[UIのlock](../../packages/web-core/src/shared/dialogs/settings/settings/RepositoryPushSettings.tsx)
+
+隔離ローカルbare remote/hooksとin-memory DBの試験は通常main/dev push、拒否・drift・権限・receiptを検査する。UIのmock fixtureとSSRは明示確認、応答喪失、再確認を検査する。実GitHub/PAT、GitHub側rule、認証済み稼働アプリE2Eの成功をこれらのfixtureから推定しない。[検証入口と範囲](../../tests/repository-push/README.md)

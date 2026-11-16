@@ -5,7 +5,7 @@ description: AgentRun を独立プロセスで実行し、Native Audit から永
 tags: [agent-runtime, audit, persistence, recovery]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-16T15:12:08.330Z
+    at: 2026-11-16T23:50:22.756Z
 sources:
   - id: openwiki-source-b85c3dc0eaacdffedf4e68ee
     resource: repo://crates/db/migrations/20261026180000_agent_starting_recovery.sql
@@ -49,6 +49,8 @@ sources:
     resource: repo://crates/local-deployment/src/process_host/journal.rs
   - id: openwiki-source-8a1832c7fd24c1e7222a8d0a
     resource: repo://crates/local-deployment/src/pty.rs
+  - id: openwiki-source-dc107dec6d46a1dcc08d0a9b
+    resource: repo://crates/mcp/src/task_server/tools/context.rs
   - id: openwiki-source-5720d865d1c837f0e6b7dab7
     resource: repo://crates/server/src/routes/integrations/conversation.rs
   - id: openwiki-source-ecfa47de2e3842c785820c9b
@@ -77,7 +79,7 @@ sources:
     resource: repo://crates/workspace-manager/src/workspace_manager.rs
   - id: openwiki-source-141584dac09cf0f93be6bff5
     resource: repo://tests/codex-process-cleanup/README.md
-generated: { by: "codex", at: "2026-11-10T21:23:07.231Z" }
+generated: { by: "codex", at: "2026-11-16T23:50:22.756Z" }
 ---
 
 # Agent Runtime の監査・投影・回復
@@ -147,7 +149,7 @@ Codex のメッセージ差分と完成メッセージは別の経路を通る�
 
 Codex の最新 context は `tokenUsage.last.totalTokens` と `modelContextWindow`、累積 usage は `total.inputTokens` / `total.outputTokens` から別々に得る。context の任意 field は既存 snapshot JSON に入り、host journal と DB の latest-value snapshot を通って replay される。context 用の専用 table や canonical token 履歴は増やさない。Workspace 累積トークンは別の thread 単位集計として保存する。[分類](../../crates/executors/src/executors/provider_adapter.rs#L1632-L1658)・[JSON 保存](../../crates/db/src/models/agent_runtime.rs#L1861-L1907)・[journal の選別](../../crates/local-deployment/src/process_host/journal.rs#L156-L175)。画面での未知値・新しい attempt の扱いは [Session の context 表示](../concepts/session-and-agent-run.md#context-使用量の意味)を参照する。
 
-現行 Codex mapper は v8 で、`AgentScope` が native thread の親子関係と観測を canonical AgentActivity へ投影する。root は開始・再開応答で確定し、子の通知や scope 不明の usage を親の会話・使用量にしない。v7 は delivery 解釈導入前、v6 は明示 plan 導入前、v5 は実行表示 metadata 導入前、旧 v4 は collaboration 観測導入前の replay 用に残す。既存 canonical 履歴を新しい観測で推測補完する仕組みではない。[mapper 選択](../../crates/executors/src/executors/provider_adapter.rs#L280-L444)・[scope](../../crates/executors/src/executors/codex/agent_scope.rs#L24-L200)。子の終端証拠を要求する実行側 guard と表示 lifecycle は [native subagent](../concepts/session-and-agent-run.md#native-subagent-と旧実行モデル)に置く。
+現行 Codex mapper は v9 で、`AgentScope` が native thread の親子関係と観測を canonical AgentActivity へ投影する。root は開始・再開応答で確定し、子の通知や scope 不明の usage を親の会話・使用量にしない。v8 は安全なエラー分類導入前、v7 は delivery 解釈導入前、v6 は明示 plan 導入前、v5 は実行表示 metadata 導入前、旧 v4 は collaboration 観測導入前の replay 用に残す。既存 canonical 履歴を新しい観測で推測補完する仕組みではない。[mapper 選択](../../crates/executors/src/executors/provider_adapter.rs#L280-L444)・[scope](../../crates/executors/src/executors/codex/agent_scope.rs#L24-L200)。子の終端証拠を要求する実行側 guard と表示 lifecycle は [native subagent](../concepts/session-and-agent-run.md#native-subagent-と旧実行モデル)に置く。
 
 ## Host の再送記録と有界配信
 
@@ -289,3 +291,15 @@ LOCAL-361以後、通常起動は現在のRun/Repo identityと短い契約を合
 一般質問のwaiterもproviderと同じhostが所有する。UI/MCPのSubmitInputはhost内の意味的制御としてwaiterを解決し、元request handlerだけが元の数値/文字列native request IDへ応答する。InputRequestedの任意provider_metadataに元ID・params・questionsを保持する。取消・期限切れ・元turn終了でwaiterを解放し、別attemptや遅い回答、同一native要求の再送から二重配送を作らない。[client](../../crates/executors/src/executors/codex/client.rs#L1146-L1264)・[host回帰](../../crates/local-deployment/src/process_host/approvals.rs#L252-L400)
 
 mapper v8は明示delivery=asyncだけをasync質問へ投影し、asyncのfinal_answerをturn最終報告としない。未知値・null・欠落と元item/thread/turn情報をmetadataに保持し、modeや本文・DECISIONから補わない。明示isBlocking=falseは待機件数へ入れず、欠落時は旧server-request契約を維持する。旧mapperの履歴と終了済みRunを書き換えない。[投影](../../crates/executors/src/executors/provider_adapter.rs#L2112-L2220)・[質問登録](../../crates/executors/src/executors/codex/client.rs#L1154-L1207)
+
+## Codexのretry進捗と安全な診断
+
+Codex mapper v9はnative `error`の`willRetry: true`をSystem進捗メッセージへ投影し、その時点でErrorや最終失敗にしない。後続の`turn/completed`がfailedなら終端側のエラーを投影し、回復したturnの成功や保持済み成果をretry通知で消さない。実際の終端制御とprocess回収は既存hostが所有する。v8以前の監査は当時のmapperで再生する。[分類](../../crates/executors/src/executors/provider_adapter.rs#L1194-L1251)・[回帰](../../crates/executors/src/executors/provider_adapter.rs#L3310-L3404)
+
+診断の`provider_code`は閉じたallowlistだけを保存する。stream切断・接続失敗・試行上限・HTTP接続失敗はProtocolFailed、その他はUnknownへ分類する。未知のcode、native message、URL、additionalDetailsは公開診断へ流さず、一般化したprovider errorとする。MCPも再度allowlistとboolean型を検査する。[allowlist](../../crates/executors/src/executors/provider_adapter.rs#L1172-L1251)・[公開診断](../../crates/server/src/remote_mcp/runtime_read.rs)
+
+## Codex承認設定と読み取りガイド
+
+通常Sessionと正式自動マージworkerは同じthread startパラメータを使う。Auto sandboxで承認指定がなければon-request、明示on-request/never/unless-trustedはその値を渡し、それ以外の未指定ではnative設定を継承する。保存設定・送信値・実効値は別の証拠であり、承認設定をモデルの判断や実行成功と混同しない。[パラメータ](../../crates/executors/src/executors/codex.rs#L1192-L1211)・[隔離検証記録](../../tests/settings-redesign/APPROVAL-VERIFICATION.md)
+
+stdioの`get_context`はread-only/non-destructive/closed-worldを宣言する。guide取得時のresource path解決は非作成の`asset_dir_path`を使い、dataディレクトリも生成しない。起動前のguideファイル配置は従来のprepareの責務であり、読み取りと分離される。他の書込toolの認可は変更しない。[context](../../crates/mcp/src/task_server/tools/context.rs#L24-L56)・[guide](../../crates/utils/src/agent_guides.rs#L15-L29)・[stdio回帰](../../crates/mcp/src/task_server/tools/stdio_tests.rs)

@@ -94,6 +94,8 @@ sources:
     resource: repo://packages/web-core/src/app/styles/new/index.css
   - id: openwiki-source-36bc16e51274306c238a63a2
     resource: repo://packages/web-core/src/features/kanban/model/hooks/useKanbanFilters.ts
+  - id: openwiki-source-42495f15f981aca75a68322a
+    resource: repo://packages/web-core/src/features/kanban/model/searchKanbanIssues.ts
   - id: openwiki-source-cae8a3c125596fe3e7ed7b37
     resource: repo://packages/web-core/src/features/kanban/ui/kanban-grid.css
   - id: openwiki-source-b39952c69795059582eecfdf
@@ -120,10 +122,10 @@ sources:
     resource: repo://tests/kanban/issue-detail.mjs
   - id: openwiki-source-62d93277f2c37df9b3fcebae
     resource: repo://tests/kanban/README.md
-generated: { by: "codex", at: "2026-11-16T15:12:08.330Z" }
+generated: { by: "codex", at: "2026-11-16T23:50:22.756Z" }
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-16T18:11:18.484Z
+    at: 2026-11-16T23:50:22.756Z
 ---
 
 # Project・Issue と実施の関係
@@ -252,7 +254,7 @@ Team / Personal は同じ Project の Issue 集合を見る filter preset であ
 
 `hideBlocked` は blocking 関係の元 Issue を blocker として調べる。blocker が **最後の可視 Status（sort_order 順）または任意の hidden Status** にあれば解決済みとして扱い、それ以外なら被ブロック Issue を隠す。参照先 blocker が手元の集合に存在しなければ、ブロック中と判定しない。名前が Done か、`completed_at` が埋まっているかという判定ではない。列の順序・非表示化は見た目だけでなく、この依存表示の意味を変える。[解決済み Status 集合](../../packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L311-L325)・[blocking の向きと判定](../../packages/web-core/src/features/kanban/model/hooks/useKanbanFilters.ts#L149-L169)
 
-検索は title / simple_id / issue_number の部分一致で、Project / view 別設定を保持する。filter はカテゴリー内 OR、カテゴリー間は順に適用する AND である。[検索・filter](../../packages/web-core/src/features/kanban/model/hooks/useKanbanFilters.ts#L82-L147)・[Project 別設定の復元](../../packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L244-L285)
+検索の直接一致は title / simple_id / issue_number の部分一致で、検索語はProject / view別設定を保持する。「関連イシューを含む」は初期ONの画面stateであり、保存されたview設定ではない。ONでは直接一致を起点に、読み込み済みの同一Projectの `related` 関係だけを双方向・連鎖的にたどり、循環を重複排除する。OFFでは直接一致だけに戻る。親子・blocking・重複関係は展開せず、欠落端点を追加取得しない。空検索は元の集合、該当なしは空集合となる。展開後も元のstatus_idを保持し、他のfilter、sub-issue表示、hidden Statusとarchive表示範囲を適用する。[検索と回帰](../../packages/web-core/src/features/kanban/model/searchKanbanIssues.ts)・[ON/OFF](../../packages/ui/src/components/KanbanFilterBar.tsx)・[表示集合](../../packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L344-L380)。filter はカテゴリー内 OR、カテゴリー間は順に適用する AND である。[検索・filter](../../packages/web-core/src/features/kanban/model/hooks/useKanbanFilters.ts#L82-L147)・[Project 別設定の復元](../../packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L244-L285)
 
 ### コンパクトカードの表示契約
 
