@@ -30,7 +30,11 @@ function RootRouteComponent() {
 
   return (
     <I18nextProvider i18n={i18n}>
-      <ThemeProvider initialTheme={config?.theme || ThemeMode.SYSTEM}>
+      <ThemeProvider
+        initialTheme={config?.theme || ThemeMode.SYSTEM}
+        initialLightColorTheme={config?.light_color_theme}
+        initialDarkColorTheme={config?.dark_color_theme}
+      >
         <UserProvider>
           <Outlet />
         </UserProvider>

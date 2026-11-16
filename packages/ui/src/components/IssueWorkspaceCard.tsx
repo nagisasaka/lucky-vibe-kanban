@@ -398,7 +398,7 @@ export function IssueWorkspaceCreateCard({
           onClick={onClick}
           disabled={!onClick}
           className={cn(
-            'shrink-0 rounded-sm px-base py-half text-cta h-cta flex items-center bg-brand-secondary text-on-brand hover:bg-brand-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed',
+            'shrink-0 rounded-sm px-base py-half text-cta h-cta flex items-center bg-brand-secondary text-on-brand-secondary hover:bg-brand-secondary-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed',
             shouldAnimateCreateButton && 'create-issue-attention'
           )}
         >

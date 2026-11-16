@@ -13,8 +13,10 @@ import {
 import { FolderPickerDialog } from '@/shared/dialogs/shared/FolderPickerDialog';
 import {
   type BaseCodingAgent,
+  DarkColorTheme,
   DEFAULT_PR_DESCRIPTION_PROMPT,
   type ExecutorProfileId,
+  LightColorTheme,
   SoundFile,
   ThemeMode,
   UiLanguage,
@@ -54,6 +56,7 @@ import {
   SettingsTextarea,
 } from './SettingsComponents';
 import { useSettingsDirty } from './SettingsDirtyContext';
+import { ColorThemeSettings } from './ColorThemeSettings';
 
 export function GeneralSettingsSection({
   category = 'general',
@@ -78,7 +81,7 @@ export function GeneralSettingsSection({
   const [branchPrefixError, setBranchPrefixError] = useState<string | null>(
     null
   );
-  const { setTheme } = useTheme();
+  const { setTheme, setColorThemes } = useTheme();
 
   // Executor options for the default coding agent dropdown
   const executorOptions = profiles
@@ -196,7 +199,12 @@ export function GeneralSettingsSection({
         !(await updateAndSaveConfig(draft, (message) => setSaveError(message)))
       )
         return;
+      // Appearance is applied only after a successful save.
       setTheme(draft.theme);
+      setColorThemes({
+        light: draft.light_color_theme ?? LightColorTheme.STANDARD,
+        dark: draft.dark_color_theme ?? DarkColorTheme.STANDARD,
+      });
       setDirty(false);
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
@@ -244,11 +252,6 @@ export function GeneralSettingsSection({
     );
   }
 
-  const themeOptions = Object.values(ThemeMode).map((theme) => ({
-    value: theme,
-    label: toPrettyCase(theme),
-  }));
-
   const soundOptions = Object.values(SoundFile).map((sound) => ({
     value: sound,
     label: notificationSoundLabel(sound, t),
@@ -276,17 +279,20 @@ export function GeneralSettingsSection({
           description={t('settings.general.appearance.description')}
         >
           <p className="text-xs text-low">{t('settings.scope.appearance')}</p>
-          <SettingsField
-            label={t('settings.general.appearance.theme.label')}
-            description={t('settings.general.appearance.theme.helper')}
-          >
-            <SettingsSelect
-              value={draft?.theme}
-              options={themeOptions}
-              onChange={(value) => updateDraft({ theme: value })}
-              placeholder={t('settings.general.appearance.theme.placeholder')}
-            />
-          </SettingsField>
+          <ColorThemeSettings
+            theme={draft?.theme ?? ThemeMode.SYSTEM}
+            lightColorTheme={
+              draft?.light_color_theme ?? LightColorTheme.STANDARD
+            }
+            darkColorTheme={draft?.dark_color_theme ?? DarkColorTheme.STANDARD}
+            onThemeChange={(theme) => updateDraft({ theme })}
+            onLightColorThemeChange={(light_color_theme) =>
+              updateDraft({ light_color_theme })
+            }
+            onDarkColorThemeChange={(dark_color_theme) =>
+              updateDraft({ dark_color_theme })
+            }
+          />
 
           <SettingsField
             label={t('settings.general.appearance.language.label')}

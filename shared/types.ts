@@ -962,7 +962,15 @@ export type DirectoryInspection = { path: string, is_git_repo: boolean, repo: Re
 
 export type SearchMode = "taskform" | "settings";
 
-export type Config = { config_version: string, theme: ThemeMode, executor_profile: ExecutorProfileId, disclaimer_acknowledged: boolean, onboarding_acknowledged: boolean, notifications: NotificationConfig, editor: EditorConfig, github: GitHubConfig, analytics_enabled: boolean, workspace_dir: string | null, last_app_version: string | null, show_release_notes: boolean, language: UiLanguage,
+export type Config = { config_version: string, theme: ThemeMode,
+/**
+ * Instance-wide colour theme for the light appearance.
+ */
+light_color_theme: LightColorTheme,
+/**
+ * Instance-wide colour theme for the dark appearance.
+ */
+dark_color_theme: DarkColorTheme, executor_profile: ExecutorProfileId, disclaimer_acknowledged: boolean, onboarding_acknowledged: boolean, notifications: NotificationConfig, editor: EditorConfig, github: GitHubConfig, analytics_enabled: boolean, workspace_dir: string | null, last_app_version: string | null, show_release_notes: boolean, language: UiLanguage,
 /**
  * Last browser locale supplied with an explicit server-wide config save.
  * This is a notification hint, not a user preference or UI language override.
@@ -984,6 +992,10 @@ integration_skip_validation: boolean, };
 export type NotificationConfig = { sound_enabled: boolean, push_enabled: boolean, push_event_mask: number, sound_file: SoundFile, };
 
 export enum ThemeMode { LIGHT = "LIGHT", DARK = "DARK", SYSTEM = "SYSTEM" }
+
+export enum LightColorTheme { STANDARD = "STANDARD", PAPER = "PAPER", LINEN = "LINEN" }
+
+export enum DarkColorTheme { STANDARD = "STANDARD", NAVY = "NAVY", INDIGO = "INDIGO" }
 
 export type EditorConfig = {
 /**

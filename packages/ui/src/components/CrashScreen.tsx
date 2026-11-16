@@ -35,7 +35,7 @@ export function CrashScreen({
         <button
           type="button"
           onClick={() => (onReload ?? (() => window.location.reload()))()}
-          className="flex items-center gap-half rounded-md bg-brand px-double py-base text-base font-medium text-white hover:bg-brand/90 transition-colors"
+          className="flex items-center gap-half rounded-md bg-brand px-double py-base text-base font-medium text-on-brand hover:bg-brand/90 transition-colors"
         >
           <ArrowClockwiseIcon className="size-icon-base" weight="bold" />
           {t('crashScreen.reload')}

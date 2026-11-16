@@ -28,7 +28,7 @@ export function PrimaryButton({
     : variant === 'default'
       ? 'bg-brand hover:bg-brand-hover text-on-brand'
       : variant === 'secondary'
-        ? 'bg-brand-secondary hover:bg-brand-hover text-on-brand'
+        ? 'bg-brand-secondary hover:bg-brand-secondary-hover text-on-brand-secondary'
         : 'bg-panel hover:bg-secondary text-normal';
 
   return (

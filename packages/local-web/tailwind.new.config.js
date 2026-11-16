@@ -112,15 +112,26 @@ module.exports = {
         brand: "hsl(var(--brand))",
         'brand-hover': "hsl(var(--brand-hover))",
         'brand-secondary': "hsl(var(--brand-secondary))",
+        'brand-secondary-hover': "hsl(var(--brand-secondary-hover))",
         error: "hsl(var(--error))",
         success: "hsl(var(--success))",
         merged: "hsl(var(--merged))",
-        // Text on accent
+        // Text on accent fills
         'on-brand': "hsl(var(--text-on-brand))",
+        'on-brand-secondary': "hsl(var(--text-on-brand-secondary))",
+        'on-error': "hsl(var(--text-on-error))",
+        'on-success': "hsl(var(--text-on-success))",
         // shadcn-style colors (used by @apply in CSS base layer)
         background: "hsl(var(--bg-primary))",
         foreground: "hsl(var(--text-normal))",
         border: "hsl(var(--border))",
+      },
+      // `text-brand` uses a text-safe shade (darker on light surfaces).
+      textColor: {
+        brand: "hsl(var(--brand-text))",
+      },
+      ringColor: {
+        brand: "hsl(var(--brand-text))",
       },
       borderColor: {
         DEFAULT: "hsl(var(--border))",

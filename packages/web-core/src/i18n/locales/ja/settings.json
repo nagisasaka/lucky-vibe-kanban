@@ -68,8 +68,27 @@
         "description": "アプリケーションの見た目と操作感をカスタマイズします。",
         "theme": {
           "label": "テーマ",
-          "placeholder": "テーマを選択",
-          "helper": "お好みの色スキームを選択してください。"
+          "helper": "OS の設定に従うか、常にライトかダークで表示します。",
+          "options": {
+            "system": "システム",
+            "light": "ライト",
+            "dark": "ダーク"
+          }
+        },
+        "colorTheme": {
+          "label": "カラーテーマ",
+          "helper": "ライト・ダークそれぞれで使う配色を選びます。保存すると反映されます。",
+          "light": "ライトのカラーテーマ",
+          "dark": "ダークのカラーテーマ",
+          "systemLight": "OS がライトのとき",
+          "systemDark": "OS がダークのとき",
+          "names": {
+            "standard": "標準",
+            "paper": "Paper",
+            "linen": "Linen",
+            "navy": "Navy",
+            "indigo": "Indigo"
+          }
         },
         "language": {
           "label": "言語",

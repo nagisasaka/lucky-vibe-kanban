@@ -331,6 +331,8 @@ fn generate_types_content() -> String {
         services::services::config::Config::decl(),
         services::services::config::NotificationConfig::decl(),
         services::services::config::ThemeMode::decl(),
+        services::services::config::LightColorTheme::decl(),
+        services::services::config::DarkColorTheme::decl(),
         services::services::config::EditorConfig::decl(),
         services::services::config::editor::EditorEntry::decl(),
         services::services::config::editor::EditorLink::decl(),

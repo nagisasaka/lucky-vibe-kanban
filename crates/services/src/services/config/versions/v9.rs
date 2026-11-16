@@ -1,6 +1,9 @@
+use std::str::FromStr;
+
 use anyhow::Error;
 use executors::{executors::BaseCodingAgent, profile::ExecutorProfileId};
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
+use strum_macros::EnumString;
 use ts_rs::TS;
 pub use v8::{
     EditorConfig, GitHubConfig, NotificationConfig, SendMessageShortcut, ShowcaseState, SoundFile,
@@ -24,10 +27,55 @@ fn default_hidden_agents() -> Vec<BaseCodingAgent> {
     ]
 }
 
+/// Colour theme used while the resolved appearance (ThemeMode) is light.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize, TS, EnumString)]
+#[ts(use_ts_enum)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[strum(serialize_all = "SCREAMING_SNAKE_CASE")]
+pub enum LightColorTheme {
+    #[default]
+    Standard,
+    Paper,
+    Linen,
+}
+
+/// Colour theme used while the resolved appearance (ThemeMode) is dark.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize, TS, EnumString)]
+#[ts(use_ts_enum)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[strum(serialize_all = "SCREAMING_SNAKE_CASE")]
+pub enum DarkColorTheme {
+    #[default]
+    Standard,
+    Navy,
+    Indigo,
+}
+
+/// Colour themes are cosmetic: an unknown or malformed value (for example one
+/// written by a newer build) falls back to Standard instead of invalidating
+/// the whole config and resetting unrelated settings.
+fn deserialize_color_theme<'de, D, T>(deserializer: D) -> Result<T, D::Error>
+where
+    D: Deserializer<'de>,
+    T: FromStr + Default,
+{
+    let value = serde_json::Value::deserialize(deserializer)?;
+    Ok(value
+        .as_str()
+        .and_then(|value| value.parse().ok())
+        .unwrap_or_default())
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize, TS)]
 pub struct Config {
     pub config_version: String,
     pub theme: ThemeMode,
+    /// Instance-wide colour theme for the light appearance.
+    #[serde(default, deserialize_with = "deserialize_color_theme")]
+    pub light_color_theme: LightColorTheme,
+    /// Instance-wide colour theme for the dark appearance.
+    #[serde(default, deserialize_with = "deserialize_color_theme")]
+    pub dark_color_theme: DarkColorTheme,
     pub executor_profile: ExecutorProfileId,
     pub disclaimer_acknowledged: bool,
     pub onboarding_acknowledged: bool,
@@ -92,6 +140,8 @@ impl Config {
         Self {
             config_version: "v9".to_string(),
             theme: old_config.theme,
+            light_color_theme: LightColorTheme::default(),
+            dark_color_theme: DarkColorTheme::default(),
             executor_profile: old_config.executor_profile,
             disclaimer_acknowledged: old_config.disclaimer_acknowledged,
             onboarding_acknowledged: old_config.onboarding_acknowledged,
@@ -151,6 +201,8 @@ impl Default for Config {
         Self {
             config_version: "v9".to_string(),
             theme: ThemeMode::System,
+            light_color_theme: LightColorTheme::default(),
+            dark_color_theme: DarkColorTheme::default(),
             executor_profile: ExecutorProfileId::new(BaseCodingAgent::ClaudeCode),
             disclaimer_acknowledged: false,
             onboarding_acknowledged: false,
@@ -321,6 +373,104 @@ mod tests {
                 .get("commit_reminder_enabled")
                 .is_none()
         );
+    }
+
+    #[test]
+    fn color_themes_default_to_standard_and_keep_the_theme_mode() {
+        let config = Config::default();
+        assert_eq!(config.light_color_theme, LightColorTheme::Standard);
+        assert_eq!(config.dark_color_theme, DarkColorTheme::Standard);
+
+        // A v9 config saved before colour themes existed keeps its mode.
+        let mut legacy = serde_json::to_value(Config::default()).unwrap();
+        let object = legacy.as_object_mut().unwrap();
+        object.remove("light_color_theme");
+        object.remove("dark_color_theme");
+        legacy["theme"] = serde_json::json!("DARK");
+        legacy["git_branch_prefix"] = serde_json::json!("retained");
+        let migrated = Config::from(legacy.to_string());
+        assert!(matches!(migrated.theme, ThemeMode::Dark));
+        assert_eq!(migrated.light_color_theme, LightColorTheme::Standard);
+        assert_eq!(migrated.dark_color_theme, DarkColorTheme::Standard);
+        assert_eq!(migrated.git_branch_prefix, "retained");
+
+        // Older config versions migrate to Standard and keep their mode.
+        let mut v8 = serde_json::to_value(v8::Config::default()).unwrap();
+        v8["theme"] = serde_json::json!("LIGHT");
+        let migrated = Config::from(v8.to_string());
+        assert!(matches!(migrated.theme, ThemeMode::Light));
+        assert_eq!(migrated.light_color_theme, LightColorTheme::Standard);
+        assert_eq!(migrated.dark_color_theme, DarkColorTheme::Standard);
+    }
+
+    #[test]
+    fn color_themes_round_trip_independently() {
+        let config = Config {
+            theme: ThemeMode::System,
+            light_color_theme: LightColorTheme::Linen,
+            dark_color_theme: DarkColorTheme::Navy,
+            ..Default::default()
+        };
+        let stored = serde_json::to_value(&config).unwrap();
+        assert_eq!(stored["light_color_theme"], "LINEN");
+        assert_eq!(stored["dark_color_theme"], "NAVY");
+        let reloaded = Config::from(stored.to_string());
+        assert!(matches!(reloaded.theme, ThemeMode::System));
+        assert_eq!(reloaded.light_color_theme, LightColorTheme::Linen);
+        assert_eq!(reloaded.dark_color_theme, DarkColorTheme::Navy);
+
+        let mut changed = reloaded.clone();
+        changed.dark_color_theme = DarkColorTheme::Indigo;
+        let reloaded = Config::from(serde_json::to_string(&changed).unwrap());
+        assert_eq!(reloaded.light_color_theme, LightColorTheme::Linen);
+        assert_eq!(reloaded.dark_color_theme, DarkColorTheme::Indigo);
+    }
+
+    #[tokio::test]
+    async fn color_themes_survive_file_save_and_reload() {
+        use crate::services::config::{load_config_from_file, save_config_to_file};
+
+        let directory = tempfile::tempdir().unwrap();
+        let path = directory.path().join("config.json");
+        for light in [
+            LightColorTheme::Standard,
+            LightColorTheme::Paper,
+            LightColorTheme::Linen,
+        ] {
+            for dark in [
+                DarkColorTheme::Standard,
+                DarkColorTheme::Navy,
+                DarkColorTheme::Indigo,
+            ] {
+                let config = Config {
+                    theme: ThemeMode::System,
+                    light_color_theme: light,
+                    dark_color_theme: dark,
+                    git_branch_prefix: "retained".into(),
+                    ..Default::default()
+                };
+                save_config_to_file(&config, &path).await.unwrap();
+                let reloaded = load_config_from_file(&path).await;
+                assert!(matches!(reloaded.theme, ThemeMode::System));
+                assert_eq!(reloaded.light_color_theme, light);
+                assert_eq!(reloaded.dark_color_theme, dark);
+                assert_eq!(reloaded.git_branch_prefix, "retained");
+            }
+        }
+    }
+
+    #[test]
+    fn unknown_color_theme_falls_back_without_resetting_other_settings() {
+        let mut value = serde_json::to_value(Config::default()).unwrap();
+        value["theme"] = serde_json::json!("LIGHT");
+        value["light_color_theme"] = serde_json::json!("FUTURE_SEPIA");
+        value["dark_color_theme"] = serde_json::json!(42);
+        value["git_branch_prefix"] = serde_json::json!("retained");
+        let config = Config::from(value.to_string());
+        assert!(matches!(config.theme, ThemeMode::Light));
+        assert_eq!(config.light_color_theme, LightColorTheme::Standard);
+        assert_eq!(config.dark_color_theme, DarkColorTheme::Standard);
+        assert_eq!(config.git_branch_prefix, "retained");
     }
 
     #[test]

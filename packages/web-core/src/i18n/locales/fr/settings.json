@@ -45,8 +45,27 @@
         "description": "Personnalisez l'apparence de l'application.",
         "theme": {
           "label": "Thème",
-          "placeholder": "Sélectionner un thème",
-          "helper": "Choisissez votre palette de couleurs préférée."
+          "helper": "Choisissez votre palette de couleurs préférée.",
+          "options": {
+            "system": "Système",
+            "light": "Clair",
+            "dark": "Sombre"
+          }
+        },
+        "colorTheme": {
+          "label": "Thème de couleurs",
+          "helper": "Choisissez les couleurs des modes clair et sombre. Appliqué à l’enregistrement.",
+          "light": "Thème de couleurs clair",
+          "dark": "Thème de couleurs sombre",
+          "systemLight": "Quand le système est en mode clair",
+          "systemDark": "Quand le système est en mode sombre",
+          "names": {
+            "standard": "Standard",
+            "paper": "Paper",
+            "linen": "Linen",
+            "navy": "Navy",
+            "indigo": "Indigo"
+          }
         },
         "language": {
           "label": "Langue",

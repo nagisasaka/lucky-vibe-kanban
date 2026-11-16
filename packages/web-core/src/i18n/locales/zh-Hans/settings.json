@@ -45,8 +45,27 @@
         "description": "自定义应用程序的外观和感觉。",
         "theme": {
           "label": "主题",
-          "placeholder": "选择主题",
-          "helper": "选择您喜欢的配色方案。"
+          "helper": "选择您喜欢的配色方案。",
+          "options": {
+            "system": "系统",
+            "light": "浅色",
+            "dark": "深色"
+          }
+        },
+        "colorTheme": {
+          "label": "颜色主题",
+          "helper": "分别选择浅色和深色时使用的配色。保存后生效。",
+          "light": "浅色颜色主题",
+          "dark": "深色颜色主题",
+          "systemLight": "系统为浅色时",
+          "systemDark": "系统为深色时",
+          "names": {
+            "standard": "标准",
+            "paper": "Paper",
+            "linen": "Linen",
+            "navy": "Navy",
+            "indigo": "Indigo"
+          }
         },
         "language": {
           "label": "语言",
