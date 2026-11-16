@@ -7,7 +7,8 @@ import {
   useCallback,
   type ComponentProps,
 } from 'react';
-import WYSIWYGEditor from '@/shared/components/WYSIWYGEditor';
+import type WYSIWYGEditor from '@/shared/components/WYSIWYGEditor';
+import { ProjectIssueEditor } from '@/shared/components/ProjectIssueEditor';
 import { PROJECT_ISSUES_SHAPE } from 'shared/remote-types';
 import { refreshShapeFallback } from '@/shared/lib/electric/collections';
 import { makeRequest } from '@/shared/lib/remoteApi';
@@ -340,7 +341,8 @@ export function IssueVersionEditor({
           </PrimaryButton>
         </div>
       )}
-      <WYSIWYGEditor
+      <ProjectIssueEditor
+        projectId={projectId}
         {...editorProps}
         key={selected}
         contentKey={selected}

@@ -2341,5 +2341,36 @@
       "crashed": "agent異常終了",
       "audit_failed": "監査失敗"
     }
+  },
+  "projectTransfer": {
+    "title": "Project の移送",
+    "scope": "LVKの記録を単一SQLiteで持ち運びます。全体バックアップではありません。Git・worktree・添付実体・ネイティブセッションは含みません。移行先Repoを別途準備し、必要なコミット・Git移送は手動で行ってください。",
+    "optIn": "完了済みの会話履歴を含める",
+    "historyScope": "保存済みの表示用本文・要約だけを含めます。認証・環境・構造化secret・provider生イベント・工具の入出力は除外します。自由記述に機密情報が残る可能性があるため、共有前に確認してください。未対応の旧ログは除外します。",
+    "export": "SQLiteをエクスポート",
+    "importScope": "新規Projectとして追加します。既存Project・Issue・Repoは変更しません。同一exportの再取り込みは拒否します。",
+    "file": "SQLiteファイル",
+    "preview": "選択ファイルをプレビュー",
+    "counts": "Issue {{issues}}件 / 版 {{versions}}件 / コメント {{comments}}件 / 履歴 {{histories}}件 / Manifest {{manifests}}件",
+    "external": "除外した外部参照: {{count}}件",
+    "missing": "実体を利用できない添付: {{count}}件",
+    "key": "新規Projectの一意なキー（必須）",
+    "selectRepo": "準備済みの移行先Repoを選択",
+    "import": "新規Projectへ取り込む",
+    "imported": "取り込んだProjectを開く",
+    "history": "取り込んだ履歴を表示",
+    "readOnly": "表示専用の移行履歴です。worktree・ネイティブセッションは再開できません。本文のリンク・画像は文字列で表示し、添付実体は利用できません。",
+    "empty": "取り込んだ履歴はありません。",
+    "issue": "関連Issueを開く",
+    "manifest": "Change Manifest",
+    "tooLarge": "32 MiB以下のSQLiteファイルを選択してください。",
+    "manifestFields": {
+      "created_at": "作成日時",
+      "base_commit": "基点コミット",
+      "source_commit": "ソースコミット",
+      "target_branch": "対象ブランチ",
+      "changed_paths": "変更パス"
+    },
+    "importedRefresh": "取り込みは完了しました。Project一覧の更新を待っています。表示されない場合はページを再読み込みしてください。再取り込みは不要です。"
   }
 }

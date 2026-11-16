@@ -15,7 +15,7 @@ import { useDebouncedCallback } from '@/shared/hooks/useDebouncedCallback';
 import { useProjectContext } from '@/shared/hooks/useProjectContext';
 import { useOrgContext } from '@/shared/hooks/useOrgContext';
 import { useProjectWorkspaceCreateDraft } from '@/shared/hooks/useProjectWorkspaceCreateDraft';
-import WYSIWYGEditor from '@/shared/components/WYSIWYGEditor';
+import { ProjectIssueEditor } from '@/shared/components/ProjectIssueEditor';
 import { IssueVersionEditor } from './IssueVersionEditor';
 import { SearchableTagDropdownContainer } from '@/shared/components/SearchableTagDropdownContainer';
 import { ProjectWorkspaceDefaultContext } from '@/shared/components/ProjectWorkspaceDefaultContext';
@@ -862,7 +862,7 @@ export function KanbanIssuePanelContainer({
             onCurrentDescription={handleCurrentVersionDescription}
           />
         ) : (
-          <WYSIWYGEditor {...props} />
+          <ProjectIssueEditor {...props} projectId={projectId} />
         )
       }
       renderProjectWorkspaceContext={
@@ -893,7 +893,10 @@ export function KanbanIssuePanelContainer({
         <IssueSubIssuesSectionContainer issueId={issueId} />
       )}
       renderCommentsSection={(issueId) => (
-        <IssueCommentsSectionContainer issueId={issueId} />
+        <IssueCommentsSectionContainer
+          issueId={issueId}
+          projectId={projectId}
+        />
       )}
     />
   );

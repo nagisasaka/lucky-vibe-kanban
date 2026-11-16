@@ -1,3 +1,4 @@
+import { ProjectTransferPanel } from '@/shared/components/ProjectTransferPanel';
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
@@ -1483,6 +1484,8 @@ export function RemoteProjectsSettingsSection({
           </div>
         )}
       </SettingsCard>
+
+      <ProjectTransferPanel />
 
       <SettingsSaveBar
         show={isDirty}

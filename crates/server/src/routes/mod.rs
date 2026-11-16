@@ -33,6 +33,7 @@ pub mod local_remote;
 pub mod openwiki;
 pub mod parallel_context;
 mod project_utilities;
+mod project_transfer;
 pub mod releases;
 pub mod repo;
 pub mod resource_coordination;
@@ -76,6 +77,7 @@ pub fn router(
         .merge(resource_observation::router())
         .merge(resource_observation::environment_router(&deployment))
         .merge(project_utilities::router())
+        .merge(project_transfer::router(&deployment))
         .merge(execution_bridge::router())
         .merge(events::router(&deployment))
         .merge(approvals::router())

@@ -1,108 +1,133 @@
-# Project transfer core (LOCAL-396, first slice)
+# Project transfer (LOCAL-396)
 
-`db::project_transfer` implements a deliberately partial, additive transfer of
-Project-owned Issue records. It is not yet exposed by server routes, MCP or UI.
-It does not provide a whole-instance backup or a supported production migration
-command. No runtime authentication boundary has been added or bypassed.
+`db::project_transfer` exports selected LVK-owned Project data to one standalone
+SQLite file and imports it as a new Project. Authenticated API and the existing
+Project utilities UI expose explicit export, preview, Repo mapping, unique key
+selection and additional import. Project settings also offer import without an
+existing Project. Import success refreshes the existing Project list; the new
+Project link appears only after its ID is observed, without changing missing-
+Project/404 behavior. A delayed list refresh never relabels a committed import
+as a failed import. This is not an instance backup or Git transfer.
+Existing destination Projects, Issues and Repo settings are never updated.
 
-The public library operations are:
+## Scope and privacy
 
-- `coverage()`: describe included free text and all exclusions before export.
-- `export_project(pool, project_id, output)`: take a source read transaction and
-  publish a standalone SQLite file without replacing an existing output path.
-- `inspect_package(path)`: validate the file and return scope, counts, source
-  Repo identities/display names and missing attachment summaries for review.
-- `import_project(pool, path, key, organization_id, repo_map)`: insert a new
-  Project and its records in one destination `BEGIN IMMEDIATE` transaction.
+The fixed allowlist includes Project name/times, statuses, Issues and their
+unchanged bodies, named versions, comments, internal relationships, tags, and
+Repo identities/display names. Design Notes, Todos, Workflow definitions, assignees/followers/reactions and
+all other nonallowlisted Project data remain unimplemented/excluded. Actor
+identities, global settings, Repo paths,
+scripts, credentials, environment, provider metadata and arbitrary JSON are not
+copied. External relationship/parent/reply/tag references are removed and counted;
+remaining invalid closure fails validation. All imported internal identities are
+new. Issue numbers survive; `simple_id` uses the explicitly selected new key.
 
-A future authenticated caller must authorize the source Project and destination
-Project creation, display the scope and free-text notice before export, collect
-an explicit destination key, and map every source Repo to a user-selected,
-already registered destination Repo. The core neither registers nor touches Git
-repositories. It does not read provider HOME directories or shared Repo storage.
+Conversation export is **off by default**. `export_project` retains that default;
+`export_project_with_options(..., include_history)` requires an explicit opt-in.
+Eligible source Runs have a matching Project–Issue–Workspace link and Session,
+a terminal ledger status, current canonical projection, and matching terminal
+state/latest attempt. The existing reader's typed `RunState` JSON must also have
+current schema/reducer versions, matching terminal status and matching
+Run/Session/Turn/latest-attempt/cursor identities. Stale, active, malformed,
+ambiguous and inconsistent projections are omitted.
+The source read transaction also reads their canonical `agent_events` and
+DB-confirmed `repository_change_manifests`; it never follows files or HOME paths.
 
-## Portable data and reference closure
+Conversation fields are only canonical user `Message.content` and assistant
+`Message.content` with `final_output=true`. This uses the same canonical text
+field as `canonicalAgentConversation.ts`'s existing normalized display projection;
+it does not reinterpret native events or manufacture text from request envelopes.
+Thinking, nonfinal assistant commentary, tool calls/results, provider raw events,
+native references, authentication, structured secrets and other event variants
+are discarded. `agent_turns.input_message`, request envelopes and raw logs are
+never exported. Unsupported/legacy logs are explicitly reported as omitted;
+there is no fallback raw copy. Free text may contain sensitive prose or paths;
+this is **not** a claim of complete text sanitization. The UI discloses the scope
+before optional conversation inclusion.
 
-| Source | Included fields / handling |
-| --- | --- |
-| `projects` | Source ID for remapping, name, creation/update time, Issue numbering high water |
-| `local_project_metadata` | Color and order; organization is explicitly supplied at import |
-| `local_project_statuses` | Project-owned status identity, name, color, order, hidden flag |
-| `local_issues` | Title, body, number, status, priority/dates, completion time, order, parent, archived flag, times, current version pointer/revision |
-| `issue_versions` | All selected Issues' named bodies and version revisions |
-| `local_issue_comments` | Message, times and same-Issue reply structure; no actor identities |
-| `local_issue_relationships` | Outgoing relationships with both endpoints inside the selected Project |
-| `local_tags`, `local_issue_tags` | Project-owned tags and selected Issues' internal tag links |
-| `project_repos`, `repos` | Referenced Repo ID and display name only; no paths, scripts, configuration or Git bytes |
-| `project_attachments`, `attachments` | Project-level attachment name/size summaries only; no file path, hash, bytes or live attachment association |
+Manifest selection requires the DB event ID to match an eligible Run, Workspace,
+registered Workspace Repo. Required historical Repo identities/display names form
+the reference closure even after removal from the current Project preset. The validated payload's
+Repo/Workspace/event identities must agree, and an optional task ID must agree
+with the linked Issue. Only the typed semantic fields, creation time, commit IDs,
+target branch and validated relative changed paths are retained. Repo-wide shared
+storage, drafts, publication snapshots, journals and Wiki intermediates are not
+copied. Manifest inclusion does not depend on conversation opt-in.
 
-An external parent/reply pointer, outgoing external relationship or external tag
-link is excluded and counted in the report. Its foreign record and ID are not
-imported. Invalid remaining closure fails export/import rather than expanding
-selection into another Project. All imported row IDs are new. Issue numbers and
-numbering high water survive, while `simple_id` uses the explicit new Project
-key. Version insertion reconciles the existing Initial-version trigger without
-changing it or disabling it. Arbitrary JSON metadata is not copied.
+Attachment bytes are excluded. Project attachments and selected completed
+Workspace attachments contribute original-name/size missing-file summaries only;
+paths, URLs, hashes and live attachment associations are not imported. Imported
+summaries survive re-export through the receipt. Ambiguous legacy task attachment
+associations are not inferred. Git objects, worktrees, uncommitted changes and
+native/provider session continuation are excluded. Users prepare and explicitly
+map their own destination Repos; no clone, commit or push occurs.
 
-No `Workspace`, `Session`, `Run`, conversation, legacy execution log, native audit,
-Change Manifest, design note, Todo, actor assignment/follower/reaction, queue,
-process registry, recovery journal, lock, environment, credential or global
-configuration is included in this slice. This is an implementation limit, not a
-change to the agreed eventual Project portability scope. In particular, completed
-Run conversations and DB-confirmed Project-owned Change Manifests still need a
-safe display projection and their own fixture coverage. No unsupported legacy
-log is copied as raw data.
+## Archive viewing and limitations
 
-Bodies/comments are preserved text, not sanitized content. They may contain
-sensitive prose and historical path or attachment references. Those strings are
-not rewritten, followed or resolved by the transfer core. The core creates no
-attachment records or old-root/worktree associations. Before user-facing rollout,
-the existing viewer must explicitly represent unavailable attachments and must
-not silently resolve historical attachment references against old storage.
+Imported completed records live only in `project_transfer_history`, a dedicated
+read-only display archive. Issue, Workspace, Session, Run and Manifest identities
+are remapped consistently, including Manifest Repo mappings. Different identity
+kinds and ambiguous Workspace/Session ownership are rejected. No `agent_runs`,
+`agent_turns`, provider sessions, process registries, queues or launch gates are
+inserted. Archived identities cannot resume native execution or resolve old paths.
 
-## File and transaction contract
+`list_imported_history(pool, project)` serves the Project's archive viewer.
+This is a separate read-only section in the existing Project UI, **not** recreation
+of the ordinary executable Workspace/Session timeline. Imported Manifests are
+viewable there with the completed conversation, but are **not** published into
+the destination Repo's canonical Manifest reader/Wiki consumption stream. This
+preserves the boundary between historic imported evidence and new local Runs.
+The archive renderer presents retained bodies as text and unavailable attachment
+references, without resolving old roots. Imported Issue bodies, named versions
+and comments also use literal text for reading/editing. The frontend permits the
+ordinary rich editor only after the report confirms a non-imported Project;
+loading or failed lookup stays inert. This preserves stored body strings and
+prevents old images/URLs/attachment references from being resolved elsewhere in
+the existing Issue UI. Full native timeline/resume and legacy
+log fidelity are not implemented.
 
-The package is a single SQLite database with exactly the fixed `package` table
-containing one typed JSON payload. It has format `lvk-project-issues`, version 1,
-a non-nil export UUID and the explicit allowlisted snapshot. This distinct format
-identifies the partial scope; it must not be advertised as a complete Project
-archive. SQLite schema SQL from input is never executed in the destination.
-Unknown fields/versions, other database schemas, views/triggers, bad references,
-cycles and oversized/non-regular inputs fail validation. The file limit is 32 MiB
-and payload limit is 16 MiB. Symlink inputs are rejected. There are no extraction
-paths or input-controlled attachment reads. Input schema and payload are read
-inside one read-only transaction with `trusted_schema=OFF` and `query_only=ON`.
-The package connection is immutable so adjacent WAL/journal files are never
-consumed as archive content. Callers must retain a private, stable input file
-for the duration of inspection/import; this library is not a sandbox against
-concurrent writers with access to that file.
+## Format, transactions and retries
 
-Export uses one source transaction, allowlisted SELECTs and a temporary output
-in the requested directory, then publishes without replacing an existing file.
-Import validates input before writing. An exact one-to-one Repo mapping is
-required, and destination Repo existence/key conflicts are checked under the
-writer transaction. Repo settings and existing Projects/Issues are never updated.
-Any insertion or final constraint failure rolls back all rows and the receipt.
+The single SQLite file has exactly the fixed `package` table with one typed JSON
+payload, format `lvk-project-issues`, version 2 and a nonnil export UUID. Version 1
+Issue-only packages remain readable. Empty/default history fields are omitted
+from serialization, preserving the version 1 Snapshot content fingerprint.
+Unknown fields/versions, executable schema objects, invalid references/cycles,
+nonregular/symlink inputs and oversized packages fail validation. Limits remain
+32 MiB for the file and 16 MiB for its JSON payload. Input schema SQL is never
+executed in the destination. A read-only immutable connection, trusted schema off
+and query-only mode prevent adjacent WAL/journal or supplied views from expanding
+input. Packages have no extraction paths or input-controlled filesystem reads.
 
-`project_transfer_receipts` commits the export UUID, canonical snapshot SHA-256,
-new Project ID and coverage/missing-reference report together with the import.
-Repeated UUIDs or identical snapshots (including reordered copies with a new
-export UUID) are rejected. Changed snapshots may create another new Project with
-a different explicit key; they cannot update the prior import. Receipts survive
-Project deletion to keep retries detectable, without blocking the existing
-Project deletion lifecycle. The fingerprint is duplicate detection, not a
-signature or proof of archive authenticity.
+Export takes one source read transaction and publishes a temporary standalone
+file without replacing an existing output. The API uses private temporary files;
+preview and import verify the same uploaded SQLite bytes using a SHA-256 digest.
+The digest binds review to input bytes; it is not an authenticity signature.
 
-## Verification and remaining integration
+Import validates the entire package and exact one-to-one registered Repo mapping,
+then uses one destination `BEGIN IMMEDIATE` transaction for all new records,
+archive projections and receipt. Existing key or missing Repo errors fail safely.
+Mid-insert or final constraint errors roll back everything, including the receipt.
+Export identity and canonical Snapshot content hash are both unique receipt keys:
+retries or identical content with a new export UUID are rejected. A meaningfully
+changed snapshot can only add a new Project with another explicit key.
+Receipts survive Project deletion to keep retries detectable.
 
-`crates/db/tests/project_transfer.rs` uses task-owned temporary SQLite databases,
-the real migrations and disposable Git fixtures. It exercises export/import,
-old-root removal and reopening, internal reference remapping, shared-Repo
-isolation, missing attachment summaries, duplicate/key rejection, malformed
-inputs and transaction rollback. These are DB-level checks, not evidence of
-browser history rendering, authentication integration or production migration.
+## Verification
 
-Remaining work includes authenticated API/upload/download entry points, existing
-UI scope/repo/key selection, optional conversation exclusion and safe completed
-conversation projection, Manifest ownership/remapping, legacy-log omission
-reporting, and end-to-end viewer verification with the old root unavailable.
+`crates/db/tests/project_transfer.rs` uses isolated SQLite databases, real migrations
+and disposable Git fixtures. It covers internal ID remapping/body preservation,
+shared Repo/other Project exclusion, active Run omission, opt-in/out, canonical
+message allowlisting, Manifest ownership/metadata, missing attachments, old-root
+removal and pool reopening, archive read/re-export, corrupted packages, identity
+collisions, v1 receipt fingerprints, duplicate/key rejection and transaction
+rollback. API tests cover authentication/CSRF and same-byte preview/import.
+These checks do not claim production migration, native provider fidelity or a
+restarted running service. No production DB or live GitHub is needed.
+
+The isolated UI fixture is `node tests/project-transfer/browser.mjs`. It uses
+real frontend components with synthetic HTTP responses and checks opt-in, byte
+binding, file replacement, archive/Manifest and inert text rendering on mobile
+and desktop in both themes. It does not establish live server/browser/provider
+interoperability; actual SQLite and authenticated API behavior have separate
+backend fixtures.

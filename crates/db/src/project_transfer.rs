@@ -1,9 +1,8 @@
-//! Project-owned portable data, version 1 (Issue records only).
+//! Project-owned portable data with optional, display-only completed history.
 //!
 //! This is a deliberately partial transfer core, not a whole-instance backup.
-//! No runtime routes expose it yet. Callers must authorize export/import and
-//! present `coverage()` before export. Native/provider history, execution state,
-//! manifests and attachment bytes are not copied by this version.
+//! Callers must authorize export/import and present `coverage()` before export.
+//! Native/provider histories, execution state and attachment bytes are excluded.
 use std::{
     collections::{BTreeMap, HashSet},
     path::Path,
@@ -15,8 +14,14 @@ use sha2::{Digest, Sha256};
 use sqlx::{Connection, FromRow, SqliteConnection, SqlitePool, sqlite::SqliteConnectOptions};
 use uuid::Uuid;
 
+fn is_false(value: &bool) -> bool {
+    !value
+}
+
 const FORMAT: &str = "lvk-project-issues";
-const VERSION: i64 = 1;
+const VERSION: i64 = 2;
+mod history;
+pub use history::{HistoryManifest, HistoryMessage, ImportedHistory, list_imported_history};
 const MAX_BYTES: u64 = 32 * 1024 * 1024;
 const TABLE_SQL: &str =
     "CREATE TABLE package (id INTEGER PRIMARY KEY CHECK(id=1), payload TEXT NOT NULL)";
@@ -37,10 +42,10 @@ fn invalid(message: &str) -> TransferError {
     TransferError::Invalid(message.into())
 }
 
-/// Must be shown by future UI/API callers. Free text is intentionally preserved;
+/// Must be shown by UI/API callers. Free text is intentionally preserved;
 /// it can contain sensitive text and is not claimed to be sanitized.
 pub fn coverage() -> &'static str {
-    "Includes Project name, Issue bodies/versions/comments, statuses, tags and internal relationships. Free text may contain sensitive information. Excludes ALL Workspace/Session/Run conversations and history (including legacy logs), Change Manifests, attachment bytes, Git, native sessions/memory, credentials, environment, provider events, tool arguments, execution/queue/lock state, user identities and global settings. Attachment names and sizes are missing-file summaries only. No native resume."
+    "Includes Project/Issue bodies, versions, comments, internal relationships and uniquely Project-owned DB-confirmed semantic Manifests. Completed canonical user messages and assistant final answers require explicit opt-in. Free text can contain sensitive information; it is not fully sanitized. Excludes provider raw events, thinking, tool I/O, auth, structured secrets, environment, native sessions/memory, legacy logs, execution/queue/locks, Design Notes, Todos, Workflow definitions, assignees/followers/reactions, all nonallowlisted Project data, Git and attachment bytes. Attachment summaries indicate missing files. Imported history is read-only, with no native resume. Legacy logs and unsupported/ambiguous records are omitted."
 }
 
 macro_rules! record {
@@ -115,6 +120,10 @@ struct Snapshot {
     repositories: Vec<Repository>,
     missing_attachments: Vec<MissingAttachment>,
     external_reference_count: i64,
+    #[serde(default, skip_serializing_if = "is_false")]
+    history_included: bool,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    history: Vec<ImportedHistory>,
 }
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -132,6 +141,10 @@ pub struct TransferReport {
     pub coverage: String,
     pub missing_attachments: Vec<AttachmentSummary>,
     pub external_reference_count: i64,
+    pub history_included: bool,
+    pub history_count: usize,
+    pub manifest_count: usize,
+    pub history_omissions: String,
 }
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AttachmentSummary {
@@ -141,7 +154,7 @@ pub struct AttachmentSummary {
 
 /// Reads only allowlisted columns in one SQLite snapshot. No Repo paths, scripts,
 /// arbitrary JSON metadata, actor IDs or execution state enter the package.
-async fn snapshot(pool: &SqlitePool, project_id: Uuid) -> Result<Snapshot> {
+async fn snapshot(pool: &SqlitePool, project_id: Uuid, include_history: bool) -> Result<Snapshot> {
     let mut tx = pool.begin().await?;
     let project = sqlx::query_as::<_, Project>(
         "SELECT id,name,issue_number_high_water,created_at,updated_at FROM projects WHERE id=?",
@@ -192,13 +205,13 @@ async fn snapshot(pool: &SqlitePool, project_id: Uuid) -> Result<Snapshot> {
         IssueTag,
         "SELECT t.id,t.issue_id,t.tag_id FROM local_issue_tags t JOIN local_issues i ON i.id=t.issue_id WHERE i.project_id=? ORDER BY t.id"
     );
-    let repositories = rows!(
+    let mut repositories = rows!(
         Repository,
         "SELECT r.id,r.display_name FROM repos r JOIN project_repos p ON p.repo_id=r.id WHERE p.project_id=? ORDER BY r.id"
     );
     // Summaries only; never copy a file_path, URL or content hash which might
     // accidentally resolve against pre-existing destination attachment storage.
-    let missing_attachments = rows!(
+    let mut missing_attachments = rows!(
         MissingAttachment,
         "SELECT a.original_name,a.size_bytes FROM attachments a WHERE a.id IN (SELECT attachment_id FROM project_attachments WHERE project_id=?) ORDER BY a.id"
     );
@@ -236,6 +249,27 @@ async fn snapshot(pool: &SqlitePool, project_id: Uuid) -> Result<Snapshot> {
         }
         keep
     });
+    let history =
+        history::snapshot(&mut tx, project_id, include_history, &mut repositories).await?;
+    // Selected completed Workspace attachments have no portable bytes or paths.
+    let mut seen_workspaces = HashSet::new();
+    for h in &history {
+        if seen_workspaces.insert(h.workspace_id) {
+            let mut summaries = sqlx::query_as::<_, MissingAttachment>("SELECT a.original_name,a.size_bytes FROM attachments a JOIN workspace_attachments wa ON wa.attachment_id=a.id WHERE wa.workspace_id=? ORDER BY a.id").bind(h.workspace_id).fetch_all(&mut *tx).await?;
+            missing_attachments.append(&mut summaries);
+        }
+    }
+    // Imported missing-file summaries survive subsequent exports. They remain
+    // data, never attachment identities that could resolve at the destination.
+    let reports: Vec<String> = sqlx::query_scalar("SELECT json_extract(report,'$.missing_attachments') FROM project_transfer_receipts WHERE project_id=?").bind(project_id).fetch_all(&mut *tx).await?;
+    for raw in reports {
+        let summaries: Vec<AttachmentSummary> = serde_json::from_str(&raw)?;
+        missing_attachments.extend(summaries.into_iter().map(|a| MissingAttachment {
+            original_name: a.name,
+            size_bytes: a.size_bytes,
+        }));
+    }
+
     tx.commit().await?;
     Ok(Snapshot {
         project,
@@ -250,13 +284,24 @@ async fn snapshot(pool: &SqlitePool, project_id: Uuid) -> Result<Snapshot> {
         repositories,
         missing_attachments,
         external_reference_count,
+        history_included: include_history,
+        history,
     })
 }
 
 /// Atomically publishes a standalone SQLite file; an existing path is never
 /// replaced. The source pool is read-only in this operation.
 pub async fn export_project(pool: &SqlitePool, project: Uuid, output: &Path) -> Result<Uuid> {
-    let mut data = snapshot(pool, project).await?;
+    export_project_with_options(pool, project, output, false).await
+}
+
+pub async fn export_project_with_options(
+    pool: &SqlitePool,
+    project: Uuid,
+    output: &Path,
+    include_history: bool,
+) -> Result<Uuid> {
+    let mut data = snapshot(pool, project, include_history).await?;
     canonicalize(&mut data);
     validate(&data)?;
     let package = Package {
@@ -326,8 +371,16 @@ async fn read_package(path: &Path) -> Result<Package> {
             return Err(invalid("Invalid package envelope"));
         }
         let mut package: Package = serde_json::from_str(&rows[0].1)?;
-        if package.format != FORMAT || package.version != VERSION || package.export_id.is_nil() {
+        if package.format != FORMAT
+            || !(1..=VERSION).contains(&package.version)
+            || package.export_id.is_nil()
+        {
             return Err(invalid("Unsupported Project transfer format/version"));
+        }
+        if package.version == 1
+            && (package.data.history_included || !package.data.history.is_empty())
+        {
+            return Err(invalid("History requires package version 2"));
         }
         canonicalize(&mut package.data);
         validate(&package.data)?;
@@ -342,6 +395,10 @@ async fn read_package(path: &Path) -> Result<Package> {
 // Export identity and incidental JSON/row ordering are excluded from the content
 // fingerprint. A reordered copy with a new export UUID is still a retry.
 fn canonicalize(data: &mut Snapshot) {
+    data.history.sort_by_key(|h| h.run_id);
+    for h in &mut data.history {
+        h.manifests.sort_by_key(|m| (m.repo_id, m.id));
+    }
     data.statuses.sort_by_key(|r| r.id);
     data.issues.sort_by_key(|r| r.id);
     data.versions.sort_by_key(|r| r.id);
@@ -430,6 +487,13 @@ fn validate(data: &Snapshot) -> Result<()> {
     {
         return Err(invalid("Invalid Project reference closure"));
     }
+    history::validate(
+        &data.history,
+        data.history_included,
+        &issues,
+        &all,
+        &data.repositories,
+    )?;
     validate_parents(
         data.issues
             .iter()
@@ -617,11 +681,16 @@ pub async fn import_project(
             .execute(&mut *tx)
             .await?;
     }
+    history::insert(&mut tx, project_id, &data.history, &remap, repositories).await?;
     let report = TransferReport {
         project_id,
         export_id: package.export_id,
         coverage: coverage().into(),
         external_reference_count: data.external_reference_count,
+        history_included: data.history_included,
+        history_count: data.history.len(),
+        manifest_count: data.history.iter().map(|h| h.manifests.len()).sum(),
+        history_omissions: history::OMISSIONS.into(),
         missing_attachments: data
             .missing_attachments
             .iter()
@@ -649,6 +718,10 @@ pub struct PackagePreview {
     pub repositories: Vec<RepositorySelection>,
     pub coverage: String,
     pub external_reference_count: i64,
+    pub history_included: bool,
+    pub history_count: usize,
+    pub manifest_count: usize,
+    pub history_omissions: String,
     pub missing_attachments: Vec<AttachmentSummary>,
 }
 #[derive(Debug, Serialize)]
@@ -676,6 +749,10 @@ pub async fn inspect_package(path: &Path) -> Result<PackagePreview> {
             .collect(),
         coverage: coverage().into(),
         external_reference_count: d.external_reference_count,
+        history_included: d.history_included,
+        history_count: d.history.len(),
+        manifest_count: d.history.iter().map(|h| h.manifests.len()).sum(),
+        history_omissions: history::OMISSIONS.into(),
         missing_attachments: d
             .missing_attachments
             .into_iter()
