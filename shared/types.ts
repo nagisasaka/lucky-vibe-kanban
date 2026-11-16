@@ -207,7 +207,15 @@ export type CombinationPreview = { repository_id: string, owner_workspace_id: st
 
 export type IntegrationSelection = { card_id: string, workspace_id: string, expected_commit: string, };
 
-export type IntegrationSource = { selection: IntegrationSelection, branch: string, commit: string, title: string, description: string | null, status_id: string, requirements_revision: bigint, event_ids: Array<string>, related_workspaces: Array<string>, done_result: string | null, };
+export type IntegrationIssueSnapshot = { issue_id: string, simple_id: string, title: string, version_id: string, version_revision: bigint, body: string, frozen_at: string, };
+
+export type IntegrationArchivePublication = { request_id: string, parent_commit: string, tree: string | null, commit: string | null, };
+
+export type IntegrationSource = { selection: IntegrationSelection, branch: string, commit: string, title: string,
+/**
+ * Compatibility copy for older readers; archive generation uses issue_snapshot only.
+ */
+description: string | null, issue_snapshot: IntegrationIssueSnapshot | null, retry_context: string | null, status_id: string, requirements_revision: bigint, event_ids: Array<string>, related_workspaces: Array<string>, done_result: string | null, };
 
 export type IntegrationValidationSuggestion = { command: string, cwd: string, evidence: string, environment_requirements: string, };
 
@@ -215,7 +223,7 @@ export type IntegrationEvidence = { request_id: string, agent_run_id: string, co
 
 export type IntegrationPublicationRequest = { request_id: string, agent_run_id: string, code_commit: string, wiki_commit: string | null, candidate_commit: string, };
 
-export type IntegrationPayload = { wiki_enabled: boolean, evidence: Array<IntegrationEvidence>, publication_request: IntegrationPublicationRequest | null, instructions: string,
+export type IntegrationPayload = { issue_archive_enabled: boolean, archive_publication: IntegrationArchivePublication | null, wiki_enabled: boolean, evidence: Array<IntegrationEvidence>, publication_request: IntegrationPublicationRequest | null, instructions: string,
 /**
  * Immutable initial worker Create envelope for restart/redelivery.
  */
@@ -963,7 +971,11 @@ notification_browser_language?: string, git_branch_prefix: string, showcases: Sh
 /**
  * Include semantic intent in normal LVK-created source commits (shared through Git).
  */
-manifest_in_commit_body: boolean, send_message_shortcut: SendMessageShortcut, hidden_agents: Array<BaseCodingAgent>,
+manifest_in_commit_body: boolean,
+/**
+ * Archive adopted saved Issue bodies in Auto-merge candidates; shared through Git.
+ */
+issue_archive_enabled: boolean, send_message_shortcut: SendMessageShortcut, hidden_agents: Array<BaseCodingAgent>,
 /**
  * Default for new Auto-merge runs, including chat/MCP submissions.
  */

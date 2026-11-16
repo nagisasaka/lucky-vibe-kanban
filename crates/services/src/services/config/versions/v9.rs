@@ -56,6 +56,9 @@ pub struct Config {
     /// Include semantic intent in normal LVK-created source commits (shared through Git).
     #[serde(default)]
     pub manifest_in_commit_body: bool,
+    /// Archive adopted saved Issue bodies in Auto-merge candidates; shared through Git.
+    #[serde(default)]
+    pub issue_archive_enabled: bool,
     #[serde(default)]
     pub send_message_shortcut: SendMessageShortcut,
     #[serde(default = "default_hidden_agents")]
@@ -106,6 +109,7 @@ impl Config {
             pr_auto_description_enabled: old_config.pr_auto_description_enabled,
             pr_auto_description_prompt: old_config.pr_auto_description_prompt,
             manifest_in_commit_body: false,
+            issue_archive_enabled: false,
             send_message_shortcut: old_config.send_message_shortcut,
             // Provider visibility is rebuilt from the V1 registry; removed
             // provider entries are intentionally not carried across config
@@ -164,6 +168,7 @@ impl Default for Config {
             pr_auto_description_enabled: true,
             pr_auto_description_prompt: None,
             manifest_in_commit_body: false,
+            issue_archive_enabled: false,
             send_message_shortcut: SendMessageShortcut::default(),
             hidden_agents: default_hidden_agents(),
             integration_skip_validation: false,
@@ -174,6 +179,16 @@ impl Default for Config {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn issue_archive_defaults_off_and_round_trips() {
+        assert!(!Config::default().issue_archive_enabled);
+        let mut old = serde_json::to_value(Config::default()).unwrap();
+        old.as_object_mut().unwrap().remove("issue_archive_enabled");
+        assert!(!Config::from(old.to_string()).issue_archive_enabled);
+        old["issue_archive_enabled"] = serde_json::json!(true);
+        assert!(Config::from(old.to_string()).issue_archive_enabled);
+    }
 
     #[test]
     fn notification_browser_hint_is_optional_persisted_and_never_overrides_explicit_language() {

@@ -74,6 +74,8 @@ fn generate_types_content() -> String {
         server::routes::parallel_context::CreatePreview::decl(),
         server::routes::parallel_context::CombinationPreview::decl(),
         db::models::integration::IntegrationSelection::decl(),
+        db::models::integration::IntegrationIssueSnapshot::decl(),
+        db::models::integration::IntegrationArchivePublication::decl(),
         db::models::integration::IntegrationSource::decl(),
         db::models::integration::IntegrationValidationSuggestion::decl(),
         db::models::integration::IntegrationEvidence::decl(),

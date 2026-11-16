@@ -103,6 +103,8 @@ async fn fixture() -> (SqlitePool, IntegrationRun, ExecutionProcess, ExecutorAct
                 commit: oid.clone(),
                 title: "request".into(),
                 description: None,
+                issue_snapshot: None,
+                retry_context: None,
                 status_id: Uuid::new_v4(),
                 requirements_revision: 1,
                 event_ids: vec![],

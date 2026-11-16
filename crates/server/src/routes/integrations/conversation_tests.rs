@@ -47,6 +47,10 @@ async fn isolated_conversation_repair_publication_drift_and_idempotence() -> any
 async fn exercise(deployment: &DeploymentImpl, instance: &std::path::Path) -> anyhow::Result<()> {
     for (index, mode) in [
         "success",
+        "archive-success",
+        "archive-off",
+        "archive-collision",
+        "wiki-archive-success",
         "multi-source",
         "source-head-unavailable",
         "safe-drift",
@@ -171,6 +175,8 @@ async fn exercise(deployment: &DeploymentImpl, instance: &std::path::Path) -> an
                     commit: source.clone(),
                     title: "source".into(),
                     description: None,
+                    issue_snapshot: None,
+                    retry_context: None,
                     status_id: status,
                     requirements_revision: 1,
                     event_ids: vec![],
@@ -195,6 +201,55 @@ async fn exercise(deployment: &DeploymentImpl, instance: &std::path::Path) -> an
             selected.commit = commit.clone();
             selected.branch = ws.branch.clone();
             run.payload.sources.push(selected);
+        }
+        if mode.contains("archive") {
+            let selected = run.payload.sources[0].selection.clone();
+            sqlx::query("INSERT INTO local_issues(id,project_id,issue_number,simple_id,status_id,title,description,sort_order) VALUES(?,?,1,?,?, 'original title','original saved body',0)")
+                .bind(selected.card_id).bind(project).bind(format!("FIX{index}-1")).bind(status).execute(pool).await?;
+            sqlx::query(
+                "INSERT INTO local_workspace_links(workspace_id,issue_id,project_id) VALUES(?,?,?)",
+            )
+            .bind(selected.workspace_id)
+            .bind(selected.card_id)
+            .bind(project)
+            .execute(pool)
+            .await?;
+            // Another saved tab exists; only the explicitly current specification is adopted.
+            sqlx::query("INSERT INTO issue_versions(id,issue_id,name,description) VALUES(?,?,'draft','wrong tab body')")
+                .bind(Uuid::new_v4()).bind(selected.card_id).execute(pool).await?;
+            let admission_request = super::super::CreateIntegrationRequest {
+                request_id: Uuid::new_v4(),
+                project_id: project,
+                repository_id: repo.id,
+                target_branch: "main".into(),
+                selections: vec![selected.clone()],
+                executor_config: None,
+                skip_validation: None,
+                instructions: None,
+            };
+            run.payload.sources[0] =
+                admission::source(deployment, &admission_request, &selected).await?;
+            ensure!(
+                run.payload.sources[0].issue_snapshot.as_ref().unwrap().body
+                    == "original saved body"
+            );
+            let mut wrong = admission_request.clone();
+            wrong.repository_id = Repo::find_or_create(pool, &instance.join("other-repo"), "other")
+                .await?
+                .id;
+            ensure!(
+                admission::source(deployment, &wrong, &selected)
+                    .await
+                    .is_err()
+            );
+            wrong = admission_request;
+            wrong.project_id = Uuid::new_v4();
+            ensure!(
+                admission::source(deployment, &wrong, &selected)
+                    .await
+                    .is_err()
+            );
+            run.payload.issue_archive_enabled = mode != "archive-off";
         }
         if mode == "source-head-unavailable" {
             let progress: Uuid = sqlx::query_scalar(
@@ -278,6 +333,71 @@ async fn exercise(deployment: &DeploymentImpl, instance: &std::path::Path) -> an
             decision_actor: None,
             reason: "fixture decision".into(),
             remaining_risk: "fixture only".into(),
+        };
+        let source = if mode.contains("archive") {
+            // Changes after admission do not replace the frozen input or its ON/OFF choice.
+            deployment.config().write().await.issue_archive_enabled =
+                !run.payload.issue_archive_enabled;
+            let selected = run.payload.sources[0].selection.card_id;
+            sqlx::query("UPDATE issue_versions SET description='later edited body',revision=revision+1 WHERE id=(SELECT current_version_id FROM local_issues WHERE id=?)")
+                .bind(selected).execute(pool).await?;
+            if mode == "archive-off" {
+                ensure!(!checkout.join("docs/changes").exists());
+                source
+            } else {
+                ensure!(
+                    action(deployment, call(Uuid::new_v4(), "skip", &source, None))
+                        .await
+                        .is_err()
+                );
+                if mode == "archive-collision" {
+                    let snapshot = run.payload.sources[0].issue_snapshot.as_ref().unwrap();
+                    let date = &snapshot.frozen_at[..10];
+                    let path = format!(
+                        "docs/changes/{date}-{}-{}.md",
+                        snapshot.simple_id,
+                        &snapshot.issue_id.simple().to_string()[..8]
+                    );
+                    std::fs::create_dir_all(checkout.join("docs/changes"))?;
+                    std::fs::write(checkout.join(path), "collision")?;
+                    ensure!(
+                        action(
+                            deployment,
+                            call(Uuid::new_v4(), "prepare_archive", &source, None)
+                        )
+                        .await
+                        .is_err()
+                    );
+                    let mut publish = call(Uuid::new_v4(), "publish", &source, None);
+                    publish.code_commit = Some(source.clone());
+                    ensure!(action(deployment, publish).await.is_err());
+                    ensure!(git(&["rev-parse", "main"])? == base);
+                    sqlx::query("UPDATE agent_runs SET status='failed' WHERE id=?")
+                        .bind(agent)
+                        .execute(pool)
+                        .await?;
+                    sqlx::query(
+                        "UPDATE agent_run_attempts SET status='failed' WHERE agent_run_id=?",
+                    )
+                    .bind(agent)
+                    .execute(pool)
+                    .await?;
+                    sqlx::query("UPDATE agent_process_registry SET registry_status='not_started' WHERE run_attempt_id=?").bind(attempt.run_attempt_id).execute(pool).await?;
+                    continue;
+                }
+                let prepare = call(Uuid::new_v4(), "prepare_archive", &source, None);
+                let result = action(deployment, prepare.clone()).await?;
+                ensure!(action(deployment, prepare).await? == result);
+                let candidate = result["candidate_commit"]
+                    .as_str()
+                    .context("Archive SHA missing")?
+                    .to_owned();
+                let archived = IntegrationRun::find(pool, id).await?;
+                super::super::issue_archive::verify(&archived, &checkout, &candidate)?;
+                candidate
+            }
+        } else {
+            source
         };
         if mode == "success" {
             support::git(&checkout, &["checkout", "--detach"])?;

@@ -1,6 +1,7 @@
 //! Conversation-owned Auto-merge admission, execution evidence and safe publication.
 mod admission;
 pub(crate) mod conversation;
+mod issue_archive;
 mod runtime;
 mod support;
 pub(crate) use admission::AdmissionFailure;

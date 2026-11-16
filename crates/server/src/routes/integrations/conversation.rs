@@ -34,7 +34,7 @@ pub(crate) struct WorkerRequest {
     pub workspace_id: Uuid,
     pub agent_run_id: Uuid,
     pub request_id: Uuid,
-    /// inspect, verify, skip, prepare_wiki, or publish. No progress planner lives here.
+    /// inspect, prepare_archive, verify, skip, prepare_wiki, or publish. No progress planner lives here.
     pub action: String,
     /// inspect only: sources or materials. Omit for compact diagnostics.
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -119,6 +119,7 @@ pub(crate) async fn inspection(
         "sources":run.payload.sources.iter().map(|source| serde_json::json!({"issue_id":source.selection.card_id,"workspace_id":source.selection.workspace_id,"commit":source.commit,"branch":source.branch,"title":source.title,"done_result":source.done_result})).collect::<Vec<_>>(),
         "reference_sections":["sources","materials"],"base_commit":run.payload.observed_target,
         "candidate_commit":run.payload.result_commit,"evidence":run.payload.evidence,
+        "issue_archive_enabled":run.payload.issue_archive_enabled,"archive_publication":run.payload.archive_publication,
         "wiki_enabled":run.payload.wiki_enabled,"publication":run.payload.publication_request,
         "published":run.payload.published,"stop":run.payload.stop,"error":run.error,
         "history":run.payload.history.iter().map(|entry|serde_json::json!({"request_id":entry["request_id"],"state":entry["state"],"process_id":entry["process_id"],"candidate_commit":entry["candidate_commit"],"event":entry["event"]})).collect::<Vec<_>>()
@@ -183,6 +184,81 @@ pub(crate) async fn action(
     .fetch_one(pool)
     .await?;
     ensure!(latest == agent.id, "Stale worker");
+
+    if request.action == "prepare_archive" {
+        let input = serde_json::to_value(&request)?;
+        if let Some(old) = run
+            .payload
+            .history
+            .iter()
+            .find(|v| v["request_id"] == request.request_id.to_string())
+        {
+            ensure!(old["input"] == input, "Idempotency conflict");
+            if old["state"] == "recorded" {
+                return Ok(
+                    serde_json::json!({"candidate_commit":old["candidate_commit"],"archive_publication":run.payload.archive_publication}),
+                );
+            }
+        }
+        ensure!(
+            !agent.status.is_terminal()
+                && !run.cancel_requested
+                && !run.payload.publication_intent
+                && run.payload.publication_request.is_none()
+                && run.status == "integrating",
+            "Worker no longer owns an editable integration"
+        );
+        let (_, workspace, _, root) = runtime::context(deployment, &run).await?;
+        support::require_private_branch(&root, &workspace.branch, &run.target_ref)?;
+        let expected = request
+            .expected_commit
+            .as_deref()
+            .context("expected_commit required")?;
+        ensure!(
+            deployment
+                .git()
+                .is_ancestor(&root, &run.payload.observed_target, expected)?,
+            "Candidate lost admitted base"
+        );
+        for source in &run.payload.sources {
+            ensure!(
+                deployment
+                    .git()
+                    .is_ancestor(&root, &source.commit, expected)?,
+                "Candidate lost selected source"
+            );
+        }
+        if !run
+            .payload
+            .history
+            .iter()
+            .any(|v| v["request_id"] == request.request_id.to_string())
+        {
+            run.payload.history.push(serde_json::json!({"request_id":request.request_id,"input":input,"state":"accepted"}));
+            run.save(pool).await?;
+        }
+        let commit = super::issue_archive::prepare(
+            pool,
+            deployment.git(),
+            &mut run,
+            &root,
+            request.request_id,
+            expected,
+        )
+        .await?;
+        let entry = run
+            .payload
+            .history
+            .iter_mut()
+            .find(|v| v["request_id"] == request.request_id.to_string())
+            .unwrap();
+        entry["state"] = serde_json::json!("recorded");
+        entry["candidate_commit"] = serde_json::json!(commit);
+        run.save(pool).await?;
+        return Ok(
+            serde_json::json!({"candidate_commit":commit,"archive_publication":run.payload.archive_publication}),
+        );
+    }
 
     // Immutable request receipt in existing history, persisted before any process side effect.
     let input = serde_json::to_value(&request)?;
@@ -351,6 +427,7 @@ pub(crate) async fn action(
             "Candidate lost a selected source"
         );
     }
+    super::issue_archive::verify(&run, &root, expected)?;
     let user_skip = run.payload.skip_validation;
     if !run.payload.wiki_enabled {
         services::services::repository_memory::guard_normal_workspace(
