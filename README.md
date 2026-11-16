@@ -30,6 +30,16 @@ promise automatic resumption of interrupted processes.
 - [From an issue to integration](openwiki/workflows/task-to-integration.md) and [Auto-merge](openwiki/concepts/formal-integration.md)
 - [Change Manifests and authorised Wiki maintenance](openwiki/operations/openwiki-maintenance.md)
 
+## Claude Web plugin
+
+Once these files are published on main, open **Customize → Plugins → Add → Add marketplace → Add from a repository**
+in Claude and enter `nagisasaka/lucky-vibe-kanban`. Add `lvk-orchestration` and check its
+Skills and Connectors tabs for the LVK Skill and `https://luckyvibekanban.com/mcp`.
+This requires a paid Claude plan and any applicable organization permission. No ZIP or directory submission is required.
+Existing authentication is unchanged; installation and connector display do not prove a live connection.
+See the [Japanese setup and maintenance notes](README.ja.md#claude-webからskillとmcp接続先を導入する)
+for the canonical Skill, generated Git snapshot and offline checks.
+
 ## Develop LVK
 
 Use the [development guide](openwiki/operations/development.md) for toolchains,

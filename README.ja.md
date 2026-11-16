@@ -30,6 +30,32 @@ GHCRを通じてDockerイメージのみを配布し、現在の対象はLinux a
 - [Issueから統合まで](openwiki/workflows/task-to-integration.md)と[自動マージ](openwiki/concepts/formal-integration.md)
 - [リポジトリの記憶と正規Wiki保守](openwiki/operations/openwiki-maintenance.md)
 
+## Claude WebからSkillとMCP接続先を導入する
+
+配布ファイルが公開mainに反映された後、Claudeの有料プランで
+**Customize → Plugins → Add → Add marketplace → Add from a repository** を開き、
+`nagisasaka/lucky-vibe-kanban` を登録します。組織の利用制限がある場合は管理者の許可が必要です。
+一覧から `lvk-orchestration` を追加し、Skillsに同名Skill、Connectorsに
+`https://luckyvibekanban.com/mcp` のLVK接続先が表示されることを確認します。
+ZIP作成・アップロード、別リポジトリ、公開ディレクトリへの申請は不要です。
+この配布設定は既存の接続先・認証設定を変更しません。表示確認と実接続・認証の成功は別です。
+
+Skillの編集元は `skills/lvk-orchestration/` だけです。Claude用の `skills/` は
+Git直接導入用の生成物で、参照ファイルも含めて正本と同一内容を収録します。
+正本更新後は `python3 scripts/claude-marketplace.py --sync` を実行し、生成物も同時にコミットします。
+Claude配布内容を更新する際は既存Claude manifestのversionも上げます。
+`python3 scripts/claude-marketplace.py --check --ref HEAD` はコミット済み配布ツリーを検証し、
+専用CIも不一致を検出します。利用者のインストール時には生成処理を実行しません。
+
+Marketplaceのsourceはリポジトリルート基準の `./plugins/lvk-orchestration/claude` です。
+その中に既存manifest、`.mcp.json`、Skillと参照先が収まり、ルート外リンクは使いません。
+仕様根拠：[公式の導入手順](https://support.claude.com/en/articles/13837440-use-plugins-in-claude)、
+[Plugin構成](https://claude.com/docs/plugins/build)、
+[sourceの解決規則](https://code.claude.com/docs/en/plugins/marketplace-reference)、
+[Anthropicの同一リポジトリ内source例](https://github.com/anthropics/knowledge-work-plugins/blob/main/.claude-plugin/marketplace.json)。
+CLI validateや配布ツリー検証の成功は、Claude Webでの実インストール成功を意味しません。
+公開後のMarketplace登録・Skillとコネクタ表示は人間が確認してください。
+
 ## LVKを開発する
 
 ツールチェーン、セットアップ、ビルド、検証、復旧は[開発ガイド](openwiki/operations/development.md)、

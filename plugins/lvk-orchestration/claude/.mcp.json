@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "lvk": {
+      "type": "http",
+      "url": "https://luckyvibekanban.com/mcp"
+    }
+  }
+}
