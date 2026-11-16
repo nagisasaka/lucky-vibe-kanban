@@ -45,8 +45,27 @@
         "description": "Personaliza cómo se ve la aplicación.",
         "theme": {
           "label": "Tema",
-          "placeholder": "Seleccionar tema",
-          "helper": "Elige tus colores preferidos."
+          "helper": "Elige tus colores preferidos.",
+          "options": {
+            "system": "Sistema",
+            "light": "Claro",
+            "dark": "Oscuro"
+          }
+        },
+        "colorTheme": {
+          "label": "Tema de color",
+          "helper": "Elige los colores para los modos claro y oscuro. Se aplican al guardar.",
+          "light": "Tema de color claro",
+          "dark": "Tema de color oscuro",
+          "systemLight": "Cuando el sistema está en modo claro",
+          "systemDark": "Cuando el sistema está en modo oscuro",
+          "names": {
+            "standard": "Estándar",
+            "paper": "Paper",
+            "linen": "Linen",
+            "navy": "Navy",
+            "indigo": "Indigo"
+          }
         },
         "language": {
           "label": "Idioma",

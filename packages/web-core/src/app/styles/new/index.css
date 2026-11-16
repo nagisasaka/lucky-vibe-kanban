@@ -11,8 +11,10 @@ html {
 
 /* 1) THEME TOKENS */
 @layer base {
-  /* Light defaults */
-  :root {
+  /* Light defaults. `.light` lets a subtree (e.g. colour theme previews)
+     use light tokens inside a dark document. */
+  :root,
+  .light {
     color-scheme: light;
     --_background: 0 0% 95%;
     --_foreground: 0 0% 5%;
@@ -24,19 +26,19 @@ html {
     --_muted-foreground: 0 0% 56%;
     --_accent: 0 0% 92%;
     --_accent-foreground: 0 0% 5%;
-    --_destructive: 0 59% 57%;
+    --_destructive: 0 59% 42%;
     --_destructive-foreground: 0 0% 100%;
     --_border: 0 0% 85%;
     --_input: 0 0% 96%;
     --_ring: 0 0% 5%;
     --_radius: 0.125rem;
 
-    /* Status (light) */
-    --_success: 117 38% 50%;
+    /* Status (light) - darkened to keep text readable on light surfaces */
+    --_success: 117 38% 29%;
     --_success-foreground: 117 38% 20%;
-    --_warning: 32 95% 44%;
+    --_warning: 32 95% 27%;
     --_warning-foreground: 32 95% 14%;
-    --_info: 217 91% 60%;
+    --_info: 217 91% 41%;
     --_info-foreground: 0 0% 5%;
     --_neutral: 0 0% 92%;
     --_neutral-foreground: 0 0% 5%;
@@ -44,8 +46,8 @@ html {
     /* Console (light) */
     --_console-background: 0 0% 100%;
     --_console-foreground: 0 0% 5%;
-    --_console-success: 117 38% 50%;
-    --_console-error: 0 59% 57%;
+    --_console-success: 117 38% 29%;
+    --_console-error: 0 59% 42%;
 
     /* Syntax highlighting (light) */
     --_syntax-keyword: #d73a49;
@@ -74,16 +76,22 @@ html {
     );
     --bg-panel: var(--vscode-input-background, var(--_bg-panel-default));
 
-    /* Accent (light) */
+    /* Accent (light). Keep the shared orange fill; text and focus use
+       a darker shade for contrast on light surfaces. */
     --brand: 25 82% 54%;
     --brand-hover: 25 75% 62%;
-    --brand-secondary: 25 82% 37%;
-    --error: 0 59% 57%;
-    --success: 117 38% 50%;
+    --brand-secondary: 25 82% 33%;
+    --brand-secondary-hover: 25 82% 37%;
+    --brand-text: 25 85% 32%;
+    --error: 0 59% 42%;
+    --success: 117 38% 29%;
     --merged: 271 81% 46%;
 
-    /* Text on accent */
-    --text-on-brand: 0 0% 100%;
+    /* Text on accent fills */
+    --text-on-brand: 31 49% 7%;
+    --text-on-brand-secondary: 0 0% 100%;
+    --text-on-error: 0 0% 100%;
+    --text-on-success: 0 0% 100%;
   }
 
   /* Dark mode */
@@ -101,8 +109,8 @@ html {
     --_muted-foreground: 0 0% 64%;
     --_accent: 0 0% 20%;
     --_accent-foreground: 0 0% 96%;
-    --_destructive: 0 59% 57%;
-    --_destructive-foreground: 0 0% 96%;
+    --_destructive: 356.7 80.9% 69.2%;
+    --_destructive-foreground: 31 49% 7%;
     --_border: 0 0% 20%;
     --_input: 0 0% 20%;
     --_ring: 0 0% 77%;
@@ -112,7 +120,7 @@ html {
     --_success-foreground: 117 38% 90%;
     --_warning: 32.2 95% 44.1%;
     --_warning-foreground: 32.2 95% 90%;
-    --_info: 217.2 91.2% 59.8%;
+    --_info: 215.8 100% 70.8%;
     --_info-foreground: 217.2 91.2% 90%;
     --_neutral: 0 0% 20%;
     --_neutral-foreground: 0 0% 90%;
@@ -120,7 +128,7 @@ html {
     /* Text (dark) */
     --text-high: 0 0% 96%;
     --text-normal: 0 0% 77%;
-    --text-low: 0 0% 56%;
+    --text-low: 0 0% 64%;
 
     /* Background (dark) - with VS Code overrides */
     --_bg-primary-default: 0 0% 13%;
@@ -137,12 +145,17 @@ html {
     --brand: 25 82% 54%;
     --brand-hover: 25 75% 62%;
     --brand-secondary: 25 82% 37%;
-    --error: 0 59% 57%;
+    --brand-secondary-hover: 25 82% 40%;
+    --brand-text: 25 82% 54%;
+    --error: 356.7 80.9% 69.2%;
     --success: 117 38% 50%;
-    --merged: 271 81% 66%;
+    --merged: 260.9 100% 77.5%;
 
-    /* Text on accent */
-    --text-on-brand: 0 0% 100%;
+    /* Text on accent fills */
+    --text-on-brand: 31 49% 7%;
+    --text-on-brand-secondary: 0 0% 100%;
+    --text-on-error: 31 49% 7%;
+    --text-on-success: 31 49% 7%;
     /* Console (dark) */
     --_console-background: 0 0% 0%;
     --_console-foreground: 210 40% 98%;
@@ -159,6 +172,107 @@ html {
     --_syntax-tag: #7ee787;
     --_syntax-punctuation: #c9d1d9;
     --_syntax-deleted: #ffdcd7;
+  }
+
+  /* Colour themes. ThemeMode still resolves to light or dark; the selected
+     colour theme for that side is exposed as html[data-color-theme] and only
+     swaps token values. Standard themes have no attribute. */
+  /* Light colour theme: Paper (warm off-white) */
+  .light[data-color-theme='paper'] {
+    --_background: 38.2 33.3% 93.5%;
+    --_secondary: 38.2 33.3% 93.5%;
+    --_muted: 37.5 26.7% 88.2%;
+    --_accent: 37.5 26.7% 88.2%;
+    --_border: 38.2 23.9% 82%;
+    --_input: 38.2 33.3% 93.5%;
+    --_neutral: 37.5 26.7% 88.2%;
+    --_muted-foreground: 35.5 12.2% 35.3%;
+    --_ring: 36 20.8% 9.4%;
+    --text-high: 36 20.8% 9.4%;
+    --text-normal: 36 14.6% 20.2%;
+    --text-low: 35.5 12.2% 35.3%;
+    --_bg-primary-default: 40 50% 97.6%;
+    --_bg-secondary-default: 38.2 33.3% 93.5%;
+    --_bg-panel-default: 37.5 26.7% 88.2%;
+    --_console-background: 40 100% 98.8%;
+    --line-added: 96.8 44.9% 86.5%;
+    --line-removed: 15.4 68.4% 88.8%;
+  }
+
+  /* Light colour theme: Linen (beige) */
+  .light[data-color-theme='linen'] {
+    --_background: 37.1 39.6% 89.6%;
+    --_secondary: 37.1 39.6% 89.6%;
+    --_muted: 37.2 34.9% 83.7%;
+    --_accent: 37.2 34.9% 83.7%;
+    --_border: 37.3 30.6% 76.3%;
+    --_input: 37.1 39.6% 89.6%;
+    --_neutral: 37.2 34.9% 83.7%;
+    --_muted-foreground: 35.3 19.1% 34.9%;
+    --_ring: 33.3 34.6% 10.2%;
+    --text-high: 33.3 34.6% 10.2%;
+    --text-normal: 35 22.2% 21.2%;
+    --text-low: 35.3 19.1% 34.9%;
+    --_bg-primary-default: 38.6 50% 94.5%;
+    --_bg-secondary-default: 37.1 39.6% 89.6%;
+    --_bg-panel-default: 37.2 34.9% 83.7%;
+    --_console-background: 40 52.9% 96.7%;
+    --line-added: 89.1 42.2% 83.7%;
+    --line-removed: 20 61.6% 85.7%;
+  }
+
+  /* Dark colour theme: Navy */
+  .dark[data-color-theme='navy'] {
+    --_background: 219.3 39.7% 14.3%;
+    --_secondary: 220.9 39.3% 11%;
+    --_muted: 219.4 37.6% 18.2%;
+    --_accent: 218.6 33.3% 24.7%;
+    --_border: 218.6 33.3% 24.7%;
+    --_input: 218.6 33.3% 24.7%;
+    --_neutral: 218.6 33.3% 24.7%;
+    --_muted-foreground: 217.7 20.2% 66.1%;
+    --_ring: 217 100% 74.9%;
+    --text-high: 216 41.7% 95.3%;
+    --text-normal: 217.8 27.3% 80.6%;
+    --text-low: 217.7 20.2% 66.1%;
+    --_bg-primary-default: 219.3 39.7% 14.3%;
+    --_bg-secondary-default: 220.9 39.3% 11%;
+    --_bg-panel-default: 219.4 37.6% 18.2%;
+    --_console-background: 218.8 43.6% 7.6%;
+    --line-added: 167.6 41.5% 16.1%;
+    --line-removed: 328.9 28.4% 18.6%;
+    --_success: 126.9 42.9% 56.1%;
+    --success: 126.9 42.9% 56.1%;
+    --_warning: 36.2 79.1% 56.9%;
+  }
+
+  /* Dark colour theme: Indigo (merged purple shifted away from the indigo background) */
+  .dark[data-color-theme='indigo'] {
+    --_background: 235.2 32.5% 15.1%;
+    --_secondary: 237.3 35.5% 12.2%;
+    --_muted: 234.2 30.7% 19.8%;
+    --_accent: 234.3 30.4% 27.1%;
+    --_border: 234.3 30.4% 27.1%;
+    --_input: 234.3 30.4% 27.1%;
+    --_neutral: 234.3 30.4% 27.1%;
+    --_muted-foreground: 231.8 27.8% 69%;
+    --_ring: 226.6 100% 78%;
+    --text-high: 232 65.2% 95.5%;
+    --text-normal: 231.9 42.5% 82.9%;
+    --text-low: 231.8 27.8% 69%;
+    --_bg-primary-default: 235.2 32.5% 15.1%;
+    --_bg-secondary-default: 237.3 35.5% 12.2%;
+    --_bg-panel-default: 234.2 30.7% 19.8%;
+    --_console-background: 236 31.9% 9.2%;
+    --line-added: 180 31.8% 17.3%;
+    --line-removed: 312.9 28% 19.6%;
+    --error: 348.8 89% 71.6%;
+    --_destructive: 348.8 89% 71.6%;
+    --_success: 140.9 44.3% 62%;
+    --success: 140.9 44.3% 62%;
+    --_warning: 35.5 65.9% 64.3%;
+    --_info: 220.8 88.7% 72.4%;
+    --merged: 289.9 62.6% 75.9%;
   }
 }
 
@@ -254,7 +368,7 @@ html {
 
     /* Allotment */
     --separator-border: hsl(var(--border));
-    --focus-border: hsl(var(--brand));
+    --focus-border: hsl(var(--brand-text));
   }
 }
 
@@ -1203,12 +1317,12 @@ html {
   /* Background colors for PWA safe-area */
   html,
   body {
-    background-color: #f2f2f2;
+    background-color: hsl(var(--bg-secondary));
   }
 
   html.dark body,
   html.dark {
-    background-color: #212121;
+    background-color: hsl(var(--bg-primary));
   }
 }
 
@@ -1386,13 +1500,14 @@ html {
   font-style: normal;
 }
 .markdown-body a {
-  color: hsl(var(--brand));
+  color: hsl(var(--brand-text));
   text-decoration: underline;
   text-underline-offset: 0.15em;
   cursor: pointer;
 }
 .markdown-body a:hover {
-  color: hsl(var(--brand-hover));
+  color: hsl(var(--brand-text));
+  text-decoration-thickness: 2px;
 }
 .markdown-body :is(a, h1, h2, h3):focus-visible,
 .markdown-outline button:focus-visible {

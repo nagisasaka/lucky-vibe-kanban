@@ -572,7 +572,7 @@ export function WorkflowRunDashboardTab({
                 selectedNodeActionGate.canReject && (
                   <div className="flex gap-2 pt-2">
                     <button
-                      className="flex-1 rounded bg-success px-3 py-1.5 text-white font-medium hover:opacity-90 disabled:opacity-50"
+                      className="flex-1 rounded bg-success px-3 py-1.5 text-on-success font-medium hover:opacity-90 disabled:opacity-50"
                       onClick={() =>
                         void handleApproveNode(selectedNode.node_id)
                       }
@@ -581,7 +581,7 @@ export function WorkflowRunDashboardTab({
                       {t('workflow.dashboard.approve')}
                     </button>
                     <button
-                      className="flex-1 rounded bg-error px-3 py-1.5 text-white font-medium hover:opacity-90 disabled:opacity-50"
+                      className="flex-1 rounded bg-error px-3 py-1.5 text-on-error font-medium hover:opacity-90 disabled:opacity-50"
                       onClick={() =>
                         void handleRejectNode(selectedNode.node_id)
                       }

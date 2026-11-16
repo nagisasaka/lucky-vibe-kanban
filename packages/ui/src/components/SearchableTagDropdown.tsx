@@ -145,7 +145,7 @@ export function SearchableTagDropdown({
               <button
                 type="button"
                 onClick={onConfirmCreate}
-                className="px-base py-half text-sm text-high bg-brand hover:bg-brand/90 rounded-sm transition-colors"
+                className="px-base py-half text-sm text-on-brand bg-brand hover:bg-brand/90 rounded-sm transition-colors"
               >
                 {t('buttons.create')}
               </button>

@@ -162,7 +162,7 @@ export function IssueTaskAttemptCard({
             type="button"
             onClick={onOpen}
             disabled={!onOpen}
-            className="inline-flex h-8 items-center gap-half rounded-sm bg-brand-secondary px-base text-xs font-medium text-on-brand transition-colors hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex h-8 items-center gap-half rounded-sm bg-brand-secondary px-base text-xs font-medium text-on-brand-secondary transition-colors hover:bg-brand-secondary-hover disabled:cursor-not-allowed disabled:opacity-50"
           >
             <GitBranch className="h-3.5 w-3.5" />
             <span>{attempt.primaryActionLabel}</span>

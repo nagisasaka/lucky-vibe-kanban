@@ -80,8 +80,27 @@
         "description": "Customize how the application looks and feels.",
         "theme": {
           "label": "Theme",
-          "placeholder": "Select theme",
-          "helper": "Choose your preferred color scheme."
+          "helper": "Follow the OS, or always use light or dark.",
+          "options": {
+            "system": "System",
+            "light": "Light",
+            "dark": "Dark"
+          }
+        },
+        "colorTheme": {
+          "label": "Color theme",
+          "helper": "Choose the colors used for light and dark. Applied when you save.",
+          "light": "Light color theme",
+          "dark": "Dark color theme",
+          "systemLight": "When the OS is light",
+          "systemDark": "When the OS is dark",
+          "names": {
+            "standard": "Standard",
+            "paper": "Paper",
+            "linen": "Linen",
+            "navy": "Navy",
+            "indigo": "Indigo"
+          }
         },
         "language": {
           "label": "Language",

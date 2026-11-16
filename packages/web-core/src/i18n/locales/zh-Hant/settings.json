@@ -45,8 +45,27 @@
         "description": "自訂應用程式的外觀與風格。",
         "theme": {
           "label": "主題",
-          "placeholder": "選擇主題",
-          "helper": "選擇您喜歡的配色方案。"
+          "helper": "選擇您喜歡的配色方案。",
+          "options": {
+            "system": "系統",
+            "light": "淺色",
+            "dark": "深色"
+          }
+        },
+        "colorTheme": {
+          "label": "顏色主題",
+          "helper": "分別選擇淺色與深色時使用的配色。儲存後生效。",
+          "light": "淺色顏色主題",
+          "dark": "深色顏色主題",
+          "systemLight": "系統為淺色時",
+          "systemDark": "系統為深色時",
+          "names": {
+            "standard": "標準",
+            "paper": "Paper",
+            "linen": "Linen",
+            "navy": "Navy",
+            "indigo": "Indigo"
+          }
         },
         "language": {
           "label": "語言",

@@ -969,7 +969,7 @@ diffs-container [slot='hover-slot'] button:hover,
 diffs-container [slot='hover-slot'] button:focus,
 diffs-container [slot='hover-slot'] button:active {
   background-color: hsl(var(--brand) / 0.2);
-  color: hsl(var(--brand));
+  color: hsl(var(--brand-text));
   border: none;
   outline: none;
   box-shadow: none;

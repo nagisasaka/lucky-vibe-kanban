@@ -231,7 +231,7 @@ export function RepositoryWikiFilesSettings({
               className={
                 blocked || dirty || confirmation !== `${repo.name}/openwiki`
                   ? undefined
-                  : 'bg-error text-on-brand hover:bg-error/90'
+                  : 'bg-error text-on-error hover:bg-error/90'
               }
               disabled={
                 blocked || dirty || confirmation !== `${repo.name}/openwiki`

@@ -224,7 +224,7 @@ export const AskUserQuestionBanner = forwardRef<
               type="button"
               disabled={disabled}
               onClick={handleConfirmMultiSelect}
-              className="mt-2 rounded-md bg-brand px-3 py-1 text-xs font-medium text-white hover:bg-brand/90 transition-colors disabled:opacity-50"
+              className="mt-2 rounded-md bg-brand px-3 py-1 text-xs font-medium text-on-brand hover:bg-brand/90 transition-colors disabled:opacity-50"
             >
               {t('askQuestion.confirmSelection')}
             </button>
