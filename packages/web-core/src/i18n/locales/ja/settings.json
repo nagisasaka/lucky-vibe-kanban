@@ -643,6 +643,30 @@
       "readOnly": "操作方法の案内です。保存する値はありません。",
       "onboarding": "オンボーディング再表示はインスタンス共通のconfig.jsonに即時保存します。",
       "host-pet": "このインスタンスの表示名とペットを設定します。"
+    },
+    "repositoryPush": {
+      "title": "Repositoryブランチをpush",
+      "description": "登録済みGitHub認証でローカルブランチを公開します。",
+      "branch": "ローカルブランチ",
+      "remote": "設定済みremote",
+      "preview": "push対象を確認",
+      "push": "確認したcommitをpush",
+      "recheck": "remoteの結果を再確認",
+      "confirm": "Repository・remote・commit・宛先を確認しました。Issueアーカイブを含み得る、この履歴を公開します。",
+      "history": "選択commitとその履歴を公開します。履歴にはアーカイブされたIssue本文が含まれる場合があります。",
+      "source": "Source SHA",
+      "destination": "宛先ブランチ",
+      "remoteSha": "観測したremote SHA",
+      "absent": "ブランチ未作成",
+      "error": "操作結果を確認できませんでした。次のpushを試す前に結果を再確認してください。",
+      "unknown": "結果不明です。「remoteの結果を再確認」を使い、pushを繰り返さないでください。",
+      "request": "Request ID",
+      "status": "状態",
+      "choose": "選択してください…",
+      "noProject": "pushするには、このRepositoryに紐づくProjectから開いてください。",
+      "published": "remoteブランチは確認したsource SHAを指しています。",
+      "unpublished": "remoteブランチは現在、確認したsource SHAを指していません。",
+      "newReview": "別のpush対象を確認"
     }
   },
   "integrations": {

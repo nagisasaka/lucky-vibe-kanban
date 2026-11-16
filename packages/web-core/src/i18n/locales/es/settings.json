@@ -564,6 +564,30 @@
       "noHostAvailable": "No host is available for host-specific settings yet.",
       "pairMachineHint": "Pair a machine to open machine settings.",
       "selectMachineHint": "Select a machine to open machine settings."
+    },
+    "repositoryPush": {
+      "title": "Push repository branch",
+      "description": "Publish a local repository branch using the registered GitHub authentication.",
+      "branch": "Local branch",
+      "remote": "Configured remote",
+      "preview": "Review push target",
+      "push": "Push confirmed commit",
+      "recheck": "Check remote result",
+      "confirm": "I confirm this repository, remote, commit and destination. Publish this history, including any Issue archives it contains.",
+      "history": "This publishes the selected commit and its history, which may include archived Issue text.",
+      "source": "Source SHA",
+      "destination": "Destination branch",
+      "remoteSha": "Observed remote SHA",
+      "absent": "Branch does not exist",
+      "error": "The operation could not be confirmed. Check its result before attempting another push.",
+      "unknown": "Result unknown. Use Check remote result; do not repeat the push.",
+      "request": "Request ID",
+      "status": "Status",
+      "choose": "Select…",
+      "noProject": "Open this repository in a linked Project to push.",
+      "published": "The remote branch points to the confirmed source SHA.",
+      "unpublished": "The remote branch does not currently point to the confirmed source SHA.",
+      "newReview": "Review another push"
     }
   },
   "integrations": {

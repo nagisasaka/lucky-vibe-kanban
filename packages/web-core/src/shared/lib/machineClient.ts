@@ -27,6 +27,10 @@ import type {
   Config,
   GetMcpServerResponse,
   GitBranch,
+  GitRemote,
+  RepositoryPushPreview,
+  RepositoryPushReceipt,
+  RepositoryPushVerification,
   GithubCredentialStatus,
   SaveGithubCredential,
   GithubCredentialTarget,
@@ -103,6 +107,19 @@ export interface MachineClient {
   getConfig: () => Promise<UserSystemInfo>;
   saveConfig: (config: Config) => Promise<Config>;
   listRepos: () => Promise<Repo[]>;
+  listRepoRemotes: (repoId: string) => Promise<GitRemote[]>;
+  previewRepositoryPush: (
+    repoId: string,
+    data: { project_id: string; remote: string; branch: string }
+  ) => Promise<RepositoryPushPreview>;
+  pushRepository: (
+    repoId: string,
+    data: { request_id: string; preview: RepositoryPushPreview }
+  ) => Promise<RepositoryPushReceipt>;
+  verifyRepositoryPush: (
+    repoId: string,
+    requestId: string
+  ) => Promise<RepositoryPushVerification>;
   getSharedStorage: (repoId: string) => Promise<SharedStorageUsage>;
   clearSharedStorage: (
     repoId: string,
@@ -311,6 +328,39 @@ export function createMachineClient(
     listRepos: async () =>
       handleApiResponse<Repo[]>(
         await makeMachineRequest(runtime, target, '/api/repos')
+      ),
+    listRepoRemotes: async (repoId) =>
+      handleApiResponse<GitRemote[]>(
+        await makeMachineRequest(
+          runtime,
+          target,
+          `/api/repos/${repoId}/remotes`
+        )
+      ),
+    previewRepositoryPush: async (repoId, data) =>
+      handleApiResponse<RepositoryPushPreview>(
+        await makeMachineRequest(
+          runtime,
+          target,
+          `/api/repos/${repoId}/push/preview`,
+          { method: 'POST', body: JSON.stringify(data) }
+        )
+      ),
+    pushRepository: async (repoId, data) =>
+      handleApiResponse<RepositoryPushReceipt>(
+        await makeMachineRequest(runtime, target, `/api/repos/${repoId}/push`, {
+          method: 'POST',
+          body: JSON.stringify(data),
+        })
+      ),
+    verifyRepositoryPush: async (repoId, requestId) =>
+      handleApiResponse<RepositoryPushVerification>(
+        await makeMachineRequest(
+          runtime,
+          target,
+          `/api/repos/${repoId}/push/${requestId}/verify`,
+          { method: 'POST' }
+        )
       ),
     getSharedStorage: async (repoId) =>
       handleApiResponse<SharedStorageUsage>(

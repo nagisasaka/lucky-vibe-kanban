@@ -396,6 +396,19 @@ pub fn router() -> Router<DeploymentImpl> {
             "/repos/{repo_id}/shared-storage/{kind}",
             axum::routing::delete(super::shared_storage::clear),
         )
+        .route(
+            "/repos/{repo_id}/push/preview",
+            post(super::repository_push::preview),
+        )
+        .route("/repos/{repo_id}/push", post(super::repository_push::push))
+        .route(
+            "/repos/{repo_id}/push/{request_id}",
+            get(super::repository_push::receipt),
+        )
+        .route(
+            "/repos/{repo_id}/push/{request_id}/verify",
+            post(super::repository_push::verify),
+        )
         .route("/repos/recent", get(get_recent_repos))
         .route("/repos/init", post(init_repo))
         .route("/repos/batch", post(get_repos_batch))

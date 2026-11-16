@@ -499,6 +499,48 @@ impl GitCli {
     }
 
     /// This directly queries the remote without fetching.
+    pub fn push_exact(
+        &self,
+        root: &Path,
+        url: &str,
+        sha: &str,
+        branch: &str,
+    ) -> Result<(), GitCliError> {
+        let refspec = format!("{sha}:refs/heads/{branch}");
+        let envs = [(OsString::from("GIT_TERMINAL_PROMPT"), OsString::from("0"))];
+        self.git_with_env(
+            root,
+            [
+                "push",
+                "--porcelain",
+                "--no-follow-tags",
+                "--recurse-submodules=no",
+                "--no-verify",
+                "--",
+                url,
+                &refspec,
+            ],
+            &envs,
+        )?;
+        Ok(())
+    }
+
+    pub fn remote_branch_sha(
+        &self,
+        root: &Path,
+        url: &str,
+        branch: &str,
+    ) -> Result<Option<String>, GitCliError> {
+        let reference = format!("refs/heads/{branch}");
+        let envs = [(OsString::from("GIT_TERMINAL_PROMPT"), OsString::from("0"))];
+        let output =
+            self.git_with_env(root, ["ls-remote", "--refs", "--", url, &reference], &envs)?;
+        Ok(output.lines().find_map(|line| {
+            let (sha, name) = line.split_once('\t')?;
+            (name == reference && git2::Oid::from_str(sha).is_ok()).then(|| sha.to_owned())
+        }))
+    }
+
     pub fn check_remote_branch_exists(
         &self,
         repo_path: &Path,

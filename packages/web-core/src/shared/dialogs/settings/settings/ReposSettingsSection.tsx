@@ -1,3 +1,4 @@
+import { RepositoryPushSettings } from './RepositoryPushSettings';
 import { SharedStorageSettings } from './SharedStorageSettings';
 import { EditorSelectionDialog } from '@/shared/dialogs/command-bar/EditorSelectionDialog';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -735,6 +736,16 @@ export function ReposSettingsSection({
               repoId={selectedRepo.id}
               repoPath={selectedRepo.path}
               client={machineClient}
+            />
+          )}
+
+          {machineClient && (
+            <RepositoryPushSettings
+              key={`push:${machineClient.target.id}:${selectedRepo.id}`}
+              repo={selectedRepo}
+              client={machineClient}
+              projectId={projectId}
+              projects={allProjects}
             />
           )}
 

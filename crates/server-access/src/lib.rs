@@ -161,6 +161,11 @@ pub struct Lease {
     principal: Principal,
 }
 impl Lease {
+    /// Recheck the existing authenticated actor before an external effect.
+    pub async fn is_valid(&self) -> bool {
+        self.access.valid(&self.principal).await
+    }
+
     /// Revalidation also stops upgraded sockets after logout, mode changes,
     /// expiry or member disable. No credential is kept in the socket task.
     pub async fn until_revoked(&self) {
