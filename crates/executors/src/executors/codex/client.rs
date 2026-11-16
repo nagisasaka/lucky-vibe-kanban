@@ -102,6 +102,9 @@ struct CompletedTurn {
 }
 
 pub struct AppServerClient {
+    additional_user_input: StdMutex<Option<String>>,
+    resume_instructions: OnceLock<crate::instruction_delivery::ResumeInstructions>,
+    verified_instruction_runtime: AtomicBool,
     rpc: OnceLock<JsonRpcPeer>,
     log_writer: LogWriter,
     approvals: Option<Arc<dyn ExecutorApprovalService>>,
@@ -146,6 +149,9 @@ impl AppServerClient {
         cancel: CancellationToken,
     ) -> Arc<Self> {
         Arc::new_cyclic(|weak| Self {
+            additional_user_input: StdMutex::new(None),
+            resume_instructions: OnceLock::new(),
+            verified_instruction_runtime: AtomicBool::new(false),
             rpc: OnceLock::new(),
             log_writer,
             approvals,
@@ -175,6 +181,17 @@ impl AppServerClient {
 
     pub fn connect(&self, peer: JsonRpcPeer) {
         let _ = self.rpc.set(peer);
+    }
+
+    pub fn set_resume_instructions(
+        &self,
+        instructions: crate::instruction_delivery::ResumeInstructions,
+    ) {
+        let _ = self.resume_instructions.set(instructions);
+    }
+
+    pub fn set_additional_user_input(&self, content: Option<String>) {
+        *self.additional_user_input.lock().unwrap() = content.filter(|text| !text.is_empty());
     }
 
     pub fn set_resolved_model(&self, model: String) {
@@ -258,6 +275,15 @@ impl AppServerClient {
         // established by the handshake and the methods/capabilities we use.
         if observe_version {
             observe_codex_version(&response.user_agent);
+            self.verified_instruction_runtime.store(
+                response
+                    .user_agent
+                    .split_whitespace()
+                    .next()
+                    .and_then(|agent| agent.rsplit_once('/'))
+                    .is_some_and(|(_, version)| version == "0.163.0"),
+                Ordering::Release,
+            );
         }
         self.send_message(&ClientNotification::Initialized).await
     }
@@ -266,11 +292,56 @@ impl AppServerClient {
         &self,
         params: ThreadStartParams,
     ) -> Result<ThreadStartResponse, ExecutorError> {
+        let mut delivery: Vec<_> = params
+            .developer_instructions
+            .as_ref()
+            .map(|content| {
+                crate::instruction_delivery::InstructionDelivery::new(
+                    "thread/start.developerInstructions",
+                    "developer",
+                    "initial",
+                    None,
+                    content.clone(),
+                )
+            })
+            .into_iter()
+            .chain(params.base_instructions.as_ref().map(|content| {
+                crate::instruction_delivery::InstructionDelivery::new(
+                    "thread/start.baseInstructions",
+                    "native_base_config",
+                    "initial",
+                    None,
+                    content.clone(),
+                )
+            }))
+            .collect();
+        for delivery in &delivery {
+            delivery.log(&self.log_writer).await?;
+        }
         let request = ClientRequest::ThreadStart {
             request_id: self.next_request_id(),
             params,
         };
-        let response: ThreadStartResponse = self.send_request(request, "thread/start").await?;
+        let response: ThreadStartResponse = match self.send_request(request, "thread/start").await {
+            Ok(response) => response,
+            Err(error) => {
+                for delivery in &mut delivery {
+                    delivery.status = "unconfirmed".into();
+                    delivery.log(&self.log_writer).await?;
+                }
+                return Err(error);
+            }
+        };
+        for delivery in &mut delivery {
+            delivery.status = "accepted".into();
+            delivery.native_session_id = Some(response.thread.id.clone());
+            delivery.log(&self.log_writer).await?;
+        }
+        if !delivery.is_empty()
+            && let Some(context) = self.resume_instructions.get()
+        {
+            let _ = context.acknowledge(&response.thread.id);
+        }
         self.adopt_thread_settings(response.model.clone(), response.reasoning_effort.clone());
         Ok(response)
     }
@@ -283,17 +354,81 @@ impl AppServerClient {
         // `thread/fork` would create another CLI-visible thread on every turn.
         let requested_thread_id = params.thread_id.clone();
         let developer_instructions = params.developer_instructions.clone();
+        let context = self.resume_instructions.get();
+        let reduce = self.verified_instruction_runtime.load(Ordering::Acquire)
+            && context.is_some_and(|context| {
+                context.allow_reduction && context.matches(&requested_thread_id)
+            });
+        // Invalidate before any uncertain write. Missing receipt means full fallback.
+        if let Some(context) = context {
+            context.invalidate(&requested_thread_id)?;
+        }
+        let mut settings_delivery: Vec<_> = developer_instructions
+            .as_ref()
+            .map(|content| {
+                crate::instruction_delivery::InstructionDelivery::new(
+                    "thread/resume.developerInstructions",
+                    "developer",
+                    "resume_settings",
+                    Some(&requested_thread_id),
+                    content.clone(),
+                )
+            })
+            .into_iter()
+            .chain(params.base_instructions.as_ref().map(|content| {
+                crate::instruction_delivery::InstructionDelivery::new(
+                    "thread/resume.baseInstructions",
+                    "native_base_config",
+                    "resume_settings",
+                    Some(&requested_thread_id),
+                    content.clone(),
+                )
+            }))
+            .collect();
+        for delivery in &settings_delivery {
+            delivery.log(&self.log_writer).await?;
+        }
         *self.thread_id.lock().await = Some(requested_thread_id.clone());
         let request = ClientRequest::ThreadResume {
             request_id: self.next_request_id(),
             params,
         };
-        let response: ResumedThread = self.send_request(request, "thread/resume").await?;
+        let response: ResumedThread = match self.send_request(request, "thread/resume").await {
+            Ok(response) => response,
+            Err(error) => {
+                for delivery in &mut settings_delivery {
+                    delivery.status = "unconfirmed".into();
+                    delivery.log(&self.log_writer).await?;
+                }
+                return Err(error);
+            }
+        };
         ensure_resumed_thread_id(&requested_thread_id, &response.thread.id)?;
+        for delivery in &mut settings_delivery {
+            delivery.status = "accepted".into();
+            delivery.log(&self.log_writer).await?;
+        }
         self.adopt_thread_settings(response.model.clone(), response.reasoning_effort.clone());
         // Explicitly refresh current instructions before any continuation turn.
         // Native resume configuration alone is not evidence of model visibility.
-        if let Some(instructions) = developer_instructions.filter(|text| !text.trim().is_empty()) {
+        let injection = if reduce {
+            context.map(|context| context.current.clone())
+        } else {
+            developer_instructions
+        };
+        if let Some(instructions) = injection.filter(|text| !text.trim().is_empty()) {
+            let mut delivery = crate::instruction_delivery::InstructionDelivery::new(
+                "thread/inject_items",
+                "developer",
+                if reduce {
+                    "current_values"
+                } else {
+                    "full_fallback"
+                },
+                Some(&requested_thread_id),
+                instructions.clone(),
+            );
+            delivery.log(&self.log_writer).await?;
             let request = ClientRequest::ThreadInjectItems {
                 request_id: self.next_request_id(),
                 params: ThreadInjectItemsParams {
@@ -304,8 +439,19 @@ impl AppServerClient {
                     })],
                 },
             };
-            let _: ThreadInjectItemsResponse =
-                self.send_request(request, "thread/inject_items").await?;
+            let result: Result<ThreadInjectItemsResponse, _> =
+                self.send_request(request, "thread/inject_items").await;
+            delivery.status = if result.is_ok() {
+                "accepted"
+            } else {
+                "unconfirmed"
+            }
+            .into();
+            delivery.log(&self.log_writer).await?;
+            result?;
+            if let Some(context) = context {
+                let _ = context.acknowledge(&response.thread.id);
+            }
         }
         Ok(response)
     }
@@ -316,12 +462,45 @@ impl AppServerClient {
         input: Vec<UserInput>,
         collaboration_mode: Option<CollaborationMode>,
     ) -> Result<TurnStartResponse, ExecutorError> {
+        let mut additions = self
+            .additional_user_input
+            .lock()
+            .unwrap()
+            .take()
+            .unwrap_or_default();
+        for item in &input {
+            if matches!(item, UserInput::Skill { .. }) {
+                additions.push_str(&format!("\n{}", serde_json::to_string(item)?));
+            }
+        }
+        let mut delivery = (!additions.is_empty()).then(|| {
+            crate::instruction_delivery::InstructionDelivery::new(
+                "turn/start.input",
+                "user",
+                "profile_append_or_skill_reference",
+                Some(&thread_id),
+                additions,
+            )
+        });
+        if let Some(delivery) = &delivery {
+            delivery.log(&self.log_writer).await?;
+        }
         let effort = self.current_reasoning_effort();
         let request = ClientRequest::TurnStart {
             request_id: self.next_request_id(),
             params: build_turn_start_params(thread_id, input, collaboration_mode, effort),
         };
-        let response: TurnStartResponse = self.send_request(request, "turn/start").await?;
+        let result: Result<TurnStartResponse, _> = self.send_request(request, "turn/start").await;
+        if let Some(delivery) = &mut delivery {
+            delivery.status = if result.is_ok() {
+                "accepted"
+            } else {
+                "unconfirmed"
+            }
+            .into();
+            delivery.log(&self.log_writer).await?;
+        }
+        let response = result?;
         *self.turn_id.lock().await = Some(response.turn.id.clone());
         Ok(response)
     }
@@ -1767,6 +1946,34 @@ impl AppServerClient {
         raw: &str,
         notification: JSONRPCNotification,
     ) -> Result<JsonRpcControlFlow, ExecutorError> {
+        if matches!(
+            notification.method.as_str(),
+            "item/started" | "item/completed"
+        ) && notification.params.as_ref().is_some_and(|params| {
+            params.pointer("/item/type").and_then(Value::as_str) == Some("contextCompaction")
+        }) && let Some(context) = self.resume_instructions.get()
+            && let Some(thread) = self.thread_id.lock().await.as_ref()
+            && notification
+                .params
+                .as_ref()
+                .and_then(|p| p.get("threadId"))
+                .and_then(Value::as_str)
+                == Some(thread.as_str())
+        {
+            // Native compaction (not a generic success) invalidates continuation
+            // receipts. Duplicate notifications are harmless. No untrusted hook
+            // or post-hoc mid-turn injection is activated.
+            if let Some(id) = notification
+                .params
+                .as_ref()
+                .and_then(|params| params.pointer("/item/id"))
+                .and_then(Value::as_str)
+            {
+                context.observe_compaction(thread, id)?;
+            } else {
+                context.invalidate(thread)?;
+            }
+        }
         self.observe_child_completion(&notification).await;
         self.observe_mcp_approval_item(&notification).await;
         let flow = self.process_notification_inner(raw, notification).await?;
@@ -2714,11 +2921,12 @@ mod version_check_tests {
                 .unwrap()
                 .contains("drafts/current-run.json")
         );
-        assert!(
+        assert_eq!(
             item["content"][0]["text"]
                 .as_str()
                 .unwrap()
-                .contains("Keep fixed repository safety")
+                .contains("Keep fixed repository safety"),
+            std::env::var_os("LVK_TEST_REDUCED_INJECTION").is_none()
         );
         let _: codex_protocol::models::ResponseItem = serde_json::from_value(item.clone()).unwrap();
         let response = if std::env::var_os("LVK_TEST_REJECT_INJECTION").is_some() {
@@ -2733,15 +2941,19 @@ mod version_check_tests {
     #[tokio::test]
     async fn resumed_host_context_is_visible_before_any_new_turn() {
         use super::super::jsonrpc::{ExitSignalSender, JsonRpcPeer};
-        for (mode, reject) in [
-            (ExecutionMode::Code, false),
-            (ExecutionMode::Review, false),
-            (ExecutionMode::Goal, false),
-            (ExecutionMode::Code, true),
+        for (mode, reject, reduced, changed) in [
+            (ExecutionMode::Code, false, false, false),
+            (ExecutionMode::Review, false, false, false),
+            (ExecutionMode::Goal, false, false, false),
+            (ExecutionMode::Code, true, false, false),
+            (ExecutionMode::Code, false, true, false),
+            (ExecutionMode::Code, true, true, false),
+            (ExecutionMode::Code, false, false, true),
         ] {
             let cancel = CancellationToken::new();
+            let captured = Capture(Default::default());
             let client = AppServerClient::new(
-                LogWriter::new(tokio::io::sink()),
+                LogWriter::new(captured.clone()),
                 None,
                 false,
                 false,
@@ -2750,7 +2962,32 @@ mod version_check_tests {
                 None,
                 cancel.clone(),
             );
+            let directory = tempfile::tempdir().unwrap();
+            if reduced || changed {
+                let context = crate::instruction_delivery::ResumeInstructions::new(
+                    directory.path(),
+                    "contract-1",
+                    "RUN=current-run draft_path=drafts/current-run.json".into(),
+                );
+                context.acknowledge("resumed").unwrap();
+                let context = if changed {
+                    crate::instruction_delivery::ResumeInstructions::new(
+                        directory.path(),
+                        "contract-2",
+                        context.current.clone(),
+                    )
+                } else {
+                    context
+                };
+                client.set_resume_instructions(context);
+                client
+                    .verified_instruction_runtime
+                    .store(true, std::sync::atomic::Ordering::Release);
+            }
             let mut command = tokio::process::Command::new(std::env::current_exe().unwrap());
+            if reduced {
+                command.env("LVK_TEST_REDUCED_INJECTION", "1");
+            }
             command.args(["--exact", "executors::codex::client::version_check_tests::resumed_host_context_stdio_fixture", "--ignored", "--nocapture"])
                 .stdin(std::process::Stdio::piped()).stdout(std::process::Stdio::piped()).stderr(std::process::Stdio::inherit()).kill_on_drop(true);
             if reject {
@@ -2774,12 +3011,66 @@ mod version_check_tests {
                     })
                     .await;
                 assert_eq!(result.is_err(), reject);
+                if let Some(context) = client.resume_instructions.get() {
+                    assert_eq!(context.matches("resumed"), !reject);
+                }
+                let log = String::from_utf8_lossy(&captured.0.lock().unwrap()).into_owned();
+                assert!(log.contains(if reject { "unconfirmed" } else { "accepted" }));
                 assert!(child.wait().await.unwrap().success());
             })
             .await
             .expect("resume must acknowledge visible context before continuation");
             cancel.cancel();
         }
+    }
+
+    #[tokio::test]
+    async fn compaction_instruction_receipt_invalidation_is_scoped_and_idempotent() {
+        let client = goal_client();
+        let directory = tempfile::tempdir().unwrap();
+        let context = crate::instruction_delivery::ResumeInstructions::new(
+            directory.path(),
+            "fixed",
+            "RUN=2".into(),
+        );
+        context.acknowledge("thread-1").unwrap();
+        client.set_resume_instructions(context.clone());
+        let child = json!({"method":"item/completed","params":{"threadId":"child","turnId":"t","item":{"type":"contextCompaction","id":"compact-1"}}});
+        client
+            .process_notification(&child.to_string(), serde_json::from_value(child).unwrap())
+            .await
+            .unwrap();
+        assert!(context.matches("thread-1"));
+        for method in ["item/started", "item/completed", "item/completed"] {
+            notify(
+                &client,
+                method,
+                json!({"turnId":"t","item":{"type":"contextCompaction","id":"compact-1"}}),
+            )
+            .await;
+            assert!(!context.matches("thread-1"));
+        }
+        // A failed/aborted compact never restores a success receipt. The next
+        // normal continuation must use the full fallback, not a second callback.
+        assert!(!context.matches("thread-1"));
+        context.acknowledge("thread-1").unwrap();
+        notify(
+            &client,
+            "item/completed",
+            json!({"turnId":"t","item":{"type":"contextCompaction","id":"compact-1"}}),
+        )
+        .await;
+        assert!(
+            context.matches("thread-1"),
+            "a delayed duplicate must not cause another full resend"
+        );
+        notify(
+            &client,
+            "item/started",
+            json!({"turnId":"t2","item":{"type":"contextCompaction","id":"compact-2"}}),
+        )
+        .await;
+        assert!(!context.matches("thread-1"));
     }
 
     fn arm_goal(client: &AppServerClient) {

@@ -292,6 +292,7 @@ function appendRunEntries(
   run: CanonicalAgentSessionRun,
   output: PatchTypeWithKey[]
 ) {
+  const firstRunIndex = output.length;
   const liveIds = new Set(
     run.timeline?.transientEvents.map((event) => event.event_id)
   );
@@ -321,6 +322,7 @@ function appendRunEntries(
   >();
   const approvalIndexes = new Map<string, number>();
   const explanationIndexes = new Map<string, number>();
+  const instructionIndexes = new Map<string, number>();
   const explanationParts = new Map<string, Map<number, string>>();
   const inputIndexes = new Map<string, number>();
   let previousMessage:
@@ -809,6 +811,67 @@ function appendRunEntries(
       case 'provider_extension':
         resetMessageMerge();
         if (
+          payload.data.provider_namespace === 'lvk' &&
+          payload.data.provider_event === 'instruction_delivery'
+        ) {
+          const data = jsonObject(payload.data.payload);
+          if (
+            !data ||
+            typeof data.id !== 'string' ||
+            typeof data.route !== 'string' ||
+            typeof data.role !== 'string' ||
+            typeof data.reason !== 'string' ||
+            typeof data.content !== 'string' ||
+            !['attempted', 'accepted', 'unconfirmed'].includes(
+              String(data.status)
+            )
+          )
+            break;
+          const key = toolKey(event, data.id);
+          const index = instructionIndexes.get(key);
+          const previous = index === undefined ? undefined : output[index];
+          const next = normalizedPatch(event, {
+            entry_type: { type: 'system_message' },
+            content: '',
+            timestamp: event.timestamp,
+          });
+          next.instructionDelivery = {
+            id: data.id,
+            route: data.route,
+            role: data.role,
+            reason: data.reason,
+            nativeSessionId:
+              typeof data.native_session_id === 'string'
+                ? data.native_session_id
+                : null,
+            content: data.content,
+            status:
+              data.status === 'attempted' && !runActive
+                ? 'unconfirmed'
+                : (data.status as 'attempted' | 'accepted' | 'unconfirmed'),
+            attemptedAt:
+              previous?.instructionDelivery?.attemptedAt ??
+              (data.status === 'attempted' ? event.timestamp : null),
+            updatedAt: event.timestamp,
+          };
+          if (previous && index !== undefined) {
+            // Late/duplicated attempt notifications must not downgrade an ACK.
+            if (
+              previous.instructionDelivery?.status === 'accepted' &&
+              data.status !== 'accepted'
+            )
+              break;
+            next.patchKey = previous.patchKey;
+            next.canonical = previous.canonical;
+            mergeEventIdentity(next, event, false);
+            output[index] = next;
+          } else {
+            instructionIndexes.set(key, output.length);
+            output.push(next);
+          }
+          break;
+        }
+        if (
           ['codex', 'claude_code', 'lvk_live'].includes(
             payload.data.provider_namespace
           ) &&
@@ -970,6 +1033,16 @@ function appendRunEntries(
       patchKey: `agent-run:${run.summary.agent_run_id}:preparing`,
     });
     return;
+  }
+  if (!runActive && instructionIndexes.size === 0) {
+    const human = output
+      .slice(firstRunIndex)
+      .find(
+        (entry) =>
+          entry.type === 'NORMALIZED_ENTRY' &&
+          entry.content.entry_type.type === 'user_message'
+      );
+    if (human) human.instructionRecordMissing = true;
   }
   const terminalEvent = events.find(
     (event) =>

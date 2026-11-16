@@ -290,7 +290,7 @@ impl DirectProvider {
                 runtime: None,
                 protocol: Some("stream-json-v1"),
                 adapter: "claude-code-adapter-v1",
-                mapper: "claude-code-mapper-v6",
+                mapper: "claude-code-mapper-v7",
             },
         }
     }
@@ -403,7 +403,7 @@ impl DirectProvider {
             provider: self,
             semantics: match self {
                 Self::Codex => MapperSemantics::V8,
-                Self::ClaudeCode => MapperSemantics::V6,
+                Self::ClaudeCode => MapperSemantics::V7,
             },
             scope: Default::default(),
             replay_sequence: Default::default(),
@@ -856,7 +856,8 @@ impl NativeAuditReplayMapper for DirectProviderMapper {
     ) -> Result<Vec<AgentEvent>, NativeAuditError> {
         let typed = if self.provider == DirectProvider::ClaudeCode {
             match self.semantics {
-                MapperSemantics::V6 => classify_payload(self.provider, event)?,
+                MapperSemantics::V6 => classify_payload_v6(self.provider, event)?,
+                MapperSemantics::V7 => classify_payload(self.provider, event)?,
                 MapperSemantics::V5 => classify_payload_v5(self.provider, event)?,
                 MapperSemantics::V3 | MapperSemantics::V4 => {
                     classify_payload_v4(self.provider, event)?
@@ -1116,7 +1117,34 @@ fn claude_api_retry_message(object: &serde_json::Map<String, Value>) -> String {
 
 // New Claude streams distinguish terminal results from recoverable error messages.
 // Historical v3/v4/v5 audit bundles retain their original classifiers below.
+// Claude 2.1.308 can label a failed local compact as success/is_error=false.
+// A local command result is never evidence of compaction or instruction delivery.
 fn classify_payload(
+    provider: DirectProvider,
+    event: &ProviderEvent,
+) -> Result<TypedProviderEvent, NativeAuditError> {
+    if provider == DirectProvider::ClaudeCode
+        && let Some(raw) = &event.payload_json
+        && raw["type"] == "result"
+        && raw["local_command"] == "compact"
+        && let Some(message) = raw["result"].as_str()
+        && message.starts_with("Error during compaction:")
+    {
+        return Ok(TypedProviderEvent::TurnResult {
+            status: AgentRunStatus::Failed,
+            output: None,
+            error: Some(AgentRuntimeError::new(
+                AgentRuntimeErrorKind::ProtocolFailed,
+                message,
+            )),
+        });
+    }
+    // Preserve command lifecycle reporting. No result, including success,
+    // creates an instruction receipt or a compaction-delivery observation.
+    classify_payload_v6(provider, event)
+}
+
+fn classify_payload_v6(
     provider: DirectProvider,
     event: &ProviderEvent,
 ) -> Result<TypedProviderEvent, NativeAuditError> {
@@ -2050,6 +2078,43 @@ fn project_typed_event(
     event: &DecodedProviderEvent,
     manifest: &NativeAuditManifest,
 ) -> Result<ProviderEventProjection, NativeAuditError> {
+    // Facts emitted at the adapter's write/ACK boundary, not launch-time intent.
+    // Keep historical replay semantics unchanged.
+    if ["codex-mapper-v8", "claude-code-mapper-v7"].contains(&manifest.mapper_version.as_str())
+        && let Some(value) = event
+            .raw
+            .payload_json
+            .as_ref()
+            .and_then(|raw| raw.get("lvk_instruction_delivery"))
+        && let Ok(delivery) = serde_json::from_value::<
+            crate::instruction_delivery::InstructionDelivery,
+        >(value.clone())
+    {
+        return Ok(ProviderEventProjection {
+            durable_events: vec![AgentEventEnvelope {
+                schema_version: AGENT_EVENT_SCHEMA_VERSION,
+                payload_version: AGENT_EVENT_PAYLOAD_VERSION,
+                event_id: event_id(manifest.run_attempt_id, event.raw.sequence),
+                session_id: manifest.session_id,
+                agent_run_id: manifest.agent_run_id,
+                turn_id: manifest.turn_id,
+                run_attempt_id: manifest.run_attempt_id,
+                run_attempt_number: manifest.run_attempt_number,
+                sequence: event.raw.sequence,
+                correlation_id: event.raw.correlation_id,
+                orchestration_run_id: None,
+                orchestration_node_execution_id: None,
+                timestamp: event.raw.timestamp,
+                native_refs: vec![event.raw.native_ref.clone()],
+                payload: AgentEventPayload::ProviderExtension {
+                    provider_namespace: "lvk".into(),
+                    provider_event: "instruction_delivery".into(),
+                    payload: serde_json::to_value(delivery).expect("delivery serializes"),
+                },
+            }],
+            live_events: Vec::new(),
+        });
+    }
     if let TypedProviderEvent::TurnResult {
         status,
         output,
@@ -2278,7 +2343,7 @@ fn project_typed_event(
     // Claude emits mixed text/tool content in a single envelope. Expand only
     // completed semantic blocks at the adapter boundary, with distinct stable
     // event IDs and the same native reference. Preserve historical v1/v2 replay.
-    let claude_block_snapshots = ["-v4", "-v5", "-v6"]
+    let claude_block_snapshots = ["-v4", "-v5", "-v6", "-v7"]
         .iter()
         .any(|suffix| manifest.mapper_version.ends_with(suffix));
     if provider == DirectProvider::ClaudeCode
@@ -3218,6 +3283,77 @@ mod tests {
                 .windows(2)
                 .all(|pair| pair[0].adapter != pair[1].adapter)
         );
+    }
+
+    #[test]
+    fn instruction_delivery_projects_only_actual_adapter_facts() {
+        for provider in [DirectProvider::Codex, DirectProvider::ClaudeCode] {
+            let delivery = crate::instruction_delivery::InstructionDelivery::new(
+                "native.route",
+                "developer",
+                "current_values",
+                Some("native-1"),
+                "RUN=2 draft_path=2.json".into(),
+            );
+            let raw = frame(
+                provider,
+                serde_json::json!({"type":"lvk_instruction_delivery", "lvk_instruction_delivery":delivery}),
+            );
+            let decoded = provider.decode_native_frame(&raw).unwrap();
+            let manifest = fixture_manifest(provider);
+            let projected = provider
+                .project_provider_event(&decoded, &manifest)
+                .unwrap();
+            assert_eq!(projected.durable_events.len(), 1);
+            assert!(
+                matches!(&projected.durable_events[0].payload, AgentEventPayload::ProviderExtension {provider_namespace, provider_event, payload} if provider_namespace=="lvk" && provider_event=="instruction_delivery" && payload["status"]=="attempted")
+            );
+            let mut old = manifest;
+            old.mapper_version = provider.v6_mapper().versions().mapper_version;
+            assert!(
+                provider
+                    .v6_mapper()
+                    .map(&decoded.raw, &old)
+                    .unwrap()
+                    .is_empty()
+            );
+        }
+    }
+
+    #[test]
+    fn failed_compact_instruction_delivery_cannot_be_certified_by_success_subtype() {
+        let provider = DirectProvider::ClaudeCode;
+        let raw = frame(
+            provider,
+            serde_json::json!({"type":"result", "subtype":"success", "is_error":false, "local_command":"compact", "result":"Error during compaction: Failed to authenticate: fixture"}),
+        );
+        let decoded = provider.decode_native_frame(&raw).unwrap();
+        assert!(matches!(
+            decoded.typed,
+            TypedProviderEvent::TurnResult {
+                status: AgentRunStatus::Failed,
+                ..
+            }
+        ));
+        let manifest = fixture_manifest(provider);
+        let projected = provider
+            .project_provider_event(&decoded, &manifest)
+            .unwrap();
+        assert!(matches!(
+            projected.durable_events.last().unwrap().payload,
+            AgentEventPayload::LifecycleChanged {
+                status: AgentRunStatus::Failed
+            }
+        ));
+        let mut old = manifest;
+        old.mapper_version = provider.v6_mapper().versions().mapper_version;
+        let historical = provider.v6_mapper().map(&decoded.raw, &old).unwrap();
+        assert!(matches!(
+            historical.last().unwrap().payload,
+            AgentEventPayload::LifecycleChanged {
+                status: AgentRunStatus::Succeeded
+            }
+        ));
     }
 
     #[test]
@@ -4942,7 +5078,7 @@ mod tests {
                 if provider == DirectProvider::Codex {
                     "-v8"
                 } else if provider == DirectProvider::ClaudeCode {
-                    "-v6"
+                    "-v7"
                 } else {
                     "-v3"
                 }

@@ -109,6 +109,7 @@ impl ProtocolPeer {
                 .read_loop(stdout, Some(client.clone()), cancel)
                 .await
             {
+                let _ = client.finish_instruction_delivery().await;
                 tracing::error!("Protocol reader loop error: {}", e);
                 let _ = client.log_message(&serde_json::json!({"type":"error","message":"Claude control stream closed or failed before a result"}).to_string()).await;
                 reader_peer.fail_runtime();
@@ -302,6 +303,7 @@ impl ProtocolPeer {
                                         .await;
                                 }
                                 Ok(CLIMessage::Result(_)) => {
+                                    client.finish_instruction_delivery().await?;
                                     break;
                                 }
                                 _ => {

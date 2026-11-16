@@ -2341,5 +2341,16 @@
       "crashed": "agent異常終了",
       "audit_failed": "監査失敗"
     }
+  },
+  "lvkInstructions": {
+    "title": "LVK の追加指示",
+    "attempted": "送信試行・受付未確認",
+    "accepted": "CLI 受付確認",
+    "unconfirmed": "受付結果不明",
+    "scope": "LVK が渡した追加指示の記録です。CLI 受付はモデル到達・遵守の証明ではありません。CLI 独自の読込や非公開の内部指示は対象外です。参照先の内容を読んだことも意味しません。",
+    "route": "配信経路・ロール・理由",
+    "timing": "送信試行 → 最終観測",
+    "missing": "配信記録なし",
+    "missingExplanation": "この Run には追加指示の配信記録がありません。未配信を意味しません。現在の設定から過去の内容を再生成しません。"
   }
 }

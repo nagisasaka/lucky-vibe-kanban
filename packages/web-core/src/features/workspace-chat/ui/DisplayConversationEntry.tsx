@@ -49,6 +49,7 @@ import {
 } from '@vibe/ui/components/ChatFileEntry';
 import { ChatApprovalCard } from '@vibe/ui/components/ChatApprovalCard';
 import { ChatUserMessage } from '@vibe/ui/components/ChatUserMessage';
+import { LvkInstructionsEntry } from './LvkInstructionsEntry';
 import { ChatAssistantMessage } from '@vibe/ui/components/ChatAssistantMessage';
 import { ChatSystemMessage } from '@vibe/ui/components/ChatSystemMessage';
 import { ChatProviderPlan } from '@vibe/ui/components/ChatProviderPlan';
@@ -94,6 +95,8 @@ type Props = {
   toolTiming?: PatchTypeWithKey['toolTiming'];
   pendingDelivery?: PatchTypeWithKey['pendingDelivery'];
   providerText?: PatchTypeWithKey['providerText'];
+  instructionDelivery?: PatchTypeWithKey['instructionDelivery'];
+  instructionRecordMissing?: boolean;
   toolOutput?: PatchTypeWithKey['toolOutput'];
   workspaceWithSession: WorkspaceWithSession;
   resetAction: UseResetProcessResult;
@@ -641,19 +644,24 @@ function DisplayConversationEntry(props: Props) {
         return <IntegrationInitialMessage run={integration.data} />;
       }
       return (
-        <UserMessageEntry
-          pendingDelivery={props.pendingDelivery}
-          canonicalEntryKey={props.canonicalEntryKey ?? expansionKey}
-          content={entry.content}
-          expansionKey={expansionKey}
-          workspaceId={workspaceWithSession?.id}
-          sessionId={sessionId}
-          executionProcessId={executionProcessId}
-          executorCanFork={
-            executorCanFork && workspaceWithSession?.usage === 'interactive'
-          }
-          resetAction={resetAction}
-        />
+        <>
+          <UserMessageEntry
+            pendingDelivery={props.pendingDelivery}
+            canonicalEntryKey={props.canonicalEntryKey ?? expansionKey}
+            content={entry.content}
+            expansionKey={expansionKey}
+            workspaceId={workspaceWithSession?.id}
+            sessionId={sessionId}
+            executionProcessId={executionProcessId}
+            executorCanFork={
+              executorCanFork && workspaceWithSession?.usage === 'interactive'
+            }
+            resetAction={resetAction}
+          />
+          {props.instructionRecordMissing && (
+            <LvkInstructionsEntry runId={props.agentRunId} />
+          )}
+        </>
       );
 
     case 'assistant_message':
@@ -666,6 +674,14 @@ function DisplayConversationEntry(props: Props) {
       );
 
     case 'system_message':
+      if (props.instructionDelivery) {
+        return (
+          <LvkInstructionsEntry
+            delivery={props.instructionDelivery}
+            runId={props.agentRunId}
+          />
+        );
+      }
       return (
         <SystemMessageEntry
           content={entry.content}

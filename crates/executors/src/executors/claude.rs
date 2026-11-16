@@ -789,6 +789,12 @@ impl ClaudeCode {
         }
         let (program_path, args) = command_parts.into_resolved().await?;
         let combined_prompt = self.append_prompt.combine_prompt(prompt);
+        let memory = env.get("LVK_DELIVERED_USER_SUFFIX").cloned();
+        let additional_instructions = format!(
+            "{}{}",
+            memory.unwrap_or_default(),
+            self.append_prompt.get().unwrap_or_default()
+        );
 
         let mut command = crate::source_protection::claude_command(&program_path, env)?;
         command
@@ -890,6 +896,10 @@ impl ClaudeCode {
                     .set_permission_mode(permission_mode)
                     .await
                     .map_err(|_| "Claude permission setup failed or timed out")?;
+                client
+                    .begin_instruction_delivery(prompt_clone.clone(), additional_instructions)
+                    .await
+                    .map_err(|_| "Claude instruction delivery recording failed")?;
                 protocol_peer
                     .send_user_message(prompt_clone)
                     .await
@@ -898,6 +908,7 @@ impl ClaudeCode {
             tokio::select! {
                 _ = cancel_startup.cancelled() => {},
                 result = startup => if let Err(message) = result {
+                    let _ = client.finish_instruction_delivery().await;
                     let _ = log_writer.log_raw(&serde_json::json!({
                         "type":"error", "message":message
                     }).to_string()).await;

@@ -27,6 +27,8 @@ const TOOL_DENY_PREFIX: &str = "The user doesn't want to proceed with this tool 
 
 /// Claude Agent client with control protocol support
 pub struct ClaudeAgentClient {
+    instruction_delivery:
+        tokio::sync::Mutex<Option<(String, crate::instruction_delivery::InstructionDelivery)>>,
     log_writer: LogWriter,
     approvals: Option<Arc<dyn ExecutorApprovalService>>,
     auto_approve: bool, // true when approvals is None
@@ -42,6 +44,7 @@ impl ClaudeAgentClient {
     ) -> Arc<Self> {
         let auto_approve = approvals.is_none();
         Arc::new(Self {
+            instruction_delivery: tokio::sync::Mutex::new(None),
             log_writer,
             approvals,
             auto_approve,
@@ -352,6 +355,120 @@ impl ClaudeAgentClient {
     }
 
     pub async fn log_message(&self, line: &str) -> Result<(), ExecutorError> {
-        self.log_writer.log_raw(line).await
+        self.log_writer.log_raw(line).await?;
+        if let Ok(value) = serde_json::from_str::<serde_json::Value>(line)
+            && value["type"] == "user"
+        {
+            let content = value.pointer("/message/content");
+            let text = content
+                .and_then(|v| v.as_str().map(str::to_owned))
+                .or_else(|| {
+                    let blocks = content?.as_array()?;
+                    if blocks.iter().all(|v| v["type"] == "text") {
+                        Some(
+                            blocks
+                                .iter()
+                                .filter_map(|v| v["text"].as_str())
+                                .collect::<String>(),
+                        )
+                    } else {
+                        None
+                    }
+                });
+            let mut pending = self.instruction_delivery.lock().await;
+            if pending
+                .as_ref()
+                .is_some_and(|(expected, _)| text.as_ref() == Some(expected))
+            {
+                let (_, mut delivery) = pending.take().expect("matched pending delivery");
+                delivery.status = "accepted".into();
+                delivery.native_session_id = value["session_id"].as_str().map(str::to_owned);
+                delivery.log(&self.log_writer).await?;
+            }
+        }
+        Ok(())
+    }
+
+    pub async fn begin_instruction_delivery(
+        &self,
+        expected: String,
+        additional: String,
+    ) -> Result<(), ExecutorError> {
+        if additional.is_empty() {
+            return Ok(());
+        }
+        let delivery = crate::instruction_delivery::InstructionDelivery::new(
+            "stream-json.user_suffix",
+            "user",
+            "full_fallback",
+            None,
+            additional,
+        );
+        delivery.log(&self.log_writer).await?;
+        *self.instruction_delivery.lock().await = Some((expected, delivery));
+        Ok(())
+    }
+
+    pub async fn finish_instruction_delivery(&self) -> Result<(), ExecutorError> {
+        if let Some((_, mut delivery)) = self.instruction_delivery.lock().await.take() {
+            delivery.status = "unconfirmed".into();
+            delivery.log(&self.log_writer).await?;
+        }
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod instruction_delivery_tests {
+    use tokio::io::AsyncReadExt;
+
+    use super::*;
+
+    #[tokio::test]
+    async fn instruction_receipt_requires_exact_native_echo_not_generic_success() {
+        for acknowledged in [false, true] {
+            let (writer, mut reader) = tokio::io::duplex(65536);
+            let client =
+                ClaudeAgentClient::new(LogWriter::new(writer), None, CancellationToken::new());
+            client
+                .begin_instruction_delivery("human\nfixed".into(), "fixed".into())
+                .await
+                .unwrap();
+            client
+                .log_message(r#"{"type":"result","subtype":"success","is_error":false}"#)
+                .await
+                .unwrap();
+            client
+                .log_message(r#"{"type":"user","message":{"content":"different"}}"#)
+                .await
+                .unwrap();
+            if acknowledged {
+                for _ in 0..2 {
+                    client.log_message(r#"{"type":"user","session_id":"native-1","message":{"content":[{"type":"text","text":"human\nfixed"}]}}"#).await.unwrap();
+                }
+            }
+            client.finish_instruction_delivery().await.unwrap();
+            drop(client);
+            let mut log = String::new();
+            reader.read_to_string(&mut log).await.unwrap();
+            let facts: Vec<serde_json::Value> = log
+                .lines()
+                .map(|line| serde_json::from_str::<serde_json::Value>(line).unwrap())
+                .filter_map(|v| v.get("lvk_instruction_delivery").cloned())
+                .collect();
+            assert_eq!(facts.len(), 2);
+            assert_eq!(facts[0]["status"], "attempted");
+            assert_eq!(
+                facts[1]["status"],
+                if acknowledged {
+                    "accepted"
+                } else {
+                    "unconfirmed"
+                }
+            );
+            if acknowledged {
+                assert_eq!(facts[1]["native_session_id"], "native-1");
+            }
+        }
     }
 }

@@ -98,6 +98,83 @@ function projectRuns(
 }
 
 describe('projectCanonicalAgentConversation', () => {
+  it('keeps human input intact and folds delivery attempts and ACKs without inventing missing content', () => {
+    const delivery = (sequence: number, status: string) =>
+      event('instructions', sequence, {
+        type: 'provider_extension',
+        data: {
+          provider_namespace: 'lvk',
+          provider_event: 'instruction_delivery',
+          payload: {
+            id: 'delivery-1',
+            route: 'thread/inject_items',
+            role: 'developer',
+            reason: 'current_values',
+            native_session_id: 'native-1',
+            content: 'RUN=current draft_path=current.json',
+            status,
+          },
+        },
+      });
+    const human = event('instructions', 1, {
+      type: 'message',
+      data: {
+        message: {
+          message_id: 'human',
+          role: 'user',
+          content: 'あなたの原文\n```text\n引用\n```',
+        },
+        final_output: false,
+      },
+    });
+    const result = projectRuns([
+      {
+        runId: 'instructions',
+        status: 'succeeded',
+        events: [
+          human,
+          delivery(2, 'attempted'),
+          delivery(3, 'accepted'),
+          delivery(4, 'attempted'),
+        ],
+      },
+    ]);
+    const rows = result.entries.filter((row) => row.instructionDelivery);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].instructionDelivery).toMatchObject({
+      status: 'accepted',
+      content: 'RUN=current draft_path=current.json',
+      attemptedAt: '2026-08-14T00:00:02Z',
+      updatedAt: '2026-08-14T00:00:03Z',
+    });
+    expect(
+      result.entries.find(
+        (row) =>
+          row.type === 'NORMALIZED_ENTRY' &&
+          row.content.entry_type.type === 'user_message'
+      )
+    ).toMatchObject({
+      content: { content: 'あなたの原文\n```text\n引用\n```' },
+    });
+    const unknown = projectRuns([
+      {
+        runId: 'instructions',
+        status: 'failed',
+        events: [human, delivery(2, 'attempted')],
+      },
+    ]);
+    expect(
+      unknown.entries.find((row) => row.instructionDelivery)
+        ?.instructionDelivery?.status
+    ).toBe('unconfirmed');
+    const old = projectRuns([
+      { runId: 'instructions', status: 'succeeded', events: [human] },
+    ]);
+    expect(
+      old.entries.find((row) => row.instructionRecordMissing)?.content
+    ).toMatchObject({ content: 'あなたの原文\n```text\n引用\n```' });
+    expect(old.entries.some((row) => row.instructionDelivery)).toBe(false);
+  });
   it('stores a final snapshot without displaying an identical assistant answer twice', () => {
     const entries = projectRuns([
       {

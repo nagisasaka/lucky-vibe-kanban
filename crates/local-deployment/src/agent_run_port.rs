@@ -149,17 +149,24 @@ impl FrozenDirectProviderLaunchSpec {
         request: &AgentRunRequestEnvelope,
         attempt: &RunAttemptRequest,
         provider: DirectProvider,
-        env: ExecutionEnv,
+        mut env: ExecutionEnv,
     ) -> Self {
+        let prompt = executors::executors::provider_adapter::prompt_with_repository_memory(
+            provider,
+            &request.input.content,
+            &env,
+        );
+        if provider != DirectProvider::Codex
+            && !request.input.content.trim_start().starts_with('/')
+            && let Some(suffix) = env.repository_memory_instructions()
+        {
+            env.insert("LVK_DELIVERED_USER_SUFFIX", format!("\n\n{suffix}"));
+        }
         Self {
             provider,
             executor_config: attempt.executor_config.clone(),
             intent: direct_intent(request.intent, attempt.mode),
-            prompt: executors::executors::provider_adapter::prompt_with_repository_memory(
-                provider,
-                &request.input.content,
-                &env,
-            ),
+            prompt,
             provider_session: attempt.provider_session.clone(),
             reset_to_message_id: attempt.reset_to_message_id.clone(),
             selected_skills: attempt.selected_skills.clone().unwrap_or_default(),
@@ -1051,12 +1058,19 @@ impl LocalAgentRunPort {
                 }
             }
         }
+        let mut current_instructions = memory_instructions.clone();
+        let mut fixed_instructions = Vec::<String>::new();
+        current_instructions.extend(parallel_contexts.clone());
         if !parallel_contexts.is_empty() {
+            fixed_instructions.push(services::services::parallel_context::INSTRUCTIONS.into());
             memory_instructions.extend(parallel_contexts);
             memory_instructions.push(services::services::parallel_context::INSTRUCTIONS.into());
         }
         if let Some(instructions) = utils::repository_memory::coding_run_instructions(&coding_runs)
         {
+            current_instructions.extend(coding_runs.iter().map(|run| run.identity_instructions()));
+            current_instructions.push("The CURRENT identity supersedes earlier run IDs and draft paths for each repository. Use only its current draft_path and repository_path.".into());
+            fixed_instructions.push(utils::repository_memory::CODING_RUN_INSTRUCTIONS.into());
             memory_instructions.push(instructions);
         }
         let repo_names = repos
@@ -1112,6 +1126,14 @@ impl LocalAgentRunPort {
             env.insert("LVK_OPENWIKI_REVIEWER", "1");
         }
         if !memory_instructions.is_empty() {
+            env.insert(
+                "LVK_CURRENT_MEMORY_INSTRUCTIONS",
+                current_instructions.join("\n\n"),
+            );
+            env.insert(
+                "LVK_FIXED_MEMORY_INSTRUCTIONS",
+                fixed_instructions.join("\n\n"),
+            );
             env.insert(
                 "LVK_REPOSITORY_MEMORY_INSTRUCTIONS",
                 memory_instructions.join("\n\n"),
