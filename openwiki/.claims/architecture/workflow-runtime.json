@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:08f0af5acd96c6bcbad689693ee9dd9d20d03e34bec430018033a88231f1331e",
+  "pageVersion": "sha256:54c5378b60288e1c86bfdd77374a99c16d607c36b4ce9a00ae1c47e35ec080b2",
   "claims": [
     {
       "id": "claim_82dcbc35b88a441daa22355016e0d3f8",
@@ -245,8 +245,8 @@
       "statement": "新規自動マージは専用会話のAgentRunを直接dispatchし、専用Orchestration nodeを作らない。orchestration startupはproduct_kind=integrationを通常回復対象から外す。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/integrations/conversation.rs#L848-L915",
-          "version": "repo-lines-v1:sha256:1f8d050c69ef0e87cfce925c554b57f6f6d79a63d137a0734a88284138276eaf:eyJzZWxlY3RlZExpbmVDb3VudCI6NjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY0NTdjYjhlMjc0ZTA2ZmY2ZjQwNmRjZjJlZDQzOWFjMjVjMWQ1NzkxMTQxNTMwNjc5ZDlkYTNkNzEwZjkxMWQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY3YjNiMTVmZjZhZjViYWFiYTAyOTMzZGIwYmQwYWM2NGJjMDRjMDMxNzQ4N2M5ZWNiMThiNzMxZGVkZTQ3NmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjNlZGVhNWZmOGE2NjBmMDEwM2IwNGM0NmIwNjBjNzRkOTgyMDFjMWI3NjkwNjY5OTZmMWUwNTQxOTU4MjdlZGIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUwYzdjZDZiNDRiNGMzYjQ0Y2Y3Y2Q0ZGY2ODQ5OTk0NTVkYTFiYzI2Mzg4NTUwM2U4OGU3M2VmMzUxMDUyMDkifQ"
+          "resource": "repo://crates/server/src/routes/integrations/conversation.rs#L925-L993",
+          "version": "repo-lines-v1:sha256:45110bc74d051c9bcc51db148a976245063d7587b0c8e21a4e52fb70ce9a5a3c:eyJzZWxlY3RlZExpbmVDb3VudCI6NjksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY0NTdjYjhlMjc0ZTA2ZmY2ZjQwNmRjZjJlZDQzOWFjMjVjMWQ1NzkxMTQxNTMwNjc5ZDlkYTNkNzEwZjkxMWQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY3YjNiMTVmZjZhZjViYWFiYTAyOTMzZGIwYmQwYWM2NGJjMDRjMDMxNzQ4N2M5ZWNiMThiNzMxZGVkZTQ3NmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjNlZGVhNWZmOGE2NjBmMDEwM2IwNGM0NmIwNjBjNzRkOTgyMDFjMWI3NjkwNjY5OTZmMWUwNTQxOTU4MjdlZGIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUwYzdjZDZiNDRiNGMzYjQ0Y2Y3Y2Q0ZGY2ODQ5OTk0NTVkYTFiYzI2Mzg4NTUwM2U4OGU3M2VmMzUxMDUyMDkifQ"
         },
         {
           "resource": "repo://crates/services/src/services/orchestration.rs#L1148-L1163",
@@ -315,8 +315,8 @@
       "statement": "固定presetの成果成立は通常coding完了後のclean sourceとreportを確認し、実装SHA・phase開始snapshot・Change Manifestを引き渡す。報告工程は開始終了sourceの一致を検査する。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/workflow_runtime/presets.rs#L80-L166",
-          "version": "repo-lines-v1:sha256:f5d9a48d260b365dff6dd896900c3572d5acb6151a39e39b9b7afaaa239c8023:eyJzZWxlY3RlZExpbmVDb3VudCI6ODcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjczNWY1Y2NmZDQzMDY3YjEzMzQzOTg3OWE4ZjFjMTAzMjFiMzZkODdhOWQxOGYzNmRhMmRkZmI5MjE2MmYwYjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg4MzEyMzNkMjhkOTUzNWQ3YjM3NjFkMjFhM2U5YWU0M2Q4MTYwZmQ1MTAzNWExNTM3ZDAxODJlODY4OGY4OWEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI5MGMyMTUyOGFhOTZjZTU0M2YzY2IxNTk4OGQ1NTgyYmExNGVkZmM5MWUyNWZiNWM0NjZjYjViNzNjMzIzNGMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE1MjE2MDRiMzVmYzQwYWYwMGNiYTRlZWEyZmQ1ZTJjM2FmMTg2M2IzOTExODVkN2JmNGJiMDllNzJkMGM4YjMifQ"
+          "resource": "repo://crates/server/src/workflow_runtime/presets.rs#L80-L167",
+          "version": "repo-lines-v1:sha256:d266468bf4166cfaf65a0081fa800f69581c9de98597437e6789f292a867e650:eyJzZWxlY3RlZExpbmVDb3VudCI6ODgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjczNWY1Y2NmZDQzMDY3YjEzMzQzOTg3OWE4ZjFjMTAzMjFiMzZkODdhOWQxOGYzNmRhMmRkZmI5MjE2MmYwYjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg4MzEyMzNkMjhkOTUzNWQ3YjM3NjFkMjFhM2U5YWU0M2Q4MTYwZmQ1MTAzNWExNTM3ZDAxODJlODY4OGY4OWEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI5MGMyMTUyOGFhOTZjZTU0M2YzY2IxNTk4OGQ1NTgyYmExNGVkZmM5MWUyNWZiNWM0NjZjYjViNzNjMzIzNGMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE1MjE2MDRiMzVmYzQwYWYwMGNiYTRlZWEyZmQ1ZTJjM2FmMTg2M2IzOTExODVkN2JmNGJiMDllNzJkMGM4YjMifQ"
         }
       ]
     },
@@ -337,10 +337,20 @@
           "version": "repo-file-v1:sha256:02b746acf53b62df51aee665b777c78bcd64e25396b607403ac6fc825b94cc86"
         }
       ]
+    },
+    {
+      "id": "claim_00106048d5da4a1a8f70d05127a2d11e",
+      "statement": "固定presetのChange Manifest引渡しはDB正本を利用し、Repo/eventを指定する読取URLを含み旧ファイルpathを渡さない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/workflow_runtime/presets.rs#L105-L143",
+          "version": "repo-lines-v1:sha256:14ced79b7160c2bcbd0d15805e01367159de6c637bf880fbfcf555042ccd0880:eyJzZWxlY3RlZExpbmVDb3VudCI6MzksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQzZTE1MzdkZTM2NzY2NWMzMmZiNzI2NTAxMThiN2NmOGNiM2ZhMDI4MDY2NmU0MTVhM2NmMzYzZmFmZjQwMTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU1MjJjNDJjZDE5YzZkMDNkODA4YzQ1MjcyMDU1MjgyNWI3ZWExYzViNDkxYjIxODUxMWNhYzc0MTVjZjlkOWIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI0NTMyYWZlNWEwMjZiNDMyNjk1Y2VmZWIzODRjZWE1ZjBkZTkxNmFkNWJkYzRmODAwMmIzYzIzY2ViYTk4MjciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijk3YTJhOTk2ZTcxYTE1ODE2YTJmMDRmZjgwNDA3YTRjZTA2YjMzYmMyMGUyZmEzNjU4OWE1NDIyZTJkZGMwOTUifQ"
+        }
+      ]
     }
   ],
   "verification": {
-    "by": "openwiki/0.7.2",
-    "at": "2026-11-11T09:36:22.928Z"
+    "by": "openwiki/0.9.0",
+    "at": "2026-11-16T15:12:08.330Z"
   }
 }

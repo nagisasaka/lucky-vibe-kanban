@@ -24,8 +24,6 @@ sources:
     resource: repo://crates/executors/src/executors/codex/client/openwiki.rs
   - id: openwiki-source-343f68138e6e2d3312d2774c
     resource: repo://crates/local-deployment/src/container.rs
-  - id: openwiki-source-a13fe4db1eee073d0a7e2c4d
-    resource: repo://crates/server/src/main.rs
   - id: openwiki-source-8e100846c63b4921192f2eb4
     resource: repo://crates/server/src/remote_mcp/errors.rs
   - id: openwiki-source-83d25ea893da220229c11f8b
@@ -36,6 +34,8 @@ sources:
     resource: repo://crates/server/src/remote_mcp/repository_wiki.rs
   - id: openwiki-source-5720d865d1c837f0e6b7dab7
     resource: repo://crates/server/src/routes/integrations/conversation.rs
+  - id: openwiki-source-0c7c883005a8c160cd795437
+    resource: repo://crates/server/src/routes/integrations/issue_archive.rs
   - id: openwiki-source-b393e75029374eaf9cba5f7d
     resource: repo://crates/server/src/routes/integrations/runtime.rs
   - id: openwiki-source-1ffb01d1ba3953937e0771bf
@@ -102,10 +102,10 @@ sources:
     resource: repo://scripts/test-openwiki-focused.mjs
   - id: openwiki-source-7fd9452d5e666180c50f8cb7
     resource: repo://tests/openwiki/recovery.sh
-generated: { by: "codex", at: "2026-11-12T15:26:52.299Z" }
+generated: { by: "codex", at: "2026-11-16T15:20:15.420Z" }
 verified:
-  - by: openwiki/0.7.2
-    at: 2026-11-12T15:26:52.299Z
+  - by: openwiki/0.9.0
+    at: 2026-11-16T15:20:15.420Z
 ---
 
 # OpenWiki の初期生成・同期・回復
@@ -370,9 +370,9 @@ Repository memory設定の状態取得は15秒周期である。保存済みbran
 
 Wikiの可変state・receipt・publicationとsource integration対応は、既存instance DBのrepository運用modelが正本である。通常Syncのowner結果・receipt・stateは同じtransactionで確定し、自動マージのreceipt・state・integration結果も一括確定する。GitはDBと同じtransactionにはならず、Git操作前のpublication intentと実SHA/tree/markerを照合して途中停止を回復する。復旧のためだけに別の恒久監査基盤を追加しない。[運用model](../../crates/db/src/models/repository_state.rs)・[Sync確定](../../crates/server/src/routes/openwiki.rs#L604-L629)・[統合確定](../../crates/server/src/routes/integrations/runtime.rs#L503-L540)
 
-Syncは統合済みsourceと該当するファイルManifestを固定入力にし、可変Workspace Memoryをsnapshotしない。Manifest・固定sync-inputs・source-publications・Run checkpoint・setup原本/復元journal・Bootstrap索引/reportは別責務でファイルに残る。WikiをOFFにしても通常coding Runのsource自動commitとManifest確定は止まらない。[固定入力](../../crates/services/src/services/openwiki/sync_input.rs#L30-L92)・[Runの責務](../concepts/repository-memory.md)
+Syncは統合済みsourceとDB正本から得た該当Manifestを固定入力にし、可変Workspace Memoryをsnapshotしない。確定Manifestの正本はDBへ移り、固定sync-inputs・source-publications・Run checkpoint・setup原本/復元journal・Bootstrap索引/reportは別責務でファイルに残る。WikiをOFFにしても通常coding Runのsource自動commitとManifest確定は止まらない。[固定入力](../../crates/services/src/services/openwiki/sync_input.rs#L30-L92)・[Runの責務](../concepts/repository-memory.md)
 
-LOCAL-336で一度限りの移行CLI・importer・旧JSON decoder・未移行互換guardと専用runbookは撤去済みである。現行版には旧運用ファイルを再取込する操作はなく、通常DB modelとforward SQL migrationを維持する。残った旧ファイルを運用正本として読み戻さない。[現行起動入口](../../crates/server/src/main.rs#L42-L70)・[DB opener](../../crates/db/src/models/repository_state.rs#L32-L77)
+LOCAL-336で一度限りの移行CLI・importer・旧JSON decoder・未移行互換guardと専用runbookは撤去済みである。LOCAL-398の確定Manifest起動時取込とは別に、現行版には旧運用state JSONを再取込する操作はなく、通常DB modelとforward SQL migrationを維持する。残った旧ファイルを運用正本として読み戻さない。[現行起動入口](../../crates/server/src/main.rs#L42-L70)・[DB opener](../../crates/db/src/models/repository_state.rs#L32-L77)
 
 旧運用ファイルと廃止済みWorkspace Memory・専用検証記録の物理削除は別途、具体的な対象を確認して許可を得る。Manifest・固定sync-inputs・source-publications・setup原本/復元journal等を保持し、knowledge全体やbackupを一括削除しない。保存先と撤去境界は[Repository Memory](../concepts/repository-memory.md#運用状態のdb集約と一度限りの開発移行)、切替・復旧は[既存switch手順](../../deploy/developer/switch/README.md)を参照する。
 
@@ -438,3 +438,10 @@ openwiki/は生成・保守専用とし、manifest/frontmatter/generated.byか�
 この統合は固定base `4a4f68f58a6ffaa31bd57d3e2f681f18130cb17b` からsourceを競合なく採用し、コード検証SHAは `b5563ce25a291a2867a6eaa67e55adb05f6df183`。管理commandでlocked install、probe/配布/admissionの7件、隔離した公開npm0.9.0の10schema・lifecycle・検索読取・noop/resume/source drift、begin上限/commit情報・focused保留と次回debtを独立再実行して成功した。初回のyaml依存不足による失敗は依存導入後に同一commandで成功し、失敗記録も保持する。
 
 同じsource SHAの実装Manifestにあるservices103件・all-target Clippy・installer/setup復元成功は既存証拠として参照し、包括frontend/build/check/lint/backend suiteとその重複試験はagent判断で理由・残リスクを記録して省略した。今回の新規passへ付け替えない。0.9.0の実Codex linked Wiki E2E、image実行・配布・稼働反映は未検証。この候補のWiki writer自体は既存runtimeの0.7.2を使用しており、0.9.0での実writer完走を示さない。共有runtimeやglobal設定を更新せず、Wiki完了SHAとコードSHA、正式main適用とGitHub pushの成立はそれぞれ別に確認する。
+
+
+## DB正本とIssueアーカイブを経たWiki入力（LOCAL-398/399）
+
+確定ManifestはDB正本へ移り、pending選択・固定event ID解決・receipt検証はDBを参照する。sync-inputのmanifest/chunkとsetup原本journalは引き続きファイルで保持し、可変draftや私的会話を代替入力にしない。旧Manifestの起動時取込・失敗時の停止境界は[正本と取込](../concepts/repository-memory.md#確定manifestのdb正本と起動時取込local-398)を参照する。[DB receipt検証](../../crates/db/src/models/repository_state/manifests.rs)・[固定入力](../../crates/services/src/services/openwiki/sync_input.rs)
+
+自動マージの受付時に `issue_archive_enabled` がONなら、担当は先に `prepare_archive` で固定Issue本文を専用commitへ保存し、その返却SHAをcode候補として検証する。アーカイブ不成立や候補blob改変はWiki準備も止める。その後の `prepare_wiki` 成功→begin→ページ更新→finish→Wiki専用commit→publish→Run終了→host収束/限定復元/公開という順序は変えない。OFFの受付を後の設定変更でONにしない。実モデル/CLI fixtureと、今回担当のWiki lifecycle完了・ローカルmain公開を混同しない。[固定原文と回復](../concepts/formal-integration.md#採用issue本文の任意アーカイブlocal-399)・[worker guard](../../crates/server/src/routes/integrations/conversation.rs)

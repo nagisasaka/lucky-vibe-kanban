@@ -4,8 +4,8 @@ title: Agent Runtime の監査・投影・回復
 description: AgentRun を独立プロセスで実行し、Native Audit から永続状態と画面表示へ変換する境界。再接続、DB 競合、投影劣化時の契約を説明する。
 tags: [agent-runtime, audit, persistence, recovery]
 verified:
-  - by: openwiki/0.7.2
-    at: 2026-11-12T04:13:28.445Z
+  - by: openwiki/0.9.0
+    at: 2026-11-16T15:12:08.330Z
 sources:
   - id: openwiki-source-b85c3dc0eaacdffedf4e68ee
     resource: repo://crates/db/migrations/20261026180000_agent_starting_recovery.sql

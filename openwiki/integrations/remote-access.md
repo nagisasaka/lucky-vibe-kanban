@@ -20,6 +20,8 @@ sources:
     resource: repo://crates/mcp/src/task_server/tools/attachments.rs
   - id: openwiki-source-c1a99ab3d402970b84e3cc23
     resource: repo://crates/mcp/src/task_server/tools/dev_server.rs
+  - id: openwiki-source-49a828d687d86bf3842e528d
+    resource: repo://crates/mcp/src/task_server/tools/integration.rs
   - id: openwiki-source-4c00e6ad62d940e70c2ebbb3
     resource: repo://crates/mcp/src/task_server/tools/mod.rs
   - id: openwiki-source-c6b92f5dd86f9cc046935fa4
@@ -148,10 +150,10 @@ sources:
     resource: repo://crates/utils/src/mcp_error.rs
   - id: openwiki-source-3ecddc0be7b037ea6ab24381
     resource: repo://packages/local-web/vite.config.ts
-generated: { by: "codex", at: "2026-11-12T04:13:28.445Z" }
+generated: { by: "codex", at: "2026-11-16T15:12:08.330Z" }
 verified:
-  - by: openwiki/0.7.2
-    at: 2026-11-12T04:13:28.445Z
+  - by: openwiki/0.9.0
+    at: 2026-11-16T15:12:08.330Z
 ---
 
 # 外部アクセス・MCP・Runner の境界
@@ -576,3 +578,10 @@ stdioとremoteは同じ版サービスへ接続する。`get_issue.description` 
 一般質問は `ask_help({prompt,session_id?})` で開始・継続し、`get_help_conversation({session_id})` で実行状態・回答・失敗を読む。`cancel_help_conversation` / `delete_help_conversation` も同じSessionを指定する。全toolにread、変更に追加write scopeが必要で、UIと共通のruntimeへ委譲する。ヘルプ対象以外のSessionは拒否し、実行中削除は不可。askは冪等ではなくrequest ID/Operations receiptを要求する既存mutationと異なるため、応答不明時に自動再送しない。受付を回答成功と扱わない。[4tool契約](../../crates/server/src/remote_mcp/help.rs)・[共通service](../../crates/server/src/routes/help.rs)
 
 既存provider認証・料金・承認を使い、専用の内部会話モデルを追加しない。一般ヘルプから無指示の開発へ進まず、引用・事実・解釈と参照revisionを分ける。通常Workspace向けガイドとSkillも直接参照・対話質問の使い分けを案内する。詳しい寿命・欠落sourceの扱い・別環境の未実証項目は[対話ヘルプ](../concepts/interactive-help.md)を参照する。実OAuth/MCPと実provider結合はmock成功から推定しない。
+
+
+## 確定Manifestと任意Issueアーカイブ（LOCAL-398/399）
+
+Manifest参照はDB正本を読む `/api/repos/{repo_id}/change-manifests/{event_id}` のURLへ変わり、旧ファイルpathを公開参照として要求しない。外部の統合状態読取も既存のRepo/Workspace認可を保ってDBを参照する。[API](../../crates/server/src/routes/repo.rs)・[状態読取](../../crates/server/src/remote_mcp/merge_read.rs)
+
+worker専用stdio `integration_action` に `prepare_archive` を追加した。受付時に固定された `issue_archive_enabled` がONの場合、候補作成後・検証/Wiki前に固定Issue本文を追加commitへ保存し、返された候補SHAを以後のcode SHAに用いる。retryは元request_id・元expected_commitを保持する。外部AIに候補branchやruntime対象のoverride権限を追加せず、OFFを今回の依頼で勝手にONへ変更しない。[worker tool](../../crates/mcp/src/task_server/tools/integration.rs)・[設定/停止回復の詳細](../concepts/formal-integration.md#採用issue本文の任意アーカイブlocal-399)

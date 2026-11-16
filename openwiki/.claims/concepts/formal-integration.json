@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:7f9906d8209f05c281eabb856f59aefe80a9b180f15dd3e097dd23201aa5ec93",
+  "pageVersion": "sha256:8e9e06b5265b167ef20552362f42198f0c9902c36bd190f730348b81de57ff59",
   "claims": [
     {
       "id": "claim_12101e4e85524a9280291b25d4812f5f",
@@ -8,7 +8,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/integrations/conversation.rs",
-          "version": "repo-file-v1:sha256:d13a2344653d1033a6ec01b5eb592fa5ab68a49abaeec99dfff8b68e6670f72a"
+          "version": "repo-file-v1:sha256:818e51ca25baa1cbae72b97525267f274262be62f3fcba0c69bd052cb4e4e2e6"
         }
       ]
     },
@@ -18,7 +18,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/integrations/admission.rs",
-          "version": "repo-file-v1:sha256:9ea4b6822948538a71d77ee15de84ee4edb340a1258c8dd301f3503ca8415679"
+          "version": "repo-file-v1:sha256:427e6ffc8d9a6631ce53debb8dcaf98d2d3429c7019609da2c4ead3d691ea7ef"
         }
       ]
     },
@@ -28,7 +28,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/integrations/admission.rs",
-          "version": "repo-file-v1:sha256:9ea4b6822948538a71d77ee15de84ee4edb340a1258c8dd301f3503ca8415679"
+          "version": "repo-file-v1:sha256:427e6ffc8d9a6631ce53debb8dcaf98d2d3429c7019609da2c4ead3d691ea7ef"
         }
       ]
     },
@@ -38,11 +38,11 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/integrations/admission.rs",
-          "version": "repo-file-v1:sha256:9ea4b6822948538a71d77ee15de84ee4edb340a1258c8dd301f3503ca8415679"
+          "version": "repo-file-v1:sha256:427e6ffc8d9a6631ce53debb8dcaf98d2d3429c7019609da2c4ead3d691ea7ef"
         },
         {
           "resource": "repo://crates/server/src/routes/integrations/runtime.rs",
-          "version": "repo-file-v1:sha256:dfe206b14be0c75a8536bca67f813b9efdafdbef26ea7748d6190ce7e29b98b4"
+          "version": "repo-file-v1:sha256:424dcd0fde5f84624050284dbdb76f293ffffbd438ac311dc30f658b4edc879c"
         }
       ]
     },
@@ -52,11 +52,11 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/integrations/conversation.rs",
-          "version": "repo-file-v1:sha256:d13a2344653d1033a6ec01b5eb592fa5ab68a49abaeec99dfff8b68e6670f72a"
+          "version": "repo-file-v1:sha256:818e51ca25baa1cbae72b97525267f274262be62f3fcba0c69bd052cb4e4e2e6"
         },
         {
           "resource": "repo://crates/server/src/routes/integrations/runtime.rs",
-          "version": "repo-file-v1:sha256:dfe206b14be0c75a8536bca67f813b9efdafdbef26ea7748d6190ce7e29b98b4"
+          "version": "repo-file-v1:sha256:424dcd0fde5f84624050284dbdb76f293ffffbd438ac311dc30f658b4edc879c"
         }
       ]
     },
@@ -66,7 +66,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/integrations/conversation.rs",
-          "version": "repo-file-v1:sha256:d13a2344653d1033a6ec01b5eb592fa5ab68a49abaeec99dfff8b68e6670f72a"
+          "version": "repo-file-v1:sha256:818e51ca25baa1cbae72b97525267f274262be62f3fcba0c69bd052cb4e4e2e6"
         }
       ]
     },
@@ -75,7 +75,7 @@
       "statement": "code SHAに結び付いた管理commandの実行証拠は要件の意味的解釈やtest網羅性を証明しない。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/integrations/conversation.rs#L414-L486",
+          "resource": "repo://crates/server/src/routes/integrations/conversation.rs#L491-L563",
           "version": "repo-lines-v1:sha256:6795dce8cb107ea0ee3f1c7a7f2a0520f608d52abb6415d1619a10ccf195d232:eyJzZWxlY3RlZExpbmVDb3VudCI6NzMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhiYzU5MTJkYjczZWRjMmE1NTU4YjkyNzgyZTQ0Mjk4MDE2MjEzNDU3MWRlODdmMzY3NzNkNzJkOGY1YTIwNWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRlNDYyYmQ4NWVhMzUyMjgyMmE5YWQzZWIyNDA5OWIwMzJhMWI2MjdiZWNmZDdjNTgzMWU5OTI3ZDRiYWM0MGUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImIyNDA3N2QxZTk1MDA3YTBmYjc0ZDQ0ZDQ4NzUwZTMyNGMzMTU5YjVjYmQzNjY3YTNkNTUwNDJjZTFlNDg2ZDgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNjY2M5NjlhYTU1ZTBhMzRkNTI3M2FkYzc2ZGMxZDY2ZmZhZTZlOWE1MGIxN2Y5NWU5NGU2ODcyMDBmY2JlMzQifQ"
         }
       ]
@@ -86,7 +86,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/integrations/runtime.rs",
-          "version": "repo-file-v1:sha256:dfe206b14be0c75a8536bca67f813b9efdafdbef26ea7748d6190ce7e29b98b4"
+          "version": "repo-file-v1:sha256:424dcd0fde5f84624050284dbdb76f293ffffbd438ac311dc30f658b4edc879c"
         }
       ]
     },
@@ -105,11 +105,11 @@
       "statement": "公開後の採用元Cardは採用WorkspaceのHEAD差・非terminal Run・HEAD観測不能なら現在列を保ち、他source完了と予約解放は継続する。receipt再送は手動再オープンやCancelledを上書きしない。",
       "evidence": [
         {
-          "resource": "repo://crates/db/src/models/integration.rs#L346-L436",
+          "resource": "repo://crates/db/src/models/integration.rs#L376-L466",
           "version": "repo-lines-v1:sha256:8581fa67160592dbf3cc27dec90f7f874a5f42b0ac70aae254d8128d3a31b2d5:eyJzZWxlY3RlZExpbmVDb3VudCI6OTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU4NTA3OWU5ZDcxMmQ2MzgxYjZlMzVkODg0M2JhZjQxYWEwM2M0ZjM1OWQyZmYyZmQ3OTkyODY3NDliMzJkYzEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YjA0NDkxNDY5NzIyZTgzNjNhOTRlNDA0NDUzOGUwMTNhMmEyMTdlMzZiMWU1NjhiYTYwYWNiN2I0YzhmMmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjYzYWMxOGU3ZjM3ZDk2YWVhYzUzOTViMDE0Y2JjZDk3MjJkNjViN2Y1ZGQ3ZDY5ODAyZjRmZjRlNzg1NDA2ODgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzMmExZDc2NDQzMWE4NjcyZDIxYzA4NGVkYzA0MjVlN2JhZDZkMDg0NTRmZTY1ZWUxNTI5MjM5ZmUxNjZjMDIifQ"
         },
         {
-          "resource": "repo://crates/server/src/routes/integrations/runtime.rs#L545-L587",
+          "resource": "repo://crates/server/src/routes/integrations/runtime.rs#L556-L598",
           "version": "repo-lines-v1:sha256:a0285679365f38b5218fa88ad3b97868e213c3f0aba5fbf28af4cb862fdacde9:eyJzZWxlY3RlZExpbmVDb3VudCI6NDMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjU1YWI3YjZkOWI2ZTE5NTY1M2ZjOGI1NWY2M2YzNjQ2MDY4NTVjNDU0ZmM1NjU4NTFmMzFhMmYwOTQ1ZGE3NDIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
         }
       ]
@@ -119,11 +119,11 @@
       "statement": "Wiki有効時はコード検証後に同じ候補でWikiを別commitにし、公開後にevent receipt・鮮度state・integrationのWiki結果を同じinstance DB transactionで確定する。後処理失敗はGit適用を取り消さない。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/integrations/conversation.rs#L1135-L1197",
+          "resource": "repo://crates/server/src/routes/integrations/conversation.rs#L1213-L1275",
           "version": "repo-lines-v1:sha256:20018f51d885a22052f870080f2de788aee4a5e7cfec08e1c96023d33b6c6edc:eyJzZWxlY3RlZExpbmVDb3VudCI6NjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImIzNmY5YmY0OGUxZWFhZTAwMTQ2MzVjNmMzODA4ZGQ5YjEyMDhhZmMzMGViMDhiOTlkMTIzMDQ3ODViMGFkZjAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE0YjE2MTlhNjE4NmJkNzQ5MzBmNmNlYTA3MTM4NzRkOTI0ZmZlYzc3MGVhNGQ1YTliZDZmMzhlMGNhZWI3ZjQifQ"
         },
         {
-          "resource": "repo://crates/server/src/routes/integrations/runtime.rs#L503-L584",
+          "resource": "repo://crates/server/src/routes/integrations/runtime.rs#L514-L595",
           "version": "repo-lines-v1:sha256:1a8463a9c5b96c0eae3fb6a56fa4221c62fb57c5fe5eb4764e90a309863bb5b1:eyJzZWxlY3RlZExpbmVDb3VudCI6ODIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFmYjgyZTU4NTIzZDg1M2JjMWI2MzM3MDQ3NTA1YWY5YTRhZTJiOGZiZDdhZmYwNDk4YTM0NWZjMjAyNzYyNGEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBkYWFhYTI0NTA1N2IxNGRkY2NmNmQyNzgyMzQxYmU4MGNlN2E5ZGJmODE5MmQ5MGU2YTIyNTljMDMzNmRmNDciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjczYzlmOWFkYWY5NjBkMDg2YjQzMWI1Yjk5MTMxNGNlNjM1ZjI1ODNjM2ViY2FiOGY0ZWJjODQyMjA1MTc5YmEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijg1ZTg0OWQ1OGRjMzQxMDdmZmViOTg4YjQ5OTdjNGRmNGE0YTczZjg1MWIyN2VkYjgwZDY4YWQzZGVjYzYzZDkifQ"
         }
       ]
@@ -134,7 +134,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/integrations/runtime.rs",
-          "version": "repo-file-v1:sha256:dfe206b14be0c75a8536bca67f813b9efdafdbef26ea7748d6190ce7e29b98b4"
+          "version": "repo-file-v1:sha256:424dcd0fde5f84624050284dbdb76f293ffffbd438ac311dc30f658b4edc879c"
         }
       ]
     },
@@ -148,7 +148,7 @@
         },
         {
           "resource": "repo://crates/server/src/routes/integrations/runtime.rs",
-          "version": "repo-file-v1:sha256:dfe206b14be0c75a8536bca67f813b9efdafdbef26ea7748d6190ce7e29b98b4"
+          "version": "repo-file-v1:sha256:424dcd0fde5f84624050284dbdb76f293ffffbd438ac311dc30f658b4edc879c"
         }
       ]
     },
@@ -158,11 +158,11 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/integrations/admission.rs",
-          "version": "repo-file-v1:sha256:9ea4b6822948538a71d77ee15de84ee4edb340a1258c8dd301f3503ca8415679"
+          "version": "repo-file-v1:sha256:427e6ffc8d9a6631ce53debb8dcaf98d2d3429c7019609da2c4ead3d691ea7ef"
         },
         {
           "resource": "repo://crates/server/src/routes/integrations/mod.rs",
-          "version": "repo-file-v1:sha256:2fabccc0cc7382b4c1a5e90871c15ce9a227e3eaaaf33700b9fbf4c47e387590"
+          "version": "repo-file-v1:sha256:4103349643773a7a7b4d6b2321f9f82cfdbfb134712cc3fdd7f996bdc2e05f4f"
         }
       ]
     },
@@ -176,7 +176,7 @@
         },
         {
           "resource": "repo://crates/server/src/routes/integrations/support.rs",
-          "version": "repo-file-v1:sha256:a90bf2647ff214710cf5d5a6d9ea175c2aadc3e65a4d15cea84b7bfbeb2541b5"
+          "version": "repo-file-v1:sha256:2c8656321fe704122b4c5632b4af20ed563372c309d859b1aa3c3e8d323b80d1"
         }
       ]
     },
@@ -204,7 +204,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/integrations/runtime.rs",
-          "version": "repo-file-v1:sha256:dfe206b14be0c75a8536bca67f813b9efdafdbef26ea7748d6190ce7e29b98b4"
+          "version": "repo-file-v1:sha256:424dcd0fde5f84624050284dbdb76f293ffffbd438ac311dc30f658b4edc879c"
         },
         {
           "resource": "repo://packages/web-core/src/features/workspace-chat/ui/IntegrationFacts.tsx",
@@ -222,7 +222,7 @@
         },
         {
           "resource": "repo://crates/server/src/routes/integrations/support.rs",
-          "version": "repo-file-v1:sha256:a90bf2647ff214710cf5d5a6d9ea175c2aadc3e65a4d15cea84b7bfbeb2541b5"
+          "version": "repo-file-v1:sha256:2c8656321fe704122b4c5632b4af20ed563372c309d859b1aa3c3e8d323b80d1"
         }
       ]
     },
@@ -236,11 +236,11 @@
         },
         {
           "resource": "repo://crates/server/src/routes/integrations/conversation.rs",
-          "version": "repo-file-v1:sha256:d13a2344653d1033a6ec01b5eb592fa5ab68a49abaeec99dfff8b68e6670f72a"
+          "version": "repo-file-v1:sha256:818e51ca25baa1cbae72b97525267f274262be62f3fcba0c69bd052cb4e4e2e6"
         },
         {
           "resource": "repo://crates/server/src/routes/integrations/support.rs",
-          "version": "repo-file-v1:sha256:a90bf2647ff214710cf5d5a6d9ea175c2aadc3e65a4d15cea84b7bfbeb2541b5"
+          "version": "repo-file-v1:sha256:2c8656321fe704122b4c5632b4af20ed563372c309d859b1aa3c3e8d323b80d1"
         }
       ]
     },
@@ -271,7 +271,7 @@
           "version": "repo-lines-v1:sha256:0636e73314b2f967c6fe9027dbe7fd3d5f0a6d34a4e03555bc9b8e2c07b540eb:eyJzZWxlY3RlZExpbmVDb3VudCI6ODEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI4NDVmNjE1MDBkZTdlZGRhMmQ1YjgxMzMzN2Q5ZWJjMmIyN2Y0MGI2ODgyZDQ1NjA1MjYxYzM4ZjJlNWI1MTgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU3YjRhNzA5MjRiM2Q1MDI0NTg5ZGM0MzYxY2EwODc0Yzc1MzQ4ZDQxYjk0NzRiMWU1ODE0MWJkYjI4YzNmN2IiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImE3ZDE3NTY2Y2JiYWJkY2QwOWZiNGFmZmViMGVmNTBiMTI5MGZmOGI4MGM5ZTdhOWJkNmJiMjExYzRhN2UxMDciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY4NWVkODIxMDM0OTQ5MGRiODFjYzhmNjM1NGJhNzgwMjAzYzViMTliZDhkZGUwZmM3Njc4YmZiNmQ0NTYyZTgifQ"
         },
         {
-          "resource": "repo://crates/server/src/routes/repo.rs#L385-L389",
+          "resource": "repo://crates/server/src/routes/repo.rs#L416-L420",
           "version": "repo-lines-v1:sha256:103e34b6d76457f3f4dc5f1e564a50b417b285daa71475a9bb9cd6ea36931de9:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZTFkMDllMTQwZmJhZjVkNTY2Zjk3NjIxNmUyNGY3ZDY3MjZjYjhkYWMyYTljOTAwYmFkZjA5MWYyN2U3NjdlMCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiODk2NjRjZWNkMzg4NjAwMTJhZTgzN2QwMzkxYTViZjkyMWI2ZmIyYjhhNTY2MzQ4MTI2YmYwOWVlY2M2YmI2YyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMWY0ODMzOWUyNjNmZDc2MDIwMDBkMzZmMTA0NGQxYzVmYjg4NTJiYzc2MjAyYjdhNTU1ZDFiM2E2ZGJmNTViZiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNzlhZGVlZmM4M2Q0ODY0NDViM2MwYzRmZWUzODAxZGU2MTI1ZTViYzE1OGNlZjkzNDRlODNhMWE2Y2JiN2VkNSJ9"
         }
       ]
@@ -309,7 +309,7 @@
       "statement": "過去のIntegration完了receiptがあるsourceは再送時に列変更せず、別Integrationの公開後完了は新しいreceiptで処理する。",
       "evidence": [
         {
-          "resource": "repo://crates/db/src/models/integration.rs#L346-L436",
+          "resource": "repo://crates/db/src/models/integration.rs#L376-L466",
           "version": "repo-lines-v1:sha256:8581fa67160592dbf3cc27dec90f7f874a5f42b0ac70aae254d8128d3a31b2d5:eyJzZWxlY3RlZExpbmVDb3VudCI6OTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU4NTA3OWU5ZDcxMmQ2MzgxYjZlMzVkODg0M2JhZjQxYWEwM2M0ZjM1OWQyZmYyZmQ3OTkyODY3NDliMzJkYzEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YjA0NDkxNDY5NzIyZTgzNjNhOTRlNDA0NDUzOGUwMTNhMmEyMTdlMzZiMWU1NjhiYTYwYWNiN2I0YzhmMmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjYzYWMxOGU3ZjM3ZDk2YWVhYzUzOTViMDE0Y2JjZDk3MjJkNjViN2Y1ZGQ3ZDY5ODAyZjRmZjRlNzg1NDA2ODgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzMmExZDc2NDQzMWE4NjcyZDIxYzA4NGVkYzA0MjVlN2JhZDZkMDg0NTRmZTY1ZWUxNTI5MjM5ZmUxNjZjMDIifQ"
         }
       ]
@@ -323,7 +323,7 @@
           "version": "repo-lines-v1:sha256:e96665a8d5f3a5d399587574b6b44d7ab246a8db5943bf48d71f04eb036d0d69:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY0ZTI1YzY4MDdiZTliYTRiZmQ4Y2E1OTBjODk4ODY2NTYwNTNiMGExZjBhNDQxOGI2OGYxZmYyMzZjMzM0ZTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMwMjg3NTZiZDFjZTkwNGM1YzY5YzdmNTk0MTA3NzRiOGVjNDNhYTA2YmJiZDUxYjk0ODA0MmMwOGM2ZmJlYjciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijg5YWEzZTJhNTk5ZmNiNTc1NjRkMGQ3NDVjNWZhMWE3YmYzNjRiNzY5ZmNjOTU5OGUzMzQ3M2YxOGM5MWU3YzkifQ"
         },
         {
-          "resource": "repo://crates/db/src/models/integration.rs#L217-L243",
+          "resource": "repo://crates/db/src/models/integration.rs#L247-L273",
           "version": "repo-lines-v1:sha256:974f5f076c8c26db199cd0160633b52468c05442fdef88e405811b6026b3d221:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjljNGI2OGIyMjM4MGZkYjFhZTlmOWY1M2I5ZDE3MGJiYTRlOTI5NTliMjE4NWRlYjMwOTBlNGU4NmM0YWJiYmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdiMzY0NzM3Y2I5NmZjM2FlNmM2MmE5MDUxYzU3YTM3ZjdkZTI3ZTRhYTFlNmM1OTAzOWRlZjY1ZTA2M2Q4NWIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjA2Nzk3N2IzYjg1MWFlYWQ5NjJkN2NmYTEwY2IxYzdiMWFjYTg0NDU3NDllOWE2NDFkZjliNTdjYTUxYmM1MWIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE0MGIxZGVmYWZjYmU4ODEzNTQ3MTM0OTgyNjU4YmM2MTMzMjNiNDlhODBiYjg0Y2JiNDk3NjE1Nzc0ODg3YWIifQ"
         }
       ]
@@ -334,7 +334,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/integrations/runtime.rs",
-          "version": "repo-file-v1:sha256:dfe206b14be0c75a8536bca67f813b9efdafdbef26ea7748d6190ce7e29b98b4"
+          "version": "repo-file-v1:sha256:424dcd0fde5f84624050284dbdb76f293ffffbd438ac311dc30f658b4edc879c"
         }
       ]
     },
@@ -344,7 +344,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/integrations/runtime.rs",
-          "version": "repo-file-v1:sha256:dfe206b14be0c75a8536bca67f813b9efdafdbef26ea7748d6190ce7e29b98b4"
+          "version": "repo-file-v1:sha256:424dcd0fde5f84624050284dbdb76f293ffffbd438ac311dc30f658b4edc879c"
         }
       ]
     },
@@ -354,7 +354,7 @@
       "evidence": [
         {
           "resource": "repo://assets/skills/auto-merge/SKILL.md",
-          "version": "repo-file-v1:sha256:0b2e7b27b8e8dcf574b56b7fa95c0cc2a15663ad69b0827376dbe595eba15052"
+          "version": "repo-file-v1:sha256:a08d67cdfb66a313b74acb02cef04f065b57546fdf022e07fd09e98aa020394c"
         },
         {
           "resource": "repo://crates/git/src/publication.rs",
@@ -368,11 +368,11 @@
       "evidence": [
         {
           "resource": "repo://assets/skills/auto-merge/SKILL.md",
-          "version": "repo-file-v1:sha256:0b2e7b27b8e8dcf574b56b7fa95c0cc2a15663ad69b0827376dbe595eba15052"
+          "version": "repo-file-v1:sha256:a08d67cdfb66a313b74acb02cef04f065b57546fdf022e07fd09e98aa020394c"
         },
         {
           "resource": "repo://crates/server/src/routes/integrations/conversation.rs",
-          "version": "repo-file-v1:sha256:d13a2344653d1033a6ec01b5eb592fa5ab68a49abaeec99dfff8b68e6670f72a"
+          "version": "repo-file-v1:sha256:818e51ca25baa1cbae72b97525267f274262be62f3fcba0c69bd052cb4e4e2e6"
         }
       ]
     },
@@ -410,7 +410,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/integrations/conversation.rs",
-          "version": "repo-file-v1:sha256:d13a2344653d1033a6ec01b5eb592fa5ab68a49abaeec99dfff8b68e6670f72a"
+          "version": "repo-file-v1:sha256:818e51ca25baa1cbae72b97525267f274262be62f3fcba0c69bd052cb4e4e2e6"
         }
       ]
     },
@@ -420,7 +420,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/integrations/conversation_tests.rs",
-          "version": "repo-file-v1:sha256:d288335616b591f6e90b123844eb55e5b666ab5274a6c454c44788b9f0327c22"
+          "version": "repo-file-v1:sha256:02ac7b1c220e439d726699be748d7ba5895eff74bfe4021088064a339295968a"
         }
       ]
     },
@@ -453,7 +453,7 @@
       "statement": "Wiki有効な自動マージは検証code SHAの証拠を確定して最初のbegin前にprepare_wikiで原本journalとdigest receiptを保存し、先行beginを後付けjournalで正当化しない。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/integrations/conversation.rs#L623-L812",
+          "resource": "repo://crates/server/src/routes/integrations/conversation.rs#L700-L889",
           "version": "repo-lines-v1:sha256:02a70f48f694e360079c44dbaee15d1722e3d38aeafd13d62d2b5110e4445444:eyJzZWxlY3RlZExpbmVDb3VudCI6MTkwLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI1MmM4YTU4NmMzNWRhYWQxNzJjOWY3MTkzNjBjY2QyYmE5YTA2YmU1ZjE1NmY3MzYxY2Q4ZjNkODRhMTM3MTY3IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIxNDQ1YTk1N2Q5MzMzODdjMjM3YjAwMDEyYzc5NmE2ZWJhMTRkMzAwMzI1Zjg1Zjc3YWRlNDUyNzAyYzMxYmFjIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIzYTFiZjhlNzZmOTE0ZDNmMDA3NDJhN2MyNjA0NzgwMmQyYjhjZDdlNzU2YzViYTJmNDRiMDdhN2YzYTZlNzY3IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI4NDFmNzZjNzM0M2NiYzdmNjM0ODUyMGUwNzg0ZGRlM2I4Mjk1ZjU2MWFhZTAwNWJmYzU2YjMzYzFiNGU0ZWUzIn0"
         }
       ]
@@ -477,12 +477,12 @@
       "statement": "hostは担当・target writerの終了とWiki完了証拠を確認後、最終Wiki SHAを固定したjournalでsetupだけを限定復元しclean検査してから公開する。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/integrations/conversation.rs#L927-L970",
+          "resource": "repo://crates/server/src/routes/integrations/conversation.rs#L1005-L1048",
           "version": "repo-lines-v1:sha256:0c8df446a406d1a6b3ec5d5f8f907fe4579b61989e1ac98a2a10078b92cfd4e3:eyJzZWxlY3RlZExpbmVDb3VudCI6NDQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJkYmU5NWRiY2I4NmJiYjM0Y2UxZDk0Mjc4NWU0ZTZhNjQ1NWUzYjBkMGYyY2I4ZTJmMDlkMDhkZDFkYjQzYzciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjIzYjM5NGJmYWU3MDgyNjUyNWQxZTk5ZmJmNTQ5M2E5YTEwZTY1OTNmYjEyY2RmMDkzMTdkYjc0MTI3NWViYjUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImEyYmIxNjhkZDZkYzEyN2ZhZTczNGIwODU2ZDk3Y2IzMWQ4YTNmNTlkZmMyZWE2MDc5ZTYwZGMwOTRhMjYxYjAifQ"
         },
         {
-          "resource": "repo://crates/server/src/routes/integrations/runtime.rs#L323-L419",
-          "version": "repo-lines-v1:sha256:352ffca1bc5af57714521ad0f9418a06d8070b9a0154629741c1a54e33cb229e:eyJzZWxlY3RlZExpbmVDb3VudCI6OTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjEzN2UyNDI2NDgzZTE0NGYzMmE2M2NhZTNlY2RjNDU1ZDA4ODA3N2VkOWZiNmY0NGJiZWRlODA0NTg0M2U2MjIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE3OWI4MzJlN2JjYWNjYjVkMDhkNTY4ZjI4MWZhYjRmNzFmYWY5NzA4ZTU3Zjg0NjZjNjRjOGQ2ZTlmZjE4NGIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY0MDg4ZjA1ZTZmOGQxMjIxNGI1Y2FmYjdmOTA5ZmJmMzY0NDBlMWJkZjkxYzdjYWFiZDFmMjBmNzAwZDA0NTQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImIwMGE1ODBlNzdkMTU1ODA2MDU3ZmZkYzZiZDIxZTllMzQ4M2YxMzAxZDI4MzA3YTdiMDMzNzNjNDk1MjNlZjgifQ"
+          "resource": "repo://crates/server/src/routes/integrations/runtime.rs#L326-L430",
+          "version": "repo-lines-v1:sha256:90b3123e174fd705840dfe2d2e34f379139efaeb38ac972c60ec742efea38470:eyJzZWxlY3RlZExpbmVDb3VudCI6MTA1LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIxMzdlMjQyNjQ4M2UxNDRmMzJhNjNjYWUzZWNkYzQ1NWQwODgwNzdlZDlmYjZmNDRiYmVkZTgwNDU4NDNlNjIyIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJhNzliODMyZTdiY2FjY2I1ZDA4ZDU2OGYyODFmYWI0ZjcxZmFmOTcwOGU1N2Y4NDY2YzY0YzhkNmU5ZmYxODRiIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJmNDA4OGYwNWU2ZjhkMTIyMTRiNWNhZmI3ZjkwOWZiZjM2NDQwZTFiZGY5MWM3Y2FhYmQxZjIwZjcwMGQwNDU0IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJiMDBhNTgwZTc3ZDE1NTgwNjA1N2ZmZGM2YmQyMWU5ZTM0ODNmMTMwMWQyODMwN2E3YjAzMzczYzQ5NTIzZWY4In0"
         },
         {
           "resource": "repo://crates/services/src/services/openwiki/setup/integration.rs#L230-L258",
@@ -495,7 +495,7 @@
       "statement": "Restoredからの新prepareは原本を取り直さずcodeと過去Wiki履歴を保持してwriter phaseを再開する。最終SHA固定後の未復元状態はprepareを拒否し、同じ最終SHAの再publishを要求する。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/integrations/conversation.rs#L674-L780",
+          "resource": "repo://crates/server/src/routes/integrations/conversation.rs#L751-L857",
           "version": "repo-lines-v1:sha256:a27d0855be2061633727053dda85a9b685b067342b094bdecb27ba0f9fe59526:eyJzZWxlY3RlZExpbmVDb3VudCI6MTA3LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIxOTk2NTc0Njk0Mjg1ODA3OGI0ZWRhMDVjZGE4YzA5ODI2N2IxZjdmNjlmZjA3OWI2MzE1MTc4MDUyOTA2NTA2IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI3MzVmMDMxOGM3ZDQzOGM4NGI3MjlmNmY5ODY5ZTAwYmI0M2Q4MzYyZTZkYzExYWQ0NmJmZGFlNTEwZTAyY2Q4IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJkMGU0MjNiNGI4NDVlMjE4YjYzMGNlMGNjN2RkODAzOThhNTI5ZDhkM2M2ODJlZTljYTk0MTc2YzkxOWZjMjExIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJkZjI0MmRmYTBiODE1YzRlOTc2OTM1YjhmMTViY2Q2NmM3MjdmODJkYmU0MTM1ZDA3Yjc0YzQxNzAwYjk0ZDc5In0"
         },
         {
@@ -523,11 +523,11 @@
       "statement": "自動マージ受付はWiki保守中を拒否し、generation_suppressed中はenabledでもWiki更新を起動せず、公開後も抑止中の鮮度をCurrentへ更新しない。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/integrations/admission.rs#L303-L325",
+          "resource": "repo://crates/server/src/routes/integrations/admission.rs#L334-L356",
           "version": "repo-lines-v1:sha256:8bcdddc0f30940e340814e2d746445f2d42937464597eaf679bdf4a9e5f77746:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFhMWMwYzhjZjQ4NjlkYTM2OWYzMDgzOTU3YjVmYTAwOThlM2RiMzNhMzcxZWViMGViM2UwMjAzYzkzNWJlZDQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImViZjEyMjNhZTZiZGZkNzJlYThlNWYzZmQzZTkzMzc2MWU3MGFkZGZmYWE5MGNiMDY0ZmQ2OTAyZmI4OWEwY2QiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjYzZjM3ZWI4Zjg4OGU1MGZhODYwZjZlZjdlMjU1ZmQxNzI0OGFhYTAxZGZmMTg0OTc2YWQ5OWQ1MzJjNDkxODAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjllODlhODczYWY0NTA3YTIwMTdlZTBjOGM4MzYyYTUwODA4MDNiMWE3ZWE5NmM1MWUxNzExMTViNzVkNTM5ODQifQ"
         },
         {
-          "resource": "repo://crates/server/src/routes/integrations/conversation.rs#L1178-L1193",
+          "resource": "repo://crates/server/src/routes/integrations/conversation.rs#L1256-L1271",
           "version": "repo-lines-v1:sha256:643a50ff7a3c7ba6113308e18c83543eb07e14179f2e5f74e37bb4e2bb6d63ed:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU3NjBkYTI1YWYwZjUxYjc1MDk1YTI3Y2YwNDg5NWUzYjAwZjNjMGEzNDQyOWExNjRmYzYxMzlkOGE0ZTkzZjIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA0OTc4MjVhMTJjNTE1YTdhOTkzMGU2NDZlYTYyMWRmNDMzY2VmYTdmMTdhZTBmYjBkYWQ4NjVhYWQ1YzM2YjIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFjZWRmYWFjZDhmNGEwMmZlMWY0ZDFjNjQzNTZjNTIzM2VhMTdhMWRjOGZjODgxNmMwY2EwYzU4ZjlhNjQyYmIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImIxODBjZjk2MDY5NzI4ZjFjMmE2ZjczNmUyYzMwNThjYmI4MTk3MzI5N2E2ZTA2YzE2NTA3MWZmZTQ4OTM5YjkifQ"
         }
       ]
@@ -537,11 +537,11 @@
       "statement": "自動マージ受付はWorktree Workspaceの実Repo membershipと記録済みtarget branchを要求し、DirectFolderを拒否する。作業pathは保存済みworktree配置で解決する。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/integrations/admission.rs#L83-L104",
+          "resource": "repo://crates/server/src/routes/integrations/admission.rs#L134-L155",
           "version": "repo-lines-v1:sha256:4303b7c4516cfec53364a9da52444c65cc6e0bc1210c26072f74df783dbd9498:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZlMjgxNGVjNTJlZTE5MzRkYjMwYzBmZjVjZDhmNmMzMmEwYjRlOWE0ZmM5ZGI2OGE1NWY4YTc0ZDIxMDI2OGMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRjYjEwNjU0ZTBiOWIwYjMyMDJlMmY3NmY5YTU3OTQ3NzgzNjBiZDE2NGM1ZjFlYWM0ODhlYzRjYmMyNDQxZGEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImIzOGI3ZTU4ZTE0OTExOGJlNzAwMjA2NGZiMzZhNTdiNzExOTdmZjI3YzM3MDgyMTUwYTUwZGIwMmZlZjZhNzIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjI3MWJmZTQxMTQxNjc4YTE3YmZmMjdhOGYwMzYxMzc2ZTNmMWYxYTMwOWVhZmI1MzNlOGY4YTQzOTlmZmI0ZGUifQ"
         },
         {
-          "resource": "repo://crates/server/src/routes/integrations/runtime.rs#L150-L178",
+          "resource": "repo://crates/server/src/routes/integrations/runtime.rs#L153-L181",
           "version": "repo-lines-v1:sha256:82e3b639cdf8b679409f0ce30b429dc4e0fd70ec60de91f5cde6651e343ed8d2:eyJzZWxlY3RlZExpbmVDb3VudCI6MjksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUyYzhhNTg2YzM1ZGFhZDE3MmM5ZjcxOTM2MGNjZDJiYTlhMDZiZTVmMTU2ZjczNjFjZDhmM2Q4NGExMzcxNjciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM4MDM2MWJkYWVhYzBiMzFmYzBlZGU3MGFlZThhNDJhMDY4ZjcyNjI2Yjg4Njk5YmMyYjc5MTJkNGUxNDY2YTgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzY2QwMzhhYzhkODg3OTE3Yjc2MDZiMGYzZmI2YzZjMjliNjY5MDU2MjZjODMyZmY0YmY3ODdhYjhjNGNhYzYifQ"
         }
       ]
@@ -551,8 +551,8 @@
       "statement": "担当の実入力は採用時保存Skill全文を使い、固定branch/path/sourceと追加指示を保持し、Issue/Manifestは既存payloadのinspect参照へ分離する。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/integrations/support.rs#L70-L107",
-          "version": "repo-lines-v1:sha256:0c00ec8f38d9875efb351f45a7f40bb132ecccf227ace5abec3a4414c50113a9:eyJzZWxlY3RlZExpbmVDb3VudCI6MzgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNiZjgxZWU4NGVmYWJiZmE1Zjk5ODk5ZjRkMjMyOThhOTI3OWY2MTg1MTdkNTA3YzliNWY0OTY0MjQ3YTE5NDgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImVhOWFlMjM2ZmEzZmFkYWVlMTFlNjM3YTBlNmExNzM0M2Y3YmExN2JkM2NlYzI1MDczOWEyY2I4ZmJkNDc2MTkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBlMmE1MTIxYmQyMTVkYTBlOTExZGNjNmY5MGM1YjY3MTgzZDE4Mjg4ZDUzNzI0YjRmODM5MzU3MzEwZjY0NzIifQ"
+          "resource": "repo://crates/server/src/routes/integrations/support.rs#L70-L108",
+          "version": "repo-lines-v1:sha256:5dfca42572b639c576acbc3b0f9f28ff10b21fce4e78efa48a6c997222a9d11b:eyJzZWxlY3RlZExpbmVDb3VudCI6MzksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNiZjgxZWU4NGVmYWJiZmE1Zjk5ODk5ZjRkMjMyOThhOTI3OWY2MTg1MTdkNTA3YzliNWY0OTY0MjQ3YTE5NDgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImVhOWFlMjM2ZmEzZmFkYWVlMTFlNjM3YTBlNmExNzM0M2Y3YmExN2JkM2NlYzI1MDczOWEyY2I4ZmJkNDc2MTkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBlMmE1MTIxYmQyMTVkYTBlOTExZGNjNmY5MGM1YjY3MTgzZDE4Mjg4ZDUzNzI0YjRmODM5MzU3MzEwZjY0NzIifQ"
         }
       ]
     },
@@ -565,14 +565,56 @@
           "version": "repo-file-v1:sha256:34fbe8dbafcb19e3569fd400a331af43026c6036b638c4ecb9e5ee110919c88d"
         },
         {
-          "resource": "repo://crates/server/src/routes/integrations/conversation.rs#L83-L185",
-          "version": "repo-lines-v1:sha256:fda357e5a2038d24451db47b2bc464d415fe19491a4f1bbdef8cf144682a371e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAzLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIyYTAyM2ZkYWQ2YTFmYzVlYTgyOWEyOGRjYWY4YWFlODE0NmExNTk2NGU4ZTU2YTVjODVkMzY3MzA0MDQ3NWMwIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJhODE5ZTNkYjIzODIzZTg2ZmRiZjA2YWJhYzY3ZDQxYmQwM2M4Yjg3ZmQ3MGVjZWZlYmMyMzE0NjIxNzUwMTEyIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI0NWY2Yjg4YTI1YTAzOTZkOGY1MmFiNWU4Njk0ZTE4ZmVkNmQxNDljZmNlZDMyMmQzN2ZkNDEzZDhmN2NjZmFjIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlZjc3NGVlNzhkOWJlZGMwODI3ZmRiNGUxMDhjZjY3MWIxNjU0MzkzMWQyNzhhMzcyMjZmYzE3MmQ0OWI1YzUxIn0"
+          "resource": "repo://crates/server/src/routes/integrations/conversation.rs#L83-L261",
+          "version": "repo-lines-v1:sha256:0000668b698e554ce7a4ab41b03ac6bbca6831b6e01a435eb2a179c0101a27f7:eyJzZWxlY3RlZExpbmVDb3VudCI6MTc5LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIyYTAyM2ZkYWQ2YTFmYzVlYTgyOWEyOGRjYWY4YWFlODE0NmExNTk2NGU4ZTU2YTVjODVkMzY3MzA0MDQ3NWMwIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI0ODkzZjQwZTM3ODFlYjg5NmM4MmQwNDZhMDgwNjdhMTFlMzVjZGYyZjFkZmFmMjZmZWE5MGI4ZGI2Njc2NDEzIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI0NWY2Yjg4YTI1YTAzOTZkOGY1MmFiNWU4Njk0ZTE4ZmVkNmQxNDljZmNlZDMyMmQzN2ZkNDEzZDhmN2NjZmFjIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlZjc3NGVlNzhkOWJlZGMwODI3ZmRiNGUxMDhjZjY3MWIxNjU0MzkzMWQyNzhhMzcyMjZmYzE3MmQ0OWI1YzUxIn0"
+        }
+      ]
+    },
+    {
+      "id": "claim_147e80bd6af24263bb85cbe994fa3551",
+      "statement": "Issueアーカイブは既定OFFの全体設定を受付時に固定し、保存済み現在版の原文とidentity/UTC時刻をsnapshotに保持してretry_contextと分離する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/routes/integrations/admission.rs",
+          "version": "repo-file-v1:sha256:427e6ffc8d9a6631ce53debb8dcaf98d2d3429c7019609da2c4ead3d691ea7ef"
+        },
+        {
+          "resource": "repo://crates/services/src/services/config/versions/v9.rs",
+          "version": "repo-file-v1:sha256:6b1318074371587027f1f9b981d6e47501c536d93bb2663c3048cc99a87be83d"
+        }
+      ]
+    },
+    {
+      "id": "claim_fd1c1641918d4932ae6b87605b14912e",
+      "statement": "アーカイブON時のprepare_archiveは検証/Wiki前にdocs/changesの固定本文を専用追加commitにし、保存済み親/tree/messageによる停止回復と候補blob検査を行い、同一Repoの同一Issue再アーカイブや衝突・symlink・無関係indexを拒否する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/routes/integrations/conversation.rs",
+          "version": "repo-file-v1:sha256:818e51ca25baa1cbae72b97525267f274262be62f3fcba0c69bd052cb4e4e2e6"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/integrations/issue_archive.rs",
+          "version": "repo-file-v1:sha256:831fd858730316e41e1db5a8d5490d4e7c7fd4dd1412027c456402fe75a79445"
+        }
+      ]
+    },
+    {
+      "id": "claim_d7c2e9c9b6b541f4a41db49e157bb5ca",
+      "statement": "Wiki公開receiptは確定ManifestのDB正本の存在を検証し、setup原本journalとdraft/publication等の運用入力はファイルに保持する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/db/src/models/repository_state.rs",
+          "version": "repo-file-v1:sha256:b03aa8ee445c43740864ec99e41ce2deddeea31f5708b767dd7a623e26c791eb"
+        },
+        {
+          "resource": "repo://crates/db/src/models/repository_state/manifests.rs",
+          "version": "repo-file-v1:sha256:ffe01da9acd1eb3c90feae8c9cfe791068d197c0fe06d9bf9064c4cb8f73e55f"
         }
       ]
     }
   ],
   "verification": {
-    "by": "openwiki/0.7.2",
-    "at": "2026-11-12T03:32:18.680Z"
+    "by": "openwiki/0.9.0",
+    "at": "2026-11-16T15:12:08.330Z"
   }
 }

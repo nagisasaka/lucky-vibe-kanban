@@ -22,6 +22,8 @@ sources:
     resource: repo://crates/server/src/remote_mcp/dev_server.rs
   - id: openwiki-source-a9b6d4be264787a78357c9d6
     resource: repo://crates/server/src/routes/config.rs
+  - id: openwiki-source-5720d865d1c837f0e6b7dab7
+    resource: repo://crates/server/src/routes/integrations/conversation.rs
   - id: openwiki-source-ecfa47de2e3842c785820c9b
     resource: repo://crates/server/src/routes/integrations/mod.rs
   - id: openwiki-source-b393e75029374eaf9cba5f7d
@@ -186,10 +188,10 @@ sources:
     resource: repo://tests/server/specs/workspace-search.spec.ts
   - id: openwiki-source-dcac74ef871fd02e6315fa93
     resource: repo://tests/workflow/specs/diff-tree.spec.ts
-generated: { by: "codex", at: "2026-11-10T20:48:58.515Z" }
+generated: { by: "codex", at: "2026-11-16T15:12:08.330Z" }
 verified:
-  - by: openwiki/0.7.2
-    at: 2026-11-12T04:13:28.445Z
+  - by: openwiki/0.9.0
+    at: 2026-11-16T15:12:08.330Z
 ---
 
 # ファイル・差分・プレビュー・端末の境界
@@ -496,3 +498,10 @@ Git操作の自動マージを選ぶと、当該WorkspaceとRepoを選択した�
 開始後は割当Sessionの通常会話で追加指示・質問へ応答し、依頼概要のdetailsから保存済み初回入力原文を読む。停止時は公開commit、未公開理由と次操作を確認する。read-only診断は期待するrepository path/候補branchと観測branch/HEAD・取得エラーを返すため、誤branchや担当stdio終了後でも既存UI/上位AI読取から確認できる。診断はbranch自動修復やmutation許可ではない。[診断API](../../crates/server/src/routes/integrations/mod.rs)・[対象整合とguard](../../crates/server/src/routes/integrations/conversation.rs)・[初回概要](../../packages/web-core/src/features/workspace-chat/ui/IntegrationInitialMessage.tsx)
 
 Wiki receipt pending: はGit適用後のreceipt回復待ちとしてUIの復旧条件と揃える。公開要求受付をmain適用成功へ読み替えず、Gitを再mergeする代わりに既存の回復操作と結果を確認する。sourceのDone保留と公開成功も別結果として扱う。[回復と公開](../concepts/formal-integration.md)
+
+
+### 固定IssueアーカイブとManifest参照の診断（LOCAL-398/399）
+
+workerのinspectは受付済み `issue_archive_enabled` と `archive_publication`、sources参照では現在版本文snapshotとretry補足を返す。ON時のアーカイブ不成立ならprepare_archiveの元receipt/候補を確認し、後日の本文や設定で置換しない。ファイルの保存と公開済みを混同せず、code SHA・Wiki SHA・hostのtarget適用をそれぞれ確認する。[worker診断](../../crates/server/src/routes/integrations/conversation.rs)・[手順](../concepts/formal-integration.md#採用issue本文の任意アーカイブlocal-399)
+
+確定Manifestの参照は旧共有eventファイルpathから、登録Repo/event IDを指定するDB読取URLへ変わった。旧ファイルの不在だけでDB記録もないと判断せず、APIと固定IDの結果を読む。通常読取は旧ファイルfallbackを行わない。[読取API](../../crates/server/src/routes/repo.rs)・[DB正本](../concepts/repository-memory.md#確定manifestのdb正本と起動時取込local-398)

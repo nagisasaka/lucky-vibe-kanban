@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:8a0ed0c414cc21dac34754918923292b059ce2bfcb74071feefe2f48093566af",
+  "pageVersion": "sha256:511363a46d6971c3eb00bb09ace1789a3ccdd1fbe9c70a071e4aaa2f29821bea",
   "claims": [
     {
       "id": "claim_ef965d37641846bda42842bf4788c8cc",
@@ -214,7 +214,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/integrations/runtime.rs",
-          "version": "repo-file-v1:sha256:dfe206b14be0c75a8536bca67f813b9efdafdbef26ea7748d6190ce7e29b98b4"
+          "version": "repo-file-v1:sha256:424dcd0fde5f84624050284dbdb76f293ffffbd438ac311dc30f658b4edc879c"
         },
         {
           "resource": "repo://packages/web-core/src/features/workspace-chat/ui/ExecutionInspectionPanel.tsx",
@@ -462,7 +462,7 @@
       "evidence": [
         {
           "resource": "repo://packages/web-core/src/shared/dialogs/settings/settings/GeneralSettingsSection.tsx",
-          "version": "repo-file-v1:sha256:f7d738cfca03994d135b955a7ec1c93ee7b7fd6bc2a63d3911f6eacd3447250b"
+          "version": "repo-file-v1:sha256:3aef1e1168cfad3137be13e801dba83f946d1137faba7eb4e513b37ab6736602"
         }
       ]
     },
@@ -485,7 +485,7 @@
       "statement": "editorリンク解決はinspection_rootで削除済み・未準備・不在の実体を拒否し、container_for_inspectionによるworktree復元を避ける。Repository settingsでは登録済み元Repo.pathのみを開く。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/repo.rs#L161-L185",
+          "resource": "repo://crates/server/src/routes/repo.rs#L192-L216",
           "version": "repo-lines-v1:sha256:f4a8e74f8367687fd9fe01ac256918d582117a33fe04111bd2a7be0e5781608e:eyJzZWxlY3RlZExpbmVDb3VudCI6MjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMwMDc4YTA0ZmJlYmMyNDJjYTFiODY2NjNjNGU4MDVmM2Q0NmRmNGZhZGIzMDNlYmI1YjQyM2M0NGU4YzI2M2MiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImYwZjc4NzNjMDBmZThhNjllMTU3MmNjMDg0NzRjZjc1MTljNGU3NmQzZmY5YmRkMDkzYjA4NzExZTM2MmVhNzYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNlMDc2MTA3NDdmYzUyOWZmZDhmYmEwZTg0YTcyNzJlY2JjYzZhNzViY2M4ODE1ZGIxZDk3MGE3M2I2ZGJlNWEifQ"
         },
         {
@@ -965,7 +965,7 @@
       "statement": "Workspace Git操作は採用Workspace/Repoを選択した共通自動マージUIへ接続し、停止後の診断とWiki receipt pending回復条件を既存経路へ統合する。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/integrations/mod.rs#L145-L194",
+          "resource": "repo://crates/server/src/routes/integrations/mod.rs#L146-L195",
           "version": "repo-lines-v1:sha256:20c22405b1cb84c5d6a07ede637f11e80c0938244e5e6fa9feba319e0bf47522:eyJzZWxlY3RlZExpbmVDb3VudCI6NTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU4YzAxYjExZWE5YjEzZmM4MmRhYzgwYjkzYzUwMjM4OWZkY2EwNmEzNDJlZmM2YTdlMjRhZWU5YjM1MWQxMzIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI5NzQ2NTk0NGMzODhhMTU1ZDA3ZWZjYTU3NGI5OWM5ODdmMTFhOTk0YmIxNDJlMTU0YzhkYzI5ODRjZWY0NTQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNlMWI4MzY3ZTk4YzVkZDAxNjEyYjkyYzQzNGY2MzdiNjE4MDhmNzg5Y2ZjODQxMThmMDUxZTEzZTE4Njg1YzEifQ"
         },
         {
@@ -973,10 +973,24 @@
           "version": "repo-file-v1:sha256:0bc7152d3adc5254fc0a6d6026628223679a373d1d047e8244ce403af0c70f28"
         }
       ]
+    },
+    {
+      "id": "claim_1577ced107084d0e8b75b8af5f3285cf",
+      "statement": "worker inspectは受付時Issueアーカイブ設定・publication intentとsources内の固定snapshot/retry補足を返し、確定Manifest参照はRepo/eventを指定するDB読取URLとなる。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/routes/integrations/conversation.rs#L114-L165",
+          "version": "repo-lines-v1:sha256:bc733a4a994aec4655bfa0c6a18f03f0ad98370348cc11ee751da786e3e87371:eyJzZWxlY3RlZExpbmVDb3VudCI6NTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIwNzVjZjJiNDYzZDIzNGZmNjUyY2U1OTE2NGE3ZWY2Y2EwMDBlYWM0MDNiYTU0MDQ5MGZjNDZmZmY2ZTQ3MWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2N2ZhNjk3NTJkNzk4ZTk1NDdlMmQxMGQyMzFiMTY1NTQxYWRiMDMwMzA1YWZkNmZjNDM0MGI2NDk4YzIyYjgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImE0YzhmYTUwYWUxZDYxNTFjNTgyNmM2NzQyMTc5NGJmODAyNjNjNDRlZjBjZThlN2MzNzhkNjNhOWU4ZDNjMTkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM3YTdhZTEyODVkNDBlYTVkZDIyMGZmYmRjMGIxYjRkYzM0OTljMTc2NWI5YjdhZWJjNTAwNGEwMTYwN2MzOTYifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/repo.rs",
+          "version": "repo-file-v1:sha256:e0f5c1c30eef610c84e65b0b2c32b37a3db7ee6f82b4e41ef3b2419a22b720b0"
+        }
+      ]
     }
   ],
   "verification": {
-    "by": "openwiki/0.7.2",
-    "at": "2026-11-12T04:13:28.445Z"
+    "by": "openwiki/0.9.0",
+    "at": "2026-11-16T15:12:08.330Z"
   }
 }

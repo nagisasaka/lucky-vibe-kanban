@@ -44,10 +44,10 @@ sources:
     resource: repo://packages/web-core/src/shared/hooks/useWorkspaceRepositoryWorkflow.ts
   - id: openwiki-source-23775c3de52f3ab95a13cb8b
     resource: repo://README.md
-generated: { by: "codex", at: "2026-11-11T09:36:22.928Z" }
+generated: { by: "codex", at: "2026-11-16T15:12:08.330Z" }
 verified:
-  - by: openwiki/0.7.2
-    at: 2026-11-11T09:36:22.928Z
+  - by: openwiki/0.9.0
+    at: 2026-11-16T15:12:08.330Z
 ---
 
 # Workflow の実行と耐久オーケストレーション
@@ -118,7 +118,7 @@ Runの取得もreconciliationを伴うが、LOCAL-372以後はstandaloneにも�
 
 ## 固定presetの成果成立と一度だけの合流
 
-3 presetは[共通開始サービス](../../crates/server/src/routes/workflow_presets.rs)から固定graphを作り、同じWorkspace内に工程ごとの独立Sessionを確保する。実装工程は通常codingの後処理とcommitを待ち、report・確定SHA・phase開始snapshot・Change Manifest参照を引き渡す。report空やclean source不成立は失敗、commit出版中は同じ実行の完了待ちであり、新しいagentを起動し直さない。[成果成立](../../crates/server/src/workflow_runtime/presets.rs#L80-L166)
+3 presetは[共通開始サービス](../../crates/server/src/routes/workflow_presets.rs)から固定graphを作り、同じWorkspace内に工程ごとの独立Sessionを確保する。実装工程は通常codingの後処理とcommitを待ち、report・確定SHA・phase開始snapshot・Change Manifest参照を引き渡す。LOCAL-398以後、確定ManifestはDBから読み、引渡しの `change_manifests` は旧ファイルpathではなく Repo/event 固定の読取URLを含む。[引渡し形式](../../crates/server/src/workflow_runtime/presets.rs)report空やclean source不成立は失敗、commit出版中は同じ実行の完了待ちであり、新しいagentを起動し直さない。[成果成立](../../crates/server/src/workflow_runtime/presets.rs#L80-L166)
 
 報告工程は開始snapshotと終了snapshotの一致を検査し、事前のproviderソース保護も適用する。後からのSHA比較だけを防御にはしない。多角調査の合流はwait_for_allを持ち、必要な全入力の成功後に一度だけ成立する。一部失敗なら統合を始めず成果を保持する。旧graphの既定ANY判定とは区別する。[planner](../../crates/workflow/src/planner.rs)・[固定graph](../../crates/workflow/src/presets.rs)・[権限制御](../integrations/agent-providers.md)
 

@@ -36,6 +36,8 @@ sources:
     resource: repo://crates/server/src/routes/integrations/admission.rs
   - id: openwiki-source-5720d865d1c837f0e6b7dab7
     resource: repo://crates/server/src/routes/integrations/conversation.rs
+  - id: openwiki-source-0c7c883005a8c160cd795437
+    resource: repo://crates/server/src/routes/integrations/issue_archive.rs
   - id: openwiki-source-b393e75029374eaf9cba5f7d
     resource: repo://crates/server/src/routes/integrations/runtime.rs
   - id: openwiki-source-24838d7108e2888a7fdc2714
@@ -96,10 +98,10 @@ sources:
     resource: repo://packages/web-core/src/shared/dialogs/shared/WorkspaceTargetDialog.tsx
   - id: openwiki-source-ffc55e6e31e6ce477ca57329
     resource: repo://packages/web-core/src/shared/hooks/useWorkflowRun.ts
-generated: { by: "codex", at: "2026-11-11T22:39:59.377Z" }
+generated: { by: "codex", at: "2026-11-16T15:12:08.330Z" }
 verified:
-  - by: openwiki/0.7.2
-    at: 2026-11-12T04:13:28.445Z
+  - by: openwiki/0.9.0
+    at: 2026-11-16T15:12:08.330Z
 ---
 
 # Issue から実行・レビュー・統合まで
@@ -302,3 +304,16 @@ WorkspaceのGit操作から開く場合は当該Workspace/Repoを選択し、Kan
 開始フォームとProject既定設定の3 preset名は、共通の型付き静的キー表を通して同じ翻訳を読む。工程のengine選択肢も既存の `environment.codex` / `environment.claude` を使う。動的な文字列連結でpresetの翻訳キーを生成しない。[開始フォーム](../../packages/web-core/src/features/workflow/ui/WorkflowPresetFields.tsx#L11-L15)・[engine表示](../../packages/web-core/src/features/workflow/ui/WorkflowPresetFields.tsx#L60-L61)・[Project設定](../../packages/web-core/src/features/workflow/ui/WorkflowTemplateListPage.tsx#L30-L30)
 
 翻訳変更の公開前検査は `pnpm run i18n:test`、`pnpm run i18n:check`、`node scripts/check-unused-i18n-keys.mjs` で確認する。未使用候補の削除では現行参照とnamespace・fallbackを照合し、検査条件の緩和で代用しない。コード候補 `46ed9ab94c42b00762cc006933f3493f88da7230` では依存配置後に3コマンドが成功した。これはDocker imageや実provider/namespace成功側の検証ではなく、それらの既知の未検証は残る。
+
+
+## Issue本文アーカイブを有効にした正式統合（LOCAL-399）
+
+1. 新規受付前に、全体設定 `issue_archive_enabled` を確認する。既定OFFで、Wikiやcommit本文併記とは独立する。ONは保存済み現在版本文全文が対象repoへ入りpushで公開される設定である。
+2. 受付後はinspectのsourcesと設定を基準にする。後日の本文・設定変更やretry補足で固定原文を置換しない。
+3. 同じ候補branchへ固定sourceを統合し、ONなら検証/Wiki前に `prepare_archive` を成功させる。返却candidateをcode SHAにし、そのSHAへ必要な検証/省略を記録する。OFFは新規アーカイブを生成しない。
+4. Wiki有効ならcode検証後・最初のbegin前に `prepare_wiki` を成功させ、同じ候補のWiki lifecycleを完了しWikiだけ別commitにする。setup生成差分は未stageで残す。
+5. code/Wiki/final SHAを区別してpublish要求を保存し、Runを終了する。hostの収束・限定復元・clean検査・実Git適用の結果を確認する。
+
+アーカイブ衝突・保存失敗・候補blob改変なら公開を止め、元request ID・expected commitと保存済み親/treeを保持して正式経路で診断する。未公開を公開済みとせず、古いファイルの更新/削除で回避しない。[アーカイブ契約と回復](../concepts/formal-integration.md#採用issue本文の任意アーカイブlocal-399)・[管理action](../../crates/server/src/routes/integrations/conversation.rs)
+
+LOCAL-398の確定ManifestはDB正本であり、通常読取URLと固定event IDを使う。旧共有JSONが残っていても通常読取正本へ戻さない。[取込・失敗時の境界](../concepts/repository-memory.md#確定manifestのdb正本と起動時取込local-398)・[正式候補の検証と未実施](../operations/development.md#local-398399の統合検証)

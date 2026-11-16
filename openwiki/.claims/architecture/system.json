@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:a9383f51515387122822871d2f264ebacc07f9bfd2b25f560a39891a4beafe00",
+  "pageVersion": "sha256:0ea4740535f4bfe5eed54db10895729e27eb2794634d71a1b41b012a19e64463",
   "claims": [
     {
       "id": "claim_040b4779a7b24b2da362496e3236ffd7",
@@ -85,10 +85,6 @@
         {
           "resource": "repo://Dockerfile#L232-L250",
           "version": "repo-lines-v1:sha256:de51fa9428d7497154a8762dab1c5306c44da7dceaa64f75babc062d9d06bd07:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQyNjMyYmZlYzRmMzhlNTUzMDU4MzE3ODVjNzI2NDhlZTRkOGNiMjllMDEzNzg0NDc0OTk5YzYxYTcwYjg2ZjQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEzYTY3Y2FlYzdkZWIzYzhmZWFhMDQ2NTNiNTA5YzlkZmYyMzAxNTVkYzViYjAzYjliZGY4ODYzN2I5MGJiMjIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjBmNzU3YzQ4NzRlM2JhZTNjMjhkYjdhNzNkMTM2NDg1MDgwNjE4NmE4MzdlZThhOWQ2ZTcyZmIyNTIwMzgwOWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
-        },
-        {
-          "resource": "repo://crates/db/src/lib.rs#L262-L277",
-          "version": "repo-lines-v1:sha256:35ea5cadafd4a9dfbd96f8e5ee8271542caf8de1ed45e947a56058ffd79a2d5c:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU1ZjAzMDVlM2VkMGRjYzQ4YjFlMGFhZDkwZjk1M2RmMzk1MTQ2MzY2YTI3ZmIyZTAyMzczOTI1M2Y2NDZmNDUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY3ZDRkYzUyMzFiMWE5Y2UwMjUwODE2Y2E0ZDY5Nzk5ODFhOWYyNzk4MzE0YTAwMzkyMTg5ZDhjMDJjZTNkZTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImIxYmZkMmQ3NjAzMTcxMmJlZTE5NmE2MTQ4YjZkYjExZjIxNTdiMDIzYWE2MjEwZGI4MGQzMGI0NmE2MjMxNTEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImI5ZDEwNDQwNDYwNzAyOWI5NDBhMmE0M2Q1NThlOTFmYzM4NTI4N2M1OTgyZjc5YWIwMzFjMmU1M2FmOWZhOTEifQ"
         },
         {
           "resource": "repo://crates/server/src/lib.rs#L1-L10",
@@ -309,10 +305,24 @@
           "version": "repo-lines-v1:sha256:5285d4983125f7c4f6dfee1e43b61c06a12dab5b205958574a49b0beed269f7b:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY2MjNhYmNkNzk4M2NhZWVlZDViOGUzN2IwNjEzNzBmNGMwMDU5NjQ2MGJhZmRhNTdlZWQ5YjIwMWEyZWM0NGQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjlhYzA0M2NlYTlmZDg5NTY4NDFlODljYTQ2YTAyNTYzZWM4NWJhMDM5ZTJmYWIwYTI3NmNkOTRlMjgzYTEwNTYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjI1Mjk4YmE2NDU3MmNhODkwODg0YTFiMWViNmE1MjA2YmI3NWJkMWE3Mzk5Mzk3YWVjOGQ4NGVkMDVhMWQ4ODAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNjYTBkMDlkN2VhYjRhMDRlOTExMjc0NWI4NjAzZjcwMDdjMDRmZDk2NDQ0ODUwMTJiZjVmNzhlNWFhMGVjMzkifQ"
         }
       ]
+    },
+    {
+      "id": "claim_0420cc323bb848f2b88d6bef7bd13a5b",
+      "statement": "確定Change ManifestはSQLiteが正本で、登録済みRepoの旧正本はDBService初期化時に一度だけ原子的に取り込まれ、失敗は起動を失敗させ旧ファイルを削除しない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/db/src/lib.rs",
+          "version": "repo-file-v1:sha256:d28b541d11de5de8a2b1f452ce3992d5aa67e9d632b27b580d7f640259df80ba"
+        },
+        {
+          "resource": "repo://crates/db/src/models/repository_state/manifests.rs",
+          "version": "repo-file-v1:sha256:ffe01da9acd1eb3c90feae8c9cfe791068d197c0fe06d9bf9064c4cb8f73e55f"
+        }
+      ]
     }
   ],
   "verification": {
-    "by": "openwiki/0.7.2",
-    "at": "2026-11-12T04:13:28.445Z"
+    "by": "openwiki/0.9.0",
+    "at": "2026-11-16T15:12:08.330Z"
   }
 }

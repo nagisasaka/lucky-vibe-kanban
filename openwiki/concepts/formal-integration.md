@@ -14,6 +14,10 @@ sources:
     resource: repo://crates/db/migrations/20261027090000_generated_issue_status.sql
   - id: openwiki-source-c01fa644be961cb7ee12d2b5
     resource: repo://crates/db/src/models/integration.rs
+  - id: openwiki-source-5144fccee237bf35dd134ccb
+    resource: repo://crates/db/src/models/repository_state.rs
+  - id: openwiki-source-21149aa9001849998cda42a2
+    resource: repo://crates/db/src/models/repository_state/manifests.rs
   - id: openwiki-source-4f59e07f8850eb04105d5cb8
     resource: repo://crates/db/tests/generated_issue_status.rs
   - id: openwiki-source-d40a52c39b8604505b97c3e9
@@ -34,6 +38,8 @@ sources:
     resource: repo://crates/server/src/routes/integrations/conversation_tests.rs
   - id: openwiki-source-5720d865d1c837f0e6b7dab7
     resource: repo://crates/server/src/routes/integrations/conversation.rs
+  - id: openwiki-source-0c7c883005a8c160cd795437
+    resource: repo://crates/server/src/routes/integrations/issue_archive.rs
   - id: openwiki-source-ecfa47de2e3842c785820c9b
     resource: repo://crates/server/src/routes/integrations/mod.rs
   - id: openwiki-source-b393e75029374eaf9cba5f7d
@@ -46,6 +52,8 @@ sources:
     resource: repo://crates/server/src/routes/openwiki/completion.rs
   - id: openwiki-source-c1a5c9bda8d34af222d811c1
     resource: repo://crates/server/src/routes/repo.rs
+  - id: openwiki-source-ae8c631b5b4385c934e47d60
+    resource: repo://crates/services/src/services/config/versions/v9.rs
   - id: openwiki-source-fa966dc92e5b940e2e3155e3
     resource: repo://crates/services/src/services/openwiki/completion.rs
   - id: openwiki-source-c4df16e7e579927d462857d7
@@ -56,10 +64,10 @@ sources:
     resource: repo://packages/web-core/src/features/workspace-chat/ui/IntegrationFacts.tsx
   - id: openwiki-source-344aff2e68b53276f6be4e40
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/IntegrationValidationSettings.tsx
-generated: { by: "codex", at: "2026-11-11T14:47:52.070Z" }
+generated: { by: "codex", at: "2026-11-16T15:12:08.330Z" }
 verified:
-  - by: openwiki/0.7.2
-    at: 2026-11-12T03:32:18.680Z
+  - by: openwiki/0.9.0
+    at: 2026-11-16T15:12:08.330Z
 ---
 
 # 自動マージの選択・検証・公開
@@ -135,7 +143,7 @@ Wiki有効時はコード検証後、同じ候補branchでOpenWikiの正規ラ�
 
 公開後は採用元Workspaceの現在HEADと固定source SHAの単純不一致、または同Workspace内の非terminal Runがある場合、採用元Cardの現在列を維持して自動Doneだけを保留する。本文revisionや同Issueの別Workspaceは条件にしない。HEAD観測不能も当該sourceだけ保留receiptを記録し、他sourceのDoneと予約解放を続ける。DB照会・receipt保存の失敗は伝播する。公開成功自体は取り消さない。公開後は採用元CardのDone処理とreceiptを記録する。Cancelledや公開後の再オープン、他run予約は上書きしない。新しい実開始によるDoneからの再着手に、旧receiptを再適用しない。生成Issueは進行/再開でIn Progress、停止でIn Review、公開済みでDoneへ投影する。成功後の専用Issue/Workspaceは通常archive契約に従い、採用元Workspaceを削除対象にしない。[完了](../../crates/db/src/models/integration.rs)・[生成状態](../../crates/db/migrations/20261027090000_generated_issue_status.sql)・[archive guard](../../crates/server/src/routes/local_remote/issue_archive.rs)
 
-Wiki有効時の公開済みevent receiptと鮮度はinstance DB の repository_wiki_receipts / repository_wiki_state へ保存する。receipt・鮮度stateとintegrationのWiki結果は同じDB transactionで確定する。Manifestファイルとsetup原本journalは引き続きファイルで保持する。Git適用後のreceipt失敗は `Wiki receipt pending` として回復し、既に適用したGitを取り消さず、Card完了やarchiveを巻き戻さない。[後処理](../../crates/server/src/routes/integrations/runtime.rs#L480-L520)・[Wiki receipt](../../crates/server/src/routes/integrations/conversation.rs#L1048-L1100)
+Wiki有効時の公開済みevent receiptと鮮度はinstance DB の repository_wiki_receipts / repository_wiki_state へ保存する。receipt・鮮度stateとintegrationのWiki結果は同じDB transactionで確定する。確定Manifestの正本はLOCAL-398以後DBへ移り、receiptはDB正本の存在を照合する。setup原本journalとdraft/publication等の運用入力はファイルのまま保持する。Git適用後のreceipt失敗は `Wiki receipt pending` として回復し、既に適用したGitを取り消さず、Card完了やarchiveを巻き戻さない。[後処理](../../crates/server/src/routes/integrations/runtime.rs#L480-L520)・[Wiki receipt](../../crates/server/src/routes/integrations/conversation.rs#L1048-L1100)
 
 ## 中断・介入・回復
 
@@ -183,3 +191,19 @@ LVKのWorkspace Git操作もKanban/MCPも共通の自動マージへ接続する
 inspectは対象整合を確認後、変更操作の受付・状態・候補branch guardより前にread-only診断を返す。停止後stdioがなくてもGET診断/上位AIの既存get_integrationから期待branch/pathと実branch/HEAD・取得エラーへ到達できる。変更操作のguardを弱めず、branchを自動修復しない。Wiki receipt pending: をUIの復旧表示条件と一致させ、公開済Gitを再統合しない。[診断](../../crates/server/src/routes/integrations/conversation.rs)・[HTTP入口](../../crates/server/src/routes/integrations/mod.rs)・[上位AI読取](../../crates/server/src/remote_mcp/integration_read.rs)
 
 今回のコード検証SHAは `f9bd24b17bb2876a44f3ae6e56e457b058273514`。候補上でfrontend型/lint/build、会話/Markdown回帰、DB/server/executor対象試験と影響crate Clippy、隔離multi-source・source-head-unavailable・wiki-receipt-crashを成功確認した。全suite・型/SQLx再生成は既存source SHAの証拠と統合差分によりagent判断で省略記録した。実provider/認証済UIは未確認で、旧devの今回worker起動を新初回入力のprovider検証とは扱わない。Wiki完了・公開要求・main適用はそれぞれ別の結果である。
+
+
+## 採用Issue本文の任意アーカイブ（LOCAL-399）
+
+全体設定 `issue_archive_enabled` は既定OFFで、Wiki設定と `manifest_in_commit_body` から独立する。設定画面でONにすると、以後受付する自動マージは採用Issueの保存済み現在仕様本文全文を対象repoへ保存し、pushすれば公開される。設定変更は受付済みIntegrationへ遡及しない。コメント・会話・添付実体は収集しない。[設定](../../crates/services/src/services/config/versions/v9.rs)・[説明UI](../../packages/web-core/src/shared/dialogs/settings/settings/GeneralSettingsSection.tsx)
+
+受付はIssue UUID・表示ID・タイトル・現在版ID/revision・原文・固定UTC時刻をsnapshotへ保存する。後日の本文・設定変更で置換せず、自動マージやWikiの参照とアーカイブに同じ固定本文を用いる。旧統合の補足は `retry_context` に分離し、原文へ混入しない。[採用時固定](../../crates/server/src/routes/integrations/admission.rs)・[payload](../../crates/db/src/models/integration.rs)
+
+1. inspectで受付時のアーカイブ設定とsnapshot、既存 `archive_publication` を確認する。OFFなら新規ファイルを作らない。
+2. ONでは固定baseと全sourceを保持するclean候補を作った後、検証・Wiki準備前に `integration_action prepare_archive(expected_commit=候補SHA)` を実行する。
+3. `docs/changes/YYYY-MM-DD-表示ID-UUID先頭8桁.md` を対象ファイルだけstageした一つの追加commitにまとめる。注記は「当時の意図を示す資料であり、現在の仕様・実行許可・実装完了の証明ではない」とし、原文全文と版情報を保存する。commitにはIssue ID/UUID trailerを含め、ファイル内に自己commit SHAを書かない。
+4. 返された候補SHAを検証・省略記録のcode SHAにする。その後Wikiが有効なら正式prepare→begin→finish→Wiki専用commit→publishへ進む。
+
+再送は元request IDと入力を保持する。Git commit後・DB記録前の停止は保存済み親/tree/messageに一致するHEADから回復する。内容衝突・無関係なindex・symlink・候補内の固定blob改変・保存失敗は検証/Wiki準備/公開を止める。同じRepo内の1 Issueは1回だけで、別Integrationでの再アーカイブは現行範囲外。過去ファイルの更新・削除や二重生成で回避しない。本文中の他Issue UUID言及はファイル自身の同一性に使わない。[prepareと照合](../../crates/server/src/routes/integrations/issue_archive.rs)・[呼出しguard](../../crates/server/src/routes/integrations/conversation.rs)・[公開時再検査](../../crates/server/src/routes/integrations/runtime.rs)
+
+LOCAL-398/399の正式候補 `e7f46db7fe09883223fa562ce3677734618f5e6a` は固定baseへ両sourceを無競合統合した。候補上の対象回帰・frontend型/対象lint/build・隔離4モード・Clippy・生成型検査と、省略・未検証範囲は[統合検証記録](../operations/development.md#local-398399の統合検証)に分ける。この統合自体の稼働設定は変更しておらず、新機能の有効化や実DB移行を意味しない。Wiki完了と公開要求、Run終了後のhostによるmain適用は別の結果である。

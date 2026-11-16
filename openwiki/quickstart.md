@@ -60,6 +60,8 @@ sources:
     resource: repo://crates/server/src/routes/integrations/admission.rs
   - id: openwiki-source-5720d865d1c837f0e6b7dab7
     resource: repo://crates/server/src/routes/integrations/conversation.rs
+  - id: openwiki-source-0c7c883005a8c160cd795437
+    resource: repo://crates/server/src/routes/integrations/issue_archive.rs
   - id: openwiki-source-b393e75029374eaf9cba5f7d
     resource: repo://crates/server/src/routes/integrations/runtime.rs
   - id: openwiki-source-1ffb01d1ba3953937e0771bf
@@ -128,10 +130,10 @@ sources:
     resource: repo://packages/web-core/src/shared/providers/TerminalProvider.tsx
   - id: openwiki-source-23775c3de52f3ab95a13cb8b
     resource: repo://README.md
-generated: { by: "codex", at: "2026-11-12T04:13:28.445Z" }
+generated: { by: "codex", at: "2026-11-16T15:12:08.330Z" }
 verified:
-  - by: openwiki/0.7.2
-    at: 2026-11-12T04:13:28.445Z
+  - by: openwiki/0.9.0
+    at: 2026-11-16T15:12:08.330Z
 ---
 
 # クイックスタートと調査案内
@@ -175,7 +177,7 @@ LVK独自のrepo内管理領域は原則 `.lvk/` に集約する。共有設定�
 | 候補をどう比較し、採用後の実装へ移るか | [Arena](concepts/arena.md)。Design / Implementation、候補、promotion と Workflow 内の選択 |
 | prompt の再利用文脈と並列 source をどう扱うか | [保存本文・共有領域・並列参照](concepts/card-context-and-llm-wiki.md)。既知5hash限定の送信時除去と引用保護、必要時ガイド、固定snapshotと旧機能撤去の境界 |
 | 採用した並列成果を安全に local target へ反映するには | [自動マージ](concepts/formal-integration.md)。固定source/base、同じ会話の候補・検証/省略・Wiki、hostの公開と取消 |
-| 並列作業の知識を統合済み repository にどう反映するか | [Repository memory](concepts/repository-memory.md)。canonical Wiki、ファイルChange Manifest、正常Run自動commit、DB運用状態とsource checkpoint |
+| 並列作業の知識を統合済み repository にどう反映するか | [Repository memory](concepts/repository-memory.md)。canonical Wiki、DB正本の確定Change Manifest、正常Run自動commit、DB運用状態とsource checkpoint |
 
 名称だけを確認する場合は [自動マージの名称と互換境界](concepts/formal-integration.md#名称と互換境界)を読む。API・tool の識別子と画面名を区別し、マージ済みコードと候補内Wikiの完了と公開の結果を別々に確認する。
 
@@ -410,7 +412,7 @@ Kanban / Workspace の右サイドバーは共通環境 panel とファイル・
 
 ## LOCAL-332: Run成果とWiki運用状態の整理
 
-開発中の文脈はproviderのSessionが扱い、Workspace Memory・no-change専用検証記録・commit reminderは撤去された。通常成功coding Runのsource自動commitとファイルManifestはWiki無効でも有効。`manifest_in_commit_body` は既定OFFの選択肢で、ONは通常LVK source commitへ意図と判断理由を人間可読に併記する。Gitで共有される本文からManifestを復元する二重管理は行わない。[責務と設定の詳細](concepts/repository-memory.md)・[通常Runの最終報告](integrations/remote-access.md#専用検証mcpの廃止と通常run報告)
+開発中の文脈はproviderのSessionが扱い、Workspace Memory・no-change専用検証記録・commit reminderは撤去された。通常成功coding Runのsource自動commitとDB正本の確定ManifestはWiki無効でも有効。`manifest_in_commit_body` は既定OFFの選択肢で、ONは通常LVK source commitへ意図と判断理由を人間可読に併記する。Gitで共有される本文からManifestを復元する二重管理は行わない。[責務と設定の詳細](concepts/repository-memory.md)・[通常Runの最終報告](integrations/remote-access.md#専用検証mcpの廃止と通常run報告)
 
 可変なWiki state・receipt・publication・source integration対応はinstance DBへ集約し、Manifest・固定sync-inputs・source-publication・setup原本journalはファイルとして保持する。一度限りの移行CLI・importer・旧JSON decoder・互換guardとrunbookはLOCAL-336で撤去済みであり、現行版で再importしない。[現行のDB正本と撤去・保持境界](concepts/repository-memory.md#運用状態のdb集約と一度限りの開発移行)
 
@@ -517,3 +519,12 @@ UI/MCPの共通会話、質問ごとの参照版、失敗・取消・削除、RE
 固定base `1b511168` に375 source `78fb649b` を採用し、en/ja末尾の競合で377本文版と375ヘルプを両方保持した。広域検証を実行したSHAは `69f9f382c74316d2c7f872826d00ab11f348450d`。画像fixtureの撮影だけを補正した最終コード検証SHAは `e5cddb5128e878ce0f0d9bd37bb0c150ea88268a` で、そのSHAでは差分限定とmock Chromiumを再実行した。重複広域suiteのagent省略と別環境試験を準備に留めるユーザー境界を区別して記録した。[検証結果と未実施](operations/development.md#local-375の対話ヘルプ統合検証)
 
 完成image・異なるimageへの保持volume更新、実OAuth/MCP、実browser/provider結合、回答生成中取消等は未検証である。[別環境手順](concepts/interactive-help.md#別環境で残る受入検証)を準備し、今回は実行していない。コード検証後のprepareで原本journalを保存してから同じ候補branchでWikiを別commitにする。Wiki完了・公開要求・hostのローカルmain実Git反映を区別し、GitHub push・tag・認証変更・デプロイ・稼働環境操作は行わない。
+
+
+## LOCAL-398/399：DB正本のManifestと任意Issue本文アーカイブ
+
+確定Change Manifestは[DB正本・Repo単位の起動時取込](concepts/repository-memory.md#確定manifestのdb正本と起動時取込local-398)へ移る。通常読取はDB単独で、参照URLと固定event IDを使う。旧ファイルを削除せず、draft・固定sync-input・source publication・setup原本journalはファイルのまま保持する。
+
+[Issue本文アーカイブ](concepts/formal-integration.md#採用issue本文の任意アーカイブlocal-399)は全体設定 `issue_archive_enabled` が既定OFFの独立機能である。ONで受付した場合だけ、保存済み現在版の原文を検証/Wiki前の専用追加commitへ残す。後日の本文/設定変更やretry補足で置換しない。表示から外すIssue archiveとは異なる。操作順は[統合手順](workflows/task-to-integration.md#issue本文アーカイブを有効にした正式統合local-399)、失敗回復は同契約を読む。
+
+固定base `da8273ef` へ398/399を無競合統合したコード検証SHAは `e7f46db7fe09883223fa562ce3677734618f5e6a`。[管理検証と省略・未実施](operations/development.md#local-398399の統合検証)では正式候補の対象試験/型/対象lint/build/隔離4モード/Clippy/生成型成功、前提不足とlint呼出しの失敗履歴、先行REVIEWと単独source証拠の再利用を区別する。実DB移行・設定変更・稼働再起動・実モデル/認証UI E2Eは未実施で、396は含まない。Wikiは事前prepare済みの同候補で別commitにし、Wiki完了・公開要求・Run終了後のhostのローカルmain適用は独立して確認する。GitHub push・リリース・配備は行わない。

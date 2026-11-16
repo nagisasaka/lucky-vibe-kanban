@@ -12,6 +12,8 @@ sources:
     resource: repo://crates/db/src/lib.rs
   - id: openwiki-source-7b783ec1a704bf9dadb9c003
     resource: repo://crates/db/src/migration_compat.rs
+  - id: openwiki-source-21149aa9001849998cda42a2
+    resource: repo://crates/db/src/models/repository_state/manifests.rs
   - id: openwiki-source-190ea4aff3773f72dcf4935b
     resource: repo://crates/local-deployment/src/lib.rs
   - id: openwiki-source-104d584b7b5ffa5973f60cde
@@ -58,10 +60,10 @@ sources:
     resource: repo://README.md
   - id: openwiki-source-8ea6c46d63953a7104f5dd97
     resource: repo://scripts/dev-cargo.mjs
-generated: { by: "codex", at: "2026-11-12T04:13:28.445Z" }
+generated: { by: "codex", at: "2026-11-16T15:12:08.330Z" }
 verified:
-  - by: openwiki/0.7.2
-    at: 2026-11-12T04:13:28.445Z
+  - by: openwiki/0.9.0
+    at: 2026-11-16T15:12:08.330Z
 ---
 
 # システム境界と起動順序
@@ -103,7 +105,7 @@ flowchart LR
 
 Board の Web は `/api/local`、stdio MCP は `/api/board` を使い、同じローカルデータを読む。旧名 `local_remote` や `remote-types.ts` は Cloud backend の存在を意味しない。[router](../../crates/server/src/routes/mod.rs#L49-L103) と [Web と同期](web-and-sync.md)で応答・再取得の契約を確認する。
 
-Git の作業木、Native Audit、Repository Memory は SQLite と別の永続状態を持つ。復旧で DB の状態だけを正しいと決めず、[実行ホスト](agent-runtime.md)や [記憶の統合状態](../concepts/repository-memory.md)の証拠も確認する。
+Git の作業木、Native Audit、Repository Memory の draft・publication・setup journal は SQLite と別の永続状態を持つ。確定 Change Manifest は LOCAL-398 以後 SQLite が正本であり、DBService 初期化時に登録済み Repo の旧正本を一度だけ原子的に取り込む。失敗時は起動を失敗させ、既存ファイルは削除しない。[正本と取込](../../crates/db/src/models/repository_state/manifests.rs)・[初期化](../../crates/db/src/lib.rs) 復旧で DB の状態だけを正しいと決めず、[実行ホスト](agent-runtime.md)や [記憶の統合状態](../concepts/repository-memory.md)の証拠も確認する。
 
 新しい [単一サーバーコンテナー](../operations/server-container.md)は、この local application を Linux サーバーで動かす配布形態である。PostgreSQL / Electric / relay に依存しない。backend の認証と nginx の HTTPS ingress・独立アプリroute、実行環境と永続 volume の境界は同ページに置く。[配布binaryとvolume](../operations/server-container.md#配布-binary-と開発-checkout)
 

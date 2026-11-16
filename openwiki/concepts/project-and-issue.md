@@ -58,8 +58,12 @@ sources:
     resource: repo://crates/server/src/remote_mcp/launch_tests.rs
   - id: openwiki-source-ab70a43b3f61734a8322478b
     resource: repo://crates/server/src/remote_mcp/stdio.rs
+  - id: openwiki-source-595d5d0308d670e38ef27fbf
+    resource: repo://crates/server/src/routes/integrations/admission.rs
   - id: openwiki-source-5720d865d1c837f0e6b7dab7
     resource: repo://crates/server/src/routes/integrations/conversation.rs
+  - id: openwiki-source-0c7c883005a8c160cd795437
+    resource: repo://crates/server/src/routes/integrations/issue_archive.rs
   - id: openwiki-source-1ffb01d1ba3953937e0771bf
     resource: repo://crates/server/src/routes/local_remote.rs
   - id: openwiki-source-24838d7108e2888a7fdc2714
@@ -116,10 +120,10 @@ sources:
     resource: repo://tests/kanban/issue-detail.mjs
   - id: openwiki-source-62d93277f2c37df9b3fcebae
     resource: repo://tests/kanban/README.md
-generated: { by: "codex", at: "2026-11-12T03:32:18.680Z" }
+generated: { by: "codex", at: "2026-11-16T15:12:08.330Z" }
 verified:
-  - by: openwiki/0.7.2
-    at: 2026-11-12T03:32:18.680Z
+  - by: openwiki/0.9.0
+    at: 2026-11-16T15:12:08.330Z
 ---
 
 # Project・Issue と実施の関係
@@ -359,3 +363,8 @@ Issue本文の正本は `issue_versions` に保存する。各版は安定した
 migrationは既存本文をNULL/空文字も含めてInitialという初期1版へ移し、それを現在版にする。新規IssueもINSERT triggerで初期版と現在指定を作り、過去に存在しなかった版は生成しない。各版は編集可能であり、厳密な本文履歴や任意時点snapshotを提供するものではない。[schemaと移行](../../crates/db/migrations/20261111220000_issue_versions.sql)・[既存本文移行と並行編集](../../crates/server/src/routes/local_remote/issue_update_tests.rs#L607-L690)
 
 版の作成・編集・指定だけではRunを開始せず、稼働Agentへ再指示しない。既送信promptや採用済snapshotは後日の版編集で書き換えない。コメント・レビューはIssue全体のままであり、[レビュー対象の観測値](issue-collaboration.md#手動版本文とレビュー対象の境界local-377)を版IDへ読み替えない。[起動とreplayの回帰](../../crates/server/src/remote_mcp/launch_tests.rs#L380-L469)
+
+
+### 採用時の本文固定とGitアーカイブ（LOCAL-399）
+
+自動マージの受付は `current_version_id` の保存済み現在版を直接読み、版ID/revision・原文・Issue UUID・表示ID・タイトル・UTC時刻を固定する。後日の版編集や再依頼補足はこのsnapshotを置換しない。全体設定 `issue_archive_enabled` は既定OFFで、ONを受付時に採った場合だけ検証/Wiki前の専用追加commitに本文全文を残す。これは表示から外すIssue archiveとは別機能であり、コメント・会話・添付実体を保存しない。[固定](../../crates/server/src/routes/integrations/admission.rs)・[任意アーカイブの操作と回復](formal-integration.md#採用issue本文の任意アーカイブlocal-399)

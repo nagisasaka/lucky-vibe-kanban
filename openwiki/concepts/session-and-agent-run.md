@@ -10,6 +10,8 @@ sources:
     resource: repo://crates/db/migrations/20261027090000_generated_issue_status.sql
   - id: openwiki-source-d20a82e2192a07c687b838cb
     resource: repo://crates/db/src/models/agent_runtime.rs
+  - id: openwiki-source-21149aa9001849998cda42a2
+    resource: repo://crates/db/src/models/repository_state/manifests.rs
   - id: openwiki-source-3e5425718d87b437a12edd60
     resource: repo://crates/db/src/models/session.rs
   - id: openwiki-source-c30cc36c4bbe315c59b8e38f
@@ -92,6 +94,8 @@ sources:
     resource: repo://crates/services/src/services/approvals/executor_approvals.rs
   - id: openwiki-source-9c5d335ecd1178e88c47c0a8
     resource: repo://crates/services/src/services/queued_message.rs
+  - id: openwiki-source-6067be8d6f85caa8ac03638f
+    resource: repo://crates/services/src/services/repository_memory.rs
   - id: openwiki-source-b26c7f3a0d7934f679a80a5e
     resource: repo://packages/ui/src/components/ChatBoxBase.tsx
   - id: openwiki-source-e4d0ff0d72ea9774e1af777c
@@ -192,10 +196,10 @@ sources:
     resource: repo://tests/supervised/README.md
   - id: openwiki-source-5184ef612e83b7ab35d62e7b
     resource: repo://tests/supervised/run_isolated.py
-generated: { by: "codex", at: "2026-11-11T09:36:22.928Z" }
+generated: { by: "codex", at: "2026-11-16T15:20:15.420Z" }
 verified:
-  - by: openwiki/0.7.2
-    at: 2026-11-12T04:13:28.445Z
+  - by: openwiki/0.9.0
+    at: 2026-11-16T15:20:15.420Z
 ---
 
 # Session・AgentRun・RunAttempt
@@ -518,7 +522,7 @@ InteractiveSessionChatBox が discovery snapshot を一度取得し、ModelSelec
 
 ### 通常Runの成果確定とWikiの独立性
 
-Worktree Workspaceの通常成功coding Runのsource自動commitとファイルManifestはWiki無効でも有効で、既存HEADが全変更を含む場合は再利用する。変更なしRunは専用検証記録を作らず通常の最終報告で検証を伝える。失敗・取消・REVIEW・制御・自動マージ担当・DirectFolder・Design Arena等の適用除外は維持する。人間の目的・動機・判断理由はIssue・追加指示・直接会話からsemantic draftへ渡し、承認を技術理由の代用にしない。[Run完了と意図の契約](repository-memory.md#sessionmanifest統合済みwiki)・[完了host](../../crates/local-deployment/src/container.rs#L450-L493)・[source適用条件](../../crates/local-deployment/src/agent_run_port.rs#L939-L998)
+Worktree Workspaceの通常成功coding Runのsource自動commitとDB正本の確定ManifestはWiki無効でも有効で、既存HEADが全変更を含む場合は再利用する。変更なしRunは専用検証記録を作らず通常の最終報告で検証を伝える。失敗・取消・REVIEW・制御・自動マージ担当・DirectFolder・Design Arena等の適用除外は維持する。人間の目的・動機・判断理由はIssue・追加指示・直接会話からsemantic draftへ渡し、承認を技術理由の代用にしない。[Run完了と意図の契約](repository-memory.md#sessionmanifest統合済みwiki)・[完了host](../../crates/local-deployment/src/container.rs#L450-L493)・[source適用条件](../../crates/local-deployment/src/agent_run_port.rs#L939-L998)
 
 ### カンバン内 Workspace の読み幅
 

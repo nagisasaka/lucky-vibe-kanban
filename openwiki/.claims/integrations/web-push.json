@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:cab8215962b1b2797674a5568889d3f8489d1abd8626740a7b554b714dc17dce",
+  "pageVersion": "sha256:646130b1587396dc8608bc4fe3b3dfee235763d80c2051d38e7b54591ace9ef6",
   "claims": [
     {
       "id": "claim_12d9a2cd77a84b53a677021c3e9d8057",
@@ -262,7 +262,7 @@
         },
         {
           "resource": "repo://packages/web-core/src/shared/dialogs/settings/settings/GeneralSettingsSection.tsx",
-          "version": "repo-file-v1:sha256:f7d738cfca03994d135b955a7ec1c93ee7b7fd6bc2a63d3911f6eacd3447250b"
+          "version": "repo-file-v1:sha256:3aef1e1168cfad3137be13e801dba83f946d1137faba7eb4e513b37ab6736602"
         },
         {
           "resource": "repo://tests/settings-redesign/settings.spec.ts",
@@ -290,7 +290,7 @@
       "evidence": [
         {
           "resource": "repo://crates/services/src/services/config/versions/v9.rs",
-          "version": "repo-file-v1:sha256:f0d3aa9271b7f3c8e849c2b57e9a082a1bfbebb74b8d69de29a6a8d55b194d39"
+          "version": "repo-file-v1:sha256:6b1318074371587027f1f9b981d6e47501c536d93bb2663c3048cc99a87be83d"
         },
         {
           "resource": "repo://crates/services/src/services/notification.rs#L105-L141",
@@ -304,7 +304,7 @@
     }
   ],
   "verification": {
-    "by": "openwiki/0.7.2",
-    "at": "2026-11-06T15:15:40.431Z"
+    "by": "openwiki/0.9.0",
+    "at": "2026-11-16T15:12:08.330Z"
   }
 }

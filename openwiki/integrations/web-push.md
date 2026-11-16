@@ -50,8 +50,8 @@ sources:
     resource: repo://tests/settings-redesign/settings.spec.ts
 generated: { by: "codex", at: "2026-11-04T20:22:03.096Z" }
 verified:
-  - by: openwiki/0.7.2
-    at: 2026-11-06T15:15:40.431Z
+  - by: openwiki/0.9.0
+    at: 2026-11-16T15:12:08.330Z
 ---
 
 # Web Push・通知同意・会話への復帰

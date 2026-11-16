@@ -181,10 +181,10 @@ sources:
     resource: repo://tests/workflow/playwright.config.ts
   - id: openwiki-source-7ff1b0a7c2af3c41dc6b3d55
     resource: repo://tests/workflow/specs/workflow-presets.spec.ts
-generated: { by: "codex", at: "2026-11-12T12:23:18.004Z" }
+generated: { by: "codex", at: "2026-11-16T15:12:08.330Z" }
 verified:
-  - by: openwiki/0.7.2
-    at: 2026-11-12T12:23:18.004Z
+  - by: openwiki/0.9.0
+    at: 2026-11-16T15:12:08.330Z
 ---
 
 
@@ -675,3 +675,18 @@ MCP待機は300秒でtimeoutしたが、保存済みprocess identityを読取API
 frontend build・包括check/lint/backend:testは、上記3ファイル差分と公開Memoryの元SHA対応検証、baseに含まれる既存統合検証を根拠にagent判断で理由・残リスク付きskipとした。ユーザー省略指定ではなく、候補上の包括passでもない。完成Docker image・新版実HTTP・保持volume更新は未検証であり、次CI/ホスト隔離環境で確認する。過去のdirty binary実測は新候補のimage成功ではない。
 
 新規統合 `b9b75d2d-9c69-4fb2-9ca4-ba6e0562226d` のprepare request `c8a618b3-bdaa-42d3-8020-375e49bb14be` はbegin前に原本journal digest付きrecorded receiptを保存し、同一入力で再取得した。固有Wiki runで同じ候補branchを更新し、Wikiだけ別commitにする。正式main反映はRun終了後のhost結果で区別する。push/tag/外部公開・稼働環境変更は行わない。
+
+
+## LOCAL-398/399の統合検証
+
+固定base `da8273ef0e1bf8dbb0f7f4b4b6f097e298d0ac6f` に398 source `5fd56d536c305baea97e8366350759aa151bf0d0` と399 source `ea0f29e005f7cceb89fdcb02e0885d82f2e661cd` を順に無競合mergeした。コード検証SHAは `e7f46db7fe09883223fa562ce3677734618f5e6a`。生成型は両方の変更を保持し、追加の製品修復はない。396は対象外である。
+
+正式候補上の管理検証では `test -p db repository_state --lib` 8件、`test -p services repository_memory --lib` 15件、`issue_archive_defaults_off_and_round_trips` 1件、`test -p server routes::integrations --lib` 19件が成功し、通常の隔離2件はignoredだった。最初のバッチはこれら成功後に依存未導入の `tsc: not found` で失敗した。`pnpm install --frozen-lockfile` 後のweb-core/local-web/UI型検査は成功し、次のバッチはlint設定探索を指定し忘れて失敗した。既存 `.eslintrc.cjs` を明示した対象lint・実frontend production build・差分検査は成功した。失敗バッチ全体をpassへ変更せず、部分結果と後続結果を区別して保存した。
+
+`LVK_INSTANCE_DIR` に新規のtask専用 `lvk257-test-60eccf09-*` を割り当て、既存 `isolated_conversation_repair_publication_drift_and_idempotence --ignored` の `archive-success,archive-off,archive-collision,wiki-archive-success` を正式候補で実行して成功した。実Git/隔離SQLite・管理commandを使い、providerは予約のみ、Wiki操作はfixtureである。同じバッチでutils/db/services/mcp/serverの全target・server/qa-modeを含むClippyと `generate-types:check` も成功した。一時instanceはtrapで削除し、通常targetと導入依存は後続作業に保持した。[隔離定義](../../crates/server/src/routes/integrations/conversation_tests.rs)・[アーカイブ回帰](../../crates/server/src/routes/integrations/issue_archive_tests.rs)・[DB回帰](../../crates/db/src/models/repository_state/manifests/tests.rs)
+
+長い管理検証のMCP応答は300秒で待機timeoutになったが、元request/processをinspectし、終了後に同じrequest ID・同じ入力で保存済みpassとexit=0を回収した。二重起動していない。
+
+先行隔離REVIEW `b156b8e6-347b-4f73-8315-479dd00d1291` は同じbase/source組合せで、398の2 Repo起動時取込関数の途中停止・再試行・冪等性、399 OFF/ONと固定本文再試行、DB正本を使うWiki receiptの関連14件成功を報告している。これは先行証拠であり今回候補上での再実行と混同しない。各source公開ManifestのSQLx/単独suite証拠と無競合delta、今回の境界検証から、包括 `check/lint/backend:test`、SQLx再生成/再check、先行起動関数fixtureの重複試験と失敗したバッチ全体の再実行をagent判断でskip記録した。ユーザー省略指定によるものではない。
+
+実DB取込・設定変更・稼働dev/stable再起動・実認証browser/provider・完成image/別環境は未実施。実OpenWiki CLIを含む製品E2E成功も主張しない。この担当のOpenWiki lifecycle完了、Wiki専用commit、公開要求保存とRun終了後のhostによるローカルmain適用は独立した結果として確認する。prepare_wiki request `6060beed-d871-4f92-a450-52a119630ca5` は最初のbegin前にコードSHAの原本journalを保存した。GitHub push・リリース・配備は行っていない。

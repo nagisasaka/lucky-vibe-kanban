@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:c8b4cf64cffb0f81e850d85b943aa05de53b289c70c2be3b14de38ceec4be5c5",
+  "pageVersion": "sha256:05e9d78fb54015e618e8b34ed84c9a11ef50a990cb6cfae42cd330eb24d41598",
   "claims": [
     {
       "id": "claim_71e4432fe19d42fca4c3a1ae5f546775",
@@ -170,7 +170,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/integrations/runtime.rs",
-          "version": "repo-file-v1:sha256:dfe206b14be0c75a8536bca67f813b9efdafdbef26ea7748d6190ce7e29b98b4"
+          "version": "repo-file-v1:sha256:424dcd0fde5f84624050284dbdb76f293ffffbd438ac311dc30f658b4edc879c"
         }
       ]
     },
@@ -875,7 +875,7 @@
           "version": "repo-file-v1:sha256:011b349bfe757831717fbb8b19b1fd9811cc5942d8e71829ffea7d6dc98e2a9b"
         },
         {
-          "resource": "repo://crates/server/src/routes/integrations/conversation.rs#L397-L493",
+          "resource": "repo://crates/server/src/routes/integrations/conversation.rs#L474-L570",
           "version": "repo-lines-v1:sha256:cda07962ec908ce407e785ea237ae82150d3e92346dd8d3103b38505c3d93c4b:eyJzZWxlY3RlZExpbmVDb3VudCI6OTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgzYzkxYmRmNjNkMDkyODhlODFjMGFjNThmNTk4ODAxNWFjMTRjMDFhOWRhY2ZhZjRlYzA5OGU1M2M5NDFmY2IiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFmZTkyNmY4NjNjNmI5YzcwMjc5NjIxYTdjMjdiOWY5NzFlYzc1YzE1MTNlYzE1NDRiNDFmM2IyYzU3MjZjNjgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQ1OWY0MDFlNTFhYmFmNmIxZmRjN2I5ZjFkYjYzY2NmN2QxMGNlMGY4OTc5YTE4ZWRjZWY3NWQ4NmQxMDMyZWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImIxYTk0OWFlYzMzNDJlYjU0YmNkY2NjZmRkNmJiMDU4OTEyOWRjNDg0MzhlOTQxZTAyZWE3YzgwY2Q0MTNmN2YifQ"
         }
       ]
@@ -1077,8 +1077,8 @@
       "statement": "worker対象ID組の整合とmutation側の最新Run検査は、共有内部認証からcaller Runを導く認証ではない。inspectは対象整合を維持しつつmutation guardから分離する。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/integrations/conversation.rs#L150-L189",
-          "version": "repo-lines-v1:sha256:af3389187e9ec12cb2b9389d7d69d3b637f21d0dba5470abb210d23a7d7fed7f:eyJzZWxlY3RlZExpbmVDb3VudCI6NDAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk5MjI1YWY5YjllYWY5MTQyNjg5N2I5ZjAwMmNhZDAwYWYxYWQ5M2Q4OWQwNGYyZDU3YTRhNjM3OTg1OTE4NjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI0MDAxOGFjNTA5M2YyMDMxMGEwYmExZDIxNzgzMGZhZTAyN2ZjNWIyYjhkZTFjNjlmMmZiMTUyNmJkYWM5YjUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjNiNTNkYzc3YzQ5ODQxMjc3MTY5Mjc0ODgzOTVlYzcwZjRlYjAyZjZkZDk5ODFiMWVjZGQ5YTA1NDZmN2E5ZTIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhmZTMyODgyYjU0NDE5NmMyZTkyYjk5MzljYjE2ZTYzNDEyMDY0YTgzNjNmNGQ2ODBhNGY3ZTIyOGNiOWUwNzgifQ"
+          "resource": "repo://crates/server/src/routes/integrations/conversation.rs#L151-L265",
+          "version": "repo-lines-v1:sha256:68f020fb46822cbb1b6e55b762d702d3c48845652d4c2821c4341f413a69823e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTE1LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI5OTIyNWFmOWI5ZWFmOTE0MjY4OTdiOWYwMDJjYWQwMGFmMWFkOTNkODlkMDRmMmQ1N2E0YTYzNzk4NTkxODY4IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJiNDAwMThhYzUwOTNmMjAzMTBhMGJhMWQyMTc4MzBmYWUwMjdmYzViMmI4ZGUxYzY5ZjJmYjE1MjZiZGFjOWI1IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIzYjUzZGM3N2M0OTg0MTI3NzE2OTI3NDg4Mzk1ZWM3MGY0ZWIwMmY2ZGQ5OTgxYjFlY2RkOWEwNTQ2ZjdhOWUyIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI4ZmUzMjg4MmI1NDQxOTZjMmU5MmI5OTM5Y2IxNmU2MzQxMjA2NGE4MzYzZjRkNjgwYTRmN2UyMjhjYjllMDc4In0"
         },
         {
           "resource": "repo://crates/server/src/routes/integrations/conversation.rs#L45-L82",
@@ -1177,10 +1177,24 @@
           "version": "repo-lines-v1:sha256:ffc4b5662ad0257231cf622dd0b40665ca86e4dc145d516b91e8d21e492f5e2a:eyJzZWxlY3RlZExpbmVDb3VudCI6NTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFlNjczYWJkNDU3YTk3ZWVhMTdhNjAwNjJlYjBmYWVhNmJkZjA5NDg2OGNjNmI4ZjhjMGViZGEyZjYxZWQ0MmYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU3MGI2ZWU0NmEwYjRiODVlNDgyYTRjMjBlMWEzODZmZDc0YTlkM2Y1ZTFhODMxNTQ4YThhYjVmY2Y1NmI2MzMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZlMDgyMjk5ZjEwZmFkOTcxMzJlMDVlNTcyNWU0MmQyODIwNDVlNzQyNmE2ZGI5YzQ5ODk2MzQ5ZjNlYjE3ZWEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjI1YjA5YzU4OWRlMTViMmU0ZmM4OWE4MTE5N2FmN2E5MzE3NzIwNWQ0ZWFkM2JiYWNkNmI2ZmM4NDFlOTliMzYifQ"
         }
       ]
+    },
+    {
+      "id": "claim_c2374ac6d1c34cbb82371ebdaf7f972e",
+      "statement": "worker専用integration_actionのprepare_archiveは受付時ONの固定Issue本文を検証/Wiki前の候補へ追加し、元request ID/expected commitで再送し、返された候補をcode SHAにする。runtime対象のoverrideは許さない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/mcp/src/task_server/tools/integration.rs",
+          "version": "repo-file-v1:sha256:475286305d11566786d2818ee43b366d145aa9c91b93f2d61dfac9f06058cb0f"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/integrations/conversation.rs",
+          "version": "repo-file-v1:sha256:818e51ca25baa1cbae72b97525267f274262be62f3fcba0c69bd052cb4e4e2e6"
+        }
+      ]
     }
   ],
   "verification": {
-    "by": "openwiki/0.7.2",
-    "at": "2026-11-12T04:13:28.445Z"
+    "by": "openwiki/0.9.0",
+    "at": "2026-11-16T15:12:08.330Z"
   }
 }

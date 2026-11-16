@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:7c96cfb3a3bdd26ca8e074e3132b599930a3326e47d9ab492c448e82a1a821ee",
+  "pageVersion": "sha256:111cf70b41f20bc9fb63459ebee64d3cb89b9d561d7c04d373079ee59a6f4a7c",
   "claims": [
     {
       "id": "claim_33c0ff606c234c65b0a089749cc323a5",
@@ -195,7 +195,7 @@
       "statement": "自動マージ公開後の採用元Cardは採用WorkspaceのHEAD差・非terminal Run・HEAD観測不能ならDoneを保留し、それ以外はDone優先の可視最終列へreceiptと原子的に更新する。専用Cardの生成状態投影と手動再オープン保護は維持する。",
       "evidence": [
         {
-          "resource": "repo://crates/db/src/models/integration.rs#L346-L436",
+          "resource": "repo://crates/db/src/models/integration.rs#L376-L466",
           "version": "repo-lines-v1:sha256:8581fa67160592dbf3cc27dec90f7f874a5f42b0ac70aae254d8128d3a31b2d5:eyJzZWxlY3RlZExpbmVDb3VudCI6OTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU4NTA3OWU5ZDcxMmQ2MzgxYjZlMzVkODg0M2JhZjQxYWEwM2M0ZjM1OWQyZmYyZmQ3OTkyODY3NDliMzJkYzEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YjA0NDkxNDY5NzIyZTgzNjNhOTRlNDA0NDUzOGUwMTNhMmEyMTdlMzZiMWU1NjhiYTYwYWNiN2I0YzhmMmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjYzYWMxOGU3ZjM3ZDk2YWVhYzUzOTViMDE0Y2JjZDk3MjJkNjViN2Y1ZGQ3ZDY5ODAyZjRmZjRlNzg1NDA2ODgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzMmExZDc2NDQzMWE4NjcyZDIxYzA4NGVkYzA0MjVlN2JhZDZkMDg0NTRmZTY1ZWUxNTI5MjM5ZmUxNjZjMDIifQ"
         }
       ]
@@ -216,7 +216,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/integrations/conversation.rs",
-          "version": "repo-file-v1:sha256:d13a2344653d1033a6ec01b5eb592fa5ab68a49abaeec99dfff8b68e6670f72a"
+          "version": "repo-file-v1:sha256:818e51ca25baa1cbae72b97525267f274262be62f3fcba0c69bd052cb4e4e2e6"
         }
       ]
     },
@@ -363,7 +363,7 @@
           "version": "repo-lines-v1:sha256:f747756bc4a376f568c988f661bd8d70f9d854a1da8e4a8acd8081cc9ed3b5ba:eyJzZWxlY3RlZExpbmVDb3VudCI6OTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjlkM2Q3MDdmODlhZGNhYjA0NDQ5YWMwYTZlNTZjZGQ4NGRlMjM2ZjIwOGUzNWE3YWRmZGZmMmI1MzgwODM1NTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjljNmZmZWY4YjFkNGI2NDYwMzU1OWRlYmRiNDA2MTNmNzUzOThiZGRmOGEwYjRlMmUwMDRkMTU3MjI0MmY2ZTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijg5ODFmYjlmZDUzODgxMWY3N2NkN2E4OTc3YmVlMTg4NDlkMWYxMGMyM2E1MTgxY2M4Nzc3ZjlkZjRhNGMwNTciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQzOWZlZmNlODg4ZTYzMjEzOWU2N2ZmNGFmNWM3ODViNTJlNDMwNTY0NTBiN2IxNDI2ZDNkMzhkOWJlMzBjNWQifQ"
         },
         {
-          "resource": "repo://crates/db/src/models/integration.rs#L341-L431",
+          "resource": "repo://crates/db/src/models/integration.rs#L371-L461",
           "version": "repo-lines-v1:sha256:3e3729bb48829cbe900c31691fae79f215e488c789749bf05b92421ff12ab9ef:eyJzZWxlY3RlZExpbmVDb3VudCI6OTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUzZTc4NGI1ZTE5YTY0OGU0M2I4NGY2YjBkOTk0NWRiZTc0MGMxYjQ1YzQyMWZjMTY5NTEwZWE2NjE3MTgzYjYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg3YWM0OTA1ZTZkMGM4YTI1ZDUxYTk2OGNjYjVmZGUxZGY5ZjhkZDc4NTllY2ZkN2U1MWRlMjY2NTU5NGYxOTQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImZmYWQ4YmJjMmY0ZWI0YTM0M2UwNDA1MTExN2YwYWE2ZGZjMWYwOTJjOWQzMTczOGY2ODI4Mzg4MjhmNmVjMzkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjRkYzc4ODU0YzA2NDFkNWMyY2FkZTRlYzdiYWVmZTI5NzVjMzQ2YzRkZDZmMmQ5ZjY3NmUwNmI1ODBmMGJiMDIifQ"
         }
       ]
@@ -813,10 +813,24 @@
           "version": "repo-lines-v1:sha256:902266d286bad213604588b67d506b472dfb329a9dba4512e32e271634643f64:eyJzZWxlY3RlZExpbmVDb3VudCI6OTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAyMjk0NGIyYmQzM2ZhMWVmYjI2MmE0NmYzMGFmYTY1Y2NlMWNjY2ZlZGI0ZTY2ZjEyN2M3ZWU3MDI0YmVjMDkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijc3NzJlOTI3NWNiNmEyNGZmYTg5NTJjY2E3N2U2YTRhNWEyYWRlNjNjZWQ0MzUxYzZiYzU4NjBhYWZlNTIyZDEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImViZWQ3NGQ3YWUwOTg1NDZjYTMxOWQ1NjYzZWNhODVjMjExYjY2NGNlMmI5NzE1NjY5YjRiNzY4ZGYyMDdmYmEifQ"
         }
       ]
+    },
+    {
+      "id": "claim_c4e62180cc3b4b48bc1a7c54457caabb",
+      "statement": "自動マージは受付時の保存済み現在版本文と版・Issue identity・UTC時刻を固定し、後日編集とretry補足から分離し、既定OFFの設定が受付時ONの場合だけGit本文アーカイブを追加する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/routes/integrations/admission.rs",
+          "version": "repo-file-v1:sha256:427e6ffc8d9a6631ce53debb8dcaf98d2d3429c7019609da2c4ead3d691ea7ef"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/integrations/issue_archive.rs",
+          "version": "repo-file-v1:sha256:831fd858730316e41e1db5a8d5490d4e7c7fd4dd1412027c456402fe75a79445"
+        }
+      ]
     }
   ],
   "verification": {
-    "by": "openwiki/0.7.2",
-    "at": "2026-11-12T03:32:18.680Z"
+    "by": "openwiki/0.9.0",
+    "at": "2026-11-16T15:12:08.330Z"
   }
 }

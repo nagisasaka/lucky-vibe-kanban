@@ -4,6 +4,8 @@ title: 保存済み本文の保護と並列作業の参照
 description: Card Contextと旧Pipeline供給の廃止後に残る通常本文、既知定型文5hashの送信時除去、実ガイドと公開peer参照の境界。
 tags: [card-context, pipeline, parallel-context, knowledge]
 sources:
+  - id: openwiki-source-21149aa9001849998cda42a2
+    resource: repo://crates/db/src/models/repository_state/manifests.rs
   - id: openwiki-source-a3956271cbf62ae0786e7fc7
     resource: repo://crates/executors/src/env.rs
   - id: openwiki-source-f4e0f9b2ce513d3f8b8b070e
@@ -22,10 +24,10 @@ sources:
     resource: repo://crates/utils/src/path.rs
   - id: openwiki-source-7cc1d248ce00f0c5ef61c76e
     resource: repo://tests/chat/prompt-context.test.mjs
-generated: { by: "codex", at: "2026-11-09T18:10:41.827Z" }
+generated: { by: "codex", at: "2026-11-16T15:12:08.330Z" }
 verified:
-  - by: openwiki/0.7.2
-    at: 2026-11-12T04:13:28.445Z
+  - by: openwiki/0.9.0
+    at: 2026-11-16T15:12:08.330Z
 ---
 
 # 保存済み本文の保護と並列作業の参照
@@ -57,6 +59,8 @@ Manifest・parallel・資源操作の詳細は通常起動で配置する実ガ�
 ## 並列活動と固定したソースを読む
 
 `/api/repos/{id}/parallel-context` は登録 Repo の interactiveなWorktree Workspace（DirectFolderを除く）、現在の Card link、実行数、観測時の branch HEAD と immutable Manifest の参照を返す。peer の checkout を復元せず common repository の branch を読む。活動と Manifest は別 snapshot であり、Manifest がないことは活動ゼロ、現在の Card link は過去 event の帰属、という意味にはならない。[discovery](../../crates/services/src/services/parallel_context.rs#L63-L131)
+
+LOCAL-398以後、discoveryの確定ManifestはDB正本から取得し、参照はRepo/eventを指定する読取URLになる。旧eventファイルへの通常読取fallbackは置かない。[DB読取](../../crates/db/src/models/repository_state/manifests.rs)
 
 Workspace と Manifest は独立した cursor でページングする。既定25・最大100件で、memory 読取失敗は `memory_error` として残す。空結果と情報源の故障を区別し、他 Workspace の私的文脈や raw conversation を参照する仕組みにしない。Wiki の target / source / publication commit は maintenance の観測情報であり、今の作業木へ最新 Wiki を配達した証拠ではない。[情報の解釈契約](../../crates/services/src/services/parallel_context.rs#L192-L198)
 

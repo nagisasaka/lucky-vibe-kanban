@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:1f55f7b257a7793bb80b1763536cabca24dbd0dbec0b6b6a662385719dd6df01",
+  "pageVersion": "sha256:499e98019dc1710f7d3985a4ea4a2beb4b03daf33a041d858ead6a4b1a3fd4e7",
   "claims": [
     {
       "id": "claim_4dffdf86feca4ef1b40bf96375e3d1a2",
@@ -8,7 +8,7 @@
       "evidence": [
         {
           "resource": "repo://crates/services/src/services/parallel_context.rs",
-          "version": "repo-file-v1:sha256:e6463415bffe38eadfe0092241d50125db0e04c3859b2b3d4af718d589423e33"
+          "version": "repo-file-v1:sha256:96506c7a86dbcbf7d77eb5bba25a27c9a25007464decd81f597449e84ca09199"
         }
       ]
     },
@@ -83,10 +83,24 @@
           "version": "repo-lines-v1:sha256:3c386c1a063e6ea1a45b5d113413f91a9f23fbd06ec71c1afc8742cf15b8c4c6:eyJzZWxlY3RlZExpbmVDb3VudCI6MjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBkZmQ4ODk4YzQ2YmQ4NjQwODIzNGQ4ZDdiN2IzOGQ4Mzg4NGQ3ZjZkNjY1OGY2NjQ3NzI2Njc5ZjZlNWQ2MTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YjA0NDkxNDY5NzIyZTgzNjNhOTRlNDA0NDUzOGUwMTNhMmEyMTdlMzZiMWU1NjhiYTYwYWNiN2I0YzhmMmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjBiMmYzYmEyYTk2M2Q2MjAwZTY1N2MzNTJiMGI5MTBlODc5ZWZkYzZiNzgyZjE1YzQ4NDc1Yzg5ZWIwNTZkZDIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImVmODczMDA5NWVmNDA2YWUwYmMxMjNhNGU4OGNkOGFjYmM3YTdhNDA3ZjdmODNhMjAyYjAyZDhhZTIzMjdkOWIifQ"
         }
       ]
+    },
+    {
+      "id": "claim_62f89e4403fc48dfb975230e99b0f5e7",
+      "statement": "並列discoveryの確定ManifestはDB正本から取得し、参照はRepo/event読取URLとなり旧eventファイルへの通常fallbackを持たない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/db/src/models/repository_state/manifests.rs",
+          "version": "repo-file-v1:sha256:ffe01da9acd1eb3c90feae8c9cfe791068d197c0fe06d9bf9064c4cb8f73e55f"
+        },
+        {
+          "resource": "repo://crates/services/src/services/parallel_context.rs#L112-L130",
+          "version": "repo-lines-v1:sha256:4b17241e504871852036f320b6449878481b51db06b8e4adf2d69cc2eae596bd:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEwZWJmY2U5ZTJkNjgyODIxMmJmMGE3ZTQ5ZjFmNDQ0MzUyZjk5MTg5Y2Q2ZTVmNmU3YzhiMzZjZDc1OWFlODUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBiMjU5MTBiODgxMThkYjRlYTlkN2NiYzA2YTA3YzY0YmNhMTVlODZkNWZkMmFiMmZjOTI2Y2E3OWNlNGViMzYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjU2OWM2MjcwNmZmZDc2Y2Y1YzFiYmFmYjA4MWVmYTZiZjgyYmY5ZDU1OGY1ZGI3MGVkOWQzYTJlZjhkNDdhODQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImEzZjgyNTVhYjM5ZTkyOGY1ZDllZTRlNTNhODQxMDE1NzlhOWRkOGJjM2VhZGU1OGUyZThjOWQ4MzM3Mzg3Y2IifQ"
+        }
+      ]
     }
   ],
   "verification": {
-    "by": "openwiki/0.7.2",
-    "at": "2026-11-12T04:13:28.445Z"
+    "by": "openwiki/0.9.0",
+    "at": "2026-11-16T15:12:08.330Z"
   }
 }
