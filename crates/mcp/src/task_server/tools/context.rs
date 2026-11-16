@@ -23,7 +23,12 @@ pub enum ContextGuide {
 #[tool_router(router = context_tools_router, vis = "pub")]
 impl McpServer {
     #[tool(
-        description = "Return project, issue, and workspace metadata. Request guide=coding for Manifest format, parallel for discovery/preview APIs, or resources for raw HTTP/Runner details. Coding agents perform their assigned work directly; orchestration delegation instructions apply to coordinating agents."
+        description = "Return project, issue, and workspace metadata. Request guide=coding for Manifest format, parallel for discovery/preview APIs, or resources for raw HTTP/Runner details. Coding agents perform their assigned work directly; orchestration delegation instructions apply to coordinating agents.",
+        annotations(
+            read_only_hint = true,
+            destructive_hint = false,
+            open_world_hint = false
+        )
     )]
     async fn get_context(
         &self,

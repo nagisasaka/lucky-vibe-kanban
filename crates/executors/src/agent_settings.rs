@@ -2359,6 +2359,121 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "stdin bridge for the isolated approval-policy browser test"]
+    fn approval_policy_browser_bridge() {
+        use std::io::{BufRead, Write};
+        let harness = harness();
+        write(
+            &harness.home.join(".codex/config.toml"),
+            "# isolated UI fixture\n",
+        );
+        println!("APPROVAL_BRIDGE_READY");
+        std::io::stdout().flush().unwrap();
+        for line in std::io::stdin().lock().lines() {
+            let request: Value = serde_json::from_str(&line.unwrap()).unwrap();
+            let body = request["body"].clone();
+            let data = match request["path"].as_str().unwrap() {
+                "/api/agent-settings" => {
+                    serde_json::to_value(public_api::AgentSettingsInventoryView::from(
+                        harness
+                            .service
+                            .discover(Some(AgentSettingsProvider::Codex), None),
+                    ))
+                    .unwrap()
+                }
+                "/api/agent-settings/profiles" => json!([]),
+                "/api/agent-settings/diff" => serde_json::to_value(public_api::public_diff(
+                    harness
+                        .service
+                        .diff(&serde_json::from_value(body).unwrap())
+                        .unwrap(),
+                ))
+                .unwrap(),
+                "/api/agent-settings/apply" => {
+                    serde_json::to_value(public_api::SettingsSnapshotView::from(
+                        harness
+                            .service
+                            .apply(serde_json::from_value(body).unwrap())
+                            .unwrap(),
+                    ))
+                    .unwrap()
+                }
+                "/fixture/verify" => {
+                    let content =
+                        fs::read_to_string(harness.home.join(".codex/config.toml")).unwrap();
+                    let config: toml::Value = toml::from_str(&content).unwrap();
+                    json!({"approval_policy":config.get("approval_policy").and_then(|v| v.as_str()), "comment_preserved":content.contains("# isolated UI fixture")})
+                }
+                _ => panic!("unsupported fixture request"),
+            };
+            println!(
+                "APPROVAL_BRIDGE_REPLY {}",
+                json!({"success":true,"data":data})
+            );
+            std::io::stdout().flush().unwrap();
+        }
+    }
+
+    #[test]
+    fn codex_approval_policy_round_trips_user_config_and_inheritance() {
+        let harness = harness();
+        let path = harness.home.join(".codex/config.toml");
+        write(&path, "# preserve\nunknown = 7\n");
+        for value in [Some("on-request"), Some("never"), None] {
+            // Recreate the service as a settings-page reload would do.
+            let service =
+                AgentSettingsService::new(harness.home.clone(), harness.home.join("profiles.json"));
+            let manager = service.manager(AgentSettingsProvider::Codex, Some(&harness.project));
+            let before = manager.discover().unwrap();
+            let revision = before
+                .native_files
+                .iter()
+                .find(|file| file.id == "user_config")
+                .unwrap()
+                .revision
+                .clone()
+                .unwrap();
+            let key = SettingKey::new("common", "approval_policy");
+            let operation = match value {
+                Some(value) => SettingOperation::Set {
+                    key,
+                    scope: SettingScope::User,
+                    value: json!(value),
+                },
+                None => SettingOperation::Unset {
+                    key,
+                    scope: SettingScope::User,
+                },
+            };
+            manager
+                .apply(&SettingsPatch {
+                    provider: AgentSettingsProvider::Codex,
+                    project_path: Some(harness.project.display().to_string()),
+                    expected_file_revisions: BTreeMap::from([("user_config".into(), revision)]),
+                    operations: vec![operation],
+                })
+                .unwrap();
+            let inventory = harness
+                .service
+                .discover(Some(AgentSettingsProvider::Codex), Some(&harness.project));
+            let setting = snapshot(&inventory, AgentSettingsProvider::Codex)
+                .effective_settings
+                .iter()
+                .find(|s| s.key.id() == "common.approval_policy")
+                .unwrap();
+            assert_eq!(setting.effective_value, value.map(|v| json!(v)));
+            let content = fs::read_to_string(&path).unwrap();
+            let parsed: toml::Value = toml::from_str(&content).unwrap();
+            assert_eq!(
+                parsed.get("approval_policy").and_then(|v| v.as_str()),
+                value
+            );
+            assert!(content.contains("# preserve"));
+            assert_eq!(parsed["unknown"].as_integer(), Some(7));
+        }
+    }
+
+    #[test]
     fn codex_targeted_set_and_unset_preserve_comments_and_unknown_fields() {
         let harness = harness();
         let path = harness.home.join(".codex/config.toml");
