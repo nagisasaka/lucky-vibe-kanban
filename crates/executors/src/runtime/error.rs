@@ -31,6 +31,11 @@ pub struct AgentRuntimeError {
     pub launch_phase: Option<AgentRuntimeLaunchPhase>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub exit_code: Option<i32>,
+    /// Allowlisted provider classification, never a native message or detail.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub provider_code: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub will_retry: Option<bool>,
 }
 
 impl AgentRuntimeError {
@@ -41,6 +46,8 @@ impl AgentRuntimeError {
             provider: None,
             launch_phase: None,
             exit_code: None,
+            provider_code: None,
+            will_retry: None,
         }
     }
 

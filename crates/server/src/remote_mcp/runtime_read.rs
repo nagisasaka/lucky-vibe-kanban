@@ -75,7 +75,7 @@ pub(super) fn tools() -> Vec<rmcp::model::Tool> {
         ),
         definition::<ExecutionArgs>(
             "get_execution",
-            "Read one run's execution_mode (latest attempt), final response, initial instruction or Goal objective in bounded character pages. Returns canonical lifecycle separately from the text. An agent claim is not independent test evidence.",
+            "Read one run's execution_mode (latest attempt), final response, initial instruction or Goal objective in bounded character pages. Returns canonical lifecycle separately from the text and allowlisted error_kind/error_provider_code/error_will_retry diagnostics; legacy error_code is preserved. Native messages/details are not exposed as diagnostics. An agent claim is not independent test evidence.",
         ),
     ]
 }
@@ -180,7 +180,7 @@ impl Remote {
         };
         // Only the closed enum selects a SQL expression; caller text is bound.
         let sql = format!(
-            "SELECT r.id,r.session_id,r.status,r.projection_status,r.updated_at,s.last_event_sequence,(SELECT json_extract(a.request_envelope,'$.executor_config.execution_mode') FROM agent_run_attempts a WHERE a.agent_run_id=r.id ORDER BY julianday(a.created_at) DESC,a.rowid DESC LIMIT 1) AS execution_mode,NOT EXISTS (SELECT 1 FROM agent_runs newer WHERE newer.session_id=r.session_id AND (newer.created_at>r.created_at OR (newer.created_at=r.created_at AND newer.rowid>r.rowid))) AS is_current_run,json_extract(s.state_json,'$.goal.status') AS goal_status,json_extract(s.state_json,'$.goal.token_budget') AS goal_token_budget,json_extract(s.state_json,'$.goal.tokens_used') AS goal_tokens_used,json_extract(s.state_json,'$.goal.time_used_seconds') AS goal_time_used_seconds,json_extract(s.state_json,'$.last_error.code') AS error_code,substr(coalesce({expression},''),?,?) AS content,length(coalesce({expression},'')) AS total FROM agent_runs r LEFT JOIN agent_run_state s ON s.agent_run_id=r.id WHERE r.id=? AND r.workspace_id=?"
+            "SELECT r.id,r.session_id,r.status,r.projection_status,r.updated_at,s.last_event_sequence,(SELECT json_extract(a.request_envelope,'$.executor_config.execution_mode') FROM agent_run_attempts a WHERE a.agent_run_id=r.id ORDER BY julianday(a.created_at) DESC,a.rowid DESC LIMIT 1) AS execution_mode,NOT EXISTS (SELECT 1 FROM agent_runs newer WHERE newer.session_id=r.session_id AND (newer.created_at>r.created_at OR (newer.created_at=r.created_at AND newer.rowid>r.rowid))) AS is_current_run,json_extract(s.state_json,'$.goal.status') AS goal_status,json_extract(s.state_json,'$.goal.token_budget') AS goal_token_budget,json_extract(s.state_json,'$.goal.tokens_used') AS goal_tokens_used,json_extract(s.state_json,'$.goal.time_used_seconds') AS goal_time_used_seconds,json_extract(s.state_json,'$.last_error.code') AS error_code,CASE WHEN json_type(s.state_json,'$.last_error.kind')='text' THEN json_extract(s.state_json,'$.last_error.kind') END AS error_kind,CASE WHEN json_type(s.state_json,'$.last_error.provider_code')='text' THEN json_extract(s.state_json,'$.last_error.provider_code') END AS error_provider_code,CASE WHEN json_type(s.state_json,'$.last_error.will_retry') IN ('true','false') THEN json_extract(s.state_json,'$.last_error.will_retry') END AS error_will_retry,substr(coalesce({expression},''),?,?) AS content,length(coalesce({expression},'')) AS total FROM agent_runs r LEFT JOIN agent_run_state s ON s.agent_run_id=r.id WHERE r.id=? AND r.workspace_id=?"
         );
         let row = sqlx::query(&sql)
             .bind(i64::from(args.offset) + 1)
@@ -218,8 +218,20 @@ impl Remote {
             )
         );
         let next = i64::from(args.offset) + i64::from(args.limit);
+        // Saved/native messages can contain secrets. Expose only the closed
+        // runtime kind, allowlisted provider classification and a boolean.
+        let error_kind = row
+            .try_get::<Option<String>, _>("error_kind")?
+            .and_then(|kind| {
+                serde_json::from_value::<executors::runtime::AgentRuntimeErrorKind>(json!(kind))
+                    .ok()
+            });
+        let error_provider_code = row
+            .try_get::<Option<String>, _>("error_provider_code")?
+            .and_then(|code| executors::executors::provider_adapter::safe_codex_error_code(&code));
+        let error_will_retry = row.try_get::<Option<bool>, _>("error_will_retry")?;
         Ok(
-            json!({"agent_run_id":args.agent_run_id,"session_id":row.try_get::<Uuid,_>("session_id")?,"workspace_id":args.workspace_id,"status":row.try_get::<String,_>("status")?,"projection_status":row.try_get::<String,_>("projection_status")?,"is_current_run":row.try_get::<bool,_>("is_current_run")?,"projection_available":sequence.is_some(),"execution_mode":row.try_get::<Option<String>,_>("execution_mode")?,"goal_status":row.try_get::<Option<String>,_>("goal_status")?,"goal_usage":{"token_budget":row.try_get::<Option<i64>,_>("goal_token_budget")?,"tokens_used":row.try_get::<Option<i64>,_>("goal_tokens_used")?,"time_used_seconds":row.try_get::<Option<i64>,_>("goal_time_used_seconds")?},"error_code":row.try_get::<Option<String>,_>("error_code")?,"revision":revision,"content":row.try_get::<String,_>("content")?,"offset":args.offset,"total_characters":total,"has_more":next<total,"next_offset":if next<total {Some(next)} else {None},"url":self.config.workspace_url(args.project_id,issue,args.workspace_id),"verification":{"status":"unknown","reason":"Output is an agent report, not independent verification evidence"}}),
+            json!({"agent_run_id":args.agent_run_id,"session_id":row.try_get::<Uuid,_>("session_id")?,"workspace_id":args.workspace_id,"status":row.try_get::<String,_>("status")?,"projection_status":row.try_get::<String,_>("projection_status")?,"is_current_run":row.try_get::<bool,_>("is_current_run")?,"projection_available":sequence.is_some(),"execution_mode":row.try_get::<Option<String>,_>("execution_mode")?,"goal_status":row.try_get::<Option<String>,_>("goal_status")?,"goal_usage":{"token_budget":row.try_get::<Option<i64>,_>("goal_token_budget")?,"tokens_used":row.try_get::<Option<i64>,_>("goal_tokens_used")?,"time_used_seconds":row.try_get::<Option<i64>,_>("goal_time_used_seconds")?},"error_code":row.try_get::<Option<String>,_>("error_code")?,"error_kind":error_kind,"error_provider_code":error_provider_code,"error_will_retry":error_will_retry,"revision":revision,"content":row.try_get::<String,_>("content")?,"offset":args.offset,"total_characters":total,"has_more":next<total,"next_offset":if next<total {Some(next)} else {None},"url":self.config.workspace_url(args.project_id,issue,args.workspace_id),"verification":{"status":"unknown","reason":"Output is an agent report, not independent verification evidence"}}),
         )
     }
 }
@@ -231,6 +243,52 @@ mod tests {
         runtime_write,
         runtime_write_tests::{fixture, insert_run},
     };
+
+    #[tokio::test]
+    async fn execution_diagnostics_are_additive_allowlisted_and_do_not_expose_messages() {
+        let (remote, _, _, target, _) = fixture().await;
+        crate::remote_mcp::runtime_write_tests::emit_questions(&remote.pool, &target).await;
+        let args = json!({"project_id":target.project_id,"workspace_id":target.workspace_id,"agent_run_id":target.agent_run_id,"section":"final_response"});
+        let before = call(&remote, "get_execution", args.clone()).await.unwrap();
+        assert!(before["error_code"].is_null());
+        assert!(before["error_kind"].is_null());
+        for (error, kind, code, retry) in [
+            (
+                json!({"kind":"protocol_failed","message":"secret-fixture","provider_code":"responseStreamDisconnected","will_retry":false}),
+                json!("protocol_failed"),
+                json!("responseStreamDisconnected"),
+                json!(false),
+            ),
+            (
+                json!({"kind":"auth_required","message":"secret-fixture"}),
+                json!("auth_required"),
+                Value::Null,
+                Value::Null,
+            ),
+            (
+                json!({"kind":123,"message":"secret-fixture","provider_code":["secret-fixture"],"will_retry":2}),
+                Value::Null,
+                Value::Null,
+                Value::Null,
+            ),
+            (
+                json!({"kind":"secret-fixture","message":"secret-fixture","provider_code":"secret-fixture","will_retry":"secret-fixture"}),
+                Value::Null,
+                Value::Null,
+                Value::Null,
+            ),
+        ] {
+            sqlx::query("UPDATE agent_run_state SET state_json=json_set(state_json,'$.last_error',json(?)) WHERE agent_run_id=?").bind(error.to_string()).bind(target.agent_run_id).execute(&remote.pool).await.unwrap();
+            let result = call(&remote, "get_execution", args.clone()).await.unwrap();
+            assert_eq!(result["error_kind"], kind);
+            assert_eq!(result["error_provider_code"], code);
+            assert_eq!(result["error_will_retry"], retry);
+            assert_eq!(result["error_code"], before["error_code"]);
+            assert_eq!(result["status"], before["status"]);
+            assert_eq!(result["content"], before["content"]);
+            assert!(!result.to_string().contains("secret-fixture"));
+        }
+    }
 
     #[tokio::test]
     async fn review_execution_mode_is_read_from_the_requested_runs_attempt() {

@@ -12,7 +12,7 @@ use crate::{DeploymentImpl, routes::workflow_presets};
 pub(super) fn tools() -> Vec<rmcp::model::Tool> {
     let mut tools = vec![definition::<WorkflowArgs>(
         "workflow",
-        "List/start fixed Workflow presets, retrieve their existing Run/Session results, stop, or edit Project additions. Uses the same parameters/service as UI. Start requires a stable request_id; replay unchanged after uncertainty. No arbitrary graph or automatic adoption/fix/merge/publication. Start acceptance is not completion. status reports retained successful results, failures and remaining nodes.",
+        "List/start fixed Workflow presets, retrieve their existing Run/Session results, stop, or edit Project additions. Uses the same parameters/service as UI. Start requires a stable request_id; replay unchanged after uncertainty. No arbitrary graph or automatic adoption/fix/merge/publication. Start acceptance is not completion. status reports retained successful results, failures and remaining nodes. defaults returns an object with an items array of revisioned Project defaults.",
     )];
     for tool in &mut tools {
         if let Some(a) = &mut tool.annotations {
@@ -63,12 +63,20 @@ pub(super) async fn call(
     if matches!(a.action, Action::List) {
         return Ok(workflow_presets::catalog());
     }
-    remote
+    let defaults = matches!(a.action, Action::Defaults);
+    let value = remote
         .launch
         .as_ref()
         .ok_or_else(|| anyhow::anyhow!("Workflow runtime unavailable"))?
         .workflow(a)
-        .await
+        .await?;
+    // MCP structuredContent must be an object. HTTP/UI and the shared defaults
+    // service keep their existing array contract.
+    Ok(if defaults {
+        serde_json::json!({"items": value})
+    } else {
+        value
+    })
 }
 pub(super) async fn execute(d: &DeploymentImpl, a: WorkflowArgs) -> anyhow::Result<Value> {
     use deployment::Deployment;
