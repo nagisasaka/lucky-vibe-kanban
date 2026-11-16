@@ -232,7 +232,6 @@
   },
   "branchSelector": {
     "placeholder": "Select a branch",
-    "includeRelatedIssues": "Include related issues",
     "searchPlaceholder": "Search branches...",
     "empty": "No branches found",
     "badges": {
@@ -1275,6 +1274,7 @@
     }
   },
   "kanban": {
+    "includeRelatedIssues": "Include related issues",
     "compact": {
       "workspaces": "Workspaces: {{count}} · Details",
       "approval": "Approval required",
