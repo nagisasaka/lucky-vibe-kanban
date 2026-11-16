@@ -196,11 +196,7 @@ impl FrozenDirectProviderLaunchSpec {
             provider_session: self.provider_session.as_ref(),
             reset_to_message_id: self.reset_to_message_id.as_deref(),
             selected_skills: &self.selected_skills,
-            approval_behavior: if self.provider == DirectProvider::Codex {
-                "host_tool_waiter"
-            } else {
-                "noop"
-            },
+            approval_behavior: "host_tool_waiter",
             current_dir: &self.current_dir,
             env: AuditedExecutionEnv {
                 vars: &self.env.vars,
@@ -3698,24 +3694,9 @@ impl AgentRunPort for LocalAgentRunPort {
                     },
                 )
                 .await?;
-                if provider == DirectProvider::Codex {
-                    // The request handler emits the matching resolution after
-                    // its waiter completes, including timeout/cancel outcomes.
-                    return Ok(());
-                }
-                self.append_event(
-                    &request,
-                    &attempt,
-                    AgentEventPayload::ApprovalResolved {
-                        approval_id: approval_id.clone(),
-                        approved: *approved,
-                        reason: reason.clone(),
-                    },
-                    Vec::new(),
-                    Utc::now(),
-                    None,
-                )
-                .await
+                // Each provider handler emits resolution only after its Run-bound
+                // waiter completes, including timeout/cancel outcomes.
+                Ok(())
             }
             AgentRunPortCommand::Steer { content } => {
                 let (request, attempt) = self.load_request(agent_run_id).await?;

@@ -13,6 +13,9 @@ import time
 import urllib.request
 
 ROOT = Path(__file__).resolve().parents[2]
+PROVIDER = os.environ.get('LVK_APPROVAL_TEST_PROVIDER', 'CODEX')
+if PROVIDER not in ('CODEX', 'CLAUDE_CODE'):
+    raise ValueError('Unsupported approval fixture provider')
 evidence_root = ROOT / '.build/supervised-approval'
 evidence_root.mkdir(parents=True, exist_ok=True)
 EVIDENCE = evidence_root / f'e2e-{time.time_ns()}'
@@ -67,10 +70,19 @@ with tempfile.TemporaryDirectory(prefix='lvk-local38-') as temporary:
         'VK_ALLOWED_ORIGINS': f'http://127.0.0.1:{frontend}', 'VITE_OPEN': 'false',
         'LVK_APPROVAL_FIXTURE_TRACE': str(temp / 'trace'), 'LVK_SUPERVISED_TEST_ROOT': str(temp / 'workspaces'),
         'LVK_E2E_BASE_URL': f'http://127.0.0.1:{frontend}', 'DISABLE_WORKTREE_CLEANUP': '1', 'TOKIO_WORKER_THREADS': '2', 'GOMAXPROCS': '2',
+        'LVK_APPROVAL_TEST_PROVIDER': PROVIDER,
     })
     profile = {'sandbox': 'danger-full-access', 'base_command_override': f'python3 {ROOT}/tests/supervised/codex_fixture.py',
                'env': {'LVK_APPROVAL_FIXTURE_TRACE': str(temp / 'trace'), 'CODEX_HOME': str(temp / 'codex')}}
-    (instance / 'data/profiles.json').write_text(json.dumps({'executors': {'CODEX': {'DEFAULT': {'CODEX': profile}}}}))
+    if PROVIDER == 'CLAUDE_CODE':
+        (temp / 'claude').mkdir()
+        env['CLAUDE_CONFIG_DIR'] = str(temp / 'claude')
+        profile = {'base_command_override': str(ROOT / 'tests/claude-approvals/claude_fixture.py'),
+                   'dangerously_skip_permissions': True,
+                   'require_subscription_login': False,
+                   'env': {'LVK_APPROVAL_FIXTURE_TRACE': str(temp / 'trace'),
+                           'CLAUDE_CONFIG_DIR': str(temp / 'claude')}}
+    (instance / 'data/profiles.json').write_text(json.dumps({'executors': {PROVIDER: {'DEFAULT': {PROVIDER: profile}}}}))
     processes = []
     logs = []
     code = 1

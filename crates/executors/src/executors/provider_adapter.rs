@@ -290,7 +290,7 @@ impl DirectProvider {
                 runtime: None,
                 protocol: Some("stream-json-v1"),
                 adapter: "claude-code-adapter-v1",
-                mapper: "claude-code-mapper-v6",
+                mapper: "claude-code-mapper-v7",
             },
         }
     }
@@ -358,7 +358,7 @@ impl DirectProvider {
                 ),
                 (
                     crate::runtime::AgentCapability::Approval,
-                    CapabilityState::Unsupported,
+                    CapabilityState::Native,
                 ),
                 (
                     crate::runtime::AgentCapability::Images,
@@ -403,7 +403,7 @@ impl DirectProvider {
             provider: self,
             semantics: match self {
                 Self::Codex => MapperSemantics::V8,
-                Self::ClaudeCode => MapperSemantics::V6,
+                Self::ClaudeCode => MapperSemantics::V7,
             },
             scope: Default::default(),
             replay_sequence: Default::default(),
@@ -856,7 +856,9 @@ impl NativeAuditReplayMapper for DirectProviderMapper {
     ) -> Result<Vec<AgentEvent>, NativeAuditError> {
         let typed = if self.provider == DirectProvider::ClaudeCode {
             match self.semantics {
-                MapperSemantics::V6 => classify_payload(self.provider, event)?,
+                MapperSemantics::V6 | MapperSemantics::V7 => {
+                    classify_payload(self.provider, event)?
+                }
                 MapperSemantics::V5 => classify_payload_v5(self.provider, event)?,
                 MapperSemantics::V3 | MapperSemantics::V4 => {
                     classify_payload_v4(self.provider, event)?
@@ -2111,6 +2113,25 @@ fn project_typed_event(
 
     // Delivery was introduced independently of message phase. Only explicit
     // async delivery is an async inbox question; phase alone cannot supply it.
+    if provider == DirectProvider::ClaudeCode
+        && manifest.mapper_version.ends_with("-v7")
+        && let Some(raw) = &event.raw.payload_json
+        && raw["method"] == "lucky-vibe/approval/status"
+    {
+        let pending = raw
+            .pointer("/params/pending")
+            .and_then(Value::as_u64)
+            .ok_or(NativeAuditError::MalformedFrame(event.raw.sequence))?;
+        let mut status = event.clone();
+        status.raw.payload_json = None;
+        status.typed = TypedProviderEvent::Lifecycle(if pending > 0 {
+            AgentRunStatus::AwaitingApproval
+        } else {
+            AgentRunStatus::Running
+        });
+        return project_typed_event(provider, &status, manifest);
+    }
+
     if provider == DirectProvider::Codex
         && manifest.mapper_version.ends_with("-v8")
         && let Some(raw) = &event.raw.payload_json
@@ -2278,7 +2299,7 @@ fn project_typed_event(
     // Claude emits mixed text/tool content in a single envelope. Expand only
     // completed semantic blocks at the adapter boundary, with distinct stable
     // event IDs and the same native reference. Preserve historical v1/v2 replay.
-    let claude_block_snapshots = ["-v4", "-v5", "-v6"]
+    let claude_block_snapshots = ["-v4", "-v5", "-v6", "-v7"]
         .iter()
         .any(|suffix| manifest.mapper_version.ends_with(suffix));
     if provider == DirectProvider::ClaudeCode
@@ -4464,6 +4485,39 @@ mod tests {
     }
 
     #[test]
+    fn claude_pending_approvals_project_only_in_connected_mapper_version() {
+        let provider = DirectProvider::ClaudeCode;
+        for (pending, expected) in [
+            (2, AgentRunStatus::AwaitingApproval),
+            (1, AgentRunStatus::AwaitingApproval),
+            (0, AgentRunStatus::Running),
+        ] {
+            let decoded = provider
+                .decode_native_frame(&frame(
+                    provider,
+                    serde_json::json!({
+                        "method":"lucky-vibe/approval/status", "params":{"pending":pending}
+                    }),
+                ))
+                .unwrap();
+            let manifest = fixture_manifest(provider);
+            let events = provider.map_provider_event(&decoded, &manifest).unwrap();
+            assert!(
+                matches!(events[0].payload, AgentEventPayload::LifecycleChanged { status } if status == expected)
+            );
+            let mut old = manifest.clone();
+            old.mapper_version = provider.v6_mapper().versions().mapper_version;
+            let events = provider.map_provider_event(&decoded, &old).unwrap();
+            assert!(
+                !events.iter().any(|event| matches!(
+                    event.payload,
+                    AgentEventPayload::LifecycleChanged { .. }
+                ))
+            );
+        }
+    }
+
+    #[test]
     fn maps_approval_and_waiting_input_to_canonical_events() {
         let manifest = NativeAuditManifest {
             audit_schema_version: crate::runtime::NATIVE_AUDIT_SCHEMA_VERSION,
@@ -4942,7 +4996,7 @@ mod tests {
                 if provider == DirectProvider::Codex {
                     "-v8"
                 } else if provider == DirectProvider::ClaudeCode {
-                    "-v6"
+                    "-v7"
                 } else {
                     "-v3"
                 }

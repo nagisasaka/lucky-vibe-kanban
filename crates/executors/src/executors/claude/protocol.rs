@@ -1,7 +1,7 @@
 use std::{
-    collections::HashMap,
+    collections::{HashMap, HashSet},
     sync::{
-        Arc, Mutex as StdMutex,
+        Arc, Mutex as StdMutex, Weak,
         atomic::{AtomicBool, Ordering},
     },
 };
@@ -31,13 +31,23 @@ type ControlWaiters =
 type RuntimeFailure = Arc<StdMutex<Option<oneshot::Sender<ExecutorExitResult>>>>;
 
 /// Handles bidirectional control protocol communication
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct ProtocolPeer {
     stdin: Arc<Mutex<ChildStdin>>,
     interrupt_sent: Arc<AtomicBool>,
     pending: ControlWaiters,
     closed: Arc<AtomicBool>,
     failure: Option<RuntimeFailure>,
+    client: Option<Weak<ClaudeAgentClient>>,
+    callbacks: Arc<Mutex<Vec<tokio::task::JoinHandle<()>>>>,
+}
+
+impl std::fmt::Debug for ProtocolPeer {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ProtocolPeer")
+            .field("closed", &self.closed)
+            .finish_non_exhaustive()
+    }
 }
 
 #[async_trait::async_trait]
@@ -56,22 +66,16 @@ impl crate::executors::ExecutorControl for ProtocolPeer {
                 approved,
                 reason,
             } => {
-                let response = if approved {
-                    serde_json::json!({
-                        "behavior": "allow",
-                        "updatedInput": {}
-                    })
-                } else {
-                    serde_json::json!({
-                        "behavior": "deny",
-                        "message": reason.unwrap_or_else(|| "Denied by user".to_string())
-                    })
-                };
-                self.send_json_bytes(&ControlResponseMessage::new(ControlResponseType::Success {
-                    request_id,
-                    response: Some(response),
-                }))
-                .await
+                if self.closed.load(Ordering::Acquire) {
+                    return Err(ExecutorApprovalError::ServiceUnavailable.into());
+                }
+                self.client
+                    .as_ref()
+                    .and_then(Weak::upgrade)
+                    .ok_or(ExecutorApprovalError::ServiceUnavailable)?
+                    .resolve_approval(&request_id, approved, reason)
+                    .await?;
+                Ok(Vec::new())
             }
             DirectControl::Input { .. } => Err(ExecutorError::Io(std::io::Error::new(
                 std::io::ErrorKind::Unsupported,
@@ -101,20 +105,27 @@ impl ProtocolPeer {
             pending: Default::default(),
             closed: Arc::new(AtomicBool::new(false)),
             failure: Some(Arc::new(StdMutex::new(Some(failure_tx)))),
+            client: Some(Arc::downgrade(&client)),
+            callbacks: Default::default(),
         };
 
         let reader_peer = peer.clone();
+        let reader_cancel = cancel.clone();
         tokio::spawn(async move {
-            if let Err(e) = reader_peer
+            let outcome = reader_peer
                 .read_loop(stdout, Some(client.clone()), cancel)
-                .await
-            {
+                .await;
+            reader_peer.closed.store(true, Ordering::Release);
+            reader_cancel.cancel();
+            for callback in reader_peer.callbacks.lock().await.drain(..) {
+                let _ = callback.await;
+            }
+            reader_peer.pending.lock().unwrap().clear();
+            if let Err(e) = outcome {
                 tracing::error!("Protocol reader loop error: {}", e);
                 let _ = client.log_message(&serde_json::json!({"type":"error","message":"Claude control stream closed or failed before a result"}).to_string()).await;
                 reader_peer.fail_runtime();
             }
-            reader_peer.closed.store(true, Ordering::Release);
-            reader_peer.pending.lock().unwrap().clear();
         });
 
         (peer, failure_rx)
@@ -133,6 +144,8 @@ impl ProtocolPeer {
             pending: Default::default(),
             closed: Arc::new(AtomicBool::new(false)),
             failure: None,
+            client: None,
+            callbacks: Default::default(),
         };
         let reader = peer.clone();
         let task = tokio::spawn(async move {
@@ -242,6 +255,8 @@ impl ProtocolPeer {
         let mut reader = BufReader::new(stdout.take(max_bytes));
         let mut buffer = String::new();
         let mut cancellation_observed = false;
+        let mut requests = HashMap::<String, CancellationToken>::new();
+        let mut tool_calls = HashSet::new();
 
         loop {
             buffer.clear();
@@ -298,8 +313,29 @@ impl ProtocolPeer {
                                     request_id,
                                     request,
                                 }) => {
-                                    self.handle_control_request(client, request_id, request)
-                                        .await;
+                                    if requests.contains_key(&request_id) {
+                                        // A retry is still the original pending request, never
+                                        // an early error followed by a second native response.
+                                        continue;
+                                    }
+                                    if let ControlRequestType::CanUseTool { tool_use_id: Some(id), .. } = &request
+                                        && !tool_calls.insert(id.clone())
+                                    {
+                                        self.send_error(request_id, "Duplicate Claude tool request".into()).await?;
+                                        continue;
+                                    }
+                                    let request_cancel = cancel.child_token();
+                                    requests.insert(request_id.clone(), request_cancel.clone());
+                                    let peer = self.clone();
+                                    let client = client.with_cancel(request_cancel);
+                                    self.callbacks.lock().await.push(tokio::spawn(async move {
+                                        peer.handle_control_request(&client, request_id, request).await;
+                                    }));
+                                }
+                                Ok(CLIMessage::ControlCancelRequest { request_id }) => {
+                                    if let Some(request_cancel) = requests.get(&request_id) {
+                                        request_cancel.cancel();
+                                    }
                                 }
                                 Ok(CLIMessage::Result(_)) => {
                                     break;
@@ -347,6 +383,9 @@ impl ProtocolPeer {
                     .await
                 {
                     Ok(result) => {
+                        if client.is_cancelled() {
+                            return;
+                        }
                         if let Err(e) = self
                             .send_hook_response(request_id, serde_json::to_value(result).unwrap())
                             .await
@@ -394,11 +433,22 @@ impl ProtocolPeer {
         request_id: String,
         hook_output: serde_json::Value,
     ) -> Result<(), ExecutorError> {
-        self.send_json(&ControlResponseMessage::new(ControlResponseType::Success {
+        let response = ControlResponseMessage::new(ControlResponseType::Success {
             request_id,
             response: Some(hook_output),
-        }))
-        .await
+        });
+        self.send_json(&response).await?;
+        if let Some(client) = self.client.as_ref().and_then(Weak::upgrade) {
+            client
+                .log_message(
+                    &serde_json::json!({
+                        "type":"approval_protocol_response", "response":response
+                    })
+                    .to_string(),
+                )
+                .await?;
+        }
+        Ok(())
     }
 
     /// Send error response to CLI

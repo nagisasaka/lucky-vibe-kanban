@@ -200,6 +200,9 @@ impl ClaudeCode {
                 PermissionPolicy::Supervised => {
                     self.plan = Some(false);
                     self.approvals = Some(true);
+                    // An explicit policy narrows this runtime copy, including
+                    // DEFAULT's saved AUTO flag. Never rewrite the profile.
+                    self.dangerously_skip_permissions = Some(false);
                 }
                 PermissionPolicy::Auto => {
                     self.plan = Some(false);
@@ -214,10 +217,31 @@ impl ClaudeCode {
     }
 
     fn validate_permission_support(&self) -> Result<(), ExecutorError> {
-        if self.plan.unwrap_or(false) || self.approvals.unwrap_or(false) {
+        if self.plan.unwrap_or(false) {
             return Err(ExecutorError::Io(std::io::Error::new(
                 std::io::ErrorKind::Unsupported,
-                "Claude Supervised/Plan and profiles requiring interactive approval are unavailable: the approval/question UI is not connected. Select AUTO explicitly to run without interactive approval.",
+                "Claude Plan is unavailable: plan transition/question UI is not connected",
+            )));
+        }
+        if self.approvals.unwrap_or(false)
+            && (self.dangerously_skip_permissions.unwrap_or(false)
+                || self.claude_code_router.unwrap_or(false)
+                || !crate::command::supports_passive_launcher(&self.cmd))
+        {
+            return Err(ExecutorError::Io(std::io::Error::new(
+                std::io::ErrorKind::Unsupported,
+                "Claude Supervised requires the direct CLI without permission overrides or additional arguments",
+            )));
+        }
+        if self.approvals.unwrap_or(false)
+            && !self
+                .approvals_service
+                .as_ref()
+                .is_some_and(|service| service.supports_interactive_tools())
+        {
+            return Err(ExecutorError::Io(std::io::Error::new(
+                std::io::ErrorKind::Unsupported,
+                "Claude interactive approval UI is not connected",
             )));
         }
         Ok(())
@@ -450,7 +474,7 @@ fn default_discovered_options(
             models: claude_model_options(supports_effort),
             default_model: Some("opus".to_string()),
             agents: vec![],
-            permissions: vec![PermissionPolicy::Auto],
+            permissions: vec![PermissionPolicy::Auto, PermissionPolicy::Supervised],
         },
         slash_commands: ClaudeCode::hardcoded_slash_commands(),
         skills: vec![],
@@ -3115,11 +3139,7 @@ mod tests {
                 Err(error) => error,
                 Ok(_) => panic!("interactive launch must fail"),
             };
-            assert!(
-                error
-                    .to_string()
-                    .contains("approval/question UI is not connected")
-            );
+            assert!(error.to_string().contains("UI is not connected"));
             assert_eq!(agent.plan, Some(plan));
             assert_eq!(agent.approvals, Some(approvals));
         }
@@ -3133,8 +3153,122 @@ mod tests {
         assert!(agent.validate_permission_support().is_ok());
         assert_eq!(
             default_discovered_options(false).model_selector.permissions,
-            vec![PermissionPolicy::Auto]
+            vec![PermissionPolicy::Auto, PermissionPolicy::Supervised]
         );
+    }
+
+    struct ConnectedApprovalFixture;
+
+    #[async_trait]
+    impl ExecutorApprovalService for ConnectedApprovalFixture {
+        fn supports_interactive_tools(&self) -> bool {
+            true
+        }
+        async fn create_tool_approval(
+            &self,
+            _: &str,
+        ) -> Result<String, crate::approvals::ExecutorApprovalError> {
+            Err(crate::approvals::ExecutorApprovalError::ServiceUnavailable)
+        }
+        async fn create_question_approval(
+            &self,
+            _: &str,
+            _: usize,
+        ) -> Result<String, crate::approvals::ExecutorApprovalError> {
+            Err(crate::approvals::ExecutorApprovalError::ServiceUnavailable)
+        }
+        async fn wait_tool_approval(
+            &self,
+            _: &str,
+            _: CancellationToken,
+        ) -> Result<ApprovalStatus, crate::approvals::ExecutorApprovalError> {
+            Err(crate::approvals::ExecutorApprovalError::ServiceUnavailable)
+        }
+        async fn wait_question_answer(
+            &self,
+            _: &str,
+            _: CancellationToken,
+        ) -> Result<QuestionStatus, crate::approvals::ExecutorApprovalError> {
+            Err(crate::approvals::ExecutorApprovalError::ServiceUnavailable)
+        }
+    }
+
+    #[test]
+    fn interactive_guard_requires_connected_supported_mode_and_safe_launcher() {
+        let mut agent = test_executor(None);
+        agent.approvals = Some(true);
+        for service in [
+            Arc::new(crate::approvals::NoopExecutorApprovalService)
+                as Arc<dyn ExecutorApprovalService>,
+            Arc::new(crate::approvals::UnavailableExecutorApprovalService),
+        ] {
+            agent.use_direct_approvals(service);
+            assert!(agent.validate_permission_support().is_err());
+        }
+        agent.use_direct_approvals(Arc::new(ConnectedApprovalFixture));
+        assert!(agent.validate_permission_support().is_ok());
+        agent.plan = Some(true);
+        assert!(agent.validate_permission_support().is_err());
+        agent.plan = Some(false);
+        agent.dangerously_skip_permissions = Some(true);
+        assert!(agent.validate_permission_support().is_err());
+        agent.dangerously_skip_permissions = None;
+        agent.cmd.additional_params = Some(vec!["--permission-mode=bypassPermissions".into()]);
+        assert!(agent.validate_permission_support().is_err());
+        agent.cmd.additional_params = None;
+        agent.cmd.base_command_override = Some("claude --allowedTools Bash".into());
+        assert!(agent.validate_permission_support().is_err());
+        agent.cmd.base_command_override = Some("/fixture/claude".into());
+        assert!(agent.validate_permission_support().is_ok());
+        agent.claude_code_router = Some(true);
+        assert!(agent.validate_permission_support().is_err());
+    }
+
+    #[tokio::test]
+    async fn explicit_supervised_narrows_builtin_default_without_mutating_saved_profile() {
+        let profiles: serde_json::Value =
+            serde_json::from_str(include_str!("../../default_profiles.json")).unwrap();
+        let saved = profiles["executors"]["CLAUDE_CODE"]["DEFAULT"]["CLAUDE_CODE"].clone();
+        let original: ClaudeCode = serde_json::from_value(saved.clone()).unwrap();
+        assert_eq!(original.dangerously_skip_permissions, Some(true));
+        let mut runtime = original.clone();
+        let config = serde_json::from_value(
+            serde_json::json!({"executor":"CLAUDE_CODE", "permission_policy":"SUPERVISED"}),
+        )
+        .unwrap();
+        runtime.apply_direct_overrides(&config);
+        runtime.use_direct_approvals(Arc::new(ConnectedApprovalFixture));
+        assert!(runtime.validate_permission_support().is_ok());
+        assert_eq!(runtime.permission_mode(), PermissionMode::Default);
+        runtime.cmd.base_command_override = Some(
+            std::env::current_exe()
+                .unwrap()
+                .to_string_lossy()
+                .into_owned(),
+        );
+        let (_, args) = command_adapter::ClaudeCodeCommandAdapter::new(&runtime)
+            .build_runtime(false)
+            .unwrap()
+            .build_initial()
+            .unwrap()
+            .into_resolved()
+            .await
+            .unwrap();
+        assert!(
+            !args
+                .iter()
+                .any(|arg| arg == "--dangerously-skip-permissions")
+        );
+        assert!(args.iter().any(|arg| arg == "--permission-mode=default"));
+        assert_eq!(original.dangerously_skip_permissions, Some(true));
+        assert_eq!(saved["dangerously_skip_permissions"], true);
+        let mut auto = original.clone();
+        let config = serde_json::from_value(
+            serde_json::json!({"executor":"CLAUDE_CODE", "permission_policy":"AUTO"}),
+        )
+        .unwrap();
+        auto.apply_direct_overrides(&config);
+        assert_eq!(auto.dangerously_skip_permissions, Some(true));
     }
 
     #[cfg(unix)]

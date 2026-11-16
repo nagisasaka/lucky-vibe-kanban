@@ -10,11 +10,17 @@ if (
 }
 export default defineConfig({
   testDir: ".",
-  testMatch: "*.spec.ts",
+  testMatch:
+    process.env.LVK_APPROVAL_TEST_PROVIDER === "CLAUDE_CODE"
+      ? "claude-approval.spec.ts"
+      : "approval.spec.ts",
   workers: 1,
   timeout: 300_000,
   expect: { timeout: 30_000 },
-  outputDir: "../../test-results/supervised",
+  outputDir:
+    process.env.LVK_APPROVAL_TEST_PROVIDER === "CLAUDE_CODE"
+      ? "../../test-results/claude-approvals"
+      : "../../test-results/supervised",
   reporter: [["list"]],
   use: {
     ...devices["Desktop Chrome"],
