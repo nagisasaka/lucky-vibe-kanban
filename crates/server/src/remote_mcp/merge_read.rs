@@ -391,6 +391,8 @@ mod tests {
                 commit: source,
                 title: "Fixture".into(),
                 description: None,
+                issue_snapshot: None,
+                retry_context: None,
                 status_id: Uuid::new_v4(),
                 requirements_revision: 1,
                 event_ids: vec![],

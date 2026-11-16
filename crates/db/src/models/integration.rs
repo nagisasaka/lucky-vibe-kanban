@@ -14,13 +14,39 @@ pub struct IntegrationSelection {
     pub expected_commit: String,
 }
 
+/// Original saved current specification, frozen once at admission. Reference data only.
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+pub struct IntegrationIssueSnapshot {
+    pub issue_id: Uuid,
+    pub simple_id: String,
+    pub title: String,
+    pub version_id: Uuid,
+    pub version_revision: i64,
+    pub body: String,
+    pub frozen_at: String,
+}
+
+/// Durable archive commit intent; recovery never re-reads settings or Issue bodies.
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+pub struct IntegrationArchivePublication {
+    pub request_id: Uuid,
+    pub parent_commit: String,
+    pub tree: Option<String>,
+    pub commit: Option<String>,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct IntegrationSource {
     pub selection: IntegrationSelection,
     pub branch: String,
     pub commit: String,
     pub title: String,
+    /// Compatibility copy for older readers; archive generation uses issue_snapshot only.
     pub description: Option<String>,
+    #[serde(default)]
+    pub issue_snapshot: Option<IntegrationIssueSnapshot>,
+    #[serde(default)]
+    pub retry_context: Option<String>,
     pub status_id: Uuid,
     pub requirements_revision: i64,
     pub event_ids: Vec<Uuid>,
@@ -71,6 +97,10 @@ pub struct IntegrationPublicationRequest {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize, TS)]
 pub struct IntegrationPayload {
+    #[serde(default)]
+    pub issue_archive_enabled: bool,
+    #[serde(default)]
+    pub archive_publication: Option<IntegrationArchivePublication>,
     #[serde(default)]
     pub wiki_enabled: bool,
     #[serde(default)]
@@ -524,6 +554,8 @@ pub(crate) mod tests {
                 commit: "a".repeat(40),
                 title: "request".into(),
                 description: None,
+                issue_snapshot: None,
+                retry_context: None,
                 status_id: todo,
                 requirements_revision: 1,
                 event_ids: vec![],

@@ -91,12 +91,13 @@ pub(super) fn worker_content(run: &IntegrationRun, identity: &str) -> anyhow::Re
         .and_then(serde_json::Value::as_str)
         .context("Missing adopted Auto-merge Skill")?;
     Ok(format!(
-        "{skill}\n{identity}\n固定対象: {}\n追加指示（依頼経路から保存した原文）:\n{}\n検証省略の指定: {} / 参考検証: {} / OpenWiki有効: {}",
+        "{skill}\n{identity}\n固定対象: {}\n追加指示（依頼経路から保存した原文）:\n{}\n検証省略の指定: {} / 参考検証: {} / OpenWiki有効: {} / Issueアーカイブ有効: {}",
         serde_json::to_string(&targets)?,
         run.payload.instructions,
         run.payload.skip_validation,
         serde_json::to_string(&run.payload.validation_suggestions)?,
-        run.payload.wiki_enabled
+        run.payload.wiki_enabled,
+        run.payload.issue_archive_enabled
     ))
 }
 

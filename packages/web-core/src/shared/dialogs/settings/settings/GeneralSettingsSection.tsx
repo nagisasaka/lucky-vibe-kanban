@@ -530,6 +530,15 @@ export function GeneralSettingsSection({
               updateDraft({ manifest_in_commit_body: checked })
             }
           />
+          <SettingsCheckbox
+            id="issue-archive-enabled"
+            label={t('settings.general.commits.issueArchive.label')}
+            description={t('settings.general.commits.issueArchive.helper')}
+            checked={draft?.issue_archive_enabled ?? false}
+            onChange={(checked) =>
+              updateDraft({ issue_archive_enabled: checked })
+            }
+          />
         </SettingsCard>
       )}
 

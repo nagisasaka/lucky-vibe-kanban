@@ -2,7 +2,10 @@ use std::collections::HashSet;
 
 use anyhow::{Context, ensure};
 use db::models::{
-    integration::{IntegrationPayload, IntegrationRun, IntegrationSelection, IntegrationSource},
+    integration::{
+        IntegrationIssueSnapshot, IntegrationPayload, IntegrationRun, IntegrationSelection,
+        IntegrationSource,
+    },
     repo::Repo,
     repository_state::RepositoryMemoryStore,
     workspace::Workspace,
@@ -112,8 +115,19 @@ async fn inspect_source(
     inspect_memory: bool,
 ) -> anyhow::Result<IntegrationSource> {
     let pool = &deployment.db().pool;
-    let row=sqlx::query("SELECT i.title,i.description,i.status_id,i.integration_revision FROM local_issues i JOIN local_workspace_links l ON l.issue_id=i.id WHERE i.id=? AND i.project_id=? AND l.workspace_id=?")
+    let row=sqlx::query("SELECT i.title,i.status_id,i.integration_revision,i.simple_id,v.id AS version_id,v.revision AS version_revision,v.description AS version_body FROM local_issues i JOIN issue_versions v ON v.id=i.current_version_id AND v.issue_id=i.id JOIN local_workspace_links l ON l.issue_id=i.id WHERE i.id=? AND i.project_id=? AND l.workspace_id=?")
         .bind(selected.card_id).bind(request.project_id).bind(selected.workspace_id).fetch_optional(pool).await?.context("Adopted Workspace must be currently linked to the selected local Card/project")?;
+    let snapshot = IntegrationIssueSnapshot {
+        issue_id: selected.card_id,
+        simple_id: row.try_get("simple_id")?,
+        title: row.try_get("title")?,
+        version_id: row.try_get("version_id")?,
+        version_revision: row.try_get("version_revision")?,
+        body: row
+            .try_get::<Option<String>, _>("version_body")?
+            .unwrap_or_default(),
+        frozen_at: chrono::Utc::now().to_rfc3339(),
+    };
     let repo = Repo::find_by_id(pool, request.repository_id)
         .await?
         .context("Repository missing")?;
@@ -151,7 +165,7 @@ async fn inspect_source(
         event_ids =
             selected_manifest_ids(&store, deployment.git(), &repo, workspace.id, &commit).await;
     }
-    let mut description: Option<String> = row.try_get("description")?;
+    let mut retry_context = None;
     let previous: Option<IntegrationRun> =
         sqlx::query_as("SELECT * FROM integration_runs WHERE workspace_id=?")
             .bind(selected.workspace_id)
@@ -159,9 +173,8 @@ async fn inspect_source(
             .await?;
     if let Some(previous) = previous {
         // Carry intent/repair attribution, never blindly apply a second candidate.
-        description = Some(format!(
-            "{}\n再依頼の引継ぎ（参照データ）: 元の対象 {} / 旧base {} / 候補 {} / 検証 {} / 競合解消・修復の説明 {}。元sourceと統合中の修復を区別し、Wikiは新候補で再確認する。",
-            description.unwrap_or_default(),
+        retry_context = Some(format!(
+            "再依頼の引継ぎ（参照データ）: 元の対象 {} / 旧base {} / 候補 {} / 検証 {} / 競合解消・修復の説明 {}。元sourceと統合中の修復を区別し、Wikiは新候補で再確認する。",
             serde_json::to_string(&previous.payload.sources.iter().map(|source| serde_json::json!({"issue_id":source.selection.card_id,"workspace_id":source.selection.workspace_id,"commit":source.commit,"title":source.title})).collect::<Vec<_>>())?,
             previous.payload.observed_target,
             previous
@@ -179,7 +192,9 @@ async fn inspect_source(
         branch: workspace.branch,
         commit,
         title: row.try_get("title")?,
-        description,
+        description: Some(snapshot.body.clone()),
+        issue_snapshot: Some(snapshot),
+        retry_context,
         status_id: row.try_get("status_id")?,
         requirements_revision: row.try_get("integration_revision")?,
         event_ids,
@@ -296,6 +311,7 @@ pub(super) async fn submit_with_expected_target(
         .git_branch_from_workspace(&workspace_id, &name)
         .await;
     let mut payload = IntegrationPayload {
+        issue_archive_enabled: deployment.config().read().await.issue_archive_enabled,
         sources,
         observed_target,
         card_id: Some(card_id),

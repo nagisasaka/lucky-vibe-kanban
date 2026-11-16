@@ -143,6 +143,10 @@
         "manifestBody": {
           "label": "Include Change Manifest intent in commit messages",
           "helper": "Adds purpose, changes, design decisions and verification summaries to normal source commits created by LVK. Messages are shared through Git push/clone. File Manifests remain authoritative. Existing commits, Auto-merge/repair, Wiki and squash commits are excluded. Once publication starts, retries keep the frozen message."
+        },
+        "issueArchive": {
+          "label": "Archive merged Issue bodies in the repository",
+          "helper": "When ON, the full Issue bodies adopted by Auto-merge are saved unchanged in the target repository and published when pushed."
         }
       },
       "pullRequests": {

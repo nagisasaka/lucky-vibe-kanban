@@ -336,6 +336,14 @@ pub(super) async fn publish(
     admission::verify_sources(deployment, &run).await?;
     admission::idle(deployment, run.workspace_id.unwrap()).await?;
     super::conversation::verify_evidence(pool, &run).await?;
+    super::issue_archive::verify(
+        &run,
+        &root,
+        run.payload
+            .result_commit
+            .as_deref()
+            .context("Missing candidate")?,
+    )?;
     let current = deployment
         .git()
         .get_branch_oid(&repo.path, short_target(&run))?;

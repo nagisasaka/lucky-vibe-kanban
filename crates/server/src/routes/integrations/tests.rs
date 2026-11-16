@@ -237,6 +237,8 @@ async fn failed_admission_reconciles_durable_identity_without_replaying_or_leaki
             commit: "source-head".into(),
             title: "request".into(),
             description: None,
+            issue_snapshot: None,
+            retry_context: None,
             status_id: Uuid::new_v4(),
             requirements_revision: 1,
             event_ids: vec![],
