@@ -3,7 +3,6 @@
 mod manifests;
 use std::{io, ops::Deref, path::Path};
 
-pub use manifests::import_registered_repositories;
 use sqlx::{Connection, SqliteConnection, SqlitePool};
 use utils::repository_memory::{
     self as files, MemoryIntegration, RepositoryMemoryState, WikiPublication,
@@ -391,7 +390,6 @@ mod tests {
                 ..Default::default()
             },
         };
-        files.legacy_publish_event(&event).unwrap();
         let state = RepositoryMemoryState::enabled_defaults(Some("main".into()));
         let integration = MemoryIntegration {
             id: Uuid::new_v4(),
@@ -417,7 +415,7 @@ mod tests {
             error: Some("retry needed".into()),
         };
         let store = RepositoryMemoryStore::with_artifacts(&pool, repo, files);
-        store.import_legacy_manifests().await.unwrap();
+        store.publish_event(&event).await.unwrap();
         store.save_state(&state).await.unwrap();
         store.save_integration(&integration).await.unwrap();
         store.save_publication(&publication).await.unwrap();
