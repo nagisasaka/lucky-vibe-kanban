@@ -95,7 +95,8 @@ try {
       await expect(createdAt).toHaveText('2026/11/17 08:24');
       const dateGeometry = await createdAt.boundingBox();
       assert.ok(dateGeometry.width <= pane);
-      assert.equal(geometry.title, '24px');
+      // Preserve the integrated main title hierarchy (1.75rem).
+      assert.equal(geometry.title, '28px');
       assert.ok(geometry.gutter >= 16 && geometry.gutter <= 32);
       assert.ok(geometry.reading.width <= 1024);
       assert.ok(Math.abs(geometry.conversation.x - geometry.composer.x) < 1);
