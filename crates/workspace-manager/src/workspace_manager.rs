@@ -221,7 +221,9 @@ async fn delete_workspace_record(
     }
 }
 
-async fn delete_workspace_record_in_transaction(
+/// Lifecycle-aware deletion for callers that own a larger atomic DB operation.
+/// The caller must retain admission guards and arrange cleanup after commit.
+pub async fn delete_workspace_record_in_transaction(
     connection: &mut SqliteConnection,
     workspace_id: Uuid,
 ) -> Result<u64, WorkspaceError> {
@@ -410,6 +412,27 @@ pub struct WorkspaceManager {
 }
 
 impl WorkspaceManager {
+    /// Await all cleanup and report failures. Never deletes branches or shared storage.
+    pub async fn cleanup_deleted_workspace(
+        context: &WorkspaceDeletionContext,
+        runtime_root: &Path,
+    ) -> Vec<String> {
+        let mut errors = Vec::new();
+        for session in &context.session_ids {
+            if let Err(error) =
+                Self::remove_session_runtime_files_in_root(runtime_root, *session).await
+            {
+                errors.push(format!("Session {session}: {error}"));
+            }
+        }
+        if let Some(path) = &context.workspace_dir
+            && let Err(error) = Self::cleanup_workspace_strict(path, &context.repositories).await
+        {
+            errors.push(error.to_string());
+        }
+        errors
+    }
+
     pub fn new(db: DBService) -> Self {
         Self { db }
     }

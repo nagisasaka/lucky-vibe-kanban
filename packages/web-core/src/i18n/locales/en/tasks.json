@@ -916,5 +916,36 @@
     "cliLogin": "{{provider}} CLI is not signed in.",
     "gitHost": "Git host",
     "unconfirmed": "PR creation could not be confirmed. Check the repository’s pull requests before trying again."
+  },
+  "issueDelete": {
+    "title": "Delete Issue",
+    "description": "Delete this Issue, its description, comments and related records. This cannot be undone. Child Issues are not deleted.",
+    "includeWorkspaces": "Also delete linked Workspaces",
+    "warning": "The directly linked Workspaces listed below, their conversations and execution history will be deleted. LVK-managed worktrees, including uncommitted and untracked files, will be lost. This cannot be undone.",
+    "issueOnly": "Only the Issue is deleted. Its Workspaces, processes and files are kept.",
+    "preserved": "Git branches, source repositories, external folders and shared storage are kept. External-folder Workspaces and their history are excluded.",
+    "count": "Workspaces to delete: {{count}}",
+    "loading": "Checking directly linked Workspaces…",
+    "noWorktree": "No worktree",
+    "blocked": "A protected Workspace prevents deletion. Nothing will be deleted. Resolve the reason and refresh, or uncheck the option to delete only the Issue.",
+    "completed": "Issue and selected Workspace records deleted. Physical cleanup completed.",
+    "cleanupFailed": "Issue and selected Workspace records deleted, but physical cleanup is incomplete. Review the results below; do not repeat the deletion.",
+    "cleanupCompleted": "Records deleted; cleanup completed",
+    "cleanupIncomplete": "Records deleted; cleanup failed",
+    "refused": "Deletion refused. The Issue and Workspace records were kept. Refresh and confirm again. Request: {{requestId}}",
+    "unknown": "Deletion is running or its result is unknown. Some records or files may already be deleted. Do not repeat it; inspect this request: {{requestId}}",
+    "error": "The operation could not be completed.",
+    "close": "Close",
+    "cancel": "Cancel",
+    "confirm": "Delete",
+    "refresh": "Refresh targets",
+    "inspect": "Check result",
+    "reasons": {
+      "external": "Excluded: external folder and Workspace history kept",
+      "protected": "Protected: pinned, dedicated execution or owner-managed Workspace",
+      "ownership": "Ownership could not be verified; deletion blocked",
+      "shared": "Referenced elsewhere or uses a shared path; deletion blocked",
+      "busy": "Workspace is in use; deletion blocked"
+    }
   }
 }
