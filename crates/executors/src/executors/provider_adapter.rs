@@ -2176,7 +2176,8 @@ fn project_typed_event(
 ) -> Result<ProviderEventProjection, NativeAuditError> {
     // Facts emitted at the adapter's write/ACK boundary, not launch-time intent.
     // Keep historical replay semantics unchanged.
-    if ["codex-mapper-v8", "claude-code-mapper-v7"].contains(&manifest.mapper_version.as_str())
+    if ["codex-mapper-v8", "codex-mapper-v9", "claude-code-mapper-v7"]
+        .contains(&manifest.mapper_version.as_str())
         && let Some(value) = event
             .raw
             .payload_json

@@ -43,6 +43,7 @@ import {CollapsibleSectionHeader} from './packages/ui/src/components/Collapsible
 import {useUiPreferencesStore} from './packages/web-core/src/shared/stores/useUiPreferencesStore';
 const useTranslation=()=>({t:key=>key});const FolderSimpleIcon=()=>null,CaretDownIcon=()=>null;
 const mainTerminalRepo=repos=>repos[0];
+const ProjectTransferPanel=()=> <div>Project transfer</div>;
 const rows=Number(new URLSearchParams(location.search).get('rows'))||2;
 const WorkspaceFileBrowserPanel=()=> <div className="flex h-full min-h-0 flex-col"><div className="shrink-0 p-base"><input aria-label="Search files"/></div><div data-file-tree-scroll className="min-h-0 flex-1 overflow-auto p-base">{Array.from({length:rows},(_,i)=><div key={i} style={{height:30}}>file-{i}.ts</div>)}</div></div>;
 const WorkspaceWikiNavigation=()=> <div className="flex h-full min-h-0 flex-1 flex-col"><div className="shrink-0 p-base">Wiki controls</div><nav className="min-h-0 flex-1 overflow-auto">{Array.from({length:100},(_,i)=><p key={i}>Page {i}</p>)}</nav></div>;
