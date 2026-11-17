@@ -1,0 +1,20 @@
+/* Expanded trees share the space left by controls and bounded sections.
+   Tree length must not contribute to the sidebar’s intrinsic minimum height. */
+.utility-sidebar > .utility-fill-section {
+  height: auto;
+  min-height: min-content;
+}
+
+.utility-sidebar
+  > .utility-fill-section:has(> div > button[aria-expanded='true']) {
+  flex: 1 0 0%;
+}
+
+.utility-sidebar .utility-fill-section > div:first-child {
+  flex-shrink: 0;
+}
+
+.utility-sidebar [data-file-tree-scroll] {
+  contain: size;
+  min-height: 1lh;
+}

@@ -103,6 +103,7 @@ export interface KanbanIssuePanelProps {
   // Edit mode data
   issueId?: string | null;
   creatorUser?: IssueCreator;
+  createdAt?: string;
   parentIssue?: { id: string; simpleId: string } | null;
   onParentIssueClick?: () => void;
   onRemoveParentIssue?: () => void;
@@ -172,6 +173,7 @@ export function KanbanIssuePanel({
   assigneeUsers,
   issueId,
   creatorUser,
+  createdAt,
   parentIssue,
   onParentIssueClick,
   onRemoveParentIssue,
@@ -204,8 +206,11 @@ export function KanbanIssuePanel({
   renderSubIssuesSection,
   renderCommentsSection,
 }: KanbanIssuePanelProps) {
-  const { t } = useTranslation('common');
+  const { t, i18n } = useTranslation('common');
   const isCreateMode = mode === 'create';
+  const createdDate = createdAt ? new Date(createdAt) : null;
+  const showCreatedAt =
+    !isCreateMode && createdDate && Number.isFinite(createdDate.getTime());
   const breadcrumbTextClass =
     'min-w-0 text-sm text-normal truncate rounded-sm px-1 py-0.5 hover:bg-panel hover:text-high transition-colors';
   const creatorName =
@@ -385,6 +390,24 @@ export function KanbanIssuePanel({
                 {t('kanban.issueTitlePlaceholder')}
               </div>
             </div>
+
+            {showCreatedAt && (
+              <time
+                dateTime={createdAt}
+                className="issue-section-inset block px-base mt-half text-sm text-low"
+              >
+                {createdDate.toLocaleString(
+                  i18n.resolvedLanguage || i18n.language,
+                  {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  }
+                )}
+              </time>
+            )}
 
             {/* Description WYSIWYG Editor with image dropzone */}
             <div

@@ -206,9 +206,49 @@ export const RightSidebar = memo(function RightSidebar({
 
   return (
     <UtilitySidebar repoIds={repos.map((repo) => repo.id)}>
+      {sections
+        .filter((section) => section.visible)
+        .map((section) => {
+          const isFiles = section.persistKey === PERSIST_KEYS.rightPanelFiles;
+          return (
+            <CollapsibleSectionHeader
+              key={section.persistKey}
+              className={
+                isFiles
+                  ? 'utility-fill-section !h-auto border-b'
+                  : '!h-auto max-h-[max(50vh,400px)] overflow-hidden border-b'
+              }
+              title={section.title}
+              persistKey={section.persistKey}
+              defaultExpanded={section.expanded}
+              actions={section.actions}
+            >
+              <div
+                className={
+                  isFiles
+                    ? 'flex min-h-0 flex-1 flex-col border-t'
+                    : 'flex flex-1 border-t min-h-[200px] w-full overflow-auto'
+                }
+              >
+                {section.content}
+              </div>
+            </CollapsibleSectionHeader>
+          );
+        })}
+      {selectedWorkspace?.usage === 'interactive' &&
+        selectedWorkspace.container_ref &&
+        isTerminalVisible &&
+        !isTerminalExpanded && (
+          <TerminalSection
+            scope={selectedWorkspace.id}
+            workspaceId={selectedWorkspace.id}
+            cwd={selectedWorkspace.container_ref}
+            actions={[{ icon: ArrowsOutSimpleIcon, onClick: expandTerminal }]}
+          />
+        )}
       {wiki.repositoryOptions.length > 0 && (
         <CollapsibleSectionHeader
-          className="!h-auto !min-h-fit has-[>div>button[aria-expanded=true]]:flex-1"
+          className="utility-fill-section !h-auto"
           title={t('common:environment.wiki')}
           persistKey="workspace-wiki"
           defaultExpanded={false}
@@ -226,38 +266,6 @@ export const RightSidebar = memo(function RightSidebar({
           </div>
         </CollapsibleSectionHeader>
       )}
-      {selectedWorkspace?.usage === 'interactive' &&
-        selectedWorkspace.container_ref &&
-        isTerminalVisible &&
-        !isTerminalExpanded && (
-          <TerminalSection
-            scope={selectedWorkspace.id}
-            workspaceId={selectedWorkspace.id}
-            cwd={selectedWorkspace.container_ref}
-            actions={[{ icon: ArrowsOutSimpleIcon, onClick: expandTerminal }]}
-          />
-        )}
-      <div className="divide-y border-b">
-        {sections
-          .filter((section) => section.visible)
-          .map((section) => (
-            <div
-              key={section.persistKey}
-              className="max-h-[max(50vh,400px)] flex flex-col overflow-hidden"
-            >
-              <CollapsibleSectionHeader
-                title={section.title}
-                persistKey={section.persistKey}
-                defaultExpanded={section.expanded}
-                actions={section.actions}
-              >
-                <div className="flex flex-1 border-t min-h-[200px] w-full overflow-auto">
-                  {section.content}
-                </div>
-              </CollapsibleSectionHeader>
-            </div>
-          ))}
-      </div>
     </UtilitySidebar>
   );
 });

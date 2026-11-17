@@ -69,11 +69,11 @@ export function ProjectUtilities({
         </details>
       )}
       <CollapsibleSectionHeader
-        className="!h-auto"
+        className="utility-fill-section !h-auto"
         title={t('environment.files')}
         persistKey="kanban-main-files"
       >
-        <div className="h-80">
+        <div className="flex min-h-0 flex-1 flex-col">
           <WorkspaceFileBrowserPanel
             workspaceId={projectId}
             source="file-tree"
@@ -102,7 +102,7 @@ export function ProjectUtilities({
       )}
       {repos.some((r) => r.wiki_enabled === true) && (
         <CollapsibleSectionHeader
-          className="!h-auto !min-h-fit has-[>div>button[aria-expanded=true]]:flex-1"
+          className="utility-fill-section !h-auto"
           title={t('environment.wiki')}
           persistKey={wikiKey}
           expanded={wikiExpanded}
