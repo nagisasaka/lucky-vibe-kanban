@@ -538,8 +538,13 @@ async fn finish(deployment: &DeploymentImpl, mut run: IntegrationRun) -> anyhow:
     match wiki_result {
         Ok(result) => {
             run.payload.wiki_result = Some(result);
+            run.status = "post_processing".into();
             run.save_on(&mut tx).await?;
             tx.commit().await?;
+            let store = RepositoryMemoryStore::for_repository(pool, &repo.name, repo.id)?;
+            store.cleanup_integration(run.id)?;
+            run.status = "succeeded".into();
+            run.save(pool).await?;
         }
         Err(error) => {
             tx.rollback().await?;

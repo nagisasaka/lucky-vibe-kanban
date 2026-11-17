@@ -664,7 +664,7 @@ mod tests {
             let persistent = temp.path().join("persistent");
             fs::create_dir_all(root.join("openwiki")).unwrap();
             fs::create_dir(&persistent).unwrap();
-            let store = RepositoryMemoryStore::at_persistent(&persistent).unwrap();
+            let store = RepositoryMemoryStore::at_artifacts(&persistent).unwrap();
             super::super::git_text(&root, &["init", "-b", "main"]).unwrap();
             super::super::git_text(&root, &["config", "user.email", "fixture@example.invalid"])
                 .unwrap();
@@ -823,7 +823,7 @@ mod tests {
             AGENTS
         );
         prepare(
-            &RepositoryMemoryStore::at_persistent(&fixture.temp.path().join("persistent")).unwrap(),
+            &RepositoryMemoryStore::at_artifacts(&fixture.temp.path().join("persistent")).unwrap(),
             fixture.id,
             &fixture.root,
             &fixture.source,
@@ -982,7 +982,7 @@ mod tests {
                 fixture.write("AGENTS.md", "later user edit");
             }
             let store =
-                RepositoryMemoryStore::at_persistent(&fixture.temp.path().join("persistent"))
+                RepositoryMemoryStore::at_artifacts(&fixture.temp.path().join("persistent"))
                     .unwrap();
             let result = restore(&store, fixture.id, &fixture.root, &fixture.source);
             if edit {

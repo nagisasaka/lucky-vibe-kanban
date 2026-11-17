@@ -856,6 +856,12 @@ impl LocalAgentRunPort {
             .iter()
             .flat_map(|repo| {
                 workspace_manager::shared_resources::writable_roots(&repo.name, repo.id)
+                    .into_iter()
+                    .chain(
+                        utils::repository_memory::RepositoryMemoryStore::writable_artifact_roots(
+                            repo.id,
+                        ),
+                    )
             })
             .collect();
         // Read-only is bound to the persisted Workflow Session, including later

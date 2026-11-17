@@ -482,36 +482,15 @@ mod tests {
 
     async fn memory_fixture() -> (SqlitePool, Repo, tempfile::TempDir, RepositoryMemoryStore) {
         let (pool, mut repo, _) = fixture().await;
-        // Unique shared root using the production lookup, without changing global
-        // environment or touching another repository's memory.
-        let base = utils::path::shared_resources_dir("test", repo.id)
-            .parent()
-            .unwrap()
-            .to_path_buf();
-        std::fs::create_dir_all(&base).unwrap();
-        let suffix = format!("-{}", repo.id);
-        let temp = tempfile::Builder::new()
-            .prefix("usage-")
-            .suffix(&suffix)
-            .tempdir_in(base)
-            .unwrap();
-        repo.name = temp
-            .path()
-            .file_name()
-            .unwrap()
-            .to_str()
-            .unwrap()
-            .strip_suffix(&suffix)
-            .unwrap()
-            .to_owned();
-        sqlx::query("UPDATE repos SET name=? WHERE id=?")
-            .bind(&repo.name)
-            .bind(repo.id)
-            .execute(&pool)
-            .await
-            .unwrap();
-        std::fs::create_dir(temp.path().join("persistent")).unwrap();
-        let store = RepositoryMemoryStore::for_repository(&pool, &repo.name, repo.id).unwrap();
+        // Only DB state is observed by these tests. No repository artifact
+        // directory or user shared storage is provisioned.
+        let temp = tempfile::tempdir().unwrap();
+        repo.name = format!("usage-{}", repo.id);
+        let store = RepositoryMemoryStore::with_artifacts(
+            &pool,
+            repo.id,
+            utils::repository_memory::RepositoryMemoryStore::at_artifacts(temp.path()).unwrap(),
+        );
         (pool, repo, temp, store)
     }
 

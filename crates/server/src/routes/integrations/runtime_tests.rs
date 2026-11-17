@@ -459,8 +459,7 @@ async fn integration_memory_reads_only_frozen_db_ids_without_legacy_event_files(
     use utils::repository_memory::{ChangeManifest, SemanticChanges};
     let (pool, mut run, _, _) = fixture().await;
     let temp = tempfile::tempdir().unwrap();
-    let files =
-        utils::repository_memory::RepositoryMemoryStore::at_persistent(temp.path()).unwrap();
+    let files = utils::repository_memory::RepositoryMemoryStore::at_artifacts(temp.path()).unwrap();
     let store = RepositoryMemoryStore::with_artifacts(&pool, run.repository_id, files);
     let source = &mut run.payload.sources[0];
     let event = ChangeManifest {
@@ -486,7 +485,7 @@ async fn integration_memory_reads_only_frozen_db_ids_without_legacy_event_files(
     store.publish_event(&unrelated).await.unwrap();
     let missing = Uuid::new_v4();
     source.event_ids = vec![event.event_id, missing];
-    std::fs::remove_dir_all(temp.path().join("knowledge/events")).unwrap();
+    assert!(!temp.path().join("knowledge/events").exists());
     let material = integration_memory(&run, Some(&store)).await.unwrap();
     assert_eq!(material[0]["events"].as_array().unwrap().len(), 1);
     assert_eq!(

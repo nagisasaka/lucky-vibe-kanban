@@ -33,7 +33,7 @@ async fn main() -> anyhow::Result<()> {
                 .is_some_and(|name| name.starts_with("lvk-openwiki-memory-")),
         "Fixture memory must be a separate temporary directory"
     );
-    let store = RepositoryMemoryStore::at_persistent(&persistent)?;
+    let store = RepositoryMemoryStore::at_artifacts(&persistent)?;
     let workspace_id = Uuid::parse_str(&args[3])?;
     let source = &args[4];
     ensure!(

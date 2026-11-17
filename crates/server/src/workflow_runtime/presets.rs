@@ -107,6 +107,7 @@ pub async fn establish(
             {
                 let context = store
                     .run(agent_run_id)
+                    .await
                     .map_err(|e| ApiError::BadRequest(e.to_string()))?
                     .ok_or_else(|| {
                         ApiError::BadRequest(

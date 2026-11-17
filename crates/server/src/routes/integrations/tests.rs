@@ -343,7 +343,7 @@ async fn manifest_admission_preserves_workspace_and_ancestry_selection_without_e
         .unwrap();
     std::fs::create_dir(temp.path().join("memory")).unwrap();
     let files =
-        utils::repository_memory::RepositoryMemoryStore::at_persistent(&temp.path().join("memory"))
+        utils::repository_memory::RepositoryMemoryStore::at_artifacts(&temp.path().join("memory"))
             .unwrap();
     let store = RepositoryMemoryStore::with_artifacts(&pool, repo.id, files);
     let workspace = Uuid::new_v4();
@@ -372,7 +372,7 @@ async fn manifest_admission_preserves_workspace_and_ancestry_selection_without_e
     peer.event_id = Uuid::new_v4();
     peer.workspace_id = Uuid::new_v4();
     store.publish_event(&peer).await.unwrap();
-    std::fs::remove_dir_all(temp.path().join("memory/knowledge/events")).unwrap();
+    assert!(!temp.path().join("memory/knowledge/events").exists());
     assert_eq!(
         admission::selected_manifest_ids(
             &store,

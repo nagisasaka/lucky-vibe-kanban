@@ -1,5 +1,5 @@
 //! Mechanical Bootstrap input, not a semantic coverage gate or agent artifact.
-//! Host DB freezes the reference; shared-folder bytes are verified at boundaries.
+//! Host DB freezes the reference; reproducible cache bytes are verified at boundaries.
 use std::{fs::OpenOptions, io::Read, path::Path};
 
 use anyhow::{Context, bail, ensure};

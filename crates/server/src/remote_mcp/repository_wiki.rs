@@ -369,7 +369,7 @@ mod tests {
     #[tokio::test]
     async fn wiki_result_requires_publication_and_settled_reconciliation_not_agent_success() {
         let temp = tempfile::tempdir().unwrap();
-        let store = RepositoryMemoryStore::at_persistent(temp.path()).unwrap();
+        let store = RepositoryMemoryStore::at_artifacts(temp.path()).unwrap();
         let run = Uuid::new_v4();
         let mut state = RepositoryMemoryState {
             active_run_id: Some(run),

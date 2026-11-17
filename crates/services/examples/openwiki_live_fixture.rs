@@ -50,7 +50,7 @@ async fn main() -> anyhow::Result<()> {
     ensure!(source.status.success(), "Fixture source missing");
     let source = String::from_utf8(source.stdout)?.trim().to_owned();
     std::fs::create_dir_all(evidence.join("memory"))?;
-    let store = RepositoryMemoryStore::at_persistent(&evidence.join("memory"))?;
+    let store = RepositoryMemoryStore::at_artifacts(&evidence.join("memory"))?;
     let workspace = Uuid::new_v4();
     if !replay {
         setup::prepare(&store, workspace, &root, &source)?;

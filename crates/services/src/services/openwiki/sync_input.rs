@@ -1,4 +1,4 @@
-//! Frozen semantic hints in the existing repository shared folder. Individual
+//! Frozen semantic hints in volume-backed managed tmp. Individual
 //! bounded records avoid truncating a large batch into the maintenance prompt.
 use anyhow::{Context, ensure};
 use serde::{Deserialize, Serialize};
@@ -122,7 +122,7 @@ mod tests {
     #[test]
     fn batch_is_complete_bound_and_frozen() {
         let temp = tempfile::tempdir().unwrap();
-        let store = RepositoryMemoryStore::at_persistent(temp.path()).unwrap();
+        let store = RepositoryMemoryStore::at_artifacts(temp.path()).unwrap();
         let repository = Uuid::new_v4();
         let workspace = Uuid::new_v4();
         let events: Vec<_> = (0..12)
@@ -188,7 +188,7 @@ mod tests {
     #[test]
     fn manual_sync_empty_input_and_missing_file_are_distinct() {
         let temp = tempfile::tempdir().unwrap();
-        let store = RepositoryMemoryStore::at_persistent(temp.path()).unwrap();
+        let store = RepositoryMemoryStore::at_artifacts(temp.path()).unwrap();
         let repo = Uuid::new_v4();
         let workspace = Uuid::new_v4();
         let (sha, _) = prepare(

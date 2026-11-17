@@ -198,6 +198,32 @@ async fn validated_inventory(
             .clone()
             .context("Bootstrap source missing")?,
     );
+    if !ctx
+        .store
+        .document_inventory_path(run_id, None)
+        .try_exists()?
+    {
+        let input: String = sqlx::query_scalar("SELECT input_text FROM workflow_runs WHERE id=?")
+            .bind(run_id)
+            .fetch_one(&deployment.db().pool)
+            .await?;
+        if !input.is_empty() {
+            let frozen: DocumentInventory = serde_json::from_str(&input)?;
+            if matches!(frozen, DocumentInventory::Available { .. }) {
+                let root = ctx.root.clone();
+                let store = ctx.store.clone();
+                let identity = expected.clone();
+                let regenerated = tokio::task::spawn_blocking(move || {
+                    DocumentInventory::generate(&git::GitService::new(), &root, &store, identity)
+                })
+                .await??;
+                ensure!(
+                    regenerated == frozen,
+                    "Regenerated inventory differs from the frozen input; retained for inspection"
+                );
+            }
+        }
+    }
     load_inventory_input(&deployment.db().pool, &ctx.store, expected).await
 }
 
@@ -764,13 +790,16 @@ pub async fn recover_locked(
                 Ok(publication),
             )
             .await?;
+            crate::routes::openwiki::finish_artifact_cleanup(store, &mut latest).await?;
         }
         Ok::<_, anyhow::Error>(())
     }
     .await;
     if let Err(error) = result {
         let mut latest = store.state().await?;
-        latest.error = Some(format!("{error:#}"));
+        if latest.artifact_cleanup.is_none() {
+            latest.error = Some(format!("{error:#}"));
+        }
         // Publication recovery is Git/receipt-only. Never restart paid hosts
         // or discard the identity of a possibly integrated Wiki.
         if store.publication(run_id).await?.is_some() {
