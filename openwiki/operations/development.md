@@ -25,6 +25,12 @@ sources:
     resource: repo://crates/db/src/models/agent_runtime_reservation_tests.rs
   - id: openwiki-source-d20a82e2192a07c687b838cb
     resource: repo://crates/db/src/models/agent_runtime.rs
+  - id: openwiki-source-06b554fc2573c350d37896b2
+    resource: repo://crates/db/src/models/repository_state/coding_runs.rs
+  - id: openwiki-source-02a5fb6ea4136a6d854604f6
+    resource: repo://crates/db/src/models/repository_state/cutover.rs
+  - id: openwiki-source-deed913a29de3b85e0f77fb6
+    resource: repo://crates/db/tests/project_transfer.rs
   - id: openwiki-source-8856c7b6451960c4ee31ae56
     resource: repo://crates/executors/src/account_usage_tests.rs
   - id: openwiki-source-22b82518475034ade38104e6
@@ -53,6 +59,8 @@ sources:
     resource: repo://crates/server/src/remote_mcp/runtime_read.rs
   - id: openwiki-source-8cfc9e9e42e1bce7ff48a47e
     resource: repo://crates/server/src/routes/local_remote/issue_update_tests.rs
+  - id: openwiki-source-231241ac3c842dcd67525890
+    resource: repo://crates/server/src/routes/openwiki.rs
   - id: openwiki-source-6c4d6d22a9d50e0def61c50d
     resource: repo://crates/server/src/routes/workspaces/integration.rs
   - id: openwiki-source-66c6304230dff031e0d0b855
@@ -157,6 +165,8 @@ sources:
     resource: repo://tests/issue-versions/README.md
   - id: openwiki-source-e023073a2ead0d2a5b8304d5
     resource: repo://tests/project-keys/migration_compat.py
+  - id: openwiki-source-c07af9446653a10d3d19dd50
+    resource: repo://tests/project-transfer/browser.mjs
   - id: openwiki-source-27c3f21856d770e96494e465
     resource: repo://tests/server/run-managed-dev-server.mjs
   - id: openwiki-source-a1c202ba8b2becaa93218bc0
@@ -185,10 +195,10 @@ sources:
     resource: repo://tests/workflow/playwright.config.ts
   - id: openwiki-source-7ff1b0a7c2af3c41dc6b3d55
     resource: repo://tests/workflow/specs/workflow-presets.spec.ts
-generated: { by: "codex", at: "2026-11-16T18:11:18.484Z" }
+generated: { by: "codex", at: "2026-11-17T00:44:00.706Z" }
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-16T18:11:18.484Z
+    at: 2026-11-17T00:44:00.706Z
 ---
 
 
@@ -709,3 +719,43 @@ Issueアーカイブは [固定本文](../../docs/changes/2026-11-16-LOCAL-382-1
 agent判断で広域check/lint/backend suite・build・生成型の重複再実行を省略記録した。単一sourceと同じコードtree、固定Manifestの既存成功、候補での対象再実行を根拠とし、省略を新たなpassに数えない。複数sourceの相互作用はない。Chromiumの保存はfixture状態であり、実APIとの一体E2E、認証済み全画面、実providerは未検証である。
 
 コード検証後、最初のbegin前にprepare_wikiで原本journalを保存した。同じ候補branchでWikiを別commitにし、setup生成差分は未stageのままhostの限定復元へ渡す。Wiki完了・公開要求・Run終了後のhostによるローカルmain実Git適用は別の結果であり、本記録は適用済みの宣言ではない。GitHub push、再起動、本番反映、稼働DB変更は行わない。
+
+
+## LOCAL-384/396/406/339の固定統合検証
+
+統合 `86911a38-9da6-4522-a313-b8f7e3ac7154` はbase `5a2b0fb3199cd4e1339dd2907796dbd940f70cbb` と指定source 384=`990f15bc`、396=`fc31b306`、406=`a398b8e5`、339=`2b7e1b2b` を固定した。409/411/165等は採用していない。現行mainの診断・デザインを保ち、候補branchだけで統合した。
+
+競合はCodex v9/Claude v7 mapper、独立翻訳キー、Repo連携とflex sidebarに解消した。Codex v9では新配信eventの投影gateがv8限定のため欠落する相互作用を既存試験で再現し、v9を追加して修復した。339のブラウザ試験は現行main由来の1.75rem=28pxに旧24px期待値を整合した。製品タイトルを旧値へ戻していない。移送panelを追加したProject utility用fixtureのinert stubも補った。
+
+全source統合後のclean `4ce3dd09` にprepare_archiveを適用し、保存済みIssue原文4件を `dee0871874b7e072a55cbf2e9cf2664f30dcad8a` に追加した。requestは `6b09eaa6-161d-4bf0-b465-68a58fad22b1`。後の本文やretry補足へ差し替えず、Wikiに原文全文を重複保存しない。396の過去実装Runのfailedと最終HEADの確定Manifest欠落は過去事実として残し、今回の正式候補選択と独立再検証で扱った。履歴の判定変更や強制採用は行っていない。
+
+### 実施と失敗はSHAごとに分ける
+
+| 候補SHA | 管理検証の結果 |
+| --- | --- |
+| `dee08718` | frozen install、local-web/web-core/UI型、production frontend build成功。Codex v9配信投影の既存1試験は0 event対1期待で失敗し、修復前の失敗として保存。 |
+| `4a23b918` | executor全libは371成功・9ignored、移送DB5、repository_state8、utils52、移送API3、host instruction3成功。別batchの型3packageとUI単体62成功後、旧24px期待値でブラウザが停止しbatch全体はfailed。後続項目をpassとしない。 |
+| `3d6488fd` | Issue詳細10幅/テーマ、年月日時分・Asia/Tokyo日付繰上げ・英日・390px・作成非表示、sidebarの短長一覧×3高さ、Project移送の隔離Chromiumが成功。未使用i18n keyなし、diff確認成功。 |
+| `3d6488fd` | 専用LVK_INSTANCE_DIR/XDG_CACHE_HOMEのservices repository_memory/openwiki/workspace_usage、server openwiki/bootstrap/integrations/shared_storageの焦点回帰、変更6crate全target/qa-mode Clippy -D warnings、generate-types:check、prepare-db:checkが成功。実provider依存等のignoredは成功に数えない。 |
+| `3d6488fd` | fmt確認は配列整形とmod宣言順の2点でfailed。その後のlintはこのbatchでは未実行。 |
+| `4b4946bdb5fe30629880676c33475dd811d3799b` | 2点を整形した最終コード基点。Rustfmtと変更製品UIの対象ESLintが成功。 |
+
+Rust batch request `bcd3bdc0-4b6f-4ad7-9607-14fde767a610`、browser `528d7a03-1542-42ab-a457-d6cb0f7305da`、復旧/Clippy/型/SQLx `d91ad10a-3f2f-45ae-b7f9-008d1c7964fa`、最終fmt/lint `f070f207-7cca-4995-857e-fbc8bfa8e389` を別の証拠として保持した。長い管理呼出しの300秒timeout後も元processは継続しており、新requestで二重起動せず、元receiptを照合し同一入力で終了結果を回収した。
+
+DB移送試験は[所有閉包・秘密allowlist・再ID/リンク・opt-in・旧rootなし再読込・rollback](../../crates/db/tests/project_transfer.rs)、[API認証/CSRFと同bytes確認](../../crates/server/src/routes/project_transfer/tests.rs)を扱う。406は[旧処理/lock拒否と取込履歴保全](../../crates/db/src/models/repository_state/cutover.rs)、[既存DB upgrade](../../crates/db/src/models/repository_state/coding_runs.rs)、[原本・清掃・別process排他](../../crates/utils/src/repository_memory.rs)、[Wiki cleanup再試行](../../crates/server/src/routes/openwiki.rs)を扱う。384のmockは受付echo、compact/replay、失敗時全文fallback、設定/権限境界、Codex他provider回帰を検査する。[instruction fixture](../../crates/executors/src/executors/claude/instructions.rs)・[protocol fixture](../../crates/executors/src/executors/claude/protocol.rs)
+
+### 省略の帰属と残リスク
+
+ユーザー指定は新たな実provider AUTO auth/startの禁止である。Claude固定文省略は有効な実装を保ち、今回の製品実provider結合受入は未完と明記する。過去AUTO初期化失敗の原因は未確定であり、今回のmock診断を過去へ遡及しない。CLI受付をモデル到達・遵守の証明としない。
+
+agent判断では包括check/lint/backend:test、認証済み製品全体・物理mobile/VSCode・実image/container交換・実DB移行を省略した。焦点回帰、consumer全target/qa-mode、型/SQLxと実component browserを優先したためで、未実施をpassにしない。ConversationListContainerの既存eslint directive違反/Hook警告は保存Manifestの既知項目で、今回の2props配線を越える修正へ広げず対象lintから除外した。
+
+最終整形SHAでの同じ試験/install/buildの再実行もagent判断のskipである。`4a23b918`→`3d6488fd`は試験期待値だけ、`3d6488fd`→`4b4946bd`は整形・mod宣言順だけで、製品挙動の変更がないと差分レビューした。古いSHAのpassを最終SHAの実施passへ付け替えていない。最終code SHAには実施済みfmt/対象lintと、この理由/残リスクを持つskipを記録した。
+
+### Wiki・公開と運用条件
+
+最初のbegin前にprepare_wiki request `a5a4b655-32c7-4341-8b81-0d027b35849d` をcode `4b4946bd` で成功させ、原本digest `61685492cd2f92a32a334acc39bbc49870d46082e87e665c4e98adc7d2ebfdca` を保存した。同じ候補で通常Wiki更新を行い、Wikiだけを別commitにする。コード検証、Wiki lifecycle完了、公開要求保存、Run終了後hostによる限定復元とlocal mainの実Git適用は別の事実である。
+
+live DB/旧artifact/lockの移行、認証変更、GitHub push、stable配置、restartは行っていない。406の切替前には旧writerを元バージョン・固定pathで収束させ、対応するDB/volume/鍵/設定を保全する。missing legacy rootやheld lockを空成功へ変えず、artifact_layout=2を手編集して迂回しない。[切替前提](../concepts/repository-memory.md#ユーザー成果物復旧ファイル完了履歴の寿命local-406)
+
+検証の一時instanceはtrapで削除し、SQLx一時SQLiteとwal/shmの不在を確認した。checkoutの通常target/依存は再利用用に残す。表示証拠は `.build/issue-layout/`、`.build/project-transfer-browser/`、`test-results/utility-sidebar/results.json` に保持し、稼働serviceや他Workspaceのartifactは削除していない。

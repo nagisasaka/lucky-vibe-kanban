@@ -5,7 +5,7 @@ description: AgentRun を独立プロセスで実行し、Native Audit から永
 tags: [agent-runtime, audit, persistence, recovery]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-16T23:50:22.756Z
+    at: 2026-11-17T00:44:00.706Z
 sources:
   - id: openwiki-source-b85c3dc0eaacdffedf4e68ee
     resource: repo://crates/db/migrations/20261026180000_agent_starting_recovery.sql
@@ -21,8 +21,14 @@ sources:
     resource: repo://crates/db/src/models/agent_runtime_reservation_tests.rs
   - id: openwiki-source-d20a82e2192a07c687b838cb
     resource: repo://crates/db/src/models/agent_runtime.rs
+  - id: openwiki-source-a3956271cbf62ae0786e7fc7
+    resource: repo://crates/executors/src/env.rs
   - id: openwiki-source-bfcf08b9feacd16360e862a4
     resource: repo://crates/executors/src/executors/claude.rs
+  - id: openwiki-source-9adb915d14d7350d18905dd7
+    resource: repo://crates/executors/src/executors/claude/client.rs
+  - id: openwiki-source-8ad41300e8700b7739661ba2
+    resource: repo://crates/executors/src/executors/claude/instructions.rs
   - id: openwiki-source-b15b24f9113eb215c902d4b4
     resource: repo://crates/executors/src/executors/claude/protocol.rs
   - id: openwiki-source-22b82518475034ade38104e6
@@ -31,6 +37,8 @@ sources:
     resource: repo://crates/executors/src/executors/codex/client.rs
   - id: openwiki-source-f4e0f9b2ce513d3f8b8b070e
     resource: repo://crates/executors/src/executors/provider_adapter.rs
+  - id: openwiki-source-1a19abe716ab0ea22c6fccd3
+    resource: repo://crates/executors/src/instruction_delivery.rs
   - id: openwiki-source-351583963abfe37bbf137f7e
     resource: repo://crates/executors/src/runtime/contracts.rs
   - id: openwiki-source-19ceaa0b0195b09764cb7a9b
@@ -79,7 +87,7 @@ sources:
     resource: repo://crates/workspace-manager/src/workspace_manager.rs
   - id: openwiki-source-141584dac09cf0f93be6bff5
     resource: repo://tests/codex-process-cleanup/README.md
-generated: { by: "codex", at: "2026-11-16T23:50:22.756Z" }
+generated: { by: "codex", at: "2026-11-17T00:44:00.706Z" }
 ---
 
 # Agent Runtime の監査・投影・回復
@@ -273,7 +281,7 @@ PTY service は所有対象の停止、shell の wait、reader thread の join �
 
 ## Claude の result と起動失敗の終端
 
-新規Claude監査はmapper v6を使う。v5で成功resultの`api_error_status: null`をエラー扱いしない判定と、成功・失敗resultの終端投影を導入し、v6では成功本文の型を検証する。本文は文字列（空文字を含む）または欠落/nullを許し、それ以外は`ProtocolFailed`とFailed終端にする。`structured_output`を独自に本文へ変換しない。旧v5以前の監査は当時のmapperで再生する。[分類と投影](../../crates/executors/src/executors/provider_adapter.rs)
+新規Claude監査はmapper v7を使う。v5で成功resultの`api_error_status: null`をエラー扱いしない判定と、成功・失敗resultの終端投影を導入し、v6では成功本文の型を検証する。本文は文字列（空文字を含む）または欠落/nullを許し、それ以外は`ProtocolFailed`とFailed終端にする。`structured_output`を独自に本文へ変換しない。v7はlocal compactのresultがsuccessでも本文が `Error during compaction:` なら失敗へ分類し、result自体を指示配信の証拠にしない。旧v6以前の監査は当時のmapperで再生する。[分類と投影](../../crates/executors/src/executors/provider_adapter.rs)
 
 Claude protocolはinitialize、permission設定の応答をrequest IDで待ち、失敗・期限切れ・prompt送信失敗を所有側のexit signalへ通知する。result前のEOFやreader失敗も待ち続けない。Hostは非ゼロOS終了が先着してもproviderの失敗理由を保持し、既存の所有process回収・drain・監査closeを経て最終化する。[protocol](../../crates/executors/src/executors/claude/protocol.rs)・[起動](../../crates/executors/src/executors/claude.rs#L812-L852)・[終端理由](../../crates/local-deployment/src/process_host.rs#L1220-L1295)
 
@@ -303,3 +311,16 @@ Codex mapper v9はnative `error`の`willRetry: true`をSystem進捗メッセー�
 通常Sessionと正式自動マージworkerは同じthread startパラメータを使う。Auto sandboxで承認指定がなければon-request、明示on-request/never/unless-trustedはその値を渡し、それ以外の未指定ではnative設定を継承する。保存設定・送信値・実効値は別の証拠であり、承認設定をモデルの判断や実行成功と混同しない。[パラメータ](../../crates/executors/src/executors/codex.rs#L1192-L1211)・[隔離検証記録](../../tests/settings-redesign/APPROVAL-VERIFICATION.md)
 
 stdioの`get_context`はread-only/non-destructive/closed-worldを宣言する。guide取得時のresource path解決は非作成の`asset_dir_path`を使い、dataディレクトリも生成しない。起動前のguideファイル配置は従来のprepareの責務であり、読み取りと分離される。他の書込toolの認可は変更しない。[context](../../crates/mcp/src/task_server/tools/context.rs#L24-L56)・[guide](../../crates/utils/src/agent_guides.rs#L15-L29)・[stdio回帰](../../crates/mcp/src/task_server/tools/stdio_tests.rs)
+
+
+## 通常継続の固定指示と実配信記録（LOCAL-384）
+
+固定契約のfingerprintとnative Sessionごとの受付receiptを分け、通常codingの既知Session継続で契約が一致すると追加注入を現在のRun/DRAFT等へ縮める。初回・契約変更・受付不明は全文fallbackであり、送信前にreceiptを失効する。Reviewや専用保守の契約を通常codingの省略条件へ混ぜない。[scope](../../crates/executors/src/env.rs)・[receipt](../../crates/executors/src/instruction_delivery.rs)
+
+Codexはnative resumeのsettingsと追加developer messageを別に扱い、settingsの固定契約を維持する。観測済みcompactionはreceiptを失効し、次の通常継続で全文を再送する。未承認hookや履歴JSONL解析で保持を推測しない。[client](../../crates/executors/src/executors/codex/client.rs)
+
+Claudeの省略は、通常codingの標識付きsuffix、対応するprofile/引数、正確に解決したCLIの `2.1.308 (Claude Code)` という受動version確認に限定する。異なる経路は全文のまま。SDKのPreCompactで失効し、SessionStart(source=compact)へ固定契約と最新値を返す。同じrequestの再送を区別し、相関するexact echoと境界が揃わなければ受付済みにしない。generic success、誤Session、拒否・timeout・boundary欠落から成功を作らない。ユーザー設定の信頼付与や権限変更はこの機構の責務ではない。[条件](../../crates/executors/src/executors/claude.rs)・[compact状態](../../crates/executors/src/executors/claude/instructions.rs)・[protocol](../../crates/executors/src/executors/claude/protocol.rs)
+
+adapterの実write/ACK境界で内容・経路・role・理由とattempted/accepted/unconfirmedを記録する。Codex v8/v9とClaude v7がこのLVK拡張をcanonicalへ投影し、通常の人間本文を改変せず[折りたたみ表示](web-and-sync.md)へ渡す。CLI受付はモデル到達・遵守や参照先の読込証明ではない。[投影](../../crates/executors/src/executors/provider_adapter.rs)
+
+今回のmock回帰と[SHA別検証](../operations/development.md#local-384396406339の固定統合検証)を実provider受入と混同しない。Claudeの今回の製品結合受入は未完で、過去AUTO初期化失敗の原因も未確定のままである。固定文省略は有効な実装を維持し、新しいAUTO auth/startは行っていない。

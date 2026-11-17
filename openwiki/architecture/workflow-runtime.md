@@ -32,6 +32,8 @@ sources:
     resource: repo://crates/services/src/services/orchestration_dispatch_tests.rs
   - id: openwiki-source-b19d02455156008b43c210c8
     resource: repo://crates/services/src/services/orchestration.rs
+  - id: openwiki-source-a171e1a170f941fa2a4ba003
+    resource: repo://crates/utils/src/repository_memory.rs
   - id: openwiki-source-5bd46b87a60accbf6cd6da13
     resource: repo://crates/workflow/src/planner.rs
   - id: openwiki-source-63d2b16e8e208dce3e2032ac
@@ -44,10 +46,10 @@ sources:
     resource: repo://packages/web-core/src/shared/hooks/useWorkspaceRepositoryWorkflow.ts
   - id: openwiki-source-23775c3de52f3ab95a13cb8b
     resource: repo://README.md
-generated: { by: "codex", at: "2026-11-16T15:12:08.330Z" }
+generated: { by: "codex", at: "2026-11-17T00:44:00.706Z" }
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-16T15:12:08.330Z
+    at: 2026-11-17T00:44:00.706Z
 ---
 
 # Workflow の実行と耐久オーケストレーション
@@ -146,9 +148,9 @@ Bootstrap は専用 Workspace の `execution_owner` を Workflow run に結び�
 
 ### Bootstrap の成果物参照は通常の上流本文と分ける
 
-OpenWiki Bootstrap は、通常 Workflow の会話引継ぎへ Review の全文を流さない。host が Reviewer の JSON と evidence path を検証し、repository shared storage へ完全なレポートを保存する。node output には repository・source SHA・Workflow run・Session・AgentRun・phase の identity、digest、verdict と件数だけを残す。[Review 完了時](../../crates/server/src/workflow_runtime/bootstrap.rs#L504-L533)、[保存と参照](../../crates/services/src/services/openwiki/bootstrap/reports.rs#L15-L38)
+OpenWiki Bootstrap は、通常 Workflow の会話引継ぎへ Review の全文を流さない。host が Reviewer の JSON と evidence path を検証し、instance管理tmpのrepository-memory領域へ完全なレポートを保存する。node output には repository・source SHA・Workflow run・Session・AgentRun・phase の identity、digest、verdict と件数だけを残す。[Review 完了時](../../crates/server/src/workflow_runtime/bootstrap.rs#L504-L533)、[保存と参照](../../crates/services/src/services/openwiki/bootstrap/reports.rs#L15-L38)
 
-system Condition はこの検証済み verdict から `pass` / `refine` を決定的に選び、通常の LLM Condition を呼ばない。Refiner には host が決めたファイル参照を渡す。参照の identity と内容 digest は再読込時に検証され、共有ファイルが改変された場合は再生成で隠さず拒否する。したがって、通常の上流 handoff の文字数制限を緩めずに Review の情報を保持できる。[分岐](../../crates/server/src/workflow_runtime/runner.rs#L2446-L2475)、[Refine dispatch](../../crates/server/src/workflow_runtime/bootstrap.rs#L320-L332)、[参照の再検証](../../crates/services/src/services/openwiki/bootstrap/reports.rs#L72-L113)
+system Condition はこの検証済み verdict から `pass` / `refine` を決定的に選び、通常の LLM Condition を呼ばない。Refiner には host が決めたファイル参照を渡す。参照の identity と内容 digest は再読込時に検証され、管理ファイルが改変された場合は再生成で隠さず拒否する。したがって、通常の上流 handoff の文字数制限を緩めずに Review の情報を保持できる。[分岐](../../crates/server/src/workflow_runtime/runner.rs#L2446-L2475)、[Refine dispatch](../../crates/server/src/workflow_runtime/bootstrap.rs#L320-L332)、[参照の再検証](../../crates/services/src/services/openwiki/bootstrap/reports.rs#L72-L113)
 
 この仕組みは任意ファイルを下流 prompt に挿入する汎用 artifact 機構ではない。詳細なレビュー契約と publication 前の再検証は [OpenWiki maintenance](../operations/openwiki-maintenance.md)へ集約する。
 
@@ -161,3 +163,6 @@ system Condition はこの検証済み verdict から `pass` / `refine` を決�
 新規Workflow Workspaceは現在のProject作成プリセットに選択Repoが含まれることと各base branchの実在を検査する。旧Project保存branchをWorkspaceの選択branchとして採用せず、Repo既定値/現在branchから候補を作る。既存Workspaceの再利用はその構成を保つ。UIのWorkflow選択は単一Repoを守り、通常Workspaceの全プリセット選択とは別である。
 
 内部リンク処理はWorkflow自身の同じProject/Issueリンクなら冪等に再利用する。他Issueのリンクを付け替えず、共有リンク層の孤立のみINSERTを通す。worktree snapshotとArena winnerの差分適用はRepo表示名ではなく保存配置名を使う。複数Repoの適用は順次で、全体rollbackや原子性を追加しない。[Workspace resolver](../../crates/server/src/workflow_runtime/workspace.rs)・[snapshot](../../crates/server/src/workflow_runtime/runner.rs)・[Arena](../../crates/server/src/workflow_runtime/arena.rs)
+
+
+LOCAL-406では共有persistentをユーザー成果物専用にし、Bootstrapの検証済みreportと固定入力は管理tmp、再生成可能な索引は管理cacheへ分離した。DBのWorkflow/node参照・digestは復旧artifactの代替ではない。原本復元・公開/照合・後続読取終了が揃った後だけ既存cleanupが片付け、不明や失敗では保持して既存monitorが再照合する。[保存先と寿命](../concepts/repository-memory.md)・[保守と復旧](../operations/openwiki-maintenance.md)

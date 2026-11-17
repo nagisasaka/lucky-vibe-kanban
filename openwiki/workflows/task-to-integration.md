@@ -98,10 +98,10 @@ sources:
     resource: repo://packages/web-core/src/shared/dialogs/shared/WorkspaceTargetDialog.tsx
   - id: openwiki-source-ffc55e6e31e6ce477ca57329
     resource: repo://packages/web-core/src/shared/hooks/useWorkflowRun.ts
-generated: { by: "codex", at: "2026-11-16T15:12:08.330Z" }
+generated: { by: "codex", at: "2026-11-17T00:44:00.706Z" }
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-16T15:12:08.330Z
+    at: 2026-11-17T00:44:00.706Z
 ---
 
 # Issue から実行・レビュー・統合まで
@@ -316,4 +316,13 @@ WorkspaceのGit操作から開く場合は当該Workspace/Repoを選択し、Kan
 
 アーカイブ衝突・保存失敗・候補blob改変なら公開を止め、元request ID・expected commitと保存済み親/treeを保持して正式経路で診断する。未公開を公開済みとせず、古いファイルの更新/削除で回避しない。[アーカイブ契約と回復](../concepts/formal-integration.md#採用issue本文の任意アーカイブlocal-399)・[管理action](../../crates/server/src/routes/integrations/conversation.rs)
 
-LOCAL-398の確定ManifestはDB正本であり、通常読取URLと固定event IDを使う。旧共有JSONが残っていても通常読取正本へ戻さない。[取込・失敗時の境界](../concepts/repository-memory.md#確定manifestのdb正本と起動時取込local-398)・[正式候補の検証と未実施](../operations/development.md#local-398399の統合検証)
+LOCAL-398の確定ManifestはDB正本であり、通常読取URLと固定event IDを使う。旧共有JSONが残っていても通常読取正本へ戻さない。[DB正本・旧取込の履歴と現行切替境界](../concepts/repository-memory.md#確定manifestのdb正本と起動時取込local-398)・[正式候補の検証と未実施](../operations/development.md#local-398399の統合検証)
+
+
+## 管理artifactの保護を含む完了順（LOCAL-406）
+
+通常codingでは現在Run identityをDBへ残し、semantic draftとGit前publication snapshotはinstance管理tmpに置く。成功時はexact tree・DB Manifestと凍結identityを照合してから片付け、失敗・不明・不正draftを一律に削除しない。利用者の共有persistentは成果物用として維持する。[保存先・lock・復旧条件](../concepts/repository-memory.md#ユーザー成果物復旧ファイル完了履歴の寿命local-406)
+
+正式自動マージは全source統合後に有効なIssue archiveを作り、コード検証/理由付きskip、begin前prepare_wiki、同候補の通常Wiki更新と別commit、公開要求の順に進める。AGENTS.md/CLAUDE.mdのsetup差分を担当が復元せず残し、公開要求後はwriterを終了する。hostは全writer収束・原本照合・限定復元・cleanと最終SHAを検証し、Git/DB公開bookkeeping後にjournalを片付ける。cleanup失敗はpost_processingから既存monitorで再照合する。[正式統合](../concepts/formal-integration.md#管理artifactと完了後の掃除local-406)
+
+384/396/406/339の今回の候補では、アーカイブ `dee08718`、コード基点 `4b4946bd` とWiki/公開SHAを区別する。[SHA別の失敗・修復・試験・省略](../operations/development.md#local-384396406339の固定統合検証)を参照する。Wiki lifecycle完了だけをmain適用成功にせず、GitHub push・stable・restartは行わない。

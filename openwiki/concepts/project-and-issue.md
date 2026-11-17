@@ -46,6 +46,8 @@ sources:
     resource: repo://crates/db/src/models/issue_order.rs
   - id: openwiki-source-ccd357b1781e6e90e56fd858
     resource: repo://crates/db/src/models/repo.rs
+  - id: openwiki-source-bfeb31abecf9b81f73b98a39
+    resource: repo://crates/db/src/project_transfer/history.rs
   - id: openwiki-source-4f59e07f8850eb04105d5cb8
     resource: repo://crates/db/tests/generated_issue_status.rs
   - id: openwiki-source-a43253b5be9686da077b8067
@@ -104,6 +106,8 @@ sources:
     resource: repo://packages/web-core/src/features/kanban/ui/KanbanContainer.tsx
   - id: openwiki-source-efd2346cc808d71c75e004b0
     resource: repo://packages/web-core/src/pages/kanban/IssueTaskAttemptsSectionContainer.tsx
+  - id: openwiki-source-b7caca432ab4ead6087a0935
+    resource: repo://packages/web-core/src/shared/components/ProjectTransferPanel.tsx
   - id: openwiki-source-8bf9c53954166f4a7e70ae94
     resource: repo://packages/web-core/src/shared/components/ProjectWorkspaceDefaultContext.test.tsx
   - id: openwiki-source-1665c3801b2c75a34634dc00
@@ -122,10 +126,10 @@ sources:
     resource: repo://tests/kanban/issue-detail.mjs
   - id: openwiki-source-62d93277f2c37df9b3fcebae
     resource: repo://tests/kanban/README.md
-generated: { by: "codex", at: "2026-11-16T23:50:22.756Z" }
+generated: { by: "codex", at: "2026-11-17T00:58:56.837Z" }
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-16T23:50:22.756Z
+    at: 2026-11-17T00:58:56.837Z
 ---
 
 # Project・Issue と実施の関係
@@ -346,7 +350,7 @@ remote MCPの `delete_issue(project_id, issue_id, request_id)` は既存Boardの
 
 Issueの「タスクの試行」から共通開始ダイアログを開き、単一Agentを既定に[3 preset](workflow-attempt.md)を選ぶ。Repo/branchと工程parameterを同じ開始で指定し、Workflowの結果は既存Runへ遷移する。既存Attempt/Workspace一覧は保持する。共有UIには任意のarenaOption slotが残るが、現行Issue containerは新規Arena選択を接続しない。新規Arena APIも拒否する。[共通表示](../../packages/ui/src/components/IssueTaskAttemptsSection.tsx)・[開始](../../packages/web-core/src/pages/kanban/IssueTaskAttemptsSectionContainer.tsx)・[旧Arena](arena.md)
 
-表示変更の検査入口は `PLAYWRIGHT_BROWSERS_PATH=/opt/lvk-browsers node tests/kanban/issue-detail.mjs`。本番コンポーネントと inert fixture で5幅×明暗、長文・表・複数コメント・関連・サブ課題と操作を検査する。live ConversationList / SessionChatBoxContainer は mount せず、認証済みアプリ・実機・VSCode E2E の証明にはしない。[試験の範囲](../../tests/kanban/README.md#issue-detail-and-split-conversation-reading-surfaces) 今回の統合保守では既存source証拠を参照し、描画試験を再実行していない。
+表示変更の検査入口は `PLAYWRIGHT_BROWSERS_PATH=/opt/lvk-browsers node tests/kanban/issue-detail.mjs`。本番コンポーネントと inert fixture で5幅×明暗、長文・表・複数コメント・関連・サブ課題と操作を検査する。live ConversationList / SessionChatBoxContainer は mount せず、認証済みアプリ・実機・VSCode E2E の証明にはしない。[試験の範囲](../../tests/kanban/README.md#issue-detail-and-split-conversation-reading-surfaces) 以前の統合保守では既存source証拠を参照して描画試験を再実行しなかった。LOCAL-384/396/406/339の今回の統合では、現行mainの28px期待値へ整合後に描画を再実行した。[SHA別の実施・失敗・省略](../operations/development.md#local-384396406339の固定統合検証)を区別して読む。
 
 
 ### 採用後もsource作業が続く場合（LOCAL-364）
@@ -370,3 +374,12 @@ migrationは既存本文をNULL/空文字も含めてInitialという初期1版�
 ### 採用時の本文固定とGitアーカイブ（LOCAL-399）
 
 自動マージの受付は `current_version_id` の保存済み現在版を直接読み、版ID/revision・原文・Issue UUID・表示ID・タイトル・UTC時刻を固定する。後日の版編集や再依頼補足はこのsnapshotを置換しない。全体設定 `issue_archive_enabled` は既定OFFで、ONを受付時に採った場合だけ検証/Wiki前の専用追加commitに本文全文を残す。これは表示から外すIssue archiveとは別機能であり、コメント・会話・添付実体を保存しない。[固定](../../crates/server/src/routes/integrations/admission.rs)・[任意アーカイブの操作と回復](formal-integration.md#採用issue本文の任意アーカイブlocal-399)
+
+
+## 詳細の作成日時とProject可搬性（LOCAL-339/396）
+
+編集モードのIssue詳細はタイトル下に `created_at` をラベルなしのtime要素で表示する。年月日・時分までで秒や相対時刻を出さず、画面localeとブラウザtimezoneに従う。欠落/不正日時と新規作成では表示しない。ボード/カード、APIとモデルの変更ではない。[描画](../../packages/ui/src/components/KanbanIssuePanel.tsx#L207-L214)・[表示精度](../../packages/ui/src/components/KanbanIssuePanel.tsx#L394-L417)
+
+[ProjectのSQLite移送](project-transfer.md)はGitを別途準備した移行先へLVK所有記録を追加する操作で、既存Projectを上書きしない。Project utilitiesからexport/import、Project設定から既存Projectなしのimportを始められる。会話は明示opt-in、添付は欠落summaryだけで、import履歴は実行可能Workspaceではなく専用read-only archiveになる。[入口](../../packages/web-core/src/shared/components/ProjectTransferPanel.tsx)・[Project設定](../../packages/web-core/src/shared/dialogs/settings/settings/RemoteProjectsSettingsSection.tsx)
+
+importした本文・版・コメントは保存文字列を保ち、旧パスや画像を解決しないliteralの閲覧/編集にする。import判定がloading/errorなら安全側に同じ表示を保つ。[editor](../../packages/web-core/src/shared/components/ProjectIssueEditor.tsx)・[判定](../../packages/web-core/src/shared/hooks/useImportedProject.ts)。これは過去のnative Session再開やRepoのcanonical Manifest/Wiki消費履歴の再発行ではない。

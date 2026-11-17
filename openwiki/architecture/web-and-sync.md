@@ -64,6 +64,8 @@ sources:
     resource: repo://packages/ui/src/components/CodeHighlightPlugin.tsx
   - id: openwiki-source-5e4c1802d2c1ee81cad7ac45
     resource: repo://packages/ui/src/components/IssueWorkspaceCard.tsx
+  - id: openwiki-source-ed7fffb17643f4b83bd352a5
+    resource: repo://packages/ui/src/components/KanbanIssuePanel.tsx
   - id: openwiki-source-9ac09945bdd807003978190a
     resource: repo://packages/ui/src/components/KanbanTags.tsx
   - id: openwiki-source-fc852f232a501f48c2781efb
@@ -122,8 +124,6 @@ sources:
     resource: repo://packages/web-core/src/features/pets/petStatus.ts
   - id: openwiki-source-71d9a385f4b03b8ca71765b0
     resource: repo://packages/web-core/src/features/wiki/model/wikiViewerController.ts
-  - id: openwiki-source-0cd94f38cc1a16e284fe2b1c
-    resource: repo://packages/web-core/src/features/wiki/ui/WorkspaceWikiPanel.tsx
   - id: openwiki-source-202a77c218ffbc8ac2871a04
     resource: repo://packages/web-core/src/features/wiki/ui/WorkspaceWikiProvider.tsx
   - id: openwiki-source-5ff018fe0b1ec29d9745aca4
@@ -146,6 +146,8 @@ sources:
     resource: repo://packages/web-core/src/features/workspace-chat/ui/ExecutionInspectionPanel.tsx
   - id: openwiki-source-dbaab3d3ce907e13656fcbed
     resource: repo://packages/web-core/src/features/workspace-chat/ui/IntegrationFacts.tsx
+  - id: openwiki-source-ec5e6478cb138d40ead649a1
+    resource: repo://packages/web-core/src/features/workspace-chat/ui/LvkInstructionsEntry.tsx
   - id: openwiki-source-3f4f76b473cff31732d54424
     resource: repo://packages/web-core/src/features/workspace-chat/ui/WorkspaceTokenSummary.tsx
   - id: openwiki-source-b20f21ce6e1fdbde2fcde6ed
@@ -190,6 +192,8 @@ sources:
     resource: repo://packages/web-core/src/shared/components/MarkdownInline.tsx
   - id: openwiki-source-e43fc86a21c713666db8bb2b
     resource: repo://packages/web-core/src/shared/components/MarkdownPreview.tsx
+  - id: openwiki-source-1302907005698efad4e6a002
+    resource: repo://packages/web-core/src/shared/components/ProjectIssueEditor.tsx
   - id: openwiki-source-a7cac6e6f3abafbcf9390ddf
     resource: repo://packages/web-core/src/shared/components/RouteLoadState.tsx
   - id: openwiki-source-867b74d482ff6cc365176503
@@ -198,8 +202,8 @@ sources:
     resource: repo://packages/web-core/src/shared/components/ui-new/containers/NavbarContainer.tsx
   - id: openwiki-source-4f5acbe99dd0d72515b7e82b
     resource: repo://packages/web-core/src/shared/components/ui-new/containers/SharedAppLayout.tsx
-  - id: openwiki-source-93851bff2ebf05ba57ca3277
-    resource: repo://packages/web-core/src/shared/components/UtilitySidebar.tsx
+  - id: openwiki-source-669dd59c8eba5a678a02e299
+    resource: repo://packages/web-core/src/shared/components/UtilitySidebar.css
   - id: openwiki-source-10caf2340da819f813f5ea62
     resource: repo://packages/web-core/src/shared/components/WYSIWYGEditor.tsx
   - id: openwiki-source-7e0da77c31130e66a4b635a5
@@ -214,6 +218,8 @@ sources:
     resource: repo://packages/web-core/src/shared/hooks/useCodexQuota.ts
   - id: openwiki-source-5cead200f725b8a7ed11e3cd
     resource: repo://packages/web-core/src/shared/hooks/useGitHubStars.ts
+  - id: openwiki-source-3e18850057323970085dcd11
+    resource: repo://packages/web-core/src/shared/hooks/useImportedProject.ts
   - id: openwiki-source-70a9c5225d8ef0472482d401
     resource: repo://packages/web-core/src/shared/hooks/useJsonPatchWsStream.ts
   - id: openwiki-source-dd033ed16fc4890fc3bf77a7
@@ -314,10 +320,10 @@ sources:
     resource: repo://tests/workspace-navigation/run-isolated.py
   - id: openwiki-source-b87e3253bd1458a0091f8587
     resource: repo://tests/workspace-navigation/workspace-navigation.spec.ts
-generated: { by: "codex", at: "2026-11-16T18:11:18.484Z" }
+generated: { by: "codex", at: "2026-11-17T00:44:00.706Z" }
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-16T18:11:18.484Z
+    at: 2026-11-17T00:44:00.706Z
 ---
 
 # Web の実行環境と同期
@@ -684,7 +690,7 @@ archive 欄表示、archive 対象への遷移、Issue の Workspace 一覧表�
 
 ### Wikiツリーの高さ配分
 
-KanbanとWorkspaceの共通 `UtilitySidebar` は縦flexで、各項目を縮めず外側の縦スクロールを維持する。Wiki項目は展開ボタンの `aria-expanded=true` に対応するCSSで残り高さを使い、固定 `h-80` を持たない。Wiki内navはsize containmentと `1lh` の最小高で長いツリーの内容高を親の最小高から除外し、操作欄と最低1行を残して内部スクロールする。小さい画面で全項目が収まらない場合は外側スクロールで到達する。[共通配置](../../packages/web-core/src/shared/components/UtilitySidebar.tsx)・[Kanban](../../packages/web-core/src/pages/kanban/ProjectUtilities.tsx)・[Workspace](../../packages/web-core/src/pages/workspaces/RightSidebar.tsx)
+KanbanとWorkspaceの共通 `UtilitySidebar` は縦flexで、各項目を縮めず外側の縦スクロールを維持する。ファイルとWikiの `utility-fill-section` は展開ボタンの `aria-expanded=true` に対応するCSSで残り高さを配分し、固定 `h-80` を持たない。Wiki内navはsize containmentと `1lh` の最小高で長いツリーの内容高を親の最小高から除外し、操作欄と最低1行を残して内部スクロールする。小さい画面で全項目が収まらない場合は外側スクロールで到達する。[共通配置](../../packages/web-core/src/shared/components/UtilitySidebar.tsx)・[Kanban](../../packages/web-core/src/pages/kanban/ProjectUtilities.tsx)・[Workspace](../../packages/web-core/src/pages/workspaces/RightSidebar.tsx)
 
 
 ### Repository設定操作後のcanonical Wiki表示
@@ -748,3 +754,16 @@ ThemeModeはSystem/Light/Darkの3種を維持する。明側のStandard/Paper/Li
 ThemeProviderはmatchMediaの変更を購読し、SystemだけがOSに追従する。解決した明暗をhtmlのクラスへ、配色を `data-color-theme` へ反映し、Standardは属性を除去する。共通CSSトークンとTailwindの意味色が主要surfaceへ伝わり、画面別の分岐は増やさない。ブランドオレンジのfill/hoverは6配色で共通、塗りボタンは濃い文字、ライトのリンク/focusは専用アクセントを使う。[provider](../../packages/local-web/src/app/providers/ThemeProvider.tsx)・[rootへの適用](../../packages/web-core/src/shared/lib/theme.ts)・[CSS](../../packages/web-core/src/app/styles/new/index.css)・[対応token](../../packages/local-web/tailwind.new.config.js)
 
 [テーマ回帰](../../tests/color-themes/README.md)は実コンポーネントとCSSの隔離fixtureで、保存前非適用・OS追従・キーボード/focusと6配色のコントラストを検査する。fixtureの保存は模擬状態であり、実設定API一体E2Eとは区別する。[候補の検証と証拠](../operations/development.md#local-382のテーマ統合と証拠)
+
+
+## 追加指示・Issue詳細と移送の表示（LOCAL-384/339/396）
+
+LVK追加指示は人間本文のmarker分割ではなく、adapterが記録した専用eventを `LvkInstructionsEntry` の閉じたdetailsへ投影する。同じdelivery IDの受付更新をまとめ、attempted・CLI accepted・unconfirmed・記録なしを区別する。記録なしから未送信を断定せず、現在設定から過去内容を生成しない。経路/role/理由、Run/native Session、試行と最終観測時刻、実際の内容を表示する。CLI受付はモデル遵守の証明ではない。[表示](../../packages/web-core/src/features/workspace-chat/ui/LvkInstructionsEntry.tsx)・[投影](../../packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts)
+
+Issue詳細の既存本文幅・情報階層を保ち、タイトル下だけに既存 `created_at` をラベルなしで表示する。標準locale日時処理に画面言語とブラウザtimezoneを使い、年月日・時分までで秒を出さない。新規作成・欠落・不正日時では表示せず、ボードやカードへ追加しない。現行main由来のタイトル1.75remも維持する。[panel](../../packages/ui/src/components/KanbanIssuePanel.tsx)・[受渡し](../../packages/web-core/src/pages/kanban/KanbanIssuePanelContainer.tsx)
+
+共通sidebarはRepo IDをEnvironmentPanelへ渡す契約を保ち、ファイルとWikiが残り高さを使う。Workspaceでは既存セクション、上限を保った端末、最下部Wikiの順になる。短い一覧でも残り空間を使い、長い一覧は内部scroll、低い画面では外側scrollで見出しへ到達する。[配置](../../packages/web-core/src/pages/workspaces/RightSidebar.tsx)・[CSS](../../packages/web-core/src/shared/components/UtilitySidebar.css)
+
+Project utilitiesとProject設定には[SQLite移送](../concepts/project-transfer.md)の導線がある。import成功後は既存Project一覧をrefreshし、新IDを観測してからリンクを出す。refresh待ちをcommit済みimport失敗にせず再importを促さない。移送Projectの本文・版・コメントは旧画像/URLを実行しないliteral表示と編集にし、import判定のloading/error中もinertに保つ。通常Projectは非import確認後に既存rich editorを使う。[移送panel](../../packages/web-core/src/shared/components/ProjectTransferPanel.tsx)・[editor](../../packages/web-core/src/shared/components/ProjectIssueEditor.tsx)・[判定](../../packages/web-core/src/shared/hooks/useImportedProject.ts)
+
+[候補上の検証](../operations/development.md#local-384396406339の固定統合検証)は実componentと隔離Chromiumを使う。合成HTTPの表示試験と、別のSQLite/API試験、認証済み製品全体の未検証は分けて読む。

@@ -14,8 +14,6 @@ sources:
     resource: repo://crates/db/migrations/20261027090000_generated_issue_status.sql
   - id: openwiki-source-c01fa644be961cb7ee12d2b5
     resource: repo://crates/db/src/models/integration.rs
-  - id: openwiki-source-5144fccee237bf35dd134ccb
-    resource: repo://crates/db/src/models/repository_state.rs
   - id: openwiki-source-21149aa9001849998cda42a2
     resource: repo://crates/db/src/models/repository_state/manifests.rs
   - id: openwiki-source-4f59e07f8850eb04105d5cb8
@@ -58,16 +56,18 @@ sources:
     resource: repo://crates/services/src/services/openwiki/completion.rs
   - id: openwiki-source-c4df16e7e579927d462857d7
     resource: repo://crates/services/src/services/openwiki/setup/integration.rs
+  - id: openwiki-source-a171e1a170f941fa2a4ba003
+    resource: repo://crates/utils/src/repository_memory.rs
   - id: openwiki-source-9734052c014ed77357487607
     resource: repo://packages/web-core/src/features/workspace-chat/ui/IntegrationFacts.test.tsx
   - id: openwiki-source-dbaab3d3ce907e13656fcbed
     resource: repo://packages/web-core/src/features/workspace-chat/ui/IntegrationFacts.tsx
   - id: openwiki-source-344aff2e68b53276f6be4e40
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/IntegrationValidationSettings.tsx
-generated: { by: "codex", at: "2026-11-16T15:12:08.330Z" }
+generated: { by: "codex", at: "2026-11-17T00:44:00.706Z" }
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-16T18:11:18.484Z
+    at: 2026-11-17T00:44:00.706Z
 ---
 
 # 自動マージの選択・検証・公開
@@ -207,3 +207,12 @@ inspectは対象整合を確認後、変更操作の受付・状態・候補bran
 再送は元request IDと入力を保持する。Git commit後・DB記録前の停止は保存済み親/tree/messageに一致するHEADから回復する。内容衝突・無関係なindex・symlink・候補内の固定blob改変・保存失敗は検証/Wiki準備/公開を止める。同じRepo内の1 Issueは1回だけで、別Integrationでの再アーカイブは現行範囲外。過去ファイルの更新・削除や二重生成で回避しない。本文中の他Issue UUID言及はファイル自身の同一性に使わない。[prepareと照合](../../crates/server/src/routes/integrations/issue_archive.rs)・[呼出しguard](../../crates/server/src/routes/integrations/conversation.rs)・[公開時再検査](../../crates/server/src/routes/integrations/runtime.rs)
 
 LOCAL-398/399の正式候補 `e7f46db7fe09883223fa562ce3677734618f5e6a` は固定baseへ両sourceを無競合統合した。候補上の対象回帰・frontend型/対象lint/build・隔離4モード・Clippy・生成型検査と、省略・未検証範囲は[統合検証記録](../operations/development.md#local-398399の統合検証)に分ける。この統合自体の稼働設定は変更しておらず、新機能の有効化や実DB移行を意味しない。Wiki完了と公開要求、Run終了後のhostによるmain適用は別の結果である。
+
+
+## 管理artifactと完了後の掃除（LOCAL-406）
+
+setup原本journalは共有persistentではなくinstance管理tmpのrepository-memory配下に置く。DB正本のManifest・receiptと、復元に必要な原本ファイルを取り違えない。hostは復元済み最終SHAとGit/DBの公開記録を照合した後、既存post_processingのままjournal cleanupを行い、成功してからsucceededへ進む。cleanup失敗・中断は元artifactを保持して再照合し、時間経過やAgentRun終端だけで削除しない。lockは別のコンテナ共通domainで、cleanupがinodeを作り直さない。[cleanup条件](../../crates/utils/src/repository_memory.rs#L738-L791)・[完了順](../../crates/server/src/routes/integrations/runtime.rs#L530-L554)
+
+LOCAL-384/396/406/339の固定統合は、base `5a2b0fb3`、アーカイブ `dee08718`、コード基点 `4b4946bd` を区別する。全4sourceは候補の祖先に保持し、採用Issue原文は検証/Wiki前の専用commitに保存した。396の実装Run失敗と最終HEADの確定Manifest欠落という過去の事実は変更せず、選択済みSHAの今回の検証を独立して記録した。[SHA別検証と残リスク](../operations/development.md#local-384396406339の固定統合検証)
+
+今回もWiki完了、Wiki commit、公開要求保存、Run終了後のhost復元・実Git適用は別の事実である。この本文や試験成功だけをlocal main反映済みの証拠にしない。GitHub push、stable配置、restartは対象外である。

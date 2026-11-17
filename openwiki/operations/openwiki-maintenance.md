@@ -16,6 +16,8 @@ sources:
     resource: repo://crates/db/migrations/20261027090000_generated_issue_status.sql
   - id: openwiki-source-5144fccee237bf35dd134ccb
     resource: repo://crates/db/src/models/repository_state.rs
+  - id: openwiki-source-02a5fb6ea4136a6d854604f6
+    resource: repo://crates/db/src/models/repository_state/cutover.rs
   - id: openwiki-source-4f59e07f8850eb04105d5cb8
     resource: repo://crates/db/tests/generated_issue_status.rs
   - id: openwiki-source-22b82518475034ade38104e6
@@ -102,10 +104,10 @@ sources:
     resource: repo://scripts/test-openwiki-focused.mjs
   - id: openwiki-source-7fd9452d5e666180c50f8cb7
     resource: repo://tests/openwiki/recovery.sh
-generated: { by: "codex", at: "2026-11-16T15:20:15.420Z" }
+generated: { by: "codex", at: "2026-11-17T00:44:00.706Z" }
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-16T15:20:15.420Z
+    at: 2026-11-17T00:44:00.706Z
 ---
 
 # OpenWiki の初期生成・同期・回復
@@ -370,9 +372,9 @@ Repository memory設定の状態取得は15秒周期である。保存済みbran
 
 Wikiの可変state・receipt・publicationとsource integration対応は、既存instance DBのrepository運用modelが正本である。通常Syncのowner結果・receipt・stateは同じtransactionで確定し、自動マージのreceipt・state・integration結果も一括確定する。GitはDBと同じtransactionにはならず、Git操作前のpublication intentと実SHA/tree/markerを照合して途中停止を回復する。復旧のためだけに別の恒久監査基盤を追加しない。[運用model](../../crates/db/src/models/repository_state.rs)・[Sync確定](../../crates/server/src/routes/openwiki.rs#L604-L629)・[統合確定](../../crates/server/src/routes/integrations/runtime.rs#L503-L540)
 
-Syncは統合済みsourceとDB正本から得た該当Manifestを固定入力にし、可変Workspace Memoryをsnapshotしない。確定Manifestの正本はDBへ移り、固定sync-inputs・source-publications・Run checkpoint・setup原本/復元journal・Bootstrap索引/reportは別責務でファイルに残る。WikiをOFFにしても通常coding Runのsource自動commitとManifest確定は止まらない。[固定入力](../../crates/services/src/services/openwiki/sync_input.rs#L30-L92)・[Runの責務](../concepts/repository-memory.md)
+Syncは統合済みsourceとDB正本から得た該当Manifestを固定入力にし、可変Workspace Memoryをsnapshotしない。確定Manifestの正本はDBへ移り、後から読むRun identity/完了診断はrepository_coding_runsに置き、固定sync-inputs・source-publications・setup原本/復元journal・Bootstrap索引/reportは別責務の復旧ファイルに残る。WikiをOFFにしても通常coding Runのsource自動commitとManifest確定は止まらない。[固定入力](../../crates/services/src/services/openwiki/sync_input.rs#L30-L92)・[Runの責務](../concepts/repository-memory.md)
 
-LOCAL-336で一度限りの移行CLI・importer・旧JSON decoder・未移行互換guardと専用runbookは撤去済みである。LOCAL-398の確定Manifest起動時取込とは別に、現行版には旧運用state JSONを再取込する操作はなく、通常DB modelとforward SQL migrationを維持する。残った旧ファイルを運用正本として読み戻さない。[現行起動入口](../../crates/server/src/main.rs#L42-L70)・[DB opener](../../crates/db/src/models/repository_state.rs#L32-L77)
+LOCAL-336で一度限りの移行CLI・importer・旧JSON decoder・未移行互換guardと専用runbookは撤去済みである。LOCAL-398の確定Manifest起動時取込もLOCAL-406で撤去済みであり、現行版には旧運用state JSONを再取込する操作はなく、通常DB modelとforward SQL migrationを維持する。残った旧ファイルを運用正本として読み戻さない。[現行起動入口](../../crates/server/src/main.rs#L42-L70)・[DB opener](../../crates/db/src/models/repository_state.rs#L32-L77)
 
 旧運用ファイルと廃止済みWorkspace Memory・専用検証記録の物理削除は別途、具体的な対象を確認して許可を得る。Manifest・固定sync-inputs・source-publications・setup原本/復元journal等を保持し、knowledge全体やbackupを一括削除しない。保存先と撤去境界は[Repository Memory](../concepts/repository-memory.md#運用状態のdb集約と一度限りの開発移行)、切替・復旧は[既存switch手順](../../deploy/developer/switch/README.md)を参照する。
 
@@ -442,6 +444,19 @@ openwiki/は生成・保守専用とし、manifest/frontmatter/generated.byか�
 
 ## DB正本とIssueアーカイブを経たWiki入力（LOCAL-398/399）
 
-確定ManifestはDB正本へ移り、pending選択・固定event ID解決・receipt検証はDBを参照する。sync-inputのmanifest/chunkとsetup原本journalは引き続きファイルで保持し、可変draftや私的会話を代替入力にしない。旧Manifestの起動時取込・失敗時の停止境界は[正本と取込](../concepts/repository-memory.md#確定manifestのdb正本と起動時取込local-398)を参照する。[DB receipt検証](../../crates/db/src/models/repository_state/manifests.rs)・[固定入力](../../crates/services/src/services/openwiki/sync_input.rs)
+確定ManifestはDB正本へ移り、pending選択・固定event ID解決・receipt検証はDBを参照する。sync-inputのmanifest/chunkとsetup原本journalは引き続きファイルで保持し、可変draftや私的会話を代替入力にしない。旧Manifest取込の履歴と現行cutover拒否境界は[DB正本と切替条件](../concepts/repository-memory.md#確定manifestのdb正本と起動時取込local-398)を参照する。[DB receipt検証](../../crates/db/src/models/repository_state/manifests.rs)・[固定入力](../../crates/services/src/services/openwiki/sync_input.rs)
 
 自動マージの受付時に `issue_archive_enabled` がONなら、担当は先に `prepare_archive` で固定Issue本文を専用commitへ保存し、その返却SHAをcode候補として検証する。アーカイブ不成立や候補blob改変はWiki準備も止める。その後の `prepare_wiki` 成功→begin→ページ更新→finish→Wiki専用commit→publish→Run終了→host収束/限定復元/公開という順序は変えない。OFFの受付を後の設定変更でONにしない。実モデル/CLI fixtureと、今回担当のWiki lifecycle完了・ローカルmain公開を混同しない。[固定原文と回復](../concepts/formal-integration.md#採用issue本文の任意アーカイブlocal-399)・[worker guard](../../crates/server/src/routes/integrations/conversation.rs)
+
+
+## 管理tmp/cacheと原本保全（LOCAL-406）
+
+共有persistentはユーザー成果物用であり、通常保守のjournal/固定入力/reportはinstance管理tmp、再生成可能な文書索引は管理cacheに置く。[具体的配置と寿命](../concepts/repository-memory.md#ユーザー成果物復旧ファイル完了履歴の寿命local-406)。設定とDB-only status読取、artifact writerを分け、閲覧だけで欠損領域を作らない。
+
+運用で新配置へ切り替える前には、旧server/agent hostを停止し、未完了coding/公開/Wiki/原本復元を旧版・元の固定pathで収束させる。対応DB backup、設定/鍵と復旧対象と同じ寿命のvolumeを保全する。旧新lock domainの並行稼働、live lock削除、missing legacy rootを空directoryで代用、artifact_layoutの手編集は行わない。新規DB/移行済み環境のfixture成功は実環境の収束証明ではない。[read-only拒否確認](../../crates/db/src/models/repository_state/cutover.rs)
+
+Sync/Bootstrapが公開または検証済みno-opを確定した後も、原本復元・後続利用終了を満たすまでartifactを保持する。既存DB stateはexact workspace/bootstrap cleanup identityを公開receiptとともに保存し、既存monitorが同じidentityで掃除を再試行する。部分削除に失敗した場合はerrorとidentityを残し、新保守を拒否する。symlink先や不明なユーザーdataを消して成功扱いにしない。[cleanupと新規開始guard](../../crates/server/src/routes/openwiki.rs#L290-L305)・[cleanup再試行](../../crates/server/src/routes/openwiki.rs#L773-L801)
+
+自動マージはbegin前prepareの原本journalを後付けせず、同じ候補でWikiだけをcommitする。AGENTS.md/CLAUDE.mdの既知setup差分はstage/commit/手動復元せず残す。Runと全writer終了後、hostが既知変換と原本digestを照合して限定復元し、clean候補と最終SHAを確認する。Git/DB公開bookkeeping後のjournal cleanupが成功するまでpost_processingを保つ。[正式統合](../concepts/formal-integration.md#管理artifactと完了後の掃除local-406)
+
+LOCAL-384/396/406/339では[コードのSHA別試験と省略](development.md#local-384396406339の固定統合検証)、今回の通常Wiki lifecycle、最終Wiki commitと公開要求、hostの実Git適用を別に記録する。単独のWiki system Issue/Workspaceや全体再生成は起動していない。

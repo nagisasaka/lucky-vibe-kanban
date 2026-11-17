@@ -12,6 +12,8 @@ sources:
     resource: repo://crates/db/src/lib.rs
   - id: openwiki-source-7b783ec1a704bf9dadb9c003
     resource: repo://crates/db/src/migration_compat.rs
+  - id: openwiki-source-02a5fb6ea4136a6d854604f6
+    resource: repo://crates/db/src/models/repository_state/cutover.rs
   - id: openwiki-source-21149aa9001849998cda42a2
     resource: repo://crates/db/src/models/repository_state/manifests.rs
   - id: openwiki-source-190ea4aff3773f72dcf4935b
@@ -60,10 +62,10 @@ sources:
     resource: repo://README.md
   - id: openwiki-source-8ea6c46d63953a7104f5dd97
     resource: repo://scripts/dev-cargo.mjs
-generated: { by: "codex", at: "2026-11-16T15:12:08.330Z" }
+generated: { by: "codex", at: "2026-11-17T00:44:00.706Z" }
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-16T15:12:08.330Z
+    at: 2026-11-17T00:44:00.706Z
 ---
 
 # システム境界と起動順序
@@ -105,7 +107,7 @@ flowchart LR
 
 Board の Web は `/api/local`、stdio MCP は `/api/board` を使い、同じローカルデータを読む。旧名 `local_remote` や `remote-types.ts` は Cloud backend の存在を意味しない。[router](../../crates/server/src/routes/mod.rs#L49-L103) と [Web と同期](web-and-sync.md)で応答・再取得の契約を確認する。
 
-Git の作業木、Native Audit、Repository Memory の draft・publication・setup journal は SQLite と別の永続状態を持つ。確定 Change Manifest は LOCAL-398 以後 SQLite が正本であり、DBService 初期化時に登録済み Repo の旧正本を一度だけ原子的に取り込む。失敗時は起動を失敗させ、既存ファイルは削除しない。[正本と取込](../../crates/db/src/models/repository_state/manifests.rs)・[初期化](../../crates/db/src/lib.rs) 復旧で DB の状態だけを正しいと決めず、[実行ホスト](agent-runtime.md)や [記憶の統合状態](../concepts/repository-memory.md)の証拠も確認する。
+Git の作業木、Native Audit、Repository Memory の draft・publication・setup journal は SQLite と別の永続状態を持つ。確定 Change Manifest は LOCAL-398 以後 SQLite が正本であり、旧正本の起動時取込はLOCAL-406で撤去済みで、既存migration・取込履歴行・旧ファイルを変更しない。DBServiceはschema migration後に旧未完了処理・復旧原本・held lockのread-only拒否確認を行い、不明なら起動を失敗させる。artifact_layout=2を記録したRepoでは以後ユーザーpersistentを探索しない。[DB正本](../../crates/db/src/models/repository_state/manifests.rs)・[初期化](../../crates/db/src/lib.rs) 復旧で DB の状態だけを正しいと決めず、[実行ホスト](agent-runtime.md)や [記憶の統合状態](../concepts/repository-memory.md)の証拠も確認する。
 
 新しい [単一サーバーコンテナー](../operations/server-container.md)は、この local application を Linux サーバーで動かす配布形態である。PostgreSQL / Electric / relay に依存しない。backend の認証と nginx の HTTPS ingress・独立アプリroute、実行環境と永続 volume の境界は同ページに置く。[配布binaryとvolume](../operations/server-container.md#配布-binary-と開発-checkout)
 
@@ -147,3 +149,8 @@ API 型は Rust から TypeScript へ生成するため、Rust と Web の変更
 ## 固定presetの完了追従
 
 LOCAL-372でstandaloneにもWorkflow completion watcherを配線した。standaloneとembeddedの両方で終了eventを受けて既存runtimeを進めるため、UIや外部AIの待機を工程間の前提にしない。Agent終了後の成果成立とpresetの停止契約は[Workflow runtime](workflow-runtime.md)を参照する。[起動](../../crates/server/src/main.rs)・[embedded起動](../../crates/server/src/startup.rs)
+
+
+内部のdraft・publication・setup journalはinstance管理tmp、再生成可能な文書索引は管理cacheへ置き、共有persistentはユーザー成果物用とする。コンテナ共通Repo lockと復旧volumeは寿命が異なるため、旧版writerを停止・収束させずにlock domainを切り替えない。[保存先と切替条件](../concepts/repository-memory.md)
+
+[Project移送](../concepts/project-transfer.md)は所有データの追加importであり、DB全体のbackup・Git・worktree・native Session移送とは別のAPI境界である。

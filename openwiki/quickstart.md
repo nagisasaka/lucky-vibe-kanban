@@ -18,12 +18,18 @@ sources:
     resource: repo://crates/db/src/models/design_note.rs
   - id: openwiki-source-5144fccee237bf35dd134ccb
     resource: repo://crates/db/src/models/repository_state.rs
+  - id: openwiki-source-06b554fc2573c350d37896b2
+    resource: repo://crates/db/src/models/repository_state/coding_runs.rs
   - id: openwiki-source-3e5425718d87b437a12edd60
     resource: repo://crates/db/src/models/session.rs
   - id: openwiki-source-0ba09128382dd913fe9a4c4a
     resource: repo://crates/db/src/models/tag.rs
   - id: openwiki-source-c30cc36c4bbe315c59b8e38f
     resource: repo://crates/db/src/models/workspace_tokens.rs
+  - id: openwiki-source-eec300ba0fd0bf7307068218
+    resource: repo://crates/db/src/project_transfer.rs
+  - id: openwiki-source-bfeb31abecf9b81f73b98a39
+    resource: repo://crates/db/src/project_transfer/history.rs
   - id: openwiki-source-a3956271cbf62ae0786e7fc7
     resource: repo://crates/executors/src/env.rs
   - id: openwiki-source-f4e0f9b2ce513d3f8b8b070e
@@ -90,6 +96,8 @@ sources:
     resource: repo://crates/utils/src/lvk_directory.rs
   - id: openwiki-source-19419edea1d312cc9f07ef2d
     resource: repo://crates/utils/src/path.rs
+  - id: openwiki-source-a171e1a170f941fa2a4ba003
+    resource: repo://crates/utils/src/repository_memory.rs
   - id: openwiki-source-63d2b16e8e208dce3e2032ac
     resource: repo://crates/workflow/src/presets.rs
   - id: openwiki-source-df6b7819295f53fc2381f23d
@@ -134,10 +142,10 @@ sources:
     resource: repo://packages/web-core/src/shared/providers/TerminalProvider.tsx
   - id: openwiki-source-23775c3de52f3ab95a13cb8b
     resource: repo://README.md
-generated: { by: "codex", at: "2026-11-16T18:11:18.484Z" }
+generated: { by: "codex", at: "2026-11-17T00:44:00.706Z" }
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-16T18:11:18.484Z
+    at: 2026-11-17T00:58:56.837Z
 ---
 
 # クイックスタートと調査案内
@@ -159,7 +167,7 @@ lucky-vibe-kanban（LVK）は、Issue で仕事を整理し、Workspace 内で c
 
 初回の準備と通常作業は上記の「最初の作業」と [Issueから統合まで](workflows/task-to-integration.md) を入口にする。現行Boardはlocal APIを使い、公開配置ではBasic/Auth0の認証actorを使う。旧Cloud sign-inやremote API baseは要求しない。入口認証と外部 MCP の認可は [接続境界](integrations/remote-access.md)を参照する。[local API](../packages/web-core/src/shared/lib/remoteApi.ts)
 
-LVK独自のrepo内管理領域は原則 `.lvk/` に集約する。共有設定と実行時データの違い、標準位置を維持するAGENTS/CLAUDE/OpenWikiなどの例外、旧配置を移行しない方針は [Workspaceの所有境界](concepts/workspace.md#lvkの所有境界)を参照する。同一登録RepoのWorkspace間の一時受け渡しは `.lvk/shared/tmp/`、再生成可能な再利用はcache、継続保存はpersistentを使う。tmpはRun終了で消さず、受け渡し後の不要・非使用時だけ整理する。[共有領域](concepts/workspace.md#共有ディレクトリの意味)・[製品概要](../README.ja.md)
+LVK独自のrepo内管理領域は原則 `.lvk/` に集約する。共有設定と実行時データの違い、標準位置を維持するAGENTS/CLAUDE/OpenWikiなどの例外、旧配置を移行しない方針は [Workspaceの所有境界](concepts/workspace.md#lvkの所有境界)を参照する。同一登録RepoのWorkspace間の一時受け渡しは `.lvk/shared/tmp/`、再生成可能な再利用はcache、ユーザー成果物の継続保存はpersistentを使う。LVK内部の復旧artifactは別のinstance管理tmp/cacheへ分離する。tmpはRun終了で消さず、受け渡し後の不要・非使用時だけ整理する。[共有領域](concepts/workspace.md#共有ディレクトリの意味)・[製品概要](../README.ja.md)
 
 ## 主要概念の説明先
 
@@ -168,6 +176,7 @@ LVK独自のrepo内管理領域は原則 `.lvk/` に集約する。共有設定�
 | local Board の identity と Organization は何か | [Organization・Member・Invitation](concepts/organization-and-membership.md)。固定Organization、承認制メンバー、現在actorと過去ownerの区別 |
 | LVKへ入る認証と設定の寿命は何か | [サーバー認証・設定・セッション](concepts/server-access.md)。Local/Public、初回setup、Basic/Auth0切替、失効、内部agentと回復 |
 | 何を作るか、誰の仕事か、status や親子関係は何か | [Project・Issue](concepts/project-and-issue.md)。ボード表示と共有 status の差、Workspace との link と旧 Task の違いもここ |
+| Projectを別配置へ持ち運ぶ | [ProjectのSQLite移送](concepts/project-transfer.md)。Git分離、明示履歴opt-in、添付欠落、追加importと失敗時rollback |
 | Pet の版・ZIP・保存・帰属を調べる | [装飾Pet](concepts/pets.md)。v1/v2、16方向視線、取込安全境界、添付保持、素材帰属、fixtureと実環境の区別 |
 | 小さな作業メモと Card の要求をどう使い分けるか | [Project Todo](concepts/project-todos.md)。Project 所属、任意の Card link、完了・削除、revision 競合と操作 receipt |
 | 設計意図と判断の変遷をどう残すか | [設計メモ](concepts/design-notes.md)。本文と独立追記、初版・復元、出典、競合、MCPの固定版読取、Project削除後の保持 |
@@ -527,7 +536,7 @@ UI/MCPの共通会話、質問ごとの参照版、失敗・取消・削除、RE
 
 ## LOCAL-398/399：DB正本のManifestと任意Issue本文アーカイブ
 
-確定Change Manifestは[DB正本・Repo単位の起動時取込](concepts/repository-memory.md#確定manifestのdb正本と起動時取込local-398)へ移る。通常読取はDB単独で、参照URLと固定event IDを使う。旧ファイルを削除せず、draft・固定sync-input・source publication・setup原本journalはファイルのまま保持する。
+確定Change Manifestは[DB正本・旧取込の履歴と現行切替境界](concepts/repository-memory.md#確定manifestのdb正本と起動時取込local-398)へ移る。通常読取はDB単独で、参照URLと固定event IDを使う。旧ファイルを削除せず、draft・固定sync-input・source publication・setup原本journalはファイルのまま保持する。
 
 [Issue本文アーカイブ](concepts/formal-integration.md#採用issue本文の任意アーカイブlocal-399)は全体設定 `issue_archive_enabled` が既定OFFの独立機能である。ONで受付した場合だけ、保存済み現在版の原文を検証/Wiki前の専用追加commitへ残す。後日の本文/設定変更やretry補足で置換しない。表示から外すIssue archiveとは異なる。操作順は[統合手順](workflows/task-to-integration.md#issue本文アーカイブを有効にした正式統合local-399)、失敗回復は同契約を読む。
 
@@ -539,3 +548,16 @@ UI/MCPの共通会話、質問ごとの参照版、失敗・取消・削除、RE
 設定の外観ではSystem/Light/Darkを維持し、明側Standard/Paper/Linenと暗側Standard/Navy/Indigoを独立に選ぶ。インスタンス共通で保存成功後に反映し、SystemはOS明暗へ追従する。[保存・互換・CSSの契約](architecture/web-and-sync.md#保存後に適用するm2カラーテーマlocal-382)
 
 コード検証SHA `2f6fe0b5e72127cefcb5609ea73e110bc013a0fe` でテーマ36試験・設定12試験・隔離Chromiumが成功した。[検証と省略、DB Manifest・Issueアーカイブの個別証拠](operations/development.md#local-382のテーマ統合と証拠)を参照する。実設定API一体E2Eと認証済み全画面は未検証。Wikiはコード検証後に同じ候補で別commitにし、mainの実Git適用は公開要求後にhostが確認する。
+
+
+## LOCAL-384/396/406/339：配信・移送・保存先と詳細表示
+
+| 調査対象 | 現行契約と説明先 |
+| --- | --- |
+| 固定指示の通常継続とcompact | [配信・受付・失敗境界](architecture/agent-runtime.md#通常継続の固定指示と実配信記録local-384)。Codexの固定settingsを保ち、Claudeは対応CLIの条件・exact echo・boundaryで判断する。実provider結合受入は未完。 |
+| LVK追加指示の表示 | [実eventの折りたたみ](architecture/web-and-sync.md#追加指示issue詳細と移送の表示local-384339396)。人間本文、CLI受付、結果不明、モデル遵守を分ける。 |
+| Projectの可搬データ | [SQLite移送](concepts/project-transfer.md)。所有閉包・再ID・専用read-only履歴とManifest、会話opt-in、秘密/添付/native HOME/Gitの除外、認可と原子性を確認する。 |
+| ユーザーpersistentと復旧 | [保存先と寿命](concepts/repository-memory.md#ユーザー成果物復旧ファイル完了履歴の寿命local-406)。管理tmp/cache、DBの完了履歴、旧処理/原本/lockの切替拒否とcleanupを区別する。 |
+| Issue詳細の作成日時 | [詳細だけの日時](concepts/project-and-issue.md#詳細の作成日時とproject可搬性local-339396)。年月日時分・locale/timezone、ラベル/秒なし、新規作成非表示。既存mainの階層とボードを保つ。 |
+
+固定base `5a2b0fb3`、原文アーカイブ `dee08718`、コード基点 `4b4946bd` とWiki/公開SHAを区別する。[候補別の実施・失敗・修復・理由付きskip](operations/development.md#local-384396406339の固定統合検証)に検証を分けた。396の過去failed/Manifest欠落を変更せず、今回の選択候補へ独立再検証した。実provider AUTO auth/start、実DB移行、GitHub push、stable、restartは行っていない。Wiki完了とlocal mainの実Git反映は別に確認する。

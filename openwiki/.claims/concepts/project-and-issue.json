@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:731ab4d132b7f498ddd6ecf13bb90167d367e2b5ff57b4c0874b8e90bd6b7856",
+  "pageVersion": "sha256:b99dfe7f9009932344e58bbb389eda4059b991510a270d568a16336b440054a5",
   "claims": [
     {
       "id": "claim_33c0ff606c234c65b0a089749cc323a5",
@@ -162,7 +162,7 @@
         },
         {
           "resource": "repo://packages/web-core/src/shared/dialogs/settings/settings/RemoteProjectsSettingsSection.tsx",
-          "version": "repo-file-v1:sha256:47f01ba27f5cead1da2911f97c025d28c79fc65b4ae01e9bc8f93a33e97f709c"
+          "version": "repo-file-v1:sha256:d022615caf61b0c27632889d489487156a16ffb18cb6367707189086a0c104b0"
         }
       ]
     },
@@ -701,7 +701,7 @@
       "statement": "編集Issue詳細の本文外枠は64rem上限とペイン基準clamp(1rem,3cqi,2rem)余白を持ち、作成モードは対象外。主タイトルは1.75rem・行高1.35・太さ600。",
       "evidence": [
         {
-          "resource": "repo://packages/ui/src/components/KanbanIssuePanel.tsx#L261-L376",
+          "resource": "repo://packages/ui/src/components/KanbanIssuePanel.tsx#L266-L381",
           "version": "repo-lines-v1:sha256:c348fa8cd89090deb75fca1715ab3a770f39326341a12828af09abb24a7f9322:eyJzZWxlY3RlZExpbmVDb3VudCI6MTE2LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI0ODkzZjQwZTM3ODFlYjg5NmM4MmQwNDZhMDgwNjdhMTFlMzVjZGYyZjFkZmFmMjZmZWE5MGI4ZGI2Njc2NDEzIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIwMWJhNDcxOWM4MGI2ZmU5MTFiMDkxYTdjMDUxMjRiNjRlZWVjZTk2NGUwOWMwNThlZjhmOTgwNWRhY2E1NDZiIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJjNGFhNDE1NWJlYjk5MTY2NmExY2RlM2UzYTMxNWQ1Zjk1YTg1NWNjMjU5MjVjNTY5OWIxYTVhNzQwNzhmMThlIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI2OGVjNjJmMmEzY2JkZDJmOGEyYzFhMjdiNGY4MWJjNjBiZTcwMWQ3ZTAzZjk0NmZkMjdjN2Q0YTZhYmVmODllIn0"
         },
         {
@@ -752,7 +752,7 @@
         },
         {
           "resource": "repo://tests/kanban/issue-detail.mjs",
-          "version": "repo-file-v1:sha256:e05bcf32a24adceb703f470078fb80f13a6e8ba4164b32432da4020cdb14eca9"
+          "version": "repo-file-v1:sha256:c2195e667153aaf360c232ac9e328275736ca85ce63ba29b88e1ff476563d3ef"
         }
       ]
     },
@@ -835,10 +835,42 @@
           "version": "repo-file-v1:sha256:831fd858730316e41e1db5a8d5490d4e7c7fd4dd1412027c456402fe75a79445"
         }
       ]
+    },
+    {
+      "id": "claim_83bb90077a384ca0b6fe7d23319cca53",
+      "statement": "Issue詳細だけがcreated_atをlocal timezone/画面localeの年月日時分として表示し、新規作成・欠落・不正日時では表示しない。",
+      "evidence": [
+        {
+          "resource": "repo://packages/ui/src/components/KanbanIssuePanel.tsx#L207-L214",
+          "version": "repo-lines-v1:sha256:67d4fd48e1a516075e24d8ec02e6c50b4d5a4bb433125784630bca92ed10244e:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMTIwNDBjNTI0YzUxYjVkYzg3NzQyZmE5OWZiNzg4YjUyZTBmMWVjY2NhZTZjZjE0MzhjZTE0ODRkY2YzY2JhZCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMTc5YjNkMDlmYjY2NzFjMjcyMTYwZmUwMzk2NDRkOTE5MjNhMTYyNGM4MjdjZDI4MmU4NDZhYjdmYWM2ZjA5NSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMWY3M2FjMjU4YWQyNTk5NjA5YzA4YzlkMjQ2NTA4ZTMxMzU5NTM3ZTYxZDllMjM0NDNlZWZjOWYxYmFkMTRlNyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNGZkZjg1ZDgxYTg4NTU0ZGEzN2JkMzE4OTczMmEzMmNjZGYxODU2OGRmNWYyNDQyMThhYTdjYjg3NmY0MzQ5NCJ9"
+        },
+        {
+          "resource": "repo://packages/ui/src/components/KanbanIssuePanel.tsx#L394-L417",
+          "version": "repo-lines-v1:sha256:cf0e4e90ef8b60cfb4e61be16e93f171221452ceda2243144be640888b0a6072:eyJzZWxlY3RlZExpbmVDb3VudCI6MjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY3YmYxYjY1ODRlOTdmMjY4ZjdjNTRiYjA2YzZiMGYxOThmMTc1NGZmNmU5OGYyZmY2ZDM2ODlkNTU3NzAwZGUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBlZGNjMWY0MWJhMmQ5ZGIxNzY1MDgzNjcwMTQ5MGVjOThjYTc1NDAxZWIwMTFjM2I5OTg0ZDQ2NDVhMWE3NTIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjI4OWI3Yzk0YTdlMmE2NGQ0NjE0OGFhNTFjZWY2YzYyOWRkMDdiMjQzNjA2ZjNhNjhhYTU3YTVmYTliMjcxNDIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE2OTlhNzk0YTYxY2FhZWJhYTcxOTlmMzAyMjNiNDkwOGIwNTJiYTNkOWM5MWE4MmZhMjgwYzYwYWZlYzZlZmIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_2b9d1215ce1e4093a48aec15d832bf68",
+      "statement": "Project utilitiesとProject設定のSQLite移送は追加importで、完了履歴を専用read-only archiveに保存し実行可能Workspaceやnative再開を作らない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/db/src/project_transfer/history.rs",
+          "version": "repo-file-v1:sha256:d10ca48ab2e7982707fcf1b0eb794b713658fb4480725a5674be2e40beab1cb2"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/components/ProjectTransferPanel.tsx",
+          "version": "repo-file-v1:sha256:e40fd47610df03a9b4a372c7bc2ee59d203d82990c91c68d6007af1a4a495d71"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/dialogs/settings/settings/RemoteProjectsSettingsSection.tsx#L1482-L1492",
+          "version": "repo-lines-v1:sha256:bad6fcfac0d91697113249288c20d6292a0d5d3bee32badb43745b63c9e02fc6:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ0M2Y3OWJiY2UzZTNjM2MwMTFmZGRkMTU2NTM0MDk4OWI0ZGE4YWEyOWEwMjY2Zjc5M2IzNGExMzk0NWEwNzYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZjOWQzM2ViNDg3NDI1MTYyOGJlMWIwYWJkMGQxOTRiMjFiOGNhOWRmNmRiODBkOTYxYzlhYmY4OWIxY2U5NjgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjA4YTMyMjhlZjNmMmQ1MGM3ZGU1ODJmYWE4YjVmNDAzOTVjMDQ3OWMxYTgxOWE5M2VlYWUwMGY3OWZjNDZjOGUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBjYTczNmI5NTc5YWYzY2FlYzMzZmYzMzA1ODI2Njg0YmQ3MjViNzVkMDBkNmY2YjQxZTc2ZjQxZmIzM2ZkODYifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.9.0",
-    "at": "2026-11-16T23:50:22.756Z"
+    "at": "2026-11-17T00:58:56.837Z"
   }
 }

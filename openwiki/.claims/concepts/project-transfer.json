@@ -1,0 +1,96 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:e1b50d8ef4449bc3caa609441596fe2356d6058624c9949e56c6c193286d1b40",
+  "claims": [
+    {
+      "id": "claim_0103f33cc21a42df91069b191919c6d1",
+      "statement": "Project移送はallowlistのProject所有記録だけを単一SQLiteへexportし、全検証後の一つのtransactionで既存データを上書きせず追加importする。",
+      "evidence": [
+        {
+          "resource": "repo://crates/db/src/project_transfer.rs",
+          "version": "repo-file-v1:sha256:71d9b2c6e9520226378ba8edda4fdc386c5e163cd03003f051e18a1d396318af"
+        }
+      ]
+    },
+    {
+      "id": "claim_91aa436f1ac544bbb3114259f608c27f",
+      "statement": "完了会話本文は明示opt-inでcanonical userとfinal assistantだけを選び、Run/Session/最新attempt/state identityが不整合・active・staleな記録を除外する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/db/src/project_transfer/history.rs#L62-L152",
+          "version": "repo-lines-v1:sha256:01008b6fa057f1c040c47b3ae27c97d4a40932d842c49dd0a27e75031c94e4a1:eyJzZWxlY3RlZExpbmVDb3VudCI6OTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZkYWU1YmQ2NTVlYTkzOTRkNzNhNDA4MmNiMmY3Y2MyOGQ2ZjczYjUzYjJiNmU3MzAzYzM0MDExYzczYjU5ZTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU0YWZjNjY4Y2ZmYzg1Njk3YWJjNzdiYzNmZmQ3NDgwMzI2OGM5YzRjY2VlODZjZTZjM2UzMmJjZDQwNjkwMjIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImZmZjdiMGI0YmUxODEzYmEzZTlhN2NmOGE5ZjlhNDIzNGQwNTRhNzZjYTE0YzZhMWMyN2Q2Mjg0MDVlMzZkYjAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY3NTA5MThhNzA2ZjMyYTg3OGNlOWZjNjE5ZWNmMGNjMGUzZWUxZTQ5ZDI4OWY2MDU1YjZkYjBmOTkwMzcwYmUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_6e70237b44c84877908683cbe5fa8534",
+      "statement": "移送Manifestは適格なProject完了RunとWorkspace Repoに帰属するDB確定レコードに限り、移行先canonical Manifest/Wiki消費streamには登録しない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/db/src/project_transfer/history.rs",
+          "version": "repo-file-v1:sha256:d10ca48ab2e7982707fcf1b0eb794b713658fb4480725a5674be2e40beab1cb2"
+        }
+      ]
+    },
+    {
+      "id": "claim_7996e992614441e7a000911d88f50e78",
+      "statement": "添付実体・Git・worktree・native Session・認証や構造化secretは移送対象外で、自由記述の秘密は完全にはsanitizeされない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/db/src/project_transfer.rs#L49-L54",
+          "version": "repo-lines-v1:sha256:7dcc6c897c948d76237778f5508b8cbde6ee7171db133246de48dac97c1d31b7:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNDEyY2EzNDVjY2Y3NWJmOWMwODA2YmNlNjk1YmU4ZGU4MDhiNzk5ODQyNTFhN2E1NGQyMDJjZjYxMDFkZDQ1MSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMWJhZjY4YjRkYTE0OGY2OTlhYWRmYzAzZmYxM2FlMmEwZjAxMzIyYjI2NmNjM2FiMTk5MGVmNjA0MDMzNTBmOSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMTg5ZWU0NjRjYWI1MDVjM2QwZjQwMTFiNDQ1N2I4NTRhMTM2NzM2ZWE3ZDc4NTZlN2QwN2Y4Yzg2MTIxMDhhOCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNTFlNjg4MTczMGNlMzMyYTMzZTgwMDk2OThhNjhkNTU3NjI1NTBjMGIxYTJmNDNiNjgyNjVjOGRiZDk3YjNjMSJ9"
+        },
+        {
+          "resource": "repo://crates/db/src/project_transfer/history.rs#L9-L10",
+          "version": "repo-lines-v1:sha256:8a6547fc4fd71890db09f1d5bb432474f10c24bc8eb46a1d72ee14a357b1137b:eyJzZWxlY3RlZExpbmVDb3VudCI6MiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYzRjMWUzODRkODVjNzZmNjU1ZjZmYzU5OTBkOGE2NjcxYTZhMTk0ZWY0ODEyMTM2MGYyMzQxMjQ2ZmJkZTM3NCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYmIyZjlkYzY2NjcwZmI4ZjFmYjVjZTdmYjBhODZiMjNmM2M4MTJhYzVjYjk5OWU4ZThhMGEwZmEzZTRiYTMxMiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMTE3MGZiNDNmMGVhYWVlZjA2OGRiMzFkYjIxNTY4MDA3NTUyM2MyMGEwNjlhMDZhNzU0ODUzYzYwMTc2ZDRhZSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_a84ff7c4709244fb9aca89ca0ab98943",
+      "statement": "import完了履歴は再IDしたread-only archiveで、実行可能agent_runs/turns・provider session・queue・process registryを作らない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/db/src/project_transfer/history.rs#L230-L321",
+          "version": "repo-lines-v1:sha256:a7832e4524f679953869d7bd48486d284336ec60b69bad2c65d1ac0999c171c2:eyJzZWxlY3RlZExpbmVDb3VudCI6OTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEzNzFiNjdiNzY0OWI0MTY2ZDQ1NWU1NzdjOTE2ZWQyZGFmNWQxNTJmMjFhNDA3NjU1MGMzYWIwOGRjOTgxMDciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY1MjVlNGM1ZDg5ODkzY2ZiNDUyOTdmYjFlMmE2MzhiNjdmNDRkZjgxMjIwM2FmNDc4OWY0NmQ1NzlhNTE1Y2EiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_7d3177f33beb4061add642f85d9617ed",
+      "statement": "importした本文/版/コメントはliteralで旧リンクを解決せず、import判定loading/error時もinertを維持する。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/shared/components/ProjectIssueEditor.tsx",
+          "version": "repo-file-v1:sha256:8b03b79f7563c87b7d76b94d1f12dec846360f0ae96d3c48883ed51ecdb7454d"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/components/TransferArchiveText.tsx",
+          "version": "repo-file-v1:sha256:e0630f6975610e3eeecc4595a82e01f1747ab45b1e3a438873955eacfb391a5f"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/hooks/useImportedProject.ts",
+          "version": "repo-file-v1:sha256:dbb314e4273cadefe15ef06a744a0a443c1e4f829ea58ae5dd3f74d5a711996d"
+        }
+      ]
+    },
+    {
+      "id": "claim_408e22ac1bec41678a217b814aa9cbcc",
+      "statement": "認可付き移送APIはpreview/importのSHA256 bytes一致を検査し、export UUIDと内容hashによる重複receiptをProject削除後も保持する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/db/src/project_transfer.rs",
+          "version": "repo-file-v1:sha256:71d9b2c6e9520226378ba8edda4fdc386c5e163cd03003f051e18a1d396318af"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/project_transfer.rs#L129-L186",
+          "version": "repo-lines-v1:sha256:3c6ffea9d32fb2007a7dda8240881e136bf3a6eda033dba50ab449950baf436d:eyJzZWxlY3RlZExpbmVDb3VudCI6NTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM2NzFjZGYwM2I1N2E2ODdjZGY1NmRiYmNkOWIzMjAxMTlmYTZiNzIzMWI0NDI5YzNkMzU3NmI4NGMwOTFlMzMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUxYjI1YzU1MzQzOWExMmVlY2U1MjU2ZTNlMzY4YmI3NDMxMDFkMWFjZjRkMmIxMzMxMzBhZWU3YmYzZjUxZTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhjZDM4NWRkODE5Njk3MDk3NDdjOTc5YTU5NzljMjc1M2VkNmQzYzU1OTdlZTNkODBkYjg1MzZiYjkyZTQ2MDciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjYwZjFmNjg1NjQ5MThiNDY0Y2NkMGI5N2RiY2E5MzVlOTBmMzIyZGVmNzBhODZkNDE3ZWE3OTc4MzJkYjIyNTQifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.9.0",
+    "at": "2026-11-17T00:44:00.706Z"
+  }
+}
