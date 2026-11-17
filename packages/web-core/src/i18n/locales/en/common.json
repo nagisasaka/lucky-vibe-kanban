@@ -2362,5 +2362,36 @@
     "timing": "Attempted → last observed",
     "missing": "No delivery record",
     "missingExplanation": "This run has no instruction delivery record. This does not mean nothing was sent. Past content is not reconstructed from current settings."
+  },
+  "projectTransfer": {
+    "title": "Project transfer",
+    "scope": "Carry LVK records in one SQLite file. This is not a full backup. Git, worktrees, attachment files and native agent sessions are excluded. Prepare the destination repositories yourself; commit and transfer Git changes as needed.",
+    "optIn": "Include completed conversation history",
+    "historyScope": "Only saved display text and summaries are included. Authentication, environment, structured secrets, raw provider events and tool inputs/outputs are excluded. Free text may still contain sensitive information; review before sharing. Unsupported old logs are omitted.",
+    "export": "Export SQLite",
+    "importScope": "Import adds a new Project. Existing Projects, Issues and repositories remain unchanged. Reimport of the same export is rejected.",
+    "file": "SQLite file",
+    "preview": "Preview selected file",
+    "counts": "{{issues}} Issues / {{versions}} versions / {{comments}} comments / {{histories}} histories / {{manifests}} Manifests",
+    "external": "Excluded external references: {{count}}",
+    "missing": "Unavailable attachment files: {{count}}",
+    "key": "New unique Project key (required)",
+    "selectRepo": "Select a prepared destination repository",
+    "import": "Import as a new Project",
+    "imported": "Open imported Project",
+    "history": "View imported history",
+    "readOnly": "Imported display history only. Worktrees and native sessions cannot be resumed. Links and images in archived text are displayed as text; attachment files are unavailable.",
+    "empty": "No imported history.",
+    "issue": "Open related Issue",
+    "manifest": "Change Manifest",
+    "tooLarge": "Select a SQLite file up to 32 MiB.",
+    "manifestFields": {
+      "created_at": "Created",
+      "base_commit": "Base commit",
+      "source_commit": "Source commit",
+      "target_branch": "Target branch",
+      "changed_paths": "Changed paths"
+    },
+    "importedRefresh": "Import completed. Waiting for the Project list to refresh. If it does not appear, reload the page; do not import the file again."
   }
 }

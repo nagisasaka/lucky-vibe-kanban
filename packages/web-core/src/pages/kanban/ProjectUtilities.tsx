@@ -1,3 +1,4 @@
+import { ProjectTransferPanel } from '@/shared/components/ProjectTransferPanel';
 import { useUiPreferencesStore } from '@/shared/stores/useUiPreferencesStore';
 import { CaretDownIcon, FolderSimpleIcon } from '@phosphor-icons/react';
 import { useTranslation } from 'react-i18next';
@@ -37,6 +38,7 @@ export function ProjectUtilities({
   const repo = mainTerminalRepo(repos, error);
   return (
     <UtilitySidebar repoIds={repos.map((repo) => repo.id)}>
+      <ProjectTransferPanel key={projectId} projectId={projectId} />
       {error && (
         <p role="status" className="p-base text-error">
           {t('environment.unavailable')}

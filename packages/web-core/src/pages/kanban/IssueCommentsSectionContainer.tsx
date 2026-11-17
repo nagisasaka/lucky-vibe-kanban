@@ -22,14 +22,14 @@ import {
   type IssueCommentData,
   type ReactionGroup,
 } from '@vibe/ui/components/IssueCommentsSection';
-import WYSIWYGEditor, {
-  type WYSIWYGEditorRef,
-} from '@/shared/components/WYSIWYGEditor';
+import type { WYSIWYGEditorRef } from '@/shared/components/WYSIWYGEditor';
+import { ProjectIssueEditor } from '@/shared/components/ProjectIssueEditor';
 import { MemberRole } from 'shared/remote-types';
 import { ScratchType } from 'shared/types';
 
 interface IssueCommentsSectionContainerProps {
   issueId: string;
+  projectId: string;
 }
 
 /**
@@ -38,15 +38,16 @@ interface IssueCommentsSectionContainerProps {
  */
 export function IssueCommentsSectionContainer({
   issueId,
+  projectId,
 }: IssueCommentsSectionContainerProps) {
   return (
     <IssueProvider issueId={issueId}>
-      <IssueCommentsSectionContent />
+      <IssueCommentsSectionContent projectId={projectId} />
     </IssueProvider>
   );
 }
 
-function IssueCommentsSectionContent() {
+function IssueCommentsSectionContent({ projectId }: { projectId: string }) {
   const { t } = useTranslation('common');
   const { membersWithProfilesById } = useOrgContext();
   const issueContext = useIssueContext();
@@ -349,7 +350,8 @@ function IssueCommentsSectionContent() {
       onCmdEnter,
       editorRef,
     }: IssueCommentsEditorProps) => (
-      <WYSIWYGEditor
+      <ProjectIssueEditor
+        projectId={projectId}
         ref={editorRef as Ref<WYSIWYGEditorRef>}
         value={value}
         onChange={onChange}
@@ -360,7 +362,7 @@ function IssueCommentsSectionContent() {
         onCmdEnter={onCmdEnter}
       />
     ),
-    []
+    [projectId]
   );
 
   return (
