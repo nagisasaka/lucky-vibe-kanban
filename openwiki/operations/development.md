@@ -27,10 +27,10 @@ sources:
     resource: repo://crates/db/src/models/agent_runtime.rs
   - id: openwiki-source-06b554fc2573c350d37896b2
     resource: repo://crates/db/src/models/repository_state/coding_runs.rs
-  - id: openwiki-source-02a5fb6ea4136a6d854604f6
-    resource: repo://crates/db/src/models/repository_state/cutover.rs
   - id: openwiki-source-deed913a29de3b85e0f77fb6
     resource: repo://crates/db/tests/project_transfer.rs
+  - id: openwiki-source-b695a62ee61c1d734652943f
+    resource: repo://crates/db/tests/startup.rs
   - id: openwiki-source-8856c7b6451960c4ee31ae56
     resource: repo://crates/executors/src/account_usage_tests.rs
   - id: openwiki-source-22b82518475034ade38104e6
@@ -195,10 +195,10 @@ sources:
     resource: repo://tests/workflow/playwright.config.ts
   - id: openwiki-source-7ff1b0a7c2af3c41dc6b3d55
     resource: repo://tests/workflow/specs/workflow-presets.spec.ts
-generated: { by: "codex", at: "2026-11-17T00:44:00.706Z" }
+generated: { by: "codex", at: "2026-11-17T04:16:39.656Z" }
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-17T00:44:00.706Z
+    at: 2026-11-17T04:16:39.656Z
 ---
 
 
@@ -742,7 +742,7 @@ agent判断で広域check/lint/backend suite・build・生成型の重複再実�
 
 Rust batch request `bcd3bdc0-4b6f-4ad7-9607-14fde767a610`、browser `528d7a03-1542-42ab-a457-d6cb0f7305da`、復旧/Clippy/型/SQLx `d91ad10a-3f2f-45ae-b7f9-008d1c7964fa`、最終fmt/lint `f070f207-7cca-4995-857e-fbc8bfa8e389` を別の証拠として保持した。長い管理呼出しの300秒timeout後も元processは継続しており、新requestで二重起動せず、元receiptを照合し同一入力で終了結果を回収した。
 
-DB移送試験は[所有閉包・秘密allowlist・再ID/リンク・opt-in・旧rootなし再読込・rollback](../../crates/db/tests/project_transfer.rs)、[API認証/CSRFと同bytes確認](../../crates/server/src/routes/project_transfer/tests.rs)を扱う。406は[旧処理/lock拒否と取込履歴保全](../../crates/db/src/models/repository_state/cutover.rs)、[既存DB upgrade](../../crates/db/src/models/repository_state/coding_runs.rs)、[原本・清掃・別process排他](../../crates/utils/src/repository_memory.rs)、[Wiki cleanup再試行](../../crates/server/src/routes/openwiki.rs)を扱う。384のmockは受付echo、compact/replay、失敗時全文fallback、設定/権限境界、Codex他provider回帰を検査する。[instruction fixture](../../crates/executors/src/executors/claude/instructions.rs)・[protocol fixture](../../crates/executors/src/executors/claude/protocol.rs)
+DB移送試験は[所有閉包・秘密allowlist・再ID/リンク・opt-in・旧rootなし再読込・rollback](../../crates/db/tests/project_transfer.rs)、[API認証/CSRFと同bytes確認](../../crates/server/src/routes/project_transfer/tests.rs)を扱う。406の旧起動拒否専用試験はLOCAL-414で撤去済みで、現在は[両DB初期化経路の通常起動と旧履歴・ファイル不変](../../crates/db/tests/startup.rs)を検査する。維持する現行保護は[既存DB upgrade](../../crates/db/src/models/repository_state/coding_runs.rs)、[原本・清掃・別process排他](../../crates/utils/src/repository_memory.rs)、[Wiki cleanup再試行](../../crates/server/src/routes/openwiki.rs)を扱う。384のmockは受付echo、compact/replay、失敗時全文fallback、設定/権限境界、Codex他provider回帰を検査する。[instruction fixture](../../crates/executors/src/executors/claude/instructions.rs)・[protocol fixture](../../crates/executors/src/executors/claude/protocol.rs)
 
 ### 省略の帰属と残リスク
 
@@ -756,6 +756,30 @@ agent判断では包括check/lint/backend:test、認証済み製品全体・物�
 
 最初のbegin前にprepare_wiki request `a5a4b655-32c7-4341-8b81-0d027b35849d` をcode `4b4946bd` で成功させ、原本digest `61685492cd2f92a32a334acc39bbc49870d46082e87e665c4e98adc7d2ebfdca` を保存した。同じ候補で通常Wiki更新を行い、Wikiだけを別commitにする。コード検証、Wiki lifecycle完了、公開要求保存、Run終了後hostによる限定復元とlocal mainの実Git適用は別の事実である。
 
-live DB/旧artifact/lockの移行、認証変更、GitHub push、stable配置、restartは行っていない。406の切替前には旧writerを元バージョン・固定pathで収束させ、対応するDB/volume/鍵/設定を保全する。missing legacy rootやheld lockを空成功へ変えず、artifact_layout=2を手編集して迂回しない。[切替前提](../concepts/repository-memory.md#ユーザー成果物復旧ファイル完了履歴の寿命local-406)
+live DB/旧artifact/lockの移行、認証変更、GitHub push、stable配置、restartは行っていない。406の切替前には旧writerを元バージョン・固定pathで収束させ、対応するDB/volume/鍵/設定を保全する。当時は旧root/held lockを起動拒否条件としたが、LOCAL-414でその専用判定とmarker型を撤去した。現行版は旧予約3件や旧ファイルを起動時に削除・補正せず、通常の認可・現行processの保護・DB整合性検査を維持する。[切替前提](../concepts/repository-memory.md#ユーザー成果物復旧ファイル完了履歴の寿命local-406)
 
 検証の一時instanceはtrapで削除し、SQLx一時SQLiteとwal/shmの不在を確認した。checkoutの通常target/依存は再利用用に残す。表示証拠は `.build/issue-layout/`、`.build/project-transfer-browser/`、`test-results/utility-sidebar/results.json` に保持し、稼働serviceや他Workspaceのartifactは削除していない。
+
+
+## LOCAL-414の旧起動拒否撤廃と証拠
+
+固定base `82b1953e04ee2f39055f4d7a503523a7d3c34d93` からsource `ffb26ccf44e169d589824b67216bf0dc910ee757` だけを無競合fast-forwardで採用した。コードの追加修復はない。prepare_archiveによる固定Issue原文の追加後のコード検証SHAは `eb31cfd5635d578eef404d49ee2b63948f1e6b10` で、sourceとの差分はアーカイブ1件だけである。
+
+削除範囲は旧cutover検査全体とDBServiceの呼出し/module/export、RepositoryMemoryStateのartifact_layout型・defaultと生成型、DBの直接libc依存、専用拒否試験である。代替ゲート、無効化設定、旧履歴補正や旧layout互換は加えない。[通常DB初期化](../../crates/db/src/lib.rs)と[起動回帰](../../crates/db/tests/startup.rs)を参照する。
+
+採用時に固定された公開Manifest `4813ce71-f119-456a-ae97-54203a6f7838` は、source SHA上で以下の成功を報告する。これは既存証拠であり本候補上の再実行ではない。
+
+| 既存検証 | 範囲 |
+| --- | --- |
+| `node scripts/dev-cargo.mjs test -p db --test startup` | 2 entry。両constructorで空DB、旧audit_failed/reserved 3件、旧markerなし/1/2/未知値、旧ファイルと保持lock、欠損rootを通し、履歴・SQL migration receipt・ユーザーファイル不変を確認 |
+| `node scripts/dev-cargo.mjs test -p db --lib` | DB159件。現行ラン、予約、host replay、復旧migration、schema guard、互換性と履歴 |
+| `node scripts/dev-cargo.mjs test -p utils repository_memory::tests --lib` | 現行の原本保持・cleanup・別process排他等14件 |
+| `node scripts/dev-cargo.mjs test -p local-deployment prelaunch_ --lib` | 通常復旧・busy・再起動越し予算・重複launch/Stop・host予約保全8件 |
+| `pnpm run generate-types` と `pnpm run generate-types:check` | 正式生成・consumer compile・生成型整合 |
+| `node scripts/dev-cargo.mjs clippy -p db -p utils --all-targets -- -D warnings` | 影響crateとtest target |
+
+候補上のmanaged verifyはsourceとruntime/生成型/依存の同一性、baseからのmigration・認可・現行復旧の無差分、実装の廃止ゲート参照なし、`git diff --check`を確認して成功した。初回は確認scriptがアーカイブ保存先をopenwikiと誤認してfailedとなった。正規docs/changesの1件という期待値へ直した再実行request `dff489d5-4c9a-468f-afeb-86f9d806bb9d` はexit 0で、製品コードの修復は不要だった。
+
+担当agentは、コード同一・単一sourceで相互作用なし・既存SHA対応の証拠を理由に、上記試験の重複実行と参考install/build/check/lint/backend:testの広域実行をskipとして記録した。ユーザー省略指定ではない。候補でのアプリ再build/起動、実listener全体、実provider・認証UI E2E、別環境での依存再導入は未検証である。実データや旧3件の削除・修正、外部push、デプロイ、再起動は行っていない。
+
+最初のbeginより前にコードSHAへprepare_wiki request `ecfd8013-58c0-44c2-b9dd-bee88937ce89` が原本journalを保存した。Wikiは同じ候補で残存5ページだけの増分更新とし、Wikiのみを別commitにする。コード検証、Wiki完了、公開要求、Run終了後のhostによる原本限定復元・ローカルmain適用は別の事実である。範囲外ページの既存Claim問題はfocused保留し、全Wiki照合済みとはしない。

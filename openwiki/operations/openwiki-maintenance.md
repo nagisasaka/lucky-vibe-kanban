@@ -14,12 +14,14 @@ sources:
     resource: repo://assets/skills/auto-merge/SKILL.md
   - id: openwiki-source-3c57aab40b425fc8b5d0d5c5
     resource: repo://crates/db/migrations/20261027090000_generated_issue_status.sql
+  - id: openwiki-source-5c2565a649f8be059d306209
+    resource: repo://crates/db/src/lib.rs
   - id: openwiki-source-5144fccee237bf35dd134ccb
     resource: repo://crates/db/src/models/repository_state.rs
-  - id: openwiki-source-02a5fb6ea4136a6d854604f6
-    resource: repo://crates/db/src/models/repository_state/cutover.rs
   - id: openwiki-source-4f59e07f8850eb04105d5cb8
     resource: repo://crates/db/tests/generated_issue_status.rs
+  - id: openwiki-source-b695a62ee61c1d734652943f
+    resource: repo://crates/db/tests/startup.rs
   - id: openwiki-source-22b82518475034ade38104e6
     resource: repo://crates/executors/src/executors/codex.rs
   - id: openwiki-source-38fc795b99b30483be700b71
@@ -104,10 +106,10 @@ sources:
     resource: repo://scripts/test-openwiki-focused.mjs
   - id: openwiki-source-7fd9452d5e666180c50f8cb7
     resource: repo://tests/openwiki/recovery.sh
-generated: { by: "codex", at: "2026-11-17T00:44:00.706Z" }
+generated: { by: "codex", at: "2026-11-17T04:16:39.656Z" }
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-17T00:44:00.706Z
+    at: 2026-11-17T04:16:39.656Z
 ---
 
 # OpenWiki の初期生成・同期・回復
@@ -444,7 +446,7 @@ openwiki/は生成・保守専用とし、manifest/frontmatter/generated.byか�
 
 ## DB正本とIssueアーカイブを経たWiki入力（LOCAL-398/399）
 
-確定ManifestはDB正本へ移り、pending選択・固定event ID解決・receipt検証はDBを参照する。sync-inputのmanifest/chunkとsetup原本journalは引き続きファイルで保持し、可変draftや私的会話を代替入力にしない。旧Manifest取込の履歴と現行cutover拒否境界は[DB正本と切替条件](../concepts/repository-memory.md#確定manifestのdb正本と起動時取込local-398)を参照する。[DB receipt検証](../../crates/db/src/models/repository_state/manifests.rs)・[固定入力](../../crates/services/src/services/openwiki/sync_input.rs)
+確定ManifestはDB正本へ移り、pending選択・固定event ID解決・receipt検証はDBを参照する。sync-inputのmanifest/chunkとsetup原本journalは引き続きファイルで保持し、可変draftや私的会話を代替入力にしない。旧Manifest取込の履歴とLOCAL-414での旧起動拒否撤廃は[DB正本と切替条件](../concepts/repository-memory.md#確定manifestのdb正本と起動時取込local-398)を参照する。[DB receipt検証](../../crates/db/src/models/repository_state/manifests.rs)・[固定入力](../../crates/services/src/services/openwiki/sync_input.rs)
 
 自動マージの受付時に `issue_archive_enabled` がONなら、担当は先に `prepare_archive` で固定Issue本文を専用commitへ保存し、その返却SHAをcode候補として検証する。アーカイブ不成立や候補blob改変はWiki準備も止める。その後の `prepare_wiki` 成功→begin→ページ更新→finish→Wiki専用commit→publish→Run終了→host収束/限定復元/公開という順序は変えない。OFFの受付を後の設定変更でONにしない。実モデル/CLI fixtureと、今回担当のWiki lifecycle完了・ローカルmain公開を混同しない。[固定原文と回復](../concepts/formal-integration.md#採用issue本文の任意アーカイブlocal-399)・[worker guard](../../crates/server/src/routes/integrations/conversation.rs)
 
@@ -453,7 +455,7 @@ openwiki/は生成・保守専用とし、manifest/frontmatter/generated.byか�
 
 共有persistentはユーザー成果物用であり、通常保守のjournal/固定入力/reportはinstance管理tmp、再生成可能な文書索引は管理cacheに置く。[具体的配置と寿命](../concepts/repository-memory.md#ユーザー成果物復旧ファイル完了履歴の寿命local-406)。設定とDB-only status読取、artifact writerを分け、閲覧だけで欠損領域を作らない。
 
-運用で新配置へ切り替える前には、旧server/agent hostを停止し、未完了coding/公開/Wiki/原本復元を旧版・元の固定pathで収束させる。対応DB backup、設定/鍵と復旧対象と同じ寿命のvolumeを保全する。旧新lock domainの並行稼働、live lock削除、missing legacy rootを空directoryで代用、artifact_layoutの手編集は行わない。新規DB/移行済み環境のfixture成功は実環境の収束証明ではない。[read-only拒否確認](../../crates/db/src/models/repository_state/cutover.rs)
+運用で新配置へ切り替える前には、旧server/agent hostを停止し、未完了coding/公開/Wiki/原本復元を旧版・元の固定pathで収束させる。対応DB backup、設定/鍵と復旧対象と同じ寿命のvolumeを保全する。旧新lock domainの並行稼働やlive lock削除を行わない。LOCAL-414は旧未完了履歴・旧原本/lock・旧root欠損を理由にDB起動を拒否する専用検査とmarker型を撤去した。通常起動は旧3件や旧ファイルを削除・補正せず、現行のwriter所有、原本復元、認可・DB整合性・cleanupの保護は維持する。合成DBの起動成功は実環境のwriter収束証明ではない。[通常起動回帰](../../crates/db/tests/startup.rs)・[切替手順](../../deploy/developer/switch/README.md)
 
 Sync/Bootstrapが公開または検証済みno-opを確定した後も、原本復元・後続利用終了を満たすまでartifactを保持する。既存DB stateはexact workspace/bootstrap cleanup identityを公開receiptとともに保存し、既存monitorが同じidentityで掃除を再試行する。部分削除に失敗した場合はerrorとidentityを残し、新保守を拒否する。symlink先や不明なユーザーdataを消して成功扱いにしない。[cleanupと新規開始guard](../../crates/server/src/routes/openwiki.rs#L290-L305)・[cleanup再試行](../../crates/server/src/routes/openwiki.rs#L773-L801)
 

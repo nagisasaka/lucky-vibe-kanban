@@ -12,10 +12,10 @@ sources:
     resource: repo://crates/db/src/lib.rs
   - id: openwiki-source-7b783ec1a704bf9dadb9c003
     resource: repo://crates/db/src/migration_compat.rs
-  - id: openwiki-source-02a5fb6ea4136a6d854604f6
-    resource: repo://crates/db/src/models/repository_state/cutover.rs
   - id: openwiki-source-21149aa9001849998cda42a2
     resource: repo://crates/db/src/models/repository_state/manifests.rs
+  - id: openwiki-source-b695a62ee61c1d734652943f
+    resource: repo://crates/db/tests/startup.rs
   - id: openwiki-source-190ea4aff3773f72dcf4935b
     resource: repo://crates/local-deployment/src/lib.rs
   - id: openwiki-source-104d584b7b5ffa5973f60cde
@@ -62,10 +62,10 @@ sources:
     resource: repo://README.md
   - id: openwiki-source-8ea6c46d63953a7104f5dd97
     resource: repo://scripts/dev-cargo.mjs
-generated: { by: "codex", at: "2026-11-17T00:44:00.706Z" }
+generated: { by: "codex", at: "2026-11-17T04:16:39.656Z" }
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-17T00:44:00.706Z
+    at: 2026-11-17T04:16:39.656Z
 ---
 
 # システム境界と起動順序
@@ -107,7 +107,7 @@ flowchart LR
 
 Board の Web は `/api/local`、stdio MCP は `/api/board` を使い、同じローカルデータを読む。旧名 `local_remote` や `remote-types.ts` は Cloud backend の存在を意味しない。[router](../../crates/server/src/routes/mod.rs#L49-L103) と [Web と同期](web-and-sync.md)で応答・再取得の契約を確認する。
 
-Git の作業木、Native Audit、Repository Memory の draft・publication・setup journal は SQLite と別の永続状態を持つ。確定 Change Manifest は LOCAL-398 以後 SQLite が正本であり、旧正本の起動時取込はLOCAL-406で撤去済みで、既存migration・取込履歴行・旧ファイルを変更しない。DBServiceはschema migration後に旧未完了処理・復旧原本・held lockのread-only拒否確認を行い、不明なら起動を失敗させる。artifact_layout=2を記録したRepoでは以後ユーザーpersistentを探索しない。[DB正本](../../crates/db/src/models/repository_state/manifests.rs)・[初期化](../../crates/db/src/lib.rs) 復旧で DB の状態だけを正しいと決めず、[実行ホスト](agent-runtime.md)や [記憶の統合状態](../concepts/repository-memory.md)の証拠も確認する。
+Git の作業木、Native Audit、Repository Memory の draft・publication・setup journal は SQLite と別の永続状態を持つ。確定 Change Manifest は LOCAL-398 以後 SQLite が正本であり、旧正本の起動時取込はLOCAL-406で撤去済みで、既存migration・取込履歴行・旧ファイルを変更しない。LOCAL-414では旧artifactを理由に起動を拒否する検査を専用コードごと撤去した。DBServiceはschema migrationと現行schema guardを維持し、旧予約・旧ファイル・旧markerの読取判定や補正、履歴削除を行わない。空DBと旧予約3件・旧ファイルを含む合成DBで両初期化経路の起動と履歴・適用済みmigration receipt・ファイルの不変性を確認する回帰がある。[通常起動回帰](../../crates/db/tests/startup.rs) [DB正本](../../crates/db/src/models/repository_state/manifests.rs)・[初期化](../../crates/db/src/lib.rs) 復旧で DB の状態だけを正しいと決めず、[実行ホスト](agent-runtime.md)や [記憶の統合状態](../concepts/repository-memory.md)の証拠も確認する。
 
 新しい [単一サーバーコンテナー](../operations/server-container.md)は、この local application を Linux サーバーで動かす配布形態である。PostgreSQL / Electric / relay に依存しない。backend の認証と nginx の HTTPS ingress・独立アプリroute、実行環境と永続 volume の境界は同ページに置く。[配布binaryとvolume](../operations/server-container.md#配布-binary-と開発-checkout)
 

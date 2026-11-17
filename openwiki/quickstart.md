@@ -14,6 +14,8 @@ sources:
     resource: repo://crates/db/migrations/20261018180000_web_push.sql
   - id: openwiki-source-c2fc034438311f3aa02f5ee5
     resource: repo://crates/db/migrations/20261023110000_retain_design_notes_on_project_delete.sql
+  - id: openwiki-source-5c2565a649f8be059d306209
+    resource: repo://crates/db/src/lib.rs
   - id: openwiki-source-830e28055c4ae6f5464df312
     resource: repo://crates/db/src/models/design_note.rs
   - id: openwiki-source-5144fccee237bf35dd134ccb
@@ -30,6 +32,8 @@ sources:
     resource: repo://crates/db/src/project_transfer.rs
   - id: openwiki-source-bfeb31abecf9b81f73b98a39
     resource: repo://crates/db/src/project_transfer/history.rs
+  - id: openwiki-source-b695a62ee61c1d734652943f
+    resource: repo://crates/db/tests/startup.rs
   - id: openwiki-source-a3956271cbf62ae0786e7fc7
     resource: repo://crates/executors/src/env.rs
   - id: openwiki-source-f4e0f9b2ce513d3f8b8b070e
@@ -142,10 +146,10 @@ sources:
     resource: repo://packages/web-core/src/shared/providers/TerminalProvider.tsx
   - id: openwiki-source-23775c3de52f3ab95a13cb8b
     resource: repo://README.md
-generated: { by: "codex", at: "2026-11-17T00:44:00.706Z" }
+generated: { by: "codex", at: "2026-11-17T04:16:39.656Z" }
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-17T00:58:56.837Z
+    at: 2026-11-17T04:16:39.656Z
 ---
 
 # クイックスタートと調査案内
@@ -557,7 +561,14 @@ UI/MCPの共通会話、質問ごとの参照版、失敗・取消・削除、RE
 | 固定指示の通常継続とcompact | [配信・受付・失敗境界](architecture/agent-runtime.md#通常継続の固定指示と実配信記録local-384)。Codexの固定settingsを保ち、Claudeは対応CLIの条件・exact echo・boundaryで判断する。実provider結合受入は未完。 |
 | LVK追加指示の表示 | [実eventの折りたたみ](architecture/web-and-sync.md#追加指示issue詳細と移送の表示local-384339396)。人間本文、CLI受付、結果不明、モデル遵守を分ける。 |
 | Projectの可搬データ | [SQLite移送](concepts/project-transfer.md)。所有閉包・再ID・専用read-only履歴とManifest、会話opt-in、秘密/添付/native HOME/Gitの除外、認可と原子性を確認する。 |
-| ユーザーpersistentと復旧 | [保存先と寿命](concepts/repository-memory.md#ユーザー成果物復旧ファイル完了履歴の寿命local-406)。管理tmp/cache、DBの完了履歴、旧処理/原本/lockの切替拒否とcleanupを区別する。 |
+| ユーザーpersistentと復旧 | [保存先と寿命](concepts/repository-memory.md#ユーザー成果物復旧ファイル完了履歴の寿命local-406)。管理tmp/cache、DBの完了履歴、原本保全とcleanupを区別する。LOCAL-414で旧artifact専用の起動拒否は撤去済み。 |
 | Issue詳細の作成日時 | [詳細だけの日時](concepts/project-and-issue.md#詳細の作成日時とproject可搬性local-339396)。年月日時分・locale/timezone、ラベル/秒なし、新規作成非表示。既存mainの階層とボードを保つ。 |
 
 固定base `5a2b0fb3`、原文アーカイブ `dee08718`、コード基点 `4b4946bd` とWiki/公開SHAを区別する。[候補別の実施・失敗・修復・理由付きskip](operations/development.md#local-384396406339の固定統合検証)に検証を分けた。396の過去failed/Manifest欠落を変更せず、今回の選択候補へ独立再検証した。実provider AUTO auth/start、実DB移行、GitHub push、stable、restartは行っていない。Wiki完了とlocal mainの実Git反映は別に確認する。
+
+
+## LOCAL-414：旧artifactの起動拒否を撤廃
+
+旧audit_failed/reserved 3件や旧ファイルを起動時に削除・補正せず、旧ゲート専用の検査・marker型・配線を撤去した。通常migration/checksum、DB整合性、認可、現行processの排他・復旧は維持する。[現在のDB起動境界](concepts/repository-memory.md#確定manifestのdb正本と起動時取込local-398)と[通常起動回帰・検証証拠](operations/development.md#local-414の旧起動拒否撤廃と証拠)を読む。
+
+固定source `ffb26ccf` を無競合採用し、Issue原文アーカイブ後のコード検証SHAは `eb31cfd5635d578eef404d49ee2b63948f1e6b10`。sourceの既存試験証拠を活用し、候補上ではコード同一性と不変条件を確認した。重複suiteの再実行は担当agent判断のskipであり、新たなpassではない。Wikiは残存5ページだけを増分更新し、コードSHAとWiki専用commit、Run終了後のhostによるローカルmain反映を区別する。実データ操作、外部push、デプロイ、再起動は行っていない。

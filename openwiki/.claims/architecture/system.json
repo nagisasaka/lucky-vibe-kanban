@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:fa2d16ecf1c5e65679d103ada23a51fd1b24c2047cd2b36789fb7b1a9c47114e",
+  "pageVersion": "sha256:4aa4c6a160884956ef5aea569bef7b164facb3e98bb98ac725e1cc3b1ac4c147",
   "claims": [
     {
       "id": "claim_040b4779a7b24b2da362496e3236ffd7",
@@ -308,25 +308,25 @@
     },
     {
       "id": "claim_0420cc323bb848f2b88d6bef7bd13a5b",
-      "statement": "確定Manifestの正本はSQLiteで、LOCAL-406は旧起動時取込を撤去し既存migration・DB行・旧ファイルを保持する。DBServiceは未完了legacy処理/原本/lockをread-only確認し、不明なら切替を拒否する。",
+      "statement": "確定Manifestの正本はSQLiteで、LOCAL-414のDBServiceはschema migrationを維持し、旧artifact検査による起動拒否やmarker補正を行わない。通常起動回帰は旧予約3件・旧ファイルを含む合成DBで履歴・migration receipt・ファイル不変性を検証する。",
       "evidence": [
         {
-          "resource": "repo://crates/db/src/lib.rs#L260-L280",
-          "version": "repo-lines-v1:sha256:0e540fcda3a47ca91fcf84eb23e5204789ffcfeab71873e05df3f642d497ead7:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJjZGVhMTY1MTZkZGI2YTFlMGE4NGY3ZGU1ZTBmYTk1ZWExNWUzNmNkNzJhYTBhNGQ0OTRlN2Y2MTA3YTlhMDUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjMwZGQ2ODBlMjMwZmZlNzZmNmQ3YzM4OTg0ZmIwZWE3YzQxZThkYTQxZDljOGFlYzBkODU3YTllOWUwNjI1MzciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQ5YWRkZjIxMzJhNDQzZmFhM2ViYmNmYmU1ZGY1MTlmZGU5YjY2ODM1YmMyOGY1NjA4NTE0ZjMwMzZkM2NlYTYifQ"
-        },
-        {
-          "resource": "repo://crates/db/src/models/repository_state/cutover.rs",
-          "version": "repo-file-v1:sha256:70599bbd81a86c4d95419556e67078bad5b4bb00501e48fa301a104c40e679f2"
+          "resource": "repo://crates/db/src/lib.rs#L260-L344",
+          "version": "repo-lines-v1:sha256:d5700cfa3a79e54540507b66f6e6313cf1da7e996c8242e82a38dbd297c776c9:eyJzZWxlY3RlZExpbmVDb3VudCI6ODUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJjZGVhMTY1MTZkZGI2YTFlMGE4NGY3ZGU1ZTBmYTk1ZWExNWUzNmNkNzJhYTBhNGQ0OTRlN2Y2MTA3YTlhMDUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjMwZGQ2ODBlMjMwZmZlNzZmNmQ3YzM4OTg0ZmIwZWE3YzQxZThkYTQxZDljOGFlYzBkODU3YTllOWUwNjI1MzciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEifQ"
         },
         {
           "resource": "repo://crates/db/src/models/repository_state/manifests.rs#L1-L65",
           "version": "repo-lines-v1:sha256:47fd0b1f4e2f5eaa94831eba2212cd8749b446dca56cfddf2b377b2d967818e8:eyJzZWxlY3RlZExpbmVDb3VudCI6NjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg3ZmEwZGFkN2E4ZTg0MjczYjViNjBjZGI3ZjZlNzNhNTQ3MjMxNmIwODViMTM5N2E0OTRlN2ViMGM0ZDE1OTgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg4ZmZkMjJiMzhhY2RkNjFkZTgxMDFlMDZhNWQwYjk3OTY1ZjIxMjAxNjBmY2Y0ZmMzODI4Y2ZkOTg5NDRjMDIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImZkZWI3OGQwYjg0ODFmZWIzYzY3MTJiMDRlNmJmOGE1YjAwYjUwYjQyYmJjNTI1MTRjMTgzZDUzMTc4YjZjYTEifQ"
+        },
+        {
+          "resource": "repo://crates/db/tests/startup.rs#L67-L182",
+          "version": "repo-lines-v1:sha256:bd4d3d0c2e99902155537631787999915e577ac9051cf04ba6b866c2f1b49094:eyJzZWxlY3RlZExpbmVDb3VudCI6MTE2LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIwMWJhNDcxOWM4MGI2ZmU5MTFiMDkxYTdjMDUxMjRiNjRlZWVjZTk2NGUwOWMwNThlZjhmOTgwNWRhY2E1NDZiIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI0MTJjYTM0NWNjZjc1YmY5YzA4MDZiY2U2OTViZThkZTgwOGI3OTk4NDI1MWE3YTU0ZDIwMmNmNjEwMWRkNDUxIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIzMzE3MzlmNjdkMTc1OWE0N2IyOGI3MzUyNjU4ZmU1OWM3OTdiZGEyYjBlY2Q2ZWRkOGNjNzNiMTc1ZWY0OGJmIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MCwiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1In0"
         }
       ]
     }
   ],
   "verification": {
     "by": "openwiki/0.9.0",
-    "at": "2026-11-17T00:44:00.706Z"
+    "at": "2026-11-17T04:16:39.656Z"
   }
 }

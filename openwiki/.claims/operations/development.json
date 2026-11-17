@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:e5aca77fd5b40ea2e0d695ca58b9fafdcc37cf1c31abfd283a7bd2c80e085743",
+  "pageVersion": "sha256:32c390bd6348368cace6b3c139b5b382b6c172a7f86459505d2d5277e0afab18",
   "claims": [
     {
       "id": "claim_1640e4eaeac94676a84eb3b9d9970d30",
@@ -1158,15 +1158,15 @@
     },
     {
       "id": "claim_030d8eb7d1f14b22b6b022c519df0028",
-      "statement": "406の焦点fixtureは旧未完了処理/held lock拒否、既存DBのmigration/Manifest保全、原本復元前の清掃拒否と部分失敗後の再試行を検査する。",
+      "statement": "旧起動拒否専用試験はLOCAL-414で撤去され、通常起動回帰で両DB初期化経路の空DB・旧予約3件・旧ファイル/保持lock・欠損rootの起動と履歴・migration receipt・ファイル不変を検査する。既存DB upgrade、原本保全とcleanup再試行の検証は維持する。",
       "evidence": [
         {
           "resource": "repo://crates/db/src/models/repository_state/coding_runs.rs#L123-L252",
           "version": "repo-lines-v1:sha256:d114d08f71c9a694d86afae654c797cca20357a9ec74bb3c38e59816e7ef95c9:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMwLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIyNWNmNWZjMjNmMmE2ZDIzYzNlYTUxZTcyZjVlODk2Yzc1NTVmYmFhMDVjZDViMWVhMTgyYmY5NjE4YThlODFiIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI0MTJjYTM0NWNjZjc1YmY5YzA4MDZiY2U2OTViZThkZTgwOGI3OTk4NDI1MWE3YTU0ZDIwMmNmNjEwMWRkNDUxIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIxOWU3NjM1NWNmMTE5OTQ4MGMzZjk5ODM2YjE0ODZjODQxZDg5MWZhYWQ5MDRjNjA4ZTA5MzAyMmQzNzU3YWVlIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MCwiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1In0"
         },
         {
-          "resource": "repo://crates/db/src/models/repository_state/cutover.rs#L201-L382",
-          "version": "repo-lines-v1:sha256:7d0543332ee22200f30770d972d1dfa13ea5080fccefaf306e66e039a8c8759e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgyLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIyNWNmNWZjMjNmMmE2ZDIzYzNlYTUxZTcyZjVlODk2Yzc1NTVmYmFhMDVjZDViMWVhMTgyYmY5NjE4YThlODFiIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI0MTJjYTM0NWNjZjc1YmY5YzA4MDZiY2U2OTViZThkZTgwOGI3OTk4NDI1MWE3YTU0ZDIwMmNmNjEwMWRkNDUxIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIzNWY2ZjQ2NmU1OWNmYzMwNzAzYzQ1ZjcyYWY2NWRlNTRhYzM2M2QzNTRjYzFhMzMzMDM1MGFjZDQ1MjQzNGM0IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MCwiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1In0"
+          "resource": "repo://crates/db/tests/startup.rs#L67-L182",
+          "version": "repo-lines-v1:sha256:bd4d3d0c2e99902155537631787999915e577ac9051cf04ba6b866c2f1b49094:eyJzZWxlY3RlZExpbmVDb3VudCI6MTE2LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIwMWJhNDcxOWM4MGI2ZmU5MTFiMDkxYTdjMDUxMjRiNjRlZWVjZTk2NGUwOWMwNThlZjhmOTgwNWRhY2E1NDZiIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI0MTJjYTM0NWNjZjc1YmY5YzA4MDZiY2U2OTViZThkZTgwOGI3OTk4NDI1MWE3YTU0ZDIwMmNmNjEwMWRkNDUxIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIzMzE3MzlmNjdkMTc1OWE0N2IyOGI3MzUyNjU4ZmU1OWM3OTdiZGEyYjBlY2Q2ZWRkOGNjNzNiMTc1ZWY0OGJmIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MCwiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1In0"
         },
         {
           "resource": "repo://crates/server/src/routes/openwiki.rs#L1215-L1280",
@@ -1177,6 +1177,6 @@
   ],
   "verification": {
     "by": "openwiki/0.9.0",
-    "at": "2026-11-17T00:44:00.706Z"
+    "at": "2026-11-17T04:16:39.656Z"
   }
 }

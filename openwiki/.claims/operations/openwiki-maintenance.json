@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:46d89f99caf7d01ffced4e78cc0e001020792976ab9a6c81bd3721a5be55719e",
+  "pageVersion": "sha256:a4309749b18d83542e75c2ea4946b0b16c23ae47a22f20b48a0159a7153e2dde",
   "claims": [
     {
       "id": "claim_7239e619508e4a2785f62b8f23fd0a74",
@@ -852,7 +852,7 @@
       "evidence": [
         {
           "resource": "repo://crates/db/src/models/repository_state.rs",
-          "version": "repo-file-v1:sha256:cb1849c1389dd116847b0f2777e325c6d9638d109064edcab2fe1138dee86da9"
+          "version": "repo-file-v1:sha256:20708a60353f883e428817d756a6cf7f95e7ae447c48e5a148c174c93e064898"
         },
         {
           "resource": "repo://crates/services/src/services/openwiki/sync_input.rs#L30-L92",
@@ -1007,18 +1007,26 @@
       ]
     },
     {
-      "id": "claim_fb2c2693c60f4db9922caf31e671729c",
-      "statement": "管理tmp/cacheへの切替は旧未完了Run/publication・原本・held lock・missing legacy rootで拒否し、成功後のartifact_layout=2でユーザーpersistentの探索を終える。",
+      "id": "claim_542b916dd04444eb8701402524b81acc",
+      "statement": "LOCAL-414では旧未完了履歴・旧原本/lock・旧root欠損を理由とするDB起動拒否を撤去し、旧予約3件・旧ファイルを変更せず起動できる通常回帰を持つ。Wiki原本復元とexact cleanup identityによる再試行は維持する。",
       "evidence": [
         {
-          "resource": "repo://crates/db/src/models/repository_state/cutover.rs",
-          "version": "repo-file-v1:sha256:70599bbd81a86c4d95419556e67078bad5b4bb00501e48fa301a104c40e679f2"
+          "resource": "repo://crates/db/src/lib.rs#L260-L344",
+          "version": "repo-lines-v1:sha256:d5700cfa3a79e54540507b66f6e6313cf1da7e996c8242e82a38dbd297c776c9:eyJzZWxlY3RlZExpbmVDb3VudCI6ODUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJjZGVhMTY1MTZkZGI2YTFlMGE4NGY3ZGU1ZTBmYTk1ZWExNWUzNmNkNzJhYTBhNGQ0OTRlN2Y2MTA3YTlhMDUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjMwZGQ2ODBlMjMwZmZlNzZmNmQ3YzM4OTg0ZmIwZWE3YzQxZThkYTQxZDljOGFlYzBkODU3YTllOWUwNjI1MzciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEifQ"
+        },
+        {
+          "resource": "repo://crates/db/tests/startup.rs#L67-L182",
+          "version": "repo-lines-v1:sha256:bd4d3d0c2e99902155537631787999915e577ac9051cf04ba6b866c2f1b49094:eyJzZWxlY3RlZExpbmVDb3VudCI6MTE2LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIwMWJhNDcxOWM4MGI2ZmU5MTFiMDkxYTdjMDUxMjRiNjRlZWVjZTk2NGUwOWMwNThlZjhmOTgwNWRhY2E1NDZiIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI0MTJjYTM0NWNjZjc1YmY5YzA4MDZiY2U2OTViZThkZTgwOGI3OTk4NDI1MWE3YTU0ZDIwMmNmNjEwMWRkNDUxIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIzMzE3MzlmNjdkMTc1OWE0N2IyOGI3MzUyNjU4ZmU1OWM3OTdiZGEyYjBlY2Q2ZWRkOGNjNzNiMTc1ZWY0OGJmIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MCwiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1In0"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/openwiki.rs#L1226-L1280",
+          "version": "repo-lines-v1:sha256:cef7b896da7a87e45738813bfadae2f74888f02a3e4e8d9b91868a8b76498d67:eyJzZWxlY3RlZExpbmVDb3VudCI6NTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY0ODE2OWRhODMxNDhlNDVmYzI0YWVlNjM5ZWMwMDkwZTFlY2Q2ZjE1MGY0N2FlZDVjZDgxM2E2MWNiZTVjMDciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxM2JjOWM4NDFhNDMxYjM1MWJmYzkxMDkzMTNiNTE3YjA2Njk5ZGRlZDIyNzhiMGMyZGUwODBjYTQyNTdkNTgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImM0ZmZlNDZkZGVkZTUxZThjNzMyZmU0MjhhZGYxN2FiZTAzZmZlN2MwN2M5MzJiZDZkNmU0Nzk2NTA3ZWQ5NDYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImU1MGQ2N2UwMjY5ZDg5MWUxYzAxMTI0Yjk3MjQ1M2Y0NWRhNTIzYjdmZjA1ZThkNjdjMjJmYjk4MDYzY2FkNDcifQ"
         }
       ]
     }
   ],
   "verification": {
     "by": "openwiki/0.9.0",
-    "at": "2026-11-17T00:44:00.706Z"
+    "at": "2026-11-17T04:16:39.656Z"
   }
 }

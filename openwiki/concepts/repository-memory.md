@@ -14,12 +14,12 @@ sources:
     resource: repo://crates/db/src/models/repository_state.rs
   - id: openwiki-source-06b554fc2573c350d37896b2
     resource: repo://crates/db/src/models/repository_state/coding_runs.rs
-  - id: openwiki-source-02a5fb6ea4136a6d854604f6
-    resource: repo://crates/db/src/models/repository_state/cutover.rs
   - id: openwiki-source-21149aa9001849998cda42a2
     resource: repo://crates/db/src/models/repository_state/manifests.rs
   - id: openwiki-source-bfeb31abecf9b81f73b98a39
     resource: repo://crates/db/src/project_transfer/history.rs
+  - id: openwiki-source-b695a62ee61c1d734652943f
+    resource: repo://crates/db/tests/startup.rs
   - id: openwiki-source-dc107dec6d46a1dcc08d0a9b
     resource: repo://crates/mcp/src/task_server/tools/context.rs
   - id: openwiki-source-a13fe4db1eee073d0a7e2c4d
@@ -62,10 +62,10 @@ sources:
     resource: repo://crates/utils/src/agent_guides.rs
   - id: openwiki-source-a171e1a170f941fa2a4ba003
     resource: repo://crates/utils/src/repository_memory.rs
-generated: { by: "codex", at: "2026-11-17T00:44:00.706Z" }
+generated: { by: "codex", at: "2026-11-17T04:16:39.656Z" }
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-17T00:44:00.706Z
+    at: 2026-11-17T04:16:39.656Z
 ---
 
 # Change Manifest・Run完了とWikiの責務
@@ -212,9 +212,9 @@ schema・判断と却下案・tests要約の記述手順は `CODING_RUN_GUIDE` �
 
 `repository_change_manifests` はRepo/Run複合主キーとworkspace_id・JSON payloadを持ち、Run/Workspaceへの外部キーを設けない。同一キー同内容は再実行可能、異内容・帰属不一致・不正payloadは拒否する。補助Run情報が欠けた旧正本を失わず、Project所属も推測しない。[schema](../../crates/db/migrations/20261116000000_change_manifests.sql)・[不変性](../../crates/db/src/models/repository_state/manifests.rs)
 
-LOCAL-398では旧Manifestの全ページと取込完了をRepo単位のtransactionで保存し、途中失敗をrollbackする起動時取込があった。これは過去の移行契約である。LOCAL-406は移行済み環境を前提に取込を撤去し、既存SQL migration・repository_manifest_imports行・旧ファイル・backupは変更しない。現行DBServiceはmigration後に旧未完了artifactをread-only確認し、events/を読んで再取込しない。[起動接続](../../crates/db/src/lib.rs)・[旧処理の拒否確認](../../crates/db/src/models/repository_state/cutover.rs)
+LOCAL-398では旧Manifestの全ページと取込完了をRepo単位のtransactionで保存し、途中失敗をrollbackする起動時取込があった。これは過去の移行契約である。LOCAL-406は移行済み環境を前提に取込を撤去し、既存SQL migration・repository_manifest_imports行・旧ファイル・backupは変更しない。LOCAL-414ではさらに旧artifact専用の起動拒否検査・型のmarker・配線を撤去した。現行DBServiceはevents/の再取込、旧予約の削除、旧markerの解釈や補正を行わず、通常migrationとschema整合性検査を維持する。[起動接続](../../crates/db/src/lib.rs)・[通常起動回帰](../../crates/db/tests/startup.rs)
 
-LOCAL-406の版へ切り替える前には、旧server/agent hostを停止し、未完了coding/Wiki/公開/原本復元を旧版と元の固定pathで収束させる。対応DB backupと復旧volume・設定/鍵・旧artifactを整合して保全する。legacy rootの欠損は空成功でなく拒否し、live lock、未完了Run/publication、未復元setup、未収束writerを無視しない。成功時だけ既存Wiki stateへartifact_layout=2を保存し、以後ユーザーpersistentを調べない。旧新lock実装を同時稼働させず、空directoryやmarker手編集で迂回しない。旧binaryへ新schema DBを盲目的に戻さない。[拒否条件](../../crates/db/src/models/repository_state/cutover.rs)・[切替と復旧](../operations/development.md#開発用成果物切替と復旧)。今回の統合は実DB移行・設定変更・restartを行っていない。
+LOCAL-414の通常起動では旧audit_failed/reserved 3件、旧ファイルや保持lock、旧root欠損を起動拒否の条件にしない。両DB constructorの合成DB回帰は旧履歴・SQL migration receipt・ユーザーファイルを変更しないことを確認する。これは旧データのcleanupや旧layout互換の復活ではなく、現行ランの認可・排他・復旧を免除しない。実際の成果物切替では旧server/agent hostとwriterを正式手順で停止・収束させ、対応DB backup・復旧volume・設定/鍵を保全する。旧新lock domainを並行稼働させず、旧binaryへ新schema DBを盲目的に戻さない。[起動回帰](../../crates/db/tests/startup.rs)・[切替と復旧](../operations/development.md#開発用成果物切替と復旧)。今回の統合は実DB操作・設定変更・restartを行っていない。
 
 Git成功後・DB確定前の失敗も、凍結source publicationの意味記録・親/tree/markerから元SHAへ復旧する。後続commitやmutable draftを混ぜず、Wiki pending・receipt・自動マージの固定ID解決もDB正本を参照する。`events_for_runs` はcallerが確定したRepo/Workspace/Run集合を読み、不在も明示する狭い境界である。LOCAL-396の[Project移送](project-transfer.md)は別のProject帰属・完了projection検証を持ち、import Manifestを新local Runの正本へ登録しない。[完了と回復](../../crates/services/src/services/repository_memory.rs)・[選択境界](../../crates/db/src/models/repository_state/manifests.rs)・[候補上の検証と限界](../operations/development.md#local-398399の統合検証)
 
