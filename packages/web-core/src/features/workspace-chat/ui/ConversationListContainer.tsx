@@ -181,6 +181,8 @@ function renderRowContent(
         toolTiming={entry.toolTiming}
         pendingDelivery={entry.pendingDelivery}
         providerText={entry.providerText}
+        instructionDelivery={entry.instructionDelivery}
+        instructionRecordMissing={entry.instructionRecordMissing}
         toolOutput={entry.toolOutput}
         workspaceWithSession={attempt}
         resetAction={resetAction}

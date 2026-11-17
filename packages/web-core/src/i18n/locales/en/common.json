@@ -2351,5 +2351,16 @@
       "crashed": "Agent crashed",
       "audit_failed": "Audit failed"
     }
+  },
+  "lvkInstructions": {
+    "title": "LVK additional instructions",
+    "attempted": "Attempted · receipt unconfirmed",
+    "accepted": "CLI acknowledged",
+    "unconfirmed": "Receipt unknown",
+    "scope": "Only LVK additions are recorded. CLI acknowledgment does not prove model visibility or compliance. CLI-loaded and private internal instructions are outside this record. A reference does not prove its contents were read.",
+    "route": "Route · role · reason",
+    "timing": "Attempted → last observed",
+    "missing": "No delivery record",
+    "missingExplanation": "This run has no instruction delivery record. This does not mean nothing was sent. Past content is not reconstructed from current settings."
   }
 }

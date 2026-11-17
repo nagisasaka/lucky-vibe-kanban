@@ -2,6 +2,7 @@
 mod auth;
 pub mod client;
 pub mod command_adapter;
+mod instructions;
 pub mod protocol;
 pub mod slash_commands;
 pub mod types;
@@ -788,7 +789,101 @@ impl ClaudeCode {
             )?;
         }
         let (program_path, args) = command_parts.into_resolved().await?;
-        let combined_prompt = self.append_prompt.combine_prompt(prompt);
+        let mut combined_prompt = self.append_prompt.combine_prompt(prompt);
+        let memory = env.get("LVK_DELIVERED_USER_SUFFIX").cloned();
+        let mut additional_instructions = format!(
+            "{}{}",
+            memory.unwrap_or_default(),
+            self.append_prompt.get().unwrap_or_default()
+        );
+
+        let manual_compact = prompt.split_whitespace().next() == Some("/compact");
+        let marked_suffix = env.get("LVK_DELIVERED_USER_SUFFIX").cloned().or_else(|| {
+            manual_compact
+                .then(|| {
+                    env.repository_memory_instructions()
+                        .map(|s| format!("\n\n{s}"))
+                })
+                .flatten()
+        });
+        let session = args
+            .windows(2)
+            .find(|pair| pair[0] == "--resume")
+            .map(|pair| pair[1].clone());
+        let candidate = env
+            .resume_instructions(&serde_json::to_string(self)?)
+            .map(|receipt| {
+                instructions::Instructions::new(
+                    receipt,
+                    marked_suffix.clone().unwrap_or_default(),
+                    session.clone(),
+                )
+            });
+        // Every continuation invalidates the old receipt before launch, including
+        // unknown versions, special modes and history resets. Only a fresh echo restores it.
+        let reduced = if let Some(state) = &candidate {
+            state.prepare()?
+        } else {
+            if let Some(session) = &session {
+                let mut receipt = crate::instruction_delivery::ResumeInstructions::new(
+                    &env.repo_context.workspace_root,
+                    "",
+                    String::new(),
+                );
+                receipt.directory = receipt.directory.join("claude");
+                receipt.invalidate(session)?;
+            }
+            false
+        };
+        let mut instruction_state = None;
+        if env.get("LVK_CLAUDE_NORMAL_CODE").is_some_and(|v| v == "1")
+            && !self.plan.unwrap_or(false)
+            && self.agent.is_none()
+            && !self.claude_code_router.unwrap_or(false)
+            && self.cmd.base_command_override.is_none()
+            && self
+                .cmd
+                .additional_params
+                .as_ref()
+                .is_none_or(Vec::is_empty)
+            && !args.iter().any(|a| a == "--resume-session-at")
+            && let Some(suffix) = marked_suffix.as_ref()
+            && let Some(human) = prompt
+                .strip_suffix(suffix)
+                .or(manual_compact.then_some(prompt))
+            && let Some(state) = candidate
+        {
+            // A passive version check uses the exact resolved executable and launch environment.
+            let mut version = Command::new(&program_path);
+            version
+                .arg("--version")
+                .kill_on_drop(true)
+                .current_dir(current_dir);
+            env.clone()
+                .with_profile(&self.cmd)
+                .apply_to_command(&mut version);
+            let verified = tokio::time::timeout(Duration::from_secs(5), version.output())
+                .await
+                .ok()
+                .and_then(Result::ok)
+                .is_some_and(|v| {
+                    v.status.success()
+                        && String::from_utf8_lossy(&v.stdout).trim() == "2.1.308 (Claude Code)"
+                });
+            if verified {
+                if reduced && !manual_compact {
+                    let current_suffix = format!("\n\n{}", state.receipt.current);
+                    combined_prompt = self
+                        .append_prompt
+                        .combine_prompt(&format!("{human}{current_suffix}"));
+                    additional_instructions = format!(
+                        "{current_suffix}{}",
+                        self.append_prompt.get().unwrap_or_default()
+                    );
+                }
+                instruction_state = Some(state);
+            }
+        }
 
         let mut command = crate::source_protection::claude_command(&program_path, env)?;
         command
@@ -862,7 +957,12 @@ impl ClaudeCode {
 
         let new_stdout = create_stdout_pipe_writer(&mut child)?;
         let permission_mode = self.permission_mode();
-        let hooks = self.get_hooks();
+        let mut hooks = self.get_hooks();
+        if instruction_state.is_some() {
+            let hooks = hooks.get_or_insert_with(|| serde_json::json!({}));
+            hooks["PreCompact"] = serde_json::json!([{"hookCallbackIds":[instructions::CALLBACK]}]);
+            hooks["SessionStart"] = serde_json::json!([{"matcher":"compact","hookCallbackIds":[instructions::CALLBACK]}]);
+        }
 
         // Create cancellation token for graceful shutdown
         let cancel = CancellationToken::new();
@@ -873,6 +973,7 @@ impl ClaudeCode {
             self.approvals_service.clone(),
             cancel.clone(),
         );
+        *client.instructions.lock().await = instruction_state;
         let (protocol_peer, exit_signal) =
             ProtocolPeer::spawn(child_stdin, child_stdout, client.clone(), cancel.clone());
         let control = Arc::new(protocol_peer.clone());
@@ -885,21 +986,41 @@ impl ClaudeCode {
                 protocol_peer
                     .initialize(hooks)
                     .await
-                    .map_err(|_| "Claude initialization failed or timed out")?;
+                    .map_err(|e| ("initialize", protocol::ControlFailureKind::from_error(&e)))?;
                 protocol_peer
                     .set_permission_mode(permission_mode)
                     .await
-                    .map_err(|_| "Claude permission setup failed or timed out")?;
+                    .map_err(|e| {
+                        (
+                            "set_permission_mode",
+                            protocol::ControlFailureKind::from_error(&e),
+                        )
+                    })?;
+                client
+                    .begin_instruction_delivery(prompt_clone.clone(), additional_instructions)
+                    .await
+                    .map_err(|e| {
+                        (
+                            "instruction_record",
+                            protocol::ControlFailureKind::from_error(&e),
+                        )
+                    })?;
                 protocol_peer
                     .send_user_message(prompt_clone)
                     .await
-                    .map_err(|_| "Claude prompt delivery failed or timed out")
+                    .map_err(|e| {
+                        (
+                            "send_user_message",
+                            protocol::ControlFailureKind::from_error(&e),
+                        )
+                    })
             };
             tokio::select! {
                 _ = cancel_startup.cancelled() => {},
-                result = startup => if let Err(message) = result {
+                result = startup => if let Err((phase, failure_kind)) = result {
+                    let _ = client.finish_instruction_delivery().await;
                     let _ = log_writer.log_raw(&serde_json::json!({
-                        "type":"error", "message":message
+                        "type":"error", "message":"Claude startup failed", "phase":phase, "failure_kind":failure_kind
                     }).to_string()).await;
                     protocol_peer.fail_runtime();
                 }

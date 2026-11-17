@@ -1317,18 +1317,44 @@ impl Codex {
     ) -> Result<SpawnedChild, ExecutorError> {
         let extra_roots = crate::repo_skills::codex_roots(&env.repository_roots());
         let mut params = self.build_thread_start_params_with_resources(current_dir, env);
+        let mode = self.effective_execution_mode();
+        let resume_instructions = env
+            .resume_instructions(&format!(
+                "{mode:?}\n{}\n{}\n{REVIEW_INSTRUCTIONS}",
+                self.developer_instructions.as_deref().unwrap_or(""),
+                self.base_instructions.as_deref().unwrap_or("")
+            ))
+            .map(|mut context| {
+                context.allow_reduction = mode == ExecutionMode::Code
+                    && self.cmd.base_command_override.is_none()
+                    && self
+                        .cmd
+                        .additional_params
+                        .as_ref()
+                        .is_none_or(|params| params.is_empty());
+                context.current = format!(
+                    "Current LVK execution mode: {mode:?}.\n\n{}",
+                    context.current
+                );
+                context
+            });
         let resource_mediator = env.get("LVK_RESOURCE_MEDIATOR").is_some_and(|v| v == "1");
         let workflow_read_only = crate::source_protection::roots(env)?.is_some();
         if workflow_read_only {
             crate::source_protection::validate_launcher(&self.cmd, false)?;
         }
         let resume_session = resume_session.map(|s| s.to_string());
+        let additional_user_input = self.append_prompt.get();
 
         self.spawn_app_server(
             current_dir,
             command_parts,
             env,
             move |client, _| async move {
+                client.set_additional_user_input(additional_user_input);
+                if let Some(instructions) = resume_instructions {
+                    client.set_resume_instructions(instructions);
+                }
                 client.set_skill_extra_roots(extra_roots).await?;
                 let disable_openwiki = params.config.as_ref().is_some_and(|config| {
                     config.get("mcp_servers.openwiki.enabled") == Some(&Value::Bool(false))

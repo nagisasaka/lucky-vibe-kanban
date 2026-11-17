@@ -17,6 +17,18 @@ export interface CanonicalConversationIdentity {
 }
 
 export type PatchTypeWithKey = PatchType & {
+  instructionRecordMissing?: boolean;
+  instructionDelivery?: {
+    id: string;
+    route: string;
+    role: string;
+    reason: string;
+    nativeSessionId: string | null;
+    content: string;
+    status: 'attempted' | 'accepted' | 'unconfirmed';
+    attemptedAt: string | null;
+    updatedAt: string;
+  };
   /** Stable local row identity retained when a sent message is acknowledged. */
   displayIdentity?: string;
   messageId?: string;

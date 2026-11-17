@@ -31,6 +31,43 @@ pub struct ExecutionEnv {
 }
 
 impl ExecutionEnv {
+    /// Only explicitly split, host-generated instructions may be reduced.
+    /// Special execution contracts and old launch envelopes retain full delivery.
+    pub fn resume_instructions(
+        &self,
+        profile_contract: &str,
+    ) -> Option<crate::instruction_delivery::ResumeInstructions> {
+        if [
+            "LVK_OPENWIKI_REVIEWER",
+            "LVK_RESOURCE_MEDIATOR",
+            "LVK_OPENWIKI_MAINTENANCE",
+            "LVK_INTEGRATION_WORKER",
+        ]
+        .iter()
+        .any(|key| self.contains_key(key))
+            || self.contains_key(crate::source_protection::ROOTS)
+        {
+            return None;
+        }
+        let current = self.get("LVK_CURRENT_MEMORY_INSTRUCTIONS")?;
+        let fixed = self.get("LVK_FIXED_MEMORY_INSTRUCTIONS")?;
+        let guide = self.get("LVK_EXECUTION_GUIDE").map(|path| format!("LVK on-demand guide file: {path}. Read the relevant section when needed; no MCP connection is required.")).unwrap_or_default();
+        let full = self.repository_memory_instructions()?;
+        let memory = self.get("LVK_REPOSITORY_MEMORY_INSTRUCTIONS")?;
+        // Guide paths contain their immutable content hash. A new guide is a
+        // contract change, while ordinary run/draft values remain dynamic.
+        let fixed = full.replacen(memory, fixed, 1);
+        let fixed = format!(
+            "{profile_contract}\n{fixed}\nrepos={:?}",
+            self.repo_context.repo_names
+        );
+        Some(crate::instruction_delivery::ResumeInstructions::new(
+            &self.repo_context.workspace_root,
+            &fixed,
+            format!("{guide}\n\n{current}"),
+        ))
+    }
+
     /// Host-provided repository-scoped directories. Passed through process-host
     /// as regular environment metadata, without changing user configuration.
     pub fn shared_resource_roots(&self) -> Vec<PathBuf> {
@@ -141,6 +178,70 @@ impl ExecutionEnv {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn instruction_contract_fingerprint_excludes_current_values_but_not_policy_or_scope() {
+        let mut env = ExecutionEnv::new(RepoContext::new(
+            PathBuf::from("/fixture"),
+            vec!["repo".into()],
+        ));
+        env.insert("LVK_EXECUTION_GUIDE", "/fixture/guide.md");
+        env.insert("LVK_CURRENT_MEMORY_INSTRUCTIONS", "RUN=1 draft_path=1.json");
+        env.insert("LVK_FIXED_MEMORY_INSTRUCTIONS", "fixed-policy");
+        env.insert(
+            "LVK_REPOSITORY_MEMORY_INSTRUCTIONS",
+            "fixed-policy\n\nRUN=1 draft_path=1.json",
+        );
+        let first = env.resume_instructions("profile-policy").unwrap();
+        env.insert("LVK_CURRENT_MEMORY_INSTRUCTIONS", "RUN=2 draft_path=2.json");
+        env.insert(
+            "LVK_REPOSITORY_MEMORY_INSTRUCTIONS",
+            "fixed-policy\n\nRUN=2 draft_path=2.json",
+        );
+        let current = env.resume_instructions("profile-policy").unwrap();
+        assert_eq!(first.fingerprint, current.fingerprint);
+        env.insert("LVK_EXECUTION_GUIDE", "/fixture/updated-guide.md");
+        assert_ne!(
+            first.fingerprint,
+            env.resume_instructions("profile-policy")
+                .unwrap()
+                .fingerprint
+        );
+        env.insert("LVK_EXECUTION_GUIDE", "/fixture/guide.md");
+        assert!(current.current.contains("RUN=2 draft_path=2.json"));
+        assert!(!current.current.contains("fixed-policy"));
+        assert!(
+            env.repository_memory_instructions()
+                .unwrap()
+                .contains("fixed-policy")
+        );
+        assert_ne!(
+            first.fingerprint,
+            env.resume_instructions("changed-profile")
+                .unwrap()
+                .fingerprint
+        );
+        env.repo_context.repo_names.push("second-repo".into());
+        assert_ne!(
+            first.fingerprint,
+            env.resume_instructions("profile-policy")
+                .unwrap()
+                .fingerprint
+        );
+        for key in [
+            "LVK_OPENWIKI_REVIEWER",
+            "LVK_RESOURCE_MEDIATOR",
+            "LVK_INTEGRATION_WORKER",
+            "LVK_OPENWIKI_MAINTENANCE",
+            crate::source_protection::ROOTS,
+        ] {
+            let mut special = env.clone();
+            special.insert(key, "1");
+            assert!(special.resume_instructions("profile-policy").is_none());
+        }
+        env.vars.remove("LVK_CURRENT_MEMORY_INSTRUCTIONS");
+        assert!(env.resume_instructions("profile-policy").is_none());
+    }
 
     #[test]
     fn execution_guidance_is_mode_specific_and_keeps_current_context() {
