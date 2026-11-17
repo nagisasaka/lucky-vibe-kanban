@@ -4,7 +4,6 @@ version = "0.1.44"
 edition = "2024"
 
 [dependencies]
-libc = "0.2"
 schemars = { workspace = true }
 utils = { path = "../utils" }
 executors = { path = "../executors" }

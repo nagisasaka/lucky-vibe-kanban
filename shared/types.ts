@@ -136,11 +136,7 @@ export type RepositoryMemoryState = { version: number, enabled: boolean, status:
 /**
  * Existing monitor retries only this confirmed, no-longer-consumed artifact set.
  */
-artifact_cleanup?: RepositoryArtifactCleanup,
-/**
- * Missing means pre-cutover. New registrations never inspect user persistent.
- */
-artifact_layout?: number, output_language: string, active_source_commit: string | null, active_event_ids: Array<string>, active_sync_input_digest: string | null, coding_errors: Array<string>,
+artifact_cleanup?: RepositoryArtifactCleanup, output_language: string, active_source_commit: string | null, active_event_ids: Array<string>, active_sync_input_digest: string | null, coding_errors: Array<string>,
 /**
  * Read-side detection on the saved target branch, independent of receipts.
  */

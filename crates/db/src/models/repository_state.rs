@@ -1,8 +1,6 @@
 //! Final Manifests and Wiki/integration operational state in the instance DB.
 //! Recovery inputs remain files in protected, volume-backed managed tmp.
 mod coding_runs;
-mod cutover;
-pub use cutover::verify_retired_artifacts;
 mod manifests;
 use std::{io, ops::Deref, path::Path};
 

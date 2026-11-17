@@ -328,10 +328,6 @@ pub struct RepositoryMemoryState {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
     pub artifact_cleanup: Option<RepositoryArtifactCleanup>,
-    /// Missing means pre-cutover. New registrations never inspect user persistent.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    #[ts(optional)]
-    pub artifact_layout: Option<u32>,
     #[serde(default = "default_memory_language")]
     pub output_language: String,
     #[serde(default)]
@@ -402,7 +398,6 @@ impl Default for RepositoryMemoryState {
             maintenance_session_id: None,
             error: None,
             artifact_cleanup: None,
-            artifact_layout: Some(2),
             output_language: default_memory_language(),
             active_source_commit: None,
             active_event_ids: Vec::new(),

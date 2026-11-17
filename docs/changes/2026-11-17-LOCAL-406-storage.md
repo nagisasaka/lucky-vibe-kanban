@@ -5,12 +5,11 @@ importer no longer reads legacy Change Manifest files. Applied migrations and
 `repository_manifest_imports` rows remain unchanged. Final Manifests continue to
 use the instance DB; no file fallback, deletion or live migration is performed.
 
-This change does not authorise deployment or disposal of existing files. Before
-upgrading, stop all old server/agent hosts and settle unfinished coding and Wiki
-operations using their original version and fixed paths. Do not run the old and
-new lock implementations concurrently. Keep the old artifacts and matching DB
-backup until recovery is independently verified. A clean Git checkout or a
-successful AgentRun alone does not prove that restoration/publication finished.
+This change does not authorise deployment or disposal of existing files. Follow
+the existing restart and recovery procedures. Do not run the old and new lock
+implementations concurrently. Keep recovery artifacts and matching DB backups
+until recovery is independently verified. A clean Git checkout or a successful
+AgentRun alone does not prove that restoration/publication finished.
 
 ## Internal data placement
 
@@ -42,18 +41,56 @@ state row atomically retains only the exact confirmed cleanup IDs; the repositor
 monitor retries after crashes or partial deletion without interpreting error prose.
 Auto-merge stays in its existing post-processing phase until journal cleanup ends. There is no time-based expiry.
 
-The first upgrade performs a read-only refusal check for unfinished legacy Run/publication
-or instruction-restoration files and held legacy locks. A missing legacy storage
-root remains unacknowledged; verify its original volume rather than treating it as empty. It never reads legacy
-`events/`, imports history, moves data or deletes old files. This check cannot
-prove an old binary will never start again: stopping all old processes is an
-operator prerequisite. A refusal requires offline settlement using the old version
-and original absolute paths. After successful preflight only `artifact_layout: 2`
-is saved in the existing Wiki state row; subsequent starts and new registrations
-never inspect user `persistent/knowledge`. No automatic file migration or bypass
-is provided; all import-history rows and final Manifests stay unchanged.
+Startup runs schema migrations without inspecting retired repository artifacts or
+legacy reservations. It does not read or acknowledge old artifact layouts, scan
+user `persistent/knowledge`, or modify historical state to permit startup. Old
+files, import-history rows and final Manifests remain untouched. There is no
+legacy compatibility reader, replacement gate or bypass setting.
 
 DB-only status, Manifest discovery and completion-history readers neither create
 nor require artifact directories. User shared persistent/cache/tmp links and
 provider access remain available. This change does not alter development bundle
 or restart procedures (LOCAL-407).
+
+## Startup gate removal inventory
+
+The retired upgrade-only mechanism has been removed in full:
+
+- `crates/db/src/models/repository_state/cutover.rs`: legacy JSON reader, writer
+  query, storage-root/layout checks, held-lock probe, acknowledgement write,
+  refusal errors and both dedicated cutover tests.
+- `crates/db/src/models/repository_state.rs`: module and public export.
+- `crates/db/src/lib.rs`: calls from `new` and `create_pool` (also used by
+  `new_with_after_connect`). Both retain migrations and the runtime schema guard.
+- `crates/utils/src/repository_memory.rs`: `artifact_layout` field and default;
+  generated `shared/types.ts` follows the Rust type. Stored payload fields are
+  not rewritten on startup.
+- `crates/db/Cargo.toml` and its lockfile entry: the now-unused direct `libc`
+  dependency. Other crates retain their own dependencies.
+
+Normal startup regression coverage is in `crates/db/tests/startup.rs`. It uses
+private subprocess instances for both constructors, empty databases, three
+historical audit_failed/reserved records without hosts or leases, existing
+Manifest/import history and all former layout marker variants. It compares
+history and migration receipts across repeated startup, with malformed retained
+files, a held old lock and a missing old storage root. Current run exclusivity,
+restoration, cleanup ownership, schema checks and official restart procedures
+remain separate and unchanged. No replacement gate, exception list, setting or
+historical correction is introduced.
+
+Canonical OpenWiki is read-only in ordinary coding runs. These stale references
+were inventoried for authorised maintenance; they have **not** been updated by
+this change:
+
+| Page | References requiring removal/update |
+| --- | --- |
+| `openwiki/quickstart.md` | LOCAL-406 navigation row describing cutover refusal |
+| `openwiki/architecture/system.md` | cutover source metadata and startup refusal/layout paragraph |
+| `openwiki/concepts/repository-memory.md` | cutover source metadata; DB startup inspection, refusal conditions and layout acknowledgement paragraphs |
+| `openwiki/operations/openwiki-maintenance.md` | cutover source metadata; cutover-boundary link and read-only refusal paragraph |
+| `openwiki/operations/development.md` | cutover source metadata; dedicated refusal-test link and layout/missing-root bypass paragraph |
+
+Applied SQL/checksums, past Change Manifests, live data/files/backups, merge,
+deployment and restart are outside this implementation. The operational warning
+against concurrently running old and current lock implementations remains; it is
+not an application startup check.

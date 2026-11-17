@@ -1827,7 +1827,6 @@ dependencies = [
  "chrono",
  "executors",
  "futures",
- "libc",
  "schemars 1.2.1",
  "serde",
  "serde_json",
