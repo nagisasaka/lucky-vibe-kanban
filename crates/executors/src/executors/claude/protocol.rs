@@ -352,9 +352,10 @@ impl ProtocolPeer {
                                     request_id,
                                     request,
                                 }) => {
-                                    if requests.contains_key(&request_id) {
-                                        // A retry is still the original pending request, never
-                                        // an early error followed by a second native response.
+                                    if matches!(&request, ControlRequestType::CanUseTool { .. })
+                                        && requests.contains_key(&request_id)
+                                    {
+                                        // A pending tool retry must not create another approval.
                                         continue;
                                     }
                                     if let ControlRequestType::CanUseTool { tool_use_id: Some(id), .. } = &request
