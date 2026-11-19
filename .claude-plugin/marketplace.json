@@ -1,0 +1,13 @@
+{
+  "name": "lucky-vibe-kanban",
+  "owner": {
+    "name": "nagisasaka"
+  },
+  "plugins": [
+    {
+      "name": "lvk-orchestration",
+      "source": "./plugins/lvk-orchestration/claude",
+      "description": "LVK design collaboration and execution orchestration"
+    }
+  ]
+}

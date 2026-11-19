@@ -71,6 +71,7 @@ pub struct FileService {
     legacy_cache_dir: PathBuf,
     pool: SqlitePool,
     max_size_bytes: u64,
+    issue_upload_guard: std::sync::Arc<tokio::sync::Mutex<()>>,
 }
 
 impl FileService {
@@ -82,6 +83,7 @@ impl FileService {
             cache_dir,
             legacy_cache_dir,
             pool,
+            issue_upload_guard: Default::default(),
             max_size_bytes: 20 * 1024 * 1024, // 20MB default
         })
     }
@@ -175,6 +177,27 @@ impl FileService {
         }
     }
 
+    /// Keep the metadata-to-Issue association window out of this service's cleanup.
+    /// The FK and conditional INSERT also reject concurrent Issue deletion.
+    pub async fn store_issue_file(
+        &self,
+        data: &[u8],
+        name: &str,
+        project: Uuid,
+        issue: Uuid,
+    ) -> Result<File, FileError> {
+        let _guard = self.issue_upload_guard.lock().await;
+        let file = self.store_file(data, name).await?;
+        sqlx::query("INSERT OR IGNORE INTO issue_attachments(issue_id,attachment_id) SELECT id,? FROM local_issues WHERE id=? AND project_id=?")
+            .bind(file.id).bind(issue).bind(project).execute(&self.pool).await?;
+        let linked: bool = sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM issue_attachments ia JOIN local_issues i ON i.id=ia.issue_id WHERE ia.issue_id=? AND i.project_id=? AND ia.attachment_id=?)")
+            .bind(issue).bind(project).bind(file.id).fetch_one(&self.pool).await?;
+        if !linked {
+            return Err(FileError::NotFound);
+        }
+        Ok(file)
+    }
+
     pub async fn delete_orphaned_files(&self) -> Result<(), FileError> {
         let orphaned_files = File::find_orphaned_files(&self.pool).await?;
         if orphaned_files.is_empty() {
@@ -210,10 +233,11 @@ impl FileService {
     }
 
     async fn delete_orphaned_file(&self, id: Uuid) -> Result<bool, FileError> {
+        let _guard = self.issue_upload_guard.lock().await;
         // A reference may have appeared since the cleanup snapshot. SQLite's
         // conditional delete is the authority, never the earlier SELECT.
         let path: Option<String> = sqlx::query_scalar(&format!(
-            "DELETE FROM attachments WHERE id=? AND NOT EXISTS (SELECT 1 FROM workspace_attachments WHERE attachment_id=attachments.id) AND NOT EXISTS (SELECT 1 FROM project_attachments WHERE attachment_id=attachments.id) AND {} RETURNING file_path",
+            "DELETE FROM attachments WHERE id=? AND NOT EXISTS (SELECT 1 FROM workspace_attachments WHERE attachment_id=attachments.id) AND NOT EXISTS (SELECT 1 FROM project_attachments WHERE attachment_id=attachments.id) AND NOT EXISTS (SELECT 1 FROM issue_attachments WHERE attachment_id=attachments.id) AND {} RETURNING file_path",
             db::models::file::NO_PET_ATTACHMENT_REFERENCE
         )).bind(id).fetch_optional(&self.pool).await?;
         let Some(path) = path else {
@@ -239,6 +263,17 @@ impl FileService {
     }
 
     pub async fn delete_file(&self, id: Uuid) -> Result<(), FileError> {
+        let _guard = self.issue_upload_guard.lock().await;
+        let issue_reference: bool = sqlx::query_scalar(
+            "SELECT EXISTS(SELECT 1 FROM issue_attachments WHERE attachment_id=?)",
+        )
+        .bind(id)
+        .fetch_one(&self.pool)
+        .await?;
+        if issue_reference {
+            return Err(FileError::Placement);
+        }
+
         if let Some(file) = File::find_by_id(&self.pool, id).await? {
             let file_path = self.cache_dir.join(&file.file_path);
             if file_path.exists() {
@@ -446,16 +481,93 @@ mod attachment_tests {
             .execute(&pool)
             .await
             .unwrap();
+        sqlx::query("CREATE TABLE issue_attachments(issue_id BLOB, attachment_id BLOB)")
+            .execute(&pool)
+            .await
+            .unwrap();
         let cache = root.path().join("cache");
         fs::create_dir(&cache).unwrap();
         let service = FileService {
             pool,
             cache_dir: cache,
             legacy_cache_dir: root.path().join("legacy"),
+            issue_upload_guard: Default::default(),
             max_size_bytes: 20 * 1024 * 1024,
         };
         (service, root)
     }
+    #[tokio::test]
+    async fn issue_without_workspace_survives_cleanup_and_recheck() {
+        let (svc, _root) = fixture().await;
+        sqlx::raw_sql("CREATE TABLE workspace_attachments(workspace_id BLOB,attachment_id BLOB); CREATE TABLE project_attachments(project_id BLOB,attachment_id BLOB); CREATE TABLE local_issues(id BLOB PRIMARY KEY,project_id BLOB);").execute(&svc.pool).await.unwrap();
+        let project = Uuid::new_v4();
+        let issue = Uuid::new_v4();
+        sqlx::query("INSERT INTO local_issues VALUES(?,?)")
+            .bind(issue)
+            .bind(project)
+            .execute(&svc.pool)
+            .await
+            .unwrap();
+        let orphan = svc
+            .store_file(b"issue-owned", "evidence.txt")
+            .await
+            .unwrap();
+        assert_eq!(
+            File::find_orphaned_files(&svc.pool).await.unwrap()[0].id,
+            orphan.id
+        );
+        let file = svc
+            .store_issue_file(b"issue-owned", "evidence.txt", project, issue)
+            .await
+            .unwrap();
+        assert!(
+            File::find_orphaned_files(&svc.pool)
+                .await
+                .unwrap()
+                .is_empty()
+        );
+        assert!(!svc.delete_orphaned_file(file.id).await.unwrap());
+        assert!(svc.delete_file(file.id).await.is_err());
+        assert!(
+            db::models::file::WorkspaceAttachment::associate_many_dedup(
+                &svc.pool,
+                Uuid::new_v4(),
+                &[file.id]
+            )
+            .await
+            .is_err()
+        );
+        svc.delete_orphaned_files().await.unwrap();
+        let retained = svc.get_file(file.id).await.unwrap().unwrap();
+        assert_eq!(
+            fs::read(svc.get_absolute_path(&retained)).unwrap(),
+            b"issue-owned"
+        );
+        let other_issue = Uuid::new_v4();
+        sqlx::query("INSERT INTO local_issues VALUES(?,?)")
+            .bind(other_issue)
+            .bind(project)
+            .execute(&svc.pool)
+            .await
+            .unwrap();
+        let shared = svc
+            .store_issue_file(b"issue-owned", "evidence.txt", project, other_issue)
+            .await
+            .unwrap();
+        assert_eq!(file.id, shared.id);
+        sqlx::query("DELETE FROM issue_attachments WHERE issue_id=?")
+            .bind(issue)
+            .execute(&svc.pool)
+            .await
+            .unwrap();
+        svc.delete_orphaned_files().await.unwrap();
+        assert!(svc.get_file(shared.id).await.unwrap().is_some());
+        let alias = svc.store_file(b"issue-owned", "other.txt").await.unwrap();
+        assert_ne!(file.id, alias.id);
+        assert!(svc.delete_orphaned_file(alias.id).await.unwrap());
+        assert!(svc.get_file(file.id).await.unwrap().is_some());
+    }
+
     #[tokio::test]
     async fn attachment_session_bases_and_resume_keep_workspace_and_repositories_separate() {
         let (svc, root) = fixture().await;
@@ -580,7 +692,7 @@ mod attachment_tests {
             .connect("sqlite::memory:")
             .await
             .unwrap();
-        sqlx::raw_sql("PRAGMA foreign_keys=ON; CREATE TABLE projects(id BLOB PRIMARY KEY); CREATE TABLE attachments(id BLOB PRIMARY KEY,file_path TEXT NOT NULL,original_name TEXT NOT NULL,mime_type TEXT,size_bytes INTEGER,hash TEXT NOT NULL UNIQUE,created_at TEXT NOT NULL,updated_at TEXT NOT NULL); CREATE TABLE workspace_attachments(workspace_id BLOB,attachment_id BLOB REFERENCES attachments(id));").execute(&pool).await.unwrap();
+        sqlx::raw_sql("PRAGMA foreign_keys=ON; CREATE TABLE issue_attachments(issue_id BLOB,attachment_id BLOB); CREATE TABLE projects(id BLOB PRIMARY KEY); CREATE TABLE attachments(id BLOB PRIMARY KEY,file_path TEXT NOT NULL,original_name TEXT NOT NULL,mime_type TEXT,size_bytes INTEGER,hash TEXT NOT NULL UNIQUE,created_at TEXT NOT NULL,updated_at TEXT NOT NULL); CREATE TABLE workspace_attachments(workspace_id BLOB,attachment_id BLOB REFERENCES attachments(id));").execute(&pool).await.unwrap();
         sqlx::query("CREATE TABLE scratch(scratch_type TEXT, payload TEXT)")
             .execute(&pool)
             .await

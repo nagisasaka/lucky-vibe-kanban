@@ -504,6 +504,15 @@
     "noCommands": "No hay comandos disponibles para este agente."
   },
   "kanban": {
+    "attachments": {
+      "title": "Archivos adjuntos",
+      "add": "Añadir archivo",
+      "empty": "No hay archivos adjuntos",
+      "loadFailed": "No se pudieron cargar los adjuntos.",
+      "uploadFailed": "No se confirmó la carga. Compruebe el nombre, tamaño, formato y acceso, y actualice la lista.",
+      "downloadFailed": "No se pudo descargar el adjunto.",
+      "retry": "Actualizar"
+    },
     "noVisibleStatuses": "Todos los estados están ocultos. Usa la configuración de visualización o cambia a otra pestaña para ver los problemas.",
     "noProjectFound": "No se encontró el proyecto",
     "unassigned": "Sin asignar",

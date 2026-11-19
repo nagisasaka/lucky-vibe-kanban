@@ -1,0 +1,32 @@
+name: Claude marketplace
+
+on:
+  pull_request:
+    paths:
+      - '.claude-plugin/**'
+      - 'plugins/lvk-orchestration/claude/**'
+      - 'skills/lvk-orchestration/**'
+      - 'scripts/claude-marketplace*'
+      - '.github/workflows/claude-marketplace.yml'
+  push:
+    branches: [main]
+    paths:
+      - '.claude-plugin/**'
+      - 'plugins/lvk-orchestration/claude/**'
+      - 'skills/lvk-orchestration/**'
+      - 'scripts/claude-marketplace*'
+      - '.github/workflows/claude-marketplace.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  distribution:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+      - name: Check committed distribution and regression cases
+        run: |
+          python3 scripts/claude-marketplace.py --check --ref HEAD
+          python3 scripts/claude-marketplace.test.py

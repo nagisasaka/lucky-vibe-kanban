@@ -1,5 +1,6 @@
 pub mod board_api;
 pub(crate) mod issue_archive;
+mod issue_attachments;
 pub(crate) mod issue_relations;
 #[cfg(test)]
 mod issue_update_tests;
@@ -215,6 +216,7 @@ pub fn router(deployment: &DeploymentImpl) -> Router<DeploymentImpl> {
         .route("/v1/issues", post(create_issue))
         .route("/v1/issues/bulk", post(bulk_update_issues))
         .merge(issue_versions::router())
+        .merge(issue_attachments::router())
         .route(
             "/v1/issues/{issue_id}",
             patch(update_issue).delete(delete_issue),

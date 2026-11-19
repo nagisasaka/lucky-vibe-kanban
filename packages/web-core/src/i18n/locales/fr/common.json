@@ -504,6 +504,15 @@
     "noCommands": "Aucune commande disponible pour cet agent."
   },
   "kanban": {
+    "attachments": {
+      "title": "Pièces jointes",
+      "add": "Ajouter un fichier",
+      "empty": "Aucune pièce jointe",
+      "loadFailed": "Impossible de charger les pièces jointes.",
+      "uploadFailed": "Envoi non confirmé. Vérifiez le nom, la taille, le format et les droits, puis actualisez la liste.",
+      "downloadFailed": "Impossible de télécharger la pièce jointe.",
+      "retry": "Actualiser"
+    },
     "noVisibleStatuses": "Tous les statuts sont masqués. Utilisez les paramètres d'affichage ou changez d'onglet pour voir les problèmes.",
     "noProjectFound": "Aucun projet trouvé",
     "unassigned": "Non assigné",

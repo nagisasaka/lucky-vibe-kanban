@@ -1462,6 +1462,15 @@
       "created": "Created",
       "updated": "Updated"
     },
+    "attachments": {
+      "title": "Attachments",
+      "add": "Add file",
+      "empty": "No attachments",
+      "loadFailed": "Could not load attachments.",
+      "uploadFailed": "Upload could not be confirmed. Check the file name, size, format and access, then refresh the list.",
+      "downloadFailed": "Could not download the attachment.",
+      "retry": "Refresh"
+    },
     "attachmentUploading": "Uploading",
     "selectStatus": "Select status",
     "previewWorkspacesSidebar": "Preview workspaces sidebar",

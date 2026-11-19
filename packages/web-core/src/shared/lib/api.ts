@@ -1298,6 +1298,48 @@ export const profilesApi = {
   },
 };
 
+// Issue attachment access always includes the parent Project and Issue.
+export const issueAttachmentsApi = {
+  list: async (
+    projectId: string,
+    issueId: string
+  ): Promise<AttachmentResponse[]> => {
+    const response = await makeRequest(
+      `/api/local/projects/${projectId}/issues/${issueId}/attachments`
+    );
+    return handleApiResponse<AttachmentResponse[]>(response);
+  },
+  upload: async (
+    projectId: string,
+    issueId: string,
+    file: File
+  ): Promise<AttachmentResponse> => {
+    const body = new FormData();
+    body.append('image', file);
+    const response = await makeLocalApiRequest(
+      `/api/local/projects/${projectId}/issues/${issueId}/attachments`,
+      {
+        method: 'POST',
+        body,
+        credentials: 'include',
+      }
+    );
+    return handleApiResponse<AttachmentResponse>(response);
+  },
+  download: async (
+    projectId: string,
+    issueId: string,
+    attachmentId: string
+  ): Promise<Blob> => {
+    const response = await makeLocalApiRequest(
+      `/api/local/projects/${projectId}/issues/${issueId}/attachments/${attachmentId}/file`,
+      { credentials: 'include' }
+    );
+    if (!response.ok) await handleApiResponse<void>(response);
+    return response.blob();
+  },
+};
+
 // Workspace attachments API
 export const attachmentsApi = {
   upload: async (attachment: File): Promise<AttachmentResponse> => {
