@@ -17,6 +17,7 @@ use crate::{DeploymentImpl, error::ApiError};
 pub(super) fn router() -> Router<DeploymentImpl> {
     Router::new()
         .merge(super::super::issue_archive::router())
+        .merge(super::super::issue_delete::router())
         .route("/issues", get(list_issues).post(create_issue))
         .route("/issues/search", post(search_issues))
         .route("/issues/filter", post(filter_issues))

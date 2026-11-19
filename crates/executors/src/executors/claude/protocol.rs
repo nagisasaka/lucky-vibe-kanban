@@ -154,7 +154,6 @@ impl ProtocolPeer {
             if client.finish_instruction_delivery().await.is_err() {
                 reader_peer.fail_runtime();
             }
-
         });
 
         (peer, failure_rx)

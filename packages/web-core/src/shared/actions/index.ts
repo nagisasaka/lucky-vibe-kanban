@@ -7,6 +7,7 @@ import {
 } from '@/shared/lib/issueArchiveNotice';
 import { ActionError } from '@/shared/lib/actionMessages';
 import i18n from '@/i18n/config';
+import { IssueDeleteDialog } from '@/shared/dialogs/kanban/IssueDeleteDialog';
 import { IssueArchiveDialog } from '@/shared/dialogs/kanban/IssueArchiveDialog';
 import {
   issueArchiveApi,
@@ -1503,6 +1504,14 @@ export const Actions = {
     isVisible: (ctx) =>
       ctx.layoutMode === 'kanban' && ctx.hasSelectedKanbanIssue,
     execute: async (ctx, _projectId, issueIds) => {
+      if (issueIds.length === 1 && ctx.projectMutations?.removeIssue) {
+        await IssueDeleteDialog.show({
+          projectId: _projectId,
+          issueId: issueIds[0],
+          onDeleteIssue: () => ctx.projectMutations?.removeIssue(issueIds[0]),
+        });
+        return;
+      }
       const count = issueIds.length;
       const result = await ConfirmDialog.show({
         title: () =>

@@ -869,7 +869,9 @@ impl NativeAuditReplayMapper for DirectProviderMapper {
         let typed = if self.provider == DirectProvider::ClaudeCode {
             match self.semantics {
                 MapperSemantics::V6 => classify_payload_v6(self.provider, event)?,
-                MapperSemantics::V7 | MapperSemantics::V8 => classify_payload(self.provider, event)?,
+                MapperSemantics::V7 | MapperSemantics::V8 => {
+                    classify_payload(self.provider, event)?
+                }
                 MapperSemantics::V5 => classify_payload_v5(self.provider, event)?,
                 MapperSemantics::V3 | MapperSemantics::V4 => {
                     classify_payload_v4(self.provider, event)?
@@ -3589,6 +3591,14 @@ mod tests {
             assert!(
                 matches!(&projected.durable_events[0].payload, AgentEventPayload::ProviderExtension {provider_namespace, provider_event, payload} if provider_namespace=="lvk" && provider_event=="instruction_delivery" && payload["status"]=="attempted")
             );
+            if provider == DirectProvider::ClaudeCode {
+                let mut v7 = manifest.clone();
+                v7.mapper_version = provider.v7_mapper().versions().mapper_version;
+                let replay = provider.v7_mapper().map(&decoded.raw, &v7).unwrap();
+                assert!(
+                    matches!(&replay[0].payload, AgentEventPayload::ProviderExtension { provider_event, .. } if provider_event == "instruction_delivery")
+                );
+            }
             let mut old = manifest;
             old.mapper_version = provider.v6_mapper().versions().mapper_version;
             assert!(
@@ -3622,6 +3632,15 @@ mod tests {
             .unwrap();
         assert!(matches!(
             projected.durable_events.last().unwrap().payload,
+            AgentEventPayload::LifecycleChanged {
+                status: AgentRunStatus::Failed
+            }
+        ));
+        let mut v7 = manifest.clone();
+        v7.mapper_version = provider.v7_mapper().versions().mapper_version;
+        let replay = provider.v7_mapper().map(&decoded.raw, &v7).unwrap();
+        assert!(matches!(
+            replay.last().unwrap().payload,
             AgentEventPayload::LifecycleChanged {
                 status: AgentRunStatus::Failed
             }

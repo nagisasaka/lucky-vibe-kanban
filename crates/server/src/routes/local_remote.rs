@@ -1,6 +1,7 @@
 pub mod board_api;
 pub(crate) mod issue_archive;
 mod issue_attachments;
+pub(crate) mod issue_delete;
 pub(crate) mod issue_relations;
 #[cfg(test)]
 mod issue_update_tests;

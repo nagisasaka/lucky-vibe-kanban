@@ -913,5 +913,36 @@
     "cliLogin": "{{provider}}のCLIでサインインしていません。",
     "gitHost": "Gitホスト",
     "unconfirmed": "PRの作成結果を確認できません。リポジトリのプルリクエスト一覧を確認してから再操作してください。"
+  },
+  "issueDelete": {
+    "title": "Issueを削除",
+    "description": "Issueの本文・コメント・関連記録を削除します。取り消せません。子Issueは削除しません。",
+    "includeWorkspaces": "配下のWorkspaceも削除",
+    "warning": "以下の直接紐付くWorkspaceと、その会話・実行履歴を削除します。LVK管理のworktreeと未コミット・未追跡ファイルも失われます。取り消せません。",
+    "issueOnly": "Issueのみ削除します。Workspace・プロセス・ファイルは保持します。",
+    "preserved": "Git branch・リポジトリ本体・外部フォルダ・共有領域は保持します。外部フォルダのWorkspaceと履歴は削除対象から除外します。",
+    "count": "削除対象Workspace：{{count}}件",
+    "loading": "直接紐付くWorkspaceを確認中…",
+    "noWorktree": "worktreeなし",
+    "blocked": "保護対象のWorkspaceがあるため、削除できません。まだ何も削除していません。理由を解消して対象を再確認するか、チェックを外してIssueのみ削除してください。",
+    "completed": "Issueと対象Workspaceの記録を削除し、物理cleanupも完了しました。",
+    "cleanupFailed": "Issueと対象Workspaceの記録は削除しましたが、物理cleanupは未完了です。以下の結果を確認し、削除を繰り返さないでください。",
+    "cleanupCompleted": "記録削除・cleanup完了",
+    "cleanupIncomplete": "記録削除済み・cleanup失敗",
+    "refused": "削除を拒否しました。IssueとWorkspaceの記録は保持しています。対象を再確認してください。request_id: {{requestId}}",
+    "unknown": "処理中または結果不明です。記録やファイルが一部削除済みの可能性があります。再実行せず、この要求の結果を確認してください。request_id: {{requestId}}",
+    "error": "操作を完了できませんでした。",
+    "close": "閉じる",
+    "cancel": "キャンセル",
+    "confirm": "削除",
+    "refresh": "対象を再確認",
+    "inspect": "結果を確認",
+    "reasons": {
+      "external": "除外：外部フォルダとWorkspace履歴を保持",
+      "protected": "保護対象：pinned・実行専用・owner管理のWorkspace",
+      "ownership": "所有を確認できないため削除不可",
+      "shared": "別の参照または共有パスがあるため削除不可",
+      "busy": "使用中のため削除不可"
+    }
   }
 }
