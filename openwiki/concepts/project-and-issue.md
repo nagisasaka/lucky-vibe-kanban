@@ -46,6 +46,8 @@ sources:
     resource: repo://crates/db/src/models/issue_order.rs
   - id: openwiki-source-ccd357b1781e6e90e56fd858
     resource: repo://crates/db/src/models/repo.rs
+  - id: openwiki-source-eec300ba0fd0bf7307068218
+    resource: repo://crates/db/src/project_transfer.rs
   - id: openwiki-source-bfeb31abecf9b81f73b98a39
     resource: repo://crates/db/src/project_transfer/history.rs
   - id: openwiki-source-4f59e07f8850eb04105d5cb8
@@ -70,6 +72,10 @@ sources:
     resource: repo://crates/server/src/routes/local_remote.rs
   - id: openwiki-source-24838d7108e2888a7fdc2714
     resource: repo://crates/server/src/routes/local_remote/issue_archive.rs
+  - id: openwiki-source-ff720f92402319bc9a7731c7
+    resource: repo://crates/server/src/routes/local_remote/issue_attachments.rs
+  - id: openwiki-source-d83950a9a869ea7c9c41259c
+    resource: repo://crates/server/src/routes/local_remote/issue_delete.rs
   - id: openwiki-source-03dd6dd9ecb241eb669cb49c
     resource: repo://crates/server/src/routes/local_remote/issue_relations.rs
   - id: openwiki-source-8cfc9e9e42e1bce7ff48a47e
@@ -82,6 +88,8 @@ sources:
     resource: repo://crates/server/src/routes/workspaces/links.rs
   - id: openwiki-source-04d5adb51b5929dacce999bc
     resource: repo://crates/server/src/workflow_runtime/bootstrap.rs
+  - id: openwiki-source-4294e32943918c50b31813b6
+    resource: repo://crates/services/src/services/file.rs
   - id: openwiki-source-1058a214ad85d213959225ba
     resource: repo://packages/ui/src/components/IssueRelationshipsSection.tsx
   - id: openwiki-source-9ed6a174cb1310c0c3caf83b
@@ -112,6 +120,8 @@ sources:
     resource: repo://packages/web-core/src/shared/components/ProjectWorkspaceDefaultContext.test.tsx
   - id: openwiki-source-1665c3801b2c75a34634dc00
     resource: repo://packages/web-core/src/shared/components/ProjectWorkspaceDefaultContext.tsx
+  - id: openwiki-source-d0e3c50db2b33ac15c5c10ca
+    resource: repo://packages/web-core/src/shared/dialogs/kanban/IssueDeleteDialog.tsx
   - id: openwiki-source-00110cdcfec890895b99690a
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/RemoteProjectsSettingsSection.tsx
   - id: openwiki-source-5d2382a0f231c830f95f103c
@@ -126,10 +136,10 @@ sources:
     resource: repo://tests/kanban/issue-detail.mjs
   - id: openwiki-source-62d93277f2c37df9b3fcebae
     resource: repo://tests/kanban/README.md
-generated: { by: "codex", at: "2026-11-17T00:58:56.837Z" }
+generated: { by: "codex", at: "2026-11-19T17:02:40.641Z" }
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-17T00:58:56.837Z
+    at: 2026-11-19T17:02:40.641Z
 ---
 
 # Project・Issue と実施の関係
@@ -383,3 +393,11 @@ migrationは既存本文をNULL/空文字も含めてInitialという初期1版�
 [ProjectのSQLite移送](project-transfer.md)はGitを別途準備した移行先へLVK所有記録を追加する操作で、既存Projectを上書きしない。Project utilitiesからexport/import、Project設定から既存Projectなしのimportを始められる。会話は明示opt-in、添付は欠落summaryだけで、import履歴は実行可能Workspaceではなく専用read-only archiveになる。[入口](../../packages/web-core/src/shared/components/ProjectTransferPanel.tsx)・[Project設定](../../packages/web-core/src/shared/dialogs/settings/settings/RemoteProjectsSettingsSection.tsx)
 
 importした本文・版・コメントは保存文字列を保ち、旧パスや画像を解決しないliteralの閲覧/編集にする。import判定がloading/errorなら安全側に同じ表示を保つ。[editor](../../packages/web-core/src/shared/components/ProjectIssueEditor.tsx)・[判定](../../packages/web-core/src/shared/hooks/useImportedProject.ts)。これは過去のnative Session再開やRepoのcanonical Manifest/Wiki消費履歴の再発行ではない。
+
+## Issue 添付と任意の Workspace 削除
+
+Issue 詳細は親 Project と Issue を検証して添付の保存・一覧・取得を行う。添付は Issue 単独でも保持され、Workspace や Project との共有参照が残る間は孤立ファイル cleanup の対象にならない。[Issue API](../../crates/server/src/routes/local_remote/issue_attachments.rs)・[参照保護](../../crates/services/src/services/file.rs)
+
+単一 Issue の削除確認では直接リンクした Workspace の削除を任意に選べ、既定は OFF。ON は対象と保護状態を検査して DB を一括削除し、commit 後に各 Workspace の物理 cleanup 結果を receipt に記録する。外部 Workspace は除外され、失敗や結果不明を成功とみなさない。従来の複数 Issue 削除と remote MCP はこの任意削除を使わない。[削除処理](../../crates/server/src/routes/local_remote/issue_delete.rs)・[確認画面](../../packages/web-core/src/shared/dialogs/kanban/IssueDeleteDialog.tsx)
+
+Project transfer の欠落添付一覧は Project 添付と選択した Workspace 添付を収集する。Issue だけに紐づく添付は現行の一覧収集対象ではないため、一覧が完全であるとは限らない。[収集](../../crates/db/src/project_transfer.rs)

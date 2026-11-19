@@ -1,17 +1,17 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:ff3f1d856f76e187e96bcc63ff280c52434629131ecf532052570690a1bc29d1",
+  "pageVersion": "sha256:f67b6051e1ea4964d54415d8211a9a391e252e85fab4f37d04f534f2e2ce6687",
   "claims": [
     {
       "id": "claim_73d8e11679c6457aaf2e2b1a68fb767e",
       "statement": "LocalAgentRunPortはWorkspace lifecycle lock内で要求を検証して起動前にIDを永続化し、予約と起動を分離する。archive済みまたはworktree削除済みのWorkspaceは明示再開前の起動を拒否する。",
       "evidence": [
         {
-          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L332-L390",
+          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L328-L386",
           "version": "repo-lines-v1:sha256:d1edd8031a56e94bfab88e501595862ce4f0bec09f3be4f88e87bcb18d338043:eyJzZWxlY3RlZExpbmVDb3VudCI6NTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY0NDkzM2JlYmY3OGIxOGFkNjc4Mjk0MzM1NjdjYzk4MWNlYjdiM2FlOGIyZTRlNjA5NjRlOWYwNDQ4MjJmNTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM3NzA1OTE2ZWRhN2VhZmNkYjNkYjMwZDQwYjQ0OTE1NGY0ZDMxMWEyMzkxOTQwMmI3YjdmM2YxMDk3NjA0MjIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjkwMjNhNzI5OTNjZTUyOWNiOWNiYzM0YmQ2NjA0OWM2YzA1OTU5NjhiMmMzN2Q4ODllNzFiY2Y4YmJiOTRiMzMifQ"
         },
         {
-          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L775-L794",
+          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L771-L790",
           "version": "repo-lines-v1:sha256:c0ea0e390127d6a65cbf9ef75e25a583864a23b64d1d0e5647e104eab74b7392:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZkNTIzYzhkYzliZDM1ZTg5MjQwOTc5MGRkYjY2NDM4NmZkYmM0Nzg0NmE1MjNjOTQxYzY1NmFhOTgwOGUxYzkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM5NDQ1MTRjMjBjZDQxMjFjNWRiZTUzMmRkZGE3ZmFiNzJmNTc3Yzc0YTExODJkNDZiYWFmMTUyMDQ5YzBkYTYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImZkNWExNTU5MTI0N2FmOTJjM2Y2Nzk4NjkwYWE0ZjI1NmJjMWViYTY3NjQ3MTgwNzM5Y2RjYmZjZDg2MTM1NzAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJiZGM2MWNiY2JjNWZhYTIzZTY4NWYxOGI4NWVjNjg0ZTY5YzhmNGE5ZDBlNzg3ZThhNTA0N2MxYTNmYjZhNjAifQ"
         }
       ]
@@ -25,7 +25,7 @@
           "version": "repo-lines-v1:sha256:aa5e957614d8b2c866c3753f9481a5747e39a7201ea8155451c787558f2244e7:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMzcwMWVmYWFjNTk2MTQzYjIxMmE0ZjljZTRjZTM5ZTJjNjIwMGE2ZDNhNzdjNGYyYzI4Y2Y0NmEyNWUzOTNhZCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMTlhZDVhNDgxM2UwMmZiZjEzZjljZjIzNDMyMzM1NDc1YTUwZDVjNTk2MWU5MGYxN2IyOTc1NWU4Y2ZhYzMxOCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjAsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZDRjMDk4NGJmMDdjNjIxNmI4NGJhZDJlNDdjN2FiOTAzMDk1MzcyMzEyYThmNDhkZGE3MjkxNWEzOGFhZDI1YSJ9"
         },
         {
-          "resource": "repo://crates/local-deployment/src/process_host.rs#L73-L105",
+          "resource": "repo://crates/local-deployment/src/process_host.rs#L72-L104",
           "version": "repo-lines-v1:sha256:95903d0994e592167396361bae3536769656166f869024ab5c7529d15723379f:eyJzZWxlY3RlZExpbmVDb3VudCI6MzMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjljZDhjZDQ3M2EwZThhNTI5MjUxNmJlMGE4Y2NmY2JkZWM0ZGNkNWRlZmU0NmI3ZTgzMTBmMjUxMjliNzUyMTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVhMmFjYjYyZDI4OGU1ZWY0YzYwZWQ3MzBiOWEzOGU0YTAwZTU4MmUxOGFiYWViZWFmMDFmNmI4MzA1NTUwMmEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijc3OTZmMGZiN2UyYjgxMDE4NDk5NjgyNzk2ODk4NGE0YmEzZTM2NTY3NGYxMTAwYTRjMDJlOTk0NzM2ODkzNGUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImIwZDgwYTFlYTE2YjM4MzRjMGM0YzE4YTcwNzc3ZmZlMjE2YzMxMTk5NDFmNDIzZDAyZDE1NDE4ZjEwOTQ2MGQifQ"
         }
       ]
@@ -36,7 +36,7 @@
       "evidence": [
         {
           "resource": "repo://crates/executors/src/executors/provider_adapter.rs",
-          "version": "repo-file-v1:sha256:d32f09c9bc6c4a36d4d41927920eafde0539662322ae7b4b29adb00ba1956a45"
+          "version": "repo-file-v1:sha256:590e14e516affef0b74c91561f3775c4d69d71fcfd92627df22db5bef59ddded"
         },
         {
           "resource": "repo://crates/local-deployment/src/process_host/journal.rs",
@@ -49,7 +49,7 @@
       "statement": "stdoutは監査への追記後に分類し、監査失敗または必須protocolの解釈失敗時に失敗通知して読み取りを打ち切る。",
       "evidence": [
         {
-          "resource": "repo://crates/local-deployment/src/process_host.rs#L738-L775",
+          "resource": "repo://crates/local-deployment/src/process_host.rs#L736-L773",
           "version": "repo-lines-v1:sha256:37d380e2940f2f8986b9beb6543cd28992ee3509baeedb29149880044b35b64b:eyJzZWxlY3RlZExpbmVDb3VudCI6MzgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFhZTMxYjkyMDA2NGMxZGZmMDk2ZTE2ZGQ3ZTkzZmU3Yjg1MzZiZGQ1YTA3ODE5NmFhNTM5NTYyZWU0NjBhODEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJiYzkxNTIxZTEzMTRhNzFhZDI1NzEwY2ExYWQ0ZjFiYmFjZmU1MzA5ZDU0OTdjOWIzY2Y4YWYxODk3YjJhMDciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQxZTVkMzEwNGVjNDBhYmQwZWQ0NWEyZjA4MmI1ZGExOWI4ZmRiZjVlYWJjYWIwYzFkOTc1YjFkMWRhZjZiOWMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM3Y2MxMTM1MGViZGI3Yzg4ZDkzYjRkYmEyMzRjMWM0YTRiOThlNTc0YTVjMTdiZDhmNmM1ZmMwOTEwMjcwNmYifQ"
         }
       ]
@@ -83,7 +83,7 @@
       "statement": "一時SQLite競合は有限retryとUnavailableで処理し、決定的投影失敗は観測単位に隔離し、DB基盤障害はcursorを進めない。",
       "evidence": [
         {
-          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L2443-L2525",
+          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L2439-L2521",
           "version": "repo-lines-v1:sha256:b192895072ea5fd1a25195bc954497ffc4021f5abb9000bd86aba01e316df05c:eyJzZWxlY3RlZExpbmVDb3VudCI6ODMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg3MzdiZTNjODJiNTc1Y2U1N2NkNWUwNmI4MDRiMzU3MzQ5YmEwMzVlZDZlNzk1YTRiNWM1YzlkMGMwMTJlMmQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU3YTVmZmEzZTA5NWRmMDViNmIzMzMzODcxYWJhMWMxYjNlMjVhYjNkYmYxZDQ5MmYxNTRjMmNjMmIxMjJmNTciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjAyNzEzNGU5ZTkyOGNmNzkzNjNkMmU0OTc2NWIyNmJhNTllMzExOTY5NTIxZGYzNzdiZTNiOTA1NzM4M2ZhNzgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImM5M2YwMTMwMGM2YWJjYTA2YTE3MDU1ZDcwODgwNjYyYWRjOTVhOWY2NTc1MjhhNzgzYjlhNDYzZDgxNWY1NmUifQ"
         }
       ]
@@ -93,11 +93,11 @@
       "statement": "投影劣化時は通常制御を拒否するがCancelと証拠検証付きの明示Retryを残し、終端AgentRunのCancelは冪等な無操作である。",
       "evidence": [
         {
-          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L1719-L1755",
+          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L1715-L1751",
           "version": "repo-lines-v1:sha256:0988a8e0b30521f5b2de085a6bab25621c781fb3c1ef2f2330eef2a45d84950f:eyJzZWxlY3RlZExpbmVDb3VudCI6MzcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZiNDAxMGM2NzRlNjgyZmM3OTE1YzZhMTNjNzJkMjBiMTIwOGYyOWFkMGFhYWI2MDc2YmFmMWNiODczYzYwMGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImU5ZmIzZGIzZTA1YjRlMTQ4NWQ4OWQzYWQxMjFkNzM4Nzk2ODMwOGMzYWE3ZWI3NzNlNDExNzgzYTRjNWY5ZjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFhMjZkZmEyZjY0OWQ2OTQ3ZDhhYzE3ODJlOWM5OTEyM2Q2MjllNzFiZThjZDkyM2M1M2JiNmE5NzdmYjA2OGYifQ"
         },
         {
-          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L3614-L3633",
+          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L3610-L3629",
           "version": "repo-lines-v1:sha256:9f5aba64c4698530bd2c111dfc8aa04e2e773b813819b3f10f533cfc8136f88b:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk1M2ViNjY4ZDNmMTk3OGNhMTJlNDNlODNhZTg4Nzk2YWE5ZjAxOGFkNGEyYzcxMWVlZGQzNDk4MTlkYTBjYWUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU1MjJjNDJjZDE5YzZkMDNkODA4YzQ1MjcyMDU1MjgyNWI3ZWExYzViNDkxYjIxODUxMWNhYzc0MTVjZjlkOWIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImIyOWVmN2YyOTMxMTI0YTEwYTIwZDdlYTA5ZWViN2RiNTE1Nzg0ZjcxZjI0ZjMxNTZjNTBiODIxMzE3NDM5NmMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFhMzFmZjZkMTk3MWJkNGE5OTZlODY3MDRiMjIwNGM5MTI0NjM4YzMyYjA5ZGYxM2UwZjE1YjZiNTFiYzU3MzUifQ"
         }
       ]
@@ -107,7 +107,7 @@
       "statement": "活動中のprocess host制御はproviderへの送信後に非空bytesをNative Auditへ記録し、その記録失敗でも既送信の副作用は否定できない。",
       "evidence": [
         {
-          "resource": "repo://crates/local-deployment/src/process_host.rs#L943-L1013",
+          "resource": "repo://crates/local-deployment/src/process_host.rs#L941-L1011",
           "version": "repo-lines-v1:sha256:d1d8af79745977019d2008afabcabf34a8724cc61857ad710cb268c5550f96a8:eyJzZWxlY3RlZExpbmVDb3VudCI6NzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU5ZTcxOWZjZGUxOTBhMDRiYmQ5YjI0NGJkZmU3ZTE5ZThiYjBmNzE3ZWNiYzQzMmQ0NTc3ZmJjZjY3OTVlMTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhkYjMzOWMxN2Q0Y2M1NGU3MGM0ZmNmZWNiNjExYmI5ZTdkMzYzZjI1YjE4ZTA5MjNhMWQzMDZjYzk1OTI0ZTUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjdkZWQ1N2NkZjYyOGU3YmNmYjdkNzY2MzJhOGQ3MTQ4NzM0YzA0MWJjNjUwMjBkZDg5NmJlZjE4OGE3YTIyMTQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhjMjZjYmNiY2ZjZGJjYTYyNDMzMTM2MTcyYzc5ZjA3MWY3ZjU2NTNmNDFmZWU5YzUwNWJmYmY2ZDYxZDRjOGQifQ"
         }
       ]
@@ -117,7 +117,7 @@
       "statement": "耐久commandのDB enqueueは配送前に行われ、生プロトコル入力の監査保存とは別の記録である。",
       "evidence": [
         {
-          "resource": "repo://crates/local-deployment/src/process_host.rs#L953-L1013",
+          "resource": "repo://crates/local-deployment/src/process_host.rs#L951-L1011",
           "version": "repo-lines-v1:sha256:3ee306ffe0e35de3aee8ecc90c643dec1bed270039e43209c80ffaf8ea3d0636:eyJzZWxlY3RlZExpbmVDb3VudCI6NjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNkNDcxYWU1M2I1ZmQwNTM2ZmJiNDEwODQ0NTdlY2I4NzNlYThlMmZlNTJmNzdiMTFlYzZiNGQ3MmQ4ZDQ2NDQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhkYjMzOWMxN2Q0Y2M1NGU3MGM0ZmNmZWNiNjExYmI5ZTdkMzYzZjI1YjE4ZTA5MjNhMWQzMDZjYzk1OTI0ZTUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjU2MzI5ZDBlMWE1Zjg5ODNiNWY0MzU5YzllZjM5Y2Q0ZDc5MWZhNDZkNDhiMmY5NDc0OGQzOWQ0YTM4MDA4MzYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhjMjZjYmNiY2ZjZGJjYTYyNDMzMTM2MTcyYzc5ZjA3MWY3ZjU2NTNmNDFmZWU5YzUwNWJmYmY2ZDYxZDRjOGQifQ"
         },
         {
@@ -131,7 +131,7 @@
       "statement": "活動中の制御はproviderへの送信後にnative inputを監査し、送信前監査という歴史的目標を現在の保証にできない。",
       "evidence": [
         {
-          "resource": "repo://crates/local-deployment/src/process_host.rs#L953-L1013",
+          "resource": "repo://crates/local-deployment/src/process_host.rs#L951-L1011",
           "version": "repo-lines-v1:sha256:3ee306ffe0e35de3aee8ecc90c643dec1bed270039e43209c80ffaf8ea3d0636:eyJzZWxlY3RlZExpbmVDb3VudCI6NjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNkNDcxYWU1M2I1ZmQwNTM2ZmJiNDEwODQ0NTdlY2I4NzNlYThlMmZlNTJmNzdiMTFlYzZiNGQ3MmQ4ZDQ2NDQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhkYjMzOWMxN2Q0Y2M1NGU3MGM0ZmNmZWNiNjExYmI5ZTdkMzYzZjI1YjE4ZTA5MjNhMWQzMDZjYzk1OTI0ZTUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjU2MzI5ZDBlMWE1Zjg5ODNiNWY0MzU5YzllZjM5Y2Q0ZDc5MWZhNDZkNDhiMmY5NDc0OGQzOWQ0YTM4MDA4MzYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhjMjZjYmNiY2ZjZGJjYTYyNDMzMTM2MTcyYzc5ZjA3MWY3ZjU2NTNmNDFmZWU5YzUwNWJmYmY2ZDYxZDRjOGQifQ"
         }
       ]
@@ -185,11 +185,11 @@
       "statement": "Workspace明示削除後のbackground cleanupはSessionごとにNative Auditとprocess logを削除するため、周期cleanupを追加しない歴史的方針は永久保持を保証しない。",
       "evidence": [
         {
-          "resource": "repo://crates/workspace-manager/src/workspace_manager.rs#L1358-L1387",
+          "resource": "repo://crates/workspace-manager/src/workspace_manager.rs#L1381-L1410",
           "version": "repo-lines-v1:sha256:0b797b19623d346ac9532e94bace2630043585da9d184d5afcdbf97ee58d232e:eyJzZWxlY3RlZExpbmVDb3VudCI6MzAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkxY2M0MDY4N2QyNDRlOWRhZjkxY2VkNDY1MjMyNjU2OWE0ZmI2ZGZjODFkMDNmYmU3MjNhNWVhM2NjYmU5ZGYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjJjZTRjYTliOWNjODhmYTQ4NWY1MjA3MWEyNzg3YzBkMTNmN2NkYmE4ODMwNDgzMmFhMTEzMmQzZWQ4Mzk4YzEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEifQ"
         },
         {
-          "resource": "repo://crates/workspace-manager/src/workspace_manager.rs#L427-L506",
+          "resource": "repo://crates/workspace-manager/src/workspace_manager.rs#L450-L529",
           "version": "repo-lines-v1:sha256:9dbe5c7e65cbdb6f420ea6efca3f76164e6c17cfd427f7e359ecfff4d22de1aa:eyJzZWxlY3RlZExpbmVDb3VudCI6ODAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE1YjUzNGEwNWNhMzNmNzUwZThjYjkyODFiNGNlYmUzNmZiMDRiZjAzOWEwMmM1YzBhNDA0MWQ4NGYxMzQ4ODciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJlNzBhYTI5Zjg2ZmFmOTAxZjA4NjAxNjQ4OWQ1OWIzNDUyNjhiNTU1YmJmYmFkYzE1MjViYmIzOGVlNDU5NjUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRmZTdjZGZmNmEwYTU4NjczNDQ3NTM5ZTMzMTYyNTU0ZjkwN2FjODA1MjI5ZjA4ZGNhNDJmMGU3NjQxMThlNjUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjU2MDhjZTExZjY5MjYyZTRmYjkwNGU0ZWMyOWRmMmIzODZhMmQ4Yzk3ZTU2N2YxMWE3ZjgyNzJiMjU0ODYxMmQifQ"
         }
       ]
@@ -199,11 +199,11 @@
       "statement": "取消は native interrupt 送信後の最大2秒の猶予を経て process group と捕捉した子を停止し、cleanup が成功したときだけ Cancelled を返す。",
       "evidence": [
         {
-          "resource": "repo://crates/local-deployment/src/process_host.rs#L1015-L1046",
+          "resource": "repo://crates/local-deployment/src/process_host.rs#L1013-L1044",
           "version": "repo-lines-v1:sha256:c504f3f6ec28c6547965c7fb04dc9b486523daa1e38041a9bebb682c2e1deea4:eyJzZWxlY3RlZExpbmVDb3VudCI6MzIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZjYjJjMDdmMzJlOWVlOTEwMmZjYzcxMDZmYTUwZTYyYTJlMDk3ODNmMWMxODM4ZDU5ZGFmMDBjZGI3N2ZjNTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhkYjMzOWMxN2Q0Y2M1NGU3MGM0ZmNmZWNiNjExYmI5ZTdkMzYzZjI1YjE4ZTA5MjNhMWQzMDZjYzk1OTI0ZTUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjdiMTdmMTBlNDE3NDM2NWY5ZjMxNDc0NDI4MDc2MTA5YjVmMTcwYmI1NjJmNmZkZjk0NDMwMjk5ODFmYjhiYjgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjU4NzQ5YzhjN2ZmNmI5ZTcxMGRlOGQ4NGMyYmZhODU2MTE5MmYyNDE4Yzk5MTBiYjljNWExMjZiM2IxZjZhNjgifQ"
         },
         {
-          "resource": "repo://crates/local-deployment/src/process_host.rs#L1177-L1210",
+          "resource": "repo://crates/local-deployment/src/process_host.rs#L1175-L1208",
           "version": "repo-lines-v1:sha256:b69f04d5c1bd3d99475350b3ab0860aa0de2b59cd97ccfab65c2f000af6df968:eyJzZWxlY3RlZExpbmVDb3VudCI6MzQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVlYzlkNjMyMWU4NzU4NzIzNmRlZDkzYjEyMWQ0ZTBkOGM0YjM0YTE3YTlmNjA4MTQ5MDczNmNlNmIwMjdjNjciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQ5Y2IyMWYyOWQ2NzBhZWJhOGI4Y2E5Y2Q2NjM1ZGE4ZTFiZWU3M2RmYTFhY2I5MDhjYTEwZWYyYTc4ZTNjMTgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijc0ZjVkODI1ZDIwYzA5NDFjNTM5YWY5N2IxNmM3ZjAwOTI2OTQ5OTk3NTNmOGQ1YjBkYzhmZGYzM2M3YWEzYjkifQ"
         }
       ]
@@ -241,7 +241,7 @@
       "statement": "Host の回復は確認済み終了・journal と閉じた Audit の証拠検証を要し、provider が生存中または不明なら成功へ昇格させない。",
       "evidence": [
         {
-          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L1971-L2127",
+          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L1967-L2123",
           "version": "repo-lines-v1:sha256:27b2eeef147fddfaa3765070694f6ce9c63fd7e7ccb2c1c898f807be80de4c7c:eyJzZWxlY3RlZExpbmVDb3VudCI6MTU3LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJlOThkN2QyZDNiZTEwODdjNjZkMTc2MjFlMzMwMzliMGE3NzhlYzEwOTliZDRkNGUyNTc5YmI2YzNiNGM1NzZlIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIyZWI5MDI0MDNlMjg2NDQ2OGJiOGRkNmE1OTA5N2YwMTc5ZDdmMWI2M2Y0ZTIyZDRhYmI4YzAyOTc4NTJiZDQ1IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI2YjIwZTc4YjhkZTJiNWQwZWM0ZTQ4MDdiNGUzYTgxZmMyMmI3MzE0ODM4NmVlZjczNWY2Y2MxZTEyMmI0ZGVjIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI5YWQyYmY3NTk1ODhmNzA5ODc5N2I4NWYzYTA0YTYzNTBmYmIyNTE0MzE3OWE3NzkxMzdhYzdjNzhiMGQwNWY0In0"
         }
       ]
@@ -251,11 +251,11 @@
       "statement": "Host Subscribe は cursor と heartbeat で追いつき、購読と制御を分離する。",
       "evidence": [
         {
-          "resource": "repo://crates/local-deployment/src/process_host.rs#L609-L623",
+          "resource": "repo://crates/local-deployment/src/process_host.rs#L607-L621",
           "version": "repo-lines-v1:sha256:ef8f1d93f066fe428443d679456d68808735a23ac3deab406e409391634078b4:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdmNDg1MTQ3ZjEzNzkzNTM0OTdlNGU0M2JlZDAzMGMwNTRkYjEyMGIyMTBlZWRlNGFiZDQyNDlmNzAwMTE2YTgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZmYTAwYTA2ODlkYzkyNGQyMWIyZmUwYmVmYTA2NGQ3ZTZhODYwNzcyMWZjMmMxNDgyMWM1OGM5MDQ3ZDRkZDAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjI4NjQ2MmUzZjg2MmQ3ZDE1ZTgxY2JhYzBkZmE3NzZjNDkyZjdiN2FhOTRlZDIzZWQxOTVkZjg4YzUyZTU2OGYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjEyNTMyYmI4ZThiMmNiZWY3MTk0NzIyOGU4YWFjNzEzM2M5MTJkMTEwNTliNmI2NWViYWNjYWNhYWZlYWYwODYifQ"
         },
         {
-          "resource": "repo://crates/local-deployment/src/process_host.rs#L688-L717",
+          "resource": "repo://crates/local-deployment/src/process_host.rs#L686-L715",
           "version": "repo-lines-v1:sha256:b0737090841f3b392fea4a8c3fa18495663180ec5b3101747c99b051b1706789:eyJzZWxlY3RlZExpbmVDb3VudCI6MzAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjU1YWI3YjZkOWI2ZTE5NTY1M2ZjOGI1NWY2M2YzNjQ2MDY4NTVjNDU0ZmM1NjU4NTFmMzFhMmYwOTQ1ZGE3NDIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE4MGRkNDMwMWFmYmY3ZGFjZTYwOTY2OTQ4MTk4M2RlMzk4NjA1NzRiMWM0YjNmNjQ5YjNmNWVhYWMxZjk2NDkifQ"
         }
       ]
@@ -269,7 +269,7 @@
           "version": "repo-lines-v1:sha256:91cf9149c3ca16e46f2ee84eba79b93442141845a44e0bd25fed127025deba17:eyJzZWxlY3RlZExpbmVDb3VudCI6NDcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ1NWM0MjBiZDRkYWM2MWU4ZWNiYjRhZmFiYzcxZDM2MDhiZWMwODhiNzA3ZDc3NzQ2MjZlYTYyMWFhNTJjMTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRhY2FkMTA1MjE0ODgyZjI3NDJlMTZjNGQ2ZDY3NjExZmY0ZGYxZGE4OThjMTc3Yjk2ZDE0NGUxYmU4NjI1NjgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhlYzkwMWQ4ODAxYjMxYjU0MjliZTk4ZjM1YTAzNTBiMDcxM2E2NDBhZmFhNDk3OGQyZDM5ODViMDExOGJmY2UiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImEzMTQ0ZTM0YzQ1MzNjMmQ1OTJjZDU5ZTJmYmU2NWE5MjEyMGNiMTViNzA3NzJlNTJlNTI0NjE2MTVhYmYzZDIifQ"
         },
         {
-          "resource": "repo://crates/executors/src/executors/provider_adapter.rs#L1778-L1804",
+          "resource": "repo://crates/executors/src/executors/provider_adapter.rs#L1780-L1806",
           "version": "repo-lines-v1:sha256:1f35db553a841c30dbd8d3f6fe7e3d42020b439c3edddaa69c4fe54f981aa1bf:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU0OGRiMDMxZmI2ZDRlNjM3YTI0ODdjMWFiODlhYjZmY2ExODU2MWVmOGYzNWQ0ODBhYzFhOWIxOTlhOTI5ZDQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjlmNjRkMzQzZmM3MTVkOTFkMDE0Njg3OTVjOWRmZDhmNzVjODgzYmQyM2NiZTBiZTk3N2M3ZjYwMTUzNDk0YjkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjVjYzhkYjMyMzAwYjIwODA1ZWYzOTA1Y2U2M2YzNzkyMDIzN2RiZmU3ZDE0N2ZmM2Y3NmFiOTg0MDMzZjAxODYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijg5YTI3MjBkYmRkZmRhYWE3YzQ5ZGIzYWZmNTA1NTdmZDg4MGZiNDIwMjBmNmEzMTU3NmVlNGU3N2E1NjBlZjAifQ"
         },
         {
@@ -284,7 +284,7 @@
       "evidence": [
         {
           "resource": "repo://crates/executors/src/executors/provider_adapter.rs#L280-L454",
-          "version": "repo-lines-v1:sha256:dd277c6a7c2439446241b205d27fc968272a24bc97d835df5a9e2495fd982217:eyJzZWxlY3RlZExpbmVDb3VudCI6MTc1LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI1ODM5MDI3MjdjMWIwYmRkOGIyYjEwNDkyM2VlMjMzYWM5MzBhZmVjMTFkYzFkNGY1NzJmNDkzZjNjYTc4MzU0IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI0NjU3ZjZlODI5OTdhZTg5NGE3YWVjMjZlZjZlZmZjNmEwYzNmOTEzNzYzYmU1YzRmNWIxMDk0ZDUyYjcxMTkyIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJmY2FjMTk4M2M5NTBjMjA2MzdlNDFjMDE4ZjRmYzVlMGFkODdmYjI5ZjY2ZTc1NWUwNzNlOTI1ZTA5ZGZlYjY2IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiIwMTYxMjhhOGRmOTJiNTE0ZjJhNGQ4NjcwMDc2MDc1ZDQ4ZDE3NjllZjRlZGM2MjViMTIzZTdiNGZkODJiMTc0In0"
+          "version": "repo-lines-v1:sha256:82db0b6e75ed006b2ad9397b6bbb84b4f079aac14a664df4bada8aa2ce1cf495:eyJzZWxlY3RlZExpbmVDb3VudCI6MTc1LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI1ODM5MDI3MjdjMWIwYmRkOGIyYjEwNDkyM2VlMjMzYWM5MzBhZmVjMTFkYzFkNGY1NzJmNDkzZjNjYTc4MzU0IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI0NjU3ZjZlODI5OTdhZTg5NGE3YWVjMjZlZjZlZmZjNmEwYzNmOTEzNzYzYmU1YzRmNWIxMDk0ZDUyYjcxMTkyIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJmY2FjMTk4M2M5NTBjMjA2MzdlNDFjMDE4ZjRmYzVlMGFkODdmYjI5ZjY2ZTc1NWUwNzNlOTI1ZTA5ZGZlYjY2IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiIwMTYxMjhhOGRmOTJiNTE0ZjJhNGQ4NjcwMDc2MDc1ZDQ4ZDE3NjllZjRlZGM2MjViMTIzZTdiNGZkODJiMTc0In0"
         }
       ]
     },
@@ -293,11 +293,11 @@
       "statement": "Startingの保存に失敗した場合providerを起動せず、同一attemptの再配送ではStartingのIDと時刻を維持する。Retry inputのevent IDはattempt別で初回互換を保つ。",
       "evidence": [
         {
-          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L2807-L3044",
+          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L2803-L3040",
           "version": "repo-lines-v1:sha256:4a1e075dfdf5ac2a9d2c8f5972a91575aff342c5bcbef6f6b19ebe86fe8a5009:eyJzZWxlY3RlZExpbmVDb3VudCI6MjM4LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIzN2I4YTEwOWJjZGNlNGQ2MTU3OWJkNmRhNWJlNDhiYmY0YjBjODIzMjg2NTYxNTAxNGJjOWE2OWUwNTVjYTJkIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJhODMxMGJkOWFiNjk4YTE1OGYyYmM1MDM5ZWI4NzEyZjRlNjU1ZjcwZjIzMWZiM2M0ZWFjODg1NWZlYjk5MmEyIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIwMDNiZTFlYTBiYWQ1NTUxMDJkNGUwNDZiNmJjMWU5MzFlOTg1MDVhMzcwNDI2YTY5MjhlOTAzYTE1NGI0NmU3IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJkYWEwZGQ3MGRjZGU1YTAwNjFlMzliYzUxZjNkOWJlYTA5MTdiN2U3OWY0YTA1YTkyYWJmNmRiMDljM2QzYTYxIn0"
         },
         {
-          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L637-L656",
+          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L633-L652",
           "version": "repo-lines-v1:sha256:fb65143a9eff5db29570da817d00c5a1c1e67ec9ad252f817bb9bc2e656840f2:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMwMDI0NmEwNzFmZTkxYTc3Y2MwNzU4OWRmMjE2MzVmNWNlZWYxYjA0ZTlmZjk3ZTk2ZDQwNDFkOGE3YjZjYWYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU0NDcwYmE2ZTBiZWEwNzRhYjBhYzhlNzcwOGExNzY2MDIzMTRkZjIwYjQ5M2NiYWRiMTdmZTVmYWQxOWU2ZTIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE2MmVlNTdlNDFhOGMyMGFlMDE2NGRmMjYxNDM5ZGNjNDk5ZDM1MjA4MzQxNTE1MTZkMDQ3ZThkZWFlOGE0NjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY0ZTYwMDg0ZjY5MWUyMTU2MDBlM2M4NDk3YjJkZGJlZjFkN2M3NDNhN2Y4ZTk0NzhmMTYzODE1YTI5YWVhOGEifQ"
         }
       ]
@@ -311,7 +311,7 @@
           "version": "repo-lines-v1:sha256:164ed02e3466915faebef4b390665382ad0d7dba35c09a949002d0fc3eeb6436:eyJzZWxlY3RlZExpbmVDb3VudCI6ODcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUwNzFjNmU5MjJkNjRlM2MyZDEyZDFiNDAwODRjMzFjYzRlNzgwN2ZiNDJlN2Y3MjI5Y2M4ODYwNWU3ZmM4YjUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjgzNTM4MWJiZmNkZGQwNTQ2NTY1ZWE3OTRlYmQzZDNhNmVjYTk5ZmQ5ZjU0MzI4YzU5Y2U3Y2RlZTdlZGNhMmUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQ0ZWYwZWY0MWNhMjA4NTFiNDEyZTQ2YjcyYjRmNDM5Yzg1ZDVlYzhhM2IwNWIxYmViM2JlODc4NzY1NjUwMDkifQ"
         },
         {
-          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L1757-L1958",
+          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L1753-L1954",
           "version": "repo-lines-v1:sha256:c8f2edd80d0f515f13fc46d8ce232cd83a67117803b7cbc0ed8de68538f543c8:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAyLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJmNjg0YjYzMzBkOGIyNzU5ZjAzMTNkNzkwMTE3MWFkODRiZmY0Mzk4ZTFmMTRjZmVlYzVmM2U0NWM0YTJmNTkyIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI1MDcxYzZlOTIyZDY0ZTNjMmQxMmQxYjQwMDg0YzMxY2M0ZTc4MDdmYjQyZTdmNzIyOWNjODg2MDVlN2ZjOGI1IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIxNjJlZTU3ZTQxYThjMjBhZTAxNjRkZjI2MTQzOWRjYzQ5OWQzNTIwODM0MTUxNTE2ZDA0N2U4ZGVhZThhNDY2IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlM2QzN2E5MzhmOTY5NzkwZGMwMGVlNWI4YzE2YWNjNzQ5MmU5ZDRkMjJmNTY3OGY4ODAxMTZmY2I0YTQ0NzkyIn0"
         }
       ]
@@ -339,15 +339,15 @@
       "statement": "provider spawn後のHost Started timestampはportでprocess registryに保存され、同じ時刻のcanonical Runningを生成する。registry保存はcanonical batchとは別段階で、回復後も保存済み開始時刻を保持する。",
       "evidence": [
         {
-          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L2265-L2322",
+          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L2261-L2318",
           "version": "repo-lines-v1:sha256:075d97950b484df6a41d55ce340649d58808494e13824c49d9c3884f1a5aafa6:eyJzZWxlY3RlZExpbmVDb3VudCI6NTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM3OTc2MDllM2FlZjUwMzFkZTg3ZTI4NWE5YWYwYTE0ZjVhYTJjZTU0NDRlMzQ2MjU4NDI0ODYwMWFiZTBlMmUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEzZWE3MTIxZGFhMzM5M2ZiMDRhMmNlM2UyN2VjMzg1NTI3YmQzM2E1Nzc3YzEyZTc4NDE2YmQxNGYzMWI4MmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijg2OGEwZTQ0M2QyZGM2MGU0YTQ1ZWU0ZmE2M2NjMzE3YWMxNjhiNzNhMjBjNzUzMmYzZTEzZDcxNTU3ZjA4YjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjUxMmQxYjMxZTNlMGI0YmQyMDUyNGRiMGRlNzI1OTAzNTM1OTZiZGJhODVkZmRkNmNmN2QzMzE3MGMyYjZjMGMifQ"
         },
         {
-          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L5453-L5481",
+          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L5434-L5462",
           "version": "repo-lines-v1:sha256:fe26b4b06355c637d7756a00f67d1e77da4ef250472b96e940a54a05d78ac820:eyJzZWxlY3RlZExpbmVDb3VudCI6MjksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIyNzJmNmFkMzdjYzM2YWZiMTgxNGQzMDAxMGUyMzNhYWIyMGVmMTUxMTI5YzRhOGI4MjVlNWU5NDFhMWZhZjAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjljNmZmZWY4YjFkNGI2NDYwMzU1OWRlYmRiNDA2MTNmNzUzOThiZGRmOGEwYjRlMmUwMDRkMTU3MjI0MmY2ZTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhhODNkMjM5ZjlmYmM2YTAzZTBjNmVhMzIyNzNiMjcyYzJhNGVhMTc4MjczYmFiMDY4ZTlhNmYzOTk0NDQyNTkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE2MDYxMTdhNTFhNzYxMjMxNDMyMTJiMTNkYWI1YjJhMjZiNzU5NTMwZDQ0YWM3YTZlZjA0YzczMGQ3NWQxYWUifQ"
         },
         {
-          "resource": "repo://crates/local-deployment/src/process_host.rs#L433-L452",
+          "resource": "repo://crates/local-deployment/src/process_host.rs#L431-L450",
           "version": "repo-lines-v1:sha256:de5d38c1dc7e4d79dbc8c8c5278e56def0034e9b14d567f28acfca03d6d6afaa:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU1MjJjNDJjZDE5YzZkMDNkODA4YzQ1MjcyMDU1MjgyNWI3ZWExYzViNDkxYjIxODUxMWNhYzc0MTVjZjlkOWIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjllOTY2NmNiZDRkMTU0ZDNmZTk3ZmU4ZWQ2OWQzNzg0YzkwM2Y2MjhjNjY2Y2I1NjhiMTIzMjlmMzZkNGE5ZTAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM0ZDI5MjkwMWI3NWM5YmQ3MWEwNGYwM2VmMTA2MjBhMTNhNzIwY2Q0ZDU0NWU1MWE1ZjYzMzUyMmNjOGJhNWEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImEwZDI1MGEzYjRiMjA4YzBhMGVlNTVjZGZlY2MzM2Q2ZDU4YWY4MWFkOTkzMGY5MjVkOWI3MGJkZTQ0ODJiNGMifQ"
         }
       ]
@@ -366,7 +366,7 @@
         },
         {
           "resource": "repo://crates/local-deployment/src/process_host.rs",
-          "version": "repo-file-v1:sha256:d89d74a6540e8c22a7098efe5ae3f870e72d0c8e0d5b52a084b37875371bdfcb"
+          "version": "repo-file-v1:sha256:010907e04708ad398b5558bccdc553f4fffad1aacfcc658ae6c993a43d52b569"
         }
       ]
     },
@@ -375,11 +375,11 @@
       "statement": "出力 drain は5秒で制限し、timeout だけなら警告を記録して provider terminal status を維持する。Linux owned group の SIGINT/SIGTERM 後の猶予は各最大2秒で、捕捉済みプロセスの終了確認で早く抜けるが最終再走査とleader回収を省略しない。",
       "evidence": [
         {
-          "resource": "repo://crates/local-deployment/src/process_host.rs#L1077-L1129",
+          "resource": "repo://crates/local-deployment/src/process_host.rs#L1075-L1127",
           "version": "repo-lines-v1:sha256:e2b6b23be6973b4287fae05a49170afebae53f941b43c5d573628e73dd932672:eyJzZWxlY3RlZExpbmVDb3VudCI6NTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFkNjM4MjY3MTNjYWIxNjYzNTI1YjQzYzNmY2M4ZjMwNmE1NThlMjE3NGE0NWNjMTI2ZjlmN2ZlMWQ1Mjc4ZTIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijg3Y2NkOTFhZDY3N2U4NTJmOTI4ZTJjMjhmMTViMGM1ZmY5MjI0ZTM5MzU2NDI0OWUwNGNjMDljNDVhYjM2MzgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjllNzRlY2Q2NzZiNGVjYzMwODA0MmUyN2ExYTFmZTFmNjU4ZjhiMWM1MDExYmI1ZGU1NjA0OGY3MThiNWRkMTkifQ"
         },
         {
-          "resource": "repo://crates/local-deployment/src/process_host.rs#L68-L68",
+          "resource": "repo://crates/local-deployment/src/process_host.rs#L67-L67",
           "version": "repo-lines-v1:sha256:754fc869f47fcae7800d01d8e031ad854b0655c07dcdbbfdf80a89a00c20a43c:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNzU0ZmM4NjlmNDdmY2FlNzgwMGQwMWQ4ZTAzMWFkODU0YjA2NTVjMDdkY2RiYmZkZjgwYTg5YTAwYzIwYTQzYyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNzU0ZmM4NjlmNDdmY2FlNzgwMGQwMWQ4ZTAzMWFkODU0YjA2NTVjMDdkY2RiYmZkZjgwYTg5YTAwYzIwYTQzYyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZjU3ZmIzN2M4ZmYwMjhkNjJlZmJhOTQ0MDAyMTNkYmRkZTk3MDAyMGZhYmNjMjRhZjE2MzJjMGZmNDA2OGQ4ZSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZDI5MjgxMjZlMmZlOWM0NmM1ZTk0OTYxNTRmYzE2ODM5ZWNlMWI1MzZhMTI5M2JmYzY4ODE3NTFhMjMwMWU3OSJ9"
         },
         {
@@ -393,7 +393,7 @@
       "statement": "Unix の terminal_drain_releases_control_owned_output は実 pipe の control 所有、監査 tail と Complete、2秒未満の終端、provider 証拠のない exit 0 を Crashed・非ゼロを Failed とする分類を検査する。",
       "evidence": [
         {
-          "resource": "repo://crates/local-deployment/src/process_host.rs#L1597-L1711",
+          "resource": "repo://crates/local-deployment/src/process_host.rs#L1595-L1709",
           "version": "repo-lines-v1:sha256:7157c24746e07931a2336b5ebdae07a2011dde68dc16bf571480326d1e417fa1:eyJzZWxlY3RlZExpbmVDb3VudCI6MTE1LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIyNzY4MzYwOTQ3MzRiMGVkYTRkZGEyNzA5Nzc1NmM3MGU2YzkyMzY2NjAwNGEzNDcxNzE1Y2NiZmMyZTJhYTZmIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI0ODkzZjQwZTM3ODFlYjg5NmM4MmQwNDZhMDgwNjdhMTFlMzVjZGYyZjFkZmFmMjZmZWE5MGI4ZGI2Njc2NDEzIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI5OTliZGVmZWVhY2E2MzQwZTAyOTBkYzg2ZTg4OWM4OWQ1ZTE4OWFhNWJhNDRiNTg1YjNiNzA3MzRmNGE2MmQ4IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI5NzNmYTE5ODMwNjgzMDZmOTFiMmJmZmIzNjUzNDgwYmQ1MDc2NzA0ODUwMzhlMTU1M2NhODQ3NWRhZjQ2MzQ5In0"
         }
       ]
@@ -404,11 +404,11 @@
       "evidence": [
         {
           "resource": "repo://crates/local-deployment/src/agent_run_port.rs",
-          "version": "repo-file-v1:sha256:1a8a67e9457a2e9117732b5e00d46ce8cd48ef3c48f868b1f040016611643abf"
+          "version": "repo-file-v1:sha256:c90d64274a98ae1fdd6979410cf417acf22aaad79775ecf8e3b189933465d3ec"
         },
         {
           "resource": "repo://crates/local-deployment/src/process_host/approvals.rs",
-          "version": "repo-file-v1:sha256:c8669f147a3f4a282c722540d60161b97021ca17b23fbbc105a757b2d784880c"
+          "version": "repo-file-v1:sha256:a58847b97fc080a8334f0f6ae9086923b2c0b2cdb9bdee69b16ef73f51e6ca6d"
         },
         {
           "resource": "repo://crates/services/src/services/approvals/executor_approvals.rs",
@@ -425,7 +425,7 @@
           "version": "repo-lines-v1:sha256:32e86b770dafa33fb0457a345f7b6ccd0152687a109530c02cac1d20b88961b2:eyJzZWxlY3RlZExpbmVDb3VudCI6NTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA5YTUxMTk3MTkyMWMzYjY4ZmUxMzVmNzRiZGE1NjJmYWZmNGQxODM2YzZiMTVhY2QwN2YzNWE2NjhiMWFiNGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU1MDMyZTk2NGQwOTMyMzUxZTVkMTg1MjY5MjgxYjE3MWEzYTA5YjA4YjI4NmU2NjFlYTQ3MDMyM2M4MmViNGQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjY4OTU1Yzk1NGViZWJkNWFjYTFkNTYxMTZlM2U2MDQ4ZjQzNjQ2OWM0MjFhNDA2MDE3YTk4MWEzOGI1ZGZjZWYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZiMjBlNzhiOGRlMmI1ZDBlYzRlNDgwN2I0ZTNhODFmYzIyYjczMTQ4Mzg2ZWVmNzM1ZjZjYzFlMTIyYjRkZWMifQ"
         },
         {
-          "resource": "repo://crates/executors/src/executors/provider_adapter.rs#L2286-L2328",
+          "resource": "repo://crates/executors/src/executors/provider_adapter.rs#L2308-L2350",
           "version": "repo-lines-v1:sha256:609f43fe97100e0f1cfb63abd2eff7f3164ae2c727f187ca9fa8514fbec341f1:eyJzZWxlY3RlZExpbmVDb3VudCI6NDMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFlMzJiMTE3YmUwMmRiNjlkYTQwYTZjOWJlMzJkY2FmMGRhMjg5MjlkNDZkYTgxNzc5NDNmNDNjOGM1MDE3ZDciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY3NmFkNjhiYjIxM2E2NjRhNWE2MjAxNzQyYWVhYTQ3Y2Q5ZTU3N2M3M2JkNDI5NTdjODFkZTc0MmFmODhmYzQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZhZmE5MGMxNTExZTM2ODMzMzdmOWY0YTE2NTc5MjIyNDI3MmNlNmRjNjRhZmNjN2IyNTkwNmNlMWJjNWIzYmMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY4OWQyNGM1NjNmNDEyZGY3ZmFkNzc5ZjQwOTMzMGY4ZDYzZWM2MTlkMjAxMGUwY2FmZTE2MWIyNGI5ZTM1NDkifQ"
         }
       ]
@@ -435,7 +435,7 @@
       "statement": "Host は監視 loop 終了時に明示 Cancel 以外でも cancellation token を cancel して承認 task を解放し、その後 cleanup と drain へ進む。",
       "evidence": [
         {
-          "resource": "repo://crates/local-deployment/src/process_host.rs#L1053-L1077",
+          "resource": "repo://crates/local-deployment/src/process_host.rs#L1051-L1075",
           "version": "repo-lines-v1:sha256:d0093251d273dabc8c9bc2372207ede37b5741dd66ec66ba2a9846a9408cdaac:eyJzZWxlY3RlZExpbmVDb3VudCI6MjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ0OGNiZGNmNmM3ZGE4OTY0YWFkNDJkYTZkNjllYjExNDM1ZTg3MGIxYTJmMWYxYTFlYjAxYjg2ODU1MTdlMjQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFkNjM4MjY3MTNjYWIxNjYzNTI1YjQzYzNmY2M4ZjMwNmE1NThlMjE3NGE0NWNjMTI2ZjlmN2ZlMWQ1Mjc4ZTIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjEzN2U3NGE3NDZmM2U0ZmE5OGQ3Y2I5OGRiMDdkMzBiZmY2NWNlZjY3NmYxN2FiMWVhNDkzYWM0ODQ5MDY4MTQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjljYWMwNGQ5MDlkMWFhZGU0NGY4MDJiZGU4ZTk1ZTY1NzU2Yjg0NmIzZDdlNzEyYjgzNzU3NzdkN2VjOGQxYTUifQ"
         }
       ]
@@ -445,7 +445,7 @@
       "statement": "任意のcumulative_usageは検証済みCodex native thread総量だけに付与され、旧snapshotの欠落は互換として扱われる。",
       "evidence": [
         {
-          "resource": "repo://crates/executors/src/executors/provider_adapter.rs#L2115-L2171",
+          "resource": "repo://crates/executors/src/executors/provider_adapter.rs#L2117-L2173",
           "version": "repo-lines-v1:sha256:77dd2b524accb891169676bb5746a882b21eec42b753b94b2756b285a76a1810:eyJzZWxlY3RlZExpbmVDb3VudCI6NTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFlNTNlMjQ4ODZlZDg5OTFmZDZhMjdkNzhjM2Q3MDI2N2JjNTVjOWFhYjg1NWI5MDk4NzJkNzJlNDYzNmM1NGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjI3ZDJlZGY4MmVhNDVmZTNkZTk0ZDYxYmRlYjgxMTg2Y2JiN2IxY2IxMjk5Yzg4OTUyMTRhZDZmNzgwNGEzMGIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjY1NTY5NTQ5ZTdiNzE2ZmM1OGMyNmNhNDFmMDY3ZWFmMzA3MzVlODZkZmExN2EwY2IwMzdkZjNkZjFlMTgzZjUifQ"
         },
         {
@@ -473,7 +473,7 @@
       "statement": "drain 中の ProviderTerminal は、選択済み原因が正常な Process 終了の場合だけ採用し、取消・監査失敗・非ゼロ終了を上書きしない。監査・protocol failure の処理と Audit close 後の Host Terminal 保存は維持する。",
       "evidence": [
         {
-          "resource": "repo://crates/local-deployment/src/process_host.rs#L1077-L1187",
+          "resource": "repo://crates/local-deployment/src/process_host.rs#L1075-L1185",
           "version": "repo-lines-v1:sha256:285a3892db3626002e3443b5bdddc827733175ef6c785026126b3b95e91c4d6a:eyJzZWxlY3RlZExpbmVDb3VudCI6MTExLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIxZDYzODI2NzEzY2FiMTY2MzUyNWI0M2MzZmNjOGYzMDZhNTU4ZTIxNzRhNDVjYzEyNmY5ZjdmZTFkNTI3OGUyIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI0ODkzZjQwZTM3ODFlYjg5NmM4MmQwNDZhMDgwNjdhMTFlMzVjZGYyZjFkZmFmMjZmZWE5MGI4ZGI2Njc2NDEzIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI4N2NjZDkxYWQ2NzdlODUyZjkyOGUyYzI4ZjE1YjBjNWZmOTIyNGUzOTM1NjQyNDllMDRjYzA5YzQ1YWIzNjM4IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI3NGM4YTQ5MDBiZmJlNWYwYjE3ZDMxYTg5ZTZkZWQ2YTkzYzY1MmZhZmE2MWIzYzU3OTY0OWI5ZmE2Nzk3NmMxIn0"
         }
       ]
@@ -483,7 +483,7 @@
       "statement": "process_exit_before_terminal_output_preserves_provider_evidence は終了後に通知する handshake で exit 0 の成功・失敗、exit 1 に後着する成功が Failed のままであることと取消を検査し、Linuxでは残った子の終了と無関係なプロセスの生存も検査する。",
       "evidence": [
         {
-          "resource": "repo://crates/local-deployment/src/process_host.rs#L1427-L1595",
+          "resource": "repo://crates/local-deployment/src/process_host.rs#L1425-L1593",
           "version": "repo-lines-v1:sha256:5f03ed55fd0637c5099d7a1a216772f592cb1c4bda47bf95366974d033451ac2:eyJzZWxlY3RlZExpbmVDb3VudCI6MTY5LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIyNzY4MzYwOTQ3MzRiMGVkYTRkZGEyNzA5Nzc1NmM3MGU2YzkyMzY2NjAwNGEzNDcxNzE1Y2NiZmMyZTJhYTZmIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI0ODkzZjQwZTM3ODFlYjg5NmM4MmQwNDZhMDgwNjdhMTFlMzVjZGYyZjFkZmFmMjZmZWE5MGI4ZGI2Njc2NDEzIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI5OTliZGVmZWVhY2E2MzQwZTAyOTBkYzg2ZTg4OWM4OWQ1ZTE4OWFhNWJhNDRiNTg1YjNiNzA3MzRmNGE2MmQ4IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiIwMjZiOWM1NmIxYTBlMDg2ZDI5ODcyNDM2NzgyMTNhZjM2ZWU0OWU4ZGNlNzk5Y2MxODlhYTZkNmUxNzIxODRkIn0"
         }
       ]
@@ -511,7 +511,7 @@
       "statement": "共通process hostはLinuxでは自然終了もowned group cleanupを行うが、非Linuxの自然終了後の追加cleanupは導入せず、従来のgroup cleanup機構を保持する。",
       "evidence": [
         {
-          "resource": "repo://crates/local-deployment/src/process_host.rs#L1059-L1069",
+          "resource": "repo://crates/local-deployment/src/process_host.rs#L1057-L1067",
           "version": "repo-lines-v1:sha256:bf0d3a5738845fe467cfecbe465db902c9c59b1f354578711f111bab3822668e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYzNTM3YmM0YmI3OWVjNjA5ZDk3ZDlmN2EwMmM3ZmViNDZmMDRlOGM2YThlNmJiOTBmMDQyZTVhMDQ4Zjg5ZjAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ5MzNiYmEzODFkNWJlNzQyYjkxMzk1NWZlY2Y4ZDVjMjZiM2IwMTdjYTI5OWQzOWY1N2YxMGMyZmU4ODYwMzYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFhNTczM2I5NzE2NjkzMTY4M2ZjYzk5NzRlZGY1YzU1MjM0ZTE3MWEyMDViOTEwYjA3MGE4NmEwZjM5YjA3MDUifQ"
         },
         {
@@ -525,11 +525,11 @@
       "statement": "所有権確立・cleanupの失敗はhostのWaitFailureからCrashedとなり、groupと子孫の両方が失敗した場合は両方の原因を保持する。未確認のLinux所有権のdropはログのみで自動回収しない。",
       "evidence": [
         {
-          "resource": "repo://crates/local-deployment/src/process_host.rs#L1032-L1075",
+          "resource": "repo://crates/local-deployment/src/process_host.rs#L1030-L1073",
           "version": "repo-lines-v1:sha256:b85b1d7882aa71f817cbf15393e75c202f4b9c588c1f6fa2bd8fa588fcb545dc:eyJzZWxlY3RlZExpbmVDb3VudCI6NDQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFiYmNiZWZhODFiYWJmZDNiZjYwMWUzNWM4ODJmZDFmMTZlN2U3YzRhZTZkMjYwNjJmMWMyMGFkNWQ1ZDk3MTciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFmYTk5NTRiNjc2NDVmOTY4OTYxNTkzOWUyNTViYmU4YjllOGYxYzQyMzM1NDVmMWJmZDlkZTIwMzEwNTQzMmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImMxNzU0ZjFjMWQyMjNiZWIzOGVmNDU4ZDc1MWI5MmIzYzVjOGY1MmM5ZjYxOTNkZTRkZGRhMTgyNzM3MTU4NmMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxYThlZjY5MGU3NjMxMjI1NTgxZjAwNjg5YzBjZTkzMTM3N2QxNGExNzAwY2Q0MzY2NGY0M2Q2ZDdiOWFmNzAifQ"
         },
         {
-          "resource": "repo://crates/local-deployment/src/process_host.rs#L1267-L1274",
+          "resource": "repo://crates/local-deployment/src/process_host.rs#L1265-L1272",
           "version": "repo-lines-v1:sha256:f0e2455572ab9f3a53e58c176cc80dff010532b7b20dc9d198666863ffd758b9:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZTczY2Q0NjJlMWUzZWE0MTE1ZjdmNGE3NmZhMDQ5ZGYwYWEzNmRmYzFiM2JiMmUyOGJjZjUxMzg4ZWFkNDRlNiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMmNjMTgxMDBkYTk3ZGNkMGVkZjI1NDBhOTZmMTNmNDM0NTVhNmJmNGM5NDkyMmZjZmQ1Mjk5MjYwMzc0OTQwNyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiY2Q1ZDQyMDU3YjA5YTNkZjhjN2VhNTBlOTdlMjZiOWU4MTJmOTRiMGI1NTdiYWJiZDc5ZTE2YTgwM2VkNzdjZSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZGJiZTE1Y2Y4MDcwM2EyMWZhYzk2M2Q1ZmRjYTgxNTVlZDU0N2EwNjNjMTVhYmQ4ZjU0NTNkZTY0YmQ3OTFiNSJ9"
         },
         {
@@ -569,7 +569,7 @@
           "version": "repo-lines-v1:sha256:3385a6fc7b63e43ef3782e669bfeb77be4921feb1c113398c3835315e5bf3c29:eyJzZWxlY3RlZExpbmVDb3VudCI6MTM2LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIyNGQ5OGNkYjliYTkwOTdmODkwOGU5MmZiYWU0ZDU2MzgxOWI0ZTM4N2ZjYWJkOTNjMjRlMTY3ZWVmODY1YmZkIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI4NmI1MjcxMWQ1NGFiNmIxNGMwMWQ2ZTMxN2RkOGY3OWFiYjcyZjZlMGIyZjA5MmYyMzY4NjNjOGIxYjcxNTFhIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJiZTA1ZDY5NWQzMWY4OTFhYmJkNzJiMDcwNGNhZWQ2MGVmZWJjMGM4NmFhZTZlZDJkZGM1NmVkZTAyMDQ0NzI5IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiIwY2QxYTg5NWYxNzRjNGE3MzYzMjNkZTA3ZGI0MzA1MWYyMTcyYjg0YTcyMTNhNWI2MDA1NGMxOTViOWZhZWI2In0"
         },
         {
-          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L2807-L2889",
+          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L2803-L2885",
           "version": "repo-lines-v1:sha256:1de4b88518438317375eda361270ca8755282acce08b894eefcc2388c5a1e748:eyJzZWxlY3RlZExpbmVDb3VudCI6ODMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM3YjhhMTA5YmNkY2U0ZDYxNTc5YmQ2ZGE1YmU0OGJiZjRiMGM4MjMyODY1NjE1MDE0YmM5YTY5ZTA1NWNhMmQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YjA0NDkxNDY5NzIyZTgzNjNhOTRlNDA0NDUzOGUwMTNhMmEyMTdlMzZiMWU1NjhiYTYwYWNiN2I0YzhmMmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjAwM2JlMWVhMGJhZDU1NTEwMmQ0ZTA0NmI2YmMxZTkzMWU5ODUwNWEzNzA0MjZhNjkyOGU5MDNhMTU0YjQ2ZTciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjEyN2JjZTgzOTYxMzMzYTRhYzdiMGM5MDBkNmUxZjViZWE4YmQ4NzYzM2U4MzA5ODVmOWE1MjA0OWJmODFhMzkifQ"
         }
       ]
@@ -583,7 +583,7 @@
           "version": "repo-lines-v1:sha256:88c828ca307a7d7c81de16bed0b69bdb80d80dfbf660652538e3de6cd897e828:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZkNzliMzJmYjc1NTFlNWI1MTMwMWM2NjQ0ZmQwM2I3ZGIxODIzYjIzNmM4NzkzZDc2ZGYxMTQwNzAwMTk1NTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE4ODVkY2UzZGViZjQxODE1M2Y1NGRhNTdkYTkxMDE3ODVkNGI1NTdlY2U5MmI0NWIxODhmNGNiNThjNzVjMWIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM2N2QxZjI4MjJkMGQwODU5OTJlNjM1OWU2ZDMzYWViN2Q5YzI2OWUxZDcxZTMzM2UwMGI5MzUzNjIxY2NiZmEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjY2YWU1ZDU4ZTMxY2YwYTFkZTdmMDFiNDg5ZmY2ODBlNTJlMmJiODY3N2ZlMGVhNDBmMzU0NmIyMzQwMmZjMzcifQ"
         },
         {
-          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L2788-L3002",
+          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L2784-L2998",
           "version": "repo-lines-v1:sha256:9476d35ad28b77576d4729069b57a8ee6cab9775c1c67badb7e1e0bd060b8320:eyJzZWxlY3RlZExpbmVDb3VudCI6MjE1LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI2ZTMyOGJmYmYzOWRhN2JhNjNlZjdlZGIyYjAxZmZmZTZkMTFkMGZkYTg1NjYzYTA3MmI4NDQzMjE5ZGNhNDJiIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI1MDcxYzZlOTIyZDY0ZTNjMmQxMmQxYjQwMDg0YzMxY2M0ZTc4MDdmYjQyZTdmNzIyOWNjODg2MDVlN2ZjOGI1IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI4MmJlZGRlY2Y1MzY5NDYyMGVhZWM3MDQ5ZjgwNTM0ZjkwOTdhMzBiMjBmY2M4Njc1YmY1MjU5ZDlhMmJiMGIzIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiIxZTg4NGFkOTRhMDFmY2Q5N2IwNWI5NjhlMmQ2NDg1Mzc2YTdiYzYxMWMyODBlNzM4Njg3YjRkODdhMzAyZjRjIn0"
         }
       ]
@@ -593,11 +593,11 @@
       "statement": "共通Cancelは完全な未起動証拠がある場合にAudit writerなしでCancelledを保存できるが、開始証拠のある監査障害を未起動と解釈せずAuditFailedにする。",
       "evidence": [
         {
-          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L2788-L2805",
+          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L2784-L2801",
           "version": "repo-lines-v1:sha256:ef12a94a032e1c8bcf4d0fbb70ca124bcc3e3371d915444c9eb254657d191d95:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZlMzI4YmZiZjM5ZGE3YmE2M2VmN2VkYjJiMDFmZmZlNmQxMWQwZmRhODU2NjNhMDcyYjg0NDMyMTlkY2E0MmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjgyYmVkZGVjZjUzNjk0NjIwZWFlYzcwNDlmODA1MzRmOTA5N2EzMGIyMGZjYzg2NzViZjUyNTlkOWEyYmIwYjMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQ4NDhkMjYzMWI0YTAwNjNkZDU2ZjVhZmUzMjY3N2I2MjViZWI5NTVlY2E5M2QxNTQyZjIzNThhNjljNWJkZGIifQ"
         },
         {
-          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L3160-L3182",
+          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L3156-L3178",
           "version": "repo-lines-v1:sha256:6d5e8be82ad30a6db8fa4e3634b32785a474a88b00d2218ed79a1d64233d7f26:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU2YWZjNzMwMmI2ODQyNWRlYTRhNmFkZWZiMTNkNTFlYmY4ZGJmZTk4NmE3NDUxYzUyN2EwYjVmOGI0M2RiOTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg4YjhkNGVlY2FmNGQ2NzA3NWRlZDRiMzZhNjA1ZDhiZTU4OTBjNWVlZjQ3M2MzNGMxOWI1NWQxNmMyM2UyYmYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZjNDhmNGI0MGYyNDQ2YmIzYTQ5MTc4M2YzZmE5ZDI1NTNjZTk5MTcyMGM5YzJhZDRhODNlZjY0YWQyYTE2MDIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImYwNmFiZDgwYmJlZjg3MWFhN2Y5YzllOGU1ZjkwODM2NmJkNjg2YWJjNWMxNmRkZDlkMzllNTFjYmFhODM5OWIifQ"
         }
       ]
@@ -621,15 +621,15 @@
       "statement": "Starting失敗の終端後に診断保存が中断しても、最新attemptのnot_startedとstarting_failure_pendingを既存prelaunch照合が再処理し、診断の永続化後にpendingを消す。",
       "evidence": [
         {
-          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L2815-L2836",
+          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L2811-L2832",
           "version": "repo-lines-v1:sha256:e8c6cd580f412f6d71056a1e7041e6a11c0b78e47ecff131873592b898c5aeb3:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM0ZmExOGMyY2I2MjdmMGZhMTgwNmU3ZWU3ZTIwMzEwYmM3ODgyOWJmZmU2ZGRjN2VjNjdhZjM1ZmQ1NTlhNDkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YjA0NDkxNDY5NzIyZTgzNjNhOTRlNDA0NDUzOGUwMTNhMmEyMTdlMzZiMWU1NjhiYTYwYWNiN2I0YzhmMmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjIwODM1MTM0NjM0Y2Q5OWY1ZWQzODZkNmEyZjM3MzViMWNjOTM3ZjU3YmE4NmRmNzAxOWRiZDQzOTk3ZDhhNzYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQ1NzVkMTcyMDMyNzE0MzcyYjcxNzIyMGUzOTdjYmRmOWVjNzg0Yzg3NzRjNmVjOTNiMTQ5ZTk4OTE0MjIyNTgifQ"
         },
         {
-          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L2909-L3002",
+          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L2905-L2998",
           "version": "repo-lines-v1:sha256:533a1ca12b262e6278ed31cef032c8097b99ca3ca4ced80acba909b68cd9c505:eyJzZWxlY3RlZExpbmVDb3VudCI6OTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjlkYmY0YWZmOGIyZWQyOTI3MmQxNjY0YTM5YmE1ZWJhMmNkMmYxZjI5N2UxMjk1NmYwYjk3ZGZlYzE2OGY1ZjMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUwNzFjNmU5MjJkNjRlM2MyZDEyZDFiNDAwODRjMzFjYzRlNzgwN2ZiNDJlN2Y3MjI5Y2M4ODYwNWU3ZmM4YjUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZiZjllMjI2ZTVmZGY4Mzk4MjMxMDYzZjYwODZlYzJlODQ1NzNkY2U2Y2Q3Y2I1NWRlMTYzYTAzNTAyNTg0ZmYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFlODg0YWQ5NGEwMWZjZDk3YjA1Yjk2OGUyZDY0ODUzNzZhN2JjNjExYzI4MGU3Mzg2ODdiNGQ4N2EzMDJmNGMifQ"
         },
         {
-          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L4817-L4875",
+          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L4798-L4856",
           "version": "repo-lines-v1:sha256:6c4f835210ccf8bc5417bb8f4b1e3990f791a0c3d4d9c0b3a200962b51470254:eyJzZWxlY3RlZExpbmVDb3VudCI6NTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFhODlmZDQwMzBiMGZlNzQyZGM4ZDFjMzM2OTZkZjBhMGRiMjJiMWYxYTQ0YzRiYTlkMTAwODg4YWYyM2E1NGYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBmY2Q1OGM2ZDNjZWQ2ZDM1YmFhMzRmMWM3YzM3ZjI3ZDg1ZDgzZWI2ZjNhNjE1MWE0ODU5MDAzNGEzZjkwOWIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE3YTU4MDA3MGY1NTVjNGE5NWI4M2E2ZTA0NTk1NzVkODg1NGQ1YzEzODQ1MGJkNDMwZjE5NmM2NzcwNTcyYTkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImMwOTRkYjM4YmRhYmNlOWM3NjE3ZTEyMGUwMjc5ODkxNzI3ZDkxYTA2OWNkNWM4Y2E3MzdhY2EzZDlkZGJmOGQifQ"
         }
       ]
@@ -727,7 +727,7 @@
       "statement": "Claude現行mapper v7はv6の成功本文型検証を維持し、local compactのsuccess resultでも失敗本文をFailedへ分類する。旧v6以前は当時の意味論で再生する。",
       "evidence": [
         {
-          "resource": "repo://crates/executors/src/executors/provider_adapter.rs#L1134-L1237",
+          "resource": "repo://crates/executors/src/executors/provider_adapter.rs#L1136-L1239",
           "version": "repo-lines-v1:sha256:7ff712b98086423bd14a7f9027dd8affcfde7bc09c63b9caaf9b2703ca60695d:eyJzZWxlY3RlZExpbmVDb3VudCI6MTA0LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIwMWJhNDcxOWM4MGI2ZmU5MTFiMDkxYTdjMDUxMjRiNjRlZWVjZTk2NGUwOWMwNThlZjhmOTgwNWRhY2E1NDZiIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJhZDllMTI1NDY0MjU1NzZkM2RlYWU4YzliOWRiZjEyOGQ1ZDZkZGFmNWQ3ZmU4NTc5MzQ5MjdkZWZmYTNiOWRkIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJhMmE4MjBhMmY1MGYxMmI0MTdmZTJkY2MyNjljNjAzZjNhMzFkMzkyMTEyNTMwODM4MDYyOTBjNDA5MWVhM2M4IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI4Nzk3ZDRmNzY4MjFhNzQ2MDM2NWJiOWU3NGNkMGI0ZDdjNDJhMGRmODlhMmRlYmUxMTZjNjg3ZTMyOGY3Nzk1In0"
         }
       ]
@@ -737,12 +737,12 @@
       "statement": "Claude startupは相関したinitialize/permission応答とprompt送信を期限付きで扱い、失敗またはresult前のEOFを所有側へ通知する。",
       "evidence": [
         {
-          "resource": "repo://crates/executors/src/executors/claude.rs#L973-L1034",
+          "resource": "repo://crates/executors/src/executors/claude.rs#L997-L1058",
           "version": "repo-lines-v1:sha256:175693cc435df2e247dd8d367c3e7cdc7b0cdbeada2a485f070ad3e2d7de6811:eyJzZWxlY3RlZExpbmVDb3VudCI6NjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFhYzhiZWU0MWNmZjY0OTZjY2ViZjBlNTU4NzA0ZjU4NTVhMzM4OWE1MzBkYmU2M2Q3NDUyNWIyOTAzYTQ3ZjAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU4MjkzMTc4YjlhN2UzNTY3ZjIxMGI0N2E4ZGMwYjg4YWNlMGYyYTA0MGZiMmIwMDBhNjA2YzI4MDFiYWJiZWUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJmNjlmYjNjYzllYWZhYjE4MmU0ZDUyMTg0YzRlZDk0NzJmNDk5ZTczODVmNWUzMTA1YjIyOGZlOGMwYjNmMmMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjRmZWJkYzQ5MzgwNTcxNDYxYjI2YTUwM2M5NTUwYTk0NDU0MzEyYjA0NjdmMjFkOTFmN2IzMmY2MmMzYjZkMjEifQ"
         },
         {
           "resource": "repo://crates/executors/src/executors/claude/protocol.rs",
-          "version": "repo-file-v1:sha256:4c79388715020f1b809d29f08614f2824223d64fb3246e476e66d17067d70990"
+          "version": "repo-file-v1:sha256:0fc467d4a7be8414d8dba19bda476e2f5899f66bc7ec042602e9862249caedf9"
         }
       ]
     },
@@ -761,7 +761,7 @@
       "statement": "Hostは非ゼロprocess終了時もprovider失敗理由を保持する。",
       "evidence": [
         {
-          "resource": "repo://crates/local-deployment/src/process_host.rs#L1220-L1295",
+          "resource": "repo://crates/local-deployment/src/process_host.rs#L1218-L1293",
           "version": "repo-lines-v1:sha256:ee39913dcabe299688e86013153013ffd895cd7c18655e743db7ae7586b22dda:eyJzZWxlY3RlZExpbmVDb3VudCI6NzYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk0MzNkMGVhOWVjZjJmMzljOWE1MDQwNzM5NWVlNDExNzJmZTY4MmM5Yzg4NWEzNTA4Zjc1YmRlZTE1MWVmZmYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI0YTM2NWE5MGVjMTFlOTA0MzI3NTJjZjkzNzZlYzVlZDM2YjgwYmE1ZThlNjg1NGZjZjk4OTcwZDMwNDQ0NjkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE5ZTc2MzU1Y2YxMTk5NDgwYzNmOTk4MzZiMTQ4NmM4NDFkODkxZmFhZDkwNGM2MDhlMDkzMDIyZDM3NTdhZWUifQ"
         }
       ]
@@ -771,7 +771,7 @@
       "statement": "通常起動はMCP接続に依存せず内容別の不変ガイドファイルをprovider起動前に準備し、不明な既存内容を上書きしない。",
       "evidence": [
         {
-          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L1107-L1113",
+          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L1103-L1109",
           "version": "repo-lines-v1:sha256:0d8d70a2b001d62688059daf36e83df89ae61cce306537af719d60a15eb965fe:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNjY2YzQ2NzUyNzk0NTFlNGU4MGY3M2NhMGNkNjE1NzcwZTBjZjhjZjZlNmI3YWFmZWFlMzkyNDE3NmRmNWMxZCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZTZiMDQ0OTE0Njk3MjJlODM2M2E5NGU0MDQ0NTM4ZTAxM2EyYTIxN2UzNmIxZTU2OGJhNjBhY2I3YjRjOGYyZSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMjNkZmM0NzcyYTc5ZjU3NzQ0NjNhZTRkZGZmMTUwZjNjNGJkYzM2NjQ0ZDYwZWM1OWNlNDljNDg1OGJjOTBlZCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZmIxM2QxZmM4MzQxMmRjMGNkNDMxNTgzYzY5YzVlMmUwMTgzYzA2ZTgyYjlkYjA5MzI5YzZhYjYxMjU0OTJlYSJ9"
         },
         {
@@ -789,7 +789,7 @@
           "version": "repo-lines-v1:sha256:1895809cbf1e1664b5924440957e431830ce3e09e0a2a777126e6b226d9aaad2:eyJzZWxlY3RlZExpbmVDb3VudCI6MTE5LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI0ODkzZjQwZTM3ODFlYjg5NmM4MmQwNDZhMDgwNjdhMTFlMzVjZGYyZjFkZmFmMjZmZWE5MGI4ZGI2Njc2NDEzIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI0ODkzZjQwZTM3ODFlYjg5NmM4MmQwNDZhMDgwNjdhMTFlMzVjZGYyZjFkZmFmMjZmZWE5MGI4ZGI2Njc2NDEzIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJjNGEyNDU4NzRhODFjMWNmYWIwN2JkOTgwOTEwM2ZkNDg0ZjViNzhjYTM5ZDUxMzc4MWQyOWU2ZTEzZDg2ZmEwIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJmZTE5Mjk2NDhlNDUyYWY3ODcwYmVhOTg1M2U4ZDJlNGQ3OWI1NjY0ZTg5NjY0ZDdkODcwNjZhOTMyY2U5MzE3In0"
         },
         {
-          "resource": "repo://crates/executors/src/executors/provider_adapter.rs#L2316-L2386",
+          "resource": "repo://crates/executors/src/executors/provider_adapter.rs#L2338-L2408",
           "version": "repo-lines-v1:sha256:7b0c6aece25bee9b937d9c0e8b2d5547710a9ce2a139ec214b44a7d307ee347e:eyJzZWxlY3RlZExpbmVDb3VudCI6NzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhkNjlkZWJlMWFiZjA2MzIzNDk3YThjZGUzNmVmMTgxNDZiYzk5OWJmMTJkNWM5YjhkNWYxNjFlZTA4MGQ0ZDIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA4MzBkYjVkNmViN2M5YzE1MDMwMGY0YzM0YmY2Y2Q1NGE1NGYzMjk5OTI3ZTBiMTAzOTEwODliZDIwOGFjNmYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjYzYTQ0YzA0ZjdjMDM1MTk3N2M1NzUzM2EzOWRkZjk3ZmRkNDE1OWQxMjZmMGQ1YzFiMTM4YmQxMzAwMmYwOGQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImVhNjMyOWE2OWM3ZDhmZWZiYzM4NGFkN2E4MjIwYzM0NDk2YzE2MDMyZTg2MmRjMWE0YjNmNjk2NDNmNjQ1ZWUifQ"
         }
       ]
@@ -799,7 +799,7 @@
       "statement": "Codex mapper v9はwillRetry=trueのnative errorを非終端System進捗にし、後続failed turnをエラー投影する。provider codeはallowlistだけを保持し未知のnative詳細を診断へ公開しない。",
       "evidence": [
         {
-          "resource": "repo://crates/executors/src/executors/provider_adapter.rs#L1200-L1279",
+          "resource": "repo://crates/executors/src/executors/provider_adapter.rs#L1202-L1281",
           "version": "repo-lines-v1:sha256:0b155fd3a3fa03ea2a0df9e2ae0cc5080a015cb40268b456726af38240f36108:eyJzZWxlY3RlZExpbmVDb3VudCI6ODAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRkMzRhOWRmNzc5Yjk1NjZiMDRhZDJiOWU2Y2RkZTNiMWQ1ZTZjMWE4YzhiOTdhYjdjMjhhN2IxM2EzM2JkNmEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjY1NGI4NDY2MzNhM2VkZDNiY2Y0YWUzNzg2MWZiZTUyYTk0YzEzMGRlZjVmOTM3Nzg5ZWI5MDIzNmUyNWU4YTEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImRkYmRiZTJjZDcyMTQ4YzZkODFjNWYyNWYwYmNkZmQ4NjRmMmQxMzRlMTEyMDhlMTM3MjFiMTNjZmMyNmM4YmUifQ"
         }
       ]
@@ -851,7 +851,7 @@
       "statement": "Claudeの縮小配信はCLI 2.1.308等の条件付きで、SDK compact callbackのexact echo・相関Session・境界確認が揃うまで受付済みにならない。",
       "evidence": [
         {
-          "resource": "repo://crates/executors/src/executors/claude.rs#L835-L890",
+          "resource": "repo://crates/executors/src/executors/claude.rs#L859-L914",
           "version": "repo-lines-v1:sha256:4b4c691a0efb1e325cca0d3c3e65b54131d418b198719012926152d74892f96e:eyJzZWxlY3RlZExpbmVDb3VudCI6NTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU1MjJjNDJjZDE5YzZkMDNkODA4YzQ1MjcyMDU1MjgyNWI3ZWExYzViNDkxYjIxODUxMWNhYzc0MTVjZjlkOWIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZmY2ViN2EwZDg4YTJlMTJhYzlhNjc3NWZmNzliYjc5YzkyN2I2MWNjYzM4ZWM3NTBkMzY2N2VhYzQ1N2Q4M2IiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ5OGI5NzNkMzNjMDA0NDgxNjU0NGQ1MDE5YTE1MjZiZDMzMGZmZjYwMjNhNjAzY2JmMTNlOWY4MjNmYzQ5NzgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjMwYjY1YmJjZDQ3Yjk4OWYzMzA3NjdiOGE0ZGNhYjAxYjkyYjkxNTFkMzQ5YWI5ZjU5MTM5YmNhYzU0MGY1NTQifQ"
         },
         {
@@ -862,25 +862,45 @@
     },
     {
       "id": "claim_0c13e6242c8944dfb3a2b23ee4d8ceb7",
-      "statement": "LVK追加指示は実adapter write/ACKに基づくattempted/accepted/unconfirmedの記録をCodex v8/v9・Claude v7で投影し、CLI受付とモデル遵守を区別する。",
+      "statement": "LVK追加指示は実adapter write/ACKに基づくattempted/accepted/unconfirmedの記録をCodex v8/v9・Claude v7/v8で投影し、CLI受付とモデル遵守を区別する。",
       "evidence": [
         {
-          "resource": "repo://crates/executors/src/executors/claude/client.rs#L444-L488",
-          "version": "repo-lines-v1:sha256:79a3e3344670abfa0c7bb48579756166e9e70f87e9c92d22e1fd45f593f8bf74:eyJzZWxlY3RlZExpbmVDb3VudCI6NDUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVjZmM2MjMyNGNlODRiMjdhNmMxNDBlZDc1NjNiZTQ2MzM1NzdjZjY5ZDgwNDY1NTJjZmJiNGJiZDczZGIxMTEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg0Yzg0MjlhM2QzMzU3NjQ1ZGM0YzYwMjFkZjQyYjI4OWVkMGU4YmZmOGYzYThkNDFmZjE1M2FhZjQyZWY1ZGMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE2MmVlNTdlNDFhOGMyMGFlMDE2NGRmMjYxNDM5ZGNjNDk5ZDM1MjA4MzQxNTE1MTZkMDQ3ZThkZWFlOGE0NjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImYwMWRmMDJjMGIxZTYyN2I4MjcyMTAyYTZkNmQxYjFiZWFhNjZlNTY4MTBlMTU0ZmY5NWYxOWU0YTg0NzE5Y2MifQ"
+          "resource": "repo://crates/executors/src/executors/claude/client.rs",
+          "version": "repo-file-v1:sha256:2b95d6df63d860756e76bbf74dc68df8ce3272f6ee379fe0225e2c84ca66bd28"
         },
         {
-          "resource": "repo://crates/executors/src/executors/codex/client.rs#L285-L435",
-          "version": "repo-lines-v1:sha256:7ff5cbddec2481c160dcca47f433a42b43374ebea5f2c53b700ff8b52ad23aea:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUxLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJkOTAzNmVmMzdiM2Y4YTIwMWYwZDFhNzU1N2E4NjQ4ZjMxZjg2ZWE1ZjNlYzQzMDhjZGMzZTQ0NzFhZTMwN2Q5IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJhMGRiODE1ZWEwNThlNjJkYjBhM2Y4YTc3YjM5MjhkZTcwZTI1Mzc0ZTVkNDBjMjUyMjBjZTFjYWZhODc2YzljIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIwYWJhMWRmZGY2NGY5NzdjMjRiOGM1YzIyYTFjOTFkMjMwNTc3NDYxODc4Mzc5ZTU2ZmY0ODU2MjAwNmM3YjZhIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiIzMDNmMDYxMjFhNmQ1ZTE0YTA3ODczZmRlMWFmOTA4ZWIxMTZhZTY0YTVmMmYxMDdiMzFlZTM3NjE4M2IwNjBiIn0"
+          "resource": "repo://crates/executors/src/executors/provider_adapter.rs",
+          "version": "repo-file-v1:sha256:590e14e516affef0b74c91561f3775c4d69d71fcfd92627df22db5bef59ddded"
+        }
+      ]
+    },
+    {
+      "id": "claim_b17673f6029f4ffd9a191d760c2cc748",
+      "statement": "Claude Supervisedの一回限りツール承認はhostのwaiterと元のnative要求を対応付け、未接続や未対応のPlan・質問を拒否する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/executors/src/executors/claude/client.rs",
+          "version": "repo-file-v1:sha256:2b95d6df63d860756e76bbf74dc68df8ce3272f6ee379fe0225e2c84ca66bd28"
         },
         {
-          "resource": "repo://crates/executors/src/executors/provider_adapter.rs#L2172-L2225",
-          "version": "repo-lines-v1:sha256:5253c7dacfca11e471aacc648f359f6e0d08d490e5d0ba16042913265b81ff30:eyJzZWxlY3RlZExpbmVDb3VudCI6NTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk2MDdkY2YwOWY4N2NiY2NhNWVkNGU3NGFlYzYwNmI4ODUzZTFmNjUxNDkzZTY0Y2FkOThmYWU0NzE0Zjk1NTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJjN2RjYTc2OTc5NWMzNWYzMmM3ODM0NTM1YjUxMzE5NDQ5ZjM0ZjZjYTY0ZDBiMGFkM2FhMjlhMDg2MmY3ZDYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjYwNjNjNGQxYWY4Y2Q4OWJiMGJkZDc2NTdmZmNiZjY4MDZhNjEwZDc5ZDZjOGQ0YzMwN2MyNDFkZjM5MDA1MjIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhjYWJjYmZjNWM4YmQzYThhMzkxMjAxMTkwMDIzMTMyMTljODQ3MjQ2YmJkNGNkNDhjZGJlNDM4ZjE2MTI3ZDcifQ"
+          "resource": "repo://crates/local-deployment/src/process_host/approvals.rs",
+          "version": "repo-file-v1:sha256:a58847b97fc080a8334f0f6ae9086923b2c0b2cdb9bdee69b16ef73f51e6ca6d"
+        }
+      ]
+    },
+    {
+      "id": "claim_638f4ec0036a44f4b20b77cfc224496a",
+      "statement": "Claude mapper v8はv7のcompact分類と指示配信を保持し、承認待ち件数の状態投影を追加する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/executors/src/executors/provider_adapter.rs",
+          "version": "repo-file-v1:sha256:590e14e516affef0b74c91561f3775c4d69d71fcfd92627df22db5bef59ddded"
         }
       ]
     }
   ],
   "verification": {
     "by": "openwiki/0.9.0",
-    "at": "2026-11-17T00:44:00.706Z"
+    "at": "2026-11-19T17:02:40.641Z"
   }
 }

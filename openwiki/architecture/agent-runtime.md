@@ -5,7 +5,7 @@ description: AgentRun を独立プロセスで実行し、Native Audit から永
 tags: [agent-runtime, audit, persistence, recovery]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-17T00:44:00.706Z
+    at: 2026-11-19T17:02:40.641Z
 sources:
   - id: openwiki-source-b85c3dc0eaacdffedf4e68ee
     resource: repo://crates/db/migrations/20261026180000_agent_starting_recovery.sql
@@ -87,7 +87,7 @@ sources:
     resource: repo://crates/workspace-manager/src/workspace_manager.rs
   - id: openwiki-source-141584dac09cf0f93be6bff5
     resource: repo://tests/codex-process-cleanup/README.md
-generated: { by: "codex", at: "2026-11-17T00:44:00.706Z" }
+generated: { by: "codex", at: "2026-11-19T17:02:40.641Z" }
 ---
 
 # Agent Runtime の監査・投影・回復
@@ -124,7 +124,7 @@ Starting 失敗では Failed の保存時にこの解放が先に成立する。
 
 ## Codex の承認待機を所有する場所
 
-Codex の command/file approval waiter は provider と同じ process host に置く。`ProcessHostApprovals` は既存 `ExecutorApprovalBridge` を DB・通知 service なしで再利用し、UI への記録は canonical event 経路に任せる。launch audit の `approval_behavior` も Codex では `host_tool_waiter`、他 provider では `noop` と区別する。人の判断と Plan/質問の違いは [Session の承認契約](../concepts/session-and-agent-run.md#承認質問と現在の接続状態)を正本とする。[host wrapper](../../crates/local-deployment/src/process_host/approvals.rs#L1-L82)・[bridge](../../crates/services/src/services/approvals/executor_approvals.rs#L40-L83)・[launch audit](../../crates/local-deployment/src/agent_run_port.rs#L190-L214)
+Codex の command/file approval waiter は provider と同じ process host に置く。`ProcessHostApprovals` は既存 `ExecutorApprovalBridge` を DB・通知 service なしで再利用し、UI への記録は canonical event 経路に任せる。launch audit の `approval_behavior` も Codex では `host_tool_waiter`、Claude の接続済み Supervised でも `host_tool_waiter`、未接続 provider では `noop` と区別する。人の判断と Plan/質問の違いは [Session の承認契約](../concepts/session-and-agent-run.md#承認質問と現在の接続状態)を正本とする。[host wrapper](../../crates/local-deployment/src/process_host/approvals.rs#L1-L82)・[bridge](../../crates/services/src/services/approvals/executor_approvals.rs#L40-L83)・[launch audit](../../crates/local-deployment/src/agent_run_port.rs#L190-L214)
 
 UI の ResolveApproval は host の waiter を解決する。Codex では port 側で解決 event を先行生成せず、request handler が待機結果（timeout・取消を含む）から `approval_resolved` を出す。`approval_requested` / `approval_resolved` と未解決件数の通知を adapter が canonical に投影し、承認件数が正なら AwaitingApproval、承認0かつblocking質問件数が正なら AwaitingInput、両方0なら Running にする。native request ID への応答と semantic control の監査記録は異なるものであり、UI の回答受付だけを native 操作の実行成功と扱わない。[制御配送](../../crates/local-deployment/src/agent_run_port.rs#L3318-L3367)・[client の結果記録](../../crates/executors/src/executors/codex/client.rs#L971-L1092)・[件数の投影](../../crates/executors/src/executors/provider_adapter.rs#L1522-L1535)
 
@@ -281,7 +281,7 @@ PTY service は所有対象の停止、shell の wait、reader thread の join �
 
 ## Claude の result と起動失敗の終端
 
-新規Claude監査はmapper v7を使う。v5で成功resultの`api_error_status: null`をエラー扱いしない判定と、成功・失敗resultの終端投影を導入し、v6では成功本文の型を検証する。本文は文字列（空文字を含む）または欠落/nullを許し、それ以外は`ProtocolFailed`とFailed終端にする。`structured_output`を独自に本文へ変換しない。v7はlocal compactのresultがsuccessでも本文が `Error during compaction:` なら失敗へ分類し、result自体を指示配信の証拠にしない。旧v6以前の監査は当時のmapperで再生する。[分類と投影](../../crates/executors/src/executors/provider_adapter.rs)
+新規Claude監査はmapper v8を使う。v8はv7の指示配信とcompact分類を維持し、承認待ち件数を状態へ投影する。v5で成功resultの`api_error_status: null`をエラー扱いしない判定と、成功・失敗resultの終端投影を導入し、v6では成功本文の型を検証する。本文は文字列（空文字を含む）または欠落/nullを許し、それ以外は`ProtocolFailed`とFailed終端にする。`structured_output`を独自に本文へ変換しない。v7はlocal compactのresultがsuccessでも本文が `Error during compaction:` なら失敗へ分類し、result自体を指示配信の証拠にしない。旧v6以前の監査は当時のmapperで再生する。[分類と投影](../../crates/executors/src/executors/provider_adapter.rs)
 
 Claude protocolはinitialize、permission設定の応答をrequest IDで待ち、失敗・期限切れ・prompt送信失敗を所有側のexit signalへ通知する。result前のEOFやreader失敗も待ち続けない。Hostは非ゼロOS終了が先着してもproviderの失敗理由を保持し、既存の所有process回収・drain・監査closeを経て最終化する。[protocol](../../crates/executors/src/executors/claude/protocol.rs)・[起動](../../crates/executors/src/executors/claude.rs#L812-L852)・[終端理由](../../crates/local-deployment/src/process_host.rs#L1220-L1295)
 
@@ -321,6 +321,8 @@ Codexはnative resumeのsettingsと追加developer messageを別に扱い、sett
 
 Claudeの省略は、通常codingの標識付きsuffix、対応するprofile/引数、正確に解決したCLIの `2.1.308 (Claude Code)` という受動version確認に限定する。異なる経路は全文のまま。SDKのPreCompactで失効し、SessionStart(source=compact)へ固定契約と最新値を返す。同じrequestの再送を区別し、相関するexact echoと境界が揃わなければ受付済みにしない。generic success、誤Session、拒否・timeout・boundary欠落から成功を作らない。ユーザー設定の信頼付与や権限変更はこの機構の責務ではない。[条件](../../crates/executors/src/executors/claude.rs)・[compact状態](../../crates/executors/src/executors/claude/instructions.rs)・[protocol](../../crates/executors/src/executors/claude/protocol.rs)
 
-adapterの実write/ACK境界で内容・経路・role・理由とattempted/accepted/unconfirmedを記録する。Codex v8/v9とClaude v7がこのLVK拡張をcanonicalへ投影し、通常の人間本文を改変せず[折りたたみ表示](web-and-sync.md)へ渡す。CLI受付はモデル到達・遵守や参照先の読込証明ではない。[投影](../../crates/executors/src/executors/provider_adapter.rs)
+adapterの実write/ACK境界で内容・経路・role・理由とattempted/accepted/unconfirmedを記録する。Codex v8/v9とClaude v7/v8がこのLVK拡張をcanonicalへ投影し、通常の人間本文を改変せず[折りたたみ表示](web-and-sync.md)へ渡す。CLI受付はモデル到達・遵守や参照先の読込証明ではない。[投影](../../crates/executors/src/executors/provider_adapter.rs)
 
 今回のmock回帰と[SHA別検証](../operations/development.md#local-384396406339の固定統合検証)を実provider受入と混同しない。Claudeの今回の製品結合受入は未完で、過去AUTO初期化失敗の原因も未確定のままである。固定文省略は有効な実装を維持し、新しいAUTO auth/startは行っていない。
+
+Claude Supervised の一回限りツール承認は host の waiter と元の native request ID を対応付け、許可または拒否を元の要求へ返す。未接続、ID 欠損、Plan 遷移や質問は fail closed であり、AUTO へ切り替えない。取消や切断で待機を解放する。Claude v7 の旧 replay は維持し、新しい承認状態は v8 に限定する。[承認 bridge](../../crates/local-deployment/src/process_host/approvals.rs)・[mapper](../../crates/executors/src/executors/provider_adapter.rs)
