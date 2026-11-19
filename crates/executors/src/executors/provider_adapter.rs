@@ -2412,7 +2412,8 @@ fn project_typed_event(
         && (manifest.mapper_version.ends_with("-v4")
             || manifest.mapper_version.ends_with("-v5")
             || manifest.mapper_version.ends_with("-v6")
-            || manifest.mapper_version.ends_with("-v7"))
+            || manifest.mapper_version.ends_with("-v7")
+            || manifest.mapper_version.ends_with("-v8"))
         && let TypedProviderEvent::Message {
             provider_message_id: Some(message_id),
             role: AgentRuntimeMessageRole::Assistant,
@@ -2466,7 +2467,7 @@ fn project_typed_event(
     // Claude emits mixed text/tool content in a single envelope. Expand only
     // completed semantic blocks at the adapter boundary, with distinct stable
     // event IDs and the same native reference. Preserve historical v1/v2 replay.
-    let claude_block_snapshots = ["-v4", "-v5", "-v6", "-v7"]
+    let claude_block_snapshots = ["-v4", "-v5", "-v6", "-v7", "-v8"]
         .iter()
         .any(|suffix| manifest.mapper_version.ends_with(suffix));
     if provider == DirectProvider::ClaudeCode
@@ -5411,7 +5412,7 @@ mod tests {
                 if provider == DirectProvider::Codex {
                     "-v9"
                 } else if provider == DirectProvider::ClaudeCode {
-                    "-v7"
+                    "-v8"
                 } else {
                     "-v3"
                 }
