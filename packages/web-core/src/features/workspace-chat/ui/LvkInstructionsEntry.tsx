@@ -35,7 +35,7 @@ export function LvkInstructionsEntry({
               <dd>
                 {delivery.route} · {delivery.role} · {delivery.reason}
               </dd>
-              <dt>Run / native Session</dt>
+              <dt>{t('lvkInstructions.runNativeSession')}</dt>
               <dd>
                 {runId ?? '—'} / {delivery.nativeSessionId ?? '—'}
               </dd>
