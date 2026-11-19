@@ -323,7 +323,7 @@ sources:
 generated: { by: "codex", at: "2026-11-17T00:44:00.706Z" }
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-17T00:44:00.706Z
+    at: 2026-11-19T17:50:33.332Z
 ---
 
 # Web の実行環境と同期

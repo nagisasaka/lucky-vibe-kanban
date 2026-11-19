@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:3f991e74f2557fbe0094347fb6b12343e49cbd2731d0117cadb73dfd39da17a2",
+  "pageVersion": "sha256:db84f6ea4150c00b37203b1493a51794854bd57f5b31f9425560f703885bdccb",
   "claims": [
     {
       "id": "claim_cd547b65737e432fb2cf718c4992aa97",
@@ -331,7 +331,7 @@
       "statement": "会話の永続イベントはattempt番号とcanonical sequenceで並べ、native audit番号と混在ソートしない。Steerはprovider制御送信後にcommand IDのUser messageをnative refsなしで保存する。",
       "evidence": [
         {
-          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L3758-L3798",
+          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L3739-L3779",
           "version": "repo-lines-v1:sha256:0483a7451e1e4251ef8a95cad6bb5e0051fbf2e94e7608a0b95176329ab1df76:eyJzZWxlY3RlZExpbmVDb3VudCI6NDEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQzYTE5ZmRiZjJmMjFiMmMxOTg3MzgwNjE0NWM3ZjU4ZjlmOGFmYWYyNGUxNDQ0M2Y2NDBiOTkwMzIwYzI2NzciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU1MjJjNDJjZDE5YzZkMDNkODA4YzQ1MjcyMDU1MjgyNWI3ZWExYzViNDkxYjIxODUxMWNhYzc0MTVjZjlkOWIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjA3NjJhMTcwOGRiNjllNzlhMDMwNmVkNTEwOWVlYWY4ZTg2MjM5OTdmZTRmMTE4MTQ0MjUyY2E3MTE3MjU3YmMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjVlMmEyOWE4MGY1MGIxNjI4ZGNjNTM0MzA1MWE3MTVhM2I0MWJiNmUzYjI5ZDgzZmFmZWUzZDYyMjdkZDc1M2UifQ"
         },
         {
@@ -623,7 +623,7 @@
           "version": "repo-lines-v1:sha256:0e06408d8a223425899432d3444a5171a617215f4c4e537de9a028bbc4488fd0:eyJzZWxlY3RlZExpbmVDb3VudCI6NjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZmNjMyZGQyNzJmNjRhMDM1MjBkMTk4NDJhOWFmZmMwZjUzOTMxMzY2MTViMTVmY2RlNjJlZTc1NjE0M2UxOGQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ2Y2M1MGUxMDNkNDFiNDBhNTE4ZWYxMjYwYWU3MTMzNzQ3M2NjMGRkYzVhZmUzZTljMDUwOWYwZGQxNjkwYmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjljYWIzYmNiNGYxZmE3NjYwMzVkNzMxZTdmYmYyMDczNmM2OTMyYTVkZWYwYmFhODdmMmM5YjZkM2E3ZmZjZjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoyLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdiOGI2MDBhNWI0NDhiMWU0ZDAyZGYwOTc0NmVkM2NhMzE3MmY3NWM0YWFiYjAxZGRlMDgwZTM2Y2FiMDc0YjQifQ"
         },
         {
-          "resource": "repo://packages/web-core/src/shared/actions/index.ts#L1639-L1652",
+          "resource": "repo://packages/web-core/src/shared/actions/index.ts#L1648-L1661",
           "version": "repo-lines-v1:sha256:5b98f0f07ae5f63fb4e4ff043680d11cacbc06073cbd751ee229f3ecb85c3c2e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZkYmVkYzcyZWRmNjgxOWNkZTgxM2EyMWZhZDJmOTIyNDgwNzUwNzA2ODNmNGMwN2U4ZmQ5NWVmMGMzMDliY2QiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg2Mzg3ZjZkNWYzYmJlNTc0N2VlYzQ1NzJiNmE2MTQxODEyYzVjNGY3YWQ4MDRiNjNlMTgxZmNiNzE5ZTU1MmYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQwMGU5YzFjYzkxMTZjZDM5OGY1ZWM4ZWY0MGMwNGMzZDIxNzZkMGJhZTAwYjZjZTdlNTQ5NzQ3ZGRmOGUzNGMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE0MWRlNjJmYjcxMWY2YWViMDRlZGJjODRhODg0YmMyNDM4ODhlZjk1ZDgzN2Q2ZGRmMWM0OTViODU3ZDJlMjcifQ"
         },
         {
@@ -759,7 +759,7 @@
           "version": "repo-file-v1:sha256:b2413a219732aa29bc8a0436dc7bd827ea76ef8acd9a8b80c4f2ac6a9e869f31"
         },
         {
-          "resource": "repo://packages/web-core/src/shared/actions/index.ts#L736-L794",
+          "resource": "repo://packages/web-core/src/shared/actions/index.ts#L737-L795",
           "version": "repo-lines-v1:sha256:7bbe7e6d414cf14984c894b319b0e0bd1042aa92bf93226dc44ca26ba85ed62d:eyJzZWxlY3RlZExpbmVDb3VudCI6NTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEwMTM0ZDU5MTRjNDcyZWRhOTQ4Y2U5YWRlMjY5ZGMwNGIwMDU0ZTgwYmYzMDMzYjZhZTlmYTFkMGNhYmE4YTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZlMTMzMTQ2YmEwZWM2YzAyYTU3NjZkODM0MmY1ZmNiOGU1ZDJmMDVlNzgzODE0MjZkNjYxYWYxNDA3MzdjYzUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFiYzNlNGZjOTk4OGMxMTNmNzM4MTU5ZGMwMmUwYmNlMzBiNTllYjE5MmEwMjAzMDg5MjQzM2EwNWZlYThmMDEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjcyNThjZWRmYmQxNjhjNmU4ZmI0MzViZjU4MjljOTBhN2U1Mjg5OWUxNzllOWQ1MDgwNTU0OTYyOGRmYTY2ZmYifQ"
         }
       ]
@@ -1575,7 +1575,7 @@
           "version": "repo-file-v1:sha256:f63972ace937624cb8b448234a0ba062eb1aa274ac283fadca408f07a0c7947f"
         },
         {
-          "resource": "repo://crates/server/src/routes/local_remote.rs#L157-L197",
+          "resource": "repo://crates/server/src/routes/local_remote.rs#L159-L199",
           "version": "repo-lines-v1:sha256:8548a2ff911200831b54b7c254cf94bde2f7adfb68a7baf5f56c8fa59484e668:eyJzZWxlY3RlZExpbmVDb3VudCI6NDEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU5MDlhNTNhNjE4ZDAyOGUxZDMwMDBjMGE3YWJjZWVjYmU1ZmIzN2Y0ZTUxMWVmZTQ2NjQzZmFkNmU2Njg3MmYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU5MDlhNTNhNjE4ZDAyOGUxZDMwMDBjMGE3YWJjZWVjYmU1ZmIzN2Y0ZTUxMWVmZTQ2NjQzZmFkNmU2Njg3MmYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImMxYzQ1N2VhMGE5YWU1NWU3ZmRhOTM0YjcwYWM0OTU1YjFmMjMwNmZmN2IzZjA0NTk5Y2ZlN2RjYzUyNDNjM2UiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjU2ZDkwMmU1NTVjZDE5NjFhNWNiZjJlZDkzOTE4MTNkZTI0MzY0ZTI1ODZkNjYzNzUzYWI0MmYyZDNmN2EzNjkifQ"
         },
         {
@@ -1848,7 +1848,7 @@
         },
         {
           "resource": "repo://packages/web-core/src/features/workspace-chat/ui/LvkInstructionsEntry.tsx",
-          "version": "repo-file-v1:sha256:84b6fd7d180ec728944b8336640f4188e6f9a05666c509f9b4c28c108c577d61"
+          "version": "repo-file-v1:sha256:040c6d6405e22e92a0a52e40aaa1e6616a2f0456064d3a630fcc406851f32f3c"
         }
       ]
     },
@@ -1857,11 +1857,11 @@
       "statement": "Issue詳細だけがcreated_atを画面locale・ブラウザtimezoneで年月日時分まで表示し、新規作成と不正日時では表示しない。",
       "evidence": [
         {
-          "resource": "repo://packages/ui/src/components/KanbanIssuePanel.tsx#L207-L214",
+          "resource": "repo://packages/ui/src/components/KanbanIssuePanel.tsx#L209-L216",
           "version": "repo-lines-v1:sha256:67d4fd48e1a516075e24d8ec02e6c50b4d5a4bb433125784630bca92ed10244e:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMTIwNDBjNTI0YzUxYjVkYzg3NzQyZmE5OWZiNzg4YjUyZTBmMWVjY2NhZTZjZjE0MzhjZTE0ODRkY2YzY2JhZCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMTc5YjNkMDlmYjY2NzFjMjcyMTYwZmUwMzk2NDRkOTE5MjNhMTYyNGM4MjdjZDI4MmU4NDZhYjdmYWM2ZjA5NSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMWY3M2FjMjU4YWQyNTk5NjA5YzA4YzlkMjQ2NTA4ZTMxMzU5NTM3ZTYxZDllMjM0NDNlZWZjOWYxYmFkMTRlNyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNGZkZjg1ZDgxYTg4NTU0ZGEzN2JkMzE4OTczMmEzMmNjZGYxODU2OGRmNWYyNDQyMThhYTdjYjg3NmY0MzQ5NCJ9"
         },
         {
-          "resource": "repo://packages/ui/src/components/KanbanIssuePanel.tsx#L394-L417",
+          "resource": "repo://packages/ui/src/components/KanbanIssuePanel.tsx#L396-L419",
           "version": "repo-lines-v1:sha256:cf0e4e90ef8b60cfb4e61be16e93f171221452ceda2243144be640888b0a6072:eyJzZWxlY3RlZExpbmVDb3VudCI6MjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY3YmYxYjY1ODRlOTdmMjY4ZjdjNTRiYjA2YzZiMGYxOThmMTc1NGZmNmU5OGYyZmY2ZDM2ODlkNTU3NzAwZGUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBlZGNjMWY0MWJhMmQ5ZGIxNzY1MDgzNjcwMTQ5MGVjOThjYTc1NDAxZWIwMTFjM2I5OTg0ZDQ2NDVhMWE3NTIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjI4OWI3Yzk0YTdlMmE2NGQ0NjE0OGFhNTFjZWY2YzYyOWRkMDdiMjQzNjA2ZjNhNjhhYTU3YTVmYTliMjcxNDIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE2OTlhNzk0YTYxY2FhZWJhYTcxOTlmMzAyMjNiNDkwOGIwNTJiYTNkOWM5MWE4MmZhMjgwYzYwYWZlYzZlZmIifQ"
         }
       ]
@@ -1883,6 +1883,6 @@
   ],
   "verification": {
     "by": "openwiki/0.9.0",
-    "at": "2026-11-17T00:44:00.706Z"
+    "at": "2026-11-19T17:50:33.332Z"
   }
 }
