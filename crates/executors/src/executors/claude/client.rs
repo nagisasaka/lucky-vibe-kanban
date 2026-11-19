@@ -24,9 +24,9 @@ const TOOL_DENY_PREFIX: &str = "The user doesn't want to proceed with this tool 
 
 /// Claude Agent client with control protocol support
 pub struct ClaudeAgentClient {
-    pub(super) instructions: tokio::sync::Mutex<Option<super::instructions::Instructions>>,
+    pub(super) instructions: Arc<tokio::sync::Mutex<Option<super::instructions::Instructions>>>,
     instruction_delivery:
-        tokio::sync::Mutex<Option<(String, crate::instruction_delivery::InstructionDelivery)>>,
+        Arc<tokio::sync::Mutex<Option<(String, crate::instruction_delivery::InstructionDelivery)>>>,
     log_writer: LogWriter,
     approvals: Option<Arc<dyn ExecutorApprovalService>>,
     auto_approve: bool, // true when approvals is None
@@ -43,8 +43,8 @@ impl ClaudeAgentClient {
     ) -> Arc<Self> {
         let auto_approve = approvals.is_none();
         Arc::new(Self {
-            instructions: tokio::sync::Mutex::new(None),
-            instruction_delivery: tokio::sync::Mutex::new(None),
+            instructions: Arc::new(tokio::sync::Mutex::new(None)),
+            instruction_delivery: Arc::new(tokio::sync::Mutex::new(None)),
             log_writer,
             approvals,
             auto_approve,
@@ -55,6 +55,8 @@ impl ClaudeAgentClient {
 
     pub(super) fn with_cancel(&self, cancel: CancellationToken) -> Arc<Self> {
         Arc::new(Self {
+            instructions: self.instructions.clone(),
+            instruction_delivery: self.instruction_delivery.clone(),
             log_writer: self.log_writer.clone(),
             approvals: self.approvals.clone(),
             auto_approve: self.auto_approve,
