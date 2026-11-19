@@ -28,6 +28,11 @@ impl ExecutorApprovalError {
 /// Abstraction for executor approval backends.
 #[async_trait]
 pub trait ExecutorApprovalService: Send + Sync {
+    /// True only when host controls resolve Run-bound interactive tool waiters.
+    fn supports_interactive_tools(&self) -> bool {
+        false
+    }
+
     /// Resolve a pending tool request owned by this service. Unsupported services
     /// fail closed; a provider request ID must never be fabricated from this ID.
     async fn resolve_tool_approval(

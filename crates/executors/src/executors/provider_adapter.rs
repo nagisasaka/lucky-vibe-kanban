@@ -290,7 +290,7 @@ impl DirectProvider {
                 runtime: None,
                 protocol: Some("stream-json-v1"),
                 adapter: "claude-code-adapter-v1",
-                mapper: "claude-code-mapper-v7",
+                mapper: "claude-code-mapper-v8",
             },
         }
     }
@@ -358,7 +358,7 @@ impl DirectProvider {
                 ),
                 (
                     crate::runtime::AgentCapability::Approval,
-                    CapabilityState::Unsupported,
+                    CapabilityState::Native,
                 ),
                 (
                     crate::runtime::AgentCapability::Images,
@@ -403,7 +403,7 @@ impl DirectProvider {
             provider: self,
             semantics: match self {
                 Self::Codex => MapperSemantics::V9,
-                Self::ClaudeCode => MapperSemantics::V7,
+                Self::ClaudeCode => MapperSemantics::V8,
             },
             scope: Default::default(),
             replay_sequence: Default::default(),
@@ -869,7 +869,7 @@ impl NativeAuditReplayMapper for DirectProviderMapper {
         let typed = if self.provider == DirectProvider::ClaudeCode {
             match self.semantics {
                 MapperSemantics::V6 => classify_payload_v6(self.provider, event)?,
-                MapperSemantics::V7 => classify_payload(self.provider, event)?,
+                MapperSemantics::V7 | MapperSemantics::V8 => classify_payload(self.provider, event)?,
                 MapperSemantics::V5 => classify_payload_v5(self.provider, event)?,
                 MapperSemantics::V3 | MapperSemantics::V4 => {
                     classify_payload_v4(self.provider, event)?
@@ -2180,6 +2180,7 @@ fn project_typed_event(
         "codex-mapper-v8",
         "codex-mapper-v9",
         "claude-code-mapper-v7",
+        "claude-code-mapper-v8",
     ]
     .contains(&manifest.mapper_version.as_str())
         && let Some(value) = event
@@ -2277,6 +2278,25 @@ fn project_typed_event(
 
     // Delivery was introduced independently of message phase. Only explicit
     // async delivery is an async inbox question; phase alone cannot supply it.
+    if provider == DirectProvider::ClaudeCode
+        && manifest.mapper_version == "claude-code-mapper-v8"
+        && let Some(raw) = &event.raw.payload_json
+        && raw["method"] == "lucky-vibe/approval/status"
+    {
+        let pending = raw
+            .pointer("/params/pending")
+            .and_then(Value::as_u64)
+            .ok_or(NativeAuditError::MalformedFrame(event.raw.sequence))?;
+        let mut status = event.clone();
+        status.raw.payload_json = None;
+        status.typed = TypedProviderEvent::Lifecycle(if pending > 0 {
+            AgentRunStatus::AwaitingApproval
+        } else {
+            AgentRunStatus::Running
+        });
+        return project_typed_event(provider, &status, manifest);
+    }
+
     if provider == DirectProvider::Codex
         && (manifest.mapper_version.ends_with("-v8") || manifest.mapper_version.ends_with("-v9"))
         && let Some(raw) = &event.raw.payload_json
@@ -4856,6 +4876,39 @@ mod tests {
                 .unwrap();
             assert!(
                 matches!(events[0].payload, AgentEventPayload::LifecycleChanged { status: actual } if actual == status)
+            );
+        }
+    }
+
+    #[test]
+    fn claude_pending_approvals_project_only_in_connected_mapper_version() {
+        let provider = DirectProvider::ClaudeCode;
+        for (pending, expected) in [
+            (2, AgentRunStatus::AwaitingApproval),
+            (1, AgentRunStatus::AwaitingApproval),
+            (0, AgentRunStatus::Running),
+        ] {
+            let decoded = provider
+                .decode_native_frame(&frame(
+                    provider,
+                    serde_json::json!({
+                        "method":"lucky-vibe/approval/status", "params":{"pending":pending}
+                    }),
+                ))
+                .unwrap();
+            let manifest = fixture_manifest(provider);
+            let events = provider.map_provider_event(&decoded, &manifest).unwrap();
+            assert!(
+                matches!(events[0].payload, AgentEventPayload::LifecycleChanged { status } if status == expected)
+            );
+            let mut old = manifest.clone();
+            old.mapper_version = provider.v7_mapper().versions().mapper_version;
+            let events = provider.v7_mapper().map(&decoded.raw, &old).unwrap();
+            assert!(
+                !events.iter().any(|event| matches!(
+                    event.payload,
+                    AgentEventPayload::LifecycleChanged { .. }
+                ))
             );
         }
     }

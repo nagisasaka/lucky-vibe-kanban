@@ -4,7 +4,7 @@ use std::path::PathBuf;
 
 use uuid::Uuid;
 
-use super::{ClaudeCode, PermissionMode, base_command};
+use super::{ClaudeCode, base_command};
 use crate::{
     command::{CommandBuildError, CommandBuilder, CommandParts, apply_overrides},
     executors::provider_adapter::{DirectControl, DirectIntent, encode_stdio_rpc},
@@ -93,7 +93,7 @@ impl<'a> ClaudeCodeCommandAdapter<'a> {
                 .extend_params(["--permission-prompt-tool=stdio"])
                 .extend_params([format!(
                     "--permission-mode={}",
-                    PermissionMode::BypassPermissions
+                    self.agent.permission_mode()
                 )]);
         } else {
             builder = builder.extend_params(["--disallowedTools=AskUserQuestion"]);
@@ -193,18 +193,10 @@ pub(crate) fn encode_control(control: DirectControl) -> Result<Vec<u8>, serde_js
             "request_id": Uuid::new_v4().to_string(),
             "request":{"subtype":"interrupt"}
         }),
-        DirectControl::Approve {
-            request_id,
-            approved,
-            reason,
-        } => serde_json::json!({
-            "type":"control_response",
-            "response":{"subtype":"success","request_id":request_id,"response": if approved {
-                serde_json::json!({"behavior":"allow","updatedInput":{}})
-            } else {
-                serde_json::json!({"behavior":"deny","message":reason.unwrap_or_else(|| "Denied by user".to_string())})
-            }}
-        }),
+        // LVK approval IDs are host waiter IDs, never native request IDs.
+        // ExecutorControl resolves the waiter; its callback writes and audits
+        // the sole native response with the original input and request ID.
+        DirectControl::Approve { .. } => return Ok(Vec::new()),
         DirectControl::Input { .. } => {
             return Err(serde_json::Error::io(std::io::Error::new(
                 std::io::ErrorKind::Unsupported,

@@ -12,11 +12,18 @@ use uuid::Uuid;
 
 pub(super) struct ProcessHostApprovals {
     bridge: Arc<ExecutorApprovalBridge>,
+    legacy_plan: bool,
 }
 
 impl ProcessHostApprovals {
+    #[cfg(test)]
     pub(super) fn new(run_attempt_id: Uuid) -> Arc<Self> {
+        Self::for_provider(run_attempt_id, true)
+    }
+
+    pub(super) fn for_provider(run_attempt_id: Uuid, legacy_plan: bool) -> Arc<Self> {
         Arc::new(Self {
+            legacy_plan,
             bridge: ExecutorApprovalBridge::for_process_host(Approvals::new(), run_attempt_id),
         })
     }
@@ -24,10 +31,14 @@ impl ProcessHostApprovals {
 
 #[async_trait]
 impl ExecutorApprovalService for ProcessHostApprovals {
+    fn supports_interactive_tools(&self) -> bool {
+        true
+    }
+
     async fn create_tool_approval(&self, tool_name: &str) -> Result<String, ExecutorApprovalError> {
         // Plan transition is a separate legacy contract, outside command/file
         // permissions. Preserve it until its own UI/control migration.
-        if tool_name == "plan" {
+        if self.legacy_plan && tool_name == "plan" {
             return NoopExecutorApprovalService
                 .create_tool_approval(tool_name)
                 .await;
@@ -395,6 +406,189 @@ mod tests {
                 assert!(service.resolve_question_answer(&id, vec![]).await.is_err());
                 cancel.cancel();
             }).await.unwrap();
+        }
+    }
+
+    #[test]
+    #[ignore = "Claude permission subprocess fixture"]
+    fn claude_permission_fixture() {
+        use std::io::{BufRead, Write};
+
+        use serde_json::{Value, json};
+        let case = std::env::var("LVK_CLAUDE_PERMISSION_CASE").unwrap();
+        let emit = |value: Value| {
+            println!("{value}");
+            std::io::stdout().flush().unwrap();
+        };
+        let request = json!({"type":"control_request","request_id":"native-request",
+            "request":{"subtype":"can_use_tool","tool_name":"Bash","tool_use_id":"native-tool",
+                "input":{"command":"fixture never executes a command"}}});
+        emit(request.clone());
+        if case == "duplicate" {
+            emit(request);
+        }
+        if case == "duplicate-tool" {
+            emit(
+                json!({"type":"control_request","request_id":"other-native-request",
+                "request":{"subtype":"can_use_tool","tool_name":"Bash","tool_use_id":"native-tool","input":{}}}),
+            );
+        }
+        if case == "native-cancel" {
+            std::thread::sleep(std::time::Duration::from_millis(80));
+            emit(json!({"type":"control_cancel_request","request_id":"native-request"}));
+            std::thread::sleep(std::time::Duration::from_millis(80));
+            return;
+        }
+        if case == "disconnect" {
+            std::thread::sleep(std::time::Duration::from_millis(100));
+            return;
+        }
+        for line in std::io::stdin().lock().lines() {
+            let value: Value = serde_json::from_str(&line.unwrap()).unwrap();
+            if value["type"] == "control_request" {
+                continue;
+            }
+            if value["response"]["subtype"] == "error" {
+                continue;
+            }
+            assert_eq!(value["response"]["request_id"], "native-request");
+            let result = &value["response"]["response"];
+            assert_eq!(
+                result["behavior"],
+                if case == "deny" { "deny" } else { "allow" }
+            );
+            if case == "deny" {
+                assert!(
+                    result["message"]
+                        .as_str()
+                        .unwrap()
+                        .contains("fixture reason")
+                );
+            } else {
+                assert_eq!(
+                    result["updatedInput"]["command"],
+                    "fixture never executes a command"
+                );
+                assert!(result.get("updatedPermissions").is_none());
+            }
+            return;
+        }
+    }
+
+    #[tokio::test]
+    async fn claude_controls_resolve_original_request_and_fail_closed() {
+        use executors::executors::{
+            ExecutorControl,
+            claude::{client::ClaudeAgentClient, protocol::ProtocolPeer},
+            codex::client::LogWriter,
+            provider_adapter::DirectControl,
+        };
+        use serde_json::Value;
+        use tokio::io::{AsyncBufReadExt, BufReader};
+        for case in [
+            "allow",
+            "deny",
+            "duplicate",
+            "duplicate-tool",
+            "cancel",
+            "disconnect",
+            "native-cancel",
+        ] {
+            tokio::time::timeout(Duration::from_secs(10), async {
+                let service = ProcessHostApprovals::for_provider(Uuid::new_v4(), false);
+                let other = ProcessHostApprovals::for_provider(Uuid::new_v4(), false);
+                let cancel = CancellationToken::new();
+                let (writer, reader) = tokio::io::duplex(65536);
+                let client = ClaudeAgentClient::new(
+                    LogWriter::new(writer),
+                    Some(service.clone()),
+                    cancel.clone(),
+                );
+                let mut child = tokio::process::Command::new(std::env::current_exe().unwrap())
+                    .args([
+                        "--exact",
+                        "process_host::approvals::tests::claude_permission_fixture",
+                        "--ignored",
+                        "--nocapture",
+                    ])
+                    .env("LVK_CLAUDE_PERMISSION_CASE", case)
+                    .stdin(std::process::Stdio::piped())
+                    .stdout(std::process::Stdio::piped())
+                    .kill_on_drop(true)
+                    .spawn()
+                    .unwrap();
+                let (peer, _) = ProtocolPeer::spawn(
+                    child.stdin.take().unwrap(),
+                    child.stdout.take().unwrap(),
+                    client,
+                    cancel.clone(),
+                );
+                let mut lines = BufReader::new(reader).lines();
+                let requested: Value = loop {
+                    let line = lines.next_line().await.unwrap().unwrap();
+                    if let Ok(v) = serde_json::from_str::<Value>(&line)
+                        && v["type"] == "approval_requested"
+                    {
+                        break v;
+                    }
+                };
+                let id = requested["approval_id"].as_str().unwrap();
+                assert!(other.resolve_tool_approval(id, true, None).await.is_err());
+                let control = |id: &str| DirectControl::Approve {
+                    request_id: id.into(),
+                    approved: case != "deny",
+                    reason: Some("fixture reason".into()),
+                };
+                assert!(peer.send(control("native-request")).await.is_err());
+                assert!(
+                    tokio::time::timeout(Duration::from_millis(30), child.wait())
+                        .await
+                        .is_err()
+                );
+                if case == "cancel" {
+                    cancel.cancel();
+                } else if !matches!(case, "disconnect" | "native-cancel") {
+                    // Reattaching the host control handle preserves the same waiter.
+                    peer.clone().send(control(id)).await.unwrap();
+                    assert!(peer.send(control(id)).await.is_err());
+                }
+                let mut approvals = 1;
+                loop {
+                    let line = lines.next_line().await.unwrap().unwrap();
+                    if let Ok(value) = serde_json::from_str::<Value>(&line) {
+                        if value["type"] == "approval_requested" {
+                            approvals += 1;
+                        }
+                        if value["type"] == "approval_resolved" {
+                            assert_eq!(value["approval_id"], id);
+                            assert_eq!(
+                                value["approved"],
+                                !matches!(case, "deny" | "cancel" | "disconnect" | "native-cancel")
+                            );
+                            break;
+                        }
+                    }
+                }
+                assert_eq!(approvals, 1);
+                assert!(service.resolve_tool_approval(id, true, None).await.is_err());
+                if case == "cancel" {
+                    child.kill().await.unwrap();
+                }
+                let status = child.wait().await.unwrap();
+                if case != "cancel" {
+                    assert!(status.success(), "{case}: {status}");
+                }
+                cancel.cancel();
+                // Keeping the control handle must not retain the provider log
+                // pipe after the reader and its permission callbacks settle.
+                tokio::time::timeout(Duration::from_secs(1), async {
+                    while lines.next_line().await.unwrap().is_some() {}
+                })
+                .await
+                .unwrap();
+            })
+            .await
+            .unwrap();
         }
     }
 

@@ -19,7 +19,6 @@ use std::{
 use chrono::{DateTime, Utc};
 use executors::{
     actions::SelectedSkill,
-    approvals::UnavailableExecutorApprovalService,
     env::{ExecutionEnv, RepoContext},
     executors::{
         CancellationToken, ExecutorControl, ExecutorExitResult,
@@ -347,11 +346,10 @@ impl SharedHost {
             provider_session: launch.provider_session.as_ref(),
             reset_to_message_id: launch.reset_to_message_id.as_deref(),
             selected_skills: &launch.selected_skills,
-            approvals: if launch.provider == DirectProvider::Codex {
-                approvals::ProcessHostApprovals::new(launch.run_attempt_id)
-            } else {
-                Arc::new(UnavailableExecutorApprovalService)
-            },
+            approvals: approvals::ProcessHostApprovals::for_provider(
+                launch.run_attempt_id,
+                launch.provider == DirectProvider::Codex,
+            ),
             current_dir: &launch.current_dir,
             env: &env,
         })

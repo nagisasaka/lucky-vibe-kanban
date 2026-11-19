@@ -1,25 +1,22 @@
 use std::sync::Arc;
 
 use tokio_util::sync::CancellationToken;
-use workspace_utils::approvals::{ApprovalStatus, QuestionStatus};
+use workspace_utils::approvals::ApprovalStatus;
 
-use super::types::PermissionMode;
 use crate::{
     approvals::{ExecutorApprovalError, ExecutorApprovalService},
     executors::{
         ExecutorError,
         claude::{
             ClaudeJson,
-            types::{
-                PermissionResult, PermissionUpdate, PermissionUpdateDestination,
-                PermissionUpdateType,
-            },
+            types::{PermissionResult, PermissionUpdate},
         },
         codex::client::LogWriter,
     },
 };
 
 const EXIT_PLAN_MODE_NAME: &str = "ExitPlanMode";
+const ENTER_PLAN_MODE_NAME: &str = "EnterPlanMode";
 const ASK_USER_QUESTION_NAME: &str = "AskUserQuestion";
 pub const AUTO_APPROVE_CALLBACK_ID: &str = "AUTO_APPROVE_CALLBACK_ID";
 // Prefix for denial messages from the user, mirrors claude code CLI behavior
@@ -34,6 +31,7 @@ pub struct ClaudeAgentClient {
     approvals: Option<Arc<dyn ExecutorApprovalService>>,
     auto_approve: bool, // true when approvals is None
     cancel: CancellationToken,
+    pending: Arc<tokio::sync::Mutex<usize>>,
 }
 
 impl ClaudeAgentClient {
@@ -51,7 +49,39 @@ impl ClaudeAgentClient {
             approvals,
             auto_approve,
             cancel,
+            pending: Default::default(),
         })
+    }
+
+    pub(super) fn with_cancel(&self, cancel: CancellationToken) -> Arc<Self> {
+        Arc::new(Self {
+            log_writer: self.log_writer.clone(),
+            approvals: self.approvals.clone(),
+            auto_approve: self.auto_approve,
+            cancel,
+            pending: self.pending.clone(),
+        })
+    }
+
+    pub(super) fn is_cancelled(&self) -> bool {
+        self.cancel.is_cancelled()
+    }
+
+    async fn change_pending(&self, add: bool) -> Result<(), ExecutorError> {
+        let mut pending = self.pending.lock().await;
+        if add {
+            *pending += 1;
+        } else {
+            *pending -= 1;
+        }
+        self.log_writer
+            .log_raw(
+                &serde_json::json!({
+                    "method":"lucky-vibe/approval/status", "params":{"pending":*pending}
+                })
+                .to_string(),
+            )
+            .await
     }
 
     async fn handle_approval(
@@ -65,10 +95,21 @@ impl ClaudeAgentClient {
             .as_ref()
             .ok_or(ExecutorApprovalError::ServiceUnavailable)?;
 
+        // Canonical approval details must exist even when the CLI has not
+        // emitted an assistant tool_use block yet.
+        self.log_writer
+            .log_raw(
+                &serde_json::json!({
+                    "type": "tool_call", "id": tool_use_id, "name": tool_name,
+                    "arguments": tool_input, "approval_required": true
+                })
+                .to_string(),
+            )
+            .await?;
         let approval_id = match approval_service.create_tool_approval(&tool_name).await {
             Ok(id) => id,
             Err(err) => {
-                self.handle_approval_error(&tool_name, &tool_use_id, &err)
+                self.handle_approval_error(&tool_name, &tool_use_id, None, &err)
                     .await?;
                 return Err(err.into());
             }
@@ -83,13 +124,15 @@ impl ClaudeAgentClient {
             })?)
             .await;
 
-        let status = match approval_service
+        self.change_pending(true).await?;
+        let outcome = approval_service
             .wait_tool_approval(&approval_id, self.cancel.clone())
-            .await
-        {
+            .await;
+        self.change_pending(false).await?;
+        let status = match outcome {
             Ok(s) => s,
             Err(err) => {
-                self.handle_approval_error(&tool_name, &tool_use_id, &err)
+                self.handle_approval_error(&tool_name, &tool_use_id, Some(&approval_id), &err)
                     .await?;
                 return Err(err.into());
             }
@@ -103,27 +146,26 @@ impl ClaudeAgentClient {
             })?)
             .await?;
 
+        self.log_writer
+            .log_raw(
+                &serde_json::json!({
+                    "type": "approval_resolved", "approval_id": approval_id,
+                    "approved": matches!(status, ApprovalStatus::Approved),
+                    "reason": match &status {
+                        ApprovalStatus::Denied { reason } => reason.clone(),
+                        ApprovalStatus::TimedOut => Some("Approval request timed out".into()),
+                        ApprovalStatus::Pending => Some("Approval still pending".into()),
+                        ApprovalStatus::Approved => None,
+                    }
+                })
+                .to_string(),
+            )
+            .await?;
         match status {
-            ApprovalStatus::Approved => {
-                if tool_name == EXIT_PLAN_MODE_NAME {
-                    Ok(PermissionResult::Allow {
-                        updated_input: tool_input,
-                        updated_permissions: Some(vec![PermissionUpdate {
-                            update_type: PermissionUpdateType::SetMode,
-                            mode: Some(PermissionMode::BypassPermissions),
-                            destination: Some(PermissionUpdateDestination::Session),
-                            rules: None,
-                            behavior: None,
-                            directories: None,
-                        }]),
-                    })
-                } else {
-                    Ok(PermissionResult::Allow {
-                        updated_input: tool_input,
-                        updated_permissions: None,
-                    })
-                }
-            }
+            ApprovalStatus::Approved => Ok(PermissionResult::Allow {
+                updated_input: tool_input,
+                updated_permissions: None,
+            }),
             ApprovalStatus::Denied { reason } => Ok(PermissionResult::Deny {
                 message: format!("{}{}", TOOL_DENY_PREFIX, reason.unwrap_or_default()),
                 interrupt: Some(false),
@@ -139,100 +181,25 @@ impl ClaudeAgentClient {
         }
     }
 
-    async fn handle_question(
-        &self,
-        tool_use_id: String,
-        tool_name: String,
-        tool_input: serde_json::Value,
-    ) -> Result<PermissionResult, ExecutorError> {
-        let approval_service = self
-            .approvals
-            .as_ref()
-            .ok_or(ExecutorApprovalError::ServiceUnavailable)?;
-
-        let question_count = tool_input
-            .get("questions")
-            .and_then(|q| q.as_array())
-            .map(|a| a.len())
-            .unwrap_or(1);
-
-        let approval_id = match approval_service
-            .create_question_approval(&tool_name, question_count)
-            .await
-        {
-            Ok(id) => id,
-            Err(err) => {
-                self.handle_question_error(&tool_use_id, &tool_name, &err)
-                    .await?;
-                return Err(err.into());
-            }
-        };
-
-        let _ = self
-            .log_writer
-            .log_raw(&serde_json::to_string(&ClaudeJson::ApprovalRequested {
-                tool_call_id: tool_use_id.clone(),
-                tool_name: tool_name.clone(),
-                approval_id: approval_id.clone(),
-            })?)
-            .await;
-
-        let status = match approval_service
-            .wait_question_answer(&approval_id, self.cancel.clone())
-            .await
-        {
-            Ok(s) => s,
-            Err(err) => {
-                self.handle_question_error(&tool_use_id, &tool_name, &err)
-                    .await?;
-                return Err(err.into());
-            }
-        };
-
-        self.log_writer
-            .log_raw(&serde_json::to_string(&ClaudeJson::QuestionResponse {
-                tool_call_id: tool_use_id.clone(),
-                tool_name: tool_name.clone(),
-                question_status: status.clone(),
-            })?)
-            .await?;
-
-        match status {
-            QuestionStatus::Answered { answers } => {
-                let answers_map: serde_json::Map<String, serde_json::Value> = answers
-                    .iter()
-                    .map(|qa| {
-                        (
-                            qa.question.clone(),
-                            serde_json::Value::String(qa.answer.join(", ")),
-                        )
-                    })
-                    .collect();
-                let mut updated = tool_input.clone();
-                if let Some(obj) = updated.as_object_mut() {
-                    obj.insert(
-                        "answers".to_string(),
-                        serde_json::Value::Object(answers_map),
-                    );
-                }
-                Ok(PermissionResult::Allow {
-                    updated_input: updated,
-                    updated_permissions: None,
-                })
-            }
-            QuestionStatus::TimedOut => Ok(PermissionResult::Deny {
-                message: "Question request timed out".to_string(),
-                interrupt: Some(true),
-            }),
-        }
-    }
-
     async fn handle_approval_error(
         &self,
         tool_name: &str,
         tool_use_id: &str,
+        approval_id: Option<&str>,
         err: &ExecutorApprovalError,
     ) -> Result<(), ExecutorError> {
+        if let Some(id) = approval_id {
+            let _ = self
+                .log_writer
+                .log_raw(
+                    &serde_json::json!({
+                        "type":"approval_resolved", "approval_id":id, "approved":false,
+                        "reason":format!("Approval service error: {err}")
+                    })
+                    .to_string(),
+                )
+                .await;
+        }
         if !matches!(err, ExecutorApprovalError::Cancelled) {
             tracing::error!(
                 "Claude approval failed for tool={} call_id={}: {err}",
@@ -253,23 +220,17 @@ impl ClaudeAgentClient {
         Ok(())
     }
 
-    async fn handle_question_error(
+    pub async fn resolve_approval(
         &self,
-        tool_use_id: &str,
-        tool_name: &str,
-        err: &ExecutorApprovalError,
+        id: &str,
+        approved: bool,
+        reason: Option<String>,
     ) -> Result<(), ExecutorError> {
-        if !matches!(err, ExecutorApprovalError::Cancelled) {
-            tracing::error!("Claude question failed {err}",);
-        }
-        let _ = self
-            .log_writer
-            .log_raw(&serde_json::to_string(&ClaudeJson::QuestionResponse {
-                tool_call_id: tool_use_id.to_string(),
-                tool_name: tool_name.to_string(),
-                question_status: QuestionStatus::TimedOut,
-            })?)
-            .await;
+        self.approvals
+            .as_ref()
+            .ok_or(ExecutorApprovalError::ServiceUnavailable)?
+            .resolve_tool_approval(id, approved, reason)
+            .await?;
         Ok(())
     }
 
@@ -280,39 +241,27 @@ impl ClaudeAgentClient {
         _permission_suggestions: Option<Vec<PermissionUpdate>>,
         tool_use_id: Option<String>,
     ) -> Result<PermissionResult, ExecutorError> {
-        if tool_name == ASK_USER_QUESTION_NAME {
-            if let Some(latest_tool_use_id) = tool_use_id {
-                return self
-                    .handle_question(latest_tool_use_id, tool_name, input)
-                    .await;
-            } else {
-                tracing::warn!("AskUserQuestion without tool_use_id, cannot route to approval");
-                return Ok(PermissionResult::Deny {
-                    message:
-                        "AskUserQuestion requires user interaction but no tool_use_id was provided"
-                            .to_string(),
-                    interrupt: Some(false),
-                });
-            }
+        if matches!(
+            tool_name.as_str(),
+            ASK_USER_QUESTION_NAME | EXIT_PLAN_MODE_NAME | ENTER_PLAN_MODE_NAME
+        ) {
+            return Ok(PermissionResult::Deny {
+                message: "Claude plan transitions and question UI are not connected".into(),
+                interrupt: Some(false),
+            });
         }
         if self.auto_approve {
             Ok(PermissionResult::Allow {
                 updated_input: input,
                 updated_permissions: None,
             })
-        } else if let Some(latest_tool_use_id) = tool_use_id {
+        } else if let Some(latest_tool_use_id) = tool_use_id.filter(|id| !id.trim().is_empty()) {
             self.handle_approval(latest_tool_use_id, tool_name, input)
                 .await
         } else {
-            // Auto approve tools with no matching tool_use_id
-            // tool_use_id is undocumented so this may not be possible
-            tracing::warn!(
-                "No tool_use_id available for tool '{}', cannot request approval",
-                tool_name
-            );
-            Ok(PermissionResult::Allow {
-                updated_input: input,
-                updated_permissions: None,
+            Ok(PermissionResult::Deny {
+                message: "Interactive approval requires a tool_use_id".into(),
+                interrupt: Some(false),
             })
         }
     }
@@ -336,8 +285,8 @@ impl ClaudeAgentClient {
                 AUTO_APPROVE_CALLBACK_ID => Ok(serde_json::json!({
                     "hookSpecificOutput": {
                         "hookEventName": "PreToolUse",
-                        "permissionDecision": "allow",
-                        "permissionDecisionReason": "Approved by SDK"
+                        "permissionDecision": "deny",
+                        "permissionDecisionReason": "Plan auto-approval callback is unsupported"
                     }
                 })),
                 _ => {
@@ -577,5 +526,121 @@ mod instruction_delivery_tests {
                 assert_eq!(facts[1]["native_session_id"], "native-1");
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use async_trait::async_trait;
+    use workspace_utils::approvals::QuestionStatus;
+
+    use super::*;
+
+    struct OutcomeFixture(ApprovalStatus);
+    #[async_trait]
+    impl ExecutorApprovalService for OutcomeFixture {
+        async fn create_tool_approval(&self, _: &str) -> Result<String, ExecutorApprovalError> {
+            Ok("fixture-approval".into())
+        }
+        async fn create_question_approval(
+            &self,
+            _: &str,
+            _: usize,
+        ) -> Result<String, ExecutorApprovalError> {
+            Err(ExecutorApprovalError::ServiceUnavailable)
+        }
+        async fn wait_tool_approval(
+            &self,
+            _: &str,
+            _: CancellationToken,
+        ) -> Result<ApprovalStatus, ExecutorApprovalError> {
+            Ok(self.0.clone())
+        }
+        async fn wait_question_answer(
+            &self,
+            _: &str,
+            _: CancellationToken,
+        ) -> Result<QuestionStatus, ExecutorApprovalError> {
+            Err(ExecutorApprovalError::ServiceUnavailable)
+        }
+    }
+
+    #[tokio::test]
+    async fn timeout_and_unexpected_pending_never_allow_or_change_mode() {
+        for status in [ApprovalStatus::TimedOut, ApprovalStatus::Pending] {
+            let (writer, _reader) = tokio::io::duplex(16384);
+            let client = ClaudeAgentClient::new(
+                LogWriter::new(writer),
+                Some(Arc::new(OutcomeFixture(status))),
+                CancellationToken::new(),
+            );
+            assert!(matches!(
+                client
+                    .on_can_use_tool(
+                        "Bash".into(),
+                        serde_json::json!({"command":"must not execute"}),
+                        None,
+                        Some("tool-id".into())
+                    )
+                    .await
+                    .unwrap(),
+                PermissionResult::Deny { .. }
+            ));
+        }
+    }
+
+    #[tokio::test]
+    async fn missing_identity_unavailable_service_plan_and_questions_fail_closed() {
+        let (writer, _reader) = tokio::io::duplex(16384);
+        let client = ClaudeAgentClient::new(
+            LogWriter::new(writer),
+            Some(Arc::new(
+                crate::approvals::UnavailableExecutorApprovalService,
+            )),
+            CancellationToken::new(),
+        );
+        for id in [None, Some(String::new()), Some("  ".into())] {
+            assert!(matches!(
+                client
+                    .on_can_use_tool("Bash".into(), serde_json::json!({}), None, id)
+                    .await
+                    .unwrap(),
+                PermissionResult::Deny { .. }
+            ));
+        }
+        assert!(
+            client
+                .on_can_use_tool(
+                    "Bash".into(),
+                    serde_json::json!({}),
+                    None,
+                    Some("tool-id".into())
+                )
+                .await
+                .is_err()
+        );
+        for tool in [
+            EXIT_PLAN_MODE_NAME,
+            ENTER_PLAN_MODE_NAME,
+            ASK_USER_QUESTION_NAME,
+        ] {
+            assert!(matches!(
+                client
+                    .on_can_use_tool(
+                        tool.into(),
+                        serde_json::json!({}),
+                        None,
+                        Some("tool-id".into())
+                    )
+                    .await
+                    .unwrap(),
+                PermissionResult::Deny { .. }
+            ));
+        }
+        let hook = client
+            .on_hook_callback(AUTO_APPROVE_CALLBACK_ID.into(), serde_json::json!({}), None)
+            .await
+            .unwrap();
+        assert_eq!(hook["hookSpecificOutput"]["permissionDecision"], "deny");
     }
 }
