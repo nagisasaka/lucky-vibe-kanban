@@ -1278,6 +1278,7 @@
   "kanban": {
     "includeRelatedIssues": "Include related issues",
     "compact": {
+      "blocked": "Blocked",
       "workspaces": "Workspaces: {{count}} · Details",
       "approval": "Approval required",
       "input": "Input required",

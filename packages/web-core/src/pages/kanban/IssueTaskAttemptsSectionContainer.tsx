@@ -127,6 +127,8 @@ export function IssueTaskAttemptsSectionContainer({
         isOwnedByCurrentUser: workspace.owner_user_id === userId,
         isRunning: localWorkspace?.isRunning,
         hasPendingApproval: localWorkspace?.hasPendingApproval,
+        hasPendingInput: localWorkspace?.hasPendingInput,
+        hasBlockedGoal: localWorkspace?.hasBlockedGoal,
         hasRunningDevServer: localWorkspace?.hasRunningDevServer,
         hasUnseenActivity: localWorkspace?.hasUnseenActivity,
         latestProcessStartedAt: localWorkspace?.latestProcessStartedAt,

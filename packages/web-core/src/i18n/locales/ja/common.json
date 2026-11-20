@@ -592,6 +592,7 @@
   "kanban": {
     "includeRelatedIssues": "関連イシューを含む",
     "compact": {
+      "blocked": "ブロック中",
       "workspaces": "Workspace: {{count}} · 詳細",
       "approval": "承認待ち",
       "input": "入力待ち",

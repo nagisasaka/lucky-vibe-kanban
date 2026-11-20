@@ -922,6 +922,14 @@ latest_session_id: string | null,
  */
 has_pending_approval: boolean,
 /**
+ * Whether a current run is waiting for input.
+ */
+has_pending_input: boolean,
+/**
+ * Whether a current run's Goal is interrupted.
+ */
+has_blocked_goal: boolean,
+/**
  * Number of files with changes
  */
 files_changed: number | null,

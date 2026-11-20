@@ -44,6 +44,8 @@ export interface WorkspaceWithStats {
   canManageWorkspace?: boolean;
   isRunning?: boolean;
   hasPendingApproval?: boolean;
+  hasPendingInput?: boolean;
+  hasBlockedGoal?: boolean;
   hasRunningDevServer?: boolean;
   hasUnseenActivity?: boolean;
   latestProcessStartedAt?: string;
@@ -132,9 +134,12 @@ export function IssueWorkspaceCard({
   const { t } = useTranslation('common');
   const isRunning = workspace.isRunning ?? false;
   const hasPendingApproval =
-    workspace.hasPendingApproval ||
+    workspace.hasPendingApproval ??
     workspace.latestProcessStatus === 'awaiting_approval';
-  const needsInput = workspace.latestProcessStatus === 'awaiting_input';
+  const needsInput =
+    workspace.hasPendingInput ??
+    workspace.latestProcessStatus === 'awaiting_input';
+  const blockedGoal = workspace.hasBlockedGoal ?? false;
   const hasRunningDevServer = workspace.hasRunningDevServer ?? false;
   const hasUnseenActivity = workspace.hasUnseenActivity ?? false;
   const isPreparing = ['pending', 'starting'].includes(
@@ -149,16 +154,19 @@ export function IssueWorkspaceCard({
     ? 'approval'
     : needsInput
       ? 'input'
-      : isRunning && !isPreparing
-        ? 'running'
-        : isFailed
-          ? 'failed'
-          : null;
+      : blockedGoal
+        ? 'blocked'
+        : isRunning && !isPreparing
+          ? 'running'
+          : isFailed
+            ? 'failed'
+            : null;
   const showReadState =
     !isPreparing &&
     !isRunning &&
     !hasPendingApproval &&
     !needsInput &&
+    !blockedGoal &&
     (hasUnseenActivity ||
       isFailed ||
       workspace.latestProcessStatus === 'succeeded' ||
@@ -261,7 +269,7 @@ export function IssueWorkspaceCard({
             {activity && (
               <Tooltip content={t(`kanban.compact.${activity}`)}>
                 <span role="img" aria-label={t(`kanban.compact.${activity}`)}>
-                  {hasPendingApproval || needsInput ? (
+                  {hasPendingApproval || needsInput || blockedGoal ? (
                     <HandIcon
                       aria-hidden="true"
                       className="size-icon-xs text-brand shrink-0"
@@ -279,9 +287,12 @@ export function IssueWorkspaceCard({
                 </span>
               </Tooltip>
             )}
-            {isPreparing && (
-              <span className="text-low">{t('workspaces.preparing')}</span>
-            )}
+            {isPreparing &&
+              !hasPendingApproval &&
+              !needsInput &&
+              !blockedGoal && (
+                <span className="text-low">{t('workspaces.preparing')}</span>
+              )}
             {showReadState && (
               <Tooltip
                 content={t(
