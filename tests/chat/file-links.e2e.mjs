@@ -152,7 +152,7 @@ c.commit()
       join(repo, 'src/example.ts'),
       Array.from({ length: 160 }, (_, i) =>
         i === 119 ? 'const nativeSelected = 120;' : `// native line ${i + 1}`
-      ).join('\n')
+      ).join('\r\n')
     );
     execFileSync('git', ['init', '-b', 'main', repo]);
     execFileSync('git', ['-C', repo, 'add', '.']);
@@ -189,6 +189,7 @@ c.commit()
     browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
     const context = await browser.newContext({
       viewport: { width: 1440, height: 1000 },
+      permissions: ['clipboard-read', 'clipboard-write'],
     });
     const page = await context.newPage();
     await page.route('**/api/provider-usage/read', (route) =>

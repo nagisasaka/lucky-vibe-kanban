@@ -418,7 +418,7 @@ const DiffFileItem = memo(function DiffFileItem({
       overflow: wrapText ? ('wrap' as const) : ('scroll' as const),
       hunkSeparators: 'line-info' as const,
       collapsed: !expanded,
-      enableHoverUtility: !readOnly,
+      enableGutterUtility: !readOnly,
       onLineClick: handleLineClick,
       theme: { dark: 'github-dark', light: 'github-light' } as const,
       unsafeCSS: PIERRE_DIFFS_THEME_CSS,
@@ -592,7 +592,7 @@ const DiffFileItem = memo(function DiffFileItem({
         renderAnnotation={annotations ? renderAnnotation : undefined}
         renderHeaderPrefix={renderHeaderPrefix}
         renderHeaderMetadata={renderHeaderMetadata}
-        renderHoverUtility={
+        renderGutterUtility={
           expanded && !readOnly ? renderHoverUtility : undefined
         }
       />

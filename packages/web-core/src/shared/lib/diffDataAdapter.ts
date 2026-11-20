@@ -103,6 +103,8 @@ export function transformDiffToFileDiffMetadata(
       isPartial: true,
       deletionLines: [],
       additionLines: [],
+      deletionCharacterCount: 0,
+      additionCharacterCount: 0,
     };
   }
 

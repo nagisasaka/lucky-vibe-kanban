@@ -37,10 +37,10 @@ export async function verifyNativeFileLink(
   });
   const [response] = await Promise.all([contentResponse, link.click()]);
   assert.equal(response.status(), 200);
-  assert.match(
-    JSON.stringify(await response.json()),
-    /const nativeSelected = 120;/
-  );
+  const fileResponse = await response.json();
+  const serialized = JSON.stringify(fileResponse);
+  assert.match(serialized, /const nativeSelected = 120;/);
+  assert.match(serialized, /\\r\\n/, 'file API preserves CRLF');
   await expect(
     page.getByRole('button', { name: 'Close preview', exact: true })
   ).toBeVisible();
@@ -59,6 +59,20 @@ export async function verifyNativeFileLink(
   await expect(code).toHaveText('const nativeSelected = 120;');
   await page.screenshot({ path: '.build/local432-file-preview.png', fullPage: true });
   await expect(selected.locator('span').first()).toHaveText('120');
+  await expect(selected.locator('xpath=parent::*').locator(':scope > div')).toHaveCount(160);
+  await selected.evaluate((row) => {
+    const first = row.querySelector('code');
+    const second = row.nextElementSibling.querySelector('code');
+    const range = document.createRange();
+    range.setStart(first, 0);
+    range.setEnd(second, second.childNodes.length);
+    const selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+  });
+  await page.keyboard.press('Control+c');
+  assert.equal(await page.evaluate(() => navigator.clipboard.readText()),
+    'const nativeSelected = 120;\n// native line 121');
   await expect(selected).toBeInViewport();
   // Read actual layout geometry: the row is inside its scrolled viewer viewport.
   const position = await selected.evaluate((row) => {

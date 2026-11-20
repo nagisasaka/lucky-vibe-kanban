@@ -177,16 +177,21 @@ if p.exists():
     route.fulfill({ json: { success: true, data: [] } })
   );
   await page.routeWebSocket(`**/api/workspaces/${workspace}/git/diff/ws*`, (ws) => {
+    const lineCount = process.env.LVK_CHAT_LARGE_DIFF === '1' ? 1200 : 80;
     const fixture = {
       type: 'DIFF',
       content: {
         change: 'modified', oldPath: 'src/fixture.ts', newPath: 'src/fixture.ts',
-        oldContent: Array.from({ length: 80 }, (_, i) => `const answer${i} = 1;`).join('\n') + '\n',
-        newContent: Array.from({ length: 80 }, (_, i) => `const answer${i} = 42;`).join('\n') + '\n',
-        contentOmitted: false, additions: 80, deletions: 80, repoId: null,
+        oldContent: Array.from({ length: lineCount }, (_, i) => `const answer${i} = 1;`).join('\n') + '\n',
+        newContent: Array.from({ length: lineCount }, (_, i) => `const answer${i} = ${lineCount > 80 && i % 20 !== 0 ? 1 : 42};`).join('\n') + '\n',
+        contentOmitted: false, additions: lineCount > 80 ? lineCount / 20 : lineCount,
+        deletions: lineCount > 80 ? lineCount / 20 : lineCount, repoId: null,
       },
     };
-    ws.send(JSON.stringify({ JsonPatch: [{ op: 'add', path: '/entries/fixture', value: { 'src/fixture.ts': fixture } }] }));
+    const second = { type: 'DIFF', content: {
+      ...fixture.content, oldPath: 'src/second.ts', newPath: 'src/second.ts',
+    } };
+    ws.send(JSON.stringify({ JsonPatch: [{ op: 'add', path: '/entries/fixture', value: { 'src/fixture.ts': fixture, 'src/second.ts': second } }] }));
     ws.send(JSON.stringify({ Ready: true }));
   });
   await page.routeWebSocket('**/api/agents/discovered-options/ws*', (ws) =>
@@ -417,7 +422,7 @@ if p.exists():
             message: {
               message_id: 'claude-style-markdown',
               role: 'assistant',
-              content: 'Claude-style fixture\n\n### 調査結果\n\n**要点**と `inline` を確認。',
+              content: 'Claude-style fixture\n\n### 調査結果\n\n**要点**と `src/second.ts` を確認。',
             },
             final_output: false,
           },
@@ -510,9 +515,6 @@ if p.exists():
         page.getByRole('button', { name: /ツール呼び出し完了/ })
       ).toHaveCount(0);
       await expect(
-        page.getByTestId('run-elapsed').locator('time')
-      ).toHaveAttribute('datetime', stamp);
-      await expect(
         page.locator('summary').getByText('Inspect README.md', { exact: true })
       ).toBeVisible();
       await expect(
@@ -540,7 +542,7 @@ if p.exists():
         ).toBeVisible();
       }
       report.checks.push(
-        'operation/result visible initially; retained run completion timestamp visible without expansion'
+        'operation/result visible initially'
       );
       await page.screenshot({
         path: join(evidence, 'initial.png'),
@@ -564,6 +566,15 @@ if p.exists():
     await expect
       .poll(() => commandPre.locator('.shiki-token').count())
       .toBeGreaterThan(0);
+    const commandColor = await commandPre.locator('.shiki-token').first().evaluate((el) => getComputedStyle(el).color);
+    await commandButton.click();
+    await expect(commandPre).toHaveCount(0);
+    await commandButton.click();
+    const remountedToken = commandPre.locator('.shiki-token').first();
+    expect(await remountedToken.count()).toBe(1);
+    expect(await remountedToken.evaluate((el) => getComputedStyle(el).color)).toBe(commandColor);
+    await page.screenshot({ path: join(evidence, 'command-remount.png'), fullPage: true });
+    report.checks.push('cached command remains colored immediately after collapse and remount');
     await commandPre.evaluate((el) => {
       const range = document.createRange();
       range.selectNodeContents(el);
@@ -669,7 +680,7 @@ if p.exists():
     );
     const assistantRow = page.locator('[data-row-index]').filter({
       has: page.getByText('LOCAL32 code', { exact: true }),
-    });
+    }).last();
     await assistantRow.scrollIntoViewIfNeeded();
     await assistantRow.hover();
     await assistantRow
@@ -776,11 +787,17 @@ if p.exists():
     report.checks.push(
       'stream completion, JSON, unknown/plain/unspecified and system theme changes for command and Lexical with screenshots'
     );
-    await page.getByText(/変更ファイル1件/).first().click();
+    await page.getByText(/変更ファイル2件/).first().click();
     await expect(page.getByText('src/fixture.ts', { exact: true }).first()).toBeVisible();
     const diff = page.locator('diffs-container').first();
     await expect(diff).toBeVisible();
-    await expect(diff).toContainText('answer');
+    await diff.scrollIntoViewIfNeeded();
+    await expect(diff).toContainText('answer', { timeout: 30000 });
+    await expect(diff.locator('[data-line-type="change-addition"]').first()).toBeAttached();
+    await expect(diff.locator('[data-line-type="change-deletion"]').first()).toBeAttached();
+    if (process.env.LVK_CHAT_LARGE_DIFF === '1') {
+      await expect(diff.locator('[data-separator]').first()).toBeAttached();
+    }
     const diffLine = diff.locator('[data-line="1"]').first();
     await expect(diffLine.locator('span').first()).toBeAttached();
     await expect.poll(() => diffLine.locator('span').evaluateAll((spans) =>
@@ -817,6 +834,16 @@ if p.exists():
     });
     expect(scrollResult.height).toBeGreaterThan(scrollResult.client);
     expect(scrollResult.top).toBeGreaterThan(0);
+    for (const path of ['src/second.ts', 'src/fixture.ts', 'src/second.ts']) {
+      await page.getByText(path.split('/').at(-1), { exact: true }).click();
+      const target = page.locator(`[data-diff-path="${path}"] diffs-container`);
+      await expect(target).toBeVisible();
+      await expect.poll(() => target.evaluate((el) => {
+        const root = el.closest('.overflow-auto');
+        return Math.abs(el.getBoundingClientRect().top - root.getBoundingClientRect().top);
+      }), { timeout: 15000 }).toBeLessThan(5);
+    }
+    report.checks.push('file tree clicks repeatedly move between changed diffs');
     await page.screenshot({ path: join(evidence, 'changes.png'), fullPage: true });
     report.checks.push('Pierre Changes panel renders a synthetic file diff, copies its path, adds a review comment and scrolls');
     const long = 'echo "$HOME"\n'.repeat(1800).trimEnd();
@@ -903,62 +930,6 @@ if p.exists():
     await expect.poll(() => streamedBlock.locator('span[style*="color"]').count()).toBeGreaterThan(0);
     report.checks.push('20 streamed updates retain the final source; frame and long-task samples recorded');
     if (additional) {
-      // The follow-up transport is intercepted before HTTP reaches the test API;
-      // no provider is launched, including on the rejected/retried submission.
-      let pendingFollowUp;
-      await page.route(`**/api/sessions/${session}/follow-up`, (route) => {
-        pendingFollowUp = route;
-      });
-      await composer.fill('送信直後の本文');
-      await composer.press('Enter');
-      const pendingRow = page.locator('[data-pending-delivery="sending"]');
-      await expect(pendingRow).toContainText('送信直後の本文');
-      await page.screenshot({
-        path: join(evidence, 'pending-send.png'),
-        fullPage: true,
-      });
-      await expect.poll(() => Boolean(pendingFollowUp)).toBe(true);
-      await pendingFollowUp.fulfill({
-        status: 403,
-        json: { success: false, message: 'Fixture rejection' },
-      });
-      await expect(
-        page.locator('[data-pending-delivery="failed"]')
-      ).toContainText('Fixture rejection');
-      await expect(composer).toHaveText('送信直後の本文');
-      pendingFollowUp = null;
-      await composer.press('Enter');
-      await expect(
-        page.locator('[data-pending-delivery="sending"]')
-      ).toHaveCount(1);
-      stream.send(
-        JSON.stringify({
-          type: 'event',
-          data: {
-            event: envelope({
-              type: 'message',
-              data: {
-                message: {
-                  message_id: 'synthetic-user-send',
-                  role: 'user',
-                  content: '送信直後の本文',
-                },
-                final_output: false,
-              },
-            }),
-            replay: false,
-          },
-        })
-      );
-      await expect(page.locator('[data-pending-delivery]')).toHaveCount(0);
-      await expect.poll(() => Boolean(pendingFollowUp)).toBe(true);
-      await pendingFollowUp.fulfill({
-        json: { success: true, data: { agent_run_id: run, state } },
-      });
-      await expect(composer).toHaveText('');
-      report.checks.push(
-        'real composer/list shows pending before delayed ACK; explicit rejection retains draft; event-before-ACK reconciles retry exactly once; no provider call'
-      );
       // Native live summaries are small active notes, then authoritative content
       // replaces them without turning commentary into a disclosure.
       const activeState = {

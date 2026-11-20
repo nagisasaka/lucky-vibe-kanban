@@ -465,6 +465,17 @@ try {
     await page.evaluate(() => window.changeBody('```typescript\nconst value = 1;\n```'));
     await expect.poll(() => editorCode.innerText()).toBe('const value = 1;');
     await expect.poll(() => editorCode.locator('span[style*="color"]').count(), { timeout: 15000 }).toBeGreaterThan(0);
+    await editorCode.click();
+    await page.keyboard.press('Control+End');
+    await page.keyboard.type('X');
+    await expect.poll(() => page.evaluate(() => window.currentValue)).toContain('1;X');
+    const beforeThemeChanges = await page.evaluate(() => window.changes.length);
+    await page.evaluate(() => window.setTheme('light'));
+    await page.waitForTimeout(500);
+    assert.equal(await page.evaluate(() => window.changes.length), beforeThemeChanges,
+      'theme change must not emit a draft edit');
+    await page.keyboard.press('Control+z');
+    await expect.poll(() => page.evaluate(() => window.currentValue)).not.toContain('1;X');
   }
   assert.deepEqual(errors, []);
   await writeFile(
