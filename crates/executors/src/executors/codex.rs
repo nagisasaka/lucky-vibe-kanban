@@ -1054,10 +1054,14 @@ impl Codex {
             // A trusted server role, not a prompt or user profile preference.
             // Overrides apply to this fresh thread only; inherited user/project
             // MCP and Skill installation remains untouched for other workspaces.
-            params.sandbox = Some(codex_app_server_protocol::SandboxMode::ReadOnly);
-            params.approval_policy = Some(V2AskForApproval::Never);
-            params.permissions = None;
-            params.runtime_workspace_roots = None;
+            // Wiki reviews use disposable copies with ordinary provider
+            // permissions. Generic reporting presets retain source protection.
+            if workflow_read_only {
+                params.sandbox = Some(codex_app_server_protocol::SandboxMode::ReadOnly);
+                params.approval_policy = Some(V2AskForApproval::Never);
+                params.permissions = None;
+                params.runtime_workspace_roots = None;
+            }
             let config = params.config.get_or_insert_with(HashMap::new);
             if workflow_read_only {
                 if let Ok(Some(protected)) = crate::source_protection::roots(env) {
@@ -2587,7 +2591,7 @@ mod goal_skill_tests {
     use super::*;
 
     #[test]
-    fn bootstrap_reviewer_overrides_writer_profile_without_shared_config_writes() {
+    fn bootstrap_reviewer_preserves_permissions_without_writer_tools_or_history() {
         let codex: Codex =
             serde_json::from_value(serde_json::json!({"sandbox":"danger-full-access"})).unwrap();
         let mut env = ExecutionEnv::new(RepoContext::default());
@@ -2599,8 +2603,10 @@ mod goal_skill_tests {
         );
         env.insert("LVK_SHARED_RESOURCE_ROOTS", r#"["/shared/writable"]"#);
         let params = codex.build_thread_start_params_with_resources(Path::new("/workspace"), &env);
-        assert_eq!(params.sandbox, Some(V2SandboxMode::ReadOnly));
-        assert_eq!(params.approval_policy, Some(V2AskForApproval::Never));
+        let ordinary = codex.build_thread_start_params(Path::new("/workspace"));
+        assert_eq!(params.sandbox, ordinary.sandbox);
+        assert_eq!(params.approval_policy, ordinary.approval_policy);
+        assert_eq!(params.permissions, ordinary.permissions);
         assert!(params.runtime_workspace_roots.is_none());
         assert!(
             !params

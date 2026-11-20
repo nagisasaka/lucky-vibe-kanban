@@ -907,14 +907,10 @@ impl WorkflowAgentExecutor for DeploymentWorkflowAgentExecutor {
             path: workspace_path,
         };
         let created_at = Utc::now();
-        super::bootstrap::prepare_child_dispatch(
-            &self.deployment,
-            &mut request,
-            session.id,
-            agent_run_id,
-        )
-        .await
-        .map_err(orchestration_api_error)?;
+        let bootstrap =
+            super::bootstrap::prepare_child_dispatch(&self.deployment, &mut request, session.id)
+                .await
+                .map_err(orchestration_api_error)?;
         let idempotency_key = format!(
             "workflow:{}:node:{}:iteration:{}:create",
             request.run_id, request.node_id, request.iteration
@@ -967,6 +963,16 @@ impl WorkflowAgentExecutor for DeploymentWorkflowAgentExecutor {
             provider_session: None,
             created_at,
         };
+        if bootstrap {
+            super::bootstrap::bind_child_dispatch(
+                pool,
+                request.orchestration_node_execution_id,
+                &run_request,
+                &attempt,
+            )
+            .await
+            .map_err(orchestration_api_error)?;
+        }
         let orchestration = OrchestrationService::new(
             pool.clone(),
             Arc::new(self.deployment.agent_run_port().clone()),

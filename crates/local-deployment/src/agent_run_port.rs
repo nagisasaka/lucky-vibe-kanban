@@ -180,7 +180,16 @@ impl FrozenDirectProviderLaunchSpec {
             provider_session: attempt.provider_session.clone(),
             reset_to_message_id: attempt.reset_to_message_id.clone(),
             selected_skills: attempt.selected_skills.clone().unwrap_or_default(),
-            current_dir: PathBuf::from(&attempt.workspace.path),
+            // Keep the canonical workspace/ownership envelope unchanged. The
+            // trusted review role runs solely in its host-created disposable copy.
+            current_dir: if env.get("LVK_OPENWIKI_REVIEWER").is_some_and(|v| v == "1") {
+                services::services::openwiki::bootstrap::review_workspace(
+                    Path::new(&attempt.workspace.path),
+                    request.session_id,
+                )
+            } else {
+                PathBuf::from(&attempt.workspace.path)
+            },
             env,
         }
     }
@@ -1132,6 +1141,18 @@ impl LocalAgentRunPort {
             PathBuf::from(&request.workspace.path),
             repo_names,
         ));
+        if openwiki_reviewer {
+            env.repo_context.workspace_root =
+                services::services::openwiki::bootstrap::review_workspace(
+                    Path::new(&request.workspace.path),
+                    request.session_id,
+                );
+            if !env.repo_context.workspace_root.is_dir() {
+                return Err(AgentRunPortError::Rejected(
+                    "Disposable review input missing".into(),
+                ));
+            }
+        }
         if let Some(protected) = protected_roots {
             env.insert(executors::source_protection::ROOTS, protected);
         }
@@ -5768,6 +5789,26 @@ mod tests {
             let suffix = launch.env.get("LVK_DELIVERED_USER_SUFFIX").unwrap();
             assert_eq!(launch.prompt, format!("{human}{suffix}"));
         }
+    }
+
+    #[tokio::test]
+    async fn wiki_review_launch_uses_disposable_copy_without_rebinding_ownership() {
+        let db = setup_runtime_db().await;
+        let (request, attempt) = persisted_codex_run(&db).await;
+        let mut env = test_execution_env(&attempt.workspace.path);
+        env.insert("LVK_OPENWIKI_REVIEWER", "1");
+        let copy = services::services::openwiki::bootstrap::review_workspace(
+            Path::new(&attempt.workspace.path),
+            request.session_id,
+        );
+        let launch =
+            FrozenDirectProviderLaunchSpec::new(&request, &attempt, DirectProvider::Codex, env);
+        assert_eq!(launch.current_dir, copy);
+        let payload: serde_json::Value =
+            serde_json::from_slice(&launch.audit_payload().unwrap()).unwrap();
+        assert_eq!(payload["current_dir"], copy.to_string_lossy().as_ref());
+        assert_ne!(launch.current_dir, Path::new(&request.workspace.path));
+        assert_eq!(request.workspace, attempt.workspace);
     }
 
     #[tokio::test]

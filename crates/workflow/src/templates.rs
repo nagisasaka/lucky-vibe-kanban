@@ -76,7 +76,6 @@ pub fn openwiki_bootstrap() -> WorkflowTemplate {
             data.executor_config = Some(json!({"executor":"CODEX", "execution_mode": if matches!(id,"generate"|"refine") {"goal"} else {"code"}}));
             data.prompt_template = Some(format!("LVK-managed OpenWiki {id} phase"));
         }
-        if matches!(id,"review"|"re-review") { data.source_read_only = Some(true); }
         if kind == WorkflowNodeKind::Condition {
             data.decision_source = Some(ConditionDecisionSource::OpenWikiCoverageReview);
             data.branches = Some(

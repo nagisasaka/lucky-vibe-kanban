@@ -289,8 +289,7 @@ pub(super) async fn prepare_child_dispatch(
     deployment: &DeploymentImpl,
     request: &mut AgentNodeRequest,
     session_id: Uuid,
-    agent_run_id: Uuid,
-) -> anyhow::Result<()> {
+) -> anyhow::Result<bool> {
     let repository_id: Option<Uuid> =
         sqlx::query_scalar("SELECT repository_id FROM workflow_runs WHERE id = ?")
             .bind(request.run_id)
@@ -298,7 +297,7 @@ pub(super) async fn prepare_child_dispatch(
             .await?
             .flatten();
     if repository_id.is_none() {
-        return Ok(());
+        return Ok(false);
     }
     let ctx = context(deployment, request.run_id).await?;
     let inventory = validated_inventory(deployment, &ctx, request.run_id).await?;
@@ -349,9 +348,28 @@ pub(super) async fn prepare_child_dispatch(
         "review" | "re-review" => {
             ensure_workspace_exited(deployment, ctx.workspace.id).await?;
             openwiki::setup::restore(&ctx.store, ctx.workspace.id, &ctx.root, source)?;
+            openwiki::publication_paths(deployment.git(), &ctx.root, source)?;
+            let copy = openwiki::bootstrap::review_workspace(
+                ctx.workspace
+                    .container_ref
+                    .as_deref()
+                    .map(std::path::Path::new)
+                    .context("Review workspace missing")?,
+                session_id,
+            );
+            let copy_root = copy.join(
+                ctx.root
+                    .file_name()
+                    .context("Review repository name missing")?,
+            );
+            fingerprint = Some(openwiki::bootstrap::copy_review_candidate(
+                deployment.git(),
+                &ctx.root,
+                &copy_root,
+                source,
+            )?);
             request.prompt =
-                openwiki::bootstrap::review_prompt(&ctx.root, &ctx.state.output_language);
-            fingerprint = Some(openwiki::bootstrap::worktree_fingerprint(&ctx.root)?);
+                openwiki::bootstrap::review_prompt(&copy_root, &ctx.state.output_language);
         }
         "refine" => {
             fingerprint = Some(openwiki::bootstrap::worktree_fingerprint(&ctx.root)?);
@@ -377,9 +395,39 @@ pub(super) async fn prepare_child_dispatch(
         _ => bail!("Unsupported Bootstrap node"),
     }
     if let Some(inventory) = inventory {
-        request
-            .prompt
-            .push_str(&inventory.prompt(&ctx.store, reviewer));
+        let mut guidance = inventory.prompt(&ctx.store, reviewer);
+        if reviewer
+            && let DocumentInventory::Available {
+                identity, chunks, ..
+            } = &inventory
+        {
+            let copy = openwiki::bootstrap::review_workspace(
+                ctx.workspace
+                    .container_ref
+                    .as_deref()
+                    .map(std::path::Path::new)
+                    .context("Review workspace missing")?,
+                session_id,
+            )
+            .join("inventory");
+            std::fs::create_dir(&copy)?;
+            for part in std::iter::once(None).chain((0..*chunks).map(Some)) {
+                let original = ctx.store.document_inventory_path(identity.run_id, part);
+                let destination =
+                    copy.join(original.file_name().context("Inventory filename missing")?);
+                std::fs::write(
+                    &destination,
+                    ctx.store.read_document_inventory(identity.run_id, part)?,
+                )?;
+                if part.is_none() {
+                    guidance = guidance.replace(
+                        &serde_json::to_string(&original)?,
+                        &serde_json::to_string(&destination)?,
+                    );
+                }
+            }
+        }
+        request.prompt.push_str(&guidance);
     }
     request.selected_skills = if reviewer {
         None
@@ -393,12 +441,30 @@ pub(super) async fn prepare_child_dispatch(
         }])
     };
     // The existing node is the delegation authority, not a second phase/child state machine.
-    sqlx::query("UPDATE node_executions SET session_id=?,agent_run_id=?,source_snapshot=?,input_text=? WHERE orchestration_node_execution_id=?")
-        .bind(session_id).bind(agent_run_id).bind(fingerprint).bind(&request.prompt).bind(request.orchestration_node_execution_id).execute(&deployment.db().pool).await?;
+    sqlx::query("UPDATE node_executions SET session_id=?,source_snapshot=?,input_text=? WHERE orchestration_node_execution_id=?")
+        .bind(session_id).bind(fingerprint).bind(&request.prompt).bind(request.orchestration_node_execution_id).execute(&deployment.db().pool).await?;
     if !reviewer {
         request.prompt = openwiki::bootstrap::goal_objective(&ctx.root, &request.node_id);
         executors::executors::codex::validate_goal_objective(&request.prompt)?;
     }
+    Ok(true)
+}
+
+/// Reserve the canonical identity without launch eligibility before binding its
+/// foreign key. The ordinary outbox Create still validates ownership and launches.
+pub(super) async fn bind_child_dispatch(
+    pool: &sqlx::SqlitePool,
+    node: Uuid,
+    request: &executors::runtime::AgentRunRequestEnvelope,
+    attempt: &executors::runtime::RunAttemptRequest,
+) -> anyhow::Result<()> {
+    AgentRunRecord::persist_identity_before_launch(pool, request, attempt).await?;
+    let bound = sqlx::query("UPDATE node_executions SET agent_run_id=? WHERE orchestration_node_execution_id=? AND session_id=? AND status IN ('pending','running') AND (agent_run_id IS NULL OR agent_run_id=?)")
+        .bind(request.agent_run_id).bind(node).bind(request.session_id).bind(request.agent_run_id).execute(pool).await?;
+    ensure!(
+        bound.rows_affected() == 1,
+        "Bootstrap delegation changed before dispatch"
+    );
     Ok(())
 }
 
@@ -596,7 +662,7 @@ pub(super) async fn validate_child_completion(
     if matches!(node_id, "review" | "re-review") {
         ensure!(
             fingerprint.as_deref() == Some(&openwiki::bootstrap::worktree_fingerprint(&ctx.root)?),
-            "Read-only reviewer changed the repository"
+            "Publication candidate changed after the review snapshot"
         );
         let Ok(review) = CoverageReview::parse(output) else {
             return Ok(serde_json::json!({"review_missing":true}).to_string());
@@ -756,6 +822,20 @@ async fn publish(
         .as_deref()
         .context("Bootstrap source missing")?;
     if ctx.store.publication(run_id).await?.is_none() {
+        let final_review = if run.nodes.iter().any(|n| {
+            n.node_id == "refine"
+                && n.status == db::models::workflow::NodeExecutionStatus::Succeeded
+        }) {
+            "re-review"
+        } else {
+            "review"
+        };
+        let pinned: Option<String> = sqlx::query_scalar("SELECT source_snapshot FROM node_executions WHERE run_id=? AND node_id=? AND status='succeeded' ORDER BY iteration DESC LIMIT 1")
+            .bind(run_id).bind(final_review).fetch_one(&deployment.db().pool).await?;
+        ensure!(
+            pinned.as_deref() == Some(&openwiki::bootstrap::worktree_fingerprint(&ctx.root)?),
+            "Publication candidate changed after independent review"
+        );
         openwiki::setup::restore(&ctx.store, ctx.workspace.id, &ctx.root, source)?;
         openwiki::setup::validate_provenance(&ctx.store, ctx.workspace.id, &ctx.root, source)?;
         if ctx.state.rebuild_reference.is_some() {

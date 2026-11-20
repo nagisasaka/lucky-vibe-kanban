@@ -278,6 +278,85 @@ fn safe_evidence_path(path: &str) -> bool {
             .all(|part| matches!(part, Component::Normal(_)))
 }
 
+/// Disposable review input is owned by the maintenance workspace lifecycle, but
+/// contains no Git database, remote, worktree pointer or shared artifact links.
+pub fn review_workspace(root: &Path, session: uuid::Uuid) -> std::path::PathBuf {
+    root.join(".openwiki-review").join(session.to_string())
+}
+
+pub fn copy_review_candidate(
+    git: &git::GitService,
+    root: &Path,
+    destination: &Path,
+    source: &str,
+) -> anyhow::Result<String> {
+    use std::fs;
+    let fingerprint = worktree_fingerprint(root)?;
+    utils::repository_memory::reject_symlinks(destination)?;
+    fs::create_dir_all(destination.parent().context("Review parent missing")?)?;
+    fs::create_dir(destination)?;
+    let result = (|| {
+        let snapshot = git.snapshot(root, source)?;
+        for entry in snapshot.entries()? {
+            if entry.path == "openwiki" || entry.path.starts_with("openwiki/") {
+                continue;
+            }
+            ensure!(
+                matches!(entry.mode, 0o100644 | 0o100755),
+                "Review source must contain regular files only"
+            );
+            let path = destination.join(&entry.path);
+            fs::create_dir_all(path.parent().context("Review path parent missing")?)?;
+            fs::write(
+                &path,
+                snapshot
+                    .read_blob(&entry, usize::MAX)?
+                    .context("Review source too large")?,
+            )?;
+            #[cfg(unix)]
+            {
+                use std::os::unix::fs::PermissionsExt;
+                fs::set_permissions(
+                    &path,
+                    fs::Permissions::from_mode((entry.mode & 0o777) as u32),
+                )?;
+            }
+        }
+        // Include ignored metadata as well as pages and INSTRUCTIONS. Never
+        // traverse a symlink into source, caches, credentials or shared storage.
+        for entry in ignore::WalkBuilder::new(root.join("openwiki"))
+            .hidden(false)
+            .ignore(false)
+            .git_ignore(false)
+            .git_global(false)
+            .git_exclude(false)
+            .follow_links(false)
+            .build()
+        {
+            let entry = entry?;
+            let path = entry.path();
+            let metadata = fs::symlink_metadata(path)?;
+            ensure!(!metadata.is_symlink(), "Review Wiki contains a symlink");
+            let target = destination.join(path.strip_prefix(root)?);
+            if metadata.is_dir() {
+                fs::create_dir_all(target)?;
+            } else {
+                ensure!(metadata.is_file(), "Review Wiki contains a special file");
+                fs::copy(path, target)?;
+            }
+        }
+        ensure!(
+            fingerprint == worktree_fingerprint(root)?,
+            "Candidate changed while copying review input"
+        );
+        Ok(fingerprint)
+    })();
+    if result.is_err() {
+        fs::remove_dir_all(destination)?;
+    }
+    result
+}
+
 /// Content-based baseline for an already-dirty maintenance worktree. Unlike
 /// status-only comparisons this detects edits to an existing untracked page.
 /// Do not follow symlinks or read dependency caches ignored by Git; explicitly
@@ -424,7 +503,7 @@ pub fn review_prompt(root: &Path, language: &str) -> String {
          Inspect the purpose of the product and major source entrypoints, then assess: architecture/boundaries; domain/entity relationships; state/lifecycle; end-to-end workflows; execution/configuration; persistence/synchronisation/views; concurrency; failure/cancellation; cross-component dependencies; invariants; dangerous modification points; repository-specific development conventions. Identify materially missing or misleading knowledge, not merely page counts or writing style.\n\
          Independently identify high-value documentation; do not use the generator's selected sources or Wiki taxonomy as the coverage boundary. Check missing rationale/contracts, proposals or historical designs misrepresented as current, unnecessary duplication, and missing knowledge or routes required by the repository-specific documentation policy. Material means a gap or error that could change safe implementation, compatibility or operational decisions; missing reproductions or stylistic differences alone are not material. Describe document status/applicability and inspected evidence in the existing findings fields; report coverage limits in summary.\n\
          Test whether a new reader can find and understand important concepts, boundaries, relationships and ordinary workflows without assembling scattered fragments. A name, link or heading alone does not demonstrate an adequate explanation. Check whether in-text links explain relationships and detailed contracts have a clear primary home. Describe the unanswered question, inspected evidence and effect on safe development decisions in each relevant finding. Missing standalone pages or preferred directory names alone are not material findings; a focused linkable section may suffice. Use the existing recommendedAction values and describe any consolidation, split or link repair in description rather than inventing new action values.\n\
-         This is a strictly read-only review: do not edit any file, run writers, install tools, invoke OpenWiki MCP/Skill, commit, or use commands that mutate the repository. Do not ask another agent to write. You may read openwiki/INSTRUCTIONS.md for repository-specific scope and priorities only; it does not authorise writing or override this review role. Do not use previous conversation, task memories, or generator planning artifacts as review evidence.\n\
+         This is an independent disposable copy of the fixed source and publication candidate. Any changes in this copy are discarded; only your validated structured result is accepted. Stay within this copy and do not access or modify other workspaces or shared Git references. Review without changing content: do not edit any file, run writers, install tools, invoke OpenWiki MCP/Skill, commit, or use commands that mutate the repository. Do not ask another agent to write. You may read openwiki/INSTRUCTIONS.md for repository-specific scope and priorities only; it does not authorise writing or override this review role. Do not use previous conversation, task memories, or generator planning artifacts as review evidence.\n\
          Return ONLY a JSON object matching this schema (no Markdown fences). Use {language} for human-readable text; keep source paths unchanged. Evidence paths must be repository-relative files without line-number suffixes or traversal. Use needs_refinement if and only if at least one material finding exists; otherwise pass. LVK validates and saves your full response as a shared report; the Workflow handoff limit does not apply to your report. There is no finding-count quota: retain all substantiated material findings, including missing semantic coverage, rather than selecting only the highest-priority few. Combine duplicates, not independent gaps. Do not shorten the investigation or drop findings to fit a handoff. If output or investigation limits prevent completion, report failure rather than silently omitting findings or fabricating a pass.\n{schema}",
         root = root.display(),
         schema = CoverageReview::json_schema()
@@ -720,7 +799,8 @@ mod tests {
             "Missing standalone pages or preferred directory names alone are not material findings",
             "existing recommendedAction values",
             "rather than inventing new action values",
-            "strictly read-only",
+            "independent disposable copy",
+            "only your validated structured result is accepted",
             "do not edit any file",
             "invoke OpenWiki MCP/Skill",
             "it does not authorise writing or override this review role",
@@ -911,6 +991,73 @@ mod tests {
     }
 
     #[test]
+    fn disposable_review_copy_preserves_input_without_git_links_or_writeback() {
+        use std::{fs, process::Command};
+        let source = tempfile::tempdir().unwrap();
+        let root = source.path();
+        let git = |args: &[&str]| {
+            let output = Command::new("git")
+                .arg("-C")
+                .arg(root)
+                .args(args)
+                .output()
+                .unwrap();
+            assert!(
+                output.status.success(),
+                "{}",
+                String::from_utf8_lossy(&output.stderr)
+            );
+            String::from_utf8(output.stdout).unwrap().trim().to_owned()
+        };
+        git(&["init"]);
+        fs::create_dir(root.join("openwiki")).unwrap();
+        fs::write(root.join("source.rs"), "source").unwrap();
+        fs::write(root.join("openwiki/INSTRUCTIONS.md"), "human instructions").unwrap();
+        fs::write(root.join("openwiki/page.md"), "old").unwrap();
+        git(&["add", "."]);
+        git(&[
+            "-c",
+            "user.name=Fixture",
+            "-c",
+            "user.email=fixture@example.invalid",
+            "commit",
+            "-m",
+            "fixture",
+        ]);
+        let sha = git(&["rev-parse", "HEAD"]);
+        fs::write(root.join("openwiki/page.md"), "candidate").unwrap();
+        fs::write(root.join("openwiki/.state.json"), "metadata").unwrap();
+        let copy_parent = tempfile::tempdir().unwrap();
+        let copy = copy_parent.path().join("input");
+        let fixed = copy_review_candidate(&git::GitService::new(), root, &copy, &sha).unwrap();
+        for path in [
+            "source.rs",
+            "openwiki/page.md",
+            "openwiki/INSTRUCTIONS.md",
+            "openwiki/.state.json",
+        ] {
+            assert_eq!(
+                fs::read(root.join(path)).unwrap(),
+                fs::read(copy.join(path)).unwrap()
+            );
+        }
+        assert!(!copy.join(".git").exists());
+        fs::write(copy.join("openwiki/page.md"), "review edit discarded").unwrap();
+        fs::write(copy.join("source.rs"), "review edit discarded").unwrap();
+        assert_eq!(fixed, worktree_fingerprint(root).unwrap());
+        fs::write(root.join("openwiki/page.md"), "drift").unwrap();
+        assert_ne!(fixed, worktree_fingerprint(root).unwrap());
+        assert!(copy_review_candidate(&git::GitService::new(), root, &copy, &sha).is_err());
+        #[cfg(unix)]
+        {
+            std::os::unix::fs::symlink(root.join("source.rs"), root.join("openwiki/link")).unwrap();
+            let invalid = copy_parent.path().join("invalid");
+            assert!(copy_review_candidate(&git::GitService::new(), root, &invalid, &sha).is_err());
+            assert!(!invalid.exists());
+        }
+    }
+
+    #[test]
     fn review_fingerprint_detects_changes_to_already_dirty_pages_and_index() {
         let tmp = tempfile::tempdir().unwrap();
         let root = tmp.path();
@@ -962,7 +1109,7 @@ mod tests {
         let reviewer = review_prompt(root, "ja");
         assert!(!reviewer.contains("{{upstream}}"));
         assert!(!reviewer.contains("{{input}}"));
-        assert!(reviewer.contains("strictly read-only"));
+        assert!(reviewer.contains("independent disposable copy"));
         let refine = writer_prompt(root, "ja", Some(Path::new("/shared/review.json")));
         assert!(refine.contains("force=true"));
         assert!(refine.contains("mode=\"update\""));

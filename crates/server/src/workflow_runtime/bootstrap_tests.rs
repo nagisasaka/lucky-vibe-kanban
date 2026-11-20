@@ -670,60 +670,8 @@ async fn check_bootstrap_cleanup_result(cancelled: bool) {
             .fetch_one(&f.pool)
             .await
             .unwrap();
-    let agent_run = Uuid::new_v4();
-    let turn = Uuid::new_v4();
-    let attempt = Uuid::new_v4();
-    let executor_config = ExecutorConfig::new(BaseCodingAgent::Codex);
-    let request = AgentRunRequestEnvelope {
-        schema_version: AGENT_REQUEST_SCHEMA_VERSION,
-        payload_version: AGENT_REQUEST_PAYLOAD_VERSION,
-        request_id: Uuid::new_v4(),
-        idempotency_key: "cleanup-host".into(),
-        session_id: session,
-        agent_run_id: agent_run,
-        turn_id: turn,
-        correlation_id: run_id,
-        intent: AgentRunIntent::Initial,
-        runtime_profile_id: executor_config.profile_id().cache_key(),
-        provider_id: "codex".into(),
-        workspace: WorkspaceReference {
-            workspace_id: f.workspace_id,
-            mode: WorkspaceMode::IsolatedWorktree,
-            path: f.maintenance.to_string_lossy().into_owned(),
-        },
-        input: CanonicalMessage {
-            message_id: Uuid::new_v4(),
-            role: AgentRuntimeMessageRole::User,
-            content: "cleanup fixture".into(),
-        },
-        created_at: Utc::now(),
-    };
-    let attempt_request = RunAttemptRequest {
-        schema_version: request.schema_version,
-        payload_version: request.payload_version,
-        request_id: request.request_id,
-        idempotency_key: "cleanup-attempt".into(),
-        session_id: session,
-        agent_run_id: agent_run,
-        turn_id: turn,
-        run_attempt_id: attempt,
-        attempt_number: 1,
-        correlation_id: run_id,
-        mode: RunAttemptMode::Launch,
-        transport: DirectProvider::Codex.transport(),
-        runtime_profile_id: request.runtime_profile_id.clone(),
-        provider_id: request.provider_id.clone(),
-        workspace: request.workspace.clone(),
-        capability_snapshot: direct_provider_capability_snapshot(
-            DirectProvider::Codex,
-            request.runtime_profile_id.clone(),
-        ),
-        executor_config,
-        selected_skills: None,
-        reset_to_message_id: None,
-        provider_session: None,
-        created_at: request.created_at,
-    };
+    let (request, attempt_request) = dispatch_envelopes(&f, session, run_id);
+    let attempt = attempt_request.run_attempt_id;
     db::models::agent_runtime::AgentRunRecord::persist_identity_before_launch(
         &f.pool,
         &request,
@@ -1440,4 +1388,210 @@ async fn missing_review_and_remaining_findings_publish_once_with_exact_warnings(
         }
         assert_eq!(executor.publications.load(Ordering::SeqCst), 1);
     }
+}
+
+fn dispatch_envelopes(
+    f: &Fixture,
+    session: Uuid,
+    run_id: Uuid,
+) -> (AgentRunRequestEnvelope, RunAttemptRequest) {
+    let agent_run = Uuid::new_v4();
+    let turn = Uuid::new_v4();
+    let attempt = Uuid::new_v4();
+    let executor_config = ExecutorConfig::new(BaseCodingAgent::Codex);
+    let request = AgentRunRequestEnvelope {
+        schema_version: AGENT_REQUEST_SCHEMA_VERSION,
+        payload_version: AGENT_REQUEST_PAYLOAD_VERSION,
+        request_id: Uuid::new_v4(),
+        idempotency_key: "cleanup-host".into(),
+        session_id: session,
+        agent_run_id: agent_run,
+        turn_id: turn,
+        correlation_id: run_id,
+        intent: AgentRunIntent::Initial,
+        runtime_profile_id: executor_config.profile_id().cache_key(),
+        provider_id: "codex".into(),
+        workspace: WorkspaceReference {
+            workspace_id: f.workspace_id,
+            mode: WorkspaceMode::IsolatedWorktree,
+            path: f.maintenance.to_string_lossy().into_owned(),
+        },
+        input: CanonicalMessage {
+            message_id: Uuid::new_v4(),
+            role: AgentRuntimeMessageRole::User,
+            content: "cleanup fixture".into(),
+        },
+        created_at: Utc::now(),
+    };
+    let attempt_request = RunAttemptRequest {
+        schema_version: request.schema_version,
+        payload_version: request.payload_version,
+        request_id: request.request_id,
+        idempotency_key: "cleanup-attempt".into(),
+        session_id: session,
+        agent_run_id: agent_run,
+        turn_id: turn,
+        run_attempt_id: attempt,
+        attempt_number: 1,
+        correlation_id: run_id,
+        mode: RunAttemptMode::Launch,
+        transport: DirectProvider::Codex.transport(),
+        runtime_profile_id: request.runtime_profile_id.clone(),
+        provider_id: request.provider_id.clone(),
+        workspace: request.workspace.clone(),
+        capability_snapshot: direct_provider_capability_snapshot(
+            DirectProvider::Codex,
+            request.runtime_profile_id.clone(),
+        ),
+        executor_config,
+        selected_skills: None,
+        reset_to_message_id: None,
+        provider_session: None,
+        created_at: request.created_at,
+    };
+    (request, attempt_request)
+}
+
+#[tokio::test]
+async fn bootstrap_dispatch_binds_only_persisted_identity_before_outbox_delivery() {
+    use db::models::agent_runtime::AgentRunRecord;
+    use executors::runtime::{AgentEventStream, AgentRunPort, AgentRunPortSnapshot, RunState};
+    struct CheckingPort(SqlitePool);
+    #[async_trait]
+    impl AgentRunPort for CheckingPort {
+        async fn create(
+            &self,
+            request: AgentRunRequestEnvelope,
+            attempt: RunAttemptRequest,
+        ) -> Result<Uuid, AgentRunPortError> {
+            let bound: Uuid =
+                sqlx::query_scalar("SELECT agent_run_id FROM node_executions WHERE session_id=?")
+                    .bind(request.session_id)
+                    .fetch_one(&self.0)
+                    .await
+                    .unwrap();
+            assert_eq!(bound, request.agent_run_id);
+            let workspace = Workspace::find_by_id(&self.0, request.workspace.workspace_id)
+                .await
+                .unwrap()
+                .unwrap();
+            services::services::workspace_usage::validate_agent_owner(
+                &self.0, &workspace, &request, false,
+            )
+            .await
+            .unwrap();
+            // Exercise the same idempotent canonical persistence boundary used by real Create.
+            AgentRunRecord::persist_identity_with_launch(&self.0, &request, &attempt, true)
+                .await
+                .unwrap();
+            Ok(bound)
+        }
+        async fn query(&self, id: Uuid) -> Result<AgentRunPortSnapshot, AgentRunPortError> {
+            let run = AgentRunRecord::find(&self.0, id).await.unwrap().unwrap();
+            Ok(AgentRunPortSnapshot {
+                agent_run_id: id,
+                state: RunState::pending(&run.request_envelope.0),
+            })
+        }
+        async fn control(&self, _: AgentRunPortCommandEnvelope) -> Result<(), AgentRunPortError> {
+            panic!("unexpected control")
+        }
+        async fn subscribe(&self, _: Uuid) -> Result<AgentEventStream, AgentRunPortError> {
+            panic!("unexpected subscribe")
+        }
+    }
+    let f = Fixture::new().await;
+    let run = f.reserve().await;
+    let orchestration: Uuid =
+        sqlx::query_scalar("SELECT orchestration_run_id FROM workflow_runs WHERE id=?")
+            .bind(run)
+            .fetch_one(&f.pool)
+            .await
+            .unwrap();
+    let session = Session::create(
+        &f.pool,
+        &CreateSession {
+            executor: Some("CODEX".into()),
+            name: None,
+        },
+        Uuid::new_v4(),
+        f.workspace_id,
+    )
+    .await
+    .unwrap();
+    let node:Uuid=sqlx::query_scalar("SELECT orchestration_node_execution_id FROM node_executions WHERE run_id=? AND node_id='generate'").bind(run).fetch_one(&f.pool).await.unwrap();
+    sqlx::query("UPDATE node_executions SET session_id=? WHERE orchestration_node_execution_id=?")
+        .bind(session.id)
+        .bind(node)
+        .execute(&f.pool)
+        .await
+        .unwrap();
+    sqlx::query("UPDATE workflow_runs SET status='running' WHERE id=?")
+        .bind(run)
+        .execute(&f.pool)
+        .await
+        .unwrap();
+    let state = utils::repository_memory::RepositoryMemoryState {
+        enabled: true,
+        status: utils::repository_memory::RepositoryWikiStatus::Initializing,
+        bootstrap: Some(utils::repository_memory::OpenWikiBootstrapOwner {
+            workflow_run_id: run,
+        }),
+        maintenance_workspace_id: Some(f.workspace_id),
+        ..Default::default()
+    };
+    f.store.save_state(&state).await.unwrap();
+    let (request, attempt) = dispatch_envelopes(&f, session.id, orchestration);
+    // The former order really fails with foreign_keys enabled, not a permissive mock schema.
+    let error = sqlx::query(
+        "UPDATE node_executions SET agent_run_id=? WHERE orchestration_node_execution_id=?",
+    )
+    .bind(request.agent_run_id)
+    .bind(node)
+    .execute(&f.pool)
+    .await
+    .unwrap_err();
+    assert!(error.to_string().contains("FOREIGN KEY"));
+    super::super::bootstrap::bind_child_dispatch(&f.pool, node, &request, &attempt)
+        .await
+        .unwrap();
+    super::super::bootstrap::bind_child_dispatch(&f.pool, node, &request, &attempt)
+        .await
+        .unwrap();
+    let eligible: i64 = sqlx::query_scalar(
+        "SELECT launch_requested FROM agent_process_registry WHERE run_attempt_id=?",
+    )
+    .bind(attempt.run_attempt_id)
+    .fetch_one(&f.pool)
+    .await
+    .unwrap();
+    assert_eq!(eligible, 0, "binding must not launch a provider");
+    let service = OrchestrationService::new(f.pool.clone(), Arc::new(CheckingPort(f.pool.clone())));
+    let agent = request.agent_run_id;
+    let command = AgentRunPortCommandEnvelope {
+        schema_version: ORCHESTRATION_COMMAND_SCHEMA_VERSION,
+        command_id: Uuid::new_v4(),
+        idempotency_key: "dispatch-regression".into(),
+        agent_run_id: agent,
+        orchestration_run_id: Some(orchestration),
+        orchestration_node_execution_id: Some(node),
+        correlation_id: orchestration,
+        created_at: request.created_at,
+        command: AgentRunPortCommand::Create { request, attempt },
+    };
+    let outbox = service.enqueue_command(command).await.unwrap();
+    service.deliver_create(outbox, agent).await.unwrap();
+    let links: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM orchestration_agent_run_links WHERE agent_run_id=?",
+    )
+    .bind(agent)
+    .fetch_one(&f.pool)
+    .await
+    .unwrap();
+    assert_eq!(links, 1);
+    let checks: Vec<sqlx::sqlite::SqliteRow> = sqlx::query("PRAGMA foreign_key_check")
+        .fetch_all(&f.pool)
+        .await
+        .unwrap();
+    assert!(checks.is_empty());
 }
