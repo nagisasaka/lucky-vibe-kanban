@@ -66,6 +66,7 @@ impl FixtureRuntime {
                         request_id: operation,
                         question_id: question,
                         answer,
+                        retry_unconfirmed: false,
                     },
                     &actor,
                     |run, identity, command| async move {
@@ -340,6 +341,527 @@ pub(super) async fn emit_questions(pool: &SqlitePool, target: &Target) -> String
             .bind(Uuid::new_v4()).bind(target.session_id).bind(target.agent_run_id).bind(turn).bind(attempt).bind(n as i64+1).bind(Uuid::new_v4()).bind(json!({"agent_run_id":target.agent_run_id,"session_id":target.session_id,"run_attempt_id":attempt,"event_id":Uuid::new_v4(),"payload":payload}).to_string()).execute(pool).await.unwrap();
     }
     format!("{attempt}:msg:0")
+}
+
+struct QuestionDeliveryPort {
+    calls: std::sync::atomic::AtomicUsize,
+    runs: tokio::sync::Mutex<Vec<Uuid>>,
+}
+
+struct CodexFixturePort {
+    client: Arc<executors::executors::codex::client::AppServerClient>,
+    run: Uuid,
+}
+
+#[async_trait]
+impl executors::runtime::AgentRunPort for CodexFixturePort {
+    async fn create(
+        &self,
+        _: executors::runtime::AgentRunRequestEnvelope,
+        _: executors::runtime::RunAttemptRequest,
+    ) -> Result<Uuid, executors::runtime::AgentRunPortError> {
+        unreachable!()
+    }
+    async fn query(
+        &self,
+        _: Uuid,
+    ) -> Result<executors::runtime::AgentRunPortSnapshot, executors::runtime::AgentRunPortError>
+    {
+        unreachable!()
+    }
+    async fn subscribe(
+        &self,
+        _: Uuid,
+    ) -> Result<executors::runtime::AgentEventStream, executors::runtime::AgentRunPortError> {
+        unreachable!()
+    }
+    async fn control(
+        &self,
+        command: executors::runtime::AgentRunPortCommandEnvelope,
+    ) -> Result<(), executors::runtime::AgentRunPortError> {
+        assert_eq!(command.agent_run_id, self.run);
+        let AgentRunPortCommand::Steer { content } = command.command else {
+            panic!("expected question steer")
+        };
+        self.client
+            .send_direct_control(
+                executors::executors::provider_adapter::DirectControl::Steer { text: content },
+            )
+            .await
+            .map(|_| ())
+            .map_err(|e| executors::runtime::AgentRunPortError::Rejected(e.to_string()))
+    }
+}
+
+#[test]
+#[ignore = "stdio child for blocked_goal_question_crosses_server_delivery_boundary"]
+fn blocked_question_stdio_fixture() {
+    use std::io::{BufRead, Write};
+    let goal = |status| json!({"threadId":"thread-1","objective":"fixture goal","status":status,"tokenBudget":1000,"tokensUsed":0,"timeUsedSeconds":0,"createdAt":1,"updatedAt":2});
+    for line in std::io::stdin().lock().lines() {
+        let request: Value = serde_json::from_str(&line.unwrap()).unwrap();
+        let response = match request["method"].as_str().unwrap() {
+            "thread/goal/set" => json!({"id":request["id"],"result":{"goal":goal("active")}}),
+            "thread/goal/get" => {
+                println!(
+                    "{}",
+                    json!({"method":"thread/goal/updated","params":{"threadId":"thread-1","goal":goal("blocked")}})
+                );
+                json!({"id":request["id"],"result":{"goal":goal("blocked")}})
+            }
+            "turn/start" => {
+                assert_eq!(request["params"]["threadId"], "thread-1");
+                let text = request["params"]["input"][0]["text"].as_str().unwrap();
+                assert!(text.contains("Question: Choose a colour\nAnswer: Blue"));
+                json!({"id":request["id"],"result":{"turn":{"id":"answer-turn","items":[],"status":"inProgress","error":null}}})
+            }
+            "turn/steer" => {
+                assert_eq!(request["params"]["threadId"], "thread-1");
+                assert_eq!(request["params"]["expectedTurnId"], "answer-turn");
+                assert_eq!(request["params"]["input"][0]["text"], "ordinary message");
+                json!({"id":request["id"],"result":{"turnId":"answer-turn"}})
+            }
+            other => panic!("unexpected RPC {other}"),
+        };
+        println!("{response}");
+        std::io::stdout().flush().unwrap();
+    }
+}
+
+#[tokio::test]
+async fn blocked_goal_question_crosses_server_delivery_boundary() {
+    use executors::{
+        executors::codex::{
+            client::{AppServerClient, LogWriter},
+            jsonrpc::{ExitSignalSender, JsonRpcPeer},
+        },
+        profile::ExecutionMode,
+    };
+    use services::services::agent_runtime::AgentRunCommandService;
+    use tokio_util::sync::CancellationToken;
+    let (remote, fixture, _, target, _) = fixture().await;
+    let question = emit_questions(&remote.pool, &target).await;
+    let session = Session::find_by_id(&remote.pool, target.session_id)
+        .await
+        .unwrap()
+        .unwrap();
+    let cancel = CancellationToken::new();
+    let client = AppServerClient::new(
+        LogWriter::new(tokio::io::sink()),
+        None,
+        false,
+        false,
+        ExecutionMode::Goal,
+        None,
+        None,
+        cancel.clone(),
+    );
+    client.register_session("thread-1").await.unwrap();
+    let mut child = tokio::process::Command::new(std::env::current_exe().unwrap())
+        .args([
+            "--exact",
+            "remote_mcp::runtime_write_tests::blocked_question_stdio_fixture",
+            "--ignored",
+            "--nocapture",
+        ])
+        .stdin(std::process::Stdio::piped())
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::null())
+        .kill_on_drop(true)
+        .spawn()
+        .unwrap();
+    let (exit_tx, _) = tokio::sync::oneshot::channel();
+    client.connect(JsonRpcPeer::spawn(
+        child.stdin.take().unwrap(),
+        child.stdout.take().unwrap(),
+        client.clone(),
+        ExitSignalSender::new(exit_tx),
+        cancel.clone(),
+    ));
+    let exercise = async {
+        client
+            .start_goal("thread-1".into(), "fixture goal".into())
+            .await
+            .unwrap();
+        client.thread_goal_get("thread-1".into()).await.unwrap();
+        let port = CodexFixturePort {
+            client,
+            run: target.agent_run_id,
+        };
+        let operation = Uuid::new_v4();
+        let pool = &remote.pool;
+        let port_ref = &port;
+        service::answer_with_dispatch(
+            &remote.pool,
+            &fixture.queue,
+            session,
+            service::AnswerAgentQuestion {
+                request_id: operation,
+                question_id: question,
+                answer: "Blue".into(),
+                retry_unconfirmed: false,
+            },
+            "fixture",
+            |run, identity, command| async move {
+                AgentRunCommandService::new(pool, port_ref)
+                    .dispatch(executors::runtime::AgentRunPortCommandEnvelope {
+                        schema_version: executors::runtime::ORCHESTRATION_COMMAND_SCHEMA_VERSION,
+                        command_id: identity.command_id,
+                        idempotency_key: identity.idempotency_key,
+                        agent_run_id: run,
+                        orchestration_run_id: None,
+                        orchestration_node_execution_id: None,
+                        correlation_id: identity.correlation_id,
+                        created_at: identity.created_at,
+                        command,
+                    })
+                    .await
+                    .map_err(|e| ApiError::BadRequest(e.to_string()))?;
+                Ok(json!({"accepted":true,"agent_run_id":run}))
+            },
+        )
+        .await
+        .unwrap();
+        let status: String =
+            sqlx::query_scalar("SELECT delivery_status FROM agent_run_commands WHERE command_id=?")
+                .bind(operation)
+                .fetch_one(&remote.pool)
+                .await
+                .unwrap();
+        assert_eq!(status, "delivered");
+        let normal_id = Uuid::new_v4();
+        AgentRunCommandService::new(pool, &port)
+            .dispatch(executors::runtime::AgentRunPortCommandEnvelope {
+                schema_version: executors::runtime::ORCHESTRATION_COMMAND_SCHEMA_VERSION,
+                command_id: normal_id,
+                idempotency_key: format!("ordinary:{normal_id}"),
+                agent_run_id: target.agent_run_id,
+                orchestration_run_id: None,
+                orchestration_node_execution_id: None,
+                correlation_id: normal_id,
+                created_at: chrono::Utc::now(),
+                command: AgentRunPortCommand::Steer {
+                    content: "ordinary message".into(),
+                },
+            })
+            .await
+            .unwrap();
+        let normal_status: String =
+            sqlx::query_scalar("SELECT delivery_status FROM agent_run_commands WHERE command_id=?")
+                .bind(normal_id)
+                .fetch_one(pool)
+                .await
+                .unwrap();
+        assert_eq!(normal_status, "delivered");
+    };
+    tokio::time::timeout(std::time::Duration::from_secs(10), exercise)
+        .await
+        .unwrap();
+    cancel.cancel();
+    child.kill().await.ok();
+    child.wait().await.ok();
+}
+
+#[async_trait]
+impl executors::runtime::AgentRunPort for QuestionDeliveryPort {
+    async fn create(
+        &self,
+        _: executors::runtime::AgentRunRequestEnvelope,
+        _: executors::runtime::RunAttemptRequest,
+    ) -> Result<Uuid, executors::runtime::AgentRunPortError> {
+        unreachable!()
+    }
+    async fn query(
+        &self,
+        _: Uuid,
+    ) -> Result<executors::runtime::AgentRunPortSnapshot, executors::runtime::AgentRunPortError>
+    {
+        unreachable!()
+    }
+    async fn subscribe(
+        &self,
+        _: Uuid,
+    ) -> Result<executors::runtime::AgentEventStream, executors::runtime::AgentRunPortError> {
+        unreachable!()
+    }
+    async fn control(
+        &self,
+        command: executors::runtime::AgentRunPortCommandEnvelope,
+    ) -> Result<(), executors::runtime::AgentRunPortError> {
+        self.runs.lock().await.push(command.agent_run_id);
+        if self.calls.fetch_add(1, std::sync::atomic::Ordering::SeqCst) == 0 {
+            Err(executors::runtime::AgentRunPortError::Rejected(
+                "delivery unknown".into(),
+            ))
+        } else {
+            Ok(())
+        }
+    }
+}
+
+#[tokio::test]
+async fn unconfirmed_question_retry_requires_explicit_same_answer_and_active_attempt() {
+    use executors::runtime::{AgentRunPortCommandEnvelope, ORCHESTRATION_COMMAND_SCHEMA_VERSION};
+    use services::services::agent_runtime::AgentRunCommandService;
+    let (remote, fixture, _, target, _) = fixture().await;
+    let question = emit_questions(&remote.pool, &target).await;
+    let session = Session::find_by_id(&remote.pool, target.session_id)
+        .await
+        .unwrap()
+        .unwrap();
+    let port = QuestionDeliveryPort {
+        calls: Default::default(),
+        runs: Default::default(),
+    };
+    let pool = &remote.pool;
+    let delivery_port = &port;
+    let deliver = |run, identity: agent_runs::AgentRunControlIdentity, command| async move {
+        AgentRunCommandService::new(pool, delivery_port)
+            .dispatch(AgentRunPortCommandEnvelope {
+                schema_version: ORCHESTRATION_COMMAND_SCHEMA_VERSION,
+                command_id: identity.command_id,
+                idempotency_key: identity.idempotency_key,
+                agent_run_id: run,
+                orchestration_run_id: None,
+                orchestration_node_execution_id: None,
+                correlation_id: identity.correlation_id,
+                created_at: identity.created_at,
+                command,
+            })
+            .await
+            .map_err(|e| ApiError::BadRequest(e.to_string()))?;
+        Ok(json!({"accepted":true,"agent_run_id":run}))
+    };
+    let request = |answer: &str, retry| service::AnswerAgentQuestion {
+        request_id: Uuid::new_v4(),
+        question_id: question.clone(),
+        answer: answer.into(),
+        retry_unconfirmed: retry,
+    };
+    assert!(
+        service::answer_with_dispatch(
+            &remote.pool,
+            &fixture.queue,
+            session.clone(),
+            request("Blue", false),
+            "fixture",
+            &deliver
+        )
+        .await
+        .is_err()
+    );
+    let original: Uuid =
+        sqlx::query_scalar("SELECT request_id FROM agent_question_answers WHERE question_id=?")
+            .bind(&question)
+            .fetch_one(&remote.pool)
+            .await
+            .unwrap();
+    sqlx::query("UPDATE agent_run_commands SET delivery_status='delivering' WHERE command_id=?")
+        .bind(original)
+        .execute(&remote.pool)
+        .await
+        .unwrap();
+    let report = AgentRunCommandService::new(&remote.pool, &port)
+        .reconcile_startup()
+        .await
+        .unwrap();
+    assert_eq!(report.delivered, 0);
+    assert_eq!(report.recovered_inflight, 1);
+    assert_eq!(port.calls.load(std::sync::atomic::Ordering::SeqCst), 1);
+    // A crash before the first claim can also leave a question pending.
+    sqlx::query("UPDATE agent_run_commands SET delivery_status='pending' WHERE command_id=?")
+        .bind(original)
+        .execute(&remote.pool)
+        .await
+        .unwrap();
+    let pending_report = AgentRunCommandService::new(&remote.pool, &port)
+        .reconcile_startup()
+        .await
+        .unwrap();
+    assert_eq!(pending_report.delivered, 0);
+    assert_eq!(port.calls.load(std::sync::atomic::Ordering::SeqCst), 1);
+    let other = Uuid::new_v4();
+    db::models::agent_runtime::AgentRunCommandRecord::enqueue(
+        &remote.pool,
+        &AgentRunPortCommandEnvelope {
+            schema_version: ORCHESTRATION_COMMAND_SCHEMA_VERSION,
+            command_id: other,
+            idempotency_key: format!("approval:{other}"),
+            agent_run_id: target.agent_run_id,
+            orchestration_run_id: None,
+            orchestration_node_execution_id: None,
+            correlation_id: other,
+            created_at: chrono::Utc::now(),
+            command: AgentRunPortCommand::ResolveApproval {
+                approval_id: "fixture".into(),
+                approved: false,
+                reason: None,
+            },
+        },
+    )
+    .await
+    .unwrap();
+    let queued = db::models::agent_runtime::AgentRunCommandRecord::pending(&remote.pool)
+        .await
+        .unwrap();
+    assert!(queued.iter().any(|command| command.command_id == other));
+    assert!(!queued.iter().any(|command| command.command_id == original));
+    assert!(
+        service::answer_with_dispatch(
+            &remote.pool,
+            &fixture.queue,
+            session.clone(),
+            request("Blue", false),
+            "fixture",
+            &deliver
+        )
+        .await
+        .is_err()
+    );
+    assert!(
+        service::answer_with_dispatch(
+            &remote.pool,
+            &fixture.queue,
+            session.clone(),
+            request("Green", true),
+            "fixture",
+            &deliver
+        )
+        .await
+        .is_err()
+    );
+    sqlx::query("UPDATE agent_run_attempts SET status='succeeded' WHERE agent_run_id=?")
+        .bind(target.agent_run_id)
+        .execute(&remote.pool)
+        .await
+        .unwrap();
+    assert!(
+        service::answer_with_dispatch(
+            &remote.pool,
+            &fixture.queue,
+            session.clone(),
+            request("Blue", true),
+            "fixture",
+            &deliver
+        )
+        .await
+        .is_err()
+    );
+    sqlx::query("UPDATE agent_run_attempts SET status='running' WHERE agent_run_id=?")
+        .bind(target.agent_run_id)
+        .execute(&remote.pool)
+        .await
+        .unwrap();
+    let retry_request = request("Blue", true);
+    let retry_id = retry_request.request_id;
+    service::answer_with_dispatch(
+        &remote.pool,
+        &fixture.queue,
+        session.clone(),
+        retry_request,
+        "fixture",
+        &deliver,
+    )
+    .await
+    .unwrap();
+    let preserved: Uuid =
+        sqlx::query_scalar("SELECT request_id FROM agent_question_answers WHERE question_id=?")
+            .bind(&question)
+            .fetch_one(&remote.pool)
+            .await
+            .unwrap();
+    assert_eq!(preserved, original);
+    assert_eq!(
+        runtime_write::accepted_question_command(&remote.pool, &target, &question)
+            .await
+            .unwrap(),
+        retry_id
+    );
+    assert_eq!(
+        *port.runs.lock().await,
+        vec![target.agent_run_id, target.agent_run_id]
+    );
+    assert!(
+        service::answer_with_dispatch(
+            &remote.pool,
+            &fixture.queue,
+            session,
+            request("Blue", true),
+            "fixture",
+            &deliver
+        )
+        .await
+        .is_err()
+    );
+}
+
+#[tokio::test]
+async fn stranded_delivering_question_can_only_be_retried_explicitly() {
+    use executors::runtime::{AgentRunPortCommandEnvelope, ORCHESTRATION_COMMAND_SCHEMA_VERSION};
+    use services::services::agent_runtime::AgentRunCommandService;
+    let (remote, fixture, _, target, _) = fixture().await;
+    let question = emit_questions(&remote.pool, &target).await;
+    let session = Session::find_by_id(&remote.pool, target.session_id)
+        .await
+        .unwrap()
+        .unwrap();
+    let port = QuestionDeliveryPort {
+        calls: Default::default(),
+        runs: Default::default(),
+    };
+    let pool = &remote.pool;
+    let port_ref = &port;
+    let deliver = |run, identity: agent_runs::AgentRunControlIdentity, command| async move {
+        AgentRunCommandService::new(pool, port_ref)
+            .dispatch(AgentRunPortCommandEnvelope {
+                schema_version: ORCHESTRATION_COMMAND_SCHEMA_VERSION,
+                command_id: identity.command_id,
+                idempotency_key: identity.idempotency_key,
+                agent_run_id: run,
+                orchestration_run_id: None,
+                orchestration_node_execution_id: None,
+                correlation_id: identity.correlation_id,
+                created_at: identity.created_at,
+                command,
+            })
+            .await
+            .map_err(|e| ApiError::BadRequest(e.to_string()))?;
+        Ok(json!({"accepted":true}))
+    };
+    let initial = service::AnswerAgentQuestion {
+        request_id: Uuid::new_v4(),
+        question_id: question.clone(),
+        answer: "Blue".into(),
+        retry_unconfirmed: false,
+    };
+    let first = initial.request_id;
+    assert!(
+        service::answer_with_dispatch(
+            pool,
+            &fixture.queue,
+            session.clone(),
+            initial,
+            "fixture",
+            &deliver
+        )
+        .await
+        .is_err()
+    );
+    sqlx::query("UPDATE agent_run_commands SET delivery_status='delivering' WHERE command_id=?")
+        .bind(first)
+        .execute(pool)
+        .await
+        .unwrap();
+    let retry = service::AnswerAgentQuestion {
+        request_id: Uuid::new_v4(),
+        question_id: question,
+        answer: "Blue".into(),
+        retry_unconfirmed: true,
+    };
+    service::answer_with_dispatch(pool, &fixture.queue, session, retry, "fixture", &deliver)
+        .await
+        .unwrap();
+    assert_eq!(port.calls.load(std::sync::atomic::Ordering::SeqCst), 2);
 }
 
 #[tokio::test]

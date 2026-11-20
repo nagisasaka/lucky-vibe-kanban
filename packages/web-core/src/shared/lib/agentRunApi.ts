@@ -81,7 +81,12 @@ export const agentRunsApi = {
       await makeLocalApiRequest(`/api/sessions/${sessionId}/questions`)
     );
   },
-  async answerQuestion(sessionId: string, questionId: string, answer: string) {
+  async answerQuestion(
+    sessionId: string,
+    questionId: string,
+    answer: string,
+    retryUnconfirmed = false
+  ) {
     return handleApiResponse<unknown>(
       await makeLocalApiRequest(`/api/sessions/${sessionId}/questions/answer`, {
         method: 'POST',
@@ -90,6 +95,7 @@ export const agentRunsApi = {
           request_id: crypto.randomUUID(),
           question_id: questionId,
           answer,
+          retry_unconfirmed: retryUnconfirmed,
         }),
       })
     );

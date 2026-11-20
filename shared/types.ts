@@ -251,7 +251,7 @@ export type CreateIntegrationRequest = { request_id: string, project_id: string,
 
 export type PendingAgentQuestion = { id: string, session_id: string, agent_run_id: string, workspace_id: string, title: string, options: Array<string>, delivery_status: string | null, };
 
-export type AnswerAgentQuestion = { request_id: string, question_id: string, answer: string, };
+export type AnswerAgentQuestion = { request_id: string, question_id: string, answer: string, retry_unconfirmed: boolean, };
 
 export type WikiReconciliationReceipt = { event_id: string, reconciled_at: string, target_commit: string, wiki_commit: string | null, result: ReconciliationResult, error: string | null, };
 

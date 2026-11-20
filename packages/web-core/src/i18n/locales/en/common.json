@@ -1620,7 +1620,9 @@
     "send": "Send answer",
     "sending": "Sending…",
     "sendFailed": "The answer could not be sent. Your draft has been kept; please try again.",
-    "deliveryUnconfirmed": "Answer delivery could not be confirmed. Inspect the Session before retrying."
+    "deliveryUnconfirmed": "Answer delivery could not be confirmed. Inspect the Session before retrying.",
+    "retryWarning": "Delivery is unconfirmed. Check the Session first. Retrying the same answer may deliver it twice.",
+    "retry": "Retry the same answer"
   },
   "todo": {
     "expandBody": "Show more",

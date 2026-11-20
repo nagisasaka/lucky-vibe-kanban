@@ -43,7 +43,11 @@ export function AsyncAgentQuestions({
   questions: AsyncAgentQuestion[];
   scope: string;
   disabled: boolean;
-  onAnswer: (question: AsyncAgentQuestion, answer: string) => Promise<void>;
+  onAnswer: (
+    question: AsyncAgentQuestion,
+    answer: string,
+    retryUnconfirmed: boolean
+  ) => Promise<void>;
 }) {
   const { t, i18n } = useTranslation('common');
   const storageKey = `lvk:async-questions:${scope}`;
@@ -75,7 +79,7 @@ export function AsyncAgentQuestions({
     setUnconfirmed(false);
     setErrorDetail(null);
     try {
-      await onAnswer(question, answer);
+      await onAnswer(question, answer, !!question.delivery_status);
       // Only an accepted delivery consumes a question. Failed sends retain the draft.
       const next = {
         ...savedRef.current,
@@ -121,7 +125,7 @@ export function AsyncAgentQuestions({
                 {question.title}
               </label>
               {question.delivery_status && (
-                <p role="status">{t('asyncQuestions.deliveryUnconfirmed')}</p>
+                <p role="status">{t('asyncQuestions.retryWarning')}</p>
               )}
               <div className="flex flex-wrap gap-half">
                 {question.options.map((option, index) => (
@@ -130,9 +134,7 @@ export function AsyncAgentQuestions({
                     key={index}
                     className="rounded-sm border border-border px-base py-half text-sm hover:bg-secondary"
                     aria-pressed={saved.drafts[question.id] === option}
-                    disabled={
-                      submitting === question.id || !!question.delivery_status
-                    }
+                    disabled={submitting === question.id}
                     onClick={() =>
                       save({
                         ...savedRef.current,
@@ -152,9 +154,7 @@ export function AsyncAgentQuestions({
                 className="w-full rounded-sm border border-border bg-primary p-half"
                 placeholder={t('asyncQuestions.placeholder')}
                 value={saved.drafts[question.id] ?? ''}
-                disabled={
-                  submitting === question.id || !!question.delivery_status
-                }
+                disabled={submitting === question.id}
                 onChange={(event) =>
                   save({
                     ...savedRef.current,
@@ -171,14 +171,15 @@ export function AsyncAgentQuestions({
                 disabled={
                   disabled ||
                   submitting !== null ||
-                  !saved.drafts[question.id]?.trim() ||
-                  !!question.delivery_status
+                  !saved.drafts[question.id]?.trim()
                 }
                 onClick={() => void submit(question)}
               >
                 {submitting === question.id
                   ? t('asyncQuestions.sending')
-                  : t('asyncQuestions.send')}
+                  : question.delivery_status
+                    ? t('asyncQuestions.retry')
+                    : t('asyncQuestions.send')}
               </button>
             </div>
           ))}

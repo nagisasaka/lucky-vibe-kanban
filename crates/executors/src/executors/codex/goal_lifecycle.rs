@@ -14,6 +14,7 @@ pub(super) enum GoalLifecycle {
     Managed {
         thread_id: String,
         keep_alive: bool,
+        blocked: bool,
     },
     Failed,
 }
@@ -54,6 +55,7 @@ impl GoalLifecycle {
             *self = Self::Managed {
                 thread_id: thread.to_owned(),
                 keep_alive: true,
+                blocked: false,
             };
         }
         Ok(())
@@ -76,11 +78,16 @@ impl GoalLifecycle {
         )
     }
 
+    pub fn is_blocked(&self, thread: &str) -> bool {
+        matches!(self, Self::Managed { thread_id, keep_alive: true, blocked: true } if thread_id == thread)
+    }
+
     /// Returns true only for a terminal transition of this run's managed Goal.
     pub fn observe(&mut self, thread: &str, status: &str) -> bool {
         let Self::Managed {
             thread_id,
             keep_alive,
+            blocked,
         } = self
         else {
             return false;
@@ -92,6 +99,7 @@ impl GoalLifecycle {
             "active" | "paused" | "blocked" | "usageLimited" | "usage_limited"
             | "budgetLimited" | "budget_limited" => {
                 *keep_alive = true;
+                *blocked = status == "blocked";
                 false
             }
             "complete" | "cleared" => {
@@ -140,5 +148,22 @@ mod tests {
                 .is_err()
         );
         assert!(!state.keep_alive());
+    }
+
+    #[test]
+    fn only_the_managed_threads_blocked_goal_allows_idle_answer() {
+        let mut state = GoalLifecycle::default();
+        state.begin(RequestId::Integer(1), "parent".into());
+        state
+            .acknowledge(&RequestId::Integer(1), "parent", "active")
+            .unwrap();
+        assert!(!state.is_blocked("parent"));
+        state.observe("parent", "blocked");
+        assert!(state.is_blocked("parent"));
+        assert!(!state.is_blocked("child"));
+        state.observe("parent", "paused");
+        assert!(!state.is_blocked("parent"));
+        state.observe("parent", "complete");
+        assert!(!state.is_blocked("parent"));
     }
 }

@@ -760,7 +760,7 @@ impl AgentRunCommandRecord {
         pool: &SqlitePool,
     ) -> Result<u64, AgentRuntimePersistenceError> {
         let result = sqlx::query(
-            "UPDATE agent_run_commands SET delivery_status = 'pending', updated_at = ? WHERE delivery_status = 'delivering'",
+            "UPDATE agent_run_commands SET delivery_status = CASE WHEN idempotency_key LIKE 'question:%' THEN 'failed' ELSE 'pending' END, updated_at = ? WHERE delivery_status = 'delivering'",
         )
         .bind(Utc::now())
         .execute(pool)
@@ -770,7 +770,7 @@ impl AgentRunCommandRecord {
 
     pub async fn pending(pool: &SqlitePool) -> Result<Vec<Self>, AgentRuntimePersistenceError> {
         Ok(sqlx::query_as::<_, Self>(
-            "SELECT * FROM agent_run_commands WHERE delivery_status IN ('pending', 'failed') ORDER BY created_at, command_id",
+            "SELECT * FROM agent_run_commands WHERE delivery_status IN ('pending', 'failed') AND idempotency_key NOT LIKE 'question:%' ORDER BY created_at, command_id",
         )
         .fetch_all(pool)
         .await?)

@@ -28,6 +28,8 @@ pub struct AnswerAgentQuestion {
     pub request_id: Uuid,
     pub question_id: String,
     pub answer: String,
+    #[serde(default)]
+    pub retry_unconfirmed: bool,
 }
 
 pub(crate) async fn pending(
@@ -181,17 +183,37 @@ where
     // reservation while its sender is still between reservation and dispatch.
     reconcile_answers(pool, session_id).await?;
     release_unstarted_answer(pool, session_id, &request.question_id).await?;
-    let existing: Option<(Uuid, String, Option<String>)> = sqlx::query_as(
-        "SELECT session_id,answer,result FROM agent_question_answers WHERE question_id=?",
+    let existing: Option<(Uuid, String, Option<String>, Uuid)> = sqlx::query_as(
+        "SELECT session_id,answer,result,request_id FROM agent_question_answers WHERE question_id=?",
     )
     .bind(&request.question_id)
     .fetch_optional(pool)
     .await?;
-    if let Some((answer_session_id, answer, result)) = existing {
-        if answer_session_id != session_id || answer != request.answer {
+    if let Some((answer_session_id, answer, result, previous_request)) = &existing {
+        if *answer_session_id != session_id || answer.trim() != request.answer.trim() {
             return Err(ApiError::Conflict("Question already has an answer".into()));
         }
-        return result.map(|s|serde_json::from_str(&s).map_err(|_|ApiError::Conflict("Unreadable answer receipt".into()))).unwrap_or_else(||Err(ApiError::Conflict("Answer delivery is unconfirmed. Inspect the Session; do not submit another answer.".into())));
+        if !request.retry_unconfirmed {
+            return result.as_ref().map(|s|serde_json::from_str(s).map_err(|_|ApiError::Conflict("Unreadable answer receipt".into()))).unwrap_or_else(||Err(ApiError::Conflict("Answer delivery is unconfirmed. Inspect the Session before explicitly retrying.".into())));
+        }
+        if result.is_some() || *previous_request == request.request_id {
+            return Err(ApiError::Conflict(
+                "Only an unconfirmed answer can be retried with a new request".into(),
+            ));
+        }
+        let status = question_command_status(pool, &request.question_id, *previous_request).await?;
+        // Holding the Session lock means the original answer handler is no
+        // longer running here. A stranded delivering command is uncertain as
+        // well; the explicit retry may duplicate a still-finishing host write.
+        if !matches!(status.as_deref(), Some("failed" | "pending" | "delivering")) {
+            return Err(ApiError::Conflict(
+                "Answer delivery cannot be retried".into(),
+            ));
+        }
+    } else if request.retry_unconfirmed {
+        return Err(ApiError::Conflict(
+            "There is no unconfirmed answer to retry".into(),
+        ));
     }
     if queue.has_queued(session_id) {
         return Err(ApiError::Conflict(
@@ -210,7 +232,9 @@ where
     // Always steer the run which asked. Never start a follow-up or redirect a
     // late answer to a different run; dispatch revalidates lifecycle as well.
     let run_id = question.agent_run_id;
-    sqlx::query("INSERT INTO agent_question_answers(question_id,session_id,request_id,actor,answer) VALUES(?,?,?,?,?)").bind(&request.question_id).bind(session_id).bind(request.request_id).bind(actor).bind(&request.answer).execute(pool).await?;
+    if existing.is_none() {
+        sqlx::query("INSERT INTO agent_question_answers(question_id,session_id,request_id,actor,answer) VALUES(?,?,?,?,?)").bind(&request.question_id).bind(session_id).bind(request.request_id).bind(actor).bind(&request.answer).execute(pool).await?;
+    }
     let content = format!(
         "Question: {}\nAnswer: {}\n\nLVK question: {}\nLVK question answer: {}",
         question.title,
@@ -223,7 +247,7 @@ where
             run_id,
             agent_runs::AgentRunControlIdentity {
                 command_id: request.request_id,
-                idempotency_key: format!("question:{}", request.question_id),
+                idempotency_key: format!("question:{}:{}", request.question_id, request.request_id),
                 correlation_id: request.request_id,
                 created_at: chrono::Utc::now(),
             },
@@ -237,8 +261,10 @@ where
         Err(error) => {
             // A validation/database failure before dispatch is safe to retry.
             // Once a command or run exists, preserve the receipt: an error may
-            // have happened after delivery and must never cause a duplicate.
-            release_unstarted_answer(pool, session_id, &request.question_id).await?;
+            // have happened after delivery. Only an explicit retry may duplicate it.
+            if existing.is_none() {
+                release_unstarted_answer(pool, session_id, &request.question_id).await?;
+            }
             return Err(error);
         }
     };
@@ -299,11 +325,7 @@ async fn release_unstarted_answer(
 async fn reconcile_answers(pool: &SqlitePool, session: Uuid) -> Result<(), ApiError> {
     let receipts:Vec<(String,Uuid)>=sqlx::query_as("SELECT question_id,request_id FROM agent_question_answers WHERE session_id=? AND result IS NULL").bind(session).fetch_all(pool).await?;
     for (question, request) in receipts {
-        let command: Option<String> =
-            sqlx::query_scalar("SELECT delivery_status FROM agent_run_commands WHERE command_id=?")
-                .bind(request)
-                .fetch_optional(pool)
-                .await?;
+        let command = question_command_status(pool, &question, request).await?;
         let run: Option<Uuid> = sqlx::query_scalar(
             "SELECT id FROM agent_runs WHERE session_id=? AND (instr(request_envelope,?)>0 OR instr(request_envelope,?)>0) LIMIT 1",
         )
@@ -324,6 +346,21 @@ async fn reconcile_answers(pool: &SqlitePool, session: Uuid) -> Result<(), ApiEr
         }
     }
     Ok(())
+}
+
+// Keep the original receipt stable across retries. Every subsequent command
+// has a distinct key under the same question, so a crash before or after a
+// retry dispatch cannot erase the original uncertainty or hide a confirmed
+// later delivery. An in-flight attempt takes precedence over failed attempts.
+async fn question_command_status(
+    pool: &SqlitePool,
+    question: &str,
+    original: Uuid,
+) -> Result<Option<String>, ApiError> {
+    let legacy = format!("question:{question}");
+    let prefix = format!("{legacy}:");
+    Ok(sqlx::query_scalar("SELECT delivery_status FROM agent_run_commands WHERE command_id=? OR idempotency_key=? OR substr(idempotency_key,1,length(?))=? ORDER BY CASE delivery_status WHEN 'delivered' THEN 0 WHEN 'delivering' THEN 1 ELSE 2 END LIMIT 1")
+        .bind(original).bind(legacy).bind(&prefix).bind(&prefix).fetch_optional(pool).await?)
 }
 
 /// Shared projection of unresolved canonical questions and approvals. No inference.
@@ -348,10 +385,45 @@ mod tests {
             "CREATE TABLE agent_runs (id BLOB, session_id BLOB, status TEXT, request_envelope TEXT, created_at TEXT, workspace_id BLOB);
              CREATE TABLE agent_run_attempts (id BLOB, agent_run_id BLOB, attempt_number INTEGER, status TEXT);
              CREATE TABLE agent_events (run_attempt_id BLOB, agent_run_id BLOB, session_id BLOB, event_envelope TEXT, created_at TEXT);
-             CREATE TABLE agent_run_commands (command_id BLOB, delivery_status TEXT);
+             CREATE TABLE agent_run_commands (command_id BLOB, delivery_status TEXT, idempotency_key TEXT);
              CREATE TABLE agent_question_answers (question_id TEXT PRIMARY KEY, session_id BLOB, request_id BLOB, result TEXT);",
         ).execute(&pool).await.unwrap();
         pool
+    }
+
+    #[tokio::test]
+    async fn later_confirmed_retry_reconciles_the_original_receipt() {
+        let pool = database().await;
+        let session = Uuid::new_v4();
+        let original = Uuid::new_v4();
+        let retry = Uuid::new_v4();
+        let question = "attempt:message:0";
+        sqlx::query("INSERT INTO agent_question_answers VALUES(?,?,?,NULL)")
+            .bind(question)
+            .bind(session)
+            .bind(original)
+            .execute(&pool)
+            .await
+            .unwrap();
+        for (id, status) in [(original, "failed"), (retry, "delivered")] {
+            sqlx::query("INSERT INTO agent_run_commands VALUES(?,?,?)")
+                .bind(id)
+                .bind(status)
+                .bind(format!("question:{question}:{id}"))
+                .execute(&pool)
+                .await
+                .unwrap();
+        }
+        reconcile_answers(&pool, session).await.unwrap();
+        let (stored, result): (Uuid, Option<String>) = sqlx::query_as(
+            "SELECT request_id,result FROM agent_question_answers WHERE question_id=?",
+        )
+        .bind(question)
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+        assert_eq!(stored, original);
+        assert!(result.unwrap().contains("reconciled"));
     }
 
     #[tokio::test]
@@ -509,12 +581,14 @@ mod tests {
                 .await
                 .unwrap();
             if matches!(evidence, "pending" | "delivering" | "failed" | "delivered") {
-                sqlx::query("INSERT INTO agent_run_commands VALUES(?,?)")
-                    .bind(request)
-                    .bind(evidence)
-                    .execute(&pool)
-                    .await
-                    .unwrap();
+                sqlx::query(
+                    "INSERT INTO agent_run_commands(command_id,delivery_status) VALUES(?,?)",
+                )
+                .bind(request)
+                .bind(evidence)
+                .execute(&pool)
+                .await
+                .unwrap();
             }
             if matches!(evidence, "run" | "legacy_run") {
                 sqlx::query("INSERT INTO agent_runs(id,session_id,status,request_envelope,created_at) VALUES(?,?,'succeeded',?,'2026-10-10')")
