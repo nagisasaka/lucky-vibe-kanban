@@ -279,6 +279,7 @@ export function useConversationVirtualizer({
     };
     let towardBottom = false;
     let scrollbarDrag = false;
+    let restoreFollowOnPointerUp = false;
     let previousTop = el.scrollTop;
     let touchY: number | null = null;
     const handleScroll = () => {
@@ -341,10 +342,26 @@ export function useConversationVirtualizer({
     const handlePointerDown = (event: PointerEvent) => {
       // Native scrollbar events target the scroll container, not its rows.
       scrollbarDrag = event.target === el;
+      if (
+        scrollbarDrag &&
+        event.clientX >= el.getBoundingClientRect().left + el.clientWidth
+      ) {
+        // Track clicks may trigger a layout before their first scroll event.
+        restoreFollowOnPointerUp = followingRef.current;
+        setFollowing(false);
+        markUserScroll();
+      }
       previousTop = el.scrollTop;
     };
     const handlePointerUp = () => {
       scrollbarDrag = false;
+      if (
+        restoreFollowOnPointerUp &&
+        el.scrollHeight - el.clientHeight - el.scrollTop <= 2
+      ) {
+        setFollowing(true);
+      }
+      restoreFollowOnPointerUp = false;
     };
     el.addEventListener('wheel', handleWheel, { passive: true });
     el.addEventListener('touchstart', handleTouchStart, { passive: true });

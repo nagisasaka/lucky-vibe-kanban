@@ -17,11 +17,12 @@ export function WorkspaceTokenSummary({
   });
   const number = (value: number | bigint | null | undefined) =>
     value == null ? t('workspaceTokens.unknown') : value.toLocaleString();
-  const coverage = (observed: number | bigint) =>
-    t('workspaceTokens.breakdownCoverage', {
-      observed: Number(observed),
-      total: Number(data?.thread_count ?? 0),
-    });
+  const difference =
+    data?.input_tokens != null &&
+    data.cached_input_tokens != null &&
+    data.cached_input_observed_threads === data.thread_count
+      ? BigInt(data.input_tokens) - BigInt(data.cached_input_tokens)
+      : null;
   return (
     <details
       className="px-base py-half text-xs text-low"
@@ -30,25 +31,20 @@ export function WorkspaceTokenSummary({
       <summary className="cursor-pointer w-fit focus-visible:outline focus-visible:outline-2">
         {t('workspaceTokens.label')}:{' '}
         {isError ? t('workspaceTokens.error') : number(data?.total_tokens)}
-        {!isError &&
-          data?.completeness === 'partial' &&
-          ` · ${t('workspaceTokens.partial')}`}
       </summary>
       <div className="py-half space-y-half">
-        <p>{t('workspaceTokens.scope')}</p>
         {data && !isError && (
           <>
             <p>
-              {t('workspaceTokens.input')}: {number(data.input_tokens)} ·{' '}
-              {t('workspaceTokens.output')}: {number(data.output_tokens)}
+              {t('workspaceTokens.input')}: {number(data.input_tokens)}（{t('workspaceTokens.cached')}: {number(data.cached_input_tokens)}）
+              {difference != null && (
+                <>
+                  {'/ '}{t('workspaceTokens.difference')}: {number(difference)}
+                </>
+              )}
             </p>
             <p>
-              {t('workspaceTokens.cached')}: {number(data.cached_input_tokens)}{' '}
-              ({coverage(data.cached_input_observed_threads)})
-            </p>
-            <p>
-              {t('workspaceTokens.reasoning')}: {number(data.reasoning_tokens)}{' '}
-              ({coverage(data.reasoning_observed_threads)})
+              {t('workspaceTokens.output')}: {number(data.output_tokens)}（{t('workspaceTokens.reasoning')}: {number(data.reasoning_tokens)}）
             </p>
             {data.updated_at && (
               <p>

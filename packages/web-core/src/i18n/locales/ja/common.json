@@ -299,6 +299,8 @@
     "createDraftError": "ワークスペースの下書きを準備できませんでした。もう一度お試しください。",
     "preparing": "準備中…",
     "scrollToBottom": "末尾へ移動",
+    "scrollToTop": "会話の先頭へ",
+    "scrollToTopRetry": "履歴を読み込めませんでした。矢印を押して再試行してください。",
     "openLinkedIssue": "関連付けられたIssueを開く",
     "closeCreationView": "ワークスペース作成画面を閉じる",
     "open": "ワークスペースを開く",
@@ -1729,15 +1731,13 @@
   "workspaceTokens": {
     "label": "Workspace累積トークン",
     "unknown": "不明",
-    "partial": "一部のみ",
     "error": "取得失敗",
     "input": "入力",
-    "cached": "キャッシュ入力（入力の内数）",
+    "cached": "キャッシュ入力",
     "output": "出力",
-    "reasoning": "推論（出力の内数）",
-    "scope": "Codex親threadの報告済み累積値。親に含まれない子thread分、未報告分、未対応provider、未計測履歴は不明です。料金やコンテキスト使用率ではありません。",
+    "reasoning": "推論",
     "updated": "最終更新",
-    "breakdownCoverage": "内訳取得thread: {{observed}} / {{total}}"
+    "difference": "差分"
   },
   "integrationFacts": {
     "target": "統合先",
@@ -2353,7 +2353,7 @@
     }
   },
   "lvkInstructions": {
-    "title": "LVK の追加指示",
+    "title": "システム追加指示の詳細",
     "attempted": "送信試行・受付未確認",
     "accepted": "CLI 受付確認",
     "unconfirmed": "受付結果不明",
@@ -2362,7 +2362,7 @@
     "runNativeSession": "Run / ネイティブセッション",
     "timing": "送信試行 → 最終観測",
     "missing": "配信記録なし",
-    "missingExplanation": "この Run には追加指示の配信記録がありません。未配信を意味しません。現在の設定から過去の内容を再生成しません。"
+    "missingExplanation": "この Run には追加指示の配信記録がありません。"
   },
   "projectTransfer": {
     "title": "Project の移送",

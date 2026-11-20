@@ -11,25 +11,21 @@ export function LvkInstructionsEntry({
   const { t } = useTranslation('common');
   return (
     <details
-      className="mx-base my-half rounded border border-border text-sm"
+      className="my-half rounded border border-border text-sm"
       data-testid="lvk-instructions"
     >
       <summary className="cursor-pointer px-base py-half text-low focus-visible:outline focus-visible:outline-2">
-        {t('lvkInstructions.title')} ·{' '}
-        {delivery
-          ? t(`lvkInstructions.${delivery.status}`)
-          : t('lvkInstructions.missing')}
+        {t('lvkInstructions.title')}
       </summary>
       <div className="space-y-base border-t border-border p-base">
-        <p className="text-low">
-          {t(
-            delivery
-              ? 'lvkInstructions.scope'
-              : 'lvkInstructions.missingExplanation'
-          )}
-        </p>
+        {!delivery && (
+          <p className="text-low">{t('lvkInstructions.missingExplanation')}</p>
+        )}
         {delivery && (
           <>
+            <p className="text-low">
+              {t(`lvkInstructions.${delivery.status}`)}
+            </p>
             <dl className="break-all text-xs text-low">
               <dt>{t('lvkInstructions.route')}</dt>
               <dd>

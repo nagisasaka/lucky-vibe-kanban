@@ -26,7 +26,7 @@ const variantConfig: Record<Variant, VariantConfig> = {
     icon: UserIcon,
     border: 'border-border',
     headerBg: '',
-    bg: '',
+    bg: 'bg-secondary',
   },
   plan: {
     icon: ListChecksIcon,

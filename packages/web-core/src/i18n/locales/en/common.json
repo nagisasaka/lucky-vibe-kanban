@@ -304,6 +304,8 @@
     "createDraftError": "Failed to prepare workspace draft. Please try again.",
     "preparing": "Preparing…",
     "scrollToBottom": "Scroll to bottom",
+    "scrollToTop": "Go to start of conversation",
+    "scrollToTopRetry": "Could not load history. Press the arrow to retry.",
     "openLinkedIssue": "Open linked issue",
     "closeCreationView": "Close create workspace view",
     "open": "Open workspace",
@@ -1759,15 +1761,13 @@
   "workspaceTokens": {
     "label": "Workspace cumulative tokens",
     "unknown": "Unknown",
-    "partial": "Partial",
     "error": "Unavailable",
     "input": "Input",
-    "cached": "Cached input (included in input)",
+    "cached": "Cached input",
     "output": "Output",
-    "reasoning": "Reasoning (included in output)",
-    "scope": "Reported cumulative totals of Codex parent threads. Child-thread usage not included in the parent is unknown, as are unreported usage, unsupported providers and unmeasured history. Not cost or context occupancy.",
+    "reasoning": "Reasoning",
     "updated": "Last update",
-    "breakdownCoverage": "Threads reporting breakdown: {{observed}} / {{total}}"
+    "difference": "Difference"
   },
   "integrationFacts": {
     "target": "Target",
@@ -2362,7 +2362,7 @@
     }
   },
   "lvkInstructions": {
-    "title": "LVK additional instructions",
+    "title": "System additional instruction details",
     "attempted": "Attempted · receipt unconfirmed",
     "accepted": "CLI acknowledged",
     "unconfirmed": "Receipt unknown",
@@ -2371,7 +2371,7 @@
     "runNativeSession": "Run / native Session",
     "timing": "Attempted → last observed",
     "missing": "No delivery record",
-    "missingExplanation": "This run has no instruction delivery record. This does not mean nothing was sent. Past content is not reconstructed from current settings."
+    "missingExplanation": "This run has no instruction delivery record."
   },
   "projectTransfer": {
     "title": "Project transfer",

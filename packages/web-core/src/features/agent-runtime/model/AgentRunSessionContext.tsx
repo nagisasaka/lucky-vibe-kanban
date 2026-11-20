@@ -29,6 +29,9 @@ export interface AgentRunSessionContextValue {
   readonly conversation: CanonicalConversationProjection;
   readonly isLoading: boolean;
   readonly isLoadingHistory: boolean;
+  /** Whether all discovered run histories have initialized successfully. */
+  readonly historyStatus: 'pending' | 'complete' | 'error';
+  readonly retryHistory: () => void;
   readonly isConnected: boolean;
   readonly error: string | null;
 }
@@ -96,6 +99,9 @@ function AgentRunSessionContent({
   children: ReactNode;
 }) {
   const [historyLimit, setHistoryLimit] = useState(0);
+  const [retryGenerations, setRetryGenerations] = useState<
+    ReadonlyMap<string, number>
+  >(new Map());
   const [timelines, setTimelines] = useState<
     ReadonlyMap<string, CanonicalAgentTimeline>
   >(new Map());
@@ -239,6 +245,27 @@ function AgentRunSessionContent({
         .filter((error): error is string => Boolean(error)),
     [connections, summaries]
   );
+  const retryHistory = useCallback(() => {
+    const failed = [...connections]
+      .filter(([, value]) => value.error)
+      .map(([id]) => id);
+    if (failed.length === 0) {
+      if (runsQuery.error) void runsQuery.refetch();
+      return;
+    }
+    setConnections((current) => {
+      const next = new Map(current);
+      for (const id of failed)
+        next.set(id, { connected: false, initialized: false, error: null });
+      return next;
+    });
+    setRetryGenerations((current) => {
+      const next = new Map(current);
+      for (const id of failed) next.set(id, (next.get(id) ?? 0) + 1);
+      return next;
+    });
+    if (runsQuery.error) void runsQuery.refetch();
+  }, [connections, runsQuery]);
   const isLoading =
     Boolean(sessionId) && (runsQuery.isLoading || !streamsInitialized);
   // Publish the recent conversation first; historic logs can arrive later.
@@ -262,6 +289,13 @@ function AgentRunSessionContent({
       conversation,
       isLoading,
       isLoadingHistory,
+      historyStatus:
+        runsQuery.error || streamErrors.length > 0
+          ? 'error'
+          : isLoading || isLoadingHistory
+            ? 'pending'
+            : 'complete',
+      retryHistory,
       isConnected:
         summaries.length === 0 ||
         foreground.every(
@@ -282,6 +316,7 @@ function AgentRunSessionContent({
       isLoadingHistory,
       foreground,
       streamErrors,
+      retryHistory,
       summaries,
       timeline,
     ]
@@ -291,7 +326,7 @@ function AgentRunSessionContent({
     <AgentRunSessionContext.Provider value={value}>
       {subscribed.map((summary) => (
         <AgentRunStreamBridge
-          key={summary.agent_run_id}
+          key={`${summary.agent_run_id}:${retryGenerations.get(summary.agent_run_id) ?? 0}`}
           agentRunId={summary.agent_run_id}
           onTimeline={updateTimeline}
           onConnection={updateConnection}

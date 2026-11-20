@@ -11,10 +11,6 @@ import {
   isToolActive,
   toolDisplayStatus,
 } from '../lib/tool-lifecycle';
-import {
-  toolOutputPreview,
-  toolCommandHeading,
-} from '../lib/tool-output-preview';
 
 export interface AggregatedEntry {
   summary: string;
@@ -101,25 +97,23 @@ function ToolEntryPreview({
   includeHeading?: boolean;
 }) {
   const { t } = useTranslation('tasks');
-  if (entry.command === undefined && !entry.outputState) return null;
-  const preview = toolOutputPreview(
-    entry.content ?? '',
-    entry.status?.status === 'failed'
-  );
   const state =
     entry.outputState ?? (isEntryActive(entry) ? 'pending' : 'unavailable');
   return (
     <div className="ml-6 mt-half min-w-0 text-xs text-low">
       {includeHeading && (
-        <div className="truncate font-ibm-plex-mono">
-          {entry.command !== undefined
-            ? toolCommandHeading(entry.command)
-            : entry.summary}
+        <div className="line-clamp-2 whitespace-pre-wrap break-words font-ibm-plex-mono">
+          {entry.command !== undefined ? (
+            <ChatCode code={entry.command} language="bash" />
+          ) : (
+            entry.summary
+          )}
         </div>
       )}
-      {preview.text ? (
-        <pre className="overflow-hidden whitespace-pre-wrap break-words font-ibm-plex-mono leading-relaxed">
-          {preview.text}
+      {includeHeading && <EntryStatus entry={entry} />}
+      {entry.content ? (
+        <pre className="line-clamp-2 whitespace-pre-wrap break-words font-ibm-plex-mono leading-relaxed">
+          {entry.content}
         </pre>
       ) : (
         <span>
@@ -132,10 +126,8 @@ function ToolEntryPreview({
           )}
         </span>
       )}
-      {(preview.clipped || state === 'partial') && (
-        <span className="block">
-          {t(state === 'partial' ? 'execution.partial' : 'execution.preview')}
-        </span>
+      {state === 'partial' && (
+        <span className="block">{t('execution.partial')}</span>
       )}
     </div>
   );
@@ -331,12 +323,12 @@ export function ChatAggregatedToolEntries({
               />
             )}
           </span>
-          <ActivityText active={isRunning} className="min-w-0 flex-1 truncate">
+          <ActivityText
+            active={isRunning}
+            className="min-w-0 flex-1 line-clamp-2 whitespace-pre-wrap break-words"
+          >
             {entry.command !== undefined && entry.command === headerSummary ? (
-              <ChatCode
-                code={toolCommandHeading(entry.command)}
-                language="bash"
-              />
+              <ChatCode code={entry.command} language="bash" />
             ) : (
               headerSummary
             )}
@@ -472,16 +464,13 @@ export function ChatAggregatedToolEntries({
                   <span className="flex min-w-0 flex-1 items-center gap-base">
                     <span
                       className={cn(
-                        'min-w-0 flex-1 truncate',
+                        'min-w-0 flex-1 line-clamp-2 whitespace-pre-wrap break-words',
                         entry.command && 'font-mono text-xs'
                       )}
                     >
                       {entry.command !== undefined &&
                       entry.command === entry.summary ? (
-                        <ChatCode
-                          code={toolCommandHeading(entry.command)}
-                          language="bash"
-                        />
+                        <ChatCode code={entry.command} language="bash" />
                       ) : (
                         entry.summary
                       )}

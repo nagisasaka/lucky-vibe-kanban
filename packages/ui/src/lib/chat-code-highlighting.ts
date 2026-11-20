@@ -1,6 +1,8 @@
 import { PrismTokenizer, getCodeLanguages } from '@lexical/code';
 import 'prismjs/components/prism-bash';
 import 'prismjs/components/prism-json';
+import 'prismjs/components/prism-jsx';
+import 'prismjs/components/prism-tsx';
 
 // Bound synchronous tokenization during streaming. Keep the entire text visible.
 export const MAX_CHAT_HIGHLIGHT_LENGTH = 16_384;

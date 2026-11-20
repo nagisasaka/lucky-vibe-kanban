@@ -1258,7 +1258,7 @@ function AssistantMessageEntry({
           content={content}
           workspaceId={workspaceId}
           sessionId={sessionId}
-          className={undefined}
+          className="assistant-message-markdown"
           maxWidth={undefined}
         />
       )}

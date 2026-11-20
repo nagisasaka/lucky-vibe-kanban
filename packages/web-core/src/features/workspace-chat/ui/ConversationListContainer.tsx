@@ -16,7 +16,7 @@ import {
   chatMessageScope,
   usePendingChatMessages,
 } from '../model/pendingChatMessages';
-import { SpinnerIcon } from '@phosphor-icons/react';
+import { ArrowUpIcon, SpinnerIcon } from '@phosphor-icons/react';
 import { useTranslation } from 'react-i18next';
 
 import {
@@ -62,6 +62,7 @@ interface ConversationListProps {
   repos?: RepoWithTargetBranch[];
   onAtBottomChange?: (atBottom: boolean) => void;
   sessionScopeId?: string;
+  showScrollToTop?: boolean;
 }
 
 export interface ConversationListHandle {
@@ -198,7 +199,13 @@ const ScopedConversationList = forwardRef<
   ConversationListHandle,
   ConversationListProps
 >(function ConversationList(
-  { attempt, repos: reposProp = [], onAtBottomChange, sessionScopeId },
+  {
+    attempt,
+    repos: reposProp = [],
+    onAtBottomChange,
+    sessionScopeId,
+    showScrollToTop = false,
+  },
   ref
 ) {
   const { t } = useTranslation('common');
@@ -342,7 +349,12 @@ const ScopedConversationList = forwardRef<
   }, []);
 
   const programmaticScrollDeadlineRef = useRef(0);
-  const historyAnchorRef = useRef<{ key: string; top: number } | null>(null);
+  const historyAnchorRef = useRef<{
+    key: string;
+    top: number;
+    scrollTop: number;
+    scrollHeight: number;
+  } | null>(null);
 
   const shouldSuppressInteractionDrivenSizeAdjustment = useCallback(
     () =>
@@ -446,6 +458,8 @@ const ScopedConversationList = forwardRef<
         historyAnchorRef.current = {
           key: node.dataset.semanticKey,
           top: node.getBoundingClientRect().top - top,
+          scrollTop: el.scrollTop,
+          scrollHeight: el.scrollHeight,
         };
       }
     }
@@ -514,7 +528,14 @@ const ScopedConversationList = forwardRef<
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pendingMessages, pendingScope]);
 
-  const { isFirstTurn, isLoadingHistory } = useConversationHistory({
+  const {
+    isFirstTurn,
+    isLoadingHistory,
+    legacyHistoryStatus,
+    canonicalHistoryStatus,
+    retryLegacyHistory,
+    retryCanonicalHistory,
+  } = useConversationHistory({
     attempt,
     onTimelineUpdated,
     scopeKey: conversationScopeKey,
@@ -605,6 +626,31 @@ const ScopedConversationList = forwardRef<
     const anchor = historyAnchorRef.current;
     const el = tanstackScrollRef.current;
     if (!anchor || !el) return false;
+    // A native scrollbar can move without a DOM pointer event, and its scroll
+    // event may arrive after ResizeObserver. Adopt that movement before an
+    // old anchor can undo it. Height changes still need anchor compensation.
+    if (
+      el.scrollHeight === anchor.scrollHeight &&
+      Math.abs(el.scrollTop - anchor.scrollTop) > 1
+    ) {
+      const bounds = el.getBoundingClientRect();
+      const visible = Array.from(
+        el.querySelectorAll<HTMLElement>('[data-semantic-key]')
+      ).find((row) => {
+        const rect = row.getBoundingClientRect();
+        return rect.bottom > bounds.top && rect.top < bounds.bottom;
+      });
+      if (visible?.dataset.semanticKey) {
+        historyAnchorRef.current = {
+          key: visible.dataset.semanticKey,
+          top: visible.getBoundingClientRect().top - bounds.top,
+          scrollTop: el.scrollTop,
+          scrollHeight: el.scrollHeight,
+        };
+      }
+      // The virtual window may not have rendered the new position yet.
+      return true;
+    }
     const node = Array.from(
       el.querySelectorAll<HTMLElement>('[data-semantic-key]')
     ).find((row) => row.dataset.semanticKey === anchor.key);
@@ -613,6 +659,8 @@ const ScopedConversationList = forwardRef<
       node.getBoundingClientRect().top -
       el.getBoundingClientRect().top -
       anchor.top;
+    anchor.scrollTop = el.scrollTop;
+    anchor.scrollHeight = el.scrollHeight;
     return true;
   }, []);
 
@@ -627,6 +675,8 @@ const ScopedConversationList = forwardRef<
       historyAnchorRef.current = {
         key: node.dataset.semanticKey,
         top: node.getBoundingClientRect().top - top,
+        scrollTop: el.scrollTop,
+        scrollHeight: el.scrollHeight,
       };
     }
   }, []);
@@ -642,6 +692,49 @@ const ScopedConversationList = forwardRef<
     onFollowChange: handleFollowChange,
     shouldSuppressSizeAdjustment: shouldSuppressInteractionDrivenSizeAdjustment,
   });
+
+  const [atTop, setAtTop] = useState(true);
+  const [canScroll, setCanScroll] = useState(false);
+  const [jumpToTopPending, setJumpToTopPending] = useState(false);
+  useEffect(() => {
+    const el = tanstackScrollRef.current;
+    if (!el || !showScrollToTop) return;
+    const update = () => {
+      setAtTop(el.scrollTop <= 1);
+      setCanScroll(el.scrollHeight > el.clientHeight + 1);
+    };
+    el.addEventListener('scroll', update, { passive: true });
+    const observer = new ResizeObserver(update);
+    observer.observe(el);
+    if (contentRef.current) observer.observe(contentRef.current);
+    update();
+    return () => {
+      el.removeEventListener('scroll', update);
+      observer.disconnect();
+    };
+  }, [showScrollToTop]);
+  useEffect(() => {
+    if (
+      !jumpToTopPending ||
+      legacyHistoryStatus !== 'complete' ||
+      canonicalHistoryStatus !== 'complete'
+    )
+      return;
+    const frame = requestAnimationFrame(() => {
+      historyAnchorRef.current = null;
+      conversationVirtualizer.releaseBottomLock();
+      const el = tanstackScrollRef.current;
+      if (el) el.scrollTop = 0;
+      setJumpToTopPending(false);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [
+    jumpToTopPending,
+    legacyHistoryStatus,
+    canonicalHistoryStatus,
+    dataVersion,
+    conversationVirtualizer.releaseBottomLock,
+  ]);
 
   useLayoutEffect(() => {
     const anchor = historyAnchorRef.current;
@@ -847,6 +940,7 @@ const ScopedConversationList = forwardRef<
         scrollToPreviousUserMessage();
       },
       scrollToBottom: (behavior = 'smooth') => {
+        setJumpToTopPending(false);
         scrollToBottomAndClearSpacer(behavior);
       },
       adjustScrollBy: (delta) => {
@@ -958,6 +1052,44 @@ const ScopedConversationList = forwardRef<
   return (
     <ApprovalFormProvider>
       <div className="relative h-full overflow-hidden">
+        {showScrollToTop &&
+          ((canScroll && !atTop) ||
+            (conversationRows.length > 0 &&
+              (legacyHistoryStatus !== 'complete' ||
+                canonicalHistoryStatus !== 'complete'))) && (
+            <button
+              type="button"
+              data-testid="conversation-scroll-to-top"
+              className="absolute top-2 right-4 z-10 flex items-center justify-center size-8 rounded-full bg-secondary/80 border border-secondary text-low hover:text-normal shadow-md"
+              aria-label={t('workspaces.scrollToTop')}
+              title={t('workspaces.scrollToTop')}
+              aria-busy={
+                jumpToTopPending &&
+                legacyHistoryStatus !== 'error' &&
+                canonicalHistoryStatus !== 'error'
+              }
+              onClick={() => {
+                historyAnchorRef.current = null;
+                conversationVirtualizer.releaseBottomLock();
+                if (legacyHistoryStatus === 'error') retryLegacyHistory();
+                if (canonicalHistoryStatus === 'error') retryCanonicalHistory();
+                setJumpToTopPending(true);
+              }}
+            >
+              <ArrowUpIcon className="size-icon-base" weight="bold" />
+            </button>
+          )}
+        {showScrollToTop &&
+          jumpToTopPending &&
+          (legacyHistoryStatus === 'error' ||
+            canonicalHistoryStatus === 'error') && (
+            <div
+              role="status"
+              className="absolute top-12 right-4 z-10 rounded bg-secondary px-2 py-1 text-xs text-high"
+            >
+              {t('workspaces.scrollToTopRetry')}
+            </div>
+          )}
         {showLoader && (
           <div className="absolute inset-0 flex items-center justify-center z-10">
             <SpinnerIcon className="size-6 animate-spin text-low" />
@@ -965,19 +1097,23 @@ const ScopedConversationList = forwardRef<
         )}
         <div
           ref={tanstackScrollRef}
-          className="h-full overflow-y-auto scrollbar-none"
+          className="h-full overflow-y-auto workspace-conversation-scrollbar"
           style={{ overflowAnchor: 'none', contain: 'strict' }}
           onClickCapture={handleConversationClickCapture}
           onWheelCapture={() => {
+            if (jumpToTopPending) setJumpToTopPending(false);
             historyAnchorRef.current = null;
           }}
           onTouchStartCapture={() => {
+            if (jumpToTopPending) setJumpToTopPending(false);
             historyAnchorRef.current = null;
           }}
           onPointerDownCapture={() => {
+            if (jumpToTopPending) setJumpToTopPending(false);
             historyAnchorRef.current = null;
           }}
           onKeyDownCapture={() => {
+            if (jumpToTopPending) setJumpToTopPending(false);
             historyAnchorRef.current = null;
           }}
         >

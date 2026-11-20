@@ -21,6 +21,11 @@ export interface UseConversationHistoryResult {
   isFirstTurn: boolean;
   /** Whether background batches are still loading older history entries */
   isLoadingHistory: boolean;
+  /** Completion of legacy script history, independent of canonical history. */
+  legacyHistoryStatus: 'pending' | 'complete' | 'error';
+  canonicalHistoryStatus: 'pending' | 'complete' | 'error';
+  retryCanonicalHistory: () => void;
+  retryLegacyHistory: () => void;
 }
 import {
   MIN_INITIAL_ENTRIES,
@@ -47,6 +52,10 @@ export const useConversationHistory = ({
   >(null);
   const previousActiveMapRef = useRef<Map<string, boolean>>(new Map());
   const [isLoadingHistoryState, setIsLoadingHistory] = useState(false);
+  const [legacyHistoryStatus, setLegacyHistoryStatus] = useState<
+    'pending' | 'complete' | 'error'
+  >('pending');
+  const [historyRetry, setHistoryRetry] = useState(0);
   const generationRef = useRef(0);
   const controllersRef = useRef(new Set<{ close: () => void }>());
 
@@ -96,7 +105,7 @@ export const useConversationHistory = ({
   ) => {
     const url = `/api/execution-processes/${executionProcess.id}/raw-logs/ws`;
 
-    return new Promise<PatchType[]>((resolve) => {
+    return new Promise<PatchType[]>((resolve, reject) => {
       const controller = streamJsonPatchEntries<PatchType>(url, {
         onFinished: (allEntries) => {
           controllersRef.current.delete(controller);
@@ -110,7 +119,7 @@ export const useConversationHistory = ({
           );
           controllersRef.current.delete(controller);
           controller.close();
-          resolve([]);
+          reject(err);
         },
       });
       controllersRef.current.add(controller);
@@ -384,6 +393,7 @@ export const useConversationHistory = ({
     previousActiveMapRef.current.clear();
     canonicalInitializedRef.current = false;
     setIsLoadingHistory(false);
+    setLegacyHistoryStatus('pending');
     emitEntries(displayedExecutionProcesses.current, 'initial', true);
     const controllers = controllersRef.current;
     return () => {
@@ -417,28 +427,37 @@ export const useConversationHistory = ({
         if (emittedEmptyInitialRef.current) return;
         emittedEmptyInitialRef.current = true;
         emitEntries(displayedExecutionProcesses.current, 'initial', false);
+        setLegacyHistoryStatus('complete');
         return;
       }
 
       emittedEmptyInitialRef.current = false;
 
-      const allInitialEntries = await loadHistoricEntries(MIN_INITIAL_ENTRIES);
-      if (cancelled) return;
-      loadedInitialEntries.current = true;
-      mergeIntoDisplayed((state) => {
-        Object.assign(state, allInitialEntries);
-      });
-      emitEntries(displayedExecutionProcesses.current, 'initial', false);
-
+      setLegacyHistoryStatus('pending');
       setIsLoadingHistory(true);
-      while (
-        !cancelled &&
-        (await loadRemainingEntriesInBatches(REMAINING_BATCH_SIZE))
-      ) {
+      try {
+        const allInitialEntries =
+          await loadHistoricEntries(MIN_INITIAL_ENTRIES);
         if (cancelled) return;
-        emitEntries(displayedExecutionProcesses.current, 'historic', false);
+        loadedInitialEntries.current = true;
+        mergeIntoDisplayed((state) => {
+          Object.assign(state, allInitialEntries);
+        });
+        emitEntries(displayedExecutionProcesses.current, 'initial', false);
+
+        while (
+          !cancelled &&
+          (await loadRemainingEntriesInBatches(REMAINING_BATCH_SIZE))
+        ) {
+          if (cancelled) return;
+          emitEntries(displayedExecutionProcesses.current, 'historic', false);
+        }
+        if (!cancelled) setLegacyHistoryStatus('complete');
+      } catch {
+        if (!cancelled) setLegacyHistoryStatus('error');
+      } finally {
+        if (!cancelled) setIsLoadingHistory(false);
       }
-      if (!cancelled) setIsLoadingHistory(false);
     })();
     return () => {
       cancelled = true;
@@ -450,6 +469,7 @@ export const useConversationHistory = ({
     loadHistoricEntries,
     loadRemainingEntriesInBatches,
     emitEntries,
+    historyRetry,
   ]); // include idListKey so new processes trigger reload
 
   useEffect(() => {
@@ -518,7 +538,14 @@ export const useConversationHistory = ({
       let anyUpdated = false;
 
       for (const process of processesToReload) {
-        const entries = await loadEntriesForHistoricExecutionProcess(process);
+        let entries: PatchType[];
+        try {
+          entries = await loadEntriesForHistoricExecutionProcess(process);
+        } catch {
+          if (generation === generationRef.current)
+            setLegacyHistoryStatus('error');
+          return;
+        }
         if (generation !== generationRef.current) return;
         if (entries.length === 0) continue;
 
@@ -562,5 +589,15 @@ export const useConversationHistory = ({
     isFirstTurn,
     isLoadingHistory:
       isLoadingHistoryState || canonicalSession.isLoadingHistory,
+    legacyHistoryStatus:
+      isLoading || !isConnected ? 'pending' : legacyHistoryStatus,
+    canonicalHistoryStatus: canonicalSession.historyStatus,
+    retryCanonicalHistory: canonicalSession.retryHistory,
+    retryLegacyHistory: () => {
+      if (isLoadingHistoryState) return;
+      loadedInitialEntries.current = false;
+      setLegacyHistoryStatus('pending');
+      setHistoryRetry((value) => value + 1);
+    },
   };
 };

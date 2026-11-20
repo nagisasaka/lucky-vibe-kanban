@@ -246,6 +246,7 @@ export const WorkspacesMainContainer = forwardRef<
             attempt={workspaceWithSession}
             repos={repos}
             onAtBottomChange={handleAtBottomChange}
+            showScrollToTop
             sessionScopeId={selectedSessionId}
           />
         </RetryUiProvider>

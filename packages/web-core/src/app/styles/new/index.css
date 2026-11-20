@@ -1296,6 +1296,21 @@ html {
 
 @config '../../../../../local-web/tailwind.new.config.js';
 
+/* Only the Workspace conversation's native scroll container uses these colors. */
+.workspace-conversation-scrollbar {
+  scrollbar-color: hsl(var(--text-low)) hsl(var(--bg-secondary));
+}
+
+@supports not (scrollbar-color: auto) {
+  .workspace-conversation-scrollbar::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--text-low));
+  }
+
+  .workspace-conversation-scrollbar::-webkit-scrollbar-track {
+    background-color: hsl(var(--bg-secondary));
+  }
+}
+
 /* Hide Virtuoso Message List license watermark warning (scoped to virtuoso wrappers only) */
 .virtuoso-license-wrapper
   > div[style*='color: red'][style*='pointer-events: none'] {
@@ -1689,6 +1704,12 @@ html {
   list-style: none;
   padding-inline-start: 1rem;
 }
+/* Accent only Markdown strong text in assistant replies. Links and code retain
+   their own presentation when formatting is nested. */
+.assistant-message-markdown strong:not(a *, code *, .md-inline-code, .md-inline-code *) {
+  color: hsl(var(--brand-text));
+}
+
 .markdown-editor .md-inline-code {
   font-family: monospace;
   background: hsl(var(--bg-panel));
