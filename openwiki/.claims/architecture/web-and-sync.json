@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:db84f6ea4150c00b37203b1493a51794854bd57f5b31f9425560f703885bdccb",
+  "pageVersion": "sha256:562ba3615ee51c350df7526e48cbef3dfff63a5e4c90b4c8dab5519874a628c8",
   "claims": [
     {
       "id": "claim_cd547b65737e432fb2cf718c4992aa97",
@@ -248,7 +248,7 @@
       "evidence": [
         {
           "resource": "repo://packages/web-core/src/features/agent-runtime/model/AgentRunSessionContext.tsx",
-          "version": "repo-file-v1:sha256:56849d78673b6d3b2f159217d4345203077916f714bcab2f02a92a6cc5201e05"
+          "version": "repo-file-v1:sha256:afbf39e43303169664e8f5ff5d93e518f5863f808c27bff00cacaef0d6fbe613"
         },
         {
           "resource": "repo://tests/integration-skip/history.spec.ts",
@@ -321,7 +321,7 @@
           "version": "repo-lines-v1:sha256:e60f02fb1c037a758d18eda0530082110eccb4eb2094876474618742187d1ad8:eyJzZWxlY3RlZExpbmVDb3VudCI6MzQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIzZmYyNzRhNmNiYmFkYThlNDM5ZWQwM2I1NjQ4ZDk4MGM5ZTIwM2ZhNjNjMDMxOTg0Yzk5MWVkNzgzMTVlNGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
         },
         {
-          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/ConversationListContainer.tsx#L85-L91",
+          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/ConversationListContainer.tsx#L86-L92",
           "version": "repo-lines-v1:sha256:c8be9fde89e253f53bb3c17049fbcfd1cf9194e58dd1480e13b81e68c6d91874:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNGY4YjI4NGU0ZWI2Njk4YWIzMjdlZDFjNzBjY2ZiMzU4MTNjMjgzNzZlYzViZjM1NjVhNTkzZGRlNDlmOWJiYiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMjdlNTc4OGQ1ZDlkNzNkMjRhODFkYmMwYTVhNzRiZmE4MmM5YzNiM2FmOTllNTJhZjc5NmU5MGI0NjhhOGEzZCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZjkxZTg1NWRjNzUyYjQzODNiM2EwMDY0ZGUwNTNkNTBmMzdmZjY5NDI0NzQ4ZThiNzE1MmU3YWYzMDExNWMxMCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMmEwYTU5ZDA3ZTFlN2VlZjIyZDgyYmE5OThkMWM5M2M4ZDQ5YmNjNWIxNGVhODEyZWQ3MTYyOTE0OTdhOWJiYSJ9"
         }
       ]
@@ -359,16 +359,16 @@
       "statement": "ConversationListはWorkspace/Sessionをkeyに状態を分離し保留rAFをcleanupする。初回スクロールは最初の非空行適用だけで、遅いinitial通知で再実行しない。",
       "evidence": [
         {
-          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/ConversationListContainer.tsx#L1113-L1125",
+          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/ConversationListContainer.tsx#L1249-L1261",
           "version": "repo-lines-v1:sha256:e1749535beac1d5fa62bc89cf7e385ffefe0e92a4c49ac52e75dfb1941c60fb3:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjliNTA3Y2QwNDQ2ZWE4MDI4ODlhMGVhYzE5YzU5MTZjYTExYTU0MmM4YmFhOTZiYWMxYjc3OTgzNDFkYzkyZDIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY2ZjViNDBiMTU4NDU3ZDE3ODY0ZjIxNzkwNzg2ZGQ1YTJlY2RiNjRiNjZhNjUxZjc4OGQ0ZTI1Y2QzMzAzZDIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjY4MGQyZGQ0ZjI4OWQyNmRjNzU3YzJiNjVhMDZjMzkyMjdhNjcxN2M0YjQ4YjVhMzk3OTJjOWYxMWU0MWFlYTYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoyLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFlMDczZTk4OGI1YjdmZjJhNWVhNTE0NTkyOWQxZDFkYjI1ZTZjN2M5OWM0NDVjZTQ4YjgxM2FiMWJiYTUwNDkifQ"
         },
         {
-          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/ConversationListContainer.tsx#L305-L340",
+          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/ConversationListContainer.tsx#L312-L347",
           "version": "repo-lines-v1:sha256:a3380755751c46402b2cea5aa2d4e6873458eaad9266b1645827df23323db223:eyJzZWxlY3RlZExpbmVDb3VudCI6MzYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJjMWM3Mjc4MjBkNTI3ZDVkYzEwNzJkYWExODQ0YmU0NWVkMTk3ZTc4MTMyMjQ3MmY4MjY4MDQ4NGE0MTczNWUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjBhZDhkY2E1MzY5MGQxMWVhZmY3ZTNhOTk4NzE4ZWNmNzgxZDExYmNkYjIyZWFkYWNmZTdkNDE5ZDI1ODdhOTciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFlMTFjMmI2ZDExNzAxZDExYjdlNzAzMzRlNWU3MDQ4N2RkNTVlNmYxZGEwNjYwOWUyMWM4ZTQ1ZDBkNWYyYTgifQ"
         },
         {
-          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/ConversationListContainer.tsx#L413-L485",
-          "version": "repo-lines-v1:sha256:16f697d91932d99acffed7765a55448cde151cead3b19094e628c02788bf6801:eyJzZWxlY3RlZExpbmVDb3VudCI6NzMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjEyNzBlNmMwZTEwYmY0ZTkwNTY3MDI2NmY2NTcwOTI2ZjA3YTNjZTU2MWQzZDI2YjczNmI0NGM2ZWQ3MzljZTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNiMGY3YmM2N2I1YWE2ZWIyY2RjYzRjOWVmYTUwOWYxMWNjNjYwODY4ZjMyMjhhZDY3OTBkMjFiN2MyZmU3MGMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijc5M2YxNmYzMTE2MzU3MzY4YjE1NjIyODQzZDU2YzlmM2I2MDc4NzRiYzNlZGFlM2JkZWQ4MTI2NDY5NDg4ODkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE1NzYwNmJlYmM4ZjE2MzAyMTM3ZGNjZjgxODc0Zjk4OGEyMjhhZGE1YjE1MDYxZWNlZGM5ZDI3NTZhYTUwM2EifQ"
+          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/ConversationListContainer.tsx#L425-L499",
+          "version": "repo-lines-v1:sha256:fe63394252141898ed206d9689dd850f1b10e82d0a19dccbf08173f45fbd2b00:eyJzZWxlY3RlZExpbmVDb3VudCI6NzUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjEyNzBlNmMwZTEwYmY0ZTkwNTY3MDI2NmY2NTcwOTI2ZjA3YTNjZTU2MWQzZDI2YjczNmI0NGM2ZWQ3MzljZTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNiMGY3YmM2N2I1YWE2ZWIyY2RjYzRjOWVmYTUwOWYxMWNjNjYwODY4ZjMyMjhhZDY3OTBkMjFiN2MyZmU3MGMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijc5M2YxNmYzMTE2MzU3MzY4YjE1NjIyODQzZDU2YzlmM2I2MDc4NzRiYzNlZGFlM2JkZWQ4MTI2NDY5NDg4ODkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE1NzYwNmJlYmM4ZjE2MzAyMTM3ZGNjZjgxODc0Zjk4OGEyMjhhZGE1YjE1MDYxZWNlZGM5ZDI3NTZhYTUwM2EifQ"
         }
       ]
     },
@@ -377,8 +377,8 @@
       "statement": "末尾付近の64px幾何判定と追従意図は別で、測定由来scrollでは追従を解除しない。上向き閲覧操作で解除し、下向き操作で実末尾到達か明示jumpで再開、layoutとResizeObserverで即時補正する。",
       "evidence": [
         {
-          "resource": "repo://packages/web-core/src/features/workspace-chat/model/useConversationVirtualizer.ts#L263-L441",
-          "version": "repo-lines-v1:sha256:369acf8bb95598daf741d8ca7b27a42f2e2843b110f163a2d4d9d9e612944702:eyJzZWxlY3RlZExpbmVDb3VudCI6MTc5LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIyYjkyZDJhNTQzY2Q3MjIyNmM3ZDNlZDRkZjgyNWM5ZTI1MGMwOTliYWEwY2Q1NjIwNDYwMjA1YTI2Nzg4Nzg1IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI2MzkzOWE2YzUzMTEzNmI5NzEyZjE1NmU1ODY5N2RlYzBhMWE1NDk1YTllZjlhN2U2ZmEzMDlhM2ExMDA1ZTQ0IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI5MzA4YmI3MWM4YjU4ZDUxN2NlMWZkMjhlNTU0M2EwMjRmOWE2ODhkNjAxYzcwMmQ1MjgxY2Y0MjA4OTY4YmNmIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI3MzE1YTNiY2IyNWQ3ZDc2M2Y3MDdkMGFjNmM2ZTY2NDM1MmRiYTdjYWRkNjc0MzEyM2UyYjA4MzQyOGJlYjA0In0"
+          "resource": "repo://packages/web-core/src/features/workspace-chat/model/useConversationVirtualizer.ts#L263-L458",
+          "version": "repo-lines-v1:sha256:b0ac220c5a15fad39bf6361b111ff4d60b635dcd10e09ab73a0c04b097caf78d:eyJzZWxlY3RlZExpbmVDb3VudCI6MTk2LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIyYjkyZDJhNTQzY2Q3MjIyNmM3ZDNlZDRkZjgyNWM5ZTI1MGMwOTliYWEwY2Q1NjIwNDYwMjA1YTI2Nzg4Nzg1IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI2MzkzOWE2YzUzMTEzNmI5NzEyZjE1NmU1ODY5N2RlYzBhMWE1NDk1YTllZjlhN2U2ZmEzMDlhM2ExMDA1ZTQ0IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI5MzA4YmI3MWM4YjU4ZDUxN2NlMWZkMjhlNTU0M2EwMjRmOWE2ODhkNjAxYzcwMmQ1MjgxY2Y0MjA4OTY4YmNmIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI3MzE1YTNiY2IyNWQ3ZDc2M2Y3MDdkMGFjNmM2ZTY2NDM1MmRiYTdjYWRkNjc0MzEyM2UyYjA4MzQyOGJlYjA0In0"
         }
       ]
     },
@@ -387,12 +387,12 @@
       "statement": "過去閲覧中の更新は可視行のsemantic keyと相対位置を捕捉して復元し、非仮想化の末尾境界も行keyで再解決する。anchor行がDOMにない場合はvirtualizerへ移動し、行が消えればanchorを破棄する。",
       "evidence": [
         {
-          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/ConversationListContainer.tsx#L438-L467",
-          "version": "repo-lines-v1:sha256:d0459352a486688c900d0353849ab072d30ff924a3420c7dd3218edbdd0f90d7:eyJzZWxlY3RlZExpbmVDb3VudCI6MzAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxZTlmN2MwYzYzYjFkNTZjNGI0ZTg3MGY2ZTU0MjBhYWUzNmZmMzI4MzE1MWUxYzg4YTRhNTFkNjA0Yzk5MGYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjgyODQyMDhmYmY4MWZmNjNmNDQyYTdkYzhkNmZjN2ZkZWQ5MGU2OWJhZmFlMTBiMWU1MmNhMjZlZmRiMDQwMGIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJiN2NhMWViYTFlYzFmZDVkZmRmYmU0YTE2Nzk0NDQ4NjljYjQ3MWM4YWUwZmZjMzM5NjNjMGRmNzVkOTQ3ZDgifQ"
+          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/ConversationListContainer.tsx#L450-L481",
+          "version": "repo-lines-v1:sha256:d96a9f816cfc370206ef40145de83d3ca139a81fe2e7c9963f1d6444c85d30bc:eyJzZWxlY3RlZExpbmVDb3VudCI6MzIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxZTlmN2MwYzYzYjFkNTZjNGI0ZTg3MGY2ZTU0MjBhYWUzNmZmMzI4MzE1MWUxYzg4YTRhNTFkNjA0Yzk5MGYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjgyODQyMDhmYmY4MWZmNjNmNDQyYTdkYzhkNmZjN2ZkZWQ5MGU2OWJhZmFlMTBiMWU1MmNhMjZlZmRiMDQwMGIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJiN2NhMWViYTFlYzFmZDVkZmRmYmU0YTE2Nzk0NDQ4NjljYjQ3MWM4YWUwZmZjMzM5NjNjMGRmNzVkOTQ3ZDgifQ"
         },
         {
-          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/ConversationListContainer.tsx#L603-L663",
-          "version": "repo-lines-v1:sha256:35336fef7d8835793d77594baba69b814d3ffc4b0955adc76823b27c95cbc622:eyJzZWxlY3RlZExpbmVDb3VudCI6NjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNhM2U0NmY5NDI3NmI2ZjZmNGVkMWYwMmFmNzhiZWY2YTJlZTFjNDM5ZGQ1NTg0Yjk3Mzk0ODMxMzIxNGQyYjciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjAwZDVjMDA2MzMxMjAwNDg3ZGVkYWI3YWFiYjkxMGFhNzE4NzIxMzFlOTI4MzY4MmY3M2E0MWQ4MmZiYWYzNmEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNkNjY0YzJkOTgzODE4MWVhN2M3ZGU3YjAwNzVkNzY0NmM4YmI1NjAyZGYxMWNlNmViMGZhODdjZTY4NTk4N2EifQ"
+          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/ConversationListContainer.tsx#L624-L756",
+          "version": "repo-lines-v1:sha256:9867a0ce6660de3f91537f5aec39845cc4abf9782889c2bef2d697019890d3dd:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMzLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIwMWJhNDcxOWM4MGI2ZmU5MTFiMDkxYTdjMDUxMjRiNjRlZWVjZTk2NGUwOWMwNThlZjhmOTgwNWRhY2E1NDZiIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIzYTNlNDZmOTQyNzZiNmY2ZjRlZDFmMDJhZjc4YmVmNmEyZWUxYzQzOWRkNTU4NGI5NzM5NDgzMTMyMTRkMmI3IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIwMGQ1YzAwNjMzMTIwMDQ4N2RlZGFiN2FhYmI5MTBhYTcxODcyMTMxZTkyODM2ODJmNzNhNDFkODJmYmFmMzZhIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiIzZDY2NGMyZDk4MzgxODFlYTdjN2RlN2IwMDc1ZDc2NDZjOGJiNTYwMmRmMTFjZTZlYjBmYTg3Y2U2ODU5ODdhIn0"
         }
       ]
     },
@@ -401,12 +401,12 @@
       "statement": "履歴anchorはcontent resizeでも復元する。閲覧操作で現在位置を取り直し二重補正を抑え、Run完了時の末尾DOM仮想化移行は追従再開まで延期する。",
       "evidence": [
         {
-          "resource": "repo://packages/web-core/src/features/workspace-chat/model/useConversationVirtualizer.ts#L394-L425",
+          "resource": "repo://packages/web-core/src/features/workspace-chat/model/useConversationVirtualizer.ts#L411-L442",
           "version": "repo-lines-v1:sha256:196937ecdd31d4cc9d1186c5c8db4d9dc6dbc51762da84f5ba543b14714bd6d9:eyJzZWxlY3RlZExpbmVDb3VudCI6MzIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJlNTBmNzMzNmFlNzQ1ZjE3OTVkNWVmZmEwOWRhZjk1NTg0Y2MwN2NjMDdhNmU1YmFlMWU1MmRhYjZmMzNkOGQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA3ZTAxNWRiZmFmM2NiYTE5ZGQzNDBkNzdjMWY5ZGRiODJlNzRkYzJmMzVkMWVkYmQzNDE1NmY5MjU5MzU2ZjEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjBiZjVhNzVjMDRkMDcxZGQyZmQxNWQ2NDJlNTFkN2I4MGM3MWE0ZGJjOGY1M2VjNDVkMDc1YjZkMTg4MTA2MzEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNkZTMxMTFlZDI0OGJmNzUwMjVmZTU5ZWQ5YmI2YzVkMzRkY2E1ZDk3YzllZDYxNTVmMjcwNDlkMmQyYjk1OTkifQ"
         },
         {
-          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/ConversationListContainer.tsx#L570-L663",
-          "version": "repo-lines-v1:sha256:27bf1eba2d90d150ed379e2d70dc4fa7769f6b1ee0aef0445e7431e2d812fb2b:eyJzZWxlY3RlZExpbmVDb3VudCI6OTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMyMGQ2NTYyNGU3OTEwNGRiZjZmNGI0NWY4N2RiM2NiMDFkMmEzYjkxZWFiOGQ2MmI0MGRiMzllOWExYTc4NTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNhM2U0NmY5NDI3NmI2ZjZmNGVkMWYwMmFmNzhiZWY2YTJlZTFjNDM5ZGQ1NTg0Yjk3Mzk0ODMxMzIxNGQyYjciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhlMGY0MzkxZWFiMDEzYzA0ODkwOGM1ZjYxNGQ2YzFkNzk4ZTcxMGQ4NzNiZDZiM2EyMWZlNzI4NDMzODg0ZDMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNkNjY0YzJkOTgzODE4MWVhN2M3ZGU3YjAwNzVkNzY0NmM4YmI1NjAyZGYxMWNlNmViMGZhODdjZTY4NTk4N2EifQ"
+          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/ConversationListContainer.tsx#L591-L756",
+          "version": "repo-lines-v1:sha256:fbf1f037907467199bfe36b056e5fbbb2de6a167da47ed2e612d817b2a383f57:eyJzZWxlY3RlZExpbmVDb3VudCI6MTY2LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIzMjBkNjU2MjRlNzkxMDRkYmY2ZjRiNDVmODdkYjNjYjAxZDJhM2I5MWVhYjhkNjJiNDBkYjM5ZTlhMWE3ODUwIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIzYTNlNDZmOTQyNzZiNmY2ZjRlZDFmMDJhZjc4YmVmNmEyZWUxYzQzOWRkNTU4NGI5NzM5NDgzMTMyMTRkMmI3IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI4ZTBmNDM5MWVhYjAxM2MwNDg5MDhjNWY2MTRkNmMxZDc5OGU3MTBkODczYmQ2YjNhMjFmZTcyODQzMzg4NGQzIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiIzZDY2NGMyZDk4MzgxODFlYTdjN2RlN2IwMDc1ZDc2NDZjOGJiNTYwMmRmMTFjZTZlYjBmYTg3Y2U2ODU5ODdhIn0"
         }
       ]
     },
@@ -467,12 +467,12 @@
       "statement": "チャットのcommand/scriptはChatCodeでPrism tokenをReact文字列とspanへ描画し、Markdown fenceはdisabledのWYSIWYGEditorとLexicalを通る。両経路はCODE_HIGHLIGHT_CLASSESを共有し、helperがbash/JSON grammarを登録する。",
       "evidence": [
         {
-          "resource": "repo://packages/ui/src/components/ChatCode.tsx#L1-L31",
-          "version": "repo-lines-v1:sha256:c9bb94787edf4ba5c95f66facf461af158c723c4b1092b3caa20af8931c834d5:eyJzZWxlY3RlZExpbmVDb3VudCI6MzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI0ODk5ZGE1OWY5NTA3MmE1ZGJlODg5NzM5MDM5ZmEyOTkwM2NiYjBkOGNmMWY0YTViNGYwMzU0ZDEzNDM5ZjIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY2ZjViNDBiMTU4NDU3ZDE3ODY0ZjIxNzkwNzg2ZGQ1YTJlY2RiNjRiNjZhNjUxZjc4OGQ0ZTI1Y2QzMzAzZDIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+          "resource": "repo://packages/ui/src/components/ChatCode.tsx#L1-L157",
+          "version": "repo-lines-v1:sha256:388a68429ba71a79eb72567c668095df4af94f1a3216a21bd5a774ec6503ddad:eyJzZWxlY3RlZExpbmVDb3VudCI6MTU3LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIyNDg5OWRhNTlmOTUwNzJhNWRiZTg4OTczOTAzOWZhMjk5MDNjYmIwZDhjZjFmNGE1YjRmMDM1NGQxMzQzOWYyIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJmNmY1YjQwYjE1ODQ1N2QxNzg2NGYyMTc5MDc4NmRkNWEyZWNkYjY0YjY2YTY1MWY3ODhkNGUyNWNkMzMwM2QyIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MCwicHJlY2VkaW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MCwiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1In0"
         },
         {
-          "resource": "repo://packages/ui/src/lib/chat-code-highlighting.ts#L1-L23",
-          "version": "repo-lines-v1:sha256:b3457837fedf518139a80ac538b5e6ad1b7e7c369feb57a9346c674859d0597a:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhhZWUxNDUwODdjZmZkMTcxYWFiMmIxNDJiY2ExNzczZDM4NTIyYTljNGRjN2Y4NzcxNGU1NmM2MmU1MjJlMTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+          "resource": "repo://packages/ui/src/lib/chat-code-highlighting.ts#L1-L25",
+          "version": "repo-lines-v1:sha256:0ff8433b459b5f5084478f35298ddfee6e8e511b9050be6537e58265658b9e07:eyJzZWxlY3RlZExpbmVDb3VudCI6MjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhhZWUxNDUwODdjZmZkMTcxYWFiMmIxNDJiY2ExNzczZDM4NTIyYTljNGRjN2Y4NzcxNGU1NmM2MmU1MjJlMTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
         },
         {
           "resource": "repo://packages/web-core/src/shared/components/WYSIWYGEditor.tsx#L726-L731",
@@ -485,12 +485,12 @@
       "statement": "commandとsummaryが等しい見出しをbashで装飾し、詳細は元commandとlanguage付き出力をChatCodeへ渡す。bash指定は実行shellの判定ではない。",
       "evidence": [
         {
-          "resource": "repo://packages/ui/src/components/ChatAggregatedToolEntries.tsx#L211-L219",
+          "resource": "repo://packages/ui/src/components/ChatAggregatedToolEntries.tsx#L203-L211",
           "version": "repo-lines-v1:sha256:051bda2003b40257b0b612bea946d759c01430b7a3264f62e47139af13e42308:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZWIxMDU1MTBmZGNhZTdlYTE1YTU4YWQ2NjBjYmU5ZmMyZjdmNDIxYmU1YzIwNjhmZGNlMGNiYjM2NDMyM2U3MiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDBkMGRkZTFkOWZjMDlkZDUzNzg5MzliODFkNWIyZTM2MTkwOTQ4ZTEzOTk3NDFkZWUwNTQ0ZTVmZGM2MzIyZSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMDY1MzExZDQ5MTZjZGFkNjkwNzhiNjg5ZGU0NzRkOWU0MTc0ZDU5NGY2YmU3ZjEwNGMxMjZhZGM2NzUwMDY5YiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMWIwOWQ4ZWQ0ODgxMDczMzk2YWM4Yjk0ZWUzZjhmNGFhNWNiZmE1YmU2NjYzNGE2MzgwYjViYWYzY2MwY2YxNSJ9"
         },
         {
-          "resource": "repo://packages/ui/src/components/ChatAggregatedToolEntries.tsx#L334-L351",
-          "version": "repo-lines-v1:sha256:17af43054a7178a5c514d2bb4da331ea35e417a36568e51666b7290eee430955:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ0ZWU1MTA0NDliZjMzYTc5ZTI2ZjIwNmIzOTgwMzI4ZmJlYzQ1YWZhNGJlOGJmYjQ5NzIwNDFiMThhZWI3OGQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNjNzE0NTQ2MWJlNmI1NjNjZTZjOWU2MzU5ODVlOGQ4MmYyNTE1YjZmZjM1NDQ1Y2NjYzA5ZTkxZjI2ODE2NDciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJjOTllNmNjZDUwZDkwODQ1MTNmMGY3ZTgyYjE0YjU2YTEzNDgwYWNmYzQ5NDNiNTQ5ZmJjZjY0NTczZTE3MGQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFmYTgxYmZiNWUzMzIwM2Q5MDU5N2YwODY0ZWRmMzA1ZWM3N2E4MDVkNWQ5NGU5MzNmMjA0MDNmNzI2YmU2NDUifQ"
+          "resource": "repo://packages/ui/src/components/ChatAggregatedToolEntries.tsx#L326-L343",
+          "version": "repo-lines-v1:sha256:e2348d2a45d15db30bcbd1b5833b4fbedb107d792640092ed3ffd1a93879aaf1:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE4NzRiMjBkNmIzYWIwZTU2NWIwZDhhNGNiYTFlYjU3ODc3Y2NlNGMzMWVjY2ZjYTZiNjVhZjA1YmU2MjRlYzQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNjNzE0NTQ2MWJlNmI1NjNjZTZjOWU2MzU5ODVlOGQ4MmYyNTE1YjZmZjM1NDQ1Y2NjYzA5ZTkxZjI2ODE2NDciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJjOTllNmNjZDUwZDkwODQ1MTNmMGY3ZTgyYjE0YjU2YTEzNDgwYWNmYzQ5NDNiNTQ5ZmJjZjY0NTczZTE3MGQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFmYTgxYmZiNWUzMzIwM2Q5MDU5N2YwODY0ZWRmMzA1ZWM3N2E4MDVkNWQ5NGU5MzNmMjA0MDNmNzI2YmU2NDUifQ"
         }
       ]
     },
@@ -503,7 +503,7 @@
           "version": "repo-lines-v1:sha256:8074e6c3a0b31717dff12fb9554cdf1e803fe7e291c6252b93c0bb1758ae3d56:eyJzZWxlY3RlZExpbmVDb3VudCI6MzgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc3MGYxYjdlY2Y5ODAzNGExZjc2MmU2ZDhiODYyYmNmMzY4YjQzODZkMTA1Mzk1NzdiOTkyYzRkOTBiYjhiMTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImViMzdhZmFmNWIwMzA4ZjI0NGFlNjFkM2Q4N2Y4YmVkMDQ5OTQxOGZkZTUxNWQzMDZmNjJjYjgwYTEzM2JjNGYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
         },
         {
-          "resource": "repo://packages/ui/src/lib/chat-code-highlighting.ts#L5-L23",
+          "resource": "repo://packages/ui/src/lib/chat-code-highlighting.ts#L7-L25",
           "version": "repo-lines-v1:sha256:2b46ea72e84c28ee8d15a55e17a91609a734c86e9a10e686a1c624b3b64bf2ff:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRlOWNkZGVlYTY4ZWNiMDMzYjRhZjM5M2E0ZGI0YmQ3MjU2N2Q2ZTYwZWFjZDMzZjA0MjA0YjFkZjViMzRhMDQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjVlZmVlN2VhNzM1NTMyNDczMjQ2MTMwYTFlYjBhMWVhYWU1ZTg5YTQ4OWU1ZTNkYzFkODQ5ZDZmMzA1M2ZlZjEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
         }
       ]
@@ -1127,11 +1127,11 @@
       "statement": "単一操作は実見出しと結果プレビューから一回で保持詳細へ進み、複数操作も折り畳み時に各操作の結果を残す。",
       "evidence": [
         {
-          "resource": "repo://packages/ui/src/components/ChatAggregatedToolEntries.tsx#L311-L378",
-          "version": "repo-lines-v1:sha256:4e9193e543f6cf802916d9a4de564eace502c4c35124500dead63f7094836641:eyJzZWxlY3RlZExpbmVDb3VudCI6NjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM2OWYzMGU5MmMwYzVlNDZmNTc3NTVmMGNjYTkyMzg4NTA3ODg0NWU3ZTViNWVjOTkyYzZlN2JhNWY3MzlkNWUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRmZDMyMmNiNjM0NmZlYjQxNWU0M2E5ZWEzNzkyNzhkMGMzYTAyOGNmM2I2ZDg5MDZmNzdkMjEzODk3N2U2ODAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRkYmY5ZjA3NzdiMDhlMTRkMjU0NTZjMWM5OTkzMDg4M2QwMGNlZTMwZDQ1NzcyOTEwOThjYTA3NzUzMzExMmUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZjMTFiYTRhNTYyYzc5YzA0NmIwNzVlY2IyODRlN2QwMDU1YWUzZTJlOTZlNmVkZTI1NTg0ZTk0ZDBiYzk5YWUifQ"
+          "resource": "repo://packages/ui/src/components/ChatAggregatedToolEntries.tsx#L303-L370",
+          "version": "repo-lines-v1:sha256:c16bff8a03dd502f17795bdedd787c82bdd52600b32e3649730c29d91dfed562:eyJzZWxlY3RlZExpbmVDb3VudCI6NjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM2OWYzMGU5MmMwYzVlNDZmNTc3NTVmMGNjYTkyMzg4NTA3ODg0NWU3ZTViNWVjOTkyYzZlN2JhNWY3MzlkNWUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRmZDMyMmNiNjM0NmZlYjQxNWU0M2E5ZWEzNzkyNzhkMGMzYTAyOGNmM2I2ZDg5MDZmNzdkMjEzODk3N2U2ODAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRkYmY5ZjA3NzdiMDhlMTRkMjU0NTZjMWM5OTkzMDg4M2QwMGNlZTMwZDQ1NzcyOTEwOThjYTA3NzUzMzExMmUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZjMTFiYTRhNTYyYzc5YzA0NmIwNzVlY2IyODRlN2QwMDU1YWUzZTJlOTZlNmVkZTI1NTg0ZTk0ZDBiYzk5YWUifQ"
         },
         {
-          "resource": "repo://packages/ui/src/components/ChatAggregatedToolEntries.tsx#L404-L444",
+          "resource": "repo://packages/ui/src/components/ChatAggregatedToolEntries.tsx#L396-L436",
           "version": "repo-lines-v1:sha256:59b4babe367699019e60a9b5b0d6999c097b00ead786d18566b407ac04938b77:eyJzZWxlY3RlZExpbmVDb3VudCI6NDEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFmM2NiMmI5MjRjOGY2YjAzODcwMmI1YzcwNjNjOWIwN2JiZjM3YWE0ZDA2ZjJlZGQ2Nzc3ZGU5Zjk3OTU5NjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImM3Y2EzYzgwZjNkMjQ4MzIzNzliMzM0ZDk5NjhlMTA2NzU2NDBjNjlkMjNmNmM0MmNlOTgwZWI0MDA4ZDQ3MmMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFkZDQ3MjRmZDg0ZWU5MTgyNzk0ZDNkNmNkM2JjMWY5Zjg2NzUzNGJhMzg0MzBjYWQ0ZGYwMWVjNzRjYmM3MDQifQ"
         }
       ]
@@ -1439,7 +1439,7 @@
       "statement": "Session会話は初期化済みterminal snapshotが一覧のattempt・event sequence・updated_atに追いつくとstreamを解放し、既存2秒周期の一覧discoveryで新しい更新を検出すると再購読する。",
       "evidence": [
         {
-          "resource": "repo://packages/web-core/src/features/agent-runtime/model/AgentRunSessionContext.tsx#L178-L211",
+          "resource": "repo://packages/web-core/src/features/agent-runtime/model/AgentRunSessionContext.tsx#L184-L217",
           "version": "repo-lines-v1:sha256:b66fa379dd76f8c371eaff74fe2f48bb0d0c81087221ac84307203256e0e3cf5:eyJzZWxlY3RlZExpbmVDb3VudCI6MzQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhZWI4ZmFiYjJhNmM3M2Y4NmU5YmYzMjRkN2YxODc0N2FkZTdhMTI0Y2FiZjhkZTQzMWI5NWZhOGU2MGYxMGEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU3NzlhNjJhYjlhZDFlOTdkZmZjYTVmNjlkNDhlY2JhNWFiNjdhM2E5NjljNDA5ZDI0YjRhNjc2NzAxOWY0ZmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZjYzIyZWNmMTBhOWRkOTQ1YmQ2ZmMyMzczZjE1NTBlMDI0ODViN2JhMmUwYTBlMTQxNzJkOWU4Mzk2YmJmNmUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY2NTZmY2Q0Nzc4YWY0ZGE2NTNiZWM2MjVhNmQyNmQ4NjgwNThmZDk2ZTBmYjQ5NmM4YjdhNDQ2ZTQ0MGJmNDYifQ"
         },
         {
@@ -1522,7 +1522,7 @@
         },
         {
           "resource": "repo://packages/web-core/src/features/workspace-chat/ui/WorkspaceTokenSummary.tsx",
-          "version": "repo-file-v1:sha256:b4a315dfd994f04ea4c9fce8a59677aea79c2b21c40ccce4e7b39dd06aa3f90b"
+          "version": "repo-file-v1:sha256:fd0e6a24755273f3b38cd1fa8ed292ef5854edf20550456cded60e39d19d6194"
         }
       ]
     },
@@ -1697,7 +1697,7 @@
       "statement": "LexicalとMarkdownPreviewは二系統を維持し、markdown-bodyの共通CSSとcompact/GitHub variantで本文文字組みを共有する。",
       "evidence": [
         {
-          "resource": "repo://packages/web-core/src/app/styles/new/index.css#L1411-L1550",
+          "resource": "repo://packages/web-core/src/app/styles/new/index.css#L1426-L1565",
           "version": "repo-lines-v1:sha256:2ef57173617f15e92946297fa07ef560e6fa3083234c4a3881d854a578a01c9a:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQwLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIxZjAwYmQzMzJhMTIwYzQzZjQ3YjA3MDc2NDIyY2RmYjYwM2ZjNDhiMGY3MGExZjgwY2RiNGU3MDdmOTQ5OGFkIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJhNjMzYjVjZTM0ZjUyZGVmNzMwZTc0YTRkN2UwYWY3YjY4ZWZlMDI0OTEyNTc5M2EwNGI3MGJmYmI0NWMyNWM5IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJiNjI1ZTdhNTM4N2MxZmUxZDUzZWI5ZjMwZDVkYmFiNTUxM2M3MDA1OGI1ZDhlNTNhODdjZDc2YzA4NTJmYzZjIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJhOWZiZDE0NDRhZWIzOGFmNTg5ZGViMDIyZWUxNDc1ODc4NmNjN2QwOGM2MGQxYTIxNGRhODg0ODdhMDU2OWIzIn0"
         },
         {
@@ -1773,7 +1773,7 @@
           "version": "repo-lines-v1:sha256:5e01a15bb9dd2afdf22efca4045da8cec79adfe6511b96a60467b9abad7ae9d0:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkyYWJkZjM2ZGE4MmIwNDczZjZhNjE1YTZiMzc5ZDRhZGQ2YzBkMjdmZjU2N2ExNmQ2MmU1ZTQ1MGYzM2VlMTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY0NTdiNThhNmVmMzE3MGM2OWU3YTg5YTg5MjI0MmI0YWQzNTVkZjg2Yzk4YzE5NzMyMGI4N2IwYjAxOTRjMTkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjEwYzFmMWJhMDViMTc3YjM5MjYxOGVjYTFkMzhkZWU3MWJjZGYxYjc3YzUyMGE1YzUxODVkOWE3NDg0YWZkYjAifQ"
         },
         {
-          "resource": "repo://packages/web-core/src/app/styles/new/index.css#L1428-L1440",
+          "resource": "repo://packages/web-core/src/app/styles/new/index.css#L1443-L1455",
           "version": "repo-lines-v1:sha256:b9678cc3f8d026846fcfd24a208ba390ec1c302ccc0c35e83cc2f95b128c5fca:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjJlNzg2ODE3ZmNmNzlkYjJjMDA4MDdmMDUyYWI5NTAzMDBiZjg1MjQ3MzZmM2UxOTBmMDA1ODcyZTIyNjk1MDYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImEwOGQyNGJjZDZiOTE3NDUxNWQ2ZGMwNGY1NGJiNTEyMTFmOWVmNmEwNWE2M2ZjYzhlZWFlZDZmZDc1ZDhkNzQifQ"
         }
       ]
@@ -1848,7 +1848,7 @@
         },
         {
           "resource": "repo://packages/web-core/src/features/workspace-chat/ui/LvkInstructionsEntry.tsx",
-          "version": "repo-file-v1:sha256:040c6d6405e22e92a0a52e40aaa1e6616a2f0456064d3a630fcc406851f32f3c"
+          "version": "repo-file-v1:sha256:f43c7963a620564b21993882f8dee133bbe82e312690c15672a3576b514624e5"
         }
       ]
     },
@@ -1879,10 +1879,34 @@
           "version": "repo-file-v1:sha256:dbb314e4273cadefe15ef06a744a0a443c1e4f829ea58ae5dd3f74d5a711996d"
         }
       ]
+    },
+    {
+      "id": "claim_3522b649396f4466a84814ab7eb9f61d",
+      "statement": "会話の先頭への移動は履歴取得の完了を待ち、失敗した Run の購読を再試行できる。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/features/agent-runtime/model/AgentRunSessionContext.tsx",
+          "version": "repo-file-v1:sha256:afbf39e43303169664e8f5ff5d93e518f5863f808c27bff00cacaef0d6fbe613"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/ConversationListContainer.tsx",
+          "version": "repo-file-v1:sha256:ed1bf14e50b8690f47c605b37bd606d66a1ec82030b79f616601869d8f0bde2a"
+        }
+      ]
+    },
+    {
+      "id": "claim_c09e0b2253ff4075b3e34c3d360ed260",
+      "statement": "ツール操作の折り畳みプレビューは見出しと出力を最大2行で表示し、詳細には保持された内容を使う。",
+      "evidence": [
+        {
+          "resource": "repo://packages/ui/src/components/ChatAggregatedToolEntries.tsx",
+          "version": "repo-file-v1:sha256:05bb26fb2633d2cd8064f5f7de53d7d9aa6680251bb003126913d7931262bd65"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.9.0",
-    "at": "2026-11-19T17:50:33.332Z"
+    "at": "2026-11-20T15:30:50.629Z"
   }
 }

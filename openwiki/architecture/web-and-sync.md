@@ -320,10 +320,10 @@ sources:
     resource: repo://tests/workspace-navigation/run-isolated.py
   - id: openwiki-source-b87e3253bd1458a0091f8587
     resource: repo://tests/workspace-navigation/workspace-navigation.spec.ts
-generated: { by: "codex", at: "2026-11-17T00:44:00.706Z" }
+generated: { by: "codex", at: "2026-11-20T15:30:50.629Z" }
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-19T17:50:33.332Z
+    at: 2026-11-20T15:30:50.629Z
 ---
 
 # Web の実行環境と同期
@@ -767,3 +767,9 @@ Issue詳細の既存本文幅・情報階層を保ち、タイトル下だけに
 Project utilitiesとProject設定には[SQLite移送](../concepts/project-transfer.md)の導線がある。import成功後は既存Project一覧をrefreshし、新IDを観測してからリンクを出す。refresh待ちをcommit済みimport失敗にせず再importを促さない。移送Projectの本文・版・コメントは旧画像/URLを実行しないliteral表示と編集にし、import判定のloading/error中もinertに保つ。通常Projectは非import確認後に既存rich editorを使う。[移送panel](../../packages/web-core/src/shared/components/ProjectTransferPanel.tsx)・[editor](../../packages/web-core/src/shared/components/ProjectIssueEditor.tsx)・[判定](../../packages/web-core/src/shared/hooks/useImportedProject.ts)
 
 [候補上の検証](../operations/development.md#local-384396406339の固定統合検証)は実componentと隔離Chromiumを使う。合成HTTPの表示試験と、別のSQLite/API試験、認証済み製品全体の未検証は分けて読む。
+
+## 会話表示と履歴先頭への移動（LOCAL-425）
+
+会話の先頭へ移動する操作は履歴の取得完了を待つ。取得エラー時は再試行でき、失敗した Run の購読を再初期化する。履歴の読み込み状態は初期表示の状態と区別する。[購読状態](../../packages/web-core/src/features/agent-runtime/model/AgentRunSessionContext.tsx)・[会話一覧](../../packages/web-core/src/features/workspace-chat/ui/ConversationListContainer.tsx)
+
+ツール操作の折り畳みプレビューは見出しと出力を最大2行で表示し、詳細には保持された内容を使う。コマンドの構文色分けと追加指示、トークン集計の表示も会話内で扱う。[ツール表示](../../packages/ui/src/components/ChatAggregatedToolEntries.tsx)・[コード表示](../../packages/ui/src/components/ChatCode.tsx)・[トークン集計](../../packages/web-core/src/features/workspace-chat/ui/WorkspaceTokenSummary.tsx)
