@@ -10,9 +10,13 @@ import {
   useImperativeHandle,
   useRef,
   useEffect,
+  useLayoutEffect,
   type ReactNode,
 } from 'react';
-import { LexicalComposer } from '@lexical/react/LexicalComposer';
+import { LexicalExtensionComposer } from '@lexical/react/LexicalExtensionComposer';
+import { CodeShikiExtension, ShikiTokenizer } from '@lexical/code-shiki';
+import { getExtensionDependencyFromEditor } from '@lexical/extension';
+import { MAX_HIGHLIGHT_LENGTH } from '@vibe/ui/lib/shiki-code';
 import { PlainTextPlugin } from '@lexical/react/LexicalPlainTextPlugin';
 import { PlainTextPastePlugin } from '@vibe/ui/components/PlainTextPastePlugin';
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
@@ -73,12 +77,16 @@ import { HeadingNode, QuoteNode } from '@lexical/rich-text';
 import { ListNode, ListItemNode } from '@lexical/list';
 import { ListPlugin } from '@lexical/react/LexicalListPlugin';
 import { CodeNode, CodeHighlightNode } from '@lexical/code';
-import { CodeHighlightPlugin } from '@vibe/ui/components/CodeHighlightPlugin';
-import { CODE_HIGHLIGHT_CLASSES } from '@vibe/ui/lib/code-highlight-theme';
 import { LinkNode } from '@lexical/link';
 import { TableNode, TableRowNode, TableCellNode } from '@lexical/table';
 import { TablePlugin } from '@lexical/react/LexicalTablePlugin';
-import { type EditorState, type LexicalEditor } from 'lexical';
+import {
+  $nodesOfType,
+  configExtension,
+  defineExtension,
+  type EditorState,
+  type LexicalEditor,
+} from 'lexical';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { useDiffPaths } from '@/shared/stores/useWorkspaceDiffStore';
 import {
@@ -86,6 +94,7 @@ import {
   type ExecutorDiscoverySnapshot,
 } from '@/shared/hooks/useExecutorDiscovery';
 import { useUiPreferencesStore } from '@/shared/stores/useUiPreferencesStore';
+import { useTheme } from '@/shared/hooks/useTheme';
 import { cn } from '@/shared/lib/utils';
 import { repoApi } from '@/shared/lib/api';
 import { searchTagsAndFiles } from '@/shared/lib/searchTagsAndFiles';
@@ -295,6 +304,30 @@ function EditorRefPlugin({
   return null;
 }
 
+function CodeThemePlugin({ theme }: { theme: string }) {
+  const [editor] = useLexicalComposerContext();
+  useEffect(() => {
+    const applyTheme = (node: CodeNode) => {
+      if (node.getTheme() !== theme) node.setTheme(theme);
+    };
+    const unregister = editor.registerNodeTransform(CodeNode, applyTheme);
+    editor.update(() => $nodesOfType(CodeNode).forEach(applyTheme));
+    return unregister;
+  }, [editor, theme]);
+  return null;
+}
+
+function HighlightBudgetPlugin({ disabled }: { disabled: boolean }) {
+  const [editor] = useLexicalComposerContext();
+  useLayoutEffect(() => {
+    getExtensionDependencyFromEditor(
+      editor,
+      CodeShikiExtension
+    ).output.disabled.value = disabled;
+  }, [disabled, editor]);
+  return null;
+}
+
 const WYSIWYGEditor = forwardRef<WYSIWYGEditorRef, WysiwygProps>(
   function WYSIWYGEditor(
     {
@@ -338,6 +371,16 @@ const WYSIWYGEditor = forwardRef<WYSIWYGEditorRef, WysiwygProps>(
     ref: React.ForwardedRef<WYSIWYGEditorRef>
   ) {
     const { t } = useTranslation('common');
+    const { resolvedTheme } = useTheme();
+    const codeTheme =
+      resolvedTheme === 'dark' ? 'catppuccin-mocha' : 'catppuccin-latte';
+    const initialCodeTheme = useRef(codeTheme).current;
+    const suppressHighlight =
+      plainText ||
+      value.length > MAX_HIGHLIGHT_LENGTH ||
+      value.includes('\0') ||
+      value.split('\n').some((line) => line.length > 4096);
+    const initiallySuppressHighlight = useRef(suppressHighlight).current;
     const reading = readingStyle ?? (disabled ? 'compact' : undefined);
     // Ref to capture the Lexical editor instance for imperative methods
     const editorInstanceRef = useRef<LexicalEditor | null>(null);
@@ -524,59 +567,70 @@ const WYSIWYGEditor = forwardRef<WYSIWYGEditorRef, WysiwygProps>(
     const { AttachmentNode, ATTACHMENT_TRANSFORMER } = attachmentNodeDefinition;
 
     const initialConfig = useMemo(
-      () => ({
-        namespace: 'md-wysiwyg',
-        onError: console.error,
-        theme: {
-          paragraph: 'md-paragraph',
-          heading: {
-            h1: 'md-heading',
-            h2: 'md-heading',
-            h3: 'md-heading',
-            h4: 'md-heading',
-            h5: 'md-heading',
-            h6: 'md-heading',
+      () =>
+        defineExtension({
+          name: '@vibe/markdown-editor',
+          namespace: 'md-wysiwyg',
+          onError: console.error,
+          dependencies: [
+            configExtension(CodeShikiExtension, {
+              disabled: initiallySuppressHighlight,
+              tokenizer: {
+                ...ShikiTokenizer,
+                defaultLanguage: null,
+                defaultTheme: initialCodeTheme,
+              },
+            }),
+          ],
+          theme: {
+            paragraph: 'md-paragraph',
+            heading: {
+              h1: 'md-heading',
+              h2: 'md-heading',
+              h3: 'md-heading',
+              h4: 'md-heading',
+              h5: 'md-heading',
+              h6: 'md-heading',
+            },
+            quote: 'md-quote',
+            list: {
+              ul: 'md-list',
+              ol: 'md-list',
+              listitem: '',
+              nested: { listitem: 'md-nested-item' },
+            },
+            link: 'md-link',
+            text: {
+              bold: 'font-semibold',
+              italic: 'italic',
+              underline: 'underline underline-offset-2',
+              strikethrough: 'line-through',
+              code: 'md-inline-code',
+            },
+            code: 'markdown-code-block',
+            table: 'md-table',
+            tableRow: '',
+            tableCell: 'md-cell',
+            tableCellHeader: 'md-header-cell',
           },
-          quote: 'md-quote',
-          list: {
-            ul: 'md-list',
-            ol: 'md-list',
-            listitem: '',
-            nested: { listitem: 'md-nested-item' },
-          },
-          link: 'md-link',
-          text: {
-            bold: 'font-semibold',
-            italic: 'italic',
-            underline: 'underline underline-offset-2',
-            strikethrough: 'line-through',
-            code: 'md-inline-code',
-          },
-          code: 'markdown-code-block',
-          codeHighlight: CODE_HIGHLIGHT_CLASSES,
-          table: 'md-table',
-          tableRow: '',
-          tableCell: 'md-cell',
-          tableCellHeader: 'md-header-cell',
-        },
-        nodes: [
-          HeadingNode,
-          QuoteNode,
-          ListNode,
-          ListItemNode,
-          CodeNode,
-          CodeHighlightNode,
-          LinkNode,
-          ImageNode,
-          AttachmentNode,
-          PrCommentNode,
-          ComponentInfoNode,
-          TableNode,
-          TableRowNode,
-          TableCellNode,
-        ],
-      }),
-      [AttachmentNode, ImageNode]
+          nodes: [
+            HeadingNode,
+            QuoteNode,
+            ListNode,
+            ListItemNode,
+            CodeNode,
+            CodeHighlightNode,
+            LinkNode,
+            ImageNode,
+            AttachmentNode,
+            PrCommentNode,
+            ComponentInfoNode,
+            TableNode,
+            TableRowNode,
+            TableCellNode,
+          ],
+        }),
+      [AttachmentNode, ImageNode, initialCodeTheme, initiallySuppressHighlight]
     );
 
     // Full markdown transformers for both edit and display modes.
@@ -670,8 +724,13 @@ const WYSIWYGEditor = forwardRef<WYSIWYGEditorRef, WysiwygProps>(
         <EditorWorkspaceContext.Provider value={workspaceId}>
           <SessionContext.Provider value={sessionId}>
             <LocalAttachmentsContext.Provider value={localAttachments ?? []}>
-              <LexicalComposer initialConfig={initialConfig}>
+              <LexicalExtensionComposer
+                extension={initialConfig}
+                contentEditable={null}
+              >
                 <EditorRefPlugin editorRef={editorInstanceRef} />
+                <HighlightBudgetPlugin disabled={suppressHighlight} />
+                <CodeThemePlugin theme={codeTheme} />
                 <MarkdownSyncPlugin
                   value={value}
                   onChange={handleEditorChange}
@@ -728,7 +787,6 @@ const WYSIWYGEditor = forwardRef<WYSIWYGEditorRef, WysiwygProps>(
                 )}
                 <ListPlugin />
                 <TablePlugin />
-                {!plainText && <CodeHighlightPlugin readOnly={disabled} />}
                 {/* Only include editing plugins when not in read-only mode */}
                 {!disabled && (
                   <>
@@ -797,7 +855,7 @@ const WYSIWYGEditor = forwardRef<WYSIWYGEditorRef, WysiwygProps>(
                     onCodeClick={onCodeClick}
                   />
                 )}
-              </LexicalComposer>
+              </LexicalExtensionComposer>
             </LocalAttachmentsContext.Provider>
           </SessionContext.Provider>
         </EditorWorkspaceContext.Provider>

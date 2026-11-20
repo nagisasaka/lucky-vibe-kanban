@@ -24,8 +24,8 @@ def insert(table, **values):
                        list(values.values()))
 
 
-# Interactive native layout, with an existing direct folder: no worktree creation.
-connection.execute("UPDATE workspaces SET usage='interactive', workspace_kind='direct_folder', container_ownership='external' WHERE id=?", (workspace_id.bytes,))
+# Inspection-only workspace with an existing, test-owned checkout; no worktree creation.
+connection.execute("UPDATE workspaces SET usage='execution_only', workspace_kind='worktree', container_ownership='external' WHERE id=?", (workspace_id.bytes,))
 insert('sessions', id=session, workspace_id=workspace_id, executor='CODEX', name='Native file link', agent_working_dir='project')
 workspace = dict(workspace_id=str(workspace_id), mode='shared_workspace', path=root)
 identity = dict(schema_version=1, payload_version=1, session_id=str(session), agent_run_id=str(run),

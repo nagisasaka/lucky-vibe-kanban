@@ -8,7 +8,7 @@ const css = readFileSync(
   'utf8'
 );
 const diffCss = readFileSync(
-  new URL('../../app/styles/diff-style-overrides.css', import.meta.url),
+  new URL('../../../../ui/src/styles/diff-style-overrides.css', import.meta.url),
   'utf8'
 );
 

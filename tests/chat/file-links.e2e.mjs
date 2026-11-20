@@ -12,7 +12,6 @@ import {
   rm,
   symlink,
 } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
 import { resolve, join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 
@@ -20,7 +19,8 @@ import { randomUUID } from 'node:crypto';
 // runtime, kernel-assigned loopback ports, browser context and foreground child.
 const mobileNavigation = process.argv.includes('--mobile-navigation');
 const nativeLayout = process.argv.includes('--native') || mobileNavigation;
-const scratch = await mkdtemp(join(tmpdir(), 'lvk-chat-files-'));
+await mkdir(resolve('.build'), { recursive: true });
+const scratch = await mkdtemp(resolve('.build/lvk-chat-files-'));
 const instance = join(scratch, 'instance');
 const workspace = join(scratch, 'workspace');
 const repo = join(workspace, 'project');
@@ -59,6 +59,11 @@ process.once('SIGTERM', () => {
   void cleanup().finally(() => process.exit(143));
 });
 try {
+  const isolatedBin = join(scratch, 'bin');
+  await mkdir(isolatedBin);
+  for (const name of ['codex', 'claude']) {
+    await writeFile(join(isolatedBin, name), '#!/bin/sh\nexit 1\n', { mode: 0o755 });
+  }
   await mkdir(join(repo, 'src'), { recursive: true });
   await writeFile(
     join(repo, 'src/example.ts'),
@@ -75,6 +80,7 @@ try {
     cwd: process.cwd(),
     env: {
       ...process.env,
+      PATH: `${isolatedBin}:/usr/bin:/bin`,
       LVK_INSTANCE_DIR: instance,
       LVK_ACCESS_DEPLOYMENT: 'local',
       LVK_PUBLIC_URL: '',
@@ -150,17 +156,24 @@ c.commit()
     );
     execFileSync('git', ['init', '-b', 'main', repo]);
     execFileSync('git', ['-C', repo, 'add', '.']);
-    execFileSync('git', [
-      '-C',
-      repo,
-      '-c',
-      'user.name=E2E',
-      '-c',
-      'user.email=e2e@example.invalid',
-      'commit',
-      '-m',
-      'Native file link fixture',
-    ]);
+    const identity = (kind) => {
+      const value = execFileSync('git', ['var', `GIT_${kind}_IDENT`], { encoding: 'utf8' });
+      const match = /^(.*) <([^<>]+)> \d+ [+-]\d{4}\s*$/.exec(value);
+      if (!match) throw new Error(`Unable to read effective Git ${kind.toLowerCase()} identity`);
+      return { name: match[1], email: match[2] };
+    };
+    const author = identity('AUTHOR');
+    const committer = identity('COMMITTER');
+    execFileSync('git', ['-C', repo, 'commit', '-m', 'Native file link fixture'], {
+      env: {
+        ...process.env,
+        GIT_AUTHOR_NAME: author.name,
+        GIT_AUTHOR_EMAIL: author.email,
+        GIT_COMMITTER_NAME: committer.name,
+        GIT_COMMITTER_EMAIL: committer.email,
+      },
+      stdio: 'ignore',
+    });
     const seed = JSON.parse(
       execFileSync(
         'python3',
@@ -178,6 +191,12 @@ c.commit()
       viewport: { width: 1440, height: 1000 },
     });
     const page = await context.newPage();
+    await page.route('**/api/provider-usage/read', (route) =>
+      route.fulfill({ json: { success: true, data: null } })
+    );
+    await page.routeWebSocket('**/api/agents/discovered-options/ws*', (ws) =>
+      ws.send(JSON.stringify({ Ready: true }))
+    );
     page.setDefaultTimeout(30_000);
     const errors = [];
     page.on('response', (response) => {
@@ -210,7 +229,7 @@ c.commit()
         mode: 'native-layout',
         backend: base,
         chromium: browser.version(),
-        mocks: 'none; dedicated DB conversation seed only',
+        mocks: 'provider CLI stubs and account/discovery responses; dedicated DB conversation seed',
       })
     );
   } else {

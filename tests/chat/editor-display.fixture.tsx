@@ -6,7 +6,7 @@ import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
 import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import { KEY_ENTER_COMMAND, KEY_MODIFIER_COMMAND } from "lexical";
+import { KEY_ENTER_COMMAND, KEY_DOWN_COMMAND } from "lexical";
 import { MarkdownSyncPlugin } from "../../packages/ui/src/components/MarkdownSyncPlugin";
 import { KeyboardCommandsPlugin } from "../../packages/ui/src/components/KeyboardCommandsPlugin";
 import { TypeaheadOpenProvider } from "../../packages/ui/src/components/TypeaheadOpenContext";
@@ -34,7 +34,7 @@ function Capture({ id }: { id: string }) {
     legacy = false,
   ) =>
     editor.dispatchCommand(
-      modifier ? KEY_MODIFIER_COMMAND : KEY_ENTER_COMMAND,
+      modifier ? KEY_DOWN_COMMAND : KEY_ENTER_COMMAND,
       new KeyboardEvent("keydown", {
         key: "Enter",
         isComposing: composing,

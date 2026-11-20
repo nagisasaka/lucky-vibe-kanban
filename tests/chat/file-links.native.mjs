@@ -1,8 +1,7 @@
 import assert from 'node:assert/strict';
 import { expect } from '@playwright/test';
 
-// Native route only: no DOM replacement, module injection, provider substitution,
-// API/WS mocks, or pre-setting file selection/panel preferences.
+// Native route and file API; provider account and discovery are isolated by the runner.
 export async function verifyNativeFileLink(
   page,
   base,
@@ -50,7 +49,16 @@ export async function verifyNativeFileLink(
   await expect(selected.locator('code')).toHaveText(
     'const nativeSelected = 120;'
   );
-  await expect(selected.locator('span')).toHaveText('120');
+  await expect.poll(() => selected.locator('.shiki-token').count()).toBeGreaterThan(1);
+  const code = selected.locator('code');
+  const token = selected.locator('.shiki-token').first();
+  const light = await token.evaluate((el) => getComputedStyle(el).color);
+  await page.evaluate(() => document.documentElement.classList.add('dark'));
+  const dark = await token.evaluate((el) => getComputedStyle(el).color);
+  assert.notEqual(light, dark, 'file code uses both Shiki themes');
+  await expect(code).toHaveText('const nativeSelected = 120;');
+  await page.screenshot({ path: '.build/local432-file-preview.png', fullPage: true });
+  await expect(selected.locator('span').first()).toHaveText('120');
   await expect(selected).toBeInViewport();
   // Read actual layout geometry: the row is inside its scrolled viewer viewport.
   const position = await selected.evaluate((row) => {

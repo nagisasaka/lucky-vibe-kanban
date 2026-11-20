@@ -103,6 +103,20 @@ try {
       await page.locator('#lexical').evaluate((e) => (e.scrollTop = 0));
       await page.locator('#preview').evaluate((e) => (e.scrollTop = 0));
       if (!baseline) {
+        const inlineStyles = [];
+        for (const selector of [
+          '#lexical .md-inline-code',
+          '#preview :not(pre) > code:not(.markdown-code-block)',
+        ]) {
+          const code = page.locator(selector).filter({ hasText: 'src/example.ts' }).first();
+          await expect(code).toBeVisible();
+          inlineStyles.push(await code.evaluate((el) => {
+            const style = getComputedStyle(el);
+            return { font: style.fontFamily, size: style.fontSize,
+              background: getComputedStyle(el.closest('code') ?? el).backgroundColor };
+          }));
+        }
+        assert.deepEqual(inlineStyles[0], inlineStyles[1]);
         for (const id of ['lexical', 'preview']) {
           assert.equal(
             await page.locator(`#${id} [data-markdown-alert]`).count(),
@@ -439,6 +453,18 @@ try {
       .getByRole('button', { name: 'Markdownとしてコピー', exact: true })
       .click();
     assert.equal(await page.evaluate(() => window.copiedMarkdown), saved);
+    // A controlled edit may cross the highlighting budget in either direction.
+    const longCode = 'const value = 1;\n'.repeat(1200).trimEnd();
+    await page.evaluate((code) => {
+      window.setEditing(true);
+      window.changeBody('```typescript\n' + code + '\n```');
+    }, longCode);
+    const editorCode = page.locator('#lexical code[data-language="typescript"]');
+    await expect.poll(() => editorCode.innerText()).toBe(longCode);
+    await expect(editorCode.locator('span[style*="color"]')).toHaveCount(0);
+    await page.evaluate(() => window.changeBody('```typescript\nconst value = 1;\n```'));
+    await expect.poll(() => editorCode.innerText()).toBe('const value = 1;');
+    await expect.poll(() => editorCode.locator('span[style*="color"]').count(), { timeout: 15000 }).toBeGreaterThan(0);
   }
   assert.deepEqual(errors, []);
   await writeFile(

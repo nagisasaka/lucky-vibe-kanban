@@ -131,3 +131,4 @@ docs/research/agent-mesh-design.md
 
 # Isolated source-validation outputs
 .build/
+/.pnpm-store/
