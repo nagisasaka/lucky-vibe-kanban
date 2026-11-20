@@ -16,11 +16,11 @@
       "completedRunId": "f1486c35-2217-4c42-b804-b6e199658de3"
     },
     "/openwiki/architecture/web-and-sync.md": {
-      "pageVersion": "sha256:562ba3615ee51c350df7526e48cbef3dfff63a5e4c90b4c8dab5519874a628c8",
+      "pageVersion": "sha256:acaca9c103e4ec22c877c2e6ffb00c7def29ecf49a3fb764782302b360bf4bdb",
       "completedBy": "codex",
-      "completedRunId": "646db6e2-ccd9-4dc9-91bf-869a40238193",
-      "gitHead": "e8dde9a11ead9b50760f216ef8a1dcb7dbd3ff49",
-      "sourceFingerprint": "sha256:3fe933ed681328626ffad8315e978af41262e33b82068774210c7290d5fa6067"
+      "completedRunId": "a4618abb-6551-4efc-bc1c-933755829f15",
+      "gitHead": "d4e625534b4c8d0ae8271efb3bc7decba0f844d7",
+      "sourceFingerprint": "sha256:9b806049210c20c38145a43336faf27a7c25df855d043421ee40862cce0b772a"
     },
     "/openwiki/architecture/workflow-runtime.md": {
       "gitHead": "4b4946bdb5fe30629880676c33475dd811d3799b",

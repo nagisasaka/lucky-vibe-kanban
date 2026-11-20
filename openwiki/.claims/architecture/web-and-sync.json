@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:562ba3615ee51c350df7526e48cbef3dfff63a5e4c90b4c8dab5519874a628c8",
+  "pageVersion": "sha256:acaca9c103e4ec22c877c2e6ffb00c7def29ecf49a3fb764782302b360bf4bdb",
   "claims": [
     {
       "id": "claim_cd547b65737e432fb2cf718c4992aa97",
@@ -464,19 +464,19 @@
     },
     {
       "id": "claim_ff590f6ddfa4428aa73095b41b2d5bff",
-      "statement": "チャットのcommand/scriptはChatCodeでPrism tokenをReact文字列とspanへ描画し、Markdown fenceはdisabledのWYSIWYGEditorとLexicalを通る。両経路はCODE_HIGHLIGHT_CLASSESを共有し、helperがbash/JSON grammarを登録する。",
+      "statement": "チャットのcommand/scriptはChatCodeでPrism tokenをReact文字列とspanへ描画し、Markdown fenceはdisabledのWYSIWYGEditorとLexicalを通る。両経路はCODE_HIGHLIGHT_CLASSESを共有し、helperがbash、diff、JSON、JSX、TSX grammarを登録する。",
       "evidence": [
         {
-          "resource": "repo://packages/ui/src/components/ChatCode.tsx#L1-L157",
-          "version": "repo-lines-v1:sha256:388a68429ba71a79eb72567c668095df4af94f1a3216a21bd5a774ec6503ddad:eyJzZWxlY3RlZExpbmVDb3VudCI6MTU3LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIyNDg5OWRhNTlmOTUwNzJhNWRiZTg4OTczOTAzOWZhMjk5MDNjYmIwZDhjZjFmNGE1YjRmMDM1NGQxMzQzOWYyIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJmNmY1YjQwYjE1ODQ1N2QxNzg2NGYyMTc5MDc4NmRkNWEyZWNkYjY0YjY2YTY1MWY3ODhkNGUyNWNkMzMwM2QyIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MCwicHJlY2VkaW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MCwiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1In0"
+          "resource": "repo://packages/ui/src/components/ChatCode.tsx",
+          "version": "repo-file-v1:sha256:388a68429ba71a79eb72567c668095df4af94f1a3216a21bd5a774ec6503ddad"
         },
         {
-          "resource": "repo://packages/ui/src/lib/chat-code-highlighting.ts#L1-L25",
-          "version": "repo-lines-v1:sha256:0ff8433b459b5f5084478f35298ddfee6e8e511b9050be6537e58265658b9e07:eyJzZWxlY3RlZExpbmVDb3VudCI6MjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhhZWUxNDUwODdjZmZkMTcxYWFiMmIxNDJiY2ExNzczZDM4NTIyYTljNGRjN2Y4NzcxNGU1NmM2MmU1MjJlMTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+          "resource": "repo://packages/ui/src/lib/chat-code-highlighting.ts",
+          "version": "repo-file-v1:sha256:4b57428d95d4e5d8cd256e10662b019a5538890d769ebc27827c6f83fa7a456d"
         },
         {
-          "resource": "repo://packages/web-core/src/shared/components/WYSIWYGEditor.tsx#L726-L731",
-          "version": "repo-lines-v1:sha256:222e5ff1f43cc39fab3a9c4f6b71c1dd623eb38a3c12295d653716327aa0aeb5:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYjUwN2IzZDI4NDJkOGE0NDRlMGY3N2U2ZTZiOTg0OTg3MzRiN2Q5YzEwMDg1ZWMzZjJmODcwY2I0Y2FkYWM5MCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMzVkYmM4NDRlMWNkMjNjYjkwMjAyOGM4ZGRhNmRkNDIwYjhlNmU5M2Q5MGVmZTI0YWYwZTRjNjZjNmNhYjEzOSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMmM0NDg1OTJhZjg5Mjg5MzY1NDFmYjIzZTFmNzcyNjhkYTljODQ1NjAyM2I3ZWFhMjUzMWI2YTY1YTBlNjliYyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZGI5ODRkZWIxMWM3MDQ3MjUxZDE2NzQ5ZGY5NDExZDlhMzEwNWY1YWVhMWZhYmFiNjQ2MjQ3Yzg4ODU0NWZmNSJ9"
+          "resource": "repo://packages/web-core/src/shared/components/WYSIWYGEditor.tsx",
+          "version": "repo-file-v1:sha256:a95d0c0380e691490fea8689cbe83319f761231f337f1c3b52b87e00d88d1961"
         }
       ]
     },
@@ -496,15 +496,19 @@
     },
     {
       "id": "claim_a342c03a36d64c149304150afae99165",
-      "statement": "ChatCodeとread-only Lexicalの同期装飾は16,384 UTF-16 code units以下かつ登録済み指定言語に限り、長文・未指定・未対応・例外時は全文plainへfallbackする。read-only既定言語はtextで改行とtabを保持し、editable editorは従来tokenizerを使う。",
+      "statement": "同期装飾は16,384 UTF-16 code units以下かつ登録済み言語に限る。read-only Lexicalの言語未指定コードはJavaScript、言語情報のないdiffはdiff-javascriptを使い、明示言語を優先する。長文・未対応・例外時は全文plainを保持し、改行とtabも維持する。ChatCodeは未指定時にplainを使い、editable editorは従来tokenizerを使う。",
       "evidence": [
         {
-          "resource": "repo://packages/ui/src/components/CodeHighlightPlugin.tsx#L11-L48",
-          "version": "repo-lines-v1:sha256:8074e6c3a0b31717dff12fb9554cdf1e803fe7e291c6252b93c0bb1758ae3d56:eyJzZWxlY3RlZExpbmVDb3VudCI6MzgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc3MGYxYjdlY2Y5ODAzNGExZjc2MmU2ZDhiODYyYmNmMzY4YjQzODZkMTA1Mzk1NzdiOTkyYzRkOTBiYjhiMTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImViMzdhZmFmNWIwMzA4ZjI0NGFlNjFkM2Q4N2Y4YmVkMDQ5OTQxOGZkZTUxNWQzMDZmNjJjYjgwYTEzM2JjNGYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+          "resource": "repo://packages/ui/src/components/CodeHighlightPlugin.tsx",
+          "version": "repo-file-v1:sha256:022504ccc4df28796ce42f08263632457fccbfc4cd487b1d60664205eaf558d3"
         },
         {
-          "resource": "repo://packages/ui/src/lib/chat-code-highlighting.ts#L7-L25",
-          "version": "repo-lines-v1:sha256:2b46ea72e84c28ee8d15a55e17a91609a734c86e9a10e686a1c624b3b64bf2ff:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRlOWNkZGVlYTY4ZWNiMDMzYjRhZjM5M2E0ZGI0YmQ3MjU2N2Q2ZTYwZWFjZDMzZjA0MjA0YjFkZjViMzRhMDQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjVlZmVlN2VhNzM1NTMyNDczMjQ2MTMwYTFlYjBhMWVhYWU1ZTg5YTQ4OWU1ZTNkYzFkODQ5ZDZmMzA1M2ZlZjEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+          "resource": "repo://packages/ui/src/lib/chat-code-highlighting.ts",
+          "version": "repo-file-v1:sha256:4b57428d95d4e5d8cd256e10662b019a5538890d769ebc27827c6f83fa7a456d"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/chatCodeHighlighting.test.ts",
+          "version": "repo-file-v1:sha256:9204f347e8a0aea6b4f4a5d6ec9d461befa8deedd0245999f9f4005fb7e57c3f"
         }
       ]
     },
@@ -871,7 +875,7 @@
       "statement": "初期履歴の装飾を成立させるためCodeHighlightPluginはuseLayoutEffectで変換を登録し、MarkdownSyncPluginのuseEffectによる本文取込に先行する。回帰fixtureはstream更新前のJSON装飾と未知言語の前後空白保持を検査する。",
       "evidence": [
         {
-          "resource": "repo://packages/ui/src/components/CodeHighlightPlugin.tsx#L31-L48",
+          "resource": "repo://packages/ui/src/components/CodeHighlightPlugin.tsx#L39-L56",
           "version": "repo-lines-v1:sha256:df823dfef55514fe81bd0f445fe4c51a4cc33babe7329123d7fcb056157f59bf:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ5ZmNmYmJjMzNkMDc2ODY5YTE3NDM3N2NiNTgwYjZiODE5YmJhY2NmOTEzMDE2MThjZTExZWQ1NzkxMzcwNTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJhMzhlZTljYzczYzlmMWYyYzhmOGM1NmQwMGJkMDBkZTViMDczNjlmMTJlMDgwYWJiZDc5YzhjNDM3NTZjMTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
         },
         {
@@ -1907,6 +1911,6 @@
   ],
   "verification": {
     "by": "openwiki/0.9.0",
-    "at": "2026-11-20T15:30:50.629Z"
+    "at": "2026-11-20T16:05:03.549Z"
   }
 }

@@ -138,6 +138,8 @@ sources:
     resource: repo://packages/web-core/src/features/workspace-chat/model/useConversationVirtualizer.ts
   - id: openwiki-source-d32b3d54fb9362eee85118ce
     resource: repo://packages/web-core/src/features/workspace-chat/ui/AppChatMarkdown.tsx
+  - id: openwiki-source-1db405bd41595dc677bcd044
+    resource: repo://packages/web-core/src/features/workspace-chat/ui/chatCodeHighlighting.test.ts
   - id: openwiki-source-cd106619cfd7af68eb9464fc
     resource: repo://packages/web-core/src/features/workspace-chat/ui/ConversationListContainer.tsx
   - id: openwiki-source-7ffa3a3051962e891da8067e
@@ -320,10 +322,10 @@ sources:
     resource: repo://tests/workspace-navigation/run-isolated.py
   - id: openwiki-source-b87e3253bd1458a0091f8587
     resource: repo://tests/workspace-navigation/workspace-navigation.spec.ts
-generated: { by: "codex", at: "2026-11-20T15:30:50.629Z" }
+generated: { by: "codex", at: "2026-11-20T16:05:03.549Z" }
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-20T15:30:50.629Z
+    at: 2026-11-20T16:05:03.549Z
 ---
 
 # Web の実行環境と同期
@@ -558,17 +560,17 @@ built-app の隔離試験は、実 backend と合成履歴、実 Scratch と制�
 
 ## チャットのコード装飾と本文の境界
 
-コードの色付けには二つの表示経路がある。command と script は UI の `ChatCode` が Prism token を React の文字列と span に変換し、Markdown fence は `AppChatMarkdown` → disabled の `WYSIWYGEditor` → Lexical `CodeHighlightPlugin` を通る。両方が既存の `CODE_HIGHLIGHT_CLASSES` と syntax CSS 変数を使う。UI package は Prism を直接依存に持ち、共有 helper が bash / JSON grammar を登録するため、command 側だけでなく Lexical 側の対応言語にも関わる。[文字列の描画](../../packages/ui/src/components/ChatCode.tsx#L1-L31)・[grammar と上限](../../packages/ui/src/lib/chat-code-highlighting.ts#L1-L23)・[Markdown の接続](../../packages/web-core/src/features/workspace-chat/ui/AppChatMarkdown.tsx#L22-L39)・[共通テーマ](../../packages/ui/src/lib/code-highlight-theme.ts#L1-L36)
+コードの色付けには二つの表示経路がある。command と script は UI の `ChatCode` が Prism token を React の文字列と span に変換し、Markdown fence は `AppChatMarkdown` → disabled の `WYSIWYGEditor` → Lexical `CodeHighlightPlugin` を通る。両方が既存の `CODE_HIGHLIGHT_CLASSES` と syntax CSS 変数を使う。UI package は Prism を直接依存に持ち、共有 helper が bash / diff / JSON / JSX / TSX grammar を登録するため、command 側だけでなく Lexical 側の対応言語にも関わる。[文字列の描画](../../packages/ui/src/components/ChatCode.tsx#L1-L31)・[grammar と上限](../../packages/ui/src/lib/chat-code-highlighting.ts#L1-L23)・[Markdown の接続](../../packages/web-core/src/features/workspace-chat/ui/AppChatMarkdown.tsx#L22-L39)・[共通テーマ](../../packages/ui/src/lib/code-highlight-theme.ts#L1-L36)
 
 ツールの見出しは実 command と表示 summary が等しい場合だけ装飾し、説明文を shell code として扱わない。展開詳細は空白だけの command を除外する判定に trim を使うが、描画には前後空白を含む元の文字列を渡す。script の command も同じ描画部品を使い、ツール出力本文は保持された language があれば同じ ChatCode で装飾する。ここでの `language="bash"` は表示側が固定した字句装飾であり、provider が実際に選んだ shell を証明しない。[見出しと詳細](../../packages/ui/src/components/ChatAggregatedToolEntries.tsx#L46-L77)・[単一見出し](../../packages/ui/src/components/ChatAggregatedToolEntries.tsx#L153-L163)・[集約内の見出し](../../packages/ui/src/components/ChatAggregatedToolEntries.tsx#L264-L279)・[script](../../packages/ui/src/components/ChatScriptEntry.tsx#L78-L89)。実行と event の責任は [Agent Runtime](agent-runtime.md)にあり、色付けから実行分類を逆算しない。
 
-同期 tokenization は文字列の `length` が16,384以下で、指定言語が登録済みの場合に限る。これは UTF-16 code unit 数の上限であり、byte 数や表示上の文字数ではない。長文・未指定・未対応言語、tokenizer の例外では全文を plain 表示し、切り捨てない。read-only Lexical は既定言語を `text` にし、fallback 時も改行・tab node を作り直す。editable editor は従来の tokenizer を使うため、この上限を composer 全体の入力制限と解釈しない。コードコメントは streaming 中の同期処理を有界にする目的を記録している。[guard と fallback](../../packages/ui/src/lib/chat-code-highlighting.ts#L5-L23)・[read-only tokenizer](../../packages/ui/src/components/CodeHighlightPlugin.tsx#L11-L46)・[disabled の接続](../../packages/web-core/src/shared/components/WYSIWYGEditor.tsx#L641-L650)
+同期 tokenization は文字列の `length` が16,384以下で、指定言語が登録済みの場合に限る。これは UTF-16 code unit 数の上限であり、byte 数や表示上の文字数ではない。ChatCode は未指定の場合も plain 表示する。read-only Lexical の言語未指定コードは JavaScript、言語情報のない diff は `diff-javascript` として着色し、明示言語を優先する。長文・未対応言語や tokenizer の例外では全文を plain 表示し、切り捨てない。fallback 時も改行・tab node を作り直す。editable editor は従来の tokenizer を使うため、この上限を composer 全体の入力制限と解釈しない。コードコメントは streaming 中の同期処理を有界にする目的を記録している。[guard と fallback](../../packages/ui/src/lib/chat-code-highlighting.ts#L5-L23)・[read-only tokenizer](../../packages/ui/src/components/CodeHighlightPlugin.tsx#L11-L46)・[disabled の接続](../../packages/web-core/src/shared/components/WYSIWYGEditor.tsx#L641-L650)
 
 保存済み Markdown の初回表示では、`CodeHighlightPlugin` が `useLayoutEffect` で変換を登録し、その後 `MarkdownSyncPlugin` の `useEffect` が本文を取り込む。この順序が逆になると、初期履歴のコードが次の stream 更新まで plain のまま残り得る。登録は editor / readOnly に依存し、返された解除処理を effect cleanup に渡す。[登録順序](../../packages/ui/src/components/CodeHighlightPlugin.tsx#L31-L48)・[初期本文の同期](../../packages/ui/src/components/MarkdownSyncPlugin.tsx#L47-L78)。回帰 fixture は最初から JSON と未知言語の fence を渡し、更新前に JSON の装飾と未知言語の前後空白の保持を確認する。stream 更新後だけの検査ではこの初期化不具合を検出できない。[初期 fixture](../../tests/chat/syntax-highlight.fixture.tsx#L17-L23)・[更新前の assertion](../../tests/chat/syntax-highlight.test.mjs#L29-L44)。
 
 `ChatCode` は装飾のみを所有し、コピー、空白のレイアウト、折返しは呼出側の責任である。Markdown コピーは装飾 DOM を読み戻さず editor の `value` から行う。チャットは `preserveCopySource` を指定して escaped underscore を含む元の value をコピーする。他の editor の既定は従来の unescape を保つ。[装飾の責任](../../packages/ui/src/components/ChatCode.tsx#L18-L31)・[Markdown コピー](../../packages/web-core/src/shared/components/WYSIWYGEditor.tsx#L447-L459)。入力の保存・送信は [Session の composer 契約](../concepts/session-and-agent-run.md#送信中の編集と-markdown-正規化)、高さ変化への追従は本ページの[履歴の閲覧位置](#履歴の閲覧位置と末尾追従)を参照する。
 
-検証の入口は `syntax-highlight.test.mjs` の Chromium fixture と `syntax-isolated-e2e.mjs` の built-app 試験である。前者は部分文字列・未閉鎖 fence、bash/sh/JSON などの装飾、未知・未指定・長文の fallback、文字列と focus の保持を検査する。後者は build 済み frontend/server と一時 SQLite の Workspace / Session を使い、AgentRun 一覧と WebSocket event を fixture に置き換えて command コピー、Markdown コピー、入力保持、light/dark、長文を検査する。provider の生成そのものを検証する試験ではない。終了時には browser/server、残存 PID、port、一時DBの cleanup を確認する。[component 試験](../../tests/chat/syntax-highlight.test.mjs#L7-L108)・[隔離条件](../../tests/chat/syntax-isolated-e2e.mjs#L1-L81)・[fixture と操作](../../tests/chat/syntax-isolated-e2e.mjs#L146-L325)・[cleanup](../../tests/chat/syntax-isolated-e2e.mjs#L350-L414)。再実行の環境準備は [開発と検証](../operations/development.md)を参照する。今回のコード装飾 Sync は凍結 source `777488ca3a430b56d19e2df9437de5f848dc00e2` と試験定義を静的に照合したもので、製品試験を再実行していない。供給された正式 Integration の記録も validation skipped であり、開発時の成功報告を統合後の検証成功へ読み替えない。
+検証の入口は `syntax-highlight.test.mjs` の Chromium fixture と `syntax-isolated-e2e.mjs` の built-app 試験である。前者は部分文字列・未閉鎖 fence、bash/sh/JSON などの装飾、未知・長文の fallback、文字列と focus の保持を検査する。後者は build 済み frontend/server と一時 SQLite の Workspace / Session を使い、AgentRun 一覧と WebSocket event を fixture に置き換えて command コピー、Markdown コピー、入力保持、light/dark、長文を検査する。provider の生成そのものを検証する試験ではない。終了時には browser/server、残存 PID、port、一時DBの cleanup を確認する。[component 試験](../../tests/chat/syntax-highlight.test.mjs#L7-L108)・[隔離条件](../../tests/chat/syntax-isolated-e2e.mjs#L1-L81)・[fixture と操作](../../tests/chat/syntax-isolated-e2e.mjs#L146-L325)・[cleanup](../../tests/chat/syntax-isolated-e2e.mjs#L350-L414)。再実行の環境準備は [開発と検証](../operations/development.md)を参照する。今回のコード装飾 Sync は凍結 source `777488ca3a430b56d19e2df9437de5f848dc00e2` と試験定義を静的に照合したもので、製品試験を再実行していない。供給された正式 Integration の記録も validation skipped であり、開発時の成功報告を統合後の検証成功へ読み替えない。
 
 今回の追加照合は凍結 source `0cae202fc7b1048b9787e73607fa1a3e2706afcd` の初期装飾修正と試験整合を対象とした。変換登録・Markdown 同期・実 editor への接続・初期 fixture を照合した。projection の更新試験は3件の message identity に加え、summary 由来の4件目の elapsed footer を明示的に検査する。[footer の試験](../../packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.test.ts#L149-L178)。[開発時の検証記録](../../tests/integrated-main/VALIDATION.md#interpretation-and-limits)は protocol fixture、合成 IME、viewport 模擬、実サービス未検証を区別しており、試験名の「real Codex」だけで実 model の確認済みとは扱わない。今回の正式 Integration は検証省略で、この Wiki Sync でも製品テストを再実行していない。
 
