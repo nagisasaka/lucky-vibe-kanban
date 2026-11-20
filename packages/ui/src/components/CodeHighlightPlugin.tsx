@@ -8,14 +8,22 @@ import {
 import { $createLineBreakNode, $createTabNode } from 'lexical';
 import { canHighlightChatCode } from '../lib/chat-code-highlighting';
 
-const readOnlyTokenizer: typeof PrismTokenizer = {
+export const readOnlyTokenizer: typeof PrismTokenizer = {
   ...PrismTokenizer,
-  defaultLanguage: 'text',
+  defaultLanguage: 'javascript',
   $tokenize(node, language) {
     const code = node.getTextContent();
-    if (canHighlightChatCode(code, language)) {
+    const highlightLanguage = !language
+      ? 'javascript'
+      : language === 'diff'
+        ? 'diff-javascript'
+        : language;
+    const grammar = highlightLanguage.startsWith('diff-')
+      ? highlightLanguage.slice(5)
+      : highlightLanguage;
+    if (canHighlightChatCode(code, grammar)) {
       try {
-        return PrismTokenizer.$tokenize(node, language);
+        return PrismTokenizer.$tokenize(node, highlightLanguage);
       } catch {
         // Incomplete or unsupported code must remain readable during streaming.
       }
