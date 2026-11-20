@@ -128,13 +128,8 @@ pub async fn describe(
                         .as_ref()
                         .is_some_and(|active| active.workflow_run_id == id)
                 {
-                    let phase = state.bootstrap.as_ref().unwrap().phase;
-                    view.stop_requested =
-                        phase == utils::repository_memory::OpenWikiBootstrapPhase::CleaningUp;
+                    view.stop_requested = view.status == "cancelling";
                     view.can_stop &= !view.stop_requested && store.publication(id).await?.is_none();
-                    if !view.terminal {
-                        view.status = format!("{phase:?}").to_lowercase();
-                    }
                     if state.error.is_some() {
                         view.error = state.error;
                     }

@@ -36,6 +36,10 @@ fn is_retrieval(tool: &str) -> bool {
     )
 }
 
+#[derive(Debug, thiserror::Error)]
+#[error("OpenWiki lifecycle is unfinished; continue the owned writer Session")]
+pub struct IncompleteLifecycle;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum WriterPhase {
     Generate,
@@ -155,28 +159,25 @@ impl PhaseCompletionProof {
             "Bootstrap has unresolved OpenWiki MCP calls: {:?}",
             self.pending.keys()
         );
-        ensure!(
-            self.active.is_none(),
-            "Bootstrap has an unfinished OpenWiki run: {:?}",
-            self.active
-        );
+        if self.active.is_some() {
+            return Err(IncompleteLifecycle.into());
+        }
         Ok(())
     }
 
     pub fn validate(&self) -> anyhow::Result<()> {
         self.ensure_closed()?;
-        ensure!(
-            self.phase != WriterPhase::Generate || self.initialised,
-            "Generate has no completed init from this phase"
-        );
-        ensure!(
-            !matches!(
-                self.phase,
-                WriterPhase::Sync | WriterPhase::Reconcile | WriterPhase::Rebuild
-            ) || self.completed_updates > 0
-                || self.completed_noops > 0,
-            "Sync has no completed update or audited public begin-noop"
-        );
+        if self.phase == WriterPhase::Generate && !self.initialised {
+            return Err(IncompleteLifecycle.into());
+        }
+        if matches!(
+            self.phase,
+            WriterPhase::Sync | WriterPhase::Reconcile | WriterPhase::Rebuild
+        ) && self.completed_updates == 0
+            && self.completed_noops == 0
+        {
+            return Err(IncompleteLifecycle.into());
+        }
         Ok(())
     }
 

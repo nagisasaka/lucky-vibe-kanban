@@ -185,7 +185,7 @@ impl Fixture {
         .unwrap();
         let mut graph = workflow::templates::openwiki_bootstrap().graph;
         for node in &mut graph.nodes {
-            if node.id == "review" {
+            if matches!(node.id.as_str(), "review" | "re-review") {
                 node.data.prompt_template = Some(
                     openwiki::bootstrap::review_prompt(&self.maintenance, "ja")
                         + &inventory.prompt(&self.store, true),
@@ -299,7 +299,13 @@ impl WorkflowAgentExecutor for FakeBootstrap<'_> {
                 .unwrap();
                 "SENSITIVE_GENERATOR_CONVERSATION".into()
             }
-            "review" => {
+            "review" if self.fail == Some("missing_review") => {
+                json!({"review_missing":true}).to_string()
+            }
+            "re-review" if self.fail == Some("missing_re_review") => {
+                json!({"review_missing":true}).to_string()
+            }
+            "review" | "re-review" => {
                 assert!(!request.prompt.contains("SENSITIVE_GENERATOR_CONVERSATION"));
                 assert!(!request.prompt.contains("Direct Upstream Handoff"));
                 assert!(
@@ -324,7 +330,11 @@ impl WorkflowAgentExecutor for FakeBootstrap<'_> {
                 let review = CoverageReview::parse(&raw).unwrap();
                 let reference = reports::save_review(
                     &fixture.store,
-                    identity(BootstrapReportKind::Review),
+                    identity(if request.node_id == "review" {
+                        BootstrapReportKind::Review
+                    } else {
+                        BootstrapReportKind::ReReview
+                    }),
                     &review,
                 )
                 .unwrap();
@@ -402,6 +412,26 @@ impl WorkflowAgentExecutor for FakeBootstrap<'_> {
         })
     }
 
+    async fn coverage_review(
+        &self,
+        run: Uuid,
+        _workspace: Uuid,
+        _raw: &str,
+    ) -> Result<Option<openwiki::bootstrap::CoverageVerdict>, ApiError> {
+        Ok(crate::workflow_runtime::bootstrap::load_review_phase(
+            &self.fixture.pool,
+            &self.fixture.store,
+            InventoryIdentity::new(
+                self.fixture.repository_id,
+                self.fixture.workspace_id,
+                run,
+                self.fixture.source.clone(),
+            ),
+        )
+        .await
+        .ok()
+        .map(|(review, _)| review.verdict))
+    }
     async fn publish_repository(&self, run_id: Uuid) -> Result<Option<String>, ApiError> {
         if self.fail == Some("publish") {
             return Err(ApiError::BadRequest("fixture publication failure".into()));
@@ -422,15 +452,14 @@ impl WorkflowAgentExecutor for FakeBootstrap<'_> {
             };
             std::fs::write(f.store.bootstrap_report_path(run_id, phase), "{}").unwrap();
         }
-        crate::workflow_runtime::bootstrap::validate_publication_reports(
+        let warnings = crate::workflow_runtime::bootstrap::publication_warnings(
             &f.pool,
             &f.store,
             InventoryIdentity::new(f.repository_id, f.workspace_id, run_id, f.source.clone()),
-            &f.maintenance,
         )
         .await
         .map_err(orchestration_api_error)?;
-        let result = openwiki::publish_validated_wiki(
+        let result = openwiki::publish_reviewed_wiki(
             &git::GitService::new(),
             &f.store,
             &openwiki::WikiPublicationRequest {
@@ -441,6 +470,7 @@ impl WorkflowAgentExecutor for FakeBootstrap<'_> {
                 source_commit: &f.source,
                 run_id,
             },
+            &warnings,
         )
         .await
         .map_err(orchestration_api_error)?;
@@ -518,7 +548,7 @@ async fn execution_workspace_sessions_require_bound_repository_owner_not_public_
             .fetch_one(&f.pool)
             .await
             .unwrap(),
-        3
+        4
     );
     assert!(
         Workspace::find_by_id(&f.pool, f.workspace_id)
@@ -532,7 +562,7 @@ async fn execution_workspace_sessions_require_bound_repository_owner_not_public_
 #[tokio::test]
 async fn inventory_preprocessing_failure_before_reservation_releases_owner() {
     use utils::repository_memory::{
-        OpenWikiBootstrapOwner, OpenWikiBootstrapPhase, RepositoryMemoryState, RepositoryWikiStatus,
+        OpenWikiBootstrapOwner, RepositoryMemoryState, RepositoryWikiStatus,
     };
     let f = Fixture::new().await;
     let run_id = Uuid::new_v4();
@@ -561,10 +591,6 @@ async fn inventory_preprocessing_failure_before_reservation_releases_owner() {
         error: Some(error.to_string()),
         bootstrap: Some(OpenWikiBootstrapOwner {
             workflow_run_id: run_id,
-            server_instance_id: Uuid::new_v4(),
-            phase: OpenWikiBootstrapPhase::CleaningUp,
-            child: None,
-            review_fingerprint: None,
         }),
         ..Default::default()
     };
@@ -603,7 +629,7 @@ async fn bootstrap_cleanup_restores_and_releases_only_after_all_children_exit() 
 
 async fn check_bootstrap_cleanup_result(cancelled: bool) {
     use utils::repository_memory::{
-        OpenWikiBootstrapOwner, OpenWikiBootstrapPhase, RepositoryMemoryState, RepositoryWikiStatus,
+        OpenWikiBootstrapOwner, RepositoryMemoryState, RepositoryWikiStatus,
     };
     let f = Fixture::new().await;
     let run_id = f.reserve().await;
@@ -631,10 +657,6 @@ async fn check_bootstrap_cleanup_result(cancelled: bool) {
         active_source_commit: Some(f.source.clone()),
         bootstrap: Some(OpenWikiBootstrapOwner {
             workflow_run_id: run_id,
-            server_instance_id: Uuid::new_v4(),
-            phase: OpenWikiBootstrapPhase::CleaningUp,
-            child: None,
-            review_fingerprint: None,
         }),
         error: Some("fixture failure".into()),
         ..Default::default()
@@ -991,7 +1013,7 @@ async fn bootstrap_pass_and_refine_use_existing_runner_and_publish_once() {
             .await
             .unwrap();
         let run = get_workflow_run_response(&f.pool, run_id).await.unwrap();
-        assert_eq!(run.status, WorkflowRunStatus::Succeeded);
+        assert_eq!(run.status, WorkflowRunStatus::Succeeded, "{:?}", run.nodes);
         f.assert_issue_status("Done").await;
         assert_eq!(run.issue_id, None);
         assert_eq!(run.attempt_id, None);
@@ -1003,7 +1025,7 @@ async fn bootstrap_pass_and_refine_use_existing_runner_and_publish_once() {
                 .map(|call| call.node_id.as_str())
                 .collect::<Vec<_>>(),
             if refine {
-                vec!["generate", "review", "refine"]
+                vec!["generate", "review", "refine", "re-review"]
             } else {
                 vec!["generate", "review"]
             }
@@ -1061,7 +1083,7 @@ async fn bootstrap_pass_and_refine_use_existing_runner_and_publish_once() {
         );
         assert_eq!(
             run.nodes.len(),
-            7,
+            8,
             "skip semantics must not manufacture another Publish iteration"
         );
         let snapshot: String = sqlx::query_scalar("SELECT graph_json FROM workflows WHERE id = ?")
@@ -1111,7 +1133,7 @@ async fn bootstrap_phase_failures_never_reach_publication_or_reuse_retry() {
 }
 
 #[tokio::test]
-async fn report_tampering_blocks_refine_or_publication_without_touching_target() {
+async fn report_corruption_is_a_quality_warning_after_safe_writes() {
     for (fail, refine) in [
         ("tamper_review_report", true),
         ("tamper_pass_report", false),
@@ -1129,10 +1151,11 @@ async fn report_tampering_blocks_refine_or_publication_without_touching_target()
         };
         let _ = drive_repository_workflow(&f.pool, run_id, &executor).await;
         let run = get_workflow_run_response(&f.pool, run_id).await.unwrap();
-        assert_ne!(run.status, WorkflowRunStatus::Succeeded, "{fail}");
-        assert_eq!(executor.publications.load(Ordering::SeqCst), 0, "{fail}");
-        assert!(f.store.publication(run_id).await.unwrap().is_none());
-        assert_eq!(git(&f.root, &["rev-parse", "main"]), f.source);
+        assert_eq!(run.status, WorkflowRunStatus::Succeeded, "{fail}");
+        let publication = f.store.publication(run_id).await.unwrap().unwrap();
+        if fail != "tamper_refine_report" {
+            assert_eq!(publication.quality_warnings.len(), 1);
+        }
         if fail == "tamper_review_report" {
             assert!(
                 !executor
@@ -1325,4 +1348,96 @@ async fn inventory_is_frozen_in_host_input_not_global_template_or_upstream() {
             .await
             .is_err()
     );
+}
+
+#[tokio::test]
+async fn missing_review_and_remaining_findings_publish_once_with_exact_warnings() {
+    for (fail, refine) in [
+        ("missing_review", false),
+        ("missing_re_review", true),
+        ("remaining", true),
+    ] {
+        let f = Fixture::new().await;
+        let run = f.reserve().await;
+        let executor = FakeBootstrap {
+            fixture: &f,
+            refine,
+            refute: false,
+            fail: Some(fail),
+            calls: Mutex::new(Vec::new()),
+            publications: AtomicUsize::new(0),
+        };
+        drive_repository_workflow(&f.pool, run, &executor)
+            .await
+            .unwrap();
+        assert_eq!(
+            get_workflow_run_response(&f.pool, run)
+                .await
+                .unwrap()
+                .status,
+            WorkflowRunStatus::Succeeded
+        );
+        let published = f.store.publication(run).await.unwrap().unwrap();
+        assert_eq!(published.quality_warnings.len(), 1);
+        // Receipt recovery replays the same checkpoint, including its quality
+        // warning, even when a later caller supplies no review information.
+        openwiki::publish_reviewed_wiki(
+            &git::GitService::new(),
+            &f.store,
+            &openwiki::WikiPublicationRequest {
+                repository_root: &f.root,
+                maintenance_root: &f.maintenance,
+                maintenance_branch: "wiki",
+                target_branch: "main",
+                source_commit: &f.source,
+                run_id: run,
+            },
+            &[],
+        )
+        .await
+        .unwrap();
+        assert_eq!(
+            f.store
+                .publication(run)
+                .await
+                .unwrap()
+                .unwrap()
+                .quality_warnings,
+            published.quality_warnings
+        );
+        assert_eq!(
+            git(
+                &f.root,
+                &["rev-list", "--count", &format!("{}..main", f.source)]
+            ),
+            "1"
+        );
+        let warning = &published.quality_warnings[0];
+        assert_eq!(warning.node_id, if refine { "re-review" } else { "review" });
+        if fail == "remaining" {
+            assert_eq!(warning.findings.len(), 20);
+        } else {
+            assert!(warning.findings.is_empty());
+            assert!(warning.summary.contains("レビュー結果なし"));
+        }
+        let calls = executor.calls.lock().unwrap();
+        assert_eq!(
+            calls.iter().filter(|n| n.node_id == "refine").count(),
+            usize::from(refine)
+        );
+        assert_eq!(
+            calls.iter().filter(|n| n.node_id == "re-review").count(),
+            usize::from(refine)
+        );
+        for n in calls
+            .iter()
+            .filter(|n| matches!(n.node_id.as_str(), "generate" | "refine"))
+        {
+            assert_eq!(
+                n.executor_config.as_ref().unwrap()["execution_mode"],
+                "goal"
+            );
+        }
+        assert_eq!(executor.publications.load(Ordering::SeqCst), 1);
+    }
 }

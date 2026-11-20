@@ -132,7 +132,7 @@ export type ResourceRecovery = { evidence: string,
  */
 claims: Array<ResourceClaim>, };
 
-export type RepositoryMemoryState = { version: number, enabled: boolean, status: RepositoryWikiStatus, target_branch: string | null, source_commit: string | null, wiki_commit: string | null, last_success: string | null, active_run_id: string | null, bootstrap: OpenWikiBootstrapOwner | null, maintenance_workspace_id: string | null, maintenance_session_id: string | null, error: string | null,
+export type RepositoryMemoryState = { version: number, enabled: boolean, status: RepositoryWikiStatus, target_branch: string | null, source_commit: string | null, wiki_commit: string | null, last_success: string | null, active_run_id: string | null, bootstrap: OpenWikiBootstrapOwner | null, maintenance_workspace_id: string | null, maintenance_session_id: string | null, error: string | null, quality_warnings: Array<WikiQualityWarning>,
 /**
  * Existing monitor retries only this confirmed, no-longer-consumed artifact set.
  */
@@ -171,11 +171,11 @@ export type RebuildRepositoryWiki = { branch: string, source: string, project_id
 
 export type RepositoryWikiSyncScope = { "type": "pending_changes" } | { "type": "current_source" } | { "type": "since_commit", base_commit: string, };
 
-export type OpenWikiBootstrapOwner = { workflow_run_id: string, server_instance_id: string, phase: OpenWikiBootstrapPhase, child: OpenWikiBootstrapChild | null, review_fingerprint: string | null, };
+export type OpenWikiBootstrapOwner = { workflow_run_id: string, };
 
-export type OpenWikiBootstrapChild = { session_id: string, agent_run_id: string, node_execution_id: string, node_id: string, };
+export type WikiQualityWarning = { node_id: string, summary: string, findings: Array<WikiQualityFinding>, };
 
-export type OpenWikiBootstrapPhase = "generating" | "reviewing" | "refining" | "publishing" | "cleaning_up";
+export type WikiQualityFinding = { title: string, description: string, evidence_paths: Array<string>, };
 
 export type RepositoryWikiStatus = "disabled" | "uninitialized" | "initializing" | "current" | "stale" | "reconciling" | "error";
 
@@ -840,7 +840,7 @@ export type WikiPageMetadata = { schema_version: number, title: string, language
 
 export type WikiPage = { path: string, metadata: WikiPageMetadata | null, content: string, };
 
-export type WikiSnapshot = { exists: boolean, config: WikiConfig | null, index: WikiPage | null, pages: Array<WikiPage>, };
+export type WikiSnapshot = { quality_warnings?: Array<WikiQualityWarning>, exists: boolean, config: WikiConfig | null, index: WikiPage | null, pages: Array<WikiPage>, };
 
 export type WorkspaceWikiSnapshot = { workspace_id: string, repo_id: string, repo_name: string, repo_display_name: string, source: WikiSnapshotSource, wiki: WikiSnapshot, source_links: Array<WikiSourceLink>, };
 

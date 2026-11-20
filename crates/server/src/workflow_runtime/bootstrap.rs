@@ -1,10 +1,6 @@
 //! Repository maintenance adapter for the existing Workflow runner.
-//! The existing repository recovery monitor owns transitions under its OS lock;
-//! ordinary Workflow polling/watchers must not independently drive this run.
-use std::{
-    path::PathBuf,
-    sync::{Arc, LazyLock},
-};
+//! Progression belongs to the common Workflow watcher; Wiki owns validation and publication.
+use std::{path::PathBuf, sync::Arc};
 
 use anyhow::{Context, bail, ensure};
 use async_trait::async_trait;
@@ -13,10 +9,7 @@ use db::models::{
     workflow::WorkflowRunStatus, workspace::Workspace,
 };
 use deployment::Deployment;
-use executors::{
-    actions::SelectedSkill,
-    runtime::{AgentRunStatus, OrchestrationNodeStatus},
-};
+use executors::{actions::SelectedSkill, runtime::AgentRunStatus};
 use services::services::{
     openwiki::{
         self, OpenWikiAdapter,
@@ -30,8 +23,8 @@ use services::services::{
     orchestration::OrchestrationService,
 };
 use utils::repository_memory::{
-    BootstrapReportKind, OpenWikiBootstrapChild, OpenWikiBootstrapOwner, OpenWikiBootstrapPhase,
-    RepositoryMemoryState, RepositoryWikiStatus,
+    BootstrapReportKind, OpenWikiBootstrapOwner, RepositoryMemoryState, RepositoryWikiStatus,
+    WikiQualityFinding, WikiQualityWarning,
 };
 use uuid::Uuid;
 
@@ -43,8 +36,6 @@ use super::{
     },
 };
 use crate::{DeploymentImpl, error::ApiError};
-
-static SERVER_INSTANCE: LazyLock<Uuid> = LazyLock::new(Uuid::new_v4);
 
 fn api(error: impl std::fmt::Display) -> ApiError {
     ApiError::BadRequest(error.to_string())
@@ -63,6 +54,25 @@ impl WorkflowAgentExecutor for BootstrapExecutor {
         DeploymentWorkflowAgentExecutor::new(self.deployment.clone())
             .run_agent(request)
             .await
+    }
+    async fn coverage_review(
+        &self,
+        run: Uuid,
+        _workspace: Uuid,
+        _raw: &str,
+    ) -> Result<Option<CoverageVerdict>, ApiError> {
+        let ctx = context(&self.deployment, run).await.map_err(api)?;
+        match validated_review(&self.deployment, &ctx, run).await {
+            Ok((review, _)) => Ok(Some(review.verdict)),
+            Err(error)
+                if error
+                    .downcast_ref::<sqlx::Error>()
+                    .is_some_and(|e| !matches!(e, sqlx::Error::RowNotFound)) =>
+            {
+                Err(api(error))
+            }
+            Err(_) => Ok(None),
+        }
     }
     async fn publish_repository(&self, run_id: Uuid) -> Result<Option<String>, ApiError> {
         match publish(&self.deployment, run_id).await {
@@ -117,10 +127,6 @@ pub async fn start(
     state.active_run_id = None;
     state.bootstrap = Some(OpenWikiBootstrapOwner {
         workflow_run_id: run_id,
-        server_instance_id: *SERVER_INSTANCE,
-        phase: OpenWikiBootstrapPhase::Generating,
-        child: None,
-        review_fingerprint: None,
     });
     store.save_state(state).await?;
     let identity = InventoryIdentity::new(
@@ -141,20 +147,7 @@ pub async fn start(
         .await??
     };
     tracing::info!(workflow_run_id = %run_id, inventory = ?inventory, "Bootstrap document inventory prepared");
-    let mut graph = workflow::templates::openwiki_bootstrap().graph;
-    for node in &mut graph.nodes {
-        node.data.prompt_template = match node.id.as_str() {
-            "generate" => Some(
-                openwiki::bootstrap::writer_prompt(root, &state.output_language, None)
-                    + &inventory.prompt(store, false),
-            ),
-            "review" => Some(
-                openwiki::bootstrap::review_prompt(root, &state.output_language)
-                    + &inventory.prompt(store, true),
-            ),
-            _ => node.data.prompt_template.take(),
-        };
-    }
+    let graph = workflow::templates::openwiki_bootstrap().graph;
     runner::reserve_repository_workflow(
         &deployment.db().pool,
         run_id,
@@ -307,43 +300,42 @@ pub(super) async fn prepare_child_dispatch(
     if repository_id.is_none() {
         return Ok(());
     }
-    let mut ctx = context(deployment, request.run_id).await?;
+    let ctx = context(deployment, request.run_id).await?;
     let inventory = validated_inventory(deployment, &ctx, request.run_id).await?;
-    let owner = ctx
-        .state
-        .bootstrap
-        .as_ref()
-        .context("Missing Bootstrap owner")?;
     ensure!(
-        owner.server_instance_id == *SERVER_INSTANCE
-            && owner.phase != OpenWikiBootstrapPhase::CleaningUp,
-        "Interrupted Bootstrap cannot resume a paid phase"
-    );
-    ensure!(
-        request.iteration == 0 && request.workspace_id == ctx.workspace.id,
-        "Bootstrap only supports one fresh execution per phase"
+        request.workspace_id == ctx.workspace.id,
+        "Bootstrap workspace mismatch"
     );
     let source = ctx
         .state
         .active_source_commit
         .as_deref()
-        .context("Bootstrap source is missing")?;
+        .context("Bootstrap source missing")?;
     ensure!(
         deployment.git().get_head_info(&ctx.root)?.oid == source,
-        "Bootstrap worktree HEAD changed before dispatch"
+        "Bootstrap source changed"
     );
-    // A normal new phase never reuses a Session with prior AgentRuns.
-    let existing: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM agent_runs WHERE session_id = ?")
+    let existing: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM agent_runs WHERE session_id=?")
         .bind(session_id)
         .fetch_one(&deployment.db().pool)
         .await?;
-    ensure!(
-        existing == 0,
-        "Bootstrap requires a fresh Session; start a new Bootstrap run"
-    );
-    let phase = match request.node_id.as_str() {
+    // Reviews are always independent. Writer retries may resume only their own node Session.
+    let reviewer = matches!(request.node_id.as_str(), "review" | "re-review");
+    if existing > 0 {
+        ensure!(!reviewer, "Review requires a fresh Session");
+        let previous: Option<Uuid> = sqlx::query_scalar("SELECT session_id FROM node_executions WHERE run_id=? AND node_id=? AND session_id IS NOT NULL ORDER BY iteration DESC LIMIT 1")
+            .bind(request.run_id).bind(&request.node_id).fetch_optional(&deployment.db().pool).await?.flatten();
+        ensure!(
+            previous == Some(session_id),
+            "Writer Session belongs to another node"
+        );
+    }
+    let mut fingerprint = None;
+    match request.node_id.as_str() {
         "generate" => {
-            openwiki::setup::prepare(&ctx.store, ctx.workspace.id, &ctx.root, source)?;
+            if existing == 0 {
+                openwiki::setup::prepare(&ctx.store, ctx.workspace.id, &ctx.root, source)?;
+            }
             request.prompt = if let Some(reference) = &ctx.state.rebuild_reference {
                 openwiki::bootstrap::rebuild_prompt(
                     &ctx.root,
@@ -353,51 +345,43 @@ pub(super) async fn prepare_child_dispatch(
             } else {
                 openwiki::bootstrap::writer_prompt(&ctx.root, &ctx.state.output_language, None)
             };
-            OpenWikiBootstrapPhase::Generating
         }
-        "review" => {
+        "review" | "re-review" => {
+            ensure_workspace_exited(deployment, ctx.workspace.id).await?;
             openwiki::setup::restore(&ctx.store, ctx.workspace.id, &ctx.root, source)?;
             request.prompt =
                 openwiki::bootstrap::review_prompt(&ctx.root, &ctx.state.output_language);
-            ctx.state.bootstrap.as_mut().unwrap().review_fingerprint =
-                Some(openwiki::bootstrap::worktree_fingerprint(&ctx.root)?);
-            OpenWikiBootstrapPhase::Reviewing
+            fingerprint = Some(openwiki::bootstrap::worktree_fingerprint(&ctx.root)?);
         }
         "refine" => {
+            fingerprint = Some(openwiki::bootstrap::worktree_fingerprint(&ctx.root)?);
             let (review, reference) = validated_review(deployment, &ctx, request.run_id).await?;
             ensure!(
                 review.verdict == CoverageVerdict::NeedsRefinement,
-                "Refine requires material coverage findings"
+                "Refine needs material findings"
             );
-            openwiki::setup::prepare_next_phase(&ctx.store, ctx.workspace.id, &ctx.root, source)?;
+            if existing == 0 {
+                openwiki::setup::prepare_next_phase(
+                    &ctx.store,
+                    ctx.workspace.id,
+                    &ctx.root,
+                    source,
+                )?;
+            }
             request.prompt = openwiki::bootstrap::writer_prompt(
                 &ctx.root,
                 &ctx.state.output_language,
                 Some(&reference.prompt_path(&ctx.store)),
             );
-            OpenWikiBootstrapPhase::Refining
         }
-        _ => bail!("Unsupported Bootstrap agent phase"),
-    };
-    if let Some(source) = &ctx.state.rebuild_reference
-        && phase != OpenWikiBootstrapPhase::Generating
-    {
+        _ => bail!("Unsupported Bootstrap node"),
+    }
+    if let Some(inventory) = inventory {
         request
             .prompt
-            .push_str(&openwiki::management::reference_prompt(source));
+            .push_str(&inventory.prompt(&ctx.store, reviewer));
     }
-    if let Some(inventory) = &inventory {
-        match phase {
-            OpenWikiBootstrapPhase::Generating => request
-                .prompt
-                .push_str(&inventory.prompt(&ctx.store, false)),
-            OpenWikiBootstrapPhase::Reviewing => {
-                request.prompt.push_str(&inventory.prompt(&ctx.store, true))
-            }
-            _ => {} // Refine receives findings, not a new inventory-reading task.
-        }
-    }
-    request.selected_skills = if phase == OpenWikiBootstrapPhase::Reviewing {
+    request.selected_skills = if reviewer {
         None
     } else {
         Some(vec![SelectedSkill {
@@ -408,17 +392,13 @@ pub(super) async fn prepare_child_dispatch(
             )?,
         }])
     };
-    ctx.state.active_run_id = Some(agent_run_id);
-    ctx.state.maintenance_session_id = Some(session_id);
-    let owner = ctx.state.bootstrap.as_mut().unwrap();
-    owner.phase = phase;
-    owner.child = Some(OpenWikiBootstrapChild {
-        session_id,
-        agent_run_id,
-        node_execution_id: request.orchestration_node_execution_id,
-        node_id: request.node_id.clone(),
-    });
-    ctx.store.save_state(&ctx.state).await?;
+    // The existing node is the delegation authority, not a second phase/child state machine.
+    sqlx::query("UPDATE node_executions SET session_id=?,agent_run_id=?,source_snapshot=?,input_text=? WHERE orchestration_node_execution_id=?")
+        .bind(session_id).bind(agent_run_id).bind(fingerprint).bind(&request.prompt).bind(request.orchestration_node_execution_id).execute(&deployment.db().pool).await?;
+    if !reviewer {
+        request.prompt = openwiki::bootstrap::goal_objective(&ctx.root, &request.node_id);
+        executors::executors::codex::validate_goal_objective(&request.prompt)?;
+    }
     Ok(())
 }
 
@@ -476,10 +456,17 @@ pub(super) async fn phase_report_input(
     let node = match phase {
         BootstrapReportKind::Review => "review",
         BootstrapReportKind::Refine => "refine",
+        BootstrapReportKind::ReReview => "re-review",
     };
-    let (raw, session_id, agent_run_id): (String, Uuid, Uuid) = sqlx::query_as(
-        "SELECT output_text, session_id, agent_run_id FROM node_executions WHERE run_id = ? AND node_id = ? AND iteration = 0 AND status = 'succeeded'")
+    let (raw, session_id, _agent_run_id): (String, Uuid, Uuid) = sqlx::query_as(
+        "SELECT output_text, session_id, agent_run_id FROM node_executions WHERE run_id = ? AND node_id = ? AND status = 'succeeded' ORDER BY iteration DESC LIMIT 1")
         .bind(source.run_id).bind(node).fetch_one(pool).await?;
+    let agent_run_id = sqlx::query_scalar(
+        "SELECT id FROM agent_runs WHERE session_id=? ORDER BY created_at DESC,rowid DESC LIMIT 1",
+    )
+    .bind(session_id)
+    .fetch_one(pool)
+    .await?;
     Ok((
         raw,
         ReportIdentity {
@@ -491,23 +478,55 @@ pub(super) async fn phase_report_input(
     ))
 }
 
-pub(super) async fn validate_publication_reports(
+pub(super) async fn publication_warnings(
     pool: &sqlx::SqlitePool,
     store: &RepositoryMemoryStore,
     source: InventoryIdentity,
-    root: &std::path::Path,
-) -> anyhow::Result<()> {
-    let (review, _) = load_review_phase(pool, store, source.clone()).await?;
-    if review.verdict == CoverageVerdict::NeedsRefinement {
-        let (raw, identity) = phase_report_input(pool, source, BootstrapReportKind::Refine).await?;
-        let report = if reports::is_reference(&raw) {
-            ReportReference::parse(&raw)?.load_refinement(store, &identity, &review)?
+) -> anyhow::Result<Vec<WikiQualityWarning>> {
+    let refined: bool = sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM node_executions WHERE run_id=? AND node_id='refine' AND status='succeeded')").bind(source.run_id).fetch_one(pool).await?;
+    let phase = if refined {
+        BootstrapReportKind::ReReview
+    } else {
+        BootstrapReportKind::Review
+    };
+    let node = if refined { "re-review" } else { "review" };
+    let review = async {
+        let (raw, identity) = phase_report_input(pool, source, phase).await?;
+        if reports::is_reference(&raw) {
+            ReportReference::parse(&raw)?.load_review(store, &identity)
         } else {
-            RefinementReport::parse(&raw, &review)?
-        };
-        report.validate_files(root)?;
+            CoverageReview::parse(&raw)
+        }
     }
-    Ok(())
+    .await;
+    Ok(match review {
+        Err(error)
+            if error
+                .downcast_ref::<sqlx::Error>()
+                .is_some_and(|e| !matches!(e, sqlx::Error::RowNotFound)) =>
+        {
+            return Err(error);
+        }
+        Ok(review) if review.findings.is_empty() => vec![],
+        Ok(review) => vec![WikiQualityWarning {
+            node_id: node.into(),
+            summary: review.summary,
+            findings: review
+                .findings
+                .into_iter()
+                .map(|f| WikiQualityFinding {
+                    title: f.title,
+                    description: f.description,
+                    evidence_paths: f.evidence_paths,
+                })
+                .collect(),
+        }],
+        Err(_) => vec![WikiQualityWarning {
+            node_id: node.into(),
+            summary: "レビュー結果なし（欠落・破損）".into(),
+            findings: vec![],
+        }],
+    })
 }
 
 pub(super) async fn validate_child_completion(
@@ -519,18 +538,22 @@ pub(super) async fn validate_child_completion(
 ) -> anyhow::Result<String> {
     let ctx = context(deployment, run_id).await?;
     validated_inventory(deployment, &ctx, run_id).await?;
-    let owner = ctx.state.bootstrap.as_ref().unwrap();
+    let workflow = runner::get_workflow_run_response(&deployment.db().pool, run_id).await?;
     ensure!(
-        owner
-            .child
-            .as_ref()
-            .is_some_and(|child| child.agent_run_id == agent_run_id && child.node_id == node_id),
-        "Completion is not from the delegated Bootstrap child"
+        matches!(
+            workflow.status,
+            WorkflowRunStatus::Running | WorkflowRunStatus::AwaitingHuman
+        ),
+        "Bootstrap stopped"
     );
-    ensure!(
-        owner.phase != OpenWikiBootstrapPhase::CleaningUp,
-        "Bootstrap is cleaning up, not accepting successful completion"
-    );
+    let node = workflow
+        .nodes
+        .iter()
+        .filter(|n| n.node_id == node_id && n.agent_run_id == Some(agent_run_id))
+        .max_by_key(|n| n.iteration)
+        .context("Not the delegated Bootstrap node")?;
+    let fingerprint: Option<String> = sqlx::query_scalar("SELECT source_snapshot FROM node_executions WHERE run_id=? AND node_id=? AND agent_run_id=?")
+        .bind(run_id).bind(node_id).bind(agent_run_id).fetch_one(&deployment.db().pool).await?;
     let source = ctx
         .state
         .active_source_commit
@@ -540,20 +563,28 @@ pub(super) async fn validate_child_completion(
         deployment.git().get_head_info(&ctx.root)?.oid == source,
         "Bootstrap agent changed Git history"
     );
-    let run = AgentRunRecord::find(&deployment.db().pool, agent_run_id)
-        .await?
-        .context("Bootstrap AgentRun missing")?;
-    ensure!(
-        owner
-            .child
-            .as_ref()
-            .is_some_and(|child| child.session_id == run.session_id),
-        "Bootstrap child Session mismatch"
-    );
+    let run: AgentRunRecord = sqlx::query_as(
+        "SELECT * FROM agent_runs WHERE session_id=? ORDER BY created_at DESC,rowid DESC LIMIT 1",
+    )
+    .bind(node.session_id)
+    .fetch_one(&deployment.db().pool)
+    .await?;
+    if !run.status.is_terminal() {
+        return Err(crate::routes::openwiki::completion::CompletionPending.into());
+    }
     ensure!(
         run.status == AgentRunStatus::Succeeded,
-        "Bootstrap child did not succeed"
+        "Bootstrap writer did not succeed"
     );
+    let latest_output = sqlx::query_scalar::<_,Option<String>>("SELECT json_extract(state_json,'$.terminal_output.content') FROM agent_run_state WHERE agent_run_id=?").bind(run.id).fetch_optional(&deployment.db().pool).await?.flatten();
+    let output = if run.id == agent_run_id {
+        output
+    } else {
+        latest_output.as_deref().unwrap_or("")
+    };
+    let agent_run_id = run.id;
+    crate::routes::openwiki::completion::ensure_processes_exited(&deployment.db().pool, &run)
+        .await?;
     let report_identity = |phase| -> anyhow::Result<ReportIdentity> {
         Ok(ReportIdentity {
             source: source_identity(&ctx, run_id)?,
@@ -562,13 +593,14 @@ pub(super) async fn validate_child_completion(
             agent_run_id,
         })
     };
-    if node_id == "review" {
+    if matches!(node_id, "review" | "re-review") {
         ensure!(
-            owner.review_fingerprint.as_deref()
-                == Some(&openwiki::bootstrap::worktree_fingerprint(&ctx.root)?),
+            fingerprint.as_deref() == Some(&openwiki::bootstrap::worktree_fingerprint(&ctx.root)?),
             "Read-only reviewer changed the repository"
         );
-        let review = CoverageReview::parse(output)?;
+        let Ok(review) = CoverageReview::parse(output) else {
+            return Ok(serde_json::json!({"review_missing":true}).to_string());
+        };
         for finding in &review.findings {
             for path in &finding.evidence_paths {
                 utils::repository_memory::reject_symlinks(&ctx.root.join(path))?;
@@ -580,7 +612,11 @@ pub(super) async fn validate_child_completion(
         }
         let reference = reports::save_review(
             &ctx.store,
-            report_identity(BootstrapReportKind::Review)?,
+            report_identity(if node_id == "review" {
+                BootstrapReportKind::Review
+            } else {
+                BootstrapReportKind::ReReview
+            })?,
             &review,
         )?;
         return Ok(serde_json::to_string(&reference)?);
@@ -594,28 +630,13 @@ pub(super) async fn validate_child_completion(
     } else {
         None
     };
-    let report = if node_id == "refine" {
-        Some(RefinementReport::parse(
-            output,
-            review.as_ref().context("Refine review missing")?,
-        )?)
-    } else {
-        None
-    };
-    let attempts =
-        crate::routes::openwiki::completion::ensure_processes_exited(&deployment.db().pool, &run)
-            .await?;
-    let proof = crate::routes::openwiki::completion::writer_completion_proof(
+    let proof = crate::routes::openwiki::completion::owned_writer_completion_proof(
         &deployment.db().pool,
         &run,
-        &attempts,
+        workflow
+            .orchestration_run_id
+            .context("Missing Workflow owner")?,
         ctx.workspace.id,
-        std::path::Path::new(
-            ctx.workspace
-                .container_ref
-                .as_deref()
-                .context("Bootstrap workspace path missing")?,
-        ),
         &ctx.root,
         if node_id == "refine" {
             WriterPhase::Refine
@@ -625,7 +646,25 @@ pub(super) async fn validate_child_completion(
             WriterPhase::Generate
         },
     )
-    .await?;
+    .await
+    .map_err(|error| {
+        if error
+            .downcast_ref::<openwiki::completion::IncompleteLifecycle>()
+            .is_some()
+        {
+            anyhow::Error::from(crate::routes::openwiki::completion::CompletionPending)
+        } else {
+            error
+        }
+    })?;
+    let report = if node_id == "refine" {
+        Some(RefinementReport::parse(
+            output,
+            review.as_ref().context("Refine review missing")?,
+        )?)
+    } else {
+        None
+    };
     if let Some(report) = &report {
         ensure!(
             !report.requires_update() || proof.has_completed_update(),
@@ -640,7 +679,7 @@ pub(super) async fn validate_child_completion(
         report.validate_files(&ctx.root)?;
         if !proof.has_completed_update() {
             ensure!(
-                owner.review_fingerprint.as_deref()
+                fingerprint.as_deref()
                     == Some(&openwiki::bootstrap::worktree_fingerprint(&ctx.root)?),
                 "Refine changed files without a verified OpenWiki update"
             );
@@ -659,11 +698,26 @@ pub(super) async fn validate_child_completion(
     ))
 }
 
+async fn ensure_workspace_exited(
+    deployment: &DeploymentImpl,
+    workspace: Uuid,
+) -> anyhow::Result<()> {
+    let runs: Vec<AgentRunRecord> = sqlx::query_as("SELECT * FROM agent_runs WHERE workspace_id=?")
+        .bind(workspace)
+        .fetch_all(&deployment.db().pool)
+        .await?;
+    for run in runs {
+        crate::routes::openwiki::completion::ensure_processes_exited(&deployment.db().pool, &run)
+            .await?;
+    }
+    Ok(())
+}
+
 async fn publish(
     deployment: &DeploymentImpl,
     run_id: Uuid,
 ) -> anyhow::Result<(Option<String>, bool)> {
-    let mut ctx = context(deployment, run_id).await?;
+    let ctx = context(deployment, run_id).await?;
     validated_inventory(deployment, &ctx, run_id).await?;
     let run = runner::get_workflow_run_response(&deployment.db().pool, run_id).await?;
     for node in ["generate", "review"] {
@@ -673,17 +727,29 @@ async fn publish(
             "Bootstrap has not validated {node}"
         );
     }
-    validate_publication_reports(
+    ensure_workspace_exited(deployment, ctx.workspace.id).await?;
+    let warnings = publication_warnings(
         &deployment.db().pool,
         &ctx.store,
         source_identity(&ctx, run_id)?,
-        &ctx.root,
     )
     .await?;
     ensure!(
-        ctx.state.bootstrap.as_ref().unwrap().phase != OpenWikiBootstrapPhase::CleaningUp,
-        "Failed Bootstrap cannot publish"
+        matches!(
+            run.status,
+            WorkflowRunStatus::Running | WorkflowRunStatus::Succeeded
+        ),
+        "Stopped Bootstrap cannot publish"
     );
+    if run.nodes.iter().any(|n| {
+        n.node_id == "refine" && n.status == db::models::workflow::NodeExecutionStatus::Succeeded
+    }) {
+        ensure!(
+            run.nodes.iter().any(|n| n.node_id == "re-review"
+                && n.status == db::models::workflow::NodeExecutionStatus::Succeeded),
+            "Re-review unfinished"
+        );
+    }
     let source = ctx
         .state
         .active_source_commit
@@ -699,9 +765,7 @@ async fn publish(
             );
         }
     }
-    ctx.state.bootstrap.as_mut().unwrap().phase = OpenWikiBootstrapPhase::Publishing;
-    ctx.store.save_state(&ctx.state).await?;
-    openwiki::publish_validated_wiki(
+    openwiki::publish_reviewed_wiki(
         deployment.git(),
         &ctx.store,
         &openwiki::WikiPublicationRequest {
@@ -716,139 +780,63 @@ async fn publish(
             source_commit: source,
             run_id,
         },
+        &warnings,
     )
     .await
 }
 
-/// Use the existing repository monitor under its repository lock. Ordinary
-/// Workflow event watchers never independently advance repository-owned runs.
-pub async fn recover_locked(
-    deployment: &DeploymentImpl,
-    repo: &Repo,
-    store: &RepositoryMemoryStore,
-) -> anyhow::Result<()> {
-    let mut state = store.state().await?;
-    let owner = state.bootstrap.clone().context("No Bootstrap owner")?;
-    let run_id = owner.workflow_run_id;
-    if owner.server_instance_id != *SERVER_INSTANCE && store.publication(run_id).await?.is_none() {
-        state.error = Some("Bootstrap interrupted by a server restart; start a new Initialise Wiki request after cleanup".into());
-        state.bootstrap.as_mut().unwrap().phase = OpenWikiBootstrapPhase::CleaningUp;
-        store.save_state(&state).await?;
-    }
-    if state.bootstrap.as_ref().unwrap().phase == OpenWikiBootstrapPhase::CleaningUp {
-        return cleanup(deployment, repo, store).await;
-    }
+/// Called only by the common watcher under the repository exclusion lock.
+pub async fn reconcile(deployment: &DeploymentImpl, run_id: Uuid) -> anyhow::Result<()> {
+    let ctx = context(deployment, run_id).await?;
+    let _lock = ctx.store.try_lock()?;
     let executor = BootstrapExecutor {
         deployment: deployment.clone(),
     };
     let boundary = DeploymentAgentRunReconciliationBoundary::for_repository(deployment.clone());
-    let result = async {
-        let run = runner::reconcile_workflow_run_with_arena_and_boundary(
-            &deployment.db().pool,
-            run_id,
-            &executor,
-            &NoopWorkflowArenaCreator,
-            &boundary,
-        )
-        .await?;
-        if matches!(
-            run.status,
-            WorkflowRunStatus::Failed | WorkflowRunStatus::Canceled | WorkflowRunStatus::Cancelling
-        ) {
-            bail!(
-                "{}",
-                run.nodes
-                    .iter()
-                    .find_map(|node| node.error_text.as_deref())
-                    .or(run.error_text.as_deref())
-                    .unwrap_or("Bootstrap failed or was cancelled")
-            );
-        }
-        // A deferred host publication can leave a ready node without a new
-        // AgentRun terminal event to wake it. The same planner handles it.
-        runner::drive_repository_workflow(&deployment.db().pool, run_id, &executor).await?;
-        sync_product_nodes(deployment, run_id).await?;
-        let run = runner::get_workflow_run_response(&deployment.db().pool, run_id).await?;
-        if matches!(
-            run.status,
-            WorkflowRunStatus::Failed | WorkflowRunStatus::Canceled
-        ) {
-            bail!(
-                "{}",
-                run.nodes
-                    .iter()
-                    .find_map(|node| node.error_text.as_deref())
-                    .unwrap_or("Bootstrap failed")
-            );
-        }
-        if run.status == WorkflowRunStatus::Succeeded {
-            let publication = publish(deployment, run_id).await?;
-            let mut latest = store.state().await?;
+    let run = runner::reconcile_workflow_run_with_arena_and_boundary(
+        &deployment.db().pool,
+        run_id,
+        &executor,
+        &NoopWorkflowArenaCreator,
+        &boundary,
+    )
+    .await?;
+    match run.status {
+        WorkflowRunStatus::Succeeded => {
+            let publication = ctx
+                .store
+                .publication(run_id)
+                .await?
+                .context("Missing Wiki publication")?;
+            let mut state = ctx.store.state().await?;
+            state.quality_warnings = publication.quality_warnings;
+            let result = publish(deployment, run_id).await?;
             crate::routes::openwiki::record_reconciliation_result(
-                store,
-                &mut latest,
-                Ok(publication),
+                &ctx.store,
+                &mut state,
+                Ok(result),
             )
             .await?;
-            crate::routes::openwiki::finish_artifact_cleanup(store, &mut latest).await?;
+            crate::routes::openwiki::finish_artifact_cleanup(&ctx.store, &mut state).await?;
         }
-        Ok::<_, anyhow::Error>(())
-    }
-    .await;
-    if let Err(error) = result {
-        let mut latest = store.state().await?;
-        if latest.artifact_cleanup.is_none() {
-            latest.error = Some(format!("{error:#}"));
+        WorkflowRunStatus::Failed | WorkflowRunStatus::Canceled | WorkflowRunStatus::Cancelling => {
+            let mut state = ctx.store.state().await?;
+            state.error = Some(
+                run.nodes
+                    .iter()
+                    .find_map(|n| n.error_text.clone())
+                    .or(run.error_text)
+                    .unwrap_or_else(|| "Bootstrap cancelled or failed".into()),
+            );
+            ctx.store.save_state(&state).await?;
+            cleanup(deployment, &ctx.repo, &ctx.store).await?;
         }
-        // Publication recovery is Git/receipt-only. Never restart paid hosts
-        // or discard the identity of a possibly integrated Wiki.
-        if store.publication(run_id).await?.is_some() {
-            store.save_state(&latest).await?;
-            return Err(error);
-        }
-        latest
-            .bootstrap
-            .as_mut()
-            .context("Bootstrap owner disappeared")?
-            .phase = OpenWikiBootstrapPhase::CleaningUp;
-        store.save_state(&latest).await?;
-        cleanup(deployment, repo, store).await?;
+        _ => {}
     }
     Ok(())
 }
 
-async fn sync_product_nodes(deployment: &DeploymentImpl, run_id: Uuid) -> anyhow::Result<()> {
-    let run = runner::get_workflow_run_response(&deployment.db().pool, run_id).await?;
-    let service = OrchestrationService::new(
-        deployment.db().pool.clone(),
-        Arc::new(deployment.agent_run_port().clone()),
-    );
-    let orchestration_id = run
-        .orchestration_run_id
-        .context("Bootstrap orchestration identity missing")?;
-    for node in &run.nodes {
-        let status = match node.status {
-            db::models::workflow::NodeExecutionStatus::Succeeded => {
-                OrchestrationNodeStatus::Succeeded
-            }
-            db::models::workflow::NodeExecutionStatus::Skipped => {
-                OrchestrationNodeStatus::Cancelled
-            }
-            _ => continue,
-        };
-        if let Some(id) = node.orchestration_node_execution_id {
-            service
-                .complete_product_node(orchestration_id, id, status)
-                .await?;
-        }
-    }
-    service
-        .refresh_run_projection(orchestration_id, orchestration_id)
-        .await?;
-    Ok(())
-}
-
-async fn cleanup(
+pub(crate) async fn cleanup(
     deployment: &DeploymentImpl,
     repo: &Repo,
     store: &RepositoryMemoryStore,
@@ -867,9 +855,6 @@ pub(super) async fn cleanup_with_service<P: executors::runtime::AgentRunPort + '
     store: &RepositoryMemoryStore,
     service: &OrchestrationService<P>,
 ) -> anyhow::Result<()> {
-    use executors::runtime::{
-        AgentRunPortCommand, AgentRunPortCommandEnvelope, ORCHESTRATION_COMMAND_SCHEMA_VERSION,
-    };
     let mut state = store.state().await?;
     let owner = state
         .bootstrap
@@ -884,49 +869,39 @@ pub(super) async fn cleanup_with_service<P: executors::runtime::AgentRunPort + '
     if let Some(id) = orchestration_id {
         service.cancel(id, id).await?;
     }
-    // Cover a crash after host creation but before its orchestration link.
-    if let Some(child) = &owner.child
-        && let Some(run) = AgentRunRecord::find(pool, child.agent_run_id).await?
-        && !run.status.is_terminal()
-    {
-        let id = orchestration_id
-            .context("Active Bootstrap child has no orchestration identity; keep fenced")?;
+    // A normal same-Session continuation is not a second Workflow node. Stop
+    // all live writers through the existing audited command path before restore.
+    let live: Vec<AgentRunRecord> = sqlx::query_as("SELECT * FROM agent_runs ar WHERE workspace_id=? AND status NOT IN ('succeeded','failed','cancelled','crashed','audit_failed') AND NOT EXISTS(SELECT 1 FROM orchestration_agent_run_links l WHERE l.agent_run_id=ar.id)")
+        .bind(state.maintenance_workspace_id).fetch_all(pool).await?;
+    for run in live {
+        use executors::runtime::{
+            AgentRunPortCommand, AgentRunPortCommandEnvelope, ORCHESTRATION_COMMAND_SCHEMA_VERSION,
+        };
         service
             .enqueue_command(AgentRunPortCommandEnvelope {
                 schema_version: ORCHESTRATION_COMMAND_SCHEMA_VERSION,
                 command_id: runner::stable_workflow_identity(
-                    id,
-                    child.node_execution_id,
+                    owner.workflow_run_id,
+                    run.id,
                     0,
-                    "bootstrap-cleanup",
+                    "writer-stop",
                 ),
-                idempotency_key: format!(
-                    "bootstrap:{}:cleanup:{}",
-                    owner.workflow_run_id, child.agent_run_id
-                ),
-                agent_run_id: child.agent_run_id,
-                orchestration_run_id: Some(id),
-                orchestration_node_execution_id: Some(child.node_execution_id),
-                correlation_id: id,
+                idempotency_key: format!("bootstrap:{}:stop:{}", owner.workflow_run_id, run.id),
+                agent_run_id: run.id,
+                orchestration_run_id: orchestration_id,
+                orchestration_node_execution_id: None,
+                correlation_id: run.correlation_id,
                 created_at: run.created_at,
                 command: AgentRunPortCommand::Cancel {
-                    reason: "OpenWiki Bootstrap cleanup".into(),
+                    reason: "Bootstrap stopped".into(),
                 },
             })
             .await?;
     }
-    // Bounded delivery of normal audited commands; never an unaudited kill.
     for _ in 0..32 {
         if !service.deliver_next().await? {
             break;
         }
-    }
-    if let Some(child) = &owner.child
-        && AgentRunRecord::find(pool, child.agent_run_id)
-            .await?
-            .is_some_and(|run| !run.status.is_terminal())
-    {
-        return Ok(()); // Requested Stop is not proof of process exit.
     }
     let active: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM agent_runs ar JOIN sessions s ON s.id = ar.session_id WHERE s.workspace_id = ? AND ar.status NOT IN ('succeeded','failed','cancelled','crashed','audit_failed')")
         .bind(state.maintenance_workspace_id).fetch_one(pool).await?;
@@ -1065,58 +1040,9 @@ pub async fn cancel_owned_run(deployment: &DeploymentImpl, run_id: Uuid) -> Resu
         false,
     )
     .await?;
-    state
-        .bootstrap
-        .as_mut()
-        .ok_or_else(|| api("Bootstrap owner missing"))?
-        .phase = OpenWikiBootstrapPhase::CleaningUp;
     state.error = Some("Bootstrap cancelled by the user".into());
     ctx.store.save_state(&state).await.map_err(api)?;
     cleanup(deployment, &ctx.repo, &ctx.store)
         .await
         .map_err(api)
-}
-
-/// Fence before generic startup delivery: old queued Creates must not launch
-/// paid phases. Existing hosts receive normal cancellation during cleanup.
-pub async fn fence_interrupted_runs(deployment: &DeploymentImpl) -> anyhow::Result<()> {
-    for repo in Repo::list_all(&deployment.db().pool).await? {
-        // Startup recovery owns DB-backed Bootstrap runs only. Legacy import is
-        // an explicit offline command, never an all-Repo startup prerequisite.
-        if RepositoryMemoryStore::state_on(&mut *deployment.db().pool.acquire().await?, repo.id)
-            .await?
-            .is_none()
-        {
-            continue;
-        }
-        let store =
-            RepositoryMemoryStore::for_repository(&deployment.db().pool, &repo.name, repo.id)?;
-        let _lock = store.try_lock()?;
-        let mut state = store.state().await?;
-        if let Some(owner) = state.bootstrap.as_mut()
-            && owner.server_instance_id != *SERVER_INSTANCE
-            && store.publication(owner.workflow_run_id).await?.is_none()
-        {
-            let workflow_run_id = owner.workflow_run_id;
-            owner.phase = OpenWikiBootstrapPhase::CleaningUp;
-            state.error = Some("Bootstrap interrupted by server restart; cleaning up without resuming agent phases".into());
-            store.save_state(&state).await?;
-            if let Some(id) = sqlx::query_scalar::<_, Option<Uuid>>(
-                "SELECT orchestration_run_id FROM workflow_runs WHERE id = ?",
-            )
-            .bind(workflow_run_id)
-            .fetch_optional(&deployment.db().pool)
-            .await?
-            .flatten()
-            {
-                OrchestrationService::new(
-                    deployment.db().pool.clone(),
-                    Arc::new(deployment.agent_run_port().clone()),
-                )
-                .cancel(id, id)
-                .await?;
-            }
-        }
-    }
-    Ok(())
 }

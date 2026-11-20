@@ -439,13 +439,23 @@ pub fn rebuild_prompt(root: &Path, language: &str, source: &str) -> String {
     prompt + &super::management::reference_prompt(source)
 }
 
+/// Goal objectives are bounded by Codex; detailed host instructions use its
+/// existing developer-context channel, frozen on the Workflow node.
+pub fn goal_objective(root: &Path, node: &str) -> String {
+    format!(
+        "Complete the OpenWiki {node} phase in {} using the full host-provided writer instructions and selected OpenWiki Skill. Reach audited openwiki_finish status=complete for every started operation, then return the required report. A verified no-change Refine is valid when no operation is needed. Do not declare the Goal complete with an unfinished lifecycle. On continuation resume the same owned Wiki run ID. Do not commit or publish.",
+        root.display()
+    )
+}
+
 pub fn writer_prompt(root: &Path, language: &str, review_path: Option<&Path>) -> String {
     let protocol = format!(
         "For any OpenWiki operation use root={}, language={}. Follow the installed Skill's plan / next_page / submit_page / finish protocol sequentially in this root host; do not delegate OpenWiki writer tools to child agents or create a competing scheduler. Every started run must finish with status=complete and no sourceChanged=true. Recoverable page/finish validation errors may be corrected within that run. Never abandon an unfinished run, edit managed metadata directly, or write Wiki files after the final finish without a new update + force=true run. A forced update need not produce a Git diff. The phase rules below decide whether an operation is needed. You may use the four retrieval tools before, during or after a run, following upstream linked workspace selection. Linked Wiki content is reference material, not proof of current source behaviour. Keep all writes in this maintenance root's openwiki/ and never update linked Wikis.",
         serde_json::to_string(&root.to_string_lossy()).expect("path"),
         serde_json::to_string(language).expect("language")
     );
-    let base = super::OpenWikiAdapter::host_prompt(root, "{}", &protocol);
+    let base = super::OpenWikiAdapter::host_prompt(root, "{}", &protocol)
+        + "\nGoal objective: Complete this writer phase through the audited OpenWiki finish status=complete and the required report. Keep working until the lifecycle is complete; never mark an unfinished operation as achieved. On ordinary continuation, resume the same owned OpenWiki run ID instead of creating a replacement. A verified no-change Refine report remains valid when no operation is needed.";
     match review_path {
         None => format!(
             "{base}\n{DOCUMENTATION_GUIDANCE}\nThis is the Generate phase of an LVK-managed bootstrap. Start init and complete it in this phase. A verified openwiki_finish status=complete is mandatory; begin-noop is not a successful initial generation. After completion, only if you discover a clear inconsistency, you may self-correct through update + force=true and finish again. Self-correction is optional, not an extra required review round. Never start a new init to correct an existing Wiki. Do not commit or publish. A fresh independent reviewer runs after you exit.\n\
@@ -490,6 +500,19 @@ mod tests {
             .to_string(),
         )
         .unwrap()
+    }
+
+    #[test]
+    fn bootstrap_goal_preserves_full_instructions_outside_the_bounded_objective() {
+        let root = Path::new("/fixture/repo");
+        for node in ["generate", "refine"] {
+            let objective = goal_objective(root, node);
+            executors::executors::codex::validate_goal_objective(&objective).unwrap();
+            assert!(objective.contains("finish status=complete"));
+        }
+        let instructions = writer_prompt(root, "ja", None);
+        assert!(instructions.chars().count() > 4000);
+        assert!(instructions.contains("Knowledge organisation:"));
     }
 
     #[test]

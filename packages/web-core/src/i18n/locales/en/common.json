@@ -1972,6 +1972,7 @@
     "FAHHHHH": "Fahhhhh"
   },
   "workspaceWiki": {
+    "qualityWarnings": "Published Wiki — quality warnings",
     "reload": "Reload Wiki files",
     "repository": "Wiki repository",
     "search": "Search Wiki",

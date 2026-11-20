@@ -1968,6 +1968,7 @@
     "FAHHHHH": "Fahhhhh"
   },
   "workspaceWiki": {
+    "qualityWarnings": "公開済みWiki・品質警告あり",
     "reload": "Wikiファイルを再読み込み",
     "repository": "Wikiのリポジトリ",
     "search": "Wikiを検索",

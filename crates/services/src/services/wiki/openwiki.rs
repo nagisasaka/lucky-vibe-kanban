@@ -6,6 +6,7 @@ pub fn load_snapshot(repo_root: &Path) -> Result<WikiSnapshot, WikiError> {
     let repo = fs::canonicalize(repo_root)?;
     let path = repo.join("openwiki");
     let mut snapshot = WikiSnapshot {
+        quality_warnings: None,
         exists: false,
         config: None,
         index: None,

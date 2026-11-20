@@ -105,7 +105,6 @@ async fn main() -> Result<(), VibeKanbanError> {
     )
     .await?;
     deployment.update_sentry_scope().await?;
-    server::workflow_runtime::bootstrap::fence_interrupted_runs(&deployment).await?;
     // Deployment construction reconciles the durable process owner before
     // returning. Replay commands only after that attachment pass completes;
     // a missing in-memory watcher is not evidence that a provider exited.

@@ -64,9 +64,7 @@ function render(
     target_branch: 'main',
     last_success: status === 'uninitialized' ? null : '2026-09-13T00:00:00Z',
     active_run_id: active ? 'active-run' : null,
-    bootstrap: bootstrap
-      ? { workflow_run_id: 'bootstrap-run', phase: 'reviewing', child: null }
-      : null,
+    bootstrap: bootstrap ? { workflow_run_id: 'bootstrap-run' } : null,
     maintenance_workspace_id: `maintenance-${repoId}`,
     error: status === 'error' ? 'OpenWiki finalisation failed' : null,
     ...overrides,
@@ -104,6 +102,26 @@ describe('repository memory settings', () => {
       }
     }
   );
+  it('shows saved publication warnings while keeping the Wiki published', () => {
+    const markup = render('a', 'current', false, false, {
+      quality_warnings: [
+        {
+          node_id: 're-review',
+          summary: 'Known coverage gap',
+          findings: [
+            {
+              title: 'Lifecycle',
+              description: 'Cancellation contract is incomplete',
+              evidence_paths: ['openwiki/runtime.md'],
+            },
+          ],
+        },
+      ],
+    });
+    expect(markup).toContain('Known coverage gap');
+    expect(markup).toContain('openwiki/runtime.md');
+    expect(markup).toContain('quality warnings');
+  });
   it('adopts existing Wiki without requiring a local success receipt', () => {
     const markup = render('a', 'stale', false, false, { last_success: null });
     expect(markup).toContain('Adopt existing Wiki');
@@ -126,7 +144,7 @@ describe('repository memory settings', () => {
   });
   it('keeps the workflow owner active between child AgentRuns', () => {
     const markup = render('a', 'initializing', false, true);
-    expect(markup).toContain('Reviewing');
+    expect(markup).toContain('View Workflow · Running');
     expect(markup).toContain('disabled=""');
     expect(markup).toContain('independent read-only review');
     expect(markup).toContain('href="/workspaces/maintenance-a/workflow"');

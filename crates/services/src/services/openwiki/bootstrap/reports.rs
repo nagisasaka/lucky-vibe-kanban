@@ -57,7 +57,10 @@ impl ReportReference {
         );
         ensure!(
             reference.verdict.is_some()
-                == (reference.identity.phase == BootstrapReportKind::Review),
+                == (matches!(
+                    reference.identity.phase,
+                    BootstrapReportKind::Review | BootstrapReportKind::ReReview
+                )),
             "Report phase/verdict mismatch"
         );
         if let Some(verdict) = reference.verdict {
@@ -98,7 +101,10 @@ impl ReportReference {
         expected: &ReportIdentity,
     ) -> anyhow::Result<CoverageReview> {
         ensure!(
-            expected.phase == BootstrapReportKind::Review,
+            matches!(
+                expected.phase,
+                BootstrapReportKind::Review | BootstrapReportKind::ReReview
+            ),
             "Not a Review report"
         );
         let review: CoverageReview = serde_json::from_value(self.load(store, expected)?)?;
@@ -181,7 +187,10 @@ pub fn save_review(
     review: &CoverageReview,
 ) -> anyhow::Result<ReportReference> {
     ensure!(
-        identity.phase == BootstrapReportKind::Review,
+        matches!(
+            identity.phase,
+            BootstrapReportKind::Review | BootstrapReportKind::ReReview
+        ),
         "Review identity required"
     );
     review.validate()?;
@@ -237,7 +246,10 @@ pub fn review_verdict(
     ensure!(
         reference.identity.source.run_id == run_id
             && reference.identity.source.workspace_id == workspace_id
-            && reference.identity.phase == BootstrapReportKind::Review,
+            && matches!(
+                reference.identity.phase,
+                BootstrapReportKind::Review | BootstrapReportKind::ReReview
+            ),
         "Foreign coverage routing reference"
     );
     reference.verdict.context("Missing coverage verdict")

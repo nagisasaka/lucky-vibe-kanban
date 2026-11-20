@@ -26,6 +26,7 @@ pub const MAX_BOOTSTRAP_REPORT_BYTES: usize = 1024 * 1024;
 pub enum BootstrapReportKind {
     Review,
     Refine,
+    ReReview,
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize, TS)]
@@ -324,6 +325,8 @@ pub struct RepositoryMemoryState {
     #[serde(default)]
     pub maintenance_session_id: Option<Uuid>,
     pub error: Option<String>,
+    #[serde(default)]
+    pub quality_warnings: Vec<WikiQualityWarning>,
     /// Existing monitor retries only this confirmed, no-longer-consumed artifact set.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
@@ -394,6 +397,7 @@ impl Default for RepositoryMemoryState {
             last_success: None,
             active_run_id: None,
             bootstrap: None,
+            quality_warnings: Vec::new(),
             maintenance_workspace_id: None,
             maintenance_session_id: None,
             error: None,
@@ -416,29 +420,21 @@ impl Default for RepositoryMemoryState {
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct OpenWikiBootstrapOwner {
     pub workflow_run_id: Uuid,
-    // An interrupted process may clean up, but must not resume paid stages.
-    pub server_instance_id: Uuid,
-    pub phase: OpenWikiBootstrapPhase,
-    pub child: Option<OpenWikiBootstrapChild>,
-    pub review_fingerprint: Option<String>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
-#[serde(rename_all = "snake_case")]
-pub enum OpenWikiBootstrapPhase {
-    Generating,
-    Reviewing,
-    Refining,
-    Publishing,
-    CleaningUp,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-pub struct OpenWikiBootstrapChild {
-    pub session_id: Uuid,
-    pub agent_run_id: Uuid,
-    pub node_execution_id: Uuid,
+/// Quality is separate from publication safety and remains tied to its checkpoint.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+pub struct WikiQualityWarning {
     pub node_id: String,
+    pub summary: String,
+    pub findings: Vec<WikiQualityFinding>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+pub struct WikiQualityFinding {
+    pub title: String,
+    pub description: String,
+    pub evidence_paths: Vec<String>,
 }
 
 impl RepositoryMemoryState {
@@ -505,6 +501,8 @@ pub struct WikiPublication {
     pub target_branch: String,
     pub maintenance_commit: Option<String>,
     pub no_op: bool,
+    #[serde(default)]
+    pub quality_warnings: Vec<WikiQualityWarning>,
 }
 
 /// Private filesystem journal, not part of the browser API. Original user text
@@ -852,6 +850,7 @@ impl RepositoryMemoryStore {
             .join(match kind {
                 BootstrapReportKind::Review => "review.json",
                 BootstrapReportKind::Refine => "refine.json",
+                BootstrapReportKind::ReReview => "re-review.json",
             })
     }
 

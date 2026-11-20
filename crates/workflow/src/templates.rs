@@ -62,6 +62,7 @@ pub fn openwiki_bootstrap() -> WorkflowTemplate {
         ("decision", WorkflowNodeKind::Condition),
         ("pass", WorkflowNodeKind::Transform),
         ("refine", WorkflowNodeKind::Agent),
+        ("re-review", WorkflowNodeKind::Agent),
         ("publish", WorkflowNodeKind::End),
     ]
     .into_iter()
@@ -72,9 +73,10 @@ pub fn openwiki_bootstrap() -> WorkflowTemplate {
             ..Default::default()
         };
         if kind == WorkflowNodeKind::Agent {
-            data.executor_config = Some(json!({"executor":"CODEX", "execution_mode":"code"}));
+            data.executor_config = Some(json!({"executor":"CODEX", "execution_mode": if matches!(id,"generate"|"refine") {"goal"} else {"code"}}));
             data.prompt_template = Some(format!("LVK-managed OpenWiki {id} phase"));
         }
+        if matches!(id,"review"|"re-review") { data.source_read_only = Some(true); }
         if kind == WorkflowNodeKind::Condition {
             data.decision_source = Some(ConditionDecisionSource::OpenWikiCoverageReview);
             data.branches = Some(
@@ -90,7 +92,7 @@ pub fn openwiki_bootstrap() -> WorkflowTemplate {
         }
         if kind == WorkflowNodeKind::Transform {
             data.mode = Some(TransformMode::Template);
-            data.template = Some("Coverage review passed".into());
+            data.template = Some("Review recorded; publication retains its quality warnings".into());
         }
         WorkflowNode {
             id: id.into(),
@@ -107,7 +109,8 @@ pub fn openwiki_bootstrap() -> WorkflowTemplate {
         ("decision", "pass"),
         ("decision", "refine"),
         ("pass", "publish"),
-        ("refine", "publish"),
+        ("refine", "re-review"),
+        ("re-review", "publish"),
     ]
     .into_iter()
     .map(|(source, target)| WorkflowEdge {

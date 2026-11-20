@@ -1,3 +1,4 @@
+import { WikiQualityWarnings } from './WikiQualityWarnings';
 import { useTranslation } from 'react-i18next';
 import {
   useEffect,
@@ -128,6 +129,7 @@ export function WorkspaceWikiNavigation({
             />
           </>
         )}
+        <WikiQualityWarnings warnings={snapshot?.wiki.quality_warnings} />
         {error && (
           <p role="status" className="text-sm text-error">
             {t('workspaceWiki.loadUnconfirmed')} {error}
@@ -325,6 +327,7 @@ export function WorkspaceWikiArticle({ actions }: { actions?: ReactNode }) {
           {actions}
         </div>
       </header>
+      <WikiQualityWarnings warnings={snapshot?.wiki.quality_warnings} />
       {error && (
         <p role="status" className="border-b p-base text-base text-error">
           {t('workspaceWiki.loadUnconfirmed')} {error}

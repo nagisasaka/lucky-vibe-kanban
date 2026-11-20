@@ -136,11 +136,28 @@ pub async fn get_snapshot(
 ) -> Result<ResponseJson<ApiResponse<WorkspaceWikiSnapshot>>, ApiError> {
     let resolved = resolve_wiki_repo(&deployment, &workspace, query.repo_id).await?;
     let root = resolved.root.clone();
-    let wiki = tokio::task::spawn_blocking(move || wiki::openwiki::load_snapshot(&root))
+    let mut wiki = tokio::task::spawn_blocking(move || wiki::openwiki::load_snapshot(&root))
         .await
         .map_err(|error| ApiError::BadRequest(error.to_string()))?
         .map_err(map_wiki_error)?;
     let source_links = resolve_source_links(&deployment, &wiki).await?;
+    if let Some(store) =
+        db::models::repository_state::RepositoryMemoryStore::read_only_configured_for_repository(
+            &deployment.db().pool,
+            &resolved.name,
+            resolved.id,
+        )
+        .await
+        .map_err(|e| ApiError::BadRequest(e.to_string()))?
+    {
+        wiki.quality_warnings = Some(
+            store
+                .state()
+                .await
+                .map_err(|e| ApiError::BadRequest(e.to_string()))?
+                .quality_warnings,
+        );
+    }
     Ok(ResponseJson(ApiResponse::success(WorkspaceWikiSnapshot {
         workspace_id: workspace.id,
         repo_id: resolved.id,

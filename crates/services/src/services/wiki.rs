@@ -46,6 +46,9 @@ pub struct WikiPage {
 
 #[derive(Clone, Debug, Serialize, Deserialize, TS, PartialEq, Eq)]
 pub struct WikiSnapshot {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub quality_warnings: Option<Vec<utils::repository_memory::WikiQualityWarning>>,
     pub exists: bool,
     pub config: Option<WikiConfig>,
     pub index: Option<WikiPage>,
