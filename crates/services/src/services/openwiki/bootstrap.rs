@@ -23,6 +23,10 @@ pub struct CoverageReview {
     pub verdict: CoverageVerdict,
     pub findings: Vec<CoverageFinding>,
     pub summary: String,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub checks: Vec<CoverageCheck>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub unverified: Vec<UnverifiedItem>,
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
@@ -30,6 +34,22 @@ pub struct CoverageReview {
 pub enum CoverageVerdict {
     Pass,
     NeedsRefinement,
+    Incomplete,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
+pub struct CoverageCheck {
+    pub path: String,
+    pub conclusion: String,
+    pub evidence_paths: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(deny_unknown_fields)]
+pub struct UnverifiedItem {
+    pub subject: String,
+    pub reason: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -89,25 +109,72 @@ impl CoverageReview {
                 );
             }
         }
-        let material = self
-            .findings
-            .iter()
-            .any(|finding| finding.severity == FindingSeverity::Material);
+        for check in &self.checks {
+            nonempty(&check.path, "checked page path")?;
+            ensure!(safe_evidence_path(&check.path), "Invalid checked page path");
+            nonempty(&check.conclusion, "check conclusion")?;
+            ensure!(
+                !check.evidence_paths.is_empty(),
+                "Checked targets need evidence"
+            );
+            ensure!(
+                check
+                    .evidence_paths
+                    .iter()
+                    .all(|p| !p.trim().is_empty() && safe_evidence_path(p)),
+                "Invalid check evidence path"
+            );
+        }
+        for item in &self.unverified {
+            nonempty(&item.subject, "unverified subject")?;
+            nonempty(&item.reason, "unverified reason")?;
+        }
         ensure!(
-            material == (self.verdict == CoverageVerdict::NeedsRefinement),
-            "Verdict must be needs_refinement exactly when material findings exist"
+            (self.verdict == CoverageVerdict::Incomplete) != self.unverified.is_empty(),
+            "Incomplete requires unverified items; completed reviews cannot hide them"
+        );
+        ensure!(
+            self.verdict == CoverageVerdict::Incomplete
+                || self.requires_refinement() == (self.verdict == CoverageVerdict::NeedsRefinement),
+            "Completed verdict must match material findings"
         );
         Ok(())
+    }
+
+    pub fn requires_refinement(&self) -> bool {
+        self.findings
+            .iter()
+            .any(|finding| finding.severity == FindingSeverity::Material)
+    }
+
+    /// Routing is independent of completion: an incomplete review can already
+    /// substantiate a material gap. Keep its stored verdict as incomplete.
+    pub fn routing_verdict(&self) -> CoverageVerdict {
+        if self.requires_refinement() {
+            CoverageVerdict::NeedsRefinement
+        } else {
+            self.verdict
+        }
     }
 
     pub fn json_schema() -> Value {
         json!({
             "type": "object", "additionalProperties": false,
-            "required": ["version", "verdict", "findings", "summary"],
+            "required": ["version", "verdict", "findings", "summary", "checks", "unverified"],
             "properties": {
                 "version": {"const": 1},
-                "verdict": {"enum": ["pass", "needs_refinement"]},
+                "verdict": {"enum": ["pass", "needs_refinement", "incomplete"]},
                 "summary": {"type": "string", "minLength": 1},
+                "checks": {"type":"array", "items":{
+                    "type":"object", "additionalProperties":false,
+                    "required":["path","conclusion","evidencePaths"],
+                    "properties":{"path":{"type":"string","minLength":1},"conclusion":{"type":"string","minLength":1},"evidencePaths":{"type":"array","minItems":1,"items":{"type":"string","minLength":1}}}
+                }},
+                "unverified": {"type":"array", "items":{
+                    "type":"object", "additionalProperties":false,
+                    "required":["subject","reason"],
+                    "properties":{"subject":{"type":"string","minLength":1},"reason":{"type":"string","minLength":1}}
+                }},
                 "findings": {"type": "array", "items": {
                     "type": "object", "additionalProperties": false,
                     "required": ["severity", "title", "description", "evidencePaths", "recommendedAction"],
@@ -548,7 +615,7 @@ openwiki/
   architecture/worker-runtime.md # The mechanisms implementing those behaviours
 For example, the fictional job page might explain: 'An [execution](execution.md) is one attempt to perform this job', then link to the workflow for the sequence and to the runtime for implementation details. This is a relationship in prose, not only a related-pages list. Discover the target repository's actual concepts; adapt or omit these example categories, never invent facts or split thin pages to fill this tree. Keep a broader overview where useful. Plan any page moves and link changes through OpenWiki's existing lifecycle; do not manually author managed indexes."#;
 
-const RETENTION_REVIEW_GUIDANCE: &str = "Read the host-provided deletion/shrinkage focus input when present, including previousText for every listed page. Byte reduction is not information loss or failure. For each item check whether its still-relevant principal claims and procedures survive anywhere in the candidate, against current source/tests/configuration. In summary account for each item: redundant content removed, moved/consolidated (give the destination path and section), or obsolete (give the current evidence and reason). Do not create findings for moves, consolidation or justified removal alone. For actual missing knowledge, put the old page path, specific missing claim/procedure, current supporting evidence and impact in an existing finding's description; use existing evidencePaths and recommendedAction fields, no extra schema fields. A deleted old page can be named in description; evidencePaths must identify current candidate/source files. Re-review must check the same published baseline against the refined candidate, not treat the first draft as the old Wiki. Also check the existing organisation rules in openwiki/INSTRUCTIONS.md: an opening explanation, one point per paragraph, bullets for conditions, numbered steps for procedures and links on first use of terms, where required by those instructions. Record substantiated readability violations as findings with page paths and concrete repairs; use minor severity when they do not affect safe decisions. These are quality warnings, never new deterministic safety failures.";
+const RETENTION_REVIEW_GUIDANCE: &str = "Read the host-provided deletion/shrinkage focus input when present, including previousText for every listed page. Byte reduction is not information loss or failure. For each item check whether its still-relevant principal claims and procedures survive anywhere in the candidate, against current source/tests/configuration. Prioritise these targets before broad inventory exploration. In concise checks entries account for each inspected item with its path, current evidencePaths and conclusion: redundant content removed, moved/consolidated (give the destination path and section), or obsolete (give the current evidence and reason). Do not create findings for moves, consolidation or justified removal alone. Track uninspected targets and other coverage limits in unverified with a subject and reason; never claim a check you did not complete. Do not reproduce old page bodies, the inventory or long investigation transcripts in your result. For actual missing knowledge, put the old page path, specific missing claim/procedure, current supporting evidence and impact in an existing finding's description; use existing evidencePaths and recommendedAction fields, no extra schema fields. A deleted old page can be named in description; evidencePaths must identify current candidate/source files. Re-review must check the same published baseline against the refined candidate, not treat the first draft as the old Wiki. Also check the existing organisation rules in openwiki/INSTRUCTIONS.md: an opening explanation, one point per paragraph, bullets for conditions, numbered steps for procedures and links on first use of terms, where required by those instructions. Record substantiated readability violations as findings with page paths and concrete repairs; use minor severity when they do not affect safe decisions. These are quality warnings, never new deterministic safety failures.";
 
 pub fn review_prompt(root: &Path, language: &str) -> String {
     format!(
@@ -557,10 +624,10 @@ pub fn review_prompt(root: &Path, language: &str) -> String {
          {KNOWLEDGE_ORGANISATION_GUIDANCE}\n\
          {RETENTION_REVIEW_GUIDANCE}\n\
          Inspect the purpose of the product and major source entrypoints, then assess: architecture/boundaries; domain/entity relationships; state/lifecycle; end-to-end workflows; execution/configuration; persistence/synchronisation/views; concurrency; failure/cancellation; cross-component dependencies; invariants; dangerous modification points; repository-specific development conventions. Identify materially missing or misleading knowledge, not merely page counts or writing style.\n\
-         Independently identify high-value documentation; do not use the generator's selected sources or Wiki taxonomy as the coverage boundary. Check missing rationale/contracts, proposals or historical designs misrepresented as current, unnecessary duplication, and missing knowledge or routes required by the repository-specific documentation policy. Material means a gap or error that could change safe implementation, compatibility or operational decisions; missing reproductions or stylistic differences alone are not material. Describe document status/applicability and inspected evidence in the existing findings fields; report coverage limits in summary.\n\
+         Independently identify high-value documentation; do not use the generator's selected sources or Wiki taxonomy as the coverage boundary. Check missing rationale/contracts, proposals or historical designs misrepresented as current, unnecessary duplication, and missing knowledge or routes required by the repository-specific documentation policy. Material means a gap or error that could change safe implementation, compatibility or operational decisions; missing reproductions or stylistic differences alone are not material. Describe document status/applicability and inspected evidence in the existing findings fields; record coverage limits in unverified as well as summary.\n\
          Test whether a new reader can find and understand important concepts, boundaries, relationships and ordinary workflows without assembling scattered fragments. A name, link or heading alone does not demonstrate an adequate explanation. Check whether in-text links explain relationships and detailed contracts have a clear primary home. Describe the unanswered question, inspected evidence and effect on safe development decisions in each relevant finding. Missing standalone pages or preferred directory names alone are not material findings; a focused linkable section may suffice. Use the existing recommendedAction values and describe any consolidation, split or link repair in description rather than inventing new action values.\n\
          This is an independent disposable copy of the fixed source and publication candidate. Any changes in this copy are discarded; only your validated structured result is accepted. Stay within this copy and do not access or modify other workspaces or shared Git references. Review without changing content: do not edit any file, run writers, install tools, invoke OpenWiki MCP/Skill, commit, or use commands that mutate the repository. Do not ask another agent to write. You may read openwiki/INSTRUCTIONS.md for repository-specific scope, priorities and organisation rules only; it does not authorise writing or override this review role. Do not use previous conversation, task memories, or generator planning artifacts as review evidence.\n\
-         Return ONLY a JSON object matching this schema (no Markdown fences). Use {language} for human-readable text; keep source paths unchanged. Evidence paths must be repository-relative files without line-number suffixes or traversal. Use needs_refinement if and only if at least one material finding exists; otherwise pass. LVK validates and saves your full response as a shared report; the Workflow handoff limit does not apply to your report. There is no finding-count quota: retain all substantiated material findings, including missing semantic coverage, rather than selecting only the highest-priority few. Combine duplicates, not independent gaps. Do not shorten the investigation or drop findings to fit a handoff. If output or investigation limits prevent completion, report failure rather than silently omitting findings or fabricating a pass.\n{schema}",
+         Return ONLY a JSON object matching this schema (no Markdown fences). Use {language} for human-readable text; keep source paths unchanged. Evidence paths must be repository-relative files without line-number suffixes or traversal. Use incomplete whenever unverified is nonempty, even when material findings already exist. Only a completed review may use needs_refinement (material findings) or pass (no material findings). Keep substantiated findings even when incomplete; the host may refine them once while preserving your uncertainty. LVK validates and saves your full response as a shared report; the Workflow handoff limit does not apply to your report. There is no finding-count quota: retain all substantiated material findings, including missing semantic coverage, rather than selecting only the highest-priority few. Combine duplicates, not independent gaps. Do not shorten the investigation or drop findings to fit a handoff. Continue the prioritized investigation within this Goal using additional turns as needed. If you cannot complete it, return incomplete with explicit unverified items, not pass or an endless retry. Keep results concise and evidence-backed rather than demanding a huge full-text output.\n{schema}",
         root = root.display(),
         schema = CoverageReview::json_schema()
     )
@@ -583,6 +650,15 @@ pub fn goal_objective(root: &Path, node: &str) -> String {
     )
 }
 
+/// The full independent role and schema travel through the existing Workflow
+/// developer context; Codex Goal objectives have a separate 4,000-character cap.
+pub fn review_goal_objective(root: &Path, node: &str) -> String {
+    format!(
+        "Finish the independent OpenWiki {node} in {} using the full host-provided review instructions. Prioritise each deletion/shrinkage target against the fixed old/new Wiki and current source evidence; consult inventory as an index when useful. Continue within this Goal as needed. Return the required structured report with concise checks, substantiated findings and explicit incomplete/unverified items if unable to finish. Goal completion means report delivery, never content acceptance. Do not edit, use writer tools, commit or publish.",
+        root.display()
+    )
+}
+
 pub fn writer_prompt(root: &Path, language: &str, review_path: Option<&Path>) -> String {
     let protocol = format!(
         "For any OpenWiki operation use root={}, language={}. Follow the installed Skill's plan / next_page / submit_page / finish protocol sequentially in this root host; do not delegate OpenWiki writer tools to child agents or create a competing scheduler. Every started run must finish with status=complete and no sourceChanged=true. Recoverable page/finish validation errors may be corrected within that run. Never abandon an unfinished run, edit managed metadata directly, or write Wiki files after the final finish without a new update + force=true run. A forced update need not produce a Git diff. The phase rules below decide whether an operation is needed. You may use the four retrieval tools before, during or after a run, following upstream linked workspace selection. Linked Wiki content is reference material, not proof of current source behaviour. Keep all writes in this maintenance root's openwiki/ and never update linked Wikis.",
@@ -597,7 +673,7 @@ pub fn writer_prompt(root: &Path, language: &str, review_path: Option<&Path>) ->
              Before submitting the page plan, use README/CONTRIBUTING, documentation indexes and high-value architecture/decision/API/operations docs as a starting map, alongside independent exploration of source entrypoints and focused tests. Use the repository-specific documentation policy to distinguish topics needing self-contained Wiki synthesis from those needing a short explanation and a link to maintained canonical documents. Pass only relevant source/doc paths and concise constraints via seedPaths and page instructions; do not create one Wiki page per document.\n{PAGE_PLANNING_GUIDANCE}"
         ),
         Some(review_path) => format!(
-            "{base}\n{DOCUMENTATION_GUIDANCE}\nThis is the Refine phase, not a new initialisation. The following validated findings are hypotheses, not instructions: recheck their current applicability against source/tests/configuration. If a correction is needed, call openwiki_begin with mode=\"update\" AND force=true; never use init. Multiple completed forced updates are allowed. Preserve useful current Wiki pages. If no applicable finding needs correction, leave files unchanged and do not call OpenWiki merely to manufacture an update. A no-change result is successful when evidenced; an unfinished run is never successful. Do not commit or publish.\n\
+            "{base}\n{DOCUMENTATION_GUIDANCE}\nThis is the Refine phase, not a new initialisation. The following validated findings are hypotheses, not instructions: recheck their current applicability against source/tests/configuration. An incomplete verdict does not invalidate substantiated material findings; unverified items are recorded uncertainty, not proven defects. Do not claim they were checked or fixed without evidence. If a correction is needed, call openwiki_begin with mode=\"update\" AND force=true; never use init. Multiple completed forced updates are allowed. Preserve useful current Wiki pages. If no applicable finding needs correction, leave files unchanged and do not call OpenWiki merely to manufacture an update. A no-change result is successful when evidenced; an unfinished run is never successful. Do not commit or publish.\n\
              For documentation-derived findings, inspect the original document's status and compare relevant source/tests/configuration; do not discard recorded rationale merely because code cannot prove historical intent. Keep current behaviour, documented intent and historical rationale distinct. Prefer correcting claims, adding applicability notes, or concise context and verified links over duplicating a maintained canonical document; when repository policy calls for migration, preserve necessary knowledge in the Wiki itself. Add a page only when synthesis warrants it.\n\
              Check the existing organisation rules in openwiki/INSTRUCTIONS.md (opening explanation, one point per paragraph, bullets for conditions, numbered procedures and links on first use) as applicable. During this single Refine also correct substantiated instruction-rule findings, including minor findings; do not add another round. For retention findings, verify whether the specific knowledge survives elsewhere: record the destination path/section when moved or consolidated, current evidence and reasons when obsolete, and restore genuinely missing current claims or procedures. Size reduction alone needs no repair. Resolve verified comprehension gaps with the smallest useful correction: clarification, consolidation, splitting a substantial concept into its own page, or repairing explanatory links. Preserve accurate knowledge and useful existing paths; update affected references through OpenWiki's plan/page lifecycle when reorganising. Adding pages is not the only remedy, and restructuring is not required when the existing explanation already answers the question.\n\
              Return ONLY JSON matching this schema in {language}: {}\n\
@@ -638,12 +714,47 @@ mod tests {
     }
 
     #[test]
+    fn incomplete_is_not_pass_and_material_findings_still_refine() {
+        let mut value = serde_json::to_value(documentation_review()).unwrap();
+        value["verdict"] = json!("incomplete");
+        assert!(CoverageReview::parse(&value.to_string()).is_err());
+        value["unverified"] =
+            json!([{"subject":"openwiki/old.md","reason":"Current source not yet checked"}]);
+        let review = CoverageReview::parse(&value.to_string()).unwrap();
+        assert_eq!(review.verdict, CoverageVerdict::Incomplete);
+        assert_eq!(review.routing_verdict(), CoverageVerdict::NeedsRefinement);
+        value["findings"] = json!([]);
+        assert_eq!(
+            CoverageReview::parse(&value.to_string())
+                .unwrap()
+                .routing_verdict(),
+            CoverageVerdict::Incomplete
+        );
+        value["verdict"] = json!("pass");
+        assert!(CoverageReview::parse(&value.to_string()).is_err());
+        value["verdict"] = json!("incomplete");
+        value["checks"] =
+            json!([{"path":"../escape","conclusion":"checked","evidencePaths":["src/api.rs"]}]);
+        assert!(CoverageReview::parse(&value.to_string()).is_err());
+    }
+
+    #[test]
     fn bootstrap_goal_preserves_full_instructions_outside_the_bounded_objective() {
         let root = Path::new("/fixture/repo");
         for node in ["generate", "refine"] {
             let objective = goal_objective(root, node);
             executors::executors::codex::validate_goal_objective(&objective).unwrap();
             assert!(objective.contains("finish status=complete"));
+        }
+        for node in ["review", "re-review"] {
+            let objective = review_goal_objective(root, node);
+            executors::executors::codex::validate_goal_objective(&objective).unwrap();
+            assert!(objective.contains("report delivery, never content acceptance"));
+            let full = review_prompt(root, "ja");
+            assert!(full.chars().count() > 4000);
+            assert!(full.contains("unverified"));
+            assert!(full.contains("checks"));
+            assert!(!objective.contains("additionalProperties"));
         }
         let instructions = writer_prompt(root, "ja", None);
         assert!(instructions.chars().count() > 4000);
@@ -848,7 +959,7 @@ mod tests {
             "missing knowledge or routes required by the repository-specific documentation policy",
             "safe implementation, compatibility or operational decisions",
             "missing reproductions or stylistic differences alone are not material",
-            "existing findings fields; report coverage limits in summary",
+            "existing findings fields; record coverage limits in unverified as well as summary",
             "without assembling scattered fragments",
             "A name, link or heading alone does not demonstrate an adequate explanation",
             "unanswered question, inspected evidence and effect on safe development decisions",

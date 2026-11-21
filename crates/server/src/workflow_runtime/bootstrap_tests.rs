@@ -334,7 +334,12 @@ impl WorkflowAgentExecutor for FakeBootstrap<'_> {
                     "title":format!("Coverage gap {index}"),"description":"契約と実装を確認し、知識の不足を具体的に記録。".repeat(40),
                     "evidencePaths":["source.rs"],"recommendedAction":"expand_page"
                 })).collect();
-                let raw = if self.fail == Some("retention") {
+                let raw = if self.fail == Some("incomplete") {
+                    json!({"version":1,"verdict":"incomplete", "summary":"根拠の確認が一部未完了",
+                        "findings": if self.refine {findings} else {vec![]},
+                        "checks":[{"path":"openwiki/index.md","conclusion":"現行の根拠と一致", "evidencePaths":["source.rs"]}],
+                        "unverified":[{"subject":format!("{}: old/new procedure",request.node_id),"reason":"旧版の残りの手順は未照合"}]}).to_string()
+                } else if self.fail == Some("retention") {
                     let parent = tempfile::tempdir().unwrap();
                     let copy = parent.path().join("review");
                     openwiki::bootstrap::copy_review_candidate(
@@ -475,7 +480,7 @@ impl WorkflowAgentExecutor for FakeBootstrap<'_> {
         )
         .await
         .ok()
-        .map(|(review, _)| review.verdict))
+        .map(|(review, _)| review.routing_verdict()))
     }
     async fn publish_repository(&self, run_id: Uuid) -> Result<Option<String>, ApiError> {
         if self.fail == Some("publish") {
@@ -1349,6 +1354,8 @@ async fn missing_review_and_remaining_findings_publish_once_with_exact_warnings(
         ("missing_review", false),
         ("missing_re_review", true),
         ("remaining", true),
+        ("incomplete", false),
+        ("incomplete", true),
     ] {
         let f = Fixture::new().await;
         let run = f.reserve().await;
@@ -1407,7 +1414,18 @@ async fn missing_review_and_remaining_findings_publish_once_with_exact_warnings(
         );
         let warning = &published.quality_warnings[0];
         assert_eq!(warning.node_id, if refine { "re-review" } else { "review" });
-        if fail == "remaining" {
+        if fail == "incomplete" {
+            assert!(warning.summary.contains("レビュー未完了"));
+            assert_eq!(warning.findings.len(), if refine { 21 } else { 1 });
+            let unknown = warning.findings.last().unwrap();
+            assert!(
+                unknown
+                    .title
+                    .contains(if refine { "re-review:" } else { "review:" })
+            );
+            assert!(unknown.description.contains("旧版の残りの手順は未照合"));
+            assert!(!warning.summary.contains("レビュー結果なし"));
+        } else if fail == "remaining" {
             assert_eq!(warning.findings.len(), 20);
         } else {
             assert!(warning.findings.is_empty());
@@ -1422,10 +1440,12 @@ async fn missing_review_and_remaining_findings_publish_once_with_exact_warnings(
             calls.iter().filter(|n| n.node_id == "re-review").count(),
             usize::from(refine)
         );
-        for n in calls
-            .iter()
-            .filter(|n| matches!(n.node_id.as_str(), "generate" | "refine"))
-        {
+        for n in calls.iter().filter(|n| {
+            matches!(
+                n.node_id.as_str(),
+                "generate" | "review" | "refine" | "re-review"
+            )
+        }) {
             assert_eq!(
                 n.executor_config.as_ref().unwrap()["execution_mode"],
                 "goal"

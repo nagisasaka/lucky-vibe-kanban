@@ -2665,9 +2665,11 @@ where
                 .coverage_review(run_id, workspace_id, &raw.output_text)
                 .await?;
             let (selected, skipped) = match verdict {
-                Some(services::services::openwiki::bootstrap::CoverageVerdict::Pass) | None => {
-                    ("pass", "refine")
-                }
+                Some(
+                    services::services::openwiki::bootstrap::CoverageVerdict::Pass
+                    | services::services::openwiki::bootstrap::CoverageVerdict::Incomplete,
+                )
+                | None => ("pass", "refine"),
                 Some(services::services::openwiki::bootstrap::CoverageVerdict::NeedsRefinement) => {
                     ("refine", "pass")
                 }

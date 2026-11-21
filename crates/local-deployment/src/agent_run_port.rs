@@ -900,6 +900,7 @@ impl LocalAgentRunPort {
             .is_some_and(|o| o.kind == db::models::workspace_usage::RESOURCE_MEDIATION);
         let mut openwiki_maintenance = false;
         let mut openwiki_reviewer = false;
+        let mut bootstrap_review_instructions = None;
         let local_api_port = utils::port_file::read_port_file("vibe-kanban").await.ok();
         if !resource_mediator && let Some(port) = local_api_port {
             memory_instructions.push(services::services::resource_coordination::instructions(
@@ -1037,10 +1038,14 @@ impl LocalAgentRunPort {
                             ));
                         }
                         openwiki_maintenance = !openwiki_reviewer;
-                        if openwiki_maintenance {
+                        {
                             let instructions:String=sqlx::query_scalar("SELECT input_text FROM node_executions WHERE run_id=? AND node_id=? AND session_id=? ORDER BY iteration DESC LIMIT 1")
                                 .bind(workflow_run).bind(&node).bind(request.session_id).fetch_one(&self.db.pool).await.map_err(port_database)?;
-                            memory_instructions.push(instructions);
+                            if openwiki_reviewer {
+                                bootstrap_review_instructions = Some(instructions);
+                            } else {
+                                memory_instructions.push(instructions);
+                            }
                         }
                     } else if state.maintenance_session_id != Some(request.session_id)
                         || state
@@ -1132,6 +1137,12 @@ impl LocalAgentRunPort {
             current_instructions.push("The CURRENT identity supersedes earlier run IDs and draft paths for each repository. Use only its current draft_path and repository_path.".into());
             fixed_instructions.push(utils::repository_memory::CODING_RUN_INSTRUCTIONS.into());
             memory_instructions.push(instructions);
+        }
+        // Review receives only its pinned host role, never ambient coding history.
+        if let Some(instructions) = bootstrap_review_instructions {
+            current_instructions = vec![instructions.clone()];
+            fixed_instructions.clear();
+            memory_instructions = vec![instructions];
         }
         let repo_names = repos
             .into_iter()
@@ -5794,15 +5805,33 @@ mod tests {
     #[tokio::test]
     async fn wiki_review_launch_uses_disposable_copy_without_rebinding_ownership() {
         let db = setup_runtime_db().await;
-        let (request, attempt) = persisted_codex_run(&db).await;
+        let (mut request, mut attempt) = persisted_codex_run(&db).await;
         let mut env = test_execution_env(&attempt.workspace.path);
         env.insert("LVK_OPENWIKI_REVIEWER", "1");
         let copy = services::services::openwiki::bootstrap::review_workspace(
             Path::new(&attempt.workspace.path),
             request.session_id,
         );
+        let full_role = services::services::openwiki::bootstrap::review_prompt(&copy, "ja");
+        request.input.content =
+            services::services::openwiki::bootstrap::review_goal_objective(&copy, "review");
+        executors::executors::codex::validate_goal_objective(&request.input.content).unwrap();
+        attempt.executor_config.execution_mode = Some(executors::profile::ExecutionMode::Goal);
+        env.insert("LVK_REPOSITORY_MEMORY_INSTRUCTIONS", full_role.clone());
         let launch =
             FrozenDirectProviderLaunchSpec::new(&request, &attempt, DirectProvider::Codex, env);
+        let direct = launch.launch_request();
+        assert_eq!(
+            direct.executor_config.execution_mode,
+            Some(executors::profile::ExecutionMode::Goal)
+        );
+        assert_eq!(
+            direct.env.repository_memory_instructions().as_deref(),
+            Some(full_role.as_str())
+        );
+        assert!(full_role.chars().count() > 4000);
+        assert!(full_role.contains("unverified"));
+        assert!(!direct.prompt.contains("additionalProperties"));
         assert_eq!(launch.current_dir, copy);
         let payload: serde_json::Value =
             serde_json::from_slice(&launch.audit_payload().unwrap()).unwrap();

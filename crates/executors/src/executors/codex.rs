@@ -1176,7 +1176,7 @@ impl Codex {
                 );
             }
         }
-        if let Some(memory) = env.repository_memory_instructions().filter(|_| !reviewer) {
+        if let Some(memory) = env.repository_memory_instructions() {
             params.developer_instructions = Some(match params.developer_instructions.take() {
                 Some(existing) => format!("{existing}\n\n{memory}"),
                 None => memory,
@@ -2592,15 +2592,19 @@ mod goal_skill_tests {
 
     #[test]
     fn bootstrap_reviewer_preserves_permissions_without_writer_tools_or_history() {
-        let codex: Codex =
-            serde_json::from_value(serde_json::json!({"sandbox":"danger-full-access"})).unwrap();
+        let codex: Codex = serde_json::from_value(
+            serde_json::json!({"sandbox":"danger-full-access", "execution_mode":"goal"}),
+        )
+        .unwrap();
+        assert_eq!(codex.effective_execution_mode(), ExecutionMode::Goal);
         let mut env = ExecutionEnv::new(RepoContext::default());
         env.insert("LVK_OPENWIKI_REVIEWER", "1");
         env.insert("LVK_OPENWIKI_MAINTENANCE", "1");
-        env.insert(
-            "LVK_REPOSITORY_MEMORY_INSTRUCTIONS",
-            "previous task context must not leak",
-        );
+        let full_role =
+            "Trusted independent review instructions: pinned source, incomplete schema. "
+                .repeat(100);
+        assert!(full_role.chars().count() > 4000);
+        env.insert("LVK_REPOSITORY_MEMORY_INSTRUCTIONS", full_role.clone());
         env.insert("LVK_SHARED_RESOURCE_ROOTS", r#"["/shared/writable"]"#);
         let params = codex.build_thread_start_params_with_resources(Path::new("/workspace"), &env);
         let ordinary = codex.build_thread_start_params(Path::new("/workspace"));
@@ -2609,10 +2613,10 @@ mod goal_skill_tests {
         assert_eq!(params.permissions, ordinary.permissions);
         assert!(params.runtime_workspace_roots.is_none());
         assert!(
-            !params
+            params
                 .developer_instructions
                 .unwrap_or_default()
-                .contains("previous task")
+                .contains(&full_role)
         );
         let config = params.config.unwrap();
         assert_eq!(config["mcp_servers.openwiki.enabled"], false);

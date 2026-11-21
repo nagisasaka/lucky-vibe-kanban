@@ -35,6 +35,29 @@ describe('Wiki publication quality warnings', () => {
     expect(html).toContain('openwiki/runtime.md');
     expect(html).toContain('&lt;unsafe markup&gt;');
   });
+  it('displays incomplete review subjects and reasons on a published Wiki', () => {
+    const html = renderToStaticMarkup(
+      <WikiQualityWarnings
+        warnings={[
+          {
+            node_id: 're-review',
+            summary: 'レビュー未完了: 一部の照合が未完了',
+            findings: [
+              {
+                title: '未確認: openwiki/runtime.md の旧新版',
+                description: '取消後の復旧手順は未照合',
+                evidence_paths: [],
+              },
+            ],
+          },
+        ]}
+      />
+    );
+    expect(html).toContain('workspaceWiki.qualityWarnings');
+    expect(html).toContain('レビュー未完了');
+    expect(html).toContain('未確認: openwiki/runtime.md の旧新版');
+    expect(html).toContain('取消後の復旧手順は未照合');
+  });
   it('exposes a missing review even without page findings', () => {
     const html = renderToStaticMarkup(
       <WikiQualityWarnings

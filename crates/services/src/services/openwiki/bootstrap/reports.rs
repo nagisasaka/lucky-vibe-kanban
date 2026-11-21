@@ -65,7 +65,9 @@ impl ReportReference {
         );
         if let Some(verdict) = reference.verdict {
             ensure!(
-                (reference.material_count > 0) == (verdict == CoverageVerdict::NeedsRefinement),
+                verdict == CoverageVerdict::Incomplete
+                    || (reference.material_count > 0)
+                        == (verdict == CoverageVerdict::NeedsRefinement),
                 "Report counts/verdict mismatch"
             );
         }
@@ -240,7 +242,7 @@ pub fn review_verdict(
     workspace_id: Uuid,
 ) -> anyhow::Result<CoverageVerdict> {
     if !is_reference(raw) {
-        return Ok(CoverageReview::parse(raw)?.verdict);
+        return Ok(CoverageReview::parse(raw)?.routing_verdict());
     }
     let reference = ReportReference::parse(raw)?;
     ensure!(
@@ -252,7 +254,11 @@ pub fn review_verdict(
             ),
         "Foreign coverage routing reference"
     );
-    reference.verdict.context("Missing coverage verdict")
+    if reference.material_count > 0 {
+        Ok(CoverageVerdict::NeedsRefinement)
+    } else {
+        reference.verdict.context("Missing coverage verdict")
+    }
 }
 
 #[cfg(test)]
@@ -280,6 +286,37 @@ mod tests {
             "findings":(0..20).map(|n| json!({"severity":"material","title":format!("領域{n}"),
                 "description":"不足する契約と根拠を記載。".repeat(400),"evidencePaths":["src/main.rs"],"recommendedAction":"expand_page"})).collect::<Vec<_>>()
         }).to_string()).unwrap()
+    }
+
+    #[test]
+    fn incomplete_report_keeps_uncertainty_and_routes_material_findings_once() {
+        for material in [false, true] {
+            let dir = tempfile::tempdir().unwrap();
+            let store = RepositoryMemoryStore::at_artifacts(dir.path()).unwrap();
+            let id = identity();
+            let mut report = review();
+            report.verdict = CoverageVerdict::Incomplete;
+            report.unverified = vec![super::super::UnverifiedItem {
+                subject: "old/new procedure".into(),
+                reason: "Source inspection unfinished".into(),
+            }];
+            if !material {
+                report.findings.clear();
+            }
+            let reference = save_review(&store, id.clone(), &report).unwrap();
+            let raw = serde_json::to_string(&reference).unwrap();
+            let parsed = ReportReference::parse(&raw).unwrap();
+            assert_eq!(parsed.load_review(&store, &id).unwrap(), report);
+            assert_eq!(parsed.verdict, Some(CoverageVerdict::Incomplete));
+            assert_eq!(
+                review_verdict(&raw, id.source.run_id, id.source.workspace_id).unwrap(),
+                if material {
+                    CoverageVerdict::NeedsRefinement
+                } else {
+                    CoverageVerdict::Incomplete
+                }
+            );
+        }
     }
 
     #[test]
