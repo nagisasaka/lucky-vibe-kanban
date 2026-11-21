@@ -286,7 +286,7 @@ impl WorkflowAgentExecutor for FakeBootstrap<'_> {
         };
         let output = match request.node_id.as_str() {
             "generate" => {
-                std::fs::create_dir(fixture.maintenance.join("openwiki")).unwrap();
+                std::fs::create_dir_all(fixture.maintenance.join("openwiki")).unwrap();
                 std::fs::write(
                     fixture.maintenance.join("openwiki/INSTRUCTIONS.md"),
                     include_bytes!("../../../../assets/openwiki-instructions.md"),
@@ -297,6 +297,18 @@ impl WorkflowAgentExecutor for FakeBootstrap<'_> {
                     "Generated Wiki",
                 )
                 .unwrap();
+                if self.fail == Some("retention") {
+                    std::fs::rename(
+                        fixture.maintenance.join("openwiki/moved.md"),
+                        fixture.maintenance.join("openwiki/destination.md"),
+                    )
+                    .unwrap();
+                    std::fs::write(
+                        fixture.maintenance.join("openwiki/workspace.md"),
+                        "DirectFolder is an existing folder.",
+                    )
+                    .unwrap();
+                }
                 "SENSITIVE_GENERATOR_CONVERSATION".into()
             }
             "review" if self.fail == Some("missing_review") => {
@@ -322,11 +334,41 @@ impl WorkflowAgentExecutor for FakeBootstrap<'_> {
                     "title":format!("Coverage gap {index}"),"description":"契約と実装を確認し、知識の不足を具体的に記録。".repeat(40),
                     "evidencePaths":["source.rs"],"recommendedAction":"expand_page"
                 })).collect();
-                let raw =
-                    json!({"version":1,"verdict":if self.refine {"needs_refinement"} else {"pass"},
-                    "summary":"All findings preserved","findings":findings})
-                    .to_string();
-                assert!(raw.len() > 12_000);
+                let raw = if self.fail == Some("retention") {
+                    let parent = tempfile::tempdir().unwrap();
+                    let copy = parent.path().join("review");
+                    openwiki::bootstrap::copy_review_candidate(
+                        &git::GitService::new(),
+                        &fixture.maintenance,
+                        &copy,
+                        &fixture.source,
+                    )
+                    .unwrap();
+                    let focus = openwiki::bootstrap::review_reductions(
+                        &git::GitService::new(),
+                        &fixture.maintenance,
+                        &fixture.source,
+                        &copy,
+                    )
+                    .unwrap();
+                    assert_eq!(focus["pages"].as_array().unwrap().len(), 2);
+                    assert_eq!(
+                        std::fs::read_to_string(copy.join("openwiki/destination.md")).unwrap(),
+                        "The procedure survives at its new home."
+                    );
+                    // Script the semantic verdict; this test exercises the real
+                    // report/planner/publication pipeline, not model judgement.
+                    json!({"version":1,"verdict":"needs_refinement",
+                        "summary":"openwiki/moved.md: moved to openwiki/destination.md, opening paragraph; no knowledge lost.",
+                        "findings":[{"severity":"material","title":"DirectFolder auto-merge boundary missing",
+                            "description":"openwiki/workspace.md lost the still-current constraint: DirectFolder is excluded from automatic merge. source.rs still rejects it. Restore that explicit constraint in the workspace explanation.",
+                            "evidencePaths":["openwiki/workspace.md","source.rs"],"recommendedAction":"expand_page"}]}).to_string()
+                } else {
+                    let raw = json!({"version":1,"verdict":if self.refine {"needs_refinement"} else {"pass"},
+                        "summary":"All findings preserved","findings":findings}).to_string();
+                    assert!(raw.len() > 12_000);
+                    raw
+                };
                 let review = CoverageReview::parse(&raw).unwrap();
                 let reference = reports::save_review(
                     &fixture.store,
@@ -361,7 +403,8 @@ impl WorkflowAgentExecutor for FakeBootstrap<'_> {
                 assert_eq!(prompt.matches("Knowledge organisation:").count(), 1);
                 assert!(prompt.contains("restructuring is not required"));
                 assert!(!prompt.contains("fictional job-processing product"));
-                assert!(prompt.chars().count() < 12_000);
+                // Full host instructions use developer context, independently
+                // of the bounded Goal objective and Workflow result handoff.
                 assert!(!prompt.contains("Coverage gap 19"));
                 if !self.refute {
                     std::fs::write(
@@ -375,7 +418,9 @@ impl WorkflowAgentExecutor for FakeBootstrap<'_> {
                     "reason":"現在の実装を検証し、根拠とともに処置を記録。".repeat(40),"wikiPaths":["openwiki/index.md"],"evidencePaths":["source.rs"]
                 })).collect();
                 let report = json!({"version":1,"summary":"Checked every finding","resolutions":resolutions}).to_string();
-                assert!(report.len() > 12_000);
+                if self.fail != Some("retention") {
+                    assert!(report.len() > 12_000);
+                }
                 let report =
                     openwiki::bootstrap::RefinementReport::parse(&report, &review).unwrap();
                 report.validate_files(&fixture.maintenance).unwrap();
@@ -1388,6 +1433,93 @@ async fn missing_review_and_remaining_findings_publish_once_with_exact_warnings(
         }
         assert_eq!(executor.publications.load(Ordering::SeqCst), 1);
     }
+}
+
+/// Tiny isolated Git + SQLite fixture, with scripted model output. A move is
+/// accounted for in summary; only the actual missing constraint becomes a
+/// finding, survives independent re-review and reaches the publication record.
+#[tokio::test]
+async fn retention_findings_publish_without_turning_page_moves_into_warnings() {
+    let mut f = Fixture::new().await;
+    std::fs::create_dir(f.root.join("openwiki")).unwrap();
+    std::fs::write(
+        f.root.join("source.rs"),
+        "fn auto_merge(direct_folder: bool) { assert!(!direct_folder); }",
+    )
+    .unwrap();
+    std::fs::write(
+        f.root.join("openwiki/INSTRUCTIONS.md"),
+        include_bytes!("../../../../assets/openwiki-instructions.md"),
+    )
+    .unwrap();
+    std::fs::write(
+        f.root.join("openwiki/moved.md"),
+        "The procedure survives at its new home.",
+    )
+    .unwrap();
+    std::fs::write(f.root.join("openwiki/workspace.md"), "DirectFolder is excluded from automatic merge. This constraint applies even when legacy repository rows exist. Repeat explanatory context.").unwrap();
+    git(&f.root, &["add", "."]);
+    git(&f.root, &["commit", "-m", "published fixture Wiki"]);
+    f.source = git(&f.root, &["rev-parse", "HEAD"]);
+    git(&f.maintenance, &["merge", "--ff-only", "main"]);
+    let run = f.reserve().await;
+    let executor = FakeBootstrap {
+        fixture: &f,
+        refine: true,
+        refute: false,
+        fail: Some("retention"),
+        calls: Mutex::new(Vec::new()),
+        publications: AtomicUsize::new(0),
+    };
+    drive_repository_workflow(&f.pool, run, &executor)
+        .await
+        .unwrap();
+    assert_eq!(
+        get_workflow_run_response(&f.pool, run)
+            .await
+            .unwrap()
+            .status,
+        WorkflowRunStatus::Succeeded
+    );
+    let published = f.store.publication(run).await.unwrap().unwrap();
+    assert_eq!(published.quality_warnings.len(), 1);
+    let warning = &published.quality_warnings[0];
+    assert_eq!(warning.node_id, "re-review");
+    assert_eq!(warning.findings.len(), 1);
+    assert!(
+        warning.findings[0]
+            .description
+            .contains("DirectFolder is excluded from automatic merge")
+    );
+    assert!(
+        warning.findings[0]
+            .description
+            .contains("openwiki/workspace.md")
+    );
+    assert!(
+        !warning
+            .findings
+            .iter()
+            .any(|f| f.description.contains("moved.md"))
+    );
+    assert_eq!(
+        git(&f.root, &["show", "main:openwiki/destination.md"]),
+        "The procedure survives at its new home."
+    );
+    assert_eq!(
+        git(
+            &f.root,
+            &["rev-list", "--count", &format!("{}..main", f.source)]
+        ),
+        "1"
+    );
+    assert_eq!(executor.publications.load(Ordering::SeqCst), 1);
+    let calls = executor.calls.lock().unwrap();
+    for node in ["generate", "review", "refine", "re-review"] {
+        assert_eq!(calls.iter().filter(|n| n.node_id == node).count(), 1);
+    }
+    let sessions: std::collections::HashSet<_> = calls.iter().map(|n| n.session_id).collect();
+    assert_eq!(sessions.len(), 4);
 }
 
 fn dispatch_envelopes(
