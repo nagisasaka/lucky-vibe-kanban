@@ -141,6 +141,34 @@ impl CoverageReview {
         Ok(())
     }
 
+    /// Account only for host-frozen focus paths, never infer semantic findings.
+    pub fn account_for_focus(&mut self, paths: &[String]) {
+        let path_char = |c: char| c.is_ascii_alphanumeric() || matches!(c, '/' | '_' | '-' | '.');
+        for path in paths {
+            let explicit = self.unverified.iter().any(|item| {
+                item.subject.match_indices(path.as_str()).any(|(start, _)| {
+                    !item.subject[..start]
+                        .chars()
+                        .next_back()
+                        .is_some_and(path_char)
+                        && !item.subject[start + path.len()..]
+                            .chars()
+                            .next()
+                            .is_some_and(path_char)
+                })
+            });
+            if !self.checks.iter().any(|check| check.path == *path) && !explicit {
+                self.unverified.push(UnverifiedItem {
+                    subject: path.clone(),
+                    reason: "ホストが固定した削除・縮小の重点対象に、レビューのchecks／unverifiedがありません。旧新版と現行根拠の照合は未確認です。".into(),
+                });
+            }
+        }
+        if !self.unverified.is_empty() {
+            self.verdict = CoverageVerdict::Incomplete;
+        }
+    }
+
     pub fn requires_refinement(&self) -> bool {
         self.findings
             .iter()
@@ -711,6 +739,34 @@ mod tests {
             .to_string(),
         )
         .unwrap()
+    }
+
+    #[test]
+    fn focus_accounting_is_target_specific_idempotent_and_not_a_material_finding() {
+        let mut review = CoverageReview::parse(&pass().to_string()).unwrap();
+        let paths: Vec<String> = vec!["openwiki/a.md".into(), "openwiki/b.md".into()];
+        review.checks = vec![CoverageCheck {
+            path: paths[0].clone(),
+            conclusion: "Moved to new home".into(),
+            evidence_paths: vec!["src/api.rs".into()],
+        }];
+        review.account_for_focus(&paths);
+        review.account_for_focus(&paths);
+        assert_eq!(review.unverified.len(), 1);
+        assert_eq!(review.unverified[0].subject, paths[1]);
+        assert_eq!(review.verdict, CoverageVerdict::Incomplete);
+        assert!(!review.requires_refinement());
+        review.unverified[0].subject = "未照合: `openwiki/b.md` の旧手順".into();
+        review.unverified[0].reason = "Explicit uncertainty".into();
+        review.account_for_focus(&paths);
+        assert_eq!(review.unverified.len(), 1);
+        assert_eq!(review.unverified[0].reason, "Explicit uncertainty");
+        review.unverified[0].subject = "openwiki/b.md.old".into();
+        review.account_for_focus(&paths);
+        assert_eq!(review.unverified.len(), 2);
+        let mut old = CoverageReview::parse(&pass().to_string()).unwrap();
+        old.account_for_focus(&[]);
+        assert_eq!(old.verdict, CoverageVerdict::Pass);
     }
 
     #[test]

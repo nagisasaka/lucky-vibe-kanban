@@ -331,6 +331,7 @@ pub(super) async fn prepare_child_dispatch(
     }
     let mut fingerprint = None;
     let mut goal_root = ctx.root.clone();
+    let mut review_focus = None;
     match request.node_id.as_str() {
         "generate" => {
             if existing == 0 {
@@ -378,6 +379,19 @@ pub(super) async fn prepare_child_dispatch(
                 ctx.state.rebuild_reference.as_deref().unwrap_or(source),
                 &copy_root,
             )?;
+            review_focus = Some(
+                reductions["pages"]
+                    .as_array()
+                    .context("Missing review focus")?
+                    .iter()
+                    .map(|page| {
+                        page["path"]
+                            .as_str()
+                            .context("Missing focus path")
+                            .map(str::to_owned)
+                    })
+                    .collect::<anyhow::Result<Vec<_>>>()?,
+            );
             let focus_path = copy.join("wiki-reductions.json");
             std::fs::write(&focus_path, serde_json::to_vec(&reductions)?)?;
             request.prompt.push_str(&format!(
@@ -454,6 +468,13 @@ pub(super) async fn prepare_child_dispatch(
             )?,
         }])
     };
+    if let Some(paths) = review_focus {
+        // Trusted DB context, not the disposable file that the reviewer can edit.
+        request.prompt.push_str(&format!(
+            "\n{REVIEW_FOCUS_PREFIX}{}\n",
+            serde_json::to_string(&paths)?
+        ));
+    }
     // The existing node is the delegation authority, not a second phase/child state machine.
     sqlx::query("UPDATE node_executions SET session_id=?,source_snapshot=?,input_text=? WHERE orchestration_node_execution_id=?")
         .bind(session_id).bind(fingerprint).bind(&request.prompt).bind(request.orchestration_node_execution_id).execute(&deployment.db().pool).await?;
@@ -560,6 +581,29 @@ pub(super) async fn phase_report_input(
     ))
 }
 
+pub(super) const REVIEW_FOCUS_PREFIX: &str = "Host-frozen review focus paths (JSON): ";
+
+/// Old executions without frozen focus context retain their existing semantics.
+pub(super) async fn account_review_focus(
+    pool: &sqlx::SqlitePool,
+    run_id: Uuid,
+    node: &str,
+    session: Uuid,
+    mut review: CoverageReview,
+) -> anyhow::Result<CoverageReview> {
+    let input: Option<String> = sqlx::query_scalar("SELECT input_text FROM node_executions WHERE run_id=? AND node_id=? AND session_id=? ORDER BY iteration DESC LIMIT 1")
+        .bind(run_id).bind(node).bind(session).fetch_optional(pool).await?.flatten();
+    if let Some(raw) = input.as_deref().and_then(|input| {
+        input
+            .lines()
+            .rev()
+            .find_map(|line| line.strip_prefix(REVIEW_FOCUS_PREFIX))
+    }) {
+        review.account_for_focus(&serde_json::from_str::<Vec<String>>(raw)?);
+    }
+    Ok(review)
+}
+
 pub(super) async fn publication_warnings(
     pool: &sqlx::SqlitePool,
     store: &RepositoryMemoryStore,
@@ -574,11 +618,19 @@ pub(super) async fn publication_warnings(
     let node = if refined { "re-review" } else { "review" };
     let review = async {
         let (raw, identity) = phase_report_input(pool, source, phase).await?;
-        if reports::is_reference(&raw) {
-            ReportReference::parse(&raw)?.load_review(store, &identity)
+        let review = if reports::is_reference(&raw) {
+            ReportReference::parse(&raw)?.load_review(store, &identity)?
         } else {
-            CoverageReview::parse(&raw)
-        }
+            CoverageReview::parse(&raw)?
+        };
+        account_review_focus(
+            pool,
+            identity.source.run_id,
+            node,
+            identity.session_id,
+            review,
+        )
+        .await
     }
     .await;
     Ok(match review {
@@ -697,6 +749,14 @@ pub(super) async fn validate_child_completion(
         let Ok(review) = CoverageReview::parse(output) else {
             return Ok(serde_json::json!({"review_missing":true}).to_string());
         };
+        let review = account_review_focus(
+            &deployment.db().pool,
+            run_id,
+            node_id,
+            run.session_id,
+            review,
+        )
+        .await?;
         for finding in &review.findings {
             for path in &finding.evidence_paths {
                 utils::repository_memory::reject_symlinks(&ctx.root.join(path))?;

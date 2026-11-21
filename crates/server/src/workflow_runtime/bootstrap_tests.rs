@@ -309,6 +309,12 @@ impl WorkflowAgentExecutor for FakeBootstrap<'_> {
                     )
                     .unwrap();
                 }
+                if self.fail == Some("omitted_focus") {
+                    for path in ["first.md", "second.md"] {
+                        std::fs::write(fixture.maintenance.join("openwiki").join(path), "short")
+                            .unwrap();
+                    }
+                }
                 "SENSITIVE_GENERATOR_CONVERSATION".into()
             }
             "review" if self.fail == Some("missing_review") => {
@@ -334,7 +340,11 @@ impl WorkflowAgentExecutor for FakeBootstrap<'_> {
                     "title":format!("Coverage gap {index}"),"description":"契約と実装を確認し、知識の不足を具体的に記録。".repeat(40),
                     "evidencePaths":["source.rs"],"recommendedAction":"expand_page"
                 })).collect();
-                let raw = if self.fail == Some("incomplete") {
+                let raw = if self.fail == Some("omitted_focus") {
+                    json!({"version":1,"verdict":if self.refine && request.node_id == "review" {"needs_refinement"} else {"pass"},
+                        "summary":"Checked one target", "findings": if self.refine && request.node_id == "review" {findings} else {vec![]},
+                        "checks":[{"path":"openwiki/first.md","conclusion":"Current procedure survives", "evidencePaths":["source.rs"]}], "unverified":[]}).to_string()
+                } else if self.fail == Some("incomplete") {
                     json!({"version":1,"verdict":"incomplete", "summary":"根拠の確認が一部未完了",
                         "findings": if self.refine {findings} else {vec![]},
                         "checks":[{"path":"openwiki/index.md","conclusion":"現行の根拠と一致", "evidencePaths":["source.rs"]}],
@@ -374,7 +384,44 @@ impl WorkflowAgentExecutor for FakeBootstrap<'_> {
                     assert!(raw.len() > 12_000);
                     raw
                 };
-                let review = CoverageReview::parse(&raw).unwrap();
+                let mut review = CoverageReview::parse(&raw).unwrap();
+                if self.fail == Some("omitted_focus") {
+                    let focus = openwiki::bootstrap::review_reductions(
+                        &git::GitService::new(),
+                        &fixture.maintenance,
+                        &fixture.source,
+                        &fixture.maintenance,
+                    )
+                    .unwrap();
+                    let paths: Vec<_> = focus["pages"]
+                        .as_array()
+                        .unwrap()
+                        .iter()
+                        .map(|page| page["path"].as_str().unwrap())
+                        .collect();
+                    assert_eq!(paths.len(), 2);
+                    let input = format!(
+                        "{}{}\n",
+                        crate::workflow_runtime::bootstrap::REVIEW_FOCUS_PREFIX,
+                        serde_json::to_string(&paths).unwrap()
+                    );
+                    sqlx::query("UPDATE node_executions SET input_text=?,session_id=? WHERE orchestration_node_execution_id=?")
+                        .bind(input).bind(session_id).bind(request.orchestration_node_execution_id).execute(&fixture.pool).await?;
+                    review = crate::workflow_runtime::bootstrap::account_review_focus(
+                        &fixture.pool,
+                        request.run_id,
+                        &request.node_id,
+                        session_id,
+                        review,
+                    )
+                    .await
+                    .map_err(orchestration_api_error)?;
+                    assert_eq!(
+                        review.verdict,
+                        openwiki::bootstrap::CoverageVerdict::Incomplete
+                    );
+                    assert_eq!(review.unverified.len(), 1);
+                }
                 let reference = reports::save_review(
                     &fixture.store,
                     identity(if request.node_id == "review" {
@@ -1452,6 +1499,70 @@ async fn missing_review_and_remaining_findings_publish_once_with_exact_warnings(
             );
         }
         assert_eq!(executor.publications.load(Ordering::SeqCst), 1);
+    }
+}
+
+/// Exercise both initial Review and final re-review through the existing report,
+/// planner and real isolated Git publication/receipt path, without model calls.
+#[tokio::test]
+async fn omitted_focus_in_pass_becomes_target_warning_and_still_publishes() {
+    for refine in [false, true] {
+        let mut f = Fixture::new().await;
+        std::fs::create_dir(f.root.join("openwiki")).unwrap();
+        for path in ["first.md", "second.md"] {
+            std::fs::write(
+                f.root.join("openwiki").join(path),
+                "Old current procedure. ".repeat(30),
+            )
+            .unwrap();
+        }
+        git(&f.root, &["add", "."]);
+        git(&f.root, &["commit", "-m", "two published focus pages"]);
+        f.source = git(&f.root, &["rev-parse", "HEAD"]);
+        git(&f.maintenance, &["merge", "--ff-only", "main"]);
+        let run = f.reserve().await;
+        let executor = FakeBootstrap {
+            fixture: &f,
+            refine,
+            refute: false,
+            fail: Some("omitted_focus"),
+            calls: Mutex::new(Vec::new()),
+            publications: AtomicUsize::new(0),
+        };
+        drive_repository_workflow(&f.pool, run, &executor)
+            .await
+            .unwrap();
+        assert_eq!(
+            get_workflow_run_response(&f.pool, run)
+                .await
+                .unwrap()
+                .status,
+            WorkflowRunStatus::Succeeded
+        );
+        let publication = f.store.publication(run).await.unwrap().unwrap();
+        assert_eq!(publication.quality_warnings.len(), 1);
+        let warning = &publication.quality_warnings[0];
+        assert_eq!(warning.node_id, if refine { "re-review" } else { "review" });
+        assert!(warning.summary.contains("レビュー未完了"));
+        assert_eq!(warning.findings.len(), 1);
+        assert_eq!(warning.findings[0].title, "未確認: openwiki/second.md");
+        assert!(warning.findings[0].description.contains("ホストが固定した"));
+        assert_eq!(git(&f.root, &["show", "main:openwiki/second.md"]), "short");
+        assert_eq!(
+            git(
+                &f.root,
+                &["rev-list", "--count", &format!("{}..main", f.source)]
+            ),
+            "1"
+        );
+        assert_eq!(executor.publications.load(Ordering::SeqCst), 1);
+        let calls = executor.calls.lock().unwrap();
+        for node in ["refine", "re-review"] {
+            assert_eq!(
+                calls.iter().filter(|call| call.node_id == node).count(),
+                usize::from(refine)
+            );
+        }
     }
 }
 
