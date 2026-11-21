@@ -132,8 +132,48 @@ pub(crate) async fn owned_writer_completion_proof(
     root: &Path,
     phase: WriterPhase,
 ) -> anyhow::Result<PhaseCompletionProof> {
+    settled_owned_writer_proof(pool, latest, owner, workspace_id, root, phase, true).await
+}
+
+/// A failed Refine may leave the original candidate intact. This proves only
+/// settled ownership/audit/lifecycles; the caller must also compare the full
+/// pre-Refine fingerprint after provenance checks and setup restoration.
+pub(crate) async fn failed_refine_completion_proof(
+    pool: &SqlitePool,
+    latest: &AgentRunRecord,
+    owner: Uuid,
+    workspace_id: Uuid,
+    root: &Path,
+) -> anyhow::Result<PhaseCompletionProof> {
+    settled_owned_writer_proof(
+        pool,
+        latest,
+        owner,
+        workspace_id,
+        root,
+        WriterPhase::Refine,
+        false,
+    )
+    .await
+}
+
+async fn settled_owned_writer_proof(
+    pool: &SqlitePool,
+    latest: &AgentRunRecord,
+    owner: Uuid,
+    workspace_id: Uuid,
+    root: &Path,
+    phase: WriterPhase,
+    require_success: bool,
+) -> anyhow::Result<PhaseCompletionProof> {
     ensure!(
-        latest.status == AgentRunStatus::Succeeded && latest.workspace_id == workspace_id,
+        (latest.status == AgentRunStatus::Succeeded
+            || (!require_success
+                && matches!(
+                    latest.status,
+                    AgentRunStatus::Failed | AgentRunStatus::Crashed
+                )))
+            && latest.workspace_id == workspace_id,
         "Latest OpenWiki writer did not succeed in the assigned workspace"
     );
     let runs: Vec<AgentRunRecord> =
@@ -156,7 +196,7 @@ pub(crate) async fn owned_writer_completion_proof(
             "OpenWiki conversation ownership mismatch"
         );
         let attempts = ensure_processes_exited(pool, run).await?;
-        if run.id == latest.id {
+        if run.id == latest.id && require_success {
             ensure!(
                 attempts.last().unwrap().0.status == AgentRunStatus::Succeeded,
                 "Latest OpenWiki attempt did not succeed"
@@ -700,6 +740,87 @@ mod tests {
                 result.is_ok(),
                 matches!(mutation, "valid" | "cancelled" | "failed"),
                 "{mutation}: {result:?}"
+            );
+        }
+    }
+
+    #[tokio::test]
+    async fn bootstrap_failed_refine_proves_settlement_without_weakening_writer_success() {
+        for case in [
+            "clean",
+            "completed",
+            "unfinished",
+            "running",
+            "cancelled",
+            "missing_audit",
+            "wrong_mode",
+        ] {
+            let mut f = Fixture::new().await;
+            let mut frames = if case == "clean" {
+                vec![]
+            } else {
+                f.operations(
+                    &[if case == "wrong_mode" {
+                        "init"
+                    } else {
+                        "update"
+                    }],
+                    true,
+                )
+            };
+            if case == "unfinished" {
+                frames.truncate(2);
+            }
+            f.attempt(if case == "missing_audit" {
+                None
+            } else {
+                Some(frames)
+            })
+            .await;
+            sqlx::query("UPDATE agent_runs SET status=?")
+                .bind(if case == "cancelled" {
+                    "cancelled"
+                } else {
+                    "failed"
+                })
+                .execute(&f.pool)
+                .await
+                .unwrap();
+            sqlx::query("UPDATE agent_run_attempts SET status='failed'")
+                .execute(&f.pool)
+                .await
+                .unwrap();
+            if case == "running" {
+                sqlx::query("UPDATE agent_process_registry SET registry_status='running', observed_exited_at=NULL").execute(&f.pool).await.unwrap();
+            }
+            let latest = AgentRunRecord::find(&f.pool, f.request.agent_run_id)
+                .await
+                .unwrap()
+                .unwrap();
+            let result = failed_refine_completion_proof(
+                &f.pool,
+                &latest,
+                f.request.correlation_id,
+                f.request.workspace.workspace_id,
+                f.temp.path(),
+            )
+            .await;
+            assert_eq!(
+                result.is_ok(),
+                matches!(case, "clean" | "completed"),
+                "{case}: {result:?}"
+            );
+            assert!(
+                owned_writer_completion_proof(
+                    &f.pool,
+                    &latest,
+                    f.request.correlation_id,
+                    f.request.workspace.workspace_id,
+                    f.temp.path(),
+                    WriterPhase::Refine
+                )
+                .await
+                .is_err()
             );
         }
     }

@@ -62,7 +62,6 @@ pub fn openwiki_bootstrap() -> WorkflowTemplate {
         ("decision", WorkflowNodeKind::Condition),
         ("pass", WorkflowNodeKind::Transform),
         ("refine", WorkflowNodeKind::Agent),
-        ("re-review", WorkflowNodeKind::Agent),
         ("publish", WorkflowNodeKind::End),
     ]
     .into_iter()
@@ -73,7 +72,7 @@ pub fn openwiki_bootstrap() -> WorkflowTemplate {
             ..Default::default()
         };
         if kind == WorkflowNodeKind::Agent {
-            data.executor_config = Some(json!({"executor":"CODEX", "execution_mode": "goal"}));
+            data.executor_config = Some(json!({"executor":"CODEX", "execution_mode": if id == "review" {"code"} else {"goal"}}));
             data.prompt_template = Some(format!("LVK-managed OpenWiki {id} phase"));
         }
         if kind == WorkflowNodeKind::Condition {
@@ -109,8 +108,7 @@ pub fn openwiki_bootstrap() -> WorkflowTemplate {
         ("decision", "pass"),
         ("decision", "refine"),
         ("pass", "publish"),
-        ("refine", "re-review"),
-        ("re-review", "publish"),
+        ("refine", "publish"),
     ]
     .into_iter()
     .map(|(source, target)| WorkflowEdge {

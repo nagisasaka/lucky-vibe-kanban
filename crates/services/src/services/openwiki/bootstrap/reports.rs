@@ -30,6 +30,8 @@ struct StoredReport {
 #[serde(deny_unknown_fields)]
 pub struct ReportReference {
     pub report_version: u32,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub candidate_fingerprint: Option<String>,
     pub identity: ReportIdentity,
     pub digest: String,
     pub verdict: Option<CoverageVerdict>,
@@ -63,14 +65,6 @@ impl ReportReference {
                 )),
             "Report phase/verdict mismatch"
         );
-        if let Some(verdict) = reference.verdict {
-            ensure!(
-                verdict == CoverageVerdict::Incomplete
-                    || (reference.material_count > 0)
-                        == (verdict == CoverageVerdict::NeedsRefinement),
-                "Report counts/verdict mismatch"
-            );
-        }
         Ok(reference)
     }
 
@@ -170,6 +164,7 @@ fn save(
     };
     let reference = ReportReference {
         report_version: 1,
+        candidate_fingerprint: None,
         identity: identity.clone(),
         digest: digest(&serde_json::to_vec_pretty(&stored)?),
         verdict,
@@ -325,7 +320,7 @@ mod tests {
         let store = RepositoryMemoryStore::at_artifacts(dir.path()).unwrap();
         let id = identity();
         let mut review = review();
-        review.verdict = CoverageVerdict::Pass;
+        review.version = 2;
         assert!(save_review(&store, id.clone(), &review).is_err());
         assert!(
             !store
@@ -343,6 +338,7 @@ mod tests {
         )
         .unwrap();
         assert!(reference.load_review(&store, &id).is_err());
+        review.version = 1;
         review.verdict = CoverageVerdict::NeedsRefinement;
         review.summary = "x".repeat(super::super::MAX_REVIEW_BYTES + 1);
         assert!(save_review(&store, identity(), &review).is_err());

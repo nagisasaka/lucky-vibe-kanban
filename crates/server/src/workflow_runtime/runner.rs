@@ -470,8 +470,12 @@ impl AgentRunReconciliationBoundary for DeploymentAgentRunReconciliationBoundary
                 outcome.cancelled = true;
                 continue;
             }
-            match state.status {
-                AgentRunStatus::Succeeded => {
+            match (
+                state.status,
+                self.repository_owned && matches!(node_id.as_str(), "review" | "refine"),
+            ) {
+                (AgentRunStatus::Succeeded, _)
+                | (AgentRunStatus::Failed | AgentRunStatus::Crashed, true) => {
                     let validated_output;
                     let terminal_output = if self.repository_owned {
                         match super::bootstrap::validate_child_completion(
@@ -610,7 +614,7 @@ impl AgentRunReconciliationBoundary for DeploymentAgentRunReconciliationBoundary
                         .await?;
                     }
                 }
-                AgentRunStatus::AwaitingInput | AgentRunStatus::AwaitingApproval => {
+                (AgentRunStatus::AwaitingInput | AgentRunStatus::AwaitingApproval, _) => {
                     if current_status != node_status_value(DbNodeExecutionStatus::AwaitingHuman) {
                         update_node_execution(
                             pool,
@@ -635,10 +639,13 @@ impl AgentRunReconciliationBoundary for DeploymentAgentRunReconciliationBoundary
                     }
                     outcome.awaiting_human = true;
                 }
-                AgentRunStatus::Failed
-                | AgentRunStatus::Cancelled
-                | AgentRunStatus::Crashed
-                | AgentRunStatus::AuditFailed => {
+                (
+                    AgentRunStatus::Failed
+                    | AgentRunStatus::Cancelled
+                    | AgentRunStatus::Crashed
+                    | AgentRunStatus::AuditFailed,
+                    _,
+                ) => {
                     let fallback = match state.status {
                         AgentRunStatus::Cancelled => "Workflow AgentRun was cancelled",
                         AgentRunStatus::Crashed => "Workflow AgentRun crashed",
@@ -650,6 +657,19 @@ impl AgentRunReconciliationBoundary for DeploymentAgentRunReconciliationBoundary
                         .as_ref()
                         .map(|error| error.message.as_str())
                         .unwrap_or(fallback);
+                    if state.status != AgentRunStatus::Cancelled
+                        && (self.repository_owned
+                            || workflow::presets::contract(&runtime_run.graph).is_some())
+                    {
+                        service
+                            .complete_product_node(
+                                orchestration_run_id,
+                                orchestration_node_execution_id,
+                                executors::runtime::OrchestrationNodeStatus::Failed,
+                            )
+                            .await
+                            .map_err(orchestration_api_error)?;
+                    }
                     if state.status == AgentRunStatus::Cancelled {
                         update_node_execution(
                             pool,
@@ -687,10 +707,13 @@ impl AgentRunReconciliationBoundary for DeploymentAgentRunReconciliationBoundary
                         outcome.failed = true;
                     }
                 }
-                AgentRunStatus::Pending
-                | AgentRunStatus::Starting
-                | AgentRunStatus::Running
-                | AgentRunStatus::Cancelling => {
+                (
+                    AgentRunStatus::Pending
+                    | AgentRunStatus::Starting
+                    | AgentRunStatus::Running
+                    | AgentRunStatus::Cancelling,
+                    _,
+                ) => {
                     all_active_agent_runs_terminal = false;
                 }
             }
@@ -1294,7 +1317,7 @@ async fn start_workflow_orchestration(
                     join: OrchestrationJoinPolicy::All,
                     failure_policy: if workflow_id.to_string()
                         == workflow::templates::OPENWIKI_BOOTSTRAP_ID
-                        && matches!(node.id.as_str(), "pass" | "refine" | "re-review")
+                        && matches!(node.id.as_str(), "pass" | "refine")
                     {
                         // An unselected branch is canonically cancelled. Its
                         // product node still uses Bootstrap fail-fast handling
@@ -2678,9 +2701,6 @@ where
                 json!({"selected_target_node_ids":[selected], "verdict":verdict}).to_string();
             mark_node_succeeded(pool, run_id, &node.id, iteration, Some(&output), None).await?;
             mark_skipped_targets(pool, run_id, &[skipped.into()]).await?;
-            if selected == "pass" {
-                mark_skipped_targets(pool, run_id, &["re-review".into()]).await?;
-            }
             Ok(RunStep::Continue)
         }
         WorkflowNodeKind::End if issue_id.is_none() => {

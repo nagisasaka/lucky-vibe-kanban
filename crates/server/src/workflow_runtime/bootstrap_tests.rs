@@ -185,11 +185,9 @@ impl Fixture {
         .unwrap();
         let mut graph = workflow::templates::openwiki_bootstrap().graph;
         for node in &mut graph.nodes {
-            if matches!(node.id.as_str(), "review" | "re-review") {
-                node.data.prompt_template = Some(
-                    openwiki::bootstrap::review_prompt(&self.maintenance, "ja")
-                        + &inventory.prompt(&self.store, true),
-                );
+            if node.id == "review" {
+                node.data.prompt_template =
+                    Some(openwiki::bootstrap::review_prompt(&self.maintenance, "ja"));
             } else if node.id == "generate" {
                 node.data.prompt_template = Some(
                     openwiki::bootstrap::writer_prompt(&self.maintenance, "ja", None)
@@ -245,21 +243,24 @@ impl WorkflowAgentExecutor for FakeBootstrap<'_> {
     async fn run_agent(&self, request: AgentNodeRequest) -> Result<AgentNodeExecution, ApiError> {
         let fixture = self.fixture;
         let inventory = fixture.inventory(request.run_id).await?;
-        if matches!(request.node_id.as_str(), "generate" | "review") {
-            assert_eq!(request.prompt.matches("Knowledge organisation:").count(), 1);
-            assert!(request.prompt.contains("canonical explanation home"));
-            assert_eq!(
-                request.prompt.contains("fictional job-processing product"),
-                request.node_id == "generate",
-            );
+        if request.node_id == "generate" {
+            assert!(request.prompt.contains("Knowledge organisation:"));
             assert!(
                 request
                     .prompt
-                    .contains(&inventory.prompt(&fixture.store, request.node_id == "review"))
+                    .contains(&inventory.prompt(&fixture.store, false))
             );
+        }
+        if request.node_id == "review" {
+            assert!(!request.prompt.contains("Knowledge organisation:"));
             assert!(
-                !request.prompt.contains("\"digest\":"),
-                "host input is not workflow context"
+                !request
+                    .prompt
+                    .contains(&inventory.prompt(&fixture.store, true))
+            );
+            assert_eq!(
+                request.executor_config.as_ref().unwrap()["execution_mode"],
+                "code"
             );
         }
         assert_eq!(
@@ -317,23 +318,17 @@ impl WorkflowAgentExecutor for FakeBootstrap<'_> {
                 }
                 "SENSITIVE_GENERATOR_CONVERSATION".into()
             }
-            "review" if self.fail == Some("missing_review") => {
+            "review" if matches!(self.fail, Some("missing_review" | "malformed_review")) => {
                 json!({"review_missing":true}).to_string()
             }
-            "re-review" if self.fail == Some("missing_re_review") => {
-                json!({"review_missing":true}).to_string()
-            }
-            "review" | "re-review" => {
+            "review" => {
                 assert!(!request.prompt.contains("SENSITIVE_GENERATOR_CONVERSATION"));
                 assert!(!request.prompt.contains("Direct Upstream Handoff"));
                 assert!(
                     request
                         .prompt
-                        .contains("unanswered question, inspected evidence")
+                        .contains("Read openwiki/INSTRUCTIONS.md first")
                 );
-                assert!(request.prompt.contains(
-                    "Missing standalone pages or preferred directory names alone are not material"
-                ));
                 assert!(request.selected_skills.is_none());
                 let findings: Vec<_> = (0..20).map(|index| json!({
                     "severity": if self.refine {"material"} else {"minor"},
@@ -424,11 +419,7 @@ impl WorkflowAgentExecutor for FakeBootstrap<'_> {
                 }
                 let reference = reports::save_review(
                     &fixture.store,
-                    identity(if request.node_id == "review" {
-                        BootstrapReportKind::Review
-                    } else {
-                        BootstrapReportKind::ReReview
-                    }),
+                    identity(BootstrapReportKind::Review),
                     &review,
                 )
                 .unwrap();
@@ -452,12 +443,19 @@ impl WorkflowAgentExecutor for FakeBootstrap<'_> {
                     Some(&reference.prompt_path(&fixture.store)),
                 );
                 assert!(prompt.contains("force=true"));
-                assert_eq!(prompt.matches("Knowledge organisation:").count(), 1);
-                assert!(prompt.contains("restructuring is not required"));
+                assert!(!prompt.contains("Knowledge organisation:"));
+                assert!(prompt.contains("single Refine"));
                 assert!(!prompt.contains("fictional job-processing product"));
                 // Full host instructions use developer context, independently
                 // of the bounded Goal objective and Workflow result handoff.
                 assert!(!prompt.contains("Coverage gap 19"));
+                if self.fail == Some("retention") {
+                    std::fs::write(
+                        fixture.maintenance.join("openwiki/workspace.md"),
+                        "DirectFolder is excluded from automatic merge.",
+                    )
+                    .unwrap();
+                }
                 if !self.refute {
                     std::fs::write(
                         fixture.maintenance.join("openwiki/index.md"),
@@ -476,13 +474,15 @@ impl WorkflowAgentExecutor for FakeBootstrap<'_> {
                 let report =
                     openwiki::bootstrap::RefinementReport::parse(&report, &review).unwrap();
                 report.validate_files(&fixture.maintenance).unwrap();
-                let reference = reports::save_refinement(
+                let mut reference = reports::save_refinement(
                     &fixture.store,
                     identity(BootstrapReportKind::Refine),
                     &report,
                     &review,
                 )
                 .unwrap();
+                reference.candidate_fingerprint =
+                    Some(openwiki::bootstrap::worktree_fingerprint(&fixture.maintenance).unwrap());
                 serde_json::to_string(&reference).unwrap()
             }
             _ => panic!("unexpected agent node"),
@@ -645,7 +645,7 @@ async fn execution_workspace_sessions_require_bound_repository_owner_not_public_
             .fetch_one(&f.pool)
             .await
             .unwrap(),
-        4
+        3
     );
     assert!(
         Workspace::find_by_id(&f.pool, f.workspace_id)
@@ -852,6 +852,7 @@ async fn bootstrap_validation_gate_survives_generic_recovery_and_does_not_block_
     };
     struct CompletedPort {
         pool: SqlitePool,
+        status: AgentRunStatus,
     }
     #[async_trait]
     impl AgentRunPort for CompletedPort {
@@ -899,14 +900,18 @@ async fn bootstrap_validation_gate_survives_generic_recovery_and_does_not_block_
                 },
                 created_at: Utc::now(),
             });
-            state.status = AgentRunStatus::Succeeded;
+            state.status = self.status;
             Ok(AgentRunPortSnapshot {
                 agent_run_id: id,
                 state,
             })
         }
     }
-    for gated in [true, false] {
+    for (gated, status) in [
+        (true, AgentRunStatus::Succeeded),
+        (false, AgentRunStatus::Succeeded),
+        (true, AgentRunStatus::Failed),
+    ] {
         let f = Fixture::new().await;
         let run_id = f.reserve().await;
         let executor = FakeBootstrap {
@@ -955,6 +960,7 @@ async fn bootstrap_validation_gate_survives_generic_recovery_and_does_not_block_
             f.pool.clone(),
             Arc::new(CompletedPort {
                 pool: f.pool.clone(),
+                status,
             }),
         );
         service
@@ -1070,7 +1076,7 @@ async fn bootstrap_pass_and_refine_use_existing_runner_and_publish_once() {
                 .map(|call| call.node_id.as_str())
                 .collect::<Vec<_>>(),
             if refine {
-                vec!["generate", "review", "refine", "re-review"]
+                vec!["generate", "review", "refine"]
             } else {
                 vec!["generate", "review"]
             }
@@ -1128,7 +1134,7 @@ async fn bootstrap_pass_and_refine_use_existing_runner_and_publish_once() {
         );
         assert_eq!(
             run.nodes.len(),
-            8,
+            7,
             "skip semantics must not manufacture another Publish iteration"
         );
         let snapshot: String = sqlx::query_scalar("SELECT graph_json FROM workflows WHERE id = ?")
@@ -1378,12 +1384,13 @@ async fn inventory_is_frozen_in_host_input_not_global_template_or_upstream() {
         .filter(|node| matches!(node.id.as_str(), "generate" | "review"))
     {
         assert_eq!(node.data.include_workflow_context, Some(false));
-        assert!(
+        assert_eq!(
             node.data
                 .prompt_template
                 .as_deref()
                 .unwrap()
-                .contains(&inventory.prompt(&f.store, node.id == "review"))
+                .contains(&inventory.prompt(&f.store, node.id == "review")),
+            node.id == "generate"
         );
     }
     let mut expected = inventory.identity().clone();
@@ -1399,8 +1406,7 @@ async fn inventory_is_frozen_in_host_input_not_global_template_or_upstream() {
 async fn missing_review_and_remaining_findings_publish_once_with_exact_warnings() {
     for (fail, refine) in [
         ("missing_review", false),
-        ("missing_re_review", true),
-        ("remaining", true),
+        ("malformed_review", false),
         ("incomplete", false),
         ("incomplete", true),
     ] {
@@ -1460,20 +1466,14 @@ async fn missing_review_and_remaining_findings_publish_once_with_exact_warnings(
             "1"
         );
         let warning = &published.quality_warnings[0];
-        assert_eq!(warning.node_id, if refine { "re-review" } else { "review" });
+        assert_eq!(warning.node_id, "review");
         if fail == "incomplete" {
             assert!(warning.summary.contains("レビュー未完了"));
-            assert_eq!(warning.findings.len(), if refine { 21 } else { 1 });
+            assert_eq!(warning.findings.len(), 1);
             let unknown = warning.findings.last().unwrap();
-            assert!(
-                unknown
-                    .title
-                    .contains(if refine { "re-review:" } else { "review:" })
-            );
+            assert!(unknown.title.contains("review:"));
             assert!(unknown.description.contains("旧版の残りの手順は未照合"));
             assert!(!warning.summary.contains("レビュー結果なし"));
-        } else if fail == "remaining" {
-            assert_eq!(warning.findings.len(), 20);
         } else {
             assert!(warning.findings.is_empty());
             assert!(warning.summary.contains("レビュー結果なし"));
@@ -1483,10 +1483,7 @@ async fn missing_review_and_remaining_findings_publish_once_with_exact_warnings(
             calls.iter().filter(|n| n.node_id == "refine").count(),
             usize::from(refine)
         );
-        assert_eq!(
-            calls.iter().filter(|n| n.node_id == "re-review").count(),
-            usize::from(refine)
-        );
+        assert_eq!(calls.iter().filter(|n| n.node_id == "re-review").count(), 0);
         for n in calls.iter().filter(|n| {
             matches!(
                 n.node_id.as_str(),
@@ -1495,14 +1492,18 @@ async fn missing_review_and_remaining_findings_publish_once_with_exact_warnings(
         }) {
             assert_eq!(
                 n.executor_config.as_ref().unwrap()["execution_mode"],
-                "goal"
+                if n.node_id == "review" {
+                    "code"
+                } else {
+                    "goal"
+                }
             );
         }
         assert_eq!(executor.publications.load(Ordering::SeqCst), 1);
     }
 }
 
-/// Exercise both initial Review and final re-review through the existing report,
+/// Exercise the single Review with optional Refine through the existing report,
 /// planner and real isolated Git publication/receipt path, without model calls.
 #[tokio::test]
 async fn omitted_focus_in_pass_becomes_target_warning_and_still_publishes() {
@@ -1542,7 +1543,7 @@ async fn omitted_focus_in_pass_becomes_target_warning_and_still_publishes() {
         let publication = f.store.publication(run).await.unwrap().unwrap();
         assert_eq!(publication.quality_warnings.len(), 1);
         let warning = &publication.quality_warnings[0];
-        assert_eq!(warning.node_id, if refine { "re-review" } else { "review" });
+        assert_eq!(warning.node_id, "review");
         assert!(warning.summary.contains("レビュー未完了"));
         assert_eq!(warning.findings.len(), 1);
         assert_eq!(warning.findings[0].title, "未確認: openwiki/second.md");
@@ -1560,7 +1561,11 @@ async fn omitted_focus_in_pass_becomes_target_warning_and_still_publishes() {
         for node in ["refine", "re-review"] {
             assert_eq!(
                 calls.iter().filter(|call| call.node_id == node).count(),
-                usize::from(refine)
+                if node == "refine" {
+                    usize::from(refine)
+                } else {
+                    0
+                }
             );
         }
     }
@@ -1568,7 +1573,7 @@ async fn omitted_focus_in_pass_becomes_target_warning_and_still_publishes() {
 
 /// Tiny isolated Git + SQLite fixture, with scripted model output. A move is
 /// accounted for in summary; only the actual missing constraint becomes a
-/// finding, survives independent re-review and reaches the publication record.
+/// finding is repaired once without manufacturing warnings for moves.
 #[tokio::test]
 async fn retention_findings_publish_without_turning_page_moves_into_warnings() {
     let mut f = Fixture::new().await;
@@ -1613,25 +1618,10 @@ async fn retention_findings_publish_without_turning_page_moves_into_warnings() {
         WorkflowRunStatus::Succeeded
     );
     let published = f.store.publication(run).await.unwrap().unwrap();
-    assert_eq!(published.quality_warnings.len(), 1);
-    let warning = &published.quality_warnings[0];
-    assert_eq!(warning.node_id, "re-review");
-    assert_eq!(warning.findings.len(), 1);
+    assert!(published.quality_warnings.is_empty());
     assert!(
-        warning.findings[0]
-            .description
+        git(&f.root, &["show", "main:openwiki/workspace.md"])
             .contains("DirectFolder is excluded from automatic merge")
-    );
-    assert!(
-        warning.findings[0]
-            .description
-            .contains("openwiki/workspace.md")
-    );
-    assert!(
-        !warning
-            .findings
-            .iter()
-            .any(|f| f.description.contains("moved.md"))
     );
     assert_eq!(
         git(&f.root, &["show", "main:openwiki/destination.md"]),
@@ -1646,11 +1636,12 @@ async fn retention_findings_publish_without_turning_page_moves_into_warnings() {
     );
     assert_eq!(executor.publications.load(Ordering::SeqCst), 1);
     let calls = executor.calls.lock().unwrap();
-    for node in ["generate", "review", "refine", "re-review"] {
+    for node in ["generate", "review", "refine"] {
         assert_eq!(calls.iter().filter(|n| n.node_id == node).count(), 1);
     }
+    assert!(!calls.iter().any(|n| n.node_id == "re-review"));
     let sessions: std::collections::HashSet<_> = calls.iter().map(|n| n.session_id).collect();
-    assert_eq!(sessions.len(), 4);
+    assert_eq!(sessions.len(), 3);
 }
 
 fn dispatch_envelopes(

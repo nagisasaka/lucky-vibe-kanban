@@ -1232,14 +1232,17 @@ where
                 Err(error) => return Err(error.into()),
             };
             let observed = node_status_from_agent(snapshot.state.status);
-            if observed == OrchestrationNodeStatus::Succeeded
-                && run_status != OrchestrationRunStatus::Cancelling
+            if matches!(
+                observed,
+                OrchestrationNodeStatus::Succeeded | OrchestrationNodeStatus::Failed
+            ) && run_status != OrchestrationRunStatus::Cancelling
                 && plan
                     .nodes
                     .iter()
                     .any(|node| node.node_key == node_key && node.requires_product_validation)
             {
-                // The product must verify its protocol/result first. This also
+                // The product judges both terminal success and failure; a raw
+                // provider failure may still have a safe domain fallback. This also
                 // applies during generic startup/outbox recovery, not just the
                 // live Workflow watcher, so raw success cannot race validation.
                 continue;

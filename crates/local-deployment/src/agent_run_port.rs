@@ -1018,7 +1018,7 @@ impl LocalAgentRunPort {
                                 "Bootstrap owner mismatch".into(),
                             ));
                         }
-                        openwiki_reviewer = matches!(node.as_str(), "review" | "re-review");
+                        openwiki_reviewer = node == "review";
                         if provider != DirectProvider::Codex
                             || (openwiki_reviewer
                                 && (request.agent_run_id != initial_run
