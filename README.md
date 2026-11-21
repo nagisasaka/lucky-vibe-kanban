@@ -1,18 +1,40 @@
-# Lucky Vibe Kanban (LVK)
+# Lucky Vibe Kanban
 
-**Plan work on a kanban board, run coding agents, and review their changes.**
+**Developers in flow.**\
+**Ideas taking shape.**
 
-LVK is a self-hosted development workspace with Git worktrees, multiple sessions,
-visual agent workflows, local integration and OpenWiki. Run it
-locally or on your own server so agent work can continue while your laptop is
-disconnected. Agent accounts, provider subscriptions and model usage are separate.
+An open-source, self-hosted Kanban board for AI-assisted development.
 
+Think with ChatGPT or Claude at your desk or on your phone. Let your AI coordinate coding agents in parallel around the clock.
+
+Your code comes together behind the board, while you and your AI share a clear view of the project.
+
+[Website](https://nagisasaka.github.io/lucky-vibe-kanban/) ·
 [日本語](README.ja.md) · [简体中文](README.zh-CN.md) ·
 [Source](https://github.com/nagisasaka/lucky-vibe-kanban) · [Apache-2.0](LICENSE)
+
+## Get started
+
+1. [Set up your LVK server](openwiki/operations/server-container.md).
+2. [Connect your coding agents](openwiki/integrations/agent-providers.md).
+3. [Connect ChatGPT or Claude](openwiki/integrations/remote-access.md), then
+   [take an issue through implementation and integration](openwiki/workflows/task-to-integration.md).
+
+## Why LVK
+
+- **Many agents, one train of thought.** Discuss your next idea while coding agents
+  work in separate workspaces on the tasks you have already shaped.
+- **Built in parallel. Brought together.** Review results and use auto-merge to bring
+  changes into one codebase, with progress on a shared board.
+- **Room for your next idea.** Return to issues, specifications and change records
+  when you need context. OpenWiki can optionally maintain longer-lived project knowledge.
+- **Better AI. Better flow.** Connect the AI you think with and the coding agents
+  you build with, so improvements in those tools can improve how your project moves forward.
 
 ## Distribution
 
 LVK is distributed only as Docker images through GHCR, currently for Linux amd64.
+Agent accounts, provider subscriptions and model usage are separate.
 This fork does not publish npm packages. The old npx launcher, Tauri desktop shell,
 upstream Cloud and relay services are retired; use the browser at your LVK server
 URL. External Runner execution remains available through Execution Bridge.
@@ -77,3 +99,4 @@ LVK builds on [Easy Vibe Kanban](https://github.com/toby1123yjh/easy-vibe-kanban
 and [Vibe Kanban](https://github.com/BloopAI/vibe-kanban). Their contributions and
 history remain part of this project. Licensed under [Apache-2.0](LICENSE); see
 [NOTICE](NOTICE) for attribution.
+

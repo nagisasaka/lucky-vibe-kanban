@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#f8faf8">
+  <title>Lucky Vibe Kanban — Developers in flow. Ideas taking shape.</title>
+  <meta name="description" content="An open-source, self-hosted Kanban board for AI-assisted development. Think with ChatGPT or Claude. Let your AI coordinate coding agents in parallel.">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Lucky Vibe Kanban — Developers in flow. Ideas taking shape.">
+  <meta property="og:description" content="Think with ChatGPT or Claude. Let your AI coordinate coding agents in parallel around the clock. Your code comes together behind the board.">
+  <meta property="og:url" content="https://nagisasaka.github.io/lucky-vibe-kanban/">
+  <link rel="canonical" href="https://nagisasaka.github.io/lucky-vibe-kanban/">
+  <link rel="icon" href="./assets/lvk-clover.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./styles.css">
+  <script src="./app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <div class="nav-wrap">
+      <a class="brand" href="#top" aria-label="Lucky Vibe Kanban home"><img src="./assets/lvk-clover.svg" width="36" height="36" alt=""><span>Lucky Vibe Kanban</span></a>
+      <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="navigation"><span>Menu</span><span class="menu-lines" aria-hidden="true"></span></button>
+      <nav id="navigation" aria-label="Main navigation">
+        <a href="#experience">The experience</a><a href="#possibilities">Built for what’s next</a><a href="https://github.com/nagisasaka/lucky-vibe-kanban">GitHub</a>
+        <a class="button button-small" href="https://github.com/nagisasaka/lucky-vibe-kanban/blob/main/openwiki/operations/server-container.md">Get started</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="hero shell" id="top" aria-labelledby="hero-title">
+      <div class="hero-kicker"><span class="mini-clover" aria-hidden="true">✦</span> A little more room to create.</div>
+      <h1 id="hero-title">Developers in flow.<br><span>Ideas taking shape.</span></h1>
+      <p class="hero-category">An open-source, self-hosted Kanban board for AI-assisted development.</p>
+      <div class="hero-description">
+        <p>Think with ChatGPT or Claude at your desk or on your phone. Let your AI coordinate coding agents in parallel around the clock.</p>
+        <p>Your code comes together behind the board, while you and your AI share a clear view of the project.</p>
+      </div>
+      <div class="hero-actions"><a class="button" href="https://github.com/nagisasaka/lucky-vibe-kanban/blob/main/openwiki/operations/server-container.md">Get started</a><a class="text-link" href="#workflow">See the flow <span class="down-mark" aria-hidden="true"></span></a></div>
+      <figure class="workflow-demo" id="workflow">
+        <div class="demo-topline"><span class="demo-label">An idea, in motion.</span><div class="phase-switch" role="group" aria-label="Explore an illustrative workflow"><button type="button" data-phase="think" aria-pressed="false">Think</button><button type="button" data-phase="build" aria-pressed="true">Build</button><button type="button" data-phase="review" aria-pressed="false">Review</button></div></div>
+        <div class="workspace-window" data-current-phase="build">
+          <div class="window-bar"><span class="window-lights" aria-hidden="true"><i></i><i></i><i></i></span><span><img src="./assets/lvk-clover.svg" width="20" height="20" alt=""> Lucky Vibe Kanban</span><span class="window-project">Your next idea</span></div>
+          <div class="demo-workspace">
+            <div class="demo-conversation">
+              <div class="mini-label">YOUR CONVERSATION</div>
+              <div class="human-message" id="demo-question">Let’s add a command palette. And make search feel faster.</div>
+              <div class="ai-message"><span class="ai-symbol" aria-hidden="true">✳</span><p id="demo-answer">The tasks are ready. Two agents are building while we think through what comes next.</p></div>
+              <div class="conversation-input"><span>What’s on your mind?</span><span class="input-plus" aria-hidden="true">+</span></div>
+            </div>
+            <div class="demo-board">
+              <div class="board-top"><span>Your project</span><span class="board-view">Board <i aria-hidden="true"></i></span></div>
+              <div class="board-columns">
+                <div class="board-column"><div class="column-heading">Planned <span data-count="planned">0</span></div><div class="card-lane" data-lane="planned"></div></div>
+                <div class="board-column"><div class="column-heading"><span class="status-line" aria-hidden="true"></span> Building <span data-count="building">2</span></div><div class="card-lane" data-lane="building">
+                  <article class="sample-card" data-card="palette"><span class="card-type">FEATURE</span><h3>Add a command palette</h3><p>A shortcut to anywhere.</p><div class="card-footer"><span class="agent-avatar">C</span><span>Codex</span><span class="card-activity" aria-hidden="true"></span></div></article>
+                  <article class="sample-card" data-card="search"><span class="card-type">IMPROVEMENT</span><h3>Improve search</h3><p>Find the thought you left.</p><div class="card-footer"><span class="agent-avatar alternate">C</span><span>Claude Code</span><span class="card-activity" aria-hidden="true"></span></div></article>
+                </div></div>
+                <div class="board-column"><div class="column-heading">In review <span data-count="review">1</span></div><div class="card-lane" data-lane="review">
+                  <article class="sample-card" data-card="settings"><span class="card-type">REFINEMENT</span><h3>Polish the settings</h3><p>A calmer place to adjust.</p><div class="card-footer"><span class="agent-avatar">C</span><span>Codex</span><span class="card-check" aria-hidden="true">✓</span></div></article>
+                </div></div>
+              </div>
+            </div>
+          </div>
+          <div class="integration-strip"><div class="branch-glyph" aria-hidden="true"><i></i><i></i><i></i></div><span id="demo-status" aria-live="polite">Three workspaces. One project in view.</span><span class="integration-label">Behind the board</span></div>
+        </div>
+        <figcaption>An illustrative workflow. Your ideas, agents, and decisions stay connected.</figcaption>
+      </figure>
+    </section>
+
+    <section class="section shell split conversation-section" id="experience" aria-labelledby="conversation-title">
+      <div class="section-copy"><p class="eyebrow">START WHERE IDEAS START</p><h2 id="conversation-title">A conversation<br>worth building on.</h2><p>Start with a question, a rough sketch, or something you wish worked better. Think it through with ChatGPT or Claude. Turn the conversation into a shared issue, and give your coding agents a clear place to begin.</p><a class="text-link" href="https://github.com/nagisasaka/lucky-vibe-kanban/blob/main/openwiki/integrations/remote-access.md">Connect your AI</a></div>
+      <div class="conversation-visual illustration" aria-label="An illustrative conversation becoming a shared issue">
+        <div class="thought-bubble"><span class="quote-mark" aria-hidden="true">“</span>I wish I could get<br>anywhere with<br>one shortcut.</div>
+        <div class="thought-connector" aria-hidden="true"></div>
+        <div class="idea-document"><span class="document-icon" aria-hidden="true"><i></i><i></i><i></i></span><div><span class="document-meta">FROM YOUR CONVERSATION</span><h3>A command palette</h3><p>The intent. The details. A place to start.</p></div><span class="document-check" aria-hidden="true">✓</span></div>
+        <span class="illustration-caption">A thought becomes a shared starting point.</span>
+      </div>
+    </section>
+
+    <section class="parallel-section section" aria-labelledby="parallel-title">
+      <div class="shell"><div class="section-copy centered"><p class="eyebrow">KEEP YOUR TRAIN OF THOUGHT</p><h2 id="parallel-title">Many agents,<br>one train of thought.</h2><p>Talk through your next idea while coding agents work on the ones you’ve already shaped. Check a result, make a decision, or send a new task from the same conversation. Keep the work moving while your train of thought stays with you.</p></div>
+        <div class="parallel-visual illustration" aria-label="One continuing conversation with three separate workspaces">
+          <div class="thought-track"><span>Your next idea</span><span class="track-line" aria-hidden="true"></span><span>And the one after that.</span></div>
+          <div class="parallel-connectors" aria-hidden="true"><i></i><i></i><i></i></div>
+          <div class="parallel-agents">
+            <div class="agent-work"><div class="agent-work-top"><span class="workspace-mark" aria-hidden="true">⌘</span><span>Command palette</span></div><div class="code-lines" aria-hidden="true"><i></i><i></i><i></i><i></i></div><div class="work-bottom"><span>Codex</span><span>Workspace</span></div></div>
+            <div class="agent-work"><div class="agent-work-top"><span class="workspace-mark" aria-hidden="true">⌕</span><span>Search that finds</span></div><div class="code-lines shifted" aria-hidden="true"><i></i><i></i><i></i><i></i></div><div class="work-bottom"><span>Claude Code</span><span>Workspace</span></div></div>
+            <div class="agent-work"><div class="agent-work-top"><span class="workspace-mark" aria-hidden="true">☷</span><span>A calmer settings page</span></div><div class="code-lines" aria-hidden="true"><i></i><i></i><i></i><i></i></div><div class="work-bottom"><span>Codex</span><span>Workspace</span></div></div>
+          </div>
+          <p class="illustration-caption">Separate workspaces. A shared direction.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section shell split merge-section" aria-labelledby="merge-title">
+      <div class="merge-visual illustration" aria-label="Three parallel changes converge through auto-merge into one codebase">
+        <svg class="merge-lines" viewBox="0 0 520 370" role="img" aria-label="Parallel workspaces converge into one codebase"><path class="merge-background" d="M65 70 H235 Q285 70 285 120 V185 H438 M65 185 H438 M65 300 H235 Q285 300 285 250 V185"/><path class="merge-active" d="M65 70 H235 Q285 70 285 120 V185 H438 M65 185 H438 M65 300 H235 Q285 300 285 250 V185"/><circle cx="65" cy="70" r="9"/><circle cx="65" cy="185" r="9"/><circle cx="65" cy="300" r="9"/><circle class="merge-end" cx="438" cy="185" r="21"/><path class="merge-tick" d="m429 185 6 6 12-13"/></svg>
+        <div class="merge-tag tag-one">Command palette</div><div class="merge-tag tag-two">Search improvements</div><div class="merge-tag tag-three">Settings refinements</div><div class="merge-result">One codebase.</div><div class="merge-label">AUTO-MERGE</div>
+      </div>
+      <div class="section-copy"><p class="eyebrow">BEHIND THE BOARD</p><h2 id="merge-title">Built in parallel.<br>Brought together.</h2><p>Agents work in separate workspaces. You review the results, and auto-merge brings their changes into one codebase. Follow the progress on a shared board, with less of your attention spent bringing separate pieces together and more on what to build next.</p></div>
+    </section>
+
+    <aside class="simple-section shell" aria-labelledby="simple-title"><div><p class="eyebrow">YOUR VISION, CARRIED FORWARD.</p><h2 id="simple-title">Thought through.<br>Kept simple.</h2></div><p>Make room for a second perspective before an idea becomes code. Discuss the specification, have the implementation reviewed independently, and remove what it doesn’t need. Keep the purpose clear from the first conversation to the change you choose to keep.</p></aside>
+
+    <section class="section shell split memory-section" aria-labelledby="memory-title">
+      <div class="section-copy"><p class="eyebrow">MORE IN MOTION. LESS ON YOUR MIND.</p><h2 id="memory-title">Room for<br>your next idea.</h2><p>You don’t have to keep every detail in your head. Issues, plans, and records of changes give you and your AI a way back into the work. The board keeps the project in view, leaving more room for the idea you haven’t had yet.</p></div>
+      <div class="memory-visual illustration" aria-label="Project context retained in issues, plans, change manifests and design notes">
+        <div class="memory-card memory-card-back"><span>Design notes</span><p>What matters. And why.</p></div>
+        <div class="memory-card memory-card-middle"><span>Change manifests</span><p>What changed, with its context.</p></div>
+        <div class="memory-card memory-card-front"><div class="memory-card-heading"><span class="document-icon" aria-hidden="true"><i></i><i></i><i></i></span><span>Issues &amp; plans</span></div><p>A clear way back into the work.</p><div class="memory-rule"></div><div class="memory-line"></div><div class="memory-line short"></div><span class="memory-tag">Shared with your AI</span></div>
+        <div class="memory-caption">Keep the context.<br><strong>Free the headspace.</strong></div>
+      </div>
+    </section>
+
+    <section class="phone-section section" aria-labelledby="phone-title"><div class="shell split">
+      <div class="phone-visual illustration"><div class="orbit orbit-one" aria-hidden="true"></div><div class="orbit orbit-two" aria-hidden="true"></div><span class="phone-note">An idea can happen<br>anywhere.</span>
+        <div class="phone"><div class="phone-camera" aria-hidden="true"></div><div class="phone-status"><span>9:41</span><span class="phone-signal" aria-hidden="true">▮▮▮</span></div><div class="phone-title"><img src="./assets/lvk-clover.svg" alt="" width="24" height="24"><span>Your next idea</span></div><div class="phone-thread"><p class="phone-human">Could the command palette also find my issues?</p><div class="phone-ai"><span class="ai-symbol" aria-hidden="true">✳</span><p>Let’s think through how you’d want that to feel.</p></div><p class="phone-human">Same shortcut.<br>One place to look.</p><div class="phone-shared"><span class="document-icon" aria-hidden="true"><i></i><i></i><i></i></span><div><strong>Search from anywhere</strong><span>A shared issue to build on</span></div></div></div><div class="phone-composer">Keep thinking…<span aria-hidden="true">+</span></div><div class="phone-home" aria-hidden="true"></div></div><span class="illustration-caption">Illustrative conversation.</span>
+      </div>
+      <div class="section-copy"><p class="eyebrow">AT YOUR DESK. ON YOUR PHONE.</p><h2 id="phone-title">Good ideas<br>don’t wait<br> for your desk.</h2><p>An idea on the train. A question on a walk. A small decision before you call it a day. Open the AI you already use on your phone, think it through, and set the next piece of work in motion.</p></div>
+    </div></section>
+
+    <section class="night-section section" aria-labelledby="night-title"><div class="shell split">
+      <div class="section-copy"><p class="eyebrow">ON YOUR OWN TIME</p><h2 id="night-title">Around the clock.<br>At your pace.</h2><p>Give your agents a clear task, then step away. Work can carry on while you spend your time elsewhere. Come back to the board, see what has moved forward, and follow the decisions that help you pick up where you left off.</p><p class="night-subcopy">Come back to progress.<br>Pick up the thread.</p></div>
+      <div class="time-visual illustration" data-time="night"><div class="time-tabs" role="group" aria-label="Explore an example of work progressing while you are away"><button type="button" data-time-toggle="night" aria-pressed="true">Step away</button><button type="button" data-time-toggle="morning" aria-pressed="false">Come back</button></div><div class="time-sky"><span class="celestial" aria-hidden="true"></span><span class="star star-one" aria-hidden="true">·</span><span class="star star-two" aria-hidden="true">·</span><span class="star star-three" aria-hidden="true">·</span><p id="time-scene-title">Something to wake up to.</p></div><div class="time-log"><div><span class="time-point" aria-hidden="true"></span><span class="time-log-time">EVENING</span><p>A clear task, ready to go.</p><span class="log-tick" aria-hidden="true">✓</span></div><div><span class="time-point" aria-hidden="true"></span><span class="time-log-time">WHILE YOU’RE AWAY</span><p>Agents move the work forward.</p><span class="log-tick" aria-hidden="true">✓</span></div><div class="morning-entry"><span class="time-point" aria-hidden="true"></span><span class="time-log-time">WHEN YOU RETURN</span><p>A result to review. A next step to take.</p><span class="log-tick" aria-hidden="true">✓</span></div></div><p class="illustration-caption">An illustrative rhythm. You decide when to pick up the thread.</p></div>
+    </div></section>
+
+    <section class="section shell ai-section" id="possibilities" aria-labelledby="ai-title"><div class="section-copy centered"><p class="eyebrow">BUILT FOR WHAT’S NEXT</p><h2 id="ai-title">Better AI.<br><span>Better flow.</span></h2><p>LVK connects the AI you think with and the coding agents you build with through a shared project. As they become more capable, they can carry more of the work forward, with less checking in and more room for your next idea.</p></div>
+      <div class="ai-visual illustration"><div class="ai-endpoints"><span>ChatGPT</span><span>Claude</span></div><div class="ai-link" aria-hidden="true"></div><div class="ai-shared"><img src="./assets/lvk-clover.svg" width="46" height="46" alt=""><div><strong>Your shared project.</strong><span>The context to move it forward.</span></div><div class="mini-board" aria-hidden="true"><i></i><i></i><i></i></div></div><div class="ai-link" aria-hidden="true"></div><div class="ai-endpoints coding"><span>Codex</span><span>Claude Code</span></div></div>
+    </section>
+
+    <section class="section shell creative-section" aria-labelledby="creative-title"><div class="creative-top"><p class="eyebrow">WHAT YOU MAKE MAKES YOU THINK.</p><h2 id="creative-title">Make something.<br>See what it starts.</h2><p>See the thing you imagined start to work. Try it, change your mind, and notice what you want to make next. A working idea gives you something new to think with—and another reason to keep building.</p></div><div class="creative-visual" aria-label="An idea becomes something you can try, leading to your next idea"><div class="creative-word">An idea<span class="idea-spark" aria-hidden="true">✦</span></div><div class="creative-connector" aria-hidden="true"></div><div class="creative-word solid">Something real<span class="small-board" aria-hidden="true"><i></i><i></i><i></i></span></div><div class="creative-connector" aria-hidden="true"></div><div class="creative-word next">Your next idea<span class="idea-spark" aria-hidden="true">✦</span></div></div></section>
+
+    <section class="closing section" id="open-source" aria-labelledby="closing-title"><div class="shell"><img class="closing-clover" src="./assets/lvk-clover.svg" width="74" height="74" alt=""><h2 id="closing-title">Open source.<br>Yours to run.</h2><p>Run Lucky Vibe Kanban on your own server. Connect the AI you like to think with and the coding agents you like to build with. Explore the source, make it your own, and help shape what comes next.</p><div class="closing-actions"><a class="button" href="https://github.com/nagisasaka/lucky-vibe-kanban/blob/main/openwiki/operations/server-container.md">Get started</a><a class="button button-outline" href="https://github.com/nagisasaka/lucky-vibe-kanban">View on GitHub</a></div><img class="closing-rabbit" src="./assets/lvk-rabbit-idle.webp" width="146" height="146" alt="LVK Rabbit, a little companion building at a laptop." loading="lazy"><p class="closing-signoff">For the joy of building.</p><p class="rabbit-credit"><a href="https://github.com/nagisasaka/lvk-rabbit">LVK Rabbit by Masato Fujino</a> · <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a></p></div></section>
+  </main>
+  <footer class="site-footer shell"><a class="brand" href="#top"><img src="./assets/lvk-clover.svg" width="28" height="28" alt=""><span>Lucky Vibe Kanban</span></a><p>Developers in flow. Ideas taking shape.</p><div><a href="https://github.com/nagisasaka/lucky-vibe-kanban/blob/main/LICENSE">Apache-2.0</a><a href="https://github.com/nagisasaka/lucky-vibe-kanban/blob/main/NOTICE">Acknowledgments</a><a href="https://github.com/nagisasaka/lucky-vibe-kanban">GitHub</a></div></footer>
+</body>
+</html>
