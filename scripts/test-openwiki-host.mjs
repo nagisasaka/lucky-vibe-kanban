@@ -77,6 +77,9 @@ const originalAgents =
   "# Fixture repository rules\n\nPreserve these original instructions.\n";
 const instructions =
   "# User instructions\nPreserve evidence and write concise fixture documentation.\n";
+const frozenInstructions = lvkSetup && process.env.OPENWIKI_FIXTURE_INSTRUCTIONS
+  ? await readFile(process.env.OPENWIKI_FIXTURE_INSTRUCTIONS, "utf8")
+  : instructions;
 let workspaceId = randomUUID();
 function lvk(operation, source) {
   if (!lvkSetup) return;
@@ -116,7 +119,7 @@ git("config", "user.email", "openwiki-fixture@example.invalid");
 git("config", "user.name", "OpenWiki fixture");
 await writeFile(
   path.join(root, "README.md"),
-  "# Counter fixture\n\nThis project exports an add function for adding two numbers.\n",
+  "# Counter fixture\n\nThis project exports an add function for adding two numbers.\n\n[Guide](openwiki/quickstart.md#quickstart)\n",
 );
 await writeFile(
   path.join(root, "index.js"),
@@ -135,6 +138,12 @@ git("add", ".");
 git("commit", "-m", "fixture source");
 const head = git("rev-parse", "HEAD");
 lvk("prepare", head);
+if (lvkSetup) {
+  assert.equal(
+    await readFile(path.join(root, "openwiki/INSTRUCTIONS.md"), "utf8"),
+    frozenInstructions,
+  );
+}
 if (lvkSetup && claudeKind !== "absent") {
   assert.equal(
     (await lstat(path.join(root, "CLAUDE.md"))).isSymbolicLink(),
@@ -153,7 +162,8 @@ const install = () =>
 assert.equal(install().status, 0, "Project-scoped public integration install");
 assert.equal(install().status, 0, "Repeated integration install is idempotent");
 await mkdir(path.join(root, "openwiki"), { recursive: true });
-await writeFile(path.join(root, "openwiki/INSTRUCTIONS.md"), instructions);
+if (!lvkSetup)
+  await writeFile(path.join(root, "openwiki/INSTRUCTIONS.md"), instructions);
 let client = await openWikiMcp(binary, root, env);
 const call = (...args) => client.call(...args);
 const tool = (...args) => client.tool(...args);
@@ -197,6 +207,10 @@ try {
   assert.equal(
     (await tool("openwiki_list_workspaces", { root })).workspaces.length,
     0,
+  );
+  assert.equal(
+    await readFile(path.join(root, "openwiki/INSTRUCTIONS.md"), "utf8"),
+    frozenInstructions,
   );
   const begin = await tool("openwiki_begin", {
     root,
@@ -342,6 +356,11 @@ try {
   const updateHead = git("rev-parse", "HEAD");
   workspaceId = randomUUID();
   lvk("prepare", updateHead);
+  if (lvkSetup)
+    assert.equal(
+      await readFile(path.join(root, "openwiki/INSTRUCTIONS.md"), "utf8"),
+      frozenInstructions,
+    );
   const update = await tool("openwiki_begin", {
     root,
     mode: "update",
@@ -372,6 +391,70 @@ try {
     await readFile(path.join(root, "openwiki/INSTRUCTIONS.md"), "utf8"),
     instructions,
   );
+  if (lvkSetup && process.argv.includes("--rebuild")) {
+    // Rebuild starts from the immutable published fixture and clears only its
+    // generated pages, while preserving the original instructions for restore.
+    lvk("remove-generated", updateHead);
+    assert.match(
+      git("show", `${updateHead}:openwiki/quickstart.md`),
+      /add function/,
+    );
+    workspaceId = randomUUID();
+    lvk("prepare", updateHead);
+    assert.equal(
+      await readFile(path.join(root, "openwiki/INSTRUCTIONS.md"), "utf8"),
+      frozenInstructions,
+    );
+    const rebuild = await tool("openwiki_begin", {
+      root, mode: "update", language: "en", force: true,
+    });
+    assert.equal(rebuild.status, "active");
+    await tool("openwiki_submit_plan", {
+      runId: rebuild.runId,
+      pages: [{
+        path: "/openwiki/quickstart.md", title: "Quickstart",
+        purpose: "Preserve the existing entry", seedPaths: ["index.js", "README.md"],
+      }],
+    });
+    const job = await tool("openwiki_next_page", { runId: rebuild.runId });
+    assert.equal(job.status, "pending");
+    await tool("openwiki_inspect_page_claims", {
+      runId: rebuild.runId, jobId: job.job.id,
+    });
+    await writeFile(
+      path.join(root, "openwiki/quickstart.md"),
+      "---\ntype: concept\ntitle: Quickstart\ndescription: The fixture add function.\ntags: [fixture]\n---\n\n# Quickstart\n\nThe add function returns the sum of a and b.\n",
+    );
+    await tool("openwiki_submit_page", {
+      runId: rebuild.runId, jobId: job.job.id,
+      claims: [{
+        statement: "The add function returns the sum of a and b.",
+        evidence: [{ resource: "repo://index.js#L1" }],
+      }],
+    });
+    assert.equal(
+      (await tool("openwiki_next_page", { runId: rebuild.runId })).status,
+      "complete",
+    );
+    const finishedRebuild = await tool("openwiki_finish", { runId: rebuild.runId });
+    assert.equal(finishedRebuild.status, "complete");
+    assert.notEqual(finishedRebuild.sourceChanged, true);
+    lvk("restore", updateHead);
+    await assertClaudeRestored();
+    assert.equal(await readFile(path.join(root, "AGENTS.md"), "utf8"), originalAgents);
+    assert.equal(
+      await readFile(path.join(root, "openwiki/INSTRUCTIONS.md"), "utf8"),
+      instructions,
+    );
+    assert.match(await readFile(path.join(root, "openwiki/quickstart.md"), "utf8"), /# Quickstart/);
+    assert.match(
+      await readFile(path.join(root, "README.md"), "utf8"),
+      /\[Guide\]\(openwiki\/quickstart\.md#quickstart\)/,
+    );
+    console.log(
+      "PASS: forced rebuild, frozen instruction input, old reference, entry path, finish and restoration; no model call.",
+    );
+  }
   console.log(
     `PASS: OpenWiki ${pin}; public MCP version, install/reinstall, host MCP, init, rejected premature finish, plan/page/claims/finalisation, user instructions and source preservation.${lvkSetup ? " LVK production alias isolation, duplicate restoration and Wiki-only publication guards passed." : ""} Update begin status=${update.status}; supported no-change finalisation verified, not a guarantee of begin-noop. No model call.`,
   );

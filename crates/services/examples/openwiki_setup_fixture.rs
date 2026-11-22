@@ -46,7 +46,21 @@ async fn main() -> anyhow::Result<()> {
                 .prepare_codex(&root, true)
                 .await?
         }
-        "prepare" => setup::prepare(&store, workspace_id, &root, source)?,
+        "prepare" => {
+            let instructions = std::env::var_os("OPENWIKI_FIXTURE_INSTRUCTIONS")
+                .map(std::fs::read_to_string)
+                .transpose()?;
+            setup::prepare_with_instructions(
+                &store,
+                workspace_id,
+                &root,
+                source,
+                instructions.as_deref(),
+            )?;
+        }
+        "remove-generated" => {
+            services::services::openwiki::management::remove_generated(&root, source)?;
+        }
         "restore" => {
             setup::validate_provenance(&store, workspace_id, &root, source)?;
             setup::restore(&store, workspace_id, &root, source)?;
