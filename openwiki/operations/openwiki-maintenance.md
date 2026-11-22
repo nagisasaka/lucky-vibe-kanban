@@ -5,13 +5,15 @@ description: Repository Wiki の所有、生成、検証と公開。
 tags: [openwiki, maintenance]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-22T18:40:23.680Z
+    at: 2026-11-22T22:03:18.931Z
 sources:
+  - id: openwiki-source-73a2f1e62857401883667045
+    resource: repo://assets/openwiki-instructions.md
   - id: openwiki-source-7277adee5c65e8d79143e722
     resource: repo://crates/services/src/services/openwiki/bootstrap.rs
   - id: openwiki-source-fa966dc92e5b940e2e3155e3
     resource: repo://crates/services/src/services/openwiki/completion.rs
-generated: { by: "codex", at: "2026-11-22T18:40:23.680Z" }
+generated: { by: "codex", at: "2026-11-22T22:03:18.931Z" }
 ---
 
 # OpenWiki の生成・同期・回復
@@ -25,6 +27,8 @@ Repository settings で有効化し、local target branch と言語を選ぶ。�
 Bootstrap は固定 source に対する生成、独立 review、必要な refinement と host 公開の各段階を分ける。writer は保存された指示と ignore を守り、登録済み OpenWiki integration の lifecycle を完了する。review の完了は指摘がないことと同義ではない。通常 Sync は同じ独立 review を毎回実施する方式ではない。[Bootstrap 契約](../../crates/services/src/services/openwiki/bootstrap.rs)
 
 Generate は初期生成の完了を必要とする。Refine は操作不要と検証できた場合に変更なしでも完了できるが、開始した操作はいずれも監査された `openwiki_finish` の complete が必要である。既定テンプレートは有効な旧知識と入口リンクを守りながら、読者の目的に沿った構成を許す。[writer 契約](../../crates/services/src/services/openwiki/bootstrap.rs)・[既定指示](../../assets/openwiki-instructions.md)
+
+共通の既定指示は、主要概念を正規名の個別ページで見つけやすくし、概念間の関係をリンクで説明する方針を示す。小さな話題は節で扱え、すべての用語にページを強制しない。ホストは lifecycle、完了証跡、根拠の検証と managed index の契約を引き続き担う。リポジトリ固有の指示が存在する場合はそれも尊重する。[既定指示](../../assets/openwiki-instructions.md)・[writer 契約](../../crates/services/src/services/openwiki/bootstrap.rs)
 
 ## 受付・実行・公開・鮮度
 
