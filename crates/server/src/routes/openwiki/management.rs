@@ -12,6 +12,7 @@ pub struct RepositoryWikiFile {
     pub default_content: String,
     pub exists: bool,
     pub override_saved: bool,
+    pub repository_content: Option<String>,
 }
 
 #[derive(Debug, Serialize, TS)]
@@ -115,13 +116,34 @@ pub async fn get_files(
         (files::IGNORE, files::DEFAULT_IGNORE),
     ] {
         let entry = entries.iter().find(|entry| entry.path == path);
-        let actual = if deployment.git().get_head_info(&repo.path)?.oid == source {
+        // Instructions are imported explicitly from the selected branch. A broken
+        // legacy file must not prevent settings or generation status from loading.
+        let repository_content = if path == files::INSTRUCTIONS {
+            entry
+                .and_then(|entry| snapshot.read_blob(entry, 1024 * 1024).ok().flatten())
+                .and_then(|bytes| String::from_utf8(bytes).ok())
+        } else {
+            None
+        };
+        let actual = if path != files::INSTRUCTIONS
+            && deployment.git().get_head_info(&repo.path)?.oid == source
+        {
             worktree_content(&repo.path, path).map_err(api_error)?
         } else {
             None
         };
-        let exists = actual.is_some() || entry.is_some();
-        let content = if let Some(actual) = actual {
+        let exists = if path == files::INSTRUCTIONS {
+            entry.is_some()
+        } else {
+            actual.is_some() || entry.is_some()
+        };
+        let override_saved = path == files::INSTRUCTIONS && state.wiki_instructions.is_some();
+        let content = if path == files::INSTRUCTIONS {
+            state
+                .wiki_instructions
+                .clone()
+                .unwrap_or_else(|| default.into())
+        } else if let Some(actual) = actual {
             actual
         } else if let Some(entry) = entry {
             String::from_utf8(
@@ -134,21 +156,11 @@ pub async fn get_files(
         } else {
             default.into()
         };
-        let override_saved = path == files::INSTRUCTIONS && state.wiki_instructions.is_some();
-        let fallback = content;
-        let content = if override_saved {
-            state.wiki_instructions.clone().expect("checked")
-        } else {
-            fallback.clone()
-        };
         values.push(RepositoryWikiFile {
             path: path.into(),
             content,
-            default_content: if path == files::INSTRUCTIONS {
-                fallback
-            } else {
-                default.into()
-            },
+            default_content: default.into(),
+            repository_content,
             exists,
             override_saved,
         });
@@ -673,7 +685,7 @@ mod tests {
         let Json(actual) = get_files(State(deployment.clone()), Path(repo.id)).await?;
         assert_eq!(
             actual.into_data().unwrap().files[0].content,
-            "uncommitted user instructions"
+            files::DEFAULT_INSTRUCTIONS
         );
         assert!(
             mutate(
@@ -702,6 +714,19 @@ mod tests {
         )
         .await?;
         let source = git(&root, &["rev-parse", "HEAD"]);
+        let Json(importable) = get_files(State(deployment.clone()), Path(repo.id)).await?;
+        let importable = importable.into_data().unwrap();
+        assert_eq!(importable.files[0].content, files::DEFAULT_INSTRUCTIONS);
+        assert_eq!(
+            importable.files[0].default_content,
+            files::DEFAULT_INSTRUCTIONS
+        );
+        assert_eq!(
+            importable.files[0].repository_content.as_deref(),
+            Some("new saved instructions")
+        );
+        assert!(importable.files[0].exists);
+        assert_eq!(store.state().await?.wiki_instructions, None);
         let _ = save_file(
             State(deployment.clone()),
             Path(repo.id),
@@ -733,7 +758,7 @@ mod tests {
         .await?;
         assert_eq!(
             cleared.into_data().unwrap().files[0].content,
-            "new saved instructions"
+            files::DEFAULT_INSTRUCTIONS
         );
         assert_eq!(git(&root, &["rev-parse", "HEAD"]), source);
         assert_eq!(

@@ -117,7 +117,7 @@ export type RepositoryArtifactCleanup = { workspace_id: string, bootstrap_run_id
 
 export type RepositoryWikiFileOperation = { id: string, workspace_id: string, source: string, branch: string, paths: Array<string>, delete: boolean, };
 
-export type RepositoryWikiFile = { path: string, content: string, default_content: string, exists: boolean, override_saved: boolean, };
+export type RepositoryWikiFile = { path: string, content: string, default_content: string, exists: boolean, override_saved: boolean, repository_content: string | null, };
 
 export type RepositoryWikiFiles = { repository_id: string, branch: string, source: string, files: Array<RepositoryWikiFile>, };
 

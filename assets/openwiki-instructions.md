@@ -67,7 +67,7 @@ when it changes.
 Give each major concept a dedicated page titled with its canonical term, so readers
 can find it by name. Explain relationships in prose with links to the relevant
 concept pages. Name cross-concept pages for the reader's task. Smaller topics can
-use a focused section; not every glossary term needs a page.
+use a focused section.
 
 Concept pages, cross-concept workflows and implementation architecture answer
 different questions, and the Wiki can contain all three. Keep detailed contracts

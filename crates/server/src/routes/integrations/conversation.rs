@@ -751,6 +751,9 @@ async fn prepare_wiki(
     let _settings_lock = store.try_lock()?;
     let state = store.state().await?;
     let applied_override = state.applied_wiki_instructions_override.as_deref();
+    let effective_instructions = applied_override.unwrap_or(include_str!(
+        "../../../../../assets/openwiki-instructions.md"
+    ));
     if let Some(text) = applied_override {
         ensure!(
             state.applied_wiki_instructions_digest.as_deref()
@@ -805,7 +808,7 @@ async fn prepare_wiki(
                     == "openwiki/INSTRUCTIONS.md"
                     && matches!(&entry.prepared,
                         utils::repository_memory::WikiSetupFile::Regular { content, .. }
-                        if Some(content.as_str()) == applied_override)),
+                        if content == effective_instructions)),
                 "Unacknowledged Wiki instructions differ from the applied checkpoint"
             );
             services::services::openwiki::setup::integration::validate(
@@ -821,7 +824,7 @@ async fn prepare_wiki(
     services::services::openwiki::setup::integration::prepare_with_instructions(
         &store,
         &wiki_setup_identity(run, &root, code)?,
-        applied_override,
+        Some(effective_instructions),
     )?;
     services::services::openwiki::setup::integration::original_digest(
         &store
