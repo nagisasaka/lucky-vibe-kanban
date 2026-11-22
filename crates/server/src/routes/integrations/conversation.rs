@@ -1031,14 +1031,24 @@ pub(super) async fn advance(
         crate::routes::openwiki::completion::ensure_processes_exited(pool, &agent).await?;
         if run.payload.wiki_enabled {
             let (_, _, _, root) = runtime::context(deployment, &run).await?;
-            crate::routes::openwiki::completion::conversation_completion_proof(
+            if let Err(error) = crate::routes::openwiki::completion::conversation_completion_proof(
                 pool,
                 &agent,
                 run.id,
                 run.workspace_id.unwrap(),
                 &root,
             )
-            .await?;
+            .await
+            {
+                run.payload.stop = Some(db::models::integration::IntegrationStop {
+                    stage: "publication_proof".into(),
+                    category: "wiki_proof_failed".into(),
+                    next_action: "Wiki公開証跡を確認してください。候補は未公開です。".into(),
+                });
+                run.save(pool).await?;
+                tracing::warn!(integration_id=%run.id, error=%format!("{error:#}"), "Wiki publication proof failed");
+                anyhow::bail!("Wiki publication proof failed (wiki_proof_failed)");
+            }
         }
         run.status = "validating".into(); // publication hand-off, not a host validation plan
         run.save(pool).await?;
