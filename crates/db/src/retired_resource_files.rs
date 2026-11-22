@@ -4,15 +4,15 @@
 //! Database copies and in-memory migrations must not touch instance files.
 use std::path::{Component, Path, PathBuf};
 
-use sqlx::{
-    Error, SqlitePool,
-    migrate::{MigrateError, Migrator},
-};
+use sqlx::{Error, SqlitePool};
 use uuid::Uuid;
 
-const RETIRE_VERSION: i64 = 20261122000000;
+pub(crate) struct RetiredFiles {
+    root: PathBuf,
+    paths: Vec<(PathBuf, bool)>,
+}
 
-pub(crate) async fn cleanup(pool: &SqlitePool, migrator: &Migrator) -> Result<(), Error> {
+pub(crate) async fn collect(pool: &SqlitePool) -> Result<Option<RetiredFiles>, Error> {
     let file: String =
         sqlx::query_scalar("SELECT file FROM pragma_database_list WHERE name='main'")
             .fetch_one(pool)
@@ -22,49 +22,37 @@ pub(crate) async fn cleanup(pool: &SqlitePool, migrator: &Migrator) -> Result<()
         .file_name()
         .is_none_or(|name| name != "db.v2.sqlite")
     {
-        return Ok(());
+        return Ok(None);
     }
     let Some(root) = database.parent() else {
-        return Ok(());
+        return Ok(None);
     };
     let root = tokio::fs::canonicalize(root).await?;
     let configured = utils::assets::asset_dir_path()?;
     let configured = match tokio::fs::canonicalize(configured).await {
         Ok(path) => path,
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(()),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(None),
         Err(error) => return Err(error.into()),
     };
     if root != configured {
-        return Ok(());
+        tracing::warn!(
+            "Database is outside the configured instance; skipping retired resource file cleanup"
+        );
+        return Ok(None);
     }
     let exists: bool = sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM sqlite_master WHERE type='table' AND name='resource_mediations')")
         .fetch_one(pool).await?;
     if !exists {
-        return Ok(());
+        return Ok(None);
     }
-
-    // Never delete files from a database whose migration history is inconsistent.
-    // SQLx still performs its normal validation and applies the actual migration.
-    let rows: Vec<(i64, Vec<u8>, bool)> =
-        sqlx::query_as("SELECT version,checksum,success FROM _sqlx_migrations")
-            .fetch_all(pool)
-            .await?;
-    for (version, checksum, success) in rows {
-        if !success {
-            return Err(MigrateError::Dirty(version).into());
-        }
-        let migration = migrator
-            .iter()
-            .find(|item| item.version == version)
-            .ok_or(MigrateError::VersionMissing(version))?;
-        if migration.checksum.as_ref() != checksum.as_slice() {
-            return Err(MigrateError::VersionMismatch(version).into());
-        }
-        if version >= RETIRE_VERSION {
-            return Err(Error::Protocol(
-                "Retired resource tables remain after migration".into(),
-            ));
-        }
+    let already_retired: bool = sqlx::query_scalar(
+        "SELECT EXISTS(SELECT 1 FROM _sqlx_migrations WHERE version >= 20261122000000)",
+    )
+    .fetch_one(pool)
+    .await?;
+    if already_retired {
+        tracing::warn!("Retired resource tables remain after migration; leaving files untouched");
+        return Ok(None);
     }
 
     let mediations: Vec<Uuid> = sqlx::query_scalar("SELECT id FROM resource_mediations")
@@ -77,33 +65,46 @@ pub(crate) async fn cleanup(pool: &SqlitePool, migrator: &Migrator) -> Result<()
     )
     .fetch_all(pool)
     .await?;
+    let mut paths = Vec::new();
     for id in mediations {
-        remove(
-            &root,
-            &PathBuf::from("resource-mediation").join(id.to_string()),
+        paths.push((
+            PathBuf::from("resource-mediation").join(id.to_string()),
             true,
-        )
-        .await?;
+        ));
     }
     for id in sessions {
         for path in [
             utils::execution_logs::process_logs_session_dir_in_root(&root, id),
             utils::native_audit::session_dir_in_root(&root, id),
         ] {
-            let relative = path
-                .strip_prefix(root.as_path())
-                .map_err(|e| Error::Protocol(e.to_string()))?;
-            remove(&root, relative, true).await?;
+            paths.push((
+                path.strip_prefix(&root)
+                    .map_err(|e| Error::Protocol(e.to_string()))?
+                    .to_path_buf(),
+                true,
+            ));
         }
     }
     for (session, process) in processes {
         let path = utils::execution_logs::process_log_file_path_in_root(&root, session, process);
-        let relative = path
-            .strip_prefix(root.as_path())
-            .map_err(|e| Error::Protocol(e.to_string()))?;
-        remove(&root, relative, false).await?;
+        paths.push((
+            path.strip_prefix(&root)
+                .map_err(|e| Error::Protocol(e.to_string()))?
+                .to_path_buf(),
+            false,
+        ));
     }
-    Ok(())
+    Ok(Some(RetiredFiles { root, paths }))
+}
+
+impl RetiredFiles {
+    pub(crate) async fn cleanup(self) {
+        for (path, directory) in self.paths {
+            if let Err(error) = remove(&self.root, &path, directory).await {
+                tracing::warn!(path = %path.display(), %error, "Could not remove retired resource file; leaving it untouched");
+            }
+        }
+    }
 }
 
 async fn remove(root: &Path, relative: &Path, directory: bool) -> Result<(), Error> {
@@ -159,8 +160,7 @@ mod tests {
             .unwrap();
         let marker = root.path().join("resource-mediation");
         std::fs::write(&marker, "user data").unwrap();
-        let migrator = sqlx::migrate!("./migrations");
-        cleanup(&pool, &migrator).await.unwrap();
+        assert!(collect(&pool).await.unwrap().is_none());
         assert_eq!(std::fs::read_to_string(marker).unwrap(), "user data");
     }
 

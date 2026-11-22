@@ -201,6 +201,77 @@ async fn instance_upgrade_removes_only_retired_runtime_files() {
         .bind(interrupted_workspace).bind(interrupted_dir.to_string_lossy().as_ref()).execute(&pool).await.unwrap();
     sqlx::query("INSERT INTO resource_mediations(id,trigger_operation_id,snapshot,status) VALUES(?,?,'{}','preparing')")
         .bind(interrupted_mediation).bind(operation).execute(&pool).await.unwrap();
+    // Real AgentRun, turn, attempt, event and DB-backed Manifest must survive.
+    let run = uuid::Uuid::new_v4();
+    let turn = uuid::Uuid::new_v4();
+    let attempt = uuid::Uuid::new_v4();
+    let event_id = uuid::Uuid::new_v4();
+    let repository_id = uuid::Uuid::new_v4();
+    sqlx::query("INSERT INTO agent_runs(id,session_id,workspace_id,request_id,idempotency_key,correlation_id,schema_version,payload_version,runtime_profile_id,provider_id,workspace_mode,workspace_path,status,request_envelope) VALUES(?,?,?,?,?,?,1,1,'CODEX','codex','shared_workspace','/fixture','succeeded','{\"normal\":true}')")
+        .bind(run).bind(normal_session).bind(normal_ws).bind(uuid::Uuid::new_v4()).bind("normal-run").bind(uuid::Uuid::new_v4()).execute(&pool).await.unwrap();
+    sqlx::query("INSERT INTO agent_turns(id,agent_run_id,request_id,intent,input_message) VALUES(?,?,?,'initial','keep turn')")
+        .bind(turn).bind(run).bind(uuid::Uuid::new_v4()).execute(&pool).await.unwrap();
+    sqlx::query("INSERT INTO agent_run_attempts(id,agent_run_id,turn_id,request_id,idempotency_key,attempt_number,mode,transport,schema_version,payload_version,capability_snapshot,request_envelope,status) VALUES(?,?,?,?,?,1,'launch','stdio_cli',1,1,'{}','{}','succeeded')")
+        .bind(attempt).bind(run).bind(turn).bind(uuid::Uuid::new_v4()).bind("normal-attempt").execute(&pool).await.unwrap();
+    sqlx::query("INSERT INTO agent_events(event_id,session_id,agent_run_id,turn_id,run_attempt_id,run_attempt_number,sequence,correlation_id,schema_version,payload_version,event_envelope) VALUES(?,?,?,?,?,1,1,?,1,1,'{\"keep\":true}')")
+        .bind(event_id).bind(normal_session).bind(run).bind(turn).bind(attempt).bind(uuid::Uuid::new_v4()).execute(&pool).await.unwrap();
+    let files = utils::repository_memory::RepositoryMemoryStore::at_artifacts(
+        &instance.join("fixture-memory"),
+    )
+    .unwrap();
+    let store = db::models::repository_state::RepositoryMemoryStore::with_artifacts(
+        &pool,
+        repository_id,
+        files,
+    );
+    let manifest = utils::repository_memory::ChangeManifest {
+        version: 1,
+        event_id: run,
+        repository_id,
+        workspace_id: normal_ws,
+        task_id: None,
+        created_at: chrono::Utc::now(),
+        base_commit: "a".repeat(40),
+        source_commit: "b".repeat(40),
+        target_branch: Some("main".into()),
+        changed_paths: vec!["keep.rs".into()],
+        semantics: utils::repository_memory::SemanticChanges {
+            summary: "preserve manifest".into(),
+            ..Default::default()
+        },
+    };
+    store.publish_event(&manifest).await.unwrap();
+    let before_run: (String, String) =
+        sqlx::query_as("SELECT status,request_envelope FROM agent_runs WHERE id=?")
+            .bind(run)
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+    let before_event: String =
+        sqlx::query_scalar("SELECT event_envelope FROM agent_events WHERE event_id=?")
+            .bind(event_id)
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+    let before_workspace: (String, String) =
+        sqlx::query_as("SELECT branch,usage FROM workspaces WHERE id=?")
+            .bind(normal_ws)
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+    let before_session: uuid::Uuid =
+        sqlx::query_scalar("SELECT workspace_id FROM sessions WHERE id=?")
+            .bind(normal_session)
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+    let before_process: (uuid::Uuid, String) =
+        sqlx::query_as("SELECT session_id,run_reason FROM execution_processes WHERE id=?")
+            .bind(normal_process)
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+    assert_eq!(store.event(run).await.unwrap(), Some(manifest.clone()));
     let retired_dir = root.join("resource-mediation").join(mediation.to_string());
     let retired_audit = utils::native_audit::session_dir_in_root(root, mediator_session);
     let retired_session =
@@ -235,6 +306,29 @@ async fn instance_upgrade_removes_only_retired_runtime_files() {
         std::fs::create_dir_all(file.parent().unwrap()).unwrap();
         std::fs::write(file, "data").unwrap();
     }
+    // Rejected symlink must not block other cleanup or affect its target.
+    #[cfg(unix)]
+    let outside = {
+        let outside = instance.join("outside");
+        std::fs::create_dir(&outside).unwrap();
+        std::fs::write(outside.join("keep"), "unchanged").unwrap();
+        std::os::unix::fs::symlink(
+            &outside,
+            root.join("resource-mediation")
+                .join(inconsistent_mediation.to_string()),
+        )
+        .unwrap();
+        outside
+    };
+    // Cause the actual retirement migration to fail, not just checksum validation.
+    sqlx::query("CREATE TRIGGER fixture_abort_retirement BEFORE DELETE ON workspaces WHEN OLD.usage='execution_only' BEGIN SELECT RAISE(ABORT,'fixture failure'); END")
+        .execute(&pool).await.unwrap();
+    assert!(db::run_migrations(&pool).await.is_err());
+    assert!(retired_log.exists() && retired_dir.exists() && retired_session.exists());
+    sqlx::query("DROP TRIGGER fixture_abort_retirement")
+        .execute(&pool)
+        .await
+        .unwrap();
     // A checksum mismatch must stop before deleting any runtime evidence.
     sqlx::query("UPDATE _sqlx_migrations SET checksum=X'00' WHERE version=20261006000000")
         .execute(&pool)
@@ -280,6 +374,52 @@ async fn instance_upgrade_removes_only_retired_runtime_files() {
             .is_none()
     );
     assert!(!interrupted_dir.exists());
+    let after_run: (String, String) =
+        sqlx::query_as("SELECT status,request_envelope FROM agent_runs WHERE id=?")
+            .bind(run)
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+    let after_event: String =
+        sqlx::query_scalar("SELECT event_envelope FROM agent_events WHERE event_id=?")
+            .bind(event_id)
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+    assert_eq!(after_run, before_run);
+    assert_eq!(after_event, before_event);
+    assert_eq!(store.event(run).await.unwrap(), Some(manifest));
+    assert_eq!(
+        sqlx::query_as::<_, (String, String)>("SELECT branch,usage FROM workspaces WHERE id=?")
+            .bind(normal_ws)
+            .fetch_one(&pool)
+            .await
+            .unwrap(),
+        before_workspace
+    );
+    assert_eq!(
+        sqlx::query_scalar::<_, uuid::Uuid>("SELECT workspace_id FROM sessions WHERE id=?")
+            .bind(normal_session)
+            .fetch_one(&pool)
+            .await
+            .unwrap(),
+        before_session
+    );
+    assert_eq!(
+        sqlx::query_as::<_, (uuid::Uuid, String)>(
+            "SELECT session_id,run_reason FROM execution_processes WHERE id=?"
+        )
+        .bind(normal_process)
+        .fetch_one(&pool)
+        .await
+        .unwrap(),
+        before_process
+    );
+    #[cfg(unix)]
+    assert_eq!(
+        std::fs::read_to_string(outside.join("keep")).unwrap(),
+        "unchanged"
+    );
     assert!(normal_log.is_file());
     assert!(normal_audit.join("fixture").is_file());
     assert!(
