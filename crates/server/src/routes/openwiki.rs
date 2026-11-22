@@ -74,7 +74,7 @@ pub(crate) fn instructions_digest(text: &str) -> String {
 }
 
 pub(crate) fn select_wiki_instructions(
-    root: &FsPath,
+    _root: &FsPath,
     saved: Option<&str>,
 ) -> anyhow::Result<String> {
     if let Some(saved) = saved {
@@ -84,21 +84,7 @@ pub(crate) fn select_wiki_instructions(
         );
         return Ok(saved.into());
     }
-    let path = root.join("openwiki/INSTRUCTIONS.md");
-    reject_symlinks(&path)?;
-    match std::fs::read_to_string(path) {
-        Ok(text) => {
-            anyhow::ensure!(
-                text.len() <= 1024 * 1024,
-                "OpenWiki instructions exceed size limit"
-            );
-            Ok(text)
-        }
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
-            Ok(include_str!("../../../../assets/openwiki-instructions.md").into())
-        }
-        Err(error) => Err(error.into()),
-    }
+    Ok(include_str!("../../../../assets/openwiki-instructions.md").into())
 }
 
 pub(crate) fn validate_frozen_instructions(state: &RepositoryMemoryState) -> anyhow::Result<()> {
@@ -163,25 +149,8 @@ pub(crate) async fn status_snapshot(
     let mut current_source = None;
     if let Some(branch) = &state.target_branch {
         let head = deployment.git().get_branch_oid(&repo.path, branch)?;
-        let effective = if let Some(text) = &state.wiki_instructions {
-            text.clone()
-        } else {
-            let snapshot = deployment.git().snapshot(&repo.path, &head)?;
-            let entries = snapshot.entries()?;
-            match entries
-                .iter()
-                .find(|entry| entry.path == "openwiki/INSTRUCTIONS.md")
-            {
-                Some(entry) => String::from_utf8(
-                    snapshot
-                        .read_blob(entry, 1024 * 1024)?
-                        .context("Instructions too large")
-                        .map_err(api_error)?,
-                )
-                .map_err(api_error)?,
-                None => include_str!("../../../../assets/openwiki-instructions.md").into(),
-            }
-        };
+        let effective = select_wiki_instructions(&repo.path, state.wiki_instructions.as_deref())
+            .map_err(api_error)?;
         state.wiki_instructions_pending = match &state.applied_wiki_instructions_digest {
             Some(digest) => *digest != instructions_digest(&effective),
             None => state.wiki_instructions.is_some(),
@@ -1318,7 +1287,7 @@ mod adoption_tests {
         std::fs::write(temp.path().join("openwiki/INSTRUCTIONS.md"), "repo\n").unwrap();
         assert_eq!(
             select_wiki_instructions(temp.path(), None).unwrap(),
-            "repo\n"
+            include_str!("../../../../assets/openwiki-instructions.md")
         );
         assert_eq!(
             select_wiki_instructions(temp.path(), Some("db\n")).unwrap(),
@@ -1345,6 +1314,11 @@ mod adoption_tests {
         assert!(!instructions_require_force(&state));
         state.wiki_instructions = Some("B".into());
         assert!(instructions_require_force(&state)); // Legacy applied value is unknown.
+        state.wiki_instructions = None;
+        state.applied_wiki_instructions_digest = Some(instructions_digest("old Git instructions"));
+        state.active_wiki_instructions =
+            Some(include_str!("../../../../assets/openwiki-instructions.md").into());
+        assert!(instructions_require_force(&state)); // Old Git digest must not skip an explicit update.
     }
 
     #[tokio::test]

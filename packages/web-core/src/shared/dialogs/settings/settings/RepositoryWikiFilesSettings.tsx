@@ -37,7 +37,7 @@ function FileEditor({
         description={
           file.override_saved
             ? t('repositoryMemory.files.savedOverride')
-            : file.exists
+            : file.exists && file.path !== 'openwiki/INSTRUCTIONS.md'
               ? t('repositoryMemory.files.existing')
               : t('repositoryMemory.files.defaultValue')
         }
@@ -52,6 +52,29 @@ function FileEditor({
           className="w-full rounded border border-border bg-primary p-base font-ibm-plex-mono text-sm text-normal focus:outline-none focus:ring-1 focus:ring-brand"
         />
       </SettingsField>
+      {file.path === 'openwiki/INSTRUCTIONS.md' && file.exists && (
+        <div className="space-y-base">
+          <p className="text-sm text-normal">
+            {t('repositoryMemory.files.importHint')}
+          </p>
+          <PrimaryButton
+            value={t('repositoryMemory.files.import')}
+            variant="tertiary"
+            disabled={disabled || dirty || file.repository_content == null}
+            onClick={() => {
+              if (file.repository_content != null) {
+                setEditing(true);
+                setValue(file.repository_content);
+              }
+            }}
+          />
+          {file.repository_content == null && (
+            <p role="alert" className="text-sm text-error">
+              {t('repositoryMemory.files.importUnavailable')}
+            </p>
+          )}
+        </div>
+      )}
       <div className="flex flex-wrap gap-base">
         <PrimaryButton
           value={t('repositoryMemory.files.edit')}
@@ -79,7 +102,11 @@ function FileEditor({
         )}
         <PrimaryButton
           value={t('repositoryMemory.save')}
-          disabled={disabled || (!dirty && file.exists)}
+          disabled={
+            disabled ||
+            (!dirty &&
+              (file.exists || file.path === 'openwiki/INSTRUCTIONS.md'))
+          }
           onClick={() => void onSave(file.path, value)}
         />
       </div>

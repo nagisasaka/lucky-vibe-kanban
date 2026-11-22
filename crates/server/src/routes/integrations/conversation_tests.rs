@@ -118,6 +118,10 @@ async fn exercise(deployment: &DeploymentImpl, instance: &std::path::Path) -> an
         std::fs::write(root.join("code"), "base")?;
         std::fs::write(root.join("AGENTS.md"), "# User rules\n")?;
         std::fs::write(root.join("CLAUDE.md"), "@AGENTS.md\n")?;
+        if mode == "wiki-success" {
+            std::fs::create_dir_all(root.join("openwiki"))?;
+            std::fs::write(root.join("openwiki/INSTRUCTIONS.md"), "git-only marker\n")?;
+        }
         utils::lvk_directory::LvkDirectory::open(&root)?.ensure_runtime_ignores()?;
         git(&["add", "."])?;
         git(&["commit", "-m", "base"])?;
@@ -485,7 +489,7 @@ async fn exercise(deployment: &DeploymentImpl, instance: &std::path::Path) -> an
             if mode == "wiki-override" {
                 state.enabled = true;
                 state.target_branch = Some("main".into());
-                state.wiki_instructions = Some("applied A\n".into());
+                state.wiki_instructions = Some("pending B\n".into());
                 state.applied_wiki_instructions_override = Some("applied A\n".into());
                 state.applied_wiki_instructions_digest =
                     Some(crate::routes::openwiki::instructions_digest("applied A\n"));
@@ -524,6 +528,12 @@ async fn exercise(deployment: &DeploymentImpl, instance: &std::path::Path) -> an
                     interrupted.save(pool).await?;
                 }
                 action(deployment, prepare).await?;
+                if mode == "wiki-success" {
+                    ensure!(
+                        std::fs::read_to_string(checkout.join("openwiki/INSTRUCTIONS.md"))?
+                            == include_str!("../../../../../assets/openwiki-instructions.md")
+                    );
+                }
                 if mode == "wiki-override" {
                     ensure!(
                         std::fs::read_to_string(checkout.join("openwiki/INSTRUCTIONS.md"))?
@@ -835,7 +845,7 @@ async fn exercise(deployment: &DeploymentImpl, instance: &std::path::Path) -> an
                     checkout.join("openwiki/continued.md"),
                     "new writer phase Wiki content",
                 )?;
-                support::git(&checkout, &["add", "openwiki"])?;
+                support::git(&checkout, &["add", "openwiki/continued.md"])?;
                 support::git(&checkout, &["commit", "-m", "continued Wiki phase"])?;
                 candidate = support::git(&checkout, &["rev-parse", "HEAD"])?;
             }
@@ -1007,6 +1017,12 @@ async fn exercise(deployment: &DeploymentImpl, instance: &std::path::Path) -> an
             if wiki {
                 ensure!(std::fs::read_to_string(root.join("AGENTS.md"))? == "# User rules\n");
                 deployment.git().require_clean_source(&root, &candidate)?;
+                if mode == "wiki-success" {
+                    ensure!(
+                        std::fs::read_to_string(root.join("openwiki/INSTRUCTIONS.md"))?
+                            == "git-only marker\n"
+                    );
+                }
                 if mode == "wiki-override" {
                     ensure!(!root.join("openwiki/INSTRUCTIONS.md").exists());
                     let store =
