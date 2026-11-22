@@ -41,7 +41,9 @@ At first use, link unfamiliar terms to an existing glossary or concept page when
 available. Add a brief paraphrase only where needed to understand the sentence;
 do not repeat definitions on every page. A separate glossary is not mandatory.
 
-Keep useful knowledge when reorganising pages. Separate retired designs into
+Carry forward still-valid knowledge from the old Wiki, but organise chapters and
+directories around readers’ goals rather than preserving the old structure by default.
+Separate retired designs into
 historical context. When changing or removing headings, update references or
 retain compatibility anchors as needed to preserve existing links. Keep
 README-linked operational entry paths stable.
