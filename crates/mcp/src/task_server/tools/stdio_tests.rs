@@ -74,7 +74,7 @@ async fn stdio_codec_initialises_lists_existing_tools_and_calls_the_existing_api
                 }
                 2 => {
                     let tools=reply["result"]["tools"].as_array().unwrap();
-                    for name in ["self_restart","get_self_restart_operation","start_dev_server","stop_dev_server","get_dev_server_status","list_projects","list_workspaces","delete_workspace","run_resource_operation","prepare_issue_archive","confirm_issue_archive","unarchive_issue","get_issue_archive_operation"] {
+                    for name in ["self_restart","get_self_restart_operation","start_dev_server","stop_dev_server","get_dev_server_status","list_projects","list_workspaces","delete_workspace","prepare_issue_archive","confirm_issue_archive","unarchive_issue","get_issue_archive_operation"] {
                         assert!(tools.iter().any(|tool| tool["name"]==name), "missing {name}");
                     }
                     for name in ["get_context","get_connection","start_integration"] {
@@ -126,7 +126,6 @@ async fn coding_context_details_remain_available_over_global_stdio() {
             (2, "tools/list", json!({})),
             (3, "tools/call", json!({"name":"get_context","arguments":{"guide":"coding"}})),
             (4, "tools/call", json!({"name":"get_context","arguments":{"guide":"parallel"}})),
-            (5, "tools/call", json!({"name":"get_context","arguments":{"guide":"resources"}})),
             (6, "tools/call", json!({"name":"get_context","arguments":{}})),
         ] {
             write.write_all(format!("{}\n", json!({"jsonrpc":"2.0","id":id,"method":method,"params":params})).as_bytes()).await.unwrap();
@@ -145,14 +144,13 @@ async fn coding_context_details_remain_available_over_global_stdio() {
                     assert_eq!(context["annotations"]["readOnlyHint"], true);
                     assert_eq!(context["annotations"]["destructiveHint"], false);
                     assert_eq!(context["annotations"]["openWorldHint"], false);
-                    for name in ["run_resource_operation", "delete_workspace", "confirm_issue_archive"] {
+                    for name in ["delete_workspace", "confirm_issue_archive"] {
                         let tool = catalog.iter().find(|t| t["name"] == name).unwrap();
                         assert_ne!(tool["annotations"]["readOnlyHint"], true, "{name}");
                     }
-                    let operation = catalog.iter().find(|t| t["name"] == "run_resource_operation").unwrap();
-                    let contract = operation["description"].as_str().unwrap();
-                    for term in ["atomic", "cleanup", "verification", "owners", "same request_id"] { assert!(contract.contains(term)); }
-                    assert!(catalog.iter().any(|t| t["name"] == "list_shared_resources"));
+                    for name in ["run_resource_operation", "list_shared_resources", "run_process", "read_runtime_path", "change_runtime_path"] {
+                        assert!(!catalog.iter().any(|tool| tool["name"] == name), "unexpected {name}");
+                    }
                 }
                 3 => {
                     assert_ne!(reply["result"]["isError"], true);
@@ -164,14 +162,13 @@ async fn coding_context_details_remain_available_over_global_stdio() {
                     assert!(details.get("resource_access_guide").is_none());
                     assert!(details.get("parallel_api_guide").is_none());
                 }
-                4..=6 => {
+                4 | 6 => {
                     assert_ne!(reply["result"]["isError"], true);
                     let details: Value = serde_json::from_str(reply["result"]["content"][0]["text"].as_str().unwrap()).unwrap();
                     assert_eq!(details["workspace_id"], workspace.to_string());
                     assert!(details.get("coding_run_guide").is_none());
                     match id {
-                        4 => assert!(details["parallel_api_guide"].as_str().unwrap().contains("after_workspace")),
-                        5 => assert!(details["resource_access_guide"].as_str().unwrap().contains("X-LVK-Internal-Token")),
+                        4 => assert_eq!(details["parallel_api_guide"].as_str().unwrap(), utils::agent_guides::parallel_guide().unwrap()),
                         6 => { assert!(details.get("parallel_api_guide").is_none()); assert!(details.get("resource_access_guide").is_none()); },
                         _ => unreachable!(),
                     }

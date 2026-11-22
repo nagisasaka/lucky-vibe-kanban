@@ -1036,24 +1036,6 @@ pub(crate) mod tests {
     }
 
     #[tokio::test]
-    async fn manual_archive_rejects_active_resource_mediation_without_agent() {
-        let (_root, pool, ws, _repo, _session) = fixture().await;
-        let operation = Uuid::new_v4();
-        sqlx::query("INSERT INTO resource_operations(id,workspace_id,session_id,spec,status) VALUES(?,?,?,'{}','succeeded')")
-            .bind(operation).bind(Uuid::new_v4()).bind(Uuid::new_v4()).execute(&pool).await.unwrap();
-        let mediation = Uuid::new_v4();
-        sqlx::query("INSERT INTO resource_mediations(id,trigger_operation_id,snapshot,status,workspace_id) VALUES(?,?,'{}','preparing',?)")
-            .bind(mediation).bind(operation).bind(ws.id).execute(&pool).await.unwrap();
-        assert!(prepare_for_pool(&pool, &ws).await.is_err());
-        sqlx::query("UPDATE resource_mediations SET status='applied' WHERE id=?")
-            .bind(mediation)
-            .execute(&pool)
-            .await
-            .unwrap();
-        assert!(prepare_for_pool(&pool, &ws).await.is_ok());
-    }
-
-    #[tokio::test]
     async fn manual_archive_waiting_for_admission_rechecks_usage() {
         let (_root, pool, ws, _repo, session) = fixture().await;
         let prepared = prepare_for_pool(&pool, &ws).await.unwrap();

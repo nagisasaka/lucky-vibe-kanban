@@ -45,7 +45,6 @@
         "agent-toolsDesc": "Native MCP servers and Skills",
         "remote-projects": "Projects",
         "remote-projectsDesc": "Manage projects",
-        "resources": "Shared resources and recovery",
         "mcp-integration": "External AI → LVK",
         "notifications": "Notifications",
         "execution": "Work defaults",
@@ -619,8 +618,7 @@
       "ai": "AI and work defaults",
       "projects": "Projects and code",
       "connections": "Connections and access",
-      "account": "Account",
-      "operations": "Operations"
+      "account": "Account"
     },
     "scope": {
       "account": "Connection status and sign-out for this browser. No configuration values are changed.",
@@ -634,7 +632,6 @@
       "mcp-integration": "File and execution permissions for external AI connecting to LVK. Manage connection authentication in Authentication and members.",
       "mcp": "Edit agent connections to external MCP servers as whole JSON. MCP and Skills items manages the same native settings one item at a time. Check the target and storage scope.",
       "access": "Authentication and members for this LVK server. Actions apply individually and may require confirmation or reauthentication.",
-      "resources": "Resource registration settings, live status, coordination and recovery actions. Review each confirmation before recovery or deletion.",
       "instance": "Storage: shared LVK instance (config.json) · Apply with Save below",
       "appearance": "Appearance and language: LVK instance · Mobile text size: saved immediately on this device",
       "push": "Scope: user × selected Project × this device’s Push subscription · Applied by controls in this panel",
@@ -705,68 +702,6 @@
       }
     }
   },
-  "resources": {
-    "title": "Shared resources",
-    "description": "Coordinate exclusive access across parallel Cards. Codex assesses conflicts; LVK controls ownership.",
-    "scope": "This host is one coordination authority. Register a physical resource once. Other LVK installations and commands run outside this protocol are not coordinated.",
-    "loading": "Loading resources…",
-    "occupied": "In use",
-    "revision": "State revision {{revision}}",
-    "owner": "Operation",
-    "empty": "No resources registered. Start with a mock resource before connecting hardware or services.",
-    "fields": {
-      "resource_key": "Canonical identity (for example, mock:phone-1)",
-      "name": "Display name",
-      "description": "Usage contract and verification requirements",
-      "state": "Current verified state"
-    },
-    "register": "Register resource",
-    "operations": "Operations",
-    "operationsHelp": "Agents submit a complete command, cleanup and verification through the LVK tools. Waiting requests hold no resources.",
-    "workspace": "Workspace",
-    "command": "Command",
-    "verification": "Verification",
-    "process": "Process log ID",
-    "cancel": "Cancel operation",
-    "mediate": "Ask Codex to reassess",
-    "inspectRecovery": "Review recovery",
-    "recoveryHelp": "Confirm that the old process and all remote effects have stopped. Record the actual state of every resource. This releases the bundle and increments state revisions; waiting Cards must reconsider old assumptions.",
-    "evidence": "Evidence of termination and state verification",
-    "confirmRecovery": "Confirm verified recovery",
-    "noOperations": "No operations yet.",
-    "mediations": "Mediation history",
-    "mediationsHelp": "Only contention, changed assumptions or uncertain outcomes start Codex. Decisions cannot preempt an owner or waive a state check.",
-    "assessing": "Waiting for an assessment…",
-    "health": {
-      "ready": "Ready",
-      "recovery_required": "Recovery required"
-    },
-    "status": {
-      "queued": "Queued",
-      "blocked": "Replan required",
-      "launching": "Starting",
-      "running": "Running",
-      "succeeded": "Verified complete",
-      "cancelled": "Cancelled",
-      "recovery_required": "Recovery required",
-      "recovered": "Recovered"
-    },
-    "mediationStatus": {
-      "pending": "Queued",
-      "preparing": "Preparing",
-      "running": "Assessing",
-      "applied": "Applied",
-      "stale": "State changed; not applied",
-      "failed": "Assessment unavailable"
-    },
-    "stopMediation": "Stop assessment",
-    "unknownState": "Unknown state",
-    "originalState": "Original state: {{state}}",
-    "actionUnconfirmed": "The resource operation could not be confirmed. Check the current state, owner and operation record before trying again.",
-    "loadUnconfirmed": "Resource information could not be loaded. Check the connection and selected host.",
-    "operationDetailsOriginal": "Operation details (original)",
-    "assessmentDetailsOriginal": "Assessment explanation (original)"
-  },
   "runtimeAccess": {
     "title": "Runtime environment access",
     "description": "Allow trusted MCP clients to operate on files and run programs.",
@@ -775,7 +710,7 @@
     "restrict": "Restrict file access roots",
     "roots": "Allowed roots (absolute paths, one per line)",
     "osAuthority": "This is not a sandbox. When execution is allowed, programs can access paths outside these roots.",
-    "permissions": "File OFF blocks direct APIs only. Workspace reads are allowed; direct changes/deletion and launching in Workspace cwd are refused. Absolute executable and cwd paths are independent of file roots. Use existing coordination for shared resources.",
+    "permissions": "File OFF blocks direct APIs only. Workspace reads are allowed; direct changes/deletion and launching in Workspace cwd are refused. Absolute executable and cwd paths are independent of file roots. Coordinate consequential shared-environment work with the people involved.",
     "revoke": "Turning execution OFF does not terminate running processes; observation, output and stop are then unavailable. Existing timeouts remain.",
     "denied": "Settings unavailable. Sign in as an administrator.",
     "loading": "Loading…"

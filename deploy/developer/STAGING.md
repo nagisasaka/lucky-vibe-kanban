@@ -109,12 +109,9 @@ such a switch; rollback requires the matching data snapshot, not just an old
 binary. Stable data is never used. Health/E2E failure after starting a candidate
 requires inspection; this kit does not silently roll its DB backward.
 
-Shared staging must be operated through LVK resource coordination when registered.
-Claim the canonical deployment, ports and data for the entire operation, and
-include stop/cleanup and independent idle verification in the same operation.
-Do not leave a detached server behind a completed test operation. Human preview
-requires an explicitly managed long-lived service/terminal, not a forgotten test
-process. Independent card tests use separate instance names and ports.
+Coordinate shared staging use with the people involved. Stop test processes after
+use; human previews require an explicitly managed long-lived service. Independent
+card tests use separate instance names and ports.
 
 ## One-time host migration from the old development container
 

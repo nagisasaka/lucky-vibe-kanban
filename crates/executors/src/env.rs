@@ -39,7 +39,6 @@ impl ExecutionEnv {
     ) -> Option<crate::instruction_delivery::ResumeInstructions> {
         if [
             "LVK_OPENWIKI_REVIEWER",
-            "LVK_RESOURCE_MEDIATOR",
             "LVK_OPENWIKI_MAINTENANCE",
             "LVK_INTEGRATION_WORKER",
         ]
@@ -78,8 +77,7 @@ impl ExecutionEnv {
     }
 
     pub fn repository_roots(&self) -> Vec<PathBuf> {
-        if self.contains_key("LVK_RESOURCE_MEDIATOR") || self.contains_key("LVK_OPENWIKI_REVIEWER")
-        {
+        if self.contains_key("LVK_OPENWIKI_REVIEWER") {
             return Vec::new();
         }
         crate::repo_skills::workspace_repos(
@@ -95,9 +93,6 @@ impl ExecutionEnv {
             // The launch port replaces ambient memory with the saved review role.
             // Do not append coding, shared-storage or maintenance instructions.
             return self.get("LVK_REPOSITORY_MEMORY_INSTRUCTIONS").cloned();
-        }
-        if self.contains_key("LVK_RESOURCE_MEDIATOR") {
-            return None;
         }
         let mut parts = Vec::new();
         let guide = self.get("LVK_EXECUTION_GUIDE").map(|path| format!("LVK on-demand guide file: {path}. Read the relevant section when needed; no MCP connection is required."));
@@ -234,7 +229,6 @@ mod tests {
         );
         for key in [
             "LVK_OPENWIKI_REVIEWER",
-            "LVK_RESOURCE_MEDIATOR",
             "LVK_INTEGRATION_WORKER",
             "LVK_OPENWIKI_MAINTENANCE",
             crate::source_protection::ROOTS,
@@ -281,9 +275,6 @@ mod tests {
         );
         reviewer.vars.remove("LVK_REPOSITORY_MEMORY_INSTRUCTIONS");
         assert!(reviewer.repository_memory_instructions().is_none());
-        let mut mediator = env.clone();
-        mediator.insert("LVK_RESOURCE_MEDIATOR", "1");
-        assert!(mediator.repository_memory_instructions().is_none());
     }
 
     #[test]

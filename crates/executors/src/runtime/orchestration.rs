@@ -27,7 +27,6 @@ pub const ORCHESTRATION_REDUCER_VERSION: u16 = 1;
 pub enum OrchestrationProductKind {
     Workflow,
     Arena,
-    ResourceMediation,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]

@@ -288,9 +288,7 @@ pub trait ContainerService {
         // Never finalize DevServer processes
         if matches!(
             ctx.execution_process.run_reason,
-            ExecutionProcessRunReason::DevServer
-                | ExecutionProcessRunReason::IntegrationValidation
-                | ExecutionProcessRunReason::ResourceCommand
+            ExecutionProcessRunReason::DevServer | ExecutionProcessRunReason::IntegrationValidation
         ) {
             return false;
         }
@@ -973,14 +971,7 @@ pub trait ContainerService {
             run_reason: run_reason.clone(),
         };
 
-        // A managed resource request has exactly one process identity. A crash
-        // or concurrent replay between create and attach cannot run it twice.
-        let process_id = if *run_reason == ExecutionProcessRunReason::ResourceCommand {
-            super::resource_coordination::operation_id(executor_action)
-                .map_err(ContainerError::Other)?
-        } else {
-            Uuid::new_v4()
-        };
+        let process_id = Uuid::new_v4();
         let execution_process = ExecutionProcess::create(
             &self.db().pool,
             &create_execution_process,

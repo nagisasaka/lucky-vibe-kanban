@@ -110,7 +110,6 @@ int main(int argc, char **argv) {
     }
     const char *body = "{\"success\":true}";
     if (strstr(request, "/api/info")) body="{\"success\":true,\"data\":{\"build_info\":{\"kind\":\"fixture\"}}}";
-    else if (strstr(request, "/api/resource-coordination/snapshot")) body="{\"success\":true,\"data\":{\"resources\":[{\"id\":\"unused-fixture-device\",\"description\":\"Unused peripheral unrelated to this instance\"}],\"holders\":[],\"queue\":[]}}";
     else if (strstr(request, "GET /index.html ")) {
       body=HTML;
     }

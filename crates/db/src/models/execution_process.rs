@@ -53,7 +53,6 @@ pub enum ExecutionProcessRunReason {
     ArchiveScript,
     DevServer,
     IntegrationValidation,
-    ResourceCommand,
 }
 
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize, TS)]

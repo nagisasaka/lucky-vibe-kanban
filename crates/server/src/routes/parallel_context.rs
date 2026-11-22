@@ -170,3 +170,171 @@ pub async fn preview(
         instructions:"Retained detached test worktree: combine only the pinned peer commits here and run tests here. No source/target refs or Card status were changed. Never use reset/stash on the original Workspace. Do not finalise trial changes as normal source, invoke Wiki writers, or modify peers. If a peer itself needs changes, report peer change required with evidence. Keep test-only commands in this directory; explicit cleanup is available through normal git worktree remove after inspection.".into(),
     })))
 }
+
+#[cfg(test)]
+mod auth_tests {
+    use std::{path::PathBuf, time::Duration};
+
+    use anyhow::ensure;
+    use db::models::{repo::Repo, repository_state::RepositoryMemoryStore};
+    use deployment::Deployment;
+    use tower::ServiceExt;
+    use utils::repository_memory::{ChangeManifest, SemanticChanges};
+    use uuid::Uuid;
+
+    #[tokio::test]
+    #[ignore = "requires a fresh lvk-parallel-auth-* instance and public URL; run alone"]
+    async fn isolated_parallel_loopback_auth() -> anyhow::Result<()> {
+        let instance = PathBuf::from(std::env::var("LVK_INSTANCE_DIR")?);
+        ensure!(
+            instance.is_absolute()
+                && instance
+                    .file_name()
+                    .unwrap()
+                    .to_string_lossy()
+                    .starts_with("lvk-parallel-auth-")
+        );
+        ensure!(!instance.join("data/db.v2.sqlite").exists());
+        ensure!(std::env::var("LVK_ACCESS_DEPLOYMENT").as_deref() == Ok("public"));
+        ensure!(std::env::var("LVK_PUBLIC_URL").as_deref() == Ok("https://example.test"));
+        let shutdown = tokio_util::sync::CancellationToken::new();
+        let deployment = crate::DeploymentImpl::new(shutdown.clone()).await?;
+        let result = async {
+            let root = instance.join("repo");
+            std::fs::create_dir(&root)?;
+            let repo = Repo::find_or_create(&deployment.db().pool, &root, "fixture").await?;
+            workspace_manager::shared_resources::ensure_repository_memory(
+                &deployment.db().pool,
+                &repo,
+            )
+            .await?;
+            let store =
+                RepositoryMemoryStore::for_repository(&deployment.db().pool, &repo.name, repo.id)?;
+            let event = ChangeManifest {
+                version: 1,
+                event_id: Uuid::new_v4(),
+                repository_id: repo.id,
+                workspace_id: Uuid::new_v4(),
+                task_id: None,
+                created_at: chrono::Utc::now(),
+                base_commit: "0".repeat(40),
+                source_commit: "1".repeat(40),
+                target_branch: Some("main".into()),
+                changed_paths: vec!["fixture".into()],
+                semantics: SemanticChanges {
+                    summary: "fixture".into(),
+                    ..Default::default()
+                },
+            };
+            store.publish_event(&event).await?;
+            let access = server_access::Access::from_env(
+                deployment.db().pool.clone(),
+                utils::assets::asset_dir(),
+            )?;
+            let key = server_access::issue_key(
+                &deployment.db().pool,
+                &instance.join("data/access.key"),
+                false,
+            )
+            .await?;
+            let setup_app = access.layer(server_access::router(access.clone()));
+            let request = axum::http::Request::builder()
+                .method("POST")
+                .uri("/api/access/setup")
+                .header("host", "example.test")
+                .header("x-lvk-csrf", "setup")
+                .header("content-type", "application/json")
+                .body(axum::body::Body::from(
+                    serde_json::json!({"key": key}).to_string(),
+                ))?;
+            let response = setup_app.clone().oneshot(request).await?;
+            ensure!(response.status() == axum::http::StatusCode::OK);
+            let cookie = response
+                .headers()
+                .get("set-cookie")
+                .unwrap()
+                .to_str()?
+                .split(';')
+                .next()
+                .unwrap()
+                .to_owned();
+            let body: serde_json::Value =
+                serde_json::from_slice(&axum::body::to_bytes(response.into_body(), 65536).await?)?;
+            let csrf = body["csrf"].as_str().unwrap();
+            let request = axum::http::Request::builder()
+                .method("POST")
+                .uri("/api/access/basic")
+                .header("host", "example.test")
+                .header("cookie", cookie)
+                .header("x-lvk-csrf", csrf)
+                .header("content-type", "application/json")
+                .body(axum::body::Body::from(
+                    serde_json::json!({"username":"fixture", "password":"a long fixture password"})
+                        .to_string(),
+                ))?;
+            ensure!(setup_app.oneshot(request).await?.status() == axum::http::StatusCode::OK);
+            let token_path = instance.join("data/access-internal.token");
+            let guide = utils::agent_guides::parallel_guide()?;
+            ensure!(
+                guide.contains(token_path.to_str().unwrap())
+                    && guide.contains("X-LVK-Internal-Token")
+            );
+            let token = std::fs::read_to_string(token_path)?;
+            let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await?;
+            let address = listener.local_addr()?;
+            let router = access.layer(
+                axum::Router::new()
+                    .nest("/api", crate::routes::repo::router())
+                    .with_state(deployment.clone()),
+            );
+            let stop = shutdown.clone();
+            let server = tokio::spawn(async move {
+                axum::serve(listener, router)
+                    .with_graceful_shutdown(async move { stop.cancelled().await })
+                    .await
+            });
+            let client = reqwest::Client::builder()
+                .no_proxy()
+                .redirect(reqwest::redirect::Policy::none())
+                .timeout(Duration::from_secs(10))
+                .build()?;
+            let discovery = format!("http://{address}/api/repos/{}/parallel-context", repo.id);
+            ensure!(
+                client.get(&discovery).send().await?.status() == reqwest::StatusCode::FORBIDDEN
+            );
+            let data: serde_json::Value = client
+                .get(&discovery)
+                .header("X-LVK-Internal-Token", token.trim())
+                .send()
+                .await?
+                .error_for_status()?
+                .json()
+                .await?;
+            ensure!(
+                data["success"] == true && data["data"]["repository_id"] == repo.id.to_string()
+            );
+            let manifest = format!(
+                "http://{address}/api/repos/{}/change-manifests/{}",
+                repo.id, event.event_id
+            );
+            ensure!(client.get(&manifest).send().await?.status() == reqwest::StatusCode::FORBIDDEN);
+            let data: serde_json::Value = client
+                .get(&manifest)
+                .header("X-LVK-Internal-Token", token.trim())
+                .send()
+                .await?
+                .error_for_status()?
+                .json()
+                .await?;
+            ensure!(
+                data["success"] == true && data["data"]["event_id"] == event.event_id.to_string()
+            );
+            shutdown.cancel();
+            server.await??;
+            anyhow::Ok(())
+        }
+        .await;
+        shutdown.cancel();
+        result
+    }
+}

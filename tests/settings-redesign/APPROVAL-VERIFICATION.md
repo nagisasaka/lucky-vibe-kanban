@@ -1,5 +1,7 @@
 # stdio get_context と Codex 承認設定の隔離検証
 
+> 当時の検証記録です。その後 LOCAL-436 で資源管理と `resources` guide は廃止されました。以下の旧コマンドは現行の操作手順ではありません。
+
 この変更は `get_context` の読み取り専用宣言を修正する。`resources` guide は
 データディレクトリを作成し得る `asset_dir()` を使っていたため、既存の
 非作成API `asset_dir_path()` に替える。有効な既存インスタンスで返すパスと

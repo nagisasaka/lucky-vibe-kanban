@@ -13,7 +13,6 @@ LVK是自托管开发环境，提供Git工作树、多会话、可视化代理�
 
 LVK仅通过GHCR发布Docker镜像，当前平台为Linux amd64，此分支不发布npm包。
 旧npx启动器、Tauri桌面外壳及上游Cloud和relay服务已移除，请用浏览器访问LVK服务器URL。
-外部Runner执行仍可通过Execution Bridge使用。
 
 公开部署使用HTTPS及Basic／Auth0认证，首次启动保持锁定。
 这是面向可信团队的环境，不是无限制的公共代理服务。

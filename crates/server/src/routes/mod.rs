@@ -23,7 +23,6 @@ pub(crate) mod attachment_transfer;
 pub mod attachments;
 pub mod design_notes;
 pub mod events;
-pub mod execution_bridge;
 pub mod execution_processes;
 pub mod frontend;
 pub mod health;
@@ -36,7 +35,6 @@ mod project_transfer;
 mod project_utilities;
 pub mod releases;
 pub mod repo;
-pub mod resource_coordination;
 mod resource_observation;
 pub mod scheduled_tasks;
 pub mod scratch;
@@ -73,12 +71,10 @@ pub fn router(
         .merge(filesystem::router())
         .merge(repo::router())
         .merge(integrations::router())
-        .merge(resource_coordination::router())
         .merge(resource_observation::router())
         .merge(resource_observation::environment_router(&deployment))
         .merge(project_utilities::router())
         .merge(project_transfer::router(&deployment))
-        .merge(execution_bridge::router())
         .merge(events::router(&deployment))
         .merge(approvals::router())
         .merge(scratch::router(&deployment))

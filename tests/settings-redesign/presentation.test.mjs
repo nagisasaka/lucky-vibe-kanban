@@ -19,6 +19,20 @@ function baselineFor(file) {
     ? hostPetBaseline
     : baseline;
 }
+// The resource coordinator was retired after the presentation baseline. Remove
+// its exact old navigation/registry entries before comparing retained behavior.
+function withoutRetiredResources(source, file) {
+  if (file === root + 'SettingsDialog.tsx')
+    return source.replace("    operations: ['resources'],\n", '');
+  if (file === root + 'settings/settingsRegistry.tsx')
+    return source
+      .replace(/const ResourceSettingsSection = lazy\(\(\) =>[\s\S]*?\n\);\n\n/, '')
+      .replace("  | 'agent-tools'\n  | 'resources';", "  | 'agent-tools';")
+      .replace('  resources: undefined;\n', '')
+      .replace("  { id: 'resources', icon: BuildingsIcon, group: 'host' },\n", '')
+      .replace("    case 'resources':\n      return <ResourceSettingsSection key=\"resources\" />;\n", '');
+  return source;
+}
 // Ignore presentation attributes and JSX formatting, retaining text, attributes,
 // control flow and handlers. This redesign must not remove settings or semantics.
 function semantics(source) {
@@ -64,9 +78,16 @@ for (const path of [
     const before = execFileSync('git', ['show', `${baselineFor(file)}:${file}`], {
       encoding: 'utf8',
     });
-    assert.deepEqual(semantics(readFileSync(file, 'utf8')), semantics(before));
+    assert.deepEqual(semantics(readFileSync(file, 'utf8')), semantics(withoutRetiredResources(before, file)));
   });
 }
+test('settings registry retains baseline behavior except the retired resource section', () => {
+  const file = root + 'settings/settingsRegistry.tsx';
+  const before = execFileSync('git', ['show', `${hostPetBaseline}:${file}`], {
+    encoding: 'utf8',
+  });
+  assert.equal(readFileSync(file, 'utf8'), withoutRetiredResources(before, file));
+});
 test('all section implementations and registry retain their baseline content', () => {
   const files = execFileSync(
     'git',
@@ -79,14 +100,15 @@ test('all section implementations and registry retain their baseline content', (
       (file) =>
         /\.tsx?$/.test(file) &&
         !file.endsWith('/SettingsComponents.tsx') &&
-        !file.endsWith('/SettingsSection.tsx')
+        !file.endsWith('/SettingsSection.tsx') &&
+        !file.endsWith('/ResourceSettingsSection.tsx')
     );
   for (const file of files)
     assert.equal(
       readFileSync(file, 'utf8'),
-      execFileSync('git', ['show', `${baselineFor(file)}:${file}`], {
+      withoutRetiredResources(execFileSync('git', ['show', `${baselineFor(file)}:${file}`], {
         encoding: 'utf8',
-      }),
+      }), file),
       file
     );
 });

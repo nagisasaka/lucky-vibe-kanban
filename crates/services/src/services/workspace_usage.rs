@@ -184,16 +184,6 @@ pub async fn validate_agent_owner(
         owner.result.is_none(),
         "Execution workspace has a terminal owner result"
     );
-    if owner.kind == db::models::workspace_usage::RESOURCE_MEDIATION {
-        let id = owner.run_id.context("Mediation owner is unbound")?;
-        let valid: bool = sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM resource_mediations WHERE id=? AND workspace_id=? AND session_id=? AND status IN ('preparing','running'))")
-            .bind(id).bind(workspace.id).bind(request.session_id).fetch_one(pool).await?;
-        ensure!(
-            valid && request.correlation_id == id,
-            "Mediation execution identity mismatch"
-        );
-        return Ok(());
-    }
     let repo_id = owner
         .repository_id
         .context("Execution repository identity is missing")?;
@@ -306,13 +296,10 @@ pub fn inspection_root(workspace: &Workspace) -> anyhow::Result<PathBuf> {
 pub async fn validate_script_owner(
     pool: &SqlitePool,
     workspace_id: Uuid,
-    session_id: Uuid,
-    action: &executors::actions::ExecutorAction,
-    reason: &db::models::execution_process::ExecutionProcessRunReason,
+    _session_id: Uuid,
+    _action: &executors::actions::ExecutorAction,
+    _reason: &db::models::execution_process::ExecutionProcessRunReason,
 ) -> anyhow::Result<()> {
-    if *reason == db::models::execution_process::ExecutionProcessRunReason::ResourceCommand {
-        super::resource_coordination::guard_script(pool, workspace_id, session_id, action).await?;
-    }
     let ws = Workspace::find_by_id(pool, workspace_id)
         .await?
         .context("Workspace missing")?;
@@ -324,12 +311,6 @@ pub async fn validate_script_owner(
 }
 
 pub async fn cleanup_allowed(pool: &SqlitePool, workspace_id: Uuid) -> anyhow::Result<bool> {
-    if super::resource_coordination::guard_workspace_idle(pool, workspace_id)
-        .await
-        .is_err()
-    {
-        return Ok(false);
-    }
     let ws = Workspace::find_by_id(pool, workspace_id)
         .await?
         .context("Workspace missing")?;
@@ -345,9 +326,6 @@ pub async fn cleanup_allowed(pool: &SqlitePool, workspace_id: Uuid) -> anyhow::R
         return Ok(false);
     };
     match owner.kind.as_str() {
-        db::models::workspace_usage::RESOURCE_MEDIATION => {
-            Ok(sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM resource_mediations WHERE workspace_id=? AND status IN ('applied','stale','failed'))").bind(workspace_id).fetch_one(pool).await?)
-        }
         INTEGRATION => {
             let Some(id) = owner.run_id else {
                 return Ok(owner.result.is_some());
@@ -366,12 +344,16 @@ pub async fn cleanup_allowed(pool: &SqlitePool, workspace_id: Uuid) -> anyhow::R
             let Some(repo) = Repo::find_by_id(pool, repo_id).await? else {
                 return Ok(false);
             };
-            if let Some(store) =
-                RepositoryMemoryStore::read_only_configured_for_repository(pool, &repo.name, repo_id).await?
+            if let Some(store) = RepositoryMemoryStore::read_only_configured_for_repository(
+                pool, &repo.name, repo_id,
+            )
+            .await?
             {
                 let state = store.state().await?;
                 if state.maintenance_workspace_id == Some(workspace_id)
-                    && (state.active_run_id.is_some() || state.bootstrap.is_some() || state.file_operation.is_some())
+                    && (state.active_run_id.is_some()
+                        || state.bootstrap.is_some()
+                        || state.file_operation.is_some())
                 {
                     return Ok(false);
                 }

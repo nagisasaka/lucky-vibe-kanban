@@ -636,7 +636,6 @@
     },
     "owner": {
       "integration": "Auto-merge",
-      "resource_mediation": "Resource coordination",
       "openwiki_sync": "OpenWiki update",
       "openwiki_bootstrap": "OpenWiki initialization"
     }

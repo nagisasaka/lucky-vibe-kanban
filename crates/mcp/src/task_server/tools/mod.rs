@@ -60,7 +60,6 @@ mod remote_issues;
 mod remote_projects;
 mod repos;
 mod repository_read;
-mod resources;
 mod self_restart;
 mod sessions;
 mod task_attempts;
@@ -76,7 +75,6 @@ impl McpServer {
             + Self::integration_tools_router()
             + Self::provider_usage_tools_router()
             + Self::workflow_tools_router()
-            + Self::resource_tools_router()
             + Self::repository_read_tools_router()
             + Self::dev_server_tools_router()
             + Self::self_restart_tools_router()
@@ -378,7 +376,6 @@ mod tests {
         assert!(actual.contains("get_operation"));
         assert!(actual.contains("list_workspaces"));
         assert!(actual.contains("delete_workspace"));
-        assert!(actual.contains("run_resource_operation"));
         assert!(!actual.contains("output_markdown"));
     }
 }

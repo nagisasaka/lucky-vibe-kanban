@@ -45,7 +45,6 @@
         "agent-toolsDesc": "ネイティブ MCP サーバーとスキル",
         "remote-projects": "プロジェクト",
         "remote-projectsDesc": "プロジェクトを管理",
-        "resources": "共有リソース・復旧",
         "mcp-integration": "外部AI → LVK",
         "notifications": "通知",
         "execution": "作業の既定値",
@@ -619,8 +618,7 @@
       "ai": "AIと作業の既定値",
       "projects": "プロジェクトとコード",
       "connections": "接続とアクセス",
-      "account": "アカウント",
-      "operations": "運用"
+      "account": "アカウント"
     },
     "scope": {
       "account": "このブラウザの接続状態とログアウト。設定値は変更しません。",
@@ -634,7 +632,6 @@
       "mcp-integration": "外部AIからLVKへ接続するときのファイル参照・実行権限です。接続認証は「認証・メンバー」で管理します。",
       "mcp": "LVK内のエージェントから外部MCPへの接続を全体JSONで編集します。「MCP・Skillsの項目管理」は同じnative設定を項目単位で管理する入口です。対象と保存先を確認してください。",
       "access": "このLVKサーバー全体の認証・メンバー管理。各操作は個別に反映され、再認証や確認が必要な場合があります。",
-      "resources": "共有設備の登録設定と、稼働状態の確認・調停・復旧操作です。復旧や削除は各操作の確認内容を読んで実行してください。",
       "instance": "保存先：LVKインスタンス共通（config.json） · 下の保存ボタンで反映",
       "appearance": "外観・言語：LVKインスタンス共通 · モバイル文字サイズ：この端末に即時保存",
       "push": "保存範囲：ユーザー × 選択中のProject × この端末のPush購読 · この欄の操作で反映",
@@ -705,68 +702,6 @@
       }
     }
   },
-  "resources": {
-    "title": "共有リソース",
-    "description": "並列カード間の排他的な利用を調整します。Codex が競合を判断し、LVK が所有権を管理します。",
-    "scope": "このホストがひとつの調停主体です。同じ実体は一度だけ登録してください。別の LVK 環境や、この仕組みを通さないコマンドは調停の対象外です。",
-    "loading": "リソースを読み込み中…",
-    "occupied": "使用中",
-    "revision": "状態リビジョン {{revision}}",
-    "owner": "操作",
-    "empty": "未登録です。実機や外部サービスにつなぐ前に模擬リソースで確認できます。",
-    "fields": {
-      "resource_key": "実体を識別する一意のキー（例: mock:phone-1）",
-      "name": "表示名",
-      "description": "利用条件と終了時に確認すること",
-      "state": "確認済みの現在の状態"
-    },
-    "register": "リソースを登録",
-    "operations": "操作と待ち行列",
-    "operationsHelp": "AI は LVK のツールから、操作・後始末・確認を含む一連のコマンドを要求します。待機中はリソースを占有しません。",
-    "workspace": "ワークスペース",
-    "command": "実行コマンド",
-    "verification": "終了時の確認",
-    "process": "プロセスログ ID",
-    "cancel": "操作を中止",
-    "mediate": "Codex に再検討を依頼",
-    "inspectRecovery": "復旧を確認",
-    "recoveryHelp": "旧プロセスと外部で進行中の処理が停止したことを確認し、すべてのリソースの実際の状態を記録してください。解放すると状態リビジョンが更新され、待機カードは古い前提を再検討する必要があります。",
-    "evidence": "停止と状態確認の根拠",
-    "confirmRecovery": "確認済みとして復旧・解放",
-    "noOperations": "まだ操作はありません。",
-    "mediations": "調停履歴",
-    "mediationsHelp": "競合・前提の変更・状態不明の場合だけ Codex を起動します。実行中の所有権の剥奪や、状態確認の省略はできません。",
-    "assessing": "判断を待っています…",
-    "health": {
-      "ready": "利用可能",
-      "recovery_required": "復旧確認が必要"
-    },
-    "status": {
-      "queued": "順番待ち",
-      "blocked": "計画の再検討が必要",
-      "launching": "起動中",
-      "running": "実行中",
-      "succeeded": "確認完了",
-      "cancelled": "中止済み",
-      "recovery_required": "復旧確認が必要",
-      "recovered": "復旧済み"
-    },
-    "mediationStatus": {
-      "pending": "待機中",
-      "preparing": "準備中",
-      "running": "検討中",
-      "applied": "反映済み",
-      "stale": "状態変化のため未反映",
-      "failed": "判断を取得できませんでした"
-    },
-    "stopMediation": "調停を停止",
-    "unknownState": "不明な状態",
-    "originalState": "元の状態: {{state}}",
-    "actionUnconfirmed": "リソース操作の結果を確認できません。現在の状態・所有者・操作記録を確認してから再操作してください。",
-    "loadUnconfirmed": "リソース情報を読み込めませんでした。接続と選択したホストを確認してください。",
-    "operationDetailsOriginal": "操作の詳細（原文）",
-    "assessmentDetailsOriginal": "評価の説明（原文）"
-  },
   "runtimeAccess": {
     "title": "実行環境へのアクセス",
     "description": "信頼するMCPクライアントによるファイル操作とプログラム実行を許可します。",
@@ -775,7 +710,7 @@
     "restrict": "読み書き範囲を制限する",
     "roots": "許可root（絶対パス、1行に1件）",
     "osAuthority": "これはサンドボックスではありません。実行が許可されている場合、プログラムは設定範囲外にもアクセスできます。",
-    "permissions": "ファイルOFFは直接APIだけを止めます。Workspace内は読取可能ですが、直接変更・削除とWorkspace cwdでの起動は拒否します。実行ファイルとcwdは絶対パスで指定し、読書rootには制限されません。共有資源は既存の調整を使用してください。",
+    "permissions": "ファイルOFFは直接APIだけを止めます。Workspace内は読取可能ですが、直接変更・削除とWorkspace cwdでの起動は拒否します。実行ファイルとcwdは絶対パスで指定し、読み書きrootには制限されません。共有環境に影響する作業は関係者と調整してください。",
     "revoke": "OFFにしても稼働中プロセスは終了しません。実行OFFではプロセス観測・出力・停止も拒否します。既存timeoutは維持されます。",
     "denied": "設定を取得できません。管理者としてログインしてください。",
     "loading": "読込中…"

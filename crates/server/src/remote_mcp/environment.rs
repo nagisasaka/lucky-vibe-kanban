@@ -155,7 +155,7 @@ pub(super) fn tools() -> Vec<Tool> {
         ),
         tool(
             "run_process",
-            "Run an absolute existing executable with args and absolute cwd. Execution setting/scope required; independent of file roots/toggle. Workspace cwd refused at launch; ancestor/sibling cwd allowed. Programs may read/write/delete outside cwd and file roots; NOT sandboxed. Do not directly edit managed Workspaces: use their agents. Explicit user authorisation and existing shared resource coordination remain required. No executable allowlist or command-word inspection. request_id is durable; receipt success means startup only. Expiry sends TERM then KILL after 5 seconds; descendants are not managed. Self-restart uses the dedicated tool.",
+            "Run an absolute existing executable with args and absolute cwd. Execution setting/scope required; independent of file roots/toggle. Workspace cwd refused at launch; ancestor/sibling cwd allowed. Programs may read/write/delete outside cwd and file roots; NOT sandboxed. Do not directly edit managed Workspaces: use their agents. Obtain explicit user authorisation for direct operations. No executable allowlist or command-word inspection. request_id is durable; receipt success means startup only. Expiry sends TERM then KILL after 5 seconds; descendants are not managed. Self-restart uses the dedicated tool.",
             json!({"project_id":uuid,"request_id":uuid,"purpose":text,"executable":text,"args":{"type":"array","items":{"type":"string"},"maxItems":128},"cwd":text,"service":{"type":"boolean","default":false},"lifetime_seconds":{"type":"integer","minimum":1,"maximum":86400}}),
             &[
                 "project_id",
@@ -178,7 +178,7 @@ pub(super) fn tools() -> Vec<Tool> {
         ),
         tool(
             "self_restart",
-            "Explicit developer-instance switch through the installed engine, not run_process. Requires execution setting/scope and instance configuration. Coordinate idle work first. Initial busy preflight waits 30 seconds and rechecks once; other failures are not retried. Admission is not cutover; query get_self_restart_operation using the same request_id after reconnection. Shared resources still require existing coordination.",
+            "Explicit developer-instance switch through the installed engine, not run_process. Requires execution setting/scope and instance configuration. Coordinate idle work first. Initial busy preflight waits 30 seconds and rechecks once; other failures are not retried. Admission is not cutover; query get_self_restart_operation using the same request_id after reconnection.",
             json!({"project_id":uuid,"request_id":uuid,"purpose":text,"bundle":text,"no_new_work":{"type":"boolean"}}),
             &[
                 "project_id",
@@ -327,7 +327,7 @@ pub(super) async fn call(
             "Invalid capability arguments"
         );
         return Ok(
-            json!({"settings":settings,"file_write_tools":true,"os_write_sandbox":false,"execution_cwd":"absolute, independent of file roots; managed Workspace cwd refused only at launch","shared_resources":"explicit user authorisation and existing resource coordination required","output_persistence":"bounded memory; unavailable after restart","reference_data_only":true}),
+            json!({"settings":settings,"file_write_tools":true,"os_write_sandbox":false,"execution_cwd":"absolute, independent of file roots; managed Workspace cwd refused only at launch","output_persistence":"bounded memory; unavailable after restart","reference_data_only":true}),
         );
     }
     let project: Uuid = serde_json::from_value(
@@ -619,6 +619,21 @@ pub(super) async fn call(
 #[cfg(test)]
 mod error_contract_tests {
     use super::*;
+
+    #[test]
+    fn remote_process_contract_distinguishes_file_roots_from_sandbox() {
+        let tools = tools();
+        let process = tools
+            .iter()
+            .find(|tool| tool.name == "run_process")
+            .unwrap();
+        let description = process.description.as_deref().unwrap();
+        assert!(description.contains("outside cwd and file roots"));
+        assert!(description.contains("NOT sandboxed"));
+        assert!(description.contains("use their agents"));
+        assert!(!description.contains("resource coordination"));
+        assert!(tools.iter().any(|tool| tool.name == "read_runtime_path"));
+    }
 
     #[test]
     fn preflight_rejections_preserve_category_and_safe_explanation() {

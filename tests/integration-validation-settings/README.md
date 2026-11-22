@@ -33,7 +33,7 @@ git diff --check
 ```
 
 Rust実行枠が空いた後、通常のworkspace targetを利用して順次実行する。現在のrunnerはsccacheを自動設定しない。
-事前に共有資源snapshot・cargo/rustc・空き容量を確認し、AGENTS.mdのキャッシュ設定に従う。
+事前にcargo/rustc・空き容量を確認し、AGENTS.mdのキャッシュ設定に従う。
 
 ```sh
 CARGO_BUILD_JOBS=2 cargo check -p server

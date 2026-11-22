@@ -246,7 +246,6 @@ def preflight(a, *, dry_run=False, expected=None):
         shutil.disk_usage(DEV).free > selected["backup"]["required_free_bytes"],
         "Insufficient backup space",
     )
-    s.resources()
     s.idle(selected["snapshot"]["identity"]["pid"], allow_children=not dry_run)
     return selected
 
@@ -441,7 +440,6 @@ def execute(op, request, config_path):
         verify_release(selected)
         verify_release(previous)
         channel_guard(a)
-        s.resources()
         s.idle(expected["identity"]["pid"], allow_children=True)
         s.stop(expected["identity"], previous["manifest"]["files"]["server"], operation=op)
         stage("backup")

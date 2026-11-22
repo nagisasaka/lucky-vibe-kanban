@@ -232,8 +232,6 @@ export function installFixtureApi() {
       return success({ providers: [], errors: [] });
     if (path === "/api/agent-settings")
       return success({ providers: [], errors: [] });
-    if (path === "/api/resource-coordination/snapshot")
-      return success({ resources: [], holders: [], queue: [] });
     if (
       path === "/api/repos" ||
       path === "/api/tags" ||

@@ -145,15 +145,6 @@ def get(path):
     return json.loads(get_bytes(path))
 
 
-def resources():
-    j = get("/api/resource-coordination/snapshot")
-    need(j.get("success"), "Resource snapshot failed")
-    need_idle(
-        not any(j["data"][k] for k in ["holders", "queue"]),
-        "Resource holders or queued operations remain; coordinate before switching",
-    )
-
-
 def ro(path):
     c = sqlite3.connect(P(path).resolve().as_uri() + "?mode=ro", uri=True, timeout=3)
     c.execute("PRAGMA query_only=ON")

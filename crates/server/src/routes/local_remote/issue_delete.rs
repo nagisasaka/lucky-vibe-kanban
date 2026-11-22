@@ -730,7 +730,6 @@ mod tests {
             "outside",
             "shared",
             "integration",
-            "resource",
         ] {
             let f = fixture().await;
             match case {
@@ -796,9 +795,6 @@ mod tests {
                         .execute(&f.pool)
                         .await
                         .unwrap();
-                }
-                "resource" => {
-                    sqlx::query("INSERT INTO resource_operations(id,workspace_id,session_id,spec,status) VALUES(?,?,?,'{}','recovery_required')").bind(Uuid::new_v4()).bind(f.ws.id).bind(f.session.id).execute(&f.pool).await.unwrap();
                 }
                 _ => unreachable!(),
             }

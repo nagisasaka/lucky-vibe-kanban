@@ -72,8 +72,6 @@ export function executionOwnerLabel(
   switch (owner) {
     case 'integration':
       return t('tasks:executionInspection.owner.integration');
-    case 'resource_mediation':
-      return t('tasks:executionInspection.owner.resource_mediation');
     case 'openwiki_sync':
       return t('tasks:executionInspection.owner.openwiki_sync');
     case 'openwiki_bootstrap':

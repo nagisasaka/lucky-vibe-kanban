@@ -10,6 +10,7 @@ use utils::assets::asset_dir;
 mod migration_compat;
 pub mod models;
 pub mod project_transfer;
+mod retired_resource_files;
 
 /// Long enough to absorb ordinary short writer overlap without making a UI
 /// command appear hung. Semantic compaction and batch transactions remain the
@@ -22,11 +23,21 @@ pub async fn run_migrations(pool: &Pool<Sqlite>) -> Result<(), Error> {
 
     let migrator = migration_compat::migrator(pool).await?;
     let mut processed_versions: HashSet<i64> = HashSet::new();
+    let retired_files = match retired_resource_files::collect(pool).await {
+        Ok(files) => files,
+        Err(error) => {
+            tracing::warn!(%error, "Could not collect retired resource files; leaving them untouched");
+            None
+        }
+    };
 
     loop {
         match migrator.run(pool).await {
             Ok(()) => {
                 guard_agent_runtime_schema(pool).await?;
+                if let Some(files) = retired_files {
+                    files.cleanup().await;
+                }
                 return Ok(());
             }
             Err(MigrateError::VersionMismatch(version)) => {

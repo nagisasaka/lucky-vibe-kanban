@@ -15,7 +15,7 @@ disconnected. Agent accounts, provider subscriptions and model usage are separat
 LVK is distributed only as Docker images through GHCR, currently for Linux amd64.
 This fork does not publish npm packages. The old npx launcher, Tauri desktop shell,
 upstream Cloud and relay services are retired; use the browser at your LVK server
-URL. External Runner execution remains available through Execution Bridge.
+URL.
 
 Public installations use HTTPS and Basic or Auth0 authentication and start locked.
 This is for a trusted team, not an unrestricted public agent service. Provider and

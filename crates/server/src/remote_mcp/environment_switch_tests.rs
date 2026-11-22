@@ -166,19 +166,10 @@ async fn switch_host() {
                 .unwrap();
         super::record_local_listener(listener.local_addr().unwrap());
         let base = format!("http://{}", listener.local_addr().unwrap());
-        let app = super::router(remote, auth)
-            .route(
-                "/api/health",
-                axum::routing::get(|| async { axum::Json(json!({"success":true})) }),
-            )
-            .route(
-                "/api/resource-coordination/snapshot",
-                axum::routing::get(|| async {
-                    axum::Json(
-                        json!({"success":true,"data":{"resources":[],"holders":[],"queue":[]}}),
-                    )
-                }),
-            );
+        let app = super::router(remote, auth).route(
+            "/api/health",
+            axum::routing::get(|| async { axum::Json(json!({"success":true})) }),
+        );
         tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
         std::fs::write(instance.join("server.pid"), std::process::id().to_string()).unwrap();
         base

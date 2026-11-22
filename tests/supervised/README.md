@@ -6,8 +6,7 @@ workspace's real server, process host, provider adapter, JSON-RPC client,
 canonical event store, AgentRun control API, WebSocket stream and existing UI.
 It does not contact a model or prove native sandbox enforcement.
 
-Run heavyweight steps sequentially. Check the resource-coordination snapshot
-before using shared infrastructure; this runner uses a fresh temporary instance,
+Run heavyweight steps sequentially. Coordinate shared infrastructure with those affected; this fixture uses a fresh temporary instance,
 SQLite DB and three dynamically selected loopback ports. It never uses live
 instance state. It explicitly pins `VIBE_KANBAN_AGENT_PROCESS_HOST` to this checkout
 and discards inherited LVK/VK/process-host overrides. It preserves HOME and uses

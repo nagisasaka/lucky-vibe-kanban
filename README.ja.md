@@ -15,7 +15,6 @@ OpenWikiによるリポジトリの記憶を備えたセルフホストの開発
 GHCRを通じてDockerイメージのみを配布し、現在の対象はLinux amd64です。
 このフォークではnpmパッケージを公開しません。旧npxランチャー、Tauri desktop shell、
 上流のCloud・relayは廃止済みです。ブラウザーでLVKサーバーのURLへアクセスします。
-外部Runnerによる実行はExecution Bridgeで引き続き利用できます。
 
 公開配置はHTTPSとBasic／Auth0認証を使い、初回はロック状態です。
 信頼できるチーム向けで、無制限の公開エージェントサービスではありません。
