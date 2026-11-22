@@ -763,7 +763,7 @@ pub fn review_prompt(root: &Path, language: &str) -> String {
 pub fn rebuild_prompt(root: &Path, language: &str, source: &str) -> String {
     let prompt = writer_prompt(root, language, None).replace(
         "Start init and complete it in this phase. A verified openwiki_finish status=complete is mandatory; begin-noop is not a successful initial generation.",
-        "Start openwiki_begin mode=\"update\" with force=true and complete a full reconstruction in this phase; use update to preserve saved instructions and configuration. A verified openwiki_finish status=complete is mandatory. LVK has cleared only the previous generated artifacts in this dedicated worktree; the published Wiki remains intact and the frozen Git reference remains readable. Plan the entire desired generated Wiki anew, including quickstart.md, using the existing plan/page/finish lifecycle. Use the frozen old Wiki and current source; do not scan all historical Issue archives. Use deletePages for obsolete generated pages still present in this target; do not request deletion of already absent reference pages. Do not retain obsolete pages just because they existed. Preserve saved instructions, configuration and stable entry paths, repairing references as needed."
+        "Start openwiki_begin mode=\"update\" with force=true and complete a full reconstruction in this phase; use update to preserve saved instructions and configuration. A verified openwiki_finish status=complete is mandatory. LVK has cleared only the previous generated artifacts in this dedicated worktree; the published Wiki remains intact and the frozen Git reference remains readable. Plan the entire desired generated Wiki anew, including quickstart.md, using the existing plan/page/finish lifecycle. Before writing each page, read the frozen old page on the same subject when one exists, including pages being moved or merged. Check its procedures, constraints and evidenced rationale against current source, preserve still-valid knowledge in the page body or an appropriate destination, and verify that retention before submitting the page. Integrate repairs into the relevant existing sections rather than appending similar sections at the end. Do not scan all historical Issue archives. Use deletePages for obsolete generated pages still present in this target; do not request deletion of already absent reference pages. Do not retain obsolete pages just because they existed. Preserve saved instructions, configuration and stable entry paths, repairing references as needed. Once all planned pages are submitted and existing validation passes, finish complete, return the required report and end this phase. Unless a concrete inconsistency has already been identified, do not begin a whole-Wiki reinspection after completion."
     );
     prompt + &super::management::reference_prompt(source)
 }
@@ -933,6 +933,24 @@ mod tests {
             prompt.contains("Preserve saved instructions, configuration and stable entry paths")
         );
         assert!(prompt.contains("maintained canonical documents"));
+        for instruction in [
+            "Before writing each page, read the frozen old page on the same subject",
+            "verify that retention before submitting the page",
+            "Integrate repairs into the relevant existing sections",
+            "finish complete, return the required report and end this phase",
+            "do not begin a whole-Wiki reinspection after completion",
+        ] {
+            assert!(prompt.contains(instruction));
+            assert!(!writer_prompt(Path::new("/fixture/repo"), "ja", None).contains(instruction));
+            assert!(
+                !writer_prompt(
+                    Path::new("/fixture/repo"),
+                    "ja",
+                    Some(Path::new("/shared/review.json")),
+                )
+                .contains(instruction)
+            );
+        }
         assert!(!prompt.contains("Start init and complete it in this phase"));
         let reference = super::super::management::reference_prompt(&source);
         assert!(reference.contains("never invent rationale"));
