@@ -670,14 +670,26 @@ function InteractiveSessionChatBox(props: SessionChatBoxContainerProps) {
   });
 
   const handleAsyncAnswer = useCallback(
-    async (question: AsyncAgentQuestion, answer: string) => {
+    async (
+      question: AsyncAgentQuestion,
+      answer: string,
+      retryUnconfirmed: boolean
+    ) => {
       if (!sessionId || !isSessionConfigReady || !executorConfig) {
         throw new Error(t('common:asyncQuestions.sendFailed'));
       }
-      await agentRunsApi.answerQuestion(sessionId, question.id, answer);
-      await queryClient.invalidateQueries({
-        queryKey: ['agent-questions', sessionId],
-      });
+      try {
+        await agentRunsApi.answerQuestion(
+          sessionId,
+          question.id,
+          answer,
+          retryUnconfirmed
+        );
+      } finally {
+        await queryClient.invalidateQueries({
+          queryKey: ['agent-questions', sessionId],
+        });
+      }
     },
     [sessionId, isSessionConfigReady, executorConfig, queryClient, t]
   );

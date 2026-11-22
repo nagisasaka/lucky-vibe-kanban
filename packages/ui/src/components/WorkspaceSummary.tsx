@@ -24,6 +24,8 @@ export interface WorkspaceSummaryProps {
   isRunning?: boolean;
   isPinned?: boolean;
   hasPendingApproval?: boolean;
+  hasPendingInput?: boolean;
+  hasBlockedGoal?: boolean;
   hasRunningDevServer?: boolean;
   hasUnseenActivity?: boolean;
   latestProcessCompletedAt?: string;
@@ -47,6 +49,8 @@ export function WorkspaceSummary({
   isRunning = false,
   isPinned = false,
   hasPendingApproval = false,
+  hasPendingInput = false,
+  hasBlockedGoal = false,
   hasRunningDevServer = false,
   hasUnseenActivity = false,
   latestProcessCompletedAt,
@@ -133,16 +137,30 @@ export function WorkspaceSummary({
             )}
 
             {/* Running dots OR hand icon for pending approval */}
-            {isPreparing && (
-              <span className="text-low">{t('workspaces.preparing')}</span>
-            )}
+            {isPreparing &&
+              !hasPendingApproval &&
+              !hasPendingInput &&
+              !hasBlockedGoal && (
+                <span className="text-low">{t('workspaces.preparing')}</span>
+              )}
             {isRunning &&
-              !isPreparing &&
-              (hasPendingApproval ? (
-                <HandIcon
-                  className="size-icon-xs text-brand shrink-0"
-                  weight="fill"
-                />
+              (hasPendingApproval ||
+                hasPendingInput ||
+                hasBlockedGoal ||
+                !isPreparing) &&
+              (hasPendingApproval || hasPendingInput || hasBlockedGoal ? (
+                <span
+                  title={
+                    hasBlockedGoal && !hasPendingApproval && !hasPendingInput
+                      ? t('kanban.compact.blocked')
+                      : undefined
+                  }
+                >
+                  <HandIcon
+                    className="size-icon-xs text-brand shrink-0"
+                    weight="fill"
+                  />
+                </span>
               ) : (
                 <RunningDots />
               ))}

@@ -370,6 +370,44 @@ impl AgentRunRecord {
             JOIN workspaces workspace ON workspace.id = ar.workspace_id
             WHERE workspace.archived = ?
               AND state.status = 'awaiting_approval'
+              AND state.projection_status = 'current'
+              AND ar.projection_status = 'current'
+              AND ar.status NOT IN ('succeeded','failed','cancelled','crashed','audit_failed')
+              AND NOT EXISTS (SELECT 1 FROM agent_runs newer WHERE newer.session_id = ar.session_id
+                  AND (newer.created_at > ar.created_at OR
+                       (newer.created_at = ar.created_at AND newer.rowid > ar.rowid)))
+            "#,
+        )
+        .bind(archived)
+        .fetch_all(pool)
+        .await
+    }
+
+    /// Current runs requiring input or with an interrupted Goal, grouped by workspace.
+    pub async fn find_workspace_waits(
+        pool: &SqlitePool,
+        archived: bool,
+    ) -> Result<Vec<(Uuid, bool, bool)>, sqlx::Error> {
+        sqlx::query_as(
+            r#"
+            SELECT ar.workspace_id,
+                   MAX(state.status = 'awaiting_input' AND state.projection_status = 'current' AND ar.projection_status = 'current'),
+                   MAX(CASE WHEN state.projection_status = 'current'
+                                  AND ar.projection_status = 'current'
+                                  AND json_extract(state.state_json, '$.goal.status') IN
+                                      ('paused', 'blocked', 'usageLimited', 'budgetLimited')
+                            THEN 1 ELSE 0 END)
+            FROM agent_runs ar
+            JOIN agent_run_state state ON state.agent_run_id = ar.id
+            JOIN workspaces workspace ON workspace.id = ar.workspace_id
+            WHERE workspace.archived = ?
+              AND ar.status IN ('pending','starting','running','awaiting_input','awaiting_approval','cancelling')
+              AND state.status IN ('pending','starting','running','awaiting_input','awaiting_approval','cancelling')
+              AND NOT EXISTS (SELECT 1 FROM agent_runs newer
+                  WHERE newer.session_id = ar.session_id AND
+                    (newer.created_at > ar.created_at OR
+                     (newer.created_at = ar.created_at AND newer.rowid > ar.rowid)))
+            GROUP BY ar.workspace_id
             "#,
         )
         .bind(archived)
@@ -760,7 +798,7 @@ impl AgentRunCommandRecord {
         pool: &SqlitePool,
     ) -> Result<u64, AgentRuntimePersistenceError> {
         let result = sqlx::query(
-            "UPDATE agent_run_commands SET delivery_status = 'pending', updated_at = ? WHERE delivery_status = 'delivering'",
+            "UPDATE agent_run_commands SET delivery_status = CASE WHEN idempotency_key LIKE 'question:%' THEN 'failed' ELSE 'pending' END, updated_at = ? WHERE delivery_status = 'delivering'",
         )
         .bind(Utc::now())
         .execute(pool)
@@ -770,7 +808,7 @@ impl AgentRunCommandRecord {
 
     pub async fn pending(pool: &SqlitePool) -> Result<Vec<Self>, AgentRuntimePersistenceError> {
         Ok(sqlx::query_as::<_, Self>(
-            "SELECT * FROM agent_run_commands WHERE delivery_status IN ('pending', 'failed') ORDER BY created_at, command_id",
+            "SELECT * FROM agent_run_commands WHERE delivery_status IN ('pending', 'failed') AND idempotency_key NOT LIKE 'question:%' ORDER BY created_at, command_id",
         )
         .fetch_all(pool)
         .await?)
@@ -3556,6 +3594,140 @@ mod tests {
             .unwrap();
         assert_eq!(gate.gate_status, AgentRunLaunchGateStatus::Failed);
         assert_eq!(gate.failure_message.as_deref(), Some("first failure"));
+    }
+
+    #[tokio::test]
+    async fn workspace_waits_follow_current_run_goal_and_projection() {
+        let pool = setup_pool().await;
+        let (session, workspace) = insert_anchors(&pool).await;
+        let (request, attempt) = requests(session, workspace, "workspace-waits");
+        AgentRunRecord::persist_identity_before_launch(&pool, &request, &attempt)
+            .await
+            .unwrap();
+        sqlx::query("UPDATE agent_runs SET status='running' WHERE id=?")
+            .bind(request.agent_run_id)
+            .execute(&pool)
+            .await
+            .unwrap();
+        for (goal, expected) in [
+            ("active", false),
+            ("paused", true),
+            ("blocked", true),
+            ("usageLimited", true),
+            ("budgetLimited", true),
+            ("complete", false),
+        ] {
+            sqlx::query("UPDATE agent_run_state SET status='running', state_json=json_set(state_json,'$.goal.status',?) WHERE agent_run_id=?")
+                .bind(goal).bind(request.agent_run_id).execute(&pool).await.unwrap();
+            assert_eq!(
+                AgentRunRecord::find_workspace_waits(&pool, false)
+                    .await
+                    .unwrap(),
+                vec![(workspace, false, expected)]
+            );
+        }
+        sqlx::query("INSERT INTO agent_events(event_id,session_id,agent_run_id,turn_id,run_attempt_id,run_attempt_number,sequence,correlation_id,schema_version,payload_version,event_envelope) VALUES(?,?,?,?,?,1,1,?,1,1,?)")
+            .bind(Uuid::new_v4()).bind(session).bind(request.agent_run_id).bind(request.turn_id)
+            .bind(attempt.run_attempt_id).bind(request.correlation_id)
+            .bind(r#"{"payload":{"type":"provider_extension","data":{"provider_namespace":"codex","provider_event":"async_questions","payload":{"schema_version":1,"message_id":"question","questions":[{"title":"Question?","options":["Yes"]}]}}}}"#)
+            .execute(&pool).await.unwrap();
+        sqlx::query("UPDATE agent_run_state SET state_json=json_set(state_json,'$.goal.status','active') WHERE agent_run_id=?")
+            .bind(request.agent_run_id).execute(&pool).await.unwrap();
+        assert_eq!(
+            AgentRunRecord::find_workspace_waits(&pool, false)
+                .await
+                .unwrap(),
+            vec![(workspace, false, false)]
+        );
+        sqlx::query("UPDATE agent_run_state SET status='awaiting_input', state_json=json_set(state_json,'$.goal.status','active') WHERE agent_run_id=?")
+            .bind(request.agent_run_id).execute(&pool).await.unwrap();
+        assert_eq!(
+            AgentRunRecord::find_workspace_waits(&pool, false)
+                .await
+                .unwrap(),
+            vec![(workspace, true, false)]
+        );
+        sqlx::query("UPDATE agent_run_state SET status='running', projection_status='projection_degraded', state_json=json_set(state_json,'$.goal.status','blocked') WHERE agent_run_id=?")
+            .bind(request.agent_run_id).execute(&pool).await.unwrap();
+        assert_eq!(
+            AgentRunRecord::find_workspace_waits(&pool, false)
+                .await
+                .unwrap(),
+            vec![(workspace, false, false)]
+        );
+        sqlx::query("UPDATE agent_runs SET status='succeeded' WHERE id=?")
+            .bind(request.agent_run_id)
+            .execute(&pool)
+            .await
+            .unwrap();
+        assert!(
+            AgentRunRecord::find_workspace_waits(&pool, false)
+                .await
+                .unwrap()
+                .is_empty()
+        );
+
+        let session_two = Uuid::new_v4();
+        sqlx::query("INSERT INTO sessions(id, workspace_id) VALUES (?, ?)")
+            .bind(session_two)
+            .bind(workspace)
+            .execute(&pool)
+            .await
+            .unwrap();
+        let (other, other_attempt) = requests(session_two, workspace, "workspace-waits-other");
+        AgentRunRecord::persist_identity_before_launch(&pool, &other, &other_attempt)
+            .await
+            .unwrap();
+        sqlx::query("UPDATE agent_runs SET status='running' WHERE id=?")
+            .bind(other.agent_run_id)
+            .execute(&pool)
+            .await
+            .unwrap();
+        sqlx::query("UPDATE agent_run_state SET status='running', state_json=json_set(state_json,'$.goal.status','paused') WHERE agent_run_id=?")
+            .bind(other.agent_run_id).execute(&pool).await.unwrap();
+        sqlx::query("UPDATE agent_runs SET status='running' WHERE id=?")
+            .bind(request.agent_run_id)
+            .execute(&pool)
+            .await
+            .unwrap();
+        sqlx::query("UPDATE agent_run_state SET status='running', projection_status='current', state_json=json_set(state_json,'$.goal.status','active') WHERE agent_run_id=?")
+            .bind(request.agent_run_id).execute(&pool).await.unwrap();
+        assert_eq!(
+            AgentRunRecord::find_workspace_waits(&pool, false)
+                .await
+                .unwrap(),
+            vec![(workspace, false, true)]
+        );
+        sqlx::query("UPDATE agent_run_state SET state_json=json_set(state_json,'$.goal.status','active') WHERE agent_run_id=?")
+            .bind(other.agent_run_id).execute(&pool).await.unwrap();
+        assert_eq!(
+            AgentRunRecord::find_workspace_waits(&pool, false)
+                .await
+                .unwrap(),
+            vec![(workspace, false, false)]
+        );
+        sqlx::query("UPDATE agent_run_state SET state_json=json_set(state_json,'$.goal.status','blocked') WHERE agent_run_id=?")
+            .bind(other.agent_run_id).execute(&pool).await.unwrap();
+        let (newer, newer_attempt) = requests(session_two, workspace, "workspace-waits-newer");
+        AgentRunRecord::persist_identity_before_launch(&pool, &newer, &newer_attempt)
+            .await
+            .unwrap();
+        sqlx::query("UPDATE agent_runs SET created_at='2099-01-01', status='running' WHERE id=?")
+            .bind(newer.agent_run_id)
+            .execute(&pool)
+            .await
+            .unwrap();
+        sqlx::query("UPDATE agent_run_state SET status='running' WHERE agent_run_id=?")
+            .bind(newer.agent_run_id)
+            .execute(&pool)
+            .await
+            .unwrap();
+        assert_eq!(
+            AgentRunRecord::find_workspace_waits(&pool, false)
+                .await
+                .unwrap(),
+            vec![(workspace, false, false)]
+        );
     }
 
     #[tokio::test]

@@ -32,6 +32,10 @@ pub struct WorkspaceSummary {
     pub latest_session_id: Option<Uuid>,
     /// Is a tool approval currently pending?
     pub has_pending_approval: bool,
+    /// Whether a current run is waiting for input.
+    pub has_pending_input: bool,
+    /// Whether a current run's Goal is interrupted.
+    pub has_blocked_goal: bool,
     /// Number of files with changes
     pub files_changed: Option<usize>,
     /// Total lines added across all files
@@ -122,6 +126,11 @@ pub async fn get_workspace_summaries(
             .await?
             .into_iter()
             .collect();
+    let workspace_waits: HashMap<_, _> = AgentRunRecord::find_workspace_waits(pool, archived)
+        .await?
+        .into_iter()
+        .map(|(workspace, input, goal)| (workspace, (input, goal)))
+        .collect();
 
     let integrations: Vec<(Uuid, String)> = sqlx::query_as("SELECT workspace_id,status FROM integration_runs WHERE workspace_id IS NOT NULL AND status NOT IN ('succeeded','failed','cancelled')")
         .fetch_all(pool).await?;
@@ -179,6 +188,8 @@ pub async fn get_workspace_summaries(
                 is_running: running_workspaces.contains(&id),
                 latest_session_id: latest.map(|p| p.session_id),
                 has_pending_approval: pending_approval_workspaces.contains(&id),
+                has_pending_input: workspace_waits.get(&id).is_some_and(|wait| wait.0),
+                has_blocked_goal: workspace_waits.get(&id).is_some_and(|wait| wait.1),
                 files_changed: stats.map(|s| s.files_changed),
                 lines_added: stats.and_then(|s| s.lines_added),
                 lines_removed: stats.and_then(|s| s.lines_removed),

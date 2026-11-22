@@ -29,6 +29,8 @@ export interface WorkspacesSidebarWorkspace {
   isRunning?: boolean;
   isPinned?: boolean;
   hasPendingApproval?: boolean;
+  hasPendingInput?: boolean;
+  hasBlockedGoal?: boolean;
   hasRunningDevServer?: boolean;
   hasUnseenActivity?: boolean;
   latestProcessCompletedAt?: string;
@@ -150,6 +152,8 @@ function WorkspaceList({
           isRunning={workspace.isRunning}
           isPinned={workspace.isPinned}
           hasPendingApproval={workspace.hasPendingApproval}
+          hasPendingInput={workspace.hasPendingInput}
+          hasBlockedGoal={workspace.hasBlockedGoal}
           hasRunningDevServer={workspace.hasRunningDevServer}
           hasUnseenActivity={workspace.hasUnseenActivity}
           latestProcessCompletedAt={workspace.latestProcessCompletedAt}
@@ -209,7 +213,10 @@ export function WorkspacesSidebar({
     useMemo(() => {
       // Running workspaces should stay in the "Running" section even if unseen.
       const needsAttention = (ws: WorkspacesSidebarWorkspace) =>
-        ws.hasPendingApproval || (ws.hasUnseenActivity && !ws.isRunning);
+        ws.hasPendingApproval ||
+        ws.hasPendingInput ||
+        ws.hasBlockedGoal ||
+        (ws.hasUnseenActivity && !ws.isRunning);
 
       return {
         raisedHandWorkspaces: workspaces.filter((ws) => needsAttention(ws)),
@@ -296,6 +303,8 @@ export function WorkspacesSidebar({
                   isRunning={workspace.isRunning}
                   isPinned={workspace.isPinned}
                   hasPendingApproval={workspace.hasPendingApproval}
+                  hasPendingInput={workspace.hasPendingInput}
+                  hasBlockedGoal={workspace.hasBlockedGoal}
                   hasRunningDevServer={workspace.hasRunningDevServer}
                   hasUnseenActivity={workspace.hasUnseenActivity}
                   latestProcessCompletedAt={workspace.latestProcessCompletedAt}
@@ -413,6 +422,8 @@ export function WorkspacesSidebar({
                 isRunning={workspace.isRunning}
                 isPinned={workspace.isPinned}
                 hasPendingApproval={workspace.hasPendingApproval}
+                hasPendingInput={workspace.hasPendingInput}
+                hasBlockedGoal={workspace.hasBlockedGoal}
                 hasRunningDevServer={workspace.hasRunningDevServer}
                 hasUnseenActivity={workspace.hasUnseenActivity}
                 latestProcessCompletedAt={workspace.latestProcessCompletedAt}

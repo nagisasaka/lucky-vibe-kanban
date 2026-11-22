@@ -68,6 +68,22 @@ describe('workspace sidebar runtime state', () => {
     fixture.summaries = new Map();
   });
 
+  it('passes current input and Goal waits to the workspace displays', () => {
+    fixture.summaries.set('workspace', {
+      workspace_id: 'workspace',
+      is_running: true,
+      has_pending_approval: false,
+      has_pending_input: true,
+      has_blocked_goal: true,
+    } as WorkspaceSummary);
+    expect(readWorkspaces().workspaces[0]).toMatchObject({
+      isRunning: true,
+      hasPendingApproval: false,
+      hasPendingInput: true,
+      hasBlockedGoal: true,
+    });
+  });
+
   it('keeps human workspaces even when their name resembles an internal execution', () => {
     const result = readWorkspaces();
     expect(result.workspaces.map((workspace) => workspace.id)).toEqual([

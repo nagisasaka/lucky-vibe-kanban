@@ -251,7 +251,7 @@ export type CreateIntegrationRequest = { request_id: string, project_id: string,
 
 export type PendingAgentQuestion = { id: string, session_id: string, agent_run_id: string, workspace_id: string, title: string, options: Array<string>, delivery_status: string | null, };
 
-export type AnswerAgentQuestion = { request_id: string, question_id: string, answer: string, };
+export type AnswerAgentQuestion = { request_id: string, question_id: string, answer: string, retry_unconfirmed: boolean, };
 
 export type WikiReconciliationReceipt = { event_id: string, reconciled_at: string, target_commit: string, wiki_commit: string | null, result: ReconciliationResult, error: string | null, };
 
@@ -921,6 +921,14 @@ latest_session_id: string | null,
  * Is a tool approval currently pending?
  */
 has_pending_approval: boolean,
+/**
+ * Whether a current run is waiting for input.
+ */
+has_pending_input: boolean,
+/**
+ * Whether a current run's Goal is interrupted.
+ */
+has_blocked_goal: boolean,
 /**
  * Number of files with changes
  */

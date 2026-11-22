@@ -531,9 +531,40 @@ impl AppServerClient {
                 let thread_id = self.thread_id.lock().await.clone().ok_or_else(|| {
                     ExecutorError::Io(io::Error::other("Codex has no active thread"))
                 })?;
-                let expected_turn_id = self.turn_id.lock().await.clone().ok_or_else(|| {
-                    ExecutorError::Io(io::Error::other("Codex has no active turn"))
-                })?;
+                let expected_turn_id = self.turn_id.lock().await.clone();
+                let Some(expected_turn_id) = expected_turn_id else {
+                    if !self.goal_lifecycle.lock().unwrap().is_blocked(&thread_id) {
+                        return Err(ExecutorError::Io(io::Error::other(
+                            "Codex has no active turn",
+                        )));
+                    }
+                    // A blocked managed Goal keeps this host and Run alive after
+                    // its turn has ended. Start a turn in that same thread; do
+                    // not create a follow-up Run or silently reactivate other Goals.
+                    let request = ClientRequest::TurnStart {
+                        request_id: self.next_request_id(),
+                        params: build_turn_start_params(
+                            thread_id,
+                            vec![UserInput::Text {
+                                text,
+                                text_elements: vec![],
+                            }],
+                            None,
+                            self.current_reasoning_effort(),
+                        ),
+                    };
+                    let (response, raw) = self
+                        .rpc()
+                        .request_with_raw::<TurnStartResponse, _>(
+                            request_id(&request),
+                            &request,
+                            "turn/start",
+                            self.cancel.clone(),
+                        )
+                        .await?;
+                    *self.turn_id.lock().await = Some(response.turn.id);
+                    return Ok(raw);
+                };
                 let request = ClientRequest::TurnSteer {
                     request_id: self.next_request_id(),
                     params: TurnSteerParams {
@@ -3095,6 +3126,70 @@ mod version_check_tests {
             .process_notification(&raw, serde_json::from_str(&raw).unwrap())
             .await
             .unwrap()
+    }
+
+    #[test]
+    #[ignore = "subprocess fixture for blocked_goal_answer_starts_turn_in_same_thread"]
+    fn blocked_goal_answer_stdio_fixture() {
+        use std::io::{BufRead, Write};
+        let line = std::io::stdin().lock().lines().next().unwrap().unwrap();
+        let request: Value = serde_json::from_str(&line).unwrap();
+        assert_eq!(request["method"], "turn/start");
+        assert_eq!(request["params"]["threadId"], "thread-1");
+        assert_eq!(
+            request["params"]["input"][0]["text"],
+            "Question: Colour?\nAnswer: Blue"
+        );
+        println!(
+            "{}",
+            json!({"id":request["id"],"result":{"turn":{"id":"answer-turn","items":[],"status":"inProgress","error":null}}})
+        );
+        std::io::stdout().flush().unwrap();
+    }
+
+    #[tokio::test]
+    async fn blocked_goal_answer_starts_turn_in_same_thread() {
+        use super::super::jsonrpc::{ExitSignalSender, JsonRpcPeer};
+        let client = goal_client();
+        notify(
+            &client,
+            "thread/goal/updated",
+            json!({"goal":{"status":"blocked"}}),
+        )
+        .await;
+        assert!(client.turn_id.lock().await.is_none());
+        let mut child = tokio::process::Command::new(std::env::current_exe().unwrap())
+            .args([
+                "--exact",
+                "executors::codex::client::version_check_tests::blocked_goal_answer_stdio_fixture",
+                "--ignored",
+                "--nocapture",
+            ])
+            .stdin(std::process::Stdio::piped())
+            .stdout(std::process::Stdio::piped())
+            .kill_on_drop(true)
+            .spawn()
+            .unwrap();
+        let (exit_tx, _) = tokio::sync::oneshot::channel();
+        client.connect(JsonRpcPeer::spawn(
+            child.stdin.take().unwrap(),
+            child.stdout.take().unwrap(),
+            client.clone(),
+            ExitSignalSender::new(exit_tx),
+            client.cancel.clone(),
+        ));
+        tokio::time::timeout(
+            std::time::Duration::from_secs(5),
+            client.send_direct_control(DirectControl::Steer {
+                text: "Question: Colour?\nAnswer: Blue".into(),
+            }),
+        )
+        .await
+        .unwrap()
+        .unwrap();
+        assert_eq!(client.turn_id.lock().await.as_deref(), Some("answer-turn"));
+        assert!(client.goal_lifecycle.lock().unwrap().keep_alive());
+        assert!(child.wait().await.unwrap().success());
     }
 
     #[tokio::test]

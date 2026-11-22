@@ -3748,6 +3748,17 @@ impl AgentRunPort for LocalAgentRunPort {
                         "steering content must not be empty".to_string(),
                     ));
                 }
+                // Question IDs start with the emitting attempt UUID. Pin the
+                // actual attached host after loading it, so a retry or new
+                // attempt between admission and dispatch cannot receive an
+                // answer intended for an older attempt.
+                validate_question_attempt(
+                    &self.db.pool,
+                    &command.idempotency_key,
+                    agent_run_id,
+                    attempt.run_attempt_id,
+                )
+                .await?;
                 let provider = self.provider(&request.provider_id)?;
                 let direct_control = DirectControl::Steer {
                     text: content.clone(),
@@ -4085,6 +4096,34 @@ fn port_database(error: sqlx::Error) -> AgentRunPortError {
     AgentRunPortError::Unavailable(error.to_string())
 }
 
+async fn validate_question_attempt(
+    pool: &sqlx::SqlitePool,
+    key: &str,
+    run: Uuid,
+    attempt: Uuid,
+) -> Result<(), AgentRunPortError> {
+    let Some(question) = key.strip_prefix("question:") else {
+        return Ok(());
+    };
+    let expected = question
+        .split(':')
+        .next()
+        .and_then(|id| Uuid::parse_str(id).ok());
+    if expected != Some(attempt) {
+        return Err(AgentRunPortError::Rejected(
+            "question attempt has expired".into(),
+        ));
+    }
+    let active: bool = sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM agent_run_attempts WHERE id=? AND agent_run_id=? AND status IN ('pending','starting','running','awaiting_input','awaiting_approval'))")
+        .bind(attempt).bind(run).fetch_one(pool).await.map_err(port_database)?;
+    if !active {
+        return Err(AgentRunPortError::Rejected(
+            "question attempt has expired".into(),
+        ));
+    }
+    Ok(())
+}
+
 fn should_stage_mapped_lifecycle(
     current_status: Option<AgentRunStatus>,
     payload: &AgentEventPayload,
@@ -4315,6 +4354,130 @@ mod tests {
         ));
         env.insert("VK_AGENT_RUN_ID", "frozen-run");
         env
+    }
+
+    #[tokio::test]
+    async fn question_delivery_is_pinned_to_the_live_emitting_attempt() {
+        let db = setup_runtime_db().await;
+        let (run, attempt) = persisted_codex_run(&db).await;
+        let key = format!(
+            "question:{}:message:0:{}",
+            attempt.run_attempt_id,
+            Uuid::new_v4()
+        );
+        validate_question_attempt(&db.pool, &key, run.agent_run_id, attempt.run_attempt_id)
+            .await
+            .unwrap();
+        assert!(
+            validate_question_attempt(&db.pool, &key, run.agent_run_id, Uuid::new_v4())
+                .await
+                .is_err()
+        );
+        assert!(
+            validate_question_attempt(&db.pool, &key, Uuid::new_v4(), attempt.run_attempt_id)
+                .await
+                .is_err()
+        );
+        sqlx::query("UPDATE agent_run_attempts SET status='succeeded' WHERE id=?")
+            .bind(attempt.run_attempt_id)
+            .execute(&db.pool)
+            .await
+            .unwrap();
+        assert!(
+            validate_question_attempt(&db.pool, &key, run.agent_run_id, attempt.run_attempt_id)
+                .await
+                .is_err()
+        );
+    }
+
+    #[tokio::test]
+    async fn question_command_crosses_the_real_local_port_to_its_attached_host() {
+        use crate::process_host::{AuthenticatedHostCommand, HostResponse};
+        let template = setup_runtime_db().await;
+        let (request, attempt) = persisted_codex_run(&template).await;
+        let pool = SqlitePoolOptions::new()
+            .max_connections(1)
+            .connect("sqlite::memory:")
+            .await
+            .unwrap();
+        sqlx::migrate!("../db/migrations").run(&pool).await.unwrap();
+        db::models::workspace::Workspace::create(
+            &pool,
+            &db::models::workspace::CreateWorkspace {
+                branch: "question-fixture".into(),
+                name: None,
+            },
+            request.workspace.workspace_id,
+        )
+        .await
+        .unwrap();
+        Session::create(
+            &pool,
+            &db::models::session::CreateSession {
+                executor: None,
+                name: None,
+            },
+            request.session_id,
+            request.workspace.workspace_id,
+        )
+        .await
+        .unwrap();
+        AgentRunRecord::persist_identity_before_launch(&pool, &request, &attempt)
+            .await
+            .unwrap();
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let endpoint = listener.local_addr().unwrap().to_string();
+        sqlx::query(
+            "UPDATE agent_process_registry SET host_endpoint=?,host_token=? WHERE run_attempt_id=?",
+        )
+        .bind(endpoint)
+        .bind("fixture-token")
+        .bind(attempt.run_attempt_id)
+        .execute(&pool)
+        .await
+        .unwrap();
+        let host = tokio::spawn(async move {
+            let (mut stream, _) = listener.accept().await.unwrap();
+            let frame: AuthenticatedHostCommand = read_json_frame(&mut stream).await.unwrap();
+            assert_eq!(frame.auth_token, "fixture-token");
+            assert!(
+                matches!(frame.command, HostCommand::Control { control: Some(DirectControl::Steer { ref text }), cancel: false, .. } if text == "Question: Colour?\nAnswer: Blue")
+            );
+            write_json_frame(
+                &mut stream,
+                &HostResponse {
+                    host_instance_id: Uuid::new_v4(),
+                    events: vec![],
+                    terminal: false,
+                    error: None,
+                },
+            )
+            .await
+            .unwrap();
+        });
+        let command_id = Uuid::new_v4();
+        let command = AgentRunPortCommandEnvelope {
+            schema_version: executors::runtime::ORCHESTRATION_COMMAND_SCHEMA_VERSION,
+            command_id,
+            idempotency_key: format!("question:{}:message:0:{command_id}", attempt.run_attempt_id),
+            agent_run_id: request.agent_run_id,
+            orchestration_run_id: None,
+            orchestration_node_execution_id: None,
+            correlation_id: command_id,
+            created_at: Utc::now(),
+            command: AgentRunPortCommand::Steer {
+                content: "Question: Colour?\nAnswer: Blue".into(),
+            },
+        };
+        db::models::agent_runtime::AgentRunCommandRecord::enqueue(&pool, &command)
+            .await
+            .unwrap();
+        let port = LocalAgentRunPort::new(DBService { pool });
+        tokio::time::timeout(Duration::from_secs(5), port.control(command))
+            .await
+            .unwrap()
+            .unwrap();
+        host.await.unwrap();
     }
 
     #[tokio::test]

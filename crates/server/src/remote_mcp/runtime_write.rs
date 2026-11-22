@@ -143,6 +143,20 @@ pub(super) trait RuntimeActions: Send + Sync {
 }
 pub(super) struct ExistingRuntime(pub DeploymentImpl);
 
+pub(super) async fn accepted_question_command(
+    pool: &SqlitePool,
+    target: &Target,
+    question: &str,
+) -> Result<Uuid, ApiError> {
+    let legacy_key = format!("question:{question}");
+    let prefix = format!("{legacy_key}:");
+    Ok(sqlx::query_scalar::<_, Uuid>(
+        "SELECT COALESCE((SELECT command_id FROM agent_run_commands WHERE agent_run_id=? AND delivery_status='delivered' AND (idempotency_key=? OR substr(idempotency_key,1,length(?))=?) ORDER BY created_at DESC, rowid DESC LIMIT 1), request_id) FROM agent_question_answers WHERE question_id=? AND session_id=?",
+    )
+    .bind(target.agent_run_id).bind(legacy_key).bind(&prefix).bind(&prefix)
+    .bind(question).bind(target.session_id).fetch_one(pool).await?)
+}
+
 pub(super) fn identity(operation: Uuid, key: String) -> agent_runs::AgentRunControlIdentity {
     agent_runs::AgentRunControlIdentity {
         command_id: operation,
@@ -354,14 +368,14 @@ impl RuntimeActions for ExistingRuntime {
                         request_id: operation,
                         question_id: question.clone(),
                         answer,
+                        retry_unconfirmed: false,
                     },
                     &actor,
                 )
                 .await?;
                 // A direct UI answer can win the race with identical content.
                 // Report its actual durable command, not this remote receipt ID.
-                sqlx::query_scalar::<_, Uuid>("SELECT request_id FROM agent_question_answers WHERE question_id=? AND session_id=?")
-                    .bind(&question).bind(target.session_id).fetch_one(&self.0.db().pool).await?
+                accepted_question_command(&self.0.db().pool, &target, &question).await?
             }
             Kind::BlockingSpecification => {
                 // dispatch_control owns the same lock and unanswered-state check
