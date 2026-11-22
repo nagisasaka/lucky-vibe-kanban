@@ -6,7 +6,6 @@ pub mod management;
 pub(crate) mod preparation;
 mod project_context;
 use std::{
-    io::Write,
     path::{Path as FsPath, PathBuf},
     time::Duration,
 };
@@ -32,6 +31,7 @@ use services::services::{
     openwiki::{OpenWikiAdapter, completion::WriterPhase},
     repository_memory::{pending_events, recover_integrations, unresolved_integration},
 };
+use sha2::{Digest, Sha256};
 use ts_rs::TS;
 use utils::{
     repository_memory::{
@@ -67,6 +67,61 @@ pub struct SyncRepositoryMemory {
 
 fn api_error(error: impl std::fmt::Display) -> ApiError {
     ApiError::BadRequest(error.to_string())
+}
+
+pub(crate) fn instructions_digest(text: &str) -> String {
+    format!("{:x}", Sha256::digest(text.as_bytes()))
+}
+
+pub(crate) fn select_wiki_instructions(
+    root: &FsPath,
+    saved: Option<&str>,
+) -> anyhow::Result<String> {
+    if let Some(saved) = saved {
+        anyhow::ensure!(
+            saved.len() <= 1024 * 1024,
+            "OpenWiki instructions exceed size limit"
+        );
+        return Ok(saved.into());
+    }
+    let path = root.join("openwiki/INSTRUCTIONS.md");
+    reject_symlinks(&path)?;
+    match std::fs::read_to_string(path) {
+        Ok(text) => {
+            anyhow::ensure!(
+                text.len() <= 1024 * 1024,
+                "OpenWiki instructions exceed size limit"
+            );
+            Ok(text)
+        }
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+            Ok(include_str!("../../../../assets/openwiki-instructions.md").into())
+        }
+        Err(error) => Err(error.into()),
+    }
+}
+
+pub(crate) fn validate_frozen_instructions(state: &RepositoryMemoryState) -> anyhow::Result<()> {
+    match (
+        &state.active_wiki_instructions,
+        &state.active_wiki_instructions_digest,
+    ) {
+        (None, None) => Ok(()), // Legacy in-flight run.
+        (Some(text), Some(digest)) if *digest == instructions_digest(text) => Ok(()),
+        _ => anyhow::bail!("Frozen OpenWiki instructions do not match their checkpoint"),
+    }
+}
+
+pub(crate) fn instructions_require_force(state: &RepositoryMemoryState) -> bool {
+    matches!(
+        state.active_sync_scope,
+        RepositoryWikiSyncScope::PendingChanges
+    ) && state.active_wiki_instructions.as_ref().is_some_and(|text| {
+        match &state.applied_wiki_instructions_digest {
+            Some(previous) => *previous != instructions_digest(text),
+            None => state.wiki_instructions.is_some(),
+        }
+    })
 }
 
 async fn repo(deployment: &DeploymentImpl, id: Uuid) -> Result<Repo, ApiError> {
@@ -108,6 +163,29 @@ pub(crate) async fn status_snapshot(
     let mut current_source = None;
     if let Some(branch) = &state.target_branch {
         let head = deployment.git().get_branch_oid(&repo.path, branch)?;
+        let effective = if let Some(text) = &state.wiki_instructions {
+            text.clone()
+        } else {
+            let snapshot = deployment.git().snapshot(&repo.path, &head)?;
+            let entries = snapshot.entries()?;
+            match entries
+                .iter()
+                .find(|entry| entry.path == "openwiki/INSTRUCTIONS.md")
+            {
+                Some(entry) => String::from_utf8(
+                    snapshot
+                        .read_blob(entry, 1024 * 1024)?
+                        .context("Instructions too large")
+                        .map_err(api_error)?,
+                )
+                .map_err(api_error)?,
+                None => include_str!("../../../../assets/openwiki-instructions.md").into(),
+            }
+        };
+        state.wiki_instructions_pending = match &state.applied_wiki_instructions_digest {
+            Some(digest) => *digest != instructions_digest(&effective),
+            None => state.wiki_instructions.is_some(),
+        };
         let pending = match &store {
             Some(store) => {
                 unresolved_integration(store).await.map_err(api_error)?
@@ -132,7 +210,11 @@ pub(crate) async fn status_snapshot(
                 .map_err(api_error)?
         };
         state.wiki_exists = exists;
-        state.status = state.derived_status(exists, pending, source_matches);
+        state.status = state.derived_status(
+            exists,
+            pending || state.wiki_instructions_pending,
+            source_matches,
+        );
         current_source = Some(head);
     }
     Ok((state, current_source))
@@ -552,20 +634,10 @@ async fn prepare_run(
         .await?;
     reject_symlinks(&root.join("openwiki/INSTRUCTIONS.md"))?;
     std::fs::create_dir_all(root.join("openwiki"))?;
-    match std::fs::OpenOptions::new()
-        .write(true)
-        .create_new(true)
-        .open(root.join("openwiki/INSTRUCTIONS.md"))
-    {
-        Ok(mut file) => {
-            file.write_all(include_bytes!(
-                "../../../../assets/openwiki-instructions.md"
-            ))?;
-            file.sync_all()?;
-        }
-        Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => {}
-        Err(error) => return Err(error.into()),
-    }
+    let instructions = select_wiki_instructions(&root, state.wiki_instructions.as_deref())?;
+    state.active_wiki_instructions_digest = Some(instructions_digest(&instructions));
+    state.active_wiki_instructions_override = state.wiki_instructions.is_some();
+    state.active_wiki_instructions = Some(instructions);
     let events = services::services::openwiki::sync_scope::select_events(
         &repo.path,
         &scope,
@@ -600,7 +672,8 @@ async fn prepare_run(
         &events,
         &state.active_sync_scope,
     )?;
-    let prompt = OpenWikiAdapter::sync_prompt(&root, &state.output_language, &hints, &state.active_sync_scope);
+    state.active_instructions_force = instructions_require_force(state);
+    let prompt = OpenWikiAdapter::sync_prompt_with_force(&root, &state.output_language, &hints, &state.active_sync_scope, state.active_instructions_force);
     let skill_path = OpenWikiAdapter::installed_skill_path(&root, project_scope)?;
     let session = Session::create(
         &deployment.db().pool,
@@ -621,7 +694,7 @@ async fn prepare_run(
     state.error = None;
     store.save_state(state).await?;
     if let Err(error) =
-        services::services::openwiki::setup::prepare(store, workspace.id, &root, &source)
+        services::services::openwiki::setup::prepare_with_instructions(store, workspace.id, &root, &source, state.active_wiki_instructions.as_deref())
     {
         // No AgentRun has been reserved yet. A partially materialised snapshot
         // can be restored safely; never do this once a provider may be running.
@@ -723,6 +796,32 @@ async fn recover_repository(deployment: &DeploymentImpl, repo: &Repo) -> anyhow:
     if !run.status.is_terminal() {
         // Reservation may have survived a server restart before activation.
         if run.status == AgentRunStatus::Pending {
+            if let Some(instructions) = state.active_wiki_instructions.as_deref() {
+                validate_frozen_instructions(&state)?;
+                let placed = WorkspaceRepo::find_repo_for_workspace(
+                    &deployment.db().pool,
+                    run.workspace_id,
+                    repo.id,
+                )
+                .await?
+                .context("Maintenance repository missing")?;
+                let root = placed.worktree_dir(&run.workspace_path);
+                let source = state
+                    .active_source_commit
+                    .as_deref()
+                    .context("Missing source checkpoint")?;
+                anyhow::ensure!(
+                    store.wiki_setup(run.workspace_id)?.is_some(),
+                    "Missing writer setup journal"
+                );
+                services::services::openwiki::setup::prepare_with_instructions(
+                    &store,
+                    run.workspace_id,
+                    &root,
+                    source,
+                    Some(instructions),
+                )?;
+            }
             super::sessions::launch_reserved_coding_agent_execution(deployment, run_id).await?;
         }
         return Ok(());
@@ -826,6 +925,7 @@ fn reconciliation_records(
     let mut receipts = Vec::new();
     match result {
         Ok((wiki_commit, no_op)) => {
+            validate_frozen_instructions(state)?;
             if let Some(workspace_id) = state.maintenance_workspace_id {
                 state.artifact_cleanup =
                     Some(utils::repository_memory::RepositoryArtifactCleanup {
@@ -865,6 +965,12 @@ fn reconciliation_records(
                 _ => {}
             }
             state.last_success = Some(now);
+            if let Some(instructions) = &state.active_wiki_instructions {
+                state.applied_wiki_instructions_digest = Some(instructions_digest(instructions));
+                state.applied_wiki_instructions_override = state
+                    .active_wiki_instructions_override
+                    .then(|| instructions.clone());
+            }
             state.generation_suppressed = false;
             state.status = RepositoryWikiStatus::Current;
             state.error = None;
@@ -892,6 +998,10 @@ fn reconciliation_records(
     state.active_event_ids.clear();
     state.active_sync_input_digest = None;
     state.active_source_commit = None;
+    state.active_wiki_instructions = None;
+    state.active_wiki_instructions_digest = None;
+    state.active_wiki_instructions_override = false;
+    state.active_instructions_force = false;
     state.active_sync_scope = RepositoryWikiSyncScope::default();
     Ok(receipts)
 }
@@ -925,7 +1035,7 @@ async fn observe_recorded_pr_integrations(
     Ok(())
 }
 
-async fn finish_run(
+pub(crate) async fn finish_run(
     deployment: &DeploymentImpl,
     repo: &Repo,
     store: &RepositoryMemoryStore,
@@ -942,6 +1052,9 @@ async fn finish_run(
     {
         return Err(completion::MaintenanceFenced("Sync ownership mismatch".into()).into());
     }
+    validate_frozen_instructions(state).map_err(|error| {
+        completion::MaintenanceFenced(format!("Frozen instruction checkpoint invalid: {error:#}"))
+    })?;
     let attempts = completion::ensure_processes_exited(&deployment.db().pool, run)
         .await
         .map_err(|error| {
@@ -968,24 +1081,41 @@ async fn finish_run(
     // never publish their partial Wiki. A durable publication is already clean.
     if store.publication(run.id).await?.is_none() {
         let completion = if run.status == AgentRunStatus::Succeeded {
-            completion::writer_completion_proof(
-                &deployment.db().pool,
-                run,
-                &attempts,
-                run.workspace_id,
-                FsPath::new(&run.workspace_path),
-                &root,
-                if matches!(
+            let phase = if !state.active_instructions_force
+                && matches!(
                     state.active_sync_scope,
                     RepositoryWikiSyncScope::PendingChanges
                 ) {
-                    WriterPhase::Sync
-                } else {
-                    WriterPhase::Reconcile
-                },
-            )
-            .await
-            .and_then(|_| services::services::openwiki::sync_input::validate(store, repo.id, state))
+                WriterPhase::Sync
+            } else {
+                WriterPhase::Reconcile
+            };
+            let proof = if state.active_wiki_instructions.is_some() {
+                completion::resumable_writer_completion_proof(
+                    &deployment.db().pool,
+                    run,
+                    &attempts,
+                    run.workspace_id,
+                    FsPath::new(&run.workspace_path),
+                    &root,
+                    phase,
+                )
+                .await
+            } else {
+                completion::writer_completion_proof(
+                    &deployment.db().pool,
+                    run,
+                    &attempts,
+                    run.workspace_id,
+                    FsPath::new(&run.workspace_path),
+                    &root,
+                    phase,
+                )
+                .await
+            };
+            proof.and_then(|_| {
+                services::services::openwiki::sync_input::validate(store, repo.id, state)
+            })
         } else {
             Err(anyhow::anyhow!(
                 "OpenWiki AgentRun ended {:?}; generated files remain in its workspace for inspection",
@@ -1174,6 +1304,111 @@ mod adoption_tests {
         assert_eq!(state.error.as_deref(), Some("retained failure"));
         state.enabled = false;
         assert!(check_sync_available(&state).is_err());
+    }
+
+    #[test]
+    fn instruction_selection_is_single_value_with_explicit_fallback() {
+        let temp = tempfile::tempdir().unwrap();
+        std::fs::create_dir(temp.path().join("openwiki")).unwrap();
+        let default = include_str!("../../../../assets/openwiki-instructions.md");
+        assert_eq!(
+            select_wiki_instructions(temp.path(), None).unwrap(),
+            default
+        );
+        std::fs::write(temp.path().join("openwiki/INSTRUCTIONS.md"), "repo\n").unwrap();
+        assert_eq!(
+            select_wiki_instructions(temp.path(), None).unwrap(),
+            "repo\n"
+        );
+        assert_eq!(
+            select_wiki_instructions(temp.path(), Some("db\n")).unwrap(),
+            "db\n"
+        );
+        assert_eq!(select_wiki_instructions(temp.path(), Some("")).unwrap(), "");
+    }
+
+    #[test]
+    fn instruction_force_is_limited_to_pending_scope_with_changed_text() {
+        let mut state = RepositoryMemoryState {
+            active_wiki_instructions: Some("A".into()),
+            applied_wiki_instructions_digest: Some(instructions_digest("A")),
+            ..Default::default()
+        };
+        assert!(!instructions_require_force(&state));
+        state.active_wiki_instructions = Some("B".into());
+        assert!(instructions_require_force(&state));
+        state.active_sync_scope = RepositoryWikiSyncScope::CurrentSource;
+        assert!(!instructions_require_force(&state)); // Existing scope already requires force.
+        state.active_sync_scope = RepositoryWikiSyncScope::PendingChanges;
+        state.applied_wiki_instructions_digest = None;
+        state.wiki_instructions = None;
+        assert!(!instructions_require_force(&state));
+        state.wiki_instructions = Some("B".into());
+        assert!(instructions_require_force(&state)); // Legacy applied value is unknown.
+    }
+
+    #[tokio::test]
+    async fn instruction_checkpoint_advances_only_on_success() {
+        let temp = tempfile::tempdir().unwrap();
+        let store = RepositoryMemoryStore::at_artifacts(temp.path()).unwrap();
+        let mut state = RepositoryMemoryState {
+            active_source_commit: Some("b".repeat(40)),
+            wiki_instructions: Some("B".into()),
+            active_wiki_instructions: Some("A".into()),
+            active_wiki_instructions_digest: Some(instructions_digest("A")),
+            active_wiki_instructions_override: true,
+            applied_wiki_instructions_digest: Some(instructions_digest("old")),
+            applied_wiki_instructions_override: Some("old".into()),
+            ..RepositoryMemoryState::enabled_defaults(Some("main".into()))
+        };
+        assert!(validate_frozen_instructions(&state).is_ok());
+        state.active_wiki_instructions_digest = Some(instructions_digest("tampered"));
+        assert!(validate_frozen_instructions(&state).is_err());
+        state.active_wiki_instructions_digest = Some(instructions_digest("A"));
+        record_reconciliation_result(&store, &mut state, Err(anyhow::anyhow!("failed")))
+            .await
+            .unwrap();
+        assert_eq!(
+            state.applied_wiki_instructions_digest,
+            Some(instructions_digest("old"))
+        );
+        assert_eq!(
+            state.applied_wiki_instructions_override.as_deref(),
+            Some("old")
+        );
+        state.active_source_commit = Some("b".repeat(40));
+        state.active_wiki_instructions = Some("A".into());
+        state.active_wiki_instructions_digest = Some(instructions_digest("A"));
+        state.active_wiki_instructions_override = true;
+        record_reconciliation_result(&store, &mut state, Ok((None, true)))
+            .await
+            .unwrap();
+        assert_eq!(
+            state.applied_wiki_instructions_digest,
+            Some(instructions_digest("A"))
+        );
+        assert_eq!(
+            state.applied_wiki_instructions_override.as_deref(),
+            Some("A")
+        );
+        assert_eq!(state.wiki_instructions.as_deref(), Some("B"));
+        assert_ne!(
+            state.applied_wiki_instructions_digest,
+            Some(instructions_digest("B"))
+        );
+        state.wiki_instructions = None;
+        state.active_source_commit = Some("b".repeat(40));
+        state.active_wiki_instructions = Some("repo".into());
+        state.active_wiki_instructions_digest = Some(instructions_digest("repo"));
+        state.active_wiki_instructions_override = false;
+        record_reconciliation_result(&store, &mut state, Ok((None, true)))
+            .await
+            .unwrap();
+        assert_eq!(
+            state.applied_wiki_instructions_digest,
+            Some(instructions_digest("repo"))
+        );
+        assert_eq!(state.applied_wiki_instructions_override, None);
     }
 
     #[tokio::test]

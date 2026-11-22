@@ -31,9 +31,18 @@ pub fn original_digest(journal: &IntegrationWikiSetup) -> anyhow::Result<String>
     ))
 }
 
-/// No materialisation is needed here: auto-merge rejects instruction aliases.
-/// Save original bytes durably before acknowledging permission to call begin.
+/// Legacy repository-native preparation.
 pub fn prepare(store: &RepositoryMemoryStore, id: &Identity<'_>) -> anyhow::Result<()> {
+    prepare_with_instructions(store, id, None)
+}
+
+/// Freeze an already-applied override in the existing integration journal.
+/// A later settings edit cannot change a journal that has already been saved.
+pub fn prepare_with_instructions(
+    store: &RepositoryMemoryStore,
+    id: &Identity<'_>,
+    instructions: Option<&str>,
+) -> anyhow::Result<()> {
     let _lock = store.try_workspace_completion_lock(id.workspace_id)?;
     if store.integration_wiki_setup(id.integration_id)?.is_some() {
         let head = super::super::git_text(id.root, &["rev-parse", "HEAD"])?;
@@ -54,17 +63,18 @@ pub fn prepare(store: &RepositoryMemoryStore, id: &Identity<'_>) -> anyhow::Resu
                     .take()
                     .context("Missing restored Wiki SHA")?,
             );
-            journal.checkpoint.phase = WikiSetupPhase::Prepared;
+            journal.checkpoint.phase = WikiSetupPhase::Preparing;
             for entry in &mut journal.checkpoint.files {
                 entry.restoring_from = None;
             }
             store.save_integration_wiki_setup(&journal)?;
         }
+        materialize(store, id, &mut journal)?;
         return Ok(());
     }
     git::GitService::new().require_clean_source(id.root, id.code_commit)?;
     preflight(id.root)?;
-    let files = INSTRUCTION_PATHS
+    let mut files = INSTRUCTION_PATHS
         .iter()
         .map(|path| {
             let entry = capture_instruction(id.root, path)?;
@@ -78,7 +88,31 @@ pub fn prepare(store: &RepositoryMemoryStore, id: &Identity<'_>) -> anyhow::Resu
             })
         })
         .collect::<anyhow::Result<Vec<_>>>()?;
-    let journal = IntegrationWikiSetup {
+    if let Some(text) = instructions {
+        ensure!(
+            text.len() <= MAX_PAGE_BYTES as usize,
+            "Wiki instructions exceed size limit"
+        );
+        let original = read_entry(&id.root.join(WIKI_INSTRUCTIONS))?;
+        ensure!(
+            !matches!(original, WikiSetupFile::Symlink { .. }),
+            "Auto-merge instruction aliases are not supported"
+        );
+        let mode = match &original {
+            WikiSetupFile::Regular { mode, .. } => mode | 0o200,
+            _ => 0o644,
+        };
+        files.push(WikiSetupEntry {
+            path: WIKI_INSTRUCTIONS.into(),
+            original,
+            prepared: WikiSetupFile::Regular {
+                content: text.into(),
+                mode,
+            },
+            restoring_from: None,
+        });
+    }
+    let mut journal = IntegrationWikiSetup {
         version: 1,
         integration_id: id.integration_id,
         repository_id: id.repository_id,
@@ -88,16 +122,44 @@ pub fn prepare(store: &RepositoryMemoryStore, id: &Identity<'_>) -> anyhow::Resu
         final_commit: None,
         previous_final_commits: Vec::new(),
         checkpoint: WikiSetupCheckpoint {
-            version: 1,
+            version: if instructions.is_some() { 2 } else { 1 },
             workspace_id: id.workspace_id,
             repository_path: id.root.into(),
             source_commit: id.code_commit.into(),
-            phase: WikiSetupPhase::Prepared,
+            phase: WikiSetupPhase::Preparing,
             files,
         },
     };
     validate_journal(&journal, id)?;
     store.save_integration_wiki_setup(&journal)?;
+    materialize(store, id, &mut journal)?;
+    Ok(())
+}
+
+fn materialize(
+    store: &RepositoryMemoryStore,
+    id: &Identity<'_>,
+    journal: &mut IntegrationWikiSetup,
+) -> anyhow::Result<()> {
+    if journal.checkpoint.phase != WikiSetupPhase::Preparing {
+        return Ok(());
+    }
+    for entry in &journal.checkpoint.files {
+        let current = read_entry(&id.root.join(&entry.path))?;
+        ensure!(
+            current == entry.original || current == entry.prepared,
+            "{} changed during integration setup",
+            entry.path
+        );
+    }
+    if journal.checkpoint.version == 2 {
+        fs::create_dir_all(id.root.join("openwiki"))?;
+    }
+    for entry in &journal.checkpoint.files {
+        replace_if_expected(&id.root.join(&entry.path), &entry.original, &entry.prepared)?;
+    }
+    journal.checkpoint.phase = WikiSetupPhase::Prepared;
+    store.save_integration_wiki_setup(journal)?;
     Ok(())
 }
 
@@ -197,7 +259,8 @@ pub fn validate(
         ensure!(
             entry.len() >= 3
                 && matches!(&entry[..3], " M " | "?? ")
-                && INSTRUCTION_PATHS.contains(&&entry[3..]),
+                && (INSTRUCTION_PATHS.contains(&&entry[3..])
+                    || (journal.checkpoint.version == 2 && &entry[3..] == WIKI_INSTRUCTIONS)),
             "Unexpected dirty OpenWiki candidate; preserved for inspection"
         );
     }
@@ -209,10 +272,18 @@ pub fn validate(
             validate_exact_generated(entry, before)?;
         }
         match journal.checkpoint.phase {
-            WikiSetupPhase::Prepared => ensure!(
-                entry.restoring_from.is_none(),
-                "Unexpected restoration bytes"
-            ),
+            WikiSetupPhase::Prepared => {
+                ensure!(
+                    entry.restoring_from.is_none(),
+                    "Unexpected restoration bytes"
+                );
+                if entry.path == WIKI_INSTRUCTIONS {
+                    ensure!(
+                        current == entry.prepared,
+                        "Frozen Wiki instructions changed"
+                    );
+                }
+            }
             WikiSetupPhase::Restoring => ensure!(
                 current == entry.original || Some(&current) == entry.restoring_from.as_ref(),
                 "Instructions edited during restoration"
@@ -221,7 +292,10 @@ pub fn validate(
                 current == entry.original,
                 "Instructions edited after restoration"
             ),
-            WikiSetupPhase::Preparing => bail!("Invalid auto-merge setup phase"),
+            WikiSetupPhase::Preparing => ensure!(
+                current == entry.original || current == entry.prepared,
+                "Instructions edited during preparation"
+            ),
         }
     }
     Ok(journal)
@@ -293,10 +367,25 @@ fn validate_journal(journal: &IntegrationWikiSetup, id: &Identity<'_>) -> anyhow
         );
     }
     for entry in &journal.checkpoint.files {
-        ensure!(
-            entry.prepared == entry.original,
-            "Auto-merge setup snapshot was altered"
-        );
+        if entry.path == WIKI_INSTRUCTIONS {
+            let WikiSetupFile::Regular { content, mode } = &entry.prepared else {
+                bail!("Invalid frozen Wiki instruction");
+            };
+            let expected_mode = match &entry.original {
+                WikiSetupFile::Regular { mode, .. } => mode | 0o200,
+                WikiSetupFile::Missing => 0o644,
+                WikiSetupFile::Symlink { .. } => bail!("Auto-merge instruction alias in journal"),
+            };
+            ensure!(
+                content.len() <= MAX_PAGE_BYTES as usize && *mode == expected_mode,
+                "Invalid frozen Wiki instruction"
+            );
+        } else {
+            ensure!(
+                entry.prepared == entry.original,
+                "Auto-merge setup snapshot was altered"
+            );
+        }
         // The immutable code tree authenticates the original; JSON edits cannot
         // manufacture bytes to overwrite user instructions during restoration.
         let tree = raw_git(id.root, &["ls-tree", id.code_commit, "--", &entry.path])?;
@@ -353,6 +442,13 @@ fn raw_git(root: &Path, args: &[&str]) -> anyhow::Result<String> {
 
 fn validate_exact_generated(entry: &WikiSetupEntry, current: &WikiSetupFile) -> anyhow::Result<()> {
     if current == &entry.original {
+        return Ok(());
+    }
+    if entry.path == WIKI_INSTRUCTIONS {
+        ensure!(
+            current == &entry.prepared,
+            "Frozen Wiki instructions changed"
+        );
         return Ok(());
     }
     let (original, expected_mode) = match &entry.original {
@@ -496,6 +592,85 @@ mod tests {
             raw_git(&self.root, &["add", "openwiki"]).unwrap();
             raw_git(&self.root, &["commit", "-m", "Wiki only"]).unwrap();
             super::super::super::git_text(&self.root, &["rev-parse", "HEAD"]).unwrap()
+        }
+    }
+
+    #[test]
+    fn applied_override_is_frozen_restored_and_never_published() {
+        for original_exists in [true, false] {
+            let mut f = Fixture::new();
+            if !original_exists {
+                raw_git(&f.root, &["rm", "openwiki/INSTRUCTIONS.md"]).unwrap();
+                raw_git(&f.root, &["commit", "-m", "remove instructions"]).unwrap();
+                f.code = super::super::super::git_text(&f.root, &["rev-parse", "HEAD"]).unwrap();
+            }
+            prepare_with_instructions(&f.store, &f.id(), Some("applied A\n")).unwrap();
+            let origin = f.store.integration_wiki_setup(f.owner).unwrap().unwrap();
+            assert_eq!(
+                fs::read_to_string(f.root.join(WIKI_INSTRUCTIONS)).unwrap(),
+                "applied A\n"
+            );
+            // Reproduce a crash after the durable journal but before placement.
+            let mut interrupted = origin.clone();
+            let entry = interrupted.checkpoint.files.last().unwrap();
+            replace_if_expected(
+                &f.root.join(WIKI_INSTRUCTIONS),
+                &entry.prepared,
+                &entry.original,
+            )
+            .unwrap();
+            interrupted.checkpoint.phase = WikiSetupPhase::Preparing;
+            f.store.save_integration_wiki_setup(&interrupted).unwrap();
+            prepare_with_instructions(&f.store, &f.id(), Some("pending B\n")).unwrap();
+            assert_eq!(
+                fs::read_to_string(f.root.join(WIKI_INSTRUCTIONS)).unwrap(),
+                "applied A\n"
+            );
+            // A pending edit cannot replace the already-owned checkpoint.
+            prepare_with_instructions(&f.store, &f.id(), Some("pending B\n")).unwrap();
+            assert_eq!(
+                fs::read_to_string(f.root.join(WIKI_INSTRUCTIONS)).unwrap(),
+                "applied A\n"
+            );
+            fs::write(f.root.join(WIKI_INSTRUCTIONS), "tampered\n").unwrap();
+            assert!(validate(&f.store, &f.id(), &f.code).is_err());
+            fs::write(f.root.join(WIKI_INSTRUCTIONS), "applied A\n").unwrap();
+            raw_git(&f.root, &["add", WIKI_INSTRUCTIONS]).unwrap();
+            assert!(validate(&f.store, &f.id(), &f.code).is_err());
+            raw_git(&f.root, &["reset", "--", WIKI_INSTRUCTIONS]).unwrap();
+            fs::write(f.root.join("openwiki/index.md"), "wiki updated\n").unwrap();
+            raw_git(&f.root, &["add", "openwiki/index.md"]).unwrap();
+            raw_git(&f.root, &["commit", "-m", "Wiki only"]).unwrap();
+            let wiki = super::super::super::git_text(&f.root, &["rev-parse", "HEAD"]).unwrap();
+            validate(&f.store, &f.id(), &wiki).unwrap();
+            restore(&f.store, &f.id(), &wiki).unwrap();
+            assert_eq!(
+                original_digest(&origin).unwrap(),
+                original_digest(&f.store.integration_wiki_setup(f.owner).unwrap().unwrap())
+                    .unwrap()
+            );
+            if original_exists {
+                assert_eq!(
+                    fs::read_to_string(f.root.join(WIKI_INSTRUCTIONS)).unwrap(),
+                    "user instructions\n"
+                );
+            } else {
+                assert!(!f.root.join(WIKI_INSTRUCTIONS).exists());
+            }
+            assert!(
+                raw_git(&f.root, &["diff", "--name-only", &f.code, &wiki])
+                    .unwrap()
+                    .lines()
+                    .all(|path| path != WIKI_INSTRUCTIONS)
+            );
+            git::GitService::new()
+                .require_clean_source(&f.root, &wiki)
+                .unwrap();
+            prepare_with_instructions(&f.store, &f.id(), Some("pending B\n")).unwrap();
+            assert_eq!(
+                fs::read_to_string(f.root.join(WIKI_INSTRUCTIONS)).unwrap(),
+                "applied A\n"
+            );
         }
     }
 

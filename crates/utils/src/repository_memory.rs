@@ -14,10 +14,13 @@ use ts_rs::TS;
 use uuid::Uuid;
 
 const MAX_RECORD_BYTES: u64 = 128 * 1024;
+// A setup journal may contain the original, prepared, and restoring copies of
+// a full Wiki instruction. JSON escaping can expand control bytes sixfold.
+const MAX_WIKI_SETUP_BYTES: u64 = 32 * 1024 * 1024;
 // A frozen Manifest plus its readable commit projection; other records keep their limit.
 const MAX_SOURCE_PUBLICATION_BYTES: u64 = MAX_RECORD_BYTES * 4;
 // Two bounded instruction files, with original/prepared/restoring JSON copies.
-const MAX_INTEGRATION_SETUP_BYTES: u64 = 1024 * 1024;
+const MAX_INTEGRATION_SETUP_BYTES: u64 = 32 * 1024 * 1024;
 /// Resource guard for full Bootstrap reports, independent of Workflow handoffs.
 pub const MAX_BOOTSTRAP_REPORT_BYTES: usize = 1024 * 1024;
 
@@ -363,6 +366,27 @@ pub struct RepositoryMemoryState {
     /// Explicit deletion suppresses automatic integrations until explicit init.
     #[serde(default)]
     pub generation_suppressed: bool,
+    /// Repository-local override, independent of the Git-backed Wiki.
+    #[serde(default)]
+    pub wiki_instructions: Option<String>,
+    /// Immutable instructions selected for the active maintenance operation.
+    #[serde(default)]
+    pub active_wiki_instructions: Option<String>,
+    #[serde(default)]
+    pub active_wiki_instructions_digest: Option<String>,
+    /// Whether the frozen text came from the saved override at admission.
+    #[serde(default)]
+    pub active_wiki_instructions_override: bool,
+    /// Instructions used by the last successfully published operation.
+    #[serde(default)]
+    pub applied_wiki_instructions_digest: Option<String>,
+    /// Last explicitly published override, independent of later pending edits.
+    #[serde(default)]
+    pub applied_wiki_instructions_override: Option<String>,
+    #[serde(default)]
+    pub wiki_instructions_pending: bool,
+    #[serde(default)]
+    pub active_instructions_force: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
@@ -413,6 +437,14 @@ impl Default for RepositoryMemoryState {
             file_operation: None,
             rebuild_reference: None,
             generation_suppressed: false,
+            wiki_instructions: None,
+            active_wiki_instructions: None,
+            active_wiki_instructions_digest: None,
+            active_wiki_instructions_override: false,
+            applied_wiki_instructions_digest: None,
+            applied_wiki_instructions_override: None,
+            wiki_instructions_pending: false,
+            active_instructions_force: false,
         }
     }
 }
@@ -880,24 +912,31 @@ impl RepositoryMemoryStore {
     }
 
     pub fn wiki_setup(&self, workspace_id: Uuid) -> io::Result<Option<WikiSetupCheckpoint>> {
-        self.read_json(
+        self.read_optional_limited(
             &self
                 .root
                 .join("wiki-setups")
                 .join(format!("{workspace_id}.json")),
+            MAX_WIKI_SETUP_BYTES,
         )
+        .and_then(|bytes| {
+            bytes
+                .map(|bytes| serde_json::from_slice(&bytes).map_err(invalid))
+                .transpose()
+        })
     }
 
     /// Caller holds the repository maintenance lock. Unlike semantic events,
     /// this journal advances through preparation and restoration checkpoints.
     pub fn save_wiki_setup(&self, checkpoint: &WikiSetupCheckpoint) -> io::Result<()> {
-        self.publish(
+        self.publish_limited(
             &self
                 .root
                 .join("wiki-setups")
                 .join(format!("{}.json", checkpoint.workspace_id)),
             checkpoint,
             true,
+            MAX_WIKI_SETUP_BYTES,
         )
     }
 

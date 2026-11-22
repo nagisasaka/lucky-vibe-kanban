@@ -158,6 +158,13 @@ describe('repository memory settings', () => {
     expect(error).not.toContain('Status: current');
     expect(error).toContain('View Workflow');
   });
+  it('shows that saved instructions have not been applied', () => {
+    expect(
+      render('a', 'stale', false, false, { wiki_instructions_pending: true })
+    ).toContain(
+      'Saved instructions have not yet been applied to the published Wiki.'
+    );
+  });
   it('keeps repository file publication active without a model run', () => {
     render('a', 'current', false, false, {
       file_operation: {

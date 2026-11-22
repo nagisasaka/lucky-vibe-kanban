@@ -81,11 +81,15 @@ impl CoverageReview {
     /// Discard unusable references only. Prose remains an unverified clue for
     /// the independent refiner; no path correction or warning ledger is needed.
     pub fn retain_current_evidence(&mut self, root: &Path) {
+        self.retain_evidence_with_frozen_instructions(root, false);
+    }
+
+    pub fn retain_evidence_with_frozen_instructions(&mut self, root: &Path, frozen: bool) {
         for finding in &mut self.findings {
             finding.evidence_paths.retain(|path| {
                 safe_evidence_path(path)
                     && utils::repository_memory::reject_symlinks(&root.join(path)).is_ok()
-                    && root.join(path).is_file()
+                    && (root.join(path).is_file() || (frozen && path == "openwiki/INSTRUCTIONS.md"))
             });
         }
     }
@@ -234,6 +238,14 @@ impl RefinementReport {
     }
 
     pub fn validate_files(&self, root: &Path) -> anyhow::Result<()> {
+        self.validate_files_with_frozen_instructions(root, false)
+    }
+
+    pub fn validate_files_with_frozen_instructions(
+        &self,
+        root: &Path,
+        frozen: bool,
+    ) -> anyhow::Result<()> {
         for resolution in &self.resolutions {
             for path in resolution
                 .wiki_paths
@@ -242,7 +254,7 @@ impl RefinementReport {
             {
                 utils::repository_memory::reject_symlinks(&root.join(path))?;
                 ensure!(
-                    root.join(path).is_file(),
+                    root.join(path).is_file() || (frozen && path == "openwiki/INSTRUCTIONS.md"),
                     "Refine evidence file does not exist: {path}"
                 );
             }
@@ -865,6 +877,15 @@ mod tests {
         assert!(prompt.contains("preserve all user-authored instructions"));
         assert!(!prompt.contains("force=true"));
         assert!(!prompt.contains("Return ONLY"));
+        let forced = super::super::OpenWikiAdapter::sync_prompt_with_force(
+            Path::new("/fixture/repo"),
+            "en",
+            "",
+            &RepositoryWikiSyncScope::PendingChanges,
+            true,
+        );
+        assert!(forced.contains("force=true"));
+        assert!(!forced.contains("A begin status=noop is successful"));
     }
 
     fn resolution(disposition: &str) -> Value {
@@ -895,6 +916,17 @@ mod tests {
         )
         .unwrap();
         report.validate_files(tmp.path()).unwrap();
+        std::fs::remove_file(tmp.path().join("openwiki/INSTRUCTIONS.md")).unwrap();
+        assert!(report.validate_files(tmp.path()).is_err());
+        report
+            .validate_files_with_frozen_instructions(tmp.path(), true)
+            .unwrap();
+        review.findings[0].evidence_paths = vec!["openwiki/INSTRUCTIONS.md".into()];
+        review.retain_evidence_with_frozen_instructions(tmp.path(), true);
+        assert_eq!(
+            review.findings[0].evidence_paths,
+            ["openwiki/INSTRUCTIONS.md"]
+        );
         value["resolutions"][0]["wikiPaths"] = json!(["openwiki/INSTRUCTIONS.md"]);
         assert!(RefinementReport::parse(&value.to_string(), &review).is_err());
     }

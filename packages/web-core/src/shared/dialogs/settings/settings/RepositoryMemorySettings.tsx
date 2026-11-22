@@ -234,7 +234,8 @@ export function RepositoryMemorySettings({
         key={`${repo.id}/${state?.target_branch}`}
         repo={repo}
         client={client}
-        disabled={busy || active || unsaved || !state}
+        disabled={busy || unsaved || !state}
+        active={active}
         wikiExists={state?.wiki_exists ?? false}
         enabled={state?.enabled ?? false}
         branch={state?.target_branch}
@@ -242,6 +243,11 @@ export function RepositoryMemorySettings({
         onDirtyChange={setFilesDirty}
         refresh={() => query.refetch()}
       />
+      {state?.wiki_instructions_pending && (
+        <p className="text-sm text-low" role="status">
+          {t('repositoryMemory.files.pendingInstructions')}
+        </p>
+      )}
       {!state?.last_success && (
         <p className="text-sm text-low">{t('repositoryMemory.startHint')}</p>
       )}

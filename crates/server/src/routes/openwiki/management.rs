@@ -11,6 +11,7 @@ pub struct RepositoryWikiFile {
     pub content: String,
     pub default_content: String,
     pub exists: bool,
+    pub override_saved: bool,
 }
 
 #[derive(Debug, Serialize, TS)]
@@ -28,6 +29,9 @@ pub struct SaveRepositoryWikiFile {
     pub source: String,
     pub path: String,
     pub content: String,
+    #[serde(default)]
+    #[ts(optional)]
+    pub clear_override: Option<bool>,
 }
 
 #[derive(Debug, Deserialize, TS)]
@@ -130,11 +134,23 @@ pub async fn get_files(
         } else {
             default.into()
         };
+        let override_saved = path == files::INSTRUCTIONS && state.wiki_instructions.is_some();
+        let fallback = content;
+        let content = if override_saved {
+            state.wiki_instructions.clone().expect("checked")
+        } else {
+            fallback.clone()
+        };
         values.push(RepositoryWikiFile {
             path: path.into(),
             content,
-            default_content: default.into(),
+            default_content: if path == files::INSTRUCTIONS {
+                fallback
+            } else {
+                default.into()
+            },
             exists,
+            override_saved,
         });
     }
     Ok(Json(ApiResponse::success(RepositoryWikiFiles {
@@ -152,6 +168,31 @@ pub async fn save_file(
 ) -> Result<Json<ApiResponse<RepositoryWikiFiles>>, ApiError> {
     if !files::configuration_path(&request.path) || request.content.len() > 1024 * 1024 {
         return Err(api_error("Invalid OpenWiki configuration file or size"));
+    }
+    if request.path == files::INSTRUCTIONS {
+        let repo = repo(&deployment, id).await?;
+        let store = RepositoryMemoryStore::for_repository(&deployment.db().pool, &repo.name, id)
+            .map_err(api_error)?;
+        let _lock = store.try_lock().map_err(api_error)?;
+        let mut state = store.state().await.map_err(api_error)?;
+        if state.target_branch.as_deref() != Some(&request.branch)
+            || deployment
+                .git()
+                .get_branch_oid(&repo.path, &request.branch)?
+                != request.source
+        {
+            return Err(api_error(
+                "Repository target changed; reload settings before saving",
+            ));
+        }
+        state.wiki_instructions = if request.clear_override.unwrap_or(false) {
+            None
+        } else {
+            Some(request.content)
+        };
+        store.save_state(&state).await.map_err(api_error)?;
+        drop(_lock);
+        return get_files(State(deployment), Path(id)).await;
     }
     mutate(
         &deployment,
@@ -434,6 +475,8 @@ pub(super) async fn recover(
         state.source_commit = None;
         state.wiki_commit = None;
         state.last_success = None;
+        state.applied_wiki_instructions_digest = None;
+        state.applied_wiki_instructions_override = None;
         state.unverified_before = None;
         state.wiki_exists = false;
         state.generation_suppressed = true;
@@ -562,6 +605,67 @@ mod tests {
         assert!(initial.files[1].content.is_empty());
         assert!(!root.join(files::INSTRUCTIONS).exists());
         let source = initial.source.clone();
+        let published_before = std::fs::read(root.join("openwiki/index.md"))?;
+        let request = |content: &str, clear| SaveRepositoryWikiFile {
+            branch: "main".into(),
+            source: source.clone(),
+            path: files::INSTRUCTIONS.into(),
+            content: content.into(),
+            clear_override: Some(clear),
+        };
+        let _ = save_file(
+            State(deployment.clone()),
+            Path(repo.id),
+            Json(request("A", false)),
+        )
+        .await?;
+        assert_eq!(git(&root, &["rev-parse", "HEAD"]), source);
+        assert!(!root.join(files::INSTRUCTIONS).exists());
+        assert_eq!(
+            std::fs::read(root.join("openwiki/index.md"))?,
+            published_before
+        );
+        let store =
+            RepositoryMemoryStore::for_repository(&deployment.db().pool, &repo.name, repo.id)?;
+        let mut state = store.state().await?;
+        assert_eq!(state.wiki_instructions.as_deref(), Some("A"));
+        state.active_wiki_instructions = Some("A".into());
+        state.active_wiki_instructions_digest = Some(super::super::instructions_digest("A"));
+        state.active_run_id = Some(Uuid::new_v4());
+        store.save_state(&state).await?;
+        let _ = save_file(
+            State(deployment.clone()),
+            Path(repo.id),
+            Json(request("B", false)),
+        )
+        .await?;
+        let state = store.state().await?;
+        assert_eq!(state.wiki_instructions.as_deref(), Some("B"));
+        assert_eq!(state.active_wiki_instructions.as_deref(), Some("A"));
+        let Json(cleared) = save_file(
+            State(deployment.clone()),
+            Path(repo.id),
+            Json(request("", true)),
+        )
+        .await?;
+        let cleared = cleared
+            .into_data()
+            .context("Missing cleared instructions")?;
+        assert_eq!(cleared.files[0].content, files::DEFAULT_INSTRUCTIONS);
+        assert!(!cleared.files[0].override_saved);
+        let mut state = store.state().await?;
+        assert_eq!(state.wiki_instructions, None);
+        assert_eq!(state.active_wiki_instructions.as_deref(), Some("A"));
+        state.active_run_id = None;
+        state.active_wiki_instructions = None;
+        state.active_wiki_instructions_digest = None;
+        store.save_state(&state).await?;
+        assert_eq!(git(&root, &["rev-parse", "HEAD"]), source);
+        assert!(!root.join(files::INSTRUCTIONS).exists());
+        assert_eq!(
+            std::fs::read(root.join("openwiki/index.md"))?,
+            published_before
+        );
         std::fs::write(
             root.join(files::INSTRUCTIONS),
             "uncommitted user instructions",
@@ -598,6 +702,44 @@ mod tests {
         )
         .await?;
         let source = git(&root, &["rev-parse", "HEAD"]);
+        let _ = save_file(
+            State(deployment.clone()),
+            Path(repo.id),
+            Json(SaveRepositoryWikiFile {
+                branch: "main".into(),
+                source: source.clone(),
+                path: files::INSTRUCTIONS.into(),
+                content: "database override".into(),
+                clear_override: Some(false),
+            }),
+        )
+        .await?;
+        assert_eq!(git(&root, &["rev-parse", "HEAD"]), source);
+        assert_eq!(
+            std::fs::read_to_string(root.join(files::INSTRUCTIONS))?,
+            "new saved instructions"
+        );
+        let Json(cleared) = save_file(
+            State(deployment.clone()),
+            Path(repo.id),
+            Json(SaveRepositoryWikiFile {
+                branch: "main".into(),
+                source: source.clone(),
+                path: files::INSTRUCTIONS.into(),
+                content: String::new(),
+                clear_override: Some(true),
+            }),
+        )
+        .await?;
+        assert_eq!(
+            cleared.into_data().unwrap().files[0].content,
+            "new saved instructions"
+        );
+        assert_eq!(git(&root, &["rev-parse", "HEAD"]), source);
+        assert_eq!(
+            std::fs::read_to_string(root.join(files::INSTRUCTIONS))?,
+            "new saved instructions"
+        );
         assert_eq!(
             std::fs::read_to_string(root.join("openwiki/old.md"))?,
             "---\ngenerated: { by: codex }\n---\n# Operational knowledge"

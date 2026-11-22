@@ -20,6 +20,7 @@ pub mod integration;
 mod openwiki_compatibility_tests;
 
 const INSTRUCTION_PATHS: [&str; 2] = ["AGENTS.md", "CLAUDE.md"];
+const WIKI_INSTRUCTIONS: &str = "openwiki/INSTRUCTIONS.md";
 const MAX_INSTRUCTION_BYTES: u64 = 32 * 1024;
 const MAX_PAGE_BYTES: u64 = 2 * 1024 * 1024;
 const MAX_WIKI_ENTRIES: usize = 20_000;
@@ -75,21 +76,69 @@ pub fn prepare(
     root: &Path,
     source_commit: &str,
 ) -> anyhow::Result<()> {
+    prepare_with_instructions(store, workspace_id, root, source_commit, None)
+}
+
+/// Journal the original Wiki instruction before installing the run's frozen text.
+/// Reopening an existing journal never replaces its prepared value.
+pub fn prepare_with_instructions(
+    store: &RepositoryMemoryStore,
+    workspace_id: Uuid,
+    root: &Path,
+    source_commit: &str,
+    instructions: Option<&str>,
+) -> anyhow::Result<()> {
     let mut checkpoint = if let Some(checkpoint) = store.wiki_setup(workspace_id)? {
         validate_identity(&checkpoint, workspace_id, root, source_commit)?;
+        if let Some(text) = instructions {
+            let entry = checkpoint
+                .files
+                .iter()
+                .find(|entry| entry.path == WIKI_INSTRUCTIONS)
+                .context("Existing setup journal has no frozen Wiki instructions")?;
+            ensure!(
+                matches!(&entry.prepared, WikiSetupFile::Regular { content, .. } if content == text),
+                "Frozen Wiki instructions changed during the run"
+            );
+        }
         checkpoint
     } else {
         preflight(root)?;
+        let mut files = INSTRUCTION_PATHS
+            .iter()
+            .map(|path| capture_instruction(root, path))
+            .collect::<anyhow::Result<Vec<_>>>()?;
+        if let Some(text) = instructions {
+            ensure!(
+                text.len() <= MAX_PAGE_BYTES as usize,
+                "Wiki instructions exceed size limit"
+            );
+            let original = read_entry(&root.join(WIKI_INSTRUCTIONS))?;
+            ensure!(
+                !matches!(original, WikiSetupFile::Symlink { .. }),
+                "Wiki instructions cannot be a symlink"
+            );
+            let mode = match &original {
+                WikiSetupFile::Regular { mode, .. } => mode | 0o200,
+                _ => 0o644,
+            };
+            files.push(WikiSetupEntry {
+                path: WIKI_INSTRUCTIONS.into(),
+                original,
+                prepared: WikiSetupFile::Regular {
+                    content: text.into(),
+                    mode,
+                },
+                restoring_from: None,
+            });
+        }
         let checkpoint = WikiSetupCheckpoint {
-            version: 1,
+            version: if instructions.is_some() { 2 } else { 1 },
             workspace_id,
             repository_path: root.into(),
             source_commit: source_commit.into(),
             phase: WikiSetupPhase::Preparing,
-            files: INSTRUCTION_PATHS
-                .iter()
-                .map(|path| capture_instruction(root, path))
-                .collect::<anyhow::Result<_>>()?,
+            files,
         };
         store.save_wiki_setup(&checkpoint)?;
         checkpoint
@@ -171,7 +220,9 @@ fn restore_checkpoint(
     if checkpoint.phase != WikiSetupPhase::Restoring {
         for entry in &mut checkpoint.files {
             let current = read_entry(&root.join(&entry.path))?;
-            validate_change(entry, &current)?;
+            if checkpoint.phase != WikiSetupPhase::Preparing || current != entry.original {
+                validate_change(entry, &current)?;
+            }
             entry.restoring_from = Some(current);
         }
         checkpoint.phase = WikiSetupPhase::Restoring;
@@ -234,19 +285,21 @@ fn validate_identity(
     source_commit: &str,
 ) -> anyhow::Result<()> {
     ensure!(
-        checkpoint.version == 1
+        matches!(checkpoint.version, 1 | 2)
             && checkpoint.workspace_id == workspace_id
             && checkpoint.repository_path == root
             && checkpoint.source_commit == source_commit,
         "OpenWiki setup checkpoint identity mismatch"
     );
     ensure!(
-        checkpoint.files.len() == 2
+        checkpoint.files.len() == if checkpoint.version == 2 { 3 } else { 2 }
             && checkpoint
                 .files
                 .iter()
+                .take(2)
                 .zip(INSTRUCTION_PATHS)
-                .all(|(entry, path)| entry.path == path),
+                .all(|(entry, path)| entry.path == path)
+            && (checkpoint.version == 1 || checkpoint.files[2].path == WIKI_INSTRUCTIONS),
         "Invalid OpenWiki setup checkpoint paths"
     );
     reject_symlinks(root)?;
@@ -300,7 +353,14 @@ fn read_entry(path: &Path) -> anyhow::Result<WikiSetupFile> {
             target: fs::read_link(path)?,
         });
     }
-    read_regular(path, MAX_INSTRUCTION_BYTES)
+    read_regular(
+        path,
+        if path.ends_with(WIKI_INSTRUCTIONS) {
+            MAX_PAGE_BYTES
+        } else {
+            MAX_INSTRUCTION_BYTES
+        },
+    )
 }
 
 fn read_regular(path: &Path, limit: u64) -> anyhow::Result<WikiSetupFile> {
@@ -365,7 +425,14 @@ fn validate_generated_change(
     entry: &WikiSetupEntry,
     current: &WikiSetupFile,
 ) -> anyhow::Result<()> {
-    if current == &entry.original || current == &entry.prepared {
+    if current == &entry.prepared {
+        return Ok(());
+    }
+    ensure!(
+        entry.path != WIKI_INSTRUCTIONS,
+        "Wiki instructions changed during OpenWiki; restoration refused"
+    );
+    if current == &entry.original {
         return Ok(());
     }
     let before = match &entry.prepared {
@@ -725,6 +792,129 @@ mod tests {
         fn provenance(&self) -> anyhow::Result<()> {
             validate_provenance(&self.store, self.id, &self.root, &self.source)
         }
+    }
+
+    #[test]
+    fn frozen_maximum_size_instructions_fit_the_recovery_journal() {
+        let fixture = Fixture::new();
+        let text = "\u{0001}".repeat(1024 * 1024);
+        prepare_with_instructions(
+            &fixture.store,
+            fixture.id,
+            &fixture.root,
+            &fixture.source,
+            Some(&text),
+        )
+        .unwrap();
+        let reopened = fixture.store.wiki_setup(fixture.id).unwrap().unwrap();
+        assert!(
+            matches!(&reopened.files[2].prepared, WikiSetupFile::Regular { content, .. } if content == &text)
+        );
+        fixture.restore();
+        assert_eq!(
+            fs::read_to_string(fixture.root.join(WIKI_INSTRUCTIONS)).unwrap(),
+            "user-authored wiki instructions\n"
+        );
+    }
+
+    #[test]
+    fn frozen_override_restores_tracked_instruction_bytes() {
+        let fixture = Fixture::new();
+        let path = fixture.root.join(WIKI_INSTRUCTIONS);
+        let original = fs::read(&path).unwrap();
+        let mode = file_mode(&fs::metadata(&path).unwrap());
+        prepare_with_instructions(
+            &fixture.store,
+            fixture.id,
+            &fixture.root,
+            &fixture.source,
+            Some("override\r\n"),
+        )
+        .unwrap();
+        assert_eq!(fs::read(&path).unwrap(), b"override\r\n");
+        fs::write(&path, &original).unwrap();
+        assert!(restore(&fixture.store, fixture.id, &fixture.root, &fixture.source).is_err());
+        fs::write(&path, b"override\r\n").unwrap();
+        fixture.restore();
+        assert_eq!(fs::read(&path).unwrap(), original);
+        assert_eq!(file_mode(&fs::metadata(&path).unwrap()), mode);
+        assert!(
+            super::super::publication_paths(
+                &git::GitService::new(),
+                &fixture.root,
+                &fixture.source
+            )
+            .unwrap()
+            .is_empty()
+        );
+    }
+
+    #[test]
+    fn frozen_wiki_instructions_survive_restart_and_restore_missing_file() {
+        let mut fixture = Fixture::new();
+        super::super::git_text(&fixture.root, &["rm", "openwiki/INSTRUCTIONS.md"]).unwrap();
+        fixture.commit();
+        let path = fixture.root.join(WIKI_INSTRUCTIONS);
+        prepare_with_instructions(
+            &fixture.store,
+            fixture.id,
+            &fixture.root,
+            &fixture.source,
+            Some("A\n"),
+        )
+        .unwrap();
+        assert_eq!(fs::read_to_string(&path).unwrap(), "A\n");
+        assert!(
+            prepare_with_instructions(
+                &fixture.store,
+                fixture.id,
+                &fixture.root,
+                &fixture.source,
+                Some("B\n")
+            )
+            .is_err()
+        );
+        prepare_with_instructions(
+            &fixture.store,
+            fixture.id,
+            &fixture.root,
+            &fixture.source,
+            Some("A\n"),
+        )
+        .unwrap();
+        fixture.restore();
+        assert!(!path.exists());
+        prepare_next_phase(&fixture.store, fixture.id, &fixture.root, &fixture.source).unwrap();
+        assert_eq!(fs::read_to_string(&path).unwrap(), "A\n");
+        fs::remove_file(&path).unwrap();
+        assert!(restore(&fixture.store, fixture.id, &fixture.root, &fixture.source).is_err());
+        let prepared = fixture.store.wiki_setup(fixture.id).unwrap().unwrap().files[2]
+            .prepared
+            .clone();
+        replace_if_expected(&path, &WikiSetupFile::Missing, &prepared).unwrap();
+        fs::write(&path, "changed\n").unwrap();
+        assert!(restore(&fixture.store, fixture.id, &fixture.root, &fixture.source).is_err());
+        fs::write(&path, "A\n").unwrap();
+        fixture.restore();
+        assert!(!path.exists());
+        fixture.write("openwiki/index.md", "generated wiki\n");
+        let paths = super::super::publication_paths(
+            &git::GitService::new(),
+            &fixture.root,
+            &fixture.source,
+        )
+        .unwrap();
+        assert!(paths.contains(&"openwiki/index.md".to_owned()));
+        assert!(!paths.contains(&WIKI_INSTRUCTIONS.to_owned()));
+        fixture.write("source.txt", "unauthorized source change\n");
+        assert!(
+            super::super::publication_paths(
+                &git::GitService::new(),
+                &fixture.root,
+                &fixture.source
+            )
+            .is_err()
+        );
     }
 
     #[test]

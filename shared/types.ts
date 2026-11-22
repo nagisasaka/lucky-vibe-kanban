@@ -153,17 +153,37 @@ file_operation?: RepositoryWikiFileOperation, rebuild_reference?: string,
 /**
  * Explicit deletion suppresses automatic integrations until explicit init.
  */
-generation_suppressed: boolean, };
+generation_suppressed: boolean,
+/**
+ * Repository-local override, independent of the Git-backed Wiki.
+ */
+wiki_instructions: string | null,
+/**
+ * Immutable instructions selected for the active maintenance operation.
+ */
+active_wiki_instructions: string | null, active_wiki_instructions_digest: string | null,
+/**
+ * Whether the frozen text came from the saved override at admission.
+ */
+active_wiki_instructions_override: boolean,
+/**
+ * Instructions used by the last successfully published operation.
+ */
+applied_wiki_instructions_digest: string | null,
+/**
+ * Last explicitly published override, independent of later pending edits.
+ */
+applied_wiki_instructions_override: string | null, wiki_instructions_pending: boolean, active_instructions_force: boolean, };
 
 export type RepositoryArtifactCleanup = { workspace_id: string, bootstrap_run_id: string | null, };
 
 export type RepositoryWikiFileOperation = { id: string, workspace_id: string, source: string, branch: string, paths: Array<string>, delete: boolean, };
 
-export type RepositoryWikiFile = { path: string, content: string, default_content: string, exists: boolean, };
+export type RepositoryWikiFile = { path: string, content: string, default_content: string, exists: boolean, override_saved: boolean, };
 
 export type RepositoryWikiFiles = { repository_id: string, branch: string, source: string, files: Array<RepositoryWikiFile>, };
 
-export type SaveRepositoryWikiFile = { branch: string, source: string, path: string, content: string, };
+export type SaveRepositoryWikiFile = { branch: string, source: string, path: string, content: string, clear_override?: boolean, };
 
 export type DeleteRepositoryWiki = { branch: string, source: string, confirmation: string, };
 

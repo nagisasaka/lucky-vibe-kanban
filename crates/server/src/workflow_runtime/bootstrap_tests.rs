@@ -33,6 +33,81 @@ fn git(root: &Path, args: &[&str]) -> String {
     String::from_utf8(output.stdout).unwrap().trim().into()
 }
 
+async fn record_stub_audit(
+    f: &Fixture,
+    request: &AgentRunRequestEnvelope,
+    attempt: &RunAttemptRequest,
+    frames: Vec<serde_json::Value>,
+    status: &str,
+) -> anyhow::Result<()> {
+    use executors::runtime::{
+        NativeAuditChannel, NativeAuditDirection, NativeAuditMetadata, NativeAuditWriter,
+    };
+    let now = Utc::now();
+    sqlx::query("UPDATE agent_runs SET status=? WHERE id=?")
+        .bind(status)
+        .bind(request.agent_run_id)
+        .execute(&f.pool)
+        .await?;
+    sqlx::query("UPDATE agent_run_attempts SET status=?, finished_at=? WHERE id=?")
+        .bind(status)
+        .bind(now)
+        .bind(attempt.run_attempt_id)
+        .execute(&f.pool)
+        .await?;
+    sqlx::query("UPDATE agent_process_registry SET registry_status='exited', pid=123, process_started_at=?, observed_exited_at=? WHERE run_attempt_id=?")
+        .bind(now).bind(now).bind(attempt.run_attempt_id).execute(&f.pool).await?;
+    let mut writer = NativeAuditWriter::create_in(
+        f._temp.path(),
+        NativeAuditMetadata {
+            session_id: request.session_id,
+            agent_run_id: request.agent_run_id,
+            turn_id: request.turn_id,
+            run_attempt_id: attempt.run_attempt_id,
+            run_attempt_number: attempt.attempt_number,
+            provider_id: "codex".into(),
+            runtime_profile_id: request.runtime_profile_id.clone(),
+            workspace_path: request.workspace.path.clone(),
+            runtime_version: None,
+            protocol_version: None,
+            adapter_version: "fixture".into(),
+            mapper_version: "fixture".into(),
+            created_at: now,
+        },
+    )?;
+    let header = json!({"id":3,"result":{"thread":{"id":"root"},"cwd":request.workspace.path}});
+    for frame in std::iter::once(header).chain(frames) {
+        writer.append_bytes(
+            NativeAuditDirection::Output,
+            NativeAuditChannel::Stdout,
+            "application/json",
+            Uuid::new_v4(),
+            &serde_json::to_vec(&frame)?,
+            None,
+        )?;
+    }
+    let manifest = writer.close()?;
+    sqlx::query("INSERT INTO native_audit_streams (id, session_id, agent_run_id, run_attempt_id, audit_schema_version, adapter_version, mapper_version, manifest_relative_path, frames_relative_path, integrity_status) VALUES (?, ?, ?, ?, 1, 'fixture', 'fixture', ?, ?, 'complete')")
+        .bind(attempt.run_attempt_id).bind(request.session_id).bind(request.agent_run_id).bind(attempt.run_attempt_id)
+        .bind(f._temp.path().join(manifest.manifest_relative_path).to_str())
+        .bind(f._temp.path().join(manifest.frames_relative_path).to_str()).execute(&f.pool).await?;
+    Ok(())
+}
+
+fn stub_wiki_call(
+    tool: &str,
+    args: serde_json::Value,
+    result: serde_json::Value,
+) -> Vec<serde_json::Value> {
+    let id = Uuid::new_v4();
+    ["item/started", "item/completed"].into_iter().map(|method| json!({
+        "method":method,"params":{"threadId":"root","item":{
+            "id":id,"type":"mcpToolCall","server":"openwiki","tool":tool,
+            "arguments":args,"result":{"structuredContent":result},"error":null,"status":"completed"
+        }}
+    })).collect()
+}
+
 struct Fixture {
     _temp: tempfile::TempDir,
     pool: SqlitePool,
@@ -46,6 +121,10 @@ struct Fixture {
 
 impl Fixture {
     async fn new() -> Self {
+        Self::with_deployment_pool(None).await
+    }
+
+    async fn with_deployment_pool(deployment_pool: Option<SqlitePool>) -> Self {
         let temp = tempfile::tempdir().unwrap();
         let root = temp.path().join("repo");
         std::fs::create_dir(&root).unwrap();
@@ -53,6 +132,19 @@ impl Fixture {
         git(&root, &["config", "user.name", "LVK fixture"]);
         git(&root, &["config", "user.email", "fixture@example.invalid"]);
         std::fs::write(root.join("source.rs"), "authoritative source").unwrap();
+        if deployment_pool.is_some() {
+            std::fs::create_dir(root.join("openwiki")).unwrap();
+            std::fs::write(
+                root.join("openwiki/index.md"),
+                "# Previously published Wiki\n",
+            )
+            .unwrap();
+            std::fs::write(
+                root.join("openwiki/quickstart.md"),
+                "# Previous quickstart\n",
+            )
+            .unwrap();
+        }
         git(&root, &["add", "."]);
         git(&root, &["commit", "-m", "integrated source"]);
         let source = git(&root, &["rev-parse", "HEAD"]);
@@ -71,14 +163,24 @@ impl Fixture {
         std::fs::create_dir(&persistent).unwrap();
         let files =
             utils::repository_memory::RepositoryMemoryStore::at_artifacts(&persistent).unwrap();
-        let pool = sqlx::sqlite::SqlitePoolOptions::new()
-            .max_connections(1)
-            .connect("sqlite::memory:")
-            .await
-            .unwrap();
-        sqlx::migrate!("../db/migrations").run(&pool).await.unwrap();
+        let real_deployment = deployment_pool.is_some();
+        let pool = if let Some(pool) = deployment_pool {
+            pool
+        } else {
+            let pool = sqlx::sqlite::SqlitePoolOptions::new()
+                .max_connections(1)
+                .connect("sqlite::memory:")
+                .await
+                .unwrap();
+            sqlx::migrate!("../db/migrations").run(&pool).await.unwrap();
+            pool
+        };
         let repository_id = Uuid::new_v4();
-        let store = RepositoryMemoryStore::with_artifacts(&pool, repository_id, files);
+        let store = if real_deployment {
+            RepositoryMemoryStore::for_repository(&pool, "repo", repository_id).unwrap()
+        } else {
+            RepositoryMemoryStore::with_artifacts(&pool, repository_id, files)
+        };
         let workspace_id = Uuid::new_v4();
         sqlx::query(
             "INSERT INTO repos (id, path, name, display_name) VALUES (?, ?, 'repo', 'Fixture')",
@@ -571,6 +673,683 @@ impl WorkflowAgentExecutor for FakeBootstrap<'_> {
         self.publications.fetch_add(1, Ordering::SeqCst);
         Ok(Some("Published".into()))
     }
+}
+
+#[tokio::test]
+#[ignore = "requires a fresh task-owned lvk-openwiki-files-* LVK_INSTANCE_DIR; run alone"]
+async fn real_bootstrap_dispatch_keeps_frozen_instructions_on_resume() -> anyhow::Result<()> {
+    use deployment::Deployment;
+    use utils::repository_memory::{OpenWikiBootstrapOwner, RepositoryMemoryState};
+    let instance = PathBuf::from(std::env::var("LVK_INSTANCE_DIR")?);
+    anyhow::ensure!(
+        instance.is_absolute()
+            && instance
+                .file_name()
+                .unwrap()
+                .to_string_lossy()
+                .starts_with("lvk-openwiki-files-")
+            && !instance.join("data/db.v2.sqlite").exists()
+    );
+    let shutdown = tokio_util::sync::CancellationToken::new();
+    let deployment = DeploymentImpl::new(shutdown.clone()).await?;
+    let f = Fixture::with_deployment_pool(Some(deployment.db().pool.clone())).await;
+    let run_id = f.reserve().await;
+    let state = RepositoryMemoryState {
+        enabled: true,
+        target_branch: Some("main".into()),
+        ..Default::default()
+    };
+    f.store.save_state(&state).await?;
+    let _ = crate::routes::openwiki::management::save_file(
+        axum::extract::State(deployment.clone()),
+        axum::extract::Path(f.repository_id),
+        axum::Json(
+            crate::routes::openwiki::management::SaveRepositoryWikiFile {
+                branch: "main".into(),
+                source: f.source.clone(),
+                path: "openwiki/INSTRUCTIONS.md".into(),
+                content: "A\n".into(),
+                clear_override: Some(false),
+            },
+        ),
+    )
+    .await?;
+    assert_eq!(git(&f.root, &["rev-parse", "HEAD"]), f.source);
+    assert!(!f.root.join("openwiki/INSTRUCTIONS.md").exists());
+    assert_eq!(
+        std::fs::read_to_string(f.root.join("openwiki/index.md"))?,
+        "# Previously published Wiki\n"
+    );
+    let mut state = f.store.state().await?;
+    let frozen = crate::routes::openwiki::select_wiki_instructions(
+        &f.maintenance,
+        state.wiki_instructions.as_deref(),
+    )?;
+    state.active_wiki_instructions_digest =
+        Some(format!("{:x}", Sha256::digest(frozen.as_bytes())));
+    state.active_wiki_instructions_override = true;
+    state.active_wiki_instructions = Some(frozen);
+    state.active_source_commit = Some(f.source.clone());
+    state.rebuild_reference = Some(f.source.clone());
+    state.status = utils::repository_memory::RepositoryWikiStatus::Initializing;
+    state.maintenance_workspace_id = Some(f.workspace_id);
+    state.bootstrap = Some(OpenWikiBootstrapOwner {
+        workflow_run_id: run_id,
+    });
+    f.store.save_state(&state).await?;
+    std::fs::create_dir_all(f.maintenance.join("openwiki"))?;
+    openwiki::management::remove_generated(&f.maintenance, &f.source)?;
+    let orchestration_id: Uuid =
+        sqlx::query_scalar("SELECT orchestration_run_id FROM workflow_runs WHERE id=?")
+            .bind(run_id)
+            .fetch_one(&f.pool)
+            .await?;
+    let make_request = |node: &str, id: Uuid, session: Uuid| AgentNodeRequest {
+        run_id,
+        orchestration_run_id: orchestration_id,
+        orchestration_node_execution_id: id,
+        iteration: 0,
+        node_id: node.into(),
+        session_id: Some(session),
+        workspace_id: f.workspace_id,
+        prompt: String::new(),
+        selected_skills: None,
+        executor_config: None,
+    };
+    let pool = &f.pool;
+    let node_id = |node: &'static str| async move {
+        sqlx::query_scalar::<_, Uuid>("SELECT orchestration_node_execution_id FROM node_executions WHERE run_id=? AND node_id=? LIMIT 1")
+            .bind(run_id).bind(node).fetch_one(pool).await.unwrap()
+    };
+    let session = Session::create(
+        &f.pool,
+        &CreateSession {
+            executor: Some("CODEX".into()),
+            name: None,
+        },
+        Uuid::new_v4(),
+        f.workspace_id,
+    )
+    .await?;
+    let mut generate = make_request("generate", node_id("generate").await, session.id);
+    assert!(
+        super::super::bootstrap::prepare_child_dispatch(&deployment, &mut generate, session.id)
+            .await?
+    );
+    assert_eq!(
+        std::fs::read_to_string(f.maintenance.join("openwiki/INSTRUCTIONS.md"))?,
+        "A\n"
+    );
+    let (mut request, mut attempt) = dispatch_envelopes(&f, session.id, run_id);
+    request.correlation_id = orchestration_id;
+    attempt.correlation_id = orchestration_id;
+    db::models::agent_runtime::AgentRunRecord::persist_identity_before_launch(
+        &f.pool, &request, &attempt,
+    )
+    .await?;
+    let wiki_run = Uuid::new_v4();
+    let begin_args = json!({"root":f.maintenance,"mode":"update","force":true});
+    record_stub_audit(&f, &request, &attempt,
+        stub_wiki_call("openwiki_begin", begin_args.clone(), json!({"status":"active","root":f.maintenance,"mode":"update","runId":wiki_run,"resumed":false})), "failed").await?;
+    let _ = crate::routes::openwiki::management::save_file(
+        axum::extract::State(deployment.clone()),
+        axum::extract::Path(f.repository_id),
+        axum::Json(
+            crate::routes::openwiki::management::SaveRepositoryWikiFile {
+                branch: "main".into(),
+                source: f.source.clone(),
+                path: "openwiki/INSTRUCTIONS.md".into(),
+                content: "B\n".into(),
+                clear_override: Some(false),
+            },
+        ),
+    )
+    .await?;
+    let mut resumed = make_request(
+        "generate",
+        generate.orchestration_node_execution_id,
+        session.id,
+    );
+    std::fs::write(f.maintenance.join("openwiki/INSTRUCTIONS.md"), "B\n")?;
+    assert!(
+        super::super::bootstrap::validate_writer_continuation(&deployment, run_id, f.workspace_id)
+            .await
+            .is_err()
+    );
+    assert!(
+        super::super::bootstrap::prepare_child_dispatch(&deployment, &mut resumed, session.id)
+            .await
+            .is_err()
+    );
+    std::fs::write(f.maintenance.join("openwiki/INSTRUCTIONS.md"), "A\n")?;
+    super::super::bootstrap::validate_writer_continuation(&deployment, run_id, f.workspace_id)
+        .await?;
+    assert!(
+        super::super::bootstrap::prepare_child_dispatch(&deployment, &mut resumed, session.id)
+            .await?
+    );
+    assert_eq!(
+        std::fs::read_to_string(f.maintenance.join("openwiki/INSTRUCTIONS.md"))?,
+        "A\n"
+    );
+    std::fs::write(f.maintenance.join("openwiki/index.md"), "# Generated\n")?;
+    std::fs::write(
+        f.maintenance.join("openwiki/quickstart.md"),
+        "# Generated quickstart\n",
+    )?;
+    let mut retry = attempt.clone();
+    retry.request_id = Uuid::new_v4();
+    retry.idempotency_key = Uuid::new_v4().to_string();
+    retry.run_attempt_id = Uuid::new_v4();
+    retry.attempt_number = 2;
+    retry.mode = RunAttemptMode::Resume;
+    db::models::agent_runtime::AgentRunRecord::persist_retry_attempt_before_launch(
+        &f.pool, &request, &retry,
+    )
+    .await?;
+    let mut frames = stub_wiki_call(
+        "openwiki_begin",
+        begin_args,
+        json!({"status":"active","root":f.maintenance,"mode":"update","runId":wiki_run,"resumed":true}),
+    );
+    frames.extend(stub_wiki_call(
+        "openwiki_finish",
+        json!({"runId":wiki_run}),
+        json!({"status":"complete"}),
+    ));
+    // A terminal result without its second audit stream is not completion.
+    sqlx::query("UPDATE agent_runs SET status='succeeded' WHERE id=?")
+        .bind(request.agent_run_id)
+        .execute(&f.pool)
+        .await?;
+    sqlx::query("UPDATE agent_run_attempts SET status='succeeded' WHERE id=?")
+        .bind(retry.run_attempt_id)
+        .execute(&f.pool)
+        .await?;
+    sqlx::query("UPDATE agent_process_registry SET registry_status='exited', pid=123, process_started_at=?, observed_exited_at=? WHERE run_attempt_id=?")
+        .bind(Utc::now()).bind(Utc::now()).bind(retry.run_attempt_id).execute(&f.pool).await?;
+    sqlx::query("UPDATE node_executions SET status='running', agent_run_id=? WHERE run_id=? AND node_id='generate'")
+        .bind(request.agent_run_id).bind(run_id).execute(&f.pool).await?;
+    assert!(
+        super::super::bootstrap::validate_child_completion_inner(
+            &deployment,
+            run_id,
+            "generate",
+            request.agent_run_id,
+            "stub generator"
+        )
+        .await
+        .is_err()
+    );
+    record_stub_audit(&f, &request, &retry, frames, "succeeded").await?;
+    super::super::bootstrap::validate_child_completion_inner(
+        &deployment,
+        run_id,
+        "generate",
+        request.agent_run_id,
+        "stub generator",
+    )
+    .await?;
+    sqlx::query(
+        "UPDATE node_executions SET status='succeeded' WHERE run_id=? AND node_id='generate'",
+    )
+    .bind(run_id)
+    .execute(&f.pool)
+    .await?;
+    let reviewer = Session::create(
+        &f.pool,
+        &CreateSession {
+            executor: Some("CODEX".into()),
+            name: None,
+        },
+        Uuid::new_v4(),
+        f.workspace_id,
+    )
+    .await?;
+    let mut review = make_request("review", node_id("review").await, reviewer.id);
+    assert!(
+        super::super::bootstrap::prepare_child_dispatch(&deployment, &mut review, reviewer.id)
+            .await?
+    );
+    assert!(!f.maintenance.join("openwiki/INSTRUCTIONS.md").exists());
+    let copy = openwiki::bootstrap::review_workspace(f.maintenance.parent().unwrap(), reviewer.id)
+        .join("repo");
+    assert_eq!(
+        std::fs::read_to_string(copy.join("openwiki/INSTRUCTIONS.md"))?,
+        "A\n"
+    );
+    let paths = openwiki::publication_paths(&git::GitService::new(), &f.maintenance, &f.source)?;
+    assert!(!paths.contains(&"openwiki/INSTRUCTIONS.md".into()));
+    // Stub only the reviewer output; use real completion validation and Refine dispatch.
+    let (mut review_request, mut review_attempt) = dispatch_envelopes(&f, reviewer.id, run_id);
+    review_request.correlation_id = orchestration_id;
+    review_attempt.correlation_id = orchestration_id;
+    db::models::agent_runtime::AgentRunRecord::persist_identity_before_launch(
+        &f.pool,
+        &review_request,
+        &review_attempt,
+    )
+    .await?;
+    record_stub_audit(&f, &review_request, &review_attempt, vec![], "succeeded").await?;
+    let report = json!({"version":2,"verdict":"pass","summary":"Reviewed instruction compliance",
+        "findings":[{"kind":"instructions","page":"openwiki/index.md","description":"Check instruction A","evidencePaths":["openwiki/INSTRUCTIONS.md"]}]}).to_string();
+    sqlx::query("UPDATE node_executions SET status='running', agent_run_id=? WHERE run_id=? AND node_id='review'")
+        .bind(review_request.agent_run_id).bind(run_id).execute(&f.pool).await?;
+    let report = super::super::bootstrap::validate_child_completion_inner(
+        &deployment,
+        run_id,
+        "review",
+        review_request.agent_run_id,
+        &report,
+    )
+    .await?;
+    sqlx::query("UPDATE node_executions SET status='succeeded', output_text=? WHERE run_id=? AND node_id='review'")
+        .bind(report).bind(run_id).execute(&f.pool).await?;
+    let refiner = Session::create(
+        &f.pool,
+        &CreateSession {
+            executor: Some("CODEX".into()),
+            name: None,
+        },
+        Uuid::new_v4(),
+        f.workspace_id,
+    )
+    .await?;
+    let before_refine = openwiki::bootstrap::worktree_fingerprint(&f.maintenance)?;
+    let mut refine = make_request("refine", node_id("refine").await, refiner.id);
+    assert!(
+        super::super::bootstrap::prepare_child_dispatch(&deployment, &mut refine, refiner.id)
+            .await?
+    );
+    assert_eq!(
+        std::fs::read_to_string(f.maintenance.join("openwiki/INSTRUCTIONS.md"))?,
+        "A\n"
+    );
+    let recorded: Option<String> = sqlx::query_scalar(
+        "SELECT source_snapshot FROM node_executions WHERE orchestration_node_execution_id=?",
+    )
+    .bind(refine.orchestration_node_execution_id)
+    .fetch_one(&f.pool)
+    .await?;
+    assert_eq!(recorded.as_deref(), Some(before_refine.as_str()));
+    let (mut refine_request, mut refine_attempt) = dispatch_envelopes(&f, refiner.id, run_id);
+    refine_request.correlation_id = orchestration_id;
+    refine_attempt.correlation_id = orchestration_id;
+    db::models::agent_runtime::AgentRunRecord::persist_identity_before_launch(
+        &f.pool,
+        &refine_request,
+        &refine_attempt,
+    )
+    .await?;
+    let refine_wiki_run = Uuid::new_v4();
+    let mut refine_frames = stub_wiki_call(
+        "openwiki_begin",
+        json!({"root":f.maintenance,"mode":"update","force":true}),
+        json!({"status":"active","root":f.maintenance,"mode":"update","runId":refine_wiki_run,"resumed":false}),
+    );
+    refine_frames.extend(stub_wiki_call(
+        "openwiki_finish",
+        json!({"runId":refine_wiki_run}),
+        json!({"status":"complete"}),
+    ));
+    std::fs::write(f.maintenance.join("openwiki/index.md"), "# Refined\n")?;
+    record_stub_audit(
+        &f,
+        &refine_request,
+        &refine_attempt,
+        refine_frames,
+        "succeeded",
+    )
+    .await?;
+    sqlx::query("UPDATE node_executions SET status='running', agent_run_id=? WHERE run_id=? AND node_id='refine'")
+        .bind(refine_request.agent_run_id).bind(run_id).execute(&f.pool).await?;
+    let resolution = json!({"version":1,"summary":"Checked the finding", "resolutions":[{
+        "findingIndex":0,"disposition":"fixed","reason":"Checked and corrected against the fixed instruction", "wikiPaths":["openwiki/index.md"],"evidencePaths":["openwiki/INSTRUCTIONS.md"]
+    }]}).to_string();
+    let resolution_reference = super::super::bootstrap::validate_child_completion_inner(
+        &deployment,
+        run_id,
+        "refine",
+        refine_request.agent_run_id,
+        &resolution,
+    )
+    .await?;
+    sqlx::query("UPDATE node_executions SET status='succeeded', output_text=? WHERE run_id=? AND node_id='refine'")
+        .bind(resolution_reference).bind(run_id).execute(&f.pool).await?;
+    assert_ne!(
+        openwiki::bootstrap::worktree_fingerprint(&f.maintenance)?,
+        before_refine
+    );
+    assert!(
+        !openwiki::publication_paths(&git::GitService::new(), &f.maintenance, &f.source)?
+            .contains(&"openwiki/INSTRUCTIONS.md".into())
+    );
+    assert_eq!(
+        f.store.state().await?.wiki_instructions.as_deref(),
+        Some("B\n")
+    );
+    assert_eq!(git(&f.root, &["rev-parse", "HEAD"]), f.source);
+    let published = super::super::bootstrap::publish(&deployment, run_id).await?;
+    assert!(!published.1);
+    assert!(
+        !git(&f.root, &["diff", "--name-only", &f.source, "main"])
+            .lines()
+            .any(|p| p == "openwiki/INSTRUCTIONS.md")
+    );
+    let mut completed = f.store.state().await?;
+    crate::routes::openwiki::record_reconciliation_result(&f.store, &mut completed, Ok(published))
+        .await?;
+    assert_eq!(
+        completed.applied_wiki_instructions_digest,
+        Some(format!("{:x}", Sha256::digest(b"A\n")))
+    );
+    assert_eq!(
+        completed.applied_wiki_instructions_override.as_deref(),
+        Some("A\n")
+    );
+    assert_eq!(completed.wiki_instructions.as_deref(), Some("B\n"));
+    let (shown, _) = crate::routes::openwiki::status_snapshot(&deployment, f.repository_id).await?;
+    assert!(shown.wiki_instructions_pending);
+    assert_ne!(
+        shown.status,
+        utils::repository_memory::RepositoryWikiStatus::Current
+    );
+    shutdown.cancel();
+    Ok(())
+}
+
+#[tokio::test]
+#[ignore = "requires a fresh task-owned lvk-openwiki-files-* LVK_INSTANCE_DIR; run alone"]
+async fn same_sha_instruction_only_sync_publishes_frozen_text() -> anyhow::Result<()> {
+    use deployment::Deployment;
+    use utils::repository_memory::{RepositoryMemoryState, RepositoryWikiSyncScope};
+
+    let instance = PathBuf::from(std::env::var("LVK_INSTANCE_DIR")?);
+    anyhow::ensure!(
+        instance.is_absolute()
+            && instance
+                .file_name()
+                .unwrap()
+                .to_string_lossy()
+                .starts_with("lvk-openwiki-files-")
+            && !instance.join("data/db.v2.sqlite").exists()
+    );
+    let shutdown = tokio_util::sync::CancellationToken::new();
+    let deployment = DeploymentImpl::new(shutdown.clone()).await?;
+    let f = Fixture::with_deployment_pool(Some(deployment.db().pool.clone())).await;
+    let digest = |text: &str| format!("{:x}", Sha256::digest(text.as_bytes()));
+    let old = crate::routes::openwiki::select_wiki_instructions(&f.maintenance, None)?;
+    let mut state = RepositoryMemoryState {
+        enabled: true,
+        target_branch: Some("main".into()),
+        source_commit: Some(f.source.clone()),
+        applied_wiki_instructions_digest: Some(digest(&old)),
+        ..Default::default()
+    };
+    f.store.save_state(&state).await?;
+    let save =
+        |content: &'static str| crate::routes::openwiki::management::SaveRepositoryWikiFile {
+            branch: "main".into(),
+            source: f.source.clone(),
+            path: "openwiki/INSTRUCTIONS.md".into(),
+            content: content.into(),
+            clear_override: Some(false),
+        };
+    let _ = crate::routes::openwiki::management::save_file(
+        axum::extract::State(deployment.clone()),
+        axum::extract::Path(f.repository_id),
+        axum::Json(save("A\n")),
+    )
+    .await?;
+    assert_eq!(git(&f.root, &["rev-parse", "HEAD"]), f.source);
+    assert!(git(&f.root, &["status", "--porcelain"]).is_empty());
+    assert_eq!(git(&f.maintenance, &["rev-parse", "HEAD"]), f.source);
+    assert!(git(&f.maintenance, &["status", "--porcelain"]).is_empty());
+    assert!(!f.root.join("openwiki/INSTRUCTIONS.md").exists());
+    let session = Session::create(
+        &f.pool,
+        &CreateSession {
+            executor: Some("CODEX".into()),
+            name: None,
+        },
+        Uuid::new_v4(),
+        f.workspace_id,
+    )
+    .await?;
+    let (mut request, mut attempt) = dispatch_envelopes(&f, session.id, Uuid::new_v4());
+    request.workspace.path = f
+        .maintenance
+        .parent()
+        .unwrap()
+        .to_string_lossy()
+        .into_owned();
+    attempt.workspace.path = request.workspace.path.clone();
+    db::models::agent_runtime::AgentRunRecord::persist_identity_before_launch(
+        &f.pool, &request, &attempt,
+    )
+    .await?;
+    state = f.store.state().await?;
+    let frozen = crate::routes::openwiki::select_wiki_instructions(
+        &f.maintenance,
+        state.wiki_instructions.as_deref(),
+    )?;
+    assert_eq!(frozen, "A\n");
+    state.active_wiki_instructions_digest = Some(digest(&frozen));
+    state.active_wiki_instructions_override = true;
+    state.active_wiki_instructions = Some(frozen);
+    state.active_source_commit = Some(f.source.clone());
+    state.active_sync_scope = RepositoryWikiSyncScope::PendingChanges;
+    state.active_instructions_force = crate::routes::openwiki::instructions_require_force(&state);
+    assert!(state.active_instructions_force);
+    state.active_run_id = Some(request.agent_run_id);
+    state.maintenance_workspace_id = Some(f.workspace_id);
+    state.maintenance_session_id = Some(session.id);
+    let (input_digest, _) = openwiki::sync_input::prepare(
+        &f.store,
+        f.repository_id,
+        f.workspace_id,
+        &f.source,
+        "main",
+        &[],
+        &state.active_sync_scope,
+    )?;
+    state.active_sync_input_digest = Some(input_digest);
+    f.store.save_state(&state).await?;
+    openwiki::setup::prepare_with_instructions(
+        &f.store,
+        f.workspace_id,
+        &f.maintenance,
+        &f.source,
+        state.active_wiki_instructions.as_deref(),
+    )?;
+    assert_eq!(
+        std::fs::read_to_string(f.maintenance.join("openwiki/INSTRUCTIONS.md"))?,
+        "A\n"
+    );
+    let wiki_run = Uuid::new_v4();
+    let args = json!({"root":f.maintenance,"mode":"update","force":true});
+    record_stub_audit(&f, &request, &attempt, stub_wiki_call(
+        "openwiki_begin", args.clone(),
+        json!({"status":"active","root":f.maintenance,"mode":"update","runId":wiki_run,"resumed":false}),
+    ), "failed").await?;
+    let _ = crate::routes::openwiki::management::save_file(
+        axum::extract::State(deployment.clone()),
+        axum::extract::Path(f.repository_id),
+        axum::Json(save("B\n")),
+    )
+    .await?;
+    state = f.store.state().await?;
+    assert_eq!(state.active_wiki_instructions.as_deref(), Some("A\n"));
+    openwiki::setup::prepare_with_instructions(
+        &f.store,
+        f.workspace_id,
+        &f.maintenance,
+        &f.source,
+        state.active_wiki_instructions.as_deref(),
+    )?;
+    assert_eq!(
+        std::fs::read_to_string(f.maintenance.join("openwiki/INSTRUCTIONS.md"))?,
+        "A\n"
+    );
+    std::fs::write(
+        f.maintenance.join("openwiki/index.md"),
+        "# Updated with A\n",
+    )?;
+    let mut retry = attempt.clone();
+    retry.request_id = Uuid::new_v4();
+    retry.idempotency_key = Uuid::new_v4().to_string();
+    retry.run_attempt_id = Uuid::new_v4();
+    retry.attempt_number = 2;
+    retry.mode = RunAttemptMode::Resume;
+    db::models::agent_runtime::AgentRunRecord::persist_retry_attempt_before_launch(
+        &f.pool, &request, &retry,
+    )
+    .await?;
+    sqlx::query("UPDATE agent_runs SET status='succeeded' WHERE id=?")
+        .bind(request.agent_run_id)
+        .execute(&f.pool)
+        .await?;
+    sqlx::query("UPDATE agent_run_attempts SET status='succeeded' WHERE id=?")
+        .bind(retry.run_attempt_id)
+        .execute(&f.pool)
+        .await?;
+    sqlx::query("UPDATE agent_process_registry SET registry_status='exited', pid=123, process_started_at=?, observed_exited_at=? WHERE run_attempt_id=?")
+        .bind(Utc::now()).bind(Utc::now()).bind(retry.run_attempt_id).execute(&f.pool).await?;
+    let incomplete = db::models::agent_runtime::AgentRunRecord::find(&f.pool, request.agent_run_id)
+        .await?
+        .unwrap();
+    let repo = db::models::repo::Repo::find_by_id(&f.pool, f.repository_id)
+        .await?
+        .unwrap();
+    // Missing retry audit must never count as a successful resumed Sync.
+    assert!(
+        crate::routes::openwiki::finish_run(&deployment, &repo, &f.store, &state, &incomplete)
+            .await
+            .is_err()
+    );
+    // A terminal error restores the temporary file; resume it exactly as a new
+    // owned attempt would before recording the final proof.
+    openwiki::setup::prepare_next_phase(&f.store, f.workspace_id, &f.maintenance, &f.source)?;
+    let mut frames = stub_wiki_call(
+        "openwiki_begin",
+        args,
+        json!({"status":"active","root":f.maintenance,"mode":"update","runId":wiki_run,"resumed":true}),
+    );
+    frames.extend(stub_wiki_call(
+        "openwiki_finish",
+        json!({"runId":wiki_run}),
+        json!({"status":"complete"}),
+    ));
+    record_stub_audit(&f, &request, &retry, frames, "succeeded").await?;
+    let run = db::models::agent_runtime::AgentRunRecord::find(&f.pool, request.agent_run_id)
+        .await?
+        .unwrap();
+    let published =
+        crate::routes::openwiki::finish_run(&deployment, &repo, &f.store, &state, &run).await?;
+    assert!(!published.1);
+    assert!(!f.maintenance.join("openwiki/INSTRUCTIONS.md").exists());
+    assert!(
+        !git(&f.root, &["diff", "--name-only", &f.source, "main"])
+            .lines()
+            .any(|path| path == "openwiki/INSTRUCTIONS.md")
+    );
+    crate::routes::openwiki::record_reconciliation_result(&f.store, &mut state, Ok(published))
+        .await?;
+    assert_eq!(state.applied_wiki_instructions_digest, Some(digest("A\n")));
+    assert_eq!(
+        state.applied_wiki_instructions_override.as_deref(),
+        Some("A\n")
+    );
+    assert_eq!(state.wiki_instructions.as_deref(), Some("B\n"));
+    let (shown, _) = crate::routes::openwiki::status_snapshot(&deployment, f.repository_id).await?;
+    assert!(shown.wiki_instructions_pending);
+    shutdown.cancel();
+    Ok(())
+}
+
+#[tokio::test]
+async fn frozen_instructions_survive_settings_change_and_candidate_validation() {
+    use utils::repository_memory::RepositoryMemoryState;
+    let f = Fixture::new().await;
+    let digest = |text: &str| {
+        use sha2::{Digest, Sha256};
+        format!("{:x}", Sha256::digest(text.as_bytes()))
+    };
+    let mut state = RepositoryMemoryState {
+        wiki_instructions: Some("A\n".into()),
+        active_wiki_instructions: Some("A\n".into()),
+        active_wiki_instructions_digest: Some(digest("A\n")),
+        active_source_commit: Some(f.source.clone()),
+        ..Default::default()
+    };
+    f.store.save_state(&state).await.unwrap();
+    std::fs::create_dir_all(f.maintenance.join("openwiki")).unwrap();
+    openwiki::setup::prepare_with_instructions(
+        &f.store,
+        f.workspace_id,
+        &f.maintenance,
+        &f.source,
+        state.active_wiki_instructions.as_deref(),
+    )
+    .unwrap();
+    assert_eq!(
+        std::fs::read_to_string(f.maintenance.join("openwiki/INSTRUCTIONS.md")).unwrap(),
+        "A\n"
+    );
+    state.wiki_instructions = Some("B\n".into());
+    f.store.save_state(&state).await.unwrap();
+    let resumed = f.store.state().await.unwrap();
+    crate::routes::openwiki::validate_frozen_instructions(&resumed).unwrap();
+    openwiki::setup::prepare_with_instructions(
+        &f.store,
+        f.workspace_id,
+        &f.maintenance,
+        &f.source,
+        resumed.active_wiki_instructions.as_deref(),
+    )
+    .unwrap();
+    std::fs::write(f.maintenance.join("openwiki/index.md"), "# Generated\n").unwrap();
+    openwiki::setup::restore(&f.store, f.workspace_id, &f.maintenance, &f.source).unwrap();
+    let candidate =
+        openwiki::publication_paths(&git::GitService::new(), &f.maintenance, &f.source).unwrap();
+    assert!(candidate.contains(&"openwiki/index.md".into()));
+    assert!(!candidate.contains(&"openwiki/INSTRUCTIONS.md".into()));
+    assert!(!f.maintenance.join("openwiki/INSTRUCTIONS.md").exists());
+    let review = f._temp.path().join("review");
+    let baseline = openwiki::bootstrap::copy_review_candidate(
+        &git::GitService::new(),
+        &f.maintenance,
+        &review,
+        &f.source,
+    )
+    .unwrap();
+    std::fs::write(
+        review.join("openwiki/INSTRUCTIONS.md"),
+        resumed.active_wiki_instructions.as_ref().unwrap(),
+    )
+    .unwrap();
+    assert_eq!(
+        std::fs::read_to_string(review.join("openwiki/INSTRUCTIONS.md")).unwrap(),
+        "A\n"
+    );
+    assert_eq!(
+        baseline,
+        openwiki::bootstrap::worktree_fingerprint(&f.maintenance).unwrap()
+    );
+    openwiki::setup::prepare_next_phase(&f.store, f.workspace_id, &f.maintenance, &f.source)
+        .unwrap();
+    assert_eq!(
+        std::fs::read_to_string(f.maintenance.join("openwiki/INSTRUCTIONS.md")).unwrap(),
+        "A\n"
+    );
+    openwiki::setup::restore(&f.store, f.workspace_id, &f.maintenance, &f.source).unwrap();
+    assert!(
+        !openwiki::publication_paths(&git::GitService::new(), &f.maintenance, &f.source)
+            .unwrap()
+            .contains(&"openwiki/INSTRUCTIONS.md".into())
+    );
+    assert_eq!(git(&f.maintenance, &["rev-parse", "HEAD"]), f.source);
+    assert_eq!(git(&f.root, &["rev-parse", "main"]), f.source);
 }
 
 #[tokio::test]
@@ -1666,7 +2445,7 @@ fn dispatch_envelopes(
         schema_version: AGENT_REQUEST_SCHEMA_VERSION,
         payload_version: AGENT_REQUEST_PAYLOAD_VERSION,
         request_id: Uuid::new_v4(),
-        idempotency_key: "cleanup-host".into(),
+        idempotency_key: format!("cleanup-host-{agent_run}"),
         session_id: session,
         agent_run_id: agent_run,
         turn_id: turn,
@@ -1690,7 +2469,7 @@ fn dispatch_envelopes(
         schema_version: request.schema_version,
         payload_version: request.payload_version,
         request_id: request.request_id,
-        idempotency_key: "cleanup-attempt".into(),
+        idempotency_key: format!("cleanup-attempt-{attempt}"),
         session_id: session,
         agent_run_id: agent_run,
         turn_id: turn,
