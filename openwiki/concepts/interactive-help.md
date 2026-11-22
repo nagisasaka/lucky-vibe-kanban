@@ -5,7 +5,7 @@ description: 一般質問の会話、版固定の公開 source 読取と配布�
 tags: [help, source, mcp, distribution]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-22T05:31:45.518Z
+    at: 2026-11-22T18:59:30.190Z
 sources:
   - id: openwiki-source-a373f9a8da41f89b1ce1d5bd
     resource: repo://crates/server/src/bundled_source.rs
@@ -13,7 +13,7 @@ sources:
     resource: repo://crates/server/src/remote_mcp/help.rs
   - id: openwiki-source-5fe6396817bf95b4040eebdb
     resource: repo://deploy/server/SOURCE.md
-generated: { by: "codex", at: "2026-11-22T05:31:45.518Z" }
+generated: { by: "codex", at: "2026-11-22T18:59:30.190Z" }
 ---
 
 # 稼働版に基づく対話ヘルプ
@@ -38,6 +38,6 @@ Server は既定 `/opt/lvk/source`、または `LVK_SOURCE_PATH` の source を 
 
 配布 image は公開 commit と到達可能な祖先を同梱する。全 branch・tag は保証せず、同梱 source の編集は稼働 binary を変更しない。[同梱と検証手順](../../deploy/server/SOURCE.md)・[Dockerfile](../../Dockerfile)
 
-実 image の受入は、許可された隔離環境で immutable digest、実行 UID、binary revision と source HEAD、祖先の log/diff、認証付き読取を確認する。保持 volume を使う更新、実 provider の質問・継続・取消、実 OAuth/MCP の scope と失敗も別々に確認する。Docker-free fixture や mock browser の成功をこれらの代わりにしない。秘密を証拠へ含めず、所有 test process の停止と cleanup を確認する。[配布検証](../../deploy/server/SOURCE.md)・[ヘルプ fixture](../../tests/help/README.md)・[共有資源](shared-resource-coordination.md)
+実 image の受入は、許可された隔離環境で immutable digest、実行 UID、binary revision と source HEAD、祖先の log/diff、認証付き読取を確認する。保持 volume を使う更新、実 provider の質問・継続・取消、実 OAuth/MCP の scope と失敗も別々に確認する。Docker-free fixture や mock browser の成功をこれらの代わりにしない。秘密を証拠へ含めず、所有 test process の停止と cleanup を確認する。[配布検証](../../deploy/server/SOURCE.md)・[ヘルプ fixture](../../tests/help/README.md)
 
 同梱 source の unit fixture は版不一致や shallow 履歴の拒否を検査するが、最終 image や実 provider の成功を証明しない。[tests](../../crates/server/src/bundled_source.rs)

@@ -5,7 +5,7 @@ description: 凍結グラフから Agent Run を配送し、待機、再起動�
 tags: [workflow, orchestration, recovery, lifecycle]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-22T05:31:45.518Z
+    at: 2026-11-22T18:59:30.190Z
 sources:
   - id: openwiki-source-28ba6f0a94db33f3977b34d2
     resource: repo://crates/server/src/workflow_runtime/presets.rs

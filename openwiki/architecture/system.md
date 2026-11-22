@@ -5,7 +5,7 @@ description: LVK の Web、ローカル実行基盤、永続化と起動回復�
 tags: [architecture, startup, persistence, deployment]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-22T05:31:45.518Z
+    at: 2026-11-22T18:59:30.190Z
 sources:
   - id: openwiki-source-5c2565a649f8be059d306209
     resource: repo://crates/db/src/lib.rs
@@ -13,7 +13,7 @@ sources:
     resource: repo://crates/local-deployment/src/lib.rs
   - id: openwiki-source-ed8c84278dba8a1f45af40e9
     resource: repo://crates/server/src/startup.rs
-generated: { by: "codex", at: "2026-11-22T05:31:45.518Z" }
+generated: { by: "codex", at: "2026-11-22T18:59:30.190Z" }
 ---
 
 # システム境界と起動順序
@@ -29,14 +29,13 @@ flowchart LR
   Deployment --> Git[Git と Workspace]
   Deployment --> Host[Agent process host]
   Host --> Provider[Provider CLI]
-  API --> Runner[Execution Bridge Runner]
 ```
 
 ## 責任と保存先
 
 `server` は HTTP・WebSocket と製品操作を受け、`server-access` は認証とメンバーを扱う。`Deployment` の実装である `LocalDeployment` は DB、Git、Workspace、実行 port などを組み立てる。`executors` は provider の通信を扱い、独立 host は実プロセスと監査を所有する。[server](../../crates/server/src/lib.rs)・[組立](../../crates/local-deployment/src/lib.rs)・[Agent Runtime](agent-runtime.md)
 
-`workflow` はグラフの契約を持ち、server と service の runtime は永続化と副作用を伴う進行を担当する。外部 MCP は製品操作を公開し、Execution Bridge は登録 Runner で明示的に処理する別の経路である。[Workflow](workflow-runtime.md)・[外部アクセス](../integrations/remote-access.md)・[共有資源](../concepts/shared-resource-coordination.md)
+`workflow` はグラフの契約を持ち、server と service の runtime は永続化と副作用を伴う進行を担当する。外部 MCP は製品操作を公開する。[Workflow](workflow-runtime.md)・[外部アクセス](../integrations/remote-access.md)
 
 SQLite は Board、実行の canonical 状態、確定 Change Manifest などを保持する。Git worktree、Native Audit、Repository Memory の作業用 journal やユーザーの共有成果物は別の寿命を持つ。DB のコピーだけでそれらを復元できると仮定しない。[記憶の境界](../concepts/repository-memory.md)・[サーバーのバックアップ](../operations/server-container.md)
 
@@ -51,10 +50,9 @@ Standalone とライブラリーの起動経路は共通の local deployment を
 回復は実プロセスの所有者から外側へ進む。
 
 1. Deployment 構築時に provider host を再照合する。
-2. 中断した共有資源準備を fence し、耐久 direct command を再照合する。
 3. Setup launch gate を再照合する。
 4. orchestration の outbox・inbox・lease と Workflow Run を再照合する。
-5. OpenWiki と共有資源の monitor、Workflow completion watcher、定時処理を起動する。
+5. OpenWiki、Workflow completion watcher、定時処理を起動する。
 
 旧 ExecutionProcess の孤児処理は、新しい Agent Run の生存中 host を誤判定し得るため、この回復には流用しない。Standalone とライブラリーの両入口を変更時に確認し、片方の monitor 配線を他方にもあると仮定しない。[embedded 起動](../../crates/server/src/startup.rs)・[standalone 起動](../../crates/server/src/main.rs)
 

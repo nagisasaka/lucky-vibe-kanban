@@ -5,13 +5,13 @@ description: 会話、実行依頼、実行試行の識別と継続の境界。
 tags: [session, agent-run, lifecycle]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-22T05:31:45.518Z
+    at: 2026-11-22T18:59:30.190Z
 sources:
   - id: openwiki-source-3e5425718d87b437a12edd60
     resource: repo://crates/db/src/models/session.rs
   - id: openwiki-source-351583963abfe37bbf137f7e
     resource: repo://crates/executors/src/runtime/contracts.rs
-generated: { by: "codex", at: "2026-11-22T05:31:45.518Z" }
+generated: { by: "codex", at: "2026-11-22T18:59:30.190Z" }
 ---
 
 # Session・Agent Run・Attempt
@@ -28,7 +28,7 @@ Session の実行設定は最新 attempt の保存済み launch request から�
 
 ## 状態と観測
 
-Run は pending、starting、running、入力・承認待ち、cancelling を経て succeeded、failed、cancelled、crashed または audit_failed に至る。終端状態と実プロセスが確実に終了した証拠は別であり、共有資源の解放は [調整契約](shared-resource-coordination.md) に従う。表示の経過時間、通知や会話の末尾だけから成功や統合を推定しない。[状態型](../../crates/executors/src/runtime/contracts.rs)・[投影](../../crates/executors/src/runtime/reducer.rs)
+Run は pending、starting、running、入力・承認待ち、cancelling を経て succeeded、failed、cancelled、crashed または audit_failed に至る。終端状態と実プロセスが確実に終了した証拠は別である。表示の経過時間、通知や会話の末尾だけから成功や統合を推定しない。[状態型](../../crates/executors/src/runtime/contracts.rs)・[投影](../../crates/executors/src/runtime/reducer.rs)
 
 Goal は objective、状態、予算と使用量を持ち、Run の成功とは別の寿命を持つ。会話中の質問・承認や非同期回答にはそれぞれ対象 Run と期限があり、後続 Run へ無条件に流用しない。実装と停止・回復の詳細は [Agent Runtime](../architecture/agent-runtime.md) を参照する。[Goal 契約](../../crates/executors/src/runtime/contracts.rs)・[質問](../../crates/server/src/routes/sessions/questions.rs)
 

@@ -17,6 +17,5 @@
 - [実行環境へのアクセス](runtime-access.md) - 外部 MCP の直接 file・process 操作、管理設定、Workspace 境界と結果不明時の扱い。
 - [サーバー認証・設定・回復](server-access.md) - Local/Public 配置、初回認証、session、閉鎖状態と限定された operator 回復を説明する。
 - [Session・Agent Run・Attempt](session-and-agent-run.md) - 会話、実行依頼、実行試行の識別と継続の境界。
-- [共有リソースの所有権と調停](shared-resource-coordination.md) - 実機、DB、配備先を安全に共有するための操作と復旧。
 - [Workflow Attempt とグラフ](workflow-attempt.md) - Issue の複数工程、固定 preset、実行と待機の関係。
 - [Workspace と Repository](workspace.md) - 作業場所、接続 Repo、所有権と履歴の寿命。

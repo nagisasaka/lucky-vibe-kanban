@@ -5,11 +5,11 @@ description: 作業場所、接続 Repo、所有権と履歴の寿命。
 tags: [workspace, repository, worktree]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-22T05:31:45.518Z
+    at: 2026-11-22T18:59:30.190Z
 sources:
   - id: openwiki-source-5f083da2f629bcd57e386ad4
     resource: repo://crates/db/src/models/workspace.rs
-generated: { by: "codex", at: "2026-11-22T05:31:45.518Z" }
+generated: { by: "codex", at: "2026-11-22T18:59:30.190Z" }
 ---
 
 # Workspace と Repository
@@ -28,7 +28,7 @@ Git author／committer は LVK の actor や provider の identity と別であ�
 
 ## 共有領域と寿命
 
-Repo ごとの `.lvk/shared/` には一時受け渡し、再生成可能 cache、利用者が保持する persistent が分かれる。異なる Repo の store を混ぜず、必要な結果を一時領域だけに置かない。実機・DB などの排他は worktree 分離とは別で、[共有資源調停](shared-resource-coordination.md) を使う。
+Repo ごとの `.lvk/shared/` には一時受け渡し、再生成可能 cache、利用者が保持する persistent が分かれる。異なる Repo の store を混ぜず、必要な結果を一時領域だけに置かない。実機・DB の共有は worktree 分離とは別であり、必要に応じて環境や作業順序を分ける。
 
 archive は明示操作で、忙しい処理や所有中の環境を確認する。archive 状態と worktree 物理削除は別の結果であり、削除失敗や filesystem 操作後の DB 失敗では実状態と receipt を確認する。履歴閲覧は worktree を再生成せず、未 commit 内容が削除後に復元される保証はない。明示削除は process や監査ログも削除対象になり得る。[archive](../../crates/server/src/routes/workspaces/archive.rs)・[削除](../../crates/workspace-manager/src/workspace_manager.rs)・[確認手順](../operations/workspace-inspection.md)
 

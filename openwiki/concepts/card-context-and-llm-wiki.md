@@ -5,7 +5,7 @@ description: 旧 Card Context の本文保護、限定的な送信時処理と�
 tags: [issue, context, parallel-work, repository-memory]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-22T05:31:45.518Z
+    at: 2026-11-22T18:59:30.190Z
 sources:
   - id: openwiki-source-f4e0f9b2ce513d3f8b8b070e
     resource: repo://crates/executors/src/executors/provider_adapter.rs
@@ -13,7 +13,7 @@ sources:
     resource: repo://crates/server/src/routes/parallel_context.rs
   - id: openwiki-source-cc3b0007b9399fe7dda21b8e
     resource: repo://crates/services/src/services/parallel_context.rs
-generated: { by: "codex", at: "2026-11-22T05:31:45.518Z" }
+generated: { by: "codex", at: "2026-11-22T18:59:30.190Z" }
 ---
 
 # 保存済み本文と並列作業の参照
@@ -28,7 +28,7 @@ generated: { by: "codex", at: "2026-11-22T05:31:45.518Z" }
 
 ## 現在の identity とガイド
 
-通常起動では現在の Run・Repo identity と短い契約を組み立て、Manifest、並列参照、共有資源の詳細を内容に対応した on-demand guide に置く。ガイドは既存の内容と一致すれば再利用し、未知の内容や symlink を上書きしない。stdio `get_context` は引数なしでは metadata を返し、`coding`、`parallel`、`resources` を明示した場合に該当案内を返す。[ガイド](../../crates/utils/src/agent_guides.rs)・[context tool](../../crates/mcp/src/task_server/tools/context.rs)・[実行時指示](../../crates/executors/src/env.rs)
+通常起動では現在の Run・Repo identity と短い契約を組み立て、Manifest と並列参照の詳細を内容に対応した on-demand guide に置く。ガイドは既存の内容と一致すれば再利用し、未知の内容や symlink を上書きしない。stdio `get_context` は引数なしでは metadata を返し、`coding`、`parallel` を明示した場合に該当案内を返す。[ガイド](../../crates/utils/src/agent_guides.rs)・[context tool](../../crates/mcp/src/task_server/tools/context.rs)・[実行時指示](../../crates/executors/src/env.rs)
 
 [Repository shared storage](workspace.md) の受渡し用 tmp は Run 終了だけで消えず、受渡し完了後に不要かつ非使用であることを確認して整理する。Git の著者 identity と [Change Manifest](repository-memory.md) の現在 identity は別である。[README](../../README.md)
 

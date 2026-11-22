@@ -5,13 +5,13 @@ description: 外部 MCP の直接 file・process 操作、管理設定、Workspa
 tags: [runtime, mcp, authorization, processes, lifecycle]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-22T05:31:45.518Z
+    at: 2026-11-22T18:59:30.190Z
 sources:
   - id: openwiki-source-076036ed7bdac82d628d39d1
     resource: repo://crates/server/src/remote_mcp/environment_process.rs
   - id: openwiki-source-0801a7e5bbcc064c12effc80
     resource: repo://crates/server/src/remote_mcp/environment.rs
-generated: { by: "codex", at: "2026-11-22T05:31:45.518Z" }
+generated: { by: "codex", at: "2026-11-22T18:59:30.190Z" }
 ---
 
 # 実行環境へのアクセス
@@ -22,7 +22,7 @@ Runtime Access は認証された外部 MCP client が LVK の OS user 権限で
 
 `files_enabled` と `execution_enabled` は独立し、既定は両方 ON、直接 file API の roots は `/` である。roots は1〜64個の絶対 directory とし、保存時に canonicalize する。**file roots は直接 file API の範囲であり、起動した program のアクセスを閉じ込めない。** File を OFF にしても program の OS 書込みは禁止されない。[設定](../../crates/server/src/remote_mcp/environment.rs)
 
-全 tool は `lvk:read` と `lvk:runtime:read`、直接変更にはさらに `lvk:write`、起動・停止・self-restart には `lvk:runtime:execute` を要求する。能力参照以外は明示 Project を照合するが、Project は filesystem tenant 境界ではない。共有 device・DB・配置の操作には別途[共有リソース調停](shared-resource-coordination.md)が必要である。[tool 定義](../../crates/server/src/remote_mcp/environment.rs)
+全 tool は `lvk:read` と `lvk:runtime:read`、直接変更にはさらに `lvk:write`、起動・停止・self-restart には `lvk:runtime:execute` を要求する。能力参照以外は明示 Project を照合するが、Project は filesystem tenant 境界ではない。共有 device・DB・配置では他の作業への影響を確認し、必要に応じ環境や作業順序を分ける。[tool 定義](../../crates/server/src/remote_mcp/environment.rs)
 
 管理者は Settings → MCP 連携から設定を保存する。API は admin と expected revision を再確認し、設定と audit を同じ transaction に保存する。未保存なら既定を使うが、破損 row や DB 障害を緩い既定値に戻さない。各要求と副作用直前に再照合する。Execution OFF は以後の観測・出力・停止も拒否するが、既存 process を自動 kill しない。[設定 API](../../crates/server/src/remote_mcp/environment_settings.rs)
 

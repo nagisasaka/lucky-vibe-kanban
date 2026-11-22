@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:7913a18ab093299e2c7ae62f0777db669ecc23ff3bb1e2c95c706dd610f0b100",
+  "pageVersion": "sha256:6acf748f2fac002497c893884b57fcdf6635a3b82891be926ab9f647976fe26c",
   "claims": [
     {
       "id": "claim_25aa05a8d9b14b6f90d482bf1291e190",
@@ -17,7 +17,7 @@
       "statement": "起動時は provider host の再照合後、direct command、Setup gate、orchestration、Workflow の順に回復する。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/startup.rs#L183-L225",
+          "resource": "repo://crates/server/src/startup.rs#L178-L220",
           "version": "repo-lines-v1:sha256:e36e37198fa84777022f52823514999e55be0f2ba91fbfa5b89c199700833c05:eyJzZWxlY3RlZExpbmVDb3VudCI6NDMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjEwN2NhMmRlMzQ4MmI5NmE5OGNmNjg5MjZmMzA1M2VhMWZkMzVmYTY4YzIwZWVkMjJiMzdiZGQxNjljYWE5ZDAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE1YjYyMGIyNGQ0ODg2ZWUzN2I3NjNjZjE3MGU3ZDg4MTUyNGYwMGQ1Y2FlYzg4M2Y2YjY1Y2I4NjY3OWYxMTIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImYzMzIzNTljYzdjNTZlZjc1ZjIwN2E0ZDYwNDQ3OWFkZDc5ZTI4YmEyZmE4M2VjZjZlOTUzMWU0OGVkNmVlZWYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJhZGJlYmY3ODhmMzAyNjdhZjMwMTJmNzVkMTIwOTcyZDU3MjVkYjVjMzFkNjE2NTAyMjBlNGZmMWE1MDM3ZTQifQ"
         }
       ]
@@ -27,14 +27,14 @@
       "statement": "DB 初期化は migration 後に Agent Runtime schema guard を実行し、SQLite busy timeout は5秒である。",
       "evidence": [
         {
-          "resource": "repo://crates/db/src/lib.rs#L12-L31",
-          "version": "repo-lines-v1:sha256:3fcecd0dced1d08de6422709d0412a84f465de49b70f6dc9dc8b9ec0ae738236:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY2YzcxOTYyNmY3NWU3ZTFlM2RkYjY3YTMxMzZhMGJmZjIxZTE3MjA3YjU5MmZkYjU1MWUxZGJjY2UyMmE2OGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU1MjJjNDJjZDE5YzZkMDNkODA4YzQ1MjcyMDU1MjgyNWI3ZWExYzViNDkxYjIxODUxMWNhYzc0MTVjZjlkOWIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjIxODY5MTI2OTZmMzA4N2Y5MDRiZmQyNGE1ZjlkNmRhMWZkZjFjNDE0YzE1MDFhMzA3Yzc5MmYwZDg5MjNhNTkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhjMTZkY2U3MDZmNmFlNzQwNDk2OWU3ZmUzODdmY2RlODdkNmJhM2Y2ZWY0NDFmNDE1ODJkZWZkNDgyMWZjODMifQ"
+          "resource": "repo://crates/db/src/lib.rs#L12-L42",
+          "version": "repo-lines-v1:sha256:97d299f0e8163b16b8ca44eee60d4badd0a14853e0afe00b7e85cc6100ad8a9d:eyJzZWxlY3RlZExpbmVDb3VudCI6MzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY2YzcxOTYyNmY3NWU3ZTFlM2RkYjY3YTMxMzZhMGJmZjIxZTE3MjA3YjU5MmZkYjU1MWUxZGJjY2UyMmE2OGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU1MjJjNDJjZDE5YzZkMDNkODA4YzQ1MjcyMDU1MjgyNWI3ZWExYzViNDkxYjIxODUxMWNhYzc0MTVjZjlkOWIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjIxODY5MTI2OTZmMzA4N2Y5MDRiZmQyNGE1ZjlkNmRhMWZkZjFjNDE0YzE1MDFhMzA3Yzc5MmYwZDg5MjNhNTkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhjMTZkY2U3MDZmNmFlNzQwNDk2OWU3ZmUzODdmY2RlODdkNmJhM2Y2ZWY0NDFmNDE1ODJkZWZkNDgyMWZjODMifQ"
         }
       ]
     }
   ],
   "verification": {
     "by": "openwiki/0.9.0",
-    "at": "2026-11-22T05:31:45.518Z"
+    "at": "2026-11-22T18:59:30.190Z"
   }
 }

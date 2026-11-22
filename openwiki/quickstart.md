@@ -5,11 +5,11 @@ description: LVK の目的、主要概念と調査先。
 tags: [overview, quickstart]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-22T05:31:45.518Z
+    at: 2026-11-22T18:59:30.190Z
 sources:
   - id: openwiki-source-23775c3de52f3ab95a13cb8b
     resource: repo://README.md
-generated: { by: "codex", at: "2026-11-22T05:31:45.518Z" }
+generated: { by: "codex", at: "2026-11-22T18:59:30.190Z" }
 ---
 
 # クイックスタートと調査案内
@@ -34,5 +34,5 @@ Lucky Vibe Kanban（LVK）は、カンバンで仕事を計画し、coding agent
 
 - 概念の関係は [用語集](concepts/glossary.md)、実行と回復は [Agent Runtime](architecture/agent-runtime.md) を読む。
 - ファイル・差分・実行状態は [Workspace の確認](operations/workspace-inspection.md)、外部接続と receipt は [MCP](integrations/remote-access.md) を参照する。
-- 実機や DB の並行操作は [共有資源調停](concepts/shared-resource-coordination.md) を使い、worktree の分離だけで排他が成立すると考えない。
+- 実機や DB の並行操作では、worktree の分離だけで排他が成立すると考えず、必要に応じて環境や作業順序を分ける。
 - 会話の質問は [対話ヘルプ](concepts/interactive-help.md)、設計意図は [設計メモ](concepts/design-notes.md)、小さなメモは [Project Todo](concepts/project-todos.md) を参照する。

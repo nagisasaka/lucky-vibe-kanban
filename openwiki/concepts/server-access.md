@@ -5,7 +5,7 @@ description: Local/Public 配置、初回認証、session、閉鎖状態と限�
 tags: [authentication, authorization, sessions, security, recovery]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-22T05:31:45.518Z
+    at: 2026-11-22T18:59:30.190Z
 sources:
   - id: openwiki-source-20b72970921fabf5b536668c
     resource: repo://crates/server-access/src/handlers.rs
@@ -15,7 +15,7 @@ sources:
     resource: repo://crates/server-access/src/store.rs
   - id: openwiki-source-a13fe4db1eee073d0a7e2c4d
     resource: repo://crates/server/src/main.rs
-generated: { by: "codex", at: "2026-11-22T05:31:45.518Z" }
+generated: { by: "codex", at: "2026-11-22T18:59:30.190Z" }
 ---
 
 # サーバー認証・設定・回復
@@ -52,7 +52,7 @@ Auth0 作成支援は Preview と Apply を別にし、確認後に外部 plan �
 
 ### Operator の回復手順
 
-1. 対象の配置 directory、Compose project・ファイル、image digest / binary、volume と設定を記録する。新規 agent・Runner 作業を始めず、実 process と共有資源の収束を確認する。
+1. 対象の配置 directory、Compose project・ファイル、image digest / binary、volume と設定を記録する。新規 agent 作業を始めず、実 process の終了を確認する。
 2. 同じ deployment を停止し、DB と存在する journal、`access.key`、`access.configured`、設定・secret・証明書および home/repos/work 等の全 volume を同じ時点の組として保全する。[停止 backup](../operations/server-container.md#更新前のバックアップと復元検証)の archive 読取と hash を検証し、失敗したら先へ進まない。
 3. 同じ image/binary、project、volume と設定で既存 deployment を `docker compose start` で戻し、`docker compose ps` と logs を確認する。新しい image や空 volume を作らない。既存 service や対応関係が不明なら停止して調査する。
 4. `docker compose exec lvk node /opt/lvk-server/healthcheck.mjs` の成功と、既存 HTTPS URL の `/?access=recovery` で証明書検証・復旧画面を確認する。health は認証修復の成功ではなく、業務 API の閉鎖を解除する根拠でもない。

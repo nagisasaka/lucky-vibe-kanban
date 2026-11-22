@@ -1,18 +1,18 @@
 ---
 type: integration
-title: 外部アクセス・MCP・Runner
+title: 外部アクセス・MCP
 description: 外部接続、権限、操作 receipt と実行の境界。
 tags: [mcp, remote, operations]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-22T05:31:45.518Z
+    at: 2026-11-22T18:59:30.190Z
 sources:
   - id: openwiki-source-6adda10f98b079272f82a4cc
     resource: repo://crates/server/src/remote_mcp/operations.rs
-generated: { by: "codex", at: "2026-11-22T05:31:45.518Z" }
+generated: { by: "codex", at: "2026-11-22T18:59:30.190Z" }
 ---
 
-# 外部アクセス・MCP・Runner
+# 外部アクセス・MCP
 
 外部 Streamable HTTP `/mcp` は Auth0 の MCP を有効にした配置で利用し、local stdio MCP と別の入口である。Web、MCP、内部 agent は同一の資格情報ではない。公開配置の初期設定と回復は [サーバー認証](../concepts/server-access.md) を参照する。[入口](../../crates/server/src/remote_mcp/mod.rs)
 
@@ -26,8 +26,6 @@ Workspace archive は prepare で対象を確認し、利用者の確認後に c
 
 実行承認は対象 Run と単発要求に結び付く。受付と provider による解決、tool 実行完了は別である。[承認](../../crates/server/src/remote_mcp/execution_approvals.rs)
 
-## Runner と Wiki
-
-外部 Runner は実行 machine であり、資源の所有権ではない。全 resource を原子的に取得し、cleanup と独立した idle 確認まで操作を終了しない。切断時の journal と operator recovery は [共有資源](../concepts/shared-resource-coordination.md) を参照する。
+## Wiki
 
 既存 Repository Wiki の同期は read + write で要求し、受付と公開完了を区別する。初期生成や設定の管理は別入口にある。[Wiki tool](../../crates/server/src/remote_mcp/repository_wiki.rs)・[保守](../operations/openwiki-maintenance.md)

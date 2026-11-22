@@ -5,7 +5,7 @@ description: Issue の複数工程、固定 preset、実行と待機の関係。
 tags: [workflow, attempt, graph]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-22T05:31:45.518Z
+    at: 2026-11-22T18:59:30.190Z
 sources:
   - id: openwiki-source-a517c0f8e44d2cf0c440fbfc
     resource: repo://crates/server/src/routes/workflows.rs
