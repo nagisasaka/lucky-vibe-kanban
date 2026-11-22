@@ -186,10 +186,8 @@ impl Fixture {
         let mut graph = workflow::templates::openwiki_bootstrap().graph;
         for node in &mut graph.nodes {
             if node.id == "review" {
-                node.data.prompt_template = Some(
-                    openwiki::bootstrap::review_prompt(&self.maintenance, "ja")
-                        + &inventory.prompt(&self.store, true),
-                );
+                node.data.prompt_template =
+                    Some(openwiki::bootstrap::review_prompt(&self.maintenance, "ja"));
             } else if node.id == "generate" {
                 node.data.prompt_template = Some(
                     openwiki::bootstrap::writer_prompt(&self.maintenance, "ja", None)
@@ -245,21 +243,24 @@ impl WorkflowAgentExecutor for FakeBootstrap<'_> {
     async fn run_agent(&self, request: AgentNodeRequest) -> Result<AgentNodeExecution, ApiError> {
         let fixture = self.fixture;
         let inventory = fixture.inventory(request.run_id).await?;
-        if matches!(request.node_id.as_str(), "generate" | "review") {
-            assert_eq!(request.prompt.matches("Knowledge organisation:").count(), 1);
-            assert!(request.prompt.contains("canonical explanation home"));
-            assert_eq!(
-                request.prompt.contains("fictional job-processing product"),
-                request.node_id == "generate",
-            );
+        if request.node_id == "generate" {
+            assert!(request.prompt.contains("Knowledge organisation:"));
             assert!(
                 request
                     .prompt
-                    .contains(&inventory.prompt(&fixture.store, request.node_id == "review"))
+                    .contains(&inventory.prompt(&fixture.store, false))
             );
+        }
+        if request.node_id == "review" {
+            assert!(!request.prompt.contains("Knowledge organisation:"));
             assert!(
-                !request.prompt.contains("\"digest\":"),
-                "host input is not workflow context"
+                !request
+                    .prompt
+                    .contains(&inventory.prompt(&fixture.store, true))
+            );
+            assert_eq!(
+                request.executor_config.as_ref().unwrap()["execution_mode"],
+                "code"
             );
         }
         assert_eq!(
@@ -286,7 +287,7 @@ impl WorkflowAgentExecutor for FakeBootstrap<'_> {
         };
         let output = match request.node_id.as_str() {
             "generate" => {
-                std::fs::create_dir(fixture.maintenance.join("openwiki")).unwrap();
+                std::fs::create_dir_all(fixture.maintenance.join("openwiki")).unwrap();
                 std::fs::write(
                     fixture.maintenance.join("openwiki/INSTRUCTIONS.md"),
                     include_bytes!("../../../../assets/openwiki-instructions.md"),
@@ -297,7 +298,22 @@ impl WorkflowAgentExecutor for FakeBootstrap<'_> {
                     "Generated Wiki",
                 )
                 .unwrap();
+                if self.fail == Some("retention") {
+                    std::fs::rename(
+                        fixture.maintenance.join("openwiki/moved.md"),
+                        fixture.maintenance.join("openwiki/destination.md"),
+                    )
+                    .unwrap();
+                    std::fs::write(
+                        fixture.maintenance.join("openwiki/workspace.md"),
+                        "DirectFolder is an existing folder.",
+                    )
+                    .unwrap();
+                }
                 "SENSITIVE_GENERATOR_CONVERSATION".into()
+            }
+            "review" if matches!(self.fail, Some("missing_review" | "malformed_review")) => {
+                json!({"review_missing":true}).to_string()
             }
             "review" => {
                 assert!(!request.prompt.contains("SENSITIVE_GENERATOR_CONVERSATION"));
@@ -305,23 +321,71 @@ impl WorkflowAgentExecutor for FakeBootstrap<'_> {
                 assert!(
                     request
                         .prompt
-                        .contains("unanswered question, inspected evidence")
+                        .contains("Read openwiki/INSTRUCTIONS.md first")
                 );
-                assert!(request.prompt.contains(
-                    "Missing standalone pages or preferred directory names alone are not material"
-                ));
                 assert!(request.selected_skills.is_none());
-                let findings: Vec<_> = (0..20).map(|index| json!({
-                    "severity": if self.refine {"material"} else {"minor"},
-                    "title":format!("Coverage gap {index}"),"description":"契約と実装を確認し、知識の不足を具体的に記録。".repeat(40),
-                    "evidencePaths":["source.rs"],"recommendedAction":"expand_page"
+                let findings: Vec<_> = (0..if self.refine {20} else {0}).map(|index| json!({
+                    "kind":"retention",
+                    "page":format!("Coverage gap {index}"),"description":"契約と実装を確認し、知識の不足を具体的に記録。".repeat(40),
+                    "evidencePaths":["source.rs"]
                 })).collect();
-                let raw =
-                    json!({"version":1,"verdict":if self.refine {"needs_refinement"} else {"pass"},
-                    "summary":"All findings preserved","findings":findings})
+                let raw = if self.fail == Some("pathless_clues") {
+                    // Previous real Review used this invalid fixture/ prefix.
+                    json!({"version":2,"verdict":"incomplete","summary":"Partial review",
+                        "findings":[
+                            {"kind":"retention","page":"openwiki/index.md",
+                             "description":"独立 staging の認証と切替時の注意が失われている。cookie は host 単位であり別 browser profile が必要。",
+                             "evidencePaths":["fixture/deploy/developer/STAGING.md"]},
+                            {"kind":"retention","page":"openwiki/index.md",
+                             "description":"Cookies are isolated by port; shared profiles are safe.",
+                             "evidencePaths":["../outside"]},
+                            {"kind":"instructions","page":"openwiki/index.md",
+                             "description":"An uncorroborated requirement with no evidence."}
+                        ]}).to_string()
+                } else if self.fail == Some("incomplete") {
+                    json!({"version":2,"verdict":"incomplete", "summary":"根拠の確認が一部未完了",
+                        "findings": if self.refine {findings} else {vec![]}})
+                    .to_string()
+                } else if self.fail == Some("retention") {
+                    let parent = tempfile::tempdir().unwrap();
+                    let copy = parent.path().join("review");
+                    openwiki::bootstrap::copy_review_candidate(
+                        &git::GitService::new(),
+                        &fixture.maintenance,
+                        &copy,
+                        &fixture.source,
+                    )
+                    .unwrap();
+                    let focus = openwiki::bootstrap::review_reductions(
+                        &git::GitService::new(),
+                        &fixture.maintenance,
+                        &fixture.source,
+                        &copy,
+                    )
+                    .unwrap();
+                    assert_eq!(focus["pages"].as_array().unwrap().len(), 2);
+                    assert_eq!(
+                        std::fs::read_to_string(copy.join("openwiki/destination.md")).unwrap(),
+                        "The procedure survives at its new home."
+                    );
+                    // Script the semantic verdict; this test exercises the real
+                    // report/planner/publication pipeline, not model judgement.
+                    json!({"version":2,"verdict":"pass",
+                        "summary":"openwiki/moved.md: moved to openwiki/destination.md, opening paragraph; no knowledge lost.",
+                        "findings":[{"kind":"retention","page":"DirectFolder auto-merge boundary missing",
+                            "description":"openwiki/workspace.md lost the still-current constraint: DirectFolder is excluded from automatic merge. source.rs still rejects it. Restore that explicit constraint in the workspace explanation.",
+                            "evidencePaths":["openwiki/workspace.md","source.rs"]}]}).to_string()
+                } else {
+                    let raw = json!({"version":2,"verdict":"pass",
+                        "summary":"All findings preserved","findings":findings})
                     .to_string();
-                assert!(raw.len() > 12_000);
-                let review = CoverageReview::parse(&raw).unwrap();
+                    if self.refine {
+                        assert!(raw.len() > 12_000);
+                    }
+                    raw
+                };
+                let mut review = CoverageReview::parse(&raw).unwrap();
+                review.retain_current_evidence(&fixture.maintenance);
                 let reference = reports::save_review(
                     &fixture.store,
                     identity(BootstrapReportKind::Review),
@@ -348,34 +412,68 @@ impl WorkflowAgentExecutor for FakeBootstrap<'_> {
                     Some(&reference.prompt_path(&fixture.store)),
                 );
                 assert!(prompt.contains("force=true"));
-                assert_eq!(prompt.matches("Knowledge organisation:").count(), 1);
-                assert!(prompt.contains("restructuring is not required"));
+                assert!(!prompt.contains("Knowledge organisation:"));
+                assert!(prompt.contains("single Refine"));
                 assert!(!prompt.contains("fictional job-processing product"));
-                assert!(prompt.chars().count() < 12_000);
+                // Full host instructions use developer context, independently
+                // of the bounded Goal objective and Workflow result handoff.
                 assert!(!prompt.contains("Coverage gap 19"));
-                if !self.refute {
+                if self.fail == Some("retention") {
+                    std::fs::write(
+                        fixture.maintenance.join("openwiki/workspace.md"),
+                        "DirectFolder is excluded from automatic merge.",
+                    )
+                    .unwrap();
+                }
+                if self.fail == Some("pathless_clues") {
+                    assert_eq!(review.findings.len(), 3);
+                    assert!(review.findings.iter().all(|f| f.evidence_paths.is_empty()));
+                    let source = std::fs::read_to_string(
+                        fixture.maintenance.join("deploy/developer/STAGING.md"),
+                    )
+                    .unwrap();
+                    assert!(source.contains("Staging has independent authentication"));
+                    assert!(source.contains("host-scoped"));
+                    std::fs::write(fixture.maintenance.join("openwiki/index.md"),
+                        "Staging has independent authentication. Cookies are host-scoped; use separate browser profiles.").unwrap();
+                } else if !self.refute {
                     std::fs::write(
                         fixture.maintenance.join("openwiki/index.md"),
                         "Refined Wiki",
                     )
                     .unwrap();
                 }
-                let resolutions: Vec<_> = (0..review.findings.len()).map(|index| json!({
+                let resolutions: Vec<_> = if self.fail == Some("pathless_clues") {
+                    vec![
+                        json!({"findingIndex":0,"disposition":"fixed","reason":"Independently confirmed the canonical staging guide",
+                            "wikiPaths":["openwiki/index.md"],"evidencePaths":["deploy/developer/STAGING.md"]}),
+                        json!({"findingIndex":1,"disposition":"refuted","reason":"The current guide contradicts port isolation",
+                            "wikiPaths":[],"evidencePaths":["deploy/developer/STAGING.md"]}),
+                        json!({"findingIndex":2,"disposition":"refuted","reason":"Could not corroborate this requirement; no repair made",
+                            "wikiPaths":[],"evidencePaths":[]}),
+                    ]
+                } else {
+                    (0..review.findings.len()).map(|index| json!({
                     "findingIndex":index,"disposition":if self.refute {"refuted"} else {"fixed"},
                     "reason":"現在の実装を検証し、根拠とともに処置を記録。".repeat(40),"wikiPaths":["openwiki/index.md"],"evidencePaths":["source.rs"]
-                })).collect();
+                })).collect()
+                };
                 let report = json!({"version":1,"summary":"Checked every finding","resolutions":resolutions}).to_string();
-                assert!(report.len() > 12_000);
+                if !matches!(self.fail, Some("retention" | "pathless_clues")) {
+                    assert!(report.len() > 12_000);
+                }
                 let report =
                     openwiki::bootstrap::RefinementReport::parse(&report, &review).unwrap();
                 report.validate_files(&fixture.maintenance).unwrap();
-                let reference = reports::save_refinement(
+                let mut reference = reports::save_refinement(
                     &fixture.store,
                     identity(BootstrapReportKind::Refine),
                     &report,
                     &review,
                 )
                 .unwrap();
+                reference.candidate_fingerprint =
+                    Some(openwiki::bootstrap::worktree_fingerprint(&fixture.maintenance).unwrap());
                 serde_json::to_string(&reference).unwrap()
             }
             _ => panic!("unexpected agent node"),
@@ -402,6 +500,26 @@ impl WorkflowAgentExecutor for FakeBootstrap<'_> {
         })
     }
 
+    async fn coverage_review(
+        &self,
+        run: Uuid,
+        _workspace: Uuid,
+        _raw: &str,
+    ) -> Result<Option<openwiki::bootstrap::CoverageVerdict>, ApiError> {
+        Ok(crate::workflow_runtime::bootstrap::load_review_phase(
+            &self.fixture.pool,
+            &self.fixture.store,
+            InventoryIdentity::new(
+                self.fixture.repository_id,
+                self.fixture.workspace_id,
+                run,
+                self.fixture.source.clone(),
+            ),
+        )
+        .await
+        .ok()
+        .map(|(review, _)| review.routing_verdict()))
+    }
     async fn publish_repository(&self, run_id: Uuid) -> Result<Option<String>, ApiError> {
         if self.fail == Some("publish") {
             return Err(ApiError::BadRequest("fixture publication failure".into()));
@@ -422,15 +540,14 @@ impl WorkflowAgentExecutor for FakeBootstrap<'_> {
             };
             std::fs::write(f.store.bootstrap_report_path(run_id, phase), "{}").unwrap();
         }
-        crate::workflow_runtime::bootstrap::validate_publication_reports(
+        let warnings = crate::workflow_runtime::bootstrap::publication_warnings(
             &f.pool,
             &f.store,
             InventoryIdentity::new(f.repository_id, f.workspace_id, run_id, f.source.clone()),
-            &f.maintenance,
         )
         .await
         .map_err(orchestration_api_error)?;
-        let result = openwiki::publish_validated_wiki(
+        let result = openwiki::publish_reviewed_wiki(
             &git::GitService::new(),
             &f.store,
             &openwiki::WikiPublicationRequest {
@@ -441,6 +558,7 @@ impl WorkflowAgentExecutor for FakeBootstrap<'_> {
                 source_commit: &f.source,
                 run_id,
             },
+            &warnings,
         )
         .await
         .map_err(orchestration_api_error)?;
@@ -532,7 +650,7 @@ async fn execution_workspace_sessions_require_bound_repository_owner_not_public_
 #[tokio::test]
 async fn inventory_preprocessing_failure_before_reservation_releases_owner() {
     use utils::repository_memory::{
-        OpenWikiBootstrapOwner, OpenWikiBootstrapPhase, RepositoryMemoryState, RepositoryWikiStatus,
+        OpenWikiBootstrapOwner, RepositoryMemoryState, RepositoryWikiStatus,
     };
     let f = Fixture::new().await;
     let run_id = Uuid::new_v4();
@@ -561,10 +679,6 @@ async fn inventory_preprocessing_failure_before_reservation_releases_owner() {
         error: Some(error.to_string()),
         bootstrap: Some(OpenWikiBootstrapOwner {
             workflow_run_id: run_id,
-            server_instance_id: Uuid::new_v4(),
-            phase: OpenWikiBootstrapPhase::CleaningUp,
-            child: None,
-            review_fingerprint: None,
         }),
         ..Default::default()
     };
@@ -603,7 +717,7 @@ async fn bootstrap_cleanup_restores_and_releases_only_after_all_children_exit() 
 
 async fn check_bootstrap_cleanup_result(cancelled: bool) {
     use utils::repository_memory::{
-        OpenWikiBootstrapOwner, OpenWikiBootstrapPhase, RepositoryMemoryState, RepositoryWikiStatus,
+        OpenWikiBootstrapOwner, RepositoryMemoryState, RepositoryWikiStatus,
     };
     let f = Fixture::new().await;
     let run_id = f.reserve().await;
@@ -631,10 +745,6 @@ async fn check_bootstrap_cleanup_result(cancelled: bool) {
         active_source_commit: Some(f.source.clone()),
         bootstrap: Some(OpenWikiBootstrapOwner {
             workflow_run_id: run_id,
-            server_instance_id: Uuid::new_v4(),
-            phase: OpenWikiBootstrapPhase::CleaningUp,
-            child: None,
-            review_fingerprint: None,
         }),
         error: Some("fixture failure".into()),
         ..Default::default()
@@ -648,60 +758,8 @@ async fn check_bootstrap_cleanup_result(cancelled: bool) {
             .fetch_one(&f.pool)
             .await
             .unwrap();
-    let agent_run = Uuid::new_v4();
-    let turn = Uuid::new_v4();
-    let attempt = Uuid::new_v4();
-    let executor_config = ExecutorConfig::new(BaseCodingAgent::Codex);
-    let request = AgentRunRequestEnvelope {
-        schema_version: AGENT_REQUEST_SCHEMA_VERSION,
-        payload_version: AGENT_REQUEST_PAYLOAD_VERSION,
-        request_id: Uuid::new_v4(),
-        idempotency_key: "cleanup-host".into(),
-        session_id: session,
-        agent_run_id: agent_run,
-        turn_id: turn,
-        correlation_id: run_id,
-        intent: AgentRunIntent::Initial,
-        runtime_profile_id: executor_config.profile_id().cache_key(),
-        provider_id: "codex".into(),
-        workspace: WorkspaceReference {
-            workspace_id: f.workspace_id,
-            mode: WorkspaceMode::IsolatedWorktree,
-            path: f.maintenance.to_string_lossy().into_owned(),
-        },
-        input: CanonicalMessage {
-            message_id: Uuid::new_v4(),
-            role: AgentRuntimeMessageRole::User,
-            content: "cleanup fixture".into(),
-        },
-        created_at: Utc::now(),
-    };
-    let attempt_request = RunAttemptRequest {
-        schema_version: request.schema_version,
-        payload_version: request.payload_version,
-        request_id: request.request_id,
-        idempotency_key: "cleanup-attempt".into(),
-        session_id: session,
-        agent_run_id: agent_run,
-        turn_id: turn,
-        run_attempt_id: attempt,
-        attempt_number: 1,
-        correlation_id: run_id,
-        mode: RunAttemptMode::Launch,
-        transport: DirectProvider::Codex.transport(),
-        runtime_profile_id: request.runtime_profile_id.clone(),
-        provider_id: request.provider_id.clone(),
-        workspace: request.workspace.clone(),
-        capability_snapshot: direct_provider_capability_snapshot(
-            DirectProvider::Codex,
-            request.runtime_profile_id.clone(),
-        ),
-        executor_config,
-        selected_skills: None,
-        reset_to_message_id: None,
-        provider_session: None,
-        created_at: request.created_at,
-    };
+    let (request, attempt_request) = dispatch_envelopes(&f, session, run_id);
+    let attempt = attempt_request.run_attempt_id;
     db::models::agent_runtime::AgentRunRecord::persist_identity_before_launch(
         &f.pool,
         &request,
@@ -785,6 +843,7 @@ async fn bootstrap_validation_gate_survives_generic_recovery_and_does_not_block_
     };
     struct CompletedPort {
         pool: SqlitePool,
+        status: AgentRunStatus,
     }
     #[async_trait]
     impl AgentRunPort for CompletedPort {
@@ -832,14 +891,18 @@ async fn bootstrap_validation_gate_survives_generic_recovery_and_does_not_block_
                 },
                 created_at: Utc::now(),
             });
-            state.status = AgentRunStatus::Succeeded;
+            state.status = self.status;
             Ok(AgentRunPortSnapshot {
                 agent_run_id: id,
                 state,
             })
         }
     }
-    for gated in [true, false] {
+    for (gated, status) in [
+        (true, AgentRunStatus::Succeeded),
+        (false, AgentRunStatus::Succeeded),
+        (true, AgentRunStatus::Failed),
+    ] {
         let f = Fixture::new().await;
         let run_id = f.reserve().await;
         let executor = FakeBootstrap {
@@ -888,6 +951,7 @@ async fn bootstrap_validation_gate_survives_generic_recovery_and_does_not_block_
             f.pool.clone(),
             Arc::new(CompletedPort {
                 pool: f.pool.clone(),
+                status,
             }),
         );
         service
@@ -991,7 +1055,7 @@ async fn bootstrap_pass_and_refine_use_existing_runner_and_publish_once() {
             .await
             .unwrap();
         let run = get_workflow_run_response(&f.pool, run_id).await.unwrap();
-        assert_eq!(run.status, WorkflowRunStatus::Succeeded);
+        assert_eq!(run.status, WorkflowRunStatus::Succeeded, "{:?}", run.nodes);
         f.assert_issue_status("Done").await;
         assert_eq!(run.issue_id, None);
         assert_eq!(run.attempt_id, None);
@@ -1033,14 +1097,16 @@ async fn bootstrap_pass_and_refine_use_existing_runner_and_publish_once() {
             let raw = node.output_text.as_ref().unwrap();
             assert!(raw.len() < 4096);
             let reference = ReportReference::parse(raw).unwrap();
-            assert_eq!(reference.finding_count, 20);
+            assert_eq!(reference.finding_count, if refine { 20 } else { 0 });
             assert_eq!(reference.identity.agent_run_id, node.agent_run_id.unwrap());
-            assert!(
-                std::fs::metadata(reference.prompt_path(&f.store))
-                    .unwrap()
-                    .len()
-                    > 12_000
-            );
+            if refine {
+                assert!(
+                    std::fs::metadata(reference.prompt_path(&f.store))
+                        .unwrap()
+                        .len()
+                        > 12_000
+                );
+            }
         }
         if refute {
             assert_eq!(
@@ -1111,7 +1177,7 @@ async fn bootstrap_phase_failures_never_reach_publication_or_reuse_retry() {
 }
 
 #[tokio::test]
-async fn report_tampering_blocks_refine_or_publication_without_touching_target() {
+async fn report_corruption_is_a_quality_warning_after_safe_writes() {
     for (fail, refine) in [
         ("tamper_review_report", true),
         ("tamper_pass_report", false),
@@ -1129,10 +1195,11 @@ async fn report_tampering_blocks_refine_or_publication_without_touching_target()
         };
         let _ = drive_repository_workflow(&f.pool, run_id, &executor).await;
         let run = get_workflow_run_response(&f.pool, run_id).await.unwrap();
-        assert_ne!(run.status, WorkflowRunStatus::Succeeded, "{fail}");
-        assert_eq!(executor.publications.load(Ordering::SeqCst), 0, "{fail}");
-        assert!(f.store.publication(run_id).await.unwrap().is_none());
-        assert_eq!(git(&f.root, &["rev-parse", "main"]), f.source);
+        assert_eq!(run.status, WorkflowRunStatus::Succeeded, "{fail}");
+        let publication = f.store.publication(run_id).await.unwrap().unwrap();
+        if fail != "tamper_refine_report" {
+            assert_eq!(publication.quality_warnings.len(), 1);
+        }
         if fail == "tamper_review_report" {
             assert!(
                 !executor
@@ -1310,12 +1377,13 @@ async fn inventory_is_frozen_in_host_input_not_global_template_or_upstream() {
         .filter(|node| matches!(node.id.as_str(), "generate" | "review"))
     {
         assert_eq!(node.data.include_workflow_context, Some(false));
-        assert!(
+        assert_eq!(
             node.data
                 .prompt_template
                 .as_deref()
                 .unwrap()
-                .contains(&inventory.prompt(&f.store, node.id == "review"))
+                .contains(&inventory.prompt(&f.store, node.id == "review")),
+            node.id == "generate"
         );
     }
     let mut expected = inventory.identity().clone();
@@ -1325,4 +1393,468 @@ async fn inventory_is_frozen_in_host_input_not_global_template_or_upstream() {
             .await
             .is_err()
     );
+}
+
+#[tokio::test]
+async fn missing_review_and_remaining_findings_publish_once_with_exact_warnings() {
+    for (fail, refine) in [
+        ("missing_review", false),
+        ("malformed_review", false),
+        ("incomplete", false),
+        ("incomplete", true),
+    ] {
+        let f = Fixture::new().await;
+        let run = f.reserve().await;
+        let executor = FakeBootstrap {
+            fixture: &f,
+            refine,
+            refute: false,
+            fail: Some(fail),
+            calls: Mutex::new(Vec::new()),
+            publications: AtomicUsize::new(0),
+        };
+        drive_repository_workflow(&f.pool, run, &executor)
+            .await
+            .unwrap();
+        assert_eq!(
+            get_workflow_run_response(&f.pool, run)
+                .await
+                .unwrap()
+                .status,
+            WorkflowRunStatus::Succeeded
+        );
+        let published = f.store.publication(run).await.unwrap().unwrap();
+        assert_eq!(published.quality_warnings.len(), 1);
+        // Receipt recovery replays the same checkpoint, including its quality
+        // warning, even when a later caller supplies no review information.
+        openwiki::publish_reviewed_wiki(
+            &git::GitService::new(),
+            &f.store,
+            &openwiki::WikiPublicationRequest {
+                repository_root: &f.root,
+                maintenance_root: &f.maintenance,
+                maintenance_branch: "wiki",
+                target_branch: "main",
+                source_commit: &f.source,
+                run_id: run,
+            },
+            &[],
+        )
+        .await
+        .unwrap();
+        assert_eq!(
+            f.store
+                .publication(run)
+                .await
+                .unwrap()
+                .unwrap()
+                .quality_warnings,
+            published.quality_warnings
+        );
+        assert_eq!(
+            git(
+                &f.root,
+                &["rev-list", "--count", &format!("{}..main", f.source)]
+            ),
+            "1"
+        );
+        let warning = &published.quality_warnings[0];
+        assert_eq!(warning.node_id, "review");
+        if fail == "incomplete" {
+            assert!(warning.summary.contains("レビュー未完了"));
+            assert!(warning.findings.is_empty());
+            assert!(!warning.summary.contains("レビュー結果なし"));
+        } else {
+            assert!(warning.findings.is_empty());
+            assert!(warning.summary.contains("レビュー結果なし"));
+        }
+        let calls = executor.calls.lock().unwrap();
+        assert_eq!(
+            calls.iter().filter(|n| n.node_id == "refine").count(),
+            usize::from(refine)
+        );
+        assert_eq!(calls.iter().filter(|n| n.node_id == "re-review").count(), 0);
+        for n in calls.iter().filter(|n| {
+            matches!(
+                n.node_id.as_str(),
+                "generate" | "review" | "refine" | "re-review"
+            )
+        }) {
+            assert_eq!(
+                n.executor_config.as_ref().unwrap()["execution_mode"],
+                if n.node_id == "review" {
+                    "code"
+                } else {
+                    "goal"
+                }
+            );
+        }
+        assert_eq!(executor.publications.load(Ordering::SeqCst), 1);
+    }
+}
+
+/// Exercise the single Review with optional Refine through the existing report,
+/// planner and real isolated Git publication/receipt path, without model calls.
+/// Regression from the saved real staging Review. Model judgement is scripted;
+/// real-model behaviour is measured separately in the isolated acceptance run.
+#[tokio::test]
+async fn pathless_review_clues_reach_refine_but_only_independently_confirmed_repairs_publish() {
+    let mut f = Fixture::new().await;
+    std::fs::create_dir_all(f.root.join("deploy/developer")).unwrap();
+    std::fs::write(
+        f.root.join("deploy/developer/STAGING.md"),
+        include_str!("../../../../deploy/developer/STAGING.md"),
+    )
+    .unwrap();
+    git(&f.root, &["add", "."]);
+    git(&f.root, &["commit", "-m", "fixed current staging evidence"]);
+    f.source = git(&f.root, &["rev-parse", "HEAD"]);
+    git(&f.maintenance, &["merge", "--ff-only", "main"]);
+    let run = f.reserve().await;
+    let executor = FakeBootstrap {
+        fixture: &f,
+        refine: true,
+        refute: false,
+        fail: Some("pathless_clues"),
+        calls: Mutex::new(Vec::new()),
+        publications: AtomicUsize::new(0),
+    };
+    drive_repository_workflow(&f.pool, run, &executor)
+        .await
+        .unwrap();
+    assert_eq!(
+        get_workflow_run_response(&f.pool, run)
+            .await
+            .unwrap()
+            .status,
+        WorkflowRunStatus::Succeeded
+    );
+    let text = git(&f.root, &["show", "main:openwiki/index.md"]);
+    assert!(text.contains("independent authentication"));
+    assert!(text.contains("host-scoped"));
+    assert!(!text.contains("isolated by port"));
+    assert!(!text.contains("uncorroborated requirement"));
+    let source = InventoryIdentity::new(f.repository_id, f.workspace_id, run, f.source.clone());
+    let (review, _) =
+        crate::workflow_runtime::bootstrap::load_review_phase(&f.pool, &f.store, source)
+            .await
+            .unwrap();
+    assert_eq!(review.findings.len(), 3);
+    assert!(review.findings.iter().all(|f| f.evidence_paths.is_empty()));
+    let raw: String = sqlx::query_scalar(
+        "SELECT output_text FROM node_executions WHERE run_id=? AND node_id='refine'",
+    )
+    .bind(run)
+    .fetch_one(&f.pool)
+    .await
+    .unwrap();
+    let reference = reports::ReportReference::parse(&raw).unwrap();
+    let report = reference
+        .load_refinement(&f.store, &reference.identity, &review)
+        .unwrap();
+    assert_eq!(
+        report
+            .resolutions
+            .iter()
+            .filter(|r| r.disposition == openwiki::bootstrap::FindingDisposition::Fixed)
+            .count(),
+        1
+    );
+    assert!(report.resolutions[2].evidence_paths.is_empty());
+    assert!(
+        report.resolutions[2]
+            .reason
+            .contains("Could not corroborate")
+    );
+    let publication = f.store.publication(run).await.unwrap().unwrap();
+    assert_eq!(publication.quality_warnings.len(), 1);
+    assert!(
+        publication.quality_warnings[0]
+            .summary
+            .contains("レビュー未完了")
+    );
+    assert!(publication.quality_warnings[0].findings.is_empty());
+    let calls = executor.calls.lock().unwrap();
+    assert_eq!(calls.iter().filter(|c| c.node_id == "refine").count(), 1);
+    assert!(!calls.iter().any(|c| c.node_id == "re-review"));
+    assert_eq!(executor.publications.load(Ordering::SeqCst), 1);
+}
+
+/// Tiny isolated Git + SQLite fixture, with scripted model output. A move is
+/// accounted for in summary; only the actual missing constraint becomes a
+/// finding is repaired once without manufacturing warnings for moves.
+#[tokio::test]
+async fn retention_findings_publish_without_turning_page_moves_into_warnings() {
+    let mut f = Fixture::new().await;
+    std::fs::create_dir(f.root.join("openwiki")).unwrap();
+    std::fs::write(
+        f.root.join("source.rs"),
+        "fn auto_merge(direct_folder: bool) { assert!(!direct_folder); }",
+    )
+    .unwrap();
+    std::fs::write(
+        f.root.join("openwiki/INSTRUCTIONS.md"),
+        include_bytes!("../../../../assets/openwiki-instructions.md"),
+    )
+    .unwrap();
+    std::fs::write(
+        f.root.join("openwiki/moved.md"),
+        "The procedure survives at its new home.",
+    )
+    .unwrap();
+    std::fs::write(f.root.join("openwiki/workspace.md"), "DirectFolder is excluded from automatic merge. This constraint applies even when legacy repository rows exist. Repeat explanatory context.").unwrap();
+    git(&f.root, &["add", "."]);
+    git(&f.root, &["commit", "-m", "published fixture Wiki"]);
+    f.source = git(&f.root, &["rev-parse", "HEAD"]);
+    git(&f.maintenance, &["merge", "--ff-only", "main"]);
+    let run = f.reserve().await;
+    let executor = FakeBootstrap {
+        fixture: &f,
+        refine: true,
+        refute: false,
+        fail: Some("retention"),
+        calls: Mutex::new(Vec::new()),
+        publications: AtomicUsize::new(0),
+    };
+    drive_repository_workflow(&f.pool, run, &executor)
+        .await
+        .unwrap();
+    assert_eq!(
+        get_workflow_run_response(&f.pool, run)
+            .await
+            .unwrap()
+            .status,
+        WorkflowRunStatus::Succeeded
+    );
+    let published = f.store.publication(run).await.unwrap().unwrap();
+    assert!(published.quality_warnings.is_empty());
+    assert!(
+        git(&f.root, &["show", "main:openwiki/workspace.md"])
+            .contains("DirectFolder is excluded from automatic merge")
+    );
+    assert_eq!(
+        git(&f.root, &["show", "main:openwiki/destination.md"]),
+        "The procedure survives at its new home."
+    );
+    assert_eq!(
+        git(
+            &f.root,
+            &["rev-list", "--count", &format!("{}..main", f.source)]
+        ),
+        "1"
+    );
+    assert_eq!(executor.publications.load(Ordering::SeqCst), 1);
+    let calls = executor.calls.lock().unwrap();
+    for node in ["generate", "review", "refine"] {
+        assert_eq!(calls.iter().filter(|n| n.node_id == node).count(), 1);
+    }
+    assert!(!calls.iter().any(|n| n.node_id == "re-review"));
+    let sessions: std::collections::HashSet<_> = calls.iter().map(|n| n.session_id).collect();
+    assert_eq!(sessions.len(), 3);
+}
+
+fn dispatch_envelopes(
+    f: &Fixture,
+    session: Uuid,
+    run_id: Uuid,
+) -> (AgentRunRequestEnvelope, RunAttemptRequest) {
+    let agent_run = Uuid::new_v4();
+    let turn = Uuid::new_v4();
+    let attempt = Uuid::new_v4();
+    let executor_config = ExecutorConfig::new(BaseCodingAgent::Codex);
+    let request = AgentRunRequestEnvelope {
+        schema_version: AGENT_REQUEST_SCHEMA_VERSION,
+        payload_version: AGENT_REQUEST_PAYLOAD_VERSION,
+        request_id: Uuid::new_v4(),
+        idempotency_key: "cleanup-host".into(),
+        session_id: session,
+        agent_run_id: agent_run,
+        turn_id: turn,
+        correlation_id: run_id,
+        intent: AgentRunIntent::Initial,
+        runtime_profile_id: executor_config.profile_id().cache_key(),
+        provider_id: "codex".into(),
+        workspace: WorkspaceReference {
+            workspace_id: f.workspace_id,
+            mode: WorkspaceMode::IsolatedWorktree,
+            path: f.maintenance.to_string_lossy().into_owned(),
+        },
+        input: CanonicalMessage {
+            message_id: Uuid::new_v4(),
+            role: AgentRuntimeMessageRole::User,
+            content: "cleanup fixture".into(),
+        },
+        created_at: Utc::now(),
+    };
+    let attempt_request = RunAttemptRequest {
+        schema_version: request.schema_version,
+        payload_version: request.payload_version,
+        request_id: request.request_id,
+        idempotency_key: "cleanup-attempt".into(),
+        session_id: session,
+        agent_run_id: agent_run,
+        turn_id: turn,
+        run_attempt_id: attempt,
+        attempt_number: 1,
+        correlation_id: run_id,
+        mode: RunAttemptMode::Launch,
+        transport: DirectProvider::Codex.transport(),
+        runtime_profile_id: request.runtime_profile_id.clone(),
+        provider_id: request.provider_id.clone(),
+        workspace: request.workspace.clone(),
+        capability_snapshot: direct_provider_capability_snapshot(
+            DirectProvider::Codex,
+            request.runtime_profile_id.clone(),
+        ),
+        executor_config,
+        selected_skills: None,
+        reset_to_message_id: None,
+        provider_session: None,
+        created_at: request.created_at,
+    };
+    (request, attempt_request)
+}
+
+#[tokio::test]
+async fn bootstrap_dispatch_binds_only_persisted_identity_before_outbox_delivery() {
+    use db::models::agent_runtime::AgentRunRecord;
+    use executors::runtime::{AgentEventStream, AgentRunPort, AgentRunPortSnapshot, RunState};
+    struct CheckingPort(SqlitePool);
+    #[async_trait]
+    impl AgentRunPort for CheckingPort {
+        async fn create(
+            &self,
+            request: AgentRunRequestEnvelope,
+            attempt: RunAttemptRequest,
+        ) -> Result<Uuid, AgentRunPortError> {
+            let bound: Uuid =
+                sqlx::query_scalar("SELECT agent_run_id FROM node_executions WHERE session_id=?")
+                    .bind(request.session_id)
+                    .fetch_one(&self.0)
+                    .await
+                    .unwrap();
+            assert_eq!(bound, request.agent_run_id);
+            let workspace = Workspace::find_by_id(&self.0, request.workspace.workspace_id)
+                .await
+                .unwrap()
+                .unwrap();
+            services::services::workspace_usage::validate_agent_owner(
+                &self.0, &workspace, &request, false,
+            )
+            .await
+            .unwrap();
+            // Exercise the same idempotent canonical persistence boundary used by real Create.
+            AgentRunRecord::persist_identity_with_launch(&self.0, &request, &attempt, true)
+                .await
+                .unwrap();
+            Ok(bound)
+        }
+        async fn query(&self, id: Uuid) -> Result<AgentRunPortSnapshot, AgentRunPortError> {
+            let run = AgentRunRecord::find(&self.0, id).await.unwrap().unwrap();
+            Ok(AgentRunPortSnapshot {
+                agent_run_id: id,
+                state: RunState::pending(&run.request_envelope.0),
+            })
+        }
+        async fn control(&self, _: AgentRunPortCommandEnvelope) -> Result<(), AgentRunPortError> {
+            panic!("unexpected control")
+        }
+        async fn subscribe(&self, _: Uuid) -> Result<AgentEventStream, AgentRunPortError> {
+            panic!("unexpected subscribe")
+        }
+    }
+    let f = Fixture::new().await;
+    let run = f.reserve().await;
+    let orchestration: Uuid =
+        sqlx::query_scalar("SELECT orchestration_run_id FROM workflow_runs WHERE id=?")
+            .bind(run)
+            .fetch_one(&f.pool)
+            .await
+            .unwrap();
+    let session = Session::create(
+        &f.pool,
+        &CreateSession {
+            executor: Some("CODEX".into()),
+            name: None,
+        },
+        Uuid::new_v4(),
+        f.workspace_id,
+    )
+    .await
+    .unwrap();
+    let node:Uuid=sqlx::query_scalar("SELECT orchestration_node_execution_id FROM node_executions WHERE run_id=? AND node_id='generate'").bind(run).fetch_one(&f.pool).await.unwrap();
+    sqlx::query("UPDATE node_executions SET session_id=? WHERE orchestration_node_execution_id=?")
+        .bind(session.id)
+        .bind(node)
+        .execute(&f.pool)
+        .await
+        .unwrap();
+    sqlx::query("UPDATE workflow_runs SET status='running' WHERE id=?")
+        .bind(run)
+        .execute(&f.pool)
+        .await
+        .unwrap();
+    let state = utils::repository_memory::RepositoryMemoryState {
+        enabled: true,
+        status: utils::repository_memory::RepositoryWikiStatus::Initializing,
+        bootstrap: Some(utils::repository_memory::OpenWikiBootstrapOwner {
+            workflow_run_id: run,
+        }),
+        maintenance_workspace_id: Some(f.workspace_id),
+        ..Default::default()
+    };
+    f.store.save_state(&state).await.unwrap();
+    let (request, attempt) = dispatch_envelopes(&f, session.id, orchestration);
+    // The former order really fails with foreign_keys enabled, not a permissive mock schema.
+    let error = sqlx::query(
+        "UPDATE node_executions SET agent_run_id=? WHERE orchestration_node_execution_id=?",
+    )
+    .bind(request.agent_run_id)
+    .bind(node)
+    .execute(&f.pool)
+    .await
+    .unwrap_err();
+    assert!(error.to_string().contains("FOREIGN KEY"));
+    super::super::bootstrap::bind_child_dispatch(&f.pool, node, &request, &attempt)
+        .await
+        .unwrap();
+    super::super::bootstrap::bind_child_dispatch(&f.pool, node, &request, &attempt)
+        .await
+        .unwrap();
+    let eligible: i64 = sqlx::query_scalar(
+        "SELECT launch_requested FROM agent_process_registry WHERE run_attempt_id=?",
+    )
+    .bind(attempt.run_attempt_id)
+    .fetch_one(&f.pool)
+    .await
+    .unwrap();
+    assert_eq!(eligible, 0, "binding must not launch a provider");
+    let service = OrchestrationService::new(f.pool.clone(), Arc::new(CheckingPort(f.pool.clone())));
+    let agent = request.agent_run_id;
+    let command = AgentRunPortCommandEnvelope {
+        schema_version: ORCHESTRATION_COMMAND_SCHEMA_VERSION,
+        command_id: Uuid::new_v4(),
+        idempotency_key: "dispatch-regression".into(),
+        agent_run_id: agent,
+        orchestration_run_id: Some(orchestration),
+        orchestration_node_execution_id: Some(node),
+        correlation_id: orchestration,
+        created_at: request.created_at,
+        command: AgentRunPortCommand::Create { request, attempt },
+    };
+    let outbox = service.enqueue_command(command).await.unwrap();
+    service.deliver_create(outbox, agent).await.unwrap();
+    let links: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM orchestration_agent_run_links WHERE agent_run_id=?",
+    )
+    .bind(agent)
+    .fetch_one(&f.pool)
+    .await
+    .unwrap();
+    assert_eq!(links, 1);
+    let checks: Vec<sqlx::sqlite::SqliteRow> = sqlx::query("PRAGMA foreign_key_check")
+        .fetch_all(&f.pool)
+        .await
+        .unwrap();
+    assert!(checks.is_empty());
 }

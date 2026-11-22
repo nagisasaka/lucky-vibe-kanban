@@ -91,8 +91,12 @@ impl ExecutionEnv {
     /// Host-owned guidance for this execution, independent of saved Card context.
     /// Both providers use this composition; native delivery roles stay separate.
     pub fn repository_memory_instructions(&self) -> Option<String> {
-        if self.contains_key("LVK_OPENWIKI_REVIEWER") || self.contains_key("LVK_RESOURCE_MEDIATOR")
-        {
+        if self.contains_key("LVK_OPENWIKI_REVIEWER") {
+            // The launch port replaces ambient memory with the saved review role.
+            // Do not append coding, shared-storage or maintenance instructions.
+            return self.get("LVK_REPOSITORY_MEMORY_INSTRUCTIONS").cloned();
+        }
+        if self.contains_key("LVK_RESOURCE_MEDIATOR") {
             return None;
         }
         let mut parts = Vec::new();
@@ -265,11 +269,21 @@ mod tests {
         let instructions = env.repository_memory_instructions().unwrap();
         assert!(!instructions.contains(crate::env::OPENWIKI_READ_ONLY_GUIDANCE));
         assert!(instructions.contains("continued identity"));
-        for mode in ["LVK_OPENWIKI_REVIEWER", "LVK_RESOURCE_MEDIATOR"] {
-            let mut dedicated = env.clone();
-            dedicated.insert(mode, "1");
-            assert!(dedicated.repository_memory_instructions().is_none());
-        }
+        let mut reviewer = env.clone();
+        reviewer.insert("LVK_OPENWIKI_REVIEWER", "1");
+        reviewer.insert(
+            "LVK_REPOSITORY_MEMORY_INSTRUCTIONS",
+            "trusted full review role",
+        );
+        assert_eq!(
+            reviewer.repository_memory_instructions().as_deref(),
+            Some("trusted full review role")
+        );
+        reviewer.vars.remove("LVK_REPOSITORY_MEMORY_INSTRUCTIONS");
+        assert!(reviewer.repository_memory_instructions().is_none());
+        let mut mediator = env.clone();
+        mediator.insert("LVK_RESOURCE_MEDIATOR", "1");
+        assert!(mediator.repository_memory_instructions().is_none());
     }
 
     #[test]

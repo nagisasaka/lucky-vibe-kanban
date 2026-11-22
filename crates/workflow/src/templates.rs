@@ -72,7 +72,7 @@ pub fn openwiki_bootstrap() -> WorkflowTemplate {
             ..Default::default()
         };
         if kind == WorkflowNodeKind::Agent {
-            data.executor_config = Some(json!({"executor":"CODEX", "execution_mode":"code"}));
+            data.executor_config = Some(json!({"executor":"CODEX", "execution_mode": if id == "review" {"code"} else {"goal"}}));
             data.prompt_template = Some(format!("LVK-managed OpenWiki {id} phase"));
         }
         if kind == WorkflowNodeKind::Condition {
@@ -90,7 +90,8 @@ pub fn openwiki_bootstrap() -> WorkflowTemplate {
         }
         if kind == WorkflowNodeKind::Transform {
             data.mode = Some(TransformMode::Template);
-            data.template = Some("Coverage review passed".into());
+            data.template =
+                Some("Review recorded; publication retains its quality warnings".into());
         }
         WorkflowNode {
             id: id.into(),

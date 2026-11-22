@@ -7,7 +7,7 @@ use sha2::{Digest, Sha256};
 use utils::repository_memory::{BootstrapReportKind, RepositoryMemoryStore};
 use uuid::Uuid;
 
-use super::{CoverageReview, CoverageVerdict, FindingSeverity, RefinementReport};
+use super::{CoverageReview, CoverageVerdict, RefinementReport};
 use crate::services::openwiki::inventory::InventoryIdentity;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -30,6 +30,8 @@ struct StoredReport {
 #[serde(deny_unknown_fields)]
 pub struct ReportReference {
     pub report_version: u32,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub candidate_fingerprint: Option<String>,
     pub identity: ReportIdentity,
     pub digest: String,
     pub verdict: Option<CoverageVerdict>,
@@ -57,15 +59,12 @@ impl ReportReference {
         );
         ensure!(
             reference.verdict.is_some()
-                == (reference.identity.phase == BootstrapReportKind::Review),
+                == (matches!(
+                    reference.identity.phase,
+                    BootstrapReportKind::Review | BootstrapReportKind::ReReview
+                )),
             "Report phase/verdict mismatch"
         );
-        if let Some(verdict) = reference.verdict {
-            ensure!(
-                (reference.material_count > 0) == (verdict == CoverageVerdict::NeedsRefinement),
-                "Report counts/verdict mismatch"
-            );
-        }
         Ok(reference)
     }
 
@@ -98,7 +97,10 @@ impl ReportReference {
         expected: &ReportIdentity,
     ) -> anyhow::Result<CoverageReview> {
         ensure!(
-            expected.phase == BootstrapReportKind::Review,
+            matches!(
+                expected.phase,
+                BootstrapReportKind::Review | BootstrapReportKind::ReReview
+            ),
             "Not a Review report"
         );
         let review: CoverageReview = serde_json::from_value(self.load(store, expected)?)?;
@@ -136,12 +138,10 @@ impl ReportReference {
     }
 }
 
+// Keep the existing private report-reference field; every new finding is a
+// candidate for independent verification, irrespective of completion status.
 fn material_count(review: &CoverageReview) -> usize {
-    review
-        .findings
-        .iter()
-        .filter(|f| f.severity == FindingSeverity::Material)
-        .count()
+    review.findings.len()
 }
 
 fn digest(bytes: &[u8]) -> String {
@@ -162,6 +162,7 @@ fn save(
     };
     let reference = ReportReference {
         report_version: 1,
+        candidate_fingerprint: None,
         identity: identity.clone(),
         digest: digest(&serde_json::to_vec_pretty(&stored)?),
         verdict,
@@ -181,7 +182,10 @@ pub fn save_review(
     review: &CoverageReview,
 ) -> anyhow::Result<ReportReference> {
     ensure!(
-        identity.phase == BootstrapReportKind::Review,
+        matches!(
+            identity.phase,
+            BootstrapReportKind::Review | BootstrapReportKind::ReReview
+        ),
         "Review identity required"
     );
     review.validate()?;
@@ -231,16 +235,23 @@ pub fn review_verdict(
     workspace_id: Uuid,
 ) -> anyhow::Result<CoverageVerdict> {
     if !is_reference(raw) {
-        return Ok(CoverageReview::parse(raw)?.verdict);
+        return Ok(CoverageReview::parse(raw)?.routing_verdict());
     }
     let reference = ReportReference::parse(raw)?;
     ensure!(
         reference.identity.source.run_id == run_id
             && reference.identity.source.workspace_id == workspace_id
-            && reference.identity.phase == BootstrapReportKind::Review,
+            && matches!(
+                reference.identity.phase,
+                BootstrapReportKind::Review | BootstrapReportKind::ReReview
+            ),
         "Foreign coverage routing reference"
     );
-    reference.verdict.context("Missing coverage verdict")
+    if reference.material_count > 0 {
+        Ok(CoverageVerdict::NeedsRefinement)
+    } else {
+        reference.verdict.context("Missing coverage verdict")
+    }
 }
 
 #[cfg(test)]
@@ -264,10 +275,37 @@ mod tests {
     }
 
     fn review() -> CoverageReview {
-        CoverageReview::parse(&json!({"version":1,"verdict":"needs_refinement","summary":"領域ごとの検証",
-            "findings":(0..20).map(|n| json!({"severity":"material","title":format!("領域{n}"),
-                "description":"不足する契約と根拠を記載。".repeat(400),"evidencePaths":["src/main.rs"],"recommendedAction":"expand_page"})).collect::<Vec<_>>()
+        CoverageReview::parse(&json!({"version":2,"verdict":"pass","summary":"領域ごとの検証",
+            "findings":(0..20).map(|n| json!({"kind":"retention","page":format!("領域{n}"),
+                "description":"不足する契約と根拠を記載。".repeat(400),"evidencePaths":["src/main.rs"]})).collect::<Vec<_>>()
         }).to_string()).unwrap()
+    }
+
+    #[test]
+    fn incomplete_report_keeps_uncertainty_and_routes_material_findings_once() {
+        for material in [false, true] {
+            let dir = tempfile::tempdir().unwrap();
+            let store = RepositoryMemoryStore::at_artifacts(dir.path()).unwrap();
+            let id = identity();
+            let mut report = review();
+            report.verdict = CoverageVerdict::Incomplete;
+            if !material {
+                report.findings.clear();
+            }
+            let reference = save_review(&store, id.clone(), &report).unwrap();
+            let raw = serde_json::to_string(&reference).unwrap();
+            let parsed = ReportReference::parse(&raw).unwrap();
+            assert_eq!(parsed.load_review(&store, &id).unwrap(), report);
+            assert_eq!(parsed.verdict, Some(CoverageVerdict::Incomplete));
+            assert_eq!(
+                review_verdict(&raw, id.source.run_id, id.source.workspace_id).unwrap(),
+                if material {
+                    CoverageVerdict::NeedsRefinement
+                } else {
+                    CoverageVerdict::Incomplete
+                }
+            );
+        }
     }
 
     #[test]
@@ -276,7 +314,7 @@ mod tests {
         let store = RepositoryMemoryStore::at_artifacts(dir.path()).unwrap();
         let id = identity();
         let mut review = review();
-        review.verdict = CoverageVerdict::Pass;
+        review.version = 3;
         assert!(save_review(&store, id.clone(), &review).is_err());
         assert!(
             !store
@@ -294,6 +332,7 @@ mod tests {
         )
         .unwrap();
         assert!(reference.load_review(&store, &id).is_err());
+        review.version = 1;
         review.verdict = CoverageVerdict::NeedsRefinement;
         review.summary = "x".repeat(super::super::MAX_REVIEW_BYTES + 1);
         assert!(save_review(&store, identity(), &review).is_err());
@@ -327,7 +366,7 @@ mod tests {
         let mut review = review();
         review.findings.truncate(1);
         review.summary = "検証概要".repeat(2100);
-        review.findings[0].title = "重要な契約".repeat(40);
+        review.findings[0].page = "重要な契約".repeat(40);
         review.findings[0].description = "根拠と指摘".repeat(2100);
         let prefix = "nested/".repeat(40);
         review.findings[0].evidence_paths = (0..40)
@@ -427,7 +466,7 @@ mod tests {
                 id.source.workspace_id
             )
             .unwrap(),
-            review.verdict
+            review.routing_verdict()
         );
     }
 

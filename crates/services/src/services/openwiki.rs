@@ -380,6 +380,25 @@ pub async fn publish_repository_files(
     request: &WikiPublicationRequest<'_>,
     allowed_paths: Option<&[String]>,
 ) -> anyhow::Result<(Option<String>, bool)> {
+    publish_repository_files_with_warnings(git, store, request, allowed_paths, &[]).await
+}
+
+pub async fn publish_reviewed_wiki(
+    git: &git::GitService,
+    store: &db::models::repository_state::RepositoryMemoryStore,
+    request: &WikiPublicationRequest<'_>,
+    warnings: &[utils::repository_memory::WikiQualityWarning],
+) -> anyhow::Result<(Option<String>, bool)> {
+    publish_repository_files_with_warnings(git, store, request, None, warnings).await
+}
+
+async fn publish_repository_files_with_warnings(
+    git: &git::GitService,
+    store: &db::models::repository_state::RepositoryMemoryStore,
+    request: &WikiPublicationRequest<'_>,
+    allowed_paths: Option<&[String]>,
+    warnings: &[utils::repository_memory::WikiQualityWarning],
+) -> anyhow::Result<(Option<String>, bool)> {
     let _lock = store.try_integration_lock()?;
     let source = request.source_commit;
     let target = request.target_branch;
@@ -440,6 +459,7 @@ pub async fn publish_repository_files(
             source_commit: source.into(),
             target_branch: target.into(),
             no_op: maintenance_commit.is_none(),
+            quality_warnings: warnings.to_vec(),
             maintenance_commit,
         };
         store.save_publication(&publication).await?;

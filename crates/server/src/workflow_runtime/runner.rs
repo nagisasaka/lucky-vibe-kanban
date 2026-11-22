@@ -164,6 +164,18 @@ pub trait WorkflowAgentExecutor: Send + Sync {
         false
     }
 
+    async fn coverage_review(
+        &self,
+        run: Uuid,
+        workspace: Uuid,
+        raw: &str,
+    ) -> Result<Option<services::services::openwiki::bootstrap::CoverageVerdict>, ApiError> {
+        Ok(
+            services::services::openwiki::bootstrap::reports::review_verdict(raw, run, workspace)
+                .ok(),
+        )
+    }
+
     async fn publish_repository(&self, _run_id: Uuid) -> Result<Option<String>, ApiError> {
         Err(ApiError::BadRequest(
             "Repository workflow requires its maintenance owner".into(),
@@ -458,8 +470,12 @@ impl AgentRunReconciliationBoundary for DeploymentAgentRunReconciliationBoundary
                 outcome.cancelled = true;
                 continue;
             }
-            match state.status {
-                AgentRunStatus::Succeeded => {
+            match (
+                state.status,
+                self.repository_owned && matches!(node_id.as_str(), "review" | "refine"),
+            ) {
+                (AgentRunStatus::Succeeded, _)
+                | (AgentRunStatus::Failed | AgentRunStatus::Crashed, true) => {
                     let validated_output;
                     let terminal_output = if self.repository_owned {
                         match super::bootstrap::validate_child_completion(
@@ -598,7 +614,7 @@ impl AgentRunReconciliationBoundary for DeploymentAgentRunReconciliationBoundary
                         .await?;
                     }
                 }
-                AgentRunStatus::AwaitingInput | AgentRunStatus::AwaitingApproval => {
+                (AgentRunStatus::AwaitingInput | AgentRunStatus::AwaitingApproval, _) => {
                     if current_status != node_status_value(DbNodeExecutionStatus::AwaitingHuman) {
                         update_node_execution(
                             pool,
@@ -623,10 +639,13 @@ impl AgentRunReconciliationBoundary for DeploymentAgentRunReconciliationBoundary
                     }
                     outcome.awaiting_human = true;
                 }
-                AgentRunStatus::Failed
-                | AgentRunStatus::Cancelled
-                | AgentRunStatus::Crashed
-                | AgentRunStatus::AuditFailed => {
+                (
+                    AgentRunStatus::Failed
+                    | AgentRunStatus::Cancelled
+                    | AgentRunStatus::Crashed
+                    | AgentRunStatus::AuditFailed,
+                    _,
+                ) => {
                     let fallback = match state.status {
                         AgentRunStatus::Cancelled => "Workflow AgentRun was cancelled",
                         AgentRunStatus::Crashed => "Workflow AgentRun crashed",
@@ -638,6 +657,19 @@ impl AgentRunReconciliationBoundary for DeploymentAgentRunReconciliationBoundary
                         .as_ref()
                         .map(|error| error.message.as_str())
                         .unwrap_or(fallback);
+                    if state.status != AgentRunStatus::Cancelled
+                        && (self.repository_owned
+                            || workflow::presets::contract(&runtime_run.graph).is_some())
+                    {
+                        service
+                            .complete_product_node(
+                                orchestration_run_id,
+                                orchestration_node_execution_id,
+                                executors::runtime::OrchestrationNodeStatus::Failed,
+                            )
+                            .await
+                            .map_err(orchestration_api_error)?;
+                    }
                     if state.status == AgentRunStatus::Cancelled {
                         update_node_execution(
                             pool,
@@ -675,10 +707,13 @@ impl AgentRunReconciliationBoundary for DeploymentAgentRunReconciliationBoundary
                         outcome.failed = true;
                     }
                 }
-                AgentRunStatus::Pending
-                | AgentRunStatus::Starting
-                | AgentRunStatus::Running
-                | AgentRunStatus::Cancelling => {
+                (
+                    AgentRunStatus::Pending
+                    | AgentRunStatus::Starting
+                    | AgentRunStatus::Running
+                    | AgentRunStatus::Cancelling,
+                    _,
+                ) => {
                     all_active_agent_runs_terminal = false;
                 }
             }
@@ -895,14 +930,10 @@ impl WorkflowAgentExecutor for DeploymentWorkflowAgentExecutor {
             path: workspace_path,
         };
         let created_at = Utc::now();
-        super::bootstrap::prepare_child_dispatch(
-            &self.deployment,
-            &mut request,
-            session.id,
-            agent_run_id,
-        )
-        .await
-        .map_err(orchestration_api_error)?;
+        let bootstrap =
+            super::bootstrap::prepare_child_dispatch(&self.deployment, &mut request, session.id)
+                .await
+                .map_err(orchestration_api_error)?;
         let idempotency_key = format!(
             "workflow:{}:node:{}:iteration:{}:create",
             request.run_id, request.node_id, request.iteration
@@ -955,6 +986,16 @@ impl WorkflowAgentExecutor for DeploymentWorkflowAgentExecutor {
             provider_session: None,
             created_at,
         };
+        if bootstrap {
+            super::bootstrap::bind_child_dispatch(
+                pool,
+                request.orchestration_node_execution_id,
+                &run_request,
+                &attempt,
+            )
+            .await
+            .map_err(orchestration_api_error)?;
+        }
         let orchestration = OrchestrationService::new(
             pool.clone(),
             Arc::new(self.deployment.agent_run_port().clone()),
@@ -2115,7 +2156,47 @@ where
         .await?;
     }
 
+    if agent_executor.owns_repository_execution()
+        && current.status != WorkflowRunStatus::Cancelling
+        && !outcome.failed
+        && !outcome.cancelled
+        && !outcome.awaiting_human
+    {
+        drive_workflow_run(
+            pool,
+            run_id,
+            &run.graph,
+            run.issue_id,
+            run.workspace_id,
+            &run.input_text,
+            agent_executor,
+            arena_creator,
+        )
+        .await?;
+    }
     let result = get_workflow_run_response(pool, run_id).await?;
+    if agent_executor.owns_repository_execution() {
+        let service = OrchestrationService::new(pool.clone(), Arc::new(NoopAgentRunPort));
+        if let Some(owner) = result.orchestration_run_id {
+            for node in &result.nodes {
+                let status = match node.status {
+                    DbNodeExecutionStatus::Succeeded => {
+                        executors::runtime::OrchestrationNodeStatus::Succeeded
+                    }
+                    DbNodeExecutionStatus::Skipped => {
+                        executors::runtime::OrchestrationNodeStatus::Cancelled
+                    }
+                    _ => continue,
+                };
+                if let Some(id) = node.orchestration_node_execution_id {
+                    service
+                        .complete_product_node(owner, id, status)
+                        .await
+                        .map_err(orchestration_api_error)?;
+                }
+            }
+        }
+    }
     crate::routes::workflows::sync_attempt_from_run(pool, &result).await?;
     Ok(result)
 }
@@ -2603,17 +2684,16 @@ where
                 .upstream_outputs
                 .first()
                 .ok_or_else(|| ApiError::BadRequest("Missing validated coverage review".into()))?;
-            let verdict = services::services::openwiki::bootstrap::reports::review_verdict(
-                &raw.output_text,
-                run_id,
-                workspace_id,
-            )
-            .map_err(orchestration_api_error)?;
+            let verdict = agent_executor
+                .coverage_review(run_id, workspace_id, &raw.output_text)
+                .await?;
             let (selected, skipped) = match verdict {
-                services::services::openwiki::bootstrap::CoverageVerdict::Pass => {
-                    ("pass", "refine")
-                }
-                services::services::openwiki::bootstrap::CoverageVerdict::NeedsRefinement => {
+                Some(
+                    services::services::openwiki::bootstrap::CoverageVerdict::Pass
+                    | services::services::openwiki::bootstrap::CoverageVerdict::Incomplete,
+                )
+                | None => ("pass", "refine"),
+                Some(services::services::openwiki::bootstrap::CoverageVerdict::NeedsRefinement) => {
                     ("refine", "pass")
                 }
             };
@@ -3390,6 +3470,13 @@ pub fn spawn_workflow_completion_watcher(deployment: DeploymentImpl) {
     tokio::spawn(async move {
         let mut watched_agent_runs = HashSet::new();
         loop {
+            let owned = match sqlx::query_scalar("SELECT wr.id FROM workflow_runs wr JOIN repository_wiki_state rs ON rs.repository_id=wr.repository_id WHERE wr.repository_id IS NOT NULL AND replace(json_extract(rs.payload,'$.bootstrap.workflow_run_id'),'-','')=lower(hex(wr.id))")
+                .fetch_all(&deployment.db().pool).await { Ok(rows) => rows, Err(error) => {tracing::warn!(%error,"Repository workflow lookup failed"); Vec::<Uuid>::new()} };
+            for run_id in owned {
+                if let Err(error) = super::bootstrap::reconcile(&deployment, run_id).await {
+                    tracing::warn!(%run_id,%error,"repository workflow reconciliation deferred");
+                }
+            }
             let active: Vec<(Uuid, Uuid)> = match sqlx::query_as(
                 r#"
                 SELECT DISTINCT ne.run_id, links.agent_run_id

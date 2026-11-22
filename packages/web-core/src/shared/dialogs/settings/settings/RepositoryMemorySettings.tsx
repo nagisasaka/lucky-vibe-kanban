@@ -1,11 +1,8 @@
+import { WikiQualityWarnings } from '@/features/wiki/ui/WikiQualityWarnings';
 import { useTranslation } from 'react-i18next';
 import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import type {
-  Repo,
-  RepositoryWikiStatus,
-  OpenWikiBootstrapPhase,
-} from 'shared/types';
+import type { Repo, RepositoryWikiStatus } from 'shared/types';
 import type { MachineClient } from '@/shared/lib/machineClient';
 import { RepositoryWikiFilesSettings } from './RepositoryWikiFilesSettings';
 import { WorkspaceWorkflowLink } from '@/shared/components/WorkspaceWorkflowLink';
@@ -36,13 +33,6 @@ export function RepositoryMemorySettings({
     stale: t('repositoryMemory.status.stale'),
     reconciling: t('repositoryMemory.status.reconciling'),
     error: t('repositoryMemory.status.error'),
-  };
-  const phases: Record<OpenWikiBootstrapPhase, string> = {
-    generating: t('repositoryMemory.phase.generating'),
-    reviewing: t('repositoryMemory.phase.reviewing'),
-    refining: t('repositoryMemory.phase.refining'),
-    publishing: t('repositoryMemory.phase.publishing'),
-    cleaning_up: t('repositoryMemory.phase.cleaningUp'),
   };
   const checkpointMessage = (message: string) => {
     const identities =
@@ -140,16 +130,11 @@ export function RepositoryMemorySettings({
       description={t('repositoryMemory.description')}
     >
       <p className="text-sm text-normal" role="status">
-        {state?.bootstrap
-          ? t('repositoryMemory.stateWithPhase', {
-              status: statuses[state.status],
-              phase: phases[state.bootstrap.phase],
-            })
-          : t('repositoryMemory.state', {
-              status: state
-                ? statuses[state.status]
-                : t('repositoryMemory.loading'),
-            })}
+        {t('repositoryMemory.state', {
+          status: state
+            ? statuses[state.status]
+            : t('repositoryMemory.loading'),
+        })}
       </p>
       <SettingsCheckbox
         id={`openwiki-enabled-${repo.id}`}
@@ -274,6 +259,7 @@ export function RepositoryMemorySettings({
             : t('repositoryMemory.none'),
         })}
       </p>
+      <WikiQualityWarnings warnings={state?.quality_warnings} />
       {state?.unverified_before && (
         <p className="break-all text-sm text-low" role="status">
           {t('repositoryMemory.unverifiedBefore', {

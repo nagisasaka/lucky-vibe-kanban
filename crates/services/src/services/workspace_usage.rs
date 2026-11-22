@@ -216,7 +216,8 @@ pub async fn validate_agent_owner(
             let state = store.state().await?;
             ensure!(
                 state.maintenance_workspace_id == Some(workspace.id)
-                    && state.maintenance_session_id == Some(request.session_id),
+                    && (state.bootstrap.is_some()
+                        || state.maintenance_session_id == Some(request.session_id)),
                 "Maintenance execution identity mismatch"
             );
             ensure!(
@@ -232,13 +233,16 @@ pub async fn validate_agent_owner(
                     Some(bootstrap.workflow_run_id) == owner.run_id,
                     "Bootstrap run does not match workspace owner"
                 );
-                let child = bootstrap
-                    .child
-                    .context("Bootstrap child has not been delegated")?;
+                let (_, run_id, correlation, initial_run) =
+                    bootstrap_delegation(pool, workspace.id, request.session_id)
+                        .await?
+                        .context("Bootstrap node has not delegated this Session")?;
                 ensure!(
-                    child.session_id == request.session_id
-                        && child.agent_run_id == request.agent_run_id,
-                    "Bootstrap child identity mismatch"
+                    run_id == bootstrap.workflow_run_id
+                        && request.correlation_id == correlation
+                        && (request.agent_run_id == initial_run
+                            || request.intent == executors::runtime::AgentRunIntent::FollowUp),
+                    "Bootstrap execution identity mismatch"
                 );
             } else {
                 ensure!(
@@ -267,6 +271,16 @@ pub async fn validate_agent_owner(
         ),
     }
     Ok(())
+}
+
+/// Existing Workflow node records are the sole Bootstrap delegation authority.
+pub async fn bootstrap_delegation(
+    pool: &SqlitePool,
+    workspace_id: Uuid,
+    session_id: Uuid,
+) -> anyhow::Result<Option<(String, Uuid, Uuid, Uuid)>> {
+    Ok(sqlx::query_as("SELECT ne.node_id,wr.id,wr.orchestration_run_id,ne.agent_run_id FROM node_executions ne JOIN workflow_runs wr ON wr.id=ne.run_id WHERE wr.workspace_id=? AND ne.session_id=? AND wr.trigger_source='openwiki_bootstrap' AND wr.status IN ('running','awaiting_human') AND ne.status IN ('pending','running') ORDER BY ne.iteration DESC LIMIT 1")
+        .bind(workspace_id).bind(session_id).fetch_optional(pool).await?)
 }
 
 /// No mkdir, worktree restoration, scripts, or database changes. Callers retain
@@ -496,10 +510,7 @@ mod tests {
 
     #[tokio::test]
     async fn bootstrap_delegates_only_current_child_and_retains_usage_after_owner_release() {
-        use utils::repository_memory::{
-            OpenWikiBootstrapChild, OpenWikiBootstrapOwner, OpenWikiBootstrapPhase,
-            RepositoryMemoryState,
-        };
+        use utils::repository_memory::{OpenWikiBootstrapOwner, RepositoryMemoryState};
         let (pool, repo, _temp, store) = memory_fixture().await;
         let run_id = Uuid::new_v4();
         let ws = workspace(
@@ -518,25 +529,38 @@ mod tests {
             ..Default::default()
         };
         let mut previous = None;
-        for (node, phase) in [
-            ("generate", OpenWikiBootstrapPhase::Generating),
-            ("review", OpenWikiBootstrapPhase::Reviewing),
-            ("refine", OpenWikiBootstrapPhase::Refining),
-        ] {
+        sqlx::query(
+            "INSERT INTO workflows(id,name,graph_json,source) VALUES (?,'Bootstrap','{}','system')",
+        )
+        .bind(run_id)
+        .execute(&pool)
+        .await
+        .unwrap();
+        sqlx::query("INSERT INTO orchestration_runs(id,request_id,idempotency_key,correlation_id,product_kind,source_definition_id,source_definition_version,plan_schema_version,plan_snapshot,status) VALUES (?,?,?,?,'workflow',?,'test',1,'{}','running')")
+            .bind(run_id).bind(run_id).bind(run_id.to_string()).bind(run_id).bind(run_id).execute(&pool).await.unwrap();
+        sqlx::query("INSERT INTO workflow_runs(id,workflow_id,repository_id,workspace_id,trigger_source,input_text,graph_snapshot,status,orchestration_run_id) VALUES (?,?,?,?,'openwiki_bootstrap','','{}','running',?)")
+            .bind(run_id).bind(run_id).bind(repo.id).bind(ws.id).bind(run_id).execute(&pool).await.unwrap();
+        for node in ["generate", "review", "refine", "re-review"] {
             let req = request(&ws, Uuid::new_v4(), run_id);
             state.maintenance_session_id = Some(req.session_id);
             state.bootstrap = Some(OpenWikiBootstrapOwner {
                 workflow_run_id: run_id,
-                server_instance_id: Uuid::new_v4(),
-                phase,
-                review_fingerprint: None,
-                child: Some(OpenWikiBootstrapChild {
-                    session_id: req.session_id,
-                    agent_run_id: req.agent_run_id,
-                    node_execution_id: Uuid::new_v4(),
-                    node_id: node.into(),
-                }),
             });
+            sqlx::query("UPDATE node_executions SET status='succeeded' WHERE run_id=?")
+                .bind(run_id)
+                .execute(&pool)
+                .await
+                .unwrap();
+            sqlx::query("INSERT INTO sessions(id,workspace_id) VALUES (?,?)")
+                .bind(req.session_id)
+                .bind(ws.id)
+                .execute(&pool)
+                .await
+                .unwrap();
+            sqlx::query("INSERT INTO agent_runs(id,session_id,workspace_id,request_id,idempotency_key,correlation_id,schema_version,payload_version,runtime_profile_id,provider_id,workspace_mode,workspace_path,request_envelope,status) VALUES (?,?,?,?,?,?,1,1,'CODEX:default','codex','isolated_worktree',?,'{}','succeeded')")
+                .bind(req.agent_run_id).bind(req.session_id).bind(ws.id).bind(req.request_id).bind(req.idempotency_key.clone()).bind(run_id).bind(&req.workspace.path).execute(&pool).await.unwrap();
+            sqlx::query("INSERT INTO node_executions(id,run_id,node_id,node_type,iteration,status,session_id,agent_run_id) VALUES (?,?,?,'agent',0,'running',?,?)")
+                .bind(Uuid::new_v4()).bind(run_id).bind(node).bind(req.session_id).bind(req.agent_run_id).execute(&pool).await.unwrap();
             let lock = store.try_lock().unwrap();
             store.save_state(&state).await.unwrap();
             drop(lock);
@@ -549,6 +573,20 @@ mod tests {
                     .await
                     .is_err()
             );
+            if matches!(node, "generate" | "refine") {
+                let mut continued = req.clone();
+                continued.intent = executors::runtime::AgentRunIntent::FollowUp;
+                continued.agent_run_id = Uuid::new_v4();
+                validate_agent_owner(&pool, &ws, &continued, true)
+                    .await
+                    .unwrap();
+                continued.correlation_id = Uuid::new_v4();
+                assert!(
+                    validate_agent_owner(&pool, &ws, &continued, true)
+                        .await
+                        .is_err()
+                );
+            }
             if let Some(old) = &previous {
                 assert!(validate_agent_owner(&pool, &ws, old, true).await.is_err());
             }

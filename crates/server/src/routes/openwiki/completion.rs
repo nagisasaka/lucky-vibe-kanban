@@ -119,12 +119,65 @@ pub(crate) async fn conversation_completion_proof(
     workspace_id: Uuid,
     root: &Path,
 ) -> anyhow::Result<()> {
+    owned_writer_completion_proof(pool, latest, owner, workspace_id, root, WriterPhase::Sync)
+        .await?;
+    Ok(())
+}
+
+pub(crate) async fn owned_writer_completion_proof(
+    pool: &SqlitePool,
+    latest: &AgentRunRecord,
+    owner: Uuid,
+    workspace_id: Uuid,
+    root: &Path,
+    phase: WriterPhase,
+) -> anyhow::Result<PhaseCompletionProof> {
+    settled_owned_writer_proof(pool, latest, owner, workspace_id, root, phase, true).await
+}
+
+/// A failed Refine may leave the original candidate intact. This proves only
+/// settled ownership/audit/lifecycles; the caller must also compare the full
+/// pre-Refine fingerprint after provenance checks and setup restoration.
+pub(crate) async fn failed_refine_completion_proof(
+    pool: &SqlitePool,
+    latest: &AgentRunRecord,
+    owner: Uuid,
+    workspace_id: Uuid,
+    root: &Path,
+) -> anyhow::Result<PhaseCompletionProof> {
+    settled_owned_writer_proof(
+        pool,
+        latest,
+        owner,
+        workspace_id,
+        root,
+        WriterPhase::Refine,
+        false,
+    )
+    .await
+}
+
+async fn settled_owned_writer_proof(
+    pool: &SqlitePool,
+    latest: &AgentRunRecord,
+    owner: Uuid,
+    workspace_id: Uuid,
+    root: &Path,
+    phase: WriterPhase,
+    require_success: bool,
+) -> anyhow::Result<PhaseCompletionProof> {
     ensure!(
-        latest.status == AgentRunStatus::Succeeded && latest.workspace_id == workspace_id,
+        (latest.status == AgentRunStatus::Succeeded
+            || (!require_success
+                && matches!(
+                    latest.status,
+                    AgentRunStatus::Failed | AgentRunStatus::Crashed
+                )))
+            && latest.workspace_id == workspace_id,
         "Latest OpenWiki writer did not succeed in the assigned workspace"
     );
     let runs: Vec<AgentRunRecord> =
-        sqlx::query_as("SELECT * FROM agent_runs WHERE session_id = ? ORDER BY created_at, id")
+        sqlx::query_as("SELECT * FROM agent_runs WHERE session_id = ? ORDER BY created_at, rowid")
             .bind(latest.session_id)
             .fetch_all(pool)
             .await?;
@@ -132,7 +185,7 @@ pub(crate) async fn conversation_completion_proof(
         runs.last().map(|run| run.id) == Some(latest.id),
         "Stale OpenWiki conversation writer"
     );
-    let mut proof = PhaseCompletionProof::new(WriterPhase::Sync);
+    let mut proof = PhaseCompletionProof::new(phase);
     let mut previous_exit = None;
     for run in &runs {
         ensure!(
@@ -143,7 +196,7 @@ pub(crate) async fn conversation_completion_proof(
             "OpenWiki conversation ownership mismatch"
         );
         let attempts = ensure_processes_exited(pool, run).await?;
-        if run.id == latest.id {
+        if run.id == latest.id && require_success {
             ensure!(
                 attempts.last().unwrap().0.status == AgentRunStatus::Succeeded,
                 "Latest OpenWiki attempt did not succeed"
@@ -174,7 +227,8 @@ pub(crate) async fn conversation_completion_proof(
             .last()
             .and_then(|(_, process)| process.observed_exited_at);
     }
-    proof.validate()
+    proof.validate()?;
+    Ok(proof)
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -557,6 +611,7 @@ mod tests {
             "unfinished",
             "source",
             "running",
+            "overlap",
         ] {
             let mut f = Fixture::new().await;
             let owner = f.request.correlation_id;
@@ -653,6 +708,10 @@ mod tests {
                     manifest["session_id"] = json!(Uuid::new_v4());
                     std::fs::write(path, serde_json::to_vec(&manifest).unwrap()).unwrap();
                 }
+                "overlap" => {
+                    sqlx::query("UPDATE agent_process_registry SET observed_exited_at=? WHERE run_attempt_id=?")
+                        .bind(chrono::Utc::now()+chrono::Duration::minutes(1)).bind(first_attempt).execute(&f.pool).await.unwrap();
+                }
                 "workspace" => {
                     sqlx::query("UPDATE agent_runs SET workspace_path='/unknown' WHERE id=?")
                         .bind(f.request.agent_run_id)
@@ -681,6 +740,171 @@ mod tests {
                 result.is_ok(),
                 matches!(mutation, "valid" | "cancelled" | "failed"),
                 "{mutation}: {result:?}"
+            );
+        }
+    }
+
+    #[tokio::test]
+    async fn bootstrap_failed_refine_proves_settlement_without_weakening_writer_success() {
+        for case in [
+            "clean",
+            "completed",
+            "unfinished",
+            "running",
+            "cancelled",
+            "missing_audit",
+            "wrong_mode",
+        ] {
+            let mut f = Fixture::new().await;
+            let mut frames = if case == "clean" {
+                vec![]
+            } else {
+                f.operations(
+                    &[if case == "wrong_mode" {
+                        "init"
+                    } else {
+                        "update"
+                    }],
+                    true,
+                )
+            };
+            if case == "unfinished" {
+                frames.truncate(2);
+            }
+            f.attempt(if case == "missing_audit" {
+                None
+            } else {
+                Some(frames)
+            })
+            .await;
+            sqlx::query("UPDATE agent_runs SET status=?")
+                .bind(if case == "cancelled" {
+                    "cancelled"
+                } else {
+                    "failed"
+                })
+                .execute(&f.pool)
+                .await
+                .unwrap();
+            sqlx::query("UPDATE agent_run_attempts SET status='failed'")
+                .execute(&f.pool)
+                .await
+                .unwrap();
+            if case == "running" {
+                sqlx::query("UPDATE agent_process_registry SET registry_status='running', observed_exited_at=NULL").execute(&f.pool).await.unwrap();
+            }
+            let latest = AgentRunRecord::find(&f.pool, f.request.agent_run_id)
+                .await
+                .unwrap()
+                .unwrap();
+            let result = failed_refine_completion_proof(
+                &f.pool,
+                &latest,
+                f.request.correlation_id,
+                f.request.workspace.workspace_id,
+                f.temp.path(),
+            )
+            .await;
+            assert_eq!(
+                result.is_ok(),
+                matches!(case, "clean" | "completed"),
+                "{case}: {result:?}"
+            );
+            assert!(
+                owned_writer_completion_proof(
+                    &f.pool,
+                    &latest,
+                    f.request.correlation_id,
+                    f.request.workspace.workspace_id,
+                    f.temp.path(),
+                    WriterPhase::Refine
+                )
+                .await
+                .is_err()
+            );
+        }
+    }
+
+    #[tokio::test]
+    async fn bootstrap_owned_continuation_keeps_generate_rebuild_refine_policy() {
+        for (phase, mode) in [
+            (WriterPhase::Generate, "init"),
+            (WriterPhase::Rebuild, "update"),
+            (WriterPhase::Refine, "update"),
+        ] {
+            let mut f = Fixture::new().await;
+            let owner = f.request.correlation_id;
+            let first = f.operations(&[mode], false);
+            let wiki_id =
+                first[1]["params"]["item"]["result"]["structuredContent"]["runId"].clone();
+            f.attempt(Some(first)).await;
+            let unfinished = AgentRunRecord::find(&f.pool, f.request.agent_run_id)
+                .await
+                .unwrap()
+                .unwrap();
+            let error = owned_writer_completion_proof(
+                &f.pool,
+                &unfinished,
+                owner,
+                f.request.workspace.workspace_id,
+                f.temp.path(),
+                phase,
+            )
+            .await
+            .unwrap_err();
+            assert!(
+                error
+                    .downcast_ref::<services::services::openwiki::completion::IncompleteLifecycle>()
+                    .is_some()
+            );
+            f.request.agent_run_id = Uuid::new_v4();
+            f.request.request_id = Uuid::new_v4();
+            f.request.idempotency_key = Uuid::new_v4().to_string();
+            f.request.turn_id = Uuid::new_v4();
+            f.request.created_at = chrono::Utc::now();
+            f.attempts.clear();
+            let mut resumed = f.operations(&[mode], true);
+            for frame in &mut resumed {
+                let item = &mut frame["params"]["item"];
+                if item["tool"] == "openwiki_begin" {
+                    item["result"]["structuredContent"]["runId"] = wiki_id.clone();
+                    item["result"]["structuredContent"]["resumed"] = json!(true);
+                } else {
+                    item["arguments"]["runId"] = wiki_id.clone();
+                }
+            }
+            f.attempt(Some(resumed)).await;
+            let latest = AgentRunRecord::find(&f.pool, f.request.agent_run_id)
+                .await
+                .unwrap()
+                .unwrap();
+            owned_writer_completion_proof(
+                &f.pool,
+                &latest,
+                owner,
+                f.request.workspace.workspace_id,
+                f.temp.path(),
+                phase,
+            )
+            .await
+            .unwrap();
+            // A continuation cannot adopt a different operation mode.
+            let wrong = if phase == WriterPhase::Generate {
+                WriterPhase::Rebuild
+            } else {
+                WriterPhase::Generate
+            };
+            assert!(
+                owned_writer_completion_proof(
+                    &f.pool,
+                    &latest,
+                    owner,
+                    f.request.workspace.workspace_id,
+                    f.temp.path(),
+                    wrong
+                )
+                .await
+                .is_err()
             );
         }
     }

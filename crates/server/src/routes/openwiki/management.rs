@@ -450,6 +450,9 @@ pub(super) async fn recover(
             RepositoryWikiStatus::Disabled
         };
     }
+    if operation.delete {
+        state.quality_warnings.clear();
+    }
     if !operation.delete {
         state.status = if !state.enabled {
             RepositoryWikiStatus::Disabled

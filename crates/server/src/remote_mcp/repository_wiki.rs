@@ -389,6 +389,7 @@ mod tests {
         // A publication journal is intent, not proof that the target was committed.
         store
             .save_publication(&WikiPublication {
+                quality_warnings: Vec::new(),
                 run_id: run,
                 source_commit: "a".repeat(40),
                 target_branch: "main".into(),
@@ -431,6 +432,7 @@ mod tests {
         store.save_state(&state).await.unwrap();
         store
             .save_publication(&WikiPublication {
+                quality_warnings: Vec::new(),
                 run_id: retry,
                 source_commit: "c".repeat(40),
                 target_branch: "main".into(),

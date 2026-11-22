@@ -179,7 +179,6 @@ pub async fn initialize_deployment(
     .map_err(DeploymentError::Other)?;
     migrate_legacy_attachment_directories().await?;
     deployment.update_sentry_scope().await?;
-    crate::workflow_runtime::bootstrap::fence_interrupted_runs(&deployment).await?;
 
     // Runtime recovery is ordered from the real process owner outward.
     // Deployment construction has already re-attached durable provider hosts,

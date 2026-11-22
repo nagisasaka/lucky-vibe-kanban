@@ -635,9 +635,7 @@ pub(crate) mod tests {
 
     #[tokio::test]
     async fn manual_archive_rechecks_unfinished_host_maintenance_without_active_agent() {
-        use utils::repository_memory::{
-            OpenWikiBootstrapOwner, OpenWikiBootstrapPhase, RepositoryMemoryState,
-        };
+        use utils::repository_memory::{OpenWikiBootstrapOwner, RepositoryMemoryState};
 
         for (kind, files) in [
             ("openwiki_sync", false),
@@ -686,10 +684,6 @@ pub(crate) mod tests {
             } else {
                 state.bootstrap = Some(OpenWikiBootstrapOwner {
                     workflow_run_id: Uuid::new_v4(),
-                    server_instance_id: Uuid::new_v4(),
-                    phase: OpenWikiBootstrapPhase::Publishing,
-                    child: None,
-                    review_fingerprint: None,
                 });
             }
             store.save_state(&state).await.unwrap();

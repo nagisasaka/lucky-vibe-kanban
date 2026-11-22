@@ -151,18 +151,21 @@ pub(crate) async fn canonical_snapshot(
     }
     if !state.wiki_exists {
         return Ok(services::services::wiki::WikiSnapshot {
+            quality_warnings: None,
             exists: false,
             config: None,
             index: None,
             pages: Vec::new(),
         });
     }
-    tokio::task::spawn_blocking(move || {
+    let mut snapshot = tokio::task::spawn_blocking(move || {
         services::services::wiki::openwiki::load_snapshot(&repo.path)
     })
     .await
     .map_err(api_error)?
-    .map_err(api_error)
+    .map_err(api_error)?;
+    snapshot.quality_warnings = Some(state.quality_warnings);
+    Ok(snapshot)
 }
 
 pub async fn configure(
@@ -436,9 +439,6 @@ async fn start_request(
         state = store.state().await?;
         state.status = RepositoryWikiStatus::Error;
         state.error = Some(format!("{error:#}"));
-        if let Some(owner) = &mut state.bootstrap {
-            owner.phase = utils::repository_memory::OpenWikiBootstrapPhase::CleaningUp;
-        }
         store.save_state(&state).await?;
         return Err(error);
     }
@@ -699,8 +699,17 @@ async fn recover_repository(deployment: &DeploymentImpl, repo: &Repo) -> anyhow:
     }
     observe_recorded_pr_integrations(deployment, repo, &store).await?;
     recover_integrations(&store, &repo.path).await?;
-    if state.bootstrap.is_some() {
-        return crate::workflow_runtime::bootstrap::recover_locked(deployment, repo, &store).await;
+    if let Some(owner) = &state.bootstrap {
+        let id = owner.workflow_run_id;
+        let reserved: bool =
+            sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM workflow_runs WHERE id=?)")
+                .bind(id)
+                .fetch_one(&deployment.db().pool)
+                .await?;
+        if !reserved {
+            return crate::workflow_runtime::bootstrap::cleanup(deployment, repo, &store).await;
+        }
+        return Ok(()); // Bootstrap progression/recovery belongs to the common Workflow watcher.
     }
     let Some(run_id) = state.active_run_id else {
         finish_artifact_cleanup(&store, &mut state).await?;

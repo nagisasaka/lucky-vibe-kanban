@@ -404,6 +404,13 @@ pub(super) async fn create_agent_run(
             .bind(workspace.id)
             .fetch_optional(&deployment.db().pool)
             .await?;
+    let bootstrap = services::services::workspace_usage::bootstrap_delegation(
+        &deployment.db().pool,
+        workspace.id,
+        session.id,
+    )
+    .await
+    .map_err(|e| ApiError::BadRequest(e.to_string()))?;
     let correlation_id = if let Some(mut product) = product {
         db::models::integration::guard_agent_dispatch(
             &deployment.db().pool,
@@ -416,6 +423,16 @@ pub(super) async fn create_agent_run(
             .await
             .map_err(|e| ApiError::BadRequest(e.to_string()))?;
         product.id
+    } else if let Some((node, _, correlation, _)) = bootstrap {
+        if !matches!(node.as_str(), "generate" | "refine")
+            || launch.provider_session.is_none()
+            || launch.intent != AgentRunIntent::FollowUp
+        {
+            return Err(ApiError::BadRequest(
+                "Continue only the owned writer Session with its native binding".into(),
+            ));
+        }
+        correlation
     } else {
         Uuid::new_v4()
     };

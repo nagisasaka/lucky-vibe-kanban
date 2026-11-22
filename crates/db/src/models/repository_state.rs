@@ -400,6 +400,7 @@ mod tests {
             source_error: None,
         };
         let publication = WikiPublication {
+            quality_warnings: Vec::new(),
             run_id: Uuid::new_v4(),
             source_commit: event.source_commit.clone(),
             target_branch: "main".into(),
