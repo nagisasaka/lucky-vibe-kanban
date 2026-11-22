@@ -423,7 +423,7 @@ pub(super) async fn create_agent_run(
             .await
             .map_err(|e| ApiError::BadRequest(e.to_string()))?;
         product.id
-    } else if let Some((node, _, correlation, _)) = bootstrap {
+    } else if let Some((node, workflow_run_id, correlation, _)) = bootstrap {
         if !matches!(node.as_str(), "generate" | "refine")
             || launch.provider_session.is_none()
             || launch.intent != AgentRunIntent::FollowUp
@@ -432,6 +432,13 @@ pub(super) async fn create_agent_run(
                 "Continue only the owned writer Session with its native binding".into(),
             ));
         }
+        crate::workflow_runtime::bootstrap::validate_writer_continuation(
+            deployment,
+            workflow_run_id,
+            workspace.id,
+        )
+        .await
+        .map_err(|error| ApiError::BadRequest(error.to_string()))?;
         correlation
     } else {
         Uuid::new_v4()

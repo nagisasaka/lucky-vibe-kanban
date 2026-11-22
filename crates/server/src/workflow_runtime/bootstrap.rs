@@ -253,6 +253,7 @@ async fn context(deployment: &DeploymentImpl, run_id: Uuid) -> anyhow::Result<Co
     .context("Bootstrap repository missing")?;
     let store = RepositoryMemoryStore::for_repository(&deployment.db().pool, &repo.name, repo_id)?;
     let state = store.state().await?;
+    crate::routes::openwiki::validate_frozen_instructions(&state)?;
     ensure!(
         state
             .bootstrap
@@ -281,6 +282,45 @@ async fn context(deployment: &DeploymentImpl, run_id: Uuid) -> anyhow::Result<Co
         workspace,
         root,
     })
+}
+
+/// A user continuation bypasses workflow node dispatch; verify the existing
+/// frozen setup before allowing that owned writer Session to resume.
+pub(crate) async fn validate_writer_continuation(
+    deployment: &DeploymentImpl,
+    run_id: Uuid,
+    workspace_id: Uuid,
+) -> anyhow::Result<()> {
+    let ctx = context(deployment, run_id).await?;
+    ensure!(
+        ctx.workspace.id == workspace_id,
+        "Bootstrap workspace mismatch"
+    );
+    if ctx.state.active_wiki_instructions.is_none() {
+        return Ok(()); // Legacy writers have no frozen Wiki instruction checkpoint.
+    }
+    let _lock = ctx.store.try_lock()?;
+    ensure_workspace_exited(deployment, workspace_id).await?;
+    let checkpoint = ctx
+        .store
+        .wiki_setup(workspace_id)?
+        .context("Missing writer setup journal")?;
+    ensure!(
+        checkpoint.phase == utils::repository_memory::WikiSetupPhase::Prepared,
+        "Writer setup is not active"
+    );
+    let source = ctx
+        .state
+        .active_source_commit
+        .as_deref()
+        .context("Bootstrap source missing")?;
+    openwiki::setup::prepare_with_instructions(
+        &ctx.store,
+        workspace_id,
+        &ctx.root,
+        source,
+        ctx.state.active_wiki_instructions.as_deref(),
+    )
 }
 
 /// Called after stable AgentRun identities are calculated but before outbox
@@ -332,8 +372,22 @@ pub(super) async fn prepare_child_dispatch(
     let mut fingerprint = None;
     match request.node_id.as_str() {
         "generate" => {
-            if existing == 0 {
-                openwiki::setup::prepare(&ctx.store, ctx.workspace.id, &ctx.root, source)?;
+            // Revalidate the durable journal on continuations too: a changed
+            // temporary instruction must never silently become the new input.
+            if existing == 0 || ctx.state.active_wiki_instructions.is_some() {
+                if existing > 0 {
+                    ensure!(
+                        ctx.store.wiki_setup(ctx.workspace.id)?.is_some(),
+                        "Missing writer setup journal"
+                    );
+                }
+                openwiki::setup::prepare_with_instructions(
+                    &ctx.store,
+                    ctx.workspace.id,
+                    &ctx.root,
+                    source,
+                    ctx.state.active_wiki_instructions.as_deref(),
+                )?;
             }
             request.prompt = if let Some(reference) = &ctx.state.rebuild_reference {
                 openwiki::bootstrap::rebuild_prompt(
@@ -368,6 +422,13 @@ pub(super) async fn prepare_child_dispatch(
                 &copy_root,
                 source,
             )?);
+            if let Some(instructions) = &ctx.state.active_wiki_instructions {
+                use std::io::Write;
+                let directory = copy_root.join("openwiki");
+                let mut temporary = tempfile::NamedTempFile::new_in(&directory)?;
+                temporary.write_all(instructions.as_bytes())?;
+                temporary.persist(directory.join("INSTRUCTIONS.md"))?;
+            }
             request.prompt =
                 openwiki::bootstrap::review_prompt(&copy_root, &ctx.state.output_language);
             let reductions = openwiki::bootstrap::review_reductions(
@@ -403,6 +464,18 @@ pub(super) async fn prepare_child_dispatch(
                     ctx.workspace.id,
                     &ctx.root,
                     source,
+                )?;
+            } else if ctx.state.active_wiki_instructions.is_some() {
+                ensure!(
+                    ctx.store.wiki_setup(ctx.workspace.id)?.is_some(),
+                    "Missing writer setup journal"
+                );
+                openwiki::setup::prepare_with_instructions(
+                    &ctx.store,
+                    ctx.workspace.id,
+                    &ctx.root,
+                    source,
+                    ctx.state.active_wiki_instructions.as_deref(),
                 )?;
             }
             request.prompt = openwiki::bootstrap::writer_prompt(
@@ -728,7 +801,7 @@ async fn unchanged_refine_fallback(
     Ok(serde_json::json!({"refine_unmodified":true,"warning":format!("Refine失敗。開始前候補の完全一致とwriter/lifecycle収束を確認して元候補を使用: {error}")}).to_string())
 }
 
-async fn validate_child_completion_inner(
+pub(super) async fn validate_child_completion_inner(
     deployment: &DeploymentImpl,
     run_id: Uuid,
     node_id: &str,
@@ -800,7 +873,10 @@ async fn validate_child_completion_inner(
             return Ok(serde_json::json!({"review_missing":true}).to_string());
         };
         let mut review = review;
-        review.retain_current_evidence(&ctx.root);
+        review.retain_evidence_with_frozen_instructions(
+            &ctx.root,
+            ctx.state.active_wiki_instructions.is_some(),
+        );
         let reference = reports::save_review(
             &ctx.store,
             report_identity(BootstrapReportKind::Review)?,
@@ -867,7 +943,10 @@ async fn validate_child_completion_inner(
     openwiki::setup::validate_provenance(&ctx.store, ctx.workspace.id, &ctx.root, source)?;
     openwiki::publication_paths(deployment.git(), &ctx.root, source)?;
     if let Some(report) = report {
-        report.validate_files(&ctx.root)?;
+        report.validate_files_with_frozen_instructions(
+            &ctx.root,
+            ctx.state.active_wiki_instructions.is_some(),
+        )?;
         if !proof.has_completed_update() {
             ensure!(
                 fingerprint.as_deref()
@@ -906,7 +985,7 @@ async fn ensure_workspace_exited(
     Ok(())
 }
 
-async fn publish(
+pub(super) async fn publish(
     deployment: &DeploymentImpl,
     run_id: Uuid,
 ) -> anyhow::Result<(Option<String>, bool)> {

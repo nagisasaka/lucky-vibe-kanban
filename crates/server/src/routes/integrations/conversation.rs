@@ -748,6 +748,16 @@ async fn prepare_wiki(
         RepositoryMemoryStore::existing_for_repository(&deployment.db().pool, &repo.name, repo.id)
             .await?
             .context("Missing setup journal store")?;
+    let _settings_lock = store.try_lock()?;
+    let state = store.state().await?;
+    let applied_override = state.applied_wiki_instructions_override.as_deref();
+    if let Some(text) = applied_override {
+        ensure!(
+            state.applied_wiki_instructions_digest.as_deref()
+                == Some(crate::routes::openwiki::instructions_digest(text).as_str()),
+            "Applied Wiki instruction checkpoint is inconsistent"
+        );
+    }
     let phase_base = run
         .payload
         .history
@@ -782,14 +792,36 @@ async fn prepare_wiki(
                         && receipt["state"] == "recorded")
                 && journal.previous_final_commits.is_empty()
                 && journal.final_commit.is_none()
-                && journal.checkpoint.phase == utils::repository_memory::WikiSetupPhase::Prepared,
+                && matches!(
+                    journal.checkpoint.phase,
+                    utils::repository_memory::WikiSetupPhase::Preparing
+                        | utils::repository_memory::WikiSetupPhase::Prepared
+                ),
             "Original setup receipt is missing or changed"
         );
-        deployment.git().require_clean_source(&root, code)?;
+        if journal.checkpoint.version == 2 {
+            ensure!(
+                journal.checkpoint.files.iter().any(|entry| entry.path
+                    == "openwiki/INSTRUCTIONS.md"
+                    && matches!(&entry.prepared,
+                        utils::repository_memory::WikiSetupFile::Regular { content, .. }
+                        if Some(content.as_str()) == applied_override)),
+                "Unacknowledged Wiki instructions differ from the applied checkpoint"
+            );
+            services::services::openwiki::setup::integration::validate(
+                &store,
+                &wiki_setup_identity(run, &root, code)?,
+                &head,
+            )?;
+            ensure!(head == code, "Unacknowledged setup source changed");
+        } else {
+            deployment.git().require_clean_source(&root, code)?;
+        }
     }
-    services::services::openwiki::setup::integration::prepare(
+    services::services::openwiki::setup::integration::prepare_with_instructions(
         &store,
         &wiki_setup_identity(run, &root, code)?,
+        applied_override,
     )?;
     services::services::openwiki::setup::integration::original_digest(
         &store
@@ -1218,6 +1250,23 @@ pub(super) async fn verify_evidence(
 #[path = "conversation_tests.rs"]
 mod tests;
 
+fn note_repository_native_wiki_update(
+    state: &mut utils::repository_memory::RepositoryMemoryState,
+    code_commit: &str,
+    wiki_commit: Option<&str>,
+    applied_override_used: bool,
+) {
+    // A legacy repository-native writer cannot attest that an override was
+    // applied; keep the saved override pending until an explicit update.
+    if wiki_commit.is_some_and(|wiki| wiki != code_commit)
+        && (state.wiki_instructions.is_some() || state.applied_wiki_instructions_override.is_some())
+        && !applied_override_used
+    {
+        state.applied_wiki_instructions_digest = None;
+        state.applied_wiki_instructions_override = None;
+    }
+}
+
 pub(super) async fn record_wiki_result(
     pool: &sqlx::SqlitePool,
     conn: &mut sqlx::SqliteConnection,
@@ -1261,6 +1310,33 @@ pub(super) async fn record_wiki_result(
             && !state.generation_suppressed
             && state.target_branch.as_deref() == run.target_ref.strip_prefix("refs/heads/")
         {
+            let applied_override_used = store
+                .integration_wiki_setup(run.id)?
+                .filter(|journal| journal.checkpoint.version == 2)
+                .and_then(|journal| {
+                    journal.checkpoint.files.into_iter().find_map(|entry| {
+                        if entry.path != "openwiki/INSTRUCTIONS.md" {
+                            return None;
+                        }
+                        match entry.prepared {
+                            utils::repository_memory::WikiSetupFile::Regular {
+                                content, ..
+                            } => Some(content),
+                            _ => None,
+                        }
+                    })
+                })
+                .is_some_and(|text| {
+                    state.applied_wiki_instructions_override.as_deref() == Some(text.as_str())
+                        && state.applied_wiki_instructions_digest.as_deref()
+                            == Some(crate::routes::openwiki::instructions_digest(&text).as_str())
+                });
+            note_repository_native_wiki_update(
+                &mut state,
+                &request.code_commit,
+                request.wiki_commit.as_deref(),
+                applied_override_used,
+            );
             state.source_commit = Some(request.code_commit.clone());
             state.wiki_commit = request.wiki_commit.clone();
             state.last_success = Some(chrono::Utc::now());

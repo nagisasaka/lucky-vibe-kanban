@@ -10,11 +10,13 @@ function FileEditor({
   file,
   disabled,
   onSave,
+  onClear,
   onDirty,
 }: {
   file: RepositoryWikiFile;
   disabled: boolean;
   onSave: (path: string, value: string) => Promise<void>;
+  onClear: () => Promise<void>;
   onDirty: (path: string, dirty: boolean) => void;
 }) {
   const { t } = useTranslation('settings');
@@ -33,9 +35,11 @@ function FileEditor({
         label={file.path}
         htmlFor={`wiki-file-${file.path}`}
         description={
-          file.exists
-            ? t('repositoryMemory.files.existing')
-            : t('repositoryMemory.files.defaultValue')
+          file.override_saved
+            ? t('repositoryMemory.files.savedOverride')
+            : file.exists
+              ? t('repositoryMemory.files.existing')
+              : t('repositoryMemory.files.defaultValue')
         }
       >
         <textarea
@@ -55,15 +59,24 @@ function FileEditor({
           disabled={disabled || editing}
           onClick={() => setEditing(true)}
         />
-        <PrimaryButton
-          value={t('repositoryMemory.files.reset')}
-          variant="tertiary"
-          disabled={disabled}
-          onClick={() => {
-            setEditing(true);
-            setValue(file.default_content);
-          }}
-        />
+        {file.path === 'openwiki/INSTRUCTIONS.md' ? (
+          <PrimaryButton
+            value={t('repositoryMemory.files.clearOverride')}
+            variant="tertiary"
+            disabled={disabled || !file.override_saved}
+            onClick={() => void onClear()}
+          />
+        ) : (
+          <PrimaryButton
+            value={t('repositoryMemory.files.reset')}
+            variant="tertiary"
+            disabled={disabled}
+            onClick={() => {
+              setEditing(true);
+              setValue(file.default_content);
+            }}
+          />
+        )}
         <PrimaryButton
           value={t('repositoryMemory.save')}
           disabled={disabled || (!dirty && file.exists)}
@@ -78,6 +91,7 @@ export function RepositoryWikiFilesSettings({
   repo,
   client,
   disabled,
+  active,
   wikiExists,
   enabled,
   branch,
@@ -88,6 +102,7 @@ export function RepositoryWikiFilesSettings({
   repo: Repo;
   client: MachineClient;
   disabled: boolean;
+  active: boolean;
   wikiExists: boolean;
   enabled: boolean;
   branch: string | null | undefined;
@@ -127,11 +142,12 @@ export function RepositoryWikiFilesSettings({
   const data = query.data;
   const blocked = disabled || busy || !data || query.isError;
   const perform = async (
-    action: 'save' | 'delete' | 'rebuild',
+    action: 'save' | 'clear' | 'delete' | 'rebuild',
     path?: string,
     content?: string
   ) => {
-    if (blocked || !data || (action !== 'save' && dirty)) return;
+    if (blocked || !data || (action !== 'save' && action !== 'clear' && dirty))
+      return;
     if (action === 'delete' && confirmation !== `${repo.name}/openwiki`) return;
     setBusy(true);
     setError(null);
@@ -143,6 +159,15 @@ export function RepositoryWikiFilesSettings({
           source: data.source,
           path,
           content,
+        });
+        queryClient.setQueryData(key, saved);
+      } else if (action === 'clear') {
+        const saved = await client.saveRepositoryWikiFile(repo.id, {
+          branch: data.branch,
+          source: data.source,
+          path: 'openwiki/INSTRUCTIONS.md',
+          content: '',
+          clear_override: true,
         });
         queryClient.setQueryData(key, saved);
       } else if (action === 'delete') {
@@ -177,9 +202,12 @@ export function RepositoryWikiFilesSettings({
         <FileEditor
           key={`${repo.id}/${file.path}`}
           file={file}
-          disabled={blocked}
+          disabled={
+            blocked || (active && file.path !== 'openwiki/INSTRUCTIONS.md')
+          }
           onDirty={recordDirty}
           onSave={(path, value) => perform('save', path, value)}
+          onClear={() => perform('clear')}
         />
       ))}
       <p className="text-sm text-low">
@@ -202,7 +230,7 @@ export function RepositoryWikiFilesSettings({
             </p>
             <PrimaryButton
               value={t('repositoryMemory.files.rebuild')}
-              disabled={blocked || dirty || !enabled}
+              disabled={blocked || active || dirty || !enabled}
               onClick={() => void perform('rebuild')}
             />
           </div>
@@ -229,12 +257,18 @@ export function RepositoryWikiFilesSettings({
             <PrimaryButton
               value={t('repositoryMemory.files.delete')}
               className={
-                blocked || dirty || confirmation !== `${repo.name}/openwiki`
+                blocked ||
+                active ||
+                dirty ||
+                confirmation !== `${repo.name}/openwiki`
                   ? undefined
                   : 'bg-error text-on-error hover:bg-error/90'
               }
               disabled={
-                blocked || dirty || confirmation !== `${repo.name}/openwiki`
+                blocked ||
+                active ||
+                dirty ||
+                confirmation !== `${repo.name}/openwiki`
               }
               onClick={() => void perform('delete')}
             />

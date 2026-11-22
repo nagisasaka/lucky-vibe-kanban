@@ -110,6 +110,41 @@ pub(crate) async fn writer_completion_proof(
     Ok(proof)
 }
 
+/// A frozen-instruction Sync can resume the same audited OpenWiki operation
+/// across attempts. Ownership, non-overlap and explicit resumption of the same
+/// Wiki run remain mandatory; an unfinished final operation still fails.
+pub(crate) async fn resumable_writer_completion_proof(
+    pool: &SqlitePool,
+    run: &AgentRunRecord,
+    attempts: &[(AgentRunAttemptRecord, AgentProcessRegistryRecord)],
+    workspace_id: Uuid,
+    workspace_path: &Path,
+    root: &Path,
+    phase: WriterPhase,
+) -> anyhow::Result<PhaseCompletionProof> {
+    ensure!(
+        run.status == AgentRunStatus::Succeeded
+            && attempts
+                .last()
+                .is_some_and(|(attempt, _)| attempt.status == AgentRunStatus::Succeeded),
+        "Latest OpenWiki attempt did not succeed"
+    );
+    let mut proof = PhaseCompletionProof::new(phase);
+    replay_writer_run(
+        pool,
+        run,
+        attempts,
+        workspace_id,
+        workspace_path,
+        root,
+        &mut proof,
+        true,
+    )
+    .await?;
+    proof.validate()?;
+    Ok(proof)
+}
+
 /// Auto-merge owns one conversation across multiple AgentRuns. Never search
 /// other sessions for a matching OpenWiki ID or accept a resumed ID on trust.
 pub(crate) async fn conversation_completion_proof(

@@ -8,6 +8,28 @@ use executors::{executors::BaseCodingAgent, profile::ExecutorConfig};
 
 use super::*;
 
+#[test]
+fn repository_native_wiki_update_keeps_saved_override_pending() {
+    let mut state = utils::repository_memory::RepositoryMemoryState {
+        wiki_instructions: Some("override".into()),
+        applied_wiki_instructions_digest: Some("prior".into()),
+        ..Default::default()
+    };
+    note_repository_native_wiki_update(&mut state, "code", Some("code"), false);
+    assert_eq!(
+        state.applied_wiki_instructions_digest.as_deref(),
+        Some("prior")
+    );
+    note_repository_native_wiki_update(&mut state, "code", Some("wiki"), true);
+    assert_eq!(
+        state.applied_wiki_instructions_digest.as_deref(),
+        Some("prior")
+    );
+    note_repository_native_wiki_update(&mut state, "code", Some("wiki"), false);
+    assert!(state.applied_wiki_instructions_digest.is_none());
+    assert_eq!(state.wiki_instructions.as_deref(), Some("override"));
+}
+
 #[tokio::test]
 #[ignore = "fresh isolated instance only; no provider or live service"]
 async fn isolated_conversation_repair_publication_drift_and_idempotence() -> anyhow::Result<()> {
@@ -59,6 +81,7 @@ async fn exercise(deployment: &DeploymentImpl, instance: &std::path::Path) -> an
         "wiki-resume",
         "wiki-restored-resume",
         "wiki-success",
+        "wiki-override",
         "wiki-noop",
         "wiki-unsettled",
         "wiki-missing-journal",
@@ -458,7 +481,16 @@ async fn exercise(deployment: &DeploymentImpl, instance: &std::path::Path) -> an
                 utils::path::shared_resources_dir(&repo.name, repo.id).join("persistent");
             std::fs::create_dir_all(&persistent)?;
             let store = RepositoryMemoryStore::for_repository(pool, &repo.name, repo.id)?;
-            store.save_state(&store.state().await?).await?;
+            let mut state = store.state().await?;
+            if mode == "wiki-override" {
+                state.enabled = true;
+                state.target_branch = Some("main".into());
+                state.wiki_instructions = Some("applied A\n".into());
+                state.applied_wiki_instructions_override = Some("applied A\n".into());
+                state.applied_wiki_instructions_digest =
+                    Some(crate::routes::openwiki::instructions_digest("applied A\n"));
+            }
+            store.save_state(&state).await?;
             if mode == "wiki-before-journal" {
                 record_wiki_audit(
                     pool,
@@ -492,6 +524,19 @@ async fn exercise(deployment: &DeploymentImpl, instance: &std::path::Path) -> an
                     interrupted.save(pool).await?;
                 }
                 action(deployment, prepare).await?;
+                if mode == "wiki-override" {
+                    ensure!(
+                        std::fs::read_to_string(checkout.join("openwiki/INSTRUCTIONS.md"))?
+                            == "applied A\n"
+                    );
+                    let mut changed = store.state().await?;
+                    changed.wiki_instructions = Some("pending B\n".into());
+                    store.save_state(&changed).await?;
+                    ensure!(
+                        std::fs::read_to_string(checkout.join("openwiki/INSTRUCTIONS.md"))?
+                            == "applied A\n"
+                    );
+                }
             }
             let snippet =
                 include_str!("../../../../services/src/services/openwiki/setup/agents-0.9.0.txt");
@@ -503,7 +548,7 @@ async fn exercise(deployment: &DeploymentImpl, instance: &std::path::Path) -> an
         let mut candidate = if wiki && mode != "wiki-noop" {
             std::fs::create_dir_all(checkout.join("openwiki"))?;
             std::fs::write(checkout.join("openwiki/index.md"), "fixture Wiki")?;
-            support::git(&checkout, &["add", "openwiki"])?;
+            support::git(&checkout, &["add", "openwiki/index.md"])?;
             support::git(&checkout, &["commit", "-m", "Wiki only"])?;
             support::git(&checkout, &["rev-parse", "HEAD"])?
         } else {
@@ -962,6 +1007,28 @@ async fn exercise(deployment: &DeploymentImpl, instance: &std::path::Path) -> an
             if wiki {
                 ensure!(std::fs::read_to_string(root.join("AGENTS.md"))? == "# User rules\n");
                 deployment.git().require_clean_source(&root, &candidate)?;
+                if mode == "wiki-override" {
+                    ensure!(!root.join("openwiki/INSTRUCTIONS.md").exists());
+                    let store =
+                        RepositoryMemoryStore::existing_for_repository(pool, &repo.name, repo.id)
+                            .await?
+                            .unwrap();
+                    let state = store.state().await?;
+                    ensure!(state.wiki_instructions.as_deref() == Some("pending B\n"));
+                    ensure!(
+                        state.applied_wiki_instructions_override.as_deref() == Some("applied A\n")
+                    );
+                    ensure!(
+                        state.applied_wiki_instructions_digest.as_deref()
+                            == Some(
+                                crate::routes::openwiki::instructions_digest("applied A\n")
+                                    .as_str()
+                            )
+                    );
+                    let (shown, _) =
+                        crate::routes::openwiki::status_snapshot(deployment, repo.id).await?;
+                    ensure!(shown.wiki_instructions_pending);
+                }
             }
             ensure!(
                 end.status == "succeeded"

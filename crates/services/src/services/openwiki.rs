@@ -187,10 +187,21 @@ impl OpenWikiAdapter {
         hints: &str,
         scope: &utils::repository_memory::RepositoryWikiSyncScope,
     ) -> String {
+        Self::sync_prompt_with_force(root, language, hints, scope, false)
+    }
+
+    pub fn sync_prompt_with_force(
+        root: &Path,
+        language: &str,
+        hints: &str,
+        scope: &utils::repository_memory::RepositoryWikiSyncScope,
+        force: bool,
+    ) -> String {
         let update_policy = if matches!(
             scope,
             utils::repository_memory::RepositoryWikiSyncScope::PendingChanges
-        ) {
+        ) && !force
+        {
             ". A begin status=noop is successful"
         } else {
             ", force=true. This explicit reconciliation must review the requested scope even if OpenWiki's previous source checkpoint matches. Complete the update lifecycle, using an empty plan if no corrections are needed; a begin-noop is not sufficient"
@@ -246,14 +257,25 @@ pub fn publication_paths(
         .arg(root)
         .args(["show", &format!("{source}:openwiki/INSTRUCTIONS.md")])
         .output()?;
-    let expected_instructions = if previous_instructions.status.success() {
-        previous_instructions.stdout
-    } else {
-        include_bytes!("../../../../assets/openwiki-instructions.md").to_vec()
+    let actual = match std::fs::read(&instructions_path) {
+        Ok(bytes) => Some(bytes),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => None,
+        Err(error) => return Err(error.into()),
     };
-    if std::fs::read(&instructions_path)? != expected_instructions {
-        anyhow::bail!("OpenWiki changed user-authored INSTRUCTIONS.md; publication refused");
-    }
+    let valid = if previous_instructions.status.success() {
+        actual.as_deref() == Some(previous_instructions.stdout.as_slice())
+    } else {
+        // Older in-flight runs materialise the built-in default before journalling.
+        actual.is_none()
+            || actual.as_deref()
+                == Some(include_bytes!(
+                    "../../../../assets/openwiki-instructions.md"
+                ))
+    };
+    anyhow::ensure!(
+        valid,
+        "OpenWiki changed user-authored INSTRUCTIONS.md; publication refused"
+    );
     let manifest_path = root.join("openwiki/.page-manifest.json");
     utils::repository_memory::reject_symlinks(&manifest_path)?;
     if manifest_path.exists() {
@@ -284,6 +306,9 @@ pub fn publication_paths(
     let mut result = Vec::new();
     for path in git.get_diff_file_paths(root, &source.parse()?)? {
         utils::repository_memory::reject_symlinks(&root.join(&path))?;
+        if path == management::INSTRUCTIONS {
+            continue;
+        }
         if is_setup_byproduct(&path) {
             // These are installation by-products in the dedicated worktree,
             // never staged, merged or removed from user repositories.
