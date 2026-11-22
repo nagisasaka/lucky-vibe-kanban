@@ -1,39 +1,31 @@
 ---
 type: concept
-title: Organization・Member・Invitation
-description: 固定Organizationと認証actor、承認制メンバー、過去の所有者IDを区別する。
-tags: [organization, membership, authorization, invitations, cloud]
+title: Organization と Member
+description: local Board の固定 Organization、現在 actor、承認制メンバーと過去 identity の境界。
+tags: [organization, membership, authorization]
+verified:
+  - by: openwiki/0.9.0
+    at: 2026-11-22T05:31:45.518Z
 sources:
   - id: openwiki-source-20b72970921fabf5b536668c
     resource: repo://crates/server-access/src/handlers.rs
   - id: openwiki-source-9d15c737f5e087237387893e
     resource: repo://crates/server-access/src/store.rs
-  - id: openwiki-source-a6cad3d930b299ebbbd793a3
-    resource: repo://crates/server-access/src/tests.rs
   - id: openwiki-source-1ffb01d1ba3953937e0771bf
     resource: repo://crates/server/src/routes/local_remote.rs
-  - id: openwiki-source-647c795785981f31f6ce0896
-    resource: repo://packages/ui/src/components/IssueWorkspacesSection.tsx
-  - id: openwiki-source-ab4a5800fcfc16d8494e494a
-    resource: repo://packages/web-core/src/shared/lib/localIdentity.ts
-generated: { by: "codex", at: "2026-11-04T20:14:29.223Z" }
-verified:
-  - by: openwiki/0.7.2
-    at: 2026-11-04T20:14:29.223Z
+generated: { by: "codex", at: "2026-11-22T05:31:45.518Z" }
 ---
 
-# Organization・Member・Invitation
+# Organization と Member
 
-CloudサービスのOrganization/Invitationは撤去されている。local Boardは固定Organization `Uuid::from_u128(2)` を引き続き使うが、公開配置の本人識別は新しいserver-accessの認証に基づく。[Board API](../../crates/server/src/routes/local_remote.rs)、[認証](../../crates/server-access/src/lib.rs)。
+LVK の local Board は固定 Organization を使い、公開配置の本人は [サーバー認証](server-access.md) の actor で識別する。所属、権限、過去の所有者表示を変更するときに読む。認証の受付と作業の完了は[別の段階](../quickstart.md#操作の段階)である。[Board API](../../crates/server/src/routes/local_remote.rs)・[access](../../crates/server-access/src/lib.rs)
 
-Localモードのuserは `Uuid::from_u128(1)`。Basic/Auth0では認証されたactorのIDを使用し、UIもaccess gateが取得した本人IDを用いる。過去のWorkspaceの固定所有者IDを現在の利用者へ書き換えず、共有Workspaceとして表示・操作する。[local identity](../../packages/web-core/src/shared/lib/localIdentity.ts)、[Workspace UI](../../packages/ui/src/components/IssueWorkspaceCard.tsx)。
+Local mode の user は固定 local identity である。Basic と Auth0 は認証済み actor の ID を使い、UI も access gate が得た本人 ID を使う。過去の Workspace の固定所有者を現在の利用者へ書き換えない。[local identity](../../packages/web-core/src/shared/lib/localIdentity.ts)・[access](../../crates/server-access/src/lib.rs)
 
-Auth0の本人はissuerとsubjectで識別し、外部ログインしただけの利用者は承認待ちとなる。管理者が「認証・メンバー」で承認し、最後の有効な管理者は無効化・降格できない。全有効メンバーが全プロジェクトを使う。旧Cloudの招待・組織単位の隔離・同一メールによるアカウント統合は復活しない。[初期設定と管理session](server-access.md#初回設定と方式変更)、[handlers](../../crates/server-access/src/handlers.rs)。
+Auth0 の本人は issuer と subject で識別する。初回ログインだけでは active にならず、管理者の承認を待つ。最後の active admin は無効化・降格できない。固定 Organization は tenant 分離や全員が admin である証明ではない。[identity](../../crates/server-access/src/store.rs)・[member 管理](../../crates/server-access/src/handlers.rs)
 
-Boardのメンバー表示は現在actorのissuerに属するactiveメンバーを読み、Organizationのroleもactorから返す。users snapshotには過去の固定IDを「Legacy local user (unattributed)」として残す。固定Organizationはtenant境界や全員Adminの証明ではない。[表示の組立て](../../crates/server/src/routes/local_remote.rs#L1228-L1358)
+Board の member 表示は現在 actor の issuer に属する active member を読む。過去の固定 ID は帰属不明の legacy user として残す。旧 Cloud の Invitation、組織単位の隔離や同じメールによるアカウント統合を現行機能と扱わない。[表示](../../crates/server/src/routes/local_remote.rs)
 
-メンバー無効化・session失効は新規API要求と継続接続の認証を失わせる。WebSocketは共通LocalWsUpgradeで認証leaseを保持し、失効後に終了する。既に受理したagent作業を自動取消する契約ではない。同じOSユーザーとしてのファイル・エージェント権限は引き続き共有される。[WebSocket](../../crates/server/src/middleware/websocket.rs)、[運用境界](../operations/server-container.md)。
+Member の無効化や session 失効は新規要求と継続接続の認証に影響する。すでに受理された agent 作業の自動取消を意味せず、同じ OS 実行ユーザーのファイル権限も別である。[WebSocket](../../crates/server/src/middleware/websocket.rs)・[運用境界](../operations/server-container.md)
 
-実Auth0・ChatGPTアカウントでの受入確認はコンポーネント検証と区別する。[fixtureと実サービスの確認](server-access.md#検証と残る確認)。
-
-設定の初回有効化、session寿命、暗号化・復旧と内部agentの権限は [サーバー認証](server-access.md)に集約する。メンバーの承認はagent providerへのログインを代行しない。
+実 Auth0・外部 client の受入は fixture の成功と別に確認する。初期設定と回復、provider ログインの違いは[サーバー認証](server-access.md)と[provider](../integrations/agent-providers.md)を参照する。[access tests](../../crates/server-access/src/tests.rs)

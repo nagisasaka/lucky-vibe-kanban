@@ -1,168 +1,66 @@
 ---
 type: architecture
 title: Workflow の実行と耐久オーケストレーション
-description: 凍結グラフから AgentRun を起動する経路、outbox・inbox・lease の役割、分岐検証と取消・再起動時の所有境界。
+description: 凍結グラフから Agent Run を配送し、待機、再起動、分岐と取消を扱う実行境界。
 tags: [workflow, orchestration, recovery, lifecycle]
-sources:
-  - id: openwiki-source-bfeb454efabf3fd2f6ca5a1e
-    resource: repo://crates/db/src/models/orchestration.rs
-  - id: openwiki-source-5b20a61dbf36c0c143a466eb
-    resource: repo://crates/server/src/lib.rs
-  - id: openwiki-source-a13fe4db1eee073d0a7e2c4d
-    resource: repo://crates/server/src/main.rs
-  - id: openwiki-source-5720d865d1c837f0e6b7dab7
-    resource: repo://crates/server/src/routes/integrations/conversation.rs
-  - id: openwiki-source-a517c0f8e44d2cf0c440fbfc
-    resource: repo://crates/server/src/routes/workflows.rs
-  - id: openwiki-source-ed8c84278dba8a1f45af40e9
-    resource: repo://crates/server/src/startup.rs
-  - id: openwiki-source-04d5adb51b5929dacce999bc
-    resource: repo://crates/server/src/workflow_runtime/bootstrap.rs
-  - id: openwiki-source-864d86b798cce4d7e451a363
-    resource: repo://crates/server/src/workflow_runtime/condition_router.rs
-  - id: openwiki-source-28ba6f0a94db33f3977b34d2
-    resource: repo://crates/server/src/workflow_runtime/presets.rs
-  - id: openwiki-source-6f2595571056199f0f83415c
-    resource: repo://crates/server/src/workflow_runtime/runner.rs
-  - id: openwiki-source-424fb004ecd8c2fe0a368131
-    resource: repo://crates/server/src/workflow_runtime/workspace.rs
-  - id: openwiki-source-7277adee5c65e8d79143e722
-    resource: repo://crates/services/src/services/openwiki/bootstrap.rs
-  - id: openwiki-source-bef089692ac7606992050919
-    resource: repo://crates/services/src/services/openwiki/bootstrap/reports.rs
-  - id: openwiki-source-121b98c6561fe94a6783b777
-    resource: repo://crates/services/src/services/orchestration_dispatch_tests.rs
-  - id: openwiki-source-b19d02455156008b43c210c8
-    resource: repo://crates/services/src/services/orchestration.rs
-  - id: openwiki-source-5bd46b87a60accbf6cd6da13
-    resource: repo://crates/workflow/src/planner.rs
-  - id: openwiki-source-63d2b16e8e208dce3e2032ac
-    resource: repo://crates/workflow/src/presets.rs
-  - id: openwiki-source-886d46158b33599d038c5bfa
-    resource: repo://packages/web-core/src/features/workflow/ui/WorkflowRunPage.tsx
-  - id: openwiki-source-ffc55e6e31e6ce477ca57329
-    resource: repo://packages/web-core/src/shared/hooks/useWorkflowRun.ts
-  - id: openwiki-source-106370df067778d69654e845
-    resource: repo://packages/web-core/src/shared/hooks/useWorkspaceRepositoryWorkflow.ts
-  - id: openwiki-source-23775c3de52f3ab95a13cb8b
-    resource: repo://README.md
-generated: { by: "codex", at: "2026-11-22T04:06:17.040Z" }
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-22T04:06:17.040Z
+    at: 2026-11-22T05:31:45.518Z
+sources:
+  - id: openwiki-source-28ba6f0a94db33f3977b34d2
+    resource: repo://crates/server/src/workflow_runtime/presets.rs
+  - id: openwiki-source-424fb004ecd8c2fe0a368131
+    resource: repo://crates/server/src/workflow_runtime/workspace.rs
+  - id: openwiki-source-b19d02455156008b43c210c8
+    resource: repo://crates/services/src/services/orchestration.rs
+generated: { by: "codex", at: "2026-11-22T05:31:45.518Z" }
 ---
 
 # Workflow の実行と耐久オーケストレーション
 
-## 純粋な計画と副作用の分離
+Workflow runtime は [Workflow Attempt](../concepts/workflow-attempt.md) のグラフを実行し、各工程と Agent Run の状態を結び付ける。グラフの意味、実際の副作用、製品固有の成果検証を変更するときに読む。受付、実行、完了、公開、内容受入は[別の段階](../quickstart.md#操作の段階)である。
 
-`workflow` crate はグラフの検証と実行可能 node の計画を行う。server の runner は Workspace、Session、DB の node execution、AgentRun を接続する。[Workflow Attempt](../concepts/workflow-attempt.md)が説明する辺・反復の意味を、DB やプロセスの識別へ落とす境界である。
+## 計画と作業場所
 
-通常 run の開始では、実行用グラフを検証し、主 Workspace を作成または再利用し、Agent node の Session を確保する。その後 `workflow_runs.graph_snapshot`、orchestration run、node execution の対応を保存してから駆動する。[開始経路](../../crates/server/src/workflow_runtime/runner.rs#L995-L1056)
+`workflow` crate はグラフを検証し、実行可能な node を計画する。server runner は Workspace、Session、node execution と Agent Run を接続する。開始時の graph snapshot は Run に保存され、回復時に現在のテンプレートへ無条件で置き換えない。[planner](../../crates/workflow/src/planner.rs)・[runner](../../crates/server/src/workflow_runtime/runner.rs)
 
-run は開始時のグラフを保持する。復旧時も snapshot を優先し、現在のテンプレートへ無条件に切り替えない。nullable fallback は最小テスト fixture の互換用途として記録されている。[保存と再読込](../../crates/server/src/workflow_runtime/runner.rs#L2065-L2116)
+Workspace row の存在は物理 worktree の準備完了を意味しない。通常の Agent dispatch は Session の所属を確認し、予約 guard を通して作業場所を準備する。`execution_only` は所有者が準備した inspection root を使い、欠落時に通常 container を勝手に再作成しない。閲覧や graph 編集は作業木作成の契機ではない。[作業場所](../../crates/server/src/workflow_runtime/workspace.rs)・[Workspace の所有権](../concepts/workspace.md)
 
-## 作業場所の準備は実 dispatch の責任
+新規 Workflow Workspace の Repo は Project の作成プリセットと base branch を検査する。既存 Workspace の再利用はその構成を保つ。複数 Repo への適用を一つの原子的 rollback とみなさない。[resolver](../../crates/server/src/workflow_runtime/workspace.rs)・[Arena](../../crates/server/src/workflow_runtime/arena.rs)
 
-Workspace の DB row と実 worktree の準備完了は同義ではない。通常 Workflow の Agent dispatch は、指定 Session が当該 Workspace に属することを確認した後、自動マージ の予約 guard を通して既存 container 準備を呼ぶ。これにより、作成時にはまだ物理作業木を持たない通常 Workflow も開始できる。画面の閲覧や graph 編集を worktree 作成の契機にしない。[dispatch](../../crates/server/src/workflow_runtime/runner.rs#L722-L748)
+## 耐久配送と回復
 
-`execution_only` は owner が準備済みの環境を `inspection_root` で取得するだけであり、欠落時に通常 container 準備で再作成しない。OpenWiki setup の再実行や固定 source のすり替えを避けるため、通常 Workspace の lazy preparation と内部実行の前提を分けている。[用途別の解決](../../crates/server/src/workflow_runtime/workspace.rs#L14-L32)
-
-Issue が archive 済みなら新規の主 Workspace 作成を拒否する。既存 Workspace の継続は別であり、作成 guard は新規 bind と run の保存まで保持する。[Issue archive の契約](../concepts/project-and-issue.md#issue-のアーカイブ)・[guard](../../crates/server/src/workflow_runtime/runner.rs#L1015-L1043)。
-
-## durable orchestration が保証するもの
-
-| 記録 | 役割 |
+| 記録 | 責任 |
 | --- | --- |
-| plan snapshot / node identity | dispatch 前に、どの run・node execution かを固定 |
-| outbox | AgentRunPort へ渡す Create・Retry・Cancel 等の耐久コマンド |
-| inbox / consumption | canonical event と、どの下流が終端事実を消費したかの識別 |
-| lease | dispatcher の一時的な処理所有権 |
+| Plan snapshot と node identity | dispatch 前に Run と工程を固定する |
+| Outbox | Create、Retry、Cancel 等の command を耐久化する |
+| Inbox と consumption | canonical event と下流による消費を識別する |
+| Lease | dispatcher の一時的な処理所有権を表す |
 
-`OrchestrationService` は frozen plan を先に永続化し、node identity を準備する。[service](../../crates/services/src/services/orchestration.rs#L67-L105)。inbox の join 処理は製品 planner から独立しており、再送・再起動による二重の下流実行を防ぐ消費 identity を確立する。Workflow の辺の意味を `OrchestrationJoinPolicy::All` というフィールドだけから判断してはいけない。製品の Ready 判定は別に存在する。[境界を明示するコメント](../../crates/services/src/services/orchestration.rs#L417-L449)、[plan への変換](../../crates/server/src/workflow_runtime/runner.rs#L1137-L1178)
+[永続モデル](../../crates/db/src/models/orchestration.rs)と[サービス](../../crates/services/src/services/orchestration.rs)は配送の再試行と重複防止を扱う。Inbox の join は製品 planner の辺の意味そのものではなく、実際の Ready 判定は Workflow 側にある。
 
-watcher や lease が失われただけで実行を失敗・置換しない。startup は in-flight outbox、処理中 inbox、lease を照合し、子の状態を回復してから inbox を replay する。[再起動処理](../../crates/services/src/services/orchestration.rs#L1132-L1163)。実プロセスへの再接続は [Agent Runtime](agent-runtime.md)が所有する。
+Create は outbox の配送済み表示だけで受理としない。親の状態、Run・node・Agent と冪等性の link、port query の Session・turn identity を照合する。受理された Agent Run が Pending でも Started を返し得るため、provider の準備完了や成果成立の証拠ではない。[受理確認](../../crates/services/src/services/orchestration.rs)・[配送競合テスト](../../crates/services/src/services/orchestration_dispatch_tests.rs)
 
-製品所有 node の完了は子の終端を保存するだけでなく、親 orchestration の投影も更新する。子だけ保存された途中失敗の後に同じ終端を再通知した場合も親の投影を修復し、別の終端への書換えは拒否する。この再試行は agent を再起動せず、同じ完了を重複 event にしない。[製品完了](../../crates/services/src/services/orchestration.rs#L1185-L1240)、[親投影失敗からの回復テスト](../../crates/services/src/services/orchestration.rs#L1744-L1869)。新規の [自動マージ](../concepts/formal-integration.md) は専用会話の AgentRun を直接dispatchし、専用 orchestration node を作らない。orchestration startup も product_kind=integration を通常の回復対象から外す。[会話の起動](../../crates/server/src/routes/integrations/conversation.rs#L470-L530)・[回復対象](../../crates/services/src/services/orchestration.rs#L1148-L1163)
+Watcher や lease が失われただけでは実行を失敗や置換にしない。起動時は配送中 outbox、処理中 inbox、lease を再照合し、子状態の回復後に inbox を replay する。実プロセスの再接続は [Agent Runtime](agent-runtime.md) の責任である。[startup reconciliation](../../crates/services/src/services/orchestration.rs)
 
-### Create の配送と受理を区別する
+Driver の Pause はサーバー thread を待機させる意味ではなく、次の event 等による照合まで駆動を返す。Standalone と library 起動の completion watcher が終端を追い、Run GET や SSE 接続も reconciliation を行う。画面の活動中 GET は既定4秒周期だが、UI を開いていることが後続開始の前提ではない。[watcher](../../crates/server/src/workflow_runtime/runner.rs)・[画面取得](../../packages/web-core/src/shared/hooks/useWorkflowRun.ts)・[起動順](system.md#起動と回復)
 
-Workflow dispatch は enqueue が返した outbox ID を `deliver_create` に渡し、その Create の受理を待ってから Started を返す。delivered だけでは足りず、親が取消・失敗していないこと、run/node/agent/idempotency link、port query の agent/session/turn identity を照合する。他 command の配送や、停止した親の Create を破棄した事実は受理証拠にならない。別 dispatcher が配送中なら保存済み command を待ち、未受理のまま待機期限を超えれば Unavailable を返す。[受理検査](../../crates/services/src/services/orchestration.rs#L187-L269)・[呼出し](../../crates/server/src/workflow_runtime/runner.rs#L865-L900)
+## 成果、分岐、取消
 
-受理された AgentRun が Pending でも Started は返り得るため、これは provider の準備完了・仕事完了の通知ではない。同一配送の replay は既存 identity を使い、配送中に親が取消された場合は Started を返さず、受理済み Agent は取消照合用に残す。[競合・再送・取消テスト](../../crates/services/src/services/orchestration_dispatch_tests.rs#L145-L247)・[途中取消](../../crates/services/src/services/orchestration_dispatch_tests.rs#L357-L376)
+固定 preset は同じ Workspace に工程ごとの Session を持つ。実装工程の引継ぎは通常 coding 完了と clean source の確立を待ち、report、固定 SHA と Change Manifest 参照を渡す。空 report や source 不成立は失敗であり、publication 中は同じ実行の完了を待つ。[preset 完了](../../crates/server/src/workflow_runtime/presets.rs)・[固定 graph](../../crates/workflow/src/presets.rs)
 
-Orchestration event 保存と製品 node 完了は、それぞれ読み取り前に `BEGIN IMMEDIATE` で SQLite writer を予約する。deferred read-to-write upgrade の競合を避ける局所変更であり、全 DB の journal mode 変更ではない。[event と完了の transaction](../../crates/db/src/models/orchestration.rs#L277-L352)。隔離 DB の競合回帰テストはこの境界を検証するが、過去の稼働環境の lock holder は未特定である。歴史的調査では Create 受付と thread readiness の混同、attempt 間 input ID 衝突、Starting 保存失敗後の起動が別々の問題として記録された。過去環境の instance 固有 hash や旧 cutover 命令は現在の復旧手順ではない。
+報告工程は事前の source 保護と開始・終了 snapshot の照合を使う。後者だけを事前保護の代わりにしない。多角調査の合流は必要な全入力の成功を待ち、一部失敗なら結果を保持して後続を開始しない。[planner](../../crates/workflow/src/planner.rs)・[provider の設定](../integrations/agent-providers.md)
 
-## 実行の前進と待機
+通常 Condition は候補と上流情報に基づく decision block を検証する。形式不正、候補不一致、確信不足、作業木変更などでは人の判断を待ち、推測した分岐で進めない。read-only を求める prompt 自体は OS 隔離の証明ではない。[router](../../crates/server/src/workflow_runtime/condition_router.rs)・[runner](../../crates/server/src/workflow_runtime/runner.rs)
 
-driver は node iteration と snapshot を読み、Ready node を順に起動する。Agent が Started を返すと Session・AgentRun・orchestration node の ID を node execution に保持して待機する。driver の Pause はサーバー thread のブロック待ちではなく、次のイベント等による照合まで駆動を返す意味である。[driver](../../crates/server/src/workflow_runtime/runner.rs#L2259-L2333)、[起動結果の保存](../../crates/server/src/workflow_runtime/runner.rs#L2403-L2427)
+取消は親を Cancelling にし、子への取消と照合を続ける。配送時にも親状態を再確認し、取消後に残った Create/Retry は新しい Agent Run を起動せず、Cancel は配送可能に保つ。[配送 guard](../../crates/services/src/services/orchestration.rs)
 
-Workflow watcher は通常 run の canonical AgentRun リンクを購読する。Repository scope の run はそのリンク列挙から除外し、同じ watcher が repository owner の reconciliation を呼び出す。[watcher の対象](../../crates/server/src/workflow_runtime/runner.rs#L3218-L3274)
+## 製品所有の実行
 
-### 起動形態と前進の契機
+Repository scope の OpenWiki Bootstrap は専用 Workspace の owner と Workflow Run を結び付け、phase ごとの Session と子 Run を記録する。provider の成功と製品の validation・公開は別の結果であり、同じ Workspace にいるだけで起動権限が得られるわけではない。[bootstrap](../../crates/server/src/workflow_runtime/bootstrap.rs)・[Wiki 保守](../operations/openwiki-maintenance.md)
 
-Tauri shell は廃止されたが `server::startup` は公開 API として残る。以下の library 経路を現在の desktop 製品の起動方法と読まない。[現在のシステム境界](system.md#起動時は内側の所有者から回復する)・[公開 API](../../crates/server/src/lib.rs#L1-L9)
+Bootstrap の Review は host が JSON と evidence を検証し、完全な report を管理領域へ保存する。下流には identity、digest、判定と件数の参照を渡し、再読込時に照合する。これは任意ファイルを prompt に挿入する汎用機構ではない。[report](../../crates/services/src/services/openwiki/bootstrap/reports.rs)
 
-| 起動・要求 | 通常 Workflow を進める主体 |
-| --- | --- |
-| 残存 library API の `startup::initialize_deployment` | 起動時回復の後に completion watcher を開始する |
-| standalone `main.rs` | 起動時回復後に completion watcher と ScheduledTask loop を開始する |
-| Run 取得 GET / Run events の SSE 接続 | handler 自身が reconciliation を実行する |
-| 活動中の Run を表示する UI | `useWorkflowRun` は既定4秒ごとに GET する。設定で停止・変更可能 |
+[Auto-merge](../concepts/formal-integration.md) は製品固有の検証と monitor を持つ。通常 Workflow watcher や Wiki Bootstrap と同一の lifecycle として扱わない。
 
-[startup の結線](../../crates/server/src/startup.rs#L214-L231)・[standalone の回復と定時 loop](../../crates/server/src/main.rs#L87-L141)・[GET](../../crates/server/src/routes/workflows.rs#L2028-L2045)・[SSE 接続時](../../crates/server/src/routes/workflows.rs#L2066-L2085)・[UI polling](../../packages/web-core/src/shared/hooks/useWorkflowRun.ts#L26-L56)
-
-316-EF 以降、`WorkflowRunPage` の重複 SSE 購読は削除され、画面の通常更新と人待ち検知は `useWorkflowRun` の GET に依存する。活動中の既定4秒 poll、終端での停止、操作成功後の cache 更新・無効化は維持する。backend 公開 SSE route と event bus は残っているため、上表の SSE 接続時の reconciliation は外部クライアントにも適用される契約であり、この画面が接続するという意味ではない。[画面](../../packages/web-core/src/features/workflow/ui/WorkflowRunPage.tsx)・[取得と操作](../../packages/web-core/src/shared/hooks/useWorkflowRun.ts)・[GET と SSE](../../crates/server/src/routes/workflows.rs#L2088-L2160)
-
-Workspace の Repository Workflow 関連付け探索は別 hook が所有する。未発見時30秒、活動中の関連付けがあるとき5秒、終端では停止し、remote host への local DB 取得を禁止する。detail の4秒 reconcile 周期とは混同しない。[関連付け探索](../../packages/web-core/src/shared/hooks/useWorkspaceRepositoryWorkflow.ts)・[通信削減と検証限界](web-and-sync.md#workflow-の重複購読と旧-ui-の整理316-ef)
-
-Runの取得もreconciliationを伴うが、LOCAL-372以後はstandaloneにも既存watcherを配線している。UI pollingや外部AIの待機を後続開始の前提にしない。ScheduledTask loopは起動受付、watcherは完了追従を担当する。実providerでのpreset完走を実証したという意味ではない。[standalone](../../crates/server/src/main.rs#L145-L156)・[watcher](../../crates/server/src/workflow_runtime/runner.rs#L3389-L3535)
-
-## 固定presetの成果成立と一度だけの合流
-
-3 presetは[共通開始サービス](../../crates/server/src/routes/workflow_presets.rs)から固定graphを作り、同じWorkspace内に工程ごとの独立Sessionを確保する。実装工程は通常codingの後処理とcommitを待ち、report・確定SHA・phase開始snapshot・Change Manifest参照を引き渡す。LOCAL-398以後、確定ManifestはDBから読み、引渡しの `change_manifests` は旧ファイルpathではなく Repo/event 固定の読取URLを含む。[引渡し形式](../../crates/server/src/workflow_runtime/presets.rs)report空やclean source不成立は失敗、commit出版中は同じ実行の完了待ちであり、新しいagentを起動し直さない。[成果成立](../../crates/server/src/workflow_runtime/presets.rs#L80-L166)
-
-報告工程は開始snapshotと終了snapshotの一致を検査し、事前のproviderソース保護も適用する。後からのSHA比較だけを防御にはしない。多角調査の合流はwait_for_allを持ち、必要な全入力の成功後に一度だけ成立する。一部失敗なら統合を始めず成果を保持する。旧graphの既定ANY判定とは区別する。[planner](../../crates/workflow/src/planner.rs)・[固定graph](../../crates/workflow/src/presets.rs)・[権限制御](../integrations/agent-providers.md)
-
-presetはrequires_product_validationと既存complete_product_nodeを使う。下流の報告工程へは要件と全上流reportを渡し、legacy envelopeの文字数切詰めを使わない。providerのcontext上限で失敗すれば停止する。停止後に遅れて届いたreportは保持するが、成功へ再ラベルせず親を再開しない。[runner](../../crates/server/src/workflow_runtime/runner.rs#L440-L572)・[完全report](../../crates/server/src/workflow_runtime/runner.rs#L2968-L2985)
-
-Repository-owned Wiki の品質・Refine・公開判断は Wiki owner が担い、共通 Workflow が開始と完了の引渡しを担う。詳細は [OpenWiki maintenance](../operations/openwiki-maintenance.md) を参照する。
-
-## Condition と人の判断
-
-通常 Condition router は候補となる接続先、上流情報、作業木の情報を用いて判断する。prompt は read-only inspection を要求するが、それだけを隔離保証にしない。完了時は作業木の変化も照合する。[router prompt](../../crates/server/src/workflow_runtime/condition_router.rs#L125-L158)、[完了検証](../../crates/server/src/workflow_runtime/runner.rs#L3400-L3465)
-
-出力は一つの `workflow_router_decision` block の schema v1 JSON として解析する。不正な形式、複数 block、接続先の不整合、十分でない確信、作業木変更等では AwaitingHuman に置き、推測した分岐で先へ進めない。`medium` confidence も自動進行しないことは focused test に明示されている。[parser](../../crates/server/src/workflow_runtime/condition_router.rs#L347-L393)、[confidence test](../../crates/server/src/workflow_runtime/condition_router.rs#L770-L783)
-
-Human Gate と Arena の選択も製品の待機境界である。Arena は別の隔離 Workspace 群を使うため、通常 Agent Step の共有作業木と混同しない。[Arena](../concepts/arena.md)で選択・反映の意味を確認する。
-
-## 取消とシステム所有 run
-
-取消は Workflow を Cancelling にして node と子実行へ伝え、照合を続ける。終端 run への取消は現在の結果を返す。outbox は enqueue 時だけでなく delivery 時にも親状態を確認し、取消後に古い Create/Retry が残っていても新しい AgentRun を起動しない。Cancel の配送は残す。[取消経路](../../crates/server/src/workflow_runtime/runner.rs#L1692-L1740)、[配送ガード](../../crates/services/src/services/orchestration.rs#L271-L294)
-
-Repository scope の Workflow は maintenance owner だけが駆動できる。一般開始 API は server-managed decision source を拒否する。bootstrap の node には `requires_product_validation` を設定し、provider の成功と製品上の成功を分ける。[所有ガード](../../crates/server/src/workflow_runtime/runner.rs#L996-L1009)、[駆動ガード](../../crates/server/src/workflow_runtime/runner.rs#L2273-L2276)、[製品検証 flag](../../crates/server/src/workflow_runtime/runner.rs#L1153-L1175)。具体的な検証・再試行は [OpenWiki maintenance](../operations/openwiki-maintenance.md)が正本である。
-
-Bootstrap は専用 Workspace の `execution_owner` を Workflow run に結び付けてから graph と子を予約する。通常の node Session 作成は interactive を要求し、system 用は一致する repository owner 専用の経路を使う。phase dispatch ごとに maintenance Session と child AgentRun を記録するため、単に同じ Workspace にいることは起動権限ではない。[親の束縛](../../crates/server/src/workflow_runtime/bootstrap.rs#L96-L124)、[Session 境界](../../crates/server/src/routes/workflows.rs#L750-L794)、[子の委任](../../crates/server/src/workflow_runtime/bootstrap.rs#L360-L380)。用途は [Workspace の操作契約](../concepts/workspace.md#操作用途と実行所有者)を参照する。
-
-[自動マージ](../concepts/formal-integration.md)にも製品固有の検証と monitor があり、通常 Workflow の completion watcher や Bootstrap の phase と同一視しない。起動形態による monitor の差は [システムの起動順](system.md#起動時は内側の所有者から回復する)に記す。
-
-### Bootstrap の成果物参照は通常の上流本文と分ける
-
-OpenWiki Bootstrap は、通常 Workflow の会話引継ぎへ Review の全文を流さない。host が Reviewer の JSON と evidence path を検証し、instance管理tmpのrepository-memory領域へ完全なレポートを保存する。node output には repository・source SHA・Workflow run・Session・AgentRun・phase の identity、digest、verdict と件数だけを残す。[Review 完了時](../../crates/server/src/workflow_runtime/bootstrap.rs#L504-L533)、[保存と参照](../../crates/services/src/services/openwiki/bootstrap/reports.rs#L15-L38)
-
-system Condition は検証済み Review の finding の有無と完了状態から分岐を決定し、通常の LLM Condition を呼ばない。finding があれば Refine へ渡す。Refiner には host が決めたファイル参照を渡す。参照の identity と内容 digest は再読込時に検証され、管理ファイルが改変された場合は再生成で隠さず拒否する。したがって、通常の上流 handoff の文字数制限を緩めずに Review の情報を保持できる。[分岐](../../crates/server/src/workflow_runtime/runner.rs#L2446-L2475)、[Refine dispatch](../../crates/server/src/workflow_runtime/bootstrap.rs#L320-L332)、[参照の再検証](../../crates/services/src/services/openwiki/bootstrap/reports.rs#L72-L113)
-
-この仕組みは任意ファイルを下流 prompt に挿入する汎用 artifact 機構ではない。詳細なレビュー契約と publication 前の再検証は [OpenWiki maintenance](../operations/openwiki-maintenance.md)へ集約する。
-
-## 検証の入口
-
-[outbox と lease の再起動テスト](../../crates/db/src/models/orchestration.rs#L2189-L2241)は配送中コマンドの回収を確認する。グラフ凍結、重複 dispatch、親取消、router 不正出力、bootstrap の製品検証を、それぞれの境界で確認する。過去の 2026-05-08 の承認済み Workflow V1 draftにある仕組みは設計経緯であり、現行 runtime の保証を代用しない。
-
-## Workspaceプリセットとリンクの境界
-
-新規Workflow Workspaceは現在のProject作成プリセットに選択Repoが含まれることと各base branchの実在を検査する。旧Project保存branchをWorkspaceの選択branchとして採用せず、Repo既定値/現在branchから候補を作る。既存Workspaceの再利用はその構成を保つ。UIのWorkflow選択は単一Repoを守り、通常Workspaceの全プリセット選択とは別である。
-
-内部リンク処理はWorkflow自身の同じProject/Issueリンクなら冪等に再利用する。他Issueのリンクを付け替えず、共有リンク層の孤立のみINSERTを通す。worktree snapshotとArena winnerの差分適用はRepo表示名ではなく保存配置名を使う。複数Repoの適用は順次で、全体rollbackや原子性を追加しない。[Workspace resolver](../../crates/server/src/workflow_runtime/workspace.rs)・[snapshot](../../crates/server/src/workflow_runtime/runner.rs)・[Arena](../../crates/server/src/workflow_runtime/arena.rs)
-
-
-LOCAL-406では共有persistentをユーザー成果物専用にし、Bootstrapの検証済みreportと固定入力は管理tmp、再生成可能な索引は管理cacheへ分離した。DBのWorkflow/node参照・digestは復旧artifactの代替ではない。原本復元・公開/照合・後続読取終了が揃った後だけ既存cleanupが片付け、不明や失敗では保持して既存monitorが再照合する。[保存先と寿命](../concepts/repository-memory.md)・[保守と復旧](../operations/openwiki-maintenance.md)
+Outbox・lease の回復、重複配送、親取消、router の不正出力、製品 validation はそれぞれ別の境界で試験する。隔離 DB や mock の試験は実 provider での全 preset 完走を証明しない。[配送試験](../../crates/services/src/services/orchestration_dispatch_tests.rs)・[router tests](../../crates/server/src/workflow_runtime/condition_router.rs)

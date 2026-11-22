@@ -1,47 +1,29 @@
 ---
 type: concept
-title: Astra 廃止と共有機能の移行境界
-description: 内蔵 Project Chat の廃止、専用履歴を削除する migration、外部 MCP と Workspace 質問回答に残る契約を説明する。
+title: Astra・Project Chat の廃止
+description: 旧内蔵会話の削除と、残る質問回答・外部 MCP・対話ヘルプの境界。
 tags: [astra, migration, project, compatibility]
+verified:
+  - by: openwiki/0.9.0
+    at: 2026-11-22T05:31:45.518Z
 sources:
   - id: openwiki-source-b50ba7975e31fb9a56845b2c
     resource: repo://crates/db/migrations/20261016000000_remove_project_chat.sql
-  - id: openwiki-source-92a1ceb146fe14016a595480
-    resource: repo://crates/db/tests/retire_project_chat.rs
-  - id: openwiki-source-a13fe4db1eee073d0a7e2c4d
-    resource: repo://crates/server/src/main.rs
-  - id: openwiki-source-cb711830e5a5d11f35f1d1c7
-    resource: repo://crates/server/src/remote_mcp/help.rs
-  - id: openwiki-source-d40201a53108a0c612f229ef
-    resource: repo://crates/server/src/routes/help.rs
-  - id: openwiki-source-65c0f36670a161dc05040e69
-    resource: repo://crates/server/src/routes/mod.rs
   - id: openwiki-source-4d617b0e2fa188c6ad63ae56
     resource: repo://crates/server/src/routes/sessions/questions.rs
-  - id: openwiki-source-e0c2de9e01617a8949b78360
-    resource: repo://packages/web-core/src/features/kanban/ui/KanbanContainer.tsx
-generated: { by: "codex", at: "2026-11-12T04:13:28.445Z" }
-verified:
-  - by: openwiki/0.7.2
-    at: 2026-11-12T04:13:28.445Z
+generated: { by: "codex", at: "2026-11-22T05:31:45.518Z" }
 ---
 
-# Astra 廃止と共有機能の移行境界
+# Astra・Project Chat の廃止
 
-内蔵 Astra / Project Chat は廃止された。Project 画面は Board を直接表示し、server router と起動処理に専用 chat API・設定 API・worker はない。以前の discuss / operate、モデル設定、Codex ChatGPT login による内部推論は現行機能ではない。[Project 画面](../../packages/web-core/src/features/kanban/ui/KanbanContainer.tsx)・[API の構成](../../crates/server/src/routes/mod.rs)・[起動](../../crates/server/src/main.rs)
+内蔵 Astra / Project Chat は廃止され、Project 画面は Board を直接表示する。旧 discuss / operate、専用モデル設定と server 内の専用会話 worker を現行機能と扱わない。過去のデータや名前を調査するときにこのページを読む。[画面](../../packages/web-core/src/features/kanban/ui/KanbanContainer.tsx)・[router](../../crates/server/src/routes/mod.rs)・[操作の段階](../quickstart.md#操作の段階)
 
-会話から LVK を操作する外部入口は [認証付き MCP](../integrations/remote-access.md)である。その transport は廃止済みAstraの専用会話モデルを復活させず、既存の製品操作に接続する。LOCAL-375の [対話ヘルプ](interactive-help.md) は公開同梱sourceを調べる既存coding agentのSessionを使い、旧Project Chatとは異なる。外部クライアントの認証・scope を、旧 Astra の server 内 Codex 認証で代替しない。[MCP の責任](../../crates/server/src/remote_mcp/mod.rs#L1-L58)
+## 履歴と残る機能
 
-## 専用履歴の削除と残る状態
+前進 migration は専用通知 trigger と `project_chat_operations`、`project_chat_messages`、`project_chat_events`、`project_conversations` を削除する。履歴の外部サービスへの移行ではなく、DB upgrade で専用履歴を失う変更である。[migration](../../crates/db/migrations/20261016000000_remove_project_chat.sql)
 
-前進 migration `20261016000000_remove_project_chat.sql` は、専用の八つの通知 trigger と `project_chat_operations`、`project_chat_messages`、`project_chat_events`、`project_conversations` を削除する。履歴を外部 ChatGPT に移す処理ではなく、DB upgrade で専用履歴を失う変更である。元の migration を削除・書換えず、適用済み履歴から前進させる。[migration と意図](../../crates/db/migrations/20261016000000_remove_project_chat.sql)
+Project、Issue、Workspace、Session と agent の質問回答は共有状態として残る。旧名を理由に共有機能まで削除しない。質問回答に残る歴史的 `Astra operation` marker は配送済み receipt の互換性であり、内部 assistant が動いている証拠ではない。[移行試験](../../crates/db/tests/retire_project_chat.rs)・[質問回答](../../crates/server/src/routes/sessions/questions.rs)
 
-Project・Issue・Workspace・Session と `agent_question_answers` は共有状態として残る。upgrade test は既存会話を含む DB を更新し、これらの保持、`agent_input_still_pending` trigger、更新後の Board 書込・質問回答・外部キー整合性、再度 migration を実行した場合を検査する。旧 `project_chat` 名だけを根拠に、導入時に追加された共有機能まで削除してはいけない。[移行テスト](../../crates/db/tests/retire_project_chat.rs#L5-L89)
+会話から LVK を操作する外部入口は[認証付き MCP](../integrations/remote-access.md)である。一般質問の[対話ヘルプ](interactive-help.md)は既存 coding agent の Session と稼働版の公開 source を使い、旧 Project Chat の専用会話モデルではない。設計意図は [Notes](design-notes.md)、実行状態は [Agent Run](session-and-agent-run.md)、統合済み知識は [Repository Memory](repository-memory.md) にそれぞれ属する。
 
-## 質問回答と操作 receipt はそれぞれの所有者へ
-
-Workspace UI と外部 MCP は同じ質問受付を利用する。質問回答の新旧 receipt marker と二重配送防止は [Session の質問回答](session-and-agent-run.md#非同期質問への回答と配送証拠)を正本とする。旧 `Astra operation` marker がソースに残るのは配送済み履歴との互換性であり、内部アシスタントが動く証拠ではない。[互換処理](../../crates/server/src/routes/sessions/questions.rs#L253-L324)
-
-外部 MCP の request receipt は [外部操作の寿命と不確実な結果](../integrations/remote-access.md#参照結果と操作-receipt)を持つ。実行状態は [AgentRun](session-and-agent-run.md)、統合・検証は [正式 Integration](formal-integration.md)、知識の公開は [Repository memory](repository-memory.md)が所有する。廃止された Astra の会話 checkpoint を、それらの完了証拠として復活させない。
-
-廃止前の履歴で言及されるAstraと当時のtest件数を現行内部assistantの存在証明にしない。移行後の契約は [専用表を削除し共有状態を残す試験](../../crates/db/tests/retire_project_chat.rs)で確認する。外部アカウント接続の成功や、過去の設定ファイルの実在・消去は、この source 照合では確認していない。
+移行 fixture は専用表の削除と共有状態の保持を検査する。実外部アカウント接続や旧設定ファイルの消去は証明しない。[tests](../../crates/db/tests/retire_project_chat.rs)

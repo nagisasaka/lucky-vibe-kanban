@@ -1,75 +1,45 @@
 ---
 type: concept
-title: 保存済み本文の保護と並列作業の参照
-description: Card Contextと旧Pipeline供給の廃止後に残る通常本文、既知定型文5hashの送信時除去、実ガイドと公開peer参照の境界。
-tags: [card-context, pipeline, parallel-context, knowledge]
+title: 保存済み本文と並列作業の参照
+description: 旧 Card Context の本文保護、限定的な送信時処理と、固定 commit による peer 情報の参照を説明する。
+tags: [issue, context, parallel-work, repository-memory]
+verified:
+  - by: openwiki/0.9.0
+    at: 2026-11-22T05:31:45.518Z
 sources:
-  - id: openwiki-source-21149aa9001849998cda42a2
-    resource: repo://crates/db/src/models/repository_state/manifests.rs
-  - id: openwiki-source-a3956271cbf62ae0786e7fc7
-    resource: repo://crates/executors/src/env.rs
   - id: openwiki-source-f4e0f9b2ce513d3f8b8b070e
     resource: repo://crates/executors/src/executors/provider_adapter.rs
-  - id: openwiki-source-788fa2f6f1a3d449a1a9efe4
-    resource: repo://crates/local-deployment/src/agent_run_port.rs
-  - id: openwiki-source-dc107dec6d46a1dcc08d0a9b
-    resource: repo://crates/mcp/src/task_server/tools/context.rs
   - id: openwiki-source-391f34050223d13f679b3793
     resource: repo://crates/server/src/routes/parallel_context.rs
   - id: openwiki-source-cc3b0007b9399fe7dda21b8e
     resource: repo://crates/services/src/services/parallel_context.rs
-  - id: openwiki-source-8dd059d50335f535b6d49e83
-    resource: repo://crates/utils/src/agent_guides.rs
-  - id: openwiki-source-19419edea1d312cc9f07ef2d
-    resource: repo://crates/utils/src/path.rs
-  - id: openwiki-source-7cc1d248ce00f0c5ef61c76e
-    resource: repo://tests/chat/prompt-context.test.mjs
-generated: { by: "codex", at: "2026-11-16T15:12:08.330Z" }
-verified:
-  - by: openwiki/0.9.0
-    at: 2026-11-16T15:12:08.330Z
+generated: { by: "codex", at: "2026-11-22T05:31:45.518Z" }
 ---
 
-# 保存済み本文の保護と並列作業の参照
+# 保存済み本文と並列作業の参照
 
-Card Context専用UIとそのPipeline供給経路はLOCAL-361で廃止した。このページは保存済み本文の扱い、実行時の限定除去、共有領域・公開peer参照の境界を調べる入口である。[Issue](project-and-issue.md)の要求は通常本文で扱い、[WorkflowAttempt](workflow-attempt.md)の実行graphとは区別する。
+[Issue](project-and-issue.md) の本文は人間の要求を保存する通常のテキストである。旧 Card Context と Pipeline の専用 UI・供給経路は退役している。保存文、起動時のガイド、他 Workspace の公開情報を変更するとき、それぞれの境界を区別する。[操作の段階](../quickstart.md#操作の段階)
 
-## 保存と fresh Session への継承
+## 保存本文と送信
 
-専用欄、既定文の新規複製、hidden部分の分離・再結合、saved_context抽出・再注入、旧ON/OFFに依存するruntime分岐は撤去した。独自文・編集済みの文・未知Pipelineは通常本文として閲覧・編集する。保存値の一括移行やDB・TOMLの物理削除は行わない。新たな共通prompt設定も作らない。[通常description保存](../../packages/web-core/src/pages/kanban/KanbanIssuePanelContainer.tsx)・[本文のUI](../../packages/ui/src/components/KanbanIssuePanel.tsx)
+専用欄や hidden 部分の再結合を前提にせず、独自文、編集済み文、未知の Pipeline は通常本文として扱う。旧設定や本文を一括削除・移行する契約ではない。会話の表示も本文全体を通常 renderer へ渡し、Markdown の HTML comment が画面に見えることまでは保証しない。[Issue editor](../../packages/web-core/src/pages/kanban/KanbanIssuePanelContainer.tsx)・[会話表示](../architecture/web-and-sync.md)
 
-送信時には保存Issue由来の入力だけを共通helperで処理する。通常launchは現在関連するIssueのtitleとdescriptionの合成に入力が完全一致し、通常coding判定を満たす場合だけ対象とする。追記した新規promptやReview例文は加工しない。外部MCPは保存Issue本文を合成する箇所で同じhelperを使い、Review判定を尊重する。[通常起動の限定](../../crates/local-deployment/src/agent_run_port.rs#L875-L899)・[MCP合成](../../crates/server/src/remote_mcp/launch.rs)
+保存 Issue から prompt を合成する限定経路では、既知の LVK 生成共有案内だけを送信時に除去する。CRLF を正規化した内容の SHA-256 が既知5版に完全一致する必要があり、marker の存在だけで本文を捨てない。編集済み、未知、旧形式、不完全または入れ子の envelope は保持する。fence に見える行があれば引用を保護するため入力全体を保持する。任意の Review 入力を掃除する helper ではない。[helper と回帰](../../crates/executors/src/executors/provider_adapter.rs)
 
-除去対象はlvk markerの既知共有定型文5版で、CRLFをLFに正規化したSHA-256の完全一致を条件とする。markerだけで本文全体を捨てない。編集済み・未知・不完全・不整合のenvelopeや旧evk版は保持する。先頭空白を除いた行がbacktickまたはtildeのfenceらしければ、外側の既知文も含め入力全体を保持する。これは引用保護を優先した保守的な境界であり、未知旧文の完全除去を保証しない。[5hashと全文保持](../../crates/executors/src/executors/provider_adapter.rs#L2651-L2725)
+## 現在の identity とガイド
 
-## チャットの補助情報と元の全文
+通常起動では現在の Run・Repo identity と短い契約を組み立て、Manifest、並列参照、共有資源の詳細を内容に対応した on-demand guide に置く。ガイドは既存の内容と一致すれば再利用し、未知の内容や symlink を上書きしない。stdio `get_context` は引数なしでは metadata を返し、`coding`、`parallel`、`resources` を明示した場合に該当案内を返す。[ガイド](../../crates/utils/src/agent_guides.rs)・[context tool](../../crates/mcp/src/task_server/tools/context.rs)・[実行時指示](../../crates/executors/src/env.rs)
 
-PromptContextと表示用marker parserは撤去した。chat本文全体を通常rendererへ渡し、専用の補助情報折畳みや全文コピーを追加しない。編集callbackには元contentを渡す。通常MarkdownがHTML comment自体を表示する保証とは別である。[会話表示](../architecture/web-and-sync.md#user-message-の補助情報を表示時だけ折り畳む)
+[Repository shared storage](workspace.md) の受渡し用 tmp は Run 終了だけで消えず、受渡し完了後に不要かつ非使用であることを確認して整理する。Git の著者 identity と [Change Manifest](repository-memory.md) の現在 identity は別である。[README](../../README.md)
 
-### 表示変更の検証範囲
+## 並列活動と固定した source
 
-`tests/chat/prompt-context.test.mjs` はChromiumの隔離fixtureで、実KanbanIssuePanel/WYSIWYGEditorを使った独自本文の閲覧・編集・保持、専用checkbox不在とchatの未分割表示を検査する。chat rendererはfixture置換であり、実保存API・認証・実モデルの統合試験ではない。送信helperのpredicate境界試験と実hash照合も別の証拠として扱う。[試験](../../tests/chat/prompt-context.test.mjs)
+Parallel discovery は登録 Repo に属する interactive な worktree Workspace、現在の Issue link、実行数、観測時の branch HEAD と確定 Manifest 参照を返す。peer の worktree を再作成せず、共通 Repo の branch を読む。活動と Manifest は独立した snapshot であり、Manifest がないことは活動がない証明ではない。現在の Issue link を過去 event の帰属に読み替えない。[discovery](../../crates/services/src/services/parallel_context.rs)・[Manifest の正本](../../crates/db/src/models/repository_state/manifests.rs)
 
-## 共有案内と現在のidentity
+Workspace と Manifest は別 cursor でページングし、既定25件、最大100件を読む。memory 読取失敗は `memory_error` として返し、空結果と区別する。DirectFolder には自動共有リンクや peer discovery がない。Wiki の target・source・publication commit は観測情報であり、現在の作業木に最新 Wiki が配達された証明ではない。[discovery](../../crates/services/src/services/parallel_context.rs)
 
-共有storageの所在と基本境界は共通親AGENTSを責任元とし、親がないときだけExecutionEnvがfallback案内を送る。tmpはRun終了では消さず、受渡し完了・不要・非使用時だけ整理する。RepoごとのGit identity案内は保存本文と独立し、同一の正常案内はRun内で一度、Repo固有の不備案内は保持する。Manifestの現在identityはGit著者情報とは異なる。[合成](../../crates/executors/src/env.rs#L53-L90)・[Git identity](workspace.md#git-commit-identity)
+固定 snapshot API は指定 commit の Git object を読む。一覧は100件ずつで、本文は通常ファイルの UTF-8、128 KiB 以下に限る。symlink や submodule を辿らず、範囲外には理由を返す。組合せの試行は返された detached preview で行い、peer の作業木や target を変更しない。[snapshot と preview](../../crates/server/src/routes/parallel_context.rs)・[統合フロー](../workflows/task-to-integration.md)
 
-Manifest・parallel・資源操作の詳細は通常起動で配置する実ガイドファイルにまとまり、必要ならstdio `get_context(guide=coding|parallel|resources)` からも同じ定義を読める。引数なしget_contextはmetadataのみを返す。初回・継続の現在identityと短い契約は保存Cardの旧設定に依存しない。[ガイド配置](../../crates/utils/src/agent_guides.rs)・[任意MCP](../../crates/mcp/src/task_server/tools/context.rs)
+旧 `.llm-wiki` は現在の OpenWiki と別である。旧互換 filter や Pipeline endpoint の撤去は、既存ファイルや保存 Issue の自動削除を意味しない。[router](../../crates/server/src/routes/mod.rs)・[Repository Memory](repository-memory.md)
 
-## 並列活動と固定したソースを読む
-
-`/api/repos/{id}/parallel-context` は登録 Repo の interactiveなWorktree Workspace（DirectFolderを除く）、現在の Card link、実行数、観測時の branch HEAD と immutable Manifest の参照を返す。peer の checkout を復元せず common repository の branch を読む。活動と Manifest は別 snapshot であり、Manifest がないことは活動ゼロ、現在の Card link は過去 event の帰属、という意味にはならない。[discovery](../../crates/services/src/services/parallel_context.rs#L63-L131)
-
-LOCAL-398以後、discoveryの確定ManifestはDB正本から取得し、参照はRepo/eventを指定する読取URLになる。旧eventファイルへの通常読取fallbackは置かない。[DB読取](../../crates/db/src/models/repository_state/manifests.rs)
-
-Workspace と Manifest は独立した cursor でページングする。既定25・最大100件で、memory 読取失敗は `memory_error` として残す。空結果と情報源の故障を区別し、他 Workspace の私的文脈や raw conversation を参照する仕組みにしない。Wiki の target / source / publication commit は maintenance の観測情報であり、今の作業木へ最新 Wiki を配達した証拠ではない。[情報の解釈契約](../../crates/services/src/services/parallel_context.rs#L192-L198)
-
-`/api/repos/{id}/snapshot` は指定 commit の Git object を読む。path 未指定なら一覧を100件ずつ返し、本文は通常ファイルの UTF-8・128 KiB以内に限定する。symlink / submodule を辿らず、大きな blob は理由を返して同じ固定 object の分割読取へ案内する。[snapshot API](../../crates/server/src/routes/parallel_context.rs#L43-L79)。組合せを試すときは [detached preview の操作](../workflows/task-to-integration.md#並列変更を試してから正式統合する)を使い、peer の作業木や target を変えない。
-
-DirectFolder には自動共有リンクや peer discovery がない旨を通知する。一方、通常codingのWiki読取専用規則は別に適用し、Git発見だけでDirectFolderにManifestを有効化しない。[DirectFolder 分岐](../../crates/services/src/services/parallel_context.rs#L168-L170)
-
-## 旧 LLM Wiki からの移行境界
-
-旧 `.llm-wiki` は歴史的な作業branch内知識の構想であり、現行OpenWikiではない。LOCAL-361で旧Wiki互換filter、通知、旧skill pathの特別除外を撤去した。旧Recall/Enrichだけを選別除去する処理は提供しない。既存ファイルや保存Issueを自動削除・移行する意味ではなく、通常本文と選択Skillを保持する。[起動境界](../../crates/server/src/routes/sessions/agent_run.rs)・[現在のprompt合成](../../crates/executors/src/executors/provider_adapter.rs)
-
-旧GET `/api/pipelines`、frontendのlist API、TOML parse/validation/seed/load/sort、Pipeline専用型とrouter/service登録も撤去済みで、互換endpointや空loaderは残さない。現行WorkflowやOpenWiki設定で使うtoml依存は別責務として残る。[現行router](../../crates/server/src/routes/mod.rs)・[型生成](../../crates/server/src/bin/generate_types.rs)
+保存文の helper と discovery の fixture は選択された境界を検査する。実モデルが案内を読んだことや全 peer の活動を観測できたことの証明ではない。[prompt fixture](../../tests/chat/prompt-context.test.mjs)・[discovery tests](../../crates/services/src/services/parallel_context.rs)

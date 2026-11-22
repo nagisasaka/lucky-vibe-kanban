@@ -1,136 +1,31 @@
 ---
 type: concept
-title: Workflow Attempt とグラフの契約
-description: Issue 専用の実施グラフ、安定 Session、run snapshot、辺の発火・分岐・再実行の意味。
-tags: [workflow, graph, attempt, condition, lifecycle]
-sources:
-  - id: openwiki-source-b40ff99339e2929bded4b58c
-    resource: repo://crates/db/src/models/workflow.rs
-  - id: openwiki-source-f9b6f7aadd7c915cd19fa5ef
-    resource: repo://crates/server/src/remote_mcp/workflow.rs
-  - id: openwiki-source-b873a3d2c5d7749c538e03eb
-    resource: repo://crates/server/src/routes/workflow_presets.rs
-  - id: openwiki-source-a517c0f8e44d2cf0c440fbfc
-    resource: repo://crates/server/src/routes/workflows.rs
-  - id: openwiki-source-864d86b798cce4d7e451a363
-    resource: repo://crates/server/src/workflow_runtime/condition_router.rs
-  - id: openwiki-source-62bbc78a91edc9656dab8447
-    resource: repo://crates/server/src/workflow_runtime/envelope.rs
-  - id: openwiki-source-6f2595571056199f0f83415c
-    resource: repo://crates/server/src/workflow_runtime/runner.rs
-  - id: openwiki-source-b19d02455156008b43c210c8
-    resource: repo://crates/services/src/services/orchestration.rs
-  - id: openwiki-source-5bd46b87a60accbf6cd6da13
-    resource: repo://crates/workflow/src/planner.rs
-  - id: openwiki-source-63d2b16e8e208dce3e2032ac
-    resource: repo://crates/workflow/src/presets.rs
-  - id: openwiki-source-b388436d40b78500f0d81684
-    resource: repo://crates/workflow/src/transform.rs
-  - id: openwiki-source-bfc7d8936f7f60c78ed7b911
-    resource: repo://crates/workflow/src/validation.rs
-  - id: openwiki-source-49c27e78a2601ac597269802
-    resource: repo://packages/web-core/src/features/workflow/model/workflowEditorDraft.ts
-  - id: openwiki-source-39fe27949ccee837db47d1b9
-    resource: repo://packages/web-core/src/features/workflow/ui/WorkflowTemplateEditorPage.tsx
-  - id: openwiki-source-5d2382a0f231c830f95f103c
-    resource: repo://packages/web-core/src/shared/dialogs/shared/WorkspaceTargetDialog.tsx
-generated: { by: "codex", at: "2026-11-16T23:50:22.756Z" }
+title: Workflow Attempt とグラフ
+description: Issue の複数工程、固定 preset、実行と待機の関係。
+tags: [workflow, attempt, graph]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-16T23:50:22.756Z
+    at: 2026-11-22T05:31:45.518Z
+sources:
+  - id: openwiki-source-a517c0f8e44d2cf0c440fbfc
+    resource: repo://crates/server/src/routes/workflows.rs
+generated: { by: "codex", at: "2026-11-22T05:31:45.518Z" }
 ---
 
-# Workflow Attempt とグラフの契約
+# Workflow Attempt とグラフ
 
-**WorkflowAttempt** は [Issue](project-and-issue.md) を解決する一つの実施であり、専用グラフ、共有 [Workspace](workspace.md)、ノードの [Session](session-and-agent-run.md) をまとめる。Workflow は定義、WorkflowRun はその定義を起動した記録、NodeExecution は特定ノード・iteration の実行記録である。AgentRun の一回の retry と WorkflowAttempt 全体を同じ「attempt」と扱わない。[保存モデル](../../crates/db/src/models/workflow.rs#L66-L136)
+Workflow は工程の定義、Workflow Attempt は [Issue](project-and-issue.md) の一つの実施を表し、共有 [Workspace](workspace.md) とノードの [Session](session-and-agent-run.md) を結ぶ。Workflow Run は起動された定義の記録、NodeExecution は特定ノードと iteration の記録である。Agent Run の一回の retry と Workflow Attempt 全体は別単位である。[モデル](../../crates/db/src/models/workflow.rs)
 
-## 現行の3 presetと共通開始
+## 固定 preset の開始
 
-LOCAL-372以後、新しい仕事はIssueの共通開始ダイアログで単一Agent（既定）または次のpresetを選ぶ。Repo/branchを重複入力せず、工程ごとのCodex/Claude Code、model、profile、範囲、追記を固定する。[UI](../../packages/web-core/src/shared/dialogs/shared/WorkspaceTargetDialog.tsx)・[fields](../../packages/web-core/src/features/workflow/ui/WorkflowPresetFields.tsx)
+新しい仕事は共通開始画面で単一 Agent または固定 preset を選ぶ。実装後の独立レビュー、多角調査後の統合、棚卸し後の削減案はいずれも報告して停止し、採用・削除・Git 統合・公開を自動で許可しない。工程の provider、設定、利用者追記と Project 既定追記の revision を開始時に固定する。開始応答が不明なら同じ request ID と入力で再送する。[preset 定義](../../crates/workflow/src/presets.rs)・[開始と defaults](../../crates/server/src/routes/workflow_presets.rs)・[MCP](../../crates/server/src/remote_mcp/workflow.rs)
 
-| preset | 成果と停止位置 |
-| --- | --- |
-| 実装 → 独立レビュー → 停止 | 同じWorkspaceで実装し、通常coding後処理・commit後の確定SHAを別の新Sessionでレビューする。自動修復は行わない |
-| 多角調査 → 統合 → 停止 | 同じ問いを1〜8観点の独立Sessionで調査し、全成果成立後に一度だけ統合する。一部失敗なら不足を残して停止する |
-| 棚卸し → 削減案 → 停止 | 先行棚卸しを別Sessionへ渡し、理由・失う保証・代替・確認方法付きの案を提示する。削除は実行しない |
+新規の任意 graph／Arena の作成・起動は終了した。既存の定義、履歴、retry と viewer は残るため、保存された旧 graph の挙動を固定 preset と混同しない。[入口](../../crates/server/src/routes/workflows.rs)
 
-固定契約・LVK既定指示・利用者追記を分け、Project既定追記のrevisionと今回/工程追記を開始時に固定する。Project revision競合はreloadが必要。利用者追記で停止契約やgraph構造を置換しない。推奨は可能だが、採用・修正・削除・Git merge/公開は別指示であり、報告中のDECISIONだけでruntime待機状態にはしない。[preset compiler](../../crates/workflow/src/presets.rs)・[defaults/start](../../crates/server/src/routes/workflow_presets.rs)
+## 実行と合流
 
-MCPのworkflow toolも同じlist/start/status/stop/defaults/save_defaultsサービスを使う。公開MCPのdefaults応答はstructuredContentのobject契約に合わせて `{ "items": [...] }` とし、各要素にProject既定追記とrevisionを保持する。HTTP/UIと共通defaultsサービスは配列のままであり、認可やrevision照合を包装で迂回しない。startのrequest_idは同じ入力でのみ再送し、不明な受付から新しいIDで再起動しない。statusは既存Run/Session報告・成功済み成果・失敗・残件を返す。報告工程には事前の[ソース保護](../integrations/agent-providers.md)が必要で、不成立時は起動を拒否する。[MCP](../../crates/server/src/remote_mcp/workflow.rs)
+資源付き Attempt は draft、Workspace 準備、必要な Agent Session の固定を経て ready になる。開始時の graph snapshot を Run が使い、その後の定義編集で進行中の解釈を変えない。資源付きの新規開始は archive 済み Issue に対して拒否される。[準備](../../crates/server/src/routes/workflows.rs)・[runtime](../../crates/server/src/workflow_runtime/runner.rs)
 
-旧任意graph作成・編集・起動と新規Arena入口は終了した。定義・Run・保存snapshotと既存retry/resumeは保持し、旧URLは定義viewerとして読む。以下の汎用node/editor説明は保存履歴と残る互換実装の調査用で、自由editorを提供する現行手順ではない。[入口guard](../../crates/server/src/routes/workflows.rs)・[viewer](../../packages/web-core/src/features/workflow/ui/WorkflowTemplateEditorPage.tsx)
+Graph は Start、End、Agent、Condition、HumanGate、Transform、Arena などを表す。検証は一意な node、存在する edge、到達可能性を要求し、循環を拒否する。固定 preset の `wait_for_all` は全入力成功後に一度だけ合流するが、旧 graph の既定は一つの成功で ready となる。Agent は通常同じ Workspace のファイルを共有し、[Arena](arena.md) の候補は別 Workspace に隔離される。[graph](../../crates/workflow/src/graph.rs)・[validation](../../crates/workflow/src/validation.rs)・[planner](../../crates/workflow/src/planner.rs)
 
-## テンプレート・実施・run の寿命
-
-Project 用定義と System 用定義があり、System テンプレートは通常 API から更新・削除できない。Issue 専用の backing Workflow はテンプレート一覧から隠して作成する。[作成](../../crates/server/src/routes/workflows.rs#L647-L660)、[System 保護](../../crates/server/src/routes/workflows.rs#L1240-L1254)、[削除拒否](../../crates/server/src/routes/workflows.rs#L1279-L1292)
-
-資源を伴う Attempt 作成は、まず draft、次に main Workspace を作成・関連付け、Agent ノードに不足している Session ID を補ってグラフへ保存し、Ready にする。既存 Session ID を毎回作り直す処理ではない。複数 Repo を明示指定する場合は、それぞれ target branch が必要である。[資源準備](../../crates/server/src/routes/workflows.rs#L684-L751)、[Session 固定](../../crates/server/src/routes/workflows.rs#L750-L825)
-
-通常の Session 準備は interactive Workspace を要求する。Repository bootstrap だけは専用の内部入口を通り、execution_only、bootstrap 所有者の Repo/run ID、未完了結果、Repo membership が保存済みであることを確認してから子 Session を作る。クライアントの指定で所有検証を回避する入口ではない。[二つの準備経路](../../crates/server/src/routes/workflows.rs#L750-L793)。用途と所有の一次説明は [Workspace](workspace.md#操作用途と実行所有者)に置く。
-
-起動時はグラフ snapshot と実行状態を保存し、以後の runtime はその snapshot を使う。Attempt は最新 run ID と Workspace ID を保持し、draft/ready と running/awaiting/terminal の状態を区別する。編集されたテンプレートから進行中 run を再解釈する前提にはしない。[起動と snapshot](../../crates/server/src/workflow_runtime/runner.rs#L995-L1056)、[snapshot 読み込み](../../crates/server/src/workflow_runtime/runner.rs#L2065-L2116)、[状態と関連](../../crates/db/src/models/workflow.rs#L32-L47)
-
-Agent node の Started は、その Create の配送受理と run/node/Session/turn identity の照合後に返る。provider 準備完了や成果物成功の通知ではない。再送・並行配送・親取消との境界は [Workflow Runtime の受理契約](../architecture/workflow-runtime.md#create-の配送と受理を区別する)を参照する。[dispatch](../../crates/server/src/workflow_runtime/runner.rs#L865-L900)
-
-## 編集・保存競合・Undo/Redo
-
-旧editorの保存helperではgraph・名前・説明は `revision` を伴う一つの編集文書として扱う。保存は expected revision による compare-and-swap とし、不一致は Conflict。追加 Agent ノードの Session 作成と graph / Attempt の更新を一つの SQLite transaction へ収め、競合時の孤児 Session と片側だけの保存を避ける。[原子的保存](../../crates/server/src/routes/workflows.rs#L910-L959)
-
-旧editor helperの未保存文書は host・Project・Workflow 別、同じタブの sessionStorage に保持する。再取得や reload で古い draft の revision を最新に付け替えてはいけない。競合時は本文を残し、利用者が読み直し・統合・破棄を選ぶ。保存応答の待機中に追加編集した場合は、その編集を維持し、server が割り当てた Session ID だけを対応するノードへ取り込む。[復元](../../packages/web-core/src/features/workflow/model/useWorkflowEditorDraft.ts#L66-L114)、[ACK](../../packages/web-core/src/features/workflow/model/workflowEditorDraft.ts#L117-L183)
-
-Undo/Redo は graph とメタデータのローカル編集履歴であり、既に起動した Run や Git の巻き戻しではない。各 stack は64状態・合計2 Mi UTF-16 code unitsまでに抑え、draft 本文や provider prompt の制限には流用しない。履歴そのものは reload を跨いで保存しない。ReadOnly な system 定義を編集可能にする手段でもない。[編集履歴](../../packages/web-core/src/features/workflow/model/workflowEditorDraft.ts#L26-L104)、[保存する範囲](../../packages/web-core/src/features/workflow/model/workflowEditorDraft.ts#L204-L218)
-
-通常の実行時 worktree 準備と owner 準備済みの内部環境の違いは [Workflow Runtime](../architecture/workflow-runtime.md#作業場所の準備は実-dispatch-の責任)を参照する。
-
-## ノードの役割
-
-| 種類 | 意味 |
-| --- | --- |
-| Start / End | 起点と結果の構造。Start は入力、End は上流出力を結果にする |
-| Agent | main Workspace の安定 Session で指示を実行する |
-| Condition | router の判断から次の対象ノードを選ぶ |
-| HumanGate | 明示的な人の判断まで待つ |
-| Transform | テンプレート、正規表現抽出、文字数切り詰めによるテキスト変換 |
-| Arena | 候補を作り、勝者の選択・適用を待つ |
-
-[実行ノード型](../../crates/workflow/src/graph.rs#L105-L125)、[構造・待機 handler](../../crates/workflow/src/handlers.rs#L136-L158)、[Transform](../../crates/workflow/src/transform.rs#L28-L74)。StickyNote / StageGroup は canvas object であり、実行ノードに追加する種類ではない。[canvas 型](../../crates/workflow/src/graph.rs#L89-L94)
-
-[Arena](arena.md) の候補は別 Workspace に隔離される例外で、勝者の変更を main Workspace に適用してから後続へ進む。通常の Agent ノード間は同じ作業ファイルを共有する。このため、並行 Agent の編集競合はグラフ表示だけでは解消されない。[主WorkspaceとSessionの確保](../../crates/server/src/workflow_runtime/runner.rs)、[勝者適用](../../crates/server/src/workflow_runtime/arena.rs#L712-L793)
-
-## 辺・分岐・合流
-
-現行グラフ検証は version 1/2、一意の node ID、Start がちょうど一個、End が一個以上、存在する辺の両端、Start からの到達可能性を要求し、**循環を拒否する**。実行時には Condition 設定も追加検証する。[validation](../../crates/workflow/src/validation.rs#L43-L125)
-
-辺は上流の成功を後続の起動に結び付ける。Condition からの辺だけは選択された target ID を出力 JSON と照合する。wait_for_allのない旧graphでは、複数入力のいずれかが成功すればreadyになる。固定presetはwait_for_allを設定し、同じiteration=0の全入力が成功した後に一度だけreadyとなる。たとえば A と B の両方から Review に接続しても、A の成功時に Review が起動可能となる。[planner](../../crates/workflow/src/planner.rs#L150-L214)、[一方の成功で ready になるテスト](../../crates/workflow/src/planner.rs#L362-L405)
-
-wait_for_allのない旧graphの発火数は成功した上流実行から数え、NodeExecution は iteration を持つ。「一ノードだから run 中に常に一回だけ」という仮定も避ける。永続 orchestration の JoinPolicy と、この製品グラフの ready 判定は別の責任である。[発火数](../../crates/workflow/src/planner.rs#L118-L133)、[NodeExecution](../../crates/db/src/models/workflow.rs#L114-L136)、[runtime の責任分担](../architecture/workflow-runtime.md)
-
-## コンテキストと結果
-
-設計の中心は共有 worktree だが、現行実装にはテキスト入力もある。`{{input}}` / `{{run_input}}` は run 入力、`{{upstream}}` は上流出力を展開する。固定presetの報告工程は要件と全reportを直接渡す。それ以外のAgentは既定でWorkflow contextのenvelopeを付け、`include_workflow_context=false` ならノードの指示だけを返す。[prompt 構築](../../crates/server/src/workflow_runtime/runner.rs#L2819-L2868)
-
-Transform は上流出力を使い、上流出力がなければ run 入力を使う。正規表現に一致しない場合はエラーになるので、「空文字で正常継続」と仮定しない。[context](../../crates/workflow/src/handlers.rs#L45-L55)、[変換失敗](../../crates/workflow/src/transform.rs#L51-L66)
-
-旧共通envelope経路が付けるWorkflow Inputは 8,000 文字、各 direct upstream handoff は 12,000 文字で切り詰め、切詰めを本文に明示する。これは envelope の上限であり、明示的な `{{upstream}}` の展開や provider の回答長全般に対する上限と同一視しない。[envelope](../../crates/server/src/workflow_runtime/envelope.rs#L1-L83)、[template 展開](../../crates/server/src/workflow_runtime/runner.rs#L2862-L2867)
-
-[OpenWiki Bootstrap](../operations/openwiki-maintenance.md) は Reviewer / Refiner の完全なレポートを host 検証後に共有ファイルへ保存し、node 間では小さな参照を使う専用経路を持つ。旧共通envelopeのhandoff上限は維持し、Reviewer に指摘数を絞る目的として流用しない。[参照の契約](../architecture/workflow-runtime.md#bootstrap-の成果物参照は通常の上流本文と分ける)
-
-## 判断待ちと再試行
-
-Condition router は構造化出力を解析・検証し、有効なら選択枝を進める。不正な出力や判断上の問題は AwaitingHuman に変換し、解析できた質問または検証理由を示す。人による選択も target の有効性を再検証する。詳細な応答形式と mutation 検出は [Workflow Runtime](../architecture/workflow-runtime.md) に置く。[router 結果](../../crates/server/src/workflow_runtime/condition_router.rs#L253-L332)
-
-HumanGate は AwaitingHuman 状態で承認すると succeeded にして続きを駆動する。拒否はノード失敗、残る pending の skip、run 失敗になる。`Rejection` という edge kind が存在するだけで「拒否時に任意の次ノードへ分岐する」と説明しない。[承認](../../crates/server/src/workflow_runtime/runner.rs#L1498-L1528)、[拒否](../../crates/server/src/workflow_runtime/runner.rs#L1669-L1689)
-
-ノード retry は Issue run の Failed な Agent / Condition / Transform に限る。ノードを reset し、下流の skipped ノードを戻して再駆動する。[AgentRun retry](session-and-agent-run.md) のように同一 provider 試行を Resume する API とは別である。Repository bootstrap の個別ノード retry は拒否され、所有する保守フローを通す。[retry 条件](../../crates/server/src/workflow_runtime/runner.rs#L1835-L1883)
-
-Run/Attempt の Canceled と NodeExecution の Cancelled はシリアライズ名も異なる。待機状態やキャンセル中を、成功・失敗の終端と一括しない。[enum](../../crates/db/src/models/workflow.rs#L16-L64)。起動失敗、取消の伝搬、再起動回復は [runtime](../architecture/workflow-runtime.md) が説明する。
-
-## 文書との照合と未確定点
-
-移行した2026-05-16の製品設計確認稿 は合意された製品意図として有用だが、「上流出力を prompt に入れない」という記述は現在の template 展開・context 構築より狭い。また同文書の ExecutionProcess による agent 実行モデルは、現在の [AgentRun](session-and-agent-run.md) に読み替える必要がある。
-
-現在の validation は循環を受け付けない。将来のloop支援時期は確定できない。固定presetの全入力待ちと旧graph既定のANYを区別する。グラフやテンプレートの変更では、README の図だけでなく planner・validation のテストを判断基準にする。
-
-Repository scope の System Workflow は Issue を持たず、[OpenWiki bootstrap](../operations/openwiki-maintenance.md) の所有・終了検証に使われる。一般の Issue Workflow の操作権限や自動回復をそのまま適用しない。
-
-資源付きAttemptの新規作成と新規主Workspaceのbindは、Issueがarchive済みなら拒否する。既存Workspaceでの継続実行とは区別する。[Issue archive](project-and-issue.md#issue-のアーカイブ)・[受付guard](../../crates/server/src/routes/workflows.rs#L691-L697)・[新規bind](../../crates/server/src/workflow_runtime/runner.rs#L1015-L1043)。
+Condition の不正な判断は人の判断待ちに移る。HumanGate の承認は続行、拒否は失敗と下流の skip を伴う。node retry と provider の attempt retry は別で、対象や回復条件が異なる。詳細な dispatch・取消・再起動は [Workflow Runtime](../architecture/workflow-runtime.md) を参照する。[runner](../../crates/server/src/workflow_runtime/runner.rs)

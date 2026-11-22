@@ -1,106 +1,31 @@
 ---
 type: integration
-title: GitHub 認証・PR とレビューの境界
-description: リポジトリ別 PAT の所有・適用範囲、push と PR base、作成・監視の部分成功と旧 Cloud Review の境界。
-tags: [github, review, organization, webhook, cloud]
-sources:
-  - id: openwiki-source-d254ecaf5a9cc6c431ef182a
-    resource: repo://crates/git-host/src/github/cli.rs
-  - id: openwiki-source-040941dd1546f1e0a90b6c5f
-    resource: repo://crates/git/src/cli.rs
-  - id: openwiki-source-bd15422ef1716eca23408f1f
-    resource: repo://crates/git/src/lib.rs
-  - id: openwiki-source-ab16f75e6c404bee0fa0eb59
-    resource: repo://crates/git/src/repository_push.rs
-  - id: openwiki-source-aa8d534133f70921d097bb65
-    resource: repo://crates/server/src/remote_mcp/repository_push.rs
-  - id: openwiki-source-d5a46b0d63ef3823cfab4ff2
-    resource: repo://crates/server/src/repository_push.rs
-  - id: openwiki-source-16bb0bc0baa397cce8e201b1
-    resource: repo://crates/server/src/routes/github_credentials.rs
-  - id: openwiki-source-65c0f36670a161dc05040e69
-    resource: repo://crates/server/src/routes/mod.rs
-  - id: openwiki-source-27c2433bab843f01a51418b1
-    resource: repo://crates/server/src/routes/workspaces/pr.rs
-  - id: openwiki-source-72948db7f01925b4b2ff17af
-    resource: repo://crates/services/src/services/pr_monitor.rs
-  - id: openwiki-source-5837e5316279163dd8bfbfd3
-    resource: repo://crates/utils/src/github_credentials.rs
-  - id: openwiki-source-bbef1040208c4a3ecf8b1e75
-    resource: repo://packages/web-core/src/shared/dialogs/settings/settings/RepositoryPushSettings.tsx
-generated: { by: "codex", at: "2026-11-16T23:50:22.756Z" }
+title: GitHub 認証・PR とレビュー
+description: repository 資格情報、push、PR 作成と観測の境界。
+tags: [github, pull-request, credentials]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-16T23:50:22.756Z
+    at: 2026-11-22T05:31:45.518Z
+sources:
+  - id: openwiki-source-16bb0bc0baa397cce8e201b1
+    resource: repo://crates/server/src/routes/github_credentials.rs
+generated: { by: "codex", at: "2026-11-22T05:31:45.518Z" }
 ---
 
-# GitHub 認証・PR とレビューの境界
+# GitHub 認証・PR とレビュー
 
-現在の PR 操作は local Workspace と `GitHostService` を起点とする。旧 Cloud Review、組織 GitHub App installation、webhook 起動、R2 upload / review worker / callback は現行構成から削除されている。`!reviewfast` や旧 App 設定を有効な起動契約として扱わない。[現行 router](../../crates/server/src/routes/mod.rs)、[Workspace PR](../../crates/server/src/routes/workspaces/pr.rs)。
+現在の PR 操作は Workspace と GitHostService を使う。旧 Cloud Review worker や webhook callback を現行の開始条件としない。[PR route](../../crates/server/src/routes/workspaces/pr.rs)
 
 ## リポジトリ別 PAT の所有と管理
 
-Settings → Repositories → GitHub authentication で、登録 Repo の remotes と既定 push URL から GitHub.com の対象を選ぶ。保存 identity は小文字へ正規化した `owner/repository` であり、Workspace やログイン member ごとではない。同じ instance で同じ GitHub repository を使う操作は資格情報を共有する。[対象の列挙・検証](../../crates/server/src/routes/github_credentials.rs#L32-L63)・[正規化](../../crates/utils/src/github_credentials.rs#L15-L51)
+Settings → Repositories で登録 Repo の remote／push URL に対応する GitHub.com repository を選ぶ。credential は正規化した owner/repository 単位で instance 内に共有され、Workspace や member 単位ではない。管理者が fine-grained PAT を保存・置換・削除し、一覧は configured のみ返す。保存時の形式検査や接続確認は push 権限の証明ではない。保存先と backup は秘密を含み、削除は GitHub 側の revoke ではない。[API](../../crates/server/src/routes/github_credentials.rs)・[保存](../../crates/utils/src/github_credentials.rs)
 
-API の一覧は repository と configured だけを返す。保存・置換・削除・接続確認は administrator を要求する。保存時は `github_pat_` 形式を検証するが、GitHub の有効性・権限を検査してから保存するわけではない。期限あり／なしを受け付け、期限切れや組織承認の問題は接続・実操作で判明する。[API](../../crates/server/src/routes/github_credentials.rs#L17-L155)・[入力検証](../../crates/utils/src/github_credentials.rs#L54-L70)
+PR には実行環境に `gh` が必要である。対象 token が未登録なら同じ実行 account の system 認証を使う。登録 token が壊れている場合や認証拒否時に別 account に黙って fallback しない。LVK の Git／gh wrapper による対象限定の注入は任意の agent shell に配布する契約ではない。[Git wrapper](../../crates/git/src/cli.rs)・[gh wrapper](../../crates/git-host/src/github/cli.rs)
 
-保存先は asset directory の `github-credentials/<owner>!<repo>.json`。Unix では directory 0700、file 0600 とし、temporary file の flush / sync 後に置換する。暗号化保管や同じ OS user のプロセスからの隔離ではない。instance volume と backup に秘密が含まれる。[storage](../../crates/utils/src/github_credentials.rs#L147-L198)・[permission test](../../crates/utils/src/github_credentials.rs#L223-L255)・[資格情報の保存](../../crates/utils/src/github_credentials.rs#L147-L198)
+## Push、PR、観測
 
-置換は次に読み込む操作へ反映され、既に起動した操作は旧 token を保持し得る。削除は LVK 内の登録を消して system 認証へ戻すだけで、GitHub 側の失効ではない。登録状態と接続成功も別である。[保存・削除](../../crates/utils/src/github_credentials.rs#L169-L198)・[PATの登録と確認](#gitpr-を使う前に認証を準備する)
+PR 作成は source と Wiki の必要条件を確認し、branch を push して remote PR を作り、local record を保存する。これらは一つの transaction ではない。応答や local 保存が失敗した場合、重複作成前に remote の既存 PR と branch を確認する。push URL と PR base の remote は異なり得る。[処理](../../crates/server/src/routes/workspaces/pr.rs)・[Memory](../concepts/repository-memory.md)
 
-## subprocess への適用と失敗
+登録 Repository の明示 push は別操作で、preview の source SHA、destination、remote SHA と履歴を確認してから実行する。応答不明時は同じ request ID の receipt と remote を確認し、別 ID で盲目的に再送しない。remote 観測は誰が push したかや local 統合検証の証明ではない。[push service](../../crates/server/src/repository_push.rs)・[Git 操作](../../crates/git/src/repository_push.rs)
 
-LVK の Git CLI wrapper は `push` / `fetch` / `ls-remote` の認識可能な GitHub URL に対して登録 token を探す。該当時は SSH URL も subprocess 内だけ HTTPS に変換し、remote 設定は変更しない。`gh` wrapper は repository または PR URL から同じ token を選び、PR 作成・関連付け・監視・コメント取得等に使う。`gh` binary 自体は引き続き必要である。[Git wrapper](../../crates/git/src/cli.rs#L889-L929)・[gh wrapper と呼出し](../../crates/git-host/src/github/cli.rs#L148-L225)
-
-token は引数や repository config へ書かず子プロセス環境へ渡す。Git の credential helper をリセットし対象 HTTPS repository のみに応答させ、URL ごとの header、redirect 無効化、prompt 無効化、trace 環境除去を設定する。`gh` は一時 config directory と `GH_TOKEN` を使い、競合する token 環境を除く。戻り値は raw token と Basic の符号化値を伏せる。[環境設定・redaction](../../crates/utils/src/github_credentials.rs#L75-L144)
-
-登録済み token が読めない・壊れている場合は launch 前に失敗し、認証拒否でも別アカウントの system credential へ retry しない。未登録の場合だけ既存認証が使われる。任意の agent shell の `git` / `gh` はこの注入経路の対象外であり、固有の認証を使う。複数 Repo の agent 実行へ資格情報を自動配布する契約は実装されていない。[読み込み失敗](../../crates/utils/src/github_credentials.rs#L169-L177)・[gh の単一実行](../../crates/git-host/src/github/cli.rs#L165-L234)・[gh実行境界](../../crates/git-host/src/github/cli.rs#L148-L234)
-
-**Check connection** は GitHub API の repository と open PR 一覧を GET するだけで、push や PR 作成を行わず write 権限を証明しない。redirect を追わず各 request に15秒 timeout を設定する。失敗時は HTTP status と期限・対象・権限・組織承認の確認を案内する。[接続確認](../../crates/server/src/routes/github_credentials.rs#L117-L155)
-
-## Push URL と PR base
-
-Git push は既定 remote の `pushurl` があればそれを使う。PR base は target branch が remote-tracking branch ならその remote を使い、そうでなければ既定 fetch remote を使う。push 先が fork でも PR base を自動的に fork へ変えず、head repository URL として push 先を渡す。両 repository の認証・権限が必要な場合、片側の token 登録だけで他方へのアクセスを保証しない。[push 解決](../../crates/git/src/lib.rs#L1543-L1552)・[PR 解決](../../crates/server/src/routes/workspaces/pr.rs#L236-L254)・[head の指定](../../crates/server/src/routes/workspaces/pr.rs#L325-L339)
-
-## PR の作成と保存
-
-PR 作成は対象 Repo / branch / remote を検査し、[Repository Memory の source 完了と Wiki guard](../concepts/repository-memory.md#source-統合と-wiki-反映を分ける)を通し、作業 branch を push してから GitHostService に title・body・base・draft 等を渡す。GitHub の場合は `gh` を実行し、対象に登録済みの PAT があればそれを使い、未登録なら既存 system 認証を使う。これは Cloud App の installation を要求する経路ではない。[認証の準備](#gitpr-を使う前に認証を準備する)、[処理順](../../crates/server/src/routes/workspaces/pr.rs#L206-L345)。
-
-push、remote PR 作成、local PR レコード作成は一括 transaction ではない。remote 作成後の local 保存失敗はログに残るため、エラーや表示欠落を理由に新規 PR を盲目的に作り直さず、既存 PR と branch を確認する。unsupported provider・CLI 未導入・認証失敗は区別した結果を返す。[結果と失敗](../../crates/server/src/routes/workspaces/pr.rs#L302-L402)。既存 PR を branch から付ける経路も別にある。[既存 PR の関連付け](../../crates/server/src/routes/workspaces/pr.rs#L404-L534)。
-
-## 観測と完了を分ける
-
-PR monitor は open PR の remote status を調べ、closed / merged を local レコードへ保存する。PR の merge 観測や merged PR の attach で Workspace を自動 archive しない。作業木の解放は [手動 archive](../concepts/workspace.md#archive削除期限-cleanup)として別途確認する。[monitor](../../crates/services/src/services/pr_monitor.rs#L119-L159)。
-
-外部 merge の観測は local target の更新、正式 Integration の検証、Card Done、Wiki 更新の証明ではない。Memory event を統合済みと判断する祖先関係と receipt の境界は [外部 PR と Repository Memory](../concepts/repository-memory.md#source-統合と-wiki-反映を分ける)を参照する。
-
-## 三種類の review
-
-Workspace の agent review はその Session / AgentRun の作業であり、[実装から PR まで](../workflows/task-to-integration.md)の手順に属する。[自動マージ](../concepts/formal-integration.md)のレビュー・検証判断は同じ担当会話で候補SHAに結び付けて行い、旧resolution-review gateは使わない。[OpenWiki の独立 Review](../operations/openwiki-maintenance.md)は凍結ソースと知識の照合工程である。いずれも撤去された Cloud review worker の成功 callback とは異なる。レビュー結果だけでテスト、公開、通知到達まで完了したとは扱わない。
-
-## 変更時の検証と限界
-
-storage の置換・Unix permission・破損拒否、header/helper の対象制限は [utils tests](../../crates/utils/src/github_credentials.rs#L201-L315)、秘密を引数に入れないこと・失敗出力の redaction・壊れた token で起動しないことは [gh subprocess tests](../../crates/git-host/src/github/cli.rs#L621-L678)が扱う。[Git safety test](../../crates/git/tests/git_ops_safety.rs)は push URL へ送信し fetch URL を維持する。[UI test](../../tests/workflow/specs/github-credentials.spec.ts)は mock API で登録・置換・エラー・切替・削除を検査する。これらのソースを確認したことは実 PAT の権限や GitHub への write 成功を検証したことではない。
-
-## Git/PR を使う前に認証を準備する
-
-PR操作にはLVK実行環境のPATHに `gh` が必要である。未登録repositoryではその実行accountで `gh auth login` を完了し、`gh auth status` とGit remoteの対象を確認する。hostだけの認証はcontainerに自動配達されない。[CLI検出と実行](../../crates/git-host/src/github/cli.rs)
-
-repository別tokenを使う場合は Settings → Repositories で対象RepoのGitHub資格情報を開く。表示された正規化owner/repositoryとpush先を確認し、GitHubで対象Repoに限定したfine-grained PATを用意する。Git push/pullにはContents read/write、PR操作にはPull requests read/writeを与え、必要なIssue操作やworkflow定義のpushには対応する追加権限と組織承認・期限条件も確認してから、LVKへ保存して接続を確認する。token本文の再表示は行わない。置換後は次の操作で再確認し、削除後はsystem認証へ戻る。GitHub側の失効は別に行う。[管理API](../../crates/server/src/routes/github_credentials.rs)・[保存モデル](../../crates/utils/src/github_credentials.rs)
-
-## 登録Repositoryのローカルbranchを明示pushする
-
-LOCAL-385のRepository pushは、統合済みローカルmain/dev等を同名のGitHub branchへ公開する独立操作である。Workspaceの作成・checkout・source後処理・PR作成や自動マージは行わない。ローカル統合の許可からGitHub公開を推論しない。HTTPと公開MCPは共通serviceを使い、preview/pushにはread+writeとProject/Repository関連付けを要求する。push直前にもLeaseの期限・失効・membership・設定revisionを再確認する。merge権限とは別である。[共通service](../../crates/server/src/repository_push.rs)・[MCP入口](../../crates/server/src/remote_mcp/repository_push.rs#L36-L63)
-
-前提は、Projectに関連付く登録Repository、存在するローカルbranch、単一の構成済みGitHub.com push URLと有効な実行環境の認証である。URL rewrite・mirror・複数push URL・曖昧なremoteは拒否する。通常操作ではローカルfilesystem remoteを受け付けない。remote SHAのobjectがローカルにないと履歴比較不能として拒否し、自動fetchはしない。previewは未公開10,000 commitとIssue archive候補200 pathを上限とする。[対象とpreview](../../crates/git/src/repository_push.rs#L22-L152)
-
-1. Settings → Repositoriesの対象Repoを開き、関連Project・構成済みremote・ローカルbranchを選び、Review push targetを実行する。
-2. Repository identity、push URL、source SHA、同名destination branch、観測remote SHA、未公開件数、履歴内のIssue archive候補を確認する。本文archiveも履歴とともに外部公開されるため、履歴全体を確認してチェックを入れる。
-3. Push confirmed commitを明示実行する。サーバーはpreviewを再構成して全項目一致を検証し、その確認済み値だけをreceiptへ保存する。直前のsource/remote driftなら拒否し、利用者が対象を再確認する。
-4. 応答が不明ならrequest IDを保持し、Check remote resultで元receiptとremote branchを読み直す。新request IDでpushし直さない。reloadでもsessionStorageのIDから再確認導線を保つ。
-
-Gitはsource refをlockし、固定SHAの単一refspecで通常pushする。force、tag/submodule追加push、pre-push hook、upstream/tracking変更は行わない。fast-forward可否はremote側のGitも判定する。認証拒否、権限不足、保護branch、non-fast-forward、drift、結果不明は固定codeで区別し、raw Git診断や秘密を公開しない。[publish](../../crates/git/src/repository_push.rs#L154-L239)・[CLI](../../crates/git/src/cli.rs)
-
-永続receiptは同じactor・request ID・入力の重複実行を防ぐ。明確な`not_admitted`だけはIDを解放して再reviewできる。その他の応答喪失は受付済みの可能性を残す。再確認はreceiptを保持したままremote観測を別に返し、`source_present:null`は未観測、falseは現在一致しないことを示す。trueでも誰がpushしたかの証明ではない。uncertain receiptは観測で書き換えず、remoteが確認済みSHAに一致したときだけUIから別対象の明示reviewへ進める。running/acceptedや未観測では再pushを解除しない。[receiptとverify](../../crates/server/src/repository_push.rs#L150-L264)・[UIのlock](../../packages/web-core/src/shared/dialogs/settings/settings/RepositoryPushSettings.tsx)
-
-隔離ローカルbare remote/hooksとin-memory DBの試験は通常main/dev push、拒否・drift・権限・receiptを検査する。UIのmock fixtureとSSRは明示確認、応答喪失、再確認を検査する。実GitHub/PAT、GitHub側rule、認証済み稼働アプリE2Eの成功をこれらのfixtureから推定しない。[検証入口と範囲](../../tests/repository-push/README.md)
+PR monitor の merged 観測は Workspace の自動 archive、正式 Integration の検証、Issue 完了、Wiki 更新を意味しない。Agent review、[正式 Integration](../concepts/formal-integration.md) の判断、[OpenWiki 独立レビュー](../operations/openwiki-maintenance.md) はそれぞれ対象と完了条件が異なる。[monitor](../../crates/services/src/services/pr_monitor.rs)

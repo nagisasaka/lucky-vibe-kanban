@@ -1,150 +1,29 @@
 ---
 type: integration
-title: Web Push・通知同意・会話への復帰
-description: Codex の待機・Run 終端を browser に通知する同意、原子的 outbox、配送失敗、認証復帰、通知対象 Run の参照と削除済み相談コピー導線の境界。
-tags: [web-push, notifications, consent, codex, lifecycle, authentication]
+title: Web Push と通知
+description: browser ごとの同意、配送、失敗と会話への復帰。
+tags: [notifications, web-push]
+verified:
+  - by: openwiki/0.9.0
+    at: 2026-11-22T05:31:45.518Z
 sources:
   - id: openwiki-source-2f63ca1582805a46da98d522
     resource: repo://crates/db/migrations/20261018180000_web_push.sql
-  - id: openwiki-source-9de028d42d2209932d7ebb5e
-    resource: repo://crates/db/migrations/20261031180000_web_push_event_preferences.sql
-  - id: openwiki-source-b50585f67dac89cd8eecc75d
-    resource: repo://crates/executors/default_mcp.json
-  - id: openwiki-source-7d94e7454f63f16057833046
-    resource: repo://crates/server-access/src/lib.rs
-  - id: openwiki-source-fb97b52f99c4e6667bfbcfa7
-    resource: repo://crates/server/src/routes/web_push.rs
-  - id: openwiki-source-659c686d78b9705bbdb7f445
-    resource: repo://crates/services/src/services/config/versions/v2.rs
-  - id: openwiki-source-ae8c631b5b4385c934e47d60
-    resource: repo://crates/services/src/services/config/versions/v9.rs
-  - id: openwiki-source-4251300987fd63068dbcfd5d
-    resource: repo://crates/services/src/services/notification.rs
-  - id: openwiki-source-594b913429eca2d438775192
-    resource: repo://crates/services/src/services/notification/text.rs
-  - id: openwiki-source-64f4b24262714ff553327284
-    resource: repo://packages/local-web/index.html
-  - id: openwiki-source-555aad5cd76b2126b533c7d0
-    resource: repo://packages/public/lvk-push-sw.js
-  - id: openwiki-source-dd212fc02c32e80af3ca3436
-    resource: repo://packages/public/site.webmanifest
-  - id: openwiki-source-f0616990372eebb94bc69e6f
-    resource: repo://packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx
-  - id: openwiki-source-3f0e90118eff16b06f3bdd02
-    resource: repo://packages/web-core/src/shared/components/web-push/useWebPushLocale.ts
-  - id: openwiki-source-9cea28cc3d20cd3fcde94697
-    resource: repo://packages/web-core/src/shared/components/web-push/WebPushSettings.tsx
-  - id: openwiki-source-6d0dfae3c1582e1af83405d4
-    resource: repo://packages/web-core/src/shared/dialogs/settings/settings/GeneralSettingsSection.tsx
-  - id: openwiki-source-20c5019f95e5ef3c551c3907
-    resource: repo://packages/web-core/src/shared/dialogs/settings/settings/OsNotificationEvents.tsx
-  - id: openwiki-source-0dfad90f6ff4a4588fc43dde
-    resource: repo://packages/web-core/src/shared/dialogs/settings/SettingsDialog.tsx
-  - id: openwiki-source-7d81cfa1ca176b1860c23b29
-    resource: repo://scripts/generate-clover-icons.mjs
-  - id: openwiki-source-8e4d600376d97a1b981b2d12
-    resource: repo://tests/consultation-removal/browser.mjs
-  - id: openwiki-source-f4d5c774a441b4c38cace035
-    resource: repo://tests/consultation-removal/README.md
-  - id: openwiki-source-e47452003bca7e3daaa27a36
-    resource: repo://tests/settings-redesign/settings.spec.ts
-generated: { by: "codex", at: "2026-11-04T20:22:03.096Z" }
-verified:
-  - by: openwiki/0.9.0
-    at: 2026-11-16T18:11:18.484Z
+generated: { by: "codex", at: "2026-11-22T05:31:45.518Z" }
 ---
 
-# Web Push・通知同意・会話への復帰
+# Web Push と通知
 
-Web Push は、認証された利用者が Project ごとに browser を登録し、Codex の blocking question / execution approval / Run 終端へ戻るための任意機能である。[Issue Follower や OS notifier](../concepts/issue-collaboration.md)とは別で、タブの会話 stream が通知の生成主体ではない。状態の正本は [AgentRun](../concepts/session-and-agent-run.md)にあり、通知到達は人の回答・承認・テスト・自動マージ・公開の成功を意味しない。[trigger](../../crates/db/migrations/20261018180000_web_push.sql)・[固定通知本文](../../crates/server/src/routes/web_push.rs#L342-L352)
+Web Push は認証された利用者が Project と browser ごとに登録し、Codex の blocking question、承認待ち、Run 終端から会話に戻る任意機能である。通知は [Agent Run](../concepts/session-and-agent-run.md) の状態そのものではなく、到達を回答、承認、検証、統合や公開の成功と扱わない。[trigger](../../crates/db/migrations/20261018180000_web_push.sql)・[配送](../../crates/server/src/routes/web_push.rs)
 
-## 通知同意と所有権
+## 設定と同意
 
-Settings → 通知 の Web Push は secure context、Service Worker / Push / Notification API と利用者の許可を要求する。ON は Project と endpoint を登録する。owner は入力値ではなく local/basic/web の認証 actor から取り、内部 agent / MCP channel は拒否する。既存 local Board の active member は全 Project を利用し、通知だけに private Project ACL を設けない。[browser 登録](../../packages/web-core/src/shared/components/web-push/WebPushSettings.tsx#L37-L112)・[actor](../../crates/server/src/routes/web_push.rs#L83-L93)
+server は永続的な P-256 VAPID 秘密鍵の path を `LVK_WEB_PUSH_PRIVATE_KEY_FILE`、連絡先を `LVK_WEB_PUSH_SUBJECT` に設定する。HTTPS と outbound HTTPS が必要で、不正・欠損なら登録できない。鍵は秘密として保護し、rotation 後は browser を再登録する。Settings → 通知で Project と browser を登録し、browser／OS の許可を与える。登録解除とイベントを全て OFF にする設定は別である。[設定と登録](../../crates/server/src/routes/web_push.rs)・[画面](../../packages/web-core/src/shared/components/web-push/WebPushSettings.tsx)
 
-endpoint と暗号鍵は既存 server-access 鍵で封印し、DB には検索用 endpoint hash を別に置く。登録は owner・Project・browser に属し、同じ endpoint を別 owner へ黙って移せない。owner 当たり64登録が上限で、同じ登録の更新は可能。DB と access key は整合した組で保全する。[登録 transaction](../../crates/server/src/routes/web_push.rs#L172-L242)・[保存 schema](../../crates/db/migrations/20261018180000_web_push.sql#L1-L25)
+DB の封印された subscription と server-access 鍵は整合した組で保全する。OFF は待機中の配送を停止するが、既に push service や OS が受け取った通知は撤回できない。Web Push の browser 別設定と server 端末の OS 通知設定は別である。[server access](../concepts/server-access.md)・[OS 通知](../../crates/services/src/services/notification.rs)
 
-同意 envelope は owner・用途・認証設定 revision を固定し、配送時に membership / revision を再検証する。browser の idle/absolute expiry や logout を越えて残すのは、夜間の仕事も通知するためという記録された設計である。API/login credential ではなく、詳細表示は引き続き認証を要する。[認証境界](../concepts/server-access.md#失効は接続と受理済み作業で異なる)・[seal/open](../../crates/server-access/src/lib.rs#L394-L470)
+## 配送と復帰
 
-OFF は owner の登録と cascade で配送待ちを消し、一回の有界 send と同じ gate を使う。OFF 応答時に該当 send は残らないが、既に push service / OS が受け取った通知は撤回できない。現在 browser の最後の登録を削除したら client も unsubscribe する。90日で同意は期限切れになり、member 無効化・設定変更でも配送を失効させる。account 切替や VAPID key 変更では UI が既存 subscription を置き換える。[OFF](../../crates/server/src/routes/web_push.rs#L244-L258)・[dispatcher](../../crates/server/src/routes/web_push.rs#L376-L437)・[browser 更新・削除](../../packages/web-core/src/shared/components/web-push/WebPushSettings.tsx#L77-L138)
+canonical event から outbox を作り、送信前に現在の待機状態、最新 attempt、同意と event mask を再確認する。期限切れ endpoint は削除し、network error や一時エラーは限度付きで再試行する。応答喪失のため exactly-once は保証しない。lock screen は汎用文面で、質問や command の本文を露出しない。[配送処理](../../crates/server/src/routes/web_push.rs)
 
-## Canonical 状態から配送待ちへ
-
-SQLite trigger は canonical `input_requested` / `approval_requested` の INSERT と、Codex AgentRun の succeeded / failed / cancelled / crashed / audit_failed への状態変化を同じ transaction 内で outbox に入れる。Workspace が登録 Project に link されている browser ごとに配送を作り、登録前の履歴を一括再送しない。async_questions、assistant prose、provider turn 完了、script/test、自動マージ/publication は trigger ではない。[admission](../../crates/db/migrations/20261018180000_web_push.sql#L26-L49)
-
-control は attempt・種別・reference、terminal は Run・attempt と browser 登録で重複排除する。worker は送信前に共通 `pending_blocking` と照合し、回答済み・期限切れ・再試行で古くなった待機を捨てる。terminal も現在 status と最新 attempt を照合する。通知用に新しい質問 resolver や approval control を作らない。[actionable 判定](../../crates/server/src/routes/web_push.rs#L277-L341)。[Codex の承認と質問の接続状態](../concepts/session-and-agent-run.md#承認質問と現在の接続状態)は別契約であり、この通知機能が回答・承認の接続制限を解消したと解釈しない。
-
-## 配送と失敗の境界
-
-共通 router が worker を起動する。ネットワーク request は15秒 timeout、redirect 無効。送信先は HTTPS の Google FCM（`/wp/` と `/fcm/send/`）、Mozilla autopush、Apple、Microsoft notify の明示 allowlist だけであり、任意 relay URL を受け付けない。新しい vendor 対応はコード変更の境界となる。[endpoint 検証](../../crates/server/src/routes/web_push.rs#L36-L67)・[worker](../../crates/server/src/routes/web_push.rs#L95-L127)
-
-| 条件 | 結果 |
-| --- | --- |
-| network error / 429 / 5xx | 最大5回、30–480秒の指数 backoff |
-| send 前の予約後に restart | 120秒の予約期限を待って再試行可能 |
-| 404 / 410 | 期限切れ endpoint の登録を削除 |
-| その他の2xx–4xx | 成功または恒久失敗として job を終了（redirect は追わない） |
-| job 作成から1時間経過 | 終了扱いとし、長期停止後の通知を再生しない |
-| 保存から7日経過 | 配送 receipt を削除 |
-
-一回に最大32 jobを読み、設定ありは5秒周期、なしは60秒周期で維持処理する。push TTL は5分。予約を network I/O より前に保存するが、service 受付後の応答消失は区別できないため exactly-once ではない。固定 Topic / tag と Service Worker receipt が再送の重複を抑える。[配送処理](../../crates/server/src/routes/web_push.rs#L353-L482)
-
-lock screen 本文は LVK・イベント分類・汎用案内のみで、Issue title・質問・command・例外本文を含めない。IDs と相対 navigation URL は暗号化 payload 内に置く。endpoint を含み得る network error 自体はログへ出さない。[payload](../../crates/server/src/routes/web_push.rs#L450-L459)・[警告](../../crates/server/src/routes/web_push.rs#L107-L117)
-
-## 通知から会話へ戻る
-
-root scope の `/lvk-push-sw.js` に fetch handler はなく、認証済み画面/APIを cache しない。receipt cache は直近256件を保持し、browser storage 消去で失われる。通知クリックは同一 origin の参照先と完全一致する既存 tab を focus し、なければ開く。[Service Worker](../../packages/public/lvk-push-sw.js)
-
-URL の Session / Run 参照は [認証 gate の復帰処理](../architecture/web-and-sync.md#認証が製品画面より先に確定する)で login を越えて引き継ぐ。composer は通知対象 Run を示し、新しい Run と混同しない。見つからなければ Session ID と履歴の確認を促す。[通知対象表示](../../packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx#L1552-L1568)
-
-### 相談コピー導線の廃止と残る操作
-
-Session の「ChatGPTに相談 — 依頼文をコピー」「ChatGPTを開く」と fallback textarea は削除済みで、相談専用の `/api/web-push/context/{workspace}` も現行 router にない。通知対象 Run の表示は引き続き会話への復帰に使う。旧相談ボタンを通知や質問回答の前提として復活させない。[現行 composer](../../packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx#L1552-L1585)・[登録 API の境界](../../crates/server/src/routes/web_push.rs#L130-L136)・[導線不在の回帰条件](../../tests/consultation-removal/browser.mjs#L87-L97)
-
-質問・実行承認の操作は [Session の制御契約](../concepts/session-and-agent-run.md#承認質問と現在の接続状態)に従う。[外部 MCP の認証・scope](remote-access.md#認証付き外部-mcp)も別の入口として残り、質問参照は Project / Workspace / Session を照合し、実行承認は LVK での判断を要求する。[MCP 質問の分類](../../crates/server/src/remote_mcp/questions.rs#L108-L154)。保存済み progress は [list_run_events](remote-access.md#保存済み-codex-進捗の読取)から読む。Web Push はこの read tool の実装に依存しない。
-
-相談専用コピーの削除は共通 clipboard の廃止ではない。既存の Copy as Markdown は残り、回帰 fixture も実 clipboard の内容を検査する。[共通 helper](../../packages/web-core/src/shared/lib/clipboard.ts#L1-L22)・[Markdown コピーの検査](../../tests/consultation-removal/browser.mjs#L316-L330)
-
-## 設定と検証限界
-
-### 通知とホーム画面のアイコン
-
-通知の `icon` は `/apple-touch-icon.png?v=white-1` を参照する。HTMLのfaviconはlight/dark共通の `lvk-app-icon-white.svg`、Apple touchとmanifestの通常192/512px・maskable 512pxは白背景主版で、MCPカタログのアイコンも白版SVGを使う。manifestの名前・起動URL・scopeや画面内テーマを切り替える変更ではない。[worker](../../packages/public/lvk-push-sw.js)・[HTML](../../packages/local-web/index.html#L6-L14)・[manifest](../../packages/public/site.webmanifest)・[MCPカタログ](../../crates/executors/default_mcp.json)
-
-Aの背景なし四葉とBの深緑角丸背景SVGはSHA-256を照合する不変の正本である。白SVGはBの背景fillだけを置換し、四葉の形状・隙間・色・配置を保持する。Apple touchとmaskableは四葉を動かさず背景を全面へ延長する。深緑PNGも別バリエーションとして残し、`generate-clover-icons.mjs --check` で両版の再生成一致を検査できる。[生成契約](../../scripts/generate-clover-icons.mjs#L6-L76)・[生成・検査script](../../scripts/generate-clover-icons.mjs)
-
-新しいSVG URLとPNGの `v=white-1` は旧主版キャッシュと区別するが、インストール済みホーム画面のOSキャッシュ更新までは保証しない。[Chromium試験](../../tests/server/run-clover-icons.mjs)はHTTP/MIME・素材SHA・背景以外の四葉一致・16/32pxのlight/dark・丸形とmaskable安全域を確認する。実機の追加・切り抜き・通知配送、人間の小サイズ視認性は別途確認が必要である。承認色の緑/白の低コントラストを独断で変えない。再読込で変わらなければsite cacheを確認し、既存ホーム画面shortcutの削除・再追加を試す。OS側cacheの挙動は実機で確認する。
-
-server は `LVK_WEB_PUSH_PRIVATE_KEY_FILE` の PEM と `LVK_WEB_PUSH_SUBJECT`（mailto または HTTPS）から VAPID を構成する。欠損・不正設定では登録が unavailable になり、配送を行わない。公開鍵だけを browser へ渡し、秘密鍵を restart 後も維持する。key rotation 後は browser で再登録する。[設定読取](../../crates/server/src/routes/web_push.rs#L68-L81)・[VAPIDの準備と受入](#vapid-鍵の準備と配送の受入)
-
-変更時は trigger の rollback/dedup、Project fanout、古い待機・retry、owner/CSRF と同意失効、Service Worker の URL/重複、通知対象 Run と login 復帰のテストを照合する。[server tests](../../crates/server/src/routes/web_push.rs#L640-L775)・[consent tests](../../crates/server-access/src/tests.rs#L1797-L1797)・[browser tests](../../tests/web-push/service-worker.test.mjs)・[login 復帰 tests](../../packages/web-core/src/shared/components/web-push/pushReturn.test.ts)
-
-実 OS/browser の配送と HTTPS deployment は fixture や source 調査では確定しない。OS の休止・通知権限・network policy により遅延や未着があり、完全停止した browser の起動を保証しない。[配送の手動受入](#vapid-鍵の準備と配送の受入)を別に実施する。実装記録の過去 test 件数を、この統合 checkout の acceptance 成功と読み替えない。
-
-### 相談導線削除の回帰と限界
-
-[隔離 Chromium fixture](../../tests/consultation-removal/README.md)は質問待ち・承認待ち・完了の desktop dark / mobile light、古い Run の通知参照、通知なしの Workspace を検査する。相談 UI と旧 context request の不在を確かめ、質問・承認は操作可能な表示までで実送信しない。[UI 検査](../../tests/consultation-removal/browser.mjs#L285-L330)・[古い Run と request 監視](../../tests/consultation-removal/browser.mjs#L396-L420)
-
-この fixture は backend revision `aa59ab58` を明示照合するため、変更 frontend と旧 backend の組合せを検査する。専用 API の削除後の実動作や変更後 Rust のコンパイルを証明しない。[revision 検査](../../tests/consultation-removal/browser.mjs#L140-L146)。[開発時の記録](../../tests/consultation-removal/VALIDATION.md)に型検査・lint・既存33試験・ブラウザ13項目の成功があるが、実 MCP 回答、provider への回答・承認送信、実 OS 通知は未検証である。
-
-今回の Sync は統合済み source `926a03acc100a4f13675b99d1eced595e9a29349` と凍結入力４チャンクを対象に、router / worker、DB trigger、composer、MCP 質問入口、回帰 fixture を静的に照合した。製品テストは再実行していない。凍結入力の自動マージ は検証省略であり、開発時の成功記録を統合候補の合格と扱わない。無関係な既存 Wiki 全体を再検証したという意味でもない。
-
-## イベント選択と二つの保存範囲
-
-Web Pushは登録ごとに `event_mask` を保存する。質問待ち=1、承認待ち=2、成功=4、失敗/crashed/audit_failed=8、取消=16で、既存・新規登録の既定31は全種類を維持する。owner限定の `POST /api/web-push/{id}/events` は0〜31だけを受け付け、その登録だけへ即時保存する。更新とsendは同じgateを使い、OFFになった配送待ちを同じtransactionで消費する。triggerとsend直前の双方で最新maskを照合し、後でONに戻しても過去の無効イベントを再生しない。再登録は選択を保持する。登録自体を削除するOFFと、mask=0の全イベントOFFを区別する。[APIと配送](../../crates/server/src/routes/web_push.rs)・[前方migration](../../crates/db/migrations/20261031180000_web_push_event_preferences.sql)・[即時保存UI](../../packages/web-core/src/shared/components/web-push/WebPushSettings.tsx)
-
-同じ通知カテゴリのOS通知は、サーバーが動く端末向けのインスタンス共通configであり、全利用者・全Projectに適用される。質問/承認/成功/失敗の4bit、既定15で、画面の保存・破棄に従う。音の有効設定は別で、push maskにより音まで消す変更ではない。送信直前に最新configを読み、完了した保存以降の通知へ反映する。OSの実行終了通知をcanonical Run成功・テスト合格・自動マージ公開の保証と読まない。[OSイベントUI](../../packages/web-core/src/shared/dialogs/settings/settings/OsNotificationEvents.tsx)・[送信](../../crates/services/src/services/notification.rs)・[config既定](../../crates/services/src/services/config/versions/v2.rs)
-
-設定の分類と保存先は別の概念である。一般/実行/通知に一般設定の既存項目を分けても、Web Pushの個別即時保存とOS通知の共通config保存を混ぜない。カテゴリ移動・閉じる・Escape等の未保存保護は共通shellが管理する。統合回帰はOSイベントの保存・破棄・失敗後の保持とカテゴリ移動、Web Pushの独立性を検査する。[設定shell](../../packages/web-core/src/shared/dialogs/settings/SettingsDialog.tsx)・[保存と分類](../../packages/web-core/src/shared/dialogs/settings/settings/GeneralSettingsSection.tsx)・[統合fixture](../../tests/settings-redesign/settings.spec.ts)
-
-## 通知言語の二つの保存範囲
-
-Web Pushは登録時とowner限定の `/web-push/{id}/locale` で封印済みsubscriptionの `lvk_locale` を保存する。現在のbrowser subscriptionのendpoint hashに一致する登録だけを更新し、locale変更・online・再表示を契機に直列同期する。新しい言語更新は古いin-flight要求がsettleするまで待つ。日本語以外と旧登録のlocale欠落は英語になり、lock screenの汎用本文という境界は維持する。[登録と更新](../../crates/server/src/routes/web_push.rs)・[browser同期](../../packages/web-core/src/shared/components/web-push/useWebPushLocale.ts)
-
-OS通知は共有configの明示言語を優先し、BROWSERでは保存時に取得した任意の `notification_browser_language` を使う。旧clientがhintを省略した保存では既存hintを保持する。未保存の画面言語だけで全利用者の通知を変えない。`OwnedNotification`は送信直前のconfigでEN/JAを描画し、他言語は英語fallback、workspace・branch・tool等の原文は保持する。[設定解決](../../crates/services/src/services/config/versions/v9.rs)・[送信直前の参照](../../crates/services/src/services/notification.rs)・[文面](../../crates/services/src/services/notification/text.rs)
-
-## VAPID 鍵の準備と配送の受入
-
-運用者が保護した設定directoryで `umask 077` を適用し、未使用の出力先に `openssl ecparam -name prime256v1 -genkey -noout -out web-push-private.pem` で専用P-256鍵を作る。既存鍵を上書きしない。secret mountの読取可能pathを `LVK_WEB_PUSH_PRIVATE_KEY_FILE`、連絡先を `LVK_WEB_PUSH_SUBJECT=mailto:admin@example.com` のようにserverへ設定し、承認された通常deployment手順で再起動する。HTTPSとpush serviceへのoutbound HTTPSが必要で、source変更だけでは稼働設定へ反映されない。[設定読取](../../crates/server/src/routes/web_push.rs#L68-L81)
-
-利用者はSettingsのWeb PushでProjectと現在browserをONにし、OS/browserの通知許可を確認する。別browser/別account、閉じたtab、logout、通知から正しいSession/Runへの復帰、回答済み待機の抑制、OFF、member無効化、鍵変更後の再登録を実機で個別に確認する。全event OFFと購読解除は別であり、既にOSへ届いた通知は消せない。実行成功通知をtestや公開の成功と解釈しない。[登録と選択](../../packages/web-core/src/shared/components/web-push/WebPushSettings.tsx)
+通知クリックは同一 origin の画面を開き、認証を経て対象 Session／Run へ戻る。実 browser／OS で許可、配送、解除、鍵変更後の再登録を確認する必要があり、fixture の成功だけで実配送を保証しない。[service worker](../../packages/public/lvk-push-sw.js)

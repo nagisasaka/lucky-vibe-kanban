@@ -1,156 +1,69 @@
 ---
 type: architecture
 title: システム境界と起動順序
-description: ローカル実行基盤、Web、Git と永続化の所有境界、外部接続と二つの起動経路の回復順序。
-tags: [architecture, deployment, startup, database]
-sources:
-  - id: openwiki-source-651d1fb6c9e49916a916ab51
-    resource: repo://Cargo.toml
-  - id: openwiki-source-4169d2cd1d27a6243e90c06d
-    resource: repo://crates/db/src/bin/migrate_compat.rs
-  - id: openwiki-source-5c2565a649f8be059d306209
-    resource: repo://crates/db/src/lib.rs
-  - id: openwiki-source-7b783ec1a704bf9dadb9c003
-    resource: repo://crates/db/src/migration_compat.rs
-  - id: openwiki-source-21149aa9001849998cda42a2
-    resource: repo://crates/db/src/models/repository_state/manifests.rs
-  - id: openwiki-source-b695a62ee61c1d734652943f
-    resource: repo://crates/db/tests/startup.rs
-  - id: openwiki-source-190ea4aff3773f72dcf4935b
-    resource: repo://crates/local-deployment/src/lib.rs
-  - id: openwiki-source-104d584b7b5ffa5973f60cde
-    resource: repo://crates/mcp/src/task_server/tools/design_notes.rs
-  - id: openwiki-source-7b198a3d484dee341fe67f44
-    resource: repo://crates/server/Cargo.toml
-  - id: openwiki-source-5b20a61dbf36c0c143a466eb
-    resource: repo://crates/server/src/lib.rs
-  - id: openwiki-source-a13fe4db1eee073d0a7e2c4d
-    resource: repo://crates/server/src/main.rs
-  - id: openwiki-source-e1757d002aa325145a915b38
-    resource: repo://crates/server/src/provider_usage.rs
-  - id: openwiki-source-2a0ddba6878eea1524264906
-    resource: repo://crates/server/src/remote_mcp/design_notes.rs
-  - id: openwiki-source-076036ed7bdac82d628d39d1
-    resource: repo://crates/server/src/remote_mcp/environment_process.rs
-  - id: openwiki-source-cb711830e5a5d11f35f1d1c7
-    resource: repo://crates/server/src/remote_mcp/help.rs
-  - id: openwiki-source-dbc5a93efbaa86561714413e
-    resource: repo://crates/server/src/routes/design_notes.rs
-  - id: openwiki-source-d40201a53108a0c612f229ef
-    resource: repo://crates/server/src/routes/help.rs
-  - id: openwiki-source-65c0f36670a161dc05040e69
-    resource: repo://crates/server/src/routes/mod.rs
-  - id: openwiki-source-fb97b52f99c4e6667bfbcfa7
-    resource: repo://crates/server/src/routes/web_push.rs
-  - id: openwiki-source-d13a9ab0f87dbc81d0cfe1b4
-    resource: repo://crates/server/src/routes/workspaces/dev_server.rs
-  - id: openwiki-source-64c93a1aaf76831699f0fbf6
-    resource: repo://crates/server/src/runtime_payload.rs
-  - id: openwiki-source-ed8c84278dba8a1f45af40e9
-    resource: repo://crates/server/src/startup.rs
-  - id: openwiki-source-d6a1d8f43efecefbff88fc22
-    resource: repo://crates/utils/Cargo.toml
-  - id: openwiki-source-df6b7819295f53fc2381f23d
-    resource: repo://deploy/server/compose.yaml
-  - id: openwiki-source-bb1ebe868e35e9e500714501
-    resource: repo://Dockerfile
-  - id: openwiki-source-5b54a58d1b51cd490b0e7162
-    resource: repo://package.json
-  - id: openwiki-source-e0c2de9e01617a8949b78360
-    resource: repo://packages/web-core/src/features/kanban/ui/KanbanContainer.tsx
-  - id: openwiki-source-23775c3de52f3ab95a13cb8b
-    resource: repo://README.md
-  - id: openwiki-source-8ea6c46d63953a7104f5dd97
-    resource: repo://scripts/dev-cargo.mjs
-generated: { by: "codex", at: "2026-11-17T04:16:39.656Z" }
+description: LVK の Web、ローカル実行基盤、永続化と起動回復の責任を説明する。
+tags: [architecture, startup, persistence, deployment]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-17T04:16:39.656Z
+    at: 2026-11-22T05:31:45.518Z
+sources:
+  - id: openwiki-source-5c2565a649f8be059d306209
+    resource: repo://crates/db/src/lib.rs
+  - id: openwiki-source-190ea4aff3773f72dcf4935b
+    resource: repo://crates/local-deployment/src/lib.rs
+  - id: openwiki-source-ed8c84278dba8a1f45af40e9
+    resource: repo://crates/server/src/startup.rs
+generated: { by: "codex", at: "2026-11-22T05:31:45.518Z" }
 ---
 
 # システム境界と起動順序
 
-LVK は、作業要求を管理する画面と、実際のファイル・Git・coding agent を動かすホストを組み合わせる。ローカルサーバーの `DeploymentImpl` は現在 `LocalDeployment` に固定されている。上流 Cloud / relay Remote Access は削除済みで、現在の Rust workspace に独立 Remote サーバーはない。[型の結線](../../crates/server/src/lib.rs#L1-L8)、[workspace 境界](../../Cargo.toml#L1-L36)
-
-## 責任の配置
+LVK は [Kanban board](../concepts/project-and-issue.md) で仕事を管理し、ホスト上の Git と coding agent を使って実行する self-hosted 製品である。システムを横断する変更や起動障害の調査時に、所有者と保存先を区別するための入口である。[README](../../README.md)・[操作の段階](../quickstart.md#操作の段階)
 
 ```mermaid
 flowchart LR
-  UI[Local Web] --> API[Local Axum API]
-  API --> Local[LocalDeployment]
-  Local --> DB[(SQLite)]
-  Local --> Git[Git / WorkspaceManager]
-  Local --> Port[AgentRunPort]
-  Port --> Host[agent-process-host]
-  Host --> Agent[Provider CLI]
-  External[外部 MCP client] --> API
+  Web[Local Web] --> API[Axum API]
+  MCP[外部 MCP client] --> API
+  API --> Deployment[LocalDeployment]
+  Deployment --> DB[(SQLite)]
+  Deployment --> Git[Git と Workspace]
+  Deployment --> Host[Agent process host]
+  Host --> Provider[Provider CLI]
   API --> Runner[Execution Bridge Runner]
 ```
 
-| 境界 | 所有する責任 |
-| --- | --- |
-| `server` | HTTP/WS の入力検証、製品操作、Workflow と Repository Memory の接続 |
-| `server-access` | 配置別の認証、設定切替、メンバーとWebセッション、継続接続の失効 |
-| `deployment` / `local-deployment` | 共通サービスの要求面と、ローカルの DB・実行・Git の組み立て |
-| `executors` / process host | provider 固有通信と、実行・監査の仕組み |
-| `workflow` / server runtime | グラフの純粋な検証・計画と、永続状態・外部効果を伴う実行 |
-| local Board API | SQLite 上の Project・Issue と関連情報。Web と stdio MCP へ異なる応答契約を提供 |
-| Web の shell / `web-core` | 実行環境ごとの接続設定と共有製品画面 |
+## 責任と保存先
 
-サービスの結線は [LocalDeployment](../../crates/local-deployment/src/lib.rs#L57-L89)と [Deployment trait](../../crates/deployment/src/lib.rs)が入口になる。Workspace の「container」はこのサービス上の作業環境を指す。ファイル所有権と Git の隔離は [Workspace](../concepts/workspace.md)で確認する。
+`server` は HTTP・WebSocket と製品操作を受け、`server-access` は認証とメンバーを扱う。`Deployment` の実装である `LocalDeployment` は DB、Git、Workspace、実行 port などを組み立てる。`executors` は provider の通信を扱い、独立 host は実プロセスと監査を所有する。[server](../../crates/server/src/lib.rs)・[組立](../../crates/local-deployment/src/lib.rs)・[Agent Runtime](agent-runtime.md)
 
-## 永続化は一つではない
+`workflow` はグラフの契約を持ち、server と service の runtime は永続化と副作用を伴う進行を担当する。外部 MCP は製品操作を公開し、Execution Bridge は登録 Runner で明示的に処理する別の経路である。[Workflow](workflow-runtime.md)・[外部アクセス](../integrations/remote-access.md)・[共有資源](../concepts/shared-resource-coordination.md)
 
-ローカル DB は asset directory の `db.v2.sqlite` を開き、SQLx migration を適用する。通常 pool は DELETE journal と 5 秒の busy timeout を使う。[DB 初期化](../../crates/db/src/lib.rs#L254-L268)、[timeout の理由](../../crates/db/src/lib.rs#L12-L15)
+SQLite は Board、実行の canonical 状態、確定 Change Manifest などを保持する。Git worktree、Native Audit、Repository Memory の作業用 journal やユーザーの共有成果物は別の寿命を持つ。DB のコピーだけでそれらを復元できると仮定しない。[記憶の境界](../concepts/repository-memory.md)・[サーバーのバックアップ](../operations/server-container.md)
 
-起動と明示 migration tool は `db::run_migrations` を共有する。Project key の既知版だけ履歴 checksum に合う SQL を選ぶ互換 source を通し、SQLx 実行成功後に Agent Runtime schema guard を行う。未知の対象 checksum は起動を失敗させる。[共通入口](../../crates/db/src/lib.rs#L18-L34)・[履歴選択](../../crates/db/src/migration_compat.rs#L103-L133)。対応範囲と復旧上の制約は [Project key migration の互換運用](../operations/development.md#project-key-migration-の互換運用)を参照する。
+DB 起動は SQLx migration と Agent Runtime schema guard を実行する。Project key の既知の履歴について互換 migration source を選ぶが、未知の不整合を一般に修復するものではない。通常の SQLite busy timeout は5秒である。[DB 初期化](../../crates/db/src/lib.rs)・[互換選択](../../crates/db/src/migration_compat.rs)
 
-Board の Web は `/api/local`、stdio MCP は `/api/board` を使い、同じローカルデータを読む。旧名 `local_remote` や `remote-types.ts` は Cloud backend の存在を意味しない。[router](../../crates/server/src/routes/mod.rs#L49-L103) と [Web と同期](web-and-sync.md)で応答・再取得の契約を確認する。
+Web と stdio MCP は同じローカル Board データを別の応答契約で利用する。歴史的な `local_remote` や `remote-types.ts` という名前は Cloud backend の存在を意味しない。[router](../../crates/server/src/routes/mod.rs)・[Web の同期](web-and-sync.md)
 
-Git の作業木、Native Audit、Repository Memory の draft・publication・setup journal は SQLite と別の永続状態を持つ。確定 Change Manifest は LOCAL-398 以後 SQLite が正本であり、旧正本の起動時取込はLOCAL-406で撤去済みで、既存migration・取込履歴行・旧ファイルを変更しない。LOCAL-414では旧artifactを理由に起動を拒否する検査を専用コードごと撤去した。DBServiceはschema migrationと現行schema guardを維持し、旧予約・旧ファイル・旧markerの読取判定や補正、履歴削除を行わない。空DBと旧予約3件・旧ファイルを含む合成DBで両初期化経路の起動と履歴・適用済みmigration receipt・ファイルの不変性を確認する回帰がある。[通常起動回帰](../../crates/db/tests/startup.rs) [DB正本](../../crates/db/src/models/repository_state/manifests.rs)・[初期化](../../crates/db/src/lib.rs) 復旧で DB の状態だけを正しいと決めず、[実行ホスト](agent-runtime.md)や [記憶の統合状態](../concepts/repository-memory.md)の証拠も確認する。
+## 起動と回復
 
-新しい [単一サーバーコンテナー](../operations/server-container.md)は、この local application を Linux サーバーで動かす配布形態である。PostgreSQL / Electric / relay に依存しない。backend の認証と nginx の HTTPS ingress・独立アプリroute、実行環境と永続 volume の境界は同ページに置く。[配布binaryとvolume](../operations/server-container.md#配布-binary-と開発-checkout)
+Standalone とライブラリーの起動経路は共通の local deployment を組み立てる。現行配布は Docker のサーバーであり、ライブラリー API の存在を退役した desktop shell の稼働と混同しない。[配布](../../README.md)・[起動 API](../../crates/server/src/startup.rs)
 
-standalone と embedded は共通の `Access` を組み立て、main router に適用する。独立した組込み preview listener は廃止され、開発アプリは外部ブラウザーで開く。認証の責任は [サーバー認証](../concepts/server-access.md)を参照する。[main の配線](../../crates/server/src/main.rs#L180-L210)・[embedded](../../crates/server/src/startup.rs#L50-L64)
+回復は実プロセスの所有者から外側へ進む。
 
-## 起動時は内側の所有者から回復する
+1. Deployment 構築時に provider host を再照合する。
+2. 中断した共有資源準備を fence し、耐久 direct command を再照合する。
+3. Setup launch gate を再照合する。
+4. orchestration の outbox・inbox・lease と Workflow Run を再照合する。
+5. OpenWiki と共有資源の monitor、Workflow completion watcher、定時処理を起動する。
 
-standalone の `main.rs` と、ライブラリーとして残る `startup.rs` の両方に回復経路がある。Tauri shell は廃止済みであり、`startup` API の存在を現行 desktop 起動の証拠にしない。[公開 API](../../crates/server/src/lib.rs#L1-L9)・[廃止後の利用入口](../operations/development.md#開発環境と起動形態)
+旧 ExecutionProcess の孤児処理は、新しい Agent Run の生存中 host を誤判定し得るため、この回復には流用しない。Standalone とライブラリーの両入口を変更時に確認し、片方の monitor 配線を他方にもあると仮定しない。[embedded 起動](../../crates/server/src/startup.rs)・[standalone 起動](../../crates/server/src/main.rs)
 
-1. Deployment を構築し、実際の provider host の所有・接続を回復する。
-2. 中断した bootstrap を fence してから、耐久化された direct command を再処理する。
-3. Setup launch gate を照合する。
-4. orchestration の outbox/inbox/lease、続いて Workflow を照合する。
-5. 最後に OpenWiki の製品回復 monitor を開始する。
+## 変更時の境界
 
-この順序は、複数の回復主体が同じ実行を進めることを避けるためにコードで明示されている。古い ExecutionProcess の孤児処理を新しい AgentRun へ流用すると、生きたプロセスを誤判定し得る。[standalone](../../crates/server/src/main.rs#L87-L137)、[embedded](../../crates/server/src/startup.rs#L170-L225)
+公開サーバーの HTTPS、認証、永続 volume は[サーバー運用](../operations/server-container.md)で扱う。認証の状態と provider のログインは別である。[サーバー認証](../concepts/server-access.md)・[provider](../integrations/agent-providers.md)
 
-Deployment の構築中には DB 初期化後に Workspace usage を backfill する。standalone は OpenWiki monitor に続いて自動マージ monitor を開始する。embedded の対応箇所には自動マージ monitor がないため、両起動経路の自動進行を同一視しない。[Deployment](../../crates/local-deployment/src/lib.rs#L110-L160)・[standalone](../../crates/server/src/main.rs#L145-L160)・[embedded](../../crates/server/src/startup.rs#L230-L248)
+Rust の公開型は TypeScript に生成されるため、API の変更は Web の利用側も含めて検証する。開発用 Cargo と SQLx の具体的なコマンドは[開発・検証](../operations/development.md)に置く。[型生成](../../crates/server/src/bin/generate_types.rs)・[package scripts](../../package.json)
 
-standalone は `BACKEND_PORT`、次に `PORT`、未指定なら OS の空き port を使い、既定 host は `127.0.0.1`。embedded の `start()` は `localhost:0` を使い、hostname と IPv6 の不一致を避ける。[standalone listener](../../crates/server/src/main.rs#L165-L190)・[embedded listener](../../crates/server/src/startup.rs#L115-L139)
+Project の SQLite 移送は選択した Project データの追加 import であり、インスタンス全体のバックアップや Git・worktree の移送ではない。[Project 移送](../concepts/project-transfer.md)
 
-Web Push の worker は共通 router の組立て時に起動し、SQLite outbox を配送する。認証済み browser 登録 API と外向き push-service 通信の境界を持ち、coding provider や外部 MCP の会話処理ではない。設定がなくても worker は維持処理を行うが配送はしない。[router と worker](../../crates/server/src/routes/web_push.rs#L95-L135)・[設定なしの維持処理](../../crates/server/src/routes/web_push.rs#L326-L342)。同意、保存、配送失敗と運用設定は [Web Push](../integrations/web-push.md)にまとめる。
-
-Deployment は host 再照合後に [Starting receipt の回復](agent-runtime.md#starting-保存失敗と未起動の回復)を開始する。これは受理済み起動の再照合であり、[managed DevServer](../operations/workspace-inspection.md#preview-と開発サーバー)の script tracking や [受動的な provider 使用量参照](../integrations/agent-providers.md#受動的な-account-quotausage-参照)とは別の所有境界である。[起動の結線](../../crates/local-deployment/src/lib.rs#L145-L163)
-
-## 境界を変更するとき
-
-backend の source 開発では pnpm の検証・watch・型生成が明示的な `dev-cargo.mjs` を使う。contributor 用の入口で、rustc を直接使い、compiler wrapper を注入しない。共有中間物は Cargo の build-dir、最終成果は checkout の target に置く。詳細は [開発用 Cargo](../operations/development.md#lvk-開発用-cargo-と共有キャッシュ)を参照する。[呼出元](../../package.json)・[入口](../../scripts/dev-cargo.mjs)
-
-API 型は Rust から TypeScript へ生成するため、Rust と Web の変更を一組として評価する。Board 型も server の生成器で扱う。Tauri crate は workspace から撤去され、現行の backend 検証は残る Rust workspace 全体を対象にする。[型生成の入口](../../crates/server/src/bin/generate_types.rs#L642-L663)、[開発・検証](../operations/development.md)
-
-外部からの接続は一種類ではない。[認証付き MCP](../integrations/remote-access.md)は既存 LVK 操作を公開し、[Execution Bridge](../concepts/shared-resource-coordination.md)は資源束を所有したまま明示登録 Runner で処理を実行する。両者は削除済み relay と独立している。内部 Astra は廃止され、Project は Board を直接表示し、同じ Project の [Todo メモ](../concepts/project-todos.md)と[設計メモ](../concepts/design-notes.md)へ切り替えられる。設計メモの本文・追記履歴は SQLite が正本で、UI REST と両 MCP は同じ保存状態へ異なる応答形式を提供する。外部 MCP transportは廃止済みAstraの専用会話モデルを持たない。LOCAL-375の `ask_help` は、[対話ヘルプ](../concepts/interactive-help.md)として既存のcoding agent・Sessionを起動する。[廃止と共有機能の移行境界](../concepts/project-chat.md)を確認する。
-
-外部 HTTP MCP の [Runtime Access](../concepts/runtime-access.md) は、管理者が許可した Linux 上で既存プログラムを直接動かす。file rootsは直接file APIだけを制限し、実行programのアクセス先を閉じ込めない別の経路である。`remote_mcp` が共有する process registry は AgentRun を作らず、起動・停止は既存 operation receipt を使う。設定は SQLite、出力と寿命監視はプロセス内にあり、AgentRun の再接続・回復契約を流用できない。[結線](../../crates/server/src/remote_mcp/mod.rs#L55-L72)・[registry と監視](../../crates/server/src/remote_mcp/environment_process.rs#L1-L34)・[実行と receipt](../../crates/server/src/remote_mcp/environment_process.rs)
-
-`server runtime-payload` は通常の DB・認証・listener 初期化前に終了し、frontend・sounds・scripts の実埋込み bytes の hash を調べる専用 probe である。`developer-runtime` feature は debug でもそれらを埋め込む。これは通常起動の回復を実行するコマンドではなく、[開発bundle切替](../operations/development.md#開発用成果物切替と復旧)の停止前検査に使う。[早期分岐](../../crates/server/src/main.rs#L45-L52)・[payload検査](../../crates/server/src/runtime_payload.rs#L9-L34)・[feature](../../crates/server/Cargo.toml#L72-L76)
-
-
-## 固定presetの完了追従
-
-LOCAL-372でstandaloneにもWorkflow completion watcherを配線した。standaloneとembeddedの両方で終了eventを受けて既存runtimeを進めるため、UIや外部AIの待機を工程間の前提にしない。Agent終了後の成果成立とpresetの停止契約は[Workflow runtime](workflow-runtime.md)を参照する。[起動](../../crates/server/src/main.rs)・[embedded起動](../../crates/server/src/startup.rs)
-
-
-内部のdraft・publication・setup journalはinstance管理tmp、再生成可能な文書索引は管理cacheへ置き、共有persistentはユーザー成果物用とする。コンテナ共通Repo lockと復旧volumeは寿命が異なるため、旧版writerを停止・収束させずにlock domainを切り替えない。[保存先と切替条件](../concepts/repository-memory.md)
-
-[Project移送](../concepts/project-transfer.md)は所有データの追加importであり、DB全体のbackup・Git・worktree・native Session移送とは別のAPI境界である。
+DB 起動 fixture は migration と schema の回帰を検査するが、実サーバーの復元や外部 provider の受入を証明しない。[起動テスト](../../crates/db/tests/startup.rs)

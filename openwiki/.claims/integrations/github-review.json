@@ -1,168 +1,20 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:bbf7a1cfd5f72c7789241965c74820d1e912ca5b491f2d96dbb0d6a41169bf50",
+  "pageVersion": "sha256:7342c7110631a04b44950eab6a9baa4d6bfb1b1ed7065183781fd92e36a9c54f",
   "claims": [
     {
-      "id": "claim_e25f3fd7a5434288a0e3798cf317080d",
-      "statement": "現行PRはlocal Workspaceからsource完了・push・GitHostService作成・local保存の順で進み、一括transactionではない。旧Cloud Review/GitHub App workerは現行routerにない。",
+      "id": "claim_e33c9db4b72741d99914b5b460899539",
+      "statement": "GitHub credential の変更と接続検査は管理者に限定される。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/mod.rs",
-          "version": "repo-file-v1:sha256:d133367592ee5230d597157061de2831dcc145422e49637da4773f84bf187b34"
-        },
-        {
-          "resource": "repo://crates/server/src/routes/workspaces/pr.rs",
-          "version": "repo-file-v1:sha256:9ff75a34d3d7154b0855794928f31f47ea15e7a33ce5cc0dcb37a6d0f648d564"
-        }
-      ]
-    },
-    {
-      "id": "claim_45d329fd9e5c4a6990b3f3f524655561",
-      "statement": "PR monitorはremote状態を保存するがmergedでもWorkspaceを自動archiveしない。merged PRのattachも同様で、local target/Done/Wiki完了の証明ではない。",
-      "evidence": [
-        {
-          "resource": "repo://crates/server/src/routes/workspaces/pr.rs#L481-L511",
-          "version": "repo-lines-v1:sha256:e71ecd7761203f6e6fea6738c24ff97d19867365b638a510fc375a204cf049bc:eyJzZWxlY3RlZExpbmVDb3VudCI6MzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU5MDlhNTNhNjE4ZDAyOGUxZDMwMDBjMGE3YWJjZWVjYmU1ZmIzN2Y0ZTUxMWVmZTQ2NjQzZmFkNmU2Njg3MmYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEzNWFiZjk3NDE1YmU1YmMyMjU3NzQwZmViMGM5Nzg3MzEyYzk5YWI2MWQ5MDU5OGYwYTVkNjc3YWMyYjQ4MDAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRmMjA3YTFhODFkMWY5YmFhNzBlZWU4NjRjNzQ2MmFhYmVlYzE2YzhhYjA0NjFkMjY4OTlhZTQyYTdkYzZlYWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjA1MmFkYjUyMWJhNjQ2MTU1YzRlZWY2ZWI4ODRmY2MyMDVmOTE4MDU1ZjhhNDY0ZWRhMmIxMTA0NWM3ZmI0ZDYifQ"
-        },
-        {
-          "resource": "repo://crates/services/src/services/pr_monitor.rs#L119-L159",
-          "version": "repo-lines-v1:sha256:dd7d13b14d5cb60f5c1c474e4fe00062fd77a74be3da39c163943e1997b21a44:eyJzZWxlY3RlZExpbmVDb3VudCI6NDEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZlMWQyMDNhYTkyYTdlMjI1NjUxZTI4M2E0YmVmYjllM2JhZmUxNTcxNGU3NTQ5NGY0ODFkYmJhNmQyOTZmNjUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM3MmQ4ZGQ0M2FkZjU2ZjU2ZDZmNzBmZjIyODg3ZGM5ODBmMTZiMTg4NWMzZTA0NmZmMTI5NWMzNTM3ZGFmN2IiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
-        }
-      ]
-    },
-    {
-      "id": "claim_a04ce50c8bf940a8a781b377f04e9574",
-      "statement": "PATの対象は登録Repoのremotesと既定push URLから選び、instance内の正規化GitHub owner/repositoryで共有する。APIは登録有無だけを返し変更・接続確認はadmin限定。",
-      "evidence": [
-        {
-          "resource": "repo://crates/server/src/routes/github_credentials.rs#L17-L155",
-          "version": "repo-lines-v1:sha256:5741b21075a6b27f11f836ad30282bea332e63f1d14a18988b94a6555f935f84:eyJzZWxlY3RlZExpbmVDb3VudCI6MTM5LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJlYTU4OTBkOTA0NmE4ODkwZTdkNDNiYjQxZTQ5NTI5ODAzM2RiNDgzYWMyZWZmOGY0NDQ5MDM5OGZhNTIzMmQxIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI0MTJjYTM0NWNjZjc1YmY5YzA4MDZiY2U2OTViZThkZTgwOGI3OTk4NDI1MWE3YTU0ZDIwMmNmNjEwMWRkNDUxIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI0OGNiNzcwMmUyMmQ4NzAxNzM3NTkxOTZmMmIzY2YyOTVhMjY5Y2VkMjI4ZDM1NzBjMWQ4Zjg0ODRkZTk4MDU1IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MCwiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1In0"
-        },
-        {
-          "resource": "repo://crates/utils/src/github_credentials.rs#L15-L51",
-          "version": "repo-lines-v1:sha256:08f6b3346431dd40231763b4996f0b3c5bf1c9ad3c2ab88648cfca77ef69c521:eyJzZWxlY3RlZExpbmVDb3VudCI6MzcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjExM2ExNjJlNGZkMDdiNzg4NzNhZmNjMDNhZGI3NzBmNTFiN2ExZGM3OTM5NGM1YTQ4MjUzYjllODUwMTYxNTgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjcyZWUzNWE3ZThlYjlhODFiYTQwMTkwNDU3YjJhZWYxY2MzMzljZWZmOTkwNTc3ZWY1NWY0M2U4YjQ1OGI3OTIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImM2NmI2NDA0NTc4ZTg4ODVkYThiNTMxMmY0OGUwNmNmOGQxZDRkMjNiODBmOGFjMjM2ZmZiZTFlMTZjNjI5ZmYifQ"
-        }
-      ]
-    },
-    {
-      "id": "claim_137a34acfb184a41811512ac4a4e5710",
-      "statement": "資格情報はasset_dir配下のgithub-credentialsに平文保存し、Unix directory0700/file0600とtemporary fileのsync後置換を使う。削除は登録だけを消しGitHub失効ではなく、起動済み操作は旧tokenを保持し得る。",
-      "evidence": [
-        {
-          "resource": "repo://crates/utils/src/github_credentials.rs#L147-L198",
-          "version": "repo-lines-v1:sha256:7718e87f36a3f0c623a610be851b87a30d05c40363398d3cf31f04231fba76da:eyJzZWxlY3RlZExpbmVDb3VudCI6NTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc4Yzk5OTgyYTc0ODAxZDQ2ZjBiMGJiMzcxMDZkMzc4NDY3OTMzNmNjYmM3YjM2YmNmMzA5OTdiNzY2ZjIyNjkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE5ZTc2MzU1Y2YxMTk5NDgwYzNmOTk4MzZiMTQ4NmM4NDFkODkxZmFhZDkwNGM2MDhlMDkzMDIyZDM3NTdhZWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE1MjE2MDRiMzVmYzQwYWYwMGNiYTRlZWEyZmQ1ZTJjM2FmMTg2M2IzOTExODVkN2JmNGJiMDllNzJkMGM4YjMifQ"
-        },
-        {
-          "resource": "repo://crates/utils/src/github_credentials.rs#L223-L255",
-          "version": "repo-lines-v1:sha256:92c85652709bb51030eb9bcc93789ccf5f060b77177b034f2ca9fd87fdf09983:eyJzZWxlY3RlZExpbmVDb3VudCI6MzMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkyYjVlZGY1OTQ5Y2ZlYTY3ODIyY2Y2OTExMzIzNjNkNjhkNmYxZTE2OWY1ZTBkNGY3YzE0ZTVmYTFlNmQ0ZTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIyNzM0ZDk2NzgwOGI3YjJkNjU1NmYxYWFlOGRkMDczZTA1YTFhZTJjYTAxOWU0NGVlMjIwNjA2MjEwNDQ1NTYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjkxZjRkZTM5YjdkNjYwZWZjZTkwMzJjOTAzMTc5Y2IyYzg2NmM3N2MzZmE5ZmVkYzM2ZDRlZjZhYjQwNmUyNjIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImRhMjgxZmEyZDFlNTVkZTQyYTFiNTQwNmFlNGI1ZDc2ZDI3OWNiNTI1MWEyMWQ2NTYwZDQ5N2UyZWY4MjU4YzEifQ"
-        }
-      ]
-    },
-    {
-      "id": "claim_78cfcabf6394477b9f64a032062d43f2",
-      "statement": "LVK Git wrapperのpush/fetch/ls-remoteとgh PR操作は対応tokenをsubprocess環境へ注入する。Git helper/headerのscope、redirect/prompt/trace抑止、ghの一時configと競合token除去、raw/encoded tokenのredactionを行う。",
-      "evidence": [
-        {
-          "resource": "repo://crates/git-host/src/github/cli.rs#L148-L234",
-          "version": "repo-lines-v1:sha256:bea5b83539584ce13fe48b8c882b287bc0da50a2165e6c29ac3f19ff1d5a4f75:eyJzZWxlY3RlZExpbmVDb3VudCI6ODcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAyYTMxMWVkYzcyOTYzM2Y0MmM4OWVjZjNkMDk5NWNiM2YxNWEyYjRlMjEyODRmYjI2MWFiYzQwYWMwOTEzNDciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE2MmVlNTdlNDFhOGMyMGFlMDE2NGRmMjYxNDM5ZGNjNDk5ZDM1MjA4MzQxNTE1MTZkMDQ3ZThkZWFlOGE0NjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjY2YTE4NDU1NWQyMDVmYTBiNTdiMjY3YjM0NDg2MTk2ZDFjZjE2MzdmMzY4Yzg1MWY0MGU4ODQ3YWEyMTI4MzIifQ"
-        },
-        {
-          "resource": "repo://crates/git/src/cli.rs#L931-L1025",
-          "version": "repo-lines-v1:sha256:44883de0e24d7bb2c86eb9a88658376c2b310d24adff0f20c802196f565fdb5f:eyJzZWxlY3RlZExpbmVDb3VudCI6OTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY4Y2JhNDQ0Njg0ZmZjYTdlYTA2ZWJhODllMzViMWIwMGUxZTljNzA4NmE0YTUyNWM3ZjJmYmVlZWJiMWRkN2QiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEzMGVlMmYwNjc5ODJjMGE4NzE2ZGJiODE1NDE4ZjAxZDkzMDcyZTc0ZTc3Mjc0ZjAwYjI5MzM2MDA5MGU2MDYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRhOWY4NmQyOGU3ODRmOWZkMzFmYjcyZDE1ZjYwY2JjZWFhZmRkNjY5Y2JkNWI2ZGE3ODg4YTAyMzMyMWViYjkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZmMDEyMTMyNDYzOGIzNDU5N2Q0MDM4NWNjMzFlY2RkMzdhMGE0YTBhZmZiM2JmMjdiZDMzMTIwOGNmMDAwOTkifQ"
-        },
-        {
-          "resource": "repo://crates/utils/src/github_credentials.rs#L75-L144",
-          "version": "repo-lines-v1:sha256:b021ae6ad1a79ae24b0ba813f0515c3573d829aa50b0dc9e8c5afa845be5ace2:eyJzZWxlY3RlZExpbmVDb3VudCI6NzAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUyMTkyZTk1MTk5OTg4NjcwNjU4ODM1ODUzZmRiNTlhNmRhNDBhN2Q5YTA2NmJiODZkNGZhYjRhZmI4MjhjMzUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjJmYmFkZjMxNmZiM2JiMTZiNjY1MmU5MWNhODkwOTNkNDExZjlmNGRjMDNiNmViNWVjNzI5ZDFlNjJjZGQzYmMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY1MTQ2MGY4ZWUxNDI5ZThkZGExYWJjNzZhMDRiMTQxNDFjNDI3MTUxZmM4NTUxNmJhYWI4YjBmNThkNTM3ZmUifQ"
-        }
-      ]
-    },
-    {
-      "id": "claim_016c484b0e53405aac9da5f58f2e3c08",
-      "statement": "登録済みcredentialの読取・認証失敗でsystem credentialへfallbackせず、未登録なら既存認証を利用する。任意agent shellは注入対象外で、PRにはgh導入が必要。",
-      "evidence": [
-        {
-          "resource": "repo://crates/git-host/src/github/cli.rs#L148-L234",
-          "version": "repo-lines-v1:sha256:bea5b83539584ce13fe48b8c882b287bc0da50a2165e6c29ac3f19ff1d5a4f75:eyJzZWxlY3RlZExpbmVDb3VudCI6ODcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAyYTMxMWVkYzcyOTYzM2Y0MmM4OWVjZjNkMDk5NWNiM2YxNWEyYjRlMjEyODRmYjI2MWFiYzQwYWMwOTEzNDciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE2MmVlNTdlNDFhOGMyMGFlMDE2NGRmMjYxNDM5ZGNjNDk5ZDM1MjA4MzQxNTE1MTZkMDQ3ZThkZWFlOGE0NjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjY2YTE4NDU1NWQyMDVmYTBiNTdiMjY3YjM0NDg2MTk2ZDFjZjE2MzdmMzY4Yzg1MWY0MGU4ODQ3YWEyMTI4MzIifQ"
-        },
-        {
-          "resource": "repo://crates/git/src/cli.rs#L931-L971",
-          "version": "repo-lines-v1:sha256:1804f0b09b352c396d4fdb5f32e0fa0a548787a8652b589895ab12524f6fbf70:eyJzZWxlY3RlZExpbmVDb3VudCI6NDEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY4Y2JhNDQ0Njg0ZmZjYTdlYTA2ZWJhODllMzViMWIwMGUxZTljNzA4NmE0YTUyNWM3ZjJmYmVlZWJiMWRkN2QiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YjA0NDkxNDY5NzIyZTgzNjNhOTRlNDA0NDUzOGUwMTNhMmEyMTdlMzZiMWU1NjhiYTYwYWNiN2I0YzhmMmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRhOWY4NmQyOGU3ODRmOWZkMzFmYjcyZDE1ZjYwY2JjZWFhZmRkNjY5Y2JkNWI2ZGE3ODg4YTAyMzMyMWViYjkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJmNTdkZmQyM2EwN2YwOWViNmIwMDFmMmFhN2Q4ZGUzYmY4YThkOTIxZGRkMWI1ZGRmYjQ0MzJlNGFkNWFmNzAifQ"
-        }
-      ]
-    },
-    {
-      "id": "claim_690504229d11423fa26c85c2934a5d76",
-      "statement": "接続確認はredirectなし・15秒timeoutでrepositoryとPR一覧をGETするのみで、push/PR作成のwrite権限は証明しない。",
-      "evidence": [
-        {
-          "resource": "repo://crates/server/src/routes/github_credentials.rs#L117-L155",
-          "version": "repo-lines-v1:sha256:512f8999b2a0763062d12d1300f487db3063e43f10bdf97c8d73b7dcbf95446a:eyJzZWxlY3RlZExpbmVDb3VudCI6MzksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImNkMWVhMzg1YzgxOTJiZDA0YWQ4ZGZlOTc4M2I2YzgxNGRlZWU0NDUyNDdmOWVkNDAzNDY2ZmEwODY3YmVjMmUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
-        }
-      ]
-    },
-    {
-      "id": "claim_97d10b9279e3487e8c4c3aee0b027d92",
-      "statement": "pushは既定remoteのpushurlを尊重し、PR baseはtarget branchのremoteまたは既定fetch remote、head repositoryはpush先を使用する。",
-      "evidence": [
-        {
-          "resource": "repo://crates/git/src/lib.rs#L1652-L1661",
-          "version": "repo-lines-v1:sha256:6242d2e64920d2775827e46fa203133e3cd48e290ef52f5f8e9451ee75f003c0:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY5MWUxOTI1ZjZlMDliNjZmNzczOGIzZjExOTdlN2ZlMWY2M2Y5M2NmYjQwYjI2OTIwZmE0NDE3NTE3MWUwN2QiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJkN2E4YTdlMDU4NDI0ODE5ODAzOGJiMmQ5OWJhYzBiMjU0YmJmY2FlZDNjNDMxZTU0MTAxMTYwNTU3MGU3ZDIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImVlODhiYmM5YjY1MjIyYmIyODFkNWY1M2JlOTRkNDhjZTRhMzkyYjVkMzc0ZGY0NjQzYjE3ZjJhNzA2ZDczN2IifQ"
-        },
-        {
-          "resource": "repo://crates/server/src/routes/workspaces/pr.rs#L236-L254",
-          "version": "repo-lines-v1:sha256:8e1728aeee729b5674217618b9fbae1685cebd229174bb54ed20ad8a1e356dc3:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRhZWY2NzY5Y2Y5ODNmMTA3MzY2Y2YyN2YwODczMjljOWY4ZGE4MjlhYmIwNGY5ZDM4MzcyMWIyNTBjYzVhNzMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE4MjljZTAwODUyMjFiYTRjZDhkMGU4ZmJlYjkwYTZiZWQxNjllYTAzZmJkZTFjNGM2OTYyOTllY2E3ZmRlMDUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZmNjdmMjk0ZTFmMTFmYWExZmUxMDIxNTIwY2MwYTQ3YzdhYWJjOGE1MjZmODcwYmQxYTg0MWU0YzczMjVmZjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijg1NzJjNTMzOWIzMjQ5OThhMzFiZjEwOWE1N2ZjOGNkYjg3MDJiOTA1MTZkYjk5MmVhMTk3Mzc3NDAzMDc3ZTEifQ"
-        },
-        {
-          "resource": "repo://crates/server/src/routes/workspaces/pr.rs#L326-L340",
-          "version": "repo-lines-v1:sha256:e40fa3bacf4643349113727d5db4ef50929970fa7fb9de26d96dd06af48d492a:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJkZDFjNTg3NTljZjAzZjY4NDkwN2IzM2RmM2RkZGY4YTY3MGMyZWY1ZGE2YjkyMGM2MTg4MDRkNzU4M2E2MWQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM5YmZkZjAwZTliOTRlOTRkMDhiMDY0ZGVhMzY3MTc0MDYwMjA1ODk2MzhkZjEwOTlmMmNiZjIxMmIyNDFiNmYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhkYjE4ZThmNWE5YzBiOWNjNThhYzE1MDBlY2RiZmI4NGQxNjM4YjRkOTQ5Y2M1NmMyMTIzODdhMGIxOTI1MjciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImVhNGYxMDI0MTMzMjcyNTkzOGYyODUzOTlmNzhlZTE0Njc4NTIyMzIyZDY1NTNlNGZkYzM2N2Q1NGFhZGI5YzcifQ"
-        }
-      ]
-    },
-    {
-      "id": "claim_84dcc9aba53e4e9f8c031474928debea",
-      "statement": "登録Repository pushはread+writeと関連Project・Leaseを検証する共通HTTP/MCP serviceで、previewを再構成して確認済み値だけを保存し、Workspace/PR/統合と別に明示公開する。",
-      "evidence": [
-        {
-          "resource": "repo://crates/server/src/remote_mcp/repository_push.rs#L36-L63",
-          "version": "repo-lines-v1:sha256:8676a51129fc8bb6a1e9a9602ba6b1b3e8cdb18a291a40f1a9125ad4edf3cba7:eyJzZWxlY3RlZExpbmVDb3VudCI6MjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjlmNWZkZTRiYmZhMGFiZTAxYTFjNmY4Mjg2MjBhZDEwNDNjYjM3NDZmNzZiNzBlNWVlMzc3ZWEwNDYwNmEwZmQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFjZWU0NGE3YjU4YmRhMDQ0NmQ2MzQ5MzBhMDkzNGEwYTM4OTAzZGQ1YTIwOTM4MzI5MWRjY2M0Y2Q2Y2VkYWEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRmZTQwOWI3Y2UyZjRiNjJmMzk3M2UxYjhiNGE3MjQ5ZDk3YjkzMGU3NDVjNGRlYWY2NWU5OGYyYjU2NTJkNDciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImEwYjRlM2VjMTkyYTAzYmE5NzQ5MmY3NWRlYjllZDJiYmNmMDk5NzJjOGExMDdjNDhjMzJhMWRmYzgzYzk0MjcifQ"
-        },
-        {
-          "resource": "repo://crates/server/src/repository_push.rs#L58-L213",
-          "version": "repo-lines-v1:sha256:e004090ddfcc2dd0a8ca1bc06a44e2aaa0af96499137b6fd28f2a87f48bf37f3:eyJzZWxlY3RlZExpbmVDb3VudCI6MTU2LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIxNGNkMmE5NmQwMjNhZThhMWI0NGE1YzNjYjZhMmYyNGFlMmU1NTIzMjYxZDFmNWUxM2U4MjU5M2YwOGQ3MTIwIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJkZDNlM2M0YzBmZmM2MzA0NjFjY2FjOWI2YTYwZmU4ZjQ4NjVlYzIzNTFkOWE5OWUxMDAxYTI0OGNkNTFmMmM4IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJhZWFmMzc2YWQxYTkxOGU3ZjZlNDBiMTg4OGFkODFkNGYyNzA0NTdhN2Y2Y2ZmZDc5ZWFjYjFlMDRlMWE4MmRkIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJhZDY5ZjYyNTdjYjFmZGUwYWY5YTliMDhiYmVkNGYxYmE2ODZlODBlMGJjN2YzZDk0YmViNjQ5MTVhMzMxNTkxIn0"
-        }
-      ]
-    },
-    {
-      "id": "claim_87114325fdaf404990d475801d607676",
-      "statement": "Repository pushは単一構成済みGitHub URLと同名branchの固定SHAだけを通常pushし、曖昧remote・driftを拒否する。previewは自動fetchせず履歴とarchive候補に上限を設ける。",
-      "evidence": [
-        {
-          "resource": "repo://crates/git/src/repository_push.rs#L186-L239",
-          "version": "repo-lines-v1:sha256:18413bfbaa4ee6b9fad2663b67db26bd1d1822d97911e948235ca91d2e5ab471:eyJzZWxlY3RlZExpbmVDb3VudCI6NTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZiNGQ1ZGFiYjg4ZmNkNWI0YWRlNjBhMGRiNjM4NDVlZDdlMzQyOGIwZGYwY2NmMGQ0MWUzOWQ1NDVmZjczZWUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImViMmU4MTQxNTk5ZTE0Y2MwNDVlMWJhZDc1YjYwNDFmNDY3YWFmZTY5NWJkNGU1MGM2YjkxYjY0ODI4MTVkZmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjI5ZGEwMjJjYzE4NDZjYTg0NTA1ZDI2NjZkYTYwNTBkM2Q2ZmE0ZTBlMDcxMzUyM2FkZGJlNWY1OWQwZWY3ODgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjVmOWVmNmNlZWM1ZTRhODM0NDZmZDhlNjRjZGYzMTBiMmIzYzQ2YzEyYzczODZmMTdmZjIwY2Q4MWJmOTJkMzgifQ"
-        },
-        {
-          "resource": "repo://crates/git/src/repository_push.rs#L22-L152",
-          "version": "repo-lines-v1:sha256:f5f517eee7d280f178586416c24700c93ae49cb9c6fa5c5f6932b1f38f13888d:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMxLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJmNDkyMjRiYWIzNmFmNTU5ZmZiNWFlY2M0NzhjMTQwOGZkZmMxYTBkNTZmMDBhMDRkYTVmZGE5OWYzNmY0NzFjIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIxY2E1ZTk2ZmQyYWI3NWNkN2Y1MDJiMzI3NDdiYTdmZjkwOGZlNjAyODhlNGQ3NTI5Njc3ODYzMmIyNWQ2YzUwIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJjZmRmMmFjODI4NTAwNTRiNDMwNWZjNjYzNGZiYjA4NzU2ZTExYTVkNTA2YTMxY2RkZjc0NjBkM2U0MWU3OGI4IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJkM2QyNGJhNjQ3MDM5MmJlNzQ0NTRlOGJlMWE4NGNmMGI2NDgyZDk1MmI1ZWU2Nzc5MWY2NmVlYzI1YmRiNjQ1In0"
-        }
-      ]
-    },
-    {
-      "id": "claim_66e5aea721764a27a070b4739e4e3d95",
-      "statement": "Repository push再確認は元receiptとremote観測を分離し、source_present nullを未観測として保持する。uncertainは書き換えず、UIはremote一致が確認できた場合だけ別対象reviewを許す。",
-      "evidence": [
-        {
-          "resource": "repo://crates/server/src/repository_push.rs#L214-L264",
-          "version": "repo-lines-v1:sha256:b8f6116b7f2523d2dd0d76c1214d94dc7b783d07a29f428dcc17af36a3beaf7d:eyJzZWxlY3RlZExpbmVDb3VudCI6NTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc4NTNjNTQzMWE0MjM3MWVhMmJkNTE4NDNmMmNkNzNmODc5NDViZjFhZGE4OGVjMGY1OTljOTQ5N2MxNzFiZjEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJhYjg1NmE3MDM1ZWVkODA0NmU5YWUzMmFmMGUwMzAyZWE4M2E2ZWZhNDRjZTU4Zjk2NWJkMGNiYWY0ZmQ5MDMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
-        },
-        {
-          "resource": "repo://packages/web-core/src/shared/dialogs/settings/settings/RepositoryPushSettings.tsx#L120-L155",
-          "version": "repo-lines-v1:sha256:24c867c7a98cbd9d784838433284bfa7c9a5a751f2e1598d930416e7889c18ca:eyJzZWxlY3RlZExpbmVDb3VudCI6MzYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBkYTk0ZGZmNGI0NTMwYTQwZDBlYTQ4YzczZDViODQ4OTNhZDQ4YjZkMjVlOTgwNWE0ZWE2ZjM2M2Q3OTYyMTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU3MjE2ZThlOWMwYTFhNjhkMDZjMmZiYWE1ZmQyMTM5NDgyYjhlZmQwYTE5MzE1YjkxNWU2Y2NlODQ5ZDg5ZGMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImU0NDlkMTVkZGFiMjMzYTQ4N2ZhNTBkZGFkNDU4ZDAxYzYzZjVjZmM0NWVmZDk5Njg1NTBmZmM0MTRiOGUxOTQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJlYzk4MjIyZTFiYzFhZjZhNWZmYzZmMTBjYWQyODZlMmY0OTcyMDMxMWQ1NTVmNWQ5ZWE1NjUyOGI5N2NhMzUifQ"
+          "resource": "repo://crates/server/src/routes/github_credentials.rs#L81-L133",
+          "version": "repo-lines-v1:sha256:02dc2c95845233435df509f991f4889de44003fe6d33eafaf3d76e454f25c56b:eyJzZWxlY3RlZExpbmVDb3VudCI6NTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY5YjE5ODJlOGRkNzQ4MTE4MTQ2YjM5YTJkMDA2MmY0MDgxZTM0Nzc5Yjg2NzVjMjM0YzRmYjEyNGRjMzkzOTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY2NjAwODI3MDhmZTgxNzEzOTMyODhlMDc2ZjljNjJkYjk3MWNiY2FiYjMyMGMzN2MwYzI2ZDhmYWM2Zjg2NzEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImU4NWY1NGRiMzA1M2QxNThmODc4NTUxMDc4ZTgyODg2NzdkNGM0ODQ5OGFhYWUwZjBkOTRmZTkzODY1ZjY1NTciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUyMTliZTg4YmYwNjRkN2U5NGM1NTRiZjA3NzNiMDgzODEzNTFhMzQ2YmRjOTIzZWJiZDFlNzZjYmRmZTQ0ZDMifQ"
         }
       ]
     }
   ],
   "verification": {
     "by": "openwiki/0.9.0",
-    "at": "2026-11-16T23:50:22.756Z"
+    "at": "2026-11-22T05:31:45.518Z"
   }
 }

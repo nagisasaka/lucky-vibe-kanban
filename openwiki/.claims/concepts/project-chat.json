@@ -1,60 +1,30 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:8c6011d1ae01309a15f78c3b1f227dae656de5ad165c0ce811492aba4711f53c",
+  "pageVersion": "sha256:be558ac2c59ef4cabd6f9dafa704f912c7baa232dc49f6efd91293347fa8c2bd",
   "claims": [
     {
-      "id": "claim_1495b4d9643b448e950a8c2c04ce2168",
-      "statement": "内部Project ChatのAPI・workerと専用推論は廃止され、ProjectはBoardを表示する。remote MCPは既存製品操作を公開し、対話ヘルプは旧Astraではなく既存coding agentのSessionを使う。",
-      "evidence": [
-        {
-          "resource": "repo://crates/server/src/main.rs#L103-L155",
-          "version": "repo-lines-v1:sha256:64befb01241dd62209736b83cfeb71eb382a78c5c999d8b9672be19ea8f293e5:eyJzZWxlY3RlZExpbmVDb3VudCI6NTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk4ZjdmMWY1OTYzOWExOWY3ZDQ2MTYyNjMwNTUzZWE3YTExYWQ0MTIyNmU4MTAyMjcxOTQwZGFkYWU4YTRiZjMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE1NmJlMmVlMTcwMDQwNjhjMTg2YmU4MjNlMzJjYzUxMWM0OWE4MDc1ZWYxYWQwMDI5MjJkZTBjNTk5OGMzMTQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImEwZDM0ZGM0Y2I0ZDc2NzY3MDBmMTg2Mzc1MTI2ZDg1ZjZkNmVhZDMzZTk2M2FhN2M3YTM2M2YwMzdkOWRhNTIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImZjNzhlNTM5NTdiOTFiM2E4YTM4MmQwNTc5MTU2ZjJiNWFmODkxOWMzMWVhOWY1M2ZjMjY0MjgxZjljOTBjZjUifQ"
-        },
-        {
-          "resource": "repo://crates/server/src/remote_mcp/help.rs",
-          "version": "repo-file-v1:sha256:9d3006a52f41570bc7b108afd70eb48f5ec985d250321549a7990352506cb88a"
-        },
-        {
-          "resource": "repo://crates/server/src/routes/help.rs#L84-L160",
-          "version": "repo-lines-v1:sha256:62a6dcd5347fc4f9cb592e6b22d6e3028b4352edef3ce2b7344457709d074b25:eyJzZWxlY3RlZExpbmVDb3VudCI6NzcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAzODI5MDkwYmM5YzBjOTg3YjVhYzczMjg0MzQ1MGFhMmNhYTZkZjliZDVlMzYyMzIyODE1YWY3M2YxOTMyYWQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNjMWVhNjgxZjEzZjgwYmMxM2RiOWQ2MmMyZjQxZWIyNTY5MzU3YjBjYmM2NTU4M2ZhNDg1ZWM5MDhmOWQ2MGMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQ2YmRkZDBlNjYzOWQ2NjNjODU5MTEwMzUxYTE0MTE4ZGFhOGM3ZjI1MWI2YmNkODc1ZGMyMmM3YzNlYWQ3M2MiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjlhNWQxMjc1ZTY1YzgxZjhjZDEyMjk5NjI2YjZmMjExZGI5MTk4YzBjODdjZWQ1Nzg0MWM4YjFkYjUwZWY0NjIifQ"
-        },
-        {
-          "resource": "repo://crates/server/src/routes/mod.rs#L56-L97",
-          "version": "repo-lines-v1:sha256:0223bfb41bf930af1a0fa8cb8efde60406b312d62bcbf2e28a7d9d55897ccd74:eyJzZWxlY3RlZExpbmVDb3VudCI6NDIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM0NTBmYmVmOGIxYTQ3YTM1YjFlMmI1NWRlZGRmM2UzNzEzMTdjZDNmNTVhNjM2YTViNTU3NzFmNGZhOTg2YmQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRmOTNhMDdmZWQwYTdjNDlhOGFjM2VjZDNiNzA5ZjRjYzk5MThmZjI4M2YxNTcxZDk5MjBkOTVhZTU2YmFiMzciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjdjNzNmNzI4ODZiZDUyNTExOGZlNTY1ZDJjZmI1NWYxZWRjOTgwMWQyMWY2OTgwNjRlMTMxZWMzZDJmMzYxZjIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE2ZjQ4YTdjZTVlNzc5YzcwMTQ0NjI5OGU2MzExODMwMjViMDc2M2NhYTUyZDJiNjIxNDViYjcyNjY2NjE5MjUifQ"
-        },
-        {
-          "resource": "repo://packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L1068-L1089",
-          "version": "repo-lines-v1:sha256:5ad5d644341546ef8c61d9a06b0b478af28e6b3afca585d6a01f4852fc24ddae:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBjNDM1Y2M3NGY0ZmEyZTlhOTZiNDg2NTFlMDE0ODg0MDk0ZWIxZWI3NTY4ODdmNmM0ZDU5NmI2ZTkyZDczMTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdiNTdlZjBkMzdiZjcyYzVlM2I0OTk0ZTg1YTE5MjJkZjYyNTJkMjE4MmE3NmRkNzg0MzgxMGI3NmViYjg4N2QiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjBhMjY1OGNmM2I4MzQ2ZDRiN2RkNWFjYTU4NjdlMGJlYWEzY2JmYzUwMDJlZWY5YmRkOGEwNDRlZjk2MWFiMGUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFiMGM4NmRkYjRkNGUzNGM5ZTEzY2FhMGU4ZjZiOWE0ODI2NTcyMjc3OGIyNWFhZWI4NzhhYjM1YWY2ZWFmMmQifQ"
-        }
-      ]
-    },
-    {
-      "id": "claim_7ae8ee2f92b84c04bdba4f6024d7934a",
-      "statement": "前進migrationはAstra専用の八triggerと四テーブルを削除し、Project・Issue・Workspace・Session・質問回答とpending input guardを維持する。既存履歴からのupgradeとupgrade後の書込を専用testが検査する。",
+      "id": "claim_d18aff085f2041d1a11379bd685857b8",
+      "statement": "Project Chat の前進 migration は専用 trigger と会話・message・event・operation 表を削除する。",
       "evidence": [
         {
           "resource": "repo://crates/db/migrations/20261016000000_remove_project_chat.sql",
           "version": "repo-file-v1:sha256:c876ee2b499164e284e3b962e092a44c8f8174585898b193058ed5928ec9802a"
-        },
-        {
-          "resource": "repo://crates/db/tests/retire_project_chat.rs#L5-L89",
-          "version": "repo-lines-v1:sha256:abb3b24630272430db3a531e87fe5cf410a76edcc69871b779473fd9511e00fc:eyJzZWxlY3RlZExpbmVDb3VudCI6ODUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUxOTQ4NGVlZGYzNjRmYjhjMTJmMWViOThmYmY2YTliNGY2NTBmNDI3ODc0YThkNzM1OTAxMGFhZGU0MzFiYzgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJmYTUyYjEwM2MzNzhhODZlNGE0Y2VlZDIzN2ZiZmE1NjFhZjE0OWI3YTczNzlkMjBhYTE4NDVkMTczN2JlNTQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
         }
       ]
     },
     {
-      "id": "claim_d51971abff7d4848a8461f5498503de8",
-      "statement": "旧Astra operation markerは質問回答の配送済み証拠として引き続き認識され、内部アシスタントの存続を意味しない。",
+      "id": "claim_45a5dab8dc0d49778e148fd5690d27f8",
+      "statement": "歴史的 Astra operation marker は質問回答 receipt の互換処理に使われる。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/sessions/questions.rs#L253-L324",
-          "version": "repo-lines-v1:sha256:f0f920516e5c1cc93320314e3952c1c674f414bb5cf065511c41b5ae12360061:eyJzZWxlY3RlZExpbmVDb3VudCI6NzIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFiZmRjYzdiMzYwNTA4MWU0Y2M4MTkxMzNmYzk5NTliZjliMDc2M2FhMTYyOWI2NDkzNjk0NGYxZGRhMzE5ZjIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YjA0NDkxNDY5NzIyZTgzNjNhOTRlNDA0NDUzOGUwMTNhMmEyMTdlMzZiMWU1NjhiYTYwYWNiN2I0YzhmMmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhhZmEwMjlmYzZlYWY5NWY0NmRlZTU3NTIxMTA4YWM1MGMxMWU0MzUxOGQ0YmQ0MmFiMmRkZDNiNGUzYWI1MTQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjU1YWI3YjZkOWI2ZTE5NTY1M2ZjOGI1NWY2M2YzNjQ2MDY4NTVjNDU0ZmM1NjU4NTFmMzFhMmYwOTQ1ZGE3NDIifQ"
+          "resource": "repo://crates/server/src/routes/sessions/questions.rs#L279-L297",
+          "version": "repo-lines-v1:sha256:c300f6a3dd98d995c51300a6c4f4a746a55547974df0a390096f4502d50fc686:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFiZmRjYzdiMzYwNTA4MWU0Y2M4MTkxMzNmYzk5NTliZjliMDc2M2FhMTYyOWI2NDkzNjk0NGYxZGRhMzE5ZjIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVmOGE4MWVhODdhZmMzODMyOTJlMzY4M2M5MWYwYWZhYjE2NGFjMTQ0NzM0MjFhODAyMGM4ZTJmZWE2Y2RlNjYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhhZmEwMjlmYzZlYWY5NWY0NmRlZTU3NTIxMTA4YWM1MGMxMWU0MzUxOGQ0YmQ0MmFiMmRkZDNiNGUzYWI1MTQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUyMjJlZjBmNmU5NTRlNWQ1OWJhYjdjZjk5YjExNGFmZGYwNTA0NDQ5MjZhMzk5NzRlY2IzYWU4ZDFmM2MwYmIifQ"
         }
       ]
     }
   ],
   "verification": {
-    "by": "openwiki/0.7.2",
-    "at": "2026-11-12T04:13:28.445Z"
+    "by": "openwiki/0.9.0",
+    "at": "2026-11-22T05:31:45.518Z"
   }
 }

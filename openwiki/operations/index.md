@@ -1,6 +1,6 @@
 # ファイル
 
-- [開発・検証・運用文書の使い分け](development.md) - 起動形態、検証範囲、型とSQLx、DB回復、指示配信変更と切替bundleの検証境界を整理する。
-- [OpenWiki の初期生成・同期・回復](openwiki-maintenance.md) - Bootstrap の独立した Generate/Review/Refine と通常 Sync の違い、完了証拠、公開条件、失敗時に保持すべき所有権を説明する。
-- [単一サーバーコンテナーの運用境界](server-container.md) - local LVK をサーバー上で動かす配布構成。HTTPS、認証、preview origin、永続化、停止と回復の契約。
-- [ファイル・差分・プレビュー・端末の境界](workspace-inspection.md) - Workspace 内のファイル・Wiki 閲覧、添付、差分配信、dev server preview、PTY、editor 操作で異なるパス・ホスト・寿命の契約を説明する。
+- [開発と検証](development.md) - source 開発、主要 checks と検証範囲の選択。
+- [OpenWiki の生成・同期・回復](openwiki-maintenance.md) - Repository Wiki の所有、生成、検証と公開。
+- [サーバーコンテナー運用](server-container.md) - HTTPS 配置、永続化、バックアップと復元。
+- [Workspace の閲覧と操作](workspace-inspection.md) - 作業環境の状態、ファイル、差分と実行を確認する。

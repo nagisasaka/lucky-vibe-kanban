@@ -1,236 +1,53 @@
 ---
 type: concept
-title: Change Manifest・Run完了とWikiの責務
-description: Session文脈、DB正本の確定Manifest、正常Run自動commit、任意の本文併記、DB運用状態と移行完了後の保持・撤去境界。
-tags: [repository-memory, openwiki, manifest, reconciliation]
+title: Change Manifest・Run 完了と Wiki
+description: Run の意味記録、Git source、統合済み Wiki、receipt と復旧 artifact の責任を説明する。
+tags: [repository-memory, manifest, openwiki, reconciliation]
+verified:
+  - by: openwiki/0.9.0
+    at: 2026-11-22T05:31:45.518Z
 sources:
-  - id: openwiki-source-3e2ba788feaa0a7d24385a17
-    resource: repo://crates/db/migrations/20261106140000_repository_operational_state.sql
-  - id: openwiki-source-3942991377d8825ee67472c9
-    resource: repo://crates/db/migrations/20261116000000_change_manifests.sql
-  - id: openwiki-source-5c2565a649f8be059d306209
-    resource: repo://crates/db/src/lib.rs
-  - id: openwiki-source-5144fccee237bf35dd134ccb
-    resource: repo://crates/db/src/models/repository_state.rs
-  - id: openwiki-source-06b554fc2573c350d37896b2
-    resource: repo://crates/db/src/models/repository_state/coding_runs.rs
   - id: openwiki-source-21149aa9001849998cda42a2
     resource: repo://crates/db/src/models/repository_state/manifests.rs
-  - id: openwiki-source-bfeb31abecf9b81f73b98a39
-    resource: repo://crates/db/src/project_transfer/history.rs
-  - id: openwiki-source-b695a62ee61c1d734652943f
-    resource: repo://crates/db/tests/startup.rs
-  - id: openwiki-source-dc107dec6d46a1dcc08d0a9b
-    resource: repo://crates/mcp/src/task_server/tools/context.rs
-  - id: openwiki-source-a13fe4db1eee073d0a7e2c4d
-    resource: repo://crates/server/src/main.rs
-  - id: openwiki-source-62a076acbf3183e887b184c1
-    resource: repo://crates/server/src/remote_mcp/merge_read.rs
-  - id: openwiki-source-0545bff1ae2507a92137efaf
-    resource: repo://crates/server/src/remote_mcp/repository_wiki.rs
-  - id: openwiki-source-5720d865d1c837f0e6b7dab7
-    resource: repo://crates/server/src/routes/integrations/conversation.rs
-  - id: openwiki-source-b393e75029374eaf9cba5f7d
-    resource: repo://crates/server/src/routes/integrations/runtime.rs
-  - id: openwiki-source-231241ac3c842dcd67525890
-    resource: repo://crates/server/src/routes/openwiki.rs
-  - id: openwiki-source-3b873a675f85754e9183d162
-    resource: repo://crates/server/src/routes/openwiki/management.rs
-  - id: openwiki-source-a34361c91f1fbaa3ea42afc5
-    resource: repo://crates/server/src/routes/openwiki/project_context.rs
-  - id: openwiki-source-16c3e7d25cc14f30f21d7d5a
-    resource: repo://crates/server/src/routes/openwiki/recovery_tests.rs
-  - id: openwiki-source-04d5adb51b5929dacce999bc
-    resource: repo://crates/server/src/workflow_runtime/bootstrap.rs
-  - id: openwiki-source-ae8c631b5b4385c934e47d60
-    resource: repo://crates/services/src/services/config/versions/v9.rs
-  - id: openwiki-source-da8c4a13aea0bac33b3f0a35
-    resource: repo://crates/services/src/services/openwiki.rs
-  - id: openwiki-source-7277adee5c65e8d79143e722
-    resource: repo://crates/services/src/services/openwiki/bootstrap.rs
-  - id: openwiki-source-bef089692ac7606992050919
-    resource: repo://crates/services/src/services/openwiki/bootstrap/reports.rs
-  - id: openwiki-source-a2aa8cef2bdada18779e5370
-    resource: repo://crates/services/src/services/openwiki/management.rs
-  - id: openwiki-source-c4df16e7e579927d462857d7
-    resource: repo://crates/services/src/services/openwiki/setup/integration.rs
   - id: openwiki-source-110c99f4b05152335c067c71
     resource: repo://crates/services/src/services/openwiki/sync_input.rs
   - id: openwiki-source-6067be8d6f85caa8ac03638f
     resource: repo://crates/services/src/services/repository_memory.rs
-  - id: openwiki-source-8dd059d50335f535b6d49e83
-    resource: repo://crates/utils/src/agent_guides.rs
-  - id: openwiki-source-a171e1a170f941fa2a4ba003
-    resource: repo://crates/utils/src/repository_memory.rs
-  - id: openwiki-source-e3fba362b5134688658e62a4
-    resource: repo://packages/web-core/src/features/wiki/ui/WikiQualityWarnings.tsx
-  - id: openwiki-source-2fab4d75b959f83ee7aaf538
-    resource: repo://packages/web-core/src/shared/dialogs/settings/settings/RepositoryMemorySettings.tsx
-generated: { by: "codex", at: "2026-11-22T04:06:17.040Z" }
-verified:
-  - by: openwiki/0.9.0
-    at: 2026-11-22T04:06:17.040Z
+generated: { by: "codex", at: "2026-11-22T05:31:45.518Z" }
 ---
 
-# Change Manifest・Run完了とWikiの責務
+# Change Manifest・Run 完了と Wiki
 
-開発中の文脈は Codex / Claude Code の Session が扱う。LVK は独自の Workspace Memory、専用の no-change 検証記録、commit reminder を廃止し、変更の意味をDB正本の確定 Change Manifest、統合済み知識を canonical OpenWiki に分ける。source/tests/configuration を現行動作の権威とし、Manifest は意図・理由を調べる参照データとして扱う。新しい要約・Session引継ぎ基盤は作らない。[host指示](../../crates/utils/src/repository_memory.rs)
+[Change Manifest](glossary.md) は coding Run の目的、変更と判断を伝える記録であり、[Wiki](glossary.md) は統合済み source についての知識である。Session の私的な会話、Git の実際の変更、記録された意図は異なる。現行動作は source・tests・設定で確かめ、Manifest や Notes の理由を裏付けのない実装契約にしない。[型](../../crates/utils/src/repository_memory.rs)・[操作の段階](../quickstart.md#操作の段階)
 
-## Session・Manifest・統合済みWiki
+## Run から確定記録へ
 
-Worktree Workspaceの通常の成功 coding Run は Wiki の有効／無効と独立して source を確定し、Manifest をその SHA に結び付ける。source が既に全て commit 済みなら HEAD を再利用し、余分な commit や amend をしない。no-change では空の Manifest や commit を作らない。失敗・取消・REVIEW・制御・自動マージ担当・Design Arena 等を一律に自動 commit する規則ではなく、既存の実行目的と正常終了条件を維持する。[完了処理](../../crates/services/src/services/repository_memory.rs)・[host適用条件](../../crates/local-deployment/src/agent_run_port.rs)
+通常の成功 coding Run では host が Repo・Workspace・Run と開始 base を固定し、agent の semantic draft に Git から得た changed paths と source commit を結び付ける。draft は目的、要約、振る舞い・構造・不変条件、判断、見送り案、未決点と検証要約を運ぶ。Git identity や対象ファイルをモデルの申告だけで決めない。[完了](../../crates/services/src/services/repository_memory.rs)・[型](../../crates/utils/src/repository_memory.rs)
 
-Issue化・要件更新・既存Sessionへの追加指示では、上位AIが確認できた人間の目的・動機・制約、判断と理由、見送り案・未決点を渡す。Issue本文の編集だけでは既存Sessionへの追加指示にならない。coding host は直接会話も含めて人間の意図と自分の実装判断を区別し semantic draft に残す。承認を技術的理由の代わりにせず、不明な理由は創作しない。固定書式の空欄埋めや些細な変更の長文説明は要求しない。[上位AIの受渡し](../../skills/lvk-orchestration/references/execution.md)・[coding host](../../crates/utils/src/repository_memory.rs)
+変更なしでは空の Manifest や余分な commit を作らない。変更があり draft が欠落・不正な場合は原本を保持し、意図・理由・試験が不明と明示した Git-only checkpoint に縮退する。I/O 障害や Git・Wiki guard を無視する意味ではない。DirectFolder、Review、制御 Run などを一律に通常 coding の自動 commit とみなさない。[完了処理](../../crates/services/src/services/repository_memory.rs)・[Workspace](workspace.md)
 
-[Card context の .llm-wiki](card-context-and-llm-wiki.md) は従来の作業ブランチ内の知識機能である。導入時の判断は「既存機能と利用者の編集を保持し、canonical OpenWiki を別名と単一 writer で追加する」だった。これは導入時の履歴であり、現行版は旧 `.llm-wiki` の生成・読取 UI・自動注入を終了している。既存ファイルや手作業のメモは残す。[終了後の扱いと移行境界](card-context-and-llm-wiki.md#旧-llm-wiki-からの移行境界)を参照する。LOCAL-361で旧生成指示の互換filter・通知・skill特別除外も撤去した。保存済み文は通常本文として保持し、[5hashの限定除去](card-context-and-llm-wiki.md#保存と-fresh-session-への継承)とは別である。
+確定 Manifest は instance DB の `(repository_id, Run ID)` をキーとする不変 record である。同一内容の再送は許し、同じ identity の異なる内容や Workspace 不一致は拒否する。旧 event ファイルを通常読取 fallback としない。[DB model](../../crates/db/src/models/repository_state/manifests.rs)
 
-### Bootstrap の索引・レポートは記憶の正本ではない
+Git 変更前には staged tree と Manifest を publication record に固定する。回復は marker、親 commit と tree を照合し、後続の編集や mutable draft を前の Run の成果へ混ぜない。任意の `manifest_in_commit_body` は既定 OFF で、ON なら通常 source commit に人が読める意味要約を併記する。DB 正本を commit 本文から再構築する機能ではない。[publication](../../crates/services/src/services/repository_memory.rs)・[整形](../../crates/utils/src/repository_memory.rs)
 
-初期生成の文書索引はinstance管理cacheの `repository-memory/<Repo UUID>/document-inventories/<run-id>/`、検証済みReview/Refine reportは管理tmpの `repository-memory/<Repo UUID>/knowledge/bootstrap-reports/<run-id>/` に置く。前者は再生成可能な探索入力、後者は復旧中の検証成果物であり、確定Manifestや公開Wiki本文に混ぜない。identity/digestはhost側にも固定する。[保存と読取](../../crates/utils/src/repository_memory.rs)
+## 統合と Wiki を分ける
 
-管理領域に置いただけで OS レベルの不変性を得るわけではない。索引の identity と digest は host の Workflow 入力、report の identity と digest は検証済み node output に固定し、工程境界で照合する。Sessionの私的文脈を Reviewer へ引き継ぐ仕組みでもない。具体的な読取・独立性・公開前の検証は [OpenWiki 保守](../operations/openwiki-maintenance.md)を参照する。[host 所有の入力](../../crates/server/src/workflow_runtime/bootstrap.rs#L177-L220)、[report の identity と digest](../../crates/services/src/services/openwiki/bootstrap/reports.rs)、[再検証](../../crates/services/src/services/openwiki/bootstrap/reports.rs)
+通常 Workspace の `openwiki/` 変更は source 完了・統合の guard が拒否する。source を統合してから専用 maintenance が canonical Wiki を更新し、通常の複数 branch に派生 Wiki を作って merge しない。[guard](../../crates/services/src/services/repository_memory.rs)・[保守](../operations/openwiki-maintenance.md)
 
-保守開始元の Project は、保守 Workspace をどの Board の Issue に結ぶかという文脈である。Wiki の設定・writer lock・source checkpoint は引き続き Repo 単位であり、Project ごとに別の正本を作るものではない。明示 Project の検証と未指定時の互換動作は [開始元 Project と保守 Issue](../operations/openwiki-maintenance.md#開始元-project-と保守-issue)を参照する。[共通受付](../../crates/server/src/routes/openwiki.rs#L235-L282)・[紐付けの境界](../../crates/server/src/routes/openwiki/project_context.rs#L6-L43)
+[Auto-merge](formal-integration.md) は受付時に source commit と選択 event を固定し、同じ専用会話で候補・検証・有効な Wiki 更新を行う。Host は code SHA、Wiki SHA、完成候補と証拠を照合してから公開する。source 統合、Wiki 完了、Git 公開、receipt と現在の鮮度は別の事実である。
 
-## Change Manifest は変更理由を運ぶイベント
+通常 Sync の入力は Repo、maintenance Workspace、source commit、target、scope と選択 Manifest を固定した manifest と番号付き chunk である。Host は identity と各 SHA-256 を照合する。空 chunk は調査不要の証明ではなく、scope に応じて現在の source または差分を確認する。[Sync 入力](../../crates/services/src/services/openwiki/sync_input.rs)
 
-Coding host が書くのは goal、summary、振る舞い・構造・不変条件への影響、判断、テスト結果などの **semantic draft**。LVK が run 開始時に Repo/Workspace/run ID と Git base を固定し、完了時に Git から changed paths と source commit を求めて **Change Manifest** にする。モデルが書いた任意の revision や membership を採用しない。[固定 context](../../crates/services/src/services/repository_memory.rs)、[Manifest 組み立て](../../crates/services/src/services/repository_memory.rs)
+Receipt は Updated / NoOp / Failed を区別し、失敗を成功した acknowledge と扱わない。検証済み no-op は成功になり得る。Current は Wiki ファイルの存在だけでなく、設定、成功履歴、pending と source の一致を踏まえる。過去の成功 receipt は、その後の source 変更に対する現在の鮮度を保証しない。[状態と receipt](../../crates/utils/src/repository_memory.rs)・[Wiki API](../../crates/server/src/routes/openwiki.rs)
 
-イベント ID は coding run ID で、確定正本は `repository_change_manifests` の `(repository_id, id)` をキーに保存する。同じRunでもRepoごとに別レコードになる。JSONはDB payloadの形式であり、旧eventファイルを通常読取の正本としない。イベント本体と、後から更新可能な receipt/state は別である。同じイベントを再処理して新しい source commit を無制限に作る設計ではない。[イベント保存](../../crates/db/src/models/repository_state/manifests.rs)、[完了の再入](../../crates/services/src/services/repository_memory.rs)、[不変イベントと再送](../../crates/utils/src/repository_memory.rs)
+## 保存先と回復
 
-source に変更がなければ無変更 checkpoint で終わる。変更があって draft が missing / invalid なら、元 draft を保持し、意図・理由・テスト結果が不明であることを明記した Git-only checkpoint を作る。これは意味記録を捏造せず、次の coding host が draft 修復前でも起動できるための縮退である。I/O 障害、凍結 publication 不整合、Git / Wiki guard は引き続き失敗させる。制御用 run など `finalize_source=false` の場合も変更を自動 commit しない。[分岐と検証](../../crates/services/src/services/repository_memory.rs)
+確定 Manifest、Wiki の可変 state・receipt・publication と coding Run の永続診断は instance DB に置く。固定 Sync 入力、source publication、setup 原本・復元 journal と Bootstrap report は復旧用の管理 tmp、再生成可能な文書索引は管理 cache に置く。共有 persistent はユーザーが保持する成果物用で、内部 journal の代わりではない。[path と cleanup](../../crates/utils/src/repository_memory.rs)・[DB state](../../crates/db/src/models/repository_state.rs)
 
-Git 変更前には Manifest と staged tree を固定した publication 記録を書く。復旧時は `LVK-Memory-Source` marker、親 commit、tree を照合する。後から追加された変更や書き換えた draft を前のタスクの結果として取り込まないための境界である。次の coding run を開始する前にも、同じ Workspace の前回成功 run の未完了公開を回復する。[公開と検証](../../crates/services/src/services/repository_memory.rs)、[次回起動前の回復](../../crates/services/src/services/repository_memory.rs)、[後続編集保持のテスト](../../crates/services/src/services/repository_memory.rs)
+Workspace 完了 lock、Repo の Wiki lock、短い publication lock は異なる寿命を持ち、モデルの実行中に publication lock を保持しない。復元・公開・照合と後続読取の完了を確認してから管理 artifact を掃除する。中断や失敗では原本を保持し、時間経過や Run 終端だけで安全に削除できると判断しない。[lock と cleanup](../../crates/utils/src/repository_memory.rs)・[保守の回復](../operations/openwiki-maintenance.md)
 
-## Source 統合と Wiki 反映を分ける
+読取専用 observer は DB 設定がなければ未設定とし、閲覧だけで管理ディレクトリを作成しない。逆に必要な凍結入力の欠損や破損は成功へ補完しない。[reader](../../crates/db/src/models/repository_state.rs)
 
-```mermaid
-flowchart LR
-  A[Workspace の source と意味記録] --> B[immutable Manifest]
-  A --> C[対象ブランチへ source 統合]
-  B --> D[統合記録に含まれるイベントを選択]
-  C --> D
-  D --> E[統合済み checkout で OpenWiki]
-  E --> F[検証と Wiki 公開]
-  F --> G[receipt と鮮度を更新]
-```
+通常の source event や backlog の発生は別 Wiki agent の自動起動を意味しない。保存済み owner の回復と、新規の明示保守受付を区別する。Bootstrap の索引と Review report は探索・回復用の入力であり、確定 Manifest や公開 Wiki の代替ではない。[受付と回復](../../crates/server/src/routes/openwiki.rs)・[Bootstrap](../../crates/server/src/workflow_runtime/bootstrap.rs)
 
-通常 Workspace の `openwiki/` 変更は、commit 済み・未 commit・削除・rename を含めて完了/統合 guard が拒否する。ファイルを勝手に破棄して通す処理ではない。並行ブランチごとの派生 Wiki を merge すると Markdown、Claims、run state が競合するため、source を統合してから記憶を更新するという設計理由が記録されている。[guard](../../crates/services/src/services/repository_memory.rs)、[現行のsource guard](../../crates/services/src/services/repository_memory.rs)
-
-旧手動直接mergeのsquash履歴は、元commitの祖先関係だけではイベント所属を再現できない歴史的記録として読む。LOCAL-364で旧直接マージ専用の実行route・Memory準備writerを撤去した。過去のDirectMerge/PR結果の読取は維持し、旧記録だけから現在HEADの公開や検証/Wiki成功を推定しない。現行の自動マージは固定sourceと明示event IDを公開結果へ結び付ける。Wikiの処理対象は統合済みと確認でき成功receiptがないイベントである。[現行writerと履歴](../../crates/services/src/services/repository_memory.rs)・[現在HEADと履歴の区別](../../crates/server/src/remote_mcp/merge_read.rs)
-
-[自動マージ](formal-integration.md)は、同じ専用会話でコード候補と有効なWiki更新を作り、code SHA・Wiki SHA・完成候補を別々に固定してhostへ公開要求する。検証実行と省略はcode SHAへ記録し、失敗をpassへ変換しない。公開後に選択source eventへのreceiptをinstance DBへ保存し、後処理の失敗は適用済みGit/Doneを巻き戻さない。旧step summaryからの統合Manifest生成や後続Wiki agentを前提にしない。[現行契約](../../crates/server/src/routes/integrations/conversation.rs)・[後処理](../../crates/server/src/routes/integrations/runtime.rs)
-
-専用会話へ渡すMemoryは、受付時にsource祖先関係を確認した固定event IDsの公開記録だけを解決する。Repo/Workspace所属を検査し、不在はunavailableとして伝える。Sessionの私的文脈や後着eventを混ぜない。[公開Memory解決](../../crates/server/src/routes/integrations/runtime.rs#L73-L104)
-
-公開イベント・新規pending・古いbacklog・main直接変更は、別のWiki WorkspaceやAgentを自動起動しない。起動時と5秒周期の回復は、保存済み所有者や予約済みAgentRunを照合する。Bootstrap の進行と回復は共通 Workflow watcher が担い、Wiki recovery monitor は完了後の cleanup 等を担う。自動マージでは同じ候補内でWikiを更新し、それ以外の更新・再同期・初回生成はUIまたは認可済みMCPの明示要求から開始する。未処理イベントは強制ackせず、明示保守の入力として保持する。[受付と回復](../../crates/server/src/routes/openwiki.rs#L170-L202)・[新規受付なしの回復](../../crates/server/src/routes/openwiki.rs#L522-L550)・[隔離回帰](../../crates/server/src/routes/openwiki/recovery_tests.rs#L65-L160)
-
-## Sync の入力は統合済み source に結び付く凍結 snapshot
-
-通常 Sync は、対象 Repo・maintenance Workspace・固定した source commit・target branch・選択 event ID を manifest に保存する。各 Change Manifest を個別の `chunk-NNNNNN.json` とし、manifest の `chunks` 配列には番号順の SHA-256 を格納する。保存先はinstance管理tmpの `repository-memory/<Repo UUID>/knowledge/sync-inputs/<maintenance-workspace-id>/` である。これは mutable draft や現在の Memory を直接読ませ続ける仕組みではない。[入力の生成](../../crates/services/src/services/openwiki/sync_input.rs)、[保存先](../../crates/utils/src/repository_memory.rs)
-
-host は manifest と全 chunk を順番に最後まで読むよう要求する。応答の切り詰めを読了と扱わず、必要なら範囲を分ける。Change Manifest の意図・判断・検証限界は調査の入口にし、現行動作は integrated checkout で確認する。可変 Workspace Memory の snapshot は作らない。空の event/chunk 配列だけで調査不要とは判定しない。manifest の scope が調査境界を固定する。`current_source` は既存 Wiki と凍結ソース全体の照合、`pending_changes` は統合 event の影響範囲、`since_commit` は指定 base を除く base..source の差分である。範囲限定 adoption は古い内容を再検証したと主張せず、`unverified_before` によって Current を抑制する。[読取と権威の契約](../../crates/services/src/services/openwiki/sync_input.rs)
-
-公開前には、host state が持つ manifest digest、Repo/Workspace/source/target/events/scope の一致、全 chunk の digest を照合する。管理ファイル自体を OS が改変不能にするのではなく、host に固定した identity と digest で変化を検出する。移行前に開始済みで digest を持たない Sync だけは、immutable request に入力があるものとして互換経路を通る。凍結後の元draft変更は入力を変えない一方、別 Repo の入力・event 集合のずれ・chunk 改変は失敗する。[検証](../../crates/services/src/services/openwiki/sync_input.rs)、[凍結と改変のテスト](../../crates/services/src/services/openwiki/sync_input.rs)
-
-## 並行性・receipt・失敗
-
-通常 Workspace の source 完了は Workspace ごとの lock、Wiki の所有管理は Repo の lock、source/Wiki 公開は短い integration lock を使う。モデル実行中に integration lock を保持しない。これにより source 作業とイベント発行の並行性を残しながら、正本の公開を直列化する。[lock の責任](../../crates/utils/src/repository_memory.rs)
-
-receipt の結果は Updated / NoOp / Failed。Failed はイベントを acknowledge 済みと扱わず、次回も対象に残る。成功時だけ対象 source、Wiki commit、最終成功時刻を保存する。Wiki が無変更でも検証済みの成功となり得る。[選択](../../crates/services/src/services/repository_memory.rs)、[結果記録](../../crates/server/src/routes/openwiki.rs)、[Failed→NoOp テスト](../../crates/services/src/services/repository_memory.rs)
-
-新しい Wiki 公開は、対象ブランチと maintenance HEAD が固定 source に一致することを検査し、source が進んでいれば拒否する。Wiki 失敗は既に成功した source 統合を取り消す意味ではない。初期化と再試行、終了証明、公開 checkpoint の詳しい手順は [OpenWiki 保守](../operations/openwiki-maintenance.md) に置く。[公開検証](../../crates/services/src/services/openwiki.rs)、[公開と回復の実装](../../crates/services/src/services/openwiki.rs)
-
-通常 coding run の Wiki 鮮度探索では、別 Workspace の壊れた event などを診断し、Wiki 状態を Error として作業開始を継続できる。これは選択 event の厳密な公開検証を省略する許可ではない。[起動時の縮退](../../crates/services/src/services/repository_memory.rs)
-
-読み取りのobserverはDB層の `read_only_configured_for_repository` と非作成の `paths_for_repository` を使う。DB設定行がなければ未設定を返し、DBのみのstate/Manifest/完了履歴読取はartifactの存在を要求せずmkdirもしない。writerの `existing_for_repository` は設定確認後に管理artifact領域を作成できるので純粋な閲覧に使わない。必要な凍結入力の欠損や破損を成功へ補完する規則ではない。[DB reader](../../crates/db/src/models/repository_state.rs#L45-L80)・[path projection](../../crates/utils/src/repository_memory.rs#L678-L705)
-
-公開時の品質警告は Wiki state と publication に保持され、設定画面や Wiki パネルから確認できる。内容の未確認や Review 結果の欠落は安全な公開を許す場合でも合格を意味しない。writer の未終了や決定的な公開検査の失敗は別の停止条件である。[警告の型](../../crates/utils/src/repository_memory.rs)・[公開判定](../../crates/server/src/workflow_runtime/bootstrap.rs)・[画面](../../packages/web-core/src/features/wiki/ui/WikiQualityWarnings.tsx)
-
-Current は単なる「ファイルがある」ではない。有効化、Wiki 存在、成功履歴、pending の有無、source の一致を踏まえて判定する。Error/Stale などの状態は保持されるため、古い snapshot を読んだ agent が常に最新とみなす根拠にはならない。[派生状態](../../crates/utils/src/repository_memory.rs)
-
-外部 MCP でも、その request の受付、その実行の確定結果、現在の repository 鮮度を別々に観測する。過去の実行が `wiki_complete:true` でも、その後に source が進めば現在の Wiki は stale になり得る。MCP operation receipt と、この節の event 単位の reconciliation receipt は別物である。開始・再送・読戻しは [MCP から既存 Wiki を同期する](../operations/openwiki-maintenance.md#mcp-から既存-wiki-を同期する)を参照する。[応答の分離](../../crates/server/src/remote_mcp/repository_wiki.rs#L135-L211)・[実行結果の判定](../../crates/server/src/remote_mcp/repository_wiki.rs#L286-L305)
-
-## 成果の寿命と保守 Workspace の寿命
-
-Wiki の成功 receipt・canonical branch と、生成された保守 Workspace の存続は別の契約である。Sync は公開判定から owner 固有の成功結果（no-op を含む）を保存し、repository の active owner を解除する。process が収束し用途を解除できた新規内部生成 Workspace は、[一度限りの自動 archive](workspace.md#生成された専用-workspace-の自動-archive)の対象になり得る。archive の拒否や削除失敗で成功 receipt を取り消さず、archive 済みであることから Current や公開成功を逆算しない。[結果と state](../../crates/server/src/routes/openwiki.rs#L600-L705)・[解除と後処理](../../crates/server/src/routes/openwiki.rs#L894-L911)
-
-## 変更を検討する際の一次資料
-
-歴史的な導入仕様は意図・不変条件を、実装checkpointは判断と過去の検証結果を記録していた。ここへ移した履歴を現行sourceの代用にしない。記録されたテスト成功を現在の環境の実行結果とは扱わない。とくに source commit と outbox の間、squash 統合と記録の間、Wiki 公開と receipt の間の再起動窓を変更する場合は、対応する回復テストと現行実装を一緒に確認する。
-
-## sourceを変更しない新Runの報告
-
-no-change Run は `verification-starts` / `verifications` の専用記録を生成せず、専用 MCP `get_workspace_verification` / `get_workspace_verification_test` も提供しない。通常の `list_workspace_runs` → `get_execution(section="final_response")` で会話・最終報告を読む。Manifest の test 欄は実施／未実施・結果・理由の短い要約で、詳細ログや大量の証拠データの正本ではない。自動マージ自身の code SHA・command・exit・省略理由は既存 integration / execution の DB 記録が所有し、Manifest の自己申告で合格にしない。[通常読取](../../crates/server/src/remote_mcp/runtime_read.rs)・[統合検証](../../crates/server/src/routes/integrations/conversation.rs)
-
-## 任意のコミット本文併記
-
-`manifest_in_commit_body` は既定 OFF。ON の場合、LVK が通常Run完了で作る source commit の本文に、目的・完全なsummary・変更・不変条件・判断と理由・却下案・未決点・検証要約を人間可読に併記する。短さのために意図を切らず、空欄とsubjectとの重複だけを省く。検証は有効なsummaryを優先し、空ならcommand、それも空なら結果だけを表示する。既存の短いsubjectと `LVK-Memory-Source` marker は維持し、自己SHA・JSON全文・詳細ログ・会話全文は追加しない。[整形](../../crates/utils/src/repository_memory.rs#L170-L264)
-
-本文は push・clone で共有される。設定は通常 LVK source commit だけを対象にし、既存commit・自動マージmerge/修復・Wiki・直接squashまでの本文保証やamendを行わない。確定ManifestはON/OFF両方でDB正本に残し、本文から復元するparserは作らない。最初のpublication固定時に整形済みmessageを保存し、retryは現在設定やmutable draftで作り直さない。旧publicationにmessageがなければ従来のsubject＋markerで回復する。[固定と再試行](../../crates/services/src/services/repository_memory.rs#L275-L365)・[設定](../../crates/services/src/services/config/versions/v9.rs)
-
-## 運用状態のDB集約と一度限りの開発移行
-
-instance DB の `repository_wiki_state`、`repository_wiki_receipts`、`repository_wiki_publications`、`repository_integrations` が可変運用状態の正本である。通常Syncはreceipt・state・Workspace実行結果、自動マージはreceipt・state・integration結果を同じDB transactionで確定する。Gitとは一括transactionではないため、操作前のintentと実SHA・parent/tree・markerによる回復は維持する。[DB層](../../crates/db/src/models/repository_state.rs)・[Sync確定](../../crates/server/src/routes/openwiki.rs#L604-L629)・[統合確定](../../crates/server/src/routes/integrations/runtime.rs#L503-L540)
-
-確定Manifestと後から読むcoding Run identity/無変更完了/診断はDBに置く。固定sync-inputs、Git前のsource-publication、setup原本/復元journal、Bootstrap索引/reportは復旧用ファイルとして別の寿命を持つ。会話やnative auditもこれらとは独立している。DB集約を理由にknowledge全体を削除しない。[coding履歴](../../crates/db/src/models/repository_state/coding_runs.rs)
-
-一度限りの開発移行は履歴上の作業であり、LOCAL-336で移行CLI・importer・旧運用JSON decoder・未移行互換guard・専用runbookを撤去した。現行版で旧運用JSONを取り込むコマンドは提供しない。LOCAL-398の確定Manifest起動時取込は別の歴史的移行であり、LOCAL-406で取込コードを撤去した。前進SQL migrationと通常DB modelは保持する。[現行起動入口](../../crates/server/src/main.rs#L42-L70)・[運用modelと通常fixture](../../crates/db/src/models/repository_state.rs)
-
-旧 `knowledge/state.json`、`integrations/*.json`、`publications/*.json`、`receipts/*.json`、廃止済みWorkspace Memory・専用検証記録の物理削除はコード撤去と別である。残存対象と現役artifactを個別に確認し、対象を明示した許可を得てから扱う。knowledge全体、backup、現役のGit復旧情報を一括削除しない。旧binaryへの復帰を、schema migration済みDBで安全と推定しない。[切替と復旧の手順](../../deploy/developer/switch/README.md)
-
-この保守ではlive DB・旧共有ファイル・backup・releaseを変更せず、devのビルド・停止・再起動・切替も実施していない。実装ManifestのDB 2件・utils 14件・server全targetコンパイル成功はsource SHAに結び付く既存記録であり、今回の再実行結果ではない。
-
-## 文書方針と意味記録の境界
-
-共通 host prompt は、source・tests・configuration による現行動作の検証と、repository 固有の文書保守方針への従属を別々に要求する。保守される正規文書は説明とリンクを残せるが、移行対象の文書は必要な知識を Wiki 本文へ保存する。共通実装自体が全 repository に `docs/` の削除を命じるわけではない。[共通 host の文書契約](../../crates/services/src/services/openwiki.rs#L200-L216)
-
-Change Manifest の goal・判断・却下案は意図を調べる入口であり、統合済みでない私的文脈の案を製品契約へ昇格しない。理由は source と利用可能な Manifest で裏付け、Design Note は補助情報として扱う。現在の動作、記録された意図、過去の判断を区別し、確認できない理由は不明のまま残す。Bootstrap の全役割と通常 Sync への適用、運用手順の保存責任は [文書方針の継承](../operations/openwiki-maintenance.md#文書方針の継承と移行の判定)に置く。[Sync の調査契約](../../crates/services/src/services/openwiki.rs#L192-L216)・[Bootstrap の証拠契約](../../crates/services/src/services/openwiki/bootstrap.rs#L398-L406)
-
-## 自動マージの setup 原本は公開記憶と別の証拠
-
-instance管理tmpの `repository-memory/<Repo UUID>/knowledge/integration-wiki-setups/<integration UUID>.json` は、begin前の原本とowner/code identity、復元phase、過去と最終Wiki SHAを保持する。公開ManifestやWiki本文の代わりではなく、host receiptの原本digestとcode treeに照合する復元用journalである。廃止済みWorkspace MemoryやBootstrap索引をこの原本として流用しない。準備・writer収束・限定復元の順序と再開時の拒否境界は [自動マージ](formal-integration.md#begin-前の原本準備と-host-の限定復元)を参照する。[保存先](../../crates/utils/src/repository_memory.rs#L781-L805)・[identityと原本検証](../../crates/services/src/services/openwiki/setup/integration.rs#L259-L334)
-
-
-## リポジトリ設定ファイルと生成物の所有
-
-LOCAL-344は利用者の決定として、執筆指示 `openwiki/INSTRUCTIONS.md` と探索除外 `.openwikiignore` を同じ操作体系で実ファイルへ全文保存し、保存・削除・再構築を分ける。保存は次回以降の入力変更であり、生成や同期を開始しない。共通既定はリセット元に限り、設定差分の階層合成は行わない。[設定保存](../../crates/server/src/routes/openwiki/management.rs)
-
-LOCAL-373では `openwiki/` を生成・保守専用領域とし、固定sourceの通常ファイルを設定例外以外すべて管理する。manifest・frontmatter・生成マーカーによる所有権推測と、人間管理文書と推測した変更・manifest取り込みの拒否は撤去した。マーカーのない子indexも削除・再構築対象になる。`openwiki/INSTRUCTIONS.md` と `.openwikiignore` は明示設定として保護する。公開候補manifestのサイズ・schema・ページパス、INSTRUCTIONS原本一致、Wiki外変更拒否、symlink境界は維持する。削除は全対象の境界検査後に行う。通常codingのcanonical Wiki書込権限は変わらない。[領域列挙](../../crates/services/src/services/openwiki/management.rs)・[公開前検査](../../crates/services/src/services/openwiki.rs)
-
-削除成功はDBのsource/Wiki鮮度とcheckpointを未生成へ戻し、generation_suppressedで通常Syncと自動マージからの再生成を抑止する。設定保存・削除のfile_operationは既存専用Workspaceと公開checkpointを使い、結果とstateを同一DB transactionで確定する。再構築は開始時公開先SHAをrebuild_referenceとして固定し、旧Wikiの知識を現在のコード・テスト・設定へ照合する。コードだけでは失われた運用知識や理由を完全復元できないという利用者の意図を保ち、旧記述を無条件に継承しない。[操作と復旧手順](../operations/openwiki-maintenance.md)
-
-### 直接フォルダの除外
-
-DirectFolderは古いRepo行が残っていてもbegin・前回成功Runの回収・source準備から除外する。LVKの自動commit、Manifest、Repo Wiki管理を配下Gitの発見だけで有効化しない。結果は通常会話で確認し、非Git専用Manifestを追加しない。Repoのshared保存先は元Repoの識別を保ち、同名衝突用のworktree配置名へ移動しない。
-
-
-## 現在identityとオンデマンドのManifest形式
-
-通常codingにはRepoごとのCURRENT identity JSONと最新draft_pathを送り、複数Repoで共通の短いcoding契約は一度だけ合成する。同じSession継続でも旧Runのdraftを再利用しない。source変更時だけsemantic draftを書き、変更なしではdraftや専用検証記録を作らず通常の最終報告で返す。自動マージ担当のmerge/Wiki commitは通常codingの自動commitとは別契約である。[合成](../../crates/utils/src/repository_memory.rs#L597-L626)
-
-schema・判断と却下案・tests要約の記述手順は `CODING_RUN_GUIDE` にあり、起動時の実ガイドファイルと任意 `get_context(guide=coding)` が同じ定義を使う。確認済み人間の目的と担当の選択を区別し、承認を技術的理由として創作しない。これは通常注入の責務整理であり、token削減量の実測や全providerでの実モデル遵守を意味しない。[配置](../../crates/utils/src/agent_guides.rs#L25-L49)・[MCP](../../crates/mcp/src/task_server/tools/context.rs)
-
-
-## 確定ManifestのDB正本と起動時取込（LOCAL-398）
-
-確定ManifestはLVK内部の作業用記憶としてDBへ置き、Gitの可読commit本文・任意の[Issue本文アーカイブ](formal-integration.md#採用issue本文の任意アーカイブlocal-399)・統合済みWikiと責務を分ける。通常読取fallbackや恒久二重書きは設けず、既存ファイルを削除しない。登録Repo/event IDによる読取API `/api/repos/{repo_id}/change-manifests/{event_id}` を用い、ManifestReferenceと固定preset引渡しは旧pathではなくURLを返す。[model](../../crates/db/src/models/repository_state/manifests.rs)・[API](../../crates/server/src/routes/repo.rs)
-
-`repository_change_manifests` はRepo/Run複合主キーとworkspace_id・JSON payloadを持ち、Run/Workspaceへの外部キーを設けない。同一キー同内容は再実行可能、異内容・帰属不一致・不正payloadは拒否する。補助Run情報が欠けた旧正本を失わず、Project所属も推測しない。[schema](../../crates/db/migrations/20261116000000_change_manifests.sql)・[不変性](../../crates/db/src/models/repository_state/manifests.rs)
-
-LOCAL-398では旧Manifestの全ページと取込完了をRepo単位のtransactionで保存し、途中失敗をrollbackする起動時取込があった。これは過去の移行契約である。LOCAL-406は移行済み環境を前提に取込を撤去し、既存SQL migration・repository_manifest_imports行・旧ファイル・backupは変更しない。LOCAL-414ではさらに旧artifact専用の起動拒否検査・型のmarker・配線を撤去した。現行DBServiceはevents/の再取込、旧予約の削除、旧markerの解釈や補正を行わず、通常migrationとschema整合性検査を維持する。[起動接続](../../crates/db/src/lib.rs)・[通常起動回帰](../../crates/db/tests/startup.rs)
-
-LOCAL-414の通常起動では旧audit_failed/reserved 3件、旧ファイルや保持lock、旧root欠損を起動拒否の条件にしない。両DB constructorの合成DB回帰は旧履歴・SQL migration receipt・ユーザーファイルを変更しないことを確認する。これは旧データのcleanupや旧layout互換の復活ではなく、現行ランの認可・排他・復旧を免除しない。実際の成果物切替では旧server/agent hostとwriterを正式手順で停止・収束させ、対応DB backup・復旧volume・設定/鍵を保全する。旧新lock domainを並行稼働させず、旧binaryへ新schema DBを盲目的に戻さない。[起動回帰](../../crates/db/tests/startup.rs)・[切替と復旧](../operations/development.md#開発用成果物切替と復旧)。今回の統合は実DB操作・設定変更・restartを行っていない。
-
-Git成功後・DB確定前の失敗も、凍結source publicationの意味記録・親/tree/markerから元SHAへ復旧する。後続commitやmutable draftを混ぜず、Wiki pending・receipt・自動マージの固定ID解決もDB正本を参照する。`events_for_runs` はcallerが確定したRepo/Workspace/Run集合を読み、不在も明示する狭い境界である。LOCAL-396の[Project移送](project-transfer.md)は別のProject帰属・完了projection検証を持ち、import Manifestを新local Runの正本へ登録しない。[完了と回復](../../crates/services/src/services/repository_memory.rs)・[選択境界](../../crates/db/src/models/repository_state/manifests.rs)・[候補上の検証と限界](../operations/development.md#local-398399の統合検証)
-
-
-## ユーザー成果物・復旧ファイル・完了履歴の寿命（LOCAL-406）
-
-共有 `.lvk/shared/persistent` はユーザーが保持する成果物専用であり、LVK内部の通常処理はそこへdraftやjournalを作らない。共有tmp/cacheの利用者向け提供は維持する。instance管理のruntime root配下で、`tmp/repository-memory/<Repo UUID>/knowledge` にdraft・source publication・固定Sync入力・setup journal・report、`cache/repository-memory/<Repo UUID>/document-inventories` に再生成可能な索引を置く。復旧対象が残るvolumeと同じ寿命の管理tmpを保全し、一般の共有tmp/cache清掃から隔離する。[path](../../crates/utils/src/path.rs#L140-L167)・[配置](../../crates/utils/src/repository_memory.rs#L678-L723)
-
-Wiki/短い公開/Workspace完了lockは `/tmp/lvk-repository-locks/<Repo UUID>/` のコンテナ共通domainで、instanceの別名に分散させない。旧プロセスが生きたまま旧lockを消したり新domainへ切り替えたりしない。cleanupはlock fileを削除せず、同Repoを別コンテナから同時操作しない前提を持つ。[lock](../../crates/utils/src/repository_memory.rs#L985-L1028)
-
-正常codingはexact Git tree・DB Manifest・凍結publication identityの照合後にdraft/snapshotを片付け、不正draftは検査用に保持する。Wikiは原本復元と公開/照合後、DB stateへexact cleanup identityを残して片付ける。中断・部分削除・失敗は既存monitorが同じidentityから再照合し、不明なファイルを一括掃除しない。自動マージも復元済み最終SHAとGit/DB bookkeeping後にjournalを掃除し、成功までpost_processingに残る。[coding完了](../../crates/services/src/services/repository_memory.rs#L117-L148)・[Wiki掃除](../../crates/server/src/routes/openwiki.rs#L773-L801)・[統合完了](../../crates/server/src/routes/integrations/runtime.rs#L530-L554)
-
-永続に後から読むRun identity/完了診断は `repository_coding_runs` に置き、復旧snapshotを無条件にDBへ移す方式ではない。新規DBと既存DB upgrade、原本保持、コンテナ交換相当・共有清掃・別process lockの隔離試験と、稼働で未実施の収束確認は[固定統合検証](../operations/development.md#local-384396406339の固定統合検証)へ分ける。
+Git と DB の間の crash、固定入力の変更、lock と cleanup は個別の fixture で検査する。これらは live DB の移行や実 provider の受入を証明しない。[Sync tests](../../crates/services/src/services/openwiki/sync_input.rs)・[memory tests](../../crates/services/src/services/repository_memory.rs)

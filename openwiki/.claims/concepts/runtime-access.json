@@ -1,248 +1,44 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:c1888fc401d5c33240ca4c4231982aa0e431e0ddd707879a292a2fc82bb8f00a",
+  "pageVersion": "sha256:b92a2c408ac8b381a5afea13c0079a7eec7c45e4fcddf03c2dbdb7b503a37ed2",
   "claims": [
     {
-      "id": "claim_5f8fb54c2f6c4bad86021e17d9b3fbec",
-      "statement": "Runtime Accessは外部MCPでfile read/changeとprogram実行を提供しAgentRunを作らず、OS sandboxではない。",
+      "id": "claim_9eacf56ef9aa4ba78b4e422b42ec5994",
+      "statement": "Runtime Access の file と execution は独立し、既定は両方有効、file roots は / である。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/remote_mcp/environment.rs",
-          "version": "repo-file-v1:sha256:1b7db57f72f9b9578ed430201ce2909c4e1bc3d8944d0e4a9f822ba250cdeed4"
+          "resource": "repo://crates/server/src/remote_mcp/environment.rs#L24-L42",
+          "version": "repo-lines-v1:sha256:13b589094b81dbb84f9a64409529b47d4f0e720c061ca455b770257e8360f7a0:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjBkMjc5MzM5NjczOWMzZWUyMDMzMTg0ZWY2YmE1ODNlZjFjNDNkMzM4NDFlNTVlYWJmYjk4ZjA1MTlmZGU3NDkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijg2NTcxNzQ2NWVlZTQ4ZTIwZTQ1ZmYzZjNjODIxYTI4M2U1NTNmNzM5NDlmMDE3NmRkYzM4NWU0MDFmY2Y3YzgifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_d1b7432e19464ef08e77e454c14fa2a9",
+      "statement": "File roots は直接 file API だけを制約し、実行 program の OS アクセスを sandbox 化しない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/remote_mcp/environment.rs#L126-L159",
+          "version": "repo-lines-v1:sha256:37bc906c16e4f40884ee0c313217052351d6b933ec9d6169898a25aa343706d3:eyJzZWxlY3RlZExpbmVDb3VudCI6MzQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMTFkMDBiZmIwNTE1OGY5NjE0Y2UzMDM0OWMyZWU4OTliY2E3YWRmOGNiNjJhZGU2ODI3ZDZhYjQyZjY3MWYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdmMzI1NjE4NjZjODFiZTM1OTY2ZGQzMzc3YjY1ZDc2NjczNmQxZDJhNTIwZDRmOWI5ZjUxOWE0YjMyN2JlNTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhlZTNhMThlMGNjYzM5ZDgxZDEzMTk5OTVhZmVhZGFmNjU4NDM0MDBmZGQ2Y2RiMDZiNzBhYWE3NGUxOTNiYzciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjUzZGNkNTJkNGI1YjM0MTY4ZjFlMTM4NDBiN2Q0ODRlYTk4OTY0NmM0NDEzZmI1N2U3MzU4YzM5MDg0NzViZGUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_729931012ff241e6b9b5b88611841abb",
+      "statement": "直接 process の停止と timeout は pidfd により一 PID を対象とし、子孫や process group の停止を保証しない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/remote_mcp/environment.rs#L150-L174",
+          "version": "repo-lines-v1:sha256:812f7cbe62fd43bf5436b56bbb4e62ce16fb931be3c7f512ff290104412f1d99:eyJzZWxlY3RlZExpbmVDb3VudCI6MjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUxNGQ3ZjJkNDRkZTRmMzQ4ZWI5NmM3Y2I2YWIxMzM4NjllMTc2NjhiMmYxYjM5ZTc1MzYzYWRkNzBmZTdmNDkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhiOTgwOGFjOWRmMGY2MTk0YzJiZmU4YmFlYWMwMDU4ZTkzNDQyYjY3OWZjNDZkMTk2NzczY2IyYTY2MGZiZTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImMyNjIzNTE2ZGU1ZDExMmVlYzUxMmFmYTk3NTgyMGY4YTMzNGQzNjJlNTA0NDcyZDc4NDczZTU5N2UzZDNlZDAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImRlMmM5MDQ1N2E5NTQ0ZDIwMzc0ODQ3ZWVjNWMyZWM5YzZhMTc0ZDcyNWNmMDAxZWZjYWM4YTg4YjVhYmVlZTIifQ"
         },
         {
-          "resource": "repo://crates/server/src/remote_mcp/environment_process.rs",
-          "version": "repo-file-v1:sha256:971b64229afee508f944f6e2a93ee83177dad7445e29b227d35411ae4df21110"
-        }
-      ]
-    },
-    {
-      "id": "claim_606d95045b8a413c8a9c5b86fdd6bea4",
-      "statement": "Runtime設定は独立file/execute許可を既定ON、file rootsを既定/とし、region/grant・executable allowlistを持たない。能力参照以外は明示Projectとscopeを要求する。",
-      "evidence": [
-        {
-          "resource": "repo://crates/server/src/remote_mcp/environment.rs",
-          "version": "repo-file-v1:sha256:1b7db57f72f9b9578ed430201ce2909c4e1bc3d8944d0e4a9f822ba250cdeed4"
-        }
-      ]
-    },
-    {
-      "id": "claim_ddc6c7fe1e324eb4b70167709474fe34",
-      "statement": "設定APIはweb/basic/localの管理者専用で、保存時にactive adminとrevisionを再確認し、SQLite設定とauditを同じtransactionで確定する。内部agentやMCPに設定writerを公開しない。",
-      "evidence": [
-        {
-          "resource": "repo://crates/server/src/remote_mcp/environment_settings.rs",
-          "version": "repo-file-v1:sha256:44f3b425dfe61d21d8507df9443a2bd3aaa4e6c19c0692a9761cb2482e3eec4f"
-        }
-      ]
-    },
-    {
-      "id": "claim_2177e7317aa24c938b5d460bca78f326",
-      "statement": "新形式の保存設定は正本でlegacy fallbackはない。各runtime要求と副作用直前に設定を再照合し、設定保存はprocess registryを再作成しない。",
-      "evidence": [
-        {
-          "resource": "repo://crates/server/src/remote_mcp/environment.rs",
-          "version": "repo-file-v1:sha256:1b7db57f72f9b9578ed430201ce2909c4e1bc3d8944d0e4a9f822ba250cdeed4"
-        },
-        {
-          "resource": "repo://crates/server/src/remote_mcp/environment_settings.rs",
-          "version": "repo-file-v1:sha256:44f3b425dfe61d21d8507df9443a2bd3aaa4e6c19c0692a9761cb2482e3eec4f"
-        }
-      ]
-    },
-    {
-      "id": "claim_5c176c541251494d8d4347c3e4ca917b",
-      "statement": "execution OFFは後続の観測/output/stopを拒否するが稼働子をkillせず既存timeoutは残る。file機能OFFへの失効では消失rootを再検証しない。",
-      "evidence": [
-        {
-          "resource": "repo://crates/server/src/remote_mcp/environment.rs",
-          "version": "repo-file-v1:sha256:1b7db57f72f9b9578ed430201ce2909c4e1bc3d8944d0e4a9f822ba250cdeed4"
-        },
-        {
-          "resource": "repo://crates/server/src/remote_mcp/environment_settings.rs",
-          "version": "repo-file-v1:sha256:44f3b425dfe61d21d8507df9443a2bd3aaa4e6c19c0692a9761cb2482e3eec4f"
-        }
-      ]
-    },
-    {
-      "id": "claim_91dc5aaff5384b1782bd4b460e03fa27",
-      "statement": "起動時cwdがmanaged Workspace自身/子なら拒否し祖先/siblingは許す。stopに現在cwd検査はなく、直接file変更はWorkspaceと子・削除時の祖先を拒否する。resource claimは取得しない。",
-      "evidence": [
-        {
-          "resource": "repo://crates/server/src/remote_mcp/environment.rs",
-          "version": "repo-file-v1:sha256:1b7db57f72f9b9578ed430201ce2909c4e1bc3d8944d0e4a9f822ba250cdeed4"
-        },
-        {
-          "resource": "repo://crates/server/src/remote_mcp/environment_process.rs",
-          "version": "repo-file-v1:sha256:971b64229afee508f944f6e2a93ee83177dad7445e29b227d35411ae4df21110"
-        }
-      ]
-    },
-    {
-      "id": "claim_93fcebaf12a14d8aac0610557246a29b",
-      "statement": "runtime file readerはroot祖先からfd相対にsymlinkを辿らず、traversal・特殊file・procfs/sysfsを拒否する。通常bind mountやhard linkは管理者のscope内である。",
-      "evidence": [
-        {
-          "resource": "repo://crates/server/src/remote_mcp/environment_files.rs",
-          "version": "repo-file-v1:sha256:56ef00259f803af34a29a5657a4bdd662b50bcdd09643aef2618e2141fa39b49"
-        }
-      ]
-    },
-    {
-      "id": "claim_e020266aebc24b9481c9996c82f7295d",
-      "statement": "file readは既定16KiB・最大512KiBでinode/metadata/anchor cursorによりrotation等を検査し、読取中変更では次cursorを返さないがimmutable snapshotではない。",
-      "evidence": [
-        {
-          "resource": "repo://crates/server/src/remote_mcp/environment_files.rs",
-          "version": "repo-file-v1:sha256:56ef00259f803af34a29a5657a4bdd662b50bcdd09643aef2618e2141fa39b49"
-        }
-      ]
-    },
-    {
-      "id": "claim_cd65749a7d70494ba56659bbf75b13b8",
-      "statement": "run_processは有限3600秒/service86400秒を上限とし子環境をclearして固定PATH/LANGだけを与え、startup receiptをhealthやtest passとは扱わない。",
-      "evidence": [
-        {
-          "resource": "repo://crates/server/src/remote_mcp/environment.rs",
-          "version": "repo-file-v1:sha256:1b7db57f72f9b9578ed430201ce2909c4e1bc3d8944d0e4a9f822ba250cdeed4"
-        },
-        {
-          "resource": "repo://crates/server/src/remote_mcp/environment_process.rs",
-          "version": "repo-file-v1:sha256:971b64229afee508f944f6e2a93ee83177dad7445e29b227d35411ae4df21110"
-        }
-      ]
-    },
-    {
-      "id": "claim_3cc135dff260416984d4117f7e17587c",
-      "statement": "process観測とstopはsame UIDとboot/PID/start ticks、managed principal/Project所有を検査し、現在cwd/file rootで制限せずexec自体を拒否理由にしない。",
-      "evidence": [
-        {
-          "resource": "repo://crates/server/src/remote_mcp/environment.rs",
-          "version": "repo-file-v1:sha256:1b7db57f72f9b9578ed430201ce2909c4e1bc3d8944d0e4a9f822ba250cdeed4"
-        },
-        {
-          "resource": "repo://crates/server/src/remote_mcp/environment_process.rs",
-          "version": "repo-file-v1:sha256:971b64229afee508f944f6e2a93ee83177dad7445e29b227d35411ae4df21110"
-        }
-      ]
-    },
-    {
-      "id": "claim_e62af085056e4577a9d57eda9f603c70",
-      "statement": "process outputは所有者に束縛された揮発bufferで各stream1MiB・最大128記録とし、終了記録をevictしてoffset喪失とcapture drain期限を区別する。",
-      "evidence": [
-        {
-          "resource": "repo://crates/server/src/remote_mcp/environment_process.rs",
-          "version": "repo-file-v1:sha256:971b64229afee508f944f6e2a93ee83177dad7445e29b227d35411ae4df21110"
-        }
-      ]
-    },
-    {
-      "id": "claim_1cbc0e14c5d2420d898a42668afc9419",
-      "statement": "stop/timeoutはpidfdで正確な一PIDへsignalを送り、自身や祖先は拒否する。stop受付は終了証明ではなく、timeoutの終了未確認はunknownとなる。",
-      "evidence": [
-        {
-          "resource": "repo://crates/server/src/remote_mcp/environment_process.rs",
-          "version": "repo-file-v1:sha256:971b64229afee508f944f6e2a93ee83177dad7445e29b227d35411ae4df21110"
-        }
-      ]
-    },
-    {
-      "id": "claim_79a639bb8b02488ebbbd391bb6a8450a",
-      "statement": "再起動後もlaunch receiptでprincipal/Project帰属を維持するがoutputと寿命monitorを復元せず、unknownや受付済みを完了と扱わない。",
-      "evidence": [
-        {
-          "resource": "repo://crates/server/src/remote_mcp/environment.rs",
-          "version": "repo-file-v1:sha256:1b7db57f72f9b9578ed430201ce2909c4e1bc3d8944d0e4a9f822ba250cdeed4"
-        },
-        {
-          "resource": "repo://crates/server/src/remote_mcp/environment_process.rs",
-          "version": "repo-file-v1:sha256:971b64229afee508f944f6e2a93ee83177dad7445e29b227d35411ae4df21110"
-        },
-        {
-          "resource": "repo://crates/server/src/remote_mcp/operations.rs",
-          "version": "repo-file-v1:sha256:0859c5de8ecfefeca7796036e3019301a9387793da6ee200655b8161fba5c97e"
-        }
-      ]
-    },
-    {
-      "id": "claim_a2e19cc2a52c417a9ee28712e418743b",
-      "statement": "runtime receiptのget_operationはruntime:readを追加要求する履歴参照であり現在の設定許可検査とは別である。",
-      "evidence": [
-        {
-          "resource": "repo://crates/server/src/remote_mcp/issue_write.rs",
-          "version": "repo-file-v1:sha256:baf3417b472da799c486119a4a711b810bc72e1a6836998a1d76d0a8e9b17084"
-        }
-      ]
-    },
-    {
-      "id": "claim_26c8686af8dc4ff5b7cd362d15f20320",
-      "statement": "redesign migrationはpre-release runtime設定を一度削除し、新形式の既定file/execute設定へ移る。新形式row破損はdefaultへ戻さず失敗する。",
-      "evidence": [
-        {
-          "resource": "repo://crates/db/migrations/20261029010000_runtime_access_redesign.sql",
-          "version": "repo-file-v1:sha256:f9c919a0326f98caa5cc0031fb416b0550dad3d3b01c74265f063b9532c000ae"
-        },
-        {
-          "resource": "repo://crates/server/src/remote_mcp/environment_settings.rs",
-          "version": "repo-file-v1:sha256:44f3b425dfe61d21d8507df9443a2bd3aaa4e6c19c0692a9761cb2482e3eec4f"
-        }
-      ]
-    },
-    {
-      "id": "claim_85deacb44cd14e3abf13f9a3685df07d",
-      "statement": "Runtime設定UIは独立したfile/execute許可とdirect file rootsを設定し、実行はOS sandboxでなくOFFでも既存processをkillしないことを示す。",
-      "evidence": [
-        {
-          "resource": "repo://packages/web-core/src/shared/dialogs/settings/settings/RuntimeAccessSettingsSection.tsx",
-          "version": "repo-file-v1:sha256:f197ac4128154fa85d9bc826ae1c7cc007a0f71f720b8d3f092ef927b0fb4a74"
-        }
-      ]
-    },
-    {
-      "id": "claim_dd7bbe855b484a6b93f9111cf7f75744",
-      "statement": "専用self_restartはproject_idとexecution許可、固定instance switch engine/launch設定、no_new_workと絶対bundleを要求する。受付とcutover結果を分け同request ID・principal/Project所有で結果を読む。",
-      "evidence": [
-        {
-          "resource": "repo://crates/server/src/remote_mcp/environment_switch.rs",
-          "version": "repo-file-v1:sha256:ea45f124181e03fb3d9d3c9fe90b51a0ee9b551c8bd23ec784d927d97ac4030c"
-        }
-      ]
-    },
-    {
-      "id": "claim_e407f00d8526415daa040bd079dd8558",
-      "statement": "自己再起動では稼働serverの実loopback listener、process identity、instance/data、currentと起動設定hashをpipeで渡し、workerが停止前にsnapshotを独立照合する。",
-      "evidence": [
-        {
-          "resource": "repo://crates/server/src/remote_mcp/environment_switch.rs",
-          "version": "repo-file-v1:sha256:ea45f124181e03fb3d9d3c9fe90b51a0ee9b551c8bd23ec784d927d97ac4030c"
-        },
-        {
-          "resource": "repo://deploy/developer/switch/start_binary.py",
-          "version": "repo-file-v1:sha256:096945340583f5bcd11c10e562cffc9e94d6a3b073dd311a9a030f6c97b9fca1"
-        }
-      ]
-    },
-    {
-      "id": "claim_eddb6e2c864347af80bfc39bb7563d49",
-      "statement": "Runtime操作は副作用前の拒否と実行後の結果不明を分離し、失敗receiptのpath/cwd/commandや入力本文を秘匿投影してID・revision・部分作用の事実を残す。",
-      "evidence": [
-        {
-          "resource": "repo://crates/server/src/remote_mcp/environment.rs#L565-L613",
-          "version": "repo-lines-v1:sha256:2c7223827ae4ea6d29e7d938a15973affe0adb3a059ae546d91ef1210ab0e3b6:eyJzZWxlY3RlZExpbmVDb3VudCI6NDksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZmODRjYzJiZDlmZWIxNDg5ODkyZWYyYWUzMzJjMzAyMGU5ZTllOWQxMGYxMTBiY2MyODUwODYwOWQ1NDI0MGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQwOTNkY2UwMmZhM2U1YzBiOGMxYzg2YWM2N2U4NzYzZTNhMjQ5YWFhZDAxZjlhOGVkZTJkNjcyNzE1MGJkNzgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjgxZmYyZDE0MGZjZTZjMGJhMzQ3ZDEzNjgyYmIxODk2ZjYxMDQ1ZjFhNzljMjhjYzNhZGFkOTU2ZjY1ZmMzMjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImI5NWJkYjBjYjA5MDQwM2EzYjkwODdmZjEyOTQyMDhkNmRiMzNhNDA4ZWM0YjM1ODE3NTI4ZDI2NGNiZGYzZmIifQ"
-        },
-        {
-          "resource": "repo://crates/server/src/remote_mcp/issue_write.rs",
-          "version": "repo-file-v1:sha256:baf3417b472da799c486119a4a711b810bc72e1a6836998a1d76d0a8e9b17084"
-        },
-        {
-          "resource": "repo://crates/utils/src/mcp_error.rs",
-          "version": "repo-file-v1:sha256:1c72db95ace535eb4a4f96e2aec3582fe5795cd5fdeb3e22314d68477bddee39"
+          "resource": "repo://crates/server/src/remote_mcp/environment_process.rs#L1-L2",
+          "version": "repo-lines-v1:sha256:5b1626124043becbaf4355bda4e817478d50af029bc568846651d2a0e2a723e9:eyJzZWxlY3RlZExpbmVDb3VudCI6MiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYjcxY2NiMDE4YWViNmYzNzM4ZDhiZWM0MzhiNjM4MjMwZTlkMTIxNWI0MmYxYjBiNzZmMmFjNmYxMjkyNjQxYiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMzJiNWEzMjkyYmE3ODc1YmJmMmViYjI0NzVmYTM5YTg4M2RjOGQxYTFjYmNmYTVkODg3ZTAyOTIyYzQ4M2NkMiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjAsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZjlmYjk3Yjk3MzU2YjBmZDViNDZkMzAwYjZhYjNhNTYzZDJiZjBkNGIxMzA0NDEzYjBiNjE4MGJlMTBlY2QxMSJ9"
         }
       ]
     }
   ],
   "verification": {
-    "by": "openwiki/0.7.2",
-    "at": "2026-11-10T13:43:59.705Z"
+    "by": "openwiki/0.9.0",
+    "at": "2026-11-22T05:31:45.518Z"
   }
 }

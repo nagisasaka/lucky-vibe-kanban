@@ -1,152 +1,40 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:047b7f3477b40fe6b78593f5655616d3bb08c0474fc57b084f5c723bb65358b8",
+  "pageVersion": "sha256:6554cbd0916c9be4b828819acc92590dbffad7d78010f76861902a24ca2a3529",
   "claims": [
     {
-      "id": "claim_4ca71453058a4798911bdeec1ad41dc8",
-      "statement": "Arenaは一つのローカルIssueに対するWorkspace-backed候補群で、Designを既定modeとしてImplementationと区別する。",
+      "id": "claim_1ef0d609ccaa489bbb4f4b528cdb0a97",
+      "statement": "Arena の候補 status は Workspace の通常 archive flag と独立する。",
       "evidence": [
         {
-          "resource": "repo://crates/db/src/models/arena_group.rs#L25-L86",
-          "version": "repo-lines-v1:sha256:55580f469c3c17d6465145ea59e909c0335ab52866ac7fab268d22a08a9519b7:eyJzZWxlY3RlZExpbmVDb3VudCI6NjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcwMGU3NjdjYTYyODNlNjdkM2VjMzQzNzRhNmFjNDcwOWUxZTVkNWRiMmFkOTY0NThlMDIzMDE2NzFiYzJmNjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk5ZmQ4MTA5ZjA3ZTJjMzliMDc2YTg1YTQ3Y2I3YTFjMWMxZDNjYmNmYjE0MmI0NTU1NjBlZTE0MmY1MTM0ZjUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijg0NDA1NjdkZWQ4ZjI5MDYyYjk0MjQyNmEzYzhiNjlhZThjNWExMmZkZWRkYTNmMjdkMjRkMmVlZTRjNWY4NDEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImZkMGVmNzNmMmEwZjdhZTViODUyZmFlOGNjMmJlYjVkMWJhODZiY2ZlZDliMGI4OGM0MTgzMWM3NTFlNTJkNTYifQ"
-        },
-        {
-          "resource": "repo://crates/server/src/routes/local_remote.rs#L2651-L2702",
-          "version": "repo-lines-v1:sha256:4467727f6fd56aceff7c46442a7fc44daf92f87b718cba90d430113f60e7ebc8:eyJzZWxlY3RlZExpbmVDb3VudCI6NTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc1ZWNlNzljYTY5NWEyNDNhMWJiMGIxOWE0ODgxY2MwMmE1NDVjZThiMTc1MzNjMDNmMzRiMmQxZjU2NDBhM2IiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZmNDZiMTgxMzExNDg5MzBjYzY5ZTZjODcwMzg1NWM5MjFlNDhkNWIwZTUwYjRiOGJhNjVhNjZlN2Y2ZWNkNTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRhYmUwZGMyZWYzYmMwNWM0ZjQzNDNkYTY5MDhjNjAyMDg5MDk4MWE1ZDdhNzM0NGEzODBkNjRmNDdmNTFlODIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImU4YTJhY2E1YjA0NzQ5Y2Q2NGQwYWMyYWIyNmYxNDg4MTUwNTVhMTEyZTZkZWJiYzBkNmJjOGRhOTcwY2Y4ZDMifQ"
+          "resource": "repo://crates/db/src/models/arena_group.rs#L8-L23",
+          "version": "repo-lines-v1:sha256:7129a6a7eb23171456cbbcbe7ac4fdb65e76be8f4f0fc787625d3a4fe0a23241:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhMTJlMjk3MTcyZjM2ZmI0NDk4ZDYwZWYwMjNjYzAwOTM5YTBjMjBmY2EzNWMzMjAyOTI3NWQwMWMxZjFkZGQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRlOGUyNWRjNWM2YWZhNDYxNzVhN2JmYzE2N2VkYTc0Nzg1MDkxYWNjNDE4ZjIwMDY1NmNkZWMwYmZhMzhiMmQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY0MWU1NWU0YzI1MDcyNGJkNDE3ZjRiNjYzNDAwYTQ3MjVkZTgzOTdjZGQwNzQ0ZmNmODI0N2VmMmU2YjM0NzgifQ"
         }
       ]
     },
     {
-      "id": "claim_d835926610b04630a1444dd4439bc9f9",
-      "statement": "Arena内statusは通常archive flagと直交し、closed groupはactive lookupから除かれる。",
+      "id": "claim_617631ee38e6458e9b33620a6d25924e",
+      "statement": "新規 Arena 作成 handler は preset 入口 guard を通る。",
       "evidence": [
         {
-          "resource": "repo://crates/db/src/models/arena_group.rs#L424-L453",
-          "version": "repo-lines-v1:sha256:4e76b7a81487d69b69d4ad53314e0dedccb583fe6ff7cc5bfa8d05698e7e2c54:eyJzZWxlY3RlZExpbmVDb3VudCI6MzAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkxY2M0MDY4N2QyNDRlOWRhZjkxY2VkNDY1MjMyNjU2OWE0ZmI2ZGZjODFkMDNmYmU3MjNhNWVhM2NjYmU5ZGYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZhNDkwZjgyZmY2MGRiMTU3NTNiYWIwMjUxYzNmOTVlZWNmNjBjNTEwZjY5MTMxNjY0ZWYyOGZmODZkMmJkNjQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjU2NDZiYWZiZjcxNWRiODg0YWY2MWY0NTkzYzIyM2M3ZGVjZjE0MWViZTVkNzBhN2M1Y2UzNDFhODM3M2I4OWEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoyLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM3OTRkMDJhODEyMTk0NGQxNzZkMjY1ZTliYjljYzU5ZjZhYjg5MGJjYWRmOGFlZmRlYmRiYmI0ZjJlYTg0NDQifQ"
-        },
-        {
-          "resource": "repo://crates/db/src/models/arena_group.rs#L8-L53",
-          "version": "repo-lines-v1:sha256:614dfce8de6a45eab3b884a6f8894bb6f0de612d0837c360c82e71819c5fc130:eyJzZWxlY3RlZExpbmVDb3VudCI6NDYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhMTJlMjk3MTcyZjM2ZmI0NDk4ZDYwZWYwMjNjYzAwOTM5YTBjMjBmY2EzNWMzMjAyOTI3NWQwMWMxZjFkZGQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNkZjkxMjRhYzIwMmY2ZjI0ZWZhNzZlZDQ4MzI0MDQyMjdmYTgyMmU4ZTViMTUyODJmYTFlMTQxNjEzZGZkYTQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRlOGUyNWRjNWM2YWZhNDYxNzVhN2JmYzE2N2VkYTc0Nzg1MDkxYWNjNDE4ZjIwMDY1NmNkZWMwYmZhMzhiMmQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhlODI2NzM3MTQ5ZGQ1ZThmYWZhNDk5Y2U4OGE3OWMzYmI3YmIzYjhlZGFmOTcwMTg2ZDczMTIzZmFlYzBiOTkifQ"
+          "resource": "repo://crates/server/src/routes/local_remote.rs#L2815-L2824",
+          "version": "repo-lines-v1:sha256:0652bb4138a511464f6aa74131cc0bcf859ea41c6b50c808da9d0299f5599dc1:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY0NzVlOTRhOTA0YWM0OWIzMTU0ZDQ2NzJhNjZlODYyOWI4NmRhYzc0ZTNlMjkzN2JlNjkyN2FlM2RhMTFjNTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUyYWQxMDBiYmZhMzlhZWM2MDJiNDUyYmRmOTYwNjkyOWY1NTgzYjc3YTU4YjhjZmVjNmIwYjBlOWQ1NTYxZTgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJhYzEyMjQxOWQ4MzU3ZTNkZDdlMjZlZmZhNGM0YjEzNTUxYjVjOGExMjA0MGE0MDU0OWU3ZTNiZDNjNDJiMGMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJlOTFhYWE2Y2EwMTZhODdjOTliMjlmOTRkYTc5OGJiNmUzZmYzODE0ODZlOTBiMjBlMDUyM2M0NjJkYjMwMGIifQ"
         }
       ]
     },
     {
-      "id": "claim_438c95d6899e4076a8420d29a077c4bb",
-      "statement": "新規Arena作成APIはpreset入口guardで拒否する。旧候補検証ロジックと既存group/Runの互換操作は残る。",
+      "id": "claim_5cacac799fcf44299ff518a534649e37",
+      "statement": "Workflow の winner patch は Repository ごとに順次主 Workspace へ適用される。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/local_remote.rs#L2795-L2845",
-          "version": "repo-lines-v1:sha256:18380da4f4e277ccc2bb6278abcb0c6dc75a17fb3ed687d376df3809d6e410db:eyJzZWxlY3RlZExpbmVDb3VudCI6NTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdiNzgxMThjZGMxMDU5ZWM5YTY4ZmEzNDliMDIwOTZhMjA4NDY2MTYyZjFiZDZiZTAyODhmYmZiNGYyNzM2MWUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI1OGIyNDMwNGQ0Y2JlMTM2NjFiMjM1MjU4NDQwMGNlZmU4ZDlkNjYxMmYxYzEyMmY4Y2M4ZTc1Y2FhZGQzNTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQwNjg5ZjY1YWRkNjM4YWEzYmJmMTgyODRiMTNhYTQ3NzE1ODk4YmMzZjc2MTU2ZGFkYmE5ZDZjZTJlNDAxMzYifQ"
-        },
-        {
-          "resource": "repo://crates/server/src/routes/workflows.rs#L358-L362",
-          "version": "repo-lines-v1:sha256:3d60846411779b0c0a5e92ab4df459dfadd006b2a26d45b71c89365a73a808c6:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiODk3ZDA3ZTkzNTY5MjMzY2Y0ZGQ5MGQyNjE3NTFiNjk0NzUzMjBmMDkyOWRmYjg2NThkMDIwZGNiNWVmZDhlOSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiODQzZjc5NDg4OWYwNGI4Nzc2MDc3YzBmMmZiNWRiODM0MjIzYzVlMjk0Y2Y2YjFiZTVjN2VhNDk0ZDRhOWE2ZiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMTllNzYzNTVjZjExOTk0ODBjM2Y5OTgzNmIxNDg2Yzg0MWQ4OTFmYWFkOTA0YzYwOGUwOTMwMjJkMzc1N2FlZSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMzllNWEzNjg0ZGFiYmVkMjRkOWIzZDNlNzdhZGM3NTE1NGIxMGJkYzUxZWE2MDA4YThkM2RlMjhlODJkNTYzYSJ9"
-        }
-      ]
-    },
-    {
-      "id": "claim_8c52067da2b940b189e19caef4a2634b",
-      "statement": "Open Design Arenaでは既定commit方針が抑制され、ImplementationStartedで通常方針へ戻り、Designのpromoteには実装開始状態が必要である。",
-      "evidence": [
-        {
-          "resource": "repo://crates/local-deployment/src/container.rs#L2794-L2821",
-          "version": "repo-lines-v1:sha256:c53b76ae1b7e5ba21e24e9f151668391f531ba1cc74a717597fefed847be0459:eyJzZWxlY3RlZExpbmVDb3VudCI6MjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkxY2M0MDY4N2QyNDRlOWRhZjkxY2VkNDY1MjMyNjU2OWE0ZmI2ZGZjODFkMDNmYmU3MjNhNWVhM2NjYmU5ZGYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM3NDEzOGRkZWQ4YjcyMDEwNDIxYzJkNDA2YWVmNzFhNDFiYmNjMWU1MDUxMzlhNmExZWQyMjdkODgyMTM0ZTUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk5OWJkZWZlZWFjYTYzNDBlMDI5MGRjODZlODg5Yzg5ZDVlMTg5YWE1YmE0NGI1ODViM2I3MDczNGY0YTYyZDgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoyLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM3OTRkMDJhODEyMTk0NGQxNzZkMjY1ZTliYjljYzU5ZjZhYjg5MGJjYWRmOGFlZmRlYmRiYmI0ZjJlYTg0NDQifQ"
-        },
-        {
-          "resource": "repo://crates/server/src/routes/local_remote.rs#L3412-L3418",
-          "version": "repo-lines-v1:sha256:9a4793b1d13a7c3e5ac399b82b0afd9c7f5e0c11ee70ab722c5b96628498dbfb:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZDEwMGNmYjg1MzdhMGZiZjhmNjMxNTA4Y2RiYmYyYzlkZDBlY2NmNDNkNDRkMGNjYWJlYTdjNDQ3MjYyMzkzMSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDg5M2Y0MGUzNzgxZWI4OTZjODJkMDQ2YTA4MDY3YTExZTM1Y2RmMmYxZGZhZjI2ZmVhOTBiOGRiNjY3NjQxMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNzc5ZGI1Njc5OWVmOWU1ZGViZGI5ODM2NGIyNGE4NzRkMTJmMDI1YmVmNzY0YjY1YmRmMWMwN2ZiYjkxMTViYyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiN2UyYjhiNzdjYzMwMWI2MGYyODU0YjFlOTAzOGIyY2RmOWY0NDM1ZTVmOTljNjYwOTcyOWYzMDk1NmJlNWYwMCJ9"
-        }
-      ]
-    },
-    {
-      "id": "claim_01c992378c604342a37e2145943b088a",
-      "statement": "Start implementationは既存候補を実装対象に記録し、非空follow-upがある場合だけその追加入力を起動する。",
-      "evidence": [
-        {
-          "resource": "repo://crates/server/src/routes/local_remote.rs#L2973-L3013",
-          "version": "repo-lines-v1:sha256:6abc3b0029eec826c6a2e8bc2bf7b72b2bc5983f586db28a34ea2471d9288a47:eyJzZWxlY3RlZExpbmVDb3VudCI6NDEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFlMGIzZjVjNzBiMmYwZDA3OGY3MTRiNTdkNWNiNjg0MjQzZjhlNmI2NDU0MTY0NTEwZTkxZGUwOWM0NDQ2YzAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVmYjljNzQ4MjA3MGI0YmQzMTYxZjMwOTU5NDFkNDgyMWVlOGJjMTYzNmEwMzZiYmU3YTIwM2UzODY1MWY5N2EiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM0OGQ5YWZkZjdlNjhmODEyOWRhODE3MTRmMDI0YWVjNjYwMjhhM2E4NzNjNzA0ZjE1OGQ2ZGM2N2Y5NWYwZDkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE3OGYwYTVlZDRlZDFmMTdiMTUxZmQ1ZjliZWM4MjQyNGVjNWE2ZWY3NTgwYzQzN2M1MTdjYzg5ZGI4MTNiNDMifQ"
-        }
-      ]
-    },
-    {
-      "id": "claim_fcd9453be24e40efbbadaac7628a3cee",
-      "statement": "通常Arenaのpromoteはwinnerと兄弟のArena statusだけを更新し、通常Workspace archive・worktree削除・Git mergeを実行しない。",
-      "evidence": [
-        {
-          "resource": "repo://crates/server/src/routes/local_remote.rs#L3407-L3438",
-          "version": "repo-lines-v1:sha256:892fa6614634ab64245a7da4ff46498426ef5c73a84fec303a09225fa404b4d3:eyJzZWxlY3RlZExpbmVDb3VudCI6MzIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRlMjViNTljYTMzMmE4YjU2N2NkOTA0YTZkYTg4M2IwYjZlY2QwMTc0OTU5MzI2NDcyY2RiMDNhMzAyNzMyNWYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUwNzY3MDBiOGNiOTY5NjQxZjBhM2RiNDE2YWMwZDkxYmJmN2NlNjRiMmViZTg3YmE0MmU3NjdiMzY3ZDQ4ZGQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE2NmRjZWIzNjJiZjEyNzMwZWNkZGFhNGQwY2UwMzAxN2IwNjlmMzUzOGY4NTljMmZiMDg3YTc1ZjdlMDMyNTUifQ"
-        }
-      ]
-    },
-    {
-      "id": "claim_86c6cfca4ce74ca18e023c063d8888b1",
-      "statement": "Arena Retryは旧候補のArena statusだけをArchivedにして新候補を作成し、同じAgentRunのretryとは異なる。",
-      "evidence": [
-        {
-          "resource": "repo://crates/server/src/routes/local_remote.rs#L3457-L3527",
-          "version": "repo-lines-v1:sha256:a864232a777d585ee9630933767aef18e2f1bd4e5ade8a854498b8b2240a9dbf:eyJzZWxlY3RlZExpbmVDb3VudCI6NzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ2NDFhNzg2ZGYxY2JjYjEzMGVmYTk4ODQ1YWMzMjIzNDlkOTAzNWY3YTRhMTQzMjcyOGMwZDA4YTMyY2QxZDciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM0NjI0MmE5ZDY5M2VhMTVkZmJiY2RkN2I3NmYxYmNhYzNjNGVlMGVlMWY4MWU5YWM2YmExODE5YTQ2ZDQxOTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM0OGQ5YWZkZjdlNjhmODEyOWRhODE3MTRmMDI0YWVjNjYwMjhhM2E4NzNjNzA0ZjE1OGQ2ZGM2N2Y5NWYwZDkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImI3YjBjOThhOGIyZjQ1MzExODk3MjA5NzlmZDljYWI1ZjA4Mzg3YmZlZTlkNTIxMjk3MmM0ODdiYmI5ZjRmNDIifQ"
-        }
-      ]
-    },
-    {
-      "id": "claim_c17dba57d0a44e0ea281d8435438857b",
-      "statement": "候補作成失敗時は既存候補のArena status更新とgroup削除を試み、cleanup失敗はwarningとして元エラーを返す。通常Workspaceをarchiveしない。",
-      "evidence": [
-        {
-          "resource": "repo://crates/server/src/routes/local_remote.rs#L2878-L2890",
-          "version": "repo-lines-v1:sha256:af85afb4bcbe3a5a364603915a7e9f8463739e78683f6a5c31f329e965dc030a:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZlMmY1MmMyNWRlY2NiYzBlM2Q2YmU0OGI0YmYxNDFlYzU5ZDdkMTI3YWY2YjNiOTRiMTNhNmU1NzIzMjIxNDQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU1MjJjNDJjZDE5YzZkMDNkODA4YzQ1MjcyMDU1MjgyNWI3ZWExYzViNDkxYjIxODUxMWNhYzc0MTVjZjlkOWIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY5NjhmOThlMTEzMWEyMzAzMjM4NjZjMjIwMmIyY2VmMzFiMGVhNzk1ODNiNWFmZjI1YmM2Yzg5NDk1ODUzYTYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijk5OWJkZWZlZWFjYTYzNDBlMDI5MGRjODZlODg5Yzg5ZDVlMTg5YWE1YmE0NGI1ODViM2I3MDczNGY0YTYyZDgifQ"
-        },
-        {
-          "resource": "repo://crates/server/src/routes/local_remote.rs#L2915-L2928",
-          "version": "repo-lines-v1:sha256:155b1d11813e8e3682f644d3437dafa3f91e8efaadde14adec44078e0bd96559:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBjNGRkZTYzZDNmYWQ3NzEyYjQ4NDNkNDA2NWFhZGIxNzc1M2MyOTBiYWRhODE1OGJmYjM1ZWM5ZTg5YWVlNzIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM0OGQ5YWZkZjdlNjhmODEyOWRhODE3MTRmMDI0YWVjNjYwMjhhM2E4NzNjNzA0ZjE1OGQ2ZGM2N2Y5NWYwZDkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijc5YTRiYTBkZjZlYzk0NTEyNGZjYjc0NWYwMmYxN2RjN2UxMWQ0MzJlOTIwYTYwYzMwYjk4ZDA0ODdmMGMyNDIifQ"
-        }
-      ]
-    },
-    {
-      "id": "claim_a03aadf655cf4d2e840137bbe4219d0a",
-      "statement": "Workflow Arenaのwinner適用はRepositoryごとにpatchを主Workspaceへ順番に反映してからwinnerを記録する。",
-      "evidence": [
-        {
-          "resource": "repo://crates/server/src/workflow_runtime/arena.rs#L705-L795",
-          "version": "repo-lines-v1:sha256:6e0bdd7e4e272d36595b0142c4869dee5302ebc0c0e7d809d3b6932643ea0c9a:eyJzZWxlY3RlZExpbmVDb3VudCI6OTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJkODdlMjJlMTRlMzI4MmMwYmFiM2IyOWFhZWFjMDNhNjdlYWRiYTc2YWNlZmNlMWEzMGY1M2M4ZTQwOGRiNDYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUzNDc2MDYzOWQ2NDhkMzMwMzhkZWE1NTRhMmM3ZjgyNzIwNjA4ZGI5YTI1OGI2NmVhNmE3OWI3ZWUzMDJkMmEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImYzODczNmVkOGExYmU0NTJmZmUyOWU3YjAyOTA4ZmI4YjNiMmQ2OWIxYjVlMmE1NjYzNmRmYzMxNDZkMzZjYzEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNhZjY4NmUzZTc0ZWE2OTA5OGU2MTg5OTUwOWIyZDY5N2ZiODVlMzRiNjI2YjRiNjkzNWJmZGRjYjQ3MjNiMTQifQ"
-        }
-      ]
-    },
-    {
-      "id": "claim_24469d5c43cc4498b589e197a9c32e07",
-      "statement": "DissolveとWorkflow Arenaのwinner確定・失敗cleanupは候補のArena statusを更新するが、通常Workspace archiveや物理削除を行わない。",
-      "evidence": [
-        {
-          "resource": "repo://crates/server/src/routes/local_remote.rs#L3539-L3571",
-          "version": "repo-lines-v1:sha256:2d19e71efe650d7e8a384edffe8e53c05b67a2e0d8a8cbebd05357271ceb9578:eyJzZWxlY3RlZExpbmVDb3VudCI6MzMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE3NzQwNmQ5NTE3NTk5ZjlkZjA5NGIxYzQ1MDE3NmU0NmY5MGFmYWViOGY4NDExMzc2YmJjZWI4MWY5MDc1Y2UiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFjY2NmMDdlODU4ODFlM2VjODBhOGFiNzc0ODQ4YzBmODc4NmViZmVhYzIxY2UxNDllMWI0NWUzODQxYzAxZmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM0OGQ5YWZkZjdlNjhmODEyOWRhODE3MTRmMDI0YWVjNjYwMjhhM2E4NzNjNzA0ZjE1OGQ2ZGM2N2Y5NWYwZDkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJkYjQ5ZTUzOTc2ZmU0YmY5ZWY3YmY0ODgyY2ZlMDIwZGUwNDdjYTEzMGQ0MDY2MjMyZWZjZjliNDY4MDYxYzAifQ"
-        },
-        {
-          "resource": "repo://crates/server/src/workflow_runtime/arena.rs#L674-L684",
-          "version": "repo-lines-v1:sha256:86ae2354d4cff32bdeb34d5432594823c0cc3b9758a65fafd4c33d09f4055b31:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjdhNmU2YzJkMzYzOTc1OTNlNGMxM2FkOTY1NGJkMmFhODI4MDYyNmZmZmU2YTRhY2E1YzJmODEzYTBiZGY0ZWIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdlZDEwYWM1YjU2N2ViODg5NWU5ZTQ4ZmNjOGJhZDdhMmU2ZGJlYWYwZTM0MWI1ZTNiZDdiYmY5NTY1M2MxNzkifQ"
-        },
-        {
-          "resource": "repo://crates/server/src/workflow_runtime/arena.rs#L900-L919",
-          "version": "repo-lines-v1:sha256:c92c03bc90d48d322735032d9967f7afa2d74afd808ae04e8cb86bfaa41fb12d:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVlOTA2YzE2NjkzN2JkODhhYmFkNzU1ZTZhOTIwNDlkYTlkYWJjYWM4NzAyMmIwZGRmNTFhZDBmN2QzNzE3NjQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjNmOWI0ODg5MWIwYTNlMWM4YjIwNzQ3NjA3OGIyMGU4NjViMjFiZjg3ZDBhYjE1NDNkNzZhZmYxNWNmZjYzOGYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdiYzk4ZDZiMGRjNDkyYzUwMTZkZjEwODA1YTNhNTRlYjljMTg0YTVhNjEzN2U3ZjRiZWNmYTBjMjIwNTUwZDAifQ"
-        }
-      ]
-    },
-    {
-      "id": "claim_e2a3333425674e8abb9f17ea2abbcc85",
-      "statement": "Arenaの候補新設とRetryはarchive済みIssueを拒否する。",
-      "evidence": [
-        {
-          "resource": "repo://crates/server/src/routes/local_remote.rs#L2674-L2685",
-          "version": "repo-lines-v1:sha256:15c900a87fa25d8bc0c3c171006eb4c63814f16837bc3847e679860a824636ea:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIyOGRmMjg3MThiOTAyZGM1MTUyYjIxYTkwOWI1NWVmOTFjOTYxOTUxMDZhYTRmY2RmMTYxMjMwNzE3OWZhYTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImU0NWI2YWFjNmFhNmNjYTEzZTZiM2I3ODA2MTBkYjc0OTRkNWE5NTM1ZmZhNzM3NmU3YjY4OWRjY2I1NzhhYzEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijk3ZjBkMzFmNDg2YjIyMWI5OWIxMmI4NDFkYzY5ZjYxMGUzY2UzZTdmMTg2NmYzYTU1MDQ5OTY3YjkxMDA3NTIifQ"
-        },
-        {
-          "resource": "repo://crates/server/src/routes/local_remote.rs#L3124-L3132",
-          "version": "repo-lines-v1:sha256:7d54db45e89f10e5efefe1b6ac59a41ff2ca2bc993f0b110374abdd6618e1b6f:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMjI4ZGYyODcxOGI5MDJkYzUxNTJiMjFhOTA5YjU1ZWY5MWM5NjE5NTEwNmFhNGZjZGYxNjEyMzA3MTc5ZmFhMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZjUzMzRkMzBkNTU0NWNlOGI5MTUyNjc0MzQ5NWM1OTE1MDMxNGFmZTJkNmZiM2JlZjlmM2UyN2U3OGVmOWQ0ZCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOTdmMGQzMWY0ODZiMjIxYjk5YjEyYjg0MWRjNjlmNjEwZTNjZTNlN2YxODY2ZjNhNTUwNDk5NjdiOTEwMDc1MiJ9"
+          "resource": "repo://crates/server/src/workflow_runtime/arena.rs#L741-L782",
+          "version": "repo-lines-v1:sha256:d8fbe79240d2792dd0cf8bb9b320945d576a6595d9ee1c95812f18d31ed1a8ec:eyJzZWxlY3RlZExpbmVDb3VudCI6NDIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNlODBmM2Y5ZDUyODc5N2QyYmIwZDMyNGMzZjRkZTczODdmYTE4ZjNkOGM5ZmZiODZjNDYwNzgxMjRjMmNiY2EiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNiNDY3MmY0ZjkxY2Y2MTcwMjU2MmRlOTUxNWU5OGFjMDAyNDE2OWZiZDFhYTIwNzZkYjhmY2U3NzZiZTQ0YjYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ5YjM4ZjVjZTU3NDhjNGE2OTYyOTBjYjQ1M2UyNmM3OTdmOTNlMWMxMzA1NWFiYmMyNmUyNjVhMGNjNzVkNzMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE3OTQzZGUyN2MwNTEwMjNjMzM5NjMxMTMzNWFiMGYzNjg2MDI5MzQ5MWRiZWVlMGU1MTRmNWZjNzU1NjQ5ZGYifQ"
         }
       ]
     }
   ],
   "verification": {
-    "by": "openwiki/0.7.2",
-    "at": "2026-11-11T09:36:22.928Z"
+    "by": "openwiki/0.9.0",
+    "at": "2026-11-22T05:31:45.518Z"
   }
 }

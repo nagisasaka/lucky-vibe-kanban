@@ -1,21 +1,22 @@
 # ファイル
 
-- [Arena による比較と選択](arena.md) - 同じ Issue に対する複数の Workspace を比較する Arena の意味、Design と Implementation の契約、選択・再試行・終了の寿命。
-- [保存済み本文の保護と並列作業の参照](card-context-and-llm-wiki.md) - Card Contextと旧Pipeline供給の廃止後に残る通常本文、既知定型文5hashの送信時除去、実ガイドと公開peer参照の境界。
-- [設計メモ・本文履歴と独立追記](design-notes.md) - Project の設計意図を本文と独立追記として残す契約。版管理、出典、競合、UIとMCPの応答境界、Project削除後の履歴保持を説明する。
-- [自動マージの選択・検証・公開](formal-integration.md) - local Board で採用した Card と Workspace の変更を固定し、固定候補を受付時の検証方針に従って公開する契約。予約、取消、条件付き Done、Wiki と回復の境界。
-- [稼働版のソースに基づく対話ヘルプ](interactive-help.md) - UIとremote MCPから使う一般ヘルプ、Project不要の版固定ソース読取、会話の寿命と配布・実環境検証の境界。
-- [Issue のコメント・レビュー・添付・通知](issue-collaboration.md) - Issue の共有レビューと通常コメントの来歴、対象 revision、再送・全文読取・編集の契約、および購読・添付・通知との境界。
-- [Organization・Member・Invitation](organization-and-membership.md) - 固定Organizationと認証actor、承認制メンバー、過去の所有者IDを区別する。
-- [Pet の形式・安全な取込・保存と帰属](pets.md) - Kanban と Workspace に共通の装飾Pet、v1/v2 atlas互換、ZIP取込と添付保持、帰属および検証の限界を説明する。
-- [Project・Issue と実施の関係](project-and-issue.md) - ボード上の仕事と実行環境を結ぶ Project・Issue の意味、ローカル保存、旧 Task との境界。
-- [Astra 廃止と共有機能の移行境界](project-chat.md) - 内蔵 Project Chat の廃止、専用履歴を削除する migration、外部 MCP と Workspace 質問回答に残る契約を説明する。
-- [Project Todo の共有メモ](project-todos.md) - Project に保存する Todo と Issue・実行の違い、Web と二つの MCP の共有データ、競合・再送・表示の契約。
-- [Project のSQLite移送](project-transfer.md) - GitとネイティブSessionを分離し、Project所有記録と任意の完了会話を単一SQLiteで追加importする範囲、操作、原子性と限界を説明する。
-- [Change Manifest・Run完了とWikiの責務](repository-memory.md) - Session文脈、DB正本の確定Manifest、正常Run自動commit、任意の本文併記、DB運用状態と移行完了後の保持・撤去境界。
-- [実行環境へのアクセス](runtime-access.md) - 外部 HTTP MCP の Linux runtime grant、管理設定、ファイル・プロセス観測と直接実行の境界、取消・再起動・不確実な結果を説明する。
-- [サーバー認証・設定・セッション](server-access.md) - Local/Public配置、Basic/Auth0の有効化、Webセッションと内部capability、設定破損時の閉鎖と復旧の契約。
-- [Session・AgentRun・RunAttempt](session-and-agent-run.md) - 会話・依頼・実行試行の識別、継続と retry、provider binding、Goal と停止の契約。
-- [共有リソースの所有権と AI 調停](shared-resource-coordination.md) - 複製できない実機・DB・環境を並列 Card から扱うための排他制御、状態変更、調停と復旧の境界。
-- [Workflow Attempt とグラフの契約](workflow-attempt.md) - Issue 専用の実施グラフ、安定 Session、run snapshot、辺の発火・分岐・再実行の意味。
-- [Workspace と Repository](workspace.md) - 作業環境の所有権と用途、実行所有者、複数 Repo、共有資源、削除と回復の境界。
+- [Arena の履歴と互換性](arena.md) - 旧 Arena の候補、選択と Workspace の寿命、および Workflow の winner 適用を説明する。
+- [保存済み本文と並列作業の参照](card-context-and-llm-wiki.md) - 旧 Card Context の本文保護、限定的な送信時処理と、固定 commit による peer 情報の参照を説明する。
+- [Notes の本文と独立追記](design-notes.md) - Project の設計意図を記録する本文、出典付き追記、版競合と削除後の保持を説明する。
+- [Auto-merge の選択・検証・公開](formal-integration.md) - 固定 source と target から候補を作り、検証・Wiki・正確な Git 公開・回復を分ける契約。
+- [LVK 用語集](glossary.md) - LVK の仕事、作業場所、会話、統合と記憶の主要用語を定義する。
+- [稼働版に基づく対話ヘルプ](interactive-help.md) - 一般質問の会話、版固定の公開 source 読取と配布時の検証境界を説明する。
+- [Issue のコメント・レビュー・添付・通知](issue-collaboration.md) - Issue の共同作業、レビューの来歴と revision、再送、添付と通知の境界を説明する。
+- [Organization と Member](organization-and-membership.md) - local Board の固定 Organization、現在 actor、承認制メンバーと過去 identity の境界。
+- [Pet の形式・安全な取込・保存と帰属](pets.md) - Sidebar Pet の固定 atlas、ZIP 検証、共有設定と素材の帰属を説明する。
+- [Project・Issue と Kanban](project-and-issue.md) - Project、仕事としての Issue、Board の状態、本文版、実施と archive の関係を説明する。
+- [Astra・Project Chat の廃止](project-chat.md) - 旧内蔵会話の削除と、残る質問回答・外部 MCP・対話ヘルプの境界。
+- [Project TODO list の共有メモ](project-todos.md) - Project 内の TODO の所属、番号、作成経路、競合と再送を説明する。
+- [Project の SQLite 移送](project-transfer.md) - 選択した Project 記録を追加 import する範囲、操作、原子性と実行履歴の限界。
+- [Change Manifest・Run 完了と Wiki](repository-memory.md) - Run の意味記録、Git source、統合済み Wiki、receipt と復旧 artifact の責任を説明する。
+- [実行環境へのアクセス](runtime-access.md) - 外部 MCP の直接 file・process 操作、管理設定、Workspace 境界と結果不明時の扱い。
+- [サーバー認証・設定・回復](server-access.md) - Local/Public 配置、初回認証、session、閉鎖状態と限定された operator 回復を説明する。
+- [Session・Agent Run・Attempt](session-and-agent-run.md) - 会話、実行依頼、実行試行の識別と継続の境界。
+- [共有リソースの所有権と調停](shared-resource-coordination.md) - 実機、DB、配備先を安全に共有するための操作と復旧。
+- [Workflow Attempt とグラフ](workflow-attempt.md) - Issue の複数工程、固定 preset、実行と待機の関係。
+- [Workspace と Repository](workspace.md) - 作業場所、接続 Repo、所有権と履歴の寿命。
