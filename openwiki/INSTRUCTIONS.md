@@ -53,6 +53,8 @@ repository evidence, including meanings that depend on context. Link a term to
 the glossary or its concept page at its first use on each page. Do not repeat
 definitions across pages.
 
+Use one consistent writing style across the whole Wiki. Link to source files without line numbers.
+
 ## Organising knowledge
 
 Give each important concept, contract and operation one canonical home with an
@@ -129,6 +131,8 @@ The list below gives LVK's main terms and the meanings people have set for them.
 Base the glossary page on these definitions and verify detailed behaviour against
 source. Terms marked "general term" need only a short explanation.
 
+**Use these names as the glossary headwords and in page text.**
+
 - **Kanban** (general term): A method for visualising and managing the flow of
   tasks.
 - **Kanban board**: A board that lays out tasks. In LVK, the Kanban board screen
@@ -175,8 +179,7 @@ source. Terms marked "general term" need only a short explanation.
 - **Repository shared storage**: A directory that LVK creates for each
   repository and shares across workspaces. Agents use it too, and it is outside
   Git. It has two kinds:
-  - persistent: environment-specific settings files and similar items shared by
-    several workspaces.
+  - persistent: items to keep across workspaces, such as environment-specific settings files and artifacts that users retain.
   - cache: regenerable intermediate build outputs and similar items.
 - **TODO list**: Shared memos within a project. It is independent of issues and
   can refer to an issue.
