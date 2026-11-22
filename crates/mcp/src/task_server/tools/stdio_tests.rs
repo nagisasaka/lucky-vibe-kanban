@@ -168,7 +168,7 @@ async fn coding_context_details_remain_available_over_global_stdio() {
                     assert_eq!(details["workspace_id"], workspace.to_string());
                     assert!(details.get("coding_run_guide").is_none());
                     match id {
-                        4 => assert!(details["parallel_api_guide"].as_str().unwrap().contains("after_workspace")),
+                        4 => assert_eq!(details["parallel_api_guide"].as_str().unwrap(), utils::agent_guides::parallel_guide().unwrap()),
                         6 => { assert!(details.get("parallel_api_guide").is_none()); assert!(details.get("resource_access_guide").is_none()); },
                         _ => unreachable!(),
                     }

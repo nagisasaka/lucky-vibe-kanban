@@ -42,7 +42,9 @@ impl McpServer {
             }
             Some(ContextGuide::Parallel) => {
                 response["parallel_api_guide"] =
-                    serde_json::json!(utils::agent_guides::PARALLEL_GUIDE);
+                    serde_json::json!(utils::agent_guides::parallel_guide().map_err(|_| {
+                        ErrorData::internal_error("Unable to resolve instance token path", None)
+                    })?);
             }
             None => {}
         }
