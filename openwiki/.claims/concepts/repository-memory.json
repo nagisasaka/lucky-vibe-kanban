@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:31faf6298099d611608ee0f4c327d0658f096a6d905bb1595727de2c8a59993a",
+  "pageVersion": "sha256:80a75063a871c24549e2f26ae85d9b3c244487cf9ca97250f99fa687fe01d28b",
   "claims": [
     {
       "id": "claim_76ecd03a2fe8447fb30dba1bb0943500",
@@ -46,21 +46,35 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/integrations/conversation.rs",
-          "version": "repo-file-v1:sha256:ed8e159fbdf856febc5b6ee7288fc2275118f5cd01fd3b2390a3e1af349682ab"
+          "version": "repo-file-v1:sha256:b6b05a38e11679f46c959e7b6090cc52d1a3f707d2eccd6a9dc48aff62aae5e5"
         },
         {
           "resource": "repo://crates/server/src/routes/openwiki.rs",
-          "version": "repo-file-v1:sha256:c077ce7568a2c155e73f6afd1f4712c08bd3180a41e36249f3596177d8fad437"
+          "version": "repo-file-v1:sha256:61a4f8d1f080a29b26a590a4ee4f93f5235fb754ec524b3427a3a248e450b76c"
         },
         {
           "resource": "repo://crates/server/src/routes/openwiki/management.rs",
-          "version": "repo-file-v1:sha256:df34d87dd093e2ac7c4fdcaa4b4b8245d0b05f0e050a92ae04ae2e5732b557f1"
+          "version": "repo-file-v1:sha256:c27d4f38feb2c4ff2e4a241f02f4705d31f464dff2933ac69ec91be881530ed4"
+        }
+      ]
+    },
+    {
+      "id": "claim_9afd855804d2471497171505bbe50c79",
+      "statement": "明示更新はDB保存の指示または既定テンプレートを選択し、リポジトリの指示ファイルは暗黙の生成入力にしない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/routes/openwiki.rs",
+          "version": "repo-file-v1:sha256:61a4f8d1f080a29b26a590a4ee4f93f5235fb754ec524b3427a3a248e450b76c"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/openwiki/management.rs",
+          "version": "repo-file-v1:sha256:c27d4f38feb2c4ff2e4a241f02f4705d31f464dff2933ac69ec91be881530ed4"
         }
       ]
     }
   ],
   "verification": {
     "by": "openwiki/0.9.0",
-    "at": "2026-11-22T18:40:23.680Z"
+    "at": "2026-11-22T23:18:32.009Z"
   }
 }

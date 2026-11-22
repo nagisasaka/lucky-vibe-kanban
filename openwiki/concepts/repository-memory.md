@@ -5,7 +5,7 @@ description: Run の意味記録、Git source、統合済み Wiki、receipt と�
 tags: [repository-memory, manifest, openwiki, reconciliation]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-22T18:40:23.680Z
+    at: 2026-11-22T23:18:32.009Z
 sources:
   - id: openwiki-source-21149aa9001849998cda42a2
     resource: repo://crates/db/src/models/repository_state/manifests.rs
@@ -19,7 +19,7 @@ sources:
     resource: repo://crates/services/src/services/openwiki/sync_input.rs
   - id: openwiki-source-6067be8d6f85caa8ac03638f
     resource: repo://crates/services/src/services/repository_memory.rs
-generated: { by: "codex", at: "2026-11-22T18:40:23.680Z" }
+generated: { by: "codex", at: "2026-11-22T23:18:32.009Z" }
 ---
 
 # Change Manifest・Run 完了と Wiki
@@ -48,7 +48,7 @@ Receipt は Updated / NoOp / Failed を区別し、失敗を成功した acknowl
 
 ## 保存先と回復
 
-Wiki の指示設定は DB に保存され、保存や解除だけでは Git や公開 Wiki を変更しない。明示更新の受付時に DB の上書き、repository の `openwiki/INSTRUCTIONS.md`、既定テンプレートの順で一つを選び、Run 全体で固定する。成功した明示更新だけが適用済みの指示を進め、自動マージは未反映の編集ではなく最後に適用した上書きを使う。[設定](../../crates/server/src/routes/openwiki/management.rs)・[選択と完了](../../crates/server/src/routes/openwiki.rs)・[保守](../operations/openwiki-maintenance.md)
+Wiki の指示設定は DB に保存され、保存や解除だけでは Git や公開 Wiki を変更しない。明示更新の受付時に DB の上書き、なければ同梱の既定テンプレートを選び、Run 全体で固定する。成功した明示更新だけが適用済みの指示を進め、自動マージは未反映の編集ではなく最後に適用した上書き、なければ既定テンプレートを使う。repository の `openwiki/INSTRUCTIONS.md` は暗黙の入力ではなく、設定画面からの明示取り込みと一時配置後の原状復元に使う。[設定](../../crates/server/src/routes/openwiki/management.rs)・[選択と完了](../../crates/server/src/routes/openwiki.rs)・[保守](../operations/openwiki-maintenance.md)
 
 確定 Manifest、Wiki の可変 state・receipt・publication と coding Run の永続診断は instance DB に置く。固定 Sync 入力、source publication、setup 原本・復元 journal と Bootstrap report は復旧用の管理 tmp、再生成可能な文書索引は管理 cache に置く。共有 persistent はユーザーが保持する成果物用で、内部 journal の代わりではない。[path と cleanup](../../crates/utils/src/repository_memory.rs)・[DB state](../../crates/db/src/models/repository_state.rs)
 

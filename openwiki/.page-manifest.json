@@ -121,11 +121,11 @@
       "completedRunId": "a0a335e5-fa67-4365-a04c-93c15cf75da2"
     },
     "/openwiki/concepts/repository-memory.md": {
-      "gitHead": "34422c57d4896e6046ccf08c289c2ea42f931037",
-      "sourceFingerprint": "sha256:9764d912ba29a81c0054fca3c5776b37c71ed8cbe8f1a8dc0ec8af135cf0d691",
-      "pageVersion": "sha256:31faf6298099d611608ee0f4c327d0658f096a6d905bb1595727de2c8a59993a",
+      "pageVersion": "sha256:80a75063a871c24549e2f26ae85d9b3c244487cf9ca97250f99fa687fe01d28b",
       "completedBy": "codex",
-      "completedRunId": "c5aa4a76-2f95-47c4-aada-af7edcb7137c"
+      "completedRunId": "91023065-1b35-498c-894e-0c2b0500bfa1",
+      "gitHead": "f51ece22a96180bb4f82b4d072393758a81c715d",
+      "sourceFingerprint": "sha256:83dc64a38bdb19297ec77ad8cf312d113dbaf50590202a77258fcb88e70e35bc"
     },
     "/openwiki/concepts/runtime-access.md": {
       "gitHead": "4ba713381d52e52b2843c7107c87be96c4efe5b0",
@@ -198,11 +198,11 @@
       "completedRunId": "7889f09d-7d6b-4196-8aab-079d515f854b"
     },
     "/openwiki/operations/openwiki-maintenance.md": {
-      "pageVersion": "sha256:9e72cf63fb0556a93039f676149b2cb84a11c18525d3abb9ff51e984d3508cba",
+      "pageVersion": "sha256:21ba16e34b80d1ed0ca9dd16242c8f8fb04de65285e8d397d37395a8fa09e74f",
       "completedBy": "codex",
-      "completedRunId": "c8a96c92-0f6c-43fb-8dd5-39195bd79861",
-      "gitHead": "9562245287cfbc30cce3bb81bdd797aa5d783283",
-      "sourceFingerprint": "sha256:15f70a21f8f69e8cb3fa2f7af8d76c9f5d01925f8b998f00b9c8caf8d64d1dc5"
+      "completedRunId": "91023065-1b35-498c-894e-0c2b0500bfa1",
+      "gitHead": "f51ece22a96180bb4f82b4d072393758a81c715d",
+      "sourceFingerprint": "sha256:83dc64a38bdb19297ec77ad8cf312d113dbaf50590202a77258fcb88e70e35bc"
     },
     "/openwiki/operations/server-container.md": {
       "gitHead": "4ba713381d52e52b2843c7107c87be96c4efe5b0",

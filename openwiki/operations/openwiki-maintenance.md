@@ -5,15 +5,19 @@ description: Repository Wiki の所有、生成、検証と公開。
 tags: [openwiki, maintenance]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-22T22:03:18.931Z
+    at: 2026-11-22T23:18:32.009Z
 sources:
   - id: openwiki-source-73a2f1e62857401883667045
     resource: repo://assets/openwiki-instructions.md
+  - id: openwiki-source-3b873a675f85754e9183d162
+    resource: repo://crates/server/src/routes/openwiki/management.rs
   - id: openwiki-source-7277adee5c65e8d79143e722
     resource: repo://crates/services/src/services/openwiki/bootstrap.rs
   - id: openwiki-source-fa966dc92e5b940e2e3155e3
     resource: repo://crates/services/src/services/openwiki/completion.rs
-generated: { by: "codex", at: "2026-11-22T22:03:18.931Z" }
+  - id: openwiki-source-356ecdff44076964061792a9
+    resource: repo://packages/web-core/src/shared/dialogs/settings/settings/RepositoryWikiFilesSettings.tsx
+generated: { by: "codex", at: "2026-11-22T23:18:32.009Z" }
 ---
 
 # OpenWiki の生成・同期・回復
@@ -28,7 +32,9 @@ Bootstrap は固定 source に対する生成、独立 review、必要な refine
 
 Generate は初期生成の完了を必要とする。Refine は操作不要と検証できた場合に変更なしでも完了できるが、開始した操作はいずれも監査された `openwiki_finish` の complete が必要である。既定テンプレートは有効な旧知識と入口リンクを守りながら、読者の目的に沿った構成を許す。[writer 契約](../../crates/services/src/services/openwiki/bootstrap.rs)・[既定指示](../../assets/openwiki-instructions.md)
 
-共通の既定指示は、主要概念を正規名の個別ページで見つけやすくし、概念間の関係をリンクで説明する方針を示す。小さな話題は節で扱え、すべての用語にページを強制しない。ホストは lifecycle、完了証跡、根拠の検証と managed index の契約を引き続き担う。リポジトリ固有の指示が存在する場合はそれも尊重する。[既定指示](../../assets/openwiki-instructions.md)・[writer 契約](../../crates/services/src/services/openwiki/bootstrap.rs)
+共通の既定指示は、主要概念を正規名の個別ページで見つけやすくし、概念間の関係をリンクで説明する方針を示す。小さな話題は節で扱え、すべての用語にページを強制しない。ホストは lifecycle、完了証跡、根拠の検証と managed index の契約を引き続き担う。設定画面に保存された指示は既定テンプレートに代わって使われる。リポジトリ内の旧指示ファイルは自動採用されない。[既定指示](../../assets/openwiki-instructions.md)・[writer 契約](../../crates/services/src/services/openwiki/bootstrap.rs)
+
+対象 branch に旧 `openwiki/INSTRUCTIONS.md` がある場合、設定画面から内容を編集欄へ取り込める。未保存の編集がある間は取り込みできず、取り込みだけでは DB に保存されない。保存・解除は Git や公開 Wiki を変更しない。適用と自動マージの選択は [指示設定の境界](../concepts/repository-memory.md#保存先と回復) を参照する。[設定 API](../../crates/server/src/routes/openwiki/management.rs)・[設定画面](../../packages/web-core/src/shared/dialogs/settings/settings/RepositoryWikiFilesSettings.tsx)
 
 ## 受付・実行・公開・鮮度
 

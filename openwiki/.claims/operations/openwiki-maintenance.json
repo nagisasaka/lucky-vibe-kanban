@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:9e72cf63fb0556a93039f676149b2cb84a11c18525d3abb9ff51e984d3508cba",
+  "pageVersion": "sha256:21ba16e34b80d1ed0ca9dd16242c8f8fb04de65285e8d397d37395a8fa09e74f",
   "claims": [
     {
       "id": "claim_9132a1782a3d4cf6910edf0f28a58c81",
@@ -38,17 +38,31 @@
       "evidence": [
         {
           "resource": "repo://assets/openwiki-instructions.md",
-          "version": "repo-file-v1:sha256:dc800dc76436dcd558d44db829d288bc85acbfb2c63748eb59bda059f57946e9"
+          "version": "repo-file-v1:sha256:a33503e6e25a054d3c8253ffd1cc50c2106a92ee93a0bade6ea45290796f6d03"
         },
         {
           "resource": "repo://crates/services/src/services/openwiki/bootstrap.rs#L604-L625",
           "version": "repo-lines-v1:sha256:083962178f161b412fe750dc2532eb9a7b280f6f748c54e9e2be5cf1742da6c6:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk0MmM1ZjkxNDFkZWIwMDJjODBhNmViNmY3ZWMzNDQ4ZGI3Njg3NmJjNzI4MDZkZTExYzliMWE1YzZhMDNhZDkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY2NGY3NzU3YzA0OWE4MjNkODZjNzY5NGZiYzk0MzE1YTA1OTc3MTc4YzNmMGM1ODlkOTNhYjlmZDYxYzAxMjAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI4OGRhMjc1MzgwZjk5ZTllMzliNmM2YjE4NmIwNTU4NmY0MmNkZTQxMWE3OTBkOWY5NzYxZmY2YjYwOGJjZmUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImYzYmQ4NDlhMjVmYmJhOGQzNGI2ZWVlNzI3ZWMxMWJlYWQyYWIwNGEyMGQ2MjcyNTE3M2M2MDJhZTVkMTZiNjMifQ"
         }
       ]
+    },
+    {
+      "id": "claim_b9b513d52e1046a28ded38768c90b755",
+      "statement": "旧指示ファイルは設定画面から編集欄に明示的に取り込めるが、取り込みだけでは保存されず、未保存の編集がある間は取り込みを無効にする。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/routes/openwiki/management.rs",
+          "version": "repo-file-v1:sha256:c27d4f38feb2c4ff2e4a241f02f4705d31f464dff2933ac69ec91be881530ed4"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/dialogs/settings/settings/RepositoryWikiFilesSettings.tsx",
+          "version": "repo-file-v1:sha256:7e01fe8f79293d554ceb61921fbd02246f310309f773bde1107ea6093dafad10"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.9.0",
-    "at": "2026-11-22T22:03:18.931Z"
+    "at": "2026-11-22T23:18:32.009Z"
   }
 }
