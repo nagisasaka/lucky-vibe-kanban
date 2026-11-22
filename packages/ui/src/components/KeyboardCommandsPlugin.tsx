@@ -7,7 +7,7 @@ import {
   INDENT_CONTENT_COMMAND,
   INSERT_LINE_BREAK_COMMAND,
   KEY_TAB_COMMAND,
-  KEY_MODIFIER_COMMAND,
+  KEY_DOWN_COMMAND,
   KEY_ENTER_COMMAND,
   OUTDENT_CONTENT_COMMAND,
   COMMAND_PRIORITY_NORMAL,
@@ -170,7 +170,7 @@ export function KeyboardCommandsPlugin({
     };
 
     const unregisterModifier = editor.registerCommand(
-      KEY_MODIFIER_COMMAND,
+      KEY_DOWN_COMMAND,
       (event: KeyboardEvent) => {
         if (
           editor.isComposing() ||

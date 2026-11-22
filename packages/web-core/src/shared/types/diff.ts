@@ -1,6 +1,6 @@
 /**
  * Represents which side of a diff (old/deletions or new/additions).
- * This matches the SplitSide enum from @git-diff-view/react (Old=0, New=1)
+ * Side of a change, used when mapping review annotations.
  * but allows us to decouple from that library.
  */
 export enum DiffSide {

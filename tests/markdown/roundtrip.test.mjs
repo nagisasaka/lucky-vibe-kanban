@@ -69,3 +69,20 @@ for (const marker of [
     );
   });
 }
+
+test('only standalone known alert markers are restored in quotes', () => {
+  const editor = createEditor({
+    nodes: [HeadingNode, QuoteNode, ListNode, ListItemNode, CodeNode, CodeHighlightNode, LinkNode],
+    onError: (error) => { throw error; },
+  });
+  editor.update(() => {
+    const source = '> [!UNKNOWN]\n> ordinary\n\n> [!NOTE] inline prose\n\n`[!NOTE]`';
+    $convertFromMarkdownString(source, transformers);
+    const output = $convertToMarkdownString(transformers);
+    assert.ok(output.includes('> &#91;!UNKNOWN&#93;'), output);
+    assert.ok(output.includes('> &#91;!NOTE&#93; inline prose'), output);
+    assert.ok(output.includes('`[!NOTE]`'), output);
+    $convertFromMarkdownString(output, transformers);
+    assert.equal($convertToMarkdownString(transformers), output);
+  }, { discrete: true });
+});

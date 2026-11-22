@@ -6,12 +6,12 @@ import {
 } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import rehypeHighlight from 'rehype-highlight';
 import rehypeRaw from 'rehype-raw';
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
 import { cn } from '@/shared/lib/utils';
 import { MarkdownReadingSurface } from '@vibe/ui/components/MarkdownReadingSurface';
 import { MermaidDiagram } from './MermaidDiagram';
+import { ChatCode } from '@vibe/ui/components/ChatCode';
 
 interface MarkdownPreviewProps {
   content: string;
@@ -26,7 +26,7 @@ interface MarkdownPreviewProps {
 const remarkPlugins = [remarkGfm];
 const rehypePlugins: NonNullable<
   ComponentProps<typeof ReactMarkdown>['rehypePlugins']
-> = [rehypeRaw, [rehypeSanitize, defaultSchema], rehypeHighlight];
+> = [rehypeRaw, [rehypeSanitize, defaultSchema]];
 
 export function MarkdownPreview({
   content,
@@ -104,7 +104,11 @@ export function MarkdownPreview({
         // inline code gets styling via the wrapper div's CSS selector.
         return (
           <code className={codeClassName} {...props}>
-            {children}
+            {language ? (
+              <ChatCode code={String(children)} language={language} />
+            ) : (
+              children
+            )}
           </code>
         );
       },

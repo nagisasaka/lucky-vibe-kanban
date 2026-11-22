@@ -7,4 +7,7 @@ onlyBuiltDependencies:
   - esbuild
 
 patchedDependencies:
-  '@pierre/diffs@1.1.4': patches/@pierre__diffs@1.1.4.patch
+  '@pierre/diffs@1.6.4': patches/@pierre__diffs@1.6.4.patch
+
+overrides:
+  shiki: 4.6.0

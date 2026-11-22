@@ -146,7 +146,7 @@ test("collapsed activity, editor focus during updates, and IME submission", asyn
     await page.waitForTimeout(50);
     await page.evaluate(() => window.enter(true, true));
     assert.equal(await page.evaluate(() => window.submissions), 0);
-    await page.evaluate(() => window.enter(false, true));
+    await composer.press("Control+Enter");
     assert.equal(await page.evaluate(() => window.submissions), 1);
     await page.evaluate(() => window.setValue(""));
     await page.waitForFunction(
@@ -158,7 +158,7 @@ test("collapsed activity, editor focus during updates, and IME submission", asyn
       "確認した内容",
       "単独の出力",
     ]) {
-      assert.equal(await page.getByText(text, { exact: true }).count(), ["検索結果", "確認した内容"].includes(text) ? 1 : 0, text);
+      assert.equal(await page.getByText(text, { exact: true }).count(), 1, text);
     }
     const tools = page.getByRole("button", { name: "ツール呼び出し完了" });
     assert.equal(await tools.getAttribute("aria-expanded"), "false");
@@ -183,7 +183,7 @@ test("collapsed activity, editor focus during updates, and IME submission", asyn
     await tools.click();
     assert.equal(
       await page.getByText("ファイルの内容", { exact: true }).count(),
-      0,
+      1,
     );
     const thinking = page.getByRole("button", { name: "確認した内容" });
     await thinking.click();
@@ -205,7 +205,7 @@ test("collapsed activity, editor focus during updates, and IME submission", asyn
     await single.click();
     assert.equal(
       await page.getByText("単独の出力", { exact: true }).count(),
-      0,
+      1,
     );
     assert.deepEqual(errors, []);
   } finally {

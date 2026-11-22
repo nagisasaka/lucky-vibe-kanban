@@ -1,6 +1,5 @@
-import { Fragment, useEffect, useMemo, useRef, type ReactNode } from 'react';
-import { CODE_HIGHLIGHT_CLASSES } from '@vibe/ui/lib/code-highlight-theme';
-import { codeHighlightLines } from '../../model/codeHighlightLines';
+import { useEffect, useRef, type CSSProperties } from 'react';
+import { useShikiCode } from '@vibe/ui/lib/shiki-code';
 import { cn } from '@/shared/lib/utils';
 
 interface CodeTextViewerProps {
@@ -20,10 +19,8 @@ export function CodeTextViewer({
   useEffect(() => {
     selectedRef.current?.scrollIntoView({ block: 'center' });
   }, [content, selectedLine]);
-  const lines = useMemo(
-    () => codeHighlightLines(content, language),
-    [content, language]
-  );
+  const highlighted = useShikiCode(content, language);
+  const lines = highlighted ?? content.split(/\r\n|\r|\n/);
   const lineNumberWidth = Math.max(2, String(lines.length).length);
 
   return (
@@ -54,16 +51,13 @@ export function CodeTextViewer({
               {typeof line === 'string'
                 ? line
                 : line.map((segment, segmentIndex) => (
-                    <Fragment key={segmentIndex}>
-                      {segment.types.reduceRight<ReactNode>(
-                        (children, type) => (
-                          <span className={CODE_HIGHLIGHT_CLASSES[type]}>
-                            {children}
-                          </span>
-                        ),
-                        segment.text
-                      )}
-                    </Fragment>
+                    <span
+                      key={segmentIndex}
+                      className="shiki-token"
+                      style={segment.htmlStyle as CSSProperties}
+                    >
+                      {segment.content}
+                    </span>
                   ))}
             </code>
           </div>
