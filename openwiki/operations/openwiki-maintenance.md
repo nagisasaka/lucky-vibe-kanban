@@ -90,8 +90,6 @@ sources:
     resource: repo://crates/services/src/services/workspace_usage.rs
   - id: openwiki-source-6043692809cbf72f253c5631
     resource: repo://crates/services/src/services/workspace_usage/lifecycle.rs
-  - id: openwiki-source-2e2c90b28d3bcaf7a890d88a
-    resource: repo://crates/workflow/src/templates.rs
   - id: openwiki-source-7d5590729f3e0f42d994b0e8
     resource: repo://crates/workspace-manager/src/shared_resources.rs
   - id: openwiki-source-bb1ebe868e35e9e500714501
@@ -106,10 +104,10 @@ sources:
     resource: repo://scripts/test-openwiki-focused.mjs
   - id: openwiki-source-7fd9452d5e666180c50f8cb7
     resource: repo://tests/openwiki/recovery.sh
-generated: { by: "codex", at: "2026-11-17T04:16:39.656Z" }
+generated: { by: "codex", at: "2026-11-22T04:06:17.040Z" }
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-17T04:16:39.656Z
+    at: 2026-11-22T04:06:17.040Z
 ---
 
 # OpenWiki の初期生成・同期・回復
@@ -224,8 +222,8 @@ Bootstrap は repository scope の system Workflow で、Issue 専用 WorkflowAt
 ```mermaid
 flowchart LR
   G[Generate] --> R[Independent Review]
-  R -->|material finding なし| P[LVK Publish]
-  R -->|material finding あり| F[Refine]
+  R -->|finding なし| P[LVK Publish]
+  R -->|finding あり| F[Refine]
   F --> P
 ```
 
@@ -238,7 +236,7 @@ flowchart LR
 
 [phase 検証](../../crates/server/src/workflow_runtime/bootstrap.rs)・[Publish の検証](../../crates/server/src/workflow_runtime/bootstrap.rs)
 
-Repository owner は phase 間も維持される。既存の repository recovery monitor が lock 下で進め、普通の Workflow watcher が独立して進行させない。[進行の境界](../../crates/server/src/workflow_runtime/bootstrap.rs) 実装する scheduler と outbox の関係は [Workflow Runtime](../architecture/workflow-runtime.md) を参照する。
+Repository owner は phase 間も維持される。共通 Workflow watcher が repository 所有 run の reconciliation を呼び、Wiki recovery monitor は公開回復や cleanup 等のドメイン責務を維持する。[進行の境界](../../crates/server/src/workflow_runtime/bootstrap.rs) 実装する scheduler と outbox の関係は [Workflow Runtime](../architecture/workflow-runtime.md) を参照する。
 
 ## 共通文書索引は探索の入口であって網羅性証明ではない
 
@@ -273,7 +271,7 @@ Bootstrap writer と通常 Sync は共通の `PhaseCompletionProof` を使う。
 
 最新 attempt の terminal 投影と process-exit 登録が競合する場合だけ、spawned/running の登録を最大10秒未満の pending として再観測する。古い未終了 attempt や unreachable host にはこの猶予を与えない。[終了待ち](../../crates/server/src/routes/openwiki/completion.rs)・[focused test](../../crates/server/src/routes/openwiki/completion.rs)
 
-保存済みownerが持つ旧 pending_changes Sync の完了検査は init を許さず、完了した update、または未完了操作のない非 force update に対する監査済み begin-noop を必要とする。この経路では force は必須ではない。一方、利用者が開始する current_source / since_commit は明示的な reconciliation であり、既存 checkpoint が一致しても update + force=true と finish=complete が必要となる。修正不要なら空の plan で lifecycle を完了し、begin-noop では代用しない。完了した update を複数回行うことはできる。standaloneのBootstrap/Syncでは、noopで先行の未完了runを隠すことや、別attemptに未閉鎖操作を持ち越すことはできない。sourceChanged は absent/false のみ受け入れる。[phase ごとの条件](../../crates/services/src/services/openwiki/completion.rs)、[begin と noop](../../crates/services/src/services/openwiki/completion.rs)、[Sync の回帰テスト](../../crates/services/src/services/openwiki/completion.rs)
+保存済みownerが持つ旧 pending_changes Sync の完了検査は init を許さず、完了した update、または未完了操作のない非 force update に対する監査済み begin-noop を必要とする。この経路では force は必須ではない。一方、利用者が開始する current_source / since_commit は明示的な reconciliation であり、既存 checkpoint が一致しても update + force=true と finish=complete が必要となる。修正不要なら空の plan で lifecycle を完了し、begin-noop では代用しない。完了した update を複数回行うことはできる。Bootstrap と Sync の所有 writer は同じ Session の監査済み継続を照合できる。別 ID の置換や未完了操作を noop で隠すことはできない。sourceChanged は absent/false のみ受け入れる。[phase ごとの条件](../../crates/services/src/services/openwiki/completion.rs)、[begin と noop](../../crates/services/src/services/openwiki/completion.rs)、[Sync の回帰テスト](../../crates/services/src/services/openwiki/completion.rs)
 
 成功した Sync は共通の操作証明に続いて凍結入力の identity/digest を検証し、instructions を復元してから Wiki 公開へ進む。AgentRun の終端投影や Markdown が存在することだけでは成功しない。[終了処理の順序](../../crates/server/src/routes/openwiki.rs)
 
@@ -281,19 +279,19 @@ Bootstrap writer と通常 Sync は共通の `PhaseCompletionProof` を使う。
 
 自動マージはstandaloneのphase境界と異なり、同一Sessionの複数AgentRunを一つの所有会話として証明する。過去の監査beginで開いたactive ID/modeを保存し、次writerの監査されたbeginで同じID/modeのresumed=trueを確認してから書込を許す。新規beginや同一attempt内resume、noopの既存経路は残す。別会話・別owner/Workspace/rootのID探索や、resumed=trueだけの無条件受理はしない。[会話proof](../../crates/server/src/routes/openwiki/completion.rs#L115-L186)・[継続replay](../../crates/services/src/services/openwiki/completion.rs#L87-L150)
 
-全Run/attemptの所有・時系列・実終了・audit checksum/identityを確認し、未解決MCP call、active置換/放棄、閉じたID再利用、欠損/捏造audit、最終未完了を拒否する。最新writerと最終attemptは成功が必要である。standalone writerは従来のreplay_attempt前後の閉鎖検査を維持する。[共通protocol](../../crates/services/src/services/openwiki/completion.rs#L75-L162)・[server側のidentity検査](../../crates/server/src/routes/openwiki/completion.rs#L188-L315)。公開・コード/Wiki SHA・sourceChanged・targetの安全性やDone/archiveの条件は [自動マージ](../concepts/formal-integration.md#同じ会話でwiki更新を再開する)に従う。
+全Run/attemptの所有・時系列・実終了・audit checksum/identityを確認し、未解決MCP call、active置換/放棄、閉じたID再利用、欠損/捏造audit、最終未完了を拒否する。最新writerと最終attemptは成功が必要である。Bootstrap / Sync も同じ owner と Session に属する writer の監査を通じて継続を検証する。[共通protocol](../../crates/services/src/services/openwiki/completion.rs#L75-L162)・[server側のidentity検査](../../crates/server/src/routes/openwiki/completion.rs#L188-L315)。公開・コード/Wiki SHA・sourceChanged・targetの安全性やDone/archiveの条件は [自動マージ](../concepts/formal-integration.md#同じ会話でwiki更新を再開する)に従う。
 
 ## 独立 Review と finding の解決
 
-Review は generator の会話や upstream Workflow context を受け取らない。Codex thread は read-only、OpenWiki MCP / Skill は無効化され、共有 user 設定を変更しない。開始前の dirty worktree を内容 fingerprint として保存し、完了時に同一性を確認する。「Review 開始時に Git diff が空」であることは要求しない。[独立性の意図](../../crates/services/src/services/openwiki/bootstrap.rs)・[thread isolation](../../crates/executors/src/executors/codex.rs)・[baseline](../../crates/server/src/workflow_runtime/bootstrap.rs)・[変更検出](../../crates/server/src/workflow_runtime/bootstrap.rs)
+Review は generator の会話を引き継がない別 Session で行う。固定 source と Wiki を Git 参照を持たない使い捨てコピーへ用意し、コピー内の変更は公開候補に取り込まない。通常の provider 権限を変更せず、候補 fingerprint を完了時と公開前に照合する。[コピーと照合](../../crates/server/src/workflow_runtime/bootstrap.rs)・[実行先](../../crates/local-deployment/src/agent_run_port.rs)
 
-CoverageReview は version 1 の閉じた JSON。material finding が一つでもある場合に限り `needs_refinement` と一致させ、minor だけで Refine を起動しない。**指摘件数の quota や、通常 Workflow の12,000文字 handoff に収める制約はない**。prompt / JSON schema は件数・項目長の上限を示さず、根拠のある独立した不足を省略しないよう要求する。一方、host は資源防御として JSON 全体の1 MiB超過を parse 前に拒否する。これは執筆目標ではなく、超過時に勝手に切り詰めて PASS にする処理もない。[parse と verdict](../../crates/services/src/services/openwiki/bootstrap.rs)、[Reviewer 指示](../../crates/services/src/services/openwiki/bootstrap.rs)
+CoverageReview は version 2 の閉じた JSON で、完了状態 `pass` / `incomplete`、summary と、知識保持または指示準拠の finding を持つ。finding が一件でもあれば一度の Refine に進む。安全で実在する通常ファイル以外の evidence path は除外し、path を補正しない。根拠が空でも本文は未検証の手がかりとして残る。host は JSON 全体を 1 MiB に制限する。[schema と routing](../../crates/services/src/services/openwiki/bootstrap.rs)
 
-Reviewer はファイルを書かず、最終 JSON を返す。host が検証後に全文を共有 report へ保存し、node output は source/run/Session/AgentRun/phase identity、digest、verdict と件数の小さな参照にする。Refiner の実 dispatch はこの凍結ファイルの path を渡し、全 finding を分割読取させる。PASS でも publication 前に Review を再検証し、REFINE では処置結果も再検証する。改変・欠落を新しいファイルで隠して進めない。[保存](../../crates/server/src/workflow_runtime/bootstrap.rs)、[Refiner 入力](../../crates/server/src/workflow_runtime/bootstrap.rs)、[publication 再検証](../../crates/server/src/workflow_runtime/bootstrap.rs)
+host は検証済み Review 全文を管理 tmp に保存し、node output に identity・digest・件数の参照を残す。Refine は固定旧 Wiki・現行 source・保存 instructions を独立に照合し、裏付けられた修正のみ採用する。各 finding は index で一度ずつ fixed / refuted / already_satisfied に解決する。採用には Wiki と独立 evidence が必要で、未確認の refuted は根拠なしでも理由を記録できる。指示準拠の証拠として保存 INSTRUCTIONS を読めるが修正しない。[報告と参照](../../crates/services/src/services/openwiki/bootstrap/reports.rs)・[解決の検証](../../crates/services/src/services/openwiki/bootstrap.rs)
 
-RefinementReport の findingIndex は frozen Review の0始まり index。全 material finding に一つずつ resolution が必要で、未知・重複 index は拒否する。各 resolution に独立した source/doc evidence を要求し、fixed / already_satisfied には Wiki page path も要る。Wiki 自身、生成 instructions、symlink や存在しない file を独立証拠として通さない。[report の検証](../../crates/services/src/services/openwiki/bootstrap.rs)
+fixed には完了した強制 update が必要である。変更不要なら操作なしの Refine が可能で、候補 fingerprint の一致を検査する。Refine が失敗しても全 writer と lifecycle が収束し、開始前候補が完全一致すると証明できれば元候補を警告付きで使える。証明できない場合は停止する。[Refine 完了](../../crates/server/src/workflow_runtime/bootstrap.rs)
 
-Refine が update を行わず全 material finding を refuted / already_satisfied とすることもできる。その場合は setup 復元後の fingerprint が Review baseline と同じでなければならない。[update と変更の関係](../../crates/server/src/workflow_runtime/bootstrap.rs)
+Review の欠落・破損や incomplete は品質警告として保存する。安全上の検査、writer の終了、lifecycle、source と setup の整合は別の公開条件であり、品質警告で置き換えない。公開と品質合格は別である。[警告](../../crates/server/src/workflow_runtime/bootstrap.rs)・[品質状態](../../crates/utils/src/repository_memory.rs)
 
 生成・レビュー・更新の品質基準は「重要概念・契約・通常操作の説明先が安定し、初見の読者が断片を再構成せず理解できること」。概念ページ、横断 workflow、実装 architecture は異なる問いを扱い、詳細契約の正本を一か所へ置いて本文中の意味あるリンクで結ぶ。固定ディレクトリ・最低ページ数・一名詞一ページは要求しない。Generate だけに架空製品の構成例を渡し、Review はその形への準拠ではなく開発判断に影響する不足を評価する。通常 Sync も既存の説明先と関連リンクを維持する。[共通原則](../../crates/services/src/services/openwiki.rs)、[計画例と Review](../../crates/services/src/services/openwiki/bootstrap.rs)、[Sync](../../crates/services/src/services/openwiki.rs)
 
@@ -305,7 +303,7 @@ schema、path、operation の検査が証明するのは構造と監査上の閉
 
 公開候補は user-authored openwiki/INSTRUCTIONS.md の一致を検証し、upstream setup byproduct を除外、canonical Wiki 以外の変更を拒否する。AGENTS.md / CLAUDE.md の生成 setup を writer が途中で手動復元する運用ではなく、host 終了後の LVK の責務である。[公開候補の検査](../../crates/services/src/services/openwiki.rs) 公開 checkpoint と source drift の詳細は [Repository memory の統合・公開](../concepts/repository-memory.md) を参照する。
 
-失敗・取消・server 再起動のとき、Bootstrap は CleaningUp に入り、新しい有料 phase を自動再開しない。通常の監査付き Cancel を送信し、残存 active run がなく、全 child の全 attempt の実終了を確認してから instructions を復元する。利用者の取消なら Workflow を Canceled、それ以外の失敗なら Failed にして owner を解放する。Stop 要求を送っただけで所有権を消してはいけない。[cleanup](../../crates/server/src/workflow_runtime/bootstrap.rs)・[再起動時の fence](../../crates/server/src/workflow_runtime/bootstrap.rs)・[未終了 child を保持する test](../../crates/server/src/workflow_runtime/bootstrap_tests.rs)
+失敗や取消時の cleanup は所有権を保持しながら進む。未完の writer は同じ Session の通常継続で同じ Wiki ID を再開でき、全 Run と attempt の所有・終了・監査・lifecycle を照合する。通常の監査付き Cancel を送信し、残存 active run がなく、全 child の全 attempt の実終了を確認してから instructions を復元する。利用者の取消なら Workflow を Canceled、それ以外の失敗なら Failed にして owner を解放する。Stop 要求を送っただけで所有権を消してはいけない。[cleanup](../../crates/server/src/workflow_runtime/bootstrap.rs)・[再起動時の fence](../../crates/server/src/workflow_runtime/bootstrap.rs)・[未終了 child を保持する test](../../crates/server/src/workflow_runtime/bootstrap_tests.rs)
 
 Sync の cleanup は所有 identity と全 attempt の終了または未起動の証拠を先に確認する。非成功の terminal attempt が `reserved` または `not_started` で endpoint/token/host PID/provider PID を一切持たない場合は、未 spawn または開始失敗後の cleanup として instructions の復元を許す。`not_started` への遷移・履歴予約の扱いは [Runtime の未起動予約の契約](../architecture/agent-runtime.md#未起動予約の終端と-not_started)に従う。これは成功 writer の証明ではなく、publication の proof は全 attempt に `exited`・終了時刻・整合する Native Audit と操作証明を引き続き要求する。missing registry、unreachable、古い未終了 attempt、復元失敗は `MaintenanceFenced` とし、Error 診断と active owner を残す。最新終了記録の短い待機だけは `CompletionPending` として再観測する。[終了と fence](../../crates/server/src/routes/openwiki/completion.rs)、[所有を保った回復](../../crates/server/src/routes/openwiki.rs)
 
@@ -349,13 +347,13 @@ writer には lifecycle 6tool に加え `openwiki_search`、`openwiki_read`、`o
 
 ## 文書方針の継承と移行の判定
 
-共通 host prompt は repository 固有の文書方針を要求する。Bootstrap は追加の `DOCUMENTATION_GUIDANCE` を Generate・独立 Review・Refine の全役割へ一回ずつ渡す。通常 Sync は Bootstrap 専用の指示全体を複製せず、共通 host の方針と Sync の調査契約を使う。[host と Sync](../../crates/services/src/services/openwiki.rs#L176-L220)・[全役割への配線](../../crates/services/src/services/openwiki/bootstrap.rs#L398-L455)
+共通 host prompt は repository 固有の文書方針を要求する。Bootstrap は追加の `DOCUMENTATION_GUIDANCE` を Generate に渡す。Review と Refine は保存された INSTRUCTIONS と各役割の指示を使う。通常 Sync は Bootstrap 専用の指示全体を複製せず、共通 host の方針と Sync の調査契約を使う。[host と Sync](../../crates/services/src/services/openwiki.rs#L176-L220)・[全役割への配線](../../crates/services/src/services/openwiki/bootstrap.rs#L398-L455)
 
 保守される正規文書は要約と検証済みリンクで結べる。移行予定の文書は、必要な手順・制約・裏付けのある理由を Wiki 自体に保存し、読者が廃止対象の文書を開かないと運用できない状態を残さない。共通コードは全 repository の文書削除を指示しない。README など人間所有の文書の書換えと、Wiki の更新は別の権限であり、README が指す運用入口を維持する。[共通の保守境界](../../crates/services/src/services/openwiki.rs#L206-L216)
 
 Review は generator の選んだ資料や Wiki の分類だけを範囲とせず、独立した source entrypoint と高価値の文書から不足を調べる。文書の状態を current/accepted、proposed、superseded/historical、generated/transient、不明に区別する。日付や名称だけでは現行性を証明できず、コードとの不一致だけで理由の記録を捨てない。Design Note は現行契約の証拠の代わりにはせず、理由が未確認なら不明とする。[証拠と Review の契約](../../crates/services/src/services/openwiki/bootstrap.rs#L401-L429)
 
-この配線の回帰入口は `every_fresh_bootstrap_role_receives_one_shared_documentation_policy`。全三役への方針継承、移行対象の自己完結化、ignore の保全を検査する。prompt の文字列検査は実際の Wiki の意味的網羅性や docs 移行の完了を保証しない。今回の保守では試験定義を静的照合し、製品テスト・有料モデル fixture・配備を再実行していない。[回帰定義](../../crates/services/src/services/openwiki/bootstrap.rs#L487-L522)
+この配線の回帰は各役割の prompt と保存された instructions の扱いを確認する。prompt の文字列検査は実際の Wiki の意味的網羅性や docs 移行の完了を保証しない。今回の保守では試験定義を静的照合し、製品テスト・有料モデル fixture・配備を再実行していない。[回帰定義](../../crates/services/src/services/openwiki/bootstrap.rs#L487-L522)
 
 ## 設定から保守を開始する
 
@@ -430,7 +428,7 @@ openwiki/は生成・保守専用とし、manifest/frontmatter/generated.byか�
 
 コード候補は45f0e390574614129023baba11e3b01c396b205a、固定baseは122d84bf0b03803085c1e38a4ca203fa72cd99ce。sourceをそのまま採用し競合・修復はない。Manifest ce410a4d-87d0-4672-a935-38f50595237eの対象107成功、services Clippy、変更Rust整形、差分・日英JSON構造検査を既存SHAの証拠として参照した。今回の管理検証は同一source/tree・祖先・差分空白・clean確認であり、ユーザー指定で包括suiteの重複実行を省略した。実OpenWiki依存4件はignored、標準i18n/Prettierは依存不足で未成立であり、合格とはしない。
 
-373全体は未完了である。372共通基盤接続・専用進行管理撤去・Refine後の独立再Review・品質警告付き公開と伝播は今回の実装に含まれない。既存Generate/Review/Refine/Publishと決定的検査は継続する。今回の保守lifecycle完了、コード検証、hostによるmain正式公開は別の結果である。371失敗成果の救済・再開・採用やデータ削除、dev/previewの停止・再起動・切替、外部pushは実施しない。
+上記の旧候補時点の検証は履歴である。現行の Generate / 独立 Review / 必要時一回の Refine / Publish と品質警告は本ページの現行契約を参照する。今回の保守lifecycle完了、コード検証、hostによるmain正式公開は別の結果である。371失敗成果の救済・再開・採用やデータ削除、dev/previewの停止・再起動・切替、外部pushは実施しない。
 
 
 ## LOCAL-281: 0.9.0 の公開protocolと検証範囲

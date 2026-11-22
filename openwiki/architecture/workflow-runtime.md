@@ -26,14 +26,14 @@ sources:
     resource: repo://crates/server/src/workflow_runtime/runner.rs
   - id: openwiki-source-424fb004ecd8c2fe0a368131
     resource: repo://crates/server/src/workflow_runtime/workspace.rs
+  - id: openwiki-source-7277adee5c65e8d79143e722
+    resource: repo://crates/services/src/services/openwiki/bootstrap.rs
   - id: openwiki-source-bef089692ac7606992050919
     resource: repo://crates/services/src/services/openwiki/bootstrap/reports.rs
   - id: openwiki-source-121b98c6561fe94a6783b777
     resource: repo://crates/services/src/services/orchestration_dispatch_tests.rs
   - id: openwiki-source-b19d02455156008b43c210c8
     resource: repo://crates/services/src/services/orchestration.rs
-  - id: openwiki-source-a171e1a170f941fa2a4ba003
-    resource: repo://crates/utils/src/repository_memory.rs
   - id: openwiki-source-5bd46b87a60accbf6cd6da13
     resource: repo://crates/workflow/src/planner.rs
   - id: openwiki-source-63d2b16e8e208dce3e2032ac
@@ -46,10 +46,10 @@ sources:
     resource: repo://packages/web-core/src/shared/hooks/useWorkspaceRepositoryWorkflow.ts
   - id: openwiki-source-23775c3de52f3ab95a13cb8b
     resource: repo://README.md
-generated: { by: "codex", at: "2026-11-17T00:44:00.706Z" }
+generated: { by: "codex", at: "2026-11-22T04:06:17.040Z" }
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-17T00:44:00.706Z
+    at: 2026-11-22T04:06:17.040Z
 ---
 
 # Workflow の実行と耐久オーケストレーション
@@ -97,7 +97,7 @@ Orchestration event 保存と製品 node 完了は、それぞれ読み取り前
 
 driver は node iteration と snapshot を読み、Ready node を順に起動する。Agent が Started を返すと Session・AgentRun・orchestration node の ID を node execution に保持して待機する。driver の Pause はサーバー thread のブロック待ちではなく、次のイベント等による照合まで駆動を返す意味である。[driver](../../crates/server/src/workflow_runtime/runner.rs#L2259-L2333)、[起動結果の保存](../../crates/server/src/workflow_runtime/runner.rs#L2403-L2427)
 
-通常 Workflow watcher は canonical AgentRun のリンクを列挙して購読し、Repository scope の run を対象から外す。Repository Memory の独自完了検証を通常 watcher が先取りしないための境界になる。[watcher の対象](../../crates/server/src/workflow_runtime/runner.rs#L3218-L3274)
+Workflow watcher は通常 run の canonical AgentRun リンクを購読する。Repository scope の run はそのリンク列挙から除外し、同じ watcher が repository owner の reconciliation を呼び出す。[watcher の対象](../../crates/server/src/workflow_runtime/runner.rs#L3218-L3274)
 
 ### 起動形態と前進の契機
 
@@ -126,7 +126,7 @@ Runの取得もreconciliationを伴うが、LOCAL-372以後はstandaloneにも�
 
 presetはrequires_product_validationと既存complete_product_nodeを使う。下流の報告工程へは要件と全上流reportを渡し、legacy envelopeの文字数切詰めを使わない。providerのcontext上限で失敗すれば停止する。停止後に遅れて届いたreportは保持するが、成功へ再ラベルせず親を再開しない。[runner](../../crates/server/src/workflow_runtime/runner.rs#L440-L572)・[完全report](../../crates/server/src/workflow_runtime/runner.rs#L2968-L2985)
 
-Repository-owned Wikiの品質・Refine・公開判断は既存owner側に残る。372は共通の開始/完了/引渡し接続であり、373の専用進行管理撤去・品質警告伝播等の完成を意味しない。
+Repository-owned Wiki の品質・Refine・公開判断は Wiki owner が担い、共通 Workflow が開始と完了の引渡しを担う。詳細は [OpenWiki maintenance](../operations/openwiki-maintenance.md) を参照する。
 
 ## Condition と人の判断
 
@@ -150,7 +150,7 @@ Bootstrap は専用 Workspace の `execution_owner` を Workflow run に結び�
 
 OpenWiki Bootstrap は、通常 Workflow の会話引継ぎへ Review の全文を流さない。host が Reviewer の JSON と evidence path を検証し、instance管理tmpのrepository-memory領域へ完全なレポートを保存する。node output には repository・source SHA・Workflow run・Session・AgentRun・phase の identity、digest、verdict と件数だけを残す。[Review 完了時](../../crates/server/src/workflow_runtime/bootstrap.rs#L504-L533)、[保存と参照](../../crates/services/src/services/openwiki/bootstrap/reports.rs#L15-L38)
 
-system Condition はこの検証済み verdict から `pass` / `refine` を決定的に選び、通常の LLM Condition を呼ばない。Refiner には host が決めたファイル参照を渡す。参照の identity と内容 digest は再読込時に検証され、管理ファイルが改変された場合は再生成で隠さず拒否する。したがって、通常の上流 handoff の文字数制限を緩めずに Review の情報を保持できる。[分岐](../../crates/server/src/workflow_runtime/runner.rs#L2446-L2475)、[Refine dispatch](../../crates/server/src/workflow_runtime/bootstrap.rs#L320-L332)、[参照の再検証](../../crates/services/src/services/openwiki/bootstrap/reports.rs#L72-L113)
+system Condition は検証済み Review の finding の有無と完了状態から分岐を決定し、通常の LLM Condition を呼ばない。finding があれば Refine へ渡す。Refiner には host が決めたファイル参照を渡す。参照の identity と内容 digest は再読込時に検証され、管理ファイルが改変された場合は再生成で隠さず拒否する。したがって、通常の上流 handoff の文字数制限を緩めずに Review の情報を保持できる。[分岐](../../crates/server/src/workflow_runtime/runner.rs#L2446-L2475)、[Refine dispatch](../../crates/server/src/workflow_runtime/bootstrap.rs#L320-L332)、[参照の再検証](../../crates/services/src/services/openwiki/bootstrap/reports.rs#L72-L113)
 
 この仕組みは任意ファイルを下流 prompt に挿入する汎用 artifact 機構ではない。詳細なレビュー契約と publication 前の再検証は [OpenWiki maintenance](../operations/openwiki-maintenance.md)へ集約する。
 

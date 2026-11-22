@@ -62,10 +62,14 @@ sources:
     resource: repo://crates/utils/src/agent_guides.rs
   - id: openwiki-source-a171e1a170f941fa2a4ba003
     resource: repo://crates/utils/src/repository_memory.rs
-generated: { by: "codex", at: "2026-11-17T04:16:39.656Z" }
+  - id: openwiki-source-e3fba362b5134688658e62a4
+    resource: repo://packages/web-core/src/features/wiki/ui/WikiQualityWarnings.tsx
+  - id: openwiki-source-2fab4d75b959f83ee7aaf538
+    resource: repo://packages/web-core/src/shared/dialogs/settings/settings/RepositoryMemorySettings.tsx
+generated: { by: "codex", at: "2026-11-22T04:06:17.040Z" }
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-17T04:16:39.656Z
+    at: 2026-11-22T04:06:17.040Z
 ---
 
 # Change Manifest・Run完了とWikiの責務
@@ -119,7 +123,7 @@ flowchart LR
 
 専用会話へ渡すMemoryは、受付時にsource祖先関係を確認した固定event IDsの公開記録だけを解決する。Repo/Workspace所属を検査し、不在はunavailableとして伝える。Sessionの私的文脈や後着eventを混ぜない。[公開Memory解決](../../crates/server/src/routes/integrations/runtime.rs#L73-L104)
 
-公開イベント・新規pending・古いbacklog・main直接変更は、別のWiki WorkspaceやAgentを自動起動しない。起動時と5秒周期の回復は、保存済みBootstrapまたは予約済みAgentRunの所有者を回収する。自動マージでは同じ候補内でWikiを更新し、それ以外の更新・再同期・初回生成はUIまたは認可済みMCPの明示要求から開始する。未処理イベントは強制ackせず、明示保守の入力として保持する。[受付と回復](../../crates/server/src/routes/openwiki.rs#L170-L202)・[新規受付なしの回復](../../crates/server/src/routes/openwiki.rs#L522-L550)・[隔離回帰](../../crates/server/src/routes/openwiki/recovery_tests.rs#L65-L160)
+公開イベント・新規pending・古いbacklog・main直接変更は、別のWiki WorkspaceやAgentを自動起動しない。起動時と5秒周期の回復は、保存済み所有者や予約済みAgentRunを照合する。Bootstrap の進行と回復は共通 Workflow watcher が担い、Wiki recovery monitor は完了後の cleanup 等を担う。自動マージでは同じ候補内でWikiを更新し、それ以外の更新・再同期・初回生成はUIまたは認可済みMCPの明示要求から開始する。未処理イベントは強制ackせず、明示保守の入力として保持する。[受付と回復](../../crates/server/src/routes/openwiki.rs#L170-L202)・[新規受付なしの回復](../../crates/server/src/routes/openwiki.rs#L522-L550)・[隔離回帰](../../crates/server/src/routes/openwiki/recovery_tests.rs#L65-L160)
 
 ## Sync の入力は統合済み source に結び付く凍結 snapshot
 
@@ -140,6 +144,8 @@ receipt の結果は Updated / NoOp / Failed。Failed はイベントを acknowl
 通常 coding run の Wiki 鮮度探索では、別 Workspace の壊れた event などを診断し、Wiki 状態を Error として作業開始を継続できる。これは選択 event の厳密な公開検証を省略する許可ではない。[起動時の縮退](../../crates/services/src/services/repository_memory.rs)
 
 読み取りのobserverはDB層の `read_only_configured_for_repository` と非作成の `paths_for_repository` を使う。DB設定行がなければ未設定を返し、DBのみのstate/Manifest/完了履歴読取はartifactの存在を要求せずmkdirもしない。writerの `existing_for_repository` は設定確認後に管理artifact領域を作成できるので純粋な閲覧に使わない。必要な凍結入力の欠損や破損を成功へ補完する規則ではない。[DB reader](../../crates/db/src/models/repository_state.rs#L45-L80)・[path projection](../../crates/utils/src/repository_memory.rs#L678-L705)
+
+公開時の品質警告は Wiki state と publication に保持され、設定画面や Wiki パネルから確認できる。内容の未確認や Review 結果の欠落は安全な公開を許す場合でも合格を意味しない。writer の未終了や決定的な公開検査の失敗は別の停止条件である。[警告の型](../../crates/utils/src/repository_memory.rs)・[公開判定](../../crates/server/src/workflow_runtime/bootstrap.rs)・[画面](../../packages/web-core/src/features/wiki/ui/WikiQualityWarnings.tsx)
 
 Current は単なる「ファイルがある」ではない。有効化、Wiki 存在、成功履歴、pending の有無、source の一致を踏まえて判定する。Error/Stale などの状態は保持されるため、古い snapshot を読んだ agent が常に最新とみなす根拠にはならない。[派生状態](../../crates/utils/src/repository_memory.rs)
 
