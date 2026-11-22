@@ -7,7 +7,7 @@ use sha2::{Digest, Sha256};
 use utils::repository_memory::{BootstrapReportKind, RepositoryMemoryStore};
 use uuid::Uuid;
 
-use super::{CoverageReview, CoverageVerdict, FindingSeverity, RefinementReport};
+use super::{CoverageReview, CoverageVerdict, RefinementReport};
 use crate::services::openwiki::inventory::InventoryIdentity;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -138,12 +138,10 @@ impl ReportReference {
     }
 }
 
+// Keep the existing private report-reference field; every new finding is a
+// candidate for independent verification, irrespective of completion status.
 fn material_count(review: &CoverageReview) -> usize {
-    review
-        .findings
-        .iter()
-        .filter(|f| f.severity == FindingSeverity::Material)
-        .count()
+    review.findings.len()
 }
 
 fn digest(bytes: &[u8]) -> String {
@@ -277,9 +275,9 @@ mod tests {
     }
 
     fn review() -> CoverageReview {
-        CoverageReview::parse(&json!({"version":1,"verdict":"needs_refinement","summary":"領域ごとの検証",
-            "findings":(0..20).map(|n| json!({"severity":"material","title":format!("領域{n}"),
-                "description":"不足する契約と根拠を記載。".repeat(400),"evidencePaths":["src/main.rs"],"recommendedAction":"expand_page"})).collect::<Vec<_>>()
+        CoverageReview::parse(&json!({"version":2,"verdict":"pass","summary":"領域ごとの検証",
+            "findings":(0..20).map(|n| json!({"kind":"retention","page":format!("領域{n}"),
+                "description":"不足する契約と根拠を記載。".repeat(400),"evidencePaths":["src/main.rs"]})).collect::<Vec<_>>()
         }).to_string()).unwrap()
     }
 
@@ -291,10 +289,6 @@ mod tests {
             let id = identity();
             let mut report = review();
             report.verdict = CoverageVerdict::Incomplete;
-            report.unverified = vec![super::super::UnverifiedItem {
-                subject: "old/new procedure".into(),
-                reason: "Source inspection unfinished".into(),
-            }];
             if !material {
                 report.findings.clear();
             }
@@ -320,7 +314,7 @@ mod tests {
         let store = RepositoryMemoryStore::at_artifacts(dir.path()).unwrap();
         let id = identity();
         let mut review = review();
-        review.version = 2;
+        review.version = 3;
         assert!(save_review(&store, id.clone(), &review).is_err());
         assert!(
             !store
@@ -372,7 +366,7 @@ mod tests {
         let mut review = review();
         review.findings.truncate(1);
         review.summary = "検証概要".repeat(2100);
-        review.findings[0].title = "重要な契約".repeat(40);
+        review.findings[0].page = "重要な契約".repeat(40);
         review.findings[0].description = "根拠と指摘".repeat(2100);
         let prefix = "nested/".repeat(40);
         review.findings[0].evidence_paths = (0..40)
@@ -472,7 +466,7 @@ mod tests {
                 id.source.workspace_id
             )
             .unwrap(),
-            review.verdict
+            review.routing_verdict()
         );
     }
 
