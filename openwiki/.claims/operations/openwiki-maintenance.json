@@ -1,20 +1,40 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:e233319fd2b6c803abc71b58ba32fcc1737dee18c16ac13a6d4a6c98df7ffab9",
+  "pageVersion": "sha256:f7ac9347e52dac7f90c631a663aebd7ea16f20f18769d6e5e3629052428bb2a7",
   "claims": [
     {
       "id": "claim_9132a1782a3d4cf6910edf0f28a58c81",
       "statement": "Bootstrap の独立 review と writer 完了は別の host 契約である。",
       "evidence": [
         {
-          "resource": "repo://crates/services/src/services/openwiki/bootstrap.rs#L571-L595",
-          "version": "repo-lines-v1:sha256:40e19a34dfe60c2857976c3ebf03b2a479c3f8dca3a77148670f61388537659d:eyJzZWxlY3RlZExpbmVDb3VudCI6MjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ5ZGQzZmRmZGU5ODNiYzYxNjRlYmViNjg2ZjJmOWZjNTlhMTZlZDEyOWI3YzJhNDdhMjA3MGViN2QxZTA1NWIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcyMTQ1OGIzOGZkYzJlOGQ1Y2Y0NzFhNzg5NGQxNjg0YjhkNTllMjIyYjg0ZjdiNzU2YjkxNzhmZjM4OWViN2UiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImIyZWM1ZDdiOWE0YWFjOTYyNzNjYTZmM2MyODM0Nzk1M2JhMDEwZDFhZmJiMTJjMThkOGJlYzdiY2E0YjRmZjMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJiNzNlNTlmZDEwODBmMDFkMTU2NDhkODNiNjNlOGUxY2RlY2Y1ZGIxMTM0OTAyZmYzODhiZTgxY2FmNTIyNjAifQ"
+          "resource": "repo://crates/services/src/services/openwiki/bootstrap.rs#L583-L612",
+          "version": "repo-lines-v1:sha256:78e5d14f13b5712bf2d61e56b79b0e685698dcbca12da91f50e01100f835256e:eyJzZWxlY3RlZExpbmVDb3VudCI6MzAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ5ZGQzZmRmZGU5ODNiYzYxNjRlYmViNjg2ZjJmOWZjNTlhMTZlZDEyOWI3YzJhNDdhMjA3MGViN2QxZTA1NWIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIyMGVkOGQ5NjU1ODYzN2FiMzhjY2NlNTJiNmRmODZhZjBjZTQ0YWJmZDFkYzMzY2YwNDZiOGY0NGYyZWQ1ZjUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImIyZWM1ZDdiOWE0YWFjOTYyNzNjYTZmM2MyODM0Nzk1M2JhMDEwZDFhZmJiMTJjMThkOGJlYzdiY2E0YjRmZjMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJiNzNlNTlmZDEwODBmMDFkMTU2NDhkODNiNjNlOGUxY2RlY2Y1ZGIxMTM0OTAyZmYzODhiZTgxY2FmNTIyNjAifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_d396f05ccb174de2952c5a7d3844337c",
+      "statement": "Generateには初期生成の完了が必要で、Refineは操作不要と検証された場合に変更なしで完了できる。開始した操作には監査付きfinishのcompleteが必要である。",
+      "evidence": [
+        {
+          "resource": "repo://crates/services/src/services/openwiki/bootstrap.rs#L600-L645",
+          "version": "repo-lines-v1:sha256:c68fa57a9f8b0559919d6db5095fe832d392f64ab700ceb1f1ca4951d2c4b3d2:eyJzZWxlY3RlZExpbmVDb3VudCI6NDYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjczN2Y5ZDRkYWYzMGQ3OThkZDAyZDNjNGNlNjBjMmMyZjFlYzhiNzE0OTIzODFkODE1OTlhNjdkMWM4ZDg3MGMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjBlM2QyNWE1MGNkOWQxYjc3MjFlOTgxMmEwMWI3OTJiZmIzNGVhNjRhYmU2NjBhZjhlNGI3M2MzYmY4MDRlMDciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE1MjE2MDRiMzVmYzQwYWYwMGNiYTRlZWEyZmQ1ZTJjM2FmMTg2M2IzOTExODVkN2JmNGJiMDllNzJkMGM4YjMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_1ac7d869cfda4c56ad13ca9b8689ffff",
+      "statement": "同じ所有Runの再開前に発生した既知の非変異next_page拒否は厳密に一致する場合のみ回復でき、未知のエラーや異なるRunは拒否する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/services/src/services/openwiki/completion.rs",
+          "version": "repo-file-v1:sha256:fe43b524518d4abd948a4bfb9e61b9747e09693c086fc043be098cd163ef300c"
         }
       ]
     }
   ],
   "verification": {
     "by": "openwiki/0.9.0",
-    "at": "2026-11-22T05:31:45.518Z"
+    "at": "2026-11-22T18:40:23.680Z"
   }
 }

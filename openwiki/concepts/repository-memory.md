@@ -5,15 +5,21 @@ description: Run の意味記録、Git source、統合済み Wiki、receipt と�
 tags: [repository-memory, manifest, openwiki, reconciliation]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-22T05:31:45.518Z
+    at: 2026-11-22T18:40:23.680Z
 sources:
   - id: openwiki-source-21149aa9001849998cda42a2
     resource: repo://crates/db/src/models/repository_state/manifests.rs
+  - id: openwiki-source-5720d865d1c837f0e6b7dab7
+    resource: repo://crates/server/src/routes/integrations/conversation.rs
+  - id: openwiki-source-231241ac3c842dcd67525890
+    resource: repo://crates/server/src/routes/openwiki.rs
+  - id: openwiki-source-3b873a675f85754e9183d162
+    resource: repo://crates/server/src/routes/openwiki/management.rs
   - id: openwiki-source-110c99f4b05152335c067c71
     resource: repo://crates/services/src/services/openwiki/sync_input.rs
   - id: openwiki-source-6067be8d6f85caa8ac03638f
     resource: repo://crates/services/src/services/repository_memory.rs
-generated: { by: "codex", at: "2026-11-22T05:31:45.518Z" }
+generated: { by: "codex", at: "2026-11-22T18:40:23.680Z" }
 ---
 
 # Change Manifest・Run 完了と Wiki
@@ -41,6 +47,8 @@ Git 変更前には staged tree と Manifest を publication record に固定す
 Receipt は Updated / NoOp / Failed を区別し、失敗を成功した acknowledge と扱わない。検証済み no-op は成功になり得る。Current は Wiki ファイルの存在だけでなく、設定、成功履歴、pending と source の一致を踏まえる。過去の成功 receipt は、その後の source 変更に対する現在の鮮度を保証しない。[状態と receipt](../../crates/utils/src/repository_memory.rs)・[Wiki API](../../crates/server/src/routes/openwiki.rs)
 
 ## 保存先と回復
+
+Wiki の指示設定は DB に保存され、保存や解除だけでは Git や公開 Wiki を変更しない。明示更新の受付時に DB の上書き、repository の `openwiki/INSTRUCTIONS.md`、既定テンプレートの順で一つを選び、Run 全体で固定する。成功した明示更新だけが適用済みの指示を進め、自動マージは未反映の編集ではなく最後に適用した上書きを使う。[設定](../../crates/server/src/routes/openwiki/management.rs)・[選択と完了](../../crates/server/src/routes/openwiki.rs)・[保守](../operations/openwiki-maintenance.md)
 
 確定 Manifest、Wiki の可変 state・receipt・publication と coding Run の永続診断は instance DB に置く。固定 Sync 入力、source publication、setup 原本・復元 journal と Bootstrap report は復旧用の管理 tmp、再生成可能な文書索引は管理 cache に置く。共有 persistent はユーザーが保持する成果物用で、内部 journal の代わりではない。[path と cleanup](../../crates/utils/src/repository_memory.rs)・[DB state](../../crates/db/src/models/repository_state.rs)
 
