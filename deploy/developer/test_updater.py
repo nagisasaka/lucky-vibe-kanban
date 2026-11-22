@@ -110,7 +110,6 @@ class DatabaseTests(unittest.TestCase):
             extra = ",id TEXT,session_id TEXT,created_at TEXT" if table == "agent_runs" else ""
             self.db.execute(f"CREATE TABLE {table} ({column} TEXT{extra})")
         self.db.execute("CREATE TABLE agent_run_state (agent_run_id TEXT,state_json TEXT)")
-        self.db.execute("CREATE TABLE resource_holders (id TEXT)")
         self.db.execute("CREATE TABLE scheduled_tasks (enabled INTEGER)")
         self.db.commit()
 
@@ -135,9 +134,8 @@ class DatabaseTests(unittest.TestCase):
                 self.db.execute(f"DELETE FROM {table}")
                 self.db.commit()
 
-    def test_schedule_resource_and_latest_goal_do_not_block(self):
-        for sql, cleanup in (("INSERT INTO resource_holders VALUES ('held')", "DELETE FROM resource_holders"),
-                             ("INSERT INTO scheduled_tasks VALUES (1)", "DELETE FROM scheduled_tasks")):
+    def test_schedule_and_latest_goal_do_not_block(self):
+        for sql, cleanup in (("INSERT INTO scheduled_tasks VALUES (1)", "DELETE FROM scheduled_tasks"),):
             self.db.execute(sql)
             self.db.commit()
             assert_database_idle(self.path)
@@ -153,7 +151,7 @@ class DatabaseTests(unittest.TestCase):
         assert_database_idle(self.path)
 
     def test_non_agent_records_do_not_block(self):
-        for table in ("execution_processes", "orchestration_runs", "workflow_runs", "integration_runs", "resource_operations", "resource_mediations", "agent_run_commands", "orchestration_outbox"):
+        for table in ("execution_processes", "orchestration_runs", "workflow_runs", "integration_runs", "agent_run_commands", "orchestration_outbox"):
             self.db.execute(f"CREATE TABLE {table} (status TEXT)")
             self.db.execute(f"INSERT INTO {table} VALUES ('running')")
         self.db.commit()

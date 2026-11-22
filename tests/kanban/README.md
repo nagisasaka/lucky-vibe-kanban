@@ -11,8 +11,7 @@ checkout's frontend through Vite. It never connects the frontend to the existing
 server. Confirm the backend build revision/schema compatibility before reuse;
 `revision.json` records both frontend Git state and backend build identity.
 Backend/frontend/browser are stopped in `finally`; the instance is deleted.
-The test does not start agents or call paid models. Check resource coordination
-before running alongside other heavy work. No Rust build is required.
+The test does not start agents or call paid models. Coordinate with other heavy work as needed. No Rust build is required.
 
 Outputs: `.build/kanban-validation/` (screenshots, backend logs, source identity,
 geometry and results). These are local test artifacts, not canonical wiki files.

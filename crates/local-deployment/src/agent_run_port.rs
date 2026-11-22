@@ -894,20 +894,10 @@ impl LocalAgentRunPort {
         let mut memory_instructions = Vec::new();
         let mut coding_runs = Vec::new();
         let mut parallel_contexts = Vec::new();
-        let resource_mediator = workspace
-            .execution_owner
-            .as_ref()
-            .is_some_and(|o| o.kind == db::models::workspace_usage::RESOURCE_MEDIATION);
         let mut openwiki_maintenance = false;
         let mut openwiki_reviewer = false;
         let mut bootstrap_review_instructions = None;
         let local_api_port = utils::port_file::read_port_file("vibe-kanban").await.ok();
-        if !resource_mediator && let Some(port) = local_api_port {
-            memory_instructions.push(services::services::resource_coordination::instructions(
-                port,
-                request.session_id,
-            ));
-        }
         let integration: Option<db::models::integration::IntegrationRun> =
             sqlx::query_as("SELECT * FROM integration_runs WHERE workspace_id=?")
                 .bind(workspace.id)
@@ -1173,7 +1163,7 @@ impl LocalAgentRunPort {
         {
             env.insert("LVK_PARENT_AGENTS", "1");
         }
-        if !resource_mediator && !openwiki_reviewer {
+        if !openwiki_reviewer {
             env.prepare_runtime_guide().map_err(|error| {
                 AgentRunPortError::Unavailable(format!("Execution guide: {error}"))
             })?;
@@ -1198,9 +1188,6 @@ impl LocalAgentRunPort {
             })?;
             env.insert("MCP_HOST", "127.0.0.1");
             env.insert("MCP_PORT", port.to_string());
-        }
-        if resource_mediator {
-            env.insert("LVK_RESOURCE_MEDIATOR", "1");
         }
         if openwiki_maintenance {
             env.insert("LVK_OPENWIKI_MAINTENANCE", "1");
@@ -5976,25 +5963,23 @@ mod tests {
             request.session_id,
         );
         let full_role = services::services::openwiki::bootstrap::review_prompt(&copy, "ja");
-        request.input.content =
-            services::services::openwiki::bootstrap::review_goal_objective(&copy, "review");
-        executors::executors::codex::validate_goal_objective(&request.input.content).unwrap();
-        attempt.executor_config.execution_mode = Some(executors::profile::ExecutionMode::Goal);
+        request.input.content = full_role.clone();
+        attempt.executor_config.execution_mode = Some(executors::profile::ExecutionMode::Code);
         env.insert("LVK_REPOSITORY_MEMORY_INSTRUCTIONS", full_role.clone());
         let launch =
             FrozenDirectProviderLaunchSpec::new(&request, &attempt, DirectProvider::Codex, env);
         let direct = launch.launch_request();
         assert_eq!(
             direct.executor_config.execution_mode,
-            Some(executors::profile::ExecutionMode::Goal)
+            Some(executors::profile::ExecutionMode::Code)
         );
         assert_eq!(
             direct.env.repository_memory_instructions().as_deref(),
             Some(full_role.as_str())
         );
-        assert!(full_role.chars().count() > 4000);
+        assert!(full_role.contains("Review the OpenWiki publication candidate"));
         assert!(full_role.contains("unverified"));
-        assert!(!direct.prompt.contains("additionalProperties"));
+        assert_eq!(direct.prompt, full_role);
         assert_eq!(launch.current_dir, copy);
         let payload: serde_json::Value =
             serde_json::from_slice(&launch.audit_payload().unwrap()).unwrap();

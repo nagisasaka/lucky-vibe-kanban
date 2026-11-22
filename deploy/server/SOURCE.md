@@ -83,7 +83,7 @@ fetch and the helper, not an image layer or the final distribution size.
 
 Final-image and retained-volume upgrade checks remain unexecuted in this
 environment: Docker, Podman, BuildKit, nerdctl, buildah and OCI runtime commands
-are absent, no Docker/Podman socket or configured remote endpoint is available,
-and the execution bridge lists no registered runners. Installing a privileged
+are absent, and no Docker/Podman socket or configured remote endpoint is available.
+Installing a privileged
 daemon or changing host permissions is outside this verification. The local
 helper/fixture results must not be substituted for those image checks.

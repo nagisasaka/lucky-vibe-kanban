@@ -51,7 +51,6 @@ describe('execution process runtime helpers', () => {
     'cleanupscript',
     'archivescript',
     'integrationvalidation',
-    'resourcecommand',
   ])('still blocks chat for an active %s', (run_reason) => {
     expect(isChatBlockingScriptActive(makeProcess({ run_reason }))).toBe(true);
   });

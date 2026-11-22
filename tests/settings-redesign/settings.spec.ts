@@ -219,7 +219,6 @@ test("every legacy settings destination remains navigable without render errors"
     "remote-projects",
     "mcp",
     "mcp-integration",
-    "resources",
   ]) {
     console.log("Checking section", section);
     await open(page, "?section=" + section);

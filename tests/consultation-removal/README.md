@@ -12,7 +12,7 @@ LVK_TEST_BACKEND=/path/to/authorised/aa59ab58/server node tests/consultation-rem
 backendの埋込revisionは初期main
 `aa59ab5855ae90b0fe3cf65a2017ff60be52df61` と照合する。
 backendの削除対象APIは旧binaryに残るため、本試験はAPI削除の実動作を検証しない。
-共有資源を使う場合は実行前にresource coordinationの登録・利用契約を確認する。
+共有環境に影響する場合は関係者と調整する。
 
 対象は質問待ち、承認待ち、完了、通知が古いRunを指すProject配下画面、通知なしの
 Workspace。desktop/darkとmobile/lightで相談ボタン・リンク・textareaの不在と

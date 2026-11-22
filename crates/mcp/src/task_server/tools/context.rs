@@ -17,13 +17,12 @@ pub struct ContextRequest {
 pub enum ContextGuide {
     Coding,
     Parallel,
-    Resources,
 }
 
 #[tool_router(router = context_tools_router, vis = "pub")]
 impl McpServer {
     #[tool(
-        description = "Return project, issue, and workspace metadata. Request guide=coding for Manifest format, parallel for discovery/preview APIs, or resources for raw HTTP/Runner details. Coding agents perform their assigned work directly; orchestration delegation instructions apply to coordinating agents.",
+        description = "Return project, issue, and workspace metadata. Request guide=coding for Manifest format, parallel for discovery/preview APIs. Coding agents perform their assigned work directly; orchestration delegation instructions apply to coordinating agents.",
         annotations(
             read_only_hint = true,
             destructive_hint = false,
@@ -44,10 +43,6 @@ impl McpServer {
             Some(ContextGuide::Parallel) => {
                 response["parallel_api_guide"] =
                     serde_json::json!(utils::agent_guides::PARALLEL_GUIDE);
-            }
-            Some(ContextGuide::Resources) => {
-                response["resource_access_guide"] =
-                    serde_json::json!(utils::agent_guides::resource_guide());
             }
             None => {}
         }

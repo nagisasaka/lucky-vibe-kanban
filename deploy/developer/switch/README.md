@@ -103,7 +103,7 @@ manifestの`format:1`、`files`（3実行ファイルのSHA256）、`assets`（f
 remote MCPの専用`self_restart`は稼働server自身のPID/start/boot/cwd、解決済instance/data、起動port、
 currentと起動設定hashを非公開pipeで渡します。operation snapshotは監査記録であり恒久設定ではありません。
 停止直前にworkerがlistener/identity/hashを独立に再検証します。
-初回preflightが外部instance/data利用者・共有resource占有でbusyの場合だけ、30秒待って1回再確認します。対象serverの子孫の自然終了は待たず、成果物検査後の停止処理で終了させます。
+初回preflightが外部instance/data利用者でbusyの場合だけ、30秒待って1回再確認します。対象serverの子孫の自然終了は待たず、成果物検査後の停止処理で終了させます。
 identity/hash/config/権限等の拒否、停止直前の新しいbusy、SIGTERM以降の失敗は再試行しません。待機と理由は永続receiptのstageとbusy-recheck.jsonへ記録します。
 stdioの`self_restart`は既存のローカルOS UID/instance所有者の信頼境界で独立engineへ直接委任し、永続受付を返します。HTTP経路やOAuth principalは使いません。受付後は担当Codex Runを終了し、再接続後に同じproject_id/request_idの`get_self_restart_operation`で確認してください。受付は切替成功を意味しません。
 `LVK_SELF_RESTART_ENGINE/CONFIG`は不要です。engineは`INSTANCE/switch/start_binary.py`固定です。
@@ -119,7 +119,7 @@ region/grant形式は廃止され、読書rootは自己再起動の許可条件�
 実切替を拒否しません。dry-runは従来どおり停止せず、子があれば非破壊に拒否します。
 通常利用者の安定版image更新は変更しません。
 
-権限・設定・identity/listener・新旧成果物・resource holder/queueを確認してから、停止直前に
+権限・設定・identity/listener・新旧成果物を確認してから、停止直前に
 serverと子孫をPID/start・UID・親子edgeで照合しpidfdに固定します。名前やcwdだけで選ばず、
 process group全体にsignalを送りません。envを消した子や別session/groupの子も親子関係で捕捉します。
 明示的に別 `LVK_INSTANCE_DIR` を持つ子や異UIDの子は、最初のsignal前に拒否します。
@@ -184,7 +184,7 @@ stdio結果のownerはOS UIDとprojectから決まるinstance内namespaceです�
 `self_restart`を依頼できます。上位AIの新remote MCPによる再起動を前提にしません。
 受付後は担当Codex Runを終了して子孫/writerを収束させ、復帰後に同じproject/request IDの
 `get_self_restart_operation`を使います。stdio processだけを終了しても担当Runやhostが残ればbusyは解消しません。
-30秒後も外部instance/data利用者・共有resourceがbusyなら未切替で停止します。設定失効、unknown結果、権限拒否を成功と扱わず、自動再送もしません。
+30秒後も外部instance/data利用者がbusyなら未切替で停止します。設定失効、unknown結果、権限拒否を成功と扱わず、自動再送もしません。
 Codexの既存MCP設定では`mcp_servers.vibe_kanban.command`を、保持した検証済み新bundleの
 `vibe-kanban-mcp`絶対pathにします。旧serverが設定したPATHは旧releaseを先頭にするので、
 単にcommandをbasenameのままにして新bundleを置くだけでは切り替わりません。
@@ -229,8 +229,7 @@ operatorはprocess/listener、migration後DB、backupの実状態を確認し、
 復旧後、不要な失敗releaseを所有者が整理し、失敗operationを管理領域外の保護された復旧記録へ移すことで
 新切替のfenceを解除できます。記録を成功へ書き換えず、診断資料を失わないでください。
 
-resource snapshotのholders/queueは停止前に拒否します。未使用resource登録だけでは拒否しません。
-この独立engineは対象instance/DBが登録資源でないことが前提です。登録対象なら既存resource operation bundleを使います。
+共有環境に影響する操作は関係者と調整します。
 `--no-new-work`は外部調整の確認で、他の資源使用やscheduler停止を代行する強制flagではありません。
 
 ## 検証

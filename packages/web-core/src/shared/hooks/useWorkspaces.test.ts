@@ -95,7 +95,6 @@ describe('workspace sidebar runtime state', () => {
     'integration',
     'openwiki_sync',
     'openwiki_bootstrap',
-    'resource_mediation',
   ])(
     'shows %s in the normal workspace list even after its agent exits',
     (kind) => {

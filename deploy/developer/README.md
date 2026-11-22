@@ -23,7 +23,7 @@ does include headless Chromium, Playwright and its system dependencies.
    does not publish. Copy the published **digest**, full source SHA and run ID.
 5. Submit an update, then end the requesting agent run. Check the saved job
    status from a new run after the update. A pending request does not force any
-   active agent, goal, terminal, resource operation or workflow to stop.
+   active agent, goal, terminal or workflow to stop.
 
 Git push authentication is separate from reading public release metadata. Use
 credentials restricted to your fork, such as a write-enabled
@@ -34,8 +34,8 @@ attempting a release. The public release client itself needs no GitHub API token
 
 The development service watches **one** checkout (`LVK_DEV_REPO`). It does not
 automatically follow the card that requested testing. Select the intended
-worktree when starting a preview, or use separate ports. Serialise use of a
-shared preview with resource coordination. The updater does not switch branches,
+worktree when starting a preview, or use separate ports. Coordinate shared preview
+use with the people involved. The updater does not switch branches,
 pull source, commit files, merge cards, or automatically deploy every push.
 
 ## Install on the Docker host
@@ -162,11 +162,19 @@ the installation. That test does not use the real agent's credentials or data.
 
 ## Update and recovery contract
 
+The resource coordination and execution bridge retirement migration removes
+its database records. For the configured instance `data/db.v2.sqlite`, it also removes the
+retired mediation directories, mediation Session logs and audits, and resource
+command logs. Other Session files remain. A migration of a standalone database copy outside the configured instance
+has no associated instance-file cleanup. If cleanup
+fails, the migration stops; already removed retired files are not restored. Fix
+the filesystem error or unexpected symlink and retry the migration.
+
 The service waits only for LVK-managed coding agents to finish in each managed
 application. Agent runs, provider attempts and their process registrations must
 be terminal; unknown agent states and unreadable databases still block updates.
 Shells, builds, browsers, development servers, workflow/Integration parent
-records, active Goal metadata, schedules and shared-resource records do not
+records, active Goal metadata, and schedules do not
 block an update by themselves. These non-agent processes will be stopped by
 container replacement; in-memory queued follow-ups are not preserved.
 

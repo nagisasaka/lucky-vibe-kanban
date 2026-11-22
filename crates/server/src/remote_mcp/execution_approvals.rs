@@ -248,13 +248,12 @@ mod tests {
         .unwrap();
         let mut approval: Value = serde_json::from_str(&approval).unwrap();
         approval["payload"]["data"]["tool_call_id"] = json!("call");
-        approval["payload"]["data"]["tool_name"] =
-            json!("MCP fixture/list_shared_resources (one call only)");
+        approval["payload"]["data"]["tool_name"] = json!("MCP fixture/list_items (one call only)");
         sqlx::query("UPDATE agent_events SET sequence=4,event_envelope=? WHERE agent_run_id=? AND sequence=3")
             .bind(approval.to_string()).bind(target.agent_run_id).execute(&remote.pool).await.unwrap();
         let mut tool = approval.clone();
         tool["event_id"] = json!(Uuid::new_v4());
-        tool["payload"] = json!({"type":"tool_call","data":{"tool_call_id":"call","tool_name":"fixture/list_shared_resources","arguments":{},"result":"never export"}});
+        tool["payload"] = json!({"type":"tool_call","data":{"tool_call_id":"call","tool_name":"fixture/list_items","arguments":{},"result":"never export"}});
         sqlx::query("INSERT INTO agent_events(event_id,session_id,agent_run_id,turn_id,run_attempt_id,run_attempt_number,sequence,correlation_id,schema_version,payload_version,event_envelope) SELECT ?,session_id,agent_run_id,turn_id,run_attempt_id,1,3,?,1,1,? FROM agent_events WHERE agent_run_id=? AND sequence=4")
             .bind(Uuid::new_v4()).bind(Uuid::new_v4()).bind(tool.to_string()).bind(target.agent_run_id)
             .execute(&remote.pool).await.unwrap();

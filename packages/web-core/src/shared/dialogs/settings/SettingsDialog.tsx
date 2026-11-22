@@ -58,7 +58,6 @@ function SettingsDialogNavigation({
       'mcp',
       ...(access?.management ? ['access'] : []),
     ],
-    operations: ['resources'],
     ...(access?.account ? { account: ['account'] } : {}),
   };
   return (

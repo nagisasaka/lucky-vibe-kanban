@@ -635,7 +635,6 @@
     },
     "owner": {
       "integration": "自動マージ",
-      "resource_mediation": "共有資源の調整",
       "openwiki_sync": "OpenWikiの更新",
       "openwiki_bootstrap": "OpenWikiの初期化"
     }

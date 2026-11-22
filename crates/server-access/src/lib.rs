@@ -613,19 +613,6 @@ async fn gate(State(access): State<Access>, mut request: Request, next: Next) ->
         }
         return secure_response(response);
     }
-    // Runner callbacks retain their existing installation/token verification.
-    // They never gain membership through a loopback or forwarded-header guess.
-    let segments: Vec<_> = path.split('/').collect();
-    let runner_callback = (segments.len() == 6
-        && segments[1..4] == ["api", "execution-bridge", "runners"]
-        && segments[5] == "poll")
-        || (segments.len() == 8
-            && segments[1..4] == ["api", "execution-bridge", "runners"]
-            && segments[5] == "operations"
-            && matches!(segments[7], "report" | "settled"));
-    if runner_callback && matches!(access.load().await, Ok((Some(_), _))) {
-        return secure_response(next.run(request).await);
-    }
     let principal = if internal && path.starts_with("/api/") {
         let revision = match access.load().await {
             Ok((Some(_), revision)) => revision,

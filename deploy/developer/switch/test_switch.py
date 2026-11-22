@@ -60,10 +60,8 @@ class SwitchTest(unittest.TestCase):
                 ("execution_processes", "status"),
                 ("workflow_runs", "status"),
                 ("workflow_attempts", "status"),
-                ("resource_operations", "status"),
                 ("agent_run_commands", "delivery_status"),
                 ("orchestration_outbox", "delivery_status"),
-                ("bridge_commands", "status"),
                 ("agent_process_registry", "registry_status"),
                 ("integration_runs", "status"),
             ]:
@@ -600,25 +598,7 @@ class SwitchTest(unittest.TestCase):
         self.assertEqual(repeated["status"], "interrupted")
         self.assertIsNone(self.old.poll())
 
-    def test_registered_unused_resources_allowed_but_holders_and_queue_refused(self):
-        snapshot = {
-            "success": True,
-            "data": {
-                "resources": [{"id": "unrelated-device"}],
-                "holders": [],
-                "queue": [],
-            },
-        }
-        with patch.object(support, "get", return_value=snapshot):
-            engine.preflight(self.args())
-            for key in ("holders", "queue"):
-                snapshot["data"][key] = [{"operation_id": "active-operation"}]
-                with self.assertRaises(support.Refuse):
-                    engine.preflight(self.args())
-                snapshot["data"][key] = []
-        with patch.object(support, "get", side_effect=ConnectionError):
-            with self.assertRaises(ConnectionError):
-                engine.preflight(self.args())
+    def test_stop_rejects_changed_process_identity(self):
         want = engine.observation()
         want["start"] = "wrong"
         with self.assertRaises(support.Refuse):
@@ -779,7 +759,6 @@ class SwitchTest(unittest.TestCase):
                 INSERT INTO integration_reservations VALUES('logical-reservation');
                 INSERT INTO agent_run_commands VALUES('pending');
                 INSERT INTO orchestration_outbox VALUES('pending');
-                INSERT INTO bridge_commands VALUES('pending');
                 INSERT INTO scheduled_tasks VALUES(1);
             """)
 
@@ -920,21 +899,6 @@ class SwitchTest(unittest.TestCase):
         self.assertIsNone(self.old.poll())
         backup.assert_not_called()
         self.assertFalse((Path(result["result_path"]).parent / "backup-complete.json").exists())
-
-    def test_resource_holder_refuses_before_any_process_signal(self):
-        a = self.args(request_id=str(uuid.uuid4()), owner="operator", asynchronous=False)
-        real_get = support.get
-        def get(path):
-            if path == "/api/resource-coordination/snapshot":
-                return {"success": True, "data": {"resources": [], "holders": [{"resource_id": "fixture"}], "queue": []}}
-            return real_get(path)
-        with patch.object(support, "get", side_effect=get), patch.object(engine.time, "sleep"), patch.object(process_drain, "terminate") as terminate, patch.object(signal, "pidfd_send_signal") as signals:
-            result = engine.submit(a, self.config)
-        self.assertEqual(result["status"], "failed", result)
-        self.assertIn("Resource holders", result["reason"])
-        terminate.assert_not_called()
-        signals.assert_not_called()
-        self.assertIsNone(self.old.poll())
 
     def test_new_child_during_shutdown_blocks_backup_and_cutover(self):
         self.old.terminate()

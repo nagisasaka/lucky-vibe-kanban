@@ -175,7 +175,7 @@ Use the relevant guidance when working on distribution, deployment or isolated i
 - `.github/workflows/publish-server.yml` builds and validates the root Dockerfile's `server` target, then publishes version-tagged images to GHCR. Manual dispatch builds/tests without publishing.
 - Do not run local Docker release builds unless explicitly requested. Source development/debug builds are supported locally or in the server development container.
 - For server distribution changes, `pnpm run server:check` provides Docker-free kit tests alongside relevant source checks. Report skipped native tests and unavailable image/host validation. When deploying, verify the published image and use its immutable digest.
-- For isolated instance testing or staging/deployment work, follow [`deploy/developer/STAGING.md`](deploy/developer/STAGING.md). Staging is opt-in contributor tooling, not a completion step for every task. Instance state must be separate from stable state via `LVK_INSTANCE_DIR`; debug/release is not an isolation boundary. Claim registered shared staging resources through resource coordination and stop test processes before releasing claims. Publishing an image does not deploy it.
+- For isolated instance testing or staging/deployment work, follow [`deploy/developer/STAGING.md`](deploy/developer/STAGING.md). Staging is opt-in contributor tooling, not a completion step for every task. Instance state must be separate from stable state via `LVK_INSTANCE_DIR`; debug/release is not an isolation boundary. Coordinate shared staging use with those affected and stop test processes after use. Publishing an image does not deploy it.
 
 ### Shared development instance
 

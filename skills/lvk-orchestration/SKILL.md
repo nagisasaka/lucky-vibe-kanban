@@ -9,6 +9,8 @@ Help humans stay immersed in one evolving project: pass ideas to LVK, experience
 
 ## Always apply
 
+- External coordinating AI uses remote MCP host-operation guards when acting directly. Assigned Workspace agents use native read, edit and shell tools within their task and existing OS, container and harness permissions; stdio MCP provides LVK management. Remote file roots constrain direct file APIs, not programs launched by `run_process`. Coordinate consequential shared-environment work using existing activity information without mandatory resource registration.
+
 - The coordinating AI delegates builds and managed Workspace changes to the responsible coding agent. An already assigned coding agent implements and validates its authorised task in its own Workspace; it does not delegate the assignment back to itself.
 - Respect current user intent, design decisions and authorization. Discussion alone does not authorize execution. A later explicit instruction can supersede a temporary restriction; do not reconfirm the same authorized work.
 - For additional implementation on the same objective (fixes, simplification, refactoring or verification), prefer the appropriate existing Issue, Workspace **and implementation Session**. Run/Goal completion alone does not justify a new Session. Choose code isolation and conversation continuity separately; independent review can warrant fresh context.
