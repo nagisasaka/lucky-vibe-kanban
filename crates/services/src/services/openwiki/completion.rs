@@ -290,6 +290,23 @@ impl PhaseCompletionProof {
             ensure!(!failed, "OpenWiki begin failed with unknown side effects");
             return self.begin(args, &item["result"], root);
         }
+        // OpenWiki 0.9.0 rejects this exact request in requireSession before
+        // nextRepositoryPage is invoked. Other errors have unknown effects.
+        if self.resume_required
+            && tool == "openwiki_next_page"
+            && item["status"] == "failed"
+            && item["error"].is_null()
+            && item["result"]["isError"].is_null()
+            && item["result"]["structuredContent"].is_null()
+            && item["result"]["content"]
+                == serde_json::json!([{"type":"text","text":"invalid_state: No matching OpenWiki run is active. Call openwiki_begin to start or resume the durable run first."}])
+            && self
+                .active
+                .as_ref()
+                .is_some_and(|active| *args == serde_json::json!({"runId": active.id}))
+        {
+            return Ok(());
+        }
         ensure!(
             !self.resume_required,
             "OpenWiki writer must resume the owned active run"
@@ -794,6 +811,84 @@ mod tests {
                 result.is_ok(),
                 mutation == "valid",
                 "{mutation}: {result:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn continuation_only_recovers_the_known_pre_resume_next_page_rejection() {
+        let tmp = tempfile::tempdir().unwrap();
+        for case in [
+            "known",
+            "normal",
+            "unknown",
+            "wrong_run",
+            "changed_args",
+            "extra_args",
+            "unresolved",
+            "failed_begin",
+            "no_resume",
+            "no_finish",
+        ] {
+            let id = Uuid::new_v4();
+            let (_first_dir, first) = audited(tmp.path(), begin(tmp.path(), "update", id), 1);
+            let mut proof = PhaseCompletionProof::new(WriterPhase::Sync);
+            proof.replay_continuation(&first, tmp.path()).unwrap();
+            let mut rejection = frames(
+                "openwiki_next_page",
+                json!({"runId":id}),
+                json!({"isError":true,"content":[{"type":"text","text":"invalid_state: No matching OpenWiki run is active. Call openwiki_begin to start or resume the durable run first."}]}),
+            );
+            rejection[1]["params"]["item"]["status"] = json!("failed");
+            rejection[1]["params"]["item"]["result"]
+                .as_object_mut()
+                .unwrap()
+                .remove("isError");
+            match case {
+                "normal" => rejection.clear(),
+                "unknown" => {
+                    rejection[1]["params"]["item"]["result"]["content"][0]["text"] =
+                        json!("invalid_state: unknown")
+                }
+                "wrong_run" => {
+                    for frame in &mut rejection {
+                        frame["params"]["item"]["arguments"]["runId"] = json!(Uuid::nil());
+                    }
+                }
+                "changed_args" => {
+                    rejection[1]["params"]["item"]["arguments"]["runId"] = json!(Uuid::nil())
+                }
+                "extra_args" => {
+                    for frame in &mut rejection {
+                        frame["params"]["item"]["arguments"]["extra"] = json!(true);
+                    }
+                }
+                "unresolved" => {
+                    rejection.pop();
+                }
+                _ => {}
+            }
+            let mut resumed = begin(tmp.path(), "update", id);
+            for frame in &mut resumed {
+                frame["params"]["item"]["result"]["structuredContent"]["resumed"] = json!(true);
+            }
+            if case == "failed_begin" {
+                resumed[1]["params"]["item"]["result"]["isError"] = json!(true);
+            }
+            if case != "no_resume" && case != "unresolved" {
+                rejection.extend(resumed);
+            }
+            if case != "no_finish" && case != "unresolved" {
+                rejection.extend(finish(id));
+            }
+            let (_second_dir, second) = audited(tmp.path(), rejection, 2);
+            let result = proof
+                .replay_continuation(&second, tmp.path())
+                .and_then(|_| proof.validate());
+            assert_eq!(
+                result.is_ok(),
+                matches!(case, "known" | "normal"),
+                "{case}: {result:?}"
             );
         }
     }
