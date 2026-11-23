@@ -2,11 +2,11 @@
   "schemaVersion": 1,
   "pages": {
     "/openwiki/architecture/agent-runtime.md": {
+      "gitHead": "70290945ade4ca349ee6d965b4b5b10f207f3d6a",
+      "sourceFingerprint": "sha256:ab78b7d525baa6e9bd214dd4d0e769f45df84b97899c54fe2cd2d36e27fb92df",
       "pageVersion": "sha256:040d1b30570384ced0355e1c8cb99ff03d02c3b0d1ebb40a52e1ff721b50e9ff",
       "completedBy": "codex",
-      "completedRunId": "18f6014b-9694-408d-94a9-ee2a345d7eb3",
-      "gitHead": "70290945ade4ca349ee6d965b4b5b10f207f3d6a",
-      "sourceFingerprint": "sha256:ab78b7d525baa6e9bd214dd4d0e769f45df84b97899c54fe2cd2d36e27fb92df"
+      "completedRunId": "18f6014b-9694-408d-94a9-ee2a345d7eb3"
     },
     "/openwiki/architecture/system.md": {
       "gitHead": "d3c0c505f142a77994f66063b436e1c2c3d76daf",
@@ -128,11 +128,11 @@
       "completedRunId": "2c68adf3-4dd7-47ae-bb16-e15c4f09ae7a"
     },
     "/openwiki/concepts/kanban-board.md": {
-      "pageVersion": "sha256:12ca5c17152891bd6d09df50907dfb79919b9403f42edcc908d72072112223a1",
+      "pageVersion": "sha256:e85c7fbe5b38f47d883972bd9394e8c323e23a93bdb33d35f8e4b2b02742bfec",
       "completedBy": "codex",
-      "completedRunId": "18f6014b-9694-408d-94a9-ee2a345d7eb3",
-      "gitHead": "70290945ade4ca349ee6d965b4b5b10f207f3d6a",
-      "sourceFingerprint": "sha256:ab78b7d525baa6e9bd214dd4d0e769f45df84b97899c54fe2cd2d36e27fb92df"
+      "completedRunId": "acf75732-d786-4c9e-b40c-45d2c57a1a57",
+      "gitHead": "3e859d9a33b15f370c74d7d61faf529aa6875872",
+      "sourceFingerprint": "sha256:988ea22ac833758ef280e8ac7ff6cef0d0b7fb79e22728fa2b2bb9490009b3d8"
     },
     "/openwiki/concepts/kanban.md": {
       "gitHead": "d3c0c505f142a77994f66063b436e1c2c3d76daf",
@@ -149,11 +149,11 @@
       "completedRunId": "2c68adf3-4dd7-47ae-bb16-e15c4f09ae7a"
     },
     "/openwiki/concepts/pets.md": {
+      "gitHead": "70290945ade4ca349ee6d965b4b5b10f207f3d6a",
+      "sourceFingerprint": "sha256:ab78b7d525baa6e9bd214dd4d0e769f45df84b97899c54fe2cd2d36e27fb92df",
       "pageVersion": "sha256:f455adfd8ecf4a493411aac011ee9189f6f07d78f4a09694a49b10eb83308fce",
       "completedBy": "codex",
-      "completedRunId": "18f6014b-9694-408d-94a9-ee2a345d7eb3",
-      "gitHead": "70290945ade4ca349ee6d965b4b5b10f207f3d6a",
-      "sourceFingerprint": "sha256:ab78b7d525baa6e9bd214dd4d0e769f45df84b97899c54fe2cd2d36e27fb92df"
+      "completedRunId": "18f6014b-9694-408d-94a9-ee2a345d7eb3"
     },
     "/openwiki/concepts/project-and-issue.md": {
       "gitHead": "d3c0c505f142a77994f66063b436e1c2c3d76daf",

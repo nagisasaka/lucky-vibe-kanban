@@ -5,7 +5,7 @@ description: Project の Issue を状態別に表示するボード。
 tags: [kanban, board, project]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-23T19:12:52.102Z
+    at: 2026-11-23T22:15:01.079Z
 sources:
   - id: openwiki-source-f4e0f9b2ce513d3f8b8b070e
     resource: repo://crates/executors/src/executors/provider_adapter.rs
@@ -31,7 +31,7 @@ sources:
     resource: repo://tests/kanban/run-speech-lifetime.mjs
   - id: openwiki-source-eece9c51da74bcdb3fe07f45
     resource: repo://tests/speech-synthesis/settings.spec.ts
-generated: { by: "codex", at: "2026-11-23T19:12:52.102Z" }
+generated: { by: "codex", at: "2026-11-23T22:15:01.079Z" }
 ---
 
 # Kanban board
@@ -48,20 +48,22 @@ Project の route は Kanban 画面を開き、Board API はその Project の I
 
 1. `speechSynthesis` を利用できるブラウザで対象 Project のボードを開く。非対応の場合は切替が無効になる。
 2. スピーカーを押す。新着の基準位置を取得する間は接続中となり、取得できてからオンになる。接続に失敗した場合はオフのままなので、接続状態を確認して再操作する。
-3. 開始、成功・失敗・停止、回答待ちの短い定型文と、agent が人へ送った commentary を聞く。「結果と要対応だけ」を選んだ場合は開始と commentary を除く。ボード発話は選択音声の言語を使い、未選択・音声不在時の言語は `ja-JP` である。
+3. 開始、成功・失敗・停止、回答待ちの短い定型文と、agent が人へ送った commentary を聞く。「結果と要対応だけ」を選んだ場合は開始と commentary を除く。ボード発話の言語は、解決した音声の正規化済み言語、ブラウザ優先言語、`ja-JP` の順で決まる。
 4. オフにすると再生中の発話と待ち行列を即時に止める。再度オンにしても停止中の履歴は読み返さない。ボードを離れた場合も購読と発話を停止する。
 
 [音声切替](../../packages/web-core/src/features/kanban/ui/RunSpeechToggle.tsx)は Provider の状態を表示する。購読と発話キューは Project ごとの [RunSpeechProvider](../../packages/web-core/src/features/kanban/ui/RunSpeechProvider.tsx) が所有し、[SharedAppLayout](../../packages/web-core/src/shared/components/ui-new/containers/SharedAppLayout.tsx) が画面内の再マウントより上に配置する。詳細の開閉、画面幅変更、loading、同一ボード内のページ再マウントでオン状態を失わない。別 Project、ボード離脱、新しいタブは別の寿命であり、新規ボードはオフになる。サーバーに音声キューや別モデルによる要約は設けない。
 
 ### 音声・速度・読み上げる内容を選ぶ
 
-設定の「音声合成」で、そのブラウザが返す音声名と言語、速度、読み上げる内容を選ぶ。初期値は「ブラウザの既定」、1.0×、「すべて」である。速度は0.5〜2.0×を0.1刻みで選べる。音声一覧は `voiceschanged` による遅延読み込みに追従し、特定ベンダーの音声が存在するとは仮定しない。[設定画面](../../packages/web-core/src/shared/dialogs/settings/settings/SpeechSynthesisSettingsSection.tsx)
+設定の「音声合成」は、ブラウザ優先言語に合う公開音声を実際の名前と言語で表示する。`navigator.languages`、続いて `navigator.language` から最初の有効な言語を選び、同じ基本言語の音声を地域・提供元をまたいで残す。アプリの表示言語で候補を絞らない。Androidなどの `ja_JP` は `ja-JP` に正規化する。特定ベンダーの音声が存在するとは仮定しない。
 
-選好は `speech-synthesis-preferences` として localStorage に保存する。保存音声が一時的に存在しなくても選好を消さず、発話はブラウザ既定へ戻す。音声は URI・名前・言語の組で識別する。別タブの変更も次の発話生成時に読み直し、現在の音声と速度を適用する。速度の体感はブラウザと音声エンジンに依存する。[保存と発話生成](../../packages/web-core/src/shared/lib/speechSynthesis.ts)
+候補が複数なら「ブラウザの既定」と各音声を選べる。一件なら選択欄の代わりに音声名を表示し、自動使用する。ゼロ件なら候補がないことを表示し、ブラウザ既定へフォールバックする。一覧は `voiceschanged` による遅延読み込みと `languagechange` に追従する。速度の初期値は1.0×、読み上げる内容は「すべて」であり、速度は0.5〜2.0×を0.1刻みで選べる。[設定画面](../../packages/web-core/src/shared/dialogs/settings/settings/SpeechSynthesisSettingsSection.tsx)
+
+選好は `speech-synthesis-preferences` として localStorage に保存する。保存音声が一時的に存在しなくても選好を消さない。一件の候補は保存値より優先し、複数候補では保存値と一致する音声を使う。それ以外はブラウザ既定へ戻す。音声は URI・名前・言語の組で識別する。別タブの変更も次の発話生成時に読み直し、現在の音声と速度を適用する。速度の体感はブラウザと音声エンジンに依存する。[保存と発話生成](../../packages/web-core/src/shared/lib/speechSynthesis.ts)
 
 「結果と要対応だけ」は終了・失敗・停止・回答待ちを残し、開始・中間報告を除く。イベントの状態更新と重複排除は継続し、キューの排出時と非同期の有効性確認後の発話直前に最新モードを確認する。除外した待機分は破棄し、後で「すべて」に戻しても過去分を再生しない。読み始めた発話はモード切替では中断しない。[内容の選別](../../packages/web-core/src/features/kanban/model/runSpeechQueue.ts)
 
-「試聴」は固定文を現在の音声・速度でブラウザの発話列へ追加し、ボードをオンにしない。試聴や設定画面を閉じる操作は、ボードの発話を cancel せず、ボード内の待ち行列も破棄しない。内容モードにかかわらず試聴できる。非対応ブラウザでは試聴とボード切替を無効にする。[試聴](../../packages/web-core/src/shared/lib/speechSynthesis.ts)
+試聴とボードは共通の発話生成処理で音声・速度を解決する。音声もブラウザ優先言語も得られない場合だけ、試聴はアプリ表示言語、ボードは `ja-JP` を使う。「試聴」は固定文を現在の音声・速度でブラウザの発話列へ追加し、ボードをオンにしない。試聴や設定画面を閉じる操作は、ボードの発話を cancel せず、ボード内の待ち行列も破棄しない。内容モードにかかわらず試聴できる。非対応ブラウザでは試聴とボード切替を無効にする。[試聴](../../packages/web-core/src/shared/lib/speechSynthesis.ts)
 
 ### 読み上げ順序と古いイベント
 

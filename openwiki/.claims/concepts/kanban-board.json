@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:12ca5c17152891bd6d09df50907dfb79919b9403f42edcc908d72072112223a1",
+  "pageVersion": "sha256:e85c7fbe5b38f47d883972bd9394e8c323e23a93bdb33d35f8e4b2b02742bfec",
   "claims": [
     {
       "id": "claim_625a2942e9e646aab640baf76f348af5",
@@ -88,11 +88,15 @@
     },
     {
       "id": "claim_a939f081e42a4ac997b08752bc2e266d",
-      "statement": "音声合成設定はブラウザ単位に音声・速度・内容モードを保存し、既定はブラウザ既定音声・1.0倍・すべて。発話生成ごとに最新選好を読み、保存音声が見つからなければ選好を保持して既定音声へ戻す。",
+      "statement": "音声・速度・内容モードはブラウザ単位に保存し、発話ごとに最新選好を読む。一件の候補は自動使用し、複数候補では保存値に一致する音声を使う。それ以外は保存値を消さずブラウザ既定へ戻す。速度の初期値は1.0倍、内容はすべて。",
       "evidence": [
         {
-          "resource": "repo://packages/web-core/src/shared/lib/speechSynthesis.ts#L1-L74",
-          "version": "repo-lines-v1:sha256:8af82c112098389185e4718f617746ddc29bfc503a85bf919eeb390b7e531bbc:eyJzZWxlY3RlZExpbmVDb3VudCI6NzQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ5NzRlZjY5YjUyOTE3MjUyYTA1ZTVkN2UxMjRmMjY5OWY1NmFiYTU0ZTM2ZmQzMzlkOTU1NDgzNWY3ZTllZWYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNlNzdhMTVhOWFlOWJjY2ZiMzVhNDhlODI1NmNiNDM2YWI3NWM3ZGMwYWExMTg1MmYzMzQwMWQ3MmVhZjU4MTciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQ5YjFjNzBmZTE5OTM1NDJlMTIwMTJiZWVjNjZiNTllYTQxMDRkMzMxMDY5NjQzYjAwYzkyNGY5MzJiZTk1YzAifQ"
+          "resource": "repo://packages/web-core/src/shared/lib/speechSynthesis.ts#L1-L46",
+          "version": "repo-lines-v1:sha256:206a5049ce4d441248fc5a741c9ea1d49acda1ca4cc8c84f1617e8cb723eb67a:eyJzZWxlY3RlZExpbmVDb3VudCI6NDYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ5NzRlZjY5YjUyOTE3MjUyYTA1ZTVkN2UxMjRmMjY5OWY1NmFiYTU0ZTM2ZmQzMzlkOTU1NDgzNWY3ZTllZWYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImMwYzI5Mzc2ZTk5MmJiNDIxNzNhYTVlYzZiZTQyNmJlZjU2MGQzYjgwOTcxNzZiY2ZlZTg3ZmYxMjRmNmJhMTgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdlMGQ5YjMxNWFiMDcwNTViOTcyODQ1OGQ5MmY0M2EyYzVlNWNhZTNiOWQxZjFhOGFkYmQ2ODQ4M2I0Nzk4ZjQifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/lib/speechSynthesis.ts#L81-L105",
+          "version": "repo-lines-v1:sha256:b64d68a5b2bdefad07e9c56d8b8b2e741b7960edb0b0259caaf956dfd0999cde:eyJzZWxlY3RlZExpbmVDb3VudCI6MjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM0ZWI1NjU4Y2U3YWVhZmU1NDVhMzk5OTFhNjhkNjllZThlNTQ2MzYxZDMxYWYzZGIzNDZhYzEzNDUxYjVjYTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNlNzdhMTVhOWFlOWJjY2ZiMzVhNDhlODI1NmNiNDM2YWI3NWM3ZGMwYWExMTg1MmYzMzQwMWQ3MmVhZjU4MTciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjA5NGZjMGMxNzNkMWVjM2ZjNTAxZDdkZmE5Mjg1NTAxYzUyN2NmYjQ3MTI1ODNkYTNjYzM2MTgwNTY2YjRiZTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQ5YjFjNzBmZTE5OTM1NDJlMTIwMTJiZWVjNjZiNTllYTQxMDRkMzMxMDY5NjQzYjAwYzkyNGY5MzJiZTk1YzAifQ"
         }
       ]
     },
@@ -109,7 +113,7 @@
           "version": "repo-lines-v1:sha256:1389a3e1b1042f163c4c1402fded1293c77e767963aa86a393dc90f447ccfeca:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg1ZTE1YzgxMWM3OTA3YzM2ZjRjMmQ2Yjc1ZjI4ZWI5NTkyYWJjMDE5MmI0MGRhMmU1M2IyMmE4N2I1MGNlZjYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYxNWZhODFjMWQ3Y2M1NzRiYTc1YTQ5NWVhZjcyYWMyMWM4NTJmMDRjYzNmZGNiZTQ5MjIzNTMxYWMzZTNjNjAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjU1ZmU4YzcxMGQ2NTkzYTg1NDFlNTVmMjVlMTEyMGMxZDYyMmNlNjU2ZWYwMjRhZDZlZDlkOGZmZGQ3ZGNkNjAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQ1YmViYmEwODMwM2M5YjBlNTljNWE2NTlmNzgyYTgxMDUzYmExZTgwYmM3NTgyYjY3NWU4ODExOTFkNmMyOTMifQ"
         },
         {
-          "resource": "repo://tests/speech-synthesis/settings.spec.ts#L236-L273",
+          "resource": "repo://tests/speech-synthesis/settings.spec.ts#L261-L298",
           "version": "repo-lines-v1:sha256:52885bc50c8e5abd4b6db98fdf18c6ddf0c2463ccd26fb04ece409c1cd9590e9:eyJzZWxlY3RlZExpbmVDb3VudCI6MzgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk0YTg3N2QzMjc5NDdlOGE0YmM5M2Y4N2EyZWMxOTY2ODljNDJlZjJhMmY4YWE3NWM5YjAwODI4Y2FhOTg4OTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY2ZjViNDBiMTU4NDU3ZDE3ODY0ZjIxNzkwNzg2ZGQ1YTJlY2RiNjRiNjZhNjUxZjc4OGQ0ZTI1Y2QzMzAzZDIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImExODRmYzBhMGFjMmViNDQwZjZhYTlhMGI4MDg3NTM5YmE4ZGQ4NDAyYjY4ZmVkNGNiNDVmYWIzMWM0YWEwMmEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
         }
       ]
@@ -120,21 +124,63 @@
       "evidence": [
         {
           "resource": "repo://packages/web-core/src/shared/dialogs/settings/settings/SpeechSynthesisSettingsSection.tsx#L23-L42",
-          "version": "repo-lines-v1:sha256:8ef31f99d72f1fa7a7dba3c269118a8471c9e0ab1ff60f62bdbc782df25a6cfd:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU5NjZmYmZhODg5OThkYTc0NjU2YzUwMTk0OTU2YzI1ZjA4NDk0NTc2NjBjMDA5ZmU2M2QxZTlmYTlkYzkzMWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFkMmI2OGViMjg5YjA5ZTNiYjI2ZWJiOTljYzE1OWFiZjViZjJjYmQ2MWI4ZTQyYWVjNWRhNmVjNzM3MzkyYTciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjY2MzY1MDcwMjc2Mjg5NzI3ODliZGEwNDEwZjk2MmRmZTAzM2M3OTY1MjhhMDhhMTQwYmFhN2Q2NTc5OTdlN2MiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImVkMDE0MjNlODQzOGQxOTQyODdmM2JjNzNiMDc1NzhiYmY0MWQxYjU3ODJlZjhlZjI3ZDIyYTljZTdlMDNlZjkifQ"
+          "version": "repo-lines-v1:sha256:f0c76f0232513809f35e3821a5159424f64232aa4a1fe9825623e1d08f06e47f:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU5NjZmYmZhODg5OThkYTc0NjU2YzUwMTk0OTU2YzI1ZjA4NDk0NTc2NjBjMDA5ZmU2M2QxZTlmYTlkYzkzMWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY2YmI4NGM1YzUzNGYyY2FmZDE4NmFlODY2ODVjYjc1MTU5Mjc5ZjRmZTVlYjIwYmFkOGZmZTg1YmNjYThlNzAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjY2MzY1MDcwMjc2Mjg5NzI3ODliZGEwNDEwZjk2MmRmZTAzM2M3OTY1MjhhMDhhMTQwYmFhN2Q2NTc5OTdlN2MiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjkxMTIwMzA0ZWVjZGZjMmM5YWI4ZThkM2M0MGJjNzYxYjI5MWI1NTFkYTFkYjdkYzQ5MzAyMWZlYWM3YTU0ZjgifQ"
         },
         {
-          "resource": "repo://packages/web-core/src/shared/lib/speechSynthesis.ts#L77-L94",
+          "resource": "repo://packages/web-core/src/shared/lib/speechSynthesis.ts#L108-L125",
           "version": "repo-lines-v1:sha256:6e89acb4d812ad62063a66ec4b0933ce3442baa2aaeaa09faf8f6c4dad45beee:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJlZTc3NTY3MjJjZWU3MzlkMzQzMWJlMDJhNWVmNjRlMTQxNTI1ZmQzYzdmM2I1Yjc5ZTJlYzJkYmMwOTE4YWUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjA0OWIyNGYyYjMyMjJhZDM4NDIyZDRhNzk5NGEzZmJjNjkxYTE4ODVjNDk2MGQ3YmZkNTU1MTFlM2FhYzcyZjciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
         },
         {
-          "resource": "repo://tests/speech-synthesis/settings.spec.ts#L94-L163",
+          "resource": "repo://tests/speech-synthesis/settings.spec.ts#L120-L189",
           "version": "repo-lines-v1:sha256:75baab51ee2c607da4efc4903cff9538098350d3fbbbbf24cd4cdb504e7d9919:eyJzZWxlY3RlZExpbmVDb3VudCI6NzAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM0MjY1MGNjODM3NDYyYWFmODA5MGQzZGFlZTkwN2E4NTIwOTI2ZjU5N2ZiYzgzNWJlNGI2OTBlYThkMGFmZjkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY2ZjViNDBiMTU4NDU3ZDE3ODY0ZjIxNzkwNzg2ZGQ1YTJlY2RiNjRiNjZhNjUxZjc4OGQ0ZTI1Y2QzMzAzZDIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQ2NDBiN2VhZWEyMWIxY2Q4NGYwMmM2Yzg2ZGFmNzFmNzk1NGMzMWJhNTUwNTdmMDY1M2E0NjZlZGI3YzlmMTYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImIxMWVmN2ZhMzllZDE0MDk4NzQxYmFjZTkyZmRiZWJiMGQ5YjA1ZjQ1YTgwZWMxYzNjYmRiODk5MGNkMDM3ZGIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_9c4ad06989084b4a8b7fb1ab02f27756",
+      "statement": "音声候補はnavigator.languagesに続いてnavigator.languageから最初の有効な言語を選び、基本言語が一致する公開音声を残す。ja_JPなどの下線をハイフンへ正規化する。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/shared/lib/speechSynthesis.ts#L56-L79",
+          "version": "repo-lines-v1:sha256:af6f83d8a32b531081f773b928adcb057e02a02bf18df0b959fde33d0324738e:eyJzZWxlY3RlZExpbmVDb3VudCI6MjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRhZDk3Yzg4ZmVmZjdiYTgzNjhlNDRkM2U1ODQwMjBhM2I1ZjBiZmY1N2FkMmQxOTI4MWMyMWM5Njk1MTU0MzMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjExOWFhNzcxNTkwMWZhMmI1Mzc4MmEyYTA1ZGY2ZDI2MjZlZDk4NGRjYzg5ZDliM2ZkOTFjN2Q5ZDMzNGY4ZDQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjI3YjUyYWYyMjk4NWYwNTg0MjYyNTUxNTE2ZmFmNjhhZjY5Zjc5ZGEwMDc1M2I1NWUyODY1YmEyMDI4NTVmOTIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_2f9e7507bdb64f049552d895fd6938da",
+      "statement": "設定は複数候補では選択欄、一件では名前、ゼロ件では候補なしを表示し、voiceschangedとlanguagechangeで一覧を更新する。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/shared/dialogs/settings/settings/SpeechSynthesisSettingsSection.tsx#L23-L42",
+          "version": "repo-lines-v1:sha256:f0c76f0232513809f35e3821a5159424f64232aa4a1fe9825623e1d08f06e47f:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU5NjZmYmZhODg5OThkYTc0NjU2YzUwMTk0OTU2YzI1ZjA4NDk0NTc2NjBjMDA5ZmU2M2QxZTlmYTlkYzkzMWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY2YmI4NGM1YzUzNGYyY2FmZDE4NmFlODY2ODVjYjc1MTU5Mjc5ZjRmZTVlYjIwYmFkOGZmZTg1YmNjYThlNzAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjY2MzY1MDcwMjc2Mjg5NzI3ODliZGEwNDEwZjk2MmRmZTAzM2M3OTY1MjhhMDhhMTQwYmFhN2Q2NTc5OTdlN2MiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjkxMTIwMzA0ZWVjZGZjMmM5YWI4ZThkM2M0MGJjNzYxYjI5MWI1NTFkYTFkYjdkYzQ5MzAyMWZlYWM3YTU0ZjgifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/dialogs/settings/settings/SpeechSynthesisSettingsSection.tsx#L82-L131",
+          "version": "repo-lines-v1:sha256:f854e238b4ef4d060265feb8b0902537e14c6ef9a32380ba5c73a3a8b34ba5ca:eyJzZWxlY3RlZExpbmVDb3VudCI6NTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE4ZTg2YWY0ZjZiZDljOWU3ZDZiYWU3Y2E4MTA3YjMwY2UwOTI3MzU1ZjFlOGE0NjdmZDczZDY0MjA5NTQzYTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNmNjE2NmJiN2Y5NGIwNTA0NjFjZDdmMzU0OTU4NDY1ZDQ1YmU0MTFhZDcxMjM2YzgxZjQ5YzU4YWVkOGNhMjQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ0ZTNmNmZjMTgxZjllMDljYzQwOWQxNWJhOTBiYjVlNzA2ZTBiMzk0NTk2YTQ2NGM1ZGZlNzFlZDc0ZjExOTQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQzMzBlODM1OTQzZGFhMGFkNWYyNzMxMjcwMzI0MWQzNTNkYWZiNmExODhhNWE0NmE5NmYzNDE4MzYyNTJiYjIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_2292f624d3fb4cc59b8f29aad8255a14",
+      "statement": "試聴とボードは共通の発話生成を使い、言語は解決音声、ブラウザ優先言語、呼出側指定の順に決まる。最後の指定は試聴がアプリ表示言語、ボードがja-JPである。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/features/kanban/ui/RunSpeechProvider.tsx#L48-L60",
+          "version": "repo-lines-v1:sha256:1389a3e1b1042f163c4c1402fded1293c77e767963aa86a393dc90f447ccfeca:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg1ZTE1YzgxMWM3OTA3YzM2ZjRjMmQ2Yjc1ZjI4ZWI5NTkyYWJjMDE5MmI0MGRhMmU1M2IyMmE4N2I1MGNlZjYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYxNWZhODFjMWQ3Y2M1NzRiYTc1YTQ5NWVhZjcyYWMyMWM4NTJmMDRjYzNmZGNiZTQ5MjIzNTMxYWMzZTNjNjAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjU1ZmU4YzcxMGQ2NTkzYTg1NDFlNTVmMjVlMTEyMGMxZDYyMmNlNjU2ZWYwMjRhZDZlZDlkOGZmZGQ3ZGNkNjAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQ1YmViYmEwODMwM2M5YjBlNTljNWE2NTlmNzgyYTgxMDUzYmExZTgwYmM3NTgyYjY3NWU4ODExOTFkNmMyOTMifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/dialogs/settings/settings/SpeechSynthesisSettingsSection.tsx#L151-L169",
+          "version": "repo-lines-v1:sha256:2fb6e7577633447293647fdc2b3966a08a2664a07ade2f5a9f88d95bbfa3160a:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVmZGRhZGJkZTIwNDZiZDEyNzMyMzdhOWRjYzk2MzVjZTA5ZTQ1OTRjMzFhYWUzNDYwNzc5Y2U2N2I5NTAzMDEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE1YTljZGVmOGFiMTU1YjEyNjdiZTcwOGRlYmQwMDVlNWIwNjIyOTI5NTJmOWQ0YmZhYmJiMmFkNDI0YTUxNTYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhlMGVlNTQwMTExN2ZkZGFjM2NmZGU2NWViZTZjNjIwM2FiMTZmOGM2MGI4OTVlOTIzNmU5NzI1NWI5M2U4MjciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImI0YjI2YWUwNjEyNTY4ZWYwNDFhM2FlZDQ4M2NiNDNkYjY3N2NiMjM4MjE3YzQ3NTU2YjczNTM4ZmNiNTgwYzMifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/lib/speechSynthesis.ts#L94-L125",
+          "version": "repo-lines-v1:sha256:a04a38fbe687738bddc5da3fdb861892ce23f54f96d505ca85a82999f35a8d29:eyJzZWxlY3RlZExpbmVDb3VudCI6MzIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE1NzQ0NjViMDQzY2QyYWVmNWY3ZWFkMTEyNmFjMzQ0NWNhZWM5MGI5YTBlYjU3YmY0ZDZjMGQ5OWEzNWFiOTciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjgyYWEzMjMwZTZkYzAxMzk0MGQyZDQ5ZDFhNGU4NDJlYmUzNDEzNGZiNzVlZjBmZWM0MDhkYzM1NDNlMTNmOGYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
         }
       ]
     }
   ],
   "verification": {
     "by": "openwiki/0.9.0",
-    "at": "2026-11-23T19:12:52.102Z"
+    "at": "2026-11-23T22:15:01.079Z"
   }
 }
