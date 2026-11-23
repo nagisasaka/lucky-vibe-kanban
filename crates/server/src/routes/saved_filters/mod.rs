@@ -96,7 +96,7 @@ fn semantic_request(
     SemanticRequest {
         filter_id:definition.id,project_id:definition.project_id,definition_revision:i64::from(definition.revision),
         natural_language:definition.natural_language.clone().unwrap_or_default(),
-        context:serde_json::json!({"definition_context":definition.context,"statuses":corpus.statuses,"tags":corpus.tags}),
+        context:serde_json::json!({"definition_context":definition.context,"statuses":corpus.statuses,"tags":corpus.tags,"assignee_display_names":corpus.assignee_display_names}),
         issues:corpus.issues.iter().map(|i|SemanticIssue{id:i.id,evidence:serde_json::json!({"issue":i,"issue_tags":tags.get(&i.id).cloned().unwrap_or_default(),"assignees":assignees.get(&i.id).cloned().unwrap_or_default(),"relationships":relations.get(&i.id).cloned().unwrap_or_default(),"children":children.get(&i.id).cloned().unwrap_or_default()})}).collect(),
         machine_candidate_ids:candidates,
     }

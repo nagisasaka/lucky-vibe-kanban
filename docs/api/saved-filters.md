@@ -36,7 +36,7 @@ null. `total_count` is the unpaged count. Result responses include an opaque
 and definition revisions. For every subsequent result page pass it as
 `expected_evaluation_revision` (query/body for HTTP, `page` for MCP). Missing tokens
 at offset > 0 return 400. A mismatch returns HTTP 409
-(`SavedFilterEvaluationChanged`); MCP reports a conflict. Discard collected pages
+(message prefix `saved_filter_evaluation_changed`); MCP reports a conflict. Discard collected pages
 and restart at offset 0 without the token. This also detects same-count membership
 swaps and relative-time membership changes. Definition lists do not use this token. Evaluation
 always receives the entire Project corpus, including archived and noncandidate
@@ -109,7 +109,14 @@ The common adapter maps the definition and full corpus to `SemanticRequest`,
 passes machine candidate IDs separately, and invokes the semantic module with the
 existing Deployment, `activate` and `retry_failed`. The corpus includes all Project Issues,
 statuses, tag definitions, Issue tags, assignees and explicit relationships, read
-in one SQLite snapshot. Definition context is saved, not taken from a hidden chat.
+in one SQLite snapshot. Semantic context also contains `assignee_display_names`:
+a stable user-ID-ordered array of `{user_id, display_name}` for active
+`access_members` actually assigned to this Project's Issues. Duplicate assignments
+produce one entry. Unassigned members, other Projects, inactive/missing member
+profiles, email, private profile fields and viewer-dependent SELF aliases are not
+included. The existing visible-member display name is used. Renaming an assigned
+member changes semantic context and invalidates its cached evidence; identical
+names and evidence preserve reuse. Definition context is saved, not taken from a hidden chat.
 The module owns opaque `state_json` plus CAS `generation` in
 `saved_filter_semantic_cache(filter_id, generation, state_json)` and must
 invalidate on relevant evidence changes, including noncandidate Issues for global
