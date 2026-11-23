@@ -762,6 +762,9 @@
     "removeLinkedIssue": "{{issueId}}との関連付けを解除",
     "restoreToUse": "この操作を利用するには、Issueのアーカイブを解除してください。",
     "projectDisplay": "プロジェクト表示",
+    "speechConnecting": "読み上げを接続中",
+    "speechOn": "Run の読み上げをオン",
+    "speechOff": "Run の読み上げをオフ",
     "projectMenu": "プロジェクトのメニュー",
     "addRelationship": "関連付けを追加",
     "relationshipChoices": {

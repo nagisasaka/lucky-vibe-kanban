@@ -242,6 +242,27 @@ describe('projectCanonicalAgentConversation', () => {
         : []
     );
 
+  it.each(['codex', 'claude_code'])(
+    'keeps %s classification metadata out of the conversation and preserves message merging',
+    (provider) => {
+      const metadata = event('blocks', 2, {
+        type: 'provider_extension',
+        data: {
+          provider_namespace: provider,
+          provider_event: 'agent_message_metadata',
+          payload: { message_id: 'stream' },
+        },
+      });
+      expect(
+        answers([
+          assistant(1, 'First ', false, 'stream'),
+          metadata,
+          assistant(3, 'paragraph.', false, 'stream'),
+        ])
+      ).toEqual(['First paragraph.']);
+    }
+  );
+
   it('matches the final snapshot to the last multi-block answer without reprinting it', () => {
     expect(
       answers([

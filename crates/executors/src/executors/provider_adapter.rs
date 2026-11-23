@@ -6,6 +6,7 @@
 //! events. Consumers must not parse provider output themselves.
 
 use std::{
+    collections::HashSet,
     path::{Path, PathBuf},
     sync::Arc,
 };
@@ -283,14 +284,14 @@ impl DirectProvider {
                 runtime: None,
                 protocol: Some("rust-v0.144.1"),
                 adapter: "codex-adapter-v1",
-                mapper: "codex-mapper-v9",
+                mapper: "codex-mapper-v10",
             },
             Self::ClaudeCode => DirectAdapterVersions {
                 executable: "claude",
                 runtime: None,
                 protocol: Some("stream-json-v1"),
                 adapter: "claude-code-adapter-v1",
-                mapper: "claude-code-mapper-v8",
+                mapper: "claude-code-mapper-v9",
             },
         }
     }
@@ -402,10 +403,22 @@ impl DirectProvider {
         DirectProviderMapper {
             provider: self,
             semantics: match self {
-                Self::Codex => MapperSemantics::V9,
-                Self::ClaudeCode => MapperSemantics::V8,
+                Self::Codex => MapperSemantics::V10,
+                Self::ClaudeCode => MapperSemantics::V9,
             },
             scope: Default::default(),
+            claude_speech_scope: Default::default(),
+            replay_sequence: Default::default(),
+        }
+    }
+
+    /// Preserve the previous Codex replay mapping.
+    pub fn v9_mapper(self) -> DirectProviderMapper {
+        DirectProviderMapper {
+            provider: self,
+            semantics: MapperSemantics::V9,
+            scope: Default::default(),
+            claude_speech_scope: Default::default(),
             replay_sequence: Default::default(),
         }
     }
@@ -416,6 +429,7 @@ impl DirectProvider {
             provider: self,
             semantics: MapperSemantics::V8,
             scope: Default::default(),
+            claude_speech_scope: Default::default(),
             replay_sequence: Default::default(),
         }
     }
@@ -426,6 +440,7 @@ impl DirectProvider {
             provider: self,
             semantics: MapperSemantics::V7,
             scope: Default::default(),
+            claude_speech_scope: Default::default(),
             replay_sequence: Default::default(),
         }
     }
@@ -436,6 +451,7 @@ impl DirectProvider {
             provider: self,
             semantics: MapperSemantics::V6,
             scope: Default::default(),
+            claude_speech_scope: Default::default(),
             replay_sequence: Default::default(),
         }
     }
@@ -446,6 +462,7 @@ impl DirectProvider {
             provider: self,
             semantics: MapperSemantics::V5,
             scope: Default::default(),
+            claude_speech_scope: Default::default(),
             replay_sequence: Default::default(),
         }
     }
@@ -456,6 +473,7 @@ impl DirectProvider {
             provider: self,
             semantics: MapperSemantics::V4,
             scope: Default::default(),
+            claude_speech_scope: Default::default(),
             replay_sequence: Default::default(),
         }
     }
@@ -466,6 +484,7 @@ impl DirectProvider {
             provider: self,
             semantics: MapperSemantics::V3,
             scope: Default::default(),
+            claude_speech_scope: Default::default(),
             replay_sequence: Default::default(),
         }
     }
@@ -475,6 +494,7 @@ impl DirectProvider {
             provider: self,
             semantics: MapperSemantics::V2,
             scope: Default::default(),
+            claude_speech_scope: Default::default(),
             replay_sequence: Default::default(),
         }
     }
@@ -486,6 +506,7 @@ impl DirectProvider {
             provider: self,
             semantics: MapperSemantics::V1,
             scope: Default::default(),
+            claude_speech_scope: Default::default(),
             replay_sequence: Default::default(),
         }
     }
@@ -637,6 +658,7 @@ pub fn require_capability(
 pub enum TypedProviderEvent {
     AgentActivity(crate::runtime::AgentActivity),
     AgentActivities(Vec<crate::runtime::AgentActivity>),
+    ClaudeCommentaryConfirmed(Vec<(u64, usize)>),
     Lifecycle(AgentRunStatus),
     TurnResult {
         status: AgentRunStatus,
@@ -746,6 +768,7 @@ pub struct DecodedProviderEvent {
 pub struct ProviderStreamScope {
     provider: DirectProvider,
     codex: super::codex::agent_scope::AgentScope,
+    claude_speech: ClaudeSpeechScope,
 }
 
 impl ProviderStreamScope {
@@ -753,11 +776,119 @@ impl ProviderStreamScope {
         Self {
             provider,
             codex: Default::default(),
+            claude_speech: Default::default(),
         }
     }
     pub fn apply(&mut self, event: &mut DecodedProviderEvent) {
         if self.provider == DirectProvider::Codex {
             self.codex.apply(event);
+        } else {
+            self.claude_speech.apply(event);
+        }
+    }
+}
+
+/// Associate only an explicit native tool-use stop with its exact message ID.
+/// The raw frame stays in Native Audit; this augments only the projection copy.
+#[derive(Debug, Default)]
+struct ClaudeSpeechScope {
+    current_message: Option<String>,
+    tool_use_messages: HashSet<String>,
+    current_text_blocks: Vec<(u64, usize)>,
+}
+
+impl ClaudeSpeechScope {
+    fn apply(&mut self, event: &mut DecodedProviderEvent) {
+        let Some(raw) = event.raw.payload_json.as_mut() else {
+            return;
+        };
+        if !raw.get("parent_tool_use_id").is_none_or(Value::is_null) {
+            return;
+        }
+        match raw.get("type").and_then(Value::as_str) {
+            Some("stream_event") => match raw.pointer("/event/type").and_then(Value::as_str) {
+                Some("message_start") => {
+                    self.current_text_blocks.clear();
+                    self.current_message = raw
+                        .pointer("/event/message/id")
+                        .and_then(Value::as_str)
+                        .filter(|_| {
+                            raw.pointer("/event/message/role").and_then(Value::as_str)
+                                == Some("assistant")
+                        })
+                        .map(str::to_owned);
+                    if let Some(id) = &self.current_message {
+                        self.tool_use_messages.remove(id);
+                    }
+                }
+                Some("message_delta")
+                    if raw
+                        .pointer("/event/delta/stop_reason")
+                        .and_then(Value::as_str)
+                        == Some("tool_use") =>
+                {
+                    if let Some(id) = &self.current_message {
+                        if self.tool_use_messages.len() >= 64 {
+                            self.tool_use_messages.clear();
+                        }
+                        self.tool_use_messages.insert(id.clone());
+                        if !self.current_text_blocks.is_empty() {
+                            event.typed = TypedProviderEvent::ClaudeCommentaryConfirmed(
+                                std::mem::take(&mut self.current_text_blocks),
+                            );
+                        }
+                    }
+                }
+                Some("message_stop") => {
+                    self.current_message = None;
+                    self.current_text_blocks.clear();
+                }
+                _ => {}
+            },
+            Some("assistant") => {
+                let Some(id) = raw
+                    .pointer("/message/id")
+                    .and_then(Value::as_str)
+                    .map(str::to_owned)
+                else {
+                    return;
+                };
+                if self.current_message.as_deref() == Some(id.as_str())
+                    && raw
+                        .pointer("/message/stop_reason")
+                        .is_none_or(Value::is_null)
+                    && matches!(
+                        &event.typed,
+                        TypedProviderEvent::Message {
+                            role: AgentRuntimeMessageRole::Assistant,
+                            ..
+                        }
+                    )
+                    && let Some(blocks) = raw.pointer("/message/content").and_then(Value::as_array)
+                {
+                    for (index, block) in blocks.iter().enumerate() {
+                        if block.get("type").and_then(Value::as_str) == Some("text") {
+                            // The board retains only the newest unread commentary per Run.
+                            self.current_text_blocks.clear();
+                            self.current_text_blocks.push((event.raw.sequence, index));
+                        }
+                    }
+                }
+                if self.tool_use_messages.remove(&id)
+                    && matches!(
+                        &event.typed,
+                        TypedProviderEvent::Message {
+                            role: AgentRuntimeMessageRole::Assistant,
+                            ..
+                        }
+                    )
+                    && let Some(message) = raw.get_mut("message").and_then(Value::as_object_mut)
+                    && message.get("stop_reason").is_none_or(Value::is_null)
+                {
+                    message.insert("stop_reason".into(), Value::String("tool_use".into()));
+                }
+            }
+            _ => {}
         }
     }
 }
@@ -818,6 +949,7 @@ pub struct DirectProviderMapper {
     pub provider: DirectProvider,
     semantics: MapperSemantics,
     scope: std::sync::Mutex<super::codex::agent_scope::AgentScope>,
+    claude_speech_scope: std::sync::Mutex<ClaudeSpeechScope>,
     replay_sequence: std::sync::Mutex<u64>,
 }
 
@@ -832,6 +964,7 @@ enum MapperSemantics {
     V7,
     V8,
     V9,
+    V10,
 }
 
 impl NativeAuditReplayMapper for DirectProviderMapper {
@@ -847,6 +980,7 @@ impl NativeAuditReplayMapper for DirectProviderMapper {
             MapperSemantics::V7 => "v7",
             MapperSemantics::V8 => "v8",
             MapperSemantics::V9 => "v9",
+            MapperSemantics::V10 => "v10",
         };
         if let Some((prefix, _)) = versions.mapper_version.rsplit_once('-') {
             versions.mapper_version = format!("{prefix}-{suffix}");
@@ -869,7 +1003,7 @@ impl NativeAuditReplayMapper for DirectProviderMapper {
         let typed = if self.provider == DirectProvider::ClaudeCode {
             match self.semantics {
                 MapperSemantics::V6 => classify_payload_v6(self.provider, event)?,
-                MapperSemantics::V7 | MapperSemantics::V8 => {
+                MapperSemantics::V7 | MapperSemantics::V8 | MapperSemantics::V9 => {
                     classify_payload(self.provider, event)?
                 }
                 MapperSemantics::V5 => classify_payload_v5(self.provider, event)?,
@@ -878,7 +1012,7 @@ impl NativeAuditReplayMapper for DirectProviderMapper {
                 }
                 _ => classify_payload_legacy(self.provider, event)?,
             }
-        } else if matches!(self.semantics, MapperSemantics::V9) {
+        } else if matches!(self.semantics, MapperSemantics::V9 | MapperSemantics::V10) {
             classify_payload(self.provider, event)?
         } else {
             classify_payload_legacy(self.provider, event)?
@@ -898,7 +1032,8 @@ impl NativeAuditReplayMapper for DirectProviderMapper {
             | MapperSemantics::V6
             | MapperSemantics::V7
             | MapperSemantics::V8
-            | MapperSemantics::V9 => {
+            | MapperSemantics::V9
+            | MapperSemantics::V10 => {
                 let mut scope = self.scope.lock().expect("replay scope lock");
                 if event.sequence == 1 {
                     *scope = Default::default();
@@ -911,11 +1046,24 @@ impl NativeAuditReplayMapper for DirectProviderMapper {
                             | MapperSemantics::V7
                             | MapperSemantics::V8
                             | MapperSemantics::V9
+                            | MapperSemantics::V10
                     ) {
                         scope.apply(&mut decoded);
                     } else {
                         scope.apply_legacy(&mut decoded);
                     }
+                }
+                if self.provider == DirectProvider::ClaudeCode
+                    && self.semantics == MapperSemantics::V9
+                {
+                    let mut claude = self
+                        .claude_speech_scope
+                        .lock()
+                        .expect("Claude replay scope lock");
+                    if event.sequence == 1 {
+                        *claude = Default::default();
+                    }
+                    claude.apply(&mut decoded);
                 }
                 let mut projected =
                     project_typed_event(self.provider, &decoded, manifest)?.durable_events;
@@ -928,6 +1076,7 @@ impl NativeAuditReplayMapper for DirectProviderMapper {
                             | MapperSemantics::V7
                             | MapperSemantics::V8
                             | MapperSemantics::V9
+                            | MapperSemantics::V10
                     )
                 {
                     // Non-Codex v3 and Codex v4 frames can expand into several semantic
@@ -2176,13 +2325,35 @@ fn project_typed_event(
     event: &DecodedProviderEvent,
     manifest: &NativeAuditManifest,
 ) -> Result<ProviderEventProjection, NativeAuditError> {
+    if let TypedProviderEvent::ClaudeCommentaryConfirmed(blocks) = &event.typed {
+        let durable_events = blocks.iter().map(|(sequence, index)| AgentEventEnvelope {
+            schema_version: AGENT_EVENT_SCHEMA_VERSION,
+            payload_version: AGENT_EVENT_PAYLOAD_VERSION,
+            event_id: canonical_provider_message_id(manifest.run_attempt_id, &format!("claude-commentary-confirmed:{sequence}:{index}")),
+            session_id: manifest.session_id, agent_run_id: manifest.agent_run_id, turn_id: manifest.turn_id,
+            run_attempt_id: manifest.run_attempt_id, run_attempt_number: manifest.run_attempt_number,
+            sequence: event.raw.sequence, correlation_id: event.raw.correlation_id,
+            orchestration_run_id: None, orchestration_node_execution_id: None,
+            timestamp: event.raw.timestamp, native_refs: vec![event.raw.native_ref.clone()],
+            payload: AgentEventPayload::ProviderExtension {
+                provider_namespace: "claude_code".into(), provider_event: "agent_message_metadata".into(),
+                payload: serde_json::json!({"message_id":canonical_provider_message_id(manifest.run_attempt_id, &format!("claude-text-block:{sequence}:{index}")),"kind":"commentary_confirmed"}),
+            },
+        }).collect();
+        return Ok(ProviderEventProjection {
+            durable_events,
+            live_events: vec![],
+        });
+    }
     // Facts emitted at the adapter's write/ACK boundary, not launch-time intent.
     // Keep historical replay semantics unchanged.
     if [
         "codex-mapper-v8",
         "codex-mapper-v9",
+        "codex-mapper-v10",
         "claude-code-mapper-v7",
         "claude-code-mapper-v8",
+        "claude-code-mapper-v9",
     ]
     .contains(&manifest.mapper_version.as_str())
         && let Some(value) = event
@@ -2281,7 +2452,10 @@ fn project_typed_event(
     // Delivery was introduced independently of message phase. Only explicit
     // async delivery is an async inbox question; phase alone cannot supply it.
     if provider == DirectProvider::ClaudeCode
-        && manifest.mapper_version == "claude-code-mapper-v8"
+        && matches!(
+            manifest.mapper_version.as_str(),
+            "claude-code-mapper-v8" | "claude-code-mapper-v9"
+        )
         && let Some(raw) = &event.raw.payload_json
         && raw["method"] == "lucky-vibe/approval/status"
     {
@@ -2300,7 +2474,9 @@ fn project_typed_event(
     }
 
     if provider == DirectProvider::Codex
-        && (manifest.mapper_version.ends_with("-v8") || manifest.mapper_version.ends_with("-v9"))
+        && (manifest.mapper_version.ends_with("-v8")
+            || (manifest.mapper_version.ends_with("-v9")
+                || manifest.mapper_version.ends_with("-v10")))
         && let Some(raw) = &event.raw.payload_json
     {
         if matches!(
@@ -2355,7 +2531,10 @@ fn project_typed_event(
                     && item.get("delivery").is_none_or(Value::is_null);
             }
             let mut projection = project_typed_event(provider, &text_event, manifest)?;
-            if item.get("delivery").is_some() || item.get("questions").is_some() {
+            if item.get("delivery").is_some()
+                || item.get("questions").is_some()
+                || (manifest.mapper_version.ends_with("-v10") && item["phase"] == "commentary")
+            {
                 let questions: Vec<Value> = item["questions"]
                     .as_array()
                     .into_iter()
@@ -2467,7 +2646,7 @@ fn project_typed_event(
     // Claude emits mixed text/tool content in a single envelope. Expand only
     // completed semantic blocks at the adapter boundary, with distinct stable
     // event IDs and the same native reference. Preserve historical v1/v2 replay.
-    let claude_block_snapshots = ["-v4", "-v5", "-v6", "-v7", "-v8"]
+    let claude_block_snapshots = ["-v4", "-v5", "-v6", "-v7", "-v8", "-v9"]
         .iter()
         .any(|suffix| manifest.mapper_version.ends_with(suffix));
     if provider == DirectProvider::ClaudeCode
@@ -2480,6 +2659,40 @@ fn project_typed_event(
             .and_then(|value| value.pointer("/message/content"))
             .and_then(Value::as_array)
     {
+        // Tool use in the native message, or its explicit tool-use stop reason,
+        // establishes that these assistant text blocks are not the final result.
+        // Without either fact, Claude may repeat the text as its final result.
+        let root_assistant = manifest.mapper_version == "claude-code-mapper-v9"
+            && event
+                .raw
+                .payload_json
+                .as_ref()
+                .and_then(|raw| raw.get("parent_tool_use_id"))
+                .is_none_or(Value::is_null)
+            && matches!(
+                &event.typed,
+                TypedProviderEvent::Message {
+                    role: AgentRuntimeMessageRole::Assistant,
+                    ..
+                }
+            );
+        let explicit_intermediate = root_assistant
+            && event
+                .raw
+                .payload_json
+                .as_ref()
+                .and_then(|raw| raw.pointer("/message/stop_reason"))
+                .is_none_or(|reason| reason.is_null() || reason.as_str() == Some("tool_use"))
+            && (blocks
+                .iter()
+                .any(|block| block.get("type").and_then(Value::as_str) == Some("tool_use"))
+                || event
+                    .raw
+                    .payload_json
+                    .as_ref()
+                    .and_then(|raw| raw.pointer("/message/stop_reason"))
+                    .and_then(Value::as_str)
+                    == Some("tool_use"));
         let tools: Vec<_> = blocks
             .iter()
             .enumerate()
@@ -2583,6 +2796,23 @@ fn project_typed_event(
                         };
                     }
                 }
+                if root_assistant {
+                    let metadata: Vec<_> = tool.durable_events.iter().filter_map(|event| {
+                        let AgentEventPayload::Message { message, final_output: false } = &event.payload else { return None; };
+                        let mut metadata = event.clone();
+                        metadata.event_id = canonical_provider_message_id(
+                            manifest.run_attempt_id,
+                            &format!("claude-commentary-metadata:{}:{index}", decoded.raw.sequence),
+                        );
+                        metadata.payload = AgentEventPayload::ProviderExtension {
+                            provider_namespace: provider.id().into(),
+                            provider_event: "agent_message_metadata".into(),
+                            payload: serde_json::json!({"message_id": message.message_id, "kind": if explicit_intermediate { "commentary" } else { "commentary_candidate" }}),
+                        };
+                        Some(metadata)
+                    }).collect();
+                    tool.durable_events.extend(metadata);
+                }
                 projected.durable_events.extend(tool.durable_events);
             }
             return Ok(projected);
@@ -2609,7 +2839,8 @@ fn project_typed_event(
                 && (manifest.mapper_version.ends_with("-v6")
                     || (manifest.mapper_version.ends_with("-v7")
                         || (manifest.mapper_version.ends_with("-v8")
-                            || manifest.mapper_version.ends_with("-v9"))))
+                            || (manifest.mapper_version.ends_with("-v9")
+                                || manifest.mapper_version.ends_with("-v10")))))
             {
                 event
                     .raw
@@ -2673,7 +2904,8 @@ fn project_typed_event(
     let plan_update = if provider == DirectProvider::Codex
         && (manifest.mapper_version.ends_with("-v7")
             || (manifest.mapper_version.ends_with("-v8")
-                || manifest.mapper_version.ends_with("-v9")))
+                || (manifest.mapper_version.ends_with("-v9")
+                    || manifest.mapper_version.ends_with("-v10"))))
         && matches!(&event.typed, TypedProviderEvent::Unknown { .. })
     {
         event.raw.payload_json.as_ref().and_then(|raw| {
@@ -2789,7 +3021,8 @@ fn project_typed_event(
                 && (manifest.mapper_version.ends_with("-v6")
                     || (manifest.mapper_version.ends_with("-v7")
                         || (manifest.mapper_version.ends_with("-v8")
-                            || manifest.mapper_version.ends_with("-v9"))))
+                            || (manifest.mapper_version.ends_with("-v9")
+                                || manifest.mapper_version.ends_with("-v10")))))
             {
                 let item = event
                     .raw
@@ -2848,7 +3081,8 @@ fn project_typed_event(
             input_id: id.clone(),
             prompt: prompt.clone(),
             provider_metadata: if manifest.mapper_version.ends_with("-v8")
-                || manifest.mapper_version.ends_with("-v9")
+                || (manifest.mapper_version.ends_with("-v9")
+                    || manifest.mapper_version.ends_with("-v10"))
             {
                 event
                     .raw
@@ -2878,13 +3112,15 @@ fn project_typed_event(
         | TypedProviderEvent::ToolOutputDelta { .. }
         | TypedProviderEvent::TokenUsage { .. }
         | TypedProviderEvent::AuditOnly { .. }
+        | TypedProviderEvent::ClaudeCommentaryConfirmed(_)
         | TypedProviderEvent::Unknown { .. } => unreachable!("handled above"),
     };
     if provider == DirectProvider::Codex
         && (manifest.mapper_version.ends_with("-v6")
             || (manifest.mapper_version.ends_with("-v7")
                 || (manifest.mapper_version.ends_with("-v8")
-                    || manifest.mapper_version.ends_with("-v9"))))
+                    || (manifest.mapper_version.ends_with("-v9")
+                        || manifest.mapper_version.ends_with("-v10")))))
         && let AgentEventPayload::Thinking { content } = &payload
         && let Some(item) = event
             .raw
@@ -4412,6 +4648,153 @@ mod tests {
     }
 
     #[test]
+    fn claude_stream_stop_reason_classifies_only_the_matching_root_message_and_replays() {
+        use serde_json::json;
+        let provider = DirectProvider::ClaudeCode;
+        let manifest = fixture_manifest(provider);
+        let frames = [
+            json!({"type":"stream_event","event":{"type":"message_start","message":{"id":"m1","role":"assistant"}}}),
+            json!({"type":"stream_event","parent_tool_use_id":"child","event":{"type":"message_delta","delta":{"stop_reason":"tool_use"}}}),
+            json!({"type":"stream_event","event":{"type":"message_delta","delta":{"stop_reason":"tool_use"}}}),
+            json!({"type":"stream_event","event":{"type":"message_stop"}}),
+            json!({"type":"assistant","message":{"id":"m1","stop_reason":null,"content":[{"type":"text","text":"Checking"}]}}),
+            json!({"type":"assistant","message":{"id":"m2","content":[{"type":"text","text":"Possible final"}]}}),
+        ];
+        let mut scope = ProviderStreamScope::new(provider);
+        let mapper = provider.mapper();
+        let mut live_payloads = Vec::new();
+        let mut replay_payloads = Vec::new();
+        for (index, value) in frames.into_iter().enumerate() {
+            let native = frame_at(provider, (index + 1) as u64, value);
+            let mut decoded = provider.decode_native_frame(&native).unwrap();
+            scope.apply(&mut decoded);
+            live_payloads.extend(
+                provider
+                    .project_provider_event(&decoded, &manifest)
+                    .unwrap()
+                    .durable_events
+                    .into_iter()
+                    .map(|event| event.payload),
+            );
+            let raw = mapper.decode(&native).unwrap();
+            replay_payloads.extend(
+                mapper
+                    .map(&raw, &manifest)
+                    .unwrap()
+                    .into_iter()
+                    .map(|event| event.payload),
+            );
+        }
+        assert_eq!(live_payloads, replay_payloads);
+        let metadata: Vec<_> = live_payloads
+            .iter()
+            .filter_map(|payload| match payload {
+                AgentEventPayload::ProviderExtension {
+                    provider_event,
+                    payload,
+                    ..
+                } if provider_event == "agent_message_metadata" => Some(payload),
+                _ => None,
+            })
+            .collect();
+        assert_eq!(metadata.len(), 2);
+        assert_eq!(metadata[0]["kind"], "commentary");
+        assert_eq!(metadata[1]["kind"], "commentary_candidate");
+        assert_ne!(metadata[0]["message_id"], serde_json::Value::Null);
+
+        let mut root = ProviderStreamScope::new(provider);
+        for (index, value) in [
+            json!({"type":"stream_event","event":{"type":"message_start","message":{"id":"root","role":"assistant"}}}),
+            json!({"type":"stream_event","parent_tool_use_id":"child","event":{"type":"message_delta","delta":{"stop_reason":"tool_use"}}}),
+            json!({"type":"stream_event","event":{"type":"message_stop"}}),
+            json!({"type":"assistant","message":{"id":"root","stop_reason":null,"content":[{"type":"text","text":"Final"}]}}),
+            json!({"type":"assistant","parent_tool_use_id":"child","message":{"id":"child","content":[{"type":"text","text":"Child text"},{"type":"tool_use","id":"t","name":"Read"}]}}),
+        ].into_iter().enumerate() {
+            let mut decoded = provider.decode_native_frame(&frame_at(provider, (index+1) as u64, value)).unwrap();
+            root.apply(&mut decoded);
+            let projected = provider.project_provider_event(&decoded, &manifest).unwrap();
+            assert!(projected.durable_events.iter().all(|event| !matches!(&event.payload, AgentEventPayload::ProviderExtension {provider_event, payload, ..} if provider_event == "agent_message_metadata" && (index == 4 || payload["kind"] != "commentary_candidate"))));
+        }
+    }
+
+    #[test]
+    fn claude_stream_confirms_completed_text_only_after_matching_tool_use_stop() {
+        use serde_json::json;
+        let provider = DirectProvider::ClaudeCode;
+        let manifest = fixture_manifest(provider);
+        let frames = [
+            json!({"type":"stream_event","event":{"type":"message_start","message":{"id":"m1","role":"assistant"}}}),
+            json!({"type":"assistant","message":{"id":"m1","stop_reason":null,"content":[{"type":"text","text":"Checking"}]}}),
+            json!({"type":"assistant","message":{"id":"m1","stop_reason":null,"content":[{"type":"text","text":"Still checking"}]}}),
+            json!({"type":"assistant","message":{"id":"m1","content":[{"type":"tool_use","id":"t","name":"Read"}]}}),
+            json!({"type":"stream_event","event":{"type":"message_delta","delta":{"stop_reason":"tool_use"}}}),
+            json!({"type":"stream_event","event":{"type":"message_stop"}}),
+        ];
+        let mut scope = ProviderStreamScope::new(provider);
+        let mapper = provider.mapper();
+        let mut live = Vec::new();
+        let mut replay = Vec::new();
+        for (index, value) in frames.into_iter().enumerate() {
+            let frame = frame_at(provider, (index + 1) as u64, value);
+            let mut decoded = provider.decode_native_frame(&frame).unwrap();
+            scope.apply(&mut decoded);
+            live.extend(
+                provider
+                    .project_provider_event(&decoded, &manifest)
+                    .unwrap()
+                    .durable_events
+                    .into_iter()
+                    .map(|event| event.payload),
+            );
+            let raw = mapper.decode(&frame).unwrap();
+            replay.extend(
+                mapper
+                    .map(&raw, &manifest)
+                    .unwrap()
+                    .into_iter()
+                    .map(|event| event.payload),
+            );
+        }
+        assert_eq!(live, replay);
+        let message_id = live
+            .iter()
+            .rev()
+            .find_map(|event| match event {
+                AgentEventPayload::Message { message, .. } => Some(message.message_id),
+                _ => None,
+            })
+            .expect("missing text");
+        assert!(live.iter().any(|event| matches!(event, AgentEventPayload::ProviderExtension { provider_event, payload, .. } if provider_event == "agent_message_metadata" && payload["kind"] == "commentary_confirmed" && payload["message_id"] == json!(message_id))));
+    }
+
+    #[test]
+    fn claude_explicit_final_never_receives_delayed_commentary_confirmation() {
+        use serde_json::json;
+        let provider = DirectProvider::ClaudeCode;
+        let mut scope = ProviderStreamScope::new(provider);
+        let frames = [
+            json!({"type":"stream_event","event":{"type":"message_start","message":{"id":"m1","role":"assistant"}}}),
+            json!({"type":"assistant","message":{"id":"m1","stop_reason":"end_turn","content":[{"type":"text","text":"Final"}]}}),
+            json!({"type":"stream_event","event":{"type":"message_delta","delta":{"stop_reason":"tool_use"}}}),
+            json!({"type":"assistant","message":{"id":"m2","stop_reason":"end_turn","content":[{"type":"text","text":"Final"},{"type":"tool_use","id":"t","name":"Read"}]}}),
+        ];
+        for (index, value) in frames.into_iter().enumerate() {
+            let mut decoded = provider
+                .decode_native_frame(&frame_at(provider, (index + 1) as u64, value))
+                .unwrap();
+            scope.apply(&mut decoded);
+            assert!(!matches!(
+                decoded.typed,
+                TypedProviderEvent::ClaudeCommentaryConfirmed(_)
+            ));
+            let projected = provider
+                .project_provider_event(&decoded, &fixture_manifest(provider))
+                .unwrap();
+            assert!(projected.durable_events.iter().all(|event| !matches!(&event.payload, AgentEventPayload::ProviderExtension { provider_event, payload, .. } if provider_event == "agent_message_metadata" && payload["kind"] != "commentary_candidate")));
+        }
+    }
+
+    #[test]
     fn claude_completed_blocks_preserve_text_thinking_and_tool_order_without_signatures() {
         let provider = DirectProvider::ClaudeCode;
         let decoded = provider.decode_native_frame(&frame(provider, serde_json::json!({
@@ -4425,19 +4808,56 @@ mod tests {
         let projected = provider
             .project_provider_event(&decoded, &fixture_manifest(provider))
             .unwrap();
-        assert_eq!(projected.durable_events.len(), 4);
+        assert_eq!(projected.durable_events.len(), 6);
         assert!(
             matches!(&projected.durable_events[0].payload, AgentEventPayload::Message {message, ..} if message.content == "Before\n")
         );
         assert!(
-            matches!(&projected.durable_events[1].payload, AgentEventPayload::ProviderExtension {provider_event, payload, ..} if provider_event == "thinking" && payload["content"] == "  Published thought\n")
+            matches!(&projected.durable_events[1].payload, AgentEventPayload::ProviderExtension {provider_event, payload, ..} if provider_event == "agent_message_metadata" && payload["kind"] == "commentary")
         );
         assert!(
-            matches!(&projected.durable_events[2].payload, AgentEventPayload::ToolCall {tool_name, ..} if tool_name == "Bash")
+            matches!(&projected.durable_events[2].payload, AgentEventPayload::ProviderExtension {provider_event, payload, ..} if provider_event == "thinking" && payload["content"] == "  Published thought\n")
         );
         assert!(
-            matches!(&projected.durable_events[3].payload, AgentEventPayload::Message {message, ..} if message.content == "After\n")
+            matches!(&projected.durable_events[3].payload, AgentEventPayload::ToolCall {tool_name, ..} if tool_name == "Bash")
         );
+        assert!(
+            matches!(&projected.durable_events[4].payload, AgentEventPayload::Message {message, ..} if message.content == "After\n")
+        );
+        assert!(
+            matches!(&projected.durable_events[5].payload, AgentEventPayload::ProviderExtension {provider_event, ..} if provider_event == "agent_message_metadata")
+        );
+        let mut v8_manifest = fixture_manifest(provider);
+        v8_manifest.mapper_version = provider.v8_mapper().versions().mapper_version;
+        assert_eq!(
+            provider
+                .project_provider_event(&decoded, &v8_manifest)
+                .unwrap()
+                .durable_events
+                .len(),
+            4
+        );
+        let standalone = provider.decode_native_frame(&frame(provider, serde_json::json!({"type":"assistant","message":{"content":[{"type":"text","text":"Possible final"}]}}))).unwrap();
+        assert_eq!(
+            provider
+                .project_provider_event(&standalone, &fixture_manifest(provider))
+                .unwrap()
+                .durable_events
+                .len(),
+            2
+        );
+        let stopped_for_tool = provider.decode_native_frame(&frame(provider, serde_json::json!({"type":"assistant","message":{"stop_reason":"tool_use","content":[{"type":"text","text":"Checking"}]}}))).unwrap();
+        let stopped_projected = provider
+            .project_provider_event(&stopped_for_tool, &fixture_manifest(provider))
+            .unwrap();
+        assert!(
+            matches!(&stopped_projected.durable_events[1].payload, AgentEventPayload::ProviderExtension {provider_event, ..} if provider_event == "agent_message_metadata")
+        );
+        let user_text = provider.decode_native_frame(&frame(provider, serde_json::json!({"type":"user","message":{"role":"user","content":[{"type":"text","text":"Private user text"},{"type":"tool_use","id":"t","name":"Read"}]}}))).unwrap();
+        let user_projected = provider
+            .project_provider_event(&user_text, &fixture_manifest(provider))
+            .unwrap();
+        assert!(user_projected.durable_events.iter().all(|event| !matches!(&event.payload, AgentEventPayload::ProviderExtension {provider_event, ..} if provider_event == "agent_message_metadata")));
         assert!(
             !serde_json::to_string(&projected.durable_events)
                 .unwrap()
@@ -5261,6 +5681,37 @@ mod tests {
     }
 
     #[test]
+    fn codex_commentary_metadata_is_versioned() {
+        let provider = DirectProvider::Codex;
+        let frame = frame_at(
+            provider,
+            2,
+            serde_json::json!({
+                "method":"item/completed", "params":{"item":{
+                    "type":"agentMessage", "id":"report", "text":"Working", "phase":"commentary"
+                }}
+            }),
+        );
+        let event = provider.decode_native_frame(&frame).unwrap();
+        let mut manifest = fixture_manifest(provider);
+        manifest.mapper_version = "codex-mapper-v9".into();
+        assert_eq!(
+            provider
+                .project_provider_event(&event, &manifest)
+                .unwrap()
+                .durable_events
+                .len(),
+            1
+        );
+        manifest.mapper_version = "codex-mapper-v10".into();
+        let projected = provider.project_provider_event(&event, &manifest).unwrap();
+        assert_eq!(projected.durable_events.len(), 2);
+        assert!(matches!(&projected.durable_events[1].payload,
+            AgentEventPayload::ProviderExtension { provider_event, payload, .. }
+                if provider_event == "agent_message_metadata" && payload["native"]["item"]["phase"] == "commentary"));
+    }
+
+    #[test]
     fn codex_async_questions_are_durable_nonblocking_and_preserve_v3_replay() {
         let provider = DirectProvider::Codex;
         let frame = frame_at(
@@ -5410,9 +5861,9 @@ mod tests {
         for provider in DirectProvider::ALL {
             assert!(provider.mapper().versions().mapper_version.ends_with(
                 if provider == DirectProvider::Codex {
-                    "-v9"
+                    "-v10"
                 } else if provider == DirectProvider::ClaudeCode {
-                    "-v8"
+                    "-v9"
                 } else {
                     "-v3"
                 }

@@ -809,6 +809,12 @@ function appendRunEntries(
         );
         break;
       case 'provider_extension':
+        // Classification metadata is not a conversational boundary.
+        if (
+          ['codex', 'claude_code'].includes(payload.data.provider_namespace) &&
+          payload.data.provider_event === 'agent_message_metadata'
+        )
+          break;
         resetMessageMerge();
         if (
           payload.data.provider_namespace === 'lvk' &&
