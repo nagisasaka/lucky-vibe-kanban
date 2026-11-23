@@ -54,6 +54,66 @@ fn select_engine(defaults: ExecutorConfig, engine: Option<Engine>) -> ExecutorCo
         Some(engine) => ExecutorConfig::new(engine.executor()),
     }
 }
+
+fn apply_initial_settings(
+    config: &mut ExecutorConfig,
+    model_id: Option<&str>,
+    reasoning_id: Option<&str>,
+) -> anyhow::Result<()> {
+    for value in [model_id, reasoning_id] {
+        ensure!(
+            value.is_none_or(|value| !value.trim().is_empty()),
+            super::errors::rejection_with_message(
+                Category::Validation,
+                "model_id and reasoning_id must be nonempty; omit or use null for the existing default"
+            )
+        );
+    }
+    if let Some(model) = model_id {
+        config.model_id = Some(model.to_owned());
+    }
+    if let Some(reasoning) = reasoning_id {
+        config.reasoning_id = Some(reasoning.to_owned());
+    }
+    Ok(())
+}
+fn apply_mode(
+    executor: &mut ExecutorConfig,
+    execution_mode: Option<ExecutionMode>,
+    goal_token_budget: Option<u32>,
+) -> anyhow::Result<()> {
+    if execution_mode.is_some() {
+        ensure!(
+            executor.executor == executors::executors::BaseCodingAgent::Codex,
+            super::errors::rejection_with_message(
+                utils::mcp_error::Category::Validation,
+                "Explicit execution_mode requires CODEX; Claude Code does not support these modes"
+            )
+        );
+    }
+    if let Some(mode) = execution_mode {
+        executor.execution_mode = Some(mode);
+        if !matches!(mode, ExecutionMode::Goal | ExecutionMode::PlanWithGoal) {
+            executor.goal_token_budget = None;
+            executor.goal_max_concurrent_agents = None;
+        }
+    }
+    if let Some(budget) = goal_token_budget {
+        ensure!(
+            budget > 0
+                && matches!(
+                    executor.execution_mode,
+                    Some(ExecutionMode::Goal | ExecutionMode::PlanWithGoal)
+                ),
+            super::errors::rejection_with_message(
+                utils::mcp_error::Category::Validation,
+                "A positive token budget requires Goal or PlanWithGoal mode"
+            )
+        );
+        executor.goal_token_budget = Some(budget);
+    }
+    Ok(())
+}
 #[derive(Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 struct StartSessionArgs {
@@ -62,6 +122,17 @@ struct StartSessionArgs {
     request_id: Uuid,
     /// Omit to use the configured default engine/profile. Changing engine starts a new native conversation.
     engine: Option<Engine>,
+    /// Model for the first Run. Omit or null preserves the existing default; empty strings or surrounding whitespace are invalid.
+    #[schemars(length(min = 1))]
+    model_id: Option<String>,
+    /// Reasoning depth for the first Run. Omit or null preserves the existing default; empty strings or surrounding whitespace are invalid.
+    #[schemars(length(min = 1))]
+    reasoning_id: Option<String>,
+    /// Initial execution mode; omit or null to preserve the default.
+    execution_mode: Option<ExecutionMode>,
+    /// Positive token budget for Goal or PlanWithGoal.
+    #[schemars(range(min = 1))]
+    goal_token_budget: Option<u32>,
     /// Include the handoff purpose, decisions and remaining work. Native provider conversation is not transferred.
     #[schemars(length(min = 1, max = 256000))]
     prompt: String,
@@ -81,6 +152,12 @@ struct StartArgs {
     expected_revision: String,
     /// New Session engine; omitted preserves configured default selection.
     engine: Option<Engine>,
+    /// Model for the first Run. Omit or null preserves the existing default; empty strings or surrounding whitespace are invalid.
+    #[schemars(length(min = 1))]
+    model_id: Option<String>,
+    /// Reasoning depth for the first Run. Omit or null preserves the existing default; empty strings or surrounding whitespace are invalid.
+    #[schemars(length(min = 1))]
+    reasoning_id: Option<String>,
     #[schemars(length(min = 1, max = 10))]
     repositories: Vec<RepositorySelection>,
     /// Omit to preserve the default mode. Codex review uses Code execution for bounded review/investigation: include target, scope and expected findings in the Issue. Report in conversation and stop; implementation requires a separate explicit instruction. Existing permissions still apply. Goal uses native controls.
@@ -146,9 +223,33 @@ struct CandidateArgs {
 struct DefaultsArgs {
     project_id: Uuid,
 }
+#[derive(Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+struct ModelCandidatesArgs {
+    project_id: Uuid,
+    /// Select exactly one repository or existing Workspace as discovery's working directory.
+    repository_id: Option<Uuid>,
+    workspace_id: Option<Uuid>,
+    /// Omit to use the configured default engine/profile.
+    engine: Option<Engine>,
+}
 
 #[async_trait]
 pub(super) trait LaunchActions: Send + Sync {
+    async fn validate_initial_config(
+        &self,
+        _config: &ExecutorConfig,
+        _path: &std::path::Path,
+    ) -> Result<(), ApiError> {
+        Ok(())
+    }
+    async fn initial_model_capabilities(
+        &self,
+        _config: &ExecutorConfig,
+        _path: &std::path::Path,
+    ) -> Result<Value, ApiError> {
+        Err(ApiError::BadRequest("Model discovery unavailable".into()))
+    }
     async fn workflow(&self, _args: super::workflow::WorkflowArgs) -> anyhow::Result<Value> {
         Err(super::errors::rejection(Category::Unavailable))
     }
@@ -192,6 +293,14 @@ pub(super) trait LaunchActions: Send + Sync {
         request: CreateAndStartWorkspaceRequest,
         workspace_id: Uuid,
     ) -> Result<Value, ApiError>;
+    async fn start_validated(
+        &self,
+        request: CreateAndStartWorkspaceRequest,
+        workspace_id: Uuid,
+        _validate_initial: bool,
+    ) -> Result<Value, ApiError> {
+        self.start(request, workspace_id).await
+    }
     async fn integration(
         &self,
         request: integrations::CreateIntegrationRequest,
@@ -201,6 +310,23 @@ pub(super) trait LaunchActions: Send + Sync {
 pub(super) struct ExistingLaunch(pub DeploymentImpl);
 #[async_trait]
 impl LaunchActions for ExistingLaunch {
+    async fn validate_initial_config(
+        &self,
+        config: &ExecutorConfig,
+        path: &std::path::Path,
+    ) -> Result<(), ApiError> {
+        sessions::executor_config::validate_initial_config(config, path).await
+    }
+    async fn initial_model_capabilities(
+        &self,
+        config: &ExecutorConfig,
+        path: &std::path::Path,
+    ) -> Result<Value, ApiError> {
+        let capabilities =
+            sessions::executor_config::initial_model_capabilities(config, path).await?;
+        serde_json::to_value(capabilities)
+            .map_err(|_| ApiError::BadRequest("Model discovery unavailable".into()))
+    }
     async fn workflow(&self, args: super::workflow::WorkflowArgs) -> anyhow::Result<Value> {
         super::workflow::execute(&self.0, args).await
     }
@@ -291,11 +417,20 @@ impl LaunchActions for ExistingLaunch {
         request: CreateAndStartWorkspaceRequest,
         workspace_id: Uuid,
     ) -> Result<Value, ApiError> {
+        self.start_validated(request, workspace_id, false).await
+    }
+    async fn start_validated(
+        &self,
+        request: CreateAndStartWorkspaceRequest,
+        workspace_id: Uuid,
+        validate_initial: bool,
+    ) -> Result<Value, ApiError> {
         let executor_config = request.executor_config.clone();
-        let result = workspaces::create::create_and_start_workspace_admitted(
+        let result = workspaces::create::create_and_start_workspace_checked(
             self.0.clone(),
             request,
             Some(workspace_id),
+            validate_initial,
         )
         .await?;
         let result = result
@@ -344,7 +479,7 @@ fn commit(value: &str) -> anyhow::Result<()> {
 }
 
 pub(super) fn tools() -> Vec<rmcp::model::Tool> {
-    let mut start=serde_json::to_value(definition::<StartArgs>("start_workspace","Start agreed Issue requirements in a new Worktree Workspace using the configured default executor profile unless engine is explicit. Engine selection starts a new Session and native conversation. Pin the Issue revision and explicit repositories/branches from its current Project preset; historical linked repositories do not extend creation choices. Review uses the Code path to investigate the Issue scope, report in conversation and stop; separate explicit instructions are required for product implementation and existing permissions still apply. Goal uses native execution_mode. Returns existing execution admission IDs, not completion; use the original request_id after disconnection.")).unwrap();
+    let mut start=serde_json::to_value(definition::<StartArgs>("start_workspace","Start agreed Issue requirements in a new Worktree Workspace using the configured default executor profile unless engine is explicit. Optional model_id and reasoning_id select the first Run; omit or null each to retain existing defaults, and empty strings or surrounding whitespace are invalid. Use list_execution_models to inspect provider options. This is distinct from changing the next Run of an existing Session. Engine selection starts a new Session and native conversation. Pin the Issue revision and explicit repositories/branches from its current Project preset; historical linked repositories do not extend creation choices. Review uses the Code path to investigate the Issue scope, report in conversation and stop; separate explicit instructions are required for product implementation and existing permissions still apply. Goal uses native execution_mode. Returns existing execution admission IDs, not completion; use the original request_id after disconnection.")).unwrap();
     start["annotations"] = json!({"readOnlyHint":false,"destructiveHint":true,"idempotentHint":true,"openWorldHint":true});
     start["_meta"] =
         json!({"securitySchemes":[{"type":"oauth2","scopes":["lvk:read","lvk:write"]}]});
@@ -355,7 +490,7 @@ pub(super) fn tools() -> Vec<rmcp::model::Tool> {
     vec![
         serde_json::from_value(start).unwrap(),
         {
-            let mut tool = serde_json::to_value(definition::<StartSessionArgs>("start_session", "Start a new Session in the specified existing Workspace using its current code. Optional engine selects CODEX or CLAUDE_CODE; omitted uses configured defaults. Include purpose, decisions and remaining work in prompt. This starts a new native conversation; it does not migrate or continue another Session. Returns admission IDs, not completion. Reuse request_id after disconnection.")).unwrap();
+            let mut tool = serde_json::to_value(definition::<StartSessionArgs>("start_session", "Start a new Session in the specified existing Workspace using its current code. Optional engine selects CODEX or CLAUDE_CODE; omitted uses configured defaults. Optional model_id and reasoning_id select the first Run; omit or null each to retain existing defaults, and empty strings or surrounding whitespace are invalid. Use list_execution_models to inspect provider options. execution_mode can select supported Goal mode. This is distinct from changing the next Run of an existing Session. Include purpose, decisions and remaining work in prompt. This starts a new native conversation; it does not migrate or continue another Session. Returns admission IDs, not completion. Reuse request_id after disconnection.")).unwrap();
             tool["annotations"] = json!({"readOnlyHint":false,"destructiveHint":true,"idempotentHint":true,"openWorldHint":true});
             tool["_meta"] =
                 json!({"securitySchemes":[{"type":"oauth2","scopes":["lvk:read","lvk:write"]}]});
@@ -378,6 +513,10 @@ pub(super) fn tools() -> Vec<rmcp::model::Tool> {
             "get_execution_defaults",
             "Read the same default executor identity used by normal new-Workspace creation. Profile model/authentication settings remain on the server; no model is started.",
         ),
+        definition::<ModelCandidatesArgs>(
+            "list_execution_models",
+            "Discover models and reasoning options for an engine in a Project repository or Workspace directory without starting a Session. Repository results are provisional for a new Workspace; its actual root is checked before starting the first Run.",
+        ),
     ]
 }
 
@@ -388,6 +527,11 @@ async fn prepare_start(
     workspace_id: Uuid,
 ) -> anyhow::Result<CreateAndStartWorkspaceRequest> {
     let mut executor = select_engine(executor, args.engine);
+    apply_initial_settings(
+        &mut executor,
+        args.model_id.as_deref(),
+        args.reasoning_id.as_deref(),
+    )?;
     ensure!(
         !args.repositories.is_empty() && args.repositories.len() <= 10,
         super::errors::rejection_with_message(
@@ -452,36 +596,7 @@ async fn prepare_start(
         .await?
         .map_err(|_| super::errors::rejection(Category::Unavailable))?;
     }
-    if args.execution_mode.is_some() {
-        ensure!(
-            executor.executor == executors::executors::BaseCodingAgent::Codex,
-            super::errors::rejection_with_message(
-                utils::mcp_error::Category::Validation,
-                "Explicit execution_mode requires CODEX; Claude Code does not support these modes"
-            )
-        );
-    }
-    if let Some(mode) = args.execution_mode {
-        executor.execution_mode = Some(mode);
-        if !matches!(mode, ExecutionMode::Goal | ExecutionMode::PlanWithGoal) {
-            executor.goal_token_budget = None;
-            executor.goal_max_concurrent_agents = None;
-        }
-    }
-    if let Some(budget) = args.goal_token_budget {
-        ensure!(
-            budget > 0
-                && matches!(
-                    executor.execution_mode,
-                    Some(ExecutionMode::Goal | ExecutionMode::PlanWithGoal)
-                ),
-            super::errors::rejection_with_message(
-                utils::mcp_error::Category::Validation,
-                "A positive token budget requires Goal or PlanWithGoal mode"
-            )
-        );
-        executor.goal_token_budget = Some(budget);
-    }
+    apply_mode(&mut executor, args.execution_mode, args.goal_token_budget)?;
     let mut prompt = format!(
         "{}\n\n{}\n\nLVK MCP operation: {workspace_id}",
         issue.title,
@@ -672,6 +787,28 @@ fn validation_error(error: anyhow::Error) -> (&'static str, Value) {
         json!({"code":"admission_validation_failed","message":message,"error":super::errors::diagnostic(&error, false).value()}),
     )
 }
+fn initial_validation_error(error: ApiError) -> (&'static str, Value) {
+    let diagnostic = match error {
+        ApiError::BadRequest(ref message)
+            if message == "Codex model discovery timed out"
+                || message == "Unable to verify Codex model discovery"
+                || message == "Unable to verify Claude Code CLI --effort support"
+                || message == "Model discovery is unavailable for this provider"
+                || message == "Runtime profile does not exist" =>
+        {
+            super::errors::rejection_with_message(
+                Category::Unavailable,
+                "Provider model discovery or profile is unavailable; check the selected CLI and profile",
+            )
+        }
+        ApiError::BadRequest(_) => super::errors::rejection_with_message(
+            Category::Validation,
+            "The requested model and reasoning combination is unsupported or invalid; inspect list_execution_models",
+        ),
+        _ => super::errors::rejection(Category::Unavailable),
+    };
+    validation_error(diagnostic)
+}
 pub(super) async fn call(
     remote: &Remote,
     principal: &Principal,
@@ -700,6 +837,57 @@ pub(super) async fn call(
             return Ok(
                 json!({"executor":config.executor,"variant":config.variant,"execution_mode":config.execution_mode.unwrap_or_default(),"model":"configured_profile","url":remote.config.project_url(args.project_id)}),
             );
+        }
+        "list_execution_models" => {
+            let args: ModelCandidatesArgs = arguments(input)?;
+            remote.require_project(args.project_id).await?;
+            let path = match (args.repository_id, args.workspace_id) {
+                (Some(id), None) => {
+                    ensure!(
+                        local_remote::project_associated_repository_ids(
+                            &remote.pool,
+                            args.project_id
+                        )
+                        .await?
+                        .contains(&id),
+                        super::errors::rejection(Category::Permission)
+                    );
+                    Repo::find_by_id(&remote.pool, id)
+                        .await?
+                        .ok_or_else(|| super::errors::rejection(Category::NotFound))?
+                        .path
+                }
+                (None, Some(id)) => {
+                    remote.require_workspace(args.project_id, id).await?;
+                    let workspace = Workspace::find_by_id(&remote.pool, id)
+                        .await?
+                        .ok_or_else(|| super::errors::rejection(Category::NotFound))?;
+                    workspace
+                        .container_ref
+                        .map(std::path::PathBuf::from)
+                        .ok_or_else(|| super::errors::rejection(Category::Unavailable))?
+                }
+                _ => {
+                    return Err(super::errors::rejection_with_message(
+                        Category::Validation,
+                        "Select exactly one repository_id or workspace_id for discovery",
+                    ));
+                }
+            };
+            let launch = remote
+                .launch
+                .as_ref()
+                .ok_or_else(|| super::errors::rejection(Category::Unavailable))?;
+            let config = select_engine(launch.defaults().await, args.engine);
+            return launch
+                .initial_model_capabilities(&config, &path)
+                .await
+                .map_err(|_| {
+                    super::errors::rejection_with_message(
+                        Category::Unavailable,
+                        "Model discovery unavailable; check the selected provider CLI",
+                    )
+                });
         }
         _ => {}
     }
@@ -736,7 +924,13 @@ pub(super) async fn call(
             );
             remote.operations().submit_and_wait(actor,args.request_id,args.project_id,name.into(),input,json!({"workspace_id":args.workspace_id}),move|_|async move {
                 let issue = match owned.require_workspace(args.project_id,args.workspace_id).await { Ok(issue)=>issue,Err(error)=>return validation_error(error) };
-                let config = select_engine(launch.defaults().await, args.engine);
+                let mut config = select_engine(launch.defaults().await, args.engine);
+                if let Err(error) = apply_initial_settings(&mut config, args.model_id.as_deref(), args.reasoning_id.as_deref()).and_then(|()| apply_mode(&mut config, args.execution_mode, args.goal_token_budget)) { return validation_error(error); }
+                if args.model_id.is_some() || args.reasoning_id.is_some() {
+                    let path = match Workspace::find_by_id(&owned.pool, args.workspace_id).await { Ok(Some(workspace)) => workspace.container_ref, _ => None };
+                    let Some(path) = path else { return validation_error(super::errors::rejection_with_message(Category::Unavailable, "Workspace path unavailable for model discovery")); };
+                    if let Err(error) = launch.validate_initial_config(&config, std::path::Path::new(&path)).await { return initial_validation_error(error); }
+                }
                 let url=owned.config.workspace_url(args.project_id,issue,args.workspace_id);
                 match launch.start_session(args.workspace_id,args.prompt,config).await {
                     Ok(mut value)=>{value["url"]=json!(url);("succeeded",value)},
@@ -756,8 +950,9 @@ pub(super) async fn call(
             remote.operations().submit_and_wait(actor,args.request_id,args.project_id,name.into(),input,json!({"issue_id":args.issue_id}),move|operation|async move {
                 let request=match prepare_start(&owned.pool,&args,launch.defaults().await,operation).await {Ok(request)=>request,Err(error)=>return validation_error(error)};
                 let url=owned.config.workspace_url(args.project_id,args.issue_id,operation);
-                match launch.start(request,operation).await {
+                match launch.start_validated(request,operation,args.model_id.is_some() || args.reasoning_id.is_some()).await {
                     Ok(mut value)=>{value["url"]=json!(url);("succeeded",value)},
+                    Err(ApiError::InitialConfigurationRejected(message)) => ("failed",json!({"code":"configuration_rejected","message":message,"workspace_id":operation,"execution_accepted":false})),
                     Err(_)=>("uncertain",json!({"workspace_id":operation,"url":url,"message":"Inspect this Workspace and its runs before any new start request"})),
                 }
             }).await?
@@ -850,5 +1045,20 @@ mod engine_tests {
             }))
             .is_err()
         );
+    }
+
+    #[test]
+    fn initial_settings_preserve_unspecified_values_and_reject_blank() {
+        let mut config = ExecutorConfig::new(executors::executors::BaseCodingAgent::Codex);
+        config.model_id = Some("default-model".into());
+        config.reasoning_id = Some("default-depth".into());
+        apply_initial_settings(&mut config, Some("other-model"), None).unwrap();
+        assert_eq!(config.model_id.as_deref(), Some("other-model"));
+        assert_eq!(config.reasoning_id.as_deref(), Some("default-depth"));
+        apply_initial_settings(&mut config, None, Some("high")).unwrap();
+        assert_eq!(config.model_id.as_deref(), Some("other-model"));
+        assert_eq!(config.reasoning_id.as_deref(), Some("high"));
+        assert!(apply_initial_settings(&mut config, Some("  "), None).is_err());
+        assert!(apply_initial_settings(&mut config, None, Some("")).is_err());
     }
 }

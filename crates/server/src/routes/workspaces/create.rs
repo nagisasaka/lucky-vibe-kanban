@@ -157,6 +157,15 @@ pub(crate) async fn create_and_start_workspace_admitted(
     payload: CreateAndStartWorkspaceRequest,
     workspace_id: Option<Uuid>,
 ) -> Result<ResponseJson<ApiResponse<CreateAndStartWorkspaceResponse>>, ApiError> {
+    create_and_start_workspace_checked(deployment, payload, workspace_id, false).await
+}
+
+pub(crate) async fn create_and_start_workspace_checked(
+    deployment: DeploymentImpl,
+    payload: CreateAndStartWorkspaceRequest,
+    workspace_id: Option<Uuid>,
+    validate_initial: bool,
+) -> Result<ResponseJson<ApiResponse<CreateAndStartWorkspaceResponse>>, ApiError> {
     if workspace_id.is_some() && !matches!(payload.mode, CreateWorkspaceMode::Worktree) {
         return Err(ApiError::BadRequest(
             "Admitted Workspace identity requires Worktree mode".into(),
@@ -310,6 +319,17 @@ pub(crate) async fn create_and_start_workspace_admitted(
     let workspace = Workspace::find_by_id(&deployment.db().pool, workspace.id)
         .await?
         .ok_or_else(|| ApiError::BadRequest("Created workspace was not found".to_string()))?;
+    if validate_initial {
+        let root = workspace.container_ref.as_deref().ok_or_else(|| {
+            ApiError::InitialConfigurationRejected("Workspace root is missing".into())
+        })?;
+        crate::routes::sessions::executor_config::validate_initial_config(
+            &executor_config,
+            Path::new(root),
+        )
+        .await
+        .map_err(|error| ApiError::InitialConfigurationRejected(error.to_string()))?;
+    }
     let session = Session::create(
         &deployment.db().pool,
         &CreateSession {

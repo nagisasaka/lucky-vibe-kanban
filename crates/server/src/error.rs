@@ -69,6 +69,8 @@ pub enum ApiError {
     Unauthorized,
     #[error("Bad request: {0}")]
     BadRequest(String),
+    #[error("Initial configuration rejected: {0}")]
+    InitialConfigurationRejected(String),
     #[error("Conflict: {0}")]
     Conflict(String),
     #[error("Forbidden: {0}")]
@@ -366,7 +368,9 @@ impl IntoResponse for ApiError {
                 "Unauthorized",
                 "Unauthorized. Please sign in again.",
             ),
-            ApiError::BadRequest(msg) => ErrorInfo::bad_request("BadRequest", msg.clone()),
+            ApiError::BadRequest(msg) | ApiError::InitialConfigurationRejected(msg) => {
+                ErrorInfo::bad_request("BadRequest", msg.clone())
+            }
             ApiError::Conflict(msg) => ErrorInfo::conflict("ConflictError", msg.clone()),
             ApiError::Forbidden(msg) => {
                 ErrorInfo::with_status(StatusCode::FORBIDDEN, "ForbiddenError", msg.clone())

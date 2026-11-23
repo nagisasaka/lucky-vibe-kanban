@@ -1,6 +1,6 @@
 use db::models::session::Session;
 use executors::{
-    profile::{ExecutorConfig, NextRunOverrides},
+    profile::{ExecutionMode, ExecutorConfig, NextRunOverrides},
     runtime::{AgentRunStatus, RunState},
 };
 use rmcp::{
@@ -80,6 +80,20 @@ struct RunCodingAgentInSessionRequest {
         description = "Apply only to the next Run. Omitted fields preserve saved settings; use action reset explicitly. Null is invalid."
     )]
     overrides: NextRunOverrides,
+    #[schemars(
+        description = "First Run only: model ID. Omission or null uses existing default; empty, whitespace-only or surrounding whitespace is invalid.",
+        length(min = 1)
+    )]
+    model_id: Option<String>,
+    #[schemars(
+        description = "First Run only: reasoning depth ID. Omission or null uses existing default; empty, whitespace-only or surrounding whitespace is invalid.",
+        length(min = 1)
+    )]
+    reasoning_id: Option<String>,
+    #[schemars(
+        description = "First Run only: execution mode, including supported Goal mode. For later Runs use overrides."
+    )]
+    execution_mode: Option<ExecutionMode>,
     #[serde(default)]
     attachment_ids: Vec<Uuid>,
     #[schemars(description = "Session ID to run the coding agent in")]
@@ -251,7 +265,7 @@ impl McpServer {
     }
 
     #[tool(
-        description = "Run a turn in an existing Session. Optional request_id provides durable replay protection independently of explicit Run/overrides/attachments; omission provides none. Continue requires a latest finished Run; use steering for running execution. To change next-Run mode/reasoning, supply overrides; explicitly pin agent_run_id for caller-observed latest-Run protection. Project context is required for durable receipts. Omission preserves saved settings. Engine changes require create_session; REVIEW grants no additional permissions."
+        description = "Run a turn in an existing Session. Optional request_id provides durable replay protection independently of explicit Run/overrides/attachments; omission provides none. A new Session starts its first Run here: model_id, reasoning_id and execution_mode apply only to that first Run. Omit or pass null for existing defaults; empty IDs are invalid. Continue requires a latest finished Run; use steering for running execution. To change next-Run mode/reasoning, supply overrides; explicitly pin agent_run_id for caller-observed latest-Run protection. Project context is required for durable receipts. Omission preserves saved settings. Engine changes require create_session; REVIEW grants no additional permissions."
     )]
     async fn run_session_prompt(
         &self,
@@ -263,6 +277,9 @@ impl McpServer {
             attachment_ids,
             agent_run_id,
             overrides,
+            model_id,
+            reasoning_id,
+            execution_mode,
         }): Parameters<RunCodingAgentInSessionRequest>,
     ) -> Result<CallToolResult, ErrorData> {
         let prompt = prompt.trim();
@@ -270,7 +287,16 @@ impl McpServer {
             return Self::err("prompt must not be empty", None);
         }
 
-        let body = serde_json::json!({"project_id":project_id.or_else(||self.context.as_ref().and_then(|c|c.project_id)),"request_id":request_id,"agent_run_id":agent_run_id,"session_id":session_id,"prompt":prompt,"attachment_ids":attachment_ids,"overrides":overrides});
+        let mut body = serde_json::json!({"project_id":project_id.or_else(||self.context.as_ref().and_then(|c|c.project_id)),"request_id":request_id,"agent_run_id":agent_run_id,"session_id":session_id,"prompt":prompt,"attachment_ids":attachment_ids,"overrides":overrides});
+        if let Some(model_id) = model_id {
+            body["model_id"] = serde_json::json!(model_id);
+        }
+        if let Some(reasoning_id) = reasoning_id {
+            body["reasoning_id"] = serde_json::json!(reasoning_id);
+        }
+        if let Some(execution_mode) = execution_mode {
+            body["execution_mode"] = serde_json::json!(execution_mode);
+        }
         match self
             .send_json::<serde_json::Value>(
                 self.client
@@ -501,6 +527,9 @@ mod review_tests {
                     overrides: serde_json::from_value(overrides.clone()).unwrap(),
                     attachment_ids: attachments.clone(),
                     prompt: "Continue".into(),
+                    model_id: None,
+                    reasoning_id: None,
+                    execution_mode: None,
                 }))
                 .await
                 .unwrap();
@@ -514,6 +543,33 @@ mod review_tests {
             assert_eq!(posted["overrides"], overrides);
             assert_eq!(posted["attachment_ids"], json!(attachments));
         }
+    }
+
+    #[tokio::test]
+    async fn first_run_forwards_settings_and_request_identity() {
+        let request = Uuid::new_v4();
+        let (url, task) = api_fixture(vec![(
+            200,
+            json!({"success":true,"data":{"status":"accepted"}}),
+        )])
+        .await;
+        let args: RunCodingAgentInSessionRequest = serde_json::from_value(json!({
+            "session_id":Uuid::new_v4(), "prompt":"Start", "request_id":request,
+            "model_id":"model-a", "reasoning_id":"high", "execution_mode":"goal"
+        }))
+        .unwrap();
+        let result = McpServer::new_global(&url)
+            .run_session_prompt(Parameters(args))
+            .await
+            .unwrap();
+        assert_ne!(result.is_error, Some(true));
+        let requests = task.await.unwrap();
+        let posted: serde_json::Value =
+            serde_json::from_str(requests[0].split_once("\r\n\r\n").unwrap().1).unwrap();
+        assert_eq!(posted["request_id"], request.to_string());
+        assert_eq!(posted["model_id"], "model-a");
+        assert_eq!(posted["reasoning_id"], "high");
+        assert_eq!(posted["execution_mode"], "goal");
     }
 
     #[tokio::test]

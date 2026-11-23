@@ -39,6 +39,16 @@ struct FixtureLaunch {
 }
 #[async_trait]
 impl LaunchActions for FixtureLaunch {
+    async fn validate_initial_config(
+        &self,
+        config: &ExecutorConfig,
+        _path: &std::path::Path,
+    ) -> Result<(), ApiError> {
+        if config.model_id.as_deref() == Some("unsupported") {
+            return Err(ApiError::BadRequest("model_id cannot be verified".into()));
+        }
+        Ok(())
+    }
     async fn workflow(&self, args: super::workflow::WorkflowArgs) -> anyhow::Result<Value> {
         assert!(matches!(args.action, super::workflow::Action::Defaults));
         Ok(serde_json::to_value(
@@ -118,6 +128,19 @@ impl LaunchActions for FixtureLaunch {
         Ok(
             json!({"workspace_id":workspace_id,"session_id":session,"agent_run_id":run,"execution_accepted":true,"implementation_complete":false}),
         )
+    }
+    async fn start_validated(
+        &self,
+        request: CreateAndStartWorkspaceRequest,
+        workspace_id: Uuid,
+        validate_initial: bool,
+    ) -> Result<Value, ApiError> {
+        if validate_initial && request.executor_config.model_id.as_deref() == Some("unsupported") {
+            return Err(ApiError::InitialConfigurationRejected(
+                "model_id cannot be verified".into(),
+            ));
+        }
+        self.start(request, workspace_id).await
     }
     async fn start_session(
         &self,
@@ -531,6 +554,47 @@ async fn launch_uses_agreed_revision_native_goal_and_stable_admission_identity()
         .await
         .unwrap();
     assert_eq!(count, 0);
+}
+
+#[tokio::test]
+async fn initial_settings_are_part_of_workspace_admission_identity() {
+    let (_directory, remote, dispatch, principal, target, issue, repo) = fixture(false).await;
+    let mut input = start_args(&remote, &target, issue, repo).await;
+    input["model_id"] = json!("model-a");
+    input["reasoning_id"] = json!("high");
+    let first = launch::call(&remote, &principal, "start_workspace", input.clone())
+        .await
+        .unwrap();
+    assert_eq!(first["status"], "succeeded");
+    let replay = launch::call(&remote, &principal, "start_workspace", input.clone())
+        .await
+        .unwrap();
+    assert_eq!(first["operation_id"], replay["operation_id"]);
+    input["model_id"] = json!("model-b");
+    assert!(
+        launch::call(&remote, &principal, "start_workspace", input)
+            .await
+            .is_err()
+    );
+    let starts = dispatch.starts.lock().await;
+    assert_eq!(starts.len(), 1);
+    assert_eq!(starts[0]["executor_config"]["model_id"], "model-a");
+    assert_eq!(starts[0]["executor_config"]["reasoning_id"], "high");
+    assert_eq!(starts[0]["executor_config"]["execution_mode"], "goal");
+}
+
+#[tokio::test]
+async fn unsupported_initial_settings_report_failed_without_starting_session() {
+    let (_directory, remote, dispatch, principal, target, issue, repo) = fixture(false).await;
+    let mut input = start_args(&remote, &target, issue, repo).await;
+    input["model_id"] = json!("unsupported");
+    let receipt = launch::call(&remote, &principal, "start_workspace", input)
+        .await
+        .unwrap();
+    assert_eq!(receipt["status"], "failed");
+    assert_eq!(receipt["result"]["code"], "configuration_rejected");
+    assert_eq!(receipt["result"]["execution_accepted"], false);
+    assert!(dispatch.starts.lock().await.is_empty());
 }
 
 #[tokio::test]
@@ -999,9 +1063,16 @@ async fn wiki_accepted_execution_is_not_publication_success() {
 
 #[tokio::test]
 async fn new_session_engine_selection_keeps_workspace_and_receipt_identity() {
-    let (_directory, remote, dispatch, principal, target, _issue, _repo) = fixture(false).await;
+    let (directory, remote, dispatch, principal, target, _issue, _repo) = fixture(false).await;
+    Workspace::update_container_ref(
+        &remote.pool,
+        target.workspace_id,
+        directory.path().to_str().unwrap(),
+    )
+    .await
+    .unwrap();
     let input = json!({"project_id":target.project_id,"workspace_id":target.workspace_id,
-        "request_id":Uuid::new_v4(),"engine":"CLAUDE_CODE","prompt":"Purpose, decisions and remaining work"});
+        "request_id":Uuid::new_v4(),"engine":"CLAUDE_CODE","model_id":"claude-model","reasoning_id":"high","prompt":"Purpose, decisions and remaining work"});
     let first = launch::call(&remote, &principal, "start_session", input.clone())
         .await
         .unwrap();
@@ -1014,6 +1085,8 @@ async fn new_session_engine_selection_keeps_workspace_and_receipt_identity() {
     assert_eq!(starts.len(), 1);
     assert_eq!(starts[0]["workspace_id"], json!(target.workspace_id));
     assert_eq!(starts[0]["executor_config"]["executor"], "CLAUDE_CODE");
+    assert_eq!(starts[0]["executor_config"]["model_id"], "claude-model");
+    assert_eq!(starts[0]["executor_config"]["reasoning_id"], "high");
     assert!(starts[0]["executor_config"].get("variant").is_none());
     let sessions = Session::find_by_workspace_id(&remote.pool, target.workspace_id)
         .await
@@ -1028,6 +1101,29 @@ async fn new_session_engine_selection_keeps_workspace_and_receipt_identity() {
             .iter()
             .any(|session| session.id == target.session_id)
     );
+}
+
+#[tokio::test]
+async fn new_session_passes_initial_goal_and_partial_settings() {
+    let (directory, remote, dispatch, principal, target, _issue, _repo) = fixture(false).await;
+    Workspace::update_container_ref(
+        &remote.pool,
+        target.workspace_id,
+        directory.path().to_str().unwrap(),
+    )
+    .await
+    .unwrap();
+    let input = json!({"project_id":target.project_id,"workspace_id":target.workspace_id,
+        "request_id":Uuid::new_v4(),"reasoning_id":"high","execution_mode":"goal","goal_token_budget":1234,"prompt":"Start goal"});
+    let receipt = launch::call(&remote, &principal, "start_session", input)
+        .await
+        .unwrap();
+    assert_eq!(receipt["status"], "succeeded");
+    let starts = dispatch.starts.lock().await;
+    assert_eq!(starts[0]["executor_config"]["reasoning_id"], "high");
+    assert_eq!(starts[0]["executor_config"]["execution_mode"], "goal");
+    assert_eq!(starts[0]["executor_config"]["goal_token_budget"], 1234);
+    assert!(starts[0]["executor_config"].get("model_id").is_none());
 }
 
 #[tokio::test]

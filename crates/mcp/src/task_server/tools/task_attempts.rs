@@ -32,6 +32,16 @@ struct StartWorkspaceRequest {
     prompt: Option<String>,
     #[schemars(description = "The coding agent executor to run ('CLAUDE_CODE', 'CODEX')")]
     executor: String,
+    #[schemars(
+        description = "Model ID for the first Run; omission or null uses the existing default. Empty, whitespace-only or surrounding whitespace is invalid.",
+        length(min = 1)
+    )]
+    model_id: Option<String>,
+    #[schemars(
+        description = "Reasoning depth ID for the first Run; omission or null uses the existing default. Empty, whitespace-only or surrounding whitespace is invalid.",
+        length(min = 1)
+    )]
+    reasoning_id: Option<String>,
     #[schemars(description = "Optional executor variant, if needed")]
     variant: Option<String>,
     #[schemars(
@@ -76,6 +86,8 @@ impl McpServer {
             prompt,
             executor,
             variant,
+            model_id,
+            reasoning_id,
             execution_mode,
             repositories,
             issue_id,
@@ -152,9 +164,9 @@ impl McpServer {
             executor_config: ExecutorConfig {
                 executor: base_executor,
                 variant,
-                model_id: None,
+                model_id,
                 agent_id: None,
-                reasoning_id: None,
+                reasoning_id,
                 permission_policy: None,
                 execution_mode,
                 goal_token_budget: None,
@@ -249,7 +261,7 @@ mod review_tests {
                 socket.write_all(format!("HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",body.len()).as_bytes()).await.unwrap();
                 text
             });
-            let args:StartWorkspaceRequest=serde_json::from_value(serde_json::json!({"name":"start","executor":"CODEX","issue_id":issue,"request_id":request_id,"project_id":project,"attachment_ids":attachments,"repositories":[{"repo_id":Uuid::new_v4(),"branch":"main"}]})).unwrap();
+            let args:StartWorkspaceRequest=serde_json::from_value(serde_json::json!({"name":"start","executor":"CODEX","model_id":"test-model","reasoning_id":"high","issue_id":issue,"request_id":request_id,"project_id":project,"attachment_ids":attachments,"repositories":[{"repo_id":Uuid::new_v4(),"branch":"main"}]})).unwrap();
             let result = McpServer::new_global(&url)
                 .start_workspace(Parameters(args))
                 .await
@@ -262,6 +274,11 @@ mod review_tests {
             assert_eq!(posted["request_id"], request_id.to_string());
             assert_eq!(posted["issue_id"], issue.to_string());
             assert_eq!(posted["request"]["prompt"], "");
+            assert_eq!(
+                posted["request"]["executor_config"]["model_id"],
+                "test-model"
+            );
+            assert_eq!(posted["request"]["executor_config"]["reasoning_id"], "high");
             assert!(posted["request"]["linked_issue"].is_null());
             assert_eq!(posted["project_id"], project.to_string());
             if !attachments.is_empty() {

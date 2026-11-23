@@ -214,6 +214,137 @@ pub(crate) async fn next_run_capabilities(
     result
 }
 
+/// Live initial-session choices, including configured provider defaults. These
+/// are launch inputs, not evidence of what a provider subsequently used.
+#[derive(Debug, serde::Serialize)]
+pub(crate) struct InitialModelCapabilities {
+    pub models: Vec<executors::model_selector::ModelInfo>,
+    pub effective_model_id: Option<String>,
+    pub effective_reasoning_id: Option<String>,
+}
+
+pub(crate) async fn initial_model_capabilities(
+    config: &ExecutorConfig,
+    workdir: &std::path::Path,
+) -> Result<InitialModelCapabilities, ApiError> {
+    use executors::{
+        executors::{CodingAgent, StandardCodingAgentExecutor},
+        profile::ExecutorConfigs,
+    };
+    let mut agent = ExecutorConfigs::get_cached()
+        .get_coding_agent(&config.profile_id())
+        .ok_or_else(|| ApiError::BadRequest("Runtime profile does not exist".into()))?;
+    agent.apply_overrides(config);
+    let mut preset = agent.get_preset_options();
+    // Claude's UI picker uses a suggested model even when the runtime does not
+    // pass --model. Its actual provider default is not observable here.
+    if let CodingAgent::ClaudeCode(claude) = &agent {
+        preset.model_id = claude.model.clone();
+    }
+    // The provider adapters may ignore values they cannot parse. Never report
+    // such an override as accepted merely because discovery advertises it.
+    if config
+        .reasoning_id
+        .as_ref()
+        .is_some_and(|v| preset.reasoning_id.as_ref() != Some(v))
+    {
+        return Err(ApiError::BadRequest(
+            "reasoning_id cannot be applied by the selected provider".into(),
+        ));
+    }
+    let (models, provider_model, provider_reasoning) = match agent {
+        CodingAgent::Codex(codex) => tokio::time::timeout(
+            std::time::Duration::from_secs(30),
+            codex.discover_initial_models(workdir.to_path_buf()),
+        )
+        .await
+        .map_err(|_| ApiError::BadRequest("Codex model discovery timed out".into()))?
+        .map_err(|_| ApiError::BadRequest("Unable to verify Codex model discovery".into()))?,
+        CodingAgent::ClaudeCode(claude) => {
+            let supported = claude.supports_effort_flag().await.map_err(|_| {
+                ApiError::BadRequest("Unable to verify Claude Code CLI --effort support".into())
+            })?;
+            (
+                executors::executors::claude::claude_model_options(supported),
+                None,
+                None,
+            )
+        }
+        #[cfg(feature = "qa-mode")]
+        CodingAgent::QaMock(_) => {
+            return Err(ApiError::BadRequest(
+                "Model discovery is unavailable for this provider".into(),
+            ));
+        }
+    };
+    let model = preset.model_id.or(provider_model);
+    let model = if config.executor == BaseCodingAgent::Codex {
+        executors::executors::codex::resolve_model(model.as_deref())
+            .0
+            .map(str::to_owned)
+    } else {
+        model
+    };
+    let reasoning = preset.reasoning_id.or(provider_reasoning).or_else(|| {
+        model
+            .as_ref()
+            .and_then(|id| models.iter().find(|m| &m.id == id))
+            .and_then(|m| m.reasoning_options.iter().find(|r| r.is_default))
+            .map(|r| r.id.clone())
+    });
+    Ok(InitialModelCapabilities {
+        models,
+        effective_model_id: model,
+        effective_reasoning_id: reasoning,
+    })
+}
+
+pub(crate) async fn validate_initial_config(
+    config: &ExecutorConfig,
+    workdir: &std::path::Path,
+) -> Result<(), ApiError> {
+    if config.model_id.is_none() && config.reasoning_id.is_none() {
+        return Ok(());
+    }
+    for (name, value) in [
+        ("model_id", &config.model_id),
+        ("reasoning_id", &config.reasoning_id),
+    ] {
+        if value
+            .as_ref()
+            .is_some_and(|v| v.trim().is_empty() || v.trim() != v)
+        {
+            return Err(ApiError::BadRequest(format!(
+                "{name} must be non-empty and have no surrounding whitespace"
+            )));
+        }
+    }
+    let capabilities = initial_model_capabilities(config, workdir).await?;
+    validate_initial_choices(&capabilities)
+}
+
+fn validate_initial_choices(capabilities: &InitialModelCapabilities) -> Result<(), ApiError> {
+    let model = capabilities
+        .effective_model_id
+        .as_ref()
+        .and_then(|id| capabilities.models.iter().find(|m| &m.id == id))
+        .ok_or_else(|| {
+            ApiError::BadRequest(format!(
+                "model_id {:?} cannot be verified in provider discovery",
+                capabilities.effective_model_id
+            ))
+        })?;
+    if let Some(reasoning) = &capabilities.effective_reasoning_id
+        && !model.reasoning_options.iter().any(|r| &r.id == reasoning)
+    {
+        return Err(ApiError::BadRequest(format!(
+            "reasoning_id {reasoning:?} is not available for model {:?}",
+            model.id
+        )));
+    }
+    Ok(())
+}
+
 pub(crate) async fn apply_next_run_overrides(
     saved: &ExecutorConfig,
     overrides: &executors::profile::NextRunOverrides,
@@ -304,6 +435,29 @@ mod tests {
     use serde_json::json;
 
     use super::*;
+
+    #[test]
+    fn initial_choices_validate_effective_model_and_reasoning() {
+        use executors::model_selector::{ModelInfo, ReasoningOption};
+        let mut choices = InitialModelCapabilities {
+            models: vec![ModelInfo {
+                id: "model-a".into(),
+                name: "A".into(),
+                provider_id: None,
+                reasoning_options: ReasoningOption::from_names(["low", "high"]),
+            }],
+            effective_model_id: Some("model-a".into()),
+            effective_reasoning_id: Some("low".into()),
+        };
+        assert!(validate_initial_choices(&choices).is_ok());
+        choices.effective_reasoning_id = Some("ultra".into());
+        assert!(validate_initial_choices(&choices).is_err());
+        choices.effective_reasoning_id = None;
+        choices.effective_model_id = Some("missing".into());
+        assert!(validate_initial_choices(&choices).is_err());
+        choices.effective_model_id = None;
+        assert!(validate_initial_choices(&choices).is_err());
+    }
 
     #[tokio::test]
     async fn next_run_override_preserves_unrelated_fields_and_clears_goal_only_options() {

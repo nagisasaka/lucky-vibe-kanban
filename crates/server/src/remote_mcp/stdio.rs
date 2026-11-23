@@ -8,6 +8,7 @@ use axum::{
 use deployment::Deployment;
 use serde::Deserialize;
 use serde_json::{Value, json};
+use services::services::container::ContainerService;
 use sqlx::SqlitePool;
 use utils::response::ApiResponse;
 use uuid::Uuid;
@@ -39,7 +40,73 @@ pub(super) fn router() -> Router<DeploymentImpl> {
         .route("/mcp-stdio/start-workspace", post(start_workspace))
         .route("/mcp-stdio/create-session", post(create_session))
         .route("/mcp-stdio/continue", post(continue_session))
+        .route("/mcp-stdio/model-capabilities", post(model_capabilities))
 }
+#[derive(Deserialize)]
+struct ModelCapabilitiesInput {
+    executor: Option<String>,
+    variant: Option<String>,
+    workspace_id: Option<Uuid>,
+    repo_id: Option<Uuid>,
+}
+
+async fn model_capabilities(
+    State(d): State<DeploymentImpl>,
+    Extension(actor): Extension<server_access::Principal>,
+    Json(args): Json<ModelCapabilitiesInput>,
+) -> Result<Json<ApiResponse<Value>>, ApiError> {
+    owner(&actor, false)?;
+    let defaults: executors::profile::ExecutorConfig =
+        d.config().read().await.executor_profile.clone().into();
+    let mut config = match args.executor.as_deref() {
+        None => defaults,
+        Some(name) => {
+            let executor: executors::executors::BaseCodingAgent =
+                serde_json::from_value(json!(name))
+                    .map_err(|_| ApiError::BadRequest("Unknown executor".into()))?;
+            if executor == defaults.executor {
+                defaults
+            } else {
+                executors::profile::ExecutorConfig::new(executor)
+            }
+        }
+    };
+    if args.variant.is_some() {
+        config.variant = args.variant;
+    }
+    if args.workspace_id.is_some() && args.repo_id.is_some() {
+        return Err(ApiError::BadRequest(
+            "Select workspace_id or repo_id, not both".into(),
+        ));
+    }
+    let path = if let Some(id) = args.workspace_id {
+        let path: Option<String> =
+            sqlx::query_scalar("SELECT container_ref FROM workspaces WHERE id=?")
+                .bind(id)
+                .fetch_optional(&d.db().pool)
+                .await?
+                .flatten();
+        std::path::PathBuf::from(
+            path.ok_or_else(|| ApiError::BadRequest("Workspace path unavailable".into()))?,
+        )
+    } else if let Some(id) = args.repo_id {
+        db::models::repo::Repo::find_by_id(&d.db().pool, id)
+            .await?
+            .ok_or_else(|| ApiError::BadRequest("Repository not found".into()))?
+            .path
+    } else {
+        std::env::current_dir()
+            .map_err(|_| ApiError::BadRequest("Discovery working directory unavailable".into()))?
+    };
+    let capabilities =
+        crate::routes::sessions::executor_config::initial_model_capabilities(&config, &path)
+            .await?;
+    Ok(Json(ApiResponse::success(
+        serde_json::to_value(capabilities)
+            .map_err(|_| ApiError::BadRequest("Discovery result unavailable".into()))?,
+    )))
+}
+
 fn owner(actor: &server_access::Principal, write: bool) -> Result<String, ApiError> {
     if actor.channel != "internal"
         || !actor.scopes.contains("lvk:read")
@@ -353,6 +420,40 @@ async fn start_workspace(
         ));
     }
 
+    // Preserve the same-engine profile defaults, applying only explicit inputs.
+    let defaults: executors::profile::ExecutorConfig =
+        d.config().read().await.executor_profile.clone().into();
+    let requested = args.request.executor_config;
+    let explicit_settings = requested.model_id.is_some() || requested.reasoning_id.is_some();
+    let invalid_mode = requested.execution_mode.is_some()
+        && requested.executor != executors::executors::BaseCodingAgent::Codex;
+    let mut config = if requested.executor == defaults.executor {
+        defaults
+    } else {
+        executors::profile::ExecutorConfig::new(requested.executor)
+    };
+    if requested.variant.is_some() {
+        config.variant = requested.variant;
+    }
+    if requested.model_id.is_some() {
+        config.model_id = requested.model_id;
+    }
+    if requested.reasoning_id.is_some() {
+        config.reasoning_id = requested.reasoning_id;
+    }
+    if let Some(mode) = requested.execution_mode {
+        config.execution_mode = Some(mode);
+        if !matches!(
+            mode,
+            executors::profile::ExecutionMode::Goal
+                | executors::profile::ExecutionMode::PlanWithGoal
+        ) {
+            config.goal_token_budget = None;
+            config.goal_max_concurrent_agents = None;
+        }
+    }
+    args.request.executor_config = config;
+
     let project = args
         .request
         .linked_issue
@@ -405,6 +506,12 @@ async fn start_workspace(
         {
             return ("failed", json!({"code":"linked_issue_required"}));
         }
+        if invalid_mode {
+            return (
+                "failed",
+                json!({"code":"configuration_rejected", "message":"Explicit execution_mode requires CODEX"}),
+            );
+        }
         let mut request = args.request;
         for id in request.attachment_ids.as_deref().unwrap_or_default() {
             let file = match db::models::file::File::find_by_id(&d.db().pool, *id).await {
@@ -416,8 +523,15 @@ async fn start_workspace(
                 file.file_path
             ));
         }
-        match execution.start(request, id).await {
+        match execution
+            .start_validated(request, id, explicit_settings)
+            .await
+        {
             Ok(value) => ("succeeded", value),
+            Err(ApiError::InitialConfigurationRejected(message)) => (
+                "failed",
+                json!({"code":"configuration_rejected", "message":message, "workspace_id":id, "execution_accepted":false}),
+            ),
             Err(_) => (
                 "uncertain",
                 json!({"workspace_id":id,"execution_accepted":null}),
@@ -551,6 +665,9 @@ struct Continue {
     attachment_ids: Vec<Uuid>,
     #[serde(default)]
     overrides: executors::profile::NextRunOverrides,
+    model_id: Option<String>,
+    reasoning_id: Option<String>,
+    execution_mode: Option<executors::profile::ExecutionMode>,
 }
 async fn continue_session(
     State(d): State<DeploymentImpl>,
@@ -596,6 +713,15 @@ async fn continue_session(
         let latest:Option<Uuid>=match sqlx::query_scalar("SELECT id FROM agent_runs WHERE session_id=? ORDER BY created_at DESC,rowid DESC LIMIT 1").bind(session.id).fetch_optional(&d.db().pool).await{Ok(v)=>v,Err(_)=>return ("failed",json!({"code":"run_unavailable"}))};
         let runtime = super::runtime_write::ExistingRuntime(d.clone());
         if let Some(run) = args.agent_run_id.or(latest) {
+            if args.model_id.is_some()
+                || args.reasoning_id.is_some()
+                || args.execution_mode.is_some()
+            {
+                return (
+                    "failed",
+                    json!({"code":"initial_settings_require_new_session","message":"model_id, reasoning_id and execution_mode apply only to the first Run"}),
+                );
+            }
             let target = super::runtime_write::Target {
                 project_id: project.unwrap_or(Uuid::nil()),
                 workspace_id: session.workspace_id,
@@ -656,13 +782,35 @@ async fn continue_session(
                 Err(_) => ("uncertain", json!({"code":"delivery_unconfirmed"})),
             }
         } else {
+            // The initial read above races other admissions. Serialize with UI
+            // and MCP follow-ups, then recheck while holding the lock through
+            // validation and Run creation.
+            let _queue_lock = d.queued_message_service().lock_session(session.id).await;
+            if d.queued_message_service().has_queued(session.id) {
+                return (
+                    "failed",
+                    json!({"code":"queue_conflict","message":"Resume or clear the follow-up queue first"}),
+                );
+            }
+            let latest: Result<Option<Uuid>, _> = sqlx::query_scalar("SELECT id FROM agent_runs WHERE session_id=? ORDER BY created_at DESC,rowid DESC LIMIT 1")
+                .bind(session.id).fetch_optional(&d.db().pool).await;
+            match latest {
+                Ok(None) => {}
+                Ok(Some(_)) => {
+                    return (
+                        "failed",
+                        json!({"code":"run_conflict","message":"Session already has a Run; inspect it before continuing"}),
+                    );
+                }
+                Err(_) => return ("failed", json!({"code":"run_unavailable"})),
+            }
             if !args.overrides.is_empty() || !args.attachment_ids.is_empty() {
                 return (
                     "failed",
                     json!({"code":"initial_session_requires_saved_configuration"}),
                 );
             }
-            let config = match crate::routes::sessions::executor_config::read_executor_config(
+            let mut config = match crate::routes::sessions::executor_config::read_executor_config(
                 &d.db().pool,
                 session.id,
             )
@@ -674,16 +822,77 @@ async fn continue_session(
                     let default: executors::profile::ExecutorConfig =
                         d.config().read().await.executor_profile.clone().into();
                     match session.executor.as_deref() {
-                        Some("CLAUDE_CODE") => executors::profile::ExecutorConfig::new(
-                            executors::executors::BaseCodingAgent::ClaudeCode,
-                        ),
-                        Some("CODEX") => executors::profile::ExecutorConfig::new(
-                            executors::executors::BaseCodingAgent::Codex,
-                        ),
+                        Some("CLAUDE_CODE")
+                            if default.executor
+                                != executors::executors::BaseCodingAgent::ClaudeCode =>
+                        {
+                            executors::profile::ExecutorConfig::new(
+                                executors::executors::BaseCodingAgent::ClaudeCode,
+                            )
+                        }
+                        Some("CODEX")
+                            if default.executor != executors::executors::BaseCodingAgent::Codex =>
+                        {
+                            executors::profile::ExecutorConfig::new(
+                                executors::executors::BaseCodingAgent::Codex,
+                            )
+                        }
                         _ => default,
                     }
                 }
             };
+            let explicit_settings = args.model_id.is_some() || args.reasoning_id.is_some();
+            if args.execution_mode.is_some()
+                && config.executor != executors::executors::BaseCodingAgent::Codex
+            {
+                return (
+                    "failed",
+                    json!({"code":"configuration_rejected","message":"Explicit execution_mode requires CODEX"}),
+                );
+            }
+            if let Some(model) = args.model_id {
+                config.model_id = Some(model);
+            }
+            if let Some(reasoning) = args.reasoning_id {
+                config.reasoning_id = Some(reasoning);
+            }
+            if let Some(mode) = args.execution_mode {
+                config.execution_mode = Some(mode);
+                if !matches!(
+                    mode,
+                    executors::profile::ExecutionMode::Goal
+                        | executors::profile::ExecutionMode::PlanWithGoal
+                ) {
+                    config.goal_token_budget = None;
+                    config.goal_max_concurrent_agents = None;
+                }
+            }
+            let workspace = match db::models::workspace::Workspace::find_by_id(
+                &d.db().pool,
+                session.workspace_id,
+            )
+            .await
+            {
+                Ok(Some(workspace)) => workspace,
+                _ => return ("failed", json!({"code":"workspace_unavailable"})),
+            };
+            let path = match d.container().ensure_container_exists(&workspace).await {
+                Ok(path) => path,
+                Err(_) => return ("failed", json!({"code":"workspace_unavailable"})),
+            };
+            if explicit_settings
+                && let Err(error) =
+                    crate::routes::sessions::executor_config::validate_initial_config(
+                        &config,
+                        std::path::Path::new(&path),
+                    )
+                    .await
+            {
+                return (
+                    "failed",
+                    json!({"code":"configuration_rejected","message":error.to_string()}),
+                );
+            }
             match crate::routes::sessions::start_coding_agent_execution_for_session(
                 &d,
                 session,
