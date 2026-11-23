@@ -605,7 +605,7 @@ async fn live_default_provider_uses_existing_review_lifecycle() {
         "requires explicit disposable-instance marker"
     );
     assert!(
-        !instance.join("data/db.sqlite").exists(),
+        !instance.join("data/db.v2.sqlite").exists(),
         "requires a fresh test instance"
     );
     let shutdown = tokio_util::sync::CancellationToken::new();
@@ -771,7 +771,7 @@ async fn live_default_provider_uses_existing_review_lifecycle() {
     assert_eq!(outcome.issue_ids, Some(vec![req.issues[0].id]));
     assert!(persisted.success.is_some());
     let pool = SqlitePool::connect_with(
-        sqlx::sqlite::SqliteConnectOptions::new().filename(instance.join("data/db.sqlite")),
+        sqlx::sqlite::SqliteConnectOptions::new().filename(instance.join("data/db.v2.sqlite")),
     )
     .await
     .unwrap();
