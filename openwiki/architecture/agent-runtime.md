@@ -5,11 +5,13 @@ description: Agent Run の監査、投影と回復の責任を説明する。
 tags: [agent-runtime, audit, persistence, recovery]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-23T00:23:16.293Z
+    at: 2026-11-23T19:12:52.102Z
 sources:
   - id: openwiki-source-d20a82e2192a07c687b838cb
     resource: repo://crates/db/src/models/agent_runtime.rs
-generated: { by: "codex", at: "2026-11-23T00:23:16.293Z" }
+  - id: openwiki-source-c88a7c6fabdac15166554032
+    resource: repo://crates/executors/src/executors/codex/client.rs
+generated: { by: "codex", at: "2026-11-23T19:12:52.102Z" }
 ---
 
 # Agent Runtime の監査・投影・回復
@@ -50,6 +52,16 @@ DB は host batch の identity を照合し、event、provider session、投影�
 
 Provider の turn 完了、OS exit、Host Terminal は同じではない。Host は cleanup 後に出力を drain し、監査を閉じて terminal を記録する。exit 0 だけから provider の成功を作らず、後着の成功で取消、監査失敗や非ゼロ終了を上書きしない。通信失敗だけで死亡と決めたり、代替 provider を勝手に起動したりしない。[終端処理](../../crates/local-deployment/src/process_host.rs)
 
+### Codex の子エージェントと親の完了
+
+親の turn や Goal が完了しても、子の終了証拠が不足する場合は Run を成功にしない。Codex client は表示用の投影とは別に子の thread と turn を追跡する。新しい turn の開始で終了証拠を無効にし、別の古い turn の完了では新しい turn を終了扱いにしない。[終了ガード](../../crates/executors/src/executors/codex/client.rs)
+
+`wait` は子を観測する操作である。V1 の grouped wait が A/B を receiver に列挙し、結果には B の状態しか返さなくても、既に終了した A の証拠を保つ。初めて見る子は未確定として登録する。明示された running・未知状態は以前の終了証拠より優先し、wait の呼出し自体の完了を子の完了とは扱わない。
+
+`resumeAgent`、`sendInput`、`spawnAgent`、未知・欠損 tool は子を再稼働させ得るため、receiver の古い終了証拠を無効にする。V2 の `subAgentActivity` でも開始・対話は終了証明にならない。receiver/state が空の mailbox wait は、既知の子を終了させることも再稼働扱いへ戻すこともしない。[観測と表示](../../crates/executors/src/executors/codex/agent_scope.rs)
+
+注意点: 子の終了確認と、その成果が正しいかは別である。この修正は終了ガードを弱めず、観測のみの wait で既存証拠を失う経路を直す。過去の失敗 Run の実原因を確定したり、既存 Run を書き換えたりするものではない。
+
 ## 承認と指示配送
 
 承認や質問の waiter は provider を所有する host に置く。回答受付、元の native request への配送、実際の操作結果は別の証拠である。取消や接続終了では待機を解放する。[承認](../../crates/local-deployment/src/process_host/approvals.rs)・[Codex client](../../crates/executors/src/executors/codex/client.rs)
@@ -61,3 +73,5 @@ Codex と Claude の mapper は native frame を canonical event に変換し、
 ## 検証の入口
 
 DB の batch・reservation 回帰、process host の drain と terminal の回帰、Linux の所有 process cleanup を変更範囲に応じて確認する。これらの fixture は実 provider、全 OS、サーバー強制終了を越える回復の受入を証明しない。[DB tests](../../crates/db/src/models/agent_runtime_reservation_tests.rs)・[host tests](../../crates/local-deployment/src/process_host.rs)
+
+Codex client の `version_check_tests` は V1 grouped wait、V2 mailbox wait、再開・明示非終端・古い turn 完了を合成通知で検証する。実 Codex の fan-out → wait → 親完了と LVK の成功・成果保存は、候補の server/host を隔離 instance で動かして別に照合する。合成試験だけでは実モデルの動作を証明しない。[対象回帰](../../crates/executors/src/executors/codex/client.rs)・[隔離手順](../../deploy/developer/STAGING.md)

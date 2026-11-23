@@ -5,7 +5,7 @@ description: Project の Issue を状態別に表示するボード。
 tags: [kanban, board, project]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-23T02:42:04.517Z
+    at: 2026-11-23T19:12:52.102Z
 sources:
   - id: openwiki-source-f4e0f9b2ce513d3f8b8b070e
     resource: repo://crates/executors/src/executors/provider_adapter.rs
@@ -19,11 +19,19 @@ sources:
     resource: repo://packages/web-core/src/features/kanban/model/runObservationPolling.ts
   - id: openwiki-source-fa9be7983cc21002d2346ef7
     resource: repo://packages/web-core/src/features/kanban/model/runSpeechQueue.ts
-  - id: openwiki-source-e0c2de9e01617a8949b78360
-    resource: repo://packages/web-core/src/features/kanban/ui/KanbanContainer.tsx
-  - id: openwiki-source-461fe232dcc20677a51fbe76
-    resource: repo://packages/web-core/src/features/kanban/ui/RunSpeechToggle.tsx
-generated: { by: "codex", at: "2026-11-23T02:42:04.517Z" }
+  - id: openwiki-source-2706dbba10a20a516c29675e
+    resource: repo://packages/web-core/src/features/kanban/ui/RunSpeechProvider.tsx
+  - id: openwiki-source-4f5acbe99dd0d72515b7e82b
+    resource: repo://packages/web-core/src/shared/components/ui-new/containers/SharedAppLayout.tsx
+  - id: openwiki-source-06199fac94fe2f7f1f9bd1b2
+    resource: repo://packages/web-core/src/shared/dialogs/settings/settings/SpeechSynthesisSettingsSection.tsx
+  - id: openwiki-source-a7576c2af3663c39efa0974d
+    resource: repo://packages/web-core/src/shared/lib/speechSynthesis.ts
+  - id: openwiki-source-6393181e558dceee5ef998cc
+    resource: repo://tests/kanban/run-speech-lifetime.mjs
+  - id: openwiki-source-eece9c51da74bcdb3fe07f45
+    resource: repo://tests/speech-synthesis/settings.spec.ts
+generated: { by: "codex", at: "2026-11-23T19:12:52.102Z" }
 ---
 
 # Kanban board
@@ -36,14 +44,24 @@ Project の route は Kanban 画面を開き、Board API はその Project の I
 
 ## Run の進捗を音声で聞く
 
-音声切替は、複数の [Workspace](workspace.md) で動く [Run](agent-run.md) を個々の画面で見張らずに把握するための機能である。ボード右上のスピーカーをオンにすると、その Project に属する新着 Run イベントを Issue 番号付きで読む。表示中の Workspace だけに対象を絞らない。ボードを開いた時点と Project 切替時はオフで、設定は保存しない。[画面への接続](../../packages/web-core/src/features/kanban/ui/KanbanContainer.tsx)
+音声切替は、複数の [Workspace](workspace.md) で動く [Run](agent-run.md) を個々の画面で見張らずに把握するための機能である。ボード右上のスピーカーをオンにすると、その Project に属する新着 Run イベントを Issue 番号付きで読む。表示中の Workspace だけに対象を絞らない。ボードを開いた時点と Project 切替時はオフで、オン／オフは保存しない。音声・速度・読み上げる内容の選好は別途ブラウザに保存する。[画面への接続](../../packages/web-core/src/features/kanban/ui/KanbanContainer.tsx)
 
 1. `speechSynthesis` を利用できるブラウザで対象 Project のボードを開く。非対応の場合は切替が無効になる。
 2. スピーカーを押す。新着の基準位置を取得する間は接続中となり、取得できてからオンになる。接続に失敗した場合はオフのままなので、接続状態を確認して再操作する。
-3. 開始、成功・失敗・停止、回答待ちの短い定型文と、agent が人へ送った commentary を聞く。現在の発話言語は `ja-JP` である。
+3. 開始、成功・失敗・停止、回答待ちの短い定型文と、agent が人へ送った commentary を聞く。「結果と要対応だけ」を選んだ場合は開始と commentary を除く。ボード発話は選択音声の言語を使い、未選択・音声不在時の言語は `ja-JP` である。
 4. オフにすると再生中の発話と待ち行列を即時に止める。再度オンにしても停止中の履歴は読み返さない。ボードを離れた場合も購読と発話を停止する。
 
-[音声切替](../../packages/web-core/src/features/kanban/ui/RunSpeechToggle.tsx)はブラウザの発話機能を呼び出す。サーバーに音声キューや別モデルによる要約は設けない。
+[音声切替](../../packages/web-core/src/features/kanban/ui/RunSpeechToggle.tsx)は Provider の状態を表示する。購読と発話キューは Project ごとの [RunSpeechProvider](../../packages/web-core/src/features/kanban/ui/RunSpeechProvider.tsx) が所有し、[SharedAppLayout](../../packages/web-core/src/shared/components/ui-new/containers/SharedAppLayout.tsx) が画面内の再マウントより上に配置する。詳細の開閉、画面幅変更、loading、同一ボード内のページ再マウントでオン状態を失わない。別 Project、ボード離脱、新しいタブは別の寿命であり、新規ボードはオフになる。サーバーに音声キューや別モデルによる要約は設けない。
+
+### 音声・速度・読み上げる内容を選ぶ
+
+設定の「音声合成」で、そのブラウザが返す音声名と言語、速度、読み上げる内容を選ぶ。初期値は「ブラウザの既定」、1.0×、「すべて」である。速度は0.5〜2.0×を0.1刻みで選べる。音声一覧は `voiceschanged` による遅延読み込みに追従し、特定ベンダーの音声が存在するとは仮定しない。[設定画面](../../packages/web-core/src/shared/dialogs/settings/settings/SpeechSynthesisSettingsSection.tsx)
+
+選好は `speech-synthesis-preferences` として localStorage に保存する。保存音声が一時的に存在しなくても選好を消さず、発話はブラウザ既定へ戻す。音声は URI・名前・言語の組で識別する。別タブの変更も次の発話生成時に読み直し、現在の音声と速度を適用する。速度の体感はブラウザと音声エンジンに依存する。[保存と発話生成](../../packages/web-core/src/shared/lib/speechSynthesis.ts)
+
+「結果と要対応だけ」は終了・失敗・停止・回答待ちを残し、開始・中間報告を除く。イベントの状態更新と重複排除は継続し、キューの排出時と非同期の有効性確認後の発話直前に最新モードを確認する。除外した待機分は破棄し、後で「すべて」に戻しても過去分を再生しない。読み始めた発話はモード切替では中断しない。[内容の選別](../../packages/web-core/src/features/kanban/model/runSpeechQueue.ts)
+
+「試聴」は固定文を現在の音声・速度でブラウザの発話列へ追加し、ボードをオンにしない。試聴や設定画面を閉じる操作は、ボードの発話を cancel せず、ボード内の待ち行列も破棄しない。内容モードにかかわらず試聴できる。非対応ブラウザでは試聴とボード切替を無効にする。[試聴](../../packages/web-core/src/shared/lib/speechSynthesis.ts)
 
 ### 読み上げ順序と古いイベント
 
@@ -71,4 +89,4 @@ commentary の分類は provider が明示した情報に基づく。Codex は `
 - Claude の終了理由を受け取る前に切断した場合、誤読を避けるため未確定本文は読み上げない。
 - 再接続後は新着から再開する。切断中の報告を取り戻す機能ではない。
 
-[キュー試験](../../packages/web-core/src/features/kanban/model/runSpeechQueue.test.ts)、[接続試験](../../packages/web-core/src/features/kanban/model/runObservationPolling.test.ts)、[切替試験](../../packages/web-core/src/features/kanban/ui/RunSpeechToggle.test.tsx)と API・adapter の試験は分類、順序、再接続、Project 分離を扱う。これらは Chrome の別ウィンドウでの実音声を証明せず、その実機確認は未実施として残る。
+[キュー試験](../../packages/web-core/src/features/kanban/model/runSpeechQueue.test.ts)、[接続試験](../../packages/web-core/src/features/kanban/model/runObservationPolling.test.ts)、[切替試験](../../packages/web-core/src/features/kanban/ui/RunSpeechToggle.test.tsx)、[音声設定ブラウザ試験](../../tests/speech-synthesis/settings.spec.ts)、[ボード寿命ブラウザ試験](../../tests/kanban/run-speech-lifetime.mjs)と API・adapter の試験は分類、順序、再接続、Project 分離、選好のライブ反映、旧イベント非再生と試聴の独立を扱う。ブラウザ fixture の音声APIはモックであり、実音声の聴取や利用者環境の音声品質を証明しない。

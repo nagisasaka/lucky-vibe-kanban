@@ -5,18 +5,32 @@ description: Sidebar Pet の形式、安全な取込、保存と帰属。
 tags: [pets, sprites, security, persistence, attribution]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-23T00:23:16.293Z
+    at: 2026-11-23T19:12:52.102Z
 sources:
+  - id: openwiki-source-d20a82e2192a07c687b838cb
+    resource: repo://crates/db/src/models/agent_runtime.rs
+  - id: openwiki-source-42c7cffe07ec2d2c0ed4cc9d
+    resource: repo://crates/server/src/routes/workspaces/workspace_summary.rs
   - id: openwiki-source-72cc5d6937055777a10186c1
     resource: repo://packages/web-core/src/features/pets/format.ts
+  - id: openwiki-source-b917b710d762eaf81a4328c9
+    resource: repo://packages/web-core/src/features/pets/PetSprite.tsx
+  - id: openwiki-source-1147dc1b899e3c2e4aeb03ea
+    resource: repo://packages/web-core/src/features/pets/usePetApproval.ts
   - id: openwiki-source-6a174a6648f527d717aac5b8
     resource: repo://packages/web-core/src/features/pets/zip.ts
-generated: { by: "codex", at: "2026-11-23T00:23:16.293Z" }
+  - id: openwiki-source-5b956d3d9d7f17c236d42ebb
+    resource: repo://packages/web-core/src/pages/kanban/ProjectUtilities.tsx
+  - id: openwiki-source-6559800b59b62e086689d27d
+    resource: repo://packages/web-core/src/pages/workspaces/RightSidebar.tsx
+  - id: openwiki-source-235a3eb75f22fdecdbd66a8f
+    resource: repo://packages/web-core/src/shared/components/EnvironmentPanel.tsx
+generated: { by: "codex", at: "2026-11-23T19:12:52.102Z" }
 ---
 
 # Pet の形式・安全な取込・保存と帰属
 
-Pet は Kanban と Workspace の共通 EnvironmentPanel に表示する装飾である。Session 数に応じて Pet を増やすのではなく、既存の環境観測から表示状態を選ぶ。素材の作成・取込や表示を変更するときに読む。[Sidebar](../../packages/web-core/src/features/pets/SidebarPet.tsx)・[操作の段階](../quickstart.md#操作の段階)
+Pet は Kanban と Workspace の共通 EnvironmentPanel に表示する装飾である。Session 数に応じて Pet を増やすのではなく、既存の環境観測と対象内の未解決承認から表示状態を選ぶ。素材の作成・取込や表示を変更するときに読む。[Sidebar](../../packages/web-core/src/features/pets/SidebarPet.tsx)・[操作の段階](../quickstart.md#操作の段階)
 
 ## 形式と再生
 
@@ -29,9 +43,17 @@ Pet は Kanban と Workspace の共通 EnvironmentPanel に表示する装飾で
 
 静止 PNG/WebP の header と browser decode の両方で寸法を検査し、アニメーション画像は拒否する。v2 は使用セルの画素と未使用セルの透明性を検査する。旧 v1 は寸法と decode の互換基準を維持する。構造検査は絵の意味や品質の承認ではない。[画像検証](../../packages/web-core/src/features/pets/format.ts)
 
-九状態の frame timing は固定である。v2 の追加2行は16方向の静止視線で、上を0度として時計回りに22.5度刻みで選ぶ。idle/waiting 中の mouse に反応し、中心付近や pointer 離脱で通常 animation に戻る。活動状態とクリック反応が優先し、touch、非表示 tab、reduced motion の扱いは別に制限する。[timing と方向](../../packages/web-core/src/features/pets/format.ts)・[再生](../../packages/web-core/src/features/pets/PetSprite.tsx)
+九状態の frame timing は固定である。v2 の追加2行は16方向の静止視線で、上を0度として時計回りに22.5度刻みで選ぶ。idle/waiting 中にマウスが Pet 本体へ入ったときだけ追従を開始し、その時点から10秒で通常 animation に戻る。画面へ入っただけでは開始せず、ポインタ移動では期限を延長しない。Pet へ再進入すると新しい10秒を開始する。中心付近では通常 animation を表示し、画面外への離脱、blur、pointercancel、touch で追従を止める。非表示 tab、reduced motion、未ロード画像では追従しない。活動状態とクリック反応が優先し、failed と waving はクリック反応よりも優先する。[timing と方向](../../packages/web-core/src/features/pets/format.ts)・[再生](../../packages/web-core/src/features/pets/PetSprite.tsx)
 
-Visible 中の HTTP 失敗は failed、fresh な正の running Session 数は running、それ以外は idle である。古い・非表示・欠損は通信断の証拠ではない。idle の一定時間後は waiting になり、クリックや window 移動に応じた表示は既存の behavior が所有する。[状態](../../packages/web-core/src/features/pets/petStatus.ts)・[動作](../../packages/web-core/src/features/pets/usePetBehavior.ts)
+Visible 中の HTTP 失敗は failed で最優先する。次に対象内の承認待ちがあれば waving、そうでなければ fresh な正の running Session 数で running、それ以外は idle になる。古い・非表示・欠損は通信断の証拠ではない。idle の一定時間後は waiting になり、クリックや window 移動に応じた表示は既存の behavior が所有する。[状態](../../packages/web-core/src/features/pets/petStatus.ts)・[動作](../../packages/web-core/src/features/pets/usePetBehavior.ts)
+
+## 承認待ちの表示範囲と正本
+
+操作できる未解決の承認が一件でもあれば、既存の一体を `waving` にする。[Kanban board](kanban-board.md) では表示 Project に属する Workspace、[Workspace](workspace.md) 画面では表示中の Workspace だけが対象である。通常の質問、レビュー待ち、Integration の復旧待ちを承認待ちに混ぜない。複数承認の一部だけが解消した場合は手振りを維持する。[画面スコープ](../../packages/web-core/src/features/pets/usePetApproval.ts)
+
+正本は既存の Workspace summary の `has_pending_run_approval` であり、Pet 専用の監視や新しい音声通知は作らない。DB は Session の最新 Run と最新 Attempt の未解決 `approval_requested` を調べる。Run と Attempt が活動中で投影が current であり、後続の同一承認の解決イベントも解決コマンドもないことを必要とする。終端・取消・古い Attempt・劣化投影を操作可能な承認とは扱わない。[承認判定](../../crates/db/src/models/agent_runtime.rs)・[summary](../../crates/server/src/routes/workspaces/workspace_summary.rs)
+
+最後の保留が解消すると環境観測による表示へ戻る。確認済み接続断の `failed` は承認待ちより優先する。`failed` や `waving` の間は視線追従・クリックが表示を上書きせず、復帰後に通常操作を再開できる。同梱 Rabbit とインポート Pet の既存アニメーションを使い、非表示設定とサイドバーの寿命も維持する。[優先順位](../../packages/web-core/src/shared/components/EnvironmentPanel.tsx)・[再生制御](../../packages/web-core/src/features/pets/PetSprite.tsx)
 
 ## ZIP 取込と保存
 
@@ -48,4 +70,4 @@ ZIP は8 MiB、32 entries、実展開合計12 MiB、単一 file 8 MiB、manifest
 
 同梱 LVK Rabbit v1.1.0 は Masato Fujino の CC BY 4.0 素材である。固定 source、license、checksum、無改変範囲と素材・renderer の検査記録は [ATTRIBUTION](../../packages/public/pets/lvk-rabbit/ATTRIBUTION.md) にある。利用者が取込む素材はこの帰属の対象や自動再配布物ではない。
 
-[Pet の試験手順](../../tests/pets/README.md)は browser decode、ZIP、版互換、状態・方向と画面配置を検査する。隔離 fixture の HTTP や保存先は mock であり、実認証、実機、利用者の素材、連続再生の人手受入を証明しない。
+[Pet の試験手順](../../tests/pets/README.md)は browser decode、ZIP、版互換、状態・方向と画面配置を検査する。承認スコープ、複数承認、接続断優先、Pet 進入と10秒の期限はブラウザ回帰で確認し、未解決承認の正本条件は DB の `workspace_approvals_require_actionable_unresolved_events` で確認する。隔離 fixture の HTTP や保存先は mock であり、実認証、実機、利用者の素材、連続再生の人手受入を証明しない。

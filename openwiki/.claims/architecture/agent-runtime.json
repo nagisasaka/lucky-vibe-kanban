@@ -1,13 +1,13 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:a6d9a6ac617bdcd843ad9d4d71cf5af58c7466b2f95cee2a653092cb1d709167",
+  "pageVersion": "sha256:040d1b30570384ced0355e1c8cb99ff03d02c3b0d1ebb40a52e1ff721b50e9ff",
   "claims": [
     {
       "id": "claim_410d7ecd76c840bd906a575b212c0e27",
       "statement": "Host 観測の canonical event と cursor は同じ transaction で保存され、後続の照合や投影が失敗すると共に rollback する。",
       "evidence": [
         {
-          "resource": "repo://crates/db/src/models/agent_runtime.rs#L1644-L1726",
+          "resource": "repo://crates/db/src/models/agent_runtime.rs#L1668-L1750",
           "version": "repo-lines-v1:sha256:3136f0f86e0130c6f20c97be5e550cee7f6d54a2b0f6b1930c05be06c230f284:eyJzZWxlY3RlZExpbmVDb3VudCI6ODMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdmYjlhZTYzZGY0ZDY5NzVlMzY2YTk1Yjg0YzBjMzU0NjAxZTk4ZTU1NTI3NTU0ODhiYzZjMzVjY2Q0MjM4YzEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVmNzEwYzc5YWVmYzYxNGE4ODMzZGYzNzBkYjc4M2Y2ODI1NTZiNGQzYjQ2MDc0YjRiNWMyZDQzODE2OGFjYjAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRkYjc0YmRkYjQ4YTYyODVlZTA1OGU5OGFlY2U5ZjhjMTRkNWY0ZTZhNzQ5YmQxN2ZiNTgxZjk5ODQwMmMzMzQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFjNDYxYmEyZjg1Mzk1ZTFkOGNiODNkMjkwM2VmMzBiMDQyYzViNDExNzljZTcyOWQ4NGZiYmY5NGZjZDVlNzAifQ"
         }
       ]
@@ -21,10 +21,44 @@
           "version": "repo-lines-v1:sha256:9a1da10ea48aa27fa321504cc9a901d980e1ee755739749d31e66d6cd10bf2e1:eyJzZWxlY3RlZExpbmVDb3VudCI6ODgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNjMDk0MGI4ZGQyYzUwOTAwOTkzNDIxOGI5MTRiYzEzNjUyZGZhM2QwNWVmYjFmN2ViZWJiODU3NmViMzdjZTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVlZTZkYTFhZDEzODE5OTk4NTQ0MDU1NDJkYTczOTE1NTU2ZDMzYjE4ZDA5ODMxODFhYThhZjY2MTcxMDU5ZjMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZiMjBlNzhiOGRlMmI1ZDBlYzRlNDgwN2I0ZTNhODFmYzIyYjczMTQ4Mzg2ZWVmNzM1ZjZjYzFlMTIyYjRkZWMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE2MmVlNTdlNDFhOGMyMGFlMDE2NGRmMjYxNDM5ZGNjNDk5ZDM1MjA4MzQxNTE1MTZkMDQ3ZThkZWFlOGE0NjYifQ"
         }
       ]
+    },
+    {
+      "id": "claim_ae3f95614ad742b5985006c682f451d3",
+      "statement": "Codex親の成功判定は表示投影と独立した子の終了証跡を必要とし、新しい子turnの開始後に古いturnの完了では終了を認めない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/executors/src/executors/codex/client.rs#L2007-L2069",
+          "version": "repo-lines-v1:sha256:e1fb88d181e59cdf5799a89e78e93dcc61bf2d7adfecc84d5fa1bf521d04c74c:eyJzZWxlY3RlZExpbmVDb3VudCI6NjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YjA0NDkxNDY5NzIyZTgzNjNhOTRlNDA0NDUzOGUwMTNhMmEyMTdlMzZiMWU1NjhiYTYwYWNiN2I0YzhmMmUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcxMTE4ZjEyMGUxM2Y0N2FmOTI3OGY3MjRiMmUwYzM3YWM2YjJjNmI1M2NlODVlNWFlOTJlYjZhNGE2ZTY4YzkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImU2NzcwZWVhOGY2MzVhZjFmYjhhODk5ODhiYjc2OWZjN2E0ZTg1ZDM4NmYwOTk0NjUzZWVjMDA1ODZkMzMyNTYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImYzYWJlNjYxMjYzMTdmOTZjODliYWQyMTQ3ZTM0MDZhZjRlY2Q1ZWQ0OTczYzMxZTg1MWMzMzJjY2VlMDdhZmEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_efd1308ba1e64e4b8c01074f2b6a224d",
+      "statement": "collabAgentToolCallのwaitはreceiver列挙だけで既存の子終了証跡を失効させず、明示された非終端状態は反映する。一方resumeAgent・sendInput・spawnAgent・未知/欠損toolのreceiverは新たな終了証跡が必要になる。",
+      "evidence": [
+        {
+          "resource": "repo://crates/executors/src/executors/codex/client.rs#L2091-L2126",
+          "version": "repo-lines-v1:sha256:ecd8ee45fd7e006d711c2cd07111fc9b6ee523086d244a344541fc9c12644b1e:eyJzZWxlY3RlZExpbmVDb3VudCI6MzYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBjNjQ3OWNjMjMwNDQwZmQ0MWU4MjI0MjE4Njc5Njk4NTU5ZDI4OTNiZDY3YjQzODBhZmFiODExYjM4YTU1YWEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAwZjMwYmM4YWU2YmM1ZGQ3YjkxMTRjMjAwZTFhMjQ1ZTcwYTViODZkNjMwNzAxYzgwZjQwMzVjZDQ0N2QyNTUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM2OWUyYTQxNTg5Y2I5N2ZlZWUxMGRkYjVkMGJjM2RiMWIyOTAxNzk1YzgwNGZjZmYyMjY3YTQ0MDI4MGVkOWQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNkNTgzYTg3MzQ3NmQ3ZTUyZGY3ZTMyMjc3ZjBhNDMzOTViN2Q5MjU2M2Y0YzUxZGFlZWFhNDE4NGFhZDNlZWEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_83be4532ab354a8d81cd843898119bfc",
+      "statement": "V2 subAgentActivityの開始・対話は子終了証明にならず、receiver/stateが空のmailbox waitも終了/再稼働を確定しない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/executors/src/executors/codex/client.rs#L2074-L2090",
+          "version": "repo-lines-v1:sha256:4b54ea88ebc924d79eac901dde309cb582a559d3b76252f35ae52ed49c7d957b:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjlmY2UxNzAyYTUwN2I5ZmFmN2I0ZjE0MzdjNTE4MWY5NWJhZGEzNTllNDc0MGU4N2FlYmJiYWIzNTE1YmVlOTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhkYjMzOWMxN2Q0Y2M1NGU3MGM0ZmNmZWNiNjExYmI5ZTdkMzYzZjI1YjE4ZTA5MjNhMWQzMDZjYzk1OTI0ZTUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJiZTAyNTJjZTJhZmU3NDI0ODJmZTk2MDNmZWJhYTlhOWZjYzk5ODNkNWFjYTM2M2Y3YmJhYzA4ODYxNjhiZTciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjRjN2RiNzMyNDBkNTFmMTAyNmEyYzc2ZjY0MzEyN2NmY2E4MTAzOTgwYmY3OWM0Y2QwMjllNmVlN2E3ODVhOGMifQ"
+        },
+        {
+          "resource": "repo://crates/executors/src/executors/codex/client.rs#L3484-L3522",
+          "version": "repo-lines-v1:sha256:7f16ae1ca21c8b6207cd5d67f34f541dea5f9fc411d523237325302de38bfa90:eyJzZWxlY3RlZExpbmVDb3VudCI6MzksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjlhOGFmMDRlMjIwMDIzNzFlOTE2ZThiMzViYjBiY2ZjODI2MzllY2JlMDEwOTQ3MjIzZWI3NTVjZGFkYTY5MjEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRhNWVkNmE1NDlhZDA3ZTBiOTg1NzFhNWU4NjI5ZmU0MWJiYzgwMWE0MjdmNTAyN2RiZGRkMjE2NGZlZTE3OTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjAwN2M4NjA2ZmY4MGZiOGE1MjdjN2Y0YzUzOWJmOGMzMGYxZDhhODhmYTk4ZmEwNTg5MzhmZmMyOTgyZjRhMWIifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.9.0",
-    "at": "2026-11-23T00:23:16.293Z"
+    "at": "2026-11-23T19:12:52.102Z"
   }
 }

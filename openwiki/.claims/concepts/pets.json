@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:79fcb43f72542088d3439d48e60f93d3900dd12e8ce84cb2e7d7bab11d9812a7",
+  "pageVersion": "sha256:f455adfd8ecf4a493411aac011ee9189f6f07d78f4a09694a49b10eb83308fce",
   "claims": [
     {
       "id": "claim_760b48106c0f4ae5859c29fe948cac08",
@@ -25,10 +25,74 @@
           "version": "repo-lines-v1:sha256:848ce2c98cd0374e6925278b9348f8788b30b09a0c2a2351fe24739e2401728f:eyJzZWxlY3RlZExpbmVDb3VudCI6MzUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ5MmRjYTlmNTRjMmE0MDA5N2M5NjFiYzk0N2VkYWQyNWMwNDQ2NzlmNDczMGQwOGQ1OGNmNDQzMDJmMmEyYjkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk3Y2FhYjc5NGU5ZDkzM2YxZDMzNGUxNzhmOWFkYWJjMjM2ZDdhNWZlNzc0YmI4ODNiMzgwMTBmYTQ1MzJmNjgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZiM2NjZDM3NmI2NGQxYjgxZjhhM2U3MmE4NWUzYzQ1OGUxMDZlNDQ4OWNmZWM2NWEwMWNlM2RhYjYwN2E2N2YiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImZjOWY2M2U1MDFlNTZiYjI5YmY2MDhmZDIxOWJkYjgzN2FjMzIyNmQwYjA1NWM3OGQ5ZTBiY2VmMzhlZWQzOWIifQ"
         }
       ]
+    },
+    {
+      "id": "claim_966dda08e88045248144be1c18b6045d",
+      "statement": "Petの承認待ちはKanbanで表示Projectに属するWorkspace、Workspace画面で表示Workspaceに限定し、既存summaryのhasPendingRunApprovalを使用する。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/features/pets/usePetApproval.ts#L11-L42",
+          "version": "repo-lines-v1:sha256:2b2f48edd13c5903621268f5f0d84fc75f99a6cdc2bb69e085ee5c23ec35005f:eyJzZWxlY3RlZExpbmVDb3VudCI6MzIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY3ZDQ4MWE2OWY2OTA5ZDE4Y2YyNTgxZjcyMmJmMjY2ZTFlZjE1ODkwYWQ1OThjNGJiZTRiNDQxYzlkZDllOWIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjVkMzA1NjQxNTRhNjA0MTFjYmMyOGZmNDJkYjVhOTE1NzAxNzk5MWQ0ZjI4MjZmMGFjZGM4NzY5OGFlMzljYjUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/pages/kanban/ProjectUtilities.tsx#L25-L46",
+          "version": "repo-lines-v1:sha256:834d2509248632cbf33ed84c20fc22bdfc4d2b5b4a2282ff48a3adfc3568aaee:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVhMzAwMjA2NzhjYWQ3MmI5MzkyN2U2MGJhOTdmNDhjZGZjNWIwOTVlOTRiODU5ZDczYzNlMjc0YTM1ODhmZDUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI0NzI2N2E0MTA0MWNjMzRhZmFhMjAzYWU4ODk5YmEzYWRlYjRiN2ZiNzE1YWU2ZDIxOTUzYjNiMzdmMjdjMjgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImM3YWRhNGEwMzFjMDgyNmE1M2UzYWUwZjhkYzU1OTA1ZWVmMWRmZjM2N2UzZjhhOGY1Mzc2NDE5M2FlMGRlMTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImZjYWRmYzlmNDBhNzYwY2ZlYjA2NzQyMjg1MjE3MGRkM2Q5ZDk2N2ZiNmRlZTRjMDQyYTYyMmE5NmRkZThkY2QifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/pages/workspaces/RightSidebar.tsx#L50-L58",
+          "version": "repo-lines-v1:sha256:4e22bbc0fa8f00a8caac833796c405fb9119d850a51a6308d779f639e8b2a545:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMjA3MzZjNjFmY2U1NDlkMDg3ODUzYjcyZjk1MjFkMDc4N2JiZTM1N2ZlZmNjMDYyYTg3NDlmNjM0MTNlMGViMyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNzEyNWJmY2EwNGRhMmYwMWY4ZGQwMDZlZGQ4NzY1ODhmODJhN2Q0ZTk5OTRjMzVmY2QyNmU2YjhiMWZlZmFmYyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMmU3N2FiMzRjYTAyMzA1NGRiMzkxMzBkYTExZDhhZTdlYjQyMDk0OTFiMjE4ZGQ3YzFjMmFjNDZlMGM0ODJiNyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMTc1MWY1NTQxMzJlODc2OGYzNjY5N2FkZDBhN2M1YjExMTI0MTYzMDkxM2RjNDQzYjhiODU1MDk5NjUxMjkzNSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_3269364b1cb44b8185ddbe416bc8a711",
+      "statement": "操作可能な承認summaryは最新Run/Attemptの活動中かつcurrent投影にあるapproval_requestedから、同じ承認の解決イベントまたは解決コマンドがあるものを除く。",
+      "evidence": [
+        {
+          "resource": "repo://crates/db/src/models/agent_runtime.rs#L361-L408",
+          "version": "repo-lines-v1:sha256:20f2f5a9ad6d56ed9a7aee508c038cd0d60edf3eb2f198d4462c68e7bb91ec22:eyJzZWxlY3RlZExpbmVDb3VudCI6NDgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRiOGU5NzgwMDUwMmY5ZDUwYTY1OWI0M2ZjZGZhNTdmODM3M2E3ODllMTg2YmZiMWFhMTY1Njk3MmFiYjcyY2QiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImIwZDgyMWRjMGI5ODZlN2JiZWI3ZjNiOTM5ODg2NTIzNjAyZmY3MjIxZGU3Yjg4N2ZkYTVlNWVhN2U0MjQ4ZDYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImZiYmJlMzU2YjY5Mjc1ODYzNTM5NTgyOGNhZDVlZWYyZmZmYWQ5YWI1M2JjOTA5MDIzNTM1Y2VmOWFlNmY0NjMifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/workspaces/workspace_summary.rs#L125-L134",
+          "version": "repo-lines-v1:sha256:606a205c4dae5b89546741497e764c1ffe6e48a0b6b01fd90086e21b79f22da1:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhYWRmMzU1YTcyYzhkNDlhMDc0YmJjZmUzZjE0YmFkNDc1ODZhYWZlZGI2MWIyZjhlYTNmOWYyZGI2MmIzNTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRjMWQ3OTlhODZhZDM1YzUzNTE5ZGQ3ZjYzOGE1OTI2NzJhYmViNWQ3NDdhMTZlMmUxOGZkOTdjYzc2OWQxMGYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImIxZDMzODkzMzI4NmRkY2YzNDc3NGE1OWM0NDRhOWYzODc0NjQ5OWUxYzc3MTgzYmUyYjUxOWNlMjA2ODY5YzgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjlkMGI2MzUwZWZkMTgxYmE2ODdlNDIwNTVmMmU1ZDI3MjZjZDI1MmNjZmEzNGIxZmMxOWIyNzM5NDk5NzU2NTQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_ae125f8b1cc94367b991d19e4324d4f6",
+      "statement": "Petは確認済みfailedを承認待ちwavingより優先し、failed/waving中のクリック反応・視線追従は表示を上書きしない。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/features/pets/PetSprite.tsx#L134-L143",
+          "version": "repo-lines-v1:sha256:ee0023f182cb73108fa631919c765d365332944c7ae97e693202236af102f695:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc1ZmM0MGQzZDExZmU2MzBjOGE3YmI4YjlhMWFmMWU5NjFmMjYyZGExOGVhYzM5MDBmZGI0ZTllZjAzYjI3OTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFmYjcyZjk1MmY3YWRiNmRmYzkwMjQ0MTM4ODBhZjZjOTcwYmUzNjNjMzA5NDhlMjc0NTBhY2IwN2EyYmRhNGQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImEyNzZhZGJlOTVmMDU3NTA1OWY4N2UzZTZhZGFiMzcxYjQ3MDM5ZGY2YjQzMzkxMmFkOGM2NTI0NWI2ZmQzMGMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImM4MTEyZGZmNzcyYzZiNWYxN2JlZmMwNmE3YzJhZDJlYWJkOTJiYTdjOWM1OGYzYWM5YTdlYjJkOGY3MjcxN2QifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/pets/PetSprite.tsx#L38-L46",
+          "version": "repo-lines-v1:sha256:2e67cb299841548dca8ae63dec3f24004958c1b876bedced328042cc81cbf656:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZDkzNzk5YWExZTM1NjQ4Yzc1Y2Y5YTllMDlmMDZjZjA5ZDQzN2M2YWM2NWE1NDQ2NWRlN2Y1M2NkZTQzODkwZiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZWNjMWU4Yjk1OTM5NTEzYzk1NzQzMjg1M2JkYTYyMmFkY2Q3OGVjMmU0Nzk0M2FhMTg2Zjk0MmQxM2RjZGY4OSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYTlmOWYwNjNiMmRhNWQ0ZTY5MmQyNGU0ZGFiYWZiNWQxNWRmZmFkMjc3Y2I5M2ZhOWUzMjBkOWVkOGRkYTJkNiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiODhjNTljZWExZTRjZWUwZDJhM2IxZjNiMTI5Mjg3ODNhMTRlZWVkMmZkOTRkMWRkM2I1YmQ2ZjBiMTI0YWQ5MyJ9"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/components/EnvironmentPanel.tsx#L113-L125",
+          "version": "repo-lines-v1:sha256:aa13fc205e353b37b317dc840a311c57cc4b7a051d112ac665103f8e8a79be3f:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY5MDZjODEyZWRhMDE3ZWUwMzcwNmNmZjQ0N2NmMjg2YmYzMTlkOGMzYTE4ZTBlNzhlNzI4MmFjNjY3Mzk4MTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZmZjQ2YWUzZDk0Y2MwMGRiMDI3NDI0NGU5NTM0MWVkOGU4ODE0YTc3OGExOGU1NmNiNDBiNWFkZGZmMDM5MTUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjljNWQ1ZTNkMGU4YWUwM2ZlYzI4YzNlMzFlNmMwMGZiODg4ZGIwNjU3OWJjNTA2NmQyMTA0MThmMTQ5Yjc2NDAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjgwOGQ1YmViZjVmODk5YTJhZmRjYTAzOTkwMjJkMDI3NmFkOGZmOTZmZjIxZjY0NzUzMjBjYzRmMGQwYzBjMWIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_6470b0135b6547a69d047e1ed39ee67e",
+      "statement": "v2 Petの視線追従は表示中でロード済みかつreduced motionでないidle/waiting時、本体へのmouse進入から10秒間だけ有効になり、移動だけでは延長せず再進入で再開する。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/features/pets/PetSprite.tsx#L10-L10",
+          "version": "repo-lines-v1:sha256:30421519615c6e77f00d3d33d1ba7ae168bf07f3371bca34800a68af3818a8a8:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMzA0MjE1MTk2MTVjNmU3N2YwMGQzZDMzZDFiYTdhZTE2OGJmMDdmMzM3MWJjYTM0ODAwYTY4YWYzODE4YThhOCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMzA0MjE1MTk2MTVjNmU3N2YwMGQzZDMzZDFiYTdhZTE2OGJmMDdmMzM3MWJjYTM0ODAwYTY4YWYzODE4YThhOCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNTcxYTI0NTg4YjFjMTZmZjgyMTFiNjlmNzZlNzY2ZDZiNzlhNzJiYmIxM2JjMjcwYmE5NWI4YTEyNGNlOWM0NCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZmJiMDQ3YWQ2OThkZjNmMTdlM2MxNzQ0ZmM4NmIzOWZkMjQ1OGFiY2Q4NDZlMTZlY2ExMWU2ZTQ4OGM5ODIwYSJ9"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/pets/PetSprite.tsx#L41-L115",
+          "version": "repo-lines-v1:sha256:0c359a959532a3b5fb35e97614e115c135b8d576d0d9306a86467939602f90b6:eyJzZWxlY3RlZExpbmVDb3VudCI6NzUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA4ODQyOWM3MDJjOGE5ZTk1OWNhNDAyZjc3Yzg2NTZkOGI3ODc1ZTQ5NjMxOTY3MmVkYzQ1Y2VhN2M4NmM1ZWIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFkOWUxMjU0NjQyNTU3NmQzZGVhZThjOWI5ZGJmMTI4ZDVkNmRkYWY1ZDdmZTg1NzkzNDkyN2RlZmZhM2I5ZGQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQ1MGY1MTJiZWZiMzhjMDJjMDg2OTIzNzYxNjAzNDVjM2E3ZmM5N2Y1NzY1YTZiMDhlN2ZiNTRmMzE1OGQwNDgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImI5ZTdlMjE1NDczNDM2Yzk1ZjdiNDZlMTQxZWViNGE0MWU5OTJkMjJmMTNiMzYzNmIyMDJiMjljMmU5YzUwNTIifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.9.0",
-    "at": "2026-11-23T00:23:16.293Z"
+    "at": "2026-11-23T19:12:52.102Z"
   }
 }
