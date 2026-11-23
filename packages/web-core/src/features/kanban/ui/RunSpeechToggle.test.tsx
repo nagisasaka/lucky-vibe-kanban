@@ -1,6 +1,7 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
+import { RunSpeechProvider } from './RunSpeechProvider';
 import { RunSpeechToggle } from './RunSpeechToggle';
 
 vi.mock('react-i18next', () => ({
@@ -16,7 +17,10 @@ describe('RunSpeechToggle', () => {
     });
     try {
       const html = renderToStaticMarkup(
-        createElement(RunSpeechToggle, { projectId: 'project' })
+        createElement(RunSpeechProvider, {
+          projectId: 'project',
+          children: createElement(RunSpeechToggle),
+        })
       );
       expect(html).toContain('aria-pressed="false"');
       expect(html).toContain('Turn on Run speech');

@@ -1099,7 +1099,7 @@ export function KanbanContainer() {
           {projectView === 'kanban' &&
             isLocalRemoteApiEnabled() &&
             !routeState.hostId && (
-              <RunSpeechToggle key={projectId} projectId={projectId} />
+              <RunSpeechToggle />
             )}
           <DropdownMenu>
             {/* Remote Board's existing merge/PR routes remain unchanged. */}

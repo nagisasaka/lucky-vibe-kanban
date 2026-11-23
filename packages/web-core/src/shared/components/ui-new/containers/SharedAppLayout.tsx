@@ -1,3 +1,4 @@
+import { RunSpeechProvider } from '@/features/kanban/ui/RunSpeechProvider';
 import { useTranslation } from 'react-i18next';
 import { useKanbanDisplayStore } from '@/shared/stores/useKanbanDisplayStore';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -256,7 +257,7 @@ export function SharedAppLayout() {
     }
   }, [selectedOrgId, appNavigation]);
 
-  return (
+  const content = (
     <SyncErrorProvider>
       <div
         className={cn(
@@ -427,5 +428,10 @@ export function SharedAppLayout() {
         </MobileDrawer>
       </div>
     </SyncErrorProvider>
+  );
+  return (
+    <RunSpeechProvider key={boardProjectId} projectId={boardProjectId ?? ''}>
+      {content}
+    </RunSpeechProvider>
   );
 }
