@@ -3,6 +3,7 @@ import { test, expect } from "@playwright/test";
 test("nested temporary filter menus release pointer blocking after Escape", async ({
   page,
 }) => {
+  test.setTimeout(90000); // The real dialog imports app modules on a cold Vite cache.
   page.on("pageerror", (error) => console.error(error.message));
   await page.goto("/?temporary-filters");
   for (const label of [/^優先度/, /^タグ$/, /^並べ替え:/]) {

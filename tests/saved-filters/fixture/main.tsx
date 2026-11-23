@@ -1,6 +1,5 @@
-import { TemporaryFilters } from "./temporary-filters";
 import { Integration } from "./integration";
-import React, { useState } from "react";
+import React, { Suspense, lazy, useState } from "react";
 import { createRoot } from "react-dom/client";
 import "@/i18n/config";
 import i18n from "i18next";
@@ -9,6 +8,11 @@ import { SavedFilterEditor } from "@/shared/components/saved-filters/SavedFilter
 import { SavedFilterStatus } from "@/shared/components/saved-filters/SavedFilterStatus";
 import { emptyDefinition } from "@/shared/lib/savedFilters";
 i18n.changeLanguage("ja");
+const TemporaryFilters = lazy(() =>
+  import("./temporary-filters").then((module) => ({
+    default: module.TemporaryFilters,
+  })),
+);
 function App() {
   const [value, setValue] = useState({
     ...emptyDefinition(),
@@ -103,7 +107,9 @@ function App() {
 }
 createRoot(document.getElementById("root")!).render(
   new URLSearchParams(location.search).has("temporary-filters") ? (
-    <TemporaryFilters />
+    <Suspense fallback={<p>Loading temporary filters</p>}>
+      <TemporaryFilters />
+    </Suspense>
   ) : new URLSearchParams(location.search).has("integration") ? (
     <Integration />
   ) : (
