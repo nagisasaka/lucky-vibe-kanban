@@ -278,15 +278,37 @@ async fn evaluate_with(
                 Progress::Complete(output) => {
                     // A local delta discovering a cross-Issue dependency must
                     // restart with the full population, not guess from changed rows.
-                    let escalates = !pending.plan.reused.is_empty()
-                        && serde_json::from_str::<serde_json::Value>(output.trim())
-                            .ok()
-                            .is_some_and(|v| v["scope"] == "project");
+                    let escalates = (!pending.plan.reused.is_empty()
+                        || pending
+                            .stream
+                            .as_ref()
+                            .is_some_and(|s| s.needs_project_scan()))
+                        && serde_json::from_str::<serde_json::Value>(engine::normalize_output(
+                            &output,
+                        ))
+                        .ok()
+                        .is_some_and(|v| v["scope"] == "project");
                     if escalates {
-                        if let Some(success) = &mut cache.success {
-                            success.scope = engine::Scope::Project;
+                        if !pending.plan.reused.is_empty() {
+                            if let Some(success) = &mut cache.success {
+                                success.scope = engine::Scope::Project;
+                            }
+                            cache.pending = None;
+                        } else {
+                            let mut stream = pending
+                                .stream
+                                .clone()
+                                .ok_or_else(|| invalid("Missing scan checkpoint"))?;
+                            stream.restart_project(&pending.plan).map_err(invalid)?;
+                            cache.pending = Some(Pending {
+                                session_id: Uuid::new_v4(),
+                                workspace_id: Uuid::new_v4(),
+                                started_at: now,
+                                plan: pending.plan.clone(),
+                                stream: Some(stream),
+                                dispatched: false,
+                            });
                         }
-                        cache.pending = None;
                     } else if let Err(error) = cache.complete(&output, now) {
                         cache.fail(error);
                     }

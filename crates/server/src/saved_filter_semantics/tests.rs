@@ -881,3 +881,41 @@ async fn failed_temporal_evidence_can_retry_once_when_its_known_boundary_passes(
         "provider failure must not retry forever"
     );
 }
+
+#[tokio::test]
+async fn fenced_project_escalation_restarts_full_population_for_direct_and_stream_local_deltas() {
+    for streaming in [false, true] {
+        let now = Utc::now();
+        let mut req = request();
+        let pool = database(&req).await;
+        let runtime = FakeRuntime::default();
+        req.issues[0].evidence = json!({"body":"UNCHANGED_PROJECT_EVIDENCE"});
+        let cache = successful(&req, "local", now);
+        assert!(save(&pool, &req, 0, &cache).await.unwrap());
+        req.issues[1].evidence =
+            json!({"body":if streaming {"changed".repeat(5000)} else {"changed".into()}});
+        evaluate_with(&pool, &runtime, &req, true, false, now)
+            .await
+            .unwrap();
+        let (_, cache) = load(&pool, &req).await.unwrap();
+        assert_eq!(cache.pending.as_ref().unwrap().stream.is_some(), streaming);
+        assert!(!runtime.prompts.lock().unwrap()[0].contains("UNCHANGED_PROJECT_EVIDENCE"));
+        *runtime.output.lock().unwrap() =
+            Some(Ok(format!("```json\n{}\n```", reply("project", &[]))));
+        let escalated = evaluate_with(&pool, &runtime, &req, true, false, now)
+            .await
+            .unwrap();
+        assert_ne!(escalated.status, EvaluationStatus::Failed);
+        assert!(escalated.stale);
+        *runtime.output.lock().unwrap() = None;
+        evaluate_with(&pool, &runtime, &req, true, false, now)
+            .await
+            .unwrap();
+        let (_, cache) = load(&pool, &req).await.unwrap();
+        let pending = cache.pending.unwrap();
+        assert!(pending.plan.reused.is_empty());
+        assert_eq!(pending.plan.requested_ids.len(), 2);
+        assert!(runtime.prompts.lock().unwrap()[1].contains("UNCHANGED_PROJECT_EVIDENCE"));
+        assert_eq!(runtime.launches.load(Ordering::SeqCst), 2);
+    }
+}

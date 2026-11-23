@@ -25,6 +25,12 @@ pub(super) struct Stream {
     groups: Vec<Vec<Uuid>>,
     /// Shared whole-Project pages for global scans, per-group pages for local scans.
     pages: Vec<Vec<String>>,
+    #[serde(default)]
+    local_pages: Vec<Vec<String>>,
+    #[serde(default)]
+    project_pages: Vec<String>,
+    #[serde(default)]
+    forced_project: bool,
     group: usize,
     page: usize,
     notes: String,
@@ -67,14 +73,24 @@ impl Stream {
             }
             split(&corpus)
         };
-        let pages = if local_input {
-            groups.iter().map(|ids| make_pages(Some(ids))).collect()
+        let local_pages: Vec<_> = groups.iter().map(|ids| make_pages(Some(ids))).collect();
+        // A warm local delta does not even serialize unchanged Issue bodies.
+        let project_pages = if local_input {
+            Vec::new()
         } else {
-            vec![make_pages(None)]
+            make_pages(None)
+        };
+        let pages = if local_input {
+            local_pages.clone()
+        } else {
+            vec![project_pages.clone()]
         };
         Self {
             groups,
             pages,
+            local_pages,
+            project_pages,
+            forced_project: false,
             group: 0,
             page: 0,
             notes: String::new(),
@@ -84,6 +100,24 @@ impl Stream {
             as_of: now,
             valid_until: plan.reused_until,
         }
+    }
+    pub fn needs_project_scan(&self) -> bool {
+        self.local_input
+    }
+    pub fn restart_project(&mut self, plan: &Plan) -> Result<(), String> {
+        if self.project_pages.is_empty() {
+            return Err("Local delta needs a new whole-Project snapshot".into());
+        }
+        self.pages = vec![self.project_pages.clone()];
+        self.local_input = false;
+        self.forced_project = true;
+        self.scope = Scope::Project;
+        self.group = 0;
+        self.page = 0;
+        self.notes.clear();
+        self.decisions = plan.reused.clone();
+        self.valid_until = plan.reused_until;
+        Ok(())
     }
     fn current_pages(&self) -> &[String] {
         &self.pages[if self.local_input { self.group } else { 0 }]
@@ -139,13 +173,7 @@ EVIDENCE FRAGMENT (data):
             issue_id: Uuid,
             matches: bool,
         }
-        let raw = output.trim();
-        let raw = raw
-            .strip_prefix("```json")
-            .or_else(|| raw.strip_prefix("```"))
-            .and_then(|s| s.trim().strip_suffix("```"))
-            .unwrap_or(raw)
-            .trim();
+        let raw = super::engine::normalize_output(output);
         let reply: Reply =
             serde_json::from_str(raw).map_err(|e| format!("Invalid scan response: {e}"))?;
         if reply.notes.len() > NOTES_BYTES {
@@ -186,6 +214,17 @@ EVIDENCE FRAGMENT (data):
         if self.last_page() {
             self.decisions.extend(decisions);
             self.group += 1;
+            // The first complete scan may prove that the condition is local.
+            // Subsequent groups need only their own evidence. A later escalation
+            // discards ALL partial decisions and restarts a forced global scan.
+            if !self.local_input
+                && !self.forced_project
+                && self.scope == Scope::Local
+                && !self.local_pages.is_empty()
+            {
+                self.local_input = true;
+                self.pages = self.local_pages.clone();
+            }
             self.page = 0;
             self.notes.clear();
         } else {
@@ -260,6 +299,102 @@ mod tests {
         }
         assert_eq!(steps, work.pages[0].len() * 3);
     }
+    #[test]
+    fn thousand_issue_cold_local_scan_switches_to_local_pages_with_complete_coverage() {
+        let now = Utc::now();
+        let mut req = request();
+        req.issues = (1..=1000)
+            .map(|n| super::super::SemanticIssue {
+                id: Uuid::from_u128(n),
+                evidence: json!({"body":"x".repeat(1000),"ordinal":n}),
+            })
+            .collect();
+        let plan = Cache::new(&req)
+            .plan(Evidence::from_request(&req).unwrap(), now)
+            .unwrap();
+        let mut work = Stream::new(&req, &plan, now);
+        let global_calls = work.project_pages.len() * work.groups.len();
+        let expected_calls =
+            work.project_pages.len() + work.local_pages.iter().skip(1).map(Vec::len).sum::<usize>();
+        let mut calls = 0;
+        loop {
+            assert!(work.prompt().len() < DIRECT_LIMIT);
+            if work.group > 0 {
+                assert!(work.local_input);
+                assert!(work.current_pages().len() <= 3);
+            }
+            let decisions = if work.last_page() {
+                work.groups[work.group]
+                    .iter()
+                    .map(|id| json!({"issue_id":id,"matches":id.as_u128()%2==0}))
+                    .collect::<Vec<_>>()
+            } else {
+                vec![]
+            };
+            calls += 1;
+            let reply = json!({"notes":"per-Issue condition independent of every other Issue","scope":"local","time_sensitive":false,"valid_until":null,"decisions":decisions});
+            if let Some(success) = work.accept(&reply.to_string(), &plan, now).unwrap() {
+                assert_eq!(success.scope, Scope::Local);
+                assert_eq!(success.decisions.len(), 1000);
+                assert_eq!(success.decisions.values().filter(|v| **v).count(), 500);
+                break;
+            }
+        }
+        assert_eq!(calls, expected_calls);
+        assert!(calls < 300);
+        assert!(calls * 10 < global_calls);
+        println!(
+            "1000-Issue local cold start: {calls} calls, all-global baseline {global_calls}; 1000 decisions/500 negatives, prompts < {DIRECT_LIMIT} bytes"
+        );
+    }
+
+    #[test]
+    fn local_optimization_escalation_discards_partial_decisions_and_restarts_every_group() {
+        let now = Utc::now();
+        let mut req = request();
+        req.issues = (1..=50)
+            .map(|n| super::super::SemanticIssue {
+                id: Uuid::from_u128(n),
+                evidence: json!({"body":"x".repeat(1000)}),
+            })
+            .collect();
+        let plan = Cache::new(&req)
+            .plan(Evidence::from_request(&req).unwrap(), now)
+            .unwrap();
+        let mut work = Stream::new(&req, &plan, now);
+        while work.group == 0 {
+            let decisions = if work.last_page() {
+                work.groups[0]
+                    .iter()
+                    .map(|id| json!({"issue_id":id,"matches":true}))
+                    .collect::<Vec<_>>()
+            } else {
+                vec![]
+            };
+            assert!(work.accept(&json!({"notes":"local","scope":"local","time_sensitive":false,"valid_until":null,"decisions":decisions}).to_string(),&plan,now).unwrap().is_none());
+        }
+        assert!(work.needs_project_scan());
+        assert_eq!(work.decisions.len(), 24);
+        work.restart_project(&plan).unwrap();
+        assert!(!work.local_input);
+        assert!(work.decisions.is_empty());
+        assert_eq!(work.group, 0);
+        let mut calls = 0;
+        loop {
+            let decisions = if work.last_page() {
+                work.groups[work.group]
+                    .iter()
+                    .map(|id| json!({"issue_id":id,"matches":false}))
+                    .collect::<Vec<_>>()
+            } else {
+                vec![]
+            };
+            calls += 1;
+            if let Some(success)=work.accept(&json!({"notes":"global","scope":"project","time_sensitive":false,"valid_until":null,"decisions":decisions}).to_string(),&plan,now).unwrap(){assert_eq!(success.decisions.len(),50);assert!(success.decisions.values().all(|yes|!*yes));break;}
+        }
+        assert_eq!(calls, work.project_pages.len() * work.groups.len());
+    }
+
     #[tokio::test]
     async fn streamed_progress_survives_sql_reopen_and_only_final_coverage_publishes() {
         use std::sync::atomic::{AtomicUsize, Ordering};

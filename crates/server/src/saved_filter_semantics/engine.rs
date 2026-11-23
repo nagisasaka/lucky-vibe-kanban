@@ -314,14 +314,18 @@ struct Decision {
     matches: bool,
 }
 
-fn parse_output(output: &str, plan: &Plan, now: DateTime<Utc>) -> Result<Success, String> {
+pub(super) fn normalize_output(output: &str) -> &str {
     let output = output.trim();
-    let output = output
+    output
         .strip_prefix("```json")
         .or_else(|| output.strip_prefix("```"))
         .and_then(|s| s.trim().strip_suffix("```"))
         .unwrap_or(output)
-        .trim();
+        .trim()
+}
+
+fn parse_output(output: &str, plan: &Plan, now: DateTime<Utc>) -> Result<Success, String> {
+    let output = normalize_output(output);
     let reply: Reply = serde_json::from_str(output)
         .map_err(|e| format!("Invalid semantic evaluation JSON: {e}"))?;
     if reply.time_sensitive != reply.valid_until.is_some() {
