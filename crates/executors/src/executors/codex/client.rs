@@ -2097,9 +2097,14 @@ impl AppServerClient {
                         .filter_map(Value::as_str)
                         .filter(|id| *id != root)
                     {
-                        // A resumed/sent-input child may have been terminal
-                        // previously. Missing new state must not reuse that proof.
-                        children.entry(id.to_owned()).or_default().1 = false;
+                        let child = children.entry(id.to_owned()).or_default();
+                        // Waiting only observes children: a grouped wait may
+                        // report states for just a subset of its receivers.
+                        // Other tools (including unknown ones) may reactivate a
+                        // child and must not reuse its previous terminal proof.
+                        if item.get("tool").and_then(Value::as_str) != Some("wait") {
+                            child.1 = false;
+                        }
                     }
                 }
                 if let Some(states) = item.get("agentsStates").and_then(Value::as_object) {
@@ -3420,18 +3425,129 @@ mod version_check_tests {
     }
 
     #[tokio::test]
-    async fn collab_resume_without_state_invalidates_previous_completion() {
+    async fn grouped_wait_preserves_settled_receivers_until_explicit_state_changes() {
+        // Both collaboration-state and multiplexed child-turn evidence must
+        // survive observation-only items, including partial wait results.
+        for turn_evidence in [false, true] {
+            let client = goal_client();
+            notify(
+                &client,
+                "turn/started",
+                json!({"turn":{"id":"parent-turn"}}),
+            )
+            .await;
+            if turn_evidence {
+                let raw = json!({"method":"turn/completed","params":{"threadId":"a","turn":{"id":"a-turn","status":"completed"}}}).to_string();
+                client
+                    .process_notification(&raw, serde_json::from_str(&raw).unwrap())
+                    .await
+                    .unwrap();
+            } else {
+                notify(&client, "item/completed", json!({"item":{"type":"collabAgentToolCall","tool":"wait","receiverThreadIds":["a"],"agentsStates":{"a":{"status":"completed"}}}})).await;
+            }
+            notify(&client, "item/started", json!({"item":{"type":"collabAgentToolCall","tool":"wait","status":"inProgress","receiverThreadIds":["a","b"],"agentsStates":{}}})).await;
+            assert!(client.child_completion.lock().unwrap()["a"].1);
+            assert!(matches!(
+                client.checked_success().await.unwrap(),
+                ExecutorExitResult::Failure
+            ));
+            notify(&client, "item/completed", json!({"item":{"type":"collabAgentToolCall","tool":"wait","status":"completed","receiverThreadIds":["a","b"],"agentsStates":{"b":{"status":"completed"}}}})).await;
+            assert!(matches!(
+                client.checked_success().await.unwrap(),
+                ExecutorExitResult::Success
+            ));
+            // Explicit nonterminal or unrecognized state overrides old proof,
+            // even on a wait. An empty/malformed state is not terminal evidence.
+            for state in [
+                json!({"status":"running"}),
+                json!({"status":"notFound"}),
+                json!({"status":"futureStatus"}),
+                json!({}),
+            ] {
+                notify(&client, "item/completed", json!({"item":{"type":"collabAgentToolCall","tool":"wait","receiverThreadIds":["a"],"agentsStates":{"a":state}}})).await;
+                assert!(matches!(
+                    client.checked_success().await.unwrap(),
+                    ExecutorExitResult::Failure
+                ));
+                notify(&client, "item/completed", json!({"item":{"type":"collabAgentToolCall","tool":"wait","agentsStates":{"a":{"status":"completed"}}}})).await;
+            }
+            notify(
+                &client,
+                "thread/goal/updated",
+                json!({"goal":{"status":"complete"}}),
+            )
+            .await;
+            assert!(matches!(
+                notify(
+                    &client,
+                    "turn/completed",
+                    json!({"turn":{"id":"parent-turn","status":"completed"}})
+                )
+                .await,
+                JsonRpcControlFlow::Exit(ExecutorExitResult::Success)
+            ));
+        }
+    }
+
+    #[tokio::test]
+    async fn v2_mailbox_wait_neither_settles_nor_reactivates_children() {
         let client = goal_client();
-        notify(&client, "item/completed", json!({"item":{"type":"collabAgentToolCall","tool":"wait","receiverThreadIds":["child"],"agentsStates":{"child":{"status":"completed"}}}})).await;
-        assert!(matches!(
-            client.checked_success().await.unwrap(),
-            ExecutorExitResult::Success
-        ));
-        notify(&client, "item/completed", json!({"item":{"type":"collabAgentToolCall","tool":"resumeAgent","receiverThreadIds":["child"],"agentsStates":{}}})).await;
-        assert!(matches!(
-            client.checked_success().await.unwrap(),
-            ExecutorExitResult::Failure
-        ));
+        notify(
+            &client,
+            "item/completed",
+            json!({"item":{"type":"subAgentActivity","kind":"started","agentThreadId":"child"}}),
+        )
+        .await;
+        for settled in [false, true] {
+            if settled {
+                let raw = json!({"method":"turn/completed","params":{"threadId":"child","turn":{"id":"child-turn","status":"completed"}}}).to_string();
+                client
+                    .process_notification(&raw, serde_json::from_str(&raw).unwrap())
+                    .await
+                    .unwrap();
+            }
+            // Native multi_agents_v2 wait observes mailbox activity, with no
+            // receiver IDs or lifecycle states on either notification.
+            for method in ["item/started", "item/completed"] {
+                notify(&client, method, json!({"item":{"type":"collabAgentToolCall","tool":"wait","receiverThreadIds":[],"agentsStates":{}}})).await;
+                assert_eq!(
+                    matches!(
+                        client.checked_success().await.unwrap(),
+                        ExecutorExitResult::Success
+                    ),
+                    settled
+                );
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn collab_reactivation_without_state_invalidates_previous_completion() {
+        for tool in ["resumeAgent", "sendInput", "spawnAgent", "futureTool"] {
+            for method in ["item/started", "item/completed"] {
+                let client = goal_client();
+                notify(&client, "item/completed", json!({"item":{"type":"collabAgentToolCall","tool":"wait","receiverThreadIds":["child"],"agentsStates":{"child":{"status":"completed"}}}})).await;
+                assert!(matches!(
+                    client.checked_success().await.unwrap(),
+                    ExecutorExitResult::Success
+                ));
+                notify(&client, method, json!({"item":{"type":"collabAgentToolCall","tool":tool,"receiverThreadIds":["child"],"agentsStates":{}}})).await;
+                assert!(matches!(
+                    client.checked_success().await.unwrap(),
+                    ExecutorExitResult::Failure
+                ));
+                notify(&client, "item/completed", json!({"item":{"type":"collabAgentToolCall","tool":"wait","receiverThreadIds":["child"],"agentsStates":{}}})).await;
+                assert!(matches!(
+                    client.checked_success().await.unwrap(),
+                    ExecutorExitResult::Failure
+                ));
+                notify(&client, "item/completed", json!({"item":{"type":"collabAgentToolCall","tool":"wait","agentsStates":{"child":{"status":"completed"}}}})).await;
+                assert!(matches!(
+                    client.checked_success().await.unwrap(),
+                    ExecutorExitResult::Success
+                ));
+            }
+        }
     }
 
     #[tokio::test]
