@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:f8667bb2e888569eca1fc751592e4bca82b813d8a9eaf8e4ce745c2a29ba5dcb",
+  "pageVersion": "sha256:5187d97d428023cb4a431e70b5076802a72a19258c30b7612c0652542a133e3b",
   "claims": [
     {
       "id": "claim_625a2942e9e646aab640baf76f348af5",
@@ -15,10 +15,66 @@
           "version": "repo-file-v1:sha256:9c9068ba1f3571a615281f3fb23be8996109441fc75c5c23a53428461fa6a3eb"
         }
       ]
+    },
+    {
+      "id": "claim_164a9ce0eabf4c3b89dfe324fe39a9e2",
+      "statement": "ボード音声は既定オフでProject全体の新着Runを対象とし、基準位置取得後にオンになり、オフでは発話とキューを即時停止する。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L1094-L1103",
+          "version": "repo-lines-v1:sha256:e2c3f8dc83ccb5ada8efbf6052f0219d3b7c986d180c250515f2ee630bc9c7d4:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdiNTdlZjBkMzdiZjcyYzVlM2I0OTk0ZTg1YTE5MjJkZjYyNTJkMjE4MmE3NmRkNzg0MzgxMGI3NmViYjg4N2QiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE0NDRhMzFkOGVjN2U4OGY4NTU3MTUyNmJmMjdjOTU4ODIwZGZmZDI5ZjY4NTIxZDBjMDViNzcwNWExZjE4YjQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImU3M2QzZmQyMzJhZjUxY2NkYzVjYTgzYmQwOTU0MmQyMmI5YjQ2NTYwNTM4MzYxYjQ3YmUwNTZlZGE3MjRhNDIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdlMGFhM2Q4YmY0ZGU0YjU4NWE0MTQ4MTBlN2Y3N2MyYjM2MzI3ZGFiNjhiY2RjMDY3MGJiZDFjZTQ3NjAzYTMifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/kanban/ui/RunSpeechToggle.tsx#L12-L134",
+          "version": "repo-lines-v1:sha256:babbfb80a8fcbacb34a19d1e8461c2f793d94cb8c4a032bc5f22eca5b14590ed:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIzLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIwYjg0N2YzYmM0NTVlMzE0MDgxYjdkMjlkNmY2ZTFkZjFjY2E4Yzc5ZjE0OGU0NjEwZjc3ZTUwZWYxM2Q2MDc1IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI0MTJjYTM0NWNjZjc1YmY5YzA4MDZiY2U2OTViZThkZTgwOGI3OTk4NDI1MWE3YTU0ZDIwMmNmNjEwMWRkNDUxIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI2YTc3ZWNiMjUwOWFhN2UwMWRjM2M2ZWIxY2RjNjU4NjQ1Y2IzYmE1MDU0N2I0MzEzZjM5Y2UxY2I3MDI2NWE4IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MCwiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1In0"
+        }
+      ]
+    },
+    {
+      "id": "claim_6947a6a3e6e54fd6b79ba36b7174726e",
+      "statement": "音声キューは回答待ち・終端、開始、中間の順に優先し、中間はRunごとに最新一件を保ち、終了済みや回答済みの古い未再生分を除去する。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/features/kanban/model/runSpeechQueue.ts#L76-L309",
+          "version": "repo-lines-v1:sha256:cdc7f2611711609534cb4deb342a75a619cbbc9034c52b25830d752aa0063cb0:eyJzZWxlY3RlZExpbmVDb3VudCI6MjM0LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIxOGU2NTA0YTFmODEyNWNlMjliYjE0NTRjMGJmYzE3MmI5Y2ZiMThhOWE5YjgxMGZjNTgxODBjMTVlMTFhNDkyIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI0MTJjYTM0NWNjZjc1YmY5YzA4MDZiY2U2OTViZThkZTgwOGI3OTk4NDI1MWE3YTU0ZDIwMmNmNjEwMWRkNDUxIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI2YjRkN2IyYzdhNjQ3N2FiZjJhYmEwMzQwZDJmN2FmNzFhMzA3NDE5NTAzOTkxZWZhMGUzY2Y3YjIxMTdiN2JlIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MCwiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1In0"
+        }
+      ]
+    },
+    {
+      "id": "claim_2e181be125d24397a9f49f56885f42d0",
+      "statement": "Run観測APIはProjectに属するcanonicalイベントを取得し、after省略時は最新位置を基準にする。ポーリングは接続エラー後に基準を取り直し切断中の履歴を再生しない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/routes/board_run_events.rs#L54-L157",
+          "version": "repo-lines-v1:sha256:b527321c1c0054aa827ecfce2a460f758fedb5c50671df0171d5dd4133020678:eyJzZWxlY3RlZExpbmVDb3VudCI6MTA0LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJmZDhmZmJlYmMxMzIyOTE3N2EwMWYwNGRjZTNkY2VjNzc5ZDNiOWRmYTgzYjc0NDc0NWU4MTBjYWVlYmU5ODY3IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJlODY1ZmViM2ZkMDQ5ZDFhNGI0NTliOTJlMjM0OTU2YjgyZWFlZGJhMzE1MGM5NWM0NzA5ZDQ4M2JjZjZlMWM0IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI1ZGI0YzFhMzYyNjg5MmFiZmMxYWQyZTFlNDNmZjUzYjdiOWZkOTg1MTFjZGQyNDNiOWZhY2QwYTY5YmQ4YjY0IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI3YzQ2ZGNlM2IzYTM0ZWI5ODczYTViZjljNzhhNDgyMTczNmM3ZGQ1NWIyNzk2ZTRmZTRkY2ExNjg4Y2ZjYTNiIn0"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/kanban/model/runObservationPolling.ts#L10-L42",
+          "version": "repo-lines-v1:sha256:ca6e6638b2d912b9b100f7edae98feeb53c8b5f7aabaee56c291c18ff781096a:eyJzZWxlY3RlZExpbmVDb3VudCI6MzMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFhY2RiODEzMDA5ODU1YzAwYmI3NWM0MGNhOGYzNjg1Mjk2YzRkZGMzNDEyZTUzZmNkNGE1NTUyYTNhZjdhYTEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImVhNWRmOGQzYmE3N2VmMjNmYzYwOGZjMTllOGJlZTQ2M2JlMTQyNDY0N2RkODgzMGNkM2NkZWUzMjYxNGE2ODciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_1a733ce32e794f458d533b055193b523",
+      "statement": "音声は明示的なcommentaryだけを対象とし、Claudeの未確定本文は対応する確定通知まで保留して思考・ツール出力・最終応答を除外する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/executors/src/executors/provider_adapter.rs#L2640-L2815",
+          "version": "repo-lines-v1:sha256:1f751f21b502259255f88150471ff3d0fc504998e9e690ebb15b83032c08036c:eyJzZWxlY3RlZExpbmVDb3VudCI6MTc2LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIyYWMyYmM3NWI3YTFiODdkMGYxZTIyYzBjMjQ1ZmJjOTM2YjZlZGMwMmMyNjY0ODljMTM5YmFjMTYyYTIyMDc3IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIwYzY0NzljYzIzMDQ0MGZkNDFlODIyNDIxODY3OTY5ODU1OWQyODkzYmQ2N2I0MzgwYWZhYjgxMWIzOGE1NWFhIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI2ZmNkOGUyOTAwNDAxZTE2M2Y4YzhmYTk4YzQxODI2NWY1ZDU2ZDFlN2U4MDU2ODM3MzNmZGEzMDNiYThlOTRkIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiIyYTA0YzAzNWE5MTA4YWMwNTE4ZjVhMDUxNjk2ODRkMWUzYTdiZDEyZjYyYWRhY2QzMDNmZTUwMjI5YWUyZTA4In0"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/board_run_events.rs#L160-L224",
+          "version": "repo-lines-v1:sha256:4dec7b32a36a562fd22e316d578572b334a274b43781a830ecbe7f03f1a5e5cc:eyJzZWxlY3RlZExpbmVDb3VudCI6NjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE3MDU2OGRkYzA3NmI0YjUzYzQ4OGRlMTExMWRjOTNmZjQzMjQ0NGRlOWQ0NTJiOTVlNGM3MjE0ZTNiNTY2MWQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE4Y2QwNzQ2ZWE3NTE0MGM3NjNjNjQyZDgyNTYwYTE0Y2Q0MmY5MDJjMDM0N2EyODdiYzgxNTA4ZGEzZDU0OTgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijg1YmFiNjU2NDI3OGYzMTdlN2M0YzU3MDQxOWI3NzU3NTBkZDAyMzliMTU1YzhiNjdhNjBhOWQzMTU5MTkyYjgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjgxMGUwMjJjZDA3NzY3OWY1NzViYjA4OTY1NjE2NmE5MmI3MjUwNDIzZWFlYWE3YzBjNjU0YjQzNzI5OWYyODYifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/kanban/model/runSpeechQueue.ts#L193-L249",
+          "version": "repo-lines-v1:sha256:c58a05ca15bb3d4ba8cc08295d246dace5b841d13dd86c97269b516e1b9e8c42:eyJzZWxlY3RlZExpbmVDb3VudCI6NTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY2MjBmZTIzZjg1YWZmMGU4ODU3NDg3Njc0ZGMyY2U0Y2E5MTkzMGQyOWI2MGQ0ZGYyMGQyMDdjZWY0MWEyNWIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjliNjJmNjBkODU5MGE1NzljZjQ2ZjhkNjczNzhjNGM1NzJiOTYyY2VjY2RiOTBjN2E1ZjdiNDJiOTYwNzgyYTQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjdhOWRiMjRhODQ3NGI3ZWQ4MmUzMTI1Y2MzZGFiYjZmOTQ2MmFjN2MzYTBmN2Q4MmU4ODhjMGJkZDlkNzBmMTIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJjMTgyZDE1YTAyZDlmZWM3M2Y2MGMyYmE0NWJmYjViMTIxZWRlZWRhYWExMmU5OGRiNmExMDA3ZTIyZGMxNGEifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.9.0",
-    "at": "2026-11-23T00:23:16.293Z"
+    "at": "2026-11-23T02:42:04.517Z"
   }
 }
