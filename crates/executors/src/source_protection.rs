@@ -50,7 +50,6 @@ pub fn codex_inference_config() -> std::collections::HashMap<String, Value> {
         config.insert(format!("features.{feature}"), json!(false));
     }
     config.insert("agents.enabled".into(), json!(false));
-    config.insert("include_apply_patch_tool".into(), json!(false));
     config.insert("web_search".into(), json!("disabled"));
     config.insert("notify".into(), json!([]));
     config.insert("shell_environment_policy.inherit".into(), json!("none"));
