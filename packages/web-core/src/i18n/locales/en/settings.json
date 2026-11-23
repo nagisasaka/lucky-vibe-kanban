@@ -50,7 +50,8 @@
         "execution": "Work defaults",
         "account": "Account",
         "access": "Authentication and members",
-        "host-pet": "Host and pet"
+        "host-pet": "Host and pet",
+        "speech-synthesis": "Speech Synthesis"
       }
     },
     "hostPicker": {
@@ -639,7 +640,8 @@
       "templates": "Task templates are stored in the instance database. Add, edit and delete apply individually here.",
       "readOnly": "Input instructions only. There is no value to save here.",
       "onboarding": "Show onboarding again saves immediately to the instance config.json.",
-      "host-pet": "Display name and pet settings for this instance."
+      "host-pet": "Display name and pet settings for this instance.",
+      "speech-synthesis": "Saved immediately in this browser. Applies to previews and subsequent board speech, including changes from another tab."
     },
     "repositoryPush": {
       "commitCount": "Unpublished commits: {{count}}",
@@ -1623,5 +1625,18 @@
         "description": "Environment variables to set when running the executor"
       }
     }
+  },
+  "speechSynthesis": {
+    "voice": "Voice",
+    "defaultVoice": "Browser default",
+    "unavailableVoice": "Saved voice (currently unavailable)",
+    "fallback": "The saved voice is unavailable. Browser default is used until it returns; your preference is kept.",
+    "rate": "Speaking rate",
+    "rateHint": "1.0× is the default. Perceived speed and supported rates depend on the voice engine.",
+    "preview": "Preview",
+    "sample": "This is a speech synthesis preview.",
+    "previewHint": "Preview plays a short sample without enabling board speech or interrupting its current utterance.",
+    "unsupported": "Speech synthesis is not supported in this browser.",
+    "previewFailed": "The preview could not be started."
   }
 }

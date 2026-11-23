@@ -10,6 +10,7 @@ vi.mock('react-i18next', () => ({
 describe('RunSpeechToggle', () => {
   it('opens with speech off and does not subscribe until enabled', () => {
     const request = vi.spyOn(globalThis, 'fetch');
+    vi.stubGlobal('SpeechSynthesisUtterance', class {});
     vi.stubGlobal('window', {
       speechSynthesis: { cancel: vi.fn(), speak: vi.fn() },
     });

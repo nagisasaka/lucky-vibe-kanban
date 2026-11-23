@@ -50,7 +50,7 @@ function SettingsDialogNavigation({
   const { t } = useTranslation('settings');
   const access = useSettingsAccess();
   const groups = {
-    experience: ['host-pet', 'general', 'notifications'],
+    experience: ['host-pet', 'general', 'notifications', 'speech-synthesis'],
     ai: ['execution', 'agents', 'agent-tools'],
     projects: ['remote-projects', 'repos'],
     connections: [
