@@ -2,6 +2,20 @@ import { test, expect, type Page } from "@playwright/test";
 
 async function mockSpeech(page: Page) {
   await page.addInitScript(() => {
+    Object.defineProperty(navigator, "languages", {
+      value: ["ja-JP", "en-US"],
+      configurable: true,
+    });
+    Object.defineProperty(navigator, "language", {
+      value: "ja-JP",
+      configurable: true,
+    });
+    (window as any).SpeechSynthesisUtterance = class {
+      voice = null;
+      rate = 1;
+      lang = "";
+      constructor(public text: string) {}
+    };
     const synthesis = new EventTarget();
     Object.assign(window, {
       speechCalls: [],
@@ -25,7 +39,13 @@ const voice = {
   lang: "ja-JP",
 };
 const voiceId = JSON.stringify([voice.voiceURI, voice.name, voice.lang]);
-async function setVoices(page: Page, voices = [voice]) {
+async function setVoices(
+  page: Page,
+  voices = [
+    voice,
+    { ...voice, name: "Second Japanese", voiceURI: "fixture:second" },
+  ],
+) {
   await page.evaluate((voices) => {
     (window as any).testVoices = voices;
     window.speechSynthesis.dispatchEvent(new Event("voiceschanged"));
@@ -39,7 +59,7 @@ test("defaults, delayed voices, save/reload, missing voice and preview without e
   await page.goto("/");
   await expect(
     page.getByRole("combobox", { name: "Voice", exact: true }),
-  ).toHaveValue("");
+  ).toHaveCount(0);
   await expect(
     page.getByRole("combobox", { name: "Speaking rate" }),
   ).toHaveValue("1");
@@ -54,9 +74,12 @@ test("defaults, delayed voices, save/reload, missing voice and preview without e
     .getByRole("combobox", { name: "Speaking rate" })
     .selectOption("1.7");
   await page.reload();
-  await expect(
-    page.getByRole("combobox", { name: "Voice", exact: true }),
-  ).toHaveValue(voiceId);
+  expect(
+    await page.evaluate(
+      () =>
+        JSON.parse(localStorage.getItem("speech-synthesis-preferences")!).voice,
+    ),
+  ).toBe(voiceId);
   await expect(
     page.getByText("The saved voice is unavailable.", { exact: false }),
   ).toBeVisible();
@@ -84,9 +107,12 @@ test("defaults, delayed voices, save/reload, missing voice and preview without e
     page.getByText("The saved voice is unavailable.", { exact: false }),
   ).toHaveCount(0);
   await setVoices(page, []);
-  await expect(
-    page.getByRole("combobox", { name: "Voice", exact: true }),
-  ).toHaveValue(voiceId);
+  expect(
+    await page.evaluate(
+      () =>
+        JSON.parse(localStorage.getItem("speech-synthesis-preferences")!).voice,
+    ),
+  ).toBe(voiceId);
   await page.getByRole("button", { name: "Toggle settings" }).click();
   expect(await page.evaluate(() => (window as any).speechCancels)).toBe(0);
 });
@@ -232,7 +258,6 @@ test("content mode defaults, persists and leaves preview available", async ({
   ).toHaveCount(1);
 });
 
-
 test("provider reads live content mode and never replays excluded events", async ({ page }) => {
   await mockSpeech(page);
   await page.addInitScript(() => {
@@ -271,3 +296,143 @@ test("provider reads live content mode and never replays excluded events", async
   add("new");
   await expect.poll(() => page.evaluate(() => (window as any).speechCalls.length)).toBe(2);
 });
+
+for (const scenario of [
+  {
+    name: "Windows multiple providers",
+    voices: [
+      { voiceURI: "g", name: "Google 日本語", lang: "ja-JP" },
+      { voiceURI: "m", name: "Microsoft Haruka", lang: "ja_JP" },
+      { voiceURI: "third", name: "Third-party Japanese", lang: "ja-JP" },
+      { voiceURI: "en", name: "English voice", lang: "en-US" },
+    ],
+    selected: 2,
+  },
+  {
+    name: "Android locale-only single voice",
+    voices: [{ voiceURI: "ja-jp", name: "日本語 日本", lang: "ja_JP" }],
+    selected: 0,
+  },
+]) {
+  test(`${scenario.name}: named candidates and identical preview/board voice`, async ({
+    page,
+  }) => {
+    await mockSpeech(page);
+    let requests = 0;
+    await page.route("**/api/projects/fixture/run-observations*", (route) => {
+      requests++;
+      return route.fulfill({
+        json: {
+          cursor: requests,
+          active: [],
+          pending: [],
+          events:
+            requests === 2
+              ? [
+                  {
+                    run_id: "done",
+                    issue: "LOCAL-1",
+                    attempt: 1,
+                    payload: {
+                      type: "lifecycle_changed",
+                      data: { status: "succeeded" },
+                    },
+                  },
+                ]
+              : [],
+        },
+      });
+    });
+    await page.goto("/");
+    await expect(
+      page.getByRole("combobox", { name: "Voice", exact: true }),
+    ).toHaveCount(0);
+    await setVoices(page, scenario.voices);
+    const chosen = scenario.voices[scenario.selected];
+    const id = JSON.stringify([chosen.voiceURI, chosen.name, chosen.lang]);
+    if (scenario.voices.length === 1) {
+      await expect(
+        page.getByText("日本語 日本 (ja_JP)", { exact: true }),
+      ).toBeVisible();
+      await expect(
+        page.getByRole("combobox", { name: "Voice", exact: true }),
+      ).toHaveCount(0);
+      await page.setViewportSize({ width: 390, height: 844 });
+      await page.evaluate(() => document.documentElement.classList.add("dark"));
+    } else {
+      await expect(
+        page.getByRole("option", {
+          name: "English voice (en-US)",
+          exact: true,
+        }),
+      ).toHaveCount(0);
+      for (const voice of scenario.voices.slice(0, 3)) {
+        await expect(
+          page.getByRole("option", {
+            name: `${voice.name} (${voice.lang})`,
+            exact: true,
+          }),
+        ).toHaveCount(1);
+      }
+      await page
+        .getByRole("combobox", { name: "Voice", exact: true })
+        .selectOption(id);
+      await page.reload();
+      await setVoices(page, scenario.voices);
+      await expect(
+        page.getByRole("combobox", { name: "Voice", exact: true }),
+      ).toHaveValue(id);
+    }
+    await page.screenshot({
+      path: `test-results/speech-synthesis/${scenario.selected === 0 ? "single-mobile-dark" : "multiple-desktop"}.png`,
+    });
+    await page.getByRole("button", { name: "Preview", exact: true }).click();
+    await page.evaluate(() => (window as any).speechCalls[0].onend());
+    await page.getByRole("button", { name: "Turn on Run speech" }).click();
+    await expect
+      .poll(() => page.evaluate(() => (window as any).speechCalls.length))
+      .toBe(2);
+    expect(
+      await page.evaluate(() =>
+        (window as any).speechCalls.map((u: any) => ({
+          name: u.voice?.name,
+          lang: u.lang,
+        })),
+      ),
+    ).toEqual([
+      { name: chosen.name, lang: "ja-JP" },
+      { name: chosen.name, lang: "ja-JP" },
+    ]);
+    await page.getByRole("button", { name: "Turn off Run speech" }).click();
+    if (scenario.voices.length > 1) {
+      await setVoices(page, scenario.voices.slice(0, 2));
+      await page.getByRole("button", { name: "Preview", exact: true }).click();
+      expect(
+        await page.evaluate(() => (window as any).speechCalls.at(-1).voice),
+      ).toBeNull();
+      expect(
+        await page.evaluate(
+          () =>
+            JSON.parse(localStorage.getItem("speech-synthesis-preferences")!)
+              .voice,
+        ),
+      ).toBe(id);
+    } else {
+      await page.evaluate(() => {
+        Object.defineProperty(navigator, "languages", {
+          value: ["en-US", "ja-JP"],
+          configurable: true,
+        });
+        window.dispatchEvent(new Event("languagechange"));
+      });
+      await expect(
+        page.getByText("No voices for your preferred language", {
+          exact: false,
+        }),
+      ).toBeVisible();
+      await expect(
+        page.getByText("日本語 日本 (ja_JP)", { exact: true }),
+      ).toHaveCount(0);
+    }
+  });
+}

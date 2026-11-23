@@ -2,6 +2,8 @@ import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
 import {
   createSpeechUtterance,
   getSpeechSynthesis,
+  getSpeechVoices,
+  normalizeSpeechLanguage,
   previewSpeech,
   readSpeechPreferences,
   saveSpeechPreferences,
@@ -21,6 +23,10 @@ const speak = vi.fn();
 const cancel = vi.fn();
 beforeEach(() => {
   voices = [];
+  vi.stubGlobal('navigator', {
+    languages: ['ja-JP', 'en-US'],
+    language: 'ja-JP',
+  });
   stored = new Map();
   vi.stubGlobal('localStorage', {
     getItem: (key: string) => stored.get(key) ?? null,
@@ -60,6 +66,7 @@ describe('browser speech preferences', () => {
     });
     expect(createSpeechUtterance('test', 'en').voice).toBe(voice);
     expect(createSpeechUtterance('test', 'en').rate).toBe(1.4);
+    voices.push({ ...voice, voiceURI: 'second', name: 'Second' });
     // Simulate another tab writing storage without a React re-render.
     stored.set(SPEECH_SETTINGS_KEY, JSON.stringify({ voice: '', rate: 0.5 }));
     expect(createSpeechUtterance('next', 'ja-JP').rate).toBe(0.5);
@@ -183,5 +190,69 @@ describe('browser speech preferences', () => {
     expect(getSpeechSynthesis()).toBeUndefined();
     expect(previewSpeech('sample', 'en', vi.fn())).toBe(false);
     expect(cancel).not.toHaveBeenCalled();
+  });
+});
+
+describe('browser language voice resolution', () => {
+  it('normalizes Android and regional tags without changing voice identity', () => {
+    expect(normalizeSpeechLanguage(' ja_JP ')).toBe('ja-JP');
+    expect(normalizeSpeechLanguage('EN_us')).toBe('en-US');
+    expect(normalizeSpeechLanguage('invalid tag')).toBeUndefined();
+    voices = [
+      { ...voice, name: '日本語 日本', voiceURI: 'ja-jp-x', lang: 'ja_JP' },
+    ];
+    expect(getSpeechVoices()).toEqual(voices);
+    const utterance = createSpeechUtterance('board', 'en');
+    expect(utterance.voice).toBe(voices[0]);
+    expect(utterance.lang).toBe('ja-JP');
+    expect(readSpeechPreferences().voice).toBe('');
+    previewSpeech('preview', 'en', vi.fn());
+    expect(speak.mock.calls[0][0].voice).toBe(utterance.voice);
+    expect(speak.mock.calls[0][0].lang).toBe(utterance.lang);
+  });
+
+  it('keeps Windows Google, Microsoft and third-party voices for the preferred language', () => {
+    voices = ['Google 日本語', 'Microsoft Haruka', 'Third-party Voice'].map(
+      (name) => ({ ...voice, name, voiceURI: name })
+    );
+    const matching = [...voices];
+    voices.push(
+      { ...voice, name: 'English', lang: 'en-US' },
+      { ...voice, lang: 'invalid tag' }
+    );
+    expect(getSpeechVoices()).toEqual(matching);
+    for (const selected of matching) {
+      saveSpeechPreferences({
+        voice: speechVoiceId(selected),
+        rate: 1.4,
+        contentMode: 'results-and-action',
+      });
+      const board = createSpeechUtterance('board', 'ja-JP');
+      previewSpeech('preview', 'en', vi.fn());
+      expect(board.voice).toBe(selected);
+      expect(speak.mock.calls.at(-1)![0].voice).toBe(selected);
+      expect(board.rate).toBe(1.4);
+    }
+    const saved = readSpeechPreferences();
+    voices = matching.slice(0, 2);
+    expect(createSpeechUtterance('board', 'en').voice).toBeNull();
+    expect(readSpeechPreferences()).toEqual(saved);
+    voices = matching;
+    expect(createSpeechUtterance('board', 'en').voice).toBe(matching[2]);
+  });
+
+  it('does not offer other languages when the preferred language has no candidates', () => {
+    voices = [{ ...voice, lang: 'en-US' }];
+    expect(getSpeechVoices()).toEqual([]);
+    expect(createSpeechUtterance('board', 'en').voice).toBeNull();
+    expect(createSpeechUtterance('board', 'en').lang).toBe('ja-JP');
+    voices.push(voice);
+    expect(createSpeechUtterance('board', 'en').voice).toBe(voice);
+    vi.stubGlobal('navigator', {
+      languages: ['en-GB', 'ja-JP'],
+      language: 'en-GB',
+    });
+    expect(getSpeechVoices()).toEqual([voices[0]]);
+    expect(createSpeechUtterance('board', 'ja-JP').voice).toBe(voices[0]);
   });
 });

@@ -28,11 +28,13 @@ export function SpeechSynthesisSettingsSection() {
         updatePreferences();
     };
     synthesis?.addEventListener('voiceschanged', updateVoices);
+    window.addEventListener('languagechange', updateVoices);
     window.addEventListener('storage', onStorage);
     window.addEventListener(SPEECH_SETTINGS_EVENT, updatePreferences);
     updateVoices();
     return () => {
       synthesis?.removeEventListener('voiceschanged', updateVoices);
+      window.removeEventListener('languagechange', updateVoices);
       window.removeEventListener('storage', onStorage);
       window.removeEventListener(SPEECH_SETTINGS_EVENT, updatePreferences);
       // Never cancel global speech when leaving settings.
@@ -77,29 +79,45 @@ export function SpeechSynthesisSettingsSection() {
           </option>
         </select>
       </SettingsField>
-      <SettingsField label={t('speechSynthesis.voice')}>
-        <select
-          aria-label={t('speechSynthesis.voice')}
-          className={controlClass}
-          value={preferences.voice}
-          disabled={!synthesis}
-          onChange={(event) =>
-            saveSpeechPreferences({ ...preferences, voice: event.target.value })
-          }
-        >
-          <option value="">{t('speechSynthesis.defaultVoice')}</option>
-          {missing && (
-            <option value={preferences.voice}>
-              {t('speechSynthesis.unavailableVoice')}
-            </option>
-          )}
-          {voices.map((voice) => (
-            <option key={speechVoiceId(voice)} value={speechVoiceId(voice)}>
-              {voice.name} ({voice.lang})
-            </option>
-          ))}
-        </select>
-        {missing && (
+      <SettingsField
+        label={t('speechSynthesis.voice')}
+        description={t('speechSynthesis.voiceHint')}
+      >
+        {voices.length === 1 ? (
+          <p className="text-normal">
+            {voices[0].name} ({voices[0].lang})
+          </p>
+        ) : voices.length === 0 ? (
+          <p role="status" className="text-low">
+            {t('speechSynthesis.noVoices')}
+          </p>
+        ) : (
+          <select
+            aria-label={t('speechSynthesis.voice')}
+            className={controlClass}
+            value={preferences.voice}
+            disabled={!synthesis}
+            onChange={(event) =>
+              saveSpeechPreferences({
+                ...preferences,
+                voice: event.target.value,
+              })
+            }
+          >
+            <option value="">{t('speechSynthesis.defaultVoice')}</option>
+            {missing && (
+              <option value={preferences.voice}>
+                {t('speechSynthesis.unavailableVoice')}
+              </option>
+            )}
+            {voices.map((voice) => (
+              <option key={speechVoiceId(voice)} value={speechVoiceId(voice)}>
+                {voice.name} ({voice.lang})
+              </option>
+            ))}
+          </select>
+        )}
+        {missing && voices.length !== 1 && (
           <p role="status" className="text-low">
             {t('speechSynthesis.fallback')}
           </p>

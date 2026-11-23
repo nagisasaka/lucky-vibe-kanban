@@ -53,8 +53,38 @@ export function getSpeechSynthesis(): SpeechSynthesis | undefined {
     : undefined;
 }
 
+export function normalizeSpeechLanguage(tag: string): string | undefined {
+  try {
+    return Intl.getCanonicalLocales(tag.trim().replaceAll('_', '-'))[0];
+  } catch {
+    return undefined;
+  }
+}
+
+export function browserSpeechLanguage(): string | undefined {
+  if (typeof navigator === 'undefined') return undefined;
+  return [...(navigator.languages ?? []), navigator.language]
+    .filter((tag): tag is string => typeof tag === 'string')
+    .map(normalizeSpeechLanguage)
+    .find(Boolean);
+}
+
 export function getSpeechVoices(): SpeechSynthesisVoice[] {
-  return getSpeechSynthesis()?.getVoices() ?? [];
+  const language = browserSpeechLanguage()?.split('-')[0];
+  if (!language) return [];
+  // Keep every provider/region for the preferred language, using only API data.
+  return (getSpeechSynthesis()?.getVoices() ?? []).filter(
+    (voice) => normalizeSpeechLanguage(voice.lang)?.split('-')[0] === language
+  );
+}
+
+export function resolveSpeechVoice(
+  voices: SpeechSynthesisVoice[],
+  savedVoice: string
+): SpeechSynthesisVoice | undefined {
+  return voices.length === 1
+    ? voices[0]
+    : voices.find((candidate) => speechVoiceId(candidate) === savedVoice);
 }
 
 export function speechVoiceId(voice: SpeechSynthesisVoice): string {
@@ -65,10 +95,11 @@ export function speechVoiceId(voice: SpeechSynthesisVoice): string {
 export function createSpeechUtterance(text: string, lang: string) {
   const preferences = readSpeechPreferences();
   const utterance = new SpeechSynthesisUtterance(text);
-  const voice = getSpeechVoices().find(
-    (candidate) => speechVoiceId(candidate) === preferences.voice
-  );
-  utterance.lang = voice?.lang ?? lang;
+  const voice = resolveSpeechVoice(getSpeechVoices(), preferences.voice);
+  utterance.lang =
+    (voice && normalizeSpeechLanguage(voice.lang)) ??
+    browserSpeechLanguage() ??
+    lang;
   if (voice) utterance.voice = voice;
   utterance.rate = preferences.rate;
   return utterance;

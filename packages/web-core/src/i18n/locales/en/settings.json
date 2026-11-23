@@ -1641,6 +1641,8 @@
     "contentMode": "What to read aloud",
     "contentAll": "All",
     "contentResults": "Results and action required only",
-    "contentModeHint": "All reads starts, progress reports, requests for input, and endings. Results and action required only reads completion, failure, stops, and requests for input. Changes apply from the next utterance without interrupting speech in progress."
+    "contentModeHint": "All reads starts, progress reports, requests for input, and endings. Results and action required only reads completion, failure, stops, and requests for input. Changes apply from the next utterance without interrupting speech in progress.",
+    "voiceHint": "Voices match your browser’s preferred language. A single voice is used automatically. Change the language in your browser settings.",
+    "noVoices": "No voices for your preferred language are exposed. Using the browser default."
   }
 }
