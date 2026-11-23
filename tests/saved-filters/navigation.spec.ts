@@ -25,19 +25,15 @@ test("actual AppNavigation preserves only the project filter, with existing sess
     .click();
   await expect(page.getByTestId("location")).toContainText("agent_run_id");
   await page.getByRole("button", { name: "Issue", exact: true }).click();
-  await expect
-    .poll(location)
-    .toEqual({
-      ...baseline,
-      search: { ...baseline.search, savedFilter: "filter" },
-    });
+  await expect.poll(location).toEqual({
+    ...baseline,
+    search: { ...baseline.search, savedFilter: "filter" },
+  });
   await page.getByRole("button", { name: "Board", exact: true }).click();
-  await expect
-    .poll(location)
-    .toEqual({
-      pathname: "/projects/project",
-      search: { savedFilter: "filter" },
-    });
+  await expect.poll(location).toEqual({
+    pathname: "/projects/project",
+    search: { savedFilter: "filter" },
+  });
   await page
     .getByRole("button", { name: "Other project", exact: true })
     .click();
