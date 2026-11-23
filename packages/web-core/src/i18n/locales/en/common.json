@@ -1448,6 +1448,9 @@
     "removeLinkedIssue": "Remove link to {{issueId}}",
     "restoreToUse": "Restore this issue from the archive to use this action.",
     "projectDisplay": "Project view",
+    "speechConnecting": "Connecting Run speech",
+    "speechOn": "Turn on Run speech",
+    "speechOff": "Turn off Run speech",
     "projectMenu": "Project menu",
     "addRelationship": "Add relationship",
     "relationshipChoices": {

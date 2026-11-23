@@ -27,6 +27,7 @@ import { useTranslation } from 'react-i18next';
 import { useProjectContext } from '@/shared/hooks/useProjectContext';
 import { isLocalRemoteApiEnabled } from '@/shared/lib/remoteApi';
 import { IntegrationPanel } from './IntegrationPanel';
+import { RunSpeechToggle } from './RunSpeechToggle';
 import { useOrgContext } from '@/shared/hooks/useOrgContext';
 import { useWorkspaceContext } from '@/shared/hooks/useWorkspaceContext';
 import { useActions } from '@/shared/hooks/useActions';
@@ -1095,6 +1096,11 @@ export function KanbanContainer() {
               onClearFocus={() => {}}
             />
           )}
+          {projectView === 'kanban' &&
+            isLocalRemoteApiEnabled() &&
+            !routeState.hostId && (
+              <RunSpeechToggle key={projectId} projectId={projectId} />
+            )}
           <DropdownMenu>
             {/* Remote Board's existing merge/PR routes remain unchanged. */}
             <DropdownMenuTrigger asChild>
