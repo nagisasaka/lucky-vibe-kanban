@@ -11,7 +11,7 @@ use serde_json::{Value, json};
 
 use super::*;
 
-fn request() -> SemanticRequest {
+pub(super) fn request() -> SemanticRequest {
     let a = Uuid::from_u128(10);
     let b = Uuid::from_u128(20);
     SemanticRequest {
@@ -46,6 +46,8 @@ fn begin(cache: &mut Cache, request: &SemanticRequest, now: DateTime<Utc>) {
         workspace_id: Uuid::new_v4(),
         started_at: now,
         plan,
+        stream: None,
+        dispatched: true,
     });
 }
 fn successful(request: &SemanticRequest, scope: &str, now: DateTime<Utc>) -> Cache {
@@ -572,22 +574,33 @@ async fn live_default_provider_uses_existing_review_lifecycle() {
     req.context = json!({"product":"online shop"});
     req.issues[0].evidence = json!({"title":"Checkout error","body":"Every credit card payment is rejected by the payment gateway.","status":"open"});
     req.issues[1].evidence = json!({"title":"Logo refresh","body":"Replace the shop logo with our new artwork.","status":"open"});
-    let mut cache = Cache::new(&req);
-    begin(&mut cache, &req, now);
-    let pending = cache.pending.as_ref().unwrap().clone();
-    let runtime = Runtime(&deployment);
-    runtime
-        .launch(&pending, engine::prompt(&req, &pending.plan, now))
+    // Real migrations + real runtime + real semantic SQL persistence, one chain.
+    sqlx::query("INSERT INTO projects(id,name) VALUES(?,'semantic smoke')")
+        .bind(req.project_id)
+        .execute(&deployment.db().pool)
         .await
         .unwrap();
-    let deadline = tokio::time::Instant::now() + std::time::Duration::from_secs(180);
+    sqlx::query("INSERT INTO saved_filters(id,project_id,definition,revision,created_at,updated_at) VALUES(?,?,'{}',1,?,?)")
+        .bind(req.filter_id).bind(req.project_id).bind(now).bind(now).execute(&deployment.db().pool).await.unwrap();
+    let first = evaluate(&deployment, req.clone(), true, false)
+        .await
+        .unwrap();
+    assert_eq!(first.status, EvaluationStatus::Evaluating);
+    let (_, cache) = load(&deployment.db().pool, &req).await.unwrap();
+    let pending = cache.pending.unwrap();
+    let deadline = tokio::time::Instant::now() + std::time::Duration::from_secs(300);
     let outcome = loop {
-        match runtime.poll(&pending, Utc::now()).await.unwrap() {
-            Progress::Running if tokio::time::Instant::now() < deadline => {
-                tokio::time::sleep(std::time::Duration::from_secs(2)).await;
-            }
-            progress => break progress,
+        let result = evaluate(&deployment, req.clone(), true, false)
+            .await
+            .unwrap();
+        if matches!(
+            result.status,
+            EvaluationStatus::Complete | EvaluationStatus::Failed
+        ) || tokio::time::Instant::now() >= deadline
+        {
+            break result;
         }
+        tokio::time::sleep(std::time::Duration::from_secs(2)).await;
     };
     let runs = AgentRuntimeReadService::new(&deployment.db().pool)
         .list_for_session(pending.session_id)
@@ -634,21 +647,170 @@ async fn live_default_provider_uses_existing_review_lifecycle() {
         .unwrap();
     assert_eq!(issue_count, 0);
     shutdown.cancel();
-    match outcome {
-        Progress::Complete(output) => {
-            cache.complete(&output, Utc::now()).unwrap();
-            assert_eq!(
-                cache.result(&req, Utc::now()).unwrap().issue_ids,
-                Some(vec![req.issues[0].id])
-            );
-        }
-        Progress::Failed(error) => panic!("real provider failed: {error}"),
-        Progress::Running => panic!("real provider timed out; cancellation requested"),
-    }
     let state = AgentRuntimeReadService::new(&deployment.db().pool)
         .state(run.agent_run_id)
         .await
         .unwrap();
     assert!(state.status.is_terminal());
+    let count_before: i64 = sqlx::query_scalar("SELECT count(*) FROM agent_runs")
+        .fetch_one(&deployment.db().pool)
+        .await
+        .unwrap();
+    let (generation, persisted) = load(&deployment.db().pool, &req).await.unwrap();
+    assert!(generation >= 2, "completion must be SQL persisted");
+    let canonical = run
+        .state
+        .terminal_output
+        .as_ref()
+        .map(|m| m.content.clone());
     deployment.db().pool.close().await;
+    assert_eq!(
+        outcome.status,
+        EvaluationStatus::Complete,
+        "provider outcome: {:?}; canonical: {:?}",
+        outcome,
+        canonical
+    );
+    assert_eq!(outcome.issue_ids, Some(vec![req.issues[0].id]));
+    assert!(persisted.success.is_some());
+    let pool = SqlitePool::connect_with(
+        sqlx::sqlite::SqliteConnectOptions::new().filename(instance.join("data/db.sqlite")),
+    )
+    .await
+    .unwrap();
+    // Runtime points at a closed original pool: an unexpected launch/poll cannot
+    // silently pass. Cache reuse reads the genuinely reopened SQLite connection.
+    let reread = evaluate_with(&pool, &Runtime(&deployment), &req, true, false, Utc::now())
+        .await
+        .unwrap();
+    assert_eq!(reread.status, EvaluationStatus::Complete);
+    assert_eq!(reread.issue_ids, outcome.issue_ids);
+    let count_after: i64 = sqlx::query_scalar("SELECT count(*) FROM agent_runs")
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+    assert_eq!(count_before, count_after);
+    println!(
+        "semantic live chain: Review -> canonical -> SQL generation {generation} -> reopen; runs {count_before} -> {count_after}; matched {:?}",
+        reread.issue_ids
+    );
+    pool.close().await;
+}
+
+#[test]
+fn local_delta_prompt_omits_unchanged_full_evidence() {
+    let now = Utc::now();
+    let mut req = request();
+    req.issues[0].evidence = json!({"body":"UNCHANGED_SECRET_SENTINEL".repeat(3000)});
+    let cache = successful(&req, "local", now);
+    req.issues[1].evidence = json!({"body":"changed"});
+    let plan = cache
+        .plan(Evidence::from_request(&req).unwrap(), now)
+        .unwrap();
+    let prompt = engine::prompt(&req, &plan, now);
+    assert!(!prompt.contains("UNCHANGED_SECRET_SENTINEL"));
+    assert!(prompt.contains("changed"));
+}
+
+#[tokio::test]
+async fn slow_time_relative_success_and_boundary_refresh_are_not_a_hot_loop() {
+    let now = Utc::now();
+    let req = request();
+    let pool = database(&req).await;
+    let runtime = FakeRuntime::default();
+    evaluate_with(&pool, &runtime, &req, true, false, now)
+        .await
+        .unwrap();
+    let boundary = now + Duration::hours(1);
+    let mut output: Value = serde_json::from_str(&reply(
+        "local",
+        &[(req.issues[0].id, true), (req.issues[1].id, false)],
+    ))
+    .unwrap();
+    output["time_sensitive"] = json!(true);
+    output["valid_until"] = json!(boundary);
+    *runtime.output.lock().unwrap() = Some(Ok(output.to_string()));
+    let result = evaluate_with(
+        &pool,
+        &runtime,
+        &req,
+        true,
+        false,
+        now + Duration::seconds(90),
+    )
+    .await
+    .unwrap();
+    assert_eq!(result.status, EvaluationStatus::Complete);
+    evaluate_with(
+        &pool,
+        &runtime,
+        &req,
+        true,
+        false,
+        boundary - Duration::seconds(1),
+    )
+    .await
+    .unwrap();
+    assert_eq!(runtime.launches.load(Ordering::SeqCst), 1);
+    *runtime.output.lock().unwrap() = None;
+    evaluate_with(&pool, &runtime, &req, true, false, boundary)
+        .await
+        .unwrap();
+    assert_eq!(runtime.launches.load(Ordering::SeqCst), 2);
+    // A genuine short boundary crossed during a long run is a stale SUCCESS,
+    // not a failed evidence key which remains stuck as the clock advances.
+    output["valid_until"] = json!(boundary + Duration::seconds(30));
+    *runtime.output.lock().unwrap() = Some(Ok(output.to_string()));
+    let done = boundary + Duration::seconds(90);
+    let result = evaluate_with(&pool, &runtime, &req, true, false, done)
+        .await
+        .unwrap();
+    assert!(result.stale);
+    assert!(result.issue_ids.is_some());
+    for _ in 0..5 {
+        evaluate_with(
+            &pool,
+            &runtime,
+            &req,
+            true,
+            false,
+            done + Duration::seconds(1),
+        )
+        .await
+        .unwrap();
+    }
+    assert_eq!(runtime.launches.load(Ordering::SeqCst), 2);
+    let retry = done + Duration::seconds(181);
+    *runtime.output.lock().unwrap() = None;
+    evaluate_with(&pool, &runtime, &req, true, false, retry)
+        .await
+        .unwrap();
+    assert_eq!(runtime.launches.load(Ordering::SeqCst), 3);
+    output["valid_until"] = json!(retry + Duration::seconds(30));
+    *runtime.output.lock().unwrap() = Some(Ok(output.to_string()));
+    let failed = evaluate_with(
+        &pool,
+        &runtime,
+        &req,
+        true,
+        false,
+        retry + Duration::seconds(90),
+    )
+    .await
+    .unwrap();
+    assert_eq!(failed.status, EvaluationStatus::Failed);
+    assert!(failed.stale);
+    for day in 1..5 {
+        evaluate_with(
+            &pool,
+            &runtime,
+            &req,
+            true,
+            false,
+            retry + Duration::days(day),
+        )
+        .await
+        .unwrap();
+    }
+    assert_eq!(runtime.launches.load(Ordering::SeqCst), 3);
 }

@@ -110,6 +110,40 @@ pub struct LocalAgentRunPort {
     cancellation_reconciliation_locks: Arc<Mutex<HashMap<Uuid, Weak<Mutex<()>>>>>,
 }
 
+async fn semantic_inference_role(
+    pool: &sqlx::SqlitePool,
+    root: &Path,
+    path: &Path,
+    workspace_id: Uuid,
+    session_id: Uuid,
+    direct_folder: bool,
+    provider: DirectProvider,
+) -> Result<bool, AgentRunPortError> {
+    // Reserved directories never fall back to coding privileges after a cache
+    // is removed. A profile, prompt or caller-supplied environment is not a role.
+    let path =
+        std::fs::canonicalize(path).map_err(|e| AgentRunPortError::Rejected(e.to_string()))?;
+    let Some(root) = std::fs::canonicalize(root).ok() else {
+        return Ok(false);
+    };
+    if !path.starts_with(&root) {
+        return Ok(false);
+    }
+    if !direct_folder || path != root.join(workspace_id.to_string()) {
+        return Err(AgentRunPortError::Rejected(
+            "Invalid semantic evaluation workspace".into(),
+        ));
+    }
+    let reserved: bool = sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM saved_filter_semantic_cache WHERE json_valid(state_json) AND json_extract(state_json,'$.pending.session_id')=? AND json_extract(state_json,'$.pending.workspace_id')=?)")
+        .bind(session_id.to_string()).bind(workspace_id.to_string()).fetch_one(pool).await.map_err(port_database)?;
+    if !reserved || !matches!(provider, DirectProvider::Codex | DirectProvider::ClaudeCode) {
+        return Err(AgentRunPortError::Rejected(
+            "No trusted semantic evaluation reservation or unsupported provider".into(),
+        ));
+    }
+    Ok(true)
+}
+
 struct FrozenDirectProviderLaunchSpec {
     provider: DirectProvider,
     executor_config: ExecutorConfig,
@@ -869,11 +903,21 @@ impl LocalAgentRunPort {
                     )
             })
             .collect();
+        let semantic_inference = semantic_inference_role(
+            &self.db.pool,
+            &utils::assets::asset_dir().join("saved-filter-evaluations"),
+            Path::new(&request.workspace.path),
+            workspace.id,
+            request.session_id,
+            workspace.is_direct_folder(),
+            provider,
+        )
+        .await?;
         // Read-only is bound to the persisted Workflow Session, including later
         // continuations, rather than a user-selectable REVIEW label.
         let reporting: bool = sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM workflow_runs wr, json_each(CASE WHEN json_valid(wr.graph_snapshot) THEN wr.graph_snapshot ELSE '{}' END, '$.nodes') n WHERE wr.workspace_id=? AND json_extract(n.value, '$.data.session_id')=? AND json_extract(n.value, '$.data.source_read_only')=1)")
             .bind(workspace.id).bind(request.session_id.to_string()).fetch_one(&self.db.pool).await.map_err(port_database)?;
-        let protected_roots = if reporting {
+        let protected_roots = if reporting || semantic_inference {
             let mut protected = vec![
                 std::fs::canonicalize(&request.workspace.path)
                     .map_err(|e| AgentRunPortError::Rejected(e.to_string()))?,
@@ -927,6 +971,7 @@ impl LocalAgentRunPort {
             }
         }
         let source_completion_allowed = !reporting
+            && !semantic_inference
             && !workspace.is_execution_only()
             && integration.is_none()
             && executors::executors::provider_adapter::memory_source_completion_allowed(
@@ -1155,6 +1200,9 @@ impl LocalAgentRunPort {
                 ));
             }
         }
+        if semantic_inference {
+            env.insert(executors::source_protection::INFERENCE, "1");
+        }
         if let Some(protected) = protected_roots {
             env.insert(executors::source_protection::ROOTS, protected);
         }
@@ -1164,7 +1212,7 @@ impl LocalAgentRunPort {
         {
             env.insert("LVK_PARENT_AGENTS", "1");
         }
-        if !openwiki_reviewer {
+        if !openwiki_reviewer && !semantic_inference {
             env.prepare_runtime_guide().map_err(|error| {
                 AgentRunPortError::Unavailable(format!("Execution guide: {error}"))
             })?;
@@ -6088,6 +6136,109 @@ mod tests {
                 .provider_session
                 .map(|session| session.provider_session_id.as_str()),
             Some("claude-session")
+        );
+    }
+
+    #[tokio::test]
+    async fn semantic_role_requires_reserved_path_and_durable_session_not_profile_or_prompt() {
+        let fixture = tempfile::tempdir().unwrap();
+        let root = fixture.path().join("saved-filter-evaluations");
+        let workspace = Uuid::new_v4();
+        let session = Uuid::new_v4();
+        let path = root.join(workspace.to_string());
+        std::fs::create_dir_all(&path).unwrap();
+        let pool = SqlitePoolOptions::new()
+            .max_connections(1)
+            .connect("sqlite::memory:")
+            .await
+            .unwrap();
+        sqlx::query("CREATE TABLE saved_filter_semantic_cache(state_json TEXT)")
+            .execute(&pool)
+            .await
+            .unwrap();
+        assert!(
+            !semantic_inference_role(
+                &pool,
+                &root,
+                fixture.path(),
+                workspace,
+                session,
+                true,
+                DirectProvider::Codex
+            )
+            .await
+            .unwrap()
+        );
+        assert!(
+            semantic_inference_role(
+                &pool,
+                &root,
+                &path,
+                workspace,
+                session,
+                true,
+                DirectProvider::Codex
+            )
+            .await
+            .is_err()
+        );
+        sqlx::query("INSERT INTO saved_filter_semantic_cache VALUES(?)")
+            .bind(
+                serde_json::json!({"pending":{"session_id":session,"workspace_id":workspace}})
+                    .to_string(),
+            )
+            .execute(&pool)
+            .await
+            .unwrap();
+        for provider in [DirectProvider::Codex, DirectProvider::ClaudeCode] {
+            assert!(
+                semantic_inference_role(&pool, &root, &path, workspace, session, true, provider)
+                    .await
+                    .unwrap()
+            );
+        }
+        assert!(
+            semantic_inference_role(
+                &pool,
+                &root,
+                &path,
+                workspace,
+                Uuid::new_v4(),
+                true,
+                DirectProvider::Codex
+            )
+            .await
+            .is_err()
+        );
+        assert!(
+            semantic_inference_role(
+                &pool,
+                &root,
+                &path,
+                workspace,
+                session,
+                false,
+                DirectProvider::Codex
+            )
+            .await
+            .is_err()
+        );
+        sqlx::query("UPDATE saved_filter_semantic_cache SET state_json='{}'")
+            .execute(&pool)
+            .await
+            .unwrap();
+        assert!(
+            semantic_inference_role(
+                &pool,
+                &root,
+                &path,
+                workspace,
+                session,
+                true,
+                DirectProvider::Codex
+            )
+            .await
+            .is_err()
         );
     }
 

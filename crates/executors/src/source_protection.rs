@@ -4,6 +4,59 @@ use std::path::Path;
 use serde_json::{Value, json};
 
 use crate::{command::CmdOverrides, env::ExecutionEnv, executors::ExecutorError};
+/// Set only by the launch port after matching its durable semantic reservation.
+pub const INFERENCE: &str = "LVK_SEMANTIC_INFERENCE";
+pub fn inference(env: &ExecutionEnv) -> bool {
+    env.get(INFERENCE).is_some_and(|v| v == "1")
+}
+
+pub fn validate_inference_launcher(cmd: &CmdOverrides, router: bool) -> Result<(), ExecutorError> {
+    validate_launcher(cmd, router)?;
+    if cmd.env.as_ref().is_some_and(|vars| !vars.is_empty()) {
+        return Err(ExecutorError::Io(std::io::Error::other(
+            "Semantic inference forbids profile environment overrides",
+        )));
+    }
+    Ok(())
+}
+
+/// Applied after profile settings, to the process AND fresh thread. Process-level
+/// hooks/notify must be off before thread creation. Read-only/no approvals remains
+/// the enforcement boundary even for a provider-native tool not gated by features.
+pub fn codex_inference_config() -> std::collections::HashMap<String, Value> {
+    let mut config = std::collections::HashMap::new();
+    for feature in [
+        "shell_tool",
+        "unified_exec",
+        "code_mode",
+        "code_mode_only",
+        "js_repl",
+        "multi_agent",
+        "multi_agent_v2",
+        "hooks",
+        "plugins",
+        "apps",
+        "computer_use",
+        "in_app_browser",
+        "image_generation",
+        "memories",
+        "goals",
+        "skill_search",
+        "skill_mcp_dependency_install",
+        "tool_suggest",
+        "request_permissions_tool",
+        "exec_permission_approvals",
+    ] {
+        config.insert(format!("features.{feature}"), json!(false));
+    }
+    config.insert("agents.enabled".into(), json!(false));
+    config.insert("include_apply_patch_tool".into(), json!(false));
+    config.insert("web_search".into(), json!("disabled"));
+    config.insert("notify".into(), json!([]));
+    config.insert("shell_environment_policy.inherit".into(), json!("none"));
+    config
+}
+
 pub const ROOTS: &str = "LVK_WORKFLOW_PROTECTED_ROOTS";
 pub fn roots(env: &ExecutionEnv) -> Result<Option<Vec<String>>, ExecutorError> {
     let Some(value) = env.get(ROOTS) else {
@@ -127,6 +180,36 @@ pub fn claude_command(
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn semantic_role_cannot_be_reenabled_through_profile_env_or_command() {
+        let cmd = CmdOverrides {
+            env: Some(std::collections::HashMap::from([(
+                "LVK_SEMANTIC_INFERENCE".into(),
+                "0".into(),
+            )])),
+            ..Default::default()
+        };
+        assert!(validate_inference_launcher(&cmd, false).is_err());
+        assert!(validate_inference_launcher(&CmdOverrides::default(), false).is_ok());
+        assert!(validate_inference_launcher(&CmdOverrides::default(), true).is_err());
+        let settings = claude_settings(
+            &["/evaluation".into()],
+            &ExecutionEnv::new(Default::default()),
+            None,
+        );
+        assert_eq!(settings["disableAllHooks"], true);
+        let codex = codex_inference_config();
+        for key in [
+            "features.shell_tool",
+            "features.hooks",
+            "features.plugins",
+            "features.multi_agent",
+        ] {
+            assert_eq!(codex[key], false);
+        }
+        assert_eq!(codex["notify"], json!([]));
+    }
+
     #[test]
     fn restrictions_preserve_auth_and_fail_closed() {
         let v = claude_settings(
