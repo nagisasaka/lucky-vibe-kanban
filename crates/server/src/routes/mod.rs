@@ -23,6 +23,7 @@ mod repository_read;
 pub(crate) mod attachment_transfer;
 pub mod attachments;
 pub mod design_notes;
+pub mod saved_filters;
 pub mod events;
 pub mod execution_processes;
 pub mod frontend;
@@ -70,6 +71,7 @@ pub fn router(
         .merge(tags::router(&deployment))
         .merge(todos::router())
         .merge(design_notes::router())
+        .merge(saved_filters::router())
         .merge(filesystem::router())
         .merge(repo::router())
         .merge(integrations::router())

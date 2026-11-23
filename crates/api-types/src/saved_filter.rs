@@ -167,12 +167,11 @@ pub struct SavedFilterCorpus {
     pub assignees: Vec<IssueAssignee>,
     pub relationships: Vec<IssueRelationship>,
 }
-/// Unpaged result from the semantic module; the HTTP service intersects IDs with
-/// the current machine candidate set before returning any result.
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SavedFilterSemanticResult {
-    pub state: SavedFilterEvaluationState,
-    pub issue_ids: Vec<Uuid>,
-    pub stale: bool,
-    pub error: Option<String>,
+/// Explicit retry is separate from activate/poll, to avoid repeated provider failures.
+#[derive(Debug, Clone, Default, Serialize, Deserialize, TS, JsonSchema)]
+#[serde(default, deny_unknown_fields)]
+pub struct EvaluateSavedFilterRequest {
+    pub offset: u32,
+    pub limit: Option<u32>,
+    pub retry_failed: bool,
 }

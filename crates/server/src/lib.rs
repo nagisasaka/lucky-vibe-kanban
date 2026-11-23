@@ -17,3 +17,5 @@ pub(crate) mod bundled_source;
 pub(crate) mod repository_read;
 
 pub(crate) mod repository_push;
+
+pub(crate) mod saved_filter_semantics;

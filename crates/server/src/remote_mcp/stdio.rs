@@ -35,6 +35,7 @@ struct IssueArgs {
 pub(super) fn router() -> Router<DeploymentImpl> {
     Router::new()
         .route("/mcp-stdio/workflow", post(workflow))
+        .route("/mcp-stdio/saved-filters/{tool}", post(saved_filters))
         .route("/mcp-stdio/issues/{operation}", post(issue))
         .route("/mcp-stdio/operation", post(operation))
         .route("/mcp-stdio/start-workspace", post(start_workspace))
@@ -989,6 +990,65 @@ async fn workflow(
     .await
     .map_err(|e| ApiError::BadRequest(e.to_string()))?;
     Ok(Json(ApiResponse::success(result)))
+}
+
+async fn saved_filters(
+    State(d): State<DeploymentImpl>,
+    Extension(actor): Extension<server_access::Principal>,
+    Path(tool): Path<String>,
+    Json(input): Json<Value>,
+) -> Result<Json<ApiResponse<Value>>, ApiError> {
+    owner(&actor, false)?;
+    let ids = sqlx::query_scalar::<_, Uuid>("SELECT id FROM projects")
+        .fetch_all(&d.db().pool)
+        .await?
+        .into_iter()
+        .collect();
+    let principal = super::auth::Principal {
+        subject: actor.subject.clone(),
+        scopes: actor.scopes.clone(),
+    };
+    let remote = super::Remote {
+        pool: d.db().pool.clone(),
+        runtime: Some(std::sync::Arc::new(super::runtime_write::ExistingRuntime(
+            d.clone(),
+        ))),
+        launch: None,
+        environment: None,
+        process_instance: *super::PROCESS_INSTANCE.get_or_init(Uuid::new_v4),
+        config: std::sync::Arc::new(super::config::Config {
+            public_base_url: std::env::var("LVK_PUBLIC_URL")
+                .unwrap_or_default()
+                .trim_end_matches('/')
+                .to_owned(),
+            issuer: actor.issuer,
+            #[cfg(test)]
+            introspection_endpoint: String::new(),
+            #[cfg(test)]
+            introspection_client_id: String::new(),
+            #[cfg(test)]
+            introspection_secret_env: String::new(),
+            #[cfg(test)]
+            owner_subject: actor.subject,
+            project_ids: ids,
+        }),
+    };
+    let value = super::saved_filters::call(&remote, &principal, &tool, input)
+        .await
+        .map_err(|e| {
+            use utils::mcp_error::Category;
+            let diagnostic = super::errors::diagnostic(&e, true);
+            match diagnostic.category {
+                Category::Permission => ApiError::Forbidden(diagnostic.message.into()),
+                Category::NotFound => {
+                    ApiError::SavedFilter(db::models::saved_filter::SavedFilterError::NotFound)
+                }
+                Category::Conflict => ApiError::Conflict(diagnostic.message.into()),
+                Category::Validation => ApiError::BadRequest(diagnostic.message.into()),
+                _ => ApiError::BadGateway(diagnostic.message.into()),
+            }
+        })?;
+    Ok(Json(ApiResponse::success(value)))
 }
 
 #[cfg(test)]

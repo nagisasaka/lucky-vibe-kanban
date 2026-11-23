@@ -1,3 +1,4 @@
+pub(crate) mod saved_filter_snapshot;
 pub mod board_api;
 pub(crate) mod issue_archive;
 mod issue_attachments;
