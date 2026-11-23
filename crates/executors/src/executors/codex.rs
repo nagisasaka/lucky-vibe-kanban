@@ -1207,6 +1207,10 @@ impl Codex {
             params.approval_policy = Some(V2AskForApproval::Never);
             params.permissions = None;
             params.runtime_workspace_roots = None;
+            // No filesystem/shell environment is exposed to this inference
+            // thread. TurnStart uses no override, so this restriction is sticky.
+            params.environments = Some(vec![]);
+            params.dynamic_tools = Some(vec![]);
             params
                 .config
                 .get_or_insert_with(HashMap::new)
@@ -2625,6 +2629,9 @@ mod goal_skill_tests {
         assert_eq!(restricted.approval_policy, Some(V2AskForApproval::Never));
         assert!(restricted.permissions.is_none());
         assert!(restricted.runtime_workspace_roots.is_none());
+        assert_eq!(restricted.environments, Some(vec![]));
+        assert_eq!(restricted.dynamic_tools, Some(vec![]));
+        assert!(normal.environments.is_none());
         let config = restricted.config.unwrap();
         for (key, value) in crate::source_protection::codex_inference_config() {
             assert_eq!(config.get(&key), Some(&value), "{key}");
