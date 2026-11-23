@@ -358,7 +358,7 @@ impl EvaluationRuntime for FakeRuntime {
         })
     }
 }
-async fn schema(pool: &SqlitePool, req: &SemanticRequest) {
+pub(super) async fn schema(pool: &SqlitePool, req: &SemanticRequest) {
     sqlx::raw_sql("CREATE TABLE saved_filters(id BLOB PRIMARY KEY,project_id BLOB NOT NULL,revision INTEGER NOT NULL); CREATE TABLE saved_filter_semantic_cache(filter_id BLOB PRIMARY KEY REFERENCES saved_filters(id) ON DELETE CASCADE,generation INTEGER NOT NULL,state_json TEXT NOT NULL);")
         .execute(pool).await.unwrap();
     sqlx::query("INSERT INTO saved_filters VALUES(?,?,?)")
@@ -813,4 +813,71 @@ async fn slow_time_relative_success_and_boundary_refresh_are_not_a_hot_loop() {
         .unwrap();
     }
     assert_eq!(runtime.launches.load(Ordering::SeqCst), 3);
+}
+
+#[tokio::test]
+async fn failed_temporal_evidence_can_retry_once_when_its_known_boundary_passes() {
+    let now = Utc::now();
+    let mut req = request();
+    let pool = database(&req).await;
+    let runtime = FakeRuntime::default();
+    let mut cache = successful(&req, "local", now);
+    let boundary = now + Duration::minutes(10);
+    cache.success.as_mut().unwrap().valid_until = Some(boundary);
+    save(&pool, &req, 0, &cache).await.unwrap();
+    req.issues[1].evidence = json!({"body":"changed"});
+    evaluate_with(&pool, &runtime, &req, true, false, now)
+        .await
+        .unwrap();
+    *runtime.output.lock().unwrap() = Some(Err("temporary failure".into()));
+    evaluate_with(
+        &pool,
+        &runtime,
+        &req,
+        true,
+        false,
+        now + Duration::seconds(10),
+    )
+    .await
+    .unwrap();
+    evaluate_with(
+        &pool,
+        &runtime,
+        &req,
+        true,
+        false,
+        boundary - Duration::seconds(1),
+    )
+    .await
+    .unwrap();
+    assert_eq!(runtime.launches.load(Ordering::SeqCst), 1);
+    evaluate_with(&pool, &runtime, &req, true, false, boundary)
+        .await
+        .unwrap();
+    assert_eq!(runtime.launches.load(Ordering::SeqCst), 2);
+    evaluate_with(
+        &pool,
+        &runtime,
+        &req,
+        true,
+        false,
+        boundary + Duration::seconds(10),
+    )
+    .await
+    .unwrap();
+    evaluate_with(
+        &pool,
+        &runtime,
+        &req,
+        true,
+        false,
+        boundary + Duration::days(3),
+    )
+    .await
+    .unwrap();
+    assert_eq!(
+        runtime.launches.load(Ordering::SeqCst),
+        2,
+        "provider failure must not retry forever"
+    );
 }

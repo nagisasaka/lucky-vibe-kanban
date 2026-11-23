@@ -95,6 +95,8 @@ pub(super) struct Cache {
     pub failure: Option<String>,
     pub failed_evidence: Option<Evidence>,
     #[serde(default)]
+    pub failed_time_boundary: Option<DateTime<Utc>>,
+    #[serde(default)]
     pub refresh_after: Option<DateTime<Utc>>,
     #[serde(default)]
     pub expired_refreshes: u8,
@@ -159,6 +161,7 @@ impl Cache {
             pending: None,
             failure: None,
             failed_evidence: None,
+            failed_time_boundary: None,
             refresh_after: None,
             expired_refreshes: 0,
         }
@@ -236,6 +239,11 @@ impl Cache {
 
     pub fn fail(&mut self, error: String) {
         if let Some(pending) = self.pending.take() {
+            self.failed_time_boundary = pending
+                .plan
+                .reused_until
+                .or_else(|| self.success.as_ref().and_then(|s| s.valid_until))
+                .filter(|until| *until > pending.started_at);
             self.failed_evidence = Some(pending.plan.evidence);
         }
         self.failure = Some(error);

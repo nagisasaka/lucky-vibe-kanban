@@ -319,7 +319,8 @@ async fn evaluate_with(
                 && cache
                     .failed_evidence
                     .as_ref()
-                    .is_some_and(|e| e.same(&evidence)))
+                    .is_some_and(|e| e.same(&evidence))
+                && !cache.failed_time_boundary.is_some_and(|at| now >= at))
         {
             return cache.result(request, now).map_err(invalid);
         }
