@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:1c080a864ab49837420e4dc91ef84997382c80356ee539c39184dcc34c8ac248",
+  "claims": [
+    {
+      "id": "claim_0d1803fc9efa48e7ad1c346925da8e70",
+      "statement": "Issue 番号は Project の高水位から transaction 内で割り当て、commit 済み番号は削除で解放されない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/db/src/models/issue_number.rs#L21-L43",
+          "version": "repo-lines-v1:sha256:cd3e77bee1db30f17f9b83dbe91185199c6d69019559e8b2cae245cfe3818c6d:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBhZDFlZDg5ZGE1ODliZjY1YmY1MmFhYTA2NjMxMGNkMjJmZjgwZTI3Nzg0YzFkYmU5NWIyOWY0YmM1NmUzYzIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI0YTM2NWE5MGVjMTFlOTA0MzI3NTJjZjkzNzZlYzVlZDM2YjgwYmE1ZThlNjg1NGZjZjk4OTcwZDMwNDQ0NjkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE1MjE2MDRiMzVmYzQwYWYwMGNiYTRlZWEyZmQ1ZTJjM2FmMTg2M2IzOTExODVkN2JmNGJiMDllNzJkMGM4YjMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_ef1ce70902ee493aa37b5cddc70ceb4e",
+      "statement": "Issue は名前付き本文版と現在版を持ち、現在版は同じ Issue に属する必要がある。",
+      "evidence": [
+        {
+          "resource": "repo://crates/db/migrations/20261111220000_issue_versions.sql#L1-L22",
+          "version": "repo-lines-v1:sha256:879339d3b9c33783974ac1d94f27c5ad3eb4daa616ad986799114de38aa4a0f6:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ3NDAxNTc3YTE4M2VlNjE4ZWFmZDkyMWFkYzk5MmU0YmNkYzdiMTY4MzExZDgzYWU5YmY5NzJjNjczYWE1MmUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE3MmRkYzQxZGYzNjhiMTYyZmQzNDNmZjc1OTVlMDg0OGUyMWYzZmY4MDIyMzFiMzEyOTlmYmY1NDEwZWUwMWIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFkYjg3NjAxYTY0NzljMWYwYjMwNjEzMWU5ODIyYjAxYjQ2NjEyNDRlOGE4NWU4NTg5MmRmODNjZWE3MDU3Y2UifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.9.0",
+    "at": "2026-11-23T00:23:16.293Z"
+  }
+}

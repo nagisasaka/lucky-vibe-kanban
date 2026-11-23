@@ -1,20 +1,30 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:b6d09278d0b538f705dae613d18162184c8ffea8c8e3b4a6d4353bf1efd6fab2",
+  "pageVersion": "sha256:e3877d737d10568e4471f90c377a3656dd7d95f853321d633a085ab4bd8b6095",
   "claims": [
     {
-      "id": "claim_afbb64db52a6407f8ce6df40968b387a",
-      "statement": "Compose は home、repos、work を別 volume として保持する。",
+      "id": "claim_c37f1211b5944a1d99635e047beae57d",
+      "statement": "標準 Compose は public access を設定し、host 443 を container 8443 に公開し、home、repos、work を別 volume に保存する。",
       "evidence": [
         {
-          "resource": "repo://deploy/server/compose.yaml#L18-L37",
-          "version": "repo-lines-v1:sha256:38f05270fe6e77e1dec60fcdeb408c783693b69fe30fb920d420344a3a90e38c:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxM2Y0ZDk2NjFlOWQyYzNlMWEyODllNTgzMjI5OWJlYTE0Y2RiNjRiZjg4NjYxZGY3MTdiMTJmYTAyZDAxMWUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRjZGQ5MjcwNjI2ZTY5M2I1OTJhOTYwOWY3ODIxM2VmNzNjMjQwYjYzYTNjOTExMTk4NjljZDI0NjNkOWQ0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjNlMjNlYmYxYjAxNWM2Y2RhNWMwODI3MTMxOWIxNjk5YTA4Zjc2YTc2ZGRkYTAwMzc4OGYwNGU2ZTMwYmEwMTkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+          "resource": "repo://deploy/server/compose.yaml#L1-L24",
+          "version": "repo-lines-v1:sha256:3e7e3f89b64eb1bb7b0224cbba56582d87a5bfc6445283ad9e05daecc6708c8b:eyJzZWxlY3RlZExpbmVDb3VudCI6MjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgxNGVjYzA4N2U4MjQ0NWQ2YWFhOGQ4MTczMjhmZDVjZjM1ZDQxNjY5Zjc0MmE4NGI2ZTc0MDFiZTM0NmI0MGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ5YmJhMGJkYmUwOTMzMDE5OTQwYmJhOGY0YTdkY2FlODBjYjExZDQ0ZGJhM2ZjM2IxMGY1NDgzYjViMWY1MDQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE4YzM2MjUyODJhYTM4MGY1M2Q3NTU3YjdiZWNkMTU4YWU0OWRjYWIxNGQyODg2NjhkZDI4NGYyNzkwNWRiYmQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_f211fb567faa46ffadf2475e65517057",
+      "statement": "隔離 staging の schema 更新後の rollback は対応するデータ snapshot を必要とする。",
+      "evidence": [
+        {
+          "resource": "repo://deploy/developer/STAGING.md#L104-L110",
+          "version": "repo-lines-v1:sha256:03acf994cc730d474926eee44c7b9af336f9285a4501db7d9d41c82d140e1c27:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiY2JhZWE4ZWIzM2E5NDIzZmU5NzlkMDZjNGY2MGIwNDE5ZjY0NmI3NjcxYjVjYTk2YzRlOTBkNmRkMTE0NzJiZCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNGFmNmQ3YmQzNmVhOGNiYTk5MWJkOGM4NzhiNzQ5MzdmZjYzMTRkYzllNWZhODcxOGNhMzU1MzE5NmJhYTQwZCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiODhlYTIxM2RiNWVlNjU0ZDVmMmU4YzRiNThlODVkNTdlOTQ3MGYyZWNjYzI5ZTJkNjE4NzBmNjYwYWIxYjhkNCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMGQ5MDA3Mjk5M2JhNmQxZWI1Yzc2ODY2ZWFmMTgwZGIzODcyYTBmODg2MmNiNzRjODA1NjJlMDU2NzE4YTJlNiJ9"
         }
       ]
     }
   ],
   "verification": {
     "by": "openwiki/0.9.0",
-    "at": "2026-11-22T18:59:30.190Z"
+    "at": "2026-11-23T00:23:16.293Z"
   }
 }

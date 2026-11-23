@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:8669a7733f04d1ee341d85d520577ef21d57c8dc30c2cd992195ddf83b00d736",
+  "claims": [
+    {
+      "id": "claim_d108886cc275411e92c3be0cf0a55d39",
+      "statement": "Session は Workspace に属し、Workspace ごとに複数の Session を一覧できる。",
+      "evidence": [
+        {
+          "resource": "repo://crates/db/src/models/session.rs#L22-L31",
+          "version": "repo-lines-v1:sha256:0bb88c93ff3fcf3d55fd0eada48f2f36d0912dafda15d035280e5cc5ffc8f36c:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk5ZmQ4MTA5ZjA3ZTJjMzliMDc2YTg1YTQ3Y2I3YTFjMWMxZDNjYmNmYjE0MmI0NTU1NjBlZTE0MmY1MTM0ZjUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijc0YThhY2M1NjI3YTI3MzdlYjU0NGJkNDA2MGYxYzhjMWEzODc0NjgxYzUxNGFhZTY2Mzg5ZTRlMDExZjUyZWYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjIyYzU1NWM5MmMyZjRkMjA5M2YxMTkyYzY3NGE5NTZkYjU0OTRlYWUzOGM4OTU4MzhjZDY4NzFmOTExYTQ0NGIifQ"
+        },
+        {
+          "resource": "repo://crates/db/src/models/session.rs#L57-L91",
+          "version": "repo-lines-v1:sha256:bae2e94472f2e302fbb8ac132eea8dab40dc467fc4b3ea73a50f1ecce310c869:eyJzZWxlY3RlZExpbmVDb3VudCI6MzUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM2NzFjZGYwM2I1N2E2ODdjZGY1NmRiYmNkOWIzMjAxMTlmYTZiNzIzMWI0NDI5YzNkMzU3NmI4NGMwOTFlMzMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjliNGE1ZWFmYjZkMDYzNGFjZWE1ZWYxZTg0YjZkNGJmMjE5NjJmZGFkMTI4NTU1OTgxMjgzNjY1ZmY0ZDZlNDIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImExODgwNWNiYmFkZjg5Y2VhYTNkOTBjMWMyOTAzZWU3ZDU4MmI4NDcwNTk2M2MyMWZmMDM5ZjBjMDIxYWY5ODAifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.9.0",
+    "at": "2026-11-23T00:23:16.293Z"
+  }
+}

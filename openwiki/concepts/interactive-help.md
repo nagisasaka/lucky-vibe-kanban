@@ -1,19 +1,15 @@
 ---
 type: concept
-title: 稼働版に基づく対話ヘルプ
-description: 一般質問の会話、版固定の公開 source 読取と配布時の検証境界を説明する。
+title: 対話ヘルプ
+description: 稼働版の公開 source に基づく質問と版固定読取。
 tags: [help, source, mcp, distribution]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-22T18:59:30.190Z
+    at: 2026-11-23T00:23:16.293Z
 sources:
-  - id: openwiki-source-a373f9a8da41f89b1ce1d5bd
-    resource: repo://crates/server/src/bundled_source.rs
-  - id: openwiki-source-cb711830e5a5d11f35f1d1c7
-    resource: repo://crates/server/src/remote_mcp/help.rs
-  - id: openwiki-source-5fe6396817bf95b4040eebdb
-    resource: repo://deploy/server/SOURCE.md
-generated: { by: "codex", at: "2026-11-22T18:59:30.190Z" }
+  - id: openwiki-source-d40201a53108a0c612f229ef
+    resource: repo://crates/server/src/routes/help.rs
+generated: { by: "codex", at: "2026-11-23T00:23:16.293Z" }
 ---
 
 # 稼働版に基づく対話ヘルプ

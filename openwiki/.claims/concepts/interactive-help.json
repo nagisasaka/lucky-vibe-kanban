@@ -1,40 +1,34 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:710cd7cb7c2555719f609e700160b8c881591f24abe96cbd9a30a04098010a44",
+  "pageVersion": "sha256:e1b2b7e9b04513fad9320cb272edc56070d03239fe894c00ec0e8e7504b77b4d",
   "claims": [
     {
-      "id": "claim_1a6a783470c0478bafef08101de6281e",
-      "statement": "同梱 source は既知の build revision と HEAD が一致し、shallow でないことを server process ごとに検証する。",
+      "id": "claim_b0e099673fc8499f9dc684fbe802478d",
+      "statement": "対話ヘルプは版を固定した公開 source を参照し、通常の Workspace、Session、Review 実行を用いる。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/bundled_source.rs#L17-L53",
-          "version": "repo-lines-v1:sha256:8f58e60be4f6247ed80732643b54360d30ef0ace845f3a629237896feab0aa1b:eyJzZWxlY3RlZExpbmVDb3VudCI6MzcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk5ZmNhYTM1YjY4ZmFiNjlhMDllNTUxMzRmYjMyYzVmYTU0ZGJkYTVkYmFhYmMzOTcyMTg1OTZhMGUxNWMyMzciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjY0MzNiMmYzMDc5ZmYxOThhNWE5MGE0NTYwZDgyMWNkOGU1YTYyZjgxZWE1MTFlNWNiODRmNWE5ZjViMWQ5YTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjYwNjNjNGQxYWY4Y2Q4OWJiMGJkZDc2NTdmZmNiZjY4MDZhNjEwZDc5ZDZjOGQ0YzMwN2MyNDFkZjM5MDA1MjIifQ"
+          "resource": "repo://crates/server/src/routes/help.rs#L28-L38",
+          "version": "repo-lines-v1:sha256:07a2316c7a5b5c7a22d23ce959996ece3c9977ae70d102fd81948d77ec9c601c:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMzMzlkMDU3M2I1MGVkM2EyZjVlYzI3Yzc4MjNkN2I4NTQwZGVmODRiMmUzNTkyNTIwYzMxMDVlYmNiNzJjYzgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU4NjI3MDY3YmVhNmMxMTU1ZDE0M2VjMmI0ZjdlNmMyNDBiYWQ2MzAzMzk3YTAxY2VjZGRhNGM2MGE2NmI0MTgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjlhODU0OWUzNjEzYmJmNGI1YjVmZTJjNmMwMDI3NWIyNzBjZDZkZDgxZTc2MzZjOWRmOTQxNGU1NmU1ZjFiZTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZjODBhMWNjN2Y4N2M5NDY2YmZmNzVkZjVlMTA5MTAwMjZkYzk0ZDIzNjU4YzhkY2NjYzgwODA2ZjAzNTVkMmQifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/help.rs#L72-L146",
+          "version": "repo-lines-v1:sha256:6b0400bddd618b88eba36be10628d61bfda09238238e4c580100ef94c54cce96:eyJzZWxlY3RlZExpbmVDb3VudCI6NzUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFjMWY5ODM4YjVhMmQ2NGI1M2UyZGUwNWE0M2U5YmJhNDJmMWNmMDZhMzMwODNlOGU2MjYwYzYxNTYzMjE3YTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBlNWVjNzE4MDBkZTNhNDhmM2ZlOThiMWUxMzIzZjFlNzA5NmNjYjI3MDdiMzM1YTk0MGY1OGU5M2Q2MTJiMTUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI5NTUzMDc4MDE4NjM2MDc1MWM3MzMwY2JhMTU0YzUyNDI3ZWI3YzYxY2EzYzhkY2RhM2QwYWQ5OGFiNTg1YjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImYyNDk5OTQzZGJhZWQzMmU2MTk0NjY3ZDQwZDYxZGEwMTE5ZDA1ODcwMzg5MzBiMzdhYWNjNmEwMGUxMTRlODYifQ"
         }
       ]
     },
     {
-      "id": "claim_1e769a21ea344c2680c34074ebd78d76",
-      "statement": "ask_help は通常の Review Session を開始または継続し、非冪等で受付は回答成功を意味しない。",
+      "id": "claim_ab43e838f2bf440da462f2223123d07b",
+      "statement": "活動中のヘルプ Run がある会話は削除前に取消が必要である。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/remote_mcp/help.rs#L14-L29",
-          "version": "repo-lines-v1:sha256:38b7da89d0a2af5560ff6d06ffba3e23457b3c9a1b41065f327a5740b81f2039:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhhNmMwMDc3N2M2YTE2MGZjZTYyM2U3YmIzMzBiOTMwOTk2NWMzYTIyYTAzZWNiYjcwOWRlMWQ4MDcyOGY1ZmEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImM3NThhMDkzNWJhODEwM2FhMmUyMTBkOTMzNGZmZmVlZmY1M2UyYWQ1MzUyYzdmODhkOGJhMjRkODhiYWFlYTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjI2YzdkYjBiZmU4YTVmMWViMGZlZDMzYTY0OGQ1YjI4ZDc1ZDRhYWZkZjcwZGVjYzg3YjI1ZGEzMjhiYTgwMWYifQ"
-        }
-      ]
-    },
-    {
-      "id": "claim_809f0d0d8c434694a3f0d023ff509de2",
-      "statement": "配布 source は distribution commit の到達可能な祖先を含むが全 branch や tag は保証しない。",
-      "evidence": [
-        {
-          "resource": "repo://deploy/server/SOURCE.md",
-          "version": "repo-file-v1:sha256:9ab3d2edf66376bdeb0089df9c7c859eb84cfe8b3f68791629f827a270e6df88"
+          "resource": "repo://crates/server/src/routes/help.rs#L216-L224",
+          "version": "repo-lines-v1:sha256:689de8d55dfaeffc38f58db0fdf0a291c0323aa0bb3440d83cdf3ce40d39e273:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOTIxMTU0ZDE0MzA1ODg2NTJkZmM3ODc0MDBkNjMwNTFmNDA5ODFiY2Y5ZjYxOGI0NDQ3Yzk4NWI0N2RlOGJjYyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNmQ2ZTg3ZWI0M2U2ZjZmYmEzNjkyNmRlMGRhMWU4ZmI3NDY1MjhhMDQ1ODMyOGNlYzUwNTAzNzQwYTM5NTc1OSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiM2RlZTZjY2VhYmZiZTA0NTQ0OTY5ZjhkZWYyOTg4NmZiMjBjOTk3ZmI2M2VkMzM4MDNjNGFiZDBmNDA2ODNiMCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMjdhNmM0OWE2YTNkNWFhNDg0NjdkN2UxMzA4MDA1Nzc0Y2U3NzI4OTNmODgwMTY5MzFjN2M5MDA5MGRjYWM4NCJ9"
         }
       ]
     }
   ],
   "verification": {
     "by": "openwiki/0.9.0",
-    "at": "2026-11-22T18:59:30.190Z"
+    "at": "2026-11-23T00:23:16.293Z"
   }
 }

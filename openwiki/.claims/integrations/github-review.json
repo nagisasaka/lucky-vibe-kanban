@@ -1,20 +1,24 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:7342c7110631a04b44950eab6a9baa4d6bfb1b1ed7065183781fd92e36a9c54f",
+  "pageVersion": "sha256:832418f65953315f24cbca84ea5cb54f09887f11c9bb8452a9a9f38b1577a94b",
   "claims": [
     {
-      "id": "claim_e33c9db4b72741d99914b5b460899539",
-      "statement": "GitHub credential の変更と接続検査は管理者に限定される。",
+      "id": "claim_f77d0fe910554a609160a64284b99cb0",
+      "statement": "PR 作成は branch の push、remote PR 作成、local record 保存を順に行う。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/github_credentials.rs#L81-L133",
-          "version": "repo-lines-v1:sha256:02dc2c95845233435df509f991f4889de44003fe6d33eafaf3d76e454f25c56b:eyJzZWxlY3RlZExpbmVDb3VudCI6NTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY5YjE5ODJlOGRkNzQ4MTE4MTQ2YjM5YTJkMDA2MmY0MDgxZTM0Nzc5Yjg2NzVjMjM0YzRmYjEyNGRjMzkzOTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY2NjAwODI3MDhmZTgxNzEzOTMyODhlMDc2ZjljNjJkYjk3MWNiY2FiYjMyMGMzN2MwYzI2ZDhmYWM2Zjg2NzEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImU4NWY1NGRiMzA1M2QxNThmODc4NTUxMDc4ZTgyODg2NzdkNGM0ODQ5OGFhYWUwZjBkOTRmZTkzODY1ZjY1NTciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUyMTliZTg4YmYwNjRkN2U5NGM1NTRiZjA3NzNiMDgzODEzNTFhMzQ2YmRjOTIzZWJiZDFlNzZjYmRmZTQ0ZDMifQ"
+          "resource": "repo://crates/server/src/routes/workspaces/pr.rs#L280-L287",
+          "version": "repo-lines-v1:sha256:6e994faf2c36207edd2d0d44414b481b071d1ca3f50d0c4faef0fe9b34cc3023:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMTY3OTUxZGFlOGQ1OGIyMWRhZWI0MDFiMzBmYTI0MDEyZDQ3NzBiZjU3MTc4MmZjNTk3YmY3MDBmZGFjNTZhNSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOTA4OTBhNzRmOTVhYjA5ZTgzODEzYzVhMDQzZmNiYmFjNjc1M2FhMDNkMTU5ZWE0ODAyMzIyYmViNGU0NTU1MyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZjBjZmQ3ODY3MDY0MTU1ZmU3N2RlODg4ODNlM2Q1NjU0ZjdkYmE4Y2ZlMTdmNzE4MTU0YzliMjg2ZWYzNTMzNiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMmY4Y2JmMDYxZDk2MjJkYjA5MGIxMDAwZjlmZjlhYTBmYTcyMzY1ZDM1YmEyYjk4ODU4Yzk2YmUwMDgwOWQ3NyJ9"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/workspaces/pr.rs#L327-L346",
+          "version": "repo-lines-v1:sha256:7fa01dab3e7e8b362a28e7a7fd913408dfaafa7eaa1bd14d918bfcfbd53babaa:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgxYzQ0NGI2ODlkYTE1MzZmOTA1NTExMmQ4YmM3N2EyODYxOThmMDkwZTE0NjBkMDVjYTNlYzVmYTkwZDQ1YmEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA4NTg0ZmI5YTZjMjA3YzAyYjdiZmY1OTM4YmQzODMwZTVmYjE2NmZkYzAwZjNmYWNlYTdjZTRhN2U1OTNkOGEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjY3Y2QyYWU4ODk2YWQ4NTEyZjg1Zjk1NmRhMTlhN2RlZjZjMjJlODcyM2NlMmE5YmE3ODU3MTMwZTAxNGU1NjEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJjMjc2MGU1ZDI5NDZlMDM3YzE1YmE4ZTNhODVhNzgxMWE4MDA3NzRmYjMwY2RhY2RmM2YzNDRhZTEyMjE2MWIifQ"
         }
       ]
     }
   ],
   "verification": {
     "by": "openwiki/0.9.0",
-    "at": "2026-11-22T05:31:45.518Z"
+    "at": "2026-11-23T00:23:16.293Z"
   }
 }

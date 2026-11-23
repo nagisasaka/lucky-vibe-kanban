@@ -1,24 +1,24 @@
 ---
 type: concept
-title: Arena の履歴と互換性
-description: 旧 Arena の候補、選択と Workspace の寿命、および Workflow の winner 適用を説明する。
+title: Arena
+description: 旧 Arena の候補と選択、Workflow の winner 適用。
 tags: [arena, workspace, comparison, lifecycle]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-22T05:31:45.518Z
+    at: 2026-11-23T00:23:16.293Z
 sources:
-  - id: openwiki-source-2a51fb8409723c3914db4954
-    resource: repo://crates/db/src/models/arena_group.rs
   - id: openwiki-source-1ffb01d1ba3953937e0771bf
     resource: repo://crates/server/src/routes/local_remote.rs
+  - id: openwiki-source-a517c0f8e44d2cf0c440fbfc
+    resource: repo://crates/server/src/routes/workflows.rs
   - id: openwiki-source-13bc408495036974093d65eb
     resource: repo://crates/server/src/workflow_runtime/arena.rs
-generated: { by: "codex", at: "2026-11-22T05:31:45.518Z" }
+generated: { by: "codex", at: "2026-11-23T00:23:16.293Z" }
 ---
 
 # Arena の履歴と互換性
 
-Arena は一つの [Issue](project-and-issue.md) に対して複数の [Workspace](workspace.md) を候補として持つ旧比較機能である。既存の group や Run を調査するときに読む。新規 Arena 作成入口は guard で拒否され、現在の開始は単一 Agent または[固定 Workflow preset](workflow-attempt.md) を使う。旧 group や winner 適用 runtime が一括削除されたという意味ではない。[入口](../../crates/server/src/routes/local_remote.rs)・[モデル](../../crates/db/src/models/arena_group.rs)
+Arena は一つの [Issue](project-and-issue.md) に対して複数の [Workspace](workspace.md) を候補として持つ旧比較機能である。既存の group や Run を調査するときに読む。[操作の段階](../quickstart.md#操作の段階)を区別する。 新規 Arena 作成入口は guard で拒否され、現在の開始は単一 Agent または[固定 Workflow preset](workflow-attempt.md) を使う。旧 group や winner 適用 runtime が一括削除されたという意味ではない。[入口](../../crates/server/src/routes/local_remote.rs)・[モデル](../../crates/db/src/models/arena_group.rs)
 
 ## 候補と状態
 

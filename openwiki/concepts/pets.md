@@ -1,19 +1,17 @@
 ---
 type: concept
-title: Pet の形式・安全な取込・保存と帰属
-description: Sidebar Pet の固定 atlas、ZIP 検証、共有設定と素材の帰属を説明する。
+title: Pet
+description: Sidebar Pet の形式、安全な取込、保存と帰属。
 tags: [pets, sprites, security, persistence, attribution]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-22T05:31:45.518Z
+    at: 2026-11-23T00:23:16.293Z
 sources:
-  - id: openwiki-source-99b81b55f2cc14e47bf7c854
-    resource: repo://packages/public/pets/lvk-rabbit/ATTRIBUTION.md
   - id: openwiki-source-72cc5d6937055777a10186c1
     resource: repo://packages/web-core/src/features/pets/format.ts
   - id: openwiki-source-6a174a6648f527d717aac5b8
     resource: repo://packages/web-core/src/features/pets/zip.ts
-generated: { by: "codex", at: "2026-11-22T05:31:45.518Z" }
+generated: { by: "codex", at: "2026-11-23T00:23:16.293Z" }
 ---
 
 # Pet の形式・安全な取込・保存と帰属

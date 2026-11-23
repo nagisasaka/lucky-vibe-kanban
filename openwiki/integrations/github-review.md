@@ -1,20 +1,20 @@
 ---
 type: integration
-title: GitHub 認証・PR とレビュー
-description: repository 資格情報、push、PR 作成と観測の境界。
+title: GitHub review
+description: Repository 資格情報、push、PR と観測の境界。
 tags: [github, pull-request, credentials]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-22T05:31:45.518Z
+    at: 2026-11-23T00:23:16.293Z
 sources:
-  - id: openwiki-source-16bb0bc0baa397cce8e201b1
-    resource: repo://crates/server/src/routes/github_credentials.rs
-generated: { by: "codex", at: "2026-11-22T05:31:45.518Z" }
+  - id: openwiki-source-27c2433bab843f01a51418b1
+    resource: repo://crates/server/src/routes/workspaces/pr.rs
+generated: { by: "codex", at: "2026-11-23T00:23:16.293Z" }
 ---
 
 # GitHub 認証・PR とレビュー
 
-現在の PR 操作は Workspace と GitHostService を使う。旧 Cloud Review worker や webhook callback を現行の開始条件としない。[PR route](../../crates/server/src/routes/workspaces/pr.rs)
+現在の PR 操作は Workspace と GitHostService を使う。旧 Cloud Review worker や webhook callback を現行の開始条件としない。[操作の段階](../quickstart.md#操作の段階)を区別する。[PR route](../../crates/server/src/routes/workspaces/pr.rs)
 
 ## リポジトリ別 PAT の所有と管理
 

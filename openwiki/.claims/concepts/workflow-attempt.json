@@ -1,20 +1,30 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:935e128eff42884002cbad0036ad734481a448a6648e9a47756a9d986728d866",
+  "pageVersion": "sha256:b82164ceee9b3a033b525a973041dc88e352928e8c4c466d0986bb8486514ab8",
   "claims": [
     {
-      "id": "claim_0e17512a538546089b7d39e12829a8a9",
-      "statement": "任意 graph の新規起動は終了し固定 preset を使う。",
+      "id": "claim_41980f7f05074ad2bebb6890d34e68ef",
+      "statement": "新規の任意 Workflow と Arena の起動は拒否され、固定 preset を利用する。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/workflows.rs#L350-L359",
-          "version": "repo-lines-v1:sha256:55f33fefbb0a30c6889c182eadeaf103d25fa80d29179c0850c8c2758c598fae:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhNTM5Njk5NWQxZmZjYTc3MzBhMDM0MTQ2ZWNhNWY0ODBlNzllZmZkODkxNmQ4ZTI3ZTIxOGMwMWY3MzFiNGQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRiYzY3MTAzZmMwODM4ODc5ODU2YWJkYzIyMjExMjMzM2Q5YTQ1MjNhM2NlMGE4M2EyYTA1NDYwOTFlOGVkNjQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY5MjI2ODI2ZDVlZTMwNGRmNDE0ODNiY2ZmMTdiNzMxOWE3OWNlNzBjZTMxNDc5OWQ0NDRiNzVlZmEzNjhkYWIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImM0OGY2ODk2ODVhMzc0YWI5MWVlOTQxMzlmNGY1ZWEzNmRmM2FmMTJjODVmNWM2NTVkMDBhZTZjNGJiNWJhNGEifQ"
+          "resource": "repo://crates/server/src/routes/workflows.rs#L358-L360",
+          "version": "repo-lines-v1:sha256:647bd5a294dcd3bc812f4821f9ec919e88cd78a0561b9915f0ca9dd5a36c040b:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiODk3ZDA3ZTkzNTY5MjMzY2Y0ZGQ5MGQyNjE3NTFiNjk0NzUzMjBmMDkyOWRmYjg2NThkMDIwZGNiNWVmZDhlOSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDEyY2EzNDVjY2Y3NWJmOWMwODA2YmNlNjk1YmU4ZGU4MDhiNzk5ODQyNTFhN2E1NGQyMDJjZjYxMDFkZDQ1MSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMTllNzYzNTVjZjExOTk0ODBjM2Y5OTgzNmIxNDg2Yzg0MWQ4OTFmYWFkOTA0YzYwOGUwOTMwMjJkMzc1N2FlZSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiY2M4MjczNDExNjUzYmU1NDYwMDg3NWRkMzc1OTM3ZWNhNzhiOWQzN2VlNWNiM2I3ZjA0NzdlMDM0MDFiNmQzOCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_0bbbe438f9fd4394897d17b11d2073af",
+      "statement": "多角調査と棚卸しの preset は調査や提案を行い、採用・実装・公開を自動で行わない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/workflow/src/presets.rs#L126-L131",
+          "version": "repo-lines-v1:sha256:fd2e2d4063158d81e0d8298e01a40caeaf36b41b24f0ab867bba735219874737:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYWZkNzM2MGU0ZDgxMGJmNTAyNmZiNTg4YWI3OTQwM2Y5MjQ0NGMyNzJiZjVhYzc3N2QwZmI4YWFkNzY0NzRkZCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNTg0NzQzMmVmNGY2ODcyMzY3OWZlY2U2YzlmN2RlMjBlMzRhNjQyMDQxYmVlMzg0NTk3NWNlNzUxMWRjMDI0NyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTYwN2VlYTVkODUwMjFmMmY4ZGMxNzhiYTQzYTY2YTY4N2NhZjNlNDk5ODAyMjRiZGQyMWJlYTYwMTI5ZWVhMCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTZiMDkxZjE4ZjVkZmQ1MTI0ZDQ0NTFlMDdmYzRmOGQxMmNhNGQ1N2MyY2Y1ZjdkZTZmYTE5ZWJkYjE5YmQ0OSJ9"
         }
       ]
     }
   ],
   "verification": {
     "by": "openwiki/0.9.0",
-    "at": "2026-11-22T18:59:30.190Z"
+    "at": "2026-11-23T00:23:16.293Z"
   }
 }

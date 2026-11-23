@@ -1,17 +1,15 @@
 ---
 type: concept
-title: Notes の本文と独立追記
-description: Project の設計意図を記録する本文、出典付き追記、版競合と削除後の保持を説明する。
+title: Notes
+description: Project の設計意図、本文と独立追記の寿命。
 tags: [design-notes, project, history, provenance]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-22T05:31:45.518Z
+    at: 2026-11-23T00:23:16.293Z
 sources:
-  - id: openwiki-source-c2fc034438311f3aa02f5ee5
-    resource: repo://crates/db/migrations/20261023110000_retain_design_notes_on_project_delete.sql
   - id: openwiki-source-830e28055c4ae6f5464df312
     resource: repo://crates/db/src/models/design_note.rs
-generated: { by: "codex", at: "2026-11-22T05:31:45.518Z" }
+generated: { by: "codex", at: "2026-11-23T00:23:16.293Z" }
 ---
 
 # Notes の本文と独立追記

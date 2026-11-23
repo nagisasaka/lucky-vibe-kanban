@@ -1,19 +1,17 @@
 ---
 type: concept
-title: Auto-merge の選択・検証・公開
-description: 固定 source と target から候補を作り、検証・Wiki・正確な Git 公開・回復を分ける契約。
+title: Auto-merge
+description: 固定 source と target の統合、検証、Wiki と公開。
 tags: [integration, git, validation, lifecycle, recovery]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-22T05:31:45.518Z
+    at: 2026-11-23T00:23:16.293Z
 sources:
   - id: openwiki-source-595d5d0308d670e38ef27fbf
     resource: repo://crates/server/src/routes/integrations/admission.rs
   - id: openwiki-source-5720d865d1c837f0e6b7dab7
     resource: repo://crates/server/src/routes/integrations/conversation.rs
-  - id: openwiki-source-b393e75029374eaf9cba5f7d
-    resource: repo://crates/server/src/routes/integrations/runtime.rs
-generated: { by: "codex", at: "2026-11-22T05:31:45.518Z" }
+generated: { by: "codex", at: "2026-11-23T00:23:16.293Z" }
 ---
 
 # Auto-merge の選択・検証・公開
@@ -40,7 +38,7 @@ Target の `.lvk/integration-validation.json` は受付時に参考コマンド�
 
 ## Wiki と公開
 
-Wiki が有効ならコード検証後、同じ候補 branch で OpenWiki lifecycle を完了し、Wiki だけを別 commit にする。コード SHA、Wiki SHA と最終候補を区別し、Wiki 後続 commit をコード試験済みと偽らない。初回 `openwiki_begin` の前に `prepare_wiki` でコード証拠と writer を照合し、原本 journal を固定する。生成 setup 差分の復元は host が証拠と identity を検証した上で行う。[準備](../../crates/server/src/routes/integrations/conversation.rs)・[限定復元](../../crates/services/src/services/openwiki/setup/integration.rs)・[Wiki 保守](../operations/openwiki-maintenance.md)
+Wiki が有効ならコード検証後、同じ候補 branch で OpenWiki lifecycle を完了し、Wiki だけを別 commit にする。コード SHA、Wiki SHA と最終候補を区別し、Wiki 後続 commit をコード試験済みと偽らない。初回 `openwiki_begin` の前に `prepare_wiki` でコード証拠と writer を照合し、原本 journal を固定する。生成 setup 差分の復元は host が証拠と identity を検証した上で行う。[準備](../../crates/server/src/routes/integrations/conversation.rs)・[Wiki 保守](../operations/openwiki-maintenance.md)
 
 公開要求の受付は Git 適用ではない。担当 Run・子 process・script・writer の収束、Wiki 完了証拠、候補と検証を host が確認してから進む。実 target が完成候補の祖先なら完成候補を変更せず CAS で反映する。祖先でなければ候補と証拠を保持して未公開の In Review に止まり、自動 rebase や追従をしない。[公開](../../crates/server/src/routes/integrations/runtime.rs)・[Git publication](../../crates/git/src/publication.rs)
 

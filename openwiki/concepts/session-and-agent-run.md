@@ -1,22 +1,20 @@
 ---
 type: concept
-title: Session・Agent Run・Attempt
-description: 会話、実行依頼、実行試行の識別と継続の境界。
+title: Session と Agent Run
+description: 会話、実行依頼、試行と継続の境界。
 tags: [session, agent-run, lifecycle]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-22T18:59:30.190Z
+    at: 2026-11-23T00:23:16.293Z
 sources:
-  - id: openwiki-source-3e5425718d87b437a12edd60
-    resource: repo://crates/db/src/models/session.rs
   - id: openwiki-source-351583963abfe37bbf137f7e
     resource: repo://crates/executors/src/runtime/contracts.rs
-generated: { by: "codex", at: "2026-11-22T18:59:30.190Z" }
+generated: { by: "codex", at: "2026-11-23T00:23:16.293Z" }
 ---
 
 # Session・Agent Run・Attempt
 
-**Session** は [Workspace](workspace.md) 内の会話単位で、同じ Workspace の別 Session は会話履歴を分けてもファイルを共有する。**Agent Run** は一つの実行依頼、**Run Attempt** はその実行試行であり、Session や Run を OS プロセスの寿命と同一視しない。provider の native session ID も LVK の Session ID とは別である。[Session](../../crates/db/src/models/session.rs)・[実行契約](../../crates/executors/src/runtime/contracts.rs)
+**Session** は [Workspace](workspace.md) 内の会話単位で、同じ Workspace の別 Session は会話履歴を分けてもファイルを共有する。**Agent Run** は一つの実行依頼、**Run Attempt** はその実行試行であり、Session や Run を OS プロセスの寿命と同一視しない。provider の native session ID も LVK の Session ID とは別である。[操作の段階](../quickstart.md#操作の段階)を区別する。[Session](../../crates/db/src/models/session.rs)・[実行契約](../../crates/executors/src/runtime/contracts.rs)
 
 依頼は Session、Run、turn、相関 ID、冪等キー、provider/profile、Workspace と入力を保持する。Attempt はさらに試行番号、transport、capability snapshot、設定、選択 Skill、provider session を固定する。検証はこれらの identity と実行環境の整合性を要求し、Review intent の selected Skills や Follow-up 以外の reset を拒否する。起動・永続化と投影の仕組みは [Agent Runtime](../architecture/agent-runtime.md) を参照する。
 

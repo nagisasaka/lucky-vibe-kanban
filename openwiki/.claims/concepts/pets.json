@@ -1,40 +1,34 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:88aa2101358ba6b93fdb9d90ef5ab62826fc069b40d314035028a5e077f47e56",
+  "pageVersion": "sha256:79fcb43f72542088d3439d48e60f93d3900dd12e8ce84cb2e7d7bab11d9812a7",
   "claims": [
     {
-      "id": "claim_b27d13910de7405aac0b822460bd091a",
-      "statement": "Pet manifest は固定 v1/v2 atlas を受け入れ、独自の frame・state 配置を拒否する。",
+      "id": "claim_760b48106c0f4ae5859c29fe948cac08",
+      "statement": "Pet atlas の幅は 1536 pixel で、v1 は高さ 1872、v2 は高さ 2288 である。",
       "evidence": [
         {
-          "resource": "repo://packages/web-core/src/features/pets/format.ts#L53-L95",
-          "version": "repo-lines-v1:sha256:f6da55d5f3f165c9dbf375e98cc2daf7429a28fe126280b4a9b636c96a3191f7:eyJzZWxlY3RlZExpbmVDb3VudCI6NDMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNlY2QxZTAyODFiMWExNzIzYTQ0YTc3N2VlNWM2NjgyMjUyYjEwNGE5ODRkZDcyNTQ0NDczNWQ4NGUzOGZkYjQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJjMGE5ZjQ3YTRmOWMxNTBhNDljMDc1YmU0Mjc1YWFlNDdmYzg0OTFhZGQyYjM4NWQ2Mzk0OWE3ZjQ1ODFkMzkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImU5YWNlYWY3MWRhZjA0YTM5Y2E2YWY0OTA5NTkyNjBiZmI3YmFkODdiMGQzYmZmYmJhZTkyY2NiN2ExMzFlYWMifQ"
+          "resource": "repo://packages/web-core/src/features/pets/format.ts#L241-L242",
+          "version": "repo-lines-v1:sha256:2ac9adf0fb1467588ab5a1e5dba829e1eb7d367de65c65f9a91deb96c4e46e4b:eyJzZWxlY3RlZExpbmVDb3VudCI6MiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiODUwNjlhYWFhOWM5OGQxMzY3ZTg2MjExYzhiMGJhMDQ0YzBlMmU4NzUxMTA5YmJkYjVmZmZkNWRlOGZlNGQ0MCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZmFjYzQ1NWUyNDgxNzIxNjJiYTUxOGI5YjY0Mjk1YmZmMTRlM2YzYWE4ZDA1YjU0MzIxMDg1NTg2ZDhmZmNlZCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMGMzOTRmYTQzYTE2OWMzMDM3M2JjOTE5MjJhMWZlZTQ2OWZjM2JhOTU0NmEwYzM3ODA3N2M5NmFhODY0MDk2ZSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiODFiZTk3NjQzYWNjZmY3MTRlMTZmZjE3N2FmMjAxZWExZDdlYTc0MzM1ODY4NzllZGJiN2QyYWRiMzRlYTQ3OCJ9"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/pets/format.ts#L270-L274",
+          "version": "repo-lines-v1:sha256:533bf2d28687cafacd44fd6258317ece44aa316d94b237a66b752d23224126a2:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYzQ4YWQ2MGM2Zjk1MzI0NGZlZDZlOTg1ODc1YWUxYzYwZjI4NmNlNWY5ODMwZjRiYjBjYTM4MjNhYjU2M2Q1MyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYTMzYzA2ZTJlODg5MjEzMTE4MDJjYmEwMmY1ZmE5NTA4MGYwMDIwNDkwNGMwZTcwYTY2MTgzMDNhZjkyMmQwZSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNjMxN2Q2OWFmMDA1OTlhNTc5YTA4MTk0YWRlZTcxZGUyZDYyODIxMGRlYWI1NWMyMjFmYjNhMTAyNWQ2Y2MxYyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMTVlYTExYzY0MzM0MTdhZmZmMTQ3ZjMyNmIxZjZiODc2YjI0NWI2NDJlYmE3ZjBiZmM5YTVhNGYxNTA1MDZkZCJ9"
         }
       ]
     },
     {
-      "id": "claim_d7f32691878b4a8697b3f0be6c013f83",
-      "statement": "ZIP 取込は8 MiBと32 entries、実展開12 MiBを上限にし、path と重複名を検査する。",
+      "id": "claim_17dee9cf5741471eadaeda81f03cc91a",
+      "statement": "Pet ZIP のサイズと展開量には上限があり、entry 数も制限される。",
       "evidence": [
         {
-          "resource": "repo://packages/web-core/src/features/pets/zip.ts#L4-L45",
-          "version": "repo-lines-v1:sha256:6f8bb1ca9bb032a80aecdd67487910c08323902ccc6b7b5925ad6b58f62c3ef8:eyJzZWxlY3RlZExpbmVDb3VudCI6NDIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ5MmRjYTlmNTRjMmE0MDA5N2M5NjFiYzk0N2VkYWQyNWMwNDQ2NzlmNDczMGQwOGQ1OGNmNDQzMDJmMmEyYjkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQzZjQ2NzVjOWFmNzJkYzU5OGZiYzExYWY4NTQzYmE4ZjI3ZjZhYWFjNDYxOTljNzc0ZWVmNDAzYzliNDU5ZGMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZiM2NjZDM3NmI2NGQxYjgxZjhhM2U3MmE4NWUzYzQ1OGUxMDZlNDQ4OWNmZWM2NWEwMWNlM2RhYjYwN2E2N2YiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImMzZDE0Mjg2ZDY4MTk5YTQ3YjRmN2M2NmFlYTlhODJmM2U3NTBlNDNiNmU2NmY0NzU5YTMwM2U2OWY3MDM5NTQifQ"
-        }
-      ]
-    },
-    {
-      "id": "claim_fd255040dae94b258d81b76bbbee9973",
-      "statement": "同梱 LVK Rabbit v1.1.0 は Masato Fujino による CC BY 4.0 素材である。",
-      "evidence": [
-        {
-          "resource": "repo://packages/public/pets/lvk-rabbit/ATTRIBUTION.md",
-          "version": "repo-file-v1:sha256:cd99e6c411d5c4c2159cc581bd61dcadf57c1ddbce0e30ed15cdfcd7aa851b97"
+          "resource": "repo://packages/web-core/src/features/pets/zip.ts#L4-L38",
+          "version": "repo-lines-v1:sha256:848ce2c98cd0374e6925278b9348f8788b30b09a0c2a2351fe24739e2401728f:eyJzZWxlY3RlZExpbmVDb3VudCI6MzUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ5MmRjYTlmNTRjMmE0MDA5N2M5NjFiYzk0N2VkYWQyNWMwNDQ2NzlmNDczMGQwOGQ1OGNmNDQzMDJmMmEyYjkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk3Y2FhYjc5NGU5ZDkzM2YxZDMzNGUxNzhmOWFkYWJjMjM2ZDdhNWZlNzc0YmI4ODNiMzgwMTBmYTQ1MzJmNjgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZiM2NjZDM3NmI2NGQxYjgxZjhhM2U3MmE4NWUzYzQ1OGUxMDZlNDQ4OWNmZWM2NWEwMWNlM2RhYjYwN2E2N2YiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImZjOWY2M2U1MDFlNTZiYjI5YmY2MDhmZDIxOWJkYjgzN2FjMzIyNmQwYjA1NWM3OGQ5ZTBiY2VmMzhlZWQzOWIifQ"
         }
       ]
     }
   ],
   "verification": {
     "by": "openwiki/0.9.0",
-    "at": "2026-11-22T05:31:45.518Z"
+    "at": "2026-11-23T00:23:16.293Z"
   }
 }

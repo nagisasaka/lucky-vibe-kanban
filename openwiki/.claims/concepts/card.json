@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:b45bd3466b7275d7d2c1e3891c98b94b10f93f3a1c66d00a441b1f2cb30a4234",
+  "claims": [
+    {
+      "id": "claim_7a7770d369554992884aa38f7f916f5d",
+      "statement": "Board API は Project の Issue を取得し、指定時には archive 属性で結果を絞り込む。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/routes/local_remote/board_api/issues.rs#L17-L39",
+          "version": "repo-lines-v1:sha256:e7c9d4458d07fd99e651d0f116e84907d5b21561d5e9820a0770d98b720bb14e:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA0MjM5ZWE4YzY2NzFmOGMzMmY1YjM2MzNjYmE1ZmQxMDBkYTliZGEzYjA3ZDNjMGU3MzUzYTU0MDIyNThhMDMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhkNWMyNjU0ZmI0NjA5ZWU4YzgyY2FiZjQwNTdhZGRmMWE0ZThiOGU2YzY2MDhiMTRjNDQyNTAyZTcwMmU2YTUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQ4Y2I3NzAyZTIyZDg3MDE3Mzc1OTE5NmYyYjNjZjI5NWEyNjljZWQyMjhkMzU3MGMxZDhmODQ4NGRlOTgwNTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQzNDEwMTE2OWFkYmRlZDdmZGYxZDVkOWVhYmE2MzM3Y2VhZjE4ODMxNjcyZTQ2MTkyZjk1NTE5OGQ4ODUxODEifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.9.0",
+    "at": "2026-11-23T00:23:16.293Z"
+  }
+}

@@ -1,40 +1,30 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:114f78d457ba45c1fb90281a41762055d043bab4dda558e0c341fa5e1cb5111b",
+  "pageVersion": "sha256:62a1115c8fef44a3c84df84f52d683986f2557dc7b9295089fdfbe9f02407b52",
   "claims": [
     {
-      "id": "claim_79ea10662a4648c18ba466b77251e7b6",
-      "statement": "保存 Issue の送信時処理は既知の共有案内の完全一致だけを除去し、編集済みや曖昧な本文を保持する。",
+      "id": "claim_500bfa3850a6464d8c0ff4ae1b66df0d",
+      "statement": "固定 snapshot は指定 commit の通常ファイルだけを読み、symlink と submodule を辿らず、本文を UTF-8 の 128 KiB 以下に制限する。",
       "evidence": [
         {
-          "resource": "repo://crates/executors/src/executors/provider_adapter.rs#L2985-L3060",
-          "version": "repo-lines-v1:sha256:040410d1f704a836c36dbf3c97b517d110a2ef49c8a7901aa763da21195dabda:eyJzZWxlY3RlZExpbmVDb3VudCI6NzYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ4N2E5Nzg5YjQ5NjkxMjM2MGQ3YzU2MTdiMWQxODQ2MGYxOWExMTU5ZDk4YjBhNzgxNjc5YTlhZmJmZGYzZGQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjgzNWM2ZDY3MDEwZmI4NjhkODk5ZTA3YzliMDNlZTRmNDM5NmVjMDZmYWZmMTZlZmUxNzFiMDNmMDc2NDA1OTIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM4YWM0MzQ2ZWE3YzZhYTQxM2UyODYyM2FjNzQ1N2NmMGJjZTA1ODI0NzNkZGQ3NjA1OGQyNWNjMGQxYmU2MDgifQ"
+          "resource": "repo://crates/server/src/routes/parallel_context.rs#L42-L75",
+          "version": "repo-lines-v1:sha256:112e8034bcfdcdcc32b67c21f405d101590992369a81a502169b9c6f46dc76f0:eyJzZWxlY3RlZExpbmVDb3VudCI6MzQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNhNmE4MzZkYzQwYjJmMTU3OWUwODVmYWFkM2JkOTY2ZTAxMDRmMTBhMmU5ZjZjYmZkZjZiMGNkNjI1MDAxMjYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImIxYmJhYjI2N2ViNWIzZTdlMzk3Njc4OTFjNGNlMDQ3ZmI1ZGJjYzM2OWFlNzAzN2IzMDVmYzMxZjIwZTEzMDgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijg4NjA2NTcyZmMyY2VhOGM1NGJjZGJhYWQxMzE4ZmY1OTFjZjE1YTJhNzU4ZWNkOWFlMzY5Mzk0NTY2Y2FhMzkifQ"
         }
       ]
     },
     {
-      "id": "claim_8460d4f30a7f4319a1c45eba5ab9fa2f",
-      "statement": "Parallel discovery は interactive な worktree を観測し、peer container を再作成せず branch を共通 Repo から解決する。",
+      "id": "claim_406e2e2a4b264331adaba822f966671b",
+      "statement": "組合せ preview は固定 commit を確認し detached worktree を作成するが、元の source や Card を変更しない。",
       "evidence": [
         {
-          "resource": "repo://crates/services/src/services/parallel_context.rs#L63-L110",
-          "version": "repo-lines-v1:sha256:afc2852939a3019a5d361369c7fc59de7322de537db163cf843fbc04ee1ea300:eyJzZWxlY3RlZExpbmVDb3VudCI6NDgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhkZjliMThmY2NiNGQ2MjVmNjkzYjA3MmVkMjc3ZGM1NGJlZGUxYzNlYzM5ZWNmMGY0NDJhZWVmYzYzNGExMTgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIzYzI2ZDJjZjIyMzJiNTM4ZGVmYzg4MTZmYzM2NDYyNWUzZWFmMmNhNmY5NzkzYWFlZjk2N2IyZDIyZmQyZDMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRiYWQ1MjFlNTIxYjQxODQ0NDlmYjI3MjMxNTg5MDE4OWU4YTlmNDVmNjU0MjNlNjJmM2ExNTJhNGFhOTMxNWQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJmNGQ5MjhlYTY3N2NhZTRjM2Y1ZWI5YWYzMDUzMWJkMTQ4ZDI2ZjRlMGFjNGUyNzdiZTYwYTczZTI4OWFiODUifQ"
-        }
-      ]
-    },
-    {
-      "id": "claim_a58aab3391d242f19123cb54a386420d",
-      "statement": "固定 snapshot は通常ファイルの UTF-8 本文を128 KiBまで返し、symlink や submodule を辿らない。",
-      "evidence": [
-        {
-          "resource": "repo://crates/server/src/routes/parallel_context.rs#L43-L78",
-          "version": "repo-lines-v1:sha256:516052b5105614374784d060a8a149b26dfaa0c74794ae7cce0b30733726a489:eyJzZWxlY3RlZExpbmVDb3VudCI6MzYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNmZGUxMTc3YjhjNmM3OWZjNjI2OTVkMjFlN2IzOWFlZjI2MmM3ZWUxYjQzYWJiYmRiMzE2Nzc0YTIyNGRiNmUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE3YWM4MzhlYjA0YzljZGQ4MTQ4NjRkY2UzYzc3OGZiNTg0MDE0MTI1MmYwMWUwZWQzNGM5ZjZkYTY4NzJkNDIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjNlMTVkMmNmMzBiZDFjNzI3ODcxYmJhMzhjZWQxOTFhMWFlMjhkMDU1NjM2Y2Q3NzcxNDdlOGRjODUyMzY4MjIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhkMzliM2Q0OWZiYjNkMmRkNTZjNmIzM2NhNjUwNzc3ZGE1MmFjODg3MzJhOWI3MDJhZmM4NmFkNmQwMjVlMWMifQ"
+          "resource": "repo://crates/server/src/routes/parallel_context.rs#L100-L169",
+          "version": "repo-lines-v1:sha256:4ae533538bf5d1f26e33710717d2a17426a6b4b20a36abd743e81ad757fcc41f:eyJzZWxlY3RlZExpbmVDb3VudCI6NzAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYzMDA1NzcxYjg3MmMxYzc1MzZmNmM3YjVlYjk4N2Y2MGE2Y2VlMjgyYThhNzljOWM4OTVkNDcwODk4NGQyZWYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVmYTY4M2MwOWE5ZmU1NjMxNGUxZGMwNTJjY2I3NjE3NmI1Njk3NzE2NzdjZTZhZTM3ZGNiZjEyZTcwMTkyYTYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjI3YzVkZGM0YmJhN2UwYWIyY2RkMWJjY2M5N2E0YzJhNmUxZTUzMjc1ZDkwOGMyNmViNGY5MmYxMjcxODhhZGUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImExNzc1NzUxZjBiYmNmNzkxODMwYTJhMmQ2M2IwOWI2ZGY5ZjlhMDZlMjFlZmQ1MzZmOTAzZWY4OTM3ODg5MDAifQ"
         }
       ]
     }
   ],
   "verification": {
     "by": "openwiki/0.9.0",
-    "at": "2026-11-22T18:59:30.190Z"
+    "at": "2026-11-23T00:23:16.293Z"
   }
 }

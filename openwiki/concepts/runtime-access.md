@@ -1,17 +1,17 @@
 ---
 type: concept
-title: 実行環境へのアクセス
-description: 外部 MCP の直接 file・process 操作、管理設定、Workspace 境界と結果不明時の扱い。
+title: Runtime access
+description: 外部 MCP の直接 file・process 操作と権限境界。
 tags: [runtime, mcp, authorization, processes, lifecycle]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-22T18:59:30.190Z
+    at: 2026-11-23T00:23:16.293Z
 sources:
   - id: openwiki-source-076036ed7bdac82d628d39d1
     resource: repo://crates/server/src/remote_mcp/environment_process.rs
   - id: openwiki-source-0801a7e5bbcc064c12effc80
     resource: repo://crates/server/src/remote_mcp/environment.rs
-generated: { by: "codex", at: "2026-11-22T18:59:30.190Z" }
+generated: { by: "codex", at: "2026-11-23T00:23:16.293Z" }
 ---
 
 # 実行環境へのアクセス

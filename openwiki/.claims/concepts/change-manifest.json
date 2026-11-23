@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:80bad41c3c45cbf5f14f245b84f65c3e699fcbc973d13ab9d5400bcf5742b69a",
+  "claims": [
+    {
+      "id": "claim_1a6d88726058414c92b9cfb935586afd",
+      "statement": "確定 Manifest は repository と event identity を検証し、同じ identity の異なる内容を拒否する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/db/src/models/repository_state/manifests.rs#L12-L18",
+          "version": "repo-lines-v1:sha256:bd6e351230fca8be6abedf50dce30879a8c49b269ff2a977abf086d178d526fe:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiY2VmMTI5ZTEzMzBhODAwZDYwYTlkNmRiNjA2NDM3OWNlNjlkNTc3MzIzY2E4YzY5MzkzYWU3M2FkMTg2MGRjNiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDg5M2Y0MGUzNzgxZWI4OTZjODJkMDQ2YTA4MDY3YTExZTM1Y2RmMmYxZGZhZjI2ZmVhOTBiOGRiNjY3NjQxMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNjE4MWJhYTZmZTc1MTZmYjQ2ZGUyMTdhNWE3ZDJjNzdkOGM1YzhiODFkYTYwZjQ2NzA0MDJlMjk1ZGEyYTlhYyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOWRmNDc4MWVkODIxOTlkYzIyNjhhNTk1YTQyZTAyODhjNzgxNWE1NDgwYjA1OTA5OWUzOTQwMDcxMjE3MmYzZSJ9"
+        },
+        {
+          "resource": "repo://crates/db/src/models/repository_state/manifests.rs#L90-L115",
+          "version": "repo-lines-v1:sha256:6298cf99b8f4da0b0a0f726274d4360ab45e415086b61244ceeaf96c5bd204cf:eyJzZWxlY3RlZExpbmVDb3VudCI6MjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRmNDE5NmZmNzUwODA1MzY0ODcxMTlmNWJkZmVmNTI4YzcyYTQxMGExYTcwNWJkM2IyMTRiNGM2NTE0YzJmMmEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUwNzFjNmU5MjJkNjRlM2MyZDEyZDFiNDAwODRjMzFjYzRlNzgwN2ZiNDJlN2Y3MjI5Y2M4ODYwNWU3ZmM4YjUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE3N2RiOGU5ZDNmNjZjY2Y2YjMxZGJmYjBmMWNlN2I5OTgzMjU5Yzk0YzJmMjJjYzdiMzZlYzhjZjUxOTNhNDIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNhYTY3NmFiMTBiMmEzZmRiYzdjMWRjNDdjZTk3YTI4ZWExODdlMjQyOGQ3YWQ2NmM3MzJhMGNkMjJmOTU0NGQifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.9.0",
+    "at": "2026-11-23T00:23:16.293Z"
+  }
+}

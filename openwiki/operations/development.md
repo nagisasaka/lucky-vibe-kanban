@@ -1,30 +1,22 @@
 ---
 type: operation
 title: 開発と検証
-description: source 開発、主要 checks と検証範囲の選択。
+description: source 開発、検証、cache と復旧の境界。
 tags: [development, testing]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-22T06:03:56.299Z
+    at: 2026-11-23T00:45:55.554Z
 sources:
-  - id: openwiki-source-32853d735a8ae91f8c088286
-    resource: repo://crates/db/migration_compat/README.md
-  - id: openwiki-source-4169d2cd1d27a6243e90c06d
-    resource: repo://crates/db/src/bin/migrate_compat.rs
-  - id: openwiki-source-7b783ec1a704bf9dadb9c003
-    resource: repo://crates/db/src/migration_compat.rs
-  - id: openwiki-source-5b54a58d1b51cd490b0e7162
-    resource: repo://package.json
+  - id: openwiki-source-f771a8041ae618a5a49437b9
+    resource: repo://deploy/developer/STAGING.md
   - id: openwiki-source-8ea6c46d63953a7104f5dd97
     resource: repo://scripts/dev-cargo.mjs
-  - id: openwiki-source-fae34e38f06cb798a007a45b
-    resource: repo://scripts/start-web-preview.sh
-generated: { by: "codex", at: "2026-11-22T06:03:56.299Z" }
+generated: { by: "codex", at: "2026-11-23T00:45:55.554Z" }
 ---
 
 # 開発と検証
 
-[README](../../README.md) を開発の入口とし、実行対象は [package.json](../../package.json)、[Cargo workspace](../../Cargo.toml)、各試験の README で確認する。Node は 20 以上、pnpm は 10.13.1 が指定され、Rust は [toolchain](../../rust-toolchain.toml) に固定される。`pnpm run dev` はローカル Web と backend を起動し、backend watch は server と agent-process-host を扱う。
+[操作の段階](../quickstart.md#操作の段階)を区別し、[README](../../README.md) を開発の入口とする。実行対象は [package.json](../../package.json)、[Cargo workspace](../../Cargo.toml)、各試験の README で確認する。Node は 20 以上、pnpm は 10.13.1 が指定され、Rust は [toolchain](../../rust-toolchain.toml) に固定される。`pnpm run dev` はローカル Web と backend を起動し、backend watch は server と agent-process-host を扱う。
 
 ## 検証の選択
 
@@ -34,6 +26,14 @@ POSIX の LVK source 開発は `node scripts/dev-cargo.mjs check --workspace` �
 
 Agent の状態や監査の変更は [runtime](../architecture/agent-runtime.md)、graph は [Workflow](../concepts/workflow-attempt.md)、実環境の更新と復元は [server 運用](server-container.md) を参照する。既存の試験記録は対象 SHA と実施範囲を確認し、今回の実行結果として再利用しない。
 
+
+## 保存先と runtime の境界
+
+開発入口は最終 `target/` を checkout に置き、利用可能な `.lvk/shared/cache` の公式 build-dir を中間生成物に使う。共有領域がなければ checkout 内に戻す。`cargo clean` は共有中間物も削除するため、この入口では禁止する。[入口](../../scripts/dev-cargo.mjs)
+
+コンパイル時は checksum freshness を使うが、build script の file input は mtime の影響を受ける。共有 build-dir は外部 build script や compile 時の source path の安全性を保証しない。稼働中の debug frontend が読む staging source を保持する。[隔離開発と staging](../../deploy/developer/STAGING.md)
+
+`LVK_INSTANCE_DIR` は data、runtime、ports を分離するが OS sandbox ではない。実行中の instance、DB、Git worktree は独立した所有と寿命を持つ。実機切替は [専用手順](../../deploy/developer/switch/README.md) を参照する。
 
 ## モバイル向け built preview
 

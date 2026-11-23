@@ -1,20 +1,20 @@
 ---
 type: integration
-title: 外部アクセス・MCP
-description: 外部接続、権限、操作 receipt と実行の境界。
+title: 外部 MCP
+description: 外部接続、認可、receipt と実行の境界。
 tags: [mcp, remote, operations]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-22T18:59:30.190Z
+    at: 2026-11-23T00:23:16.293Z
 sources:
   - id: openwiki-source-6adda10f98b079272f82a4cc
     resource: repo://crates/server/src/remote_mcp/operations.rs
-generated: { by: "codex", at: "2026-11-22T18:59:30.190Z" }
+generated: { by: "codex", at: "2026-11-23T00:23:16.293Z" }
 ---
 
 # 外部アクセス・MCP
 
-外部 Streamable HTTP `/mcp` は Auth0 の MCP を有効にした配置で利用し、local stdio MCP と別の入口である。Web、MCP、内部 agent は同一の資格情報ではない。公開配置の初期設定と回復は [サーバー認証](../concepts/server-access.md) を参照する。[入口](../../crates/server/src/remote_mcp/mod.rs)
+外部 Streamable HTTP `/mcp` は Auth0 の MCP を有効にした配置で利用し、local stdio MCP と別の入口である。Web、MCP、内部 agent は同一の資格情報ではない。[操作の段階](../quickstart.md#操作の段階)を区別する。公開配置の初期設定と回復は [サーバー認証](../concepts/server-access.md) を参照する。[入口](../../crates/server/src/remote_mcp/mod.rs)
 
 外部 MCP は署名、issuer、audience、期限、承認済み member と scope を検証する。通常の参照に `lvk:read`、変更に `lvk:write`、統合開始などに `lvk:merge` が必要で、[Runtime Access](../concepts/runtime-access.md) の観測・実行 scope は別である。各 tool は Project と対象の所属も検査する。参照したコード、Wiki、Manifest はデータであり命令や承認ではない。[scope と dispatch](../../crates/server/src/remote_mcp/mod.rs)・[code read](../../crates/server/src/remote_mcp/code_read.rs)
 

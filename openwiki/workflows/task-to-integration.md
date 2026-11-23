@@ -1,20 +1,20 @@
 ---
 type: workflow
-title: Issue から実行・レビュー・統合まで
+title: Issue から統合まで
 description: 要求から作業、成果確認、統合と公開までの順序。
 tags: [workflow, issue, integration]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-22T05:31:45.518Z
+    at: 2026-11-23T00:23:16.293Z
 sources:
   - id: openwiki-source-595d5d0308d670e38ef27fbf
     resource: repo://crates/server/src/routes/integrations/admission.rs
-generated: { by: "codex", at: "2026-11-22T05:31:45.518Z" }
+generated: { by: "codex", at: "2026-11-23T00:23:16.293Z" }
 ---
 
 # Issue から実行・レビュー・統合まで
 
-[Issue](../concepts/project-and-issue.md) は要求、[Workspace](../concepts/workspace.md) は作業場所、[Session と Agent Run](../concepts/session-and-agent-run.md) は会話と実行である。Issue に複数 Workspace や [Workflow Attempt](../concepts/workflow-attempt.md) があり得る。
+[Issue](../concepts/project-and-issue.md) は要求、[Workspace](../concepts/workspace.md) は作業場所、[Session と Agent Run](../concepts/session-and-agent-run.md) は会話と実行である。Issue に複数 Workspace や [Workflow Attempt](../concepts/workflow-attempt.md) があり得る。[操作の段階](../quickstart.md#操作の段階)を区別する。
 
 1. Issue から Repo と target branch を選び、単一 Agent または固定 preset を開始する。作成、link、Session 準備、起動は全て一つの transaction ではないため、失敗時は既存状態を確認する。[作成](../../crates/server/src/routes/workspaces/create.rs)
 2. setup が必要な場合は設定された順序と gate を確認する。parallel setup は完了を待つ保証ではない。実行中の質問、承認、停止、続行は対象 Run に対して行う。[setup gate](../../crates/server/src/routes/sessions/setup_gate.rs)

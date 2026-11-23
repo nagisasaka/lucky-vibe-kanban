@@ -1,30 +1,22 @@
 ---
 type: concept
-title: Change Manifest・Run 完了と Wiki
-description: Run の意味記録、Git source、統合済み Wiki、receipt と復旧 artifact の責任を説明する。
+title: Repository Memory
+description: Run の意味記録、Git、Wiki と回復 artifact の境界。
 tags: [repository-memory, manifest, openwiki, reconciliation]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-22T23:18:32.009Z
+    at: 2026-11-23T00:23:16.293Z
 sources:
   - id: openwiki-source-21149aa9001849998cda42a2
     resource: repo://crates/db/src/models/repository_state/manifests.rs
-  - id: openwiki-source-5720d865d1c837f0e6b7dab7
-    resource: repo://crates/server/src/routes/integrations/conversation.rs
-  - id: openwiki-source-231241ac3c842dcd67525890
-    resource: repo://crates/server/src/routes/openwiki.rs
-  - id: openwiki-source-3b873a675f85754e9183d162
-    resource: repo://crates/server/src/routes/openwiki/management.rs
-  - id: openwiki-source-110c99f4b05152335c067c71
-    resource: repo://crates/services/src/services/openwiki/sync_input.rs
   - id: openwiki-source-6067be8d6f85caa8ac03638f
     resource: repo://crates/services/src/services/repository_memory.rs
-generated: { by: "codex", at: "2026-11-22T23:18:32.009Z" }
+generated: { by: "codex", at: "2026-11-23T00:23:16.293Z" }
 ---
 
 # Change Manifest・Run 完了と Wiki
 
-[Change Manifest](glossary.md) は coding Run の目的、変更と判断を伝える記録であり、[Wiki](glossary.md) は統合済み source についての知識である。Session の私的な会話、Git の実際の変更、記録された意図は異なる。現行動作は source・tests・設定で確かめ、Manifest や Notes の理由を裏付けのない実装契約にしない。[型](../../crates/utils/src/repository_memory.rs)・[操作の段階](../quickstart.md#操作の段階)
+[Change Manifest](change-manifest.md) は coding Run の目的、変更と判断を伝える記録であり、[Wiki](wiki.md) は統合済み source についての知識である。Session の私的な会話、Git の実際の変更、記録された意図は異なる。現行動作は source・tests・設定で確かめ、Manifest や Notes の理由を裏付けのない実装契約にしない。[型](../../crates/utils/src/repository_memory.rs)・[操作の段階](../quickstart.md#操作の段階)
 
 ## Run から確定記録へ
 

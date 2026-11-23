@@ -1,20 +1,34 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:667665bacb02bb829107295e55ecaac7c79fa122d28d1e7d3d480ae13a6c8833",
+  "pageVersion": "sha256:feb7416448c21f3150553898a7a9df38cb92b2ed360c447d389d7597cc6064ee",
   "claims": [
     {
-      "id": "claim_c92c4b13e46c4b39a95973f8d1acde65",
-      "statement": "既定 provider profiles は Codex と Claude の設定を持つ。",
+      "id": "claim_5dd974441b044185aec7cc0c264e31ee",
+      "statement": "Codex 設定は非空 CODEX_HOME を優先し、それ以外は実行 account の .codex を使う。",
       "evidence": [
         {
-          "resource": "repo://crates/executors/default_profiles.json#L1-L24",
-          "version": "repo-lines-v1:sha256:1a484eb8ddbc15ae079b8574449dd94eb373870506dc012e97bc0ed906818804:eyJzZWxlY3RlZExpbmVDb3VudCI6MjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE2ZmIwOGZkYTFhY2I5NTdiNjExNmJkMzc4MTFhMWZlNDFhMDE2MTFjMDYzMWVkYmY3ODZkNjg4OWEyN2E1NWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+          "resource": "repo://crates/executors/src/executors/codex.rs#L72-L81",
+          "version": "repo-lines-v1:sha256:1d113cb31518638d1c089e8236ab36317ca69791e33700515e4798c8d7bbd52b:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA5OWQ5ZWJiNTE0M2QzNzczYmYwOTMyYmZhNjBmOTkzZWU2YTcyMGRiMzU3Yjc5YTg0MjM4N2MzMDZiZGYwZGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjA1MmM0NGI0N2Y5MWM2MGZlZjM2YzZiNWZiMzRkZmM1MTRiMjVhYTEyZDk2NWI0YjZhMzgyZmI1ZTRiNWExMWMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQwZTEyYTM4NmYwNGU1NTM3ZWU5MWYwOTJiMGFmMzg5OTZlYWNlODBiODM2ZjUwNWIxMDVmNDI0YjVjZDA1OTEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_68c4e3b11a83432d804e4bd604b1b8fa",
+      "statement": "Claude subscription profile は実行前に CLI の subscription login を検査する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/executors/src/executors/claude.rs#L807-L807",
+          "version": "repo-lines-v1:sha256:f5f0f7a01b5bac9a496ba4bf11050544b37948e66e53be2dfbcf01016dcf58fa:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZjVmMGY3YTAxYjViYWM5YTQ5NmJhNGJmMTEwNTA1NDRiMzc5NDhlNjZlNTNiZTJkZmJjZjAxMDE2ZGNmNThmYSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZjVmMGY3YTAxYjViYWM5YTQ5NmJhNGJmMTEwNTA1NDRiMzc5NDhlNjZlNTNiZTJkZmJjZjAxMDE2ZGNmNThmYSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMWY4M2NlYzNmY2Y1N2JkY2M5MzZjNjU5ODZmNjEzMDg4ZjA1NTk5YmJhOTBjOGQ5NzY0MzJlNjRlYWYwNDcxZCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZmIxZDY4OGNkNDMwNGViNmM3NjZlZjM4ODU2OTJlNWMzODZjMmRkNzA1YzBhNzVlYWUyODc3NTc1MTJiNjM3ZCJ9"
+        },
+        {
+          "resource": "repo://crates/executors/src/executors/claude/auth.rs#L82-L90",
+          "version": "repo-lines-v1:sha256:d6b48156983fff7c26c6a021def43454089b7036fc672dc295e7bd3f801d6a90:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNDJlY2Y3MjZmYTdlYmVhNjVhMWIxZWE5N2NmNmI1ODE4Zjc2Mjk0YWY3N2M5NGExM2U4M2VjYjg2NDY5YmYwYyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMzY4Y2I0ZjlkNTE5MmYyYmQ3NWQzNjUzNDBkNjU4NDliOWNmNWM2NjAxZWU4MmY4ZmJhZDdhODUzODE2MjMxYyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMTYyZWU1N2U0MWE4YzIwYWUwMTY0ZGYyNjE0MzlkY2M0OTlkMzUyMDgzNDE1MTUxNmQwNDdlOGRlYWU4YTQ2NiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNDBkZjFjNjc5ZDI4Y2FiZTUyOGVkMTc2MDI0MWQ4NDFhNzg0NzU3NjU3YWFiOGRmNjMyZWNkZWNmZDZjMjEwNCJ9"
         }
       ]
     }
   ],
   "verification": {
     "by": "openwiki/0.9.0",
-    "at": "2026-11-22T05:31:45.518Z"
+    "at": "2026-11-23T00:23:16.293Z"
   }
 }

@@ -1,80 +1,30 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:80a75063a871c24549e2f26ae85d9b3c244487cf9ca97250f99fa687fe01d28b",
+  "pageVersion": "sha256:c4255abce76c354e5bb6bd238a4155f677fc1d230c07afcaddbea03ffcdb1269",
   "claims": [
     {
-      "id": "claim_76ecd03a2fe8447fb30dba1bb0943500",
-      "statement": "確定 Change Manifest は Repo と Run の組をキーとする不変 DB record で、異なる内容の再利用を拒否する。",
+      "id": "claim_bd2d959e5c1c4efa9107d29204f1e729",
+      "statement": "変更のない Run は Manifest を作らず、欠落または不正な semantic draft は意図や検証を不明とする Git-only checkpoint に縮退する。",
       "evidence": [
         {
-          "resource": "repo://crates/db/src/models/repository_state/manifests.rs#L1-L2",
-          "version": "repo-lines-v1:sha256:0826853b0accc184d2ad774375249b5815770548fd232dbdabc53879a5ce3320:eyJzZWxlY3RlZExpbmVDb3VudCI6MiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiODdmYTBkYWQ3YThlODQyNzNiNWI2MGNkYjdmNmU3M2E1NDcyMzE2YjA4NWIxMzk3YTQ5NGU3ZWIwYzRkMTU5OCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYTBlNDljNmE1OWVlNGFmZDZlMzE4ZWY5NTA5N2VjM2FiYzNmYmQ2YTZkMGJlZjc4NjljZDdjNmUyOTAxMDI5NyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjAsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZDVmNDQ4ZDQ2OGYyMWQwNjA2OWQ0YWUyMmE5MjYwYWMyNDQ3MjQ2YTRlMjdhOGU3MGNmYzJkMWI5YmYxZGUzZiJ9"
-        },
-        {
-          "resource": "repo://crates/db/src/models/repository_state/manifests.rs#L91-L119",
-          "version": "repo-lines-v1:sha256:b8d83dcaf3a7e0c80c8421a8cecc771df8b222da48d13390e61b49550f5e29f7:eyJzZWxlY3RlZExpbmVDb3VudCI6MjksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ2MTZhNjNjOGU3MDVhMjU5YWRhYmZjM2NmMTk0Njk1MjYzNmQ5Y2UxMmEwNjg3M2Y0NmY4MmIyYWE2ZjFkMTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImNmOGEwZDM2MmM2MTkzMzA5YzhlM2UwYzJkMzc1MDJmMmQ2YjU1OGY2YzhiMTQ3YTBiMmUyNTA3ZTAwZDA1NWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImMyMzNiN2YxZjMyYzI3NWQzYTgyNTIxNTgyNjUyZjE4YTExOWFlMDQ5YzU2YWI4ZjIzYjE2YjI5YzUyNWU3NTYifQ"
+          "resource": "repo://crates/services/src/services/repository_memory.rs#L275-L315",
+          "version": "repo-lines-v1:sha256:961f576a6fd6debe07367015655286ebf62d8ee442a40a279e47d1e74146f932:eyJzZWxlY3RlZExpbmVDb3VudCI6NDEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIwNDY1ZmNkODE3YzM4OGRlZjI2YjRlMjEyMGQzNGE5ZWNjYjI5ZjhkY2RmOGRkMmIwODUyMGJjYmU4NmU4MGQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk5ZWQxY2EyOWM5ZGZhNWI4ODRlMTQyYWNkNDc2YmJjYzgyMGIzZWZiMjJlZTk2M2UzNWQwNzA2YWFjMzdiZTciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUyMzk3ZDg1YTRmNGNhYjM1MmU1NTYzNjQ3YmY0OWNjNDMxNjliZDZmNzMyZDk2MGQ0M2QyYThiODMzMTk4MGUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNjNWI3MjBhMjhmNzc5ZmJhMzRiMzI0NDAyODFjMTAwNTRkNWJhOWM4MTkwMjUyNjYxMGNiMDliYjFiMTViZjYifQ"
         }
       ]
     },
     {
-      "id": "claim_6e48ca02f1ec42129bbde42d59b1224c",
-      "statement": "Sync 入力は Repo、Workspace、source、target、選択 event と chunk digest を固定し、公開前に照合する。",
+      "id": "claim_ed21b288b7a840c1a1eab086459d0c2a",
+      "statement": "確定 Manifest は同じ内容の再送を許すが、同じ identity の異なる内容を拒否する。",
       "evidence": [
         {
-          "resource": "repo://crates/services/src/services/openwiki/sync_input.rs#L11-L60",
-          "version": "repo-lines-v1:sha256:5a97b49caadbcf82694ed265380915f35e233a678a91f563005a7cda51e18cbe:eyJzZWxlY3RlZExpbmVDb3VudCI6NTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE4Njc0ZmM0NDUyZDNmZDNlMzAwYTJmNzM5ODFmNjhhMmZkMzkwMDJkM2NjYTAwNDFiNmEwZjVlNzE1ZTA3NGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFlNzVjNzBkOTQ2MzYyNWUxMDc5ZmQ4ZmM4ZWU2MmFkMmU5MmM0MmJlYWFiZmQ4NWI3OGQ4ZTBhNDk3OWI5NGEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImE4MDkyY2RjMDcxYjlkYjMzYjMwMzNkZjk5YWEyZTE2ZDYyY2U0OTM1Yjk3NWZjYWRjN2U0ZGZjYjYzZmJjNzkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjRjN2QwNWZiYTE2ZDk5MzQzOWYyYmMyZGQwZWFjYTlhYjVkZWZkY2I5ODRlNzc1NThjZDIxZmNkNjI2MTEzZDYifQ"
-        },
-        {
-          "resource": "repo://crates/services/src/services/openwiki/sync_input.rs#L84-L121",
-          "version": "repo-lines-v1:sha256:946982de584cd4b5643ae6bdd237a29bc967db3dc05fc4b818ea39e99a7d6716:eyJzZWxlY3RlZExpbmVDb3VudCI6MzgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcyMzZjZjllYzRhZjcyNzJlMTVhMTExZDNiMDgyMTA4NDBiOGI0ZWE2ZTdiMjljOGM4ZjRkZTQyNmZiNDIwNTciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJmMWJhMWVhYmIxYjU0NmNmNGMyMTRmYmJlMmY1NDkxN2M0MzZlYTBkM2I2NGUyYjIzMWNlZjhhOWYyYWQzYzEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjVlZmJjNmYzNDg3NzFjNzE3NmUwYTFjNmIzOTYyNGJhZWM1NmFkNWQ2ZGE4YjY1YTcyMjZmMGU3YmVlYjIxMjUifQ"
-        }
-      ]
-    },
-    {
-      "id": "claim_e4c779679fbd40cc956a9c070f928513",
-      "statement": "通常 Workspace の canonical Wiki 変更は source 完了 guard が拒否し、ファイルを勝手に破棄しない。",
-      "evidence": [
-        {
-          "resource": "repo://crates/services/src/services/repository_memory.rs#L85-L107",
-          "version": "repo-lines-v1:sha256:91aa877b8a2bb12bafa31ed0d3c97019d7e67675e912147837c78f83cbb81dd1:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFlNDkwMDBmOWQ3OTg4MWYwMGMyNTAzNzJkNWVhYjIwOTgxYTZkYjdiZTExMDI3N2NjODQ2YTExMmNlZjExODIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQ2NTI3MjY2ODYzMjVlOTUyMzUzMzZmMmZmNzk0NjAzMzIzYWRkMzUzOGUxZGMxOTU1YmJiMzM3MjNlYWExODciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjgwM2I3MGU5YjdiNjA3M2U2ZjI3NmExNzgzNGRhNTc0ZjIyNzFhN2Y1MWQzN2Y5NzE5OTRiNWU3MGRkOWZlN2MifQ"
-        }
-      ]
-    },
-    {
-      "id": "claim_109dab35ca2f40dc9b9f6671b70edd05",
-      "statement": "Wiki指示の保存・解除はDB上で行い、明示更新時に選んだ指示を固定し、成功時に適用済み版を進める。自動マージは最後の適用済み上書きを使う。",
-      "evidence": [
-        {
-          "resource": "repo://crates/server/src/routes/integrations/conversation.rs",
-          "version": "repo-file-v1:sha256:b6b05a38e11679f46c959e7b6090cc52d1a3f707d2eccd6a9dc48aff62aae5e5"
-        },
-        {
-          "resource": "repo://crates/server/src/routes/openwiki.rs",
-          "version": "repo-file-v1:sha256:61a4f8d1f080a29b26a590a4ee4f93f5235fb754ec524b3427a3a248e450b76c"
-        },
-        {
-          "resource": "repo://crates/server/src/routes/openwiki/management.rs",
-          "version": "repo-file-v1:sha256:c27d4f38feb2c4ff2e4a241f02f4705d31f464dff2933ac69ec91be881530ed4"
-        }
-      ]
-    },
-    {
-      "id": "claim_9afd855804d2471497171505bbe50c79",
-      "statement": "明示更新はDB保存の指示または既定テンプレートを選択し、リポジトリの指示ファイルは暗黙の生成入力にしない。",
-      "evidence": [
-        {
-          "resource": "repo://crates/server/src/routes/openwiki.rs",
-          "version": "repo-file-v1:sha256:61a4f8d1f080a29b26a590a4ee4f93f5235fb754ec524b3427a3a248e450b76c"
-        },
-        {
-          "resource": "repo://crates/server/src/routes/openwiki/management.rs",
-          "version": "repo-file-v1:sha256:c27d4f38feb2c4ff2e4a241f02f4705d31f464dff2933ac69ec91be881530ed4"
+          "resource": "repo://crates/db/src/models/repository_state/manifests.rs#L90-L115",
+          "version": "repo-lines-v1:sha256:6298cf99b8f4da0b0a0f726274d4360ab45e415086b61244ceeaf96c5bd204cf:eyJzZWxlY3RlZExpbmVDb3VudCI6MjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRmNDE5NmZmNzUwODA1MzY0ODcxMTlmNWJkZmVmNTI4YzcyYTQxMGExYTcwNWJkM2IyMTRiNGM2NTE0YzJmMmEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUwNzFjNmU5MjJkNjRlM2MyZDEyZDFiNDAwODRjMzFjYzRlNzgwN2ZiNDJlN2Y3MjI5Y2M4ODYwNWU3ZmM4YjUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE3N2RiOGU5ZDNmNjZjY2Y2YjMxZGJmYjBmMWNlN2I5OTgzMjU5Yzk0YzJmMjJjYzdiMzZlYzhjZjUxOTNhNDIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNhYTY3NmFiMTBiMmEzZmRiYzdjMWRjNDdjZTk3YTI4ZWExODdlMjQyOGQ3YWQ2NmM3MzJhMGNkMjJmOTU0NGQifQ"
         }
       ]
     }
   ],
   "verification": {
     "by": "openwiki/0.9.0",
-    "at": "2026-11-22T23:18:32.009Z"
+    "at": "2026-11-23T00:23:16.293Z"
   }
 }

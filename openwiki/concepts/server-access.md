@@ -1,21 +1,17 @@
 ---
 type: guide
-title: サーバー認証・設定・回復
-description: Local/Public 配置、初回認証、session、閉鎖状態と限定された operator 回復を説明する。
+title: Server access
+description: 初回認証、閉鎖状態と限定された operator 回復。
 tags: [authentication, authorization, sessions, security, recovery]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-22T18:59:30.190Z
+    at: 2026-11-23T00:23:16.293Z
 sources:
-  - id: openwiki-source-20b72970921fabf5b536668c
-    resource: repo://crates/server-access/src/handlers.rs
-  - id: openwiki-source-7d94e7454f63f16057833046
-    resource: repo://crates/server-access/src/lib.rs
   - id: openwiki-source-9d15c737f5e087237387893e
     resource: repo://crates/server-access/src/store.rs
-  - id: openwiki-source-a13fe4db1eee073d0a7e2c4d
-    resource: repo://crates/server/src/main.rs
-generated: { by: "codex", at: "2026-11-22T18:59:30.190Z" }
+  - id: openwiki-source-a6cad3d930b299ebbbd793a3
+    resource: repo://crates/server-access/src/tests.rs
+generated: { by: "codex", at: "2026-11-23T00:23:16.293Z" }
 ---
 
 # サーバー認証・設定・回復
@@ -56,7 +52,7 @@ Auth0 作成支援は Preview と Apply を別にし、確認後に外部 plan �
 2. 同じ deployment を停止し、DB と存在する journal、`access.key`、`access.configured`、設定・secret・証明書および home/repos/work 等の全 volume を同じ時点の組として保全する。[停止 backup](../operations/server-container.md#更新前のバックアップと復元検証)の archive 読取と hash を検証し、失敗したら先へ進まない。
 3. 同じ image/binary、project、volume と設定で既存 deployment を `docker compose start` で戻し、`docker compose ps` と logs を確認する。新しい image や空 volume を作らない。既存 service や対応関係が不明なら停止して調査する。
 4. `docker compose exec lvk node /opt/lvk-server/healthcheck.mjs` の成功と、既存 HTTPS URL の `/?access=recovery` で証明書検証・復旧画面を確認する。health は認証修復の成功ではなく、業務 API の閉鎖を解除する根拠でもない。
-5. 同じ対象で `docker compose exec lvk server recovery-token` を発行し、確認済み HTTPS 画面で15分以内に交換する。許可された Basic を再設定するか、Auth0 の実ログイン試験・本人確認・activate を行う。新方式で再ログインし、権限と拒否を確認してから既存 Goal・定期実行・資源所有を照合し、必要な作業だけを再開する。[CLI](../../crates/server/src/main.rs)・[token](../../crates/server-access/src/store.rs)・[healthcheck](../../deploy/server/healthcheck.mjs)
+5. 同じ対象で `docker compose exec lvk server recovery-token` を発行し、確認済み HTTPS 画面で15分以内に交換する。許可された Basic を再設定するか、Auth0 の実ログイン試験・本人確認・activate を行う。新方式で再ログインし、権限と拒否を確認してから既存 Goal・定期実行・資源所有を照合し、必要な作業だけを再開する。[CLI](../../crates/server/src/main.rs)・[token](../../crates/server-access/src/store.rs)
 
 正しい元鍵があるなら、現在の組を退避し対象停止後に対応 DB と元鍵を復元することを検討する。鍵が不正で CLI が拒否する場合は、元ファイルと DB を保全し、不正鍵を退避した後に同じ data directory で recovery token を発行する。CLI は存在する不正鍵を上書きせず、鍵がない場合だけ新規生成する。新鍵は旧設定を復号しない。業務 DB や marker を削除して未設定扱いへ戻さない。[鍵生成](../../crates/server-access/src/store.rs)
 

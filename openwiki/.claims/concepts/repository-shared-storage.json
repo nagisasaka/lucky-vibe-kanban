@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:a8eccc306fbbea6c3415f0aaf837b8c4bffcb4c1708fd31668cdf62a222bdeb7",
+  "claims": [
+    {
+      "id": "claim_4c796a70564245dba46c01b4e387fca6",
+      "statement": "Repository shared storage は persistent、cache、tmp の三種類を Repo ごとに用意する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/workspace-manager/src/shared_resources.rs#L1-L18",
+          "version": "repo-lines-v1:sha256:5b23cd8c1f15034a317d88411925401ecc582f2a446625b93b347e568e108022:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVlMDhmNDlkNTFjY2I0OTVmZTZiOGUxOGVhZWM3NDU2N2JlYjg0ZmQwZWJkMzRkMzM4Mjg3ZGEzMDMyNzNkYjkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUwYmUyYmY2YzFiMzE1MzZmNWJhNjgwZWU3NGJkM2NhYTg1MmQwOTU3OWMxMjgxNzI3NDRlNzNmNzg5MDZhMDUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZlMGQyZGY4ZDBmYzE2OGRjYjNiNTAzNGIxMzY4MzZiZTQ2NzMxNTMzYzgxMzRmZjU3NWFjYjcyYTJhNGJiMzgifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_5aa45cd8a06a42c49e14f821c181ffb7",
+      "statement": "Run 終了時に tmp を自動削除せず、受渡しが終わり不要な場合に整理する。",
+      "evidence": [
+        {
+          "resource": "repo://README.md#L65-L72",
+          "version": "repo-lines-v1:sha256:98ae0c5b151c37c9494fb84809c961169b06e03349cb27b2f894688a995a16ec:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZjkwOWI1MzljZWM5MmZhZjVlYzk1MTM0ZWNjYTMwZjIyMGYwYjcxN2M2NjQ5ZTlhMjc5ODhjMDUxMWEwMjA4ZSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMTg1Nzg3OWZlNjgyZTYzODM0YzViMWZlZDAwNThlMDgyZTlhNjZkOTE0OGM2MjA0OWJiODFlNWIxOWYxOWY2MyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiM2VjZDdjY2ViNzA3Y2Y5MmJkNmY2YjJmZGVkMGY4ODNiMjViZDhjN2YzMDhmOGM4OTRmNGZlOThjNDRjZDk1NCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZGE5MzFlOGU1YzFiYmMzN2U0OTY1MWY2OTRkZDI3YWM5MjVmMDRjMDYzMmExNzQ4M2M3MGZjODg1YmU3OTNhOSJ9"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.9.0",
+    "at": "2026-11-23T00:23:16.293Z"
+  }
+}

@@ -1,19 +1,15 @@
 ---
 type: architecture
-title: Agent Runtime の監査・投影・回復
-description: Agent Run の実プロセス、監査、永続投影、再接続と終了確認の責任を説明する。
+title: Agent Runtime
+description: Agent Run の監査、投影と回復の責任を説明する。
 tags: [agent-runtime, audit, persistence, recovery]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-22T05:31:45.518Z
+    at: 2026-11-23T00:23:16.293Z
 sources:
-  - id: openwiki-source-cf8b58730bbd6b4986a47c09
-    resource: repo://crates/db/migrations/20261027010000_unstarted_reservation_terminal.sql
   - id: openwiki-source-d20a82e2192a07c687b838cb
     resource: repo://crates/db/src/models/agent_runtime.rs
-  - id: openwiki-source-8fd7f4fe2d73e778cc63c256
-    resource: repo://crates/local-deployment/src/process_host.rs
-generated: { by: "codex", at: "2026-11-22T05:31:45.518Z" }
+generated: { by: "codex", at: "2026-11-23T00:23:16.293Z" }
 ---
 
 # Agent Runtime の監査・投影・回復

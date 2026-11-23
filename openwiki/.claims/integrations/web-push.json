@@ -1,20 +1,30 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:ebfacd1dfcb168a4edbd4d987208b84cc04b1596c3384bceb5136c144236335e",
+  "pageVersion": "sha256:c3c77b4c252baf25a2fb4de2a2c7bb1003c7c66912f141e70dba143ecdf66c09",
   "claims": [
     {
-      "id": "claim_218466a0faa44fc393cebe9793926b2a",
-      "statement": "通知 outbox は canonical な入力要求、承認要求と Run 終端を対象とする。",
+      "id": "claim_594c17a2993b475aa3b1005b094692ab",
+      "statement": "Web Push subscription は owner と Project に結び付き、登録情報を封印して保存する。",
       "evidence": [
         {
-          "resource": "repo://crates/db/migrations/20261018180000_web_push.sql#L26-L49",
-          "version": "repo-lines-v1:sha256:6922cce3f6edb50885bd3874b9b4d59415be090448e96e6f6a14729ef8e33d25:eyJzZWxlY3RlZExpbmVDb3VudCI6MjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk3MDc0NTNkOGQwNjFmMmNmYWU3MzJjNzg5YmIzMGZhMjJhOTM5OWMzZTE5OTRmODEzODVmZTU5OWJlMTJiODIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZjNzgyZTQ4MGQ0NDNlMzM5ODk3NzljNjJjOTQ4Njg0OTliYTU2MmRhYTI5NzdiNWQ4ZWJkMmE0N2JmOGM0MDMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY2ZTg4ODk4ZGI3ZTE2OGMzMTE0NmExYzU1MjU0M2QzODFlODhhNzA2MDcxNDdmY2U4N2I4OTI0OWU4MGE4OTEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+          "resource": "repo://crates/server/src/routes/web_push.rs#L186-L235",
+          "version": "repo-lines-v1:sha256:700b9bbf8e1023459e5140f571940dac1cfd242a72d4473c0ab5b6c1893996ba:eyJzZWxlY3RlZExpbmVDb3VudCI6NTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM4MjdkMDQ2NjQ3NjNkZmE5NTU1YWY2ZmQ1NzZlYmQ3MDQ3MzkxZDFkYWViMjc3MGVhMGMzOGVjYzkwY2QyNDgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJjZmM0MTU1ZWNlZWY1NGNjNmY0MTBlMTZhYjM3ZWY1ODI4OTBlMGI1YTkwNmI0NGNkYTc1OTE2N2IwZjI5MDkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk0YzhjMmFjODE1OThjODY0OWQ5OTlmOGY1Mjc1NzA1Y2VlYTM1N2QxODIzZmUyZjY4NDllMTkwYTBmYjgyYTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImU0MTQ3NDU4NDYyNDZjOGNlYmFhMWUxM2E0Y2Y0NTU5NzJlNzNhMzUxMTA0MDE1YzkzMTY1NzIyNTQ4NThmMWMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_67ae95e6f77e4fe7a00a8b8be4d5e89b",
+      "statement": "通知 mask を無効にすると対象の未完了配送は終了扱いになる。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/routes/web_push.rs#L269-L282",
+          "version": "repo-lines-v1:sha256:6cb40bd58f285a9ed08d3a24ef7446b591894a2f6e15c900a5d3fbf46b88e601:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY2MTAwOWM0ZDYzYTdkMDA0ZWUzN2Y1MWUzZjc3Mzg0OWNiODM4MjIyMWMxMzVkNDYzY2Q4MTRkYTY4NmExOTEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU4ZWU2ZWRjMGUxOWY5YjJlMGE3NzQ1YTYwN2UzZmI5MmI5MTQxMzJlODEzMTY5MWUxZDM1ZjhjMWRhYWUwNzkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImZmN2VkNDVlYjA4ZjkyNGRkNjdjNDQ1ODE0YTgwYTdlZGE5MGRiZWVhNWZhODhhZTQ4MmI1YTUyODY4Y2ZmOTAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNhNTJlMTFkMmQyZGJiYmMyYjMwZGQ1MTMyYWViYTBlYjUxYTk0Yjg0MTk0MzBjNGY0NTIzNTE2ZDMzNWQwYzMifQ"
         }
       ]
     }
   ],
   "verification": {
     "by": "openwiki/0.9.0",
-    "at": "2026-11-22T05:31:45.518Z"
+    "at": "2026-11-23T00:23:16.293Z"
   }
 }

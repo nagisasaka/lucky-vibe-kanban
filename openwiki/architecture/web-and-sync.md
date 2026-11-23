@@ -1,19 +1,17 @@
 ---
 type: architecture
-title: Web の実行環境と同期
-description: ローカル Web、Board snapshot、Agent Run stream と表示状態の異なる同期契約を説明する。
+title: Web と同期
+description: Web、Board snapshot と Agent Run stream の同期境界。
 tags: [frontend, synchronization, transport, persistence]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-22T05:31:45.518Z
+    at: 2026-11-23T00:23:16.293Z
 sources:
   - id: openwiki-source-162bcfe1ee47c1047ccf7d52
     resource: repo://crates/server/src/routes/agent_runs.rs
-  - id: openwiki-source-71d9a385f4b03b8ca71765b0
-    resource: repo://packages/web-core/src/features/wiki/model/wikiViewerController.ts
   - id: openwiki-source-e665e0fe8e478ec542e0ace4
     resource: repo://packages/web-core/src/shared/lib/electric/collections.ts
-generated: { by: "codex", at: "2026-11-22T05:31:45.518Z" }
+generated: { by: "codex", at: "2026-11-23T00:23:16.293Z" }
 ---
 
 # Web の実行環境と同期

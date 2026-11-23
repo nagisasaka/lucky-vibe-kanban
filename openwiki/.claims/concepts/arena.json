@@ -1,40 +1,34 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:6554cbd0916c9be4b828819acc92590dbffad7d78010f76861902a24ca2a3529",
+  "pageVersion": "sha256:284b0799398ac17f010daf07fd3757f04ae95a306290854f1bda4d2ce4230566",
   "claims": [
     {
-      "id": "claim_1ef0d609ccaa489bbb4f4b528cdb0a97",
-      "statement": "Arena の候補 status は Workspace の通常 archive flag と独立する。",
+      "id": "claim_9e699c40778641d7a53032a54a527af7",
+      "statement": "新規 Arena 作成は preset entry guard により拒否され、既存履歴と retry は保持される。",
       "evidence": [
         {
-          "resource": "repo://crates/db/src/models/arena_group.rs#L8-L23",
-          "version": "repo-lines-v1:sha256:7129a6a7eb23171456cbbcbe7ac4fdb65e76be8f4f0fc787625d3a4fe0a23241:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhMTJlMjk3MTcyZjM2ZmI0NDk4ZDYwZWYwMjNjYzAwOTM5YTBjMjBmY2EzNWMzMjAyOTI3NWQwMWMxZjFkZGQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRlOGUyNWRjNWM2YWZhNDYxNzVhN2JmYzE2N2VkYTc0Nzg1MDkxYWNjNDE4ZjIwMDY1NmNkZWMwYmZhMzhiMmQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY0MWU1NWU0YzI1MDcyNGJkNDE3ZjRiNjYzNDAwYTQ3MjVkZTgzOTdjZGQwNzQ0ZmNmODI0N2VmMmU2YjM0NzgifQ"
+          "resource": "repo://crates/server/src/routes/local_remote.rs#L2818-L2824",
+          "version": "repo-lines-v1:sha256:b2aa40541d26708c1b3972f6da1492071c598ec70ffde538571d4334cfb14df9:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYmM3NDE0NjUwZTJiODA3ZDYxN2NjODc1YWUyMWI4OWNhOGU1NGI3YjNlNjhhN2RkNDRkZTUwMWYzYWFkYjI1YyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNTJhZDEwMGJiZmEzOWFlYzYwMmI0NTJiZGY5NjA2OTI5ZjU1ODNiNzdhNThiOGNmZWM2YjBiMGU5ZDU1NjFlOCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNjA2M2M0ZDFhZjhjZDg5YmIwYmRkNzY1N2ZmY2JmNjgwNmE2MTBkNzlkNmM4ZDRjMzA3YzI0MWRmMzkwMDUyMiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYmU5MWFhYTZjYTAxNmE4N2M5OWIyOWY5NGRhNzk4YmI2ZTNmZjM4MTQ4NmU5MGIyMGUwNTIzYzQ2MmRiMzAwYiJ9"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/workflows.rs#L358-L360",
+          "version": "repo-lines-v1:sha256:647bd5a294dcd3bc812f4821f9ec919e88cd78a0561b9915f0ca9dd5a36c040b:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiODk3ZDA3ZTkzNTY5MjMzY2Y0ZGQ5MGQyNjE3NTFiNjk0NzUzMjBmMDkyOWRmYjg2NThkMDIwZGNiNWVmZDhlOSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDEyY2EzNDVjY2Y3NWJmOWMwODA2YmNlNjk1YmU4ZGU4MDhiNzk5ODQyNTFhN2E1NGQyMDJjZjYxMDFkZDQ1MSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMTllNzYzNTVjZjExOTk0ODBjM2Y5OTgzNmIxNDg2Yzg0MWQ4OTFmYWFkOTA0YzYwOGUwOTMwMjJkMzc1N2FlZSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiY2M4MjczNDExNjUzYmU1NDYwMDg3NWRkMzc1OTM3ZWNhNzhiOWQzN2VlNWNiM2I3ZjA0NzdlMDM0MDFiNmQzOCJ9"
         }
       ]
     },
     {
-      "id": "claim_617631ee38e6458e9b33620a6d25924e",
-      "statement": "新規 Arena 作成 handler は preset 入口 guard を通る。",
+      "id": "claim_4f092ca01ab246a8ae8dec48dfd588f8",
+      "statement": "Workflow の winner 適用は各 Repository の差分を順次 main Workspace に適用する。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/local_remote.rs#L2815-L2824",
-          "version": "repo-lines-v1:sha256:0652bb4138a511464f6aa74131cc0bcf859ea41c6b50c808da9d0299f5599dc1:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY0NzVlOTRhOTA0YWM0OWIzMTU0ZDQ2NzJhNjZlODYyOWI4NmRhYzc0ZTNlMjkzN2JlNjkyN2FlM2RhMTFjNTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUyYWQxMDBiYmZhMzlhZWM2MDJiNDUyYmRmOTYwNjkyOWY1NTgzYjc3YTU4YjhjZmVjNmIwYjBlOWQ1NTYxZTgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJhYzEyMjQxOWQ4MzU3ZTNkZDdlMjZlZmZhNGM0YjEzNTUxYjVjOGExMjA0MGE0MDU0OWU3ZTNiZDNjNDJiMGMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJlOTFhYWE2Y2EwMTZhODdjOTliMjlmOTRkYTc5OGJiNmUzZmYzODE0ODZlOTBiMjBlMDUyM2M0NjJkYjMwMGIifQ"
-        }
-      ]
-    },
-    {
-      "id": "claim_5cacac799fcf44299ff518a534649e37",
-      "statement": "Workflow の winner patch は Repository ごとに順次主 Workspace へ適用される。",
-      "evidence": [
-        {
-          "resource": "repo://crates/server/src/workflow_runtime/arena.rs#L741-L782",
-          "version": "repo-lines-v1:sha256:d8fbe79240d2792dd0cf8bb9b320945d576a6595d9ee1c95812f18d31ed1a8ec:eyJzZWxlY3RlZExpbmVDb3VudCI6NDIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNlODBmM2Y5ZDUyODc5N2QyYmIwZDMyNGMzZjRkZTczODdmYTE4ZjNkOGM5ZmZiODZjNDYwNzgxMjRjMmNiY2EiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNiNDY3MmY0ZjkxY2Y2MTcwMjU2MmRlOTUxNWU5OGFjMDAyNDE2OWZiZDFhYTIwNzZkYjhmY2U3NzZiZTQ0YjYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ5YjM4ZjVjZTU3NDhjNGE2OTYyOTBjYjQ1M2UyNmM3OTdmOTNlMWMxMzA1NWFiYmMyNmUyNjVhMGNjNzVkNzMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE3OTQzZGUyN2MwNTEwMjNjMzM5NjMxMTMzNWFiMGYzNjg2MDI5MzQ5MWRiZWVlMGU1MTRmNWZjNzU1NjQ5ZGYifQ"
+          "resource": "repo://crates/server/src/workflow_runtime/arena.rs#L740-L783",
+          "version": "repo-lines-v1:sha256:3bf1b040e948cc73637270fea6efa85bb2e74fa8a2b6eaa8464089475ca8872e:eyJzZWxlY3RlZExpbmVDb3VudCI6NDQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkwOWJhNjY1MTg4ZWY4NzZlNWYwNDFlOGJmZTY3ZTgzM2M1MjQ4NmExMTMzNTlkZmU1NWI5MTY4YzgwZWFkNzkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjgyMGJjYjY2ZGNkMzkxODEwOTllYzI1MDJlMzhhNjdmYThhNGFhODA5NjJmYjViNDMzMmY1MjIzNjFjZTEzODQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImM4NWNlOTRhODA4NzBjOTM2N2U5Y2UxMGM1NmI5NTc3MDc4OTBkY2I0YjExNTYxNmUwOWEzOGQ1NDdlZTA0NDgifQ"
         }
       ]
     }
   ],
   "verification": {
     "by": "openwiki/0.9.0",
-    "at": "2026-11-22T05:31:45.518Z"
+    "at": "2026-11-23T00:23:16.293Z"
   }
 }

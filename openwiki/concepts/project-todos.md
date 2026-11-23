@@ -1,15 +1,15 @@
 ---
 type: concept
-title: Project TODO list の共有メモ
-description: Project 内の TODO の所属、番号、作成経路、競合と再送を説明する。
+title: TODO list
+description: Project 内の共有メモ、番号、競合と再送。
 tags: [todos, project, persistence, mcp, concurrency]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-22T05:31:45.518Z
+    at: 2026-11-23T00:23:16.293Z
 sources:
   - id: openwiki-source-77fa2216e4e605d16556c5db
     resource: repo://crates/db/src/models/todo.rs
-generated: { by: "codex", at: "2026-11-22T05:31:45.518Z" }
+generated: { by: "codex", at: "2026-11-23T00:23:16.293Z" }
 ---
 
 # Project TODO list の共有メモ

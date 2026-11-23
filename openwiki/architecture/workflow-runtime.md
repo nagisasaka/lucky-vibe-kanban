@@ -1,19 +1,17 @@
 ---
 type: architecture
-title: Workflow の実行と耐久オーケストレーション
-description: 凍結グラフから Agent Run を配送し、待機、再起動、分岐と取消を扱う実行境界。
+title: Workflow Runtime
+description: グラフの実行、耐久配送、回復と取消。
 tags: [workflow, orchestration, recovery, lifecycle]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-22T18:59:30.190Z
+    at: 2026-11-23T00:23:16.293Z
 sources:
-  - id: openwiki-source-28ba6f0a94db33f3977b34d2
-    resource: repo://crates/server/src/workflow_runtime/presets.rs
-  - id: openwiki-source-424fb004ecd8c2fe0a368131
-    resource: repo://crates/server/src/workflow_runtime/workspace.rs
-  - id: openwiki-source-b19d02455156008b43c210c8
-    resource: repo://crates/services/src/services/orchestration.rs
-generated: { by: "codex", at: "2026-11-22T05:31:45.518Z" }
+  - id: openwiki-source-6f2595571056199f0f83415c
+    resource: repo://crates/server/src/workflow_runtime/runner.rs
+  - id: openwiki-source-5bd46b87a60accbf6cd6da13
+    resource: repo://crates/workflow/src/planner.rs
+generated: { by: "codex", at: "2026-11-23T00:23:16.293Z" }
 ---
 
 # Workflow の実行と耐久オーケストレーション

@@ -1,17 +1,15 @@
 ---
-type: concept
-title: Astra・Project Chat の廃止
-description: 旧内蔵会話の削除と、残る質問回答・外部 MCP・対話ヘルプの境界。
+type: history
+title: Project chat
+description: 旧内蔵会話の廃止と残る外部 MCP・対話ヘルプ。
 tags: [astra, migration, project, compatibility]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-22T05:31:45.518Z
+    at: 2026-11-23T00:23:16.293Z
 sources:
   - id: openwiki-source-b50ba7975e31fb9a56845b2c
     resource: repo://crates/db/migrations/20261016000000_remove_project_chat.sql
-  - id: openwiki-source-4d617b0e2fa188c6ad63ae56
-    resource: repo://crates/server/src/routes/sessions/questions.rs
-generated: { by: "codex", at: "2026-11-22T05:31:45.518Z" }
+generated: { by: "codex", at: "2026-11-23T00:23:16.293Z" }
 ---
 
 # Astra・Project Chat の廃止

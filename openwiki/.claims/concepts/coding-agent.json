@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:900bc71fc9f130c4e7203b83fa21aaae6b2ba7de64169ff13c212c2cf75170ef",
+  "claims": [
+    {
+      "id": "claim_90de28fafb914b7bb7be44f9a39d1621",
+      "statement": "LVK の coding agent 種別には Codex と Claude Code がある。",
+      "evidence": [
+        {
+          "resource": "repo://crates/executors/src/executors/mod.rs#L125-L132",
+          "version": "repo-lines-v1:sha256:07e964eec8f749e74bbb885a1d1916586df1740f531f2671217587d819e0c60d:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYzViZTA0ZWI0OTFiYmY5ZWFlNTdiOWRiNTAzZWMxZDBhNTYwZjBmOWE5NGUxOTRiMTE0NmY3ZDljNWY2YmMyMiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMWYyMTcwZDlmZDMzZmYyZTA0ZWJiMzVlMzE4NTQxOWU0ZDU0NzUyYmRjZGE0M2QxZmNkNGMyZGIwYWNiMDkxNCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZWY2ODZkNTBmZDgxZDkyMjdhOTU3MDgxMjAzZmNlYWFjZWQ4Yzg4NmEyZjk2YjViMjI1MTM2MmY0ZGY4MTQ1MyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZGJiYTAzOWM4ZmY4NGZiZGY3MGM1NWE1MThiODMwOTgwY2EwMDQyY2Y5NGJiMThmODgyZTczNjI4MjA3NzAxMSJ9"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.9.0",
+    "at": "2026-11-23T00:23:16.293Z"
+  }
+}

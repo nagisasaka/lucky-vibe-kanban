@@ -1,20 +1,30 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:e0665df4ef8906b2f2ab6c96756c180a263e3ddb13840a0a13dd31c3b7acf62d",
+  "pageVersion": "sha256:4870a13a273273973e9f023a8cc8da152eb01e87fa6fb662725fe4cb52690c5a",
   "claims": [
     {
-      "id": "claim_7cbba4176baf4d8485716018c90a67b5",
-      "statement": "LVK はカンバン計画、coding agent と変更レビューを提供する。",
+      "id": "claim_c601391949a2435db349e4eb0c479394",
+      "statement": "LVK は Kanban で仕事を計画し coding agent を実行して変更をレビューする self-hosted 開発環境である。",
       "evidence": [
         {
-          "resource": "repo://README.md#L1-L8",
-          "version": "repo-lines-v1:sha256:e52627e98dbd047d0942f47160fcb76b576f03ecd995e734eb7af9568be12b9c:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZDRlZmI3MzQ2NjhmM2VjNzkwOTIxYzUwYTFjYmQwMDUyYTI2OTQzYjMyMTc3NjMyZGRhNTdhNWUzYjk0NTQ4ZiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDhkY2M0MWExNDE0MGYwNmVhZTFhNGJhYWE3OWJmOGY1ZTJiZDAzMzc2MTNiNWZkMzU3NjgwZDRkMjczMDg1ZSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjAsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMmVhYTU1MTUwMTQwYWIzYjExYTc3NTIwMmM4NDk3MWI2ZDljNDZkOTg1MjE4MmYxNTY2ZDJkNjUyOTBiZTRmNyJ9"
+          "resource": "repo://README.md#L1-L11",
+          "version": "repo-lines-v1:sha256:effab0b9395fe1f7bdc443f04da599c50b80c1802656bbc9a32d9f4e6966475b:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ0ZWZiNzM0NjY4ZjNlYzc5MDkyMWM1MGExY2JkMDA1MmEyNjk0M2IzMjE3NzYzMmRkYTU3YTVlM2I5NDU0OGYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImYxZWYxYTJiZDkwZjZkY2UwYTM2ODJiNWQyNDJlNDRhM2Y5Nzc3NzlmYzE2MmE0ODAzNWMwNTM0MmU0ZTg5NzYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFlNjE0MmZkZjA4ZTUwMWQxNzJhMzMwOWExOTk0YTM1MDdjMzNkZmFkNWVmZjE0M2FhZGE4MGZkZjk2NGQxZTEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_90cee912fff349ba83de7f822f910f74",
+      "statement": "公開配置は HTTPS と Basic または Auth0 を使い、初期状態は locked である。",
+      "evidence": [
+        {
+          "resource": "repo://README.md#L20-L23",
+          "version": "repo-lines-v1:sha256:995125fd7f8259c9b823829edb080c1aedf019e8a2cd5ac3cc5e87af02d8a513:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiODU0ZTc3Yzc1N2JmOTA5YjlmMWI4ZjE1MWE0N2NhMTM4MjIwNGVjOGNjNjhhYTAyODRjYjczOTkxMTA5ODYxNCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNmRhZTQzZjBmODkyMDE1MTk2YWE0ZWFmYjUwYWJmNTE3YzgxZGZlNGY2OGExMmIwZjU2NTE3MDRjNWE4ZGNjMSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZDU5MDJmMjUxMjRiNjRjNmI1NWJkNGVkMjY5NDRiYzM0ODAzMTA3NDRiMmM2Yjc0ZjVjZWE3OTc3MDkxMjUzNCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYjBhMmE2YTg3NjI0YjhiYzVjMjI0YTk4ZWRhZDRmN2VmNzNiMzRiMjBlMWVmOGQzN2UxODE2ODFkMzY0OTI2YSJ9"
         }
       ]
     }
   ],
   "verification": {
     "by": "openwiki/0.9.0",
-    "at": "2026-11-22T18:59:30.190Z"
+    "at": "2026-11-23T00:23:16.293Z"
   }
 }

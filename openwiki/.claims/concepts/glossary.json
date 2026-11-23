@@ -1,44 +1,34 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:957ad450b03d688f00f3f2551c9f3e334e3b45004e718ea305925b8c0f3a6c24",
+  "pageVersion": "sha256:283e0dfbc044b8087854c09a049ef7d660c1404723798ab4342ab6b9db3bd871",
   "claims": [
     {
-      "id": "claim_ea7c7a0329ab4e0e9db287f0c39955ed",
-      "statement": "Session は Workspace に属し、Workspace は worktree と direct folder の種別を持つ。",
-      "evidence": [
-        {
-          "resource": "repo://crates/db/src/models/session.rs#L22-L31",
-          "version": "repo-lines-v1:sha256:0bb88c93ff3fcf3d55fd0eada48f2f36d0912dafda15d035280e5cc5ffc8f36c:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk5ZmQ4MTA5ZjA3ZTJjMzliMDc2YTg1YTQ3Y2I3YTFjMWMxZDNjYmNmYjE0MmI0NTU1NjBlZTE0MmY1MTM0ZjUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijc0YThhY2M1NjI3YTI3MzdlYjU0NGJkNDA2MGYxYzhjMWEzODc0NjgxYzUxNGFhZTY2Mzg5ZTRlMDExZjUyZWYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjIyYzU1NWM5MmMyZjRkMjA5M2YxMTkyYzY3NGE5NTZkYjU0OTRlYWUzOGM4OTU4MzhjZDY4NzFmOTExYTQ0NGIifQ"
-        },
-        {
-          "resource": "repo://crates/db/src/models/workspace.rs#L27-L70",
-          "version": "repo-lines-v1:sha256:ea89a54f61d1b0f91ad3655af3294c8fe99184ac308b8a195a6802cb6fff41bb:eyJzZWxlY3RlZExpbmVDb3VudCI6NDQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI2ZDMxNWI0MWU0MjY0NDlhMjJlOTQyYjQ1ZTU3NmM4ZjBlOGJhNTBjN2NmZTM0Y2ZjMzJlNGRjY2RkODY2YmEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFmZDZjMTMyNDI3ZjM2MTM4Y2IyZGRiZWFiMTRiYjM3ZDE5NzQzNzc2NjA3ZjBlN2Q3ODQ5OWQ0ODZmMmE4ZDAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjYzZmQwMWVkYWIyMmU4N2E3Nzc4YWFiNGVlOWVhNDg5YzdmNDdlYmYyOGNjODQxYzk3NTRhYmViNDAzMGE4ODMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdjYTdmMGRhYzA0ZGQ0OTA4ZWExN2Y2MjAwNzU2OGYxMjlkYjc1NGJlZGI3OGE5YmViZmViOTY0YjU3NTRhZDAifQ"
-        }
-      ]
-    },
-    {
-      "id": "claim_dc957336bb8a4ab1928bb49756be28f4",
-      "statement": "TODO は Project に属し、任意の Issue ID を持つ。",
-      "evidence": [
-        {
-          "resource": "repo://crates/db/src/models/todo.rs#L23-L38",
-          "version": "repo-lines-v1:sha256:6b58be29f91ca82eba6258a1a8459cbbcf6008bd386738e4bc6b3fd3fa722062:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA0NmI2NTMyZjMyYjdlODYzODkzMWMyZWVmYzk4NGY5ODZlNGQ0NTYxNjBlMTY2MjUxNzU3ZjE1MmZjZjA4YjMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjYwZWMzZWFmMjEzOTgxMTNjYmVmZDRiOGExODJkMDE4MDgyMGRlMGFkNWJjN2RhZDRjZWJmYzE0YmUxNDZlYmMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjI5Y2Q5MjQ5NDY1ZjRmN2U3NTlhZmU5NmIxYmQyOWFiYjhlODI4OTdkMThkMjk2OWY4MmI2MDNiOWRiNWYwNWMifQ"
-        }
-      ]
-    },
-    {
-      "id": "claim_486535b438954ea299b24ac424dd79fd",
-      "statement": "LVK は仕事を Kanban で計画し coding agent を実行して変更をレビューする self-hosted workspace である。",
+      "id": "claim_b23abeecbbfa4e3eba815150affe2021",
+      "statement": "LVK は Kanban で作業を計画し、coding agent を実行して変更をレビューする self-hosted 環境である。",
       "evidence": [
         {
           "resource": "repo://README.md#L1-L11",
           "version": "repo-lines-v1:sha256:effab0b9395fe1f7bdc443f04da599c50b80c1802656bbc9a32d9f4e6966475b:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ0ZWZiNzM0NjY4ZjNlYzc5MDkyMWM1MGExY2JkMDA1MmEyNjk0M2IzMjE3NzYzMmRkYTU3YTVlM2I5NDU0OGYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImYxZWYxYTJiZDkwZjZkY2UwYTM2ODJiNWQyNDJlNDRhM2Y5Nzc3NzlmYzE2MmE0ODAzNWMwNTM0MmU0ZTg5NzYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFlNjE0MmZkZjA4ZTUwMWQxNzJhMzMwOWExOTk0YTM1MDdjMzNkZmFkNWVmZjE0M2FhZGE4MGZkZjk2NGQxZTEifQ"
         }
       ]
+    },
+    {
+      "id": "claim_b565b6b1d8e545dfb2c389df244f46a8",
+      "statement": "Session は Workspace に属し、Run は Session と試行を持つ。",
+      "evidence": [
+        {
+          "resource": "repo://crates/db/src/models/agent_runtime.rs#L45-L108",
+          "version": "repo-lines-v1:sha256:3eb6196f5b63094ad2330e8607c3a399d12f07f48501c1620764604cfa127fcf:eyJzZWxlY3RlZExpbmVDb3VudCI6NjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImYzMjk4ZWIwMTIzMjAyZjRmNTI0YjI1MzhmYjM0ZjBlODQ5YWE0ZTljNmU3MTlkODRhNWQwZTgyOGM2ZGU3ZTIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImVmODU0ZWIwOTgxNDVkMDZjYzY2MzE0Nzc5M2I1YmMwMWZmZTg0NzRkNzk4Njc2ZGRhNWM2OWUzNTVlMjc1YmUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImVmODU0ZWIwOTgxNDVkMDZjYzY2MzE0Nzc5M2I1YmMwMWZmZTg0NzRkNzk4Njc2ZGRhNWM2OWUzNTVlMjc1YmUifQ"
+        },
+        {
+          "resource": "repo://crates/db/src/models/session.rs",
+          "version": "repo-file-v1:sha256:3b18d9845c68c947c6f32d69da40c83f3c47a0c73366cc3c104fd2f7b8a2d909"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.9.0",
-    "at": "2026-11-22T05:31:45.518Z"
+    "at": "2026-11-23T00:23:16.293Z"
   }
 }

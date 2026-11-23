@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:660af7b7e5957df7d016777bfcdbd3fcfbd01f41ccfe4f7634e54d670e78d564",
+  "claims": [
+    {
+      "id": "claim_3233e9ca7e8648aba118ea1579ffaec5",
+      "statement": "Board API は Project ID に対応する status の一覧を返す。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/routes/local_remote/board_api/project_statuses.rs#L13-L27",
+          "version": "repo-lines-v1:sha256:46a5410397c9d3eb16d7b9f2d15f48dd78363773d9e8c02c1bfc8807a03ef761:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRmMWQ2YjJmOTYwMmIyZTdiMGZjZTgyMWJhYmY1OTllYTg2YTNhYjVhZWQyZmIzMjAwYjhjZWFhMGZiOTEzNmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImM5MDJmODhiZDQxNzQ3OWRmZDQyMmM0ZjU3MzJjZTVhZWU5YTViYjIxZGUzNzkwOTRhNzJhYTNjZGE4MjM2MTIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjliMmUzNGUxZGRlOTQ1NmIxMjE4NDVlZTIyOWQ5ZjUyODVjNDQ2YTYwZGM5YzgzNzkxYmUwYTY2OTg3NTIwNjYifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.9.0",
+    "at": "2026-11-23T00:23:16.293Z"
+  }
+}

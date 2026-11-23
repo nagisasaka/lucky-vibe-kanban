@@ -1,20 +1,24 @@
 ---
 type: integration
-title: Agent provider・設定・MCP・Skill
-description: 実行 profile、認証環境、能力と接続の境界。
+title: Agent providers
+description: provider の認証、profile、能力と MCP の境界。
 tags: [providers, codex, claude, mcp]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-22T05:31:45.518Z
+    at: 2026-11-23T00:23:16.293Z
 sources:
-  - id: openwiki-source-a7d7b5cf722fd5837c4eb16e
-    resource: repo://crates/executors/default_profiles.json
-generated: { by: "codex", at: "2026-11-22T05:31:45.518Z" }
+  - id: openwiki-source-bfcf08b9feacd16360e862a4
+    resource: repo://crates/executors/src/executors/claude.rs
+  - id: openwiki-source-5514d83ac049ec5c68456f7b
+    resource: repo://crates/executors/src/executors/claude/auth.rs
+  - id: openwiki-source-22b82518475034ade38104e6
+    resource: repo://crates/executors/src/executors/codex.rs
+generated: { by: "codex", at: "2026-11-23T00:23:16.293Z" }
 ---
 
 # Agent provider・設定・MCP・Skill
 
-LVK は Codex と Claude Code の native 通信を adapter で共通 [Agent Run](../concepts/session-and-agent-run.md) に変換する。profile は provider の保存済み variant、実行 override はその Run の選択であり、mode と permission も別である。capability snapshot は LVK の実行経路での能力を表し、provider 全体の機能や実際の成功を保証しない。[provider](../../crates/executors/src/executors/mod.rs)・[契約](../../crates/executors/src/runtime/contracts.rs)・[既定 profile](../../crates/executors/default_profiles.json)
+LVK は Codex と Claude Code の native 通信を adapter で共通 [Agent Run](../concepts/session-and-agent-run.md) に変換する。profile は provider の保存済み variant、実行 override はその Run の選択であり、mode と permission も別である。capability snapshot は LVK の実行経路での能力を表し、provider 全体の機能や実際の成功を保証しない。[操作の段階](../quickstart.md#操作の段階)を区別する。[provider](../../crates/executors/src/executors/mod.rs)・[契約](../../crates/executors/src/runtime/contracts.rs)・[既定 profile](../../crates/executors/default_profiles.json)
 
 ## 実行 account と認証
 

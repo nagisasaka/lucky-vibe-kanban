@@ -1,19 +1,15 @@
 ---
 type: concept
-title: 保存済み本文と並列作業の参照
-description: 旧 Card Context の本文保護、限定的な送信時処理と、固定 commit による peer 情報の参照を説明する。
+title: Card context と LLM Wiki
+description: 保存本文、並列参照と固定 source の境界。
 tags: [issue, context, parallel-work, repository-memory]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-22T18:59:30.190Z
+    at: 2026-11-23T00:23:16.293Z
 sources:
-  - id: openwiki-source-f4e0f9b2ce513d3f8b8b070e
-    resource: repo://crates/executors/src/executors/provider_adapter.rs
   - id: openwiki-source-391f34050223d13f679b3793
     resource: repo://crates/server/src/routes/parallel_context.rs
-  - id: openwiki-source-cc3b0007b9399fe7dda21b8e
-    resource: repo://crates/services/src/services/parallel_context.rs
-generated: { by: "codex", at: "2026-11-22T18:59:30.190Z" }
+generated: { by: "codex", at: "2026-11-23T00:23:16.293Z" }
 ---
 
 # 保存済み本文と並列作業の参照

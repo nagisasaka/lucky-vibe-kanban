@@ -1,40 +1,34 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:6acf748f2fac002497c893884b57fcdf6635a3b82891be926ab9f647976fe26c",
+  "pageVersion": "sha256:222370200ff60c7000f81be6bbd463cbcef7cd07075c7afbd95c041e3c0b81ae",
   "claims": [
     {
-      "id": "claim_25aa05a8d9b14b6f90d482bf1291e190",
-      "statement": "LocalDeployment は DB、Git、Workspace と Agent Run port を組み立てる。",
+      "id": "claim_b9d2d75d6d9c44879fcb5165bacbe063",
+      "statement": "サーバーは process owner の再照合後に永続 command、setup gate、orchestration と Workflow の回復を行い、製品 monitor を起動する。",
       "evidence": [
         {
-          "resource": "repo://crates/local-deployment/src/lib.rs#L51-L89",
-          "version": "repo-lines-v1:sha256:8ced364172fd3f84d214229a6fa5271e1298e4872571e27cea300f9957e12554:eyJzZWxlY3RlZExpbmVDb3VudCI6MzksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU0YzRmMTIwMWRjZTA1NjNiMjlhMDBmOTcwMjg0MmY3ZWFmMWY3ZmVlMzBhN2I0NWI1NTc1YzMyNzFlNjRkNDgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YjA0NDkxNDY5NzIyZTgzNjNhOTRlNDA0NDUzOGUwMTNhMmEyMTdlMzZiMWU1NjhiYTYwYWNiN2I0YzhmMmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjJjZjBlOTA1NzE3YTM2YWYwYzVhZGFhNWMyZGJhOTQ2ZjRkYmMyMzUxYzI1NGYxZTI0OGE0NjkyZDYyYjdjYWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZmMjZlNmNhNjZkOGRiZDhlOWYzODg2YzUyMDFhODQzZjAwNDY5MzBiNjU0OGRiMWQzMThkY2U4YTU1Zjg3YzQifQ"
+          "resource": "repo://crates/server/src/main.rs#L104-L150",
+          "version": "repo-lines-v1:sha256:2bb73e7ccef22295703b831128d97ae06ea205f0dc5d9c3ddf268eb1c790774f:eyJzZWxlY3RlZExpbmVDb3VudCI6NDcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgxOTI1OTI4MTZjZjU3NDJjYTFmOGIzNGM2ZWU2OTQ0ZjQ4YjI1ZGU3OTg5NDc1ZDY3NmQwZWZjOTU0OGQ5NzUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUwOTc4ZmI3ZTEyMDQzNzJhYmNlNzU3M2FiOTk0MjIxZTM3MDU0MWQ0MjQ5ZmQ3NDNjYTYwZDFlMzRkMWRmNDIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjAzZGQ4MDE5NDYyMjMxMjI3OGNiMDFjYzRlMTA1Y2YwMzc5ZmMzMGYzMWU3Y2ExYTliYzQ5NGUxYTY0OGEyMmQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImU2YTMwZDlkZmEyNWZlNTViMjljYTc2OGViMjRkZWFlNTdiMzA3NDNiOWQyNjk1MTQzZjVhMGQ2NjA0NDZmMTcifQ"
         }
       ]
     },
     {
-      "id": "claim_116fea5111954719a01ee34a4ae0d1a2",
-      "statement": "起動時は provider host の再照合後、direct command、Setup gate、orchestration、Workflow の順に回復する。",
+      "id": "claim_c3ee60e3e9f449d7b779352b43b55e3f",
+      "statement": "SQLite 初期化は migration を実行し、通常接続に 5 秒の busy timeout を適用する。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/startup.rs#L178-L220",
-          "version": "repo-lines-v1:sha256:e36e37198fa84777022f52823514999e55be0f2ba91fbfa5b89c199700833c05:eyJzZWxlY3RlZExpbmVDb3VudCI6NDMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjEwN2NhMmRlMzQ4MmI5NmE5OGNmNjg5MjZmMzA1M2VhMWZkMzVmYTY4YzIwZWVkMjJiMzdiZGQxNjljYWE5ZDAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE1YjYyMGIyNGQ0ODg2ZWUzN2I3NjNjZjE3MGU3ZDg4MTUyNGYwMGQ1Y2FlYzg4M2Y2YjY1Y2I4NjY3OWYxMTIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImYzMzIzNTljYzdjNTZlZjc1ZjIwN2E0ZDYwNDQ3OWFkZDc5ZTI4YmEyZmE4M2VjZjZlOTUzMWU0OGVkNmVlZWYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJhZGJlYmY3ODhmMzAyNjdhZjMwMTJmNzVkMTIwOTcyZDU3MjVkYjVjMzFkNjE2NTAyMjBlNGZmMWE1MDM3ZTQifQ"
-        }
-      ]
-    },
-    {
-      "id": "claim_788587ea639f4a02b900ca476140c757",
-      "statement": "DB 初期化は migration 後に Agent Runtime schema guard を実行し、SQLite busy timeout は5秒である。",
-      "evidence": [
+          "resource": "repo://crates/db/src/lib.rs#L15-L23",
+          "version": "repo-lines-v1:sha256:2a73f334ad52d4f3080de2c5101019aecce35bac0487cf3431dcf001c1b467b2:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNzAzYmE2MDg4MmU1ZjM3NmZhYTNjMWU5MTk2Y2I1MzM0NGNiNGNjNThlYTBhZDNlMWE2YmEyZDg3NDRmMWE5MiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYmQ5MWVkYTQ4NTdkMWZmODkwYjFkYjJkZmY0YWUxMDQ2OTA2NmNmZDI3ODQxYzY3Y2UxNmM5ZWEyNWYwYmQ5MiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMzZjNTdmOTYxOWI3YzIwY2IwYTQyZTVjYzg2MzQyYmYxYmM4MDRlZjA5MmJhMjAzOTZlYjgzYzBkYzI3Y2Y2NiJ9"
+        },
         {
-          "resource": "repo://crates/db/src/lib.rs#L12-L42",
-          "version": "repo-lines-v1:sha256:97d299f0e8163b16b8ca44eee60d4badd0a14853e0afe00b7e85cc6100ad8a9d:eyJzZWxlY3RlZExpbmVDb3VudCI6MzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY2YzcxOTYyNmY3NWU3ZTFlM2RkYjY3YTMxMzZhMGJmZjIxZTE3MjA3YjU5MmZkYjU1MWUxZGJjY2UyMmE2OGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU1MjJjNDJjZDE5YzZkMDNkODA4YzQ1MjcyMDU1MjgyNWI3ZWExYzViNDkxYjIxODUxMWNhYzc0MTVjZjlkOWIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjIxODY5MTI2OTZmMzA4N2Y5MDRiZmQyNGE1ZjlkNmRhMWZkZjFjNDE0YzE1MDFhMzA3Yzc5MmYwZDg5MjNhNTkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhjMTZkY2U3MDZmNmFlNzQwNDk2OWU3ZmUzODdmY2RlODdkNmJhM2Y2ZWY0NDFmNDE1ODJkZWZkNDgyMWZjODMifQ"
+          "resource": "repo://crates/db/src/lib.rs#L270-L286",
+          "version": "repo-lines-v1:sha256:5d486d992477601d3533dd1fa9517ed98e209f55faf125abe3e36cd219ba50ba:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMwY2Q4YWQ0NDhjYmM4YzNlNWE4OWZjZDk0YWY5YjY4ZmE5ZGI1NTA2MDM2ZDVjMjY5OTUzMWE3ZDQ2MzRlYWQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQwYTBlNDFhMjc0YzQ0ZWRjZTc4MzJmNjViZWQzODQyMjQzZmQ0OTZhMDI5MTA3ZTA0MTUxODcxNmE3MzgxNTkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhmOTRhM2E1MzM4YWViYzM5OTA3MDBlMTMwNWY1NmI3NDlhNGJkODZhYTMzN2JiNDk1YjM5Y2E0MTIwOTRlNWMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY0NjgyNGNkYjE2MmRkNzUyM2U5YTYwMzljN2YyNDIyMzkyNWQ1MTIxODEyYzhlY2Q3OTdkOWVkZDZkMjAzZTQifQ"
         }
       ]
     }
   ],
   "verification": {
     "by": "openwiki/0.9.0",
-    "at": "2026-11-22T18:59:30.190Z"
+    "at": "2026-11-23T00:23:16.293Z"
   }
 }

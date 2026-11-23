@@ -1,19 +1,15 @@
 ---
 type: concept
-title: Organization と Member
-description: local Board の固定 Organization、現在 actor、承認制メンバーと過去 identity の境界。
+title: 組織とメンバー
+description: local Board の組織、認証主体とメンバーの境界。
 tags: [organization, membership, authorization]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-22T05:31:45.518Z
+    at: 2026-11-23T00:23:16.293Z
 sources:
-  - id: openwiki-source-20b72970921fabf5b536668c
-    resource: repo://crates/server-access/src/handlers.rs
   - id: openwiki-source-9d15c737f5e087237387893e
     resource: repo://crates/server-access/src/store.rs
-  - id: openwiki-source-1ffb01d1ba3953937e0771bf
-    resource: repo://crates/server/src/routes/local_remote.rs
-generated: { by: "codex", at: "2026-11-22T05:31:45.518Z" }
+generated: { by: "codex", at: "2026-11-23T00:23:16.293Z" }
 ---
 
 # Organization と Member

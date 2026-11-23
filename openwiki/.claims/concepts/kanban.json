@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:416fb8a231c501efe93c5d26eb2a60aa0b27d20f46668dbd15b58bb72ba31df4",
+  "claims": [
+    {
+      "id": "claim_f6b649991cc04dffbd14b8a9bb36dd26",
+      "statement": "LVK は Kanban board で仕事を計画する。",
+      "evidence": [
+        {
+          "resource": "repo://README.md#L1-L7",
+          "version": "repo-lines-v1:sha256:096cd45a5bd555f0fd303130895003b7826212cca44faeac12bc691e7403848f:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZDRlZmI3MzQ2NjhmM2VjNzkwOTIxYzUwYTFjYmQwMDUyYTI2OTQzYjMyMTc3NjMyZGRhNTdhNWUzYjk0NTQ4ZiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDQ3YzM3OWZhYzQ5OWQ5NGNiNDA1YzVhZDk2YzhjMDcyMDVhYzNiNjVjZDNiYmE4MTRkYjMxNGI2ZGU3MGI2NyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjAsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNDZiMjMyMDcyY2IwN2I1YTM2NmYzOTdjZDI3ZDc0YTg1NWQzNzFiZWY1ZDQwZWZkY2NjNzBhY2E5MmM2NWNlZiJ9"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.9.0",
+    "at": "2026-11-23T00:23:16.293Z"
+  }
+}

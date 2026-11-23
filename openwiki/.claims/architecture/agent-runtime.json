@@ -1,60 +1,30 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:3e4a333d55d6ff5801bc7bee1899b01ce9d56f7bf328716bd18b0ac34723e843",
+  "pageVersion": "sha256:a6d9a6ac617bdcd843ad9d4d71cf5af58c7466b2f95cee2a653092cb1d709167",
   "claims": [
     {
-      "id": "claim_907c701de90a4c5e97bed3cdc39e06b5",
-      "statement": "独立 process host が provider と Native Audit を所有し、アプリは保存済み cursor から再接続する。",
+      "id": "claim_410d7ecd76c840bd906a575b212c0e27",
+      "statement": "Host 観測の canonical event と cursor は同じ transaction で保存され、後続の照合や投影が失敗すると共に rollback する。",
       "evidence": [
         {
-          "resource": "repo://crates/local-deployment/src/process_host.rs#L1-L5",
-          "version": "repo-lines-v1:sha256:aa5e957614d8b2c866c3753f9481a5747e39a7201ea8155451c787558f2244e7:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMzcwMWVmYWFjNTk2MTQzYjIxMmE0ZjljZTRjZTM5ZTJjNjIwMGE2ZDNhNzdjNGYyYzI4Y2Y0NmEyNWUzOTNhZCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMTlhZDVhNDgxM2UwMmZiZjEzZjljZjIzNDMyMzM1NDc1YTUwZDVjNTk2MWU5MGYxN2IyOTc1NWU4Y2ZhYzMxOCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjAsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZDRjMDk4NGJmMDdjNjIxNmI4NGJhZDJlNDdjN2FiOTAzMDk1MzcyMzEyYThmNDhkZGE3MjkxNWEzOGFhZDI1YSJ9"
+          "resource": "repo://crates/db/src/models/agent_runtime.rs#L1644-L1726",
+          "version": "repo-lines-v1:sha256:3136f0f86e0130c6f20c97be5e550cee7f6d54a2b0f6b1930c05be06c230f284:eyJzZWxlY3RlZExpbmVDb3VudCI6ODMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdmYjlhZTYzZGY0ZDY5NzVlMzY2YTk1Yjg0YzBjMzU0NjAxZTk4ZTU1NTI3NTU0ODhiYzZjMzVjY2Q0MjM4YzEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVmNzEwYzc5YWVmYzYxNGE4ODMzZGYzNzBkYjc4M2Y2ODI1NTZiNGQzYjQ2MDc0YjRiNWMyZDQzODE2OGFjYjAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRkYjc0YmRkYjQ4YTYyODVlZTA1OGU5OGFlY2U5ZjhjMTRkNWY0ZTZhNzQ5YmQxN2ZiNTgxZjk5ODQwMmMzMzQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFjNDYxYmEyZjg1Mzk1ZTFkOGNiODNkMjkwM2VmMzBiMDQyYzViNDExNzljZTcyOWQ4NGZiYmY5NGZjZDVlNzAifQ"
         }
       ]
     },
     {
-      "id": "claim_7f23417d8ba146bdafd492c9e6cbcbd2",
-      "statement": "未起動と確認された予約だけが terminal 投影と同じ transaction で not_started へ解放される。",
+      "id": "claim_92301e1c2739445d8d5795f681c69d26",
+      "statement": "再試行不能の投影失敗は劣化状態と失敗記録と cursor を同じ transaction で保存する。",
       "evidence": [
         {
-          "resource": "repo://crates/db/migrations/20261027010000_unstarted_reservation_terminal.sql#L87-L111",
-          "version": "repo-lines-v1:sha256:49ceb2537e3444070984895fb9748e4788f8fefeb73e31f1afea05d21f0f4d58:eyJzZWxlY3RlZExpbmVDb3VudCI6MjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2Y2IwOWEwZDE4NTIwZWIxYTM1NjVjYzJiNWE5ZTllMWNiNjVlM2E2NDk3MGJhOTk3Y2VhYjMwZGNhYmNiNDIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZjNzgyZTQ4MGQ0NDNlMzM5ODk3NzljNjJjOTQ4Njg0OTliYTU2MmRhYTI5NzdiNWQ4ZWJkMmE0N2JmOGM0MDMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhlOTdkZDhlMDYyNjQ1NTY0YjFlNzhlMmMyNTk4OTczNTQwNmIyMzgwMjJkN2IwMmRiNGFmN2Q1MDllMTVhZmYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
-        }
-      ]
-    },
-    {
-      "id": "claim_909235dd39a24cd48c335a378dac3e00",
-      "statement": "host batch の identity、cursor、canonical event と投影は同じ transaction で照合・保存される。",
-      "evidence": [
-        {
-          "resource": "repo://crates/db/src/models/agent_runtime.rs#L1675-L1735",
-          "version": "repo-lines-v1:sha256:827db619c21090fc8af9e7ca2956a1828f730119dd7b0cc136c44eed34eade4d:eyJzZWxlY3RlZExpbmVDb3VudCI6NjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjczNmUyOWZlZmM2OTRjYThiYmU0ZDNlNTE0NWUwMjE2NmRlMmYwYzQwNDE1N2RkOTI3OWRjYTk3ZWEyNmQ3NzgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjkzZmE1MmZkMzc0MmRlZWM5M2EzYjE1OTZjMjAzYzU5YmI4YjNiMjIwMmM1NGY3MGU3ZTgwNDE1YmJhOGM2MTkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImU2YTM0NjZkOGFkN2Q5MTUwNjdhN2MxNTQwZmU5YmVmNTJjMjlmZGFjNTZiMTM2OWNhMTBlNTcyMThmM2Y0NWUifQ"
-        }
-      ]
-    },
-    {
-      "id": "claim_6686064155f240f286014393a4a2d776",
-      "statement": "活動中の制御は provider に送信した後で送信 bytes を監査するため、監査失敗は未送信を証明しない。",
-      "evidence": [
-        {
-          "resource": "repo://crates/local-deployment/src/process_host.rs#L950-L1015",
-          "version": "repo-lines-v1:sha256:97267d64bacc33ca8518f5d3f763952328397130c3c3c4f5c1ef6026d03a6e05:eyJzZWxlY3RlZExpbmVDb3VudCI6NjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE4ZjMwODEwZjg3NTdiZGU0MTkyYmFhNmQ3OGVkYjkzNWZhYTNlMGYwZTk3NDU0MDFjNzUyNjUwMGJmYmI4MmUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI5OTJmMDYzOWQ1YWYwNThhZGE2NTZlNmMzZGUwYTFiMTE3ZmY2YTdmYzAxY2IwM2E0MjhiNzYwOGNiMDYwODciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE0ZDcwNDhhNjFkZDMzN2U2MmUyODM5NzQzYjRjMmRhYjdlNTk0NDg2Y2FjNTU2YTQxYzlhNjFhNjdkNzAzNjAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijg3NTE3MTM3ZGZjNTVjNmFkY2U0MWJlNGU3MGRlNDBiODdiOGJlMjNkMjEzNDE1MGJjNWIzNThiOWMxNTBkMTMifQ"
-        }
-      ]
-    },
-    {
-      "id": "claim_dfc28598f01144c08749b3a05724abdb",
-      "statement": "正常な OS exit だけでは provider の成功にならず、監査済みの provider terminal を考慮して終端を決める。",
-      "evidence": [
-        {
-          "resource": "repo://crates/local-deployment/src/process_host.rs#L1080-L1140",
-          "version": "repo-lines-v1:sha256:ce1369daade664b062f48914b4390943c12d924ff80ebce429fda7cd95546af8:eyJzZWxlY3RlZExpbmVDb3VudCI6NjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBhZjQ4MjRkOTFmODM0MTcxNDAyODhiNmNlODdiOTllMmJjOTNiNTM3NTc5YmY0ZDllNWU3YWY1ZDI0NWY5ZTciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJiYjZiY2Y1NzUyNmExNzc2MmIzMzZmMjBjNzhmNmU1MTQ2Njk5Njc4ZWFjZDVlZGJjNWViNjUxMGIwNmQ1M2MiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImU5MTJmYmQwYTFlOWRiYTZjOWNkNWIwYTA3Y2EyNGNmODA2YTA1YmM1MzBkYWE3NTU5ODUzYjkwNzU1MDhhNjgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImYxNTI2OTk2ZjNlZGM2N2Q2NzRiYjUzZjJiYzU3ZGNmMjc0NjA2YzVhYjIwYTgxN2NkZWIyZWZiYWVmMGNmYWIifQ"
+          "resource": "repo://crates/db/src/models/agent_runtime.rs#L233-L320",
+          "version": "repo-lines-v1:sha256:9a1da10ea48aa27fa321504cc9a901d980e1ee755739749d31e66d6cd10bf2e1:eyJzZWxlY3RlZExpbmVDb3VudCI6ODgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNjMDk0MGI4ZGQyYzUwOTAwOTkzNDIxOGI5MTRiYzEzNjUyZGZhM2QwNWVmYjFmN2ViZWJiODU3NmViMzdjZTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVlZTZkYTFhZDEzODE5OTk4NTQ0MDU1NDJkYTczOTE1NTU2ZDMzYjE4ZDA5ODMxODFhYThhZjY2MTcxMDU5ZjMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZiMjBlNzhiOGRlMmI1ZDBlYzRlNDgwN2I0ZTNhODFmYzIyYjczMTQ4Mzg2ZWVmNzM1ZjZjYzFlMTIyYjRkZWMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE2MmVlNTdlNDFhOGMyMGFlMDE2NGRmMjYxNDM5ZGNjNDk5ZDM1MjA4MzQxNTE1MTZkMDQ3ZThkZWFlOGE0NjYifQ"
         }
       ]
     }
   ],
   "verification": {
     "by": "openwiki/0.9.0",
-    "at": "2026-11-22T05:31:45.518Z"
+    "at": "2026-11-23T00:23:16.293Z"
   }
 }

@@ -1,30 +1,20 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:be558ac2c59ef4cabd6f9dafa704f912c7baa232dc49f6efd91293347fa8c2bd",
+  "pageVersion": "sha256:05912ea6b8723038f9affe07fca13366521a41411280e9bd487bf33410626c60",
   "claims": [
     {
-      "id": "claim_d18aff085f2041d1a11379bd685857b8",
-      "statement": "Project Chat の前進 migration は専用 trigger と会話・message・event・operation 表を削除する。",
+      "id": "claim_b4ca76670ce24d389edd124b686c3178",
+      "statement": "Project Chat の前進 migration は専用 trigger と会話・イベント・操作テーブルを削除し、共有質問・command 状態を残す。",
       "evidence": [
         {
           "resource": "repo://crates/db/migrations/20261016000000_remove_project_chat.sql",
           "version": "repo-file-v1:sha256:c876ee2b499164e284e3b962e092a44c8f8174585898b193058ed5928ec9802a"
         }
       ]
-    },
-    {
-      "id": "claim_45a5dab8dc0d49778e148fd5690d27f8",
-      "statement": "歴史的 Astra operation marker は質問回答 receipt の互換処理に使われる。",
-      "evidence": [
-        {
-          "resource": "repo://crates/server/src/routes/sessions/questions.rs#L279-L297",
-          "version": "repo-lines-v1:sha256:c300f6a3dd98d995c51300a6c4f4a746a55547974df0a390096f4502d50fc686:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFiZmRjYzdiMzYwNTA4MWU0Y2M4MTkxMzNmYzk5NTliZjliMDc2M2FhMTYyOWI2NDkzNjk0NGYxZGRhMzE5ZjIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVmOGE4MWVhODdhZmMzODMyOTJlMzY4M2M5MWYwYWZhYjE2NGFjMTQ0NzM0MjFhODAyMGM4ZTJmZWE2Y2RlNjYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhhZmEwMjlmYzZlYWY5NWY0NmRlZTU3NTIxMTA4YWM1MGMxMWU0MzUxOGQ0YmQ0MmFiMmRkZDNiNGUzYWI1MTQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUyMjJlZjBmNmU5NTRlNWQ1OWJhYjdjZjk5YjExNGFmZGYwNTA0NDQ5MjZhMzk5NzRlY2IzYWU4ZDFmM2MwYmIifQ"
-        }
-      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.9.0",
-    "at": "2026-11-22T05:31:45.518Z"
+    "at": "2026-11-23T00:23:16.293Z"
   }
 }

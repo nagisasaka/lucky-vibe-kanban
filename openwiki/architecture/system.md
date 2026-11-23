@@ -1,19 +1,17 @@
 ---
 type: architecture
-title: システム境界と起動順序
-description: LVK の Web、ローカル実行基盤、永続化と起動回復の責任を説明する。
+title: システム構成
+description: Web、ローカル実行基盤、永続化と起動回復の責任。
 tags: [architecture, startup, persistence, deployment]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-22T18:59:30.190Z
+    at: 2026-11-23T00:23:16.293Z
 sources:
   - id: openwiki-source-5c2565a649f8be059d306209
     resource: repo://crates/db/src/lib.rs
-  - id: openwiki-source-190ea4aff3773f72dcf4935b
-    resource: repo://crates/local-deployment/src/lib.rs
-  - id: openwiki-source-ed8c84278dba8a1f45af40e9
-    resource: repo://crates/server/src/startup.rs
-generated: { by: "codex", at: "2026-11-22T18:59:30.190Z" }
+  - id: openwiki-source-a13fe4db1eee073d0a7e2c4d
+    resource: repo://crates/server/src/main.rs
+generated: { by: "codex", at: "2026-11-23T00:23:16.293Z" }
 ---
 
 # システム境界と起動順序
@@ -50,6 +48,7 @@ Standalone とライブラリーの起動経路は共通の local deployment を
 回復は実プロセスの所有者から外側へ進む。
 
 1. Deployment 構築時に provider host を再照合する。
+2. 永続化された Agent Run command を再照合する。
 3. Setup launch gate を再照合する。
 4. orchestration の outbox・inbox・lease と Workflow Run を再照合する。
 5. OpenWiki、Workflow completion watcher、定時処理を起動する。

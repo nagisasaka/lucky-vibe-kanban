@@ -1,15 +1,15 @@
 ---
 type: guide
-title: Project の SQLite 移送
-description: 選択した Project 記録を追加 import する範囲、操作、原子性と実行履歴の限界。
+title: Project transfer
+description: SQLite 移送の対象、手順、原子性と履歴の限界。
 tags: [project, transfer, sqlite, privacy, history]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-22T05:31:45.518Z
+    at: 2026-11-23T00:23:16.293Z
 sources:
   - id: openwiki-source-eec300ba0fd0bf7307068218
     resource: repo://crates/db/src/project_transfer.rs
-generated: { by: "codex", at: "2026-11-22T05:31:45.518Z" }
+generated: { by: "codex", at: "2026-11-23T00:23:16.293Z" }
 ---
 
 # Project の SQLite 移送

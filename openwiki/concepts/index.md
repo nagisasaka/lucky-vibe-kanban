@@ -1,21 +1,34 @@
 # ファイル
 
-- [Arena の履歴と互換性](arena.md) - 旧 Arena の候補、選択と Workspace の寿命、および Workflow の winner 適用を説明する。
-- [保存済み本文と並列作業の参照](card-context-and-llm-wiki.md) - 旧 Card Context の本文保護、限定的な送信時処理と、固定 commit による peer 情報の参照を説明する。
-- [Notes の本文と独立追記](design-notes.md) - Project の設計意図を記録する本文、出典付き追記、版競合と削除後の保持を説明する。
-- [Auto-merge の選択・検証・公開](formal-integration.md) - 固定 source と target から候補を作り、検証・Wiki・正確な Git 公開・回復を分ける契約。
-- [LVK 用語集](glossary.md) - LVK の仕事、作業場所、会話、統合と記憶の主要用語を定義する。
-- [稼働版に基づく対話ヘルプ](interactive-help.md) - 一般質問の会話、版固定の公開 source 読取と配布時の検証境界を説明する。
-- [Issue のコメント・レビュー・添付・通知](issue-collaboration.md) - Issue の共同作業、レビューの来歴と revision、再送、添付と通知の境界を説明する。
-- [Organization と Member](organization-and-membership.md) - local Board の固定 Organization、現在 actor、承認制メンバーと過去 identity の境界。
-- [Pet の形式・安全な取込・保存と帰属](pets.md) - Sidebar Pet の固定 atlas、ZIP 検証、共有設定と素材の帰属を説明する。
-- [Project・Issue と Kanban](project-and-issue.md) - Project、仕事としての Issue、Board の状態、本文版、実施と archive の関係を説明する。
-- [Astra・Project Chat の廃止](project-chat.md) - 旧内蔵会話の削除と、残る質問回答・外部 MCP・対話ヘルプの境界。
-- [Project TODO list の共有メモ](project-todos.md) - Project 内の TODO の所属、番号、作成経路、競合と再送を説明する。
-- [Project の SQLite 移送](project-transfer.md) - 選択した Project 記録を追加 import する範囲、操作、原子性と実行履歴の限界。
-- [Change Manifest・Run 完了と Wiki](repository-memory.md) - Run の意味記録、Git source、統合済み Wiki、receipt と復旧 artifact の責任を説明する。
-- [実行環境へのアクセス](runtime-access.md) - 外部 MCP の直接 file・process 操作、管理設定、Workspace 境界と結果不明時の扱い。
-- [サーバー認証・設定・回復](server-access.md) - Local/Public 配置、初回認証、session、閉鎖状態と限定された operator 回復を説明する。
-- [Session・Agent Run・Attempt](session-and-agent-run.md) - 会話、実行依頼、実行試行の識別と継続の境界。
-- [Workflow Attempt とグラフ](workflow-attempt.md) - Issue の複数工程、固定 preset、実行と待機の関係。
-- [Workspace と Repository](workspace.md) - 作業場所、接続 Repo、所有権と履歴の寿命。
+- [Agent Run](agent-run.md) - Session 内の実行依頼と試行、状態の関係。
+- [Arena](arena.md) - 旧 Arena の候補と選択、Workflow の winner 適用。
+- [Card context と LLM Wiki](card-context-and-llm-wiki.md) - 保存本文、並列参照と固定 source の境界。
+- [Card](card.md) - Kanban board 上の Issue と表示状態。
+- [Change Manifest](change-manifest.md) - Run の目的と判断を Git の実際の変更に結び付ける記録。
+- [Coding agent](coding-agent.md) - Workspace で作業する Codex と Claude Code の実行境界。
+- [Column](column.md) - Project の Kanban board を状態ごとに分ける列。
+- [上位AI](coordinating-ai.md) - MCP から仕様相談、委任と進捗確認を行う AI の役割。
+- [Notes](design-notes.md) - Project の設計意図、本文と独立追記の寿命。
+- [Auto-merge](formal-integration.md) - 固定 source と target の統合、検証、Wiki と公開。
+- [LVK 用語集](glossary.md) - 仕事、作業場所、会話、統合と記憶の用語。
+- [対話ヘルプ](interactive-help.md) - 稼働版の公開 source に基づく質問と版固定読取。
+- [Issue の共同作業](issue-collaboration.md) - コメント、レビュー、関係と添付の境界。
+- [Issue](issue.md) - Project の仕事、本文版と実施の関係。
+- [Kanban board](kanban-board.md) - Project の Issue を状態別に表示するボード。
+- [Kanban](kanban.md) - 仕事の流れを可視化して管理する方法。
+- [組織とメンバー](organization-and-membership.md) - local Board の組織、認証主体とメンバーの境界。
+- [Pet](pets.md) - Sidebar Pet の形式、安全な取込、保存と帰属。
+- [Project と Issue](project-and-issue.md) - 仕事の識別、本文版、Board 状態と archive。
+- [Project chat](project-chat.md) - 旧内蔵会話の廃止と残る外部 MCP・対話ヘルプ。
+- [TODO list](project-todos.md) - Project 内の共有メモ、番号、競合と再送。
+- [Project transfer](project-transfer.md) - SQLite 移送の対象、手順、原子性と履歴の限界。
+- [Project](project.md) - LVK の開発作業、状態と Repository を整理する単位。
+- [Repository Memory](repository-memory.md) - Run の意味記録、Git、Wiki と回復 artifact の境界。
+- [Repository shared storage](repository-shared-storage.md) - 登録 Repo ごとに Workspace 間で共有する Git 外の領域。
+- [Runtime access](runtime-access.md) - 外部 MCP の直接 file・process 操作と権限境界。
+- [Server access](server-access.md) - 初回認証、閉鎖状態と限定された operator 回復。
+- [Session と Agent Run](session-and-agent-run.md) - 会話、実行依頼、試行と継続の境界。
+- [Session](session.md) - Workspace 内で coding agent と行う独立した会話。
+- [Wiki](wiki.md) - 統合済み source に関する OpenWiki の知識と保守境界。
+- [Workflow](workflow-attempt.md) - Issue の複数工程、固定 preset、実行と待機。
+- [Workspace](workspace.md) - 作業場所、Repository、所有権と履歴の寿命。

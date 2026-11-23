@@ -1,20 +1,22 @@
 ---
 type: concept
-title: Workflow Attempt とグラフ
-description: Issue の複数工程、固定 preset、実行と待機の関係。
+title: Workflow
+description: Issue の複数工程、固定 preset、実行と待機。
 tags: [workflow, attempt, graph]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-22T18:59:30.190Z
+    at: 2026-11-23T00:23:16.293Z
 sources:
   - id: openwiki-source-a517c0f8e44d2cf0c440fbfc
     resource: repo://crates/server/src/routes/workflows.rs
-generated: { by: "codex", at: "2026-11-22T05:31:45.518Z" }
+  - id: openwiki-source-63d2b16e8e208dce3e2032ac
+    resource: repo://crates/workflow/src/presets.rs
+generated: { by: "codex", at: "2026-11-23T00:23:16.293Z" }
 ---
 
 # Workflow Attempt とグラフ
 
-Workflow は工程の定義、Workflow Attempt は [Issue](project-and-issue.md) の一つの実施を表し、共有 [Workspace](workspace.md) とノードの [Session](session-and-agent-run.md) を結ぶ。Workflow Run は起動された定義の記録、NodeExecution は特定ノードと iteration の記録である。Agent Run の一回の retry と Workflow Attempt 全体は別単位である。[モデル](../../crates/db/src/models/workflow.rs)
+Workflow は工程の定義、Workflow Attempt は [Issue](project-and-issue.md) の一つの実施を表し、共有 [Workspace](workspace.md) とノードの [Session](session-and-agent-run.md) を結ぶ。Workflow Run は起動された定義の記録、NodeExecution は特定ノードと iteration の記録である。Agent Run の一回の retry と Workflow Attempt 全体は別単位である。[操作の段階](../quickstart.md#操作の段階)を区別する。[モデル](../../crates/db/src/models/workflow.rs)
 
 ## 固定 preset の開始
 

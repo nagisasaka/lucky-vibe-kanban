@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:7c052ee643ee6c468f5ff0674696886bdafdf9b742e597879d47e07c3a053bcf",
+  "claims": [
+    {
+      "id": "claim_a78555a978a94c27be9ca4d254027ae2",
+      "statement": "外部 MCP の Wiki sync は観測した branch と source を固定し、欠落 Wiki を暗黙に bootstrap しない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/routes/openwiki.rs#L309-L325",
+          "version": "repo-lines-v1:sha256:d6823400844b3f2f077dfd3efca5355c6fb39491da0ef8bbf8228c7d6ed197c9:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY1NTgxNjE4NTA2MDZlNzdmYmViNTM1YTI2ZjA1YmNiZDFkOTRhZDdiMjY1ZDhjODZhZjNjOGMwMWY2MTY5M2MiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhjN2U1NjQ2MjA1Mjk3ZDA1OWE3ZTljYWM2Y2I3YmRmMjBhZTgyOTQxMjhiNmU2MTg4MTk3Mjk2YzRjOTU0MmYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQyNDA2ZjAxYmQxOWMwMWE4OTZhZGU1ODkxYTNlY2E4ZjdmMzQ3ZDgzMjllOWM4NGZlOTBkOGQyYjg0Yjg4ODgifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.9.0",
+    "at": "2026-11-23T00:23:16.293Z"
+  }
+}

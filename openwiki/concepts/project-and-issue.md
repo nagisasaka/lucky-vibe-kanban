@@ -1,26 +1,22 @@
 ---
 type: concept
-title: Project・Issue と Kanban
-description: Project、仕事としての Issue、Board の状態、本文版、実施と archive の関係を説明する。
+title: Project と Issue
+description: 仕事の識別、本文版、Board 状態と archive。
 tags: [project, issue, kanban, lifecycle]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-22T05:31:45.518Z
+    at: 2026-11-23T00:23:16.293Z
 sources:
-  - id: openwiki-source-9bf50baebc6a9d4f59193172
-    resource: repo://crates/db/migrations/20261111220000_issue_versions.sql
   - id: openwiki-source-5c693a62e6ccf09ccb60592f
     resource: repo://crates/db/src/models/agent_runtime_kanban.rs
-  - id: openwiki-source-6fe5fbd6df406f973641b771
-    resource: repo://crates/db/src/models/issue_number.rs
-  - id: openwiki-source-24838d7108e2888a7fdc2714
-    resource: repo://crates/server/src/routes/local_remote/issue_archive.rs
-generated: { by: "codex", at: "2026-11-22T05:31:45.518Z" }
+  - id: openwiki-source-db663c02905b9785eff4f4af
+    resource: repo://crates/server/src/routes/local_remote/issue_versions.rs
+generated: { by: "codex", at: "2026-11-23T00:23:16.293Z" }
 ---
 
 # Project・Issue と Kanban
 
-[Project](glossary.md) は関連する仕事、状態列、分類を集める単位である。[Issue](glossary.md) は達成したい仕事で、Board の Card として表示する。作業場所は [Workspace](workspace.md)、会話と実行は [Session・Agent Run](session-and-agent-run.md) が持ち、一つの Issue に複数の実施を関連付けられる。[schema](../../crates/db/migrations/20260427000000_local_kanban.sql)・[操作の段階](../quickstart.md#操作の段階)
+[Project](project.md) は関連する仕事、状態列、分類を集める単位である。[Issue](issue.md) は達成したい仕事で、Board の Card として表示する。作業場所は [Workspace](workspace.md)、会話と実行は [Session・Agent Run](session-and-agent-run.md) が持ち、一つの Issue に複数の実施を関連付けられる。[schema](../../crates/db/migrations/20260427000000_local_kanban.sql)・[操作の段階](../quickstart.md#操作の段階)
 
 ## Project と仕事の識別
 

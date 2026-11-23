@@ -1,24 +1,30 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:ce6169638077841148bd337fe814f3f36e546167b04e1c2cf43020302f0868c6",
+  "pageVersion": "sha256:90fb20aa99d5b3c4a8ab2a6062549006c602134fa2fca98ff35954d1acfa75bf",
   "claims": [
     {
-      "id": "claim_1ba2cdab82a048c88594633c5e3b622b",
-      "statement": "Workspace の所有権が container path の削除可否を決める。",
+      "id": "claim_4522b58785eb4241aeed6376534d0b9e",
+      "statement": "Workspace は kind、container ownership、usage、execution owner と archive 状態を別々に持つ。",
       "evidence": [
         {
-          "resource": "repo://crates/db/src/models/workspace.rs#L137-L148",
-          "version": "repo-lines-v1:sha256:5cf6d643c7a01fd41361b7b4684bfe85ea48d1ac12b41334898adb18c8d28872:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg0NGE1NGIzNjRlODhlYjMyZTQ4MjIyN2ZmMTIyYmMxMzk4MTZlNjc3N2M1MGFhZWEyNWNhZWQyYWJhYWE4YTYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImNhZmRjMmQxY2Y4MDI0OWY1YmI2MWY0NmExM2FjMmEyYzAyY2Y3Nzk4MWEzZDlkMjg5ZmY2ZmJhYzg4NjQ3MGQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImM3MTI0ODVlZTBmMmEyZmY3NDQ5YmQ3NmI2ZjI2ZDE3YzUzOGI2MzEzNjE3YzI1Yzg3NWRhMzMyNmM4OTFiMmMifQ"
-        },
+          "resource": "repo://crates/db/src/models/workspace.rs#L39-L75",
+          "version": "repo-lines-v1:sha256:a9558bfa9d3919fa745393066748dad903285f7b208121df56f12c1d353805ae:eyJzZWxlY3RlZExpbmVDb3VudCI6MzcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNiMzM3NTRkYmZkMWI1MDBkMjI5ODY2Mjk3NTQ1YmU3M2ZmYjA3ODU3MWNlNjhhMTljYTNiMDdjYzY0M2E5ZTIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkxODkyNzdhZGMyMTY5NDVjZmM5Mzc0NTBiYWQxZjU4NTNlMzdjMjlkNTdlOWExZWNhZjc3YzMyOWIwMWU1NTUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjI0Mzg5NmFkNTliZWM5YmFkNjVjMWZiODBmMzBhMGVjZjZiMGM5MGNiMDMzODM1MTc1NWJiYmE3ZWE0MWJlZDkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE2MDhkYWY3MDY3MjJkMjk2OGQxZWUzMWU3ZmE1MGJkOTM4NDhjMzQ5OGY2MzI0NDU3Y2U0NTMzYTg2NTRkMTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_1b034b61944e4804a731120026daef08",
+      "statement": "Workspace lifecycle の writer 判定は Run、process、integration reservation と workflow を考慮する。",
+      "evidence": [
         {
-          "resource": "repo://crates/db/src/models/workspace.rs#L35-L53",
-          "version": "repo-lines-v1:sha256:c9a6107d2e428a884205e569c18fc42f4fe8ac12d83c762d8389397d44c80403:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNjNjFmZmFhOTE3ZmQ1MTYwYjBmODIwYWE4MWE3ZDdkMzAyOGRjNzljODc0MTcyZmIyNWE3ZTdkY2Y1ZGFlZWEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjAwMzAzZTViY2M1NGVkNjg3NTUzMmYyNjk2YzJmNTMyMzY4NWViMjA4NTg5YjI0NWQ3MjVhOTdmYTUwNjYyOWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjRiYzc4YWY3ODFiMDYyMTBmZjM0OWY2NzBlMmRkZTg5YmRmNzhhYTIxOGRmZDBhYmZmNmU4Mjc2MTZmYzk3MTIifQ"
+          "resource": "repo://crates/services/src/services/workspace_lifecycle.rs#L35-L49",
+          "version": "repo-lines-v1:sha256:627783dea2e6f5819f69996909a8cb7b53a3d8a7637a3a7e4f2392557113711c:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE4YzQ1MjZlMGYwMzcyYjhiOTg0MjIyZjRhNTIwY2I4ZmFkMjEwYjQ1ZmRlMDEyNzg1NGZjMDcwMGQyZjlkMDAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVkZGM5ZjI1ZjY2NmQwYTVjZmY5OWExZTAwMDFhYjA4OTNkNzM0YTExNzk2MDIxZjAzMDE1MTY1NzMyN2E2ODEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE5ZTc2MzU1Y2YxMTk5NDgwYzNmOTk4MzZiMTQ4NmM4NDFkODkxZmFhZDkwNGM2MDhlMDkzMDIyZDM3NTdhZWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoyLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjU4YmM4M2NiOGI2ZjIxZWIwZDEzNGZiMDI4ZDk2ZWJhZjQxNThkOWI4OGMyZDZjNWYzNTA3YTAyYmFkMzMzZmIifQ"
         }
       ]
     }
   ],
   "verification": {
     "by": "openwiki/0.9.0",
-    "at": "2026-11-22T18:59:30.190Z"
+    "at": "2026-11-23T00:23:16.293Z"
   }
 }

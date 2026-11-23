@@ -1,24 +1,30 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:555f25f65b6502d9d2d460f482c4e11d4879615e4dcfd90dc8e780c11860c94b",
+  "pageVersion": "sha256:708dcf51352157372a7d36eb1b53fd6bced673d46820840cc972aa2b1acc06f6",
   "claims": [
     {
-      "id": "claim_f2eccb24f28745b39b9c5f878b41b3a5",
-      "statement": "統合受付は選択した source commit と target を固定する。",
+      "id": "claim_4bdef33492f94722b6f69b63f288d0cf",
+      "statement": "Auto-merge は Issue の現在版、選択 Workspace の Repo と target を検査し、期待した source commit を固定する。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/integrations/admission.rs#L131-L154",
-          "version": "repo-lines-v1:sha256:97a652757fe63a6669df28233fde24be3274290ea6466a4f3bd1a40b26a09688:eyJzZWxlY3RlZExpbmVDb3VudCI6MjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU0NTI3Y2MyM2Y3NTUzMDBiNjIxZDY2MmU5NTA3OGEzN2ZjNDVkNjM4NTIzOWVlZWVhMTIwYzg3OWFmMDAyMzUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFjZTVlNzU4MTk2OGNmNmNkOTJkYzA0MjRkYTc0ZjA4OGEzNjAzMjUzOTlkZTE4ZWNjNWY2YWRkZWNlNDg4YjEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI5Zjg0ZmU1ZmEyZGZiNDE5Mzg4N2ViMjU1Mjc1OTU5NzU1ZGZjYmFkN2Y4NzI3NGZlZmZjZjk4Y2Y0Zjg4MzYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImVmNTBjYjUzZTUyOGJlOGYzZjMwZWJkMDA2MzdmNjI3YjI5ZjFjNDk1ZDY4ODA5NWZiNzA1OGEwMGY2YjY4ZjUifQ"
-        },
+          "resource": "repo://crates/server/src/routes/integrations/admission.rs#L112-L152",
+          "version": "repo-lines-v1:sha256:20c2410a27eba40361cfa66673c8dd4b00a643716f1ff9c4f8ce6b7618e35ccb:eyJzZWxlY3RlZExpbmVDb3VudCI6NDEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI5MmFjZjc1M2E0YThkNDQ3NTdmZjdhMjI0YmM3MzJlMjExMDUzZDllNjM3NzEwZTE2MDBiY2M2MTNmYzc4Y2UiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjBkNTQwMmMxZmJhODg0OTZlMjg3MDQyZTY5M2JmY2NhODhhNmM4NjNkNTM1M2MwOTM3ZjQyYWRkOGFhMDJiZTciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjRjZDRhMjdiNWM0N2Y4MjgwZTFjMzhkZjdiNTczMTkzOGZjM2FjNWI3NzA1YzFjOGIwZGZlZTUzZDBiZjdjYzcifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_d11b542cb31c4f02b3788202b168ed78",
+      "statement": "統合対象 Workspace に活動中または未確認の writer や未完了 script があれば受付を拒否する。",
+      "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/integrations/admission.rs#L261-L295",
-          "version": "repo-lines-v1:sha256:fb76678aa1bf9604f1b50abe0daefb81c7102cc91b6fc0da345dee17694bb153:eyJzZWxlY3RlZExpbmVDb3VudCI6MzUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA5MjQzOGRlZDVjYjc5MDQ2OTAyZmYxMmYzYzI4NGZhYjA0NTk2NmJkZGQ1ZmFhNGE2Y2E4OGI0MTNhYTlhYmEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkwZWIwYjAzYjVmYjY3ZWI1NDRjYTdkNzFmOWRiOWJhZjVlM2EyZDNkMGZlNTQ2ODBlN2FkNmVjZjc0MjJhMjQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImExZDUyYzFkM2I1YmZmMGJiZjljYThmYThhYTUxZmVjZGRlNzM3NWFjYjliY2FmOTg0Yjg3MjNmZTdjYTE5OWQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjliNGUxZDVmMDMyN2FmNjMxODRmODk3ODljNzNjMWIzODU0NzEwNmI4YjYzZjQ2ZWEyMmI5NDFmNTdlZmI2ZGIifQ"
+          "resource": "repo://crates/server/src/routes/integrations/admission.rs#L50-L64",
+          "version": "repo-lines-v1:sha256:2af32f63ba180cc138a96f757bf7db4111a14ba9336b6d7ed9848eb4a7150a32:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFhZmIyNjAyYTQ4MTY3ZGJmNDRkMGI4MzE0NTcwNGQxMTI4NzhmZGVkM2U1MDFhZTU5OWVmNTNhMWRlZGYwNzgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImZkMmYwNGY2ZDg4ODNjNjk5MGFlZTVkNTExMGI5YmM0MDIyY2I3ZGRlZmE0MTIwZGY4ZDNiNGM4ZGVhMTMzNjAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQyNTBhZjgzM2MwYmQwN2UzOTYzYTQ5YjVmNWNmNWQ1ZmI3NzBkODczY2U3NTQ5ODM2Nzc1ZDBmNDRlYWFlZTIifQ"
         }
       ]
     }
   ],
   "verification": {
     "by": "openwiki/0.9.0",
-    "at": "2026-11-22T05:31:45.518Z"
+    "at": "2026-11-23T00:23:16.293Z"
   }
 }

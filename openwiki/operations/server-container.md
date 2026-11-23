@@ -1,24 +1,28 @@
 ---
 type: operation
-title: サーバーコンテナー運用
+title: サーバー配置と復元
 description: HTTPS 配置、永続化、バックアップと復元。
 tags: [server, docker, backup, recovery]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-22T18:59:30.190Z
+    at: 2026-11-23T00:23:16.293Z
 sources:
+  - id: openwiki-source-f771a8041ae618a5a49437b9
+    resource: repo://deploy/developer/STAGING.md
   - id: openwiki-source-df6b7819295f53fc2381f23d
     resource: repo://deploy/server/compose.yaml
-generated: { by: "codex", at: "2026-11-22T18:59:30.190Z" }
+generated: { by: "codex", at: "2026-11-23T00:23:16.293Z" }
 ---
 
 # サーバーコンテナー運用
 
-標準 server image は local LVK、agent と nginx をサーバーで動かし、browser に HTTPS を提供する。認証は利用者ごとの OS 隔離ではなく、agent と server は同じ実行 user を使う。read-only secret mount は上書きを防ぐが同じ user による読取を防がない。[Dockerfile](../../Dockerfile)・[Compose](../../deploy/server/compose.yaml)
+標準 server image は local LVK、agent と nginx をサーバーで動かし、browser に HTTPS を提供する。認証は利用者ごとの OS 隔離ではなく、agent と server は同じ実行 user を使う。read-only secret mount は上書きを防ぐが同じ user による読取を防がない。[操作の段階](../quickstart.md#操作の段階)を区別する。[Dockerfile](../../Dockerfile)・[Compose](../../deploy/server/compose.yaml)
 
 ## 公開配置と永続化
 
-versioned image、`LVK_HOST`、証明書と鍵を用意し、配置 directory の Compose と secrets を使う。Compose は host 443 を nginx 8443 に公開し、起動前に証明書と設定を検査する。初回はロックされた状態から [server access の初期設定](../concepts/server-access.md) を行う。health が正常でも認証設定や agent 実行成功の証明ではない。[Compose](../../deploy/server/compose.yaml)・[起動](../../deploy/server/server.mjs)・[healthcheck](../../deploy/server/healthcheck.mjs)
+versioned image、`LVK_HOST`、証明書と鍵を用意し、配置 directory の Compose と secrets を使う。Compose は host 443 を nginx 8443 に公開し、起動前に証明書と設定を検査する。初回はロックされた状態から [server access の初期設定](../concepts/server-access.md) を行う。health が正常でも認証設定や agent 実行成功の証明ではない。[Compose](../../deploy/server/compose.yaml)・[起動](../../deploy/server/server.mjs)
+
+配置 directory で `LVK_IMAGE` に版固定 image、`LVK_HOST` と `LVK_PUBLIC_URL` に公開先を設定し、`secrets` に対応する証明書と鍵を用意する。Compose project と既存 volume を確認し、`docker compose up -d` で起動する。`docker compose ps` と logs、HTTPS を確認してから初回認証へ進む。設定や証明書に問題があれば修正して再確認し、空 volume で代用しない。
 
 三つの named volume は home `/home/appuser`（DB、設定、認証）、repos `/repos`（元 Repo）、work `/var/tmp`（worktree と run 関連）を保持する。Compose project 名変更は別 volume の選択になる。custom mount は別途保護し、再起動が実行中 process を復元すると仮定しない。[Compose](../../deploy/server/compose.yaml)
 

@@ -1,50 +1,30 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:71d08cc88930eedb9aead4b99a6ac1898ccee33aece3102f1a14320b24f71d96",
+  "pageVersion": "sha256:94d9cc10d43306dc8a095c68e517b4d8ad53f6e7586469ebcfa5ab097cbf9499",
   "claims": [
     {
-      "id": "claim_dbe41262053d4b25b40760d418e8fa5c",
-      "statement": "Issue 番号は Project の高水位から caller の transaction 内で採番し、commit 済み番号は Issue 削除で解放しない。",
+      "id": "claim_54b401f276584739902f4108cced4349",
+      "statement": "Issue の現在版切替は current revision と対象版 revision の両方を検査する。",
       "evidence": [
         {
-          "resource": "repo://crates/db/src/models/issue_number.rs#L20-L45",
-          "version": "repo-lines-v1:sha256:23129d07801fa8a66390ffc1e8058a858f6e9f40e6bb672eb592d1ee29e34368:eyJzZWxlY3RlZExpbmVDb3VudCI6MjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRiNDJiNDg0NWRlOTcyOGFhZDcwN2M5YzhlYjYzMTNjNDkwMTc0MmEzN2YyMDU5YWNjMmU0N2RmMTI4MzI2YjQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjYzZTU3NTcxYTlhMWZmMTM1MDM3NWY4MmE0NTk5YTk5NjVjYzU1NzM5NmUyZGMxZTBmYjhmMThiNGNhNzY5MGIifQ"
+          "resource": "repo://crates/server/src/routes/local_remote/issue_versions.rs#L215-L230",
+          "version": "repo-lines-v1:sha256:4ac341ffad53c6d4f57a7f66802535bc1c870a1803f38bac444d3ef6afa4b1e8:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYzZDgyMzUzNTI4NDc0ZjQ2YTZiNWY3ZGJmZTczMzdhNzQyNzY1NGVlMWY3ZTBkZjFkMmRkNWNjMzczNjY3NjMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI4NDY0ZWU1OWVkOTI5YWFlZmE5OGIyNTg2ZmVlZGIyNTYyNTU0ZWMwMmZhNzQ0NzRlYTQ2NjRhM2I1NjE1OGQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjMwMzc2MDUzZjc1NmQwNDU4NDViODQyMDgyYzc1MTQxMDBiNjAxODRiODU3MGY4NjQ2YjQ4ZjE3OTIwNzQ2MTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImEwOWQwOTYwM2ZkYjM5NzA4NmMwYWY5Y2RkNjczNGQ5YmM5ZmUzZjAzMzgxNzhmNjRmYjFlN2QzMGQ2NDA4N2EifQ"
         }
       ]
     },
     {
-      "id": "claim_031e66f0ec174f51987c6e6a007c2dc3",
-      "statement": "Issue の本文版は明示的に作成され、現在版は同じ Issue に属する必要がある。",
+      "id": "claim_18265452e2674edfa31461bfbd6a3850",
+      "statement": "通常 Issue の自動状態同期は実開始の証拠と所有者を用い、終端成功時に他の活動中 Run がないことを確認する。",
       "evidence": [
         {
-          "resource": "repo://crates/db/migrations/20261111220000_issue_versions.sql#L1-L22",
-          "version": "repo-lines-v1:sha256:879339d3b9c33783974ac1d94f27c5ad3eb4daa616ad986799114de38aa4a0f6:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ3NDAxNTc3YTE4M2VlNjE4ZWFmZDkyMWFkYzk5MmU0YmNkYzdiMTY4MzExZDgzYWU5YmY5NzJjNjczYWE1MmUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE3MmRkYzQxZGYzNjhiMTYyZmQzNDNmZjc1OTVlMDg0OGUyMWYzZmY4MDIyMzFiMzEyOTlmYmY1NDEwZWUwMWIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFkYjg3NjAxYTY0NzljMWYwYjMwNjEzMWU5ODIyYjAxYjQ2NjEyNDRlOGE4NWU4NTg5MmRmODNjZWE3MDU3Y2UifQ"
-        }
-      ]
-    },
-    {
-      "id": "claim_264bde222fbd4cea98b9d6917eb02fbc",
-      "statement": "通常 Issue の Agent 状態同期は実 process 開始の証拠を使い、成功後も他の活動 Run と owner を確認する。",
-      "evidence": [
-        {
-          "resource": "repo://crates/db/src/models/agent_runtime_kanban.rs#L60-L125",
-          "version": "repo-lines-v1:sha256:d8ab59fd71e6c39aaff7b21194136add2202cf7c0466baefd4b34c05153d6338:eyJzZWxlY3RlZExpbmVDb3VudCI6NjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjlhOWQ1N2I4NTMzYTIyNWVjOTExODBhMmIxYTc1MzFlMjhkOGI3NDQ0ZjkyMjE1YjkyNTIzMTQzZTU0OTdlM2MiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE0YmVmZDNlMmYwZjIwYTRlMjY3OThmM2RmNTIwZTI0Y2E3NWY5OWVlZDk1ODQ2YjZhMjI4OGQ1MzdlMjA1N2IiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImU3ZTdmZjQ3OTg2OWRmM2RhMTYwM2Q2ODEwOWUwZmZlNTY0YTYyODRkZDVmMDljYjRmNWUxMjkzNTgxMGY4NGMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImZiNjJjNmFkZjlmZjY2NjA4MmQ4YzRiMDA2MWM2ZGM3Zjk1YWJiYmQ4OTk1ZTMwNzA1ZmE0NzY4ZDdlNDJmMjgifQ"
-        }
-      ]
-    },
-    {
-      "id": "claim_4198a153e4d541da83efc76e7f2ab919",
-      "statement": "Issue archive の確認 token は対象と caller に束縛され10分で失効する。",
-      "evidence": [
-        {
-          "resource": "repo://crates/server/src/routes/local_remote/issue_archive.rs#L165-L240",
-          "version": "repo-lines-v1:sha256:a0d6f79fc6faffbd18a7d7614533739809236a16e154d74d56022e179cb9b071:eyJzZWxlY3RlZExpbmVDb3VudCI6NzYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjlkM2Q3MDdmODlhZGNhYjA0NDQ5YWMwYTZlNTZjZGQ4NGRlMjM2ZjIwOGUzNWE3YWRmZGZmMmI1MzgwODM1NTQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ3ZjFmMDNmOTI4OGVlZWI0YzA0N2E5MDc5NzRmMDQ0MmEwZThhYWQ5Y2E2OGVjYzVhYjI1ZjA2NDg0ZDc2MzUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjRiNzMxM2QxYzIzNjYwODU1NzUyZWZhMDZiOGNjYjNkZDc3YmNiN2ZkNGU1YTRiN2Q2YzM5YWExZjYzYWFmMmMifQ"
+          "resource": "repo://crates/db/src/models/agent_runtime_kanban.rs#L26-L128",
+          "version": "repo-lines-v1:sha256:b36409f7c3643585e837c9aa7e2e3935d0668292089472e25470cbf88a5e711e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAzLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI5ODUwN2I1MGJjM2E2ZmVmY2Y3ZGMyMTMyZDMzZjhmNDhlYWZjZTVhMGUyOGY0NzNmNDVhZjMyMzA1NDdjMTc4IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI1YWI0NzQ3YmQ1MDE2MjYyNjI2YzEwZTY3NjA5MmRmYWU2ZDZiZDQ4MmExOGU1N2FhOTc5NzZmYjQ0OGJiZWY0IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIzNWY2ZjQ2NmU1OWNmYzMwNzAzYzQ1ZjcyYWY2NWRlNTRhYzM2M2QzNTRjYzFhMzMzMDM1MGFjZDQ1MjQzNGM0IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJkNzA0ZGVlZmNiOTg1YTM0ZWJmOGZmNzA1ZjIzZGVjN2FmYzVmYjAzMWQ5NWFkNmEwY2U1MTNjZDY1YTRkNTZjIn0"
         }
       ]
     }
   ],
   "verification": {
     "by": "openwiki/0.9.0",
-    "at": "2026-11-22T05:31:45.518Z"
+    "at": "2026-11-23T00:23:16.293Z"
   }
 }

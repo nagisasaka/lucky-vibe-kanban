@@ -1,20 +1,22 @@
 ---
 type: concept
-title: Workspace と Repository
-description: 作業場所、接続 Repo、所有権と履歴の寿命。
+title: Workspace
+description: 作業場所、Repository、所有権と履歴の寿命。
 tags: [workspace, repository, worktree]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-22T18:59:30.190Z
+    at: 2026-11-23T00:23:16.293Z
 sources:
   - id: openwiki-source-5f083da2f629bcd57e386ad4
     resource: repo://crates/db/src/models/workspace.rs
-generated: { by: "codex", at: "2026-11-22T18:59:30.190Z" }
+  - id: openwiki-source-2a2f483b690a2eb00cd79616
+    resource: repo://crates/services/src/services/workspace_lifecycle.rs
+generated: { by: "codex", at: "2026-11-23T00:23:16.293Z" }
 ---
 
 # Workspace と Repository
 
-Workspace は作業場所、branch、接続 Repo と複数の [Session](session-and-agent-run.md) を束ねる実施環境である。Issue と関連付けられるが、同一ではない。Repo は登録された source と既定設定、WorkspaceRepo はその Workspace で使う Repo と target branch を表す。複数 Repo は共通 root の子 worktree にあり Git 履歴と操作は各 Repo で独立する。root 自体は Git Repo ではない。[Workspace](../../crates/db/src/models/workspace.rs)・[Repo](../../crates/db/src/models/repo.rs)・[接続](../../crates/db/src/models/workspace_repo.rs)
+Workspace は作業場所、branch、接続 Repo と複数の [Session](session-and-agent-run.md) を束ねる実施環境である。Issue と関連付けられるが、同一ではない。[操作の段階](../quickstart.md#操作の段階)を区別する。Repo は登録された source と既定設定、WorkspaceRepo はその Workspace で使う Repo と target branch を表す。複数 Repo は共通 root の子 worktree にあり Git 履歴と操作は各 Repo で独立する。root 自体は Git Repo ではない。[Workspace](../../crates/db/src/models/workspace.rs)・[Repo](../../crates/db/src/models/repo.rs)・[接続](../../crates/db/src/models/workspace_repo.rs)
 
 Worktree は LVK 管理の場所、DirectFolder は利用者が選んだ既存ディレクトリを使う。物理削除の可否は kind だけでなく ownership で決まり、External container path は削除しない。DirectFolder は Git root や Repo 内の子 directory を拒否し、通常の自動 commit や Repo Memory の対象にしない。[所有権](../../crates/db/src/models/workspace.rs)・[作成](../../crates/server/src/routes/workspaces/create.rs)
 
@@ -28,7 +30,7 @@ Git author／committer は LVK の actor や provider の identity と別であ�
 
 ## 共有領域と寿命
 
-Repo ごとの `.lvk/shared/` には一時受け渡し、再生成可能 cache、利用者が保持する persistent が分かれる。異なる Repo の store を混ぜず、必要な結果を一時領域だけに置かない。実機・DB の共有は worktree 分離とは別であり、必要に応じて環境や作業順序を分ける。
+[Repository shared storage](repository-shared-storage.md) は Repo ごとに一時受け渡し、再生成可能 cache、利用者が保持する persistent に分かれる。異なる Repo の store を混ぜず、必要な結果を一時領域だけに置かない。実機・DB の共有は worktree 分離とは別であり、必要に応じて環境や作業順序を分ける。
 
 archive は明示操作で、忙しい処理や所有中の環境を確認する。archive 状態と worktree 物理削除は別の結果であり、削除失敗や filesystem 操作後の DB 失敗では実状態と receipt を確認する。履歴閲覧は worktree を再生成せず、未 commit 内容が削除後に復元される保証はない。明示削除は process や監査ログも削除対象になり得る。[archive](../../crates/server/src/routes/workspaces/archive.rs)・[削除](../../crates/workspace-manager/src/workspace_manager.rs)・[確認手順](../operations/workspace-inspection.md)
 

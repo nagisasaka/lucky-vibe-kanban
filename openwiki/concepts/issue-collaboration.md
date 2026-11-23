@@ -1,17 +1,17 @@
 ---
 type: concept
-title: Issue のコメント・レビュー・添付・通知
-description: Issue の共同作業、レビューの来歴と revision、再送、添付と通知の境界を説明する。
+title: Issue の共同作業
+description: コメント、レビュー、関係と添付の境界。
 tags: [issue, collaboration, review, attachments]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-22T05:31:45.518Z
+    at: 2026-11-23T00:23:16.293Z
 sources:
-  - id: openwiki-source-0acdd41dbcd239be02c04d7f
-    resource: repo://crates/api-types/src/issue_comment.rs
-  - id: openwiki-source-a43253b5be9686da077b8067
-    resource: repo://crates/server/src/remote_mcp/issue_comments.rs
-generated: { by: "codex", at: "2026-11-22T05:31:45.518Z" }
+  - id: openwiki-source-ff720f92402319bc9a7731c7
+    resource: repo://crates/server/src/routes/local_remote/issue_attachments.rs
+  - id: openwiki-source-03dd6dd9ecb241eb669cb49c
+    resource: repo://crates/server/src/routes/local_remote/issue_relations.rs
+generated: { by: "codex", at: "2026-11-23T00:23:16.293Z" }
 ---
 
 # Issue のコメント・レビュー・添付・通知
@@ -38,7 +38,7 @@ Assignee と Follower は Issue と user の別々の関連である。Follower 
 
 ## 添付と通知
 
-現行添付は local File・Session・Workspace の経路であり、旧 Cloud Blob の lifecycle ではない。保存先、パス検証とコピーの寿命は[Workspace の添付](../operations/workspace-inspection.md)を参照する。[作成](../../crates/server/src/routes/workspaces/create.rs)
+Issue 所有の添付は Project と Issue の所属を検査して保存・取得する。旧 Workspace・Project 所有の添付も残る。保存先、パス検証とコピーの寿命は[Workspace の添付](../operations/workspace-inspection.md)を参照する。[Issue 添付](../../crates/server/src/routes/local_remote/issue_attachments.rs)・[Workspace 作成](../../crates/server/src/routes/workspaces/create.rs)
 
 OS notifier とブラウザーの Web Push は別の経路である。OS 通知の受信先は server 実行環境に依存し、呼出し成功は人が読んだ証明ではない。Web Push は browser と Project の明示登録を使い、Agent Run の特定 event を対象とする。Issue の Follower やコメントを保存しただけで Cloud inbox 配送が成立するわけではない。[通知 service](../../crates/services/src/services/notification.rs)・[Web Push](../integrations/web-push.md)
 

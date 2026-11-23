@@ -1,20 +1,20 @@
 ---
 type: integration
-title: Web Push と通知
+title: Web push
 description: browser ごとの同意、配送、失敗と会話への復帰。
 tags: [notifications, web-push]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-22T05:31:45.518Z
+    at: 2026-11-23T00:23:16.293Z
 sources:
-  - id: openwiki-source-2f63ca1582805a46da98d522
-    resource: repo://crates/db/migrations/20261018180000_web_push.sql
-generated: { by: "codex", at: "2026-11-22T05:31:45.518Z" }
+  - id: openwiki-source-fb97b52f99c4e6667bfbcfa7
+    resource: repo://crates/server/src/routes/web_push.rs
+generated: { by: "codex", at: "2026-11-23T00:23:16.293Z" }
 ---
 
 # Web Push と通知
 
-Web Push は認証された利用者が Project と browser ごとに登録し、Codex の blocking question、承認待ち、Run 終端から会話に戻る任意機能である。通知は [Agent Run](../concepts/session-and-agent-run.md) の状態そのものではなく、到達を回答、承認、検証、統合や公開の成功と扱わない。[trigger](../../crates/db/migrations/20261018180000_web_push.sql)・[配送](../../crates/server/src/routes/web_push.rs)
+Web Push は認証された利用者が Project と browser ごとに登録し、Codex の blocking question、承認待ち、Run 終端から会話に戻る任意機能である。[操作の段階](../quickstart.md#操作の段階)を区別する。通知は [Agent Run](../concepts/session-and-agent-run.md) の状態そのものではなく、到達を回答、承認、検証、統合や公開の成功と扱わない。[trigger](../../crates/db/migrations/20261018180000_web_push.sql)・[配送](../../crates/server/src/routes/web_push.rs)
 
 ## 設定と同意
 

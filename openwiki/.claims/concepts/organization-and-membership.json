@@ -1,40 +1,30 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:12021c103ec2f89ed5b4270ffd4ae40d9ed1199bd2315043d94dc5a31b99939f",
+  "pageVersion": "sha256:ed6bba518d6025da53b074cf16c2730ee09659992edb4379d14f4e1bbe3aeee4",
   "claims": [
     {
-      "id": "claim_a60a6beb88884666a58472986a282be3",
-      "statement": "Auth0 の新しい issuer と subject は pending member として保存される。",
+      "id": "claim_5c5cafb813a54aa3922eda868f179364",
+      "statement": "新しい Auth0 identity は issuer と subject の組で保存され、pending member として作成される。",
       "evidence": [
         {
-          "resource": "repo://crates/server-access/src/store.rs#L154-L169",
-          "version": "repo-lines-v1:sha256:f0e94a0f7e7c640255b4b7dcbf2d72deeb135961cf4cbd8f3ee9e71d048d64ff:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA1NmM4NjIzODBjZTIwYjVjMWVkMWUwOTc2OWRhYjU1NGRiMGRhMzNhNTVhMjNkZTQwNjM4M2MxZWJiNDgwNjAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM2NTU4MjhhY2VmOWI1MzViOGEzYTUwYjVhYjQ4YzI5ZWVlMjhmNjM2MzY0ODRmMjljNGU3YmQ3NTU3Njc0ZTgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImE2MmVmMjFiZDMzOTNiZmFhZWQxM2NlYjkzYTY5ZGU5OTc0ODE5MDAxYmRjOGRjZmZiNzM2ZDgwNzEzZjgzODUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjMxMzM5ZjNmNjUzMzU2MTNlNjRjNWUxNTFkNzlhNTQ2NjczMzQzMTYwNjlhNjQxNWJjZGY3MjgwNDYwYWFhNTQifQ"
+          "resource": "repo://crates/server-access/src/store.rs#L160-L169",
+          "version": "repo-lines-v1:sha256:4ab234a6a78f862b79363612ae505070e2a591b28247855a1fe1268993c705df:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YjA0NDkxNDY5NzIyZTgzNjNhOTRlNDA0NDUzOGUwMTNhMmEyMTdlMzZiMWU1NjhiYTYwYWNiN2I0YzhmMmUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM2NTU4MjhhY2VmOWI1MzViOGEzYTUwYjVhYjQ4YzI5ZWVlMjhmNjM2MzY0ODRmMjljNGU3YmQ3NTU3Njc0ZTgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM5NDY3YmI5MjVjOTBlYWIxM2Y3MDdiYjM1OWQwNTJkMGMyY2IxMzczMWVkY2MwOTljZTYxNjc3NGQyMmM5OGYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjMxMzM5ZjNmNjUzMzU2MTNlNjRjNWUxNTFkNzlhNTQ2NjczMzQzMTYwNjlhNjQxNWJjZGY3MjgwNDYwYWFhNTQifQ"
         }
       ]
     },
     {
-      "id": "claim_0a533ad3226d40d294dd4b9fb45969e2",
-      "statement": "最後の active admin の無効化または降格は拒否される。",
+      "id": "claim_cdfbb5d9ebb34cd6ac31ef5377b4398d",
+      "statement": "Browser session は active membership と revision に結び付く。",
       "evidence": [
         {
-          "resource": "repo://crates/server-access/src/handlers.rs#L582-L625",
-          "version": "repo-lines-v1:sha256:c986c550419b78ece933128a4887c1f0fb506d5de2f2cba00472d6df3a9fdbca:eyJzZWxlY3RlZExpbmVDb3VudCI6NDQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM2YmVhMGUwMmYxMjI3NDUyNjhkYzRlYjI2YmNkMzJmZGY1YWE3NGE4MjhkNGI1MDgxYTM5MGZkNDk4N2E3YTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM2MWU2OTgwYTg2ZTRiYzJkNzA4OTAzYTQ2ZjZhMTFmNGVhMDgzMTUyMDU2ZDNiODczOTk3ZDRiZDNhMTliY2EiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZkODIwODE3YmYwZDVlYTY1NjczOTQyMGNjZWRiN2QwODU3ZWQxM2ZjMDk4YzQ0NGY0NzYzYWI1NGUxZDc2ZDUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijc4ZjRjNjgyODhmMTJiYTI0NjUxOGI3NGY1ZjNjMTA3ZjMxNTljZWUyZGY4OGRlNmRiNmRhMGYxMTVlZDNkNmYifQ"
-        }
-      ]
-    },
-    {
-      "id": "claim_4c87c856a4e8470b9b6302bdfe59b459",
-      "statement": "Board は現在の issuer に属する active member を表示する。",
-      "evidence": [
-        {
-          "resource": "repo://crates/server/src/routes/local_remote.rs#L1474-L1508",
-          "version": "repo-lines-v1:sha256:dcc1ab332cfdc0c3403ca7ed1908edc08328d401c23f5e78d8ecd7bd2b9f575c:eyJzZWxlY3RlZExpbmVDb3VudCI6MzUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE4NzA1NTIwYzYyZWZlNDIzZjFiNGNiODNhMzYxYTM5MGE4YTUyM2ViMWM1MmJlZjQ2OWIwNzdmOWU3NzhjZjAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY5YjE5ODJlOGRkNzQ4MTE4MTQ2YjM5YTJkMDA2MmY0MDgxZTM0Nzc5Yjg2NzVjMjM0YzRmYjEyNGRjMzkzOTAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjYwNjNjNGQxYWY4Y2Q4OWJiMGJkZDc2NTdmZmNiZjY4MDZhNjEwZDc5ZDZjOGQ0YzMwN2MyNDFkZjM5MDA1MjIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM3ZDg1ZDlhYmY1NzlkOTdiZGE2YmQ1N2NjNjU3OWYzNzg4MzkzZTIxZmE4MjM0ZDc3NDVkZTkzZGE3M2QxNGQifQ"
+          "resource": "repo://crates/server-access/src/store.rs#L225-L245",
+          "version": "repo-lines-v1:sha256:ba5f1f9fef5acd10991dbbee0d4dedb715f791aa418b14c86caca86a9da8457f:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVjZjI1ZWZmNGM0NmJlNzFhZTg0YjMyMTgwOTJmYTNhYzkxMzU2YTkwMTQ2Yjc1MzQxMzI4ZmQ0MGIzM2RhODEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNmYTNjODgzNTUwODg3NTcyZmVmNzU4YjU0NzgxMmUzYWUyYTkwZTY5YTViMTg1ODVmMGU0NDNhZDVjOTlkOTAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjljOTY2NjQ3MjQ0ZTUyZjQxN2M4MTFiYTIwY2I2MzNlZDk3OTMzOWMwNzY2ZGU0YjExZGJiMTg1NWY2MWI3OGMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFjYjI1N2IyNTRkNmUyN2ViMjkxOWE0OGZmNzc0NjM3NzUwNTA0NWI3ODAyMzI0NTdmZDFiNmVkM2RjYzJiZWQifQ"
         }
       ]
     }
   ],
   "verification": {
     "by": "openwiki/0.9.0",
-    "at": "2026-11-22T05:31:45.518Z"
+    "at": "2026-11-23T00:23:16.293Z"
   }
 }

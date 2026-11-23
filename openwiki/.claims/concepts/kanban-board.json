@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:f8667bb2e888569eca1fc751592e4bca82b813d8a9eaf8e4ce745c2a29ba5dcb",
+  "claims": [
+    {
+      "id": "claim_625a2942e9e646aab640baf76f348af5",
+      "statement": "Project の route は Kanban 画面を開き、Board API は Project の Issue と status を読む。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/routes/local_remote/board_api/mod.rs#L65-L80",
+          "version": "repo-lines-v1:sha256:01a98ac48c07f9494796d3b4005f268b1e3864fd0922a506663d0ffc1e6f1c68:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA4ODkyOGJiNzA3ZGY1ZjVmYjNmYWRiYjM3YTFhNTY4ZDJlOTkzYWQ2ZGQyYmY3YjI2NGEyMzQ5ZDgyYmQ5YjkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE0NjNlOTJiM2M2ZjcyNDJjNjY0NzNkN2Y0M2NjNGNkZDBiNTFkNWMxMTVhMDI0ZDEzMjA2MTZhMzI3ODk4NjciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjcxMDhjZTAzNGNlYmU2N2Y3NWFlNGMxMTlkOTYwYmMxYzUyNDU5YWFkY2RjY2QyNGVlMWEyYjA3YTM0N2UyMWYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNiZmRjODcwMWMwZWI4MTBjMmU5YWQ0NjhkMjg4ODYwNTdmNGI1OGNhMjcxZWM3NjdjOWQ1NzlmZTM5MTBjOWMifQ"
+        },
+        {
+          "resource": "repo://packages/local-web/src/routes/_app.projects.%24projectId.tsx",
+          "version": "repo-file-v1:sha256:9c9068ba1f3571a615281f3fb23be8996109441fc75c5c23a53428461fa6a3eb"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.9.0",
+    "at": "2026-11-23T00:23:16.293Z"
+  }
+}

@@ -1,40 +1,30 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:4d08095a902f70f25d44c7207d3cd9fd549bbd1ce296e31232862403cc878833",
+  "pageVersion": "sha256:16ac144d418722266fec2fb16a49586a4bf448a65310bbeaef1cc7eefb1635b9",
   "claims": [
     {
-      "id": "claim_a9e5be16575e420fb3d7be3435befb32",
-      "statement": "Board collection は REST snapshot を使い、mutation 前から進行中の取得を待ってから新しい snapshot を取得する。",
+      "id": "claim_2cac9a17980644eaa29f32d49f55dda1",
+      "statement": "Agent Run stream は永続履歴の replay 前に Live を購読し、Live 更新で耐久 cursor を進めない。",
       "evidence": [
         {
-          "resource": "repo://packages/web-core/src/shared/lib/electric/collections.ts#L289-L393",
-          "version": "repo-lines-v1:sha256:e3c15dc41231ba7c95720b98a2570a52d16ada6f9ac2bc3dd619757ad2adcc49:eyJzZWxlY3RlZExpbmVDb3VudCI6MTA1LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI2OTNhN2QzOTczMWU3MDJjNGQwMmM0NzUxYzNmNTM4OGUyMmI2OWNjZmE5NzZmY2NmYjY2MTBjMDJjZTZkMWI3IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJhZDllMTI1NDY0MjU1NzZkM2RlYWU4YzliOWRiZjEyOGQ1ZDZkZGFmNWQ3ZmU4NTc5MzQ5MjdkZWZmYTNiOWRkIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI5ODJlMDE4YmRjMTlmZDA2YTU0NTExZWEyMzU2Zjk5ZjljYzE1NGNjMjU1ZDUxNGRkZmMyZDQ3N2E2NWJkZGIwIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI5MjA0MGUwOTVhOTRlMmFkYTc0ZTQyMWYzNzE4NzUxYTkxYTgxMGJmZDY2ZjQ4ZjRlOTM5YzdiNzQ4MGViNjcwIn0"
+          "resource": "repo://crates/server/src/routes/agent_runs.rs#L635-L684",
+          "version": "repo-lines-v1:sha256:4a26409a2d82b72dea5a1d0f96b2286db47d24989f4331034b55ff0d2fd00d15:eyJzZWxlY3RlZExpbmVDb3VudCI6NTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJkOWMwNjM0ZDUyMjUxYmFmNDAxZTM3MGU1ODUwYzc1ZTI2MTdiYzIwZTA1YzFlZDkwMzgyMmE1YThiOGVjYjEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFlNmViMmEwOWFjMTY5YjgxOWQ5NDM0YjFjZWZiZDljMjcwZWQzYjM3MGNjZjRlZjZkMTZkYjY1MGU5NmM1NmYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjU2MzE4MTZkYjBhYTMxNTYyOTI3OTkxYTc1ZmI0OWQ3OTZiYjJjODI5Njk5YTY2OTYwNDdiNDdkYzMxYWExMDgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImMyM2JmYWQ0YWEzMThjNTI2NWRkMTcwNjIxMTQzYTFhNDZiYTAzZWI0YTM4MTllMDJiZDUxM2I4M2Q4NjY1ZmEifQ"
         }
       ]
     },
     {
-      "id": "claim_e63db89292b54ecd84d7e3230850698e",
-      "statement": "Agent Run stream は Live 購読を履歴 replay より先に開始し、永続 cursor は attempt 番号と sequence で進める。",
+      "id": "claim_8acac2e7bcac462f8d48678d9ef50ec6",
+      "statement": "Board のローカル collection はキャッシュを無効化し、実行中の取得を待ってから新しい snapshot を取得する。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/agent_runs.rs#L625-L690",
-          "version": "repo-lines-v1:sha256:4ac20fd5fe4cb9817618541441d78e00b1e5c819ba0d53e41c0d1bf5e3cd59f6:eyJzZWxlY3RlZExpbmVDb3VudCI6NjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY0NzVlOTRhOTA0YWM0OWIzMTU0ZDQ2NzJhNjZlODYyOWI4NmRhYzc0ZTNlMjkzN2JlNjkyN2FlM2RhMTFjNTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFjN2RlZjIyN2U5MTVmZGRkY2ViODIzNzk4ZjkxMWQ2OTRhOWMzM2VjOWJhZTY5ZjhmNTVkM2RhOGJjODdjMTUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY1YzM5NmFkOWNlOWJkYTRhN2Q5Yjk0ODg0YTNhMWM1OWE4Y2U0ODZmNDBhNGRlNjM2MDExYTliYjBhMDkwOGIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZkOGJhZGQzYjY0YjczNWQ3NTUyNjg3MTk3N2MxOTE4MGVhMGQyMWIyOTQ5Yzk3ZjczZWRkMDNjNGUwZjM0OGIifQ"
-        }
-      ]
-    },
-    {
-      "id": "claim_cb44e57d7ab14ef393bc5ba24e7424d3",
-      "statement": "Wiki controller は応答の Workspace と Repository identity と要求順序を検査し、対象を切り替えると選択状態をリセットする。",
-      "evidence": [
-        {
-          "resource": "repo://packages/web-core/src/features/wiki/model/wikiViewerController.ts#L20-L95",
-          "version": "repo-lines-v1:sha256:68f8339254b1c08ae55d2dc3aef72929b79cd76d77675b560b8502fdb701ed7a:eyJzZWxlY3RlZExpbmVDb3VudCI6NzYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjczMTk1OWM3OWVlYjRjZTc2ZWEzMzJlYWE4NmY0NjBhNTViMDM3ZDZjMDU2ODQzZjNkYTAyMWJiM2ZiMDc1YmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI2ODYyNTM0MjExNzRjZGY0YTIxZGMwYzVmYjRjNzcwMjNmMTZlZjY2MmM2MWE4MDY4MmUxMGQ2OGJiOTRiODgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhjODQwY2Y2YjI3ZTU1YjhjMGM5ZjY2ZGJlNzdkZDNiYjhiNjgzZjNmZjlmZjI5Y2MxNjkxZTRlNTIxZTY4OWYifQ"
+          "resource": "repo://packages/web-core/src/shared/lib/electric/collections.ts#L293-L351",
+          "version": "repo-lines-v1:sha256:2a01582739149eb8eb41eb1d9b7d27be843fb0179af0b0cf6fb8d560d30cd482:eyJzZWxlY3RlZExpbmVDb3VudCI6NTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM5MWQwY2UyNzI1MWE3ZGMzOTc2NDgxZTMxNjdjZmZlYjFkYzc2Yzk5Zjk2MzZjYjVlMzkzMDMyY2QzZGU4ZGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU3OTA0ZDNmYjNhNDRkN2U3MDU5NDA4MjgzZjE5NDYxOWUyMzE3Y2M2MjU2OGUxZDVjZTUwMDZjMTQxMzkwNDMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJkMjk1ODJjOTAyMWE2NWNhYjBjOTc0Nzk0NGRlZjM1MGJkMzA1YThmOWZmZTM4NzczZWI4MDBmODBjMDBmY2IiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImRhM2FkMDU4N2JiYWEzNGQ3NjllYmUzZDhhNzdhZjMyZmMyMDkyMjRlZDE2YjQ4NTZmN2ZjMDhiOWRhOWI5ZDcifQ"
         }
       ]
     }
   ],
   "verification": {
     "by": "openwiki/0.9.0",
-    "at": "2026-11-22T05:31:45.518Z"
+    "at": "2026-11-23T00:23:16.293Z"
   }
 }

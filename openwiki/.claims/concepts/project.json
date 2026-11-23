@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:fe1db2754fca8655282ee5ae7eb55f9f7226545d4fbced3ecf177f8eacca9680",
+  "claims": [
+    {
+      "id": "claim_452fd3330c1e40bcbd24fbde0f40198a",
+      "statement": "新しい Workspace の選択 Repository は Project の作成プリセットに属する必要があり、既存 Workspace の構成は変更されない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/routes/workspaces/create.rs#L220-L249",
+          "version": "repo-lines-v1:sha256:02d7933285910305739ef0371cb0f334e050bf17a9df8f28de5b4503b2014d26:eyJzZWxlY3RlZExpbmVDb3VudCI6MzAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxNDZlNGY0MTRlNGIzNzE4OWFjNDBjMzY5OTYxNWJkZWFmYzkyMDYwZThmZmY0YjAxYjdhYjE0Mjk0MTg2M2YiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU1MjJjNDJjZDE5YzZkMDNkODA4YzQ1MjcyMDU1MjgyNWI3ZWExYzViNDkxYjIxODUxMWNhYzc0MTVjZjlkOWIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQxNzViODAwZWQyYjU3MmM4MDMzZTA1NGE2ZjFkNDAyMjUwOTBkYjc1MTllMjUwMGIyM2I0MDQ2YWZlNDZiYzgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijk5OWJkZWZlZWFjYTYzNDBlMDI5MGRjODZlODg5Yzg5ZDVlMTg5YWE1YmE0NGI1ODViM2I3MDczNGY0YTYyZDgifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.9.0",
+    "at": "2026-11-23T00:23:16.293Z"
+  }
+}

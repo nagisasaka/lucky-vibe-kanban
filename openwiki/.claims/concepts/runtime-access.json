@@ -1,44 +1,34 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:d02df305ce70de7320e5d14614601b294bb99532ebbd8e913c1c2f78f213bac0",
+  "pageVersion": "sha256:99416bec2efa2e64257679914adb6bdf11e15f3a4bb0f586ca152047b552fc1d",
   "claims": [
     {
-      "id": "claim_9eacf56ef9aa4ba78b4e422b42ec5994",
-      "statement": "Runtime Access の file と execution は独立し、既定は両方有効、file roots は / である。",
+      "id": "claim_efdff15794ff4637bcd820f6a10a27ba",
+      "statement": "直接 file と実行の許可は独立し、既定は双方 ON、file roots は / であり、起動 program を sandbox 化しない。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/remote_mcp/environment.rs#L24-L42",
-          "version": "repo-lines-v1:sha256:13b589094b81dbb84f9a64409529b47d4f0e720c061ca455b770257e8360f7a0:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjBkMjc5MzM5NjczOWMzZWUyMDMzMTg0ZWY2YmE1ODNlZjFjNDNkMzM4NDFlNTVlYWJmYjk4ZjA1MTlmZGU3NDkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijg2NTcxNzQ2NWVlZTQ4ZTIwZTQ1ZmYzZjNjODIxYTI4M2U1NTNmNzM5NDlmMDE3NmRkYzM4NWU0MDFmY2Y3YzgifQ"
-        }
-      ]
-    },
-    {
-      "id": "claim_d1b7432e19464ef08e77e454c14fa2a9",
-      "statement": "File roots は直接 file API だけを制約し、実行 program の OS アクセスを sandbox 化しない。",
-      "evidence": [
-        {
-          "resource": "repo://crates/server/src/remote_mcp/environment.rs#L126-L158",
-          "version": "repo-lines-v1:sha256:a0ca952cd9eba55dba5d73b89004befee9600cf3ae7f03518afafe318302bf93:eyJzZWxlY3RlZExpbmVDb3VudCI6MzMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMTFkMDBiZmIwNTE1OGY5NjE0Y2UzMDM0OWMyZWU4OTliY2E3YWRmOGNiNjJhZGU2ODI3ZDZhYjQyZjY3MWYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM4NDBjZmIwNmFiOTM1NDgzYTk0N2M0NWEzYzY1YjQzMTBmN2QzYzk3NDViMWVhMTU4OTZmMTc3MTk1MWNjYzEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhlZTNhMThlMGNjYzM5ZDgxZDEzMTk5OTVhZmVhZGFmNjU4NDM0MDBmZGQ2Y2RiMDZiNzBhYWE3NGUxOTNiYzciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImU1MzMyZTMyZjI4NjUyYjljOWJhZWE3OWY2OTMxMDc1ZGFiMTllYTE2ZjJlYWFkNTk5ODBlODJmYzliNjA1OWYifQ"
-        }
-      ]
-    },
-    {
-      "id": "claim_729931012ff241e6b9b5b88611841abb",
-      "statement": "直接 process の停止と timeout は pidfd により一 PID を対象とし、子孫や process group の停止を保証しない。",
-      "evidence": [
-        {
-          "resource": "repo://crates/server/src/remote_mcp/environment.rs#L150-L174",
-          "version": "repo-lines-v1:sha256:852ff891410a981e62052445822b2f7815310a86eb3932432e26e896e72d4b2a:eyJzZWxlY3RlZExpbmVDb3VudCI6MjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUxNGQ3ZjJkNDRkZTRmMzQ4ZWI5NmM3Y2I2YWIxMzM4NjllMTc2NjhiMmYxYjM5ZTc1MzYzYWRkNzBmZTdmNDkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhiOTgwOGFjOWRmMGY2MTk0YzJiZmU4YmFlYWMwMDU4ZTkzNDQyYjY3OWZjNDZkMTk2NzczY2IyYTY2MGZiZTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImMyNjIzNTE2ZGU1ZDExMmVlYzUxMmFmYTk3NTgyMGY4YTMzNGQzNjJlNTA0NDcyZDc4NDczZTU5N2UzZDNlZDAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImRlMmM5MDQ1N2E5NTQ0ZDIwMzc0ODQ3ZWVjNWMyZWM5YzZhMTc0ZDcyNWNmMDAxZWZjYWM4YTg4YjVhYmVlZTIifQ"
+          "resource": "repo://crates/server/src/remote_mcp/environment.rs#L142-L158",
+          "version": "repo-lines-v1:sha256:ac73243a5aa9bd1e9ca7415a82fc5fe4b250d043bcb923a14c50b056839e8e04:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU3MTNiMzBhZjUxNmE4MmNkMjcxYWRjM2ExMWYwNzViNmJlYjk5ZTU4ZmM4MWNjNDAxYzM4ZDZhZWZiOWE3NTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM4NDBjZmIwNmFiOTM1NDgzYTk0N2M0NWEzYzY1YjQzMTBmN2QzYzk3NDViMWVhMTU4OTZmMTc3MTk1MWNjYzEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjgyYzYzZjU3NmFmZGM0MmE2YTgzNWNhZmM5ZmZmMmI0MjI4N2JlZmMwMjE3ZjlmNDBlMjQ5MWI3NDI2MzQwN2EiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImU1MzMyZTMyZjI4NjUyYjljOWJhZWE3OWY2OTMxMDc1ZGFiMTllYTE2ZjJlYWFkNTk5ODBlODJmYzliNjA1OWYifQ"
         },
         {
-          "resource": "repo://crates/server/src/remote_mcp/environment_process.rs#L1-L2",
-          "version": "repo-lines-v1:sha256:5b1626124043becbaf4355bda4e817478d50af029bc568846651d2a0e2a723e9:eyJzZWxlY3RlZExpbmVDb3VudCI6MiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYjcxY2NiMDE4YWViNmYzNzM4ZDhiZWM0MzhiNjM4MjMwZTlkMTIxNWI0MmYxYjBiNzZmMmFjNmYxMjkyNjQxYiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMzJiNWEzMjkyYmE3ODc1YmJmMmViYjI0NzVmYTM5YTg4M2RjOGQxYTFjYmNmYTVkODg3ZTAyOTIyYzQ4M2NkMiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjAsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZjlmYjk3Yjk3MzU2YjBmZDViNDZkMzAwYjZhYjNhNTYzZDJiZjBkNGIxMzA0NDEzYjBiNjE4MGJlMTBlY2QxMSJ9"
+          "resource": "repo://crates/server/src/remote_mcp/environment.rs#L26-L40",
+          "version": "repo-lines-v1:sha256:e04f21c1927ce23e825be59b60f1f2d25730e495cb8c4296433bb28106e793dd:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YjA0NDkxNDY5NzIyZTgzNjNhOTRlNDA0NDUzOGUwMTNhMmEyMTdlMzZiMWU1NjhiYTYwYWNiN2I0YzhmMmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImNhMTAxMGQ1OTAwNjA1Y2QwZjZhNDllMjBkOGNhODNhNTQ1NzBhMDE4MTQ0NDY3ODMyMmMxODQ1ZDhmYzVkMjkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJjYjIyOTNkYWM0YzE5YzIwMmNjN2ExZTEyYTFjYjc4MDM4MDJkOGQ3ZWFlMzE0ZWUzOTY5MDJjZjA1MDVmNmUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_51239b38e4cb48e1ae7e834b12f2a2cf",
+      "statement": "直接 process は環境を消去して固定 PATH と LANG を設定して起動する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/remote_mcp/environment_process.rs#L330-L337",
+          "version": "repo-lines-v1:sha256:3ca032a275d48e2fbdb8512bbf5b8b05292920055b4740c92c5e170f8c516cf4:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMTE2NmNlMDFjNzliZWI0NjBiNTEzNTVjNDZlZDA1YmY3MjMxNDg5ZDg3MmNkMjUzZGRiNzJjZDAxODEyZTlkMSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZGVhMmFmNDU5ZTc2M2ZhNWZjNjc1MTE4OTFjYzExNzNhZWI3MjMzYzQ0Y2QzYzcwZWEzNzIzYWE3MjAxYzBhZiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNmNiOTEyNzI0MjNlY2E0ZjlkNTcxMDMzYmUyNmIxNDZkODcxZDljMmUxNDIzYTMzNGE3ODMzMTY2NTczM2M2MyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYWE2OGYxMzU3ODhkYTkzOWRiNzQzNGJkZmRlZjY4ZjQzMmRlNTgyMDA4NjliYmU3YzcyY2E1ODBiY2Q5ODQ2YiJ9"
         }
       ]
     }
   ],
   "verification": {
     "by": "openwiki/0.9.0",
-    "at": "2026-11-22T18:59:30.190Z"
+    "at": "2026-11-23T00:23:16.293Z"
   }
 }

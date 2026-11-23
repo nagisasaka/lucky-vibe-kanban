@@ -1,42 +1,28 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:05309b53fccc600edc3bc61b5f246f939ca3064d26966e3068d8a85af3ad2f0b",
+  "pageVersion": "sha256:8be8a29c43b12bd7a458fc01281809acb7700c9fa0a398c77c94b5dde8cf7eef",
   "claims": [
     {
-      "id": "claim_7367860453b24a30a95a1ac4fefa7ac0",
-      "statement": "Project transfer は一部の LVK 所有データを移送し、全インスタンス backup や native 実行再開ではない。",
+      "id": "claim_374d1579678d469b8869090068080455",
+      "statement": "Project transfer は検証した単一 SQLite を immutable・query-only で読み、ファイルと JSON のサイズを制限する。",
       "evidence": [
         {
-          "resource": "repo://crates/db/src/project_transfer.rs#L1-L5",
-          "version": "repo-lines-v1:sha256:ad61fc5fb9a0170ce8f3c69967d23454a8e2fd05350bcfbba5b312fb49907079:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOWU5YjExMjEyMWMwOGJlZTdmOGNiNjc1MDFmOGRmYzMxZWEwNmFmYmZkYTIzZWFhMGUwNmZmM2UwZjIzZGU1OSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDk1NGJhOWUxYzgwMGU0YzdiNjZmM2U1NDZmNzVhOThkODY1ZDE5N2U1YmQxNjgyNDY3N2Q4YmFmZDk1NjliNiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjAsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNWI2ZThkMTRjMTcyOWM5ZDMxMzdhYzU3YmY0MzMxZGFlOWJhYzAwMzQ2MWJlMGRmMzIwZmYyYTY5MmQyNmZmZiJ9"
+          "resource": "repo://crates/db/src/project_transfer.rs#L25-L25",
+          "version": "repo-lines-v1:sha256:f09a33042b5e4efd6ff0c9ca611f7226e7a84f12a4243d471d4f764f4d12cd3c:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZjA5YTMzMDQyYjVlNGVmZDZmZjBjOWNhNjExZjcyMjZlN2E4NGYxMmE0MjQzZDQ3MWQ0Zjc2NGY0ZDEyY2QzYyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZjA5YTMzMDQyYjVlNGVmZDZmZjBjOWNhNjExZjcyMjZlN2E4NGYxMmE0MjQzZDQ3MWQ0Zjc2NGY0ZDEyY2QzYyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNDlkYTBmZmIyYWQyYTU3YmFkMDcyYzUyNTJmNTYyMjViMDg3ZmRkYWQwOTFhYzYzNjJmZGZlYzAwMTczYTJlOCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYzZiZTA4YzExMWUzN2RkODA0NzViYmViYTUyZTQzNTExMTdkNjE0MDJhZmMwZmFkNzJiY2NhNzgxMGMwYTI3NyJ9"
         },
         {
-          "resource": "repo://crates/db/src/project_transfer.rs#L43-L47",
-          "version": "repo-lines-v1:sha256:c95840139d631c94c24e0b483c38f32c2ab0ba1f1c600c91379c8c10322eb910:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNDEyY2EzNDVjY2Y3NWJmOWMwODA2YmNlNjk1YmU4ZGU4MDhiNzk5ODQyNTFhN2E1NGQyMDJjZjYxMDFkZDQ1MSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZTk5YmM2ZDNiZTExZjE1OTI2ZjRlNTYwYjNiOTk5Zjk0Y2U3ZmUyMDZiOWU3YzdjYmVlNGUwNTMxZjFhYjE4MyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNjJiNjEwN2JmOGU3N2QwNTA1Njk2YjlhMWUzOGU2MTgzYjYxMzhiZDE0NTNlNjZhOTlmN2I3ODlmNGNkZjA0NyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOTQzN2QwY2ZkMDQwMjAzYzZiNTM5YTBlOTUwYWMxOTFjNGE3NmYyYWYyOWM5YTJmY2Q0MzFjOGFhZGY4NmNmMiJ9"
+          "resource": "repo://crates/db/src/project_transfer.rs#L340-L378",
+          "version": "repo-lines-v1:sha256:3d91f430ba806dc5c1d062505566d76fec2ed4f193820edd779720ed7ddbf655:eyJzZWxlY3RlZExpbmVDb3VudCI6MzksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcxMTc5NjA1ODBiMzdhYjcyZGY5OTEwMTNkMTU4M2E1OTk4Mjc3NmQwNzJjOGZhZWRkOTM0NTBhMTZiYmFhYjMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkxZWM4NmQ2MjY3ZmQwNDJiMzBhY2VkN2U0MWQxZTVjODIyNjc1ZWQ3ODAxMzM2OGViN2I5OGNmZjVhZWNhYzciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE2ZDc4ZDQ3YzRmMWVjZWIwMmQwYmRmNjczYmVmMGMxYWFiZmJhZjBmMGNiYWFlMjJlNTNlNjhjNjU0Yzk0NmIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjYwMDA1NDZhOTM4MjBkNzk5NjIyMmY5OTA1MTE4NWJkNTJlZjA2NTI1MzgyZTFmZmIwMmRiMzhiOWVhNmJlNGYifQ"
         }
       ]
     },
     {
-      "id": "claim_fb13603fd6ff47349f4005f435c259bc",
-      "statement": "移送形式は version 2、ファイル最大32 MiB、JSON 最大16 MiBで version 1 も読み込む。",
+      "id": "claim_da963ec188d9435290052c3f27419767",
+      "statement": "Import は BEGIN IMMEDIATE transaction 内で重複 receipt を確認して新規データと receipt を保存する。",
       "evidence": [
         {
-          "resource": "repo://crates/db/src/project_transfer.rs#L21-L25",
-          "version": "repo-lines-v1:sha256:73abab6c7bc7ae19abc467230ff8ae89fe9caea0caef6fadacc9ccc38199926b:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZDE5ODg5YTNkY2M5MTM4ZDA0MGE2ZjA1YjljYmEwOTQ0ZGFlMjVjMzA3OWMyMzE3YWE1OGRlNzM4YjdiYzk5MyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZjA5YTMzMDQyYjVlNGVmZDZmZjBjOWNhNjExZjcyMjZlN2E4NGYxMmE0MjQzZDQ3MWQ0Zjc2NGY0ZDEyY2QzYyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYTUzNDFlMGZhYjI1NmQ4OGIzZmYwMzFiMTA0NzI3MDEzMzMzY2YwN2I2MWQ4ZDcxNTIxYjJhZTRkMDQwNDI1YiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYzZiZTA4YzExMWUzN2RkODA0NzViYmViYTUyZTQzNTExMTdkNjE0MDJhZmMwZmFkNzJiY2NhNzgxMGMwYTI3NyJ9"
-        },
-        {
-          "resource": "repo://crates/db/src/project_transfer.rs#L342-L375",
-          "version": "repo-lines-v1:sha256:f999d3f73468106b21c899832643ae1e92e1b9480ad6966870ab16fa3bd157fe:eyJzZWxlY3RlZExpbmVDb3VudCI6MzQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEzYWJlMjliN2MwZTliMmZjNjUzYmNiYmIxZGFlNjhmOGUxYTg1N2I2Yjg4YmI0YmFlZDU4MjE1MzE3ZmU1ODMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjEzZWZlOGM0NTAzNTBiMzkyOTIxYmIxMWVmMTE1ZWJiZTg0ZTgzYTg0Mjc4MTRmZjhlMmU1YmU0ZTkwMWEwMjQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjJkNDM1ZmUyZjIxNjlmNGQ5YjdmMTUyNWU5OTA5NjBlYzcyMGYwNWZkYjNmZDNjZTE2YjZiMTdlZDZkMTE2ZTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzZTBjNTk2Yjc2ZjZhNWIxNDc5NmE0MGNmOGRmZTk2OWRiZTI5ZWFiNWY2OTNiOGMxNmRjMTFkZmM2NTZiNWQifQ"
-        }
-      ]
-    },
-    {
-      "id": "claim_85cc9015c7844263b1b7b0be51c54298",
-      "statement": "Import は Repo 対応を検査した後に新規記録と receipt を同一 transaction に保存し、export ID と内容 hash の重複を拒否する。",
-      "evidence": [
-        {
-          "resource": "repo://crates/db/src/project_transfer.rs#L527-L565",
-          "version": "repo-lines-v1:sha256:6d82d8ef43d9f54c04b42cf8cba4734eb52aee12ff8dc477321793935be0e6ce:eyJzZWxlY3RlZExpbmVDb3VudCI6MzksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM3OWNiY2VlNDRlYWFjYjE4OGEwYTU3YTMzYjM0ZjIwYTgwZTVlNDYyYTExNjkzMTY0OWZkMTcwZGJjYjMyMDMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA3NDhhMTZhZTQxNzkyNGJhZDgwNDVhODFkNTg2ZDU5ODllMGVjM2VmODE1ZmI2OWM3NTNlYWJiZDRiZDRmZDAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFmZTQ1NGM2MDA3ZDU5ZWFkMzdjZGZhMTU5MjM1NDUxNDQ2MGYzNWNmZWJiYjNlNTViZGRhYTYzZGRkMDBjYTQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQ2MDcyOWMzZjcyY2Y3N2I0MDU3MjA4NTRhZGFhMDAwOWM5YTFiNGY3ZDBlYTA1NzlkYzg0ZDEwYmMwYzc1NzcifQ"
+          "resource": "repo://crates/db/src/project_transfer.rs#L559-L565",
+          "version": "repo-lines-v1:sha256:8e1bb9b418eae87c5ae73bc13362c8f9f8b7a9a566ecc54a8efaf0ae73293460:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNGIzNmEzODhhMDhmYjU2ZjFjYTE4NzE0NWUxN2FhOTNiODc5NjE5NWIyY2M0ZTFmMzAyNWQ0N2I5ODRiYjA5NiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDc0OGExNmFlNDE3OTI0YmFkODA0NWE4MWQ1ODZkNTk4OWUwZWMzZWY4MTVmYjY5Yzc1M2VhYmJkNGJkNGZkMCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZDY0YTY4MWExOGI2Y2Y0ZGE3ZmI1NGNiZGViODAyNjYxMDZjYzk3ZGQyN2Y0NjhlNzk0YTE5YTg1YzQ2YTkxMCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNDYwNzI5YzNmNzJjZjc3YjQwNTcyMDg1NGFkYWEwMDA5YzlhMWI0ZjdkMGVhMDU3OWRjODRkMTBiYzBjNzU3NyJ9"
         },
         {
           "resource": "repo://crates/db/src/project_transfer.rs#L703-L705",
@@ -47,6 +33,6 @@
   ],
   "verification": {
     "by": "openwiki/0.9.0",
-    "at": "2026-11-22T05:31:45.518Z"
+    "at": "2026-11-23T00:23:16.293Z"
   }
 }
