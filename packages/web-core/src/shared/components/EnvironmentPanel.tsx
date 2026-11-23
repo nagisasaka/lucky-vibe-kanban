@@ -92,6 +92,12 @@ export function EnvironmentPanel({
     environment.data?.host_display_name?.trim() ||
     environment.data?.hostname ||
     '—';
+  const observedPetState = petStatus(
+    resources.visible,
+    environment.isError,
+    environmentFresh,
+    environment.data?.running_sessions
+  );
   const metrics = [
     { label: 'CPU', value: view.cpu, used: null, total: null },
     { label: 'RAM', value: view.ram, ...view.memory },
@@ -108,14 +114,11 @@ export function EnvironmentPanel({
       <div className="flex items-center gap-base px-base py-plusfifty">
         <SidebarPet
           state={
-            hasPendingApproval
-              ? 'waving'
-              : petStatus(
-                  resources.visible,
-                  environment.isError,
-                  environmentFresh,
-                  environment.data?.running_sessions
-                )
+            observedPetState === 'failed'
+              ? 'failed'
+              : hasPendingApproval
+                ? 'waving'
+                : observedPetState
           }
         />
         <div className="min-w-0 flex-1 space-y-half">

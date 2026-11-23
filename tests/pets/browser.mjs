@@ -497,6 +497,32 @@ try {
   await page.mouse.move(followBounds.x + 100, followBounds.y + 40);
   await expect(followPet).not.toHaveAttribute('data-pet-direction');
   await expect(followPet).toHaveAttribute('data-pet-state', 'waving');
+  // Use the imported v2 (not the bundled v1) to prove failed suppresses tracking.
+  await expect(followPet).toHaveAttribute('data-pet-version', '2');
+  await sidebar.getByLabel('Animation preview').selectOption('idle');
+  await followPet.hover();
+  await page.mouse.move(followBounds.x + 100, followBounds.y + 40);
+  await expect(followPet).toHaveAttribute('data-pet-direction', '4');
+  await sidebar.getByLabel('Animation preview').selectOption('failed');
+  await followPet.hover();
+  await page.mouse.move(followBounds.x + 100, followBounds.y + 40);
+  await expect(followPet).not.toHaveAttribute('data-pet-direction');
+  await followPet.click();
+  await expect(followPet).toHaveAttribute('data-pet-state', 'failed');
+  await page.clock.runFor(10001);
+  await expect(followPet).toHaveAttribute('data-pet-state', 'failed');
+  await expect(followPet).not.toHaveAttribute('data-pet-direction');
+  await sidebar.getByLabel('Animation preview').selectOption('idle');
+  await page.mouse.move(1, 1);
+  await expect(followPet).not.toHaveAttribute('data-pet-direction');
+  await followPet.hover();
+  await page.mouse.move(followBounds.x + 100, followBounds.y + 40);
+  await expect(followPet).toHaveAttribute('data-pet-direction', '4');
+  await followPet.click();
+  await expect(followPet).toHaveAttribute('data-pet-state', 'jumping');
+  await page.clock.runFor(2000);
+  await expect(followPet).toHaveAttribute('data-pet-state', 'idle');
+  cases.push('Imported v2: confirmed failed state cancels active follow, suppresses hover/click beyond 10s, and recovery restores hover/click');
   cases.push('Pet entry alone starts 10s follow; movement never extends it; reentry restarts; waving wins');
 
   cases.push(

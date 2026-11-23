@@ -10,7 +10,11 @@ import type { Workspace } from "../../shared/types";
 import { WorkspaceFilesSelectionProvider } from "../../packages/web-core/src/features/workspace-files";
 import { createRoot } from "react-dom/client";
 import { useState } from "react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import {
+  QueryClient,
+  QueryClientProvider,
+  useQueryClient,
+} from "@tanstack/react-query";
 import i18n from "../../packages/web-core/src/i18n/config";
 import { PetSettings } from "../../packages/web-core/src/features/pets/SidebarPet";
 import { ProjectUtilities } from "../../packages/web-core/src/pages/kanban/ProjectUtilities";
@@ -49,6 +53,7 @@ const fixtureRepos = [
   },
 ];
 function App() {
+  const queryClient = useQueryClient();
   const [repoCount, setRepoCount] = useState(0);
   const [screen, setScreen] = useState("Kanban");
   const [pending, setPending] = useState<string[]>([]);
@@ -87,6 +92,13 @@ function App() {
                 Approvals {ids}
               </button>
             ))}
+            <button
+              onClick={() =>
+                void queryClient.invalidateQueries({ queryKey: ["environment-info"] })
+              }
+            >
+              Refresh environment
+            </button>
             <button onClick={toggle}>Toggle sidebar</button>
             {[0, 1, 2].map((count) => (
               <button key={count} onClick={() => setRepoCount(count)}>

@@ -168,6 +168,48 @@ try {
   await page.getByRole('button', { name: 'Kanban screen' }).click();
   cases.push('Scoped Run approvals wave in Kanban/Workspace; multiple and partial resolution, other scopes, ordinary input and Integration attention do not leak');
 
+  // Real environment query failure/recovery; only the isolated HTTP response changes.
+  let environmentFailed = false;
+  let runningSessions = 0;
+  await page.route('**/api/environment-info', (route) => route.fulfill({
+    status: environmentFailed ? 503 : 200,
+    contentType: 'application/json',
+    body: JSON.stringify(environmentFailed ? { success: false } : {
+      success: true,
+      data: { hostname: 'isolated-fixture-host', container: true,
+        running_sessions: runningSessions, observed_at: new Date().toISOString() },
+    }),
+  }));
+  for (const screen of ['Kanban', 'Workspace']) {
+    await page.getByRole('button', { name: screen + ' screen' }).click();
+    await expect(pet).toHaveAttribute('data-pet-version', '1');
+    for (const normalState of ['idle', 'running']) {
+      runningSessions = normalState === 'running' ? 1 : 0;
+      await page.getByRole('button', { name: 'Approvals one', exact: true }).click();
+      await expect(pet).toHaveAttribute('data-pet-state', 'waving');
+      environmentFailed = true;
+      await page.getByRole('button', { name: 'Refresh environment' }).click();
+      await expect(pet).toHaveAttribute('data-pet-state', 'failed');
+      await pet.click();
+      await expect(pet).toHaveAttribute('data-pet-state', 'failed');
+      environmentFailed = false;
+      await page.getByRole('button', { name: 'Refresh environment' }).click();
+      await expect(pet).toHaveAttribute('data-pet-state', 'waving');
+      environmentFailed = true;
+      await page.getByRole('button', { name: 'Refresh environment' }).click();
+      await expect(pet).toHaveAttribute('data-pet-state', 'failed');
+      await page.getByRole('button', { name: 'Approvals none', exact: true }).click();
+      await expect(pet).toHaveAttribute('data-pet-state', 'failed');
+      environmentFailed = false;
+      await page.getByRole('button', { name: 'Refresh environment' }).click();
+      await expect(pet).toHaveAttribute('data-pet-state', normalState);
+    }
+  }
+  runningSessions = 0;
+  await page.getByRole('button', { name: 'Refresh environment' }).click();
+  await page.getByRole('button', { name: 'Kanban screen' }).click();
+  cases.push('Both screens: pending approval → confirmed HTTP failure wins → recovery waves with approval, otherwise idle/running; bundled v1 stays failed on click (pointer suppression tested separately with v2)');
+
   await expect(
     page.getByRole('button', { name: 'Files', exact: true })
   ).toBeVisible();
