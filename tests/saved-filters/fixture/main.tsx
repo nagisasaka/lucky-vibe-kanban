@@ -1,3 +1,4 @@
+import { TemporaryFilters } from "./temporary-filters";
 import { Integration } from "./integration";
 import React, { useState } from "react";
 import { createRoot } from "react-dom/client";
@@ -101,7 +102,9 @@ function App() {
   );
 }
 createRoot(document.getElementById("root")!).render(
-  new URLSearchParams(location.search).has("integration") ? (
+  new URLSearchParams(location.search).has("temporary-filters") ? (
+    <TemporaryFilters />
+  ) : new URLSearchParams(location.search).has("integration") ? (
     <Integration />
   ) : (
     <App />

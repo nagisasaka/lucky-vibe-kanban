@@ -25,6 +25,8 @@ export interface MultiSelectDropdownProps<T extends string = string> {
   label: string;
   menuLabel?: string;
   disabled?: boolean;
+  /** The containing dialog can own modal focus/pointer handling. */
+  modal?: boolean;
   renderBadge?: (values: T[]) => ReactNode;
   /** Show only icon (+ badge) without label or caret */
   iconOnly?: boolean;
@@ -38,11 +40,12 @@ export function MultiSelectDropdown<T extends string = string>({
   label,
   menuLabel,
   disabled,
+  modal = true,
   renderBadge,
   iconOnly,
 }: MultiSelectDropdownProps<T>) {
   return (
-    <DropdownMenu>
+    <DropdownMenu modal={modal}>
       <DropdownMenuTrigger asChild disabled={disabled}>
         <button
           type="button"

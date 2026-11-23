@@ -21,6 +21,8 @@ export interface PropertyDropdownProps<T extends string = string> {
   icon?: Icon;
   label?: string;
   disabled?: boolean;
+  /** The containing dialog can own modal focus/pointer handling. */
+  modal?: boolean;
   /** Show only icon without label, value, or caret */
   iconOnly?: boolean;
   /** Value considered "default" (no highlight in icon-only mode). Defaults to first option. */
@@ -34,6 +36,7 @@ export function PropertyDropdown<T extends string = string>({
   icon: IconComponent,
   label,
   disabled,
+  modal = true,
   iconOnly,
   defaultValue,
 }: PropertyDropdownProps<T>) {
@@ -41,7 +44,7 @@ export function PropertyDropdown<T extends string = string>({
   const isNonDefault = value !== (defaultValue ?? options[0]?.value);
 
   return (
-    <DropdownMenu>
+    <DropdownMenu modal={modal}>
       <DropdownMenuTrigger asChild disabled={disabled}>
         <button
           type="button"

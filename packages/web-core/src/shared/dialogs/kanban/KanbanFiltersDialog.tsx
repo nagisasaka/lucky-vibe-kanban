@@ -218,6 +218,7 @@ export function KanbanFiltersDialog({
         <div className="max-h-[72vh] overflow-y-auto px-double py-double">
           <div className="flex flex-wrap items-center gap-base">
             <PriorityFilterDropdown
+              modal={false}
               values={filters.priorities}
               onChange={onPrioritiesChange}
             />
@@ -238,6 +239,7 @@ export function KanbanFiltersDialog({
 
             {tags.length > 0 && (
               <MultiSelectDropdown
+                modal={false}
                 values={filters.tagIds}
                 options={tagOptions}
                 onChange={onTagsChange}
@@ -248,6 +250,7 @@ export function KanbanFiltersDialog({
             )}
 
             <PropertyDropdown
+              modal={false}
               value={filters.sortField}
               options={sortOptions}
               onChange={(field) => onSortChange(field, filters.sortDirection)}

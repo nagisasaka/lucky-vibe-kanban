@@ -19,11 +19,13 @@ const priorityLabels: Record<PriorityFilterValue, string> = {
 
 export interface PriorityFilterDropdownProps {
   values: PriorityFilterValue[];
+  modal?: boolean;
   onChange: (values: PriorityFilterValue[]) => void;
 }
 
 export function PriorityFilterDropdown({
   values,
+  modal,
   onChange,
 }: PriorityFilterDropdownProps) {
   const { t } = useTranslation('common');
@@ -43,6 +45,7 @@ export function PriorityFilterDropdown({
   return (
     <MultiSelectDropdown
       values={values}
+      modal={modal}
       options={options}
       onChange={onChange}
       icon={FunnelIcon}
