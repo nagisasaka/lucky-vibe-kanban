@@ -1079,7 +1079,10 @@ impl Codex {
                 params.runtime_workspace_roots = None;
             }
             let config = params.config.get_or_insert_with(HashMap::new);
-            if workflow_read_only {
+            // Semantic inference uses native read-only without a named profile.
+            // An unused reporting profile without default_permissions makes
+            // Codex 0.163 retained-session config reload fail during routing.
+            if workflow_read_only && !crate::source_protection::inference(env) {
                 if let Ok(Some(protected)) = crate::source_protection::roots(env) {
                     let name = format!("lvk-reporting-{}", uuid::Uuid::new_v4().simple());
                     let mut profiles = serde_json::Map::new();
@@ -2623,6 +2626,8 @@ mod goal_skill_tests {
         let normal = codex.build_thread_start_params_with_resources(Path::new("/tmp"), &env);
         assert_eq!(normal.sandbox, Some(V2SandboxMode::DangerFullAccess));
         env.insert(crate::source_protection::ROOTS, "[\"/tmp\"]");
+        let reporting = codex.build_thread_start_params_with_resources(Path::new("/tmp"), &env);
+        assert!(reporting.permissions.is_some());
         env.insert(crate::source_protection::INFERENCE, "1");
         let restricted = codex.build_thread_start_params_with_resources(Path::new("/tmp"), &env);
         assert_eq!(restricted.sandbox, Some(V2SandboxMode::ReadOnly));
@@ -2633,6 +2638,8 @@ mod goal_skill_tests {
         assert_eq!(restricted.dynamic_tools, Some(vec![]));
         assert!(normal.environments.is_none());
         let config = restricted.config.unwrap();
+        assert!(!config.contains_key("permissions"));
+        assert!(!config.contains_key("include_apply_patch_tool"));
         for (key, value) in crate::source_protection::codex_inference_config() {
             assert_eq!(config.get(&key), Some(&value), "{key}");
         }
