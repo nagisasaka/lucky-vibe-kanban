@@ -2,10 +2,10 @@ import { useEffect, useState } from 'react';
 import type { PetState } from './format';
 
 export const PET_WAIT_MS = 180_000;
-// Use only confirmed HTTP failure and fresh session observations supplied by
-// EnvironmentPanel. Hidden/stale/missing observations are not failures.
+// EnvironmentPanel supplies scoped approval waits, confirmed HTTP failure and
+// fresh session observations. Hidden/stale/missing observations are not failures.
 export function usePetBehavior(
-  base: 'idle' | 'running' | 'failed',
+  base: 'idle' | 'running' | 'failed' | 'waving',
   enabled: boolean
 ): PetState {
   const [rest, setRest] = useState<PetState>('idle');

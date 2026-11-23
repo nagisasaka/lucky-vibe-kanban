@@ -29,6 +29,7 @@ export interface SidebarWorkspace {
   isPinned?: boolean;
   isArchived?: boolean;
   hasPendingApproval?: boolean;
+  hasPendingRunApproval?: boolean;
   hasPendingInput?: boolean;
   hasBlockedGoal?: boolean;
   hasRunningDevServer?: boolean;
@@ -82,6 +83,7 @@ function toSidebarWorkspace(
     isArchived: ws.archived,
     // Additional data from summary
     hasPendingApproval: summary?.has_pending_approval,
+    hasPendingRunApproval: summary?.has_pending_run_approval,
     hasPendingInput: summary?.has_pending_input,
     hasBlockedGoal: summary?.has_blocked_goal,
     hasRunningDevServer: summary?.has_running_dev_server,

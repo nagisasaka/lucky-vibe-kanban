@@ -20,7 +20,13 @@ import { claudeQuotaView } from '@/shared/lib/claudeQuotaView';
 import { readUtility } from '@/shared/lib/projectUtilitiesApi';
 import { EnvironmentQuota } from './EnvironmentQuota';
 
-export function EnvironmentPanel({ repoIds = [] }: { repoIds?: string[] }) {
+export function EnvironmentPanel({
+  repoIds = [],
+  hasPendingApproval = false,
+}: {
+  repoIds?: string[];
+  hasPendingApproval?: boolean;
+}) {
   const { t, i18n } = useTranslation('common');
   const hostId = useHostId();
   const openHostSettings = () => {
@@ -86,6 +92,12 @@ export function EnvironmentPanel({ repoIds = [] }: { repoIds?: string[] }) {
     environment.data?.host_display_name?.trim() ||
     environment.data?.hostname ||
     '—';
+  const observedPetState = petStatus(
+    resources.visible,
+    environment.isError,
+    environmentFresh,
+    environment.data?.running_sessions
+  );
   const metrics = [
     { label: 'CPU', value: view.cpu, used: null, total: null },
     { label: 'RAM', value: view.ram, ...view.memory },
@@ -101,12 +113,13 @@ export function EnvironmentPanel({ repoIds = [] }: { repoIds?: string[] }) {
     >
       <div className="flex items-center gap-base px-base py-plusfifty">
         <SidebarPet
-          state={petStatus(
-            resources.visible,
-            environment.isError,
-            environmentFresh,
-            environment.data?.running_sessions
-          )}
+          state={
+            observedPetState === 'failed'
+              ? 'failed'
+              : hasPendingApproval
+                ? 'waving'
+                : observedPetState
+          }
         />
         <div className="min-w-0 flex-1 space-y-half">
           <button

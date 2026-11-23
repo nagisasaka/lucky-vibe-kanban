@@ -1,3 +1,4 @@
+import { usePetApproval } from '@/features/pets/usePetApproval';
 import { ProjectTransferPanel } from '@/shared/components/ProjectTransferPanel';
 import { useUiPreferencesStore } from '@/shared/stores/useUiPreferencesStore';
 import { CaretDownIcon, FolderSimpleIcon } from '@phosphor-icons/react';
@@ -29,6 +30,7 @@ export function ProjectUtilities({
   onWiki: () => void;
   onClose: () => void;
 }) {
+  const hasPendingApproval = usePetApproval({ projectId });
   const { t } = useTranslation('common');
   const wikiKey = `kanban-wiki:${projectId}`;
   const wikiExpanded = useUiPreferencesStore(
@@ -37,7 +39,10 @@ export function ProjectUtilities({
   const setExpanded = useUiPreferencesStore((s) => s.setExpanded);
   const repo = mainTerminalRepo(repos, error);
   return (
-    <UtilitySidebar repoIds={repos.map((repo) => repo.id)}>
+    <UtilitySidebar
+      repoIds={repos.map((repo) => repo.id)}
+      hasPendingApproval={hasPendingApproval}
+    >
       <ProjectTransferPanel key={projectId} projectId={projectId} />
       {error && (
         <p role="status" className="p-base text-error">
