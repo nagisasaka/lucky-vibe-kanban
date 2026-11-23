@@ -231,3 +231,43 @@ test("content mode defaults, persists and leaves preview available", async ({
     page.getByRole("option", { name: "結果と要対応だけ", exact: true }),
   ).toHaveCount(1);
 });
+
+
+test("provider reads live content mode and never replays excluded events", async ({ page }) => {
+  await mockSpeech(page);
+  await page.addInitScript(() => {
+    (window as any).SpeechSynthesisUtterance = class {
+      text: string;
+      constructor(text: string) { this.text = text; }
+    };
+  });
+  let cursor = 0;
+  const events: any[] = [];
+  await page.route("**/api/projects/fixture/run-observations*", route => {
+    const after = new URL(route.request().url()).searchParams.get("after");
+    return route.fulfill({ json: { cursor, active: ["first", "excluded", "new"], pending: [],
+      events: after === null ? [] : events.filter(e => e.cursor > Number(after)) } });
+  });
+  const add = (run_id: string) => events.push({ cursor: ++cursor, run_id, issue: run_id, attempt: 1,
+    payload: { type: "lifecycle_changed", data: { status: "starting" } } });
+  await page.goto("/");
+  await setVoices(page);
+  await page.getByRole("combobox", { name: "Voice", exact: true }).selectOption(voiceId);
+  await page.getByRole("combobox", { name: "Speaking rate" }).selectOption("1.7");
+  await page.getByRole("button", { name: "Turn on Run speech" }).click();
+  await expect(page.getByRole("button", { name: "Turn off Run speech" })).toHaveAttribute("aria-pressed", "true");
+  add("first");
+  await expect.poll(() => page.evaluate(() => (window as any).speechCalls.length)).toBe(1);
+  expect(await page.evaluate(() => ({ rate: (window as any).speechCalls[0].rate, voice: (window as any).speechCalls[0].voice.name }))).toEqual({ rate: 1.7, voice: voice.name });
+  await page.getByRole("combobox", { name: "What to read aloud" }).selectOption("results-and-action");
+  add("excluded");
+  await page.waitForTimeout(1200);
+  await page.evaluate(() => (window as any).speechCalls[0].onend());
+  await page.waitForTimeout(1200);
+  expect(await page.evaluate(() => (window as any).speechCalls.length)).toBe(1);
+  await page.getByRole("combobox", { name: "What to read aloud" }).selectOption("all");
+  await page.waitForTimeout(1200);
+  expect(await page.evaluate(() => (window as any).speechCalls.length)).toBe(1);
+  add("new");
+  await expect.poll(() => page.evaluate(() => (window as any).speechCalls.length)).toBe(2);
+});
