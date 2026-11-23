@@ -203,7 +203,7 @@ fn machine_time_changes_do_not_invalidate_semantics_but_natural_time_does() {
 }
 
 #[test]
-fn definition_context_changes_invalidate_all_and_json_key_order_does_not() {
+fn definition_context_changes_invalidate_all_and_issue_order_does_not() {
     let now = Utc::now();
     let req = request();
     let cache = successful(&req, "local", now);
@@ -598,7 +598,7 @@ async fn live_default_provider_uses_existing_review_lifecycle() {
     // Even a timed-out or permission-blocked live check must settle its own Run.
     if !run.state.status.is_terminal() {
         let command = Uuid::new_v4();
-        crate::routes::agent_runs::dispatch_control(
+        let cancellation = crate::routes::agent_runs::dispatch_control(
             &deployment,
             run.agent_run_id,
             crate::routes::agent_runs::AgentRunControlIdentity {
@@ -613,6 +613,7 @@ async fn live_default_provider_uses_existing_review_lifecycle() {
         )
         .await
         .unwrap();
+        assert!(cancellation.0.is_success());
         for _ in 0..30 {
             let state = AgentRuntimeReadService::new(&deployment.db().pool)
                 .state(run.agent_run_id)
