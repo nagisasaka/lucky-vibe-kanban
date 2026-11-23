@@ -27,7 +27,8 @@
         "agent-toolsDesc": "Native MCP servers and Skills",
         "remote-projects": "Projets",
         "remote-projectsDesc": "Gérer les projets",
-        "mcp-integration": "MCP integration"
+        "mcp-integration": "MCP integration",
+        "saved-filters": "Filtres du tableau Kanban"
       }
     },
     "general": {
@@ -589,6 +590,9 @@
       "published": "The remote branch points to the confirmed source SHA.",
       "unpublished": "The remote branch does not currently point to the confirmed source SHA.",
       "newReview": "Review another push"
+    },
+    "scope": {
+      "saved-filters": "Manage shared Kanban filter definitions for a project."
     }
   },
   "integrations": {

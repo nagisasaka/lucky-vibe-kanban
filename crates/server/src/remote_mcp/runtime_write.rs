@@ -74,6 +74,9 @@ pub(super) enum Change {
 
 #[async_trait]
 pub(super) trait RuntimeActions: Send + Sync {
+    /// Shared saved-filter service needs the existing runtime for on-demand Review runs.
+    fn saved_filter_deployment(&self) -> Option<&DeploymentImpl> { None }
+
     async fn help(&self, _action: &str, _args: Value) -> Result<Value, ApiError> {
         Err(ApiError::Conflict("Help runtime unavailable".into()))
     }
@@ -168,6 +171,7 @@ pub(super) fn identity(operation: Uuid, key: String) -> agent_runs::AgentRunCont
 
 #[async_trait]
 impl RuntimeActions for ExistingRuntime {
+    fn saved_filter_deployment(&self) -> Option<&DeploymentImpl> { Some(&self.0) }
     async fn help(&self, action: &str, args: Value) -> Result<Value, ApiError> {
         if action == "ask_help" {
             let request =

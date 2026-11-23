@@ -61,6 +61,7 @@ mod remote_issues;
 mod remote_projects;
 mod repos;
 mod repository_read;
+mod saved_filters;
 mod self_restart;
 mod sessions;
 mod task_attempts;
@@ -87,6 +88,7 @@ impl McpServer {
             + Self::remote_issues_tools_router()
             + Self::todo_tools_router()
             + Self::design_note_tools_router()
+            + Self::saved_filter_tools_router()
             + Self::issue_assignees_tools_router()
             + Self::issue_tags_tools_router()
             + Self::issue_relationships_tools_router()

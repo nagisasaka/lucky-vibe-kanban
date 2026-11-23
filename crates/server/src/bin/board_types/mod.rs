@@ -1,3 +1,4 @@
+use api_types::saved_filter::*;
 use api_types::{
     CreateIssueAssigneeRequest, CreateIssueCommentReactionRequest, CreateIssueCommentRequest,
     CreateIssueFollowerRequest, CreateIssueRelationshipRequest, CreateIssueRequest,
@@ -28,6 +29,24 @@ pub fn export_shapes() -> String {
     let type_decls = vec![
         serde_json::Value::decl(),
         Project::decl(),
+        SavedFilterArchive::decl(),
+        SavedFilterTagMode::decl(),
+        SavedFilterPeriod::decl(),
+        SavedFilterRelationKind::decl(),
+        SavedFilterRelation::decl(),
+        MachineFilter::decl(),
+        SavedFilterDefinition::decl(),
+        SavedFilter::decl(),
+        CreateSavedFilterRequest::decl(),
+        UpdateSavedFilterRequest::decl(),
+        DeleteSavedFilterRequest::decl(),
+        SavedFilterEvaluationState::decl(),
+        SavedFilterEvaluation::decl(),
+        EvaluateSavedFilterRequest::decl(),
+        SavedFilterPage::decl(),
+        ListSavedFiltersResponse::decl(),
+        SavedFilterLink::decl(),
+
         Notification::decl(),
         NotificationGroupKind::decl(),
         NotificationPayload::decl(),

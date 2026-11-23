@@ -4,6 +4,7 @@ version = "0.1.44"
 edition = "2024"
 
 [dependencies]
+api-types = { path = "../api-types" }
 schemars = { workspace = true }
 utils = { path = "../utils" }
 executors = { path = "../executors" }

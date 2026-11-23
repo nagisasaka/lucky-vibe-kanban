@@ -28,6 +28,8 @@ use worktree_manager::WorktreeError;
 #[ts(type = "string")]
 pub enum ApiError {
     #[error(transparent)]
+    SavedFilter(#[from] db::models::saved_filter::SavedFilterError),
+    #[error(transparent)]
     DesignNote(#[from] db::models::design_note::DesignNoteError),
     #[error(transparent)]
     Todo(#[from] db::models::todo::TodoError),
@@ -203,6 +205,12 @@ impl ErrorInfo {
 impl IntoResponse for ApiError {
     fn into_response(self) -> Response {
         let info = match &self {
+            ApiError::SavedFilter(error) => match error {
+                db::models::saved_filter::SavedFilterError::NotFound => ErrorInfo::not_found("SavedFilterError", error.to_string()),
+                db::models::saved_filter::SavedFilterError::Conflict => ErrorInfo::conflict("SavedFilterError", error.to_string()),
+                db::models::saved_filter::SavedFilterError::Invalid(_) => ErrorInfo::bad_request("SavedFilterError", error.to_string()),
+                _ => ErrorInfo::internal("SavedFilterError"),
+            },
             ApiError::DesignNote(error) => match error {
                 db::models::design_note::DesignNoteError::NotFound => {
                     ErrorInfo::not_found("DesignNoteError", error.to_string())
