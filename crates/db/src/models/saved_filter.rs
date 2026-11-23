@@ -145,6 +145,13 @@ pub fn validate(d: &SavedFilterDefinition) -> Result<(), SavedFilterError> {
     {
         return Err(invalid("condition text is too long"));
     }
+    if d.machine
+        .simple_id
+        .as_ref()
+        .is_some_and(|s| s.chars().count() > 200)
+    {
+        return Err(invalid("simple_id is too long"));
+    }
     for period in [&d.machine.created_at, &d.machine.updated_at]
         .into_iter()
         .flatten()

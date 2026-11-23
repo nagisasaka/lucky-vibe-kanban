@@ -24,7 +24,7 @@ pub(super) fn tools() -> Vec<Tool> {
         ),
         definition::<SavedFilterReadArgs>(
             "get_saved_filter_results",
-            "Read current machine results and cached semantic state without starting AI. Follow next_offset; unevaluated/failed is not a complete empty result. Evaluate to refresh stale evidence.",
+            "Read current machine results and cached semantic state without starting AI. Pass evaluation_revision as page.expected_evaluation_revision with next_offset; on conflict discard pages and restart at offset 0 without the token. Unevaluated/failed is not a complete empty result. Evaluate to refresh stale evidence.",
         ),
         definition::<SavedFilterReadArgs>(
             "get_saved_filter_link",
@@ -61,6 +61,12 @@ pub(super) fn tools() -> Vec<Tool> {
 fn diagnostic(error: &ApiError) -> utils::mcp_error::Diagnostic {
     use db::models::saved_filter::SavedFilterError as E;
     use utils::mcp_error::{Category as C, Diagnostic, Outcome};
+    if matches!(error, ApiError::SavedFilterEvaluationChanged) {
+        let mut diagnostic = Diagnostic::new(C::Conflict, Outcome::Failed);
+        diagnostic.recovery = "restart_result_pagination";
+        diagnostic.message = "Saved filter evaluation changed. Discard collected pages and restart at offset 0 without expected_evaluation_revision.";
+        return diagnostic;
+    }
     let (category, outcome) = match error {
         ApiError::SavedFilter(E::NotFound) => (C::NotFound, Outcome::Failed),
         ApiError::SavedFilter(E::Conflict) | ApiError::Conflict(_) => {
@@ -280,6 +286,12 @@ mod tests {
         .unwrap();
         assert_eq!(from_mcp, json!(direct));
         assert_eq!(from_mcp["issue_ids"], json!([issue]));
+        let stale = call(&remote, &principal, "get_saved_filter_results", json!({"project_id":project,"saved_filter_id":id,"page":{"offset":1,"expected_evaluation_revision":"old"}})).await.unwrap_err();
+        let diagnostic = stale
+            .downcast_ref::<utils::mcp_error::Diagnostic>()
+            .unwrap();
+        assert_eq!(diagnostic.category, utils::mcp_error::Category::Conflict);
+        assert_eq!(diagnostic.recovery, "restart_result_pagination");
         let mut readonly = principal.clone();
         readonly.scopes.remove("lvk:write");
         assert!(

@@ -85,6 +85,7 @@ pub fn candidate_ids(c: &SavedFilterCorpus, f: &MachineFilter, now: DateTime<Utc
     for t in &c.issue_tags {
         tags.entry(t.issue_id).or_default().insert(t.tag_id);
     }
+    let assigned: HashSet<_> = c.assignees.iter().map(|a| a.issue_id).collect();
     let assignees: HashSet<_> = c
         .assignees
         .iter()
@@ -102,10 +103,16 @@ pub fn candidate_ids(c: &SavedFilterCorpus, f: &MachineFilter, now: DateTime<Utc
             }) && db::models::text_search::matches(
                 f.search.as_deref(),
                 &[&i.title, i.description.as_deref().unwrap_or("")],
-            ) && (f.status_ids.is_empty() || f.status_ids.contains(&i.status_id))
+            ) && f
+                .simple_id
+                .as_ref()
+                .is_none_or(|id| i.simple_id.eq_ignore_ascii_case(id))
+                && (f.status_ids.is_empty() || f.status_ids.contains(&i.status_id))
                 && (f.priorities.is_empty()
                     || i.priority.is_some_and(|p| f.priorities.contains(&p)))
-                && (f.assignee_ids.is_empty() || assignees.contains(&i.id))
+                && ((f.assignee_ids.is_empty() && !f.include_unassigned)
+                    || assignees.contains(&i.id)
+                    || (f.include_unassigned && !assigned.contains(&i.id)))
                 && (f.tag_ids.is_empty()
                     || match f.tag_mode {
                         SavedFilterTagMode::Any => tags

@@ -6,6 +6,72 @@ export type JsonValue = number | string | boolean | Array<JsonValue> | { [key in
 
 export type Project = { id: string, organization_id: string, name: string, key: string, color: string, sort_order: number, created_at: string, updated_at: string, };
 
+export type SavedFilterArchive = "active" | "archived" | "all";
+
+export type SavedFilterTagMode = "any" | "all";
+
+export type SavedFilterPeriod = { "kind": "absolute", start: string | null, end: string | null, } | { "kind": "relative", seconds: number, };
+
+export type SavedFilterRelationKind = "parent" | "children" | "descendants" | "related" | "blocking" | "blocked_by";
+
+export type SavedFilterRelation = { kind: SavedFilterRelationKind, target_issue_id: string, };
+
+export type MachineFilter = {
+/**
+ * Case-insensitive literal substring of title/description; whitespace is literal.
+ */
+search: string | null,
+/**
+ * Case-insensitive exact simple ID, matching existing MCP IssueFilters.
+ */
+simple_id: string | null, status_ids: Array<string>, priorities: Array<IssuePriority>, assignee_ids: Array<string>,
+/**
+ * Selected users OR no assignees; false with empty IDs imposes no restriction.
+ */
+include_unassigned: boolean, tag_ids: Array<string>, tag_mode: SavedFilterTagMode, archived: SavedFilterArchive, created_at: SavedFilterPeriod | null, updated_at: SavedFilterPeriod | null, relation: SavedFilterRelation | null, };
+
+export type SavedFilterDefinition = { name: string, machine: MachineFilter, natural_language: string | null, context: string | null, };
+
+export type SavedFilter = { id: string, project_id: string, name: string, machine: MachineFilter, natural_language: string | null, context: string | null, revision: number, created_at: string, updated_at: string, };
+
+export type CreateSavedFilterRequest = { request_id: string, definition: SavedFilterDefinition, };
+
+export type UpdateSavedFilterRequest = { request_id: string, expected_revision: number, definition: SavedFilterDefinition, };
+
+export type DeleteSavedFilterRequest = { request_id: string, expected_revision: number, };
+
+export type SavedFilterEvaluationState = "unevaluated" | "evaluating" | "complete" | "failed";
+
+export type SavedFilterEvaluation = { saved_filter_id: string, project_id: string, state: SavedFilterEvaluationState, issue_ids: Array<string>, total_count: number, offset: number, limit: number, next_offset: number | null, stale: boolean, error: string | null, definition_revision: number,
+/**
+ * Opaque fingerprint of the complete ordered result and evaluation state.
+ */
+evaluation_revision: string, };
+
+export type EvaluateSavedFilterRequest = { offset: number, limit: number | null,
+/**
+ * Required for result offset > 0. A mismatch requires restarting at offset 0.
+ */
+expected_evaluation_revision: string | null, retry_failed: boolean, };
+
+export type SavedFilterPage = { offset: number,
+/**
+ * Default 100, maximum 500. Pagination is applied after complete evaluation.
+ */
+limit: number | null,
+/**
+ * Required for result offset > 0. A mismatch requires restarting at offset 0.
+ */
+expected_evaluation_revision: string | null, };
+
+export type ListSavedFiltersResponse = { saved_filters: Array<SavedFilter>, total_count: number, offset: number, limit: number, next_offset: number | null, };
+
+export type SavedFilterLink = { saved_filter_id: string, project_id: string,
+/**
+ * Same-origin relative URL. MCP resolves it against the public base URL.
+ */
+url: string, };
+
 export type Notification = { id: string, organization_id: string, user_id: string, notification_type: NotificationType, payload: NotificationPayload, issue_id: string | null, comment_id: string | null, seen: boolean, dismissed_at: string | null, created_at: string, };
 
 export type NotificationGroupKind = "single" | "issue_changes" | "status_changes" | "comments" | "reactions" | "issue_deleted";
