@@ -50,7 +50,8 @@
         "execution": "Work defaults",
         "account": "Account",
         "access": "Authentication and members",
-        "host-pet": "Host and pet"
+        "host-pet": "Host and pet",
+        "saved-filters": "Kanban board filters"
       }
     },
     "hostPicker": {
@@ -639,7 +640,8 @@
       "templates": "Task templates are stored in the instance database. Add, edit and delete apply individually here.",
       "readOnly": "Input instructions only. There is no value to save here.",
       "onboarding": "Show onboarding again saves immediately to the instance config.json.",
-      "host-pet": "Display name and pet settings for this instance."
+      "host-pet": "Display name and pet settings for this instance.",
+      "saved-filters": "Manage shared Kanban filter definitions for a project."
     },
     "repositoryPush": {
       "commitCount": "Unpublished commits: {{count}}",
@@ -1623,5 +1625,84 @@
         "description": "Environment variables to set when running the executor"
       }
     }
+  },
+  "savedFilters": {
+    "title": "Kanban board filters",
+    "shared": "Definitions are shared with this project. Selecting a filter changes only this view.",
+    "project": "Project",
+    "organization": "Organization",
+    "chooseProject": "Choose a project",
+    "new": "New filter",
+    "edit": "Edit filter",
+    "name": "Name",
+    "save": "Save filter",
+    "cancel": "Cancel",
+    "delete": "Delete filter",
+    "deleteConfirm": "Delete this filter? Issues and relationships are kept.",
+    "empty": "No saved filters yet.",
+    "select": "Saved filter",
+    "none": "No saved filter",
+    "manage": "Manage filters",
+    "open": "Open board",
+    "link": "Open filter link",
+    "loading": "Loading filters…",
+    "error": "Could not load or save the filter.",
+    "retry": "Retry",
+    "unavailable": "This filter is invalid, deleted, or belongs to another project. It cannot be applied.",
+    "combination": "Fields combine with AND. Multiple choices within a field combine with OR; tags can match any or all. Empty fields impose no restriction.",
+    "search": "Search titles and descriptions",
+    "searchHelp": "Case-insensitive literal text, including whitespace. Unlike the normal board search, this does not search simple IDs or expand related issues.",
+    "statuses": "Statuses",
+    "priorities": "Priorities",
+    "assignees": "Assignees",
+    "tags": "Tags",
+    "tagMode": "Tag matching",
+    "any": "Any selected tag",
+    "all": "All selected tags",
+    "created": "Created period",
+    "updated": "Updated period",
+    "periodAny": "No restriction",
+    "absolute": "Absolute period",
+    "relative": "Relative period",
+    "absoluteHelp": "Local time. Start is inclusive; end is exclusive. Either bound can be left empty.",
+    "start": "Start",
+    "end": "End",
+    "seconds": "Within the last (seconds)",
+    "relation": "Relationship to target issue",
+    "target": "Target issue",
+    "chooseIssue": "Choose an issue",
+    "archive": "Issue archive scope",
+    "archiveScopes": {
+      "active": "Unarchived issues",
+      "archived": "Archived issues",
+      "all": "All issues, including archived"
+    },
+    "relations": {
+      "parent": "Parent of target (one level)",
+      "children": "Children of target (one level)",
+      "descendants": "All descendants of target (target excluded)",
+      "related": "Related to target (both directions, one hop)",
+      "blocking": "Issues blocking target (one hop)",
+      "blocked_by": "Issues blocked by target (one hop)"
+    },
+    "naturalLanguage": "Natural language condition",
+    "context": "Target and supporting context",
+    "contextHelp": "Save what “this release” or other references mean, so evaluation does not rely on a separate conversation.",
+    "conditions": "View conditions",
+    "override": "Saved filter results include hidden statuses and sub-issues. Temporary search, Team/Personal, tags, archive tabs and blocked-issue filters do not narrow these results. Clear the saved filter to use normal board filters.",
+    "unevaluated": "Not evaluated",
+    "evaluating": "Evaluating…",
+    "complete": "Evaluation complete",
+    "failed": "Evaluation failed",
+    "stale": "Showing previous results · stale",
+    "refreshing": "Updating results…",
+    "count": "{{count}} issues displayed",
+    "pending": "Results are not available yet. This is not a zero-match result.",
+    "missingIssues": "Loading the issues in the evaluation result…",
+    "refresh": "Refresh evaluation",
+    "invalid": "Enter a name, valid periods and a target for the selected relationship.",
+    "unsaved": "Discard unsaved filter changes?",
+    "conflict": "The definition changed. Reload it before editing again.",
+    "reload": "Reload definition"
   }
 }

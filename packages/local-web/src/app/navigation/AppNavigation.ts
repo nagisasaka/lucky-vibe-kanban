@@ -236,8 +236,19 @@ export function createLocalAppNavigation(): AppNavigation {
         ? null
         : parseLocalHostIdFromPathname(router.state.location.pathname);
 
+    const currentDestination = resolveLocalDestinationFromPath(
+      router.state.location.pathname
+    );
+    const savedFilter =
+      'projectId' in destination &&
+      currentDestination &&
+      'projectId' in currentDestination &&
+      destination.projectId === currentDestination.projectId
+        ? (router.state.location.search as { savedFilter?: string }).savedFilter
+        : undefined;
     void router.navigate({
       ...destinationToLocalTarget(destination, { currentHostId }),
+      search: { savedFilter },
       ...(transition?.replace !== undefined
         ? { replace: transition.replace }
         : {}),

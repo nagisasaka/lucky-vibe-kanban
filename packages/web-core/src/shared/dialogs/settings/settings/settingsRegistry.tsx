@@ -10,6 +10,12 @@ import {
 } from '@phosphor-icons/react';
 import type { Icon } from '@phosphor-icons/react';
 
+const SavedFiltersSettingsSection = lazy(() =>
+  import('./SavedFiltersSettingsSection').then((module) => ({
+    default: module.SavedFiltersSettingsSection,
+  }))
+);
+
 const HostPetSettingsSection = lazy(() =>
   import('./HostPetSettingsSection').then((module) => ({
     default: module.HostPetSettingsSection,
@@ -52,6 +58,7 @@ const RuntimeAccessSettingsSection = lazy(() =>
 );
 
 export type SettingsSectionType =
+  | 'saved-filters'
   | 'host-pet'
   | 'general'
   | 'execution'
@@ -68,6 +75,7 @@ export type SettingsSectionType =
 export type SettingsSectionGroup = 'host' | 'universal';
 
 export type SettingsSectionInitialState = {
+  'saved-filters': { projectId?: string; organizationId?: string } | undefined;
   'host-pet': undefined;
   general: undefined;
   execution: undefined;
@@ -92,6 +100,7 @@ export interface SettingsSectionDefinition {
 }
 
 export const SETTINGS_SECTION_DEFINITIONS: SettingsSectionDefinition[] = [
+  { id: 'saved-filters', icon: KanbanIcon, group: 'universal' },
   { id: 'host-pet', icon: BuildingsIcon, group: 'host' },
   { id: 'general', icon: GearIcon, group: 'host' },
   { id: 'notifications', icon: GearIcon, group: 'host' },
@@ -128,6 +137,14 @@ export function renderSettingsSection(
   initialState?: SettingsSectionInitialState[SettingsSectionType]
 ) {
   switch (type) {
+    case 'saved-filters':
+      return (
+        <SavedFiltersSettingsSection
+          initialState={
+            initialState as SettingsSectionInitialState['saved-filters']
+          }
+        />
+      );
     case 'execution':
     case 'notifications':
       return <GeneralSettingsSection key={type} category={type} />;

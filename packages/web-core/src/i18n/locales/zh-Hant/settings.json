@@ -27,7 +27,8 @@
         "agent-toolsDesc": "原生 MCP 伺服器和技能",
         "remote-projects": "專案",
         "remote-projectsDesc": "管理專案",
-        "mcp-integration": "MCP integration"
+        "mcp-integration": "MCP integration",
+        "saved-filters": "看板篩選器"
       }
     },
     "general": {
@@ -594,6 +595,9 @@
       "published": "The remote branch points to the confirmed source SHA.",
       "unpublished": "The remote branch does not currently point to the confirmed source SHA.",
       "newReview": "Review another push"
+    },
+    "scope": {
+      "saved-filters": "Manage shared Kanban filter definitions for a project."
     }
   },
   "integrations": {
