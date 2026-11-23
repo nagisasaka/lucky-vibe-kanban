@@ -236,8 +236,8 @@ pub async fn write(
                 ));
             }
         }
-        if let Some(r) = &d.machine.relation {
-            if sqlx::query_scalar::<_, i64>(
+        if let Some(r) = &d.machine.relation
+            && sqlx::query_scalar::<_, i64>(
                 "SELECT 1 FROM local_issues WHERE id=? AND project_id=?",
             )
             .bind(r.target_issue_id)
@@ -245,11 +245,10 @@ pub async fn write(
             .fetch_optional(&mut *tx)
             .await?
             .is_none()
-            {
-                return Err(SavedFilterError::Invalid(
-                    "relation target belongs to another Project or no longer exists".into(),
-                ));
-            }
+        {
+            return Err(SavedFilterError::Invalid(
+                "relation target belongs to another Project or no longer exists".into(),
+            ));
         }
     }
     let now = Utc::now();
