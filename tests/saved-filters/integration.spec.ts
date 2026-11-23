@@ -1,6 +1,8 @@
 import { test, expect } from "@playwright/test";
 const machine = {
   search: null,
+  simple_id: null,
+  include_unassigned: false,
   status_ids: [],
   priorities: [],
   assignee_ids: [],
@@ -46,6 +48,7 @@ test("selected filter alone evaluates; all archived IDs, evidence updates, inval
             stale: false,
             error: null,
             definition_revision: 1,
+            evaluation_revision: "v1",
           },
         },
       });
@@ -297,4 +300,99 @@ test("malformed stable ID is explained without applying another resource", async
   expect(
     requests.every((url) => new URL(url).pathname.endsWith("/saved-filters")),
   ).toBe(true);
+});
+
+test("page revision conflicts retry atomically; exhausted errors retain stale results and can recover", async ({
+  page,
+}) => {
+  let phase = "initial";
+  let starts = 0;
+  let releasePage: (() => void) | undefined;
+  const response = (
+    ids: string[],
+    revision: string,
+    next: number | null = null,
+    offset = 0,
+  ) => ({
+    saved_filter_id: definition.id,
+    project_id: "project",
+    state: "complete",
+    issue_ids: ids,
+    total_count: next !== null || offset ? 2 : ids.length,
+    offset,
+    limit: 500,
+    next_offset: next,
+    stale: false,
+    error: null,
+    definition_revision: 1,
+    evaluation_revision: revision,
+  });
+  await page.route("**/api/projects/project/saved-filters**", async (route) => {
+    const url = new URL(route.request().url());
+    if (url.pathname.endsWith("/evaluate")) {
+      starts++;
+      await route.fulfill({
+        json: {
+          success: true,
+          data:
+            phase === "initial" || phase === "recovered"
+              ? response(["active"], "v1")
+              : response(
+                  starts === 1 ? ["active"] : ["archived"],
+                  starts === 1 ? "v1" : "v2",
+                  1,
+                ),
+        },
+      });
+    } else if (url.pathname.endsWith("/results")) {
+      if (phase === "failed" || starts === 1) {
+        await route.fulfill({
+          status: 409,
+          json: { success: false, message: "Evaluation revision changed" },
+        });
+      } else {
+        expect(url.searchParams.get("expected_evaluation_revision")).toBe("v2");
+        await new Promise<void>((resolve) => {
+          releasePage = resolve;
+        });
+        await route.fulfill({
+          json: { success: true, data: response(["active"], "v2", null, 1) },
+        });
+      }
+    } else if (url.pathname.endsWith("/" + definition.id)) {
+      await route.fulfill({ json: { success: true, data: definition } });
+    } else
+      await route.fulfill({
+        json: {
+          success: true,
+          data: { saved_filters: [definition], next_offset: null },
+        },
+      });
+  });
+  await page.goto("/?integration&savedFilter=" + definition.id);
+  await expect(page.getByTestId("result")).toHaveText("active");
+  starts = 0;
+  phase = "changing";
+  await page.getByRole("button", { name: "Refresh", exact: true }).click();
+  await expect.poll(() => !!releasePage).toBe(true);
+  await expect(page.getByTestId("result")).toHaveText("active");
+  await expect(page.getByRole("status")).toContainText("古い結果");
+  releasePage!();
+  await expect(page.getByTestId("result")).toHaveText("archived,active");
+  expect(starts).toBe(2);
+  starts = 0;
+  phase = "failed";
+  await page.getByRole("button", { name: "Refresh", exact: true }).click();
+  await expect(page.getByRole("alert")).toContainText(
+    "Evaluation revision changed",
+  );
+  await expect(page.getByRole("alert")).toContainText("更新・再試行");
+  await expect(page.getByTestId("result")).toHaveText("archived,active");
+  expect(starts).toBe(3);
+  await page.reload();
+  await expect(page.getByRole("alert")).toContainText("該当0件ではありません");
+  await expect(page.getByTestId("result")).toHaveText("pending");
+  phase = "recovered";
+  await page.getByRole("button", { name: "Refresh", exact: true }).click();
+  await expect(page.getByTestId("result")).toHaveText("active");
 });

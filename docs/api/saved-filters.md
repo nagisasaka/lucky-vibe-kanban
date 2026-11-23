@@ -31,8 +31,14 @@ returns 409. A missing definition, including a different Project's ID, returns
 `shared/remote-types.ts` from `api-types`.
 
 List and result pages default to 100 and cap at 500. Follow `next_offset` until
-null. `total_count` is the unpaged count. Concurrent edits can change subsequent
-pages: restart from offset zero if the definition revision changes. Evaluation
+null. `total_count` is the unpaged count. Result responses include an opaque
+`evaluation_revision` fingerprint of all ordered IDs, evaluation state, stale/error
+and definition revisions. For every subsequent result page pass it as
+`expected_evaluation_revision` (query/body for HTTP, `page` for MCP). Missing tokens
+at offset > 0 return 400. A mismatch returns HTTP 409
+(`SavedFilterEvaluationChanged`); MCP reports a conflict. Discard collected pages
+and restart at offset 0 without the token. This also detects same-count membership
+swaps and relative-time membership changes. Definition lists do not use this token. Evaluation
 always receives the entire Project corpus, including archived and noncandidate
 Issues; it never evaluates only the returned page.
 
@@ -40,12 +46,18 @@ Issues; it never evaluates only the returned page.
 
 Conditions in different fields combine with AND. Empty lists impose no
 restriction. Nonempty `status_ids`, `priorities` and `assignee_ids` use OR.
+`include_unassigned` defaults to false for existing definitions. When true, the
+assignee field matches selected user IDs OR Issues with no assignees. With no
+selected IDs it matches only unassigned Issues. Other fields still combine with AND.
 `tag_ids` uses `tag_mode: "any" | "all"` (default `any`). Priority values are
 `urgent`, `high`, `medium`, `low`.
 
 `search` preserves existing MCP semantics: case-insensitive literal substring of
 full title or description, including literal whitespace. It does not search the
-simple ID or expand relationships. Existing ordinary UI search is unchanged.
+simple ID or expand relationships. `simple_id` separately provides a
+case-insensitive exact match, consistent with existing MCP IssueFilters. Null
+imposes no restriction; whitespace and bare numbers are not expanded. Existing
+ordinary UI search (title/simple ID/number/related) is unchanged.
 
 `archived` is `active` (default), `archived`, or `all`, and refers only to Issue
 archive. It does not imply hidden-status or Workspace archive filtering.
@@ -76,7 +88,8 @@ related edges; blocking cycles do not imply transitive traversal.
 ## Evaluation and links
 
 `SavedFilterEvaluation` contains `saved_filter_id`, `project_id`, `state`,
-`issue_ids`, paging metadata, `stale`, `error`, and `definition_revision`.
+`issue_ids`, paging metadata, `stale`, `error`, `definition_revision`, and
+`evaluation_revision`.
 `state` is `unevaluated`, `evaluating`, `complete`, or `failed`. An empty ID list
 in an incomplete/failed evaluation is not a successful zero-match answer.
 Previous results may be returned with `stale: true`. No natural-language condition
@@ -110,11 +123,11 @@ Both transports expose `list_saved_filters`, `get_saved_filter`,
 They use the same DTOs and server service. Reads require Project membership in the
 connection allowlist and read scope. Writes/evaluation require write scope.
 
-List arguments are `{project_id, page?:{offset,limit}}`. Get/results/link arguments
-are `{project_id,saved_filter_id,page?:{offset,limit}}`. Create arguments are
+List arguments are `{project_id, page?:{offset,limit,expected_evaluation_revision}}`. Get/results/link arguments
+are `{project_id,saved_filter_id,page?:{offset,limit,expected_evaluation_revision}}`. Create arguments are
 `{project_id,input:<HTTP create body>}`; update/delete also include
 `saved_filter_id`. Evaluate arguments are
-`{project_id,saved_filter_id,request_id,retry_failed?:false,page?:{offset,limit}}`.
+`{project_id,saved_filter_id,request_id,retry_failed?:false,page?:{offset,limit,expected_evaluation_revision}}`.
 
 MCP mutations/evaluation starts return existing durable Operations receipts.
 Acceptance is not completion. Use `get_operation` with the original `request_id`

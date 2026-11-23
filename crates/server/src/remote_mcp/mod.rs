@@ -8,7 +8,6 @@ mod auth;
 mod code_read;
 mod config;
 mod design_notes;
-mod saved_filters;
 mod dev_server;
 #[cfg(test)]
 mod dev_server_tests;
@@ -22,6 +21,7 @@ pub mod environment_settings;
 mod environment_switch;
 mod errors;
 mod execution_approvals;
+mod saved_filters;
 pub(crate) use errors::database_category;
 mod evidence_read;
 mod goals;

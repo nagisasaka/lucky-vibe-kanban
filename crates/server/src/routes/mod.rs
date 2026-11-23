@@ -10,10 +10,10 @@ use tower_http::{compression::CompressionLayer, validate_request::ValidateReques
 use crate::{DeploymentImpl, middleware};
 
 pub mod agent_runs;
-mod board_run_events;
 pub mod agent_settings;
 pub mod agent_tools;
 pub mod approvals;
+mod board_run_events;
 pub mod config;
 pub mod containers;
 pub mod filesystem;
@@ -23,7 +23,6 @@ mod repository_read;
 pub(crate) mod attachment_transfer;
 pub mod attachments;
 pub mod design_notes;
-pub mod saved_filters;
 pub mod events;
 pub mod execution_processes;
 pub mod frontend;
@@ -38,6 +37,7 @@ mod project_utilities;
 pub mod releases;
 pub mod repo;
 mod resource_observation;
+pub mod saved_filters;
 pub mod scheduled_tasks;
 pub mod scratch;
 pub mod search;

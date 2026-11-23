@@ -52,7 +52,7 @@ impl McpServer {
         }
     }
     #[tool(
-        description = "Read machine results and cached semantic state without starting AI. Unevaluated/failed is not a complete zero result. Follow next_offset for all matches.",
+        description = "Read machine results and cached semantic state without starting AI. Unevaluated/failed is not a complete zero result. Pass evaluation_revision as page.expected_evaluation_revision with next_offset. On conflict discard collected pages and restart at offset 0 without the token.",
         annotations(
             read_only_hint = true,
             destructive_hint = false,
@@ -70,7 +70,14 @@ impl McpServer {
             .await
         {
             Ok(v) => Self::success(&v),
-            Err(e) => Ok(Self::tool_error(e)),
+            Err(mut e) => {
+                if e.diagnostic.category == utils::mcp_error::Category::Conflict {
+                    e.diagnostic.recovery = "restart_result_pagination";
+                    e.diagnostic.message = "Saved filter evaluation changed. Discard collected pages and restart at offset 0 without expected_evaluation_revision.";
+                    e.message = e.diagnostic.message;
+                }
+                Ok(Self::tool_error(e))
+            }
         }
     }
     #[tool(
@@ -178,7 +185,7 @@ mod tests {
         let address = listener.local_addr().unwrap();
         let project = Uuid::new_v4();
         let request = Uuid::new_v4();
-        let expected = json!({"project_id":project,"input":{"request_id":request,"definition":{"name":"My slice","machine":{"search":null,"status_ids":[],"priorities":[],"assignee_ids":[],"tag_ids":[],"tag_mode":"any","archived":"active","created_at":null,"updated_at":null,"relation":null},"natural_language":null,"context":null}}});
+        let expected = json!({"project_id":project,"input":{"request_id":request,"definition":{"name":"My slice","machine":{"search":null,"simple_id":null,"status_ids":[],"priorities":[],"assignee_ids":[],"include_unassigned":false,"tag_ids":[],"tag_mode":"any","archived":"active","created_at":null,"updated_at":null,"relation":null},"natural_language":null,"context":null}}});
         let backend = tokio::spawn(async move {
             let (mut socket, _) = listener.accept().await.unwrap();
             let mut header = Vec::new();
@@ -239,5 +246,59 @@ mod tests {
             results.annotations.as_ref().unwrap().read_only_hint,
             Some(true)
         );
+    }
+    #[tokio::test]
+    async fn saved_filter_stdio_conflict_restarts_result_pagination() {
+        super::super::tests::install_rustls_provider();
+        let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let address = listener.local_addr().unwrap();
+        let backend = tokio::spawn(async move {
+            let (mut socket, _) = listener.accept().await.unwrap();
+            let mut header = Vec::new();
+            while !header.ends_with(b"\r\n\r\n") {
+                header.push(socket.read_u8().await.unwrap());
+                assert!(header.len() < 8192);
+            }
+            let header = String::from_utf8(header).unwrap();
+            let len: usize = header
+                .lines()
+                .find_map(|s| {
+                    s.to_lowercase()
+                        .strip_prefix("content-length: ")
+                        .map(str::to_owned)
+                })
+                .unwrap()
+                .parse()
+                .unwrap();
+            let mut bytes = vec![0; len];
+            socket.read_exact(&mut bytes).await.unwrap();
+            let body: Value = serde_json::from_slice(&bytes).unwrap();
+            assert_eq!(body["page"]["expected_evaluation_revision"], "old");
+            socket
+                .write_all(
+                    b"HTTP/1.1 409 Conflict\r\nContent-Length: 0\r\nConnection: close\r\n\r\n",
+                )
+                .await
+                .unwrap();
+        });
+        let server = McpServer::new_global(&format!("http://{address}"));
+        let result = server
+            .get_saved_filter_results(Parameters(SavedFilterReadArgs {
+                project_id: Uuid::new_v4(),
+                saved_filter_id: Uuid::new_v4(),
+                page: SavedFilterPage {
+                    offset: 1,
+                    limit: Some(1),
+                    expected_evaluation_revision: Some("old".into()),
+                },
+            }))
+            .await
+            .unwrap();
+        assert_eq!(result.is_error, Some(true));
+        assert_eq!(
+            result.structured_content.unwrap()["diagnostic"]["recovery"],
+            "restart_result_pagination"
+        );
+        backend.await.unwrap();
     }
 }

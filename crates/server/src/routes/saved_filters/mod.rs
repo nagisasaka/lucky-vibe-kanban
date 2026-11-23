@@ -13,6 +13,7 @@ use axum::{
 use chrono::{DateTime, Utc};
 use db::models::saved_filter::{self as store, SavedFilterWrite};
 use deployment::Deployment;
+use sha2::{Digest, Sha256};
 use sqlx::SqlitePool;
 use utils::response::ApiResponse;
 use uuid::Uuid;
@@ -109,6 +110,11 @@ pub async fn evaluate_service(
     options: EvaluationOptions,
 ) -> Result<SavedFilterEvaluation, ApiError> {
     use crate::saved_filter_semantics::{EvaluationStatus, SemanticResult};
+    if page.offset > 0 && page.expected_evaluation_revision.is_none() {
+        return Err(ApiError::BadRequest(
+            "expected_evaluation_revision is required for result offset > 0".into(),
+        ));
+    }
     let definition = store::get(pool, project, id).await?;
     let corpus = load_corpus(pool, project).await?;
     let candidates = machine::candidate_ids(&corpus, &definition.machine, options.now);
@@ -151,6 +157,23 @@ pub async fn evaluate_service(
         .into_iter()
         .filter(|id| selected.contains(id))
         .collect();
+    let stale = semantic.stale || changed;
+    let definition_revision = i32::try_from(semantic.definition_revision)
+        .map_err(|_| ApiError::Conflict("Invalid semantic definition revision".into()))?;
+    let fingerprint = serde_json::json!({
+        "version": 1, "project_id":project, "saved_filter_id":id,
+        "definition_revision":definition_revision, "current_revision":current.revision,
+        "state":state, "issue_ids":ids, "stale":stale, "error":semantic.error
+    })
+    .to_string();
+    let evaluation_revision = format!("{:x}", Sha256::digest(fingerprint));
+    if page
+        .expected_evaluation_revision
+        .as_ref()
+        .is_some_and(|expected| expected != &evaluation_revision)
+    {
+        return Err(ApiError::SavedFilterEvaluationChanged);
+    }
     let total_count = ids.len();
     let offset = page.offset as usize;
     let limit = page.limit.unwrap_or(100).clamp(1, 500) as usize;
@@ -164,10 +187,10 @@ pub async fn evaluate_service(
         limit,
         next_offset: (offset.saturating_add(limit) < total_count)
             .then_some(offset.saturating_add(limit)),
-        stale: semantic.stale || changed,
+        stale,
         error: semantic.error,
-        definition_revision: i32::try_from(semantic.definition_revision)
-            .map_err(|_| ApiError::Conflict("Invalid semantic definition revision".into()))?,
+        definition_revision,
+        evaluation_revision,
     })
 }
 pub async fn link_service(
@@ -267,6 +290,7 @@ async fn evaluate(
             &SavedFilterPage {
                 offset: input.offset,
                 limit: input.limit,
+                expected_evaluation_revision: input.expected_evaluation_revision,
             },
             EvaluationOptions {
                 activate: true,

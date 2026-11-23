@@ -62,9 +62,13 @@ pub struct SavedFilterRelation {
 pub struct MachineFilter {
     /// Case-insensitive literal substring of title/description; whitespace is literal.
     pub search: Option<String>,
+    /// Case-insensitive exact simple ID, matching existing MCP IssueFilters.
+    pub simple_id: Option<String>,
     pub status_ids: Vec<Uuid>,
     pub priorities: Vec<IssuePriority>,
     pub assignee_ids: Vec<Uuid>,
+    /// Selected users OR no assignees; false with empty IDs imposes no restriction.
+    pub include_unassigned: bool,
     pub tag_ids: Vec<Uuid>,
     pub tag_mode: SavedFilterTagMode,
     pub archived: SavedFilterArchive,
@@ -133,6 +137,8 @@ pub struct SavedFilterEvaluation {
     pub stale: bool,
     pub error: Option<String>,
     pub definition_revision: i32,
+    /// Opaque fingerprint of the complete ordered result and evaluation state.
+    pub evaluation_revision: String,
 }
 #[derive(Debug, Clone, Default, Serialize, Deserialize, TS, JsonSchema)]
 #[serde(default, deny_unknown_fields)]
@@ -140,6 +146,8 @@ pub struct SavedFilterPage {
     pub offset: u32,
     /// Default 100, maximum 500. Pagination is applied after complete evaluation.
     pub limit: Option<u32>,
+    /// Required for result offset > 0. A mismatch requires restarting at offset 0.
+    pub expected_evaluation_revision: Option<String>,
 }
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct ListSavedFiltersResponse {
@@ -173,5 +181,7 @@ pub struct SavedFilterCorpus {
 pub struct EvaluateSavedFilterRequest {
     pub offset: u32,
     pub limit: Option<u32>,
+    /// Required for result offset > 0. A mismatch requires restarting at offset 0.
+    pub expected_evaluation_revision: Option<String>,
     pub retry_failed: bool,
 }

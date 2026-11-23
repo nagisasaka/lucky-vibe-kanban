@@ -140,6 +140,7 @@ async fn saved_filter_persistence_paging_and_concurrent_revision() {
         &SavedFilterPage {
             offset: 1,
             limit: Some(1),
+            ..Default::default()
         },
     )
     .await

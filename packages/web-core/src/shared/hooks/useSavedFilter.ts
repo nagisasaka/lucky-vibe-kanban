@@ -79,7 +79,9 @@ export function useSavedFilter() {
   const refetch = evaluation.refetch;
   useEffect(() => {
     if (!selected || !definition.data || definition.isError) return;
-    const timer = setTimeout(() => void refetch(), 300);
+    const timer = setTimeout(() => {
+      if (evaluatedEvidence.current !== evidence) void refetch();
+    }, 300);
     return () => clearTimeout(timer);
   }, [evidence, selected, definition.data, definition.isError, refetch]);
   const previous = useRef<{

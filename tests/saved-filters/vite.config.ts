@@ -7,6 +7,13 @@ export default defineConfig({
     ...base.resolve,
     alias: [
       {
+        find: "@web/app/router",
+        replacement: fileURLToPath(
+          new URL("./fixture/navigation-router.ts", import.meta.url),
+        ),
+      },
+
+      {
         find: "@tanstack/react-router",
         replacement: fileURLToPath(
           new URL(

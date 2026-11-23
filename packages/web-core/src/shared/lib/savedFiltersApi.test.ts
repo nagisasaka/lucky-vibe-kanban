@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
   collectEvaluationPages,
+  SavedFilterRequestError,
   savedFiltersApi,
 } from '@/shared/lib/savedFiltersApi';
 import {
@@ -27,6 +28,7 @@ const result = (
   stale: false,
   error: null,
   definition_revision: 1,
+  evaluation_revision: 'v1',
   ...patch,
 });
 describe('saved filter evaluation and transport', () => {
@@ -40,7 +42,7 @@ describe('saved filter evaluation and transport', () => {
         result({ issue_ids: ['b'], total_count: 2, offset: 1 })
       );
     expect((await collectEvaluationPages(read)).issue_ids).toEqual(['a', 'b']);
-    expect(read.mock.calls).toEqual([[0], [1]]);
+    expect(read.mock.calls).toEqual([[0], [1, 'v1']]);
   });
   it.each([
     { definition_revision: 2 },
@@ -144,10 +146,15 @@ it('activates once, reads subsequent pages without activation, and retries failu
     (await savedFiltersApi.evaluate('project', 'filter')).issue_ids
   ).toEqual(['a', 'b']);
   expect(transport.mock.calls[0][1]?.body).toBe(
-    JSON.stringify({ offset: 0, limit: 500, retry_failed: false })
+    JSON.stringify({
+      offset: 0,
+      limit: 500,
+      expected_evaluation_revision: null,
+      retry_failed: false,
+    })
   );
   expect(transport.mock.calls[1][0]).toBe(
-    '/api/projects/project/saved-filters/filter/results?offset=1&limit=500'
+    '/api/projects/project/saved-filters/filter/results?offset=1&limit=500&expected_evaluation_revision=v1'
   );
   expect(transport.mock.calls[1][1]?.method).toBeUndefined();
   transport.mockResolvedValueOnce(
@@ -155,6 +162,95 @@ it('activates once, reads subsequent pages without activation, and retries failu
   );
   await savedFiltersApi.evaluate('project', 'filter', undefined, true);
   expect(transport.mock.calls[2][1]?.body).toBe(
-    JSON.stringify({ offset: 0, limit: 500, retry_failed: true })
+    JSON.stringify({
+      offset: 0,
+      limit: 500,
+      expected_evaluation_revision: null,
+      retry_failed: true,
+    })
   );
+});
+
+it('restarts from zero after a 409 even when count and definition are unchanged', async () => {
+  const read = vi
+    .fn()
+    .mockResolvedValueOnce(result({ total_count: 2, next_offset: 1 }))
+    .mockRejectedValueOnce(new SavedFilterRequestError('Snapshot changed', 409))
+    .mockResolvedValueOnce(
+      result({
+        issue_ids: ['c'],
+        total_count: 2,
+        next_offset: 1,
+        evaluation_revision: 'v2',
+      })
+    )
+    .mockResolvedValueOnce(
+      result({
+        issue_ids: ['d'],
+        total_count: 2,
+        offset: 1,
+        evaluation_revision: 'v2',
+      })
+    );
+  expect((await collectEvaluationPages(read)).issue_ids).toEqual(['c', 'd']);
+  expect(read.mock.calls).toEqual([[0], [1, 'v1'], [0], [1, 'v2']]);
+});
+it('restarts on mismatched returned revision and does not expose a partial collection', async () => {
+  let finish!: (value: SavedFilterEvaluation) => void;
+  const read = vi
+    .fn()
+    .mockResolvedValueOnce(result({ total_count: 2, next_offset: 1 }))
+    .mockResolvedValueOnce(
+      result({
+        issue_ids: ['d'],
+        total_count: 2,
+        offset: 1,
+        evaluation_revision: 'v2',
+      })
+    )
+    .mockResolvedValueOnce(
+      result({
+        issue_ids: ['c'],
+        total_count: 2,
+        next_offset: 1,
+        evaluation_revision: 'v2',
+      })
+    )
+    .mockImplementationOnce(
+      () =>
+        new Promise<SavedFilterEvaluation>((resolve) => {
+          finish = resolve;
+        })
+    );
+  let published = false;
+  const collection = collectEvaluationPages(read).then((value) => {
+    published = true;
+    return value;
+  });
+  await vi.waitFor(() => expect(read).toHaveBeenCalledTimes(4));
+  expect(published).toBe(false);
+  finish(
+    result({
+      issue_ids: ['d'],
+      total_count: 2,
+      offset: 1,
+      evaluation_revision: 'v2',
+    })
+  );
+  expect((await collection).issue_ids).toEqual(['c', 'd']);
+});
+it('bounds conflict retries and leaves exhausted/transport failures as errors, never zero', async () => {
+  const read = vi.fn(async (offset: number) => {
+    if (offset) throw new SavedFilterRequestError('Snapshot changed', 409);
+    return result({ total_count: 2, next_offset: 1 });
+  });
+  await expect(collectEvaluationPages(read)).rejects.toThrow(
+    'Snapshot changed'
+  );
+  expect(read).toHaveBeenCalledTimes(6);
+  const failed = vi
+    .fn()
+    .mockRejectedValue(new SavedFilterRequestError('Offline', 503));
+  await expect(collectEvaluationPages(failed)).rejects.toThrow('Offline');
+  expect(failed).toHaveBeenCalledTimes(1);
 });

@@ -5,6 +5,7 @@ import type {
   CreateSavedFilterRequest,
   UpdateSavedFilterRequest,
   DeleteSavedFilterRequest,
+  EvaluateSavedFilterRequest,
 } from 'shared/remote-types';
 import { makeLocalApiRequest } from '@/shared/lib/localApiTransport';
 
@@ -41,8 +42,26 @@ async function request<T>(url: string, init?: RequestInit): Promise<T> {
   return body.data as T;
 }
 
+// Retry a moving snapshot a bounded number of times. No partial collection is
+// returned, so React Query keeps the previous complete result during retries.
 export async function collectEvaluationPages(
-  read: (offset: number) => Promise<SavedFilterEvaluation>
+  read: (offset: number, revision?: string) => Promise<SavedFilterEvaluation>
+) {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return await collectSnapshot(read);
+    } catch (error) {
+      if (
+        !(error instanceof SavedFilterRequestError) ||
+        error.status !== 409 ||
+        attempt >= 2
+      )
+        throw error;
+    }
+  }
+}
+async function collectSnapshot(
+  read: (offset: number, revision?: string) => Promise<SavedFilterEvaluation>
 ) {
   const first = await read(0);
   const ids = [...first.issue_ids];
@@ -51,7 +70,12 @@ export async function collectEvaluationPages(
   while (next !== null) {
     if (next <= offset) throw new Error('Invalid saved filter pagination');
     offset = next;
-    const page = await read(offset);
+    const page = await read(offset, first.evaluation_revision);
+    if (page.evaluation_revision !== first.evaluation_revision)
+      throw new SavedFilterRequestError(
+        'Saved filter changed while loading results. Refresh to retry.',
+        409
+      );
     if (
       page.definition_revision !== first.definition_revision ||
       page.total_count !== first.total_count ||
@@ -110,24 +134,26 @@ export const savedFiltersApi = {
     id: string,
     signal?: AbortSignal,
     retryFailed = false
-  ) =>
-    collectEvaluationPages((offset) =>
-      offset === 0
-        ? request<SavedFilterEvaluation>(
-            `${base(projectId)}/${encodeURIComponent(id)}/evaluate`,
-            {
-              method: 'POST',
-              body: JSON.stringify({
-                offset,
-                limit: 500,
-                retry_failed: retryFailed,
-              }),
-              signal,
-            }
-          )
-        : request<SavedFilterEvaluation>(
-            `${base(projectId)}/${encodeURIComponent(id)}/results?offset=${offset}&limit=500`,
-            { signal }
-          )
-    ),
+  ) => {
+    let firstRequest = true;
+    return collectEvaluationPages((offset, revision) => {
+      if (offset === 0) {
+        const body: EvaluateSavedFilterRequest = {
+          offset,
+          limit: 500,
+          expected_evaluation_revision: null,
+          retry_failed: firstRequest && retryFailed,
+        };
+        firstRequest = false;
+        return request<SavedFilterEvaluation>(
+          `${base(projectId)}/${encodeURIComponent(id)}/evaluate`,
+          { method: 'POST', body: JSON.stringify(body), signal }
+        );
+      }
+      return request<SavedFilterEvaluation>(
+        `${base(projectId)}/${encodeURIComponent(id)}/results?offset=${offset}&limit=500&expected_evaluation_revision=${encodeURIComponent(revision!)}`,
+        { signal }
+      );
+    });
+  },
 };

@@ -6,6 +6,8 @@ import type {
 
 export const emptyMachineFilter = (): MachineFilter => ({
   search: null,
+  simple_id: null,
+  include_unassigned: false,
   status_ids: [],
   priorities: [],
   assignee_ids: [],

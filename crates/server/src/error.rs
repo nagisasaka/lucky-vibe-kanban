@@ -27,6 +27,10 @@ use worktree_manager::WorktreeError;
 #[derive(Debug, Error, ts_rs::TS)]
 #[ts(type = "string")]
 pub enum ApiError {
+    #[error(
+        "saved_filter_evaluation_changed: restart from offset 0 without expected_evaluation_revision"
+    )]
+    SavedFilterEvaluationChanged,
     #[error(transparent)]
     SavedFilter(#[from] db::models::saved_filter::SavedFilterError),
     #[error(transparent)]
@@ -206,9 +210,15 @@ impl IntoResponse for ApiError {
     fn into_response(self) -> Response {
         let info = match &self {
             ApiError::SavedFilter(error) => match error {
-                db::models::saved_filter::SavedFilterError::NotFound => ErrorInfo::not_found("SavedFilterError", error.to_string()),
-                db::models::saved_filter::SavedFilterError::Conflict => ErrorInfo::conflict("SavedFilterError", error.to_string()),
-                db::models::saved_filter::SavedFilterError::Invalid(_) => ErrorInfo::bad_request("SavedFilterError", error.to_string()),
+                db::models::saved_filter::SavedFilterError::NotFound => {
+                    ErrorInfo::not_found("SavedFilterError", error.to_string())
+                }
+                db::models::saved_filter::SavedFilterError::Conflict => {
+                    ErrorInfo::conflict("SavedFilterError", error.to_string())
+                }
+                db::models::saved_filter::SavedFilterError::Invalid(_) => {
+                    ErrorInfo::bad_request("SavedFilterError", error.to_string())
+                }
                 _ => ErrorInfo::internal("SavedFilterError"),
             },
             ApiError::DesignNote(error) => match error {
@@ -378,6 +388,9 @@ impl IntoResponse for ApiError {
             ),
             ApiError::BadRequest(msg) | ApiError::InitialConfigurationRejected(msg) => {
                 ErrorInfo::bad_request("BadRequest", msg.clone())
+            }
+            ApiError::SavedFilterEvaluationChanged => {
+                ErrorInfo::conflict("SavedFilterEvaluationChanged", self.to_string())
             }
             ApiError::Conflict(msg) => ErrorInfo::conflict("ConflictError", msg.clone()),
             ApiError::Forbidden(msg) => {

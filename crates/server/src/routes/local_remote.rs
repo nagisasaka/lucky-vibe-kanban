@@ -1,4 +1,3 @@
-pub(crate) mod saved_filter_snapshot;
 pub mod board_api;
 pub(crate) mod issue_archive;
 mod issue_attachments;
@@ -7,6 +6,7 @@ pub(crate) mod issue_relations;
 #[cfg(test)]
 mod issue_update_tests;
 pub(crate) mod issue_versions;
+pub(crate) mod saved_filter_snapshot;
 use api_types::{
     CreateIssueAssigneeRequest, CreateIssueCommentReactionRequest, CreateIssueCommentRequest,
     CreateIssueFollowerRequest, CreateIssueRelationshipRequest, CreateIssueRequest,

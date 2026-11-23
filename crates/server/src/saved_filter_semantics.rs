@@ -5,6 +5,7 @@
 //! saved_filters(id) ON DELETE CASCADE, generation INTEGER NOT NULL, state_json TEXT NOT NULL).
 //! saved_filters supplies id, project_id and integer revision. No Issue writes occur here.
 mod engine;
+mod stream;
 
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
@@ -243,11 +244,72 @@ async fn evaluate_with(
             });
         }
         cache.definition_revision = request.definition_revision;
-        if let Some(pending) = cache.pending.clone() {
+        if let Some(mut pending) = cache.pending.clone() {
+            if !pending.dispatched {
+                if !pending.plan.evidence.same(&evidence) {
+                    cache.pending = None;
+                    if !save(pool, request, generation, &cache).await? {
+                        continue;
+                    }
+                    continue;
+                }
+                if !activate {
+                    return cache.result(request, now).map_err(invalid);
+                }
+                pending.dispatched = true;
+                pending.started_at = now;
+                let prompt = pending
+                    .stream
+                    .as_ref()
+                    .ok_or_else(|| invalid("Missing streaming checkpoint"))?
+                    .prompt();
+                cache.pending = Some(pending.clone());
+                if !save(pool, request, generation, &cache).await? {
+                    continue;
+                }
+                if let Err(error) = runtime.launch(&pending, prompt).await {
+                    cache.failure = Some(format!("Evaluation launch failed: {error}"));
+                    let _ = save(pool, request, generation + 1, &cache).await?;
+                }
+                return cache.result(request, now).map_err(invalid);
+            }
             match runtime.poll(&pending, now).await? {
                 Progress::Running => return cache.result(request, now).map_err(invalid),
                 Progress::Complete(output) => {
-                    if let Err(error) = cache.complete(&output, now) {
+                    // A local delta discovering a cross-Issue dependency must
+                    // restart with the full population, not guess from changed rows.
+                    let escalates = (!pending.plan.reused.is_empty()
+                        || pending
+                            .stream
+                            .as_ref()
+                            .is_some_and(|s| s.needs_project_scan()))
+                        && serde_json::from_str::<serde_json::Value>(engine::normalize_output(
+                            &output,
+                        ))
+                        .ok()
+                        .is_some_and(|v| v["scope"] == "project");
+                    if escalates {
+                        if !pending.plan.reused.is_empty() {
+                            if let Some(success) = &mut cache.success {
+                                success.scope = engine::Scope::Project;
+                            }
+                            cache.pending = None;
+                        } else {
+                            let mut stream = pending
+                                .stream
+                                .clone()
+                                .ok_or_else(|| invalid("Missing scan checkpoint"))?;
+                            stream.restart_project(&pending.plan).map_err(invalid)?;
+                            cache.pending = Some(Pending {
+                                session_id: Uuid::new_v4(),
+                                workspace_id: Uuid::new_v4(),
+                                started_at: now,
+                                plan: pending.plan.clone(),
+                                stream: Some(stream),
+                                dispatched: false,
+                            });
+                        }
+                    } else if let Err(error) = cache.complete(&output, now) {
                         cache.fail(error);
                     }
                 }
@@ -263,12 +325,24 @@ async fn evaluate_with(
         let Some(plan) = cache.plan(evidence.clone(), now) else {
             return cache.result(request, now).map_err(invalid);
         };
+        let same_snapshot = cache
+            .success
+            .as_ref()
+            .is_some_and(|s| s.evidence.same(&evidence));
+        if !same_snapshot || retry_failed {
+            cache.expired_refreshes = 0;
+            cache.refresh_after = None;
+        }
         if !activate
+            || (same_snapshot
+                && !retry_failed
+                && (cache.expired_refreshes >= 2 || cache.refresh_after.is_some_and(|at| now < at)))
             || (!retry_failed
                 && cache
                     .failed_evidence
                     .as_ref()
-                    .is_some_and(|e| e.same(&evidence)))
+                    .is_some_and(|e| e.same(&evidence))
+                && !cache.failed_time_boundary.is_some_and(|at| now >= at))
         {
             return cache.result(request, now).map_err(invalid);
         }
@@ -287,12 +361,17 @@ async fn evaluate_with(
             }
             return cache.result(request, now).map_err(invalid);
         }
-        let prompt = engine::prompt(request, &plan, now);
+        let direct_prompt = engine::prompt(request, &plan, now);
+        let stream = (direct_prompt.len() > stream::DIRECT_LIMIT)
+            .then(|| stream::Stream::new(request, &plan, now));
+        let prompt = stream.as_ref().map_or(direct_prompt, |work| work.prompt());
         let pending = Pending {
             session_id: Uuid::new_v4(),
             workspace_id: Uuid::new_v4(),
             started_at: now,
             plan,
+            stream,
+            dispatched: true,
         };
         cache.pending = Some(pending.clone());
         cache.failure = None;
