@@ -12,6 +12,7 @@ fn corpus() -> SavedFilterCorpus {
         tags: vec![],
         issue_tags: vec![],
         assignees: vec![],
+        assignee_display_names: vec![],
         relationships: vec![],
     }
 }
@@ -400,6 +401,111 @@ async fn saved_filter_relative_time_invalidates_result_pages_without_definition_
     assert_eq!(next.total_count, first.total_count);
     assert_eq!(next.definition_revision, first.definition_revision);
     assert_ne!(next.evaluation_revision, first.evaluation_revision);
+}
+
+#[tokio::test]
+async fn saved_filter_assignee_names_are_scoped_stable_and_invalidate_context_on_rename() {
+    let pool = sqlx::sqlite::SqlitePoolOptions::new()
+        .max_connections(1)
+        .connect("sqlite::memory:")
+        .await
+        .unwrap();
+    db::run_migrations(&pool).await.unwrap();
+    let project = Uuid::new_v4();
+    let other = Uuid::new_v4();
+    let status = Uuid::new_v4();
+    for (id, key) in [(project, "NAMES"), (other, "OTHER")] {
+        sqlx::query("INSERT INTO projects(id,name,key) VALUES(?,'names',?)")
+            .bind(id)
+            .bind(key)
+            .execute(&pool)
+            .await
+            .unwrap();
+    }
+    sqlx::query("INSERT INTO local_project_statuses(id,project_id,name,color,sort_order) VALUES(?,?,'Todo','blue',0)").bind(status).bind(project).execute(&pool).await.unwrap();
+    for (n, p) in [(1, project), (2, project), (3, other)] {
+        sqlx::query("INSERT INTO local_issues(id,project_id,issue_number,simple_id,status_id,title,sort_order) VALUES(?,?,?,?,?,'Assigned work',0)").bind(Uuid::from_u128(n)).bind(p).bind(n as i32).bind(format!("NAMES-{n}")).bind(status).execute(&pool).await.unwrap();
+    }
+    // Reverse insertion order and duplicate assignment must not affect context.
+    for (n, name, state) in [
+        (51, "鈴木", "active"),
+        (50, "田中", "active"),
+        (52, "Unassigned", "active"),
+        (53, "Other project", "active"),
+        (54, "Disabled", "disabled"),
+    ] {
+        sqlx::query("INSERT INTO access_members(id,issuer,subject,display_name,state,role,created_at) VALUES(?,'fixture',?,?,?,'member',0)").bind(Uuid::from_u128(n).to_string()).bind(format!("private-subject-{n}")).bind(name).bind(state).execute(&pool).await.unwrap();
+    }
+    for (issue, user) in [(1, 51), (1, 50), (2, 50), (3, 53), (2, 54), (2, 55)] {
+        sqlx::query("INSERT INTO local_issue_assignees(id,issue_id,user_id) VALUES(?,?,?)")
+            .bind(Uuid::new_v4())
+            .bind(Uuid::from_u128(issue))
+            .bind(Uuid::from_u128(user))
+            .execute(&pool)
+            .await
+            .unwrap();
+    }
+    let value = store::write(
+        &pool,
+        project,
+        "test",
+        SavedFilterWrite::Create(CreateSavedFilterRequest {
+            request_id: Uuid::new_v4(),
+            definition: SavedFilterDefinition {
+                name: "names".into(),
+                machine: MachineFilter::default(),
+                natural_language: Some("田中さんが担当している仕事".into()),
+                context: None,
+            },
+        }),
+    )
+    .await
+    .unwrap();
+    let definition: SavedFilter = serde_json::from_value(value).unwrap();
+    let original = load_corpus(&pool, project).await.unwrap();
+    let before = semantic_request(&definition, &original, ids(&[1, 2]));
+    assert_eq!(
+        before.context["assignee_display_names"],
+        json!([{"user_id":Uuid::from_u128(50),"display_name":"田中"},{"user_id":Uuid::from_u128(51),"display_name":"鈴木"}])
+    );
+    let same = load_corpus(&pool, project).await.unwrap();
+    assert_eq!(
+        before.context,
+        semantic_request(&definition, &same, ids(&[1])).context,
+        "machine-only candidates and repeated reads preserve semantic context"
+    );
+    sqlx::query("UPDATE access_members SET display_name='田中' WHERE id=?")
+        .bind(Uuid::from_u128(50).to_string())
+        .execute(&pool)
+        .await
+        .unwrap();
+    sqlx::query("UPDATE access_members SET display_name='Not used',subject='another-private-subject' WHERE id=?").bind(Uuid::from_u128(52).to_string()).execute(&pool).await.unwrap();
+    let same = load_corpus(&pool, project).await.unwrap();
+    assert_eq!(
+        before.context,
+        semantic_request(&definition, &same, ids(&[1, 2])).context,
+        "same display name and unrelated profiles preserve cache evidence"
+    );
+    sqlx::query("UPDATE access_members SET display_name='佐藤' WHERE id=?")
+        .bind(Uuid::from_u128(50).to_string())
+        .execute(&pool)
+        .await
+        .unwrap();
+    let renamed = load_corpus(&pool, project).await.unwrap();
+    let after = semantic_request(&definition, &renamed, ids(&[1, 2]));
+    assert_ne!(
+        before.context, after.context,
+        "assignee rename changes semantic definition context, which the semantic engine invalidates globally"
+    );
+    assert_eq!(
+        after.context["assignee_display_names"][0]["display_name"],
+        "佐藤"
+    );
+    assert_eq!(
+        serde_json::to_value(before.issues).unwrap(),
+        serde_json::to_value(after.issues).unwrap(),
+        "rename invalidation does not depend on Issue modification timestamps"
+    );
 }
 
 /// Production HTTP auth/router coverage in a task-owned disposable instance.

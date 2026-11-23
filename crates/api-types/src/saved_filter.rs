@@ -164,6 +164,13 @@ pub struct SavedFilterLink {
     /// Same-origin relative URL. MCP resolves it against the public base URL.
     pub url: String,
 }
+/// Visible display name for a user actually assigned in this Project.
+/// No email, private profile fields or viewer-dependent identity aliases.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SavedFilterAssigneeDisplayName {
+    pub user_id: Uuid,
+    pub display_name: String,
+}
 /// Full Project evidence, including archived/noncandidate Issues. Consumers must
 /// include definition.context and all these fields in semantic invalidation.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -173,6 +180,7 @@ pub struct SavedFilterCorpus {
     pub tags: Vec<Tag>,
     pub issue_tags: Vec<IssueTag>,
     pub assignees: Vec<IssueAssignee>,
+    pub assignee_display_names: Vec<SavedFilterAssigneeDisplayName>,
     pub relationships: Vec<IssueRelationship>,
 }
 /// Explicit retry is separate from activate/poll, to avoid repeated provider failures.
