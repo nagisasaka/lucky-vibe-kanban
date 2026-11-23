@@ -55,6 +55,25 @@ For replacement, partial handoff, Issue closure or cleanup, read [auto-merge.md]
 
 ## Next-Run settings and engine selection
 
+For a new Workspace, pass optional `model_id` and `reasoning_id` to
+`start_workspace`; for a new Session use remote `start_session`, or stdio
+`create_session` followed by its first `run_session_prompt`. On that first
+stdio prompt pass the fields directly, not in next-Run `overrides`. Omission or
+`null` preserves each existing profile/provider default; empty strings and
+surrounding whitespace are invalid. `engine` / `executor` selects the provider,
+while `model_id` selects a model within it. Supported initial `execution_mode`,
+including Goal, may be selected on those launch calls. Before launch inspect
+remote `list_execution_models` with the Project and repository or Workspace, or stdio
+`get_initial_model_capabilities` with a repository or Workspace. Discovery uses
+that directory's provider configuration; without a directory the stdio read uses
+the server current directory. For a new Workspace, repository discovery is provisional: the actual Workspace
+root is checked before Session creation. A rejection can leave the Workspace,
+but no Session or Run. Discovery failure or an unsupported combination rejects
+an explicit selection. These are initial settings, distinct from the
+next-Run changes below. Read the saved configuration after acceptance; it is not
+proof of an unobserved provider choice. Reuse the identical request and ID after
+an uncertain response.
+
 Use `continue_execution` with the explicit latest terminal Run, or stdio
 `run_session_prompt` with `agent_run_id`, `project_id` and a stable `request_id`,
 when changing the next Run. `overrides` supports `execution_mode` and

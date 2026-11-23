@@ -80,7 +80,7 @@ pub fn codex_home() -> Option<PathBuf> {
     dirs::home_dir().map(|home| home.join(".codex"))
 }
 
-pub(crate) fn resolve_model(model: Option<&str>) -> (Option<&str>, bool) {
+pub fn resolve_model(model: Option<&str>) -> (Option<&str>, bool) {
     match model.and_then(|m| m.strip_suffix("-fast")) {
         Some(base) => (Some(base), true),
         None => (model, false),
@@ -845,6 +845,36 @@ impl Codex {
     ) -> Result<(Option<String>, Vec<ReasoningOption>), ExecutorError> {
         let models = self.discover_models(cwd).await?;
         Ok(next_run_reasoning_options(self.model.as_deref(), &models))
+    }
+
+    /// Live picker data and configured defaults for a new session. Unlike the
+    /// resume helper, a new session can use the provider's advertised default.
+    pub async fn discover_initial_models(
+        &self,
+        cwd: PathBuf,
+    ) -> Result<(Vec<ModelInfo>, Option<String>, Option<String>), ExecutorError> {
+        let request_cwd = cwd.clone();
+        self.with_discovery_app_server(&cwd, move |client| async move {
+            let config = client
+                .config_read(Some(request_cwd.to_string_lossy().into_owned()))
+                .await?
+                .config;
+            let response = client.model_list().await?;
+            let default_model = config.model.or_else(|| {
+                response
+                    .data
+                    .iter()
+                    .find(|m| m.is_default && !m.hidden)
+                    .map(|m| m.id.clone())
+            });
+            let default_reasoning = config.model_reasoning_effort.map(|v| v.to_string());
+            Ok((
+                model_list_response_to_model_infos(response),
+                default_model,
+                default_reasoning,
+            ))
+        })
+        .await
     }
 
     async fn discover_models(&self, cwd: PathBuf) -> Result<Vec<ModelInfo>, ExecutorError> {
@@ -2098,6 +2128,23 @@ mod tests {
         assert_eq!(
             overrides.get("model_reasoning_effort"),
             Some(&json!("minimal"))
+        );
+    }
+
+    #[test]
+    fn initial_config_reaches_thread_start_parameters() {
+        let mut executor = test_executor();
+        let mut config = config_with_reasoning("high");
+        config.model_id = Some("example-model".into());
+        executor.apply_overrides(&config);
+        let params = executor.build_thread_start_params(Path::new("/tmp/test-worktree"));
+        assert_eq!(params.model.as_deref(), Some("example-model"));
+        assert_eq!(
+            params
+                .config
+                .as_ref()
+                .and_then(|values| values.get("model_reasoning_effort")),
+            Some(&json!("high"))
         );
     }
 

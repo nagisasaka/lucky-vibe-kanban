@@ -53,6 +53,7 @@ mod integration;
 mod issue_assignees;
 mod issue_relationships;
 mod issue_tags;
+mod model_capabilities;
 mod operations;
 mod organizations;
 mod provider_usage;
@@ -73,6 +74,7 @@ impl McpServer {
             + Self::operation_tools_router()
             + Self::attachment_tools_router()
             + Self::integration_tools_router()
+            + Self::model_capabilities_tools_router()
             + Self::provider_usage_tools_router()
             + Self::workflow_tools_router()
             + Self::repository_read_tools_router()
