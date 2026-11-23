@@ -369,10 +369,34 @@ impl AgentRunRecord {
             JOIN agent_run_state state ON state.agent_run_id = ar.id
             JOIN workspaces workspace ON workspace.id = ar.workspace_id
             WHERE workspace.archived = ?
-              AND state.status = 'awaiting_approval'
+              AND state.status IN ('pending','starting','running','awaiting_input','awaiting_approval')
+              AND EXISTS (
+                  SELECT 1 FROM agent_events e
+                  JOIN agent_run_attempts attempt ON attempt.id = e.run_attempt_id
+                      AND attempt.agent_run_id = ar.id
+                  WHERE e.agent_run_id = ar.id
+                    AND attempt.status IN ('pending','starting','running','awaiting_input','awaiting_approval')
+                    AND e.run_attempt_number = state.last_run_attempt_number
+                    AND NOT EXISTS (SELECT 1 FROM agent_run_attempts newer_attempt
+                        WHERE newer_attempt.agent_run_id = ar.id
+                          AND newer_attempt.attempt_number > attempt.attempt_number)
+                    AND json_extract(e.event_envelope, '$.payload.type') = 'approval_requested'
+                    AND NOT EXISTS (SELECT 1 FROM agent_events resolved
+                        WHERE resolved.agent_run_id = ar.id
+                          AND resolved.run_attempt_number = e.run_attempt_number
+                          AND resolved.sequence > e.sequence
+                          AND json_extract(resolved.event_envelope, '$.payload.type') = 'approval_resolved'
+                          AND json_extract(resolved.event_envelope, '$.payload.data.approval_id') =
+                              json_extract(e.event_envelope, '$.payload.data.approval_id'))
+                    AND NOT EXISTS (SELECT 1 FROM agent_run_commands command
+                        WHERE command.agent_run_id = ar.id
+                          AND json_extract(command.command_envelope, '$.command.type') = 'resolve_approval'
+                          AND json_extract(command.command_envelope, '$.command.data.approval_id') =
+                              json_extract(e.event_envelope, '$.payload.data.approval_id'))
+              )
               AND state.projection_status = 'current'
               AND ar.projection_status = 'current'
-              AND ar.status NOT IN ('succeeded','failed','cancelled','crashed','audit_failed')
+              AND ar.status IN ('pending','starting','running','awaiting_input','awaiting_approval')
               AND NOT EXISTS (SELECT 1 FROM agent_runs newer WHERE newer.session_id = ar.session_id
                   AND (newer.created_at > ar.created_at OR
                        (newer.created_at = ar.created_at AND newer.rowid > ar.rowid)))
@@ -3594,6 +3618,226 @@ mod tests {
             .unwrap();
         assert_eq!(gate.gate_status, AgentRunLaunchGateStatus::Failed);
         assert_eq!(gate.failure_message.as_deref(), Some("first failure"));
+    }
+
+    #[tokio::test]
+    async fn workspace_approvals_require_actionable_unresolved_events() {
+        let pool = setup_pool().await;
+        let (session, workspace) = insert_anchors(&pool).await;
+        let (_, unrelated_workspace) = insert_anchors(&pool).await;
+        let (request, attempt) = requests(session, workspace, "workspace-approvals");
+        AgentRunRecord::persist_identity_before_launch(&pool, &request, &attempt)
+            .await
+            .unwrap();
+        let mut sequence = 0;
+        let mut append = |payload| {
+            sequence += 1;
+            let mut envelope = event(&request, &attempt, sequence);
+            envelope.payload = payload;
+            envelope
+        };
+        AgentEventRecord::append_and_project(
+            &pool,
+            &append(AgentEventPayload::LifecycleChanged {
+                status: AgentRunStatus::Running,
+            }),
+        )
+        .await
+        .unwrap();
+        assert!(
+            AgentRunRecord::find_workspaces_awaiting_approval(&pool, false)
+                .await
+                .unwrap()
+                .is_empty()
+        );
+        let question = append(AgentEventPayload::InputRequested {
+            input_id: "question".into(),
+            prompt: "Choose?".into(),
+            provider_metadata: None,
+        });
+        AgentEventRecord::append_and_project(&pool, &question)
+            .await
+            .unwrap();
+        assert!(
+            AgentRunRecord::find_workspaces_awaiting_approval(&pool, false)
+                .await
+                .unwrap()
+                .is_empty()
+        );
+        for id in ["first", "second"] {
+            AgentEventRecord::append_and_project(
+                &pool,
+                &append(AgentEventPayload::ApprovalRequested {
+                    approval_id: id.into(),
+                    tool_call_id: None,
+                    tool_name: "shell".into(),
+                }),
+            )
+            .await
+            .unwrap();
+        }
+        AgentEventRecord::append_and_project(
+            &pool,
+            &append(AgentEventPayload::LifecycleChanged {
+                status: AgentRunStatus::AwaitingApproval,
+            }),
+        )
+        .await
+        .unwrap();
+        let pending = AgentRunRecord::find_workspaces_awaiting_approval(&pool, false)
+            .await
+            .unwrap();
+        assert_eq!(pending, vec![workspace]);
+        assert!(!pending.contains(&unrelated_workspace));
+        AgentEventRecord::append_and_project(
+            &pool,
+            &append(AgentEventPayload::ApprovalResolved {
+                approval_id: "first".into(),
+                approved: true,
+                reason: None,
+            }),
+        )
+        .await
+        .unwrap();
+        AgentEventRecord::append_and_project(
+            &pool,
+            &append(AgentEventPayload::LifecycleChanged {
+                status: AgentRunStatus::Running,
+            }),
+        )
+        .await
+        .unwrap();
+        assert_eq!(
+            AgentRunRecord::find_workspaces_awaiting_approval(&pool, false)
+                .await
+                .unwrap(),
+            vec![workspace]
+        );
+        for (table, column, value) in [
+            ("agent_run_attempts", "status", "cancelled"),
+            (
+                "agent_run_state",
+                "projection_status",
+                "projection_degraded",
+            ),
+            ("agent_runs", "status", "cancelled"),
+            ("agent_runs", "status", "cancelling"),
+        ] {
+            let id_column = if table == "agent_run_state" {
+                "agent_run_id"
+            } else {
+                "id"
+            };
+            let id = if table == "agent_run_attempts" {
+                attempt.run_attempt_id
+            } else {
+                request.agent_run_id
+            };
+            let old: String =
+                sqlx::query_scalar(&format!("SELECT {column} FROM {table} WHERE {id_column}=?"))
+                    .bind(id)
+                    .fetch_one(&pool)
+                    .await
+                    .unwrap();
+            sqlx::query(&format!(
+                "UPDATE {table} SET {column}=? WHERE {id_column}=?"
+            ))
+            .bind(value)
+            .bind(id)
+            .execute(&pool)
+            .await
+            .unwrap();
+            assert!(
+                AgentRunRecord::find_workspaces_awaiting_approval(&pool, false)
+                    .await
+                    .unwrap()
+                    .is_empty()
+            );
+            sqlx::query(&format!(
+                "UPDATE {table} SET {column}=? WHERE {id_column}=?"
+            ))
+            .bind(old)
+            .bind(id)
+            .execute(&pool)
+            .await
+            .unwrap();
+        }
+        sqlx::query("UPDATE workspaces SET archived=1 WHERE id=?")
+            .bind(workspace)
+            .execute(&pool)
+            .await
+            .unwrap();
+        assert!(
+            AgentRunRecord::find_workspaces_awaiting_approval(&pool, false)
+                .await
+                .unwrap()
+                .is_empty()
+        );
+        assert_eq!(
+            AgentRunRecord::find_workspaces_awaiting_approval(&pool, true)
+                .await
+                .unwrap(),
+            vec![workspace]
+        );
+        sqlx::query("UPDATE workspaces SET archived=0 WHERE id=?")
+            .bind(workspace)
+            .execute(&pool)
+            .await
+            .unwrap();
+        sqlx::query("UPDATE agent_run_state SET last_run_attempt_number=2 WHERE agent_run_id=?")
+            .bind(request.agent_run_id)
+            .execute(&pool)
+            .await
+            .unwrap();
+        assert!(
+            AgentRunRecord::find_workspaces_awaiting_approval(&pool, false)
+                .await
+                .unwrap()
+                .is_empty()
+        );
+        sqlx::query("UPDATE agent_run_state SET last_run_attempt_number=1 WHERE agent_run_id=?")
+            .bind(request.agent_run_id)
+            .execute(&pool)
+            .await
+            .unwrap();
+        // A reserved decision is no longer available for another user action.
+        sqlx::query("INSERT INTO agent_run_commands(command_id,agent_run_id,idempotency_key,command_schema_version,command_envelope) VALUES(?,?,?,1,?)")
+            .bind(Uuid::new_v4()).bind(request.agent_run_id).bind("decision")
+            .bind(r#"{"command":{"type":"resolve_approval","data":{"approval_id":"second"}}}"#)
+            .execute(&pool).await.unwrap();
+        assert!(
+            AgentRunRecord::find_workspaces_awaiting_approval(&pool, false)
+                .await
+                .unwrap()
+                .is_empty()
+        );
+        sqlx::query("DELETE FROM agent_run_commands WHERE agent_run_id=?")
+            .bind(request.agent_run_id)
+            .execute(&pool)
+            .await
+            .unwrap();
+        assert_eq!(
+            AgentRunRecord::find_workspaces_awaiting_approval(&pool, false)
+                .await
+                .unwrap(),
+            vec![workspace]
+        );
+        AgentEventRecord::append_and_project(
+            &pool,
+            &append(AgentEventPayload::ApprovalResolved {
+                approval_id: "second".into(),
+                approved: false,
+                reason: None,
+            }),
+        )
+        .await
+        .unwrap();
+        assert!(
+            AgentRunRecord::find_workspaces_awaiting_approval(&pool, false)
+                .await
+                .unwrap()
+                .is_empty()
+        );
     }
 
     #[tokio::test]

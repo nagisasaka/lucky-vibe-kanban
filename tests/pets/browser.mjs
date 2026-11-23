@@ -413,6 +413,9 @@ try {
   await expect(body).toHaveAttribute('data-pet-version', '2');
   await expect(v2.locator('img')).toHaveCSS('height', '880px');
   await expect(v2.locator('img')).toHaveJSProperty('naturalHeight', 2288);
+  await page.mouse.move(1, 1);
+  await expect(v2).not.toHaveAttribute('data-pet-direction');
+  await v2.hover();
   for (let index = 0; index < 16; index++) {
     const bounds = await v2.boundingBox(),
       angle = (index * Math.PI) / 8;
@@ -443,6 +446,7 @@ try {
     )
   );
   await expect(v2).not.toHaveAttribute('data-pet-direction');
+  await v2.hover();
   await page.mouse.move(bounds.x + 88, bounds.y + 40);
   await expect(v2).toHaveAttribute('data-pet-direction', '4');
   await page.evaluate(() =>
@@ -470,6 +474,31 @@ try {
   await expect(v2).not.toHaveAttribute('data-pet-direction');
   await expect(v2).toHaveAttribute('data-pet-frame', '0');
   await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.clock.install();
+  await sidebar.getByLabel('Animation preview').selectOption('idle');
+  const followPet = sidebar.locator('[data-pet-state]');
+  await page.mouse.move(1, 1);
+  await expect(followPet).not.toHaveAttribute('data-pet-direction');
+  await followPet.hover();
+  const followBounds = await followPet.boundingBox();
+  await page.mouse.move(followBounds.x + 100, followBounds.y + 40);
+  await expect(followPet).toHaveAttribute('data-pet-direction', '4');
+  await page.clock.runFor(9000);
+  await page.mouse.move(followBounds.x + 110, followBounds.y + 40);
+  await page.clock.runFor(1001);
+  await expect(followPet).not.toHaveAttribute('data-pet-direction');
+  await page.mouse.move(followBounds.x + 120, followBounds.y + 40);
+  await expect(followPet).not.toHaveAttribute('data-pet-direction');
+  await followPet.hover();
+  await page.mouse.move(followBounds.x + 100, followBounds.y + 40);
+  await expect(followPet).toHaveAttribute('data-pet-direction', '4');
+  await sidebar.getByLabel('Animation preview').selectOption('waving');
+  await followPet.hover();
+  await page.mouse.move(followBounds.x + 100, followBounds.y + 40);
+  await expect(followPet).not.toHaveAttribute('data-pet-direction');
+  await expect(followPet).toHaveAttribute('data-pet-state', 'waving');
+  cases.push('Pet entry alone starts 10s follow; movement never extends it; reentry restarts; waving wins');
+
   cases.push(
     'v2 all 16 clockwise static cells; north is up, center/leave/touch/reduced motion return to idle; reaction and state animation take priority'
   );
@@ -711,7 +740,6 @@ try {
   });
   assert.equal(uploads, uploadsBeforeLimit);
 
-  await page.clock.install();
   await page.reload();
   const live = page.locator('aside [data-pet-state]');
   await expect(live).toHaveAttribute('data-pet-state', 'idle');

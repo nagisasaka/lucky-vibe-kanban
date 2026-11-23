@@ -7,6 +7,8 @@ import {
   type PetState,
 } from './format';
 
+export const PET_FOLLOW_MS = 10_000;
+
 type Props = {
   src: string;
   name: string;
@@ -33,7 +35,8 @@ export function PetSprite({
     () => matchMedia('(prefers-reduced-motion: reduce)').matches
   );
   const reactionTimer = useRef<ReturnType<typeof setTimeout>>();
-  const active = state === 'failed' ? 'failed' : (reaction ?? state);
+  const active =
+    state === 'failed' || state === 'waving' ? state : (reaction ?? state);
   const animationRow = PET_STATES.findIndex((s) => s.name === active);
   const following =
     version === 2 &&
@@ -61,12 +64,19 @@ export function PetSprite({
   useEffect(() => {
     setDirection(null);
     if (!following) return;
-    const reset = () => setDirection(null);
+    let tracking = false;
+    let timer: ReturnType<typeof setTimeout>;
+    const reset = () => {
+      tracking = false;
+      clearTimeout(timer);
+      setDirection(null);
+    };
     const move = (event: PointerEvent) => {
       if (event.pointerType !== 'mouse') {
         reset();
         return;
       }
+      if (!tracking) return;
       const bounds = button.current?.getBoundingClientRect();
       if (!bounds) return;
       setDirection(
@@ -77,6 +87,15 @@ export function PetSprite({
         )
       );
     };
+    const enter = (event: PointerEvent) => {
+      if (event.pointerType !== 'mouse') return;
+      tracking = true;
+      clearTimeout(timer);
+      timer = setTimeout(reset, PET_FOLLOW_MS);
+      move(event);
+    };
+    const target = button.current;
+    target?.addEventListener('pointerenter', enter);
     const leave = (event: PointerEvent) => {
       if (!event.relatedTarget) reset();
     };
@@ -86,6 +105,8 @@ export function PetSprite({
     window.addEventListener('blur', reset);
     window.addEventListener('pointercancel', reset);
     return () => {
+      clearTimeout(timer);
+      target?.removeEventListener('pointerenter', enter);
       window.removeEventListener('pointermove', move);
       window.removeEventListener('pointerdown', move);
       document.removeEventListener('pointerout', leave);

@@ -19,7 +19,7 @@ const SIDEBAR_PET_SIZE = 80;
 export function SidebarPet({
   state = 'idle',
 }: {
-  state?: 'idle' | 'running' | 'failed';
+  state?: 'idle' | 'running' | 'failed' | 'waving';
 }) {
   return <PetContent liveState={state} />;
 }
@@ -31,7 +31,7 @@ function PetContent({
   liveState = 'idle',
 }: {
   settings?: boolean;
-  liveState?: 'idle' | 'running' | 'failed';
+  liveState?: 'idle' | 'running' | 'failed' | 'waving';
 }) {
   const behavior = usePetBehavior(liveState, !settings);
   const { t, i18n } = useTranslation('common');

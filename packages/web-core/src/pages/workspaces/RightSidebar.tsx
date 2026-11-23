@@ -1,3 +1,4 @@
+import { usePetApproval } from '@/features/pets/usePetApproval';
 import { UtilitySidebar } from '@/shared/components/UtilitySidebar';
 import { useWorkspaceWiki } from '@/features/wiki/ui/WorkspaceWikiProvider';
 import { memo, useMemo } from 'react';
@@ -51,6 +52,9 @@ export const RightSidebar = memo(function RightSidebar({
   repos,
   onWikiPageSelected,
 }: RightSidebarProps) {
+  const hasPendingApproval = usePetApproval({
+    workspaceId: selectedWorkspace?.id,
+  });
   const { t } = useTranslation(['tasks', 'common']);
   const diffs = useDiffs();
   const wiki = useWorkspaceWiki();
@@ -205,7 +209,10 @@ export const RightSidebar = memo(function RightSidebar({
   ]);
 
   return (
-    <UtilitySidebar repoIds={repos.map((repo) => repo.id)}>
+    <UtilitySidebar
+      repoIds={repos.map((repo) => repo.id)}
+      hasPendingApproval={hasPendingApproval}
+    >
       {sections
         .filter((section) => section.visible)
         .map((section) => {

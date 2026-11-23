@@ -18,3 +18,5 @@ Terminal / Logs / Wiki の provider hooks は inert mock。環境情報・リソ
 スクリーンショットは静止画の検収、timer / frame assertions は自動再生挙動の検証である。人間が連続再生を目視したことを意味しない。
 
 V2 producer互換として、0行6列のneutral補助セルは空でも非空でも受理する。idleの再生は従来の6フレームのまま、視線0度は上向きのままである。21,582画素を持つ生成neutralセルでimport/reloadを検証し、0行7列など他の未使用セルと必須セルの検証は維持する。このfixtureは実Rabbitの受領・実物検証を代替しない。
+
+承認待ちと追従の回帰: `integration.mjs` は既存の Project/Workspace context に専用 Run 承認 summary を注入し、両画面で対象の絞り込み、複数承認の一部解消、通常の質問・Integration復旧待ちの除外を確認する。`browser.mjs` は Pet 本体への進入から10秒で追従を終了し、ポインタ移動では延長せず再進入で再開することと、waving 優先を仮想時計で確認する。summary の正本判定は Rust DB の対象テストで別途検証する。

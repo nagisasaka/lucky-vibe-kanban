@@ -876,9 +876,13 @@ export type WorkspaceSummary = { workspace_id: string,
  */
 latest_session_id: string | null,
 /**
- * Is a tool approval currently pending?
+ * Whether a run approval or Integration intervention is pending.
  */
 has_pending_approval: boolean,
+/**
+ * Whether a current run has an actionable unresolved tool approval.
+ */
+has_pending_run_approval: boolean,
 /**
  * Whether a current run is waiting for input.
  */

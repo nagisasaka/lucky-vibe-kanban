@@ -84,6 +84,20 @@ describe('workspace sidebar runtime state', () => {
     });
   });
 
+  it('updates the dedicated Run approval flag independently of Integration attention', () => {
+    for (const pending of [false, true, true, false]) {
+      fixture.summaries.set('workspace', {
+        workspace_id: 'workspace',
+        has_pending_approval: true,
+        has_pending_run_approval: pending,
+      } as WorkspaceSummary);
+      expect(readWorkspaces().workspaces[0]).toMatchObject({
+        hasPendingApproval: true,
+        hasPendingRunApproval: pending,
+      });
+    }
+  });
+
   it('keeps human workspaces even when their name resembles an internal execution', () => {
     const result = readWorkspaces();
     expect(result.workspaces.map((workspace) => workspace.id)).toEqual([
@@ -91,11 +105,7 @@ describe('workspace sidebar runtime state', () => {
     ]);
   });
 
-  it.each([
-    'integration',
-    'openwiki_sync',
-    'openwiki_bootstrap',
-  ])(
+  it.each(['integration', 'openwiki_sync', 'openwiki_bootstrap'])(
     'shows %s in the normal workspace list even after its agent exits',
     (kind) => {
       fixture.workspace.usage = 'execution_only';
