@@ -175,6 +175,16 @@ export function SavedFilterEditor({
         />
         <span className="block text-low">{t('savedFilters.searchHelp')}</span>
       </label>
+      <label className="block space-y-half">
+        <span>{t('savedFilters.simpleId')}</span>
+        <SettingsInput
+          value={machine.simple_id ?? ''}
+          onChange={(simple_id) =>
+            changeMachine({ simple_id: simple_id || null })
+          }
+        />
+        <span className="block text-low">{t('savedFilters.simpleIdHelp')}</span>
+      </label>
       <div className="grid min-w-0 gap-double md:grid-cols-2">
         <Choices
           label={t('savedFilters.statuses')}
@@ -195,12 +205,28 @@ export function SavedFilterEditor({
             })
           }
         />
-        <Choices
-          label={t('savedFilters.assignees')}
-          options={options.assignees}
-          value={machine.assignee_ids}
-          onChange={(assignee_ids) => changeMachine({ assignee_ids })}
-        />
+        <div className="space-y-base">
+          <Choices
+            label={t('savedFilters.assignees')}
+            options={options.assignees.map((option) => ({
+              ...option,
+              label: `${option.label} (${option.id})`,
+            }))}
+            value={machine.assignee_ids}
+            onChange={(assignee_ids) => changeMachine({ assignee_ids })}
+          />
+          <label className="flex items-center gap-half">
+            <input
+              type="checkbox"
+              checked={machine.include_unassigned ?? false}
+              onChange={(e) =>
+                changeMachine({ include_unassigned: e.target.checked })
+              }
+            />
+            {t('savedFilters.includeUnassigned')}
+          </label>
+          <p className="text-low">{t('savedFilters.assigneesHelp')}</p>
+        </div>
         <div className="space-y-base">
           <Choices
             label={t('savedFilters.tags')}

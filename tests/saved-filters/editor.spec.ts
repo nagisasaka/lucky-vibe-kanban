@@ -5,7 +5,9 @@ test("edits shared machine and semantic conditions with clear direction and boun
   await page.goto("/");
   await page.getByLabel("Todo", { exact: true }).check();
   await page.getByLabel("In Progress", { exact: true }).check();
-  await page.getByLabel("Alice", { exact: true }).check();
+  await page.getByLabel("Alice (alice)", { exact: true }).check();
+  await page.getByLabel("未割当のIssueも含める（OR）").check();
+  await page.getByRole("textbox", { name: /^Issue ID/ }).fill("local-460");
   await page.getByLabel("bug", { exact: true }).check();
   await page.getByLabel("release", { exact: true }).check();
   await page.getByLabel("タグの一致方法").selectOption("all");
@@ -24,6 +26,8 @@ test("edits shared machine and semantic conditions with clear direction and boun
   expect(definition.machine).toMatchObject({
     status_ids: ["todo", "progress"],
     assignee_ids: ["alice"],
+    include_unassigned: true,
+    simple_id: "local-460",
     tag_ids: ["bug", "release"],
     tag_mode: "all",
     created_at: { kind: "relative", seconds: 3600 },

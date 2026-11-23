@@ -1703,6 +1703,11 @@
     "invalid": "Enter a name, valid periods and a target for the selected relationship.",
     "unsaved": "Discard unsaved filter changes?",
     "conflict": "The definition changed. Reload it before editing again.",
-    "reload": "Reload definition"
+    "reload": "Reload definition",
+    "simpleId": "Issue ID (exact match)",
+    "simpleIdHelp": "Case-insensitive exact match, for example LOCAL-460. No related-issue expansion.",
+    "includeUnassigned": "Also include unassigned issues (OR)",
+    "assigneesHelp": "Selected users OR unassigned. Shared filters save these user IDs; the viewer does not change the selection.",
+    "fetchFailed": "Results could not be loaded. Use Refresh / retry to try again."
   }
 }

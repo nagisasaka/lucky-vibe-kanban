@@ -57,6 +57,11 @@ export function SavedFilterStatus({
           )}
         </p>
       )}
+      {view.evaluation.error && (
+        <p className="text-error">
+          {t('savedFilters.fetchFailed')} {view.evaluation.error.message}
+        </p>
+      )}
       {view.evaluation.data?.error && (
         <p className="text-error">{view.evaluation.data.error}</p>
       )}
