@@ -700,7 +700,11 @@ export type InitRepoRequest = { parent_path: string, folder_name: string, };
 
 export type TagSearchParams = { search: string | null, };
 
-export type BuildInfo = { revision: string, kind: string | null, release_tag: string | null, dirty: boolean | null, };
+export type BuildInfo = { revision: string,
+/**
+ * Selected dist identity; absent for embedded/stable and Vite preview.
+ */
+frontend_revision?: string, kind: string | null, release_tag: string | null, dirty: boolean | null, };
 
 export type UserSystemInfo = { version: string, build_info?: BuildInfo, config: Config, machine_id: string, login_status: LoginStatus, environment: Environment,
 /**

@@ -140,7 +140,7 @@ class SwitchTest(unittest.TestCase):
                             signal.pidfd_send_signal(fd, signal.SIGTERM)
                     finally:
                         os.close(fd)
-            except (ProcessLookupError, FileNotFoundError):
+            except (ProcessLookupError, FileNotFoundError, PermissionError):
                 pass
         self.old.wait(timeout=5)
         # Wait for all test-owned sockets to disappear before deleting fixture data.

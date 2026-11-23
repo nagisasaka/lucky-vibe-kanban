@@ -32,7 +32,10 @@ export function BuildInfoLabel({
       : buildInfo.dirty === false
         ? t('buildInfo.clean')
         : t('buildInfo.unknownDirty');
-  const details = `${kind}\n${buildInfo.revision}\n${dirty}`;
+  const revisions = buildInfo.frontend_revision
+    ? `Frontend: ${buildInfo.frontend_revision}\nBackend: ${buildInfo.revision}`
+    : buildInfo.revision;
+  const details = `${kind}\n${revisions}\n${dirty}`;
 
   return (
     <Popover>

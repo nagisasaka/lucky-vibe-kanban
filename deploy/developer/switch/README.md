@@ -5,6 +5,8 @@
 engineはSQL収集・migration審査・buildを行わず、migrationは新serverのstartupが実行します。
 自動DB rollbackはありません。live環境への導入・切替には別途承認が必要です。
 
+共有 dev の外部 dist と個別 SHA・切替は [フロント／バックエンド分離](EXTERNAL_FRONTEND.md) を参照してください。以下は既存の埋め込み bundle 契約です。
+
 ## 配置と正本
 
 ```text

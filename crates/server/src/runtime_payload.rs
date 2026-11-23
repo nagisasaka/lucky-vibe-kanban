@@ -30,5 +30,16 @@ pub fn inspect() -> Result<Value> {
         assets.contains_key("frontend/index.html"),
         "Missing frontend entry"
     );
-    Ok(json!({"embedded": true, "assets": assets}))
+    Ok(
+        json!({"embedded": true, "assets": assets, "revision": env!("LVK_BUILD_REVISION"), "external_frontend": cfg!(feature = "developer-runtime")}),
+    )
+}
+
+/// Reject an invalid external selection before startup can touch instance data.
+pub fn validate_frontend() -> Result<()> {
+    #[cfg(feature = "developer-runtime")]
+    if let Some(result) = crate::routes::dev_frontend::get("index.html") {
+        ensure!(result?.is_some(), "Missing developer frontend entry");
+    }
+    Ok(())
 }

@@ -7,9 +7,10 @@ from pathlib import Path
 import shutil
 import subprocess
 import start_support as s
+import frontend_bundle as frontend_bundle
 
 
-def package(server, host, mcp, output):
+def package(server, host, mcp, output, frontend=None):
     output.mkdir(mode=0o700)
     for name, source in [
         ("server", server),
@@ -39,6 +40,14 @@ def package(server, host, mcp, output):
             for name in ["server", "agent-process-host", "vibe-kanban-mcp"]
         },
     }
+    if payload.get("revision"):
+        manifest["backend_revision"] = payload["revision"]
+    if frontend is not None:
+        manifest["frontend"] = frontend_bundle.inspect(frontend)
+        s.need(manifest.get("backend_revision") == manifest["frontend"]["revision"],
+               "Paired artifacts must be built from the same commit")
+        shutil.copytree(frontend, output / "frontend", symlinks=True)
+        frontend_bundle.validate(output / "frontend", manifest["frontend"])
     s.save(output / "bundle.json", manifest)
     return manifest
 
@@ -47,8 +56,9 @@ if __name__ == "__main__":
     p = argparse.ArgumentParser(description=__doc__)
     for name in ["server", "agent-host", "mcp", "output"]:
         p.add_argument("--" + name, type=Path, required=True)
+    p.add_argument("--frontend", type=Path)
     a = p.parse_args()
     os.umask(0o077)
     package(
-        a.server.resolve(), a.agent_host.resolve(), a.mcp.resolve(), a.output.absolute()
+        a.server.resolve(), a.agent_host.resolve(), a.mcp.resolve(), a.output.absolute(), a.frontend.absolute() if a.frontend else None
     )

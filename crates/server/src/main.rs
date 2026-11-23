@@ -47,6 +47,7 @@ async fn main() -> Result<(), VibeKanbanError> {
         println!("{}", server::runtime_payload::inspect()?);
         return Ok(());
     }
+    server::runtime_payload::validate_frontend()?;
     // Install rustls crypto provider before any TLS operations
     rustls::crypto::aws_lc_rs::default_provider()
         .install_default()

@@ -88,6 +88,10 @@ impl Environment {
 #[derive(Debug, Serialize, Deserialize, TS)]
 pub struct BuildInfo {
     pub revision: String,
+    /// Selected dist identity; absent for embedded/stable and Vite preview.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub frontend_revision: Option<String>,
     pub kind: Option<String>,
     pub release_tag: Option<String>,
     pub dirty: Option<bool>,
@@ -102,6 +106,16 @@ impl BuildInfo {
         let known = |value: &str| (!value.is_empty()).then(|| value.to_owned());
         Some(Self {
             revision: revision.to_owned(),
+            frontend_revision: {
+                #[cfg(feature = "developer-runtime")]
+                {
+                    super::dev_frontend::revision()
+                }
+                #[cfg(not(feature = "developer-runtime"))]
+                {
+                    None
+                }
+            },
             kind: known(env!("LVK_BUILD_KIND")),
             release_tag: known(env!("LVK_BUILD_RELEASE_TAG")),
             dirty: env!("LVK_BUILD_DIRTY").parse().ok(),

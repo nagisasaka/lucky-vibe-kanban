@@ -13,6 +13,7 @@ import sys
 import time
 import uuid
 import start_support as s
+import frontend_bundle as frontend
 
 DEV = P(__file__).resolve().parent.parent
 TERMINAL = {"succeeded", "failed", "interrupted"}
@@ -52,7 +53,7 @@ def configure(instance):
         ),
         "Invalid launch environment",
     )
-    for name in ["launcher.py", "start_binary.py", "start_support.py", "process_drain.py", "start.sh"]:
+    for name in ["launcher.py", "start_binary.py", "start_support.py", "process_drain.py", "start.sh", "frontend_bundle.py", "frontend_switch.py"]:
         helper = DEV / "switch" / name
         s.need(
             helper.is_file()
@@ -87,7 +88,7 @@ def inspect(a):
         "Bundle requires server, agent-process-host and vibe-kanban-mcp",
     )
     s.need(
-        set(p.name for p in bundle.iterdir()) == PAYLOAD | {"bundle.json"},
+        set(p.name for p in bundle.iterdir()) == PAYLOAD | {"bundle.json"} | ({"frontend"} if "frontend" in manifest else set()),
         "Unexpected bundle payload",
     )
     for name, digest in manifest["files"].items():
@@ -95,6 +96,13 @@ def inspect(a):
         s.need(f.is_file() and os.access(f, os.X_OK), "Executable missing")
         s.need(not f.stat().st_mode & 0o022, "Writable executable refused")
         s.need(s.digest(f) == digest, "Bundle executable hash mismatch")
+    if "frontend" in manifest:
+        s.need(CONFIG["environment"].get("LVK_DEV_EXTERNAL_FRONTEND") == "1",
+               "Paired dist requires external dev frontend mode")
+        s.need(frontend.inspect(bundle / "frontend") == manifest["frontend"],
+               "Paired frontend differs from manifest")
+        s.need(manifest.get("backend_revision") == manifest["frontend"]["revision"],
+               "Paired update requires the same target commit")
     return {"bundle": str(bundle), "manifest": manifest}
 
 
@@ -114,7 +122,11 @@ def probe(release, manifest):
     )
     payload = json.loads(result.stdout)
     s.need(payload["embedded"] is True, "Candidate assets are not embedded")
+    if CONFIG["environment"].get("LVK_DEV_EXTERNAL_FRONTEND") == "1":
+        s.need(payload.get("external_frontend") is True, "Candidate does not support external frontend")
     s.need(payload["assets"] == manifest["assets"], "Embedded payload hash mismatch")
+    if "backend_revision" in manifest:
+        s.need(payload.get("revision") == manifest["backend_revision"], "Backend revision differs from binary")
     s.need(
         "frontend/index.html" in payload["assets"]
         and any(k.startswith("sounds/") for k in payload["assets"])
@@ -276,10 +288,17 @@ def preserve(selected, op):
     probe(release, selected["manifest"])
     selected["release"] = str(release)
     # From here onward only copied payloads are consulted.
-    return {"release": str(release), "manifest": selected["manifest"]}
+    result = {"release": str(release), "manifest": selected["manifest"]}
+    if "frontend" in selected["manifest"]:
+        result["frontend"] = frontend.install(DEV, P(selected["bundle"]) / "frontend")
+    elif "frontend" in current():
+        result["frontend"] = current()["frontend"]
+    return result
 
 
 def verify_release(selection):
+    if "frontend" in selection:
+        frontend.verify_selection(DEV, selection)
     for name, digest in selection["manifest"]["files"].items():
         f = P(selection["release"]) / name
         s.need(not f.is_symlink() and s.digest(f) == digest, "Release changed")
@@ -384,8 +403,10 @@ def health(proc, selected):
                 "Launched binary hash mismatch",
             )
             verify_release(selected)
+            if "frontend" in selected:
+                frontend.health(selected["frontend"])
             for name, digest in selected["manifest"]["assets"].items():
-                if name.startswith("frontend/") and (
+                if "frontend" not in selected and name.startswith("frontend/") and (
                     name == "frontend/index.html" or name.endswith((".js", ".css"))
                 ):
                     s.need(

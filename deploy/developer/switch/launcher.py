@@ -19,6 +19,9 @@ def launch(instance):
     ):
         raise ValueError("Invalid current release")
     env = dict(settings["environment"])
+    if env.get("LVK_DEV_EXTERNAL_FRONTEND") == "1":
+        import frontend_bundle
+        frontend_bundle.verify_selection(instance, current)
     env["LVK_LAUNCH_CONFIG_SHA256"] = hashlib.sha256(launch_bytes).hexdigest()
     env.update(
         LVK_INSTANCE_DIR=str(instance),

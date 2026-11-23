@@ -1,3 +1,5 @@
+#[cfg(feature = "developer-runtime")]
+pub(crate) mod dev_frontend;
 pub mod github_credentials;
 pub mod help;
 mod shared_storage;

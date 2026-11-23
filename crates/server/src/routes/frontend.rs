@@ -37,6 +37,35 @@ pub(super) async fn serve_frontend_root() -> impl IntoResponse {
 }
 
 async fn serve_file(path: &str) -> Response {
+    #[cfg(feature = "developer-runtime")]
+    if let Some(result) = super::dev_frontend::get(path) {
+        return match result {
+            Ok(Some(file)) => Response::builder()
+                .status(StatusCode::OK)
+                .header(
+                    header::CONTENT_TYPE,
+                    mime_guess::from_path(&file.name)
+                        .first_or_octet_stream()
+                        .as_ref(),
+                )
+                .header(
+                    header::CACHE_CONTROL,
+                    if file.immutable {
+                        "public, max-age=31536000, immutable"
+                    } else {
+                        "no-cache"
+                    },
+                )
+                .header("x-lvk-frontend-revision", file.revision)
+                .body(Body::from(file.bytes))
+                .unwrap(),
+            Ok(None) => StatusCode::NOT_FOUND.into_response(),
+            Err(error) => {
+                tracing::error!(%error, "Invalid developer frontend");
+                StatusCode::SERVICE_UNAVAILABLE.into_response()
+            }
+        };
+    }
     let file = Assets::get(path);
 
     match file {
