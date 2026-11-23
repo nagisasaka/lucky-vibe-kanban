@@ -5,6 +5,7 @@ import { makeLocalApiRequest } from '@/shared/lib/localApiTransport';
 import {
   createSpeechUtterance,
   getSpeechSynthesis,
+  readSpeechPreferences,
 } from '@/shared/lib/speechSynthesis';
 import { RunSpeechQueue } from '../model/runSpeechQueue';
 
@@ -22,6 +23,10 @@ export function RunSpeechToggle({ projectId }: { projectId: string }) {
   const queue = useRef<RunSpeechQueue>();
   if (!queue.current && getSpeechSynthesis()) {
     queue.current = new RunSpeechQueue({
+      shouldSpeak: (kind) =>
+        readSpeechPreferences().contentMode === 'all' ||
+        kind === 'terminal' ||
+        kind === 'waiting',
       speak(text, done) {
         const utterance = createSpeechUtterance(text, 'ja-JP');
         utterance.onend = done;

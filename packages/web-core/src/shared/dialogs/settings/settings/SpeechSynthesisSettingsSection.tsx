@@ -53,6 +53,30 @@ export function SpeechSynthesisSettingsSection() {
           {t('speechSynthesis.unsupported')}
         </p>
       )}
+      <SettingsField
+        label={t('speechSynthesis.contentMode')}
+        description={t('speechSynthesis.contentModeHint')}
+      >
+        <select
+          aria-label={t('speechSynthesis.contentMode')}
+          className={controlClass}
+          value={preferences.contentMode}
+          onChange={(event) =>
+            saveSpeechPreferences({
+              ...preferences,
+              contentMode:
+                event.target.value === 'results-and-action'
+                  ? 'results-and-action'
+                  : 'all',
+            })
+          }
+        >
+          <option value="all">{t('speechSynthesis.contentAll')}</option>
+          <option value="results-and-action">
+            {t('speechSynthesis.contentResults')}
+          </option>
+        </select>
+      </SettingsField>
       <SettingsField label={t('speechSynthesis.voice')}>
         <select
           aria-label={t('speechSynthesis.voice')}

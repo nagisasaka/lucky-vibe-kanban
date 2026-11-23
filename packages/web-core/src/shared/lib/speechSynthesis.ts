@@ -1,8 +1,13 @@
 /** Device/browser preferences, like the device-only mobile text size setting. */
 export const SPEECH_SETTINGS_KEY = 'speech-synthesis-preferences';
 export const SPEECH_SETTINGS_EVENT = 'speech-synthesis-preferences-changed';
-export type SpeechPreferences = { voice: string; rate: number };
-const defaults: SpeechPreferences = { voice: '', rate: 1 };
+export type SpeechContentMode = 'all' | 'results-and-action';
+export type SpeechPreferences = {
+  voice: string;
+  rate: number;
+  contentMode: SpeechContentMode;
+};
+const defaults: SpeechPreferences = { voice: '', rate: 1, contentMode: 'all' };
 let memory = defaults;
 let storageWriteFailed = false;
 
@@ -11,6 +16,10 @@ export function readSpeechPreferences(): SpeechPreferences {
   try {
     const value = JSON.parse(localStorage.getItem(SPEECH_SETTINGS_KEY) ?? '{}');
     return {
+      contentMode:
+        value?.contentMode === 'results-and-action'
+          ? 'results-and-action'
+          : 'all',
       voice: typeof value?.voice === 'string' ? value.voice : '',
       rate:
         typeof value?.rate === 'number' &&

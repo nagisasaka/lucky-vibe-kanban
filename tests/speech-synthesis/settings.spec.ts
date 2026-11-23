@@ -207,3 +207,27 @@ test("desktop light layout and native API availability (no audible assertion)", 
     path: "test-results/speech-synthesis/desktop-light.png",
   });
 });
+
+test("content mode defaults, persists and leaves preview available", async ({
+  page,
+}) => {
+  await mockSpeech(page);
+  await page.goto("/");
+  const mode = page.getByRole("combobox", { name: "What to read aloud" });
+  await expect(mode).toHaveValue("all");
+  await mode.selectOption("results-and-action");
+  await page.reload();
+  await expect(mode).toHaveValue("results-and-action");
+  await page.getByRole("button", { name: "Preview", exact: true }).click();
+  expect(await page.evaluate(() => (window as any).speechCalls.length)).toBe(1);
+  await expect(
+    page.getByRole("button", { name: "Turn on Run speech" }),
+  ).toHaveAttribute("aria-pressed", "false");
+  await page.goto("/?lang=ja");
+  await expect(
+    page.getByRole("combobox", { name: "読み上げる内容" }),
+  ).toHaveValue("results-and-action");
+  await expect(
+    page.getByRole("option", { name: "結果と要対応だけ", exact: true }),
+  ).toHaveCount(1);
+});

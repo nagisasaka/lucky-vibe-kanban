@@ -39,17 +39,25 @@ beforeEach(() => {
       constructor(public text: string) {}
     }
   );
-  saveSpeechPreferences({ voice: '', rate: 1 });
+  saveSpeechPreferences({ voice: '', rate: 1, contentMode: 'all' });
   speak.mockClear();
   cancel.mockClear();
 });
 afterEach(() => vi.unstubAllGlobals());
 describe('browser speech preferences', () => {
   it('defaults to browser voice and 1.0, and reads persisted choices on every utterance', () => {
-    expect(readSpeechPreferences()).toEqual({ voice: '', rate: 1 });
+    expect(readSpeechPreferences()).toEqual({
+      voice: '',
+      rate: 1,
+      contentMode: 'all',
+    });
     expect(createSpeechUtterance('test', 'ja-JP').voice).toBeNull();
     voices = [voice];
-    saveSpeechPreferences({ voice: speechVoiceId(voice), rate: 1.4 });
+    saveSpeechPreferences({
+      voice: speechVoiceId(voice),
+      rate: 1.4,
+      contentMode: 'all',
+    });
     expect(createSpeechUtterance('test', 'en').voice).toBe(voice);
     expect(createSpeechUtterance('test', 'en').rate).toBe(1.4);
     // Simulate another tab writing storage without a React re-render.
@@ -57,8 +65,41 @@ describe('browser speech preferences', () => {
     expect(createSpeechUtterance('next', 'ja-JP').rate).toBe(0.5);
     expect(createSpeechUtterance('next', 'ja-JP').voice).toBeNull();
   });
+  it('defaults missing/invalid content mode to all and persists results mode independently of preview', () => {
+    for (const contentMode of [undefined, 'unknown', null]) {
+      stored.set(
+        SPEECH_SETTINGS_KEY,
+        JSON.stringify({ voice: 'saved', rate: 1.3, contentMode })
+      );
+      expect(readSpeechPreferences()).toEqual({
+        voice: 'saved',
+        rate: 1.3,
+        contentMode: 'all',
+      });
+    }
+    saveSpeechPreferences({
+      voice: '',
+      rate: 1.2,
+      contentMode: 'results-and-action',
+    });
+    expect(JSON.parse(stored.get(SPEECH_SETTINGS_KEY)!).contentMode).toBe(
+      'results-and-action'
+    );
+    expect(readSpeechPreferences().contentMode).toBe('results-and-action');
+    expect(previewSpeech('sample', 'en', vi.fn())).toBe(true);
+    expect(speak.mock.calls[0][0]).toMatchObject({ text: 'sample', rate: 1.2 });
+    stored.set(
+      SPEECH_SETTINGS_KEY,
+      JSON.stringify({ voice: '', rate: 1, contentMode: 'all' })
+    );
+    expect(readSpeechPreferences().contentMode).toBe('all');
+  });
   it('retains unavailable preference through delayed loading, disappearance and recovery', () => {
-    const preference = { voice: speechVoiceId(voice), rate: 2 };
+    const preference = {
+      voice: speechVoiceId(voice),
+      rate: 2,
+      contentMode: 'all' as const,
+    };
     saveSpeechPreferences(preference);
     expect(createSpeechUtterance('test', 'ja-JP').voice).toBeNull();
     voices = [voice];
@@ -78,7 +119,11 @@ describe('browser speech preferences', () => {
   );
   it('preview uses choices and never cancels or enables a board queue', () => {
     voices = [voice];
-    saveSpeechPreferences({ voice: speechVoiceId(voice), rate: 1.7 });
+    saveSpeechPreferences({
+      voice: speechVoiceId(voice),
+      rate: 1.7,
+      contentMode: 'all',
+    });
     const queue = new RunSpeechQueue({
       speak: (text, done) => {
         const utterance = createSpeechUtterance(text, 'ja-JP');
@@ -126,7 +171,7 @@ describe('browser speech preferences', () => {
         throw new Error('quota');
       },
     });
-    saveSpeechPreferences({ voice: '', rate: 1.6 });
+    saveSpeechPreferences({ voice: '', rate: 1.6, contentMode: 'all' });
     expect(createSpeechUtterance('sample', 'en').rate).toBe(1.6);
   });
   it('handles unsupported browsers and a rejected preview without cancellation', () => {
