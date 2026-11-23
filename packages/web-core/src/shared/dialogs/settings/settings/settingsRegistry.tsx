@@ -1,6 +1,7 @@
 import { lazy } from 'react';
 import {
   GearIcon,
+  SpeakerHighIcon,
   GitBranchIcon,
   BuildingsIcon,
   KanbanIcon,
@@ -9,6 +10,12 @@ import {
   WrenchIcon,
 } from '@phosphor-icons/react';
 import type { Icon } from '@phosphor-icons/react';
+
+const SpeechSynthesisSettingsSection = lazy(() =>
+  import('./SpeechSynthesisSettingsSection').then((module) => ({
+    default: module.SpeechSynthesisSettingsSection,
+  }))
+);
 
 const HostPetSettingsSection = lazy(() =>
   import('./HostPetSettingsSection').then((module) => ({
@@ -53,6 +60,7 @@ const RuntimeAccessSettingsSection = lazy(() =>
 
 export type SettingsSectionType =
   | 'host-pet'
+  | 'speech-synthesis'
   | 'general'
   | 'execution'
   | 'notifications'
@@ -69,6 +77,7 @@ export type SettingsSectionGroup = 'host' | 'universal';
 
 export type SettingsSectionInitialState = {
   'host-pet': undefined;
+  'speech-synthesis': undefined;
   general: undefined;
   execution: undefined;
   notifications: undefined;
@@ -94,6 +103,7 @@ export interface SettingsSectionDefinition {
 export const SETTINGS_SECTION_DEFINITIONS: SettingsSectionDefinition[] = [
   { id: 'host-pet', icon: BuildingsIcon, group: 'host' },
   { id: 'general', icon: GearIcon, group: 'host' },
+  { id: 'speech-synthesis', icon: SpeakerHighIcon, group: 'universal' },
   { id: 'notifications', icon: GearIcon, group: 'host' },
   { id: 'execution', icon: CpuIcon, group: 'host' },
   {
@@ -128,6 +138,8 @@ export function renderSettingsSection(
   initialState?: SettingsSectionInitialState[SettingsSectionType]
 ) {
   switch (type) {
+    case 'speech-synthesis':
+      return <SpeechSynthesisSettingsSection />;
     case 'execution':
     case 'notifications':
       return <GeneralSettingsSection key={type} category={type} />;

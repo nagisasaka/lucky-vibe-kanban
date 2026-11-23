@@ -2,6 +2,11 @@ import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SpeakerHighIcon, SpeakerSlashIcon } from '@phosphor-icons/react';
 import { makeLocalApiRequest } from '@/shared/lib/localApiTransport';
+import {
+  createSpeechUtterance,
+  getSpeechSynthesis,
+  readSpeechPreferences,
+} from '@/shared/lib/speechSynthesis';
 import { RunSpeechQueue } from '../model/runSpeechQueue';
 
 import {
@@ -16,15 +21,14 @@ export function RunSpeechToggle({ projectId }: { projectId: string }) {
   const initialPage = useRef<RunObservationPage | null>(null);
   const connectAbort = useRef<AbortController | null>(null);
   const queue = useRef<RunSpeechQueue>();
-  if (
-    !queue.current &&
-    typeof window !== 'undefined' &&
-    'speechSynthesis' in window
-  ) {
+  if (!queue.current && getSpeechSynthesis()) {
     queue.current = new RunSpeechQueue({
+      shouldSpeak: (kind) =>
+        readSpeechPreferences().contentMode === 'all' ||
+        kind === 'terminal' ||
+        kind === 'waiting',
       speak(text, done) {
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = 'ja-JP';
+        const utterance = createSpeechUtterance(text, 'ja-JP');
         utterance.onend = done;
         utterance.onerror = done;
         window.speechSynthesis.speak(utterance);

@@ -19,6 +19,7 @@ type Entry = {
 };
 
 type Speaker = {
+  shouldSpeak?: (kind: Entry['kind']) => boolean;
   speak: (text: string, done: () => void) => void;
   cancel: () => void;
   isPending?: (run: string) => Promise<boolean>;
@@ -262,6 +263,10 @@ export class RunSpeechQueue {
   }
 
   private pump() {
+    // Discard excluded pending speech, but keep all event state/dedup updates.
+    this.pending = this.pending.filter(
+      (entry) => this.speaker.shouldSpeak?.(entry.kind) !== false
+    );
     if (!this.enabled || this.speaking || !this.pending.length) return;
     const priority = (entry: Entry) =>
       entry.kind === 'terminal' || entry.kind === 'waiting'
@@ -283,8 +288,10 @@ export class RunSpeechQueue {
       this.pump();
     };
     const speak = () => {
-      if (generation === this.generation && this.enabled)
-        this.speaker.speak(entry.text, done);
+      if (generation !== this.generation || !this.enabled) return;
+      // Recheck after asynchronous validity checks: mode may have changed.
+      if (this.speaker.shouldSpeak?.(entry.kind) === false) done();
+      else this.speaker.speak(entry.text, done);
     };
     const verify =
       entry.kind === 'waiting'

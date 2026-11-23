@@ -455,3 +455,132 @@ describe('RunSpeechQueue', () => {
     expect(spoken).toHaveLength(3);
   });
 });
+
+describe('speech content selection', () => {
+  function setup() {
+    let all = true;
+    const spoken: string[] = [];
+    let done = () => {};
+    const cancel = vi.fn();
+    const queue = new RunSpeechQueue({
+      shouldSpeak: (kind) => all || kind === 'terminal' || kind === 'waiting',
+      speak: (text, next) => {
+        spoken.push(text);
+        done = next;
+      },
+      cancel,
+    });
+    queue.enable();
+    return {
+      queue,
+      spoken,
+      cancel,
+      finish: () => done(),
+      mode: (value: boolean) => {
+        all = value;
+      },
+    };
+  }
+
+  it('all retains starts and progress; results excludes them without replaying old events', () => {
+    const s = setup();
+    s.queue.accept([lifecycle('a', 'starting'), message('a', 'progress')], []);
+    expect(s.spoken[0]).toContain('作業を開始');
+    s.finish();
+    expect(s.spoken[1]).toContain('progress');
+    s.finish();
+    s.mode(false);
+    s.queue.accept([lifecycle('b', 'starting'), message('b', 'excluded')], []);
+    expect(s.spoken).toHaveLength(2);
+    s.mode(true);
+    s.queue.accept([lifecycle('b', 'starting')], []);
+    expect(s.spoken).toHaveLength(2); // Start remains deduplicated; progress was discarded.
+    s.queue.accept([message('b', 'new progress')], []);
+    expect(s.spoken[2]).toContain('new progress');
+  });
+
+  it.each(['succeeded', 'failed', 'cancelled', 'crashed', 'audit_failed'])(
+    'results retains terminal %s and waiting, including deduplication',
+    (status) => {
+      const s = setup();
+      s.mode(false);
+      const questions = [{ run_id: 'a', issue: 'LOCAL-1', reference: 'q' }];
+      s.queue.accept(
+        [
+          lifecycle('a', 'starting'),
+          message('a', 'excluded'),
+          event('a', 'input_requested', { input_id: 'q' }),
+        ],
+        questions
+      );
+      expect(s.spoken).toEqual(['LOCAL-1 は回答を待っています']);
+      s.queue.accept(
+        [
+          event('a', 'input_requested', { input_id: 'q' }),
+          lifecycle('b', status),
+        ],
+        questions
+      );
+      s.finish();
+      expect(s.spoken[1]).toBe(
+        `LOCAL-2 の作業が${status === 'succeeded' ? '完了' : status === 'cancelled' ? '停止' : '失敗'}しました`
+      );
+      s.finish();
+      s.queue.accept([lifecycle('b', status)], questions);
+      expect(s.spoken).toHaveLength(2);
+    }
+  );
+
+  it('switching drops queued starts/reports without interrupting current speech or losing urgent work', () => {
+    const s = setup();
+    s.queue.accept([message('a', 'in progress')], []);
+    const questions = [{ run_id: 'c', issue: 'LOCAL-2', reference: 'q' }];
+    s.queue.accept(
+      [
+        lifecycle('b', 'starting'),
+        message('b', 'queued'),
+        event('c', 'approval_requested', { approval_id: 'q' }),
+        lifecycle('d', 'succeeded'),
+      ],
+      questions
+    );
+    s.mode(false);
+    expect(s.cancel).not.toHaveBeenCalled();
+    expect(s.spoken).toEqual(['LOCAL-1。in progress']);
+    s.finish();
+    expect(s.spoken[1]).toContain('回答を待っています');
+    s.finish();
+    expect(s.spoken[2]).toContain('作業が完了');
+    s.finish();
+    s.mode(true);
+    s.queue.accept([], questions);
+    expect(s.spoken).toHaveLength(3);
+  });
+
+  it('rechecks mode after async validity checks and preserves state of suppressed events', async () => {
+    let all = true;
+    let resolve!: (valid: boolean) => void;
+    const speak = vi.fn();
+    const queue = new RunSpeechQueue({
+      shouldSpeak: (kind) => all || kind === 'terminal' || kind === 'waiting',
+      isActive: () =>
+        new Promise<boolean>((done) => {
+          resolve = done;
+        }),
+      speak,
+      cancel: vi.fn(),
+    });
+    queue.enable();
+    queue.accept([lifecycle('a', 'starting')], []);
+    all = false;
+    resolve(true);
+    await Promise.resolve();
+    expect(speak).not.toHaveBeenCalled();
+    queue.accept([lifecycle('a', 'succeeded')], []);
+    expect(speak.mock.calls[0][0]).toBe('LOCAL-1 の作業が完了しました');
+    speak.mock.calls[0][1]();
+    all = true;
+    queue.accept([lifecycle('a', 'starting'), message('a', 'old')], []);
+    expect(speak).toHaveBeenCalledTimes(1);
+  });
+});
