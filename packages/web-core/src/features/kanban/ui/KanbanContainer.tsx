@@ -1,3 +1,5 @@
+import { useSavedFilter } from '@/shared/hooks/useSavedFilter';
+import { SavedFilterBar } from '@/shared/components/saved-filters/SavedFilterBar';
 import type { TFunction } from 'i18next';
 import { dropRankAfterActivity } from './kanbanOrder';
 import { projectKanbanItems, type KanbanItems } from './kanbanProjection';
@@ -260,6 +262,11 @@ export function KanbanContainer() {
     executeAction(Actions.ProjectsGuide);
   }, [executeAction]);
 
+  const savedFilter = useSavedFilter();
+  useEffect(() => {
+    if (savedFilter.selected) setProjectView(projectId, 'kanban');
+  }, [savedFilter.id, savedFilter.selected, projectId, setProjectView]);
+
   const projectViewSelection = useUiPreferencesStore(
     (s) => s.kanbanProjectViewSelections[projectId]
   );
@@ -363,15 +370,27 @@ export function KanbanContainer() {
 
   const filteredIssues = useMemo(
     () =>
-      matchingIssues.filter(
-        (issue) =>
-          statuses.some(
-            (status) => status.id === issue.status_id && !status.hidden
-          ) &&
-          (archiveScope === 'all' ||
-            issue.archived === (archiveScope === 'archived'))
-      ),
-    [matchingIssues, statuses, archiveScope]
+      savedFilter.selected
+        ? savedFilter.ready
+          ? issues.filter((issue) => savedFilter.issueIds?.has(issue.id))
+          : []
+        : matchingIssues.filter(
+            (issue) =>
+              statuses.some(
+                (status) => status.id === issue.status_id && !status.hidden
+              ) &&
+              (archiveScope === 'all' ||
+                issue.archived === (archiveScope === 'archived'))
+          ),
+    [
+      matchingIssues,
+      statuses,
+      archiveScope,
+      issues,
+      savedFilter.selected,
+      savedFilter.ready,
+      savedFilter.issueIds,
+    ]
   );
 
   const setKanbanSearchQuery = useCallback(
@@ -524,11 +543,13 @@ export function KanbanContainer() {
 
   // Filter statuses: visible (non-hidden) for kanban, hidden for tabs
   const visibleStatuses = useMemo(
-    () => sortedStatuses.filter((s) => !s.hidden),
-    [sortedStatuses]
+    () => sortedStatuses.filter((s) => savedFilter.selected || !s.hidden),
+    [sortedStatuses, savedFilter.selected]
   );
 
-  const defaultCreateStatusId = visibleStatuses[0]?.id;
+  const defaultCreateStatusId = sortedStatuses.find(
+    (status) => !status.hidden
+  )?.id;
 
   // Update default create status for command bar based on current tab
   useEffect(() => {
@@ -537,6 +558,7 @@ export function KanbanContainer() {
 
   const createAssigneeIds = useMemo(() => {
     const assigneeIds = new Set<string>();
+    if (savedFilter.selected) return [];
 
     for (const assigneeId of kanbanFilters.assigneeIds) {
       if (assigneeId === KANBAN_ASSIGNEE_FILTER_VALUES.UNASSIGNED) {
@@ -554,51 +576,12 @@ export function KanbanContainer() {
     }
 
     return [...assigneeIds];
-  }, [kanbanFilters.assigneeIds, userId]);
+  }, [kanbanFilters.assigneeIds, userId, savedFilter.selected]);
 
   const listViewStatuses = visibleStatuses;
 
   // Track items as arrays of IDs grouped by status
-  const [items, setItems] = useState<Record<string, string[]>>({});
-  const [dragPreview, setDragPreview] = useState<KanbanItems | null>(null);
-  const handleDragPreview = useCallback(
-    (result: DropResult | null) => {
-      setDragPreview(
-        result?.destination
-          ? projectKanbanItems(items, result.draggableId, result.destination)
-          : null
-      );
-    },
-    [items]
-  );
-  const [isFiltersDialogOpen, setIsFiltersDialogOpen] = useState(false);
-
-  const motionScope = JSON.stringify([
-    projectId,
-    kanbanFilters,
-    activeViewId,
-    archiveScope,
-    showSubIssues,
-    hideBlocked,
-    kanbanViewMode,
-    visibleStatuses.map(({ id, sort_order }) => [id, sort_order]),
-  ]);
-  const [layoutScope, setLayoutScope] = useState(motionScope);
-  const motionActivity = useMemo(
-    () =>
-      snapshotActivity(
-        buildSourceKey(PROJECT_ISSUES_SHAPE.table, { project_id: projectId })
-      ),
-    [projectId]
-  );
-
-  // Sync items from filtered issues when they change
-  useEffect(() => {
-    // Skip rebuild during drag-drop sync to prevent flicker
-    if (dropSync.observe(issues) || isDragging) {
-      return;
-    }
-
+  const derivedItems = useMemo(() => {
     const { sortField, sortDirection } = kanbanFilters;
     const grouped: Record<string, string[]> = {};
 
@@ -639,13 +622,55 @@ export function KanbanContainer() {
 
       grouped[status.id] = statusIssues.map((i) => i.id);
     }
-    setItems(grouped);
+    return grouped;
+  }, [kanbanFilters, statuses, filteredIssues]);
+  const [storedItems, setItems] = useState<Record<string, string[]>>({});
+  const items = savedFilter.selected ? derivedItems : storedItems;
+  const [dragPreview, setDragPreview] = useState<KanbanItems | null>(null);
+  const handleDragPreview = useCallback(
+    (result: DropResult | null) => {
+      setDragPreview(
+        result?.destination
+          ? projectKanbanItems(items, result.draggableId, result.destination)
+          : null
+      );
+    },
+    [items]
+  );
+  const [isFiltersDialogOpen, setIsFiltersDialogOpen] = useState(false);
+
+  const motionScope = JSON.stringify([
+    projectId,
+    savedFilter.id,
+    kanbanFilters,
+    activeViewId,
+    archiveScope,
+    showSubIssues,
+    hideBlocked,
+    kanbanViewMode,
+    visibleStatuses.map(({ id, sort_order }) => [id, sort_order]),
+  ]);
+  const [layoutScope, setLayoutScope] = useState(motionScope);
+  const motionActivity = useMemo(
+    () =>
+      snapshotActivity(
+        buildSourceKey(PROJECT_ISSUES_SHAPE.table, { project_id: projectId })
+      ),
+    [projectId]
+  );
+
+  // Sync items from filtered issues when they change
+  useEffect(() => {
+    // Skip rebuild during drag-drop sync to prevent flicker
+    if (dropSync.observe(issues) || isDragging) {
+      return;
+    }
+
+    setItems(derivedItems);
     setLayoutScope(motionScope);
   }, [
-    filteredIssues,
+    derivedItems,
     motionScope,
-    statuses,
-    kanbanFilters,
     isDragging,
     orderSyncRevision,
     dropSync,
@@ -892,6 +917,7 @@ export function KanbanContainer() {
     setOrderedIssueIds(orderedIssueIds);
     if (
       !projectLoading &&
+      (!savedFilter.selected || savedFilter.ready) &&
       selectedKanbanIssueId &&
       !filteredIssues.some((issue) => issue.id === selectedKanbanIssueId)
     ) {
@@ -905,6 +931,8 @@ export function KanbanContainer() {
     projectId,
     projectLoading,
     filteredIssues,
+    savedFilter.selected,
+    savedFilter.ready,
   ]);
 
   // Clear multi-selection when project or view mode changes
@@ -1134,6 +1162,9 @@ export function KanbanContainer() {
         </div>
 
         {projectView === 'kanban' && (
+          <SavedFilterBar view={savedFilter} count={filteredIssues.length} />
+        )}
+        {projectView === 'kanban' && !savedFilter.selected && (
           <div
             className={cn(
               'flex gap-base',
@@ -1223,6 +1254,11 @@ export function KanbanContainer() {
         <div className="flex-1 min-h-0">
           <TodoPanel key={projectId} projectId={projectId} grid />
         </div>
+      ) : savedFilter.selected && !savedFilter.ready ? (
+        <div
+          className="flex-1"
+          aria-busy={savedFilter.state === 'evaluating'}
+        />
       ) : kanbanViewMode === 'kanban' ? (
         visibleStatuses.length === 0 ? (
           <div className="flex-1 flex items-center justify-center">
@@ -1469,9 +1505,13 @@ export function KanbanContainer() {
         </div>
       )}
 
-      {projectView === 'kanban' && isMultiSelectActive && (
-        <BulkActionBarContainer projectId={projectId} />
-      )}
+      {projectView === 'kanban' &&
+        isMultiSelectActive &&
+        (!savedFilter.selected ||
+          (savedFilter.ready &&
+            [...selectedIssueIds].every((id) =>
+              savedFilter.issueIds?.has(id)
+            ))) && <BulkActionBarContainer projectId={projectId} />}
     </div>
   );
 }

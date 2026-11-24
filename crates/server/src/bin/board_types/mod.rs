@@ -8,7 +8,7 @@ use api_types::{
     NotificationType, OrganizationMember, Project, ProjectStatus, PullRequest, PullRequestIssue,
     PullRequestStatus, SearchIssuesRequest, SortDirection, Tag, UpdateIssueCommentReactionRequest,
     UpdateIssueCommentRequest, UpdateIssueRequest, UpdateProjectRequest,
-    UpdateProjectStatusRequest, UpdateTagRequest, User, UserData, Workspace,
+    UpdateProjectStatusRequest, UpdateTagRequest, User, UserData, Workspace, saved_filter::*,
 };
 mod contracts;
 use contracts::{all_mutation_definitions, all_shape_routes};
@@ -28,6 +28,23 @@ pub fn export_shapes() -> String {
     let type_decls = vec![
         serde_json::Value::decl(),
         Project::decl(),
+        SavedFilterArchive::decl(),
+        SavedFilterTagMode::decl(),
+        SavedFilterPeriod::decl(),
+        SavedFilterRelationKind::decl(),
+        SavedFilterRelation::decl(),
+        MachineFilter::decl(),
+        SavedFilterDefinition::decl(),
+        SavedFilter::decl(),
+        CreateSavedFilterRequest::decl(),
+        UpdateSavedFilterRequest::decl(),
+        DeleteSavedFilterRequest::decl(),
+        SavedFilterEvaluationState::decl(),
+        SavedFilterEvaluation::decl(),
+        EvaluateSavedFilterRequest::decl(),
+        SavedFilterPage::decl(),
+        ListSavedFiltersResponse::decl(),
+        SavedFilterLink::decl(),
         Notification::decl(),
         NotificationGroupKind::decl(),
         NotificationPayload::decl(),

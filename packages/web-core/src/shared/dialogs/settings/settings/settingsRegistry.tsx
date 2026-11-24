@@ -17,6 +17,12 @@ const SpeechSynthesisSettingsSection = lazy(() =>
   }))
 );
 
+const SavedFiltersSettingsSection = lazy(() =>
+  import('./SavedFiltersSettingsSection').then((module) => ({
+    default: module.SavedFiltersSettingsSection,
+  }))
+);
+
 const HostPetSettingsSection = lazy(() =>
   import('./HostPetSettingsSection').then((module) => ({
     default: module.HostPetSettingsSection,
@@ -59,6 +65,7 @@ const RuntimeAccessSettingsSection = lazy(() =>
 );
 
 export type SettingsSectionType =
+  | 'saved-filters'
   | 'host-pet'
   | 'speech-synthesis'
   | 'general'
@@ -76,6 +83,7 @@ export type SettingsSectionType =
 export type SettingsSectionGroup = 'host' | 'universal';
 
 export type SettingsSectionInitialState = {
+  'saved-filters': { projectId?: string; organizationId?: string } | undefined;
   'host-pet': undefined;
   'speech-synthesis': undefined;
   general: undefined;
@@ -101,6 +109,7 @@ export interface SettingsSectionDefinition {
 }
 
 export const SETTINGS_SECTION_DEFINITIONS: SettingsSectionDefinition[] = [
+  { id: 'saved-filters', icon: KanbanIcon, group: 'universal' },
   { id: 'host-pet', icon: BuildingsIcon, group: 'host' },
   { id: 'general', icon: GearIcon, group: 'host' },
   { id: 'speech-synthesis', icon: SpeakerHighIcon, group: 'universal' },
@@ -140,6 +149,14 @@ export function renderSettingsSection(
   switch (type) {
     case 'speech-synthesis':
       return <SpeechSynthesisSettingsSection />;
+    case 'saved-filters':
+      return (
+        <SavedFiltersSettingsSection
+          initialState={
+            initialState as SettingsSectionInitialState['saved-filters']
+          }
+        />
+      );
     case 'execution':
     case 'notifications':
       return <GeneralSettingsSection key={type} category={type} />;

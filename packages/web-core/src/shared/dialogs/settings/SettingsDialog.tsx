@@ -52,7 +52,7 @@ function SettingsDialogNavigation({
   const groups = {
     experience: ['host-pet', 'general', 'notifications', 'speech-synthesis'],
     ai: ['execution', 'agents', 'agent-tools'],
-    projects: ['remote-projects', 'repos'],
+    projects: ['remote-projects', 'saved-filters', 'repos'],
     connections: [
       'mcp-integration',
       'mcp',

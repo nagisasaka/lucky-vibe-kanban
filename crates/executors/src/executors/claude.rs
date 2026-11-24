@@ -804,14 +804,21 @@ impl ClaudeCode {
         env: &ExecutionEnv,
     ) -> Result<SpawnedChild, ExecutorError> {
         self.validate_permission_support()?;
-        self.check_subscription_login(current_dir, env).await?;
         let protected_roots = crate::source_protection::roots(env)?;
+        let semantic_inference = crate::source_protection::inference(env);
+        if semantic_inference {
+            crate::source_protection::validate_inference_launcher(
+                &self.cmd,
+                self.claude_code_router.unwrap_or(false),
+            )?;
+        }
         if protected_roots.is_some() {
             crate::source_protection::validate_launcher(
                 &self.cmd,
                 self.claude_code_router.unwrap_or(false),
             )?;
         }
+        self.check_subscription_login(current_dir, env).await?;
         let (program_path, args) = command_parts.into_resolved().await?;
         let mut combined_prompt = self.append_prompt.combine_prompt(prompt);
         let memory = env.get("LVK_DELIVERED_USER_SUFFIX").cloned();
@@ -929,7 +936,11 @@ impl ClaudeCode {
             // authentication/profile validation above remains mandatory.
             command.args([
                 "--tools",
-                "Read,Glob,Grep,Bash",
+                if semantic_inference {
+                    ""
+                } else {
+                    "Read,Glob,Grep,Bash"
+                },
                 "--disallowedTools",
                 "AskUserQuestion,Edit,Write,NotebookEdit,Agent,Task,Skill,mcp__*",
                 "--strict-mcp-config",
@@ -940,6 +951,9 @@ impl ClaudeCode {
                 "--settings",
                 &settings.to_string(),
             ]);
+        }
+        if semantic_inference {
+            command.arg("--disable-slash-commands");
         }
         let repository_roots = env.repository_roots();
         let conflicts = crate::repo_skills::ambiguous_claude_names(&repository_roots);
@@ -981,7 +995,11 @@ impl ClaudeCode {
 
         let new_stdout = create_stdout_pipe_writer(&mut child)?;
         let permission_mode = self.permission_mode();
-        let mut hooks = self.get_hooks();
+        let mut hooks = if semantic_inference {
+            None
+        } else {
+            self.get_hooks()
+        };
         if instruction_state.is_some() {
             let hooks = hooks.get_or_insert_with(|| serde_json::json!({}));
             hooks["PreCompact"] = serde_json::json!([{"hookCallbackIds":[instructions::CALLBACK]}]);

@@ -1,5 +1,5 @@
-//! Opt-in, authenticated MCP transport. This module never invokes an internal
-//! conversational model or creates a model session. Existing stdio MCP stays independent.
+//! Opt-in, authenticated MCP transport. Domain operations delegate to shared
+//! services, including server-side saved-filter evaluation.
 mod activity;
 #[cfg(test)]
 mod attachment_tests;
@@ -21,6 +21,7 @@ pub mod environment_settings;
 mod environment_switch;
 mod errors;
 mod execution_approvals;
+mod saved_filters;
 pub(crate) use errors::database_category;
 mod evidence_read;
 mod goals;
@@ -267,6 +268,10 @@ fn operation_scope(name: &str) -> Option<&'static str> {
         | "edit_issue_comment"
         | "add_issue_comment"
         | "write_design_note"
+        | "create_saved_filter"
+        | "update_saved_filter"
+        | "delete_saved_filter"
+        | "evaluate_saved_filter"
         | "create_todo"
         | "update_todo"
         | "delete_todo"
@@ -484,6 +489,7 @@ fn tools() -> Vec<Tool> {
     tools.extend(issue_comments::tools());
     tools.extend(todos::tools());
     tools.extend(design_notes::tools());
+    tools.extend(saved_filters::tools());
     tools.extend(launch::tools());
     tools.extend(attachments::tools());
     tools.extend(repository_wiki::tools());
@@ -620,6 +626,9 @@ impl Remote {
                 Ok(page) => self.projects(page).await,
                 Err(_) => Err(errors::rejection(utils::mcp_error::Category::Validation)),
             },
+            name if saved_filters::tools().iter().any(|tool| tool.name == name) => {
+                saved_filters::call(self, principal, name, args).await
+            }
             name if design_notes::tools().iter().any(|tool| tool.name == name) => {
                 design_notes::call(self, principal, name, args).await
             }

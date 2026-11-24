@@ -1079,7 +1079,10 @@ impl Codex {
                 params.runtime_workspace_roots = None;
             }
             let config = params.config.get_or_insert_with(HashMap::new);
-            if workflow_read_only {
+            // Semantic inference uses native read-only without a named profile.
+            // An unused reporting profile without default_permissions makes
+            // Codex 0.163 retained-session config reload fail during routing.
+            if workflow_read_only && !crate::source_protection::inference(env) {
                 if let Ok(Some(protected)) = crate::source_protection::roots(env) {
                     let name = format!("lvk-reporting-{}", uuid::Uuid::new_v4().simple());
                     let mut profiles = serde_json::Map::new();
@@ -1201,6 +1204,20 @@ impl Codex {
                     .filter_map(|path| path.try_into().ok())
                     .collect(),
             );
+        }
+        if crate::source_protection::inference(env) {
+            params.sandbox = Some(V2SandboxMode::ReadOnly);
+            params.approval_policy = Some(V2AskForApproval::Never);
+            params.permissions = None;
+            params.runtime_workspace_roots = None;
+            // No filesystem/shell environment is exposed to this inference
+            // thread. TurnStart uses no override, so this restriction is sticky.
+            params.environments = Some(vec![]);
+            params.dynamic_tools = Some(vec![]);
+            params
+                .config
+                .get_or_insert_with(HashMap::new)
+                .extend(crate::source_protection::codex_inference_config());
         }
         params
     }
@@ -1356,6 +1373,14 @@ impl Codex {
         let workflow_read_only = crate::source_protection::roots(env)?.is_some();
         if workflow_read_only {
             crate::source_protection::validate_launcher(&self.cmd, false)?;
+        }
+        if crate::source_protection::inference(env) {
+            crate::source_protection::validate_inference_launcher(&self.cmd, false)?;
+            if resume_session.is_some() {
+                return Err(ExecutorError::Io(std::io::Error::other(
+                    "Semantic inference requires a fresh provider thread",
+                )));
+            }
         }
         let resume_session = resume_session.map(|s| s.to_string());
         let additional_user_input = self.append_prompt.get();
@@ -1516,6 +1541,12 @@ impl Codex {
             .with_profile(&self.cmd)
             .apply_to_command(&mut process);
 
+        if crate::source_protection::inference(env) {
+            // Startup hooks/notify must be disabled before the app-server starts.
+            for (key, value) in crate::source_protection::codex_inference_config() {
+                process.arg("-c").arg(format!("{key}={value}"));
+            }
+        }
         let spawn_error_context = launch_context.clone();
         let mut child = process.group_spawn_no_window().map_err(|err| {
             ExecutorError::Io(std::io::Error::other(format!(
@@ -1535,7 +1566,8 @@ impl Codex {
         let (exit_signal_tx, exit_signal_rx) = tokio::sync::oneshot::channel();
         let cancel = tokio_util::sync::CancellationToken::new();
 
-        let auto_approve = self.auto_approve_tool_requests();
+        let auto_approve =
+            !crate::source_protection::inference(env) && self.auto_approve_tool_requests();
         let execution_mode = self.effective_execution_mode();
         let plan_mode = matches!(
             execution_mode,
@@ -2586,6 +2618,32 @@ mod tests {
 #[cfg(test)]
 mod goal_skill_tests {
     use super::*;
+
+    #[test]
+    fn semantic_inference_overrides_dangerous_profiles_without_changing_regular_review() {
+        let codex: Codex = serde_json::from_value(serde_json::json!({"sandbox":"danger-full-access","execution_mode":"review","ask_for_approval":"never"})).unwrap();
+        let mut env = ExecutionEnv::new(RepoContext::default());
+        let normal = codex.build_thread_start_params_with_resources(Path::new("/tmp"), &env);
+        assert_eq!(normal.sandbox, Some(V2SandboxMode::DangerFullAccess));
+        env.insert(crate::source_protection::ROOTS, "[\"/tmp\"]");
+        let reporting = codex.build_thread_start_params_with_resources(Path::new("/tmp"), &env);
+        assert!(reporting.permissions.is_some());
+        env.insert(crate::source_protection::INFERENCE, "1");
+        let restricted = codex.build_thread_start_params_with_resources(Path::new("/tmp"), &env);
+        assert_eq!(restricted.sandbox, Some(V2SandboxMode::ReadOnly));
+        assert_eq!(restricted.approval_policy, Some(V2AskForApproval::Never));
+        assert!(restricted.permissions.is_none());
+        assert!(restricted.runtime_workspace_roots.is_none());
+        assert_eq!(restricted.environments, Some(vec![]));
+        assert_eq!(restricted.dynamic_tools, Some(vec![]));
+        assert!(normal.environments.is_none());
+        let config = restricted.config.unwrap();
+        assert!(!config.contains_key("permissions"));
+        assert!(!config.contains_key("include_apply_patch_tool"));
+        for (key, value) in crate::source_protection::codex_inference_config() {
+            assert_eq!(config.get(&key), Some(&value), "{key}");
+        }
+    }
 
     #[test]
     fn bootstrap_reviewer_preserves_permissions_without_writer_tools_or_history() {
