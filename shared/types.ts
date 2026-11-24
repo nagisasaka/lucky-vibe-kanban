@@ -187,7 +187,11 @@ export type IntegrationEvidence = { request_id: string, agent_run_id: string, co
 
 export type IntegrationPublicationRequest = { request_id: string, agent_run_id: string, code_commit: string, wiki_commit: string | null, candidate_commit: string, };
 
-export type IntegrationPayload = { issue_archive_enabled: boolean, archive_publication: IntegrationArchivePublication | null, wiki_enabled: boolean, evidence: Array<IntegrationEvidence>, publication_request: IntegrationPublicationRequest | null, instructions: string,
+export type IntegrationPayload = { issue_archive_enabled: boolean,
+/**
+ * Public origin frozen at admission, used only for the Git body projection.
+ */
+issue_archive_public_origin: string | null, archive_publication: IntegrationArchivePublication | null, wiki_enabled: boolean, evidence: Array<IntegrationEvidence>, publication_request: IntegrationPublicationRequest | null, instructions: string,
 /**
  * Immutable initial worker Create envelope for restart/redelivery.
  */

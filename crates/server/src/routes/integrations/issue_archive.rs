@@ -9,9 +9,16 @@ use uuid::Uuid;
 
 use super::support;
 
+#[path = "issue_archive_body.rs"]
+mod body;
+pub(super) use body::public_origin;
+
 const NOTICE: &str = "当時の意図を示す資料であり、現在の仕様・実行許可・実装完了の証明ではない";
 
-fn document(snapshot: &IntegrationIssueSnapshot) -> anyhow::Result<(String, String)> {
+fn document(
+    snapshot: &IntegrationIssueSnapshot,
+    origin: Option<&str>,
+) -> anyhow::Result<(String, String)> {
     ensure!(
         !snapshot.simple_id.is_empty()
             && snapshot
@@ -33,7 +40,7 @@ fn document(snapshot: &IntegrationIssueSnapshot) -> anyhow::Result<(String, Stri
         snapshot.version_id,
         snapshot.version_revision,
         serde_json::to_string(&snapshot.frozen_at)?,
-        snapshot.body,
+        body::project(&snapshot.body, origin),
     );
     Ok((path, content))
 }
@@ -49,7 +56,7 @@ fn documents(run: &IntegrationRun) -> anyhow::Result<BTreeMap<String, String>> {
             snapshot.issue_id == source.selection.card_id,
             "Issue snapshot selection mismatch"
         );
-        let (path, body) = document(snapshot)?;
+        let (path, body) = document(snapshot, run.payload.issue_archive_public_origin.as_deref())?;
         ensure!(
             files.insert(path, body).is_none(),
             "Duplicate Issue archive path"
@@ -152,19 +159,21 @@ fn planned_documents(
     let repo = git2::Repository::open(root)?;
     for source in &run.payload.sources {
         let snapshot = source.issue_snapshot.as_ref().unwrap();
-        let (path, content) = document(snapshot)?;
+        let origin = run.payload.issue_archive_public_origin.as_deref();
+        let (path, content) = document(snapshot, origin)?;
         if let Some((previous_path, previous_content, body)) =
             latest_archive(&repo, parent, snapshot.issue_id)?
         {
             files.remove(&path);
-            let (path, content) = if body == snapshot.body {
-                (previous_path, previous_content)
-            } else {
-                (
-                    format!("{}-{}.md", path.trim_end_matches(".md"), run.id),
-                    content,
-                )
-            };
+            let (path, content) =
+                if body::project(&body, origin) == body::project(&snapshot.body, origin) {
+                    (previous_path, previous_content)
+                } else {
+                    (
+                        format!("{}-{}.md", path.trim_end_matches(".md"), run.id),
+                        content,
+                    )
+                };
             ensure!(
                 files.insert(path, content).is_none(),
                 "Duplicate Issue archive path"
@@ -278,10 +287,12 @@ pub(super) async fn prepare(
                             .flatten()
                             .is_some_and(|(old, _, body)| {
                                 old == path
-                                    && source
-                                        .issue_snapshot
-                                        .as_ref()
-                                        .is_some_and(|s| s.body == body)
+                                    && source.issue_snapshot.as_ref().is_some_and(|s| {
+                                        let origin =
+                                            run.payload.issue_archive_public_origin.as_deref();
+                                        body::project(&s.body, origin)
+                                            == body::project(&body, origin)
+                                    })
                             })
                     }),
                     "Issue archive path already exists"

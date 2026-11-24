@@ -89,7 +89,10 @@ async fn archive_exact_body_retry_and_git_receipt_recovery() -> anyhow::Result<(
     let request = Uuid::new_v4();
     assert!(verify(&run, root, &parent).is_err()); // publication is blocked until prepared
     let commit = prepare(&pool, &git, &mut run, root, request, &parent).await?;
-    let (path, content) = document(run.payload.sources[0].issue_snapshot.as_ref().unwrap())?;
+    let (path, content) = document(
+        run.payload.sources[0].issue_snapshot.as_ref().unwrap(),
+        run.payload.issue_archive_public_origin.as_deref(),
+    )?;
     assert!(path.starts_with("docs/changes/2026-11-16-LOCAL-399-"));
     assert_eq!(std::fs::read(root.join(&path))?, content.as_bytes());
     assert!(!content.contains("DO NOT ARCHIVE"));
@@ -152,7 +155,10 @@ async fn archive_off_wrong_selection_collision_and_other_repo() -> anyhow::Resul
     run.payload.sources[0].selection.card_id = original_id;
     let other = tempfile::tempdir()?;
     std::fs::write(other.path().join("keep"), "other repository")?;
-    let (path, _) = document(run.payload.sources[0].issue_snapshot.as_ref().unwrap())?;
+    let (path, _) = document(
+        run.payload.sources[0].issue_snapshot.as_ref().unwrap(),
+        run.payload.issue_archive_public_origin.as_deref(),
+    )?;
     std::fs::create_dir_all(root.join("docs/changes"))?;
     std::fs::write(root.join(&path), "existing content")?;
     assert!(
@@ -399,16 +405,19 @@ fn archive_date_uses_frozen_utc_day() {
         frozen_at: "2026-11-17T00:30:00+01:00".into(),
     };
     assert!(
-        document(&snapshot)
+        document(&snapshot, None)
             .unwrap()
             .0
             .starts_with("docs/changes/2026-11-16-")
     );
     // Rendering has no current-time or settings input, including after midnight.
     assert_eq!(
-        document(&snapshot).unwrap(),
-        document(&serde_json::from_str(&serde_json::to_string(&snapshot).unwrap()).unwrap())
-            .unwrap()
+        document(&snapshot, None).unwrap(),
+        document(
+            &serde_json::from_str(&serde_json::to_string(&snapshot).unwrap()).unwrap(),
+            None
+        )
+        .unwrap()
     );
 }
 
@@ -508,7 +517,7 @@ async fn archive_quoted_uuid_and_unchanged_blob_are_verified() -> anyhow::Result
     let (dir, pool, mut run) = fixture().await?;
     let root = dir.path();
     let snapshot = run.payload.sources[0].issue_snapshot.as_ref().unwrap();
-    let (path, content) = document(snapshot)?;
+    let (path, content) = document(snapshot, None)?;
     let content = content.replace(
         &format!("issue_id: {}", snapshot.issue_id),
         &format!("issue_id: '{}'", snapshot.issue_id),
@@ -546,7 +555,7 @@ async fn archive_changed_body_refuses_tracked_revision_path_collision() -> anyho
     run.payload.archive_publication = None;
     let snapshot = run.payload.sources[0].issue_snapshot.as_mut().unwrap();
     snapshot.body = "changed body".into();
-    let (path, _) = document(snapshot)?;
+    let (path, _) = document(snapshot, None)?;
     let path = format!("{}-{}.md", path.trim_end_matches(".md"), run.id);
     std::fs::write(root.join(&path), "tracked collision")?;
     support::git(root, &["add", "-f", "--", &path])?;
@@ -612,5 +621,104 @@ async fn archive_unchanged_still_refuses_git_conflict() -> anyhow::Result<()> {
     );
     assert!(git2::Repository::open(root)?.index()?.has_conflicts());
     assert_eq!(support::git(root, &["rev-parse", "HEAD"])?, parent);
+    Ok(())
+}
+
+#[tokio::test]
+async fn archive_projects_only_git_blob_with_frozen_origin() -> anyhow::Result<()> {
+    let (dir, pool, mut run) = fixture().await?;
+    let original = "## Intent\n[link](https://outside.test/hidden) ![alt](https://lvk.example.test/embed)\n[ref][r]\n\n[r]: https://outside.test/ref\n\nhttps://lvk.example.test/issue/1 <https://outside.test/visible>\n";
+    run.payload.sources[0].issue_snapshot.as_mut().unwrap().body = original.into();
+    run.payload.issue_archive_public_origin = public_origin(Some("https://lvk.example.test/base"));
+    let parent = run.payload.observed_target.clone();
+    let git = git::GitService::new();
+    let commit = prepare(&pool, &git, &mut run, dir.path(), Uuid::new_v4(), &parent).await?;
+    let snapshot = run.payload.sources[0].issue_snapshot.as_ref().unwrap();
+    let (path, expected) = document(snapshot, run.payload.issue_archive_public_origin.as_deref())?;
+    let repo = git2::Repository::open(dir.path())?;
+    let tree = repo.find_commit(git2::Oid::from_str(&commit)?)?.tree()?;
+    let entry = tree.get_path(Path::new(&path))?;
+    let blob = repo.find_blob(entry.id())?;
+    assert_eq!(blob.content(), expected.as_bytes());
+    assert!(expected.ends_with("LVK 内部リンク <https://outside.test/visible>\n"));
+    assert!(!expected.contains("lvk.example.test"));
+    assert!(!expected.contains("outside.test/hidden"));
+    assert!(!expected.contains("outside.test/ref"));
+    assert_eq!(snapshot.body, original);
+    // Receipt/restart restoration retains the origin, independently of current settings.
+    run = serde_json::from_str(&serde_json::to_string(&run)?)?;
+    assert_eq!(
+        prepare(&pool, &git, &mut run, dir.path(), Uuid::new_v4(), &parent).await?,
+        commit
+    );
+    assert_eq!(
+        run.payload.sources[0].issue_snapshot.as_ref().unwrap().body,
+        original
+    );
+    verify(&run, dir.path(), &commit)?;
+    Ok(())
+}
+
+#[tokio::test]
+async fn archive_legacy_projection_equivalence_preserves_blobs_and_changed_body_appends()
+-> anyhow::Result<()> {
+    let (dir, pool, mut run) = fixture().await?;
+    let root = dir.path();
+    let git = git::GitService::new();
+    let legacy = "[目的](https://lvk.example.test/old)\nhttps://lvk.example.test/issue/1\n";
+    let snapshot = run.payload.sources[0].issue_snapshot.as_mut().unwrap();
+    snapshot.body = legacy.into();
+    let (path, content) = document(snapshot, None)?;
+    // Model an actual pre-projection archive, including its original envelope.
+    let content = content.replace(&body::project(legacy, None), legacy);
+    std::fs::create_dir_all(root.join("docs/changes"))?;
+    std::fs::write(root.join(&path), &content)?;
+    support::git(root, &["add", "-f", "--", &path])?;
+    support::git(root, &["commit", "-m", "legacy unformatted archive"])?;
+    let parent = support::git(root, &["rev-parse", "HEAD"])?;
+    run.payload.issue_archive_public_origin = public_origin(Some("https://lvk.example.test/base"));
+    let adopted = "[目的](https://outside.test/new)\nhttps://lvk.example.test/issue/2\n";
+    run.payload.sources[0].issue_snapshot.as_mut().unwrap().body = adopted.into();
+    let request = Uuid::new_v4();
+    assert_eq!(
+        prepare(&pool, &git, &mut run, root, request, &parent).await?,
+        parent
+    );
+    verify(&run, root, &parent)?;
+    assert_eq!(std::fs::read_dir(root.join("docs/changes"))?.count(), 1);
+    run = serde_json::from_str(&serde_json::to_string(&run)?)?;
+    assert_eq!(
+        prepare(&pool, &git, &mut run, root, request, &parent).await?,
+        parent
+    );
+    assert_eq!(
+        run.payload.sources[0].issue_snapshot.as_ref().unwrap().body,
+        adopted
+    );
+    run.payload.archive_publication = None;
+    run.payload.sources[0]
+        .issue_snapshot
+        .as_mut()
+        .unwrap()
+        .body
+        .push_str("追加の意図\n");
+    let changed = prepare(&pool, &git, &mut run, root, Uuid::new_v4(), &parent).await?;
+    assert_ne!(changed, parent);
+    verify(&run, root, &changed)?;
+    let repo = git2::Repository::open(root)?;
+    let old_tree = repo.find_commit(git2::Oid::from_str(&parent)?)?.tree()?;
+    let new_tree = repo.find_commit(git2::Oid::from_str(&changed)?)?.tree()?;
+    assert_eq!(
+        old_tree.get_path(Path::new(&path))?.id(),
+        new_tree.get_path(Path::new(&path))?.id()
+    );
+    let files = planned_documents(&run, root, &parent)?;
+    for (new_path, expected) in files {
+        assert_ne!(new_path, path);
+        let blob = repo.find_blob(new_tree.get_path(Path::new(&new_path))?.id())?;
+        assert_eq!(blob.content(), expected.as_bytes());
+        assert!(expected.ends_with("目的\nLVK 内部リンク\n追加の意図\n"));
+    }
+    assert_eq!(std::fs::read_dir(root.join("docs/changes"))?.count(), 2);
     Ok(())
 }

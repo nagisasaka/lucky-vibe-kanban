@@ -99,6 +99,9 @@ pub struct IntegrationPublicationRequest {
 pub struct IntegrationPayload {
     #[serde(default)]
     pub issue_archive_enabled: bool,
+    /// Public origin frozen at admission, used only for the Git body projection.
+    #[serde(default)]
+    pub issue_archive_public_origin: Option<String>,
     #[serde(default)]
     pub archive_publication: Option<IntegrationArchivePublication>,
     #[serde(default)]
