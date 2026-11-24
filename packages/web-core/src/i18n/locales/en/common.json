@@ -2006,6 +2006,7 @@
     "open": "Open Wiki"
   },
   "workspaceFiles": {
+    "metadata": "Metadata",
     "search_files": "Search files",
     "refresh_files": "Refresh files",
     "loading_files": "Loading files",

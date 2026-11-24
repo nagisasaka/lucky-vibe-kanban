@@ -735,6 +735,9 @@ importers:
       wa-sqlite:
         specifier: ^1.0.0
         version: 1.0.0
+      yaml:
+        specifier: 2.8.2
+        version: 2.8.2
       zod:
         specifier: ^3.25.76
         version: 3.25.76
