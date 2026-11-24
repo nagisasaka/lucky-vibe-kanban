@@ -65,10 +65,11 @@ export function ProjectTransferPanel({ projectId }: { projectId?: string }) {
   return (
     <CollapsibleSectionHeader
       className="!h-auto"
-      title={t(projectId ? 'projectTransfer.title' : 'projectTransfer.import')}
+      title={t('projectTransfer.title')}
       persistKey="project-transfer"
     >
       <div className="space-y-base p-base text-xs text-normal">
+        <p>{t('projectTransfer.settingsHint')}</p>
         <p>{t('projectTransfer.scope')}</p>
         {projectId && (
           <>

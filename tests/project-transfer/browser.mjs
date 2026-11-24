@@ -329,6 +329,8 @@ try {
   await page.goto('https://fixture.invalid/?import-only');
   await page.addStyleTag({ content: css.css });
   await page.addScriptTag({ content: bundle.outputFiles[0].text });
+  await expect(page.getByText(ja.title, { exact: true })).toBeVisible();
+  await expect(page.getByText(ja.settingsHint, { exact: true })).toBeVisible();
   await expect(page.getByRole('checkbox')).toHaveCount(0);
   await expect(button('export')).toHaveCount(0);
   await expect(button('history')).toHaveCount(0);
@@ -353,6 +355,24 @@ try {
           !r.path.endsWith('/history')
       )
   );
+  const en = JSON.parse(
+    await readFile('packages/web-core/src/i18n/locales/en/common.json', 'utf8')
+  ).projectTransfer;
+  for (const mode of ['english', 'english&import-only']) {
+    await page.goto(`https://fixture.invalid/?${mode}`);
+    await page.addStyleTag({ content: css.css });
+    await page.addScriptTag({ content: bundle.outputFiles[0].text });
+    await expect(page.getByText(en.title, { exact: true })).toBeVisible();
+    await expect(
+      page.getByText(en.settingsHint, { exact: true })
+    ).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: en.preview, exact: true })
+    ).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: en.export, exact: true })
+    ).toHaveCount(mode.includes('import-only') ? 0 : 1);
+  }
   assert.deepEqual(errors, []);
   assert.ok(requests.every((r) => !r.path.includes('attachments')));
   await writeFile(

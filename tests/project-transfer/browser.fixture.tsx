@@ -10,10 +10,13 @@ import {
   RouterProvider,
 } from '@tanstack/react-router';
 import common from '../../packages/web-core/src/i18n/locales/ja/common.json';
+import english from '../../packages/web-core/src/i18n/locales/en/common.json';
 import { ProjectTransferPanel } from '../../packages/web-core/src/shared/components/ProjectTransferPanel';
-i18n
-  .use(initReactI18next)
-  .init({ lng: 'ja', resources: { ja: { common } }, initImmediate: false });
+i18n.use(initReactI18next).init({
+  lng: location.search.includes('english') ? 'en' : 'ja',
+  resources: { ja: { common }, en: { common: english } },
+  initImmediate: false,
+});
 const queryClient = new QueryClient();
 function IssueText() {
   const [editing, setEditing] = useState(false);

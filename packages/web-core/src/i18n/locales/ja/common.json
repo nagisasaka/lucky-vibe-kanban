@@ -2373,6 +2373,7 @@
     "missingExplanation": "この Run には追加指示の配信記録がありません。"
   },
   "projectTransfer": {
+    "settingsHint": "エクスポートするには、上でプロジェクトを選択してください。インポートは選択に関係なく、新規Projectとして追加します。",
     "title": "Project の移送",
     "scope": "LVKの記録を単一SQLiteで持ち運びます。全体バックアップではありません。Git・worktree・添付実体・ネイティブセッションは含みません。移行先Repoを別途準備し、必要なコミット・Git移送は手動で行ってください。",
     "optIn": "完了済みの会話履歴を含める",

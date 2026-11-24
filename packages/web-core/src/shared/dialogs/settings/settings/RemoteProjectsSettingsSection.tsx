@@ -1485,7 +1485,10 @@ export function RemoteProjectsSettingsSection({
         )}
       </SettingsCard>
 
-      <ProjectTransferPanel />
+      <ProjectTransferPanel
+        key={selectedProject?.id ?? 'import'}
+        projectId={selectedProject?.id}
+      />
 
       <SettingsSaveBar
         show={isDirty}
