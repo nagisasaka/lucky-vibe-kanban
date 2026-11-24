@@ -26,6 +26,9 @@ struct Observation {
     run_id: Uuid,
     attempt: u32,
     issue: String,
+    session_number: i64,
+    other_active_sessions: i64,
+    provider: String,
     payload: Value,
 }
 #[derive(Serialize)]
@@ -99,8 +102,27 @@ async fn page(pool: &SqlitePool, project: Uuid, after: Option<i64>) -> Result<Pa
     if after < 0 {
         return Err(ApiError::BadRequest("Invalid cursor".into()));
     }
-    let rows: Vec<(i64, Uuid, String, String, bool, bool, String)> = sqlx::query_as(
-        "SELECT e.rowid, e.agent_run_id, i.simple_id, e.event_envelope,
+    // Order by the first canonical start, not tab order or queued Run creation.
+    // Keep finished Sessions in the ranking across retries and subsequent Runs.
+    // A launch that fails before starting still gets a number at its terminal event.
+    let rows: Vec<(i64, Uuid, String, String, bool, bool, String, i64, i64)> = sqlx::query_as(
+        "WITH first_runs AS (
+          SELECT r.workspace_id, r.session_id, MIN((
+            SELECT e.rowid FROM agent_events e WHERE e.agent_run_id=r.id
+              AND json_extract(e.event_envelope,'$.payload.type')='lifecycle_changed'
+              AND json_extract(e.event_envelope,'$.payload.data.status') IN
+                ('starting','succeeded','failed','cancelled','crashed','audit_failed')
+            ORDER BY e.run_attempt_number, e.sequence LIMIT 1
+          )) AS first_run
+          FROM agent_runs r
+          JOIN local_workspace_links l ON l.workspace_id=r.workspace_id
+          WHERE l.project_id=? GROUP BY r.workspace_id, r.session_id
+        ), numbered_sessions AS (
+          SELECT workspace_id, session_id,
+            ROW_NUMBER() OVER (PARTITION BY workspace_id ORDER BY first_run) AS number
+          FROM first_runs WHERE first_run IS NOT NULL
+        )
+        SELECT e.rowid, e.agent_run_id, i.simple_id, e.event_envelope,
         EXISTS(SELECT 1 FROM agent_events m WHERE m.run_attempt_id=e.run_attempt_id
           AND json_extract(m.event_envelope,'$.payload.type')='provider_extension'
           AND json_extract(m.event_envelope,'$.payload.data.payload.message_id')=json_extract(e.event_envelope,'$.payload.data.message.message_id')
@@ -116,14 +138,31 @@ async fn page(pool: &SqlitePool, project: Uuid, after: Option<i64>) -> Result<Pa
           AND json_extract(c.event_envelope,'$.payload.data.provider_event')='agent_message_metadata'
           AND json_extract(c.event_envelope,'$.payload.data.payload.kind')='commentary_candidate'
           AND json_extract(c.event_envelope,'$.payload.data.payload.message_id')=json_extract(e.event_envelope,'$.payload.data.message.message_id'))
-        , r.provider_id FROM agent_events e JOIN agent_runs r ON r.id=e.agent_run_id JOIN local_workspace_links l ON l.workspace_id=r.workspace_id JOIN local_issues i ON i.id=l.issue_id AND i.project_id=l.project_id WHERE l.project_id=? AND e.rowid>? ORDER BY e.rowid LIMIT 256"
-    ).bind(project).bind(after).fetch_all(&mut *tx).await?;
+        , r.provider_id, ns.number,
+        (SELECT COUNT(DISTINCT other.session_id) FROM agent_runs other
+          WHERE other.workspace_id=r.workspace_id AND other.session_id<>r.session_id
+          AND other.status NOT IN ('succeeded','failed','cancelled','crashed','audit_failed'))
+        FROM agent_events e JOIN agent_runs r ON r.id=e.agent_run_id
+        JOIN numbered_sessions ns ON ns.workspace_id=r.workspace_id AND ns.session_id=r.session_id
+        JOIN local_workspace_links l ON l.workspace_id=r.workspace_id JOIN local_issues i ON i.id=l.issue_id AND i.project_id=l.project_id WHERE l.project_id=? AND e.rowid>? ORDER BY e.rowid LIMIT 256"
+    ).bind(project).bind(project).bind(after).fetch_all(&mut *tx).await?;
     // Once this page has drained the project, skip unrelated rows in the
     // same snapshot. Keep the last row only when the page may be incomplete.
     let drained = rows.len() < 256;
     let mut cursor = after;
     let mut events = Vec::new();
-    for (rowid, run_id, issue, envelope, commentary, candidate, provider) in rows {
+    for (
+        rowid,
+        run_id,
+        issue,
+        envelope,
+        commentary,
+        candidate,
+        provider,
+        session_number,
+        other_active_sessions,
+    ) in rows
+    {
         cursor = rowid;
         if let Ok(envelope) = serde_json::from_str::<Value>(&envelope)
             && let Some(attempt) = envelope
@@ -137,6 +176,9 @@ async fn page(pool: &SqlitePool, project: Uuid, after: Option<i64>) -> Result<Pa
                 run_id,
                 attempt,
                 issue,
+                session_number,
+                other_active_sessions,
+                provider,
                 payload,
             });
         }
@@ -241,11 +283,11 @@ mod tests {
             .await
             .unwrap();
         sqlx::raw_sql(r#"
-            CREATE TABLE agent_runs(id BLOB PRIMARY KEY, workspace_id BLOB, status TEXT, provider_id TEXT DEFAULT 'codex');
+            CREATE TABLE agent_runs(id BLOB PRIMARY KEY, workspace_id BLOB, session_id BLOB, status TEXT, provider_id TEXT DEFAULT 'codex');
             CREATE TABLE agent_run_attempts(id BLOB PRIMARY KEY, agent_run_id BLOB, attempt_number INTEGER, status TEXT);
             CREATE TABLE local_workspace_links(workspace_id BLOB, project_id BLOB, issue_id BLOB);
             CREATE TABLE local_issues(id BLOB, project_id BLOB, simple_id TEXT);
-            CREATE TABLE agent_events(agent_run_id BLOB, run_attempt_id BLOB, sequence INTEGER, event_envelope TEXT, created_at TEXT DEFAULT (datetime('now','subsec')));
+            CREATE TABLE agent_events(agent_run_id BLOB, run_attempt_id BLOB, sequence INTEGER, run_attempt_number INTEGER DEFAULT 1, event_envelope TEXT, created_at TEXT DEFAULT (datetime('now','subsec')));
             CREATE TABLE agent_run_commands(agent_run_id BLOB, command_envelope TEXT, created_at TEXT DEFAULT (datetime('now','subsec')));
             CREATE TABLE agent_question_answers(question_id TEXT);
         "#).execute(&pool).await.unwrap();
@@ -268,9 +310,10 @@ mod tests {
             (project, run3, attempt3, workspace3, issue3, "LOCAL-2"),
             (other, run2, attempt2, workspace2, issue2, "OTHER-1"),
         ] {
-            sqlx::query("INSERT INTO agent_runs(id, workspace_id, status) VALUES(?,?,'running')")
+            sqlx::query("INSERT INTO agent_runs(id, workspace_id, session_id, status) VALUES(?,?,?,'running')")
                 .bind(r)
                 .bind(w)
+                .bind(r)
                 .execute(&pool)
                 .await
                 .unwrap();
@@ -457,6 +500,140 @@ mod tests {
                 .pending
                 .iter()
                 .any(|question| question.reference == "reused")
+        );
+
+        // A finished Session retains its ordinal, even when another Session
+        // starts or the original Session gets another Run.
+        assert_eq!(messages.events[0].session_number, 1);
+        assert_eq!(messages.events[0].other_active_sessions, 0);
+        sqlx::query("UPDATE agent_runs SET workspace_id=? WHERE id=?")
+            .bind(workspace)
+            .bind(run3)
+            .execute(&pool)
+            .await
+            .unwrap();
+        let concurrent = super::page(&pool, project, Some(0)).await.unwrap();
+        let second = concurrent.events.iter().find(|e| e.run_id == run3).unwrap();
+        assert_eq!(second.session_number, 2);
+        assert_eq!(second.other_active_sessions, 1);
+        assert_eq!(second.provider, "claude_code");
+        sqlx::query("UPDATE agent_runs SET status='succeeded' WHERE id=?")
+            .bind(run)
+            .execute(&pool)
+            .await
+            .unwrap();
+        // The ending run itself is already terminal in this snapshot.
+        insert(
+            run,
+            attempt,
+            8,
+            json!({"type":"lifecycle_changed","data":{"status":"succeeded"}}),
+        )
+        .await;
+        let ended = super::page(&pool, project, Some(reused.cursor))
+            .await
+            .unwrap();
+        assert_eq!(ended.events[0].session_number, 1);
+        assert_eq!(ended.events[0].other_active_sessions, 1);
+        let queued = Uuid::new_v4();
+        sqlx::query(
+            "INSERT INTO agent_runs(id,workspace_id,session_id,status) VALUES(?,?,?,'pending')",
+        )
+        .bind(queued)
+        .bind(workspace)
+        .bind(queued)
+        .execute(&pool)
+        .await
+        .unwrap();
+        let third = Uuid::new_v4();
+        sqlx::query(
+            "INSERT INTO agent_runs(id,workspace_id,session_id,status) VALUES(?,?,?,'running')",
+        )
+        .bind(third)
+        .bind(workspace)
+        .bind(third)
+        .execute(&pool)
+        .await
+        .unwrap();
+        insert(
+            third,
+            Uuid::new_v4(),
+            1,
+            json!({"type":"lifecycle_changed","data":{"status":"starting"}}),
+        )
+        .await;
+        let next = super::page(&pool, project, Some(ended.cursor))
+            .await
+            .unwrap();
+        assert_eq!(next.events[0].session_number, 3);
+        assert_eq!(next.events[0].other_active_sessions, 2);
+        let resumed = Uuid::new_v4();
+        sqlx::query(
+            "INSERT INTO agent_runs(id,workspace_id,session_id,status) VALUES(?,?,?,'running')",
+        )
+        .bind(resumed)
+        .bind(workspace)
+        .bind(run3)
+        .execute(&pool)
+        .await
+        .unwrap();
+        insert(
+            resumed,
+            Uuid::new_v4(),
+            1,
+            json!({"type":"lifecycle_changed","data":{"status":"starting"}}),
+        )
+        .await;
+        let resume = super::page(&pool, project, Some(next.cursor))
+            .await
+            .unwrap();
+        assert_eq!(resume.events[0].session_number, 2);
+        assert_eq!(resume.events[0].other_active_sessions, 2);
+        insert(
+            third,
+            Uuid::new_v4(),
+            2,
+            json!({"type":"lifecycle_changed","data":{"status":"running"}}),
+        )
+        .await;
+        let distinct = super::page(&pool, project, Some(resume.cursor))
+            .await
+            .unwrap();
+        assert_eq!(distinct.events[0].other_active_sessions, 2); // two Runs in Session 2, plus queued
+        sqlx::query("UPDATE agent_runs SET status='failed' WHERE workspace_id=?")
+            .bind(workspace)
+            .execute(&pool)
+            .await
+            .unwrap();
+        insert(
+            third,
+            Uuid::new_v4(),
+            3,
+            json!({"type":"lifecycle_changed","data":{"status":"failed"}}),
+        )
+        .await;
+        let last = super::page(&pool, project, Some(distinct.cursor))
+            .await
+            .unwrap();
+        assert_eq!(last.events[0].session_number, 3);
+        assert_eq!(last.events[0].other_active_sessions, 0);
+        insert(
+            queued,
+            Uuid::new_v4(),
+            1,
+            json!({"type":"lifecycle_changed","data":{"status":"starting"}}),
+        )
+        .await;
+        let delayed_start = super::page(&pool, project, Some(last.cursor))
+            .await
+            .unwrap();
+        assert_eq!(delayed_start.events[0].session_number, 4);
+        assert!(
+            super::page(&pool, project, None)
+                .await
+                .unwrap()
+                .events
+                .is_empty()
         );
     }
 }

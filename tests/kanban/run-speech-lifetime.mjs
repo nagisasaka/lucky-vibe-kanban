@@ -117,6 +117,9 @@ try {
       cursor,
       run_id: "run-" + cursor,
       attempt: 1,
+      session_number: 1,
+      other_active_sessions: 0,
+      provider: "codex",
       issue: "TEST-" + cursor,
       payload: { type: "lifecycle_changed", data: { status: "succeeded" } },
     });

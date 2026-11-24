@@ -1,3 +1,5 @@
+import { speechText } from './speechText';
+
 /** Device/browser preferences, like the device-only mobile text size setting. */
 export const SPEECH_SETTINGS_KEY = 'speech-synthesis-preferences';
 export const SPEECH_SETTINGS_EVENT = 'speech-synthesis-preferences-changed';
@@ -91,10 +93,12 @@ export function speechVoiceId(voice: SpeechSynthesisVoice): string {
   return JSON.stringify([voice.voiceURI, voice.name, voice.lang]);
 }
 
-/** Read on every utterance so another tab's changes apply without a reload. */
-export function createSpeechUtterance(text: string, lang: string) {
+/** Read on every utterance so another tab's changes apply without a reload.
+ * Parse the body before adding the plain source label, preserving block Markdown.
+ */
+export function createSpeechUtterance(text: string, lang: string, prefix = '') {
   const preferences = readSpeechPreferences();
-  const utterance = new SpeechSynthesisUtterance(text);
+  const utterance = new SpeechSynthesisUtterance(prefix + speechText(text));
   const voice = resolveSpeechVoice(getSpeechVoices(), preferences.voice);
   utterance.lang =
     (voice && normalizeSpeechLanguage(voice.lang)) ??
