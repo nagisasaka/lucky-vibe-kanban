@@ -137,7 +137,7 @@ test("another tab updates choices; preview and settings close preserve board utt
               ? ["one", "two"].map((run_id) => ({
                   run_id,
                   issue: run_id,
-                  attempt: 1,
+                  attempt: 1, session_number: 1, other_active_sessions: 0, provider: "codex",
                   payload: {
                     type: "lifecycle_changed",
                     data: { status: "starting" },
@@ -273,7 +273,7 @@ test("provider reads live content mode and never replays excluded events", async
     return route.fulfill({ json: { cursor, active: ["first", "excluded", "new"], pending: [],
       events: after === null ? [] : events.filter(e => e.cursor > Number(after)) } });
   });
-  const add = (run_id: string) => events.push({ cursor: ++cursor, run_id, issue: run_id, attempt: 1,
+  const add = (run_id: string) => events.push({ cursor: ++cursor, run_id, issue: run_id, attempt: 1, session_number: 1, other_active_sessions: 0, provider: "codex",
     payload: { type: "lifecycle_changed", data: { status: "starting" } } });
   await page.goto("/");
   await setVoices(page);
@@ -332,7 +332,7 @@ for (const scenario of [
                   {
                     run_id: "done",
                     issue: "LOCAL-1",
-                    attempt: 1,
+                    attempt: 1, session_number: 1, other_active_sessions: 0, provider: "codex",
                     payload: {
                       type: "lifecycle_changed",
                       data: { status: "succeeded" },
@@ -436,3 +436,98 @@ for (const scenario of [
     }
   });
 }
+test("session labels and Markdown reach native speech in serial queue order", async ({
+  page,
+}) => {
+  await mockSpeech(page);
+  let events: any[] = [];
+  let cursor = 0;
+  await page.route("**/api/projects/*/run-observations*", async (route) => {
+    const batch = events;
+    events = [];
+    await route.fulfill({
+      json: {
+        cursor: ++cursor,
+        pending: [],
+        active: ["a", "b", "c", "next"],
+        events: batch,
+      },
+    });
+  });
+  await page.goto("/");
+  await page.getByRole("button", { name: "Turn on Run speech" }).click();
+  await expect(
+    page.getByRole("button", { name: "Turn off Run speech" }),
+  ).toBeVisible();
+  const emit = (
+    run_id: string,
+    number: number,
+    others: number,
+    type: string,
+    data: any,
+    provider = "codex",
+  ) => {
+    events.push({
+      run_id,
+      attempt: 1,
+      issue: "LOCAL-480",
+      session_number: number,
+      other_active_sessions: others,
+      provider,
+      payload: { type, data },
+    });
+  };
+  const texts = () =>
+    page.evaluate(() => (window as any).speechCalls.map((u: any) => u.text));
+  const finish = () =>
+    page.evaluate(() => (window as any).speechCalls.at(-1).onend());
+  emit("a", 1, 0, "lifecycle_changed", { status: "starting" });
+  await expect
+    .poll(texts)
+    .toEqual(["LOCAL-480 セッション1の作業を Codex が開始しました"]);
+  emit("b", 2, 1, "lifecycle_changed", { status: "starting" }, "claude_code");
+  // Keep the first utterance in flight while another start is queued.
+  await expect.poll(() => events.length).toBe(0);
+  expect(await texts()).toHaveLength(1);
+  await finish();
+  await expect.poll(texts).toHaveLength(2);
+  expect((await texts())[1]).toBe(
+    "LOCAL-480 セッション2の作業を Claude Code が開始しました",
+  );
+  await finish();
+  emit("a", 1, 1, "message", {
+    final_output: false,
+    message: {
+      role: "assistant",
+      content: "# 確認中\n\n- `a * b` と C++、[仕様](https://example.com)。",
+    },
+  });
+  await expect.poll(texts).toHaveLength(3);
+  expect((await texts())[2]).toBe(
+    "LOCAL-480 セッション1：確認中 a * b と C++、 仕様 。",
+  );
+  await finish();
+  emit("a", 1, 1, "lifecycle_changed", { status: "succeeded" });
+  await expect.poll(texts).toHaveLength(4);
+  expect((await texts())[3]).toBe("LOCAL-480 セッション1の作業を終了しました");
+  await finish();
+  emit("c", 3, 1, "lifecycle_changed", { status: "starting" });
+  await expect.poll(texts).toHaveLength(5);
+  expect((await texts())[4]).toBe(
+    "LOCAL-480 セッション3の作業を Codex が開始しました",
+  );
+  await finish();
+  emit("b", 2, 1, "lifecycle_changed", { status: "failed" });
+  await expect.poll(texts).toHaveLength(6);
+  expect((await texts())[5]).toBe("LOCAL-480 セッション2の作業が失敗しました");
+  await finish();
+  emit("c", 3, 0, "lifecycle_changed", { status: "succeeded" });
+  await expect.poll(texts).toHaveLength(7);
+  expect((await texts())[6]).toBe("LOCAL-480 の作業を終了しました");
+  await finish();
+  emit("next", 1, 0, "lifecycle_changed", { status: "starting" });
+  await expect.poll(texts).toHaveLength(8);
+  expect((await texts())[7]).toBe(
+    "LOCAL-480 セッション1の作業を Codex が開始しました",
+  );
+});

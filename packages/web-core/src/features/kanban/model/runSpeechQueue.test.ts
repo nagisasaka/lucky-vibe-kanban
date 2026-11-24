@@ -8,6 +8,9 @@ const event = (
 ): RunObservation => ({
   run_id,
   attempt: 1,
+  session_number: 1,
+  other_active_sessions: 0,
+  provider: 'codex',
   issue: run_id === 'a' ? 'LOCAL-1' : 'LOCAL-2',
   payload: { type, data },
 });
@@ -24,8 +27,8 @@ describe('RunSpeechQueue', () => {
     const spoken: string[] = [];
     let done = () => {};
     const queue = new RunSpeechQueue({
-      speak: (text, next) => {
-        spoken.push(text);
+      speak: (text, next, prefix = '') => {
+        spoken.push(prefix + text);
         done = next;
       },
       cancel: vi.fn(),
@@ -42,14 +45,14 @@ describe('RunSpeechQueue', () => {
       ],
       [{ run_id: 'b', issue: 'LOCAL-2', reference: 'q' }]
     );
-    expect(spoken).toEqual(['LOCAL-1。first']);
+    expect(spoken).toEqual(['LOCAL-1：first']);
     done();
     expect(spoken[1]).toContain('LOCAL-2 は回答');
     queue.accept([lifecycle('a', 'succeeded')], []);
     done();
-    expect(spoken[2]).toContain('LOCAL-1 の作業が完了');
+    expect(spoken[2]).toContain('LOCAL-1 の作業を終了');
     done();
-    expect(spoken[3]).toContain('LOCAL-2 の作業を開始');
+    expect(spoken[3]).toContain('LOCAL-2 セッション1の作業を Codex が開始');
     done();
     expect(spoken).toHaveLength(4);
   });
@@ -57,8 +60,8 @@ describe('RunSpeechQueue', () => {
     const spoken: string[] = [];
     let done = () => {};
     const queue = new RunSpeechQueue({
-      speak: (text, next) => {
-        spoken.push(text);
+      speak: (text, next, prefix = '') => {
+        spoken.push(prefix + text);
         done = next;
       },
       cancel: vi.fn(),
@@ -74,15 +77,15 @@ describe('RunSpeechQueue', () => {
       []
     );
     done();
-    expect(spoken).toEqual(['LOCAL-1。busy', 'LOCAL-2。new']);
+    expect(spoken).toEqual(['LOCAL-1：busy', 'LOCAL-2：new']);
   });
   it('stops immediately and ignores stale callbacks after off and on', () => {
     const cancel = vi.fn();
     const spoken: string[] = [];
     let done = () => {};
     const queue = new RunSpeechQueue({
-      speak: (text, next) => {
-        spoken.push(text);
+      speak: (text, next, prefix = '') => {
+        spoken.push(prefix + text);
         done = next;
       },
       cancel,
@@ -95,7 +98,7 @@ describe('RunSpeechQueue', () => {
     queue.enable();
     queue.accept([message('a', 'fresh')], []);
     stale();
-    expect(spoken).toEqual(['LOCAL-1。busy', 'LOCAL-1。fresh']);
+    expect(spoken).toEqual(['LOCAL-1：busy', 'LOCAL-1：fresh']);
   });
   it('does not replay pending questions at subscription and rechecks before speaking', async () => {
     const speak = vi.fn();
@@ -120,8 +123,8 @@ describe('RunSpeechQueue', () => {
     const spoken: string[] = [];
     let done = () => {};
     const queue = new RunSpeechQueue({
-      speak: (text, next) => {
-        spoken.push(text);
+      speak: (text, next, prefix = '') => {
+        spoken.push(prefix + text);
         done = next;
       },
       cancel: vi.fn(),
@@ -147,8 +150,8 @@ describe('RunSpeechQueue', () => {
     let done = () => {};
     let verify = (_value: boolean) => {};
     const queue = new RunSpeechQueue({
-      speak: (text, next) => {
-        spoken.push(text);
+      speak: (text, next, prefix = '') => {
+        spoken.push(prefix + text);
         done = next;
       },
       cancel: vi.fn(),
@@ -162,7 +165,7 @@ describe('RunSpeechQueue', () => {
     queue.accept([lifecycle('b', 'succeeded')], []);
     verify(true);
     await Promise.resolve();
-    expect(spoken).toEqual(['LOCAL-2 の作業が完了しました']);
+    expect(spoken).toEqual(['LOCAL-2 の作業を終了しました']);
     done();
     verify(false);
     await Promise.resolve();
@@ -172,8 +175,8 @@ describe('RunSpeechQueue', () => {
     const spoken: string[] = [];
     let done = () => {};
     const queue = new RunSpeechQueue({
-      speak: (text, next) => {
-        spoken.push(text);
+      speak: (text, next, prefix = '') => {
+        spoken.push(prefix + text);
         done = next;
       },
       cancel: vi.fn(),
@@ -196,8 +199,8 @@ describe('RunSpeechQueue', () => {
     const spoken: string[] = [];
     let done = () => {};
     const queue = new RunSpeechQueue({
-      speak: (text, next) => {
-        spoken.push(text);
+      speak: (text, next, prefix = '') => {
+        spoken.push(prefix + text);
         done = next;
       },
       cancel: vi.fn(),
@@ -222,8 +225,8 @@ describe('RunSpeechQueue', () => {
     const spoken: string[] = [];
     const checks: Array<(valid: boolean) => void> = [];
     const queue = new RunSpeechQueue({
-      speak: (text) => {
-        spoken.push(text);
+      speak: (text, _done, prefix = '') => {
+        spoken.push(prefix + text);
       },
       cancel: vi.fn(),
       isActive: () => new Promise<boolean>((resolve) => checks.push(resolve)),
@@ -236,13 +239,13 @@ describe('RunSpeechQueue', () => {
     expect(spoken).toEqual([]);
     checks.shift()!(true);
     await Promise.resolve();
-    expect(spoken).toEqual(['LOCAL-1。new']);
+    expect(spoken).toEqual(['LOCAL-1：new']);
 
     const secondSpoken: string[] = [];
     let check!: (valid: boolean) => void;
     const second = new RunSpeechQueue({
-      speak: (text) => {
-        secondSpoken.push(text);
+      speak: (text, _done, prefix = '') => {
+        secondSpoken.push(prefix + text);
       },
       cancel: vi.fn(),
       isActive: () =>
@@ -255,14 +258,14 @@ describe('RunSpeechQueue', () => {
     second.accept([lifecycle('b', 'succeeded')], []);
     check(true);
     await Promise.resolve();
-    expect(secondSpoken).toEqual(['LOCAL-2 の作業が完了しました']);
+    expect(secondSpoken).toEqual(['LOCAL-2 の作業を終了しました']);
   });
   it('drops an obsolete question during its freshness check even when a new one is pending', async () => {
     const spoken: string[] = [];
     const checks: Array<(valid: boolean) => void> = [];
     const queue = new RunSpeechQueue({
-      speak: (text) => {
-        spoken.push(text);
+      speak: (text, _done, prefix = '') => {
+        spoken.push(prefix + text);
       },
       cancel: vi.fn(),
       isPending: () => new Promise<boolean>((resolve) => checks.push(resolve)),
@@ -287,7 +290,7 @@ describe('RunSpeechQueue', () => {
     expect(spoken).toEqual(['LOCAL-1 は回答を待っています']);
   });
   it.each([
-    ['succeeded', 'LOCAL-1 の作業が完了しました'],
+    ['succeeded', 'LOCAL-1 の作業を終了しました'],
     ['cancelled', 'LOCAL-1 の作業が停止しました'],
     ['failed', 'LOCAL-1 の作業が失敗しました'],
     ['crashed', 'LOCAL-1 の作業が失敗しました'],
@@ -297,14 +300,18 @@ describe('RunSpeechQueue', () => {
     const queue = new RunSpeechQueue({ speak, cancel: vi.fn() });
     queue.enable();
     queue.accept([lifecycle('a', status)], []);
-    expect(speak).toHaveBeenCalledWith(expected, expect.any(Function));
+    expect(speak).toHaveBeenCalledWith(
+      expected,
+      expect.any(Function),
+      undefined
+    );
   });
   it('does not start overlapping speech when a completion callback fires twice', () => {
     const spoken: string[] = [];
     const callbacks: Array<() => void> = [];
     const queue = new RunSpeechQueue({
-      speak: (text, done) => {
-        spoken.push(text);
+      speak: (text, done, prefix = '') => {
+        spoken.push(prefix + text);
         callbacks.push(done);
       },
       cancel: vi.fn(),
@@ -322,8 +329,8 @@ describe('RunSpeechQueue', () => {
     const spoken: string[] = [];
     let done = () => {};
     const queue = new RunSpeechQueue({
-      speak: (text, next) => {
-        spoken.push(text);
+      speak: (text, next, prefix = '') => {
+        spoken.push(prefix + text);
         done = next;
       },
       cancel: vi.fn(),
@@ -339,7 +346,7 @@ describe('RunSpeechQueue', () => {
     queue.accept([confirm('other')], []);
     expect(spoken).toEqual([]);
     queue.accept([confirm('one')], []);
-    expect(spoken).toEqual(['LOCAL-1。Checking']);
+    expect(spoken).toEqual(['LOCAL-1：Checking']);
     done();
     queue.accept(
       [
@@ -350,8 +357,8 @@ describe('RunSpeechQueue', () => {
       []
     );
     expect(spoken).toEqual([
-      'LOCAL-1。Checking',
-      'LOCAL-1 の作業が完了しました',
+      'LOCAL-1：Checking',
+      'LOCAL-1 の作業を終了しました',
     ]);
   });
   it('forgets unconfirmed Claude candidates on reconnect or off', () => {
@@ -374,8 +381,8 @@ describe('RunSpeechQueue', () => {
   it('retains only the newest unconfirmed text per run', () => {
     const spoken: string[] = [];
     const queue = new RunSpeechQueue({
-      speak: (text) => {
-        spoken.push(text);
+      speak: (text, _done, prefix = '') => {
+        spoken.push(prefix + text);
       },
       cancel: vi.fn(),
     });
@@ -395,14 +402,14 @@ describe('RunSpeechQueue', () => {
       ],
       []
     );
-    expect(spoken).toEqual(['LOCAL-1。new']);
+    expect(spoken).toEqual(['LOCAL-1：new']);
   });
   it('does not start an older report while a newer Claude text awaits classification', async () => {
     const spoken: string[] = [];
     const checks: Array<(valid: boolean) => void> = [];
     const queue = new RunSpeechQueue({
-      speak: (text) => {
-        spoken.push(text);
+      speak: (text, _done, prefix = '') => {
+        spoken.push(prefix + text);
       },
       cancel: vi.fn(),
       isActive: () => new Promise<boolean>((resolve) => checks.push(resolve)),
@@ -426,14 +433,14 @@ describe('RunSpeechQueue', () => {
     );
     checks.shift()!(true);
     await Promise.resolve();
-    expect(spoken).toEqual(['LOCAL-1。new']);
+    expect(spoken).toEqual(['LOCAL-1：new']);
   });
   it('announces a retried Run and ignores late events from its previous attempt', () => {
     const spoken: string[] = [];
     let done = () => {};
     const queue = new RunSpeechQueue({
-      speak: (text, next) => {
-        spoken.push(text);
+      speak: (text, next, prefix = '') => {
+        spoken.push(prefix + text);
         done = next;
       },
       cancel: vi.fn(),
@@ -448,10 +455,10 @@ describe('RunSpeechQueue', () => {
       []
     );
     done();
-    expect(spoken[1]).toBe('LOCAL-1 の作業を開始しました');
+    expect(spoken[1]).toBe('LOCAL-1 セッション1の作業を Codex が開始しました');
     queue.accept([{ ...lifecycle('a', 'succeeded'), attempt: 2 }], []);
     done();
-    expect(spoken[2]).toBe('LOCAL-1 の作業が完了しました');
+    expect(spoken[2]).toBe('LOCAL-1 の作業を終了しました');
     expect(spoken).toHaveLength(3);
   });
 });
@@ -464,8 +471,8 @@ describe('speech content selection', () => {
     const cancel = vi.fn();
     const queue = new RunSpeechQueue({
       shouldSpeak: (kind) => all || kind === 'terminal' || kind === 'waiting',
-      speak: (text, next) => {
-        spoken.push(text);
+      speak: (text, next, prefix = '') => {
+        spoken.push(prefix + text);
         done = next;
       },
       cancel,
@@ -485,7 +492,7 @@ describe('speech content selection', () => {
   it('all retains starts and progress; results excludes them without replaying old events', () => {
     const s = setup();
     s.queue.accept([lifecycle('a', 'starting'), message('a', 'progress')], []);
-    expect(s.spoken[0]).toContain('作業を開始');
+    expect(s.spoken[0]).toContain('が開始');
     s.finish();
     expect(s.spoken[1]).toContain('progress');
     s.finish();
@@ -523,7 +530,7 @@ describe('speech content selection', () => {
       );
       s.finish();
       expect(s.spoken[1]).toBe(
-        `LOCAL-2 の作業が${status === 'succeeded' ? '完了' : status === 'cancelled' ? '停止' : '失敗'}しました`
+        `LOCAL-2 の作業${status === 'succeeded' ? 'を終了' : status === 'cancelled' ? 'が停止' : 'が失敗'}しました`
       );
       s.finish();
       s.queue.accept([lifecycle('b', status)], questions);
@@ -546,11 +553,11 @@ describe('speech content selection', () => {
     );
     s.mode(false);
     expect(s.cancel).not.toHaveBeenCalled();
-    expect(s.spoken).toEqual(['LOCAL-1。in progress']);
+    expect(s.spoken).toEqual(['LOCAL-1：in progress']);
     s.finish();
     expect(s.spoken[1]).toContain('回答を待っています');
     s.finish();
-    expect(s.spoken[2]).toContain('作業が完了');
+    expect(s.spoken[2]).toContain('作業を終了');
     s.finish();
     s.mode(true);
     s.queue.accept([], questions);
@@ -577,10 +584,74 @@ describe('speech content selection', () => {
     await Promise.resolve();
     expect(speak).not.toHaveBeenCalled();
     queue.accept([lifecycle('a', 'succeeded')], []);
-    expect(speak.mock.calls[0][0]).toBe('LOCAL-1 の作業が完了しました');
+    expect(speak.mock.calls[0][0]).toBe('LOCAL-1 の作業を終了しました');
     speak.mock.calls[0][1]();
     all = true;
     queue.accept([lifecycle('a', 'starting'), message('a', 'old')], []);
     expect(speak).toHaveBeenCalledTimes(1);
   });
+});
+
+describe('session speech labels', () => {
+  it.each(['codex', 'claude_code'])(
+    'identifies fixed session numbers with %s, keeps dedup and next Run',
+    (provider) => {
+      const spoken: string[] = [];
+      let finish = () => {};
+      const queue = new RunSpeechQueue({
+        speak(text, done, prefix = '') {
+          spoken.push(prefix + text);
+          finish = done;
+        },
+        cancel: vi.fn(),
+      });
+      const send = (
+        observation: RunObservation,
+        number: number,
+        others: number
+      ) => {
+        queue.accept(
+          [
+            {
+              ...observation,
+              issue: 'LOCAL-480',
+              session_number: number,
+              other_active_sessions: others,
+              provider,
+            },
+          ],
+          []
+        );
+        finish();
+      };
+      queue.enable();
+      queue.accept([], [], true);
+      send(lifecycle('a', 'starting'), 1, 0);
+      send(message('a', '単独'), 1, 0);
+      send(lifecycle('b', 'starting'), 2, 1);
+      send(message('a', '並行'), 1, 1);
+      send(lifecycle('a', 'succeeded'), 1, 1);
+      send(lifecycle('a', 'succeeded'), 1, 1);
+      queue.accept([], [], true); // reconnect does not reset dedup
+      send(lifecycle('a', 'succeeded'), 1, 1);
+      send(lifecycle('c', 'starting'), 3, 1);
+      send(lifecycle('b', 'succeeded'), 2, 1);
+      send(message('c', '残り一つ'), 3, 0);
+      send(lifecycle('c', 'succeeded'), 3, 0);
+      send(lifecycle('next-run', 'starting'), 1, 0);
+      const agent = provider === 'codex' ? 'Codex' : 'Claude Code';
+      expect(spoken).toEqual([
+        `LOCAL-480 セッション1の作業を ${agent} が開始しました`,
+        'LOCAL-480：単独',
+        `LOCAL-480 セッション2の作業を ${agent} が開始しました`,
+        'LOCAL-480 セッション1：並行',
+        'LOCAL-480 セッション1の作業を終了しました',
+        `LOCAL-480 セッション3の作業を ${agent} が開始しました`,
+        'LOCAL-480 セッション2の作業を終了しました',
+        'LOCAL-480：残り一つ',
+        'LOCAL-480 の作業を終了しました',
+        `LOCAL-480 セッション1の作業を ${agent} が開始しました`,
+      ]);
+    }
+  );
 });

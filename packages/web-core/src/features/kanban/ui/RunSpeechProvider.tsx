@@ -51,8 +51,8 @@ export function RunSpeechProvider({
         readSpeechPreferences().contentMode === 'all' ||
         kind === 'terminal' ||
         kind === 'waiting',
-      speak(text, done) {
-        const utterance = createSpeechUtterance(text, 'ja-JP');
+      speak(text, done, prefix) {
+        const utterance = createSpeechUtterance(text, 'ja-JP', prefix);
         utterance.onend = done;
         utterance.onerror = done;
         window.speechSynthesis.speak(utterance);

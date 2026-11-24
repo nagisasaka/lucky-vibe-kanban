@@ -2,6 +2,9 @@ export type RunObservation = {
   run_id: string;
   attempt: number;
   issue: string;
+  session_number: number;
+  other_active_sessions: number;
+  provider: string;
   payload: { type: string; data: Record<string, unknown> };
 };
 
@@ -15,12 +18,13 @@ type Entry = {
   run: string;
   kind: 'start' | 'terminal' | 'waiting' | 'commentary';
   text: string;
+  prefix?: string;
   revision: number;
 };
 
 type Speaker = {
   shouldSpeak?: (kind: Entry['kind']) => boolean;
-  speak: (text: string, done: () => void) => void;
+  speak: (text: string, done: () => void, prefix?: string) => void;
   cancel: () => void;
   isPending?: (run: string) => Promise<boolean>;
   isActive?: (run: string) => Promise<boolean>;
@@ -36,10 +40,7 @@ export class RunSpeechQueue {
   private ended = new Set<string>();
   private attempts = new Map<string, number>();
   private questions = new Map<string, Set<string>>();
-  private candidates = new Map<
-    string,
-    { id: string; issue: string; content: string }
-  >();
+  private candidates = new Map<string, { id: string; content: string }>();
   private revisions = new Map<string, number>();
 
   private revision(run: string, kind: Entry['kind']) {
@@ -89,7 +90,17 @@ export class RunSpeechQueue {
         [...current].map(([run, refs]) => [run, new Set(refs)])
       );
     }
-    for (const { run_id: run, attempt, issue, payload } of events) {
+    for (const observation of events) {
+      const {
+        run_id: run,
+        attempt,
+        issue,
+        payload,
+        session_number,
+        provider,
+      } = observation;
+      const session = `${issue} セッション${session_number}`;
+      const source = observation.other_active_sessions > 0 ? session : issue;
       const previousAttempt = this.attempts.get(run);
       if (previousAttempt !== undefined && attempt < previousAttempt) continue;
       if (previousAttempt !== undefined && attempt > previousAttempt) {
@@ -118,7 +129,7 @@ export class RunSpeechQueue {
             run,
             kind: 'start',
             revision: this.revision(run, 'start'),
-            text: `${issue} の作業を開始しました`,
+            text: `${session}の作業を ${provider === 'claude_code' ? 'Claude Code' : 'Codex'} が開始しました`,
           });
         } else if (
           typeof status === 'string' &&
@@ -139,7 +150,7 @@ export class RunSpeechQueue {
           this.pending = this.pending.filter((e) => e.run !== run);
           const text =
             status === 'succeeded'
-              ? '作業が完了しました'
+              ? '作業を終了しました'
               : status === 'cancelled'
                 ? '作業が停止しました'
                 : '作業が失敗しました';
@@ -147,7 +158,7 @@ export class RunSpeechQueue {
             run,
             kind: 'terminal',
             revision: this.revision(run, 'terminal'),
-            text: `${issue} の${text}`,
+            text: `${source}${observation.other_active_sessions > 0 ? '' : ' '}の${text}`,
           });
         }
       } else if (
@@ -206,7 +217,6 @@ export class RunSpeechQueue {
           this.invalidate(run, 'commentary');
           this.candidates.set(run, {
             id: message.message_id,
-            issue,
             content: message.content,
           });
         }
@@ -224,7 +234,8 @@ export class RunSpeechQueue {
             run,
             kind: 'commentary',
             revision: this.invalidate(run, 'commentary'),
-            text: `${candidate.issue}。${candidate.content}`,
+            text: candidate.content,
+            prefix: `${source}：`,
           });
         }
       } else if (payload.type === 'message' && !this.ended.has(run)) {
@@ -244,7 +255,8 @@ export class RunSpeechQueue {
             run,
             kind: 'commentary',
             revision: this.invalidate(run, 'commentary'),
-            text: `${issue}。${message.content}`,
+            text: message.content,
+            prefix: `${source}：`,
           });
         }
       }
@@ -291,7 +303,7 @@ export class RunSpeechQueue {
       if (generation !== this.generation || !this.enabled) return;
       // Recheck after asynchronous validity checks: mode may have changed.
       if (this.speaker.shouldSpeak?.(entry.kind) === false) done();
-      else this.speaker.speak(entry.text, done);
+      else this.speaker.speak(entry.text, done, entry.prefix);
     };
     const verify =
       entry.kind === 'waiting'
