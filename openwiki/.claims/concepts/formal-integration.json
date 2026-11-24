@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:8d2691641e743e2011f715ac5a7a3ee38c8047ddb3104d87e26fb68d4f6a5ce8",
+  "pageVersion": "sha256:69c625037993434f04c9cefa021adeb10805aa551ce5eb58848d75f9722310e5",
   "claims": [
     {
       "id": "claim_f7012827ca6b4ddb989940e8b32a50c8",
@@ -21,10 +21,44 @@
           "version": "repo-lines-v1:sha256:94c3a9b0402b06874eda4ab71c9f7ccc4d9dc4adb0b51b0c77ac172678a0ddd1:eyJzZWxlY3RlZExpbmVDb3VudCI6ODIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM5NmI0MDhkZTA4NmUwNzlkZmUwMDYyNzA4ZmU5OWExMWU1ZDJlMTFhYjM2NDI0ODczMWZmZWIzN2I3YzUyZjUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjViZmMwMmJhM2U4NzIyMzkyMGY4ZDU2ZDdkZTFlMTBiM2I1YWY3MjA0ODMyZmJiNWU0MWYzY2QyYWU2ZGQ3ZGQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI1YmYwZDU5MTBlZWM1NzZhNzMyZjY5YTNhYTZmMWQxZjc1MjE2Yjg0MzNkMTJjZTdjODJlYzgyYzk0ZmRhMmYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImU5NmY4Y2IwODNmYTgwMGE0ZGNkMjk2OTcyMmQ3YjkyNjg2YWRkOWViZTM2NTU0OTJmYTY3MmIxYTdjZWQyNDIifQ"
         }
       ]
+    },
+    {
+      "id": "claim_596f844d50d04cf1b1df09978baa3b05",
+      "statement": "Issue控えは固定候補のYAML issue_id UUIDで照合し、Git祖先履歴で直近の本文と比較する。メタデータ差だけでは追加しない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/routes/integrations/issue_archive.rs#L62-L175",
+          "version": "repo-lines-v1:sha256:b0702cc5ec94f1e94870c23999de82bd43e0f3f3089062ee8e2caa42e47e0cbd:eyJzZWxlY3RlZExpbmVDb3VudCI6MTE0LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIzNDQzZjM5OTBlZWI0NzRlNjg5MTE0MDgzZTEwNmIwODBkYzZkODg4MzYwMjIwODA1YTM5NzBmZjNkNjJkYjg2IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI0MTJjYTM0NWNjZjc1YmY5YzA4MDZiY2U2OTViZThkZTgwOGI3OTk4NDI1MWE3YTU0ZDIwMmNmNjEwMWRkNDUxIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI0ZmRlMjMyMGZiNmY3YTQ5ZTRhYWE0ZTY0OTEyYjJhZWQzYWI3MzdhMzgzZTg4MmM2ZjM1MTkyN2E4ZDkzZWQxIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJhMzZiZTNkOGIyZGJkN2YwMTM3MzgxMGQ2NjRjMjkzNDg1OTQ1NWVhODhmYzdiNjgxZDdiZmIzYzA5ODIzNjZlIn0"
+        }
+      ]
+    },
+    {
+      "id": "claim_a763201d179f4330a71425f0d29dede0",
+      "statement": "同文は既存控えを検証して追加commitを省き、変更本文はIntegration UUID付き別パスへ全文追記する。過去本文への復帰も直近と異なれば保存する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/routes/integrations/issue_archive.rs#L150-L175",
+          "version": "repo-lines-v1:sha256:e95960589c5d4d0af7f7f9070f02a04e9aa4455093b3925433a87ecb10e478f0:eyJzZWxlY3RlZExpbmVDb3VudCI6MjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4ZWMxNDhkMmYzOWM3OWI1NDAwNjIxMzA0MGNjMDI4ZDFkZjM3MTM1OGQ2NjIzODhkNmE4YThmOWZlNzkzZDUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjVlMjU3MDJiMjQ0NDJlMWFmMzVlM2ZjYjVhMjlmNWM0OTc1NjA3YjEwZDk0YzgxZDY0ZGFmN2M3MGIyYjBjNDgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImEzNmJlM2Q4YjJkYmQ3ZjAxMzczODEwZDY2NGMyOTM0ODU5NDU1ZWE4OGZjN2I2ODFkN2JmYjNjMDk4MjM2NmUifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/integrations/issue_archive.rs#L258-L307",
+          "version": "repo-lines-v1:sha256:54dbcd168fbb81433453396360515dc6ede6bf15a7150f398d02d442b5d698c4:eyJzZWxlY3RlZExpbmVDb3VudCI6NTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU5YzEzNTkwNjY1NjMyM2QxYzVlYTQxNjU0ZWU2NmFmYjU4NWFjZGNmYWVhY2ExMjFkNWUzMGJmMTkzZWVkZDciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYyMGI0OGRiMDU2YTcxODc5Mzg4ZDc4YjIxMDMwNzJjMjc1NDZiNjBjZTU5YzQzMWYzNDUyMWQ0OWEyMDdiNmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjkzNDU2NjdjOWQ3ZjIyOTYzOTVjNjRhMzM2ZjdhZDNjYzlmN2QxOWYxMjBjZjQzZWY0OTYzNGVlOTIxZDU5YzYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijg4MDMwN2U4M2JjYTBkZDkxZjA2YTdhMWVhMDE2NzA4NWIyMDc1ZmFiZmRhYjViOWNkMGJmZTJkNTI2Yjg3Y2UifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_35562264d4d14e319dc09810772b902e",
+      "statement": "同じIntegrationの保存計画は固定snapshotと保存済み親SHAから復元し、既存blob/mode/ancestryとtree/commit receiptを検証して再試行する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/routes/integrations/issue_archive.rs",
+          "version": "repo-file-v1:sha256:e2807a7f4ba1f1ab46c4530303d0ad37c8a75dc16f3e05baddecb6959e1529a6"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.9.0",
-    "at": "2026-11-23T00:23:16.293Z"
+    "at": "2026-11-24T08:19:31.399Z"
   }
 }

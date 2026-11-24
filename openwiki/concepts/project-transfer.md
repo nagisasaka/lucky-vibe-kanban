@@ -5,11 +5,15 @@ description: SQLite 移送の対象、手順、原子性と履歴の限界。
 tags: [project, transfer, sqlite, privacy, history]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-23T00:23:16.293Z
+    at: 2026-11-24T08:19:31.399Z
 sources:
   - id: openwiki-source-eec300ba0fd0bf7307068218
     resource: repo://crates/db/src/project_transfer.rs
-generated: { by: "codex", at: "2026-11-23T00:23:16.293Z" }
+  - id: openwiki-source-b7caca432ab4ead6087a0935
+    resource: repo://packages/web-core/src/shared/components/ProjectTransferPanel.tsx
+  - id: openwiki-source-00110cdcfec890895b99690a
+    resource: repo://packages/web-core/src/shared/dialogs/settings/settings/RemoteProjectsSettingsSection.tsx
+generated: { by: "codex", at: "2026-11-24T08:19:31.399Z" }
 ---
 
 # Project の SQLite 移送
@@ -29,10 +33,14 @@ DB 確定 Manifest は会話 opt-in と独立して、対象 Run・Workspace・�
 ## 移送する
 
 1. 移送先に必要な Git Repo を別途準備し、LVK に登録する。必要な commit や Git の移送は別の操作であり、この機能は clone、commit、push をしない。
-2. 移送元の Project utilities で export し、会話を含める場合だけ明示する。対象外データと欠落添付を確認する。
-3. 移送先でファイルを選んで preview し、件数、除外参照、欠落と coverage を確認する。一意の新 Project key と、各元 Repo に対応する登録済み Repo を一対一で指定する。既存 Project がなくても設定画面から import を始められる。
+2. 移送元のプロジェクト設定で Project を選び、「Project の移送」（英語では Project transfer）から export する。会話を含める場合だけ明示し、対象外データと欠落添付を確認する。
+3. 移送先のプロジェクト設定の同じパネルでファイルを選んで preview し、件数、除外参照、欠落と coverage を確認する。一意の新 Project key と、各元 Repo に対応する登録済み Repo を一対一で指定する。既存 Project がなくても設定画面から import を始められる。
 4. preview と同じ bytes を import する。ファイルを選び直したら preview をやり直す。SHA-256 は bytes の一致確認であり真正性署名ではない。
 5. 成功後に Project 一覧の更新を待ち、追加された Project と専用履歴を確認する。更新が遅くても commit 済み import を失敗と判断して再実行しない。[UI](../../packages/web-core/src/shared/components/ProjectTransferPanel.tsx)・[API](../../crates/server/src/routes/project_transfer.rs)
+
+移送入口は利用頻度の低い操作を日常の右サイドバーから分けるため、プロジェクト設定に集約している。右サイドバーには重複した入口を残さない。export と移送履歴の閲覧は選択した Project に結び付き、import は Project 未選択でも使える。import は選択中の Project を上書きせず、新規 Project を追加する。[設定への接続](../../packages/web-core/src/shared/dialogs/settings/settings/RemoteProjectsSettingsSection.tsx)・[移送パネル](../../packages/web-core/src/shared/components/ProjectTransferPanel.tsx)・[採用仕様](../../docs/changes/2026-11-24-LOCAL-487-195ec158.md)
+
+設定で Project の選択を変えるとパネルを再生成し、選択ファイル・preview・履歴などのローカル状態をリセットする。操作途中で切り替えた場合は対象とファイルを再確認する。入口移設は既存APIの権限、確認、Repo対応付けやデータ形式を変更しない。
 
 ## 形式と失敗
 

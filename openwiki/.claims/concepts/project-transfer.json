@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:8be8a29c43b12bd7a458fc01281809acb7700c9fa0a398c77c94b5dde8cf7eef",
+  "pageVersion": "sha256:f6ca1088a6b6011844107b6973813973ee2048f821ba1a265b6d53eba59a995c",
   "claims": [
     {
       "id": "claim_374d1579678d469b8869090068080455",
@@ -29,10 +29,38 @@
           "version": "repo-lines-v1:sha256:353a2797ee674e0864980c27c8c20e75e22c7fa0176d555f9ee8bcb32cc5784b:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMzY5MWVmZGUxY2FjMDhmNzE5YWY2ZDFhMjdhNWEyZGQ1MjU1ZTQ5NDliNmYxN2YzMjAxZjI3YmM0MzNjZjNlNiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNGQxMTkxZDk2ODY5ZGE5YjU0ZjExOTdhNDY0NmQyZjE1NTQyZGY5MjZlZjFmNzZjOWNhNDY3MzIyNWQ2NDViOSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOTUxY2QyZGNkODE5ZWU2NDQzNzkxY2RhYjI3ZGMxZTkwYTI0ZWZiOGJhODg0OGZjYjNkMDk4MGZhMjM5NjRjMiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMmE4ZWUyZDUwYTBjYjQ2Y2Q1OGZiODM0ZWRiNjU5OTNjNmY3N2E0MDA4M2FkNDFhMGJmY2YxZWY3MTliMDFhYSJ9"
         }
       ]
+    },
+    {
+      "id": "claim_e073dc97dbea409ca5207789363f9366",
+      "statement": "Project移送はプロジェクト設定の既存パネルに集約され、export/履歴には選択Projectを使うがimportにはProject選択を要求しない。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/shared/components/ProjectTransferPanel.tsx#L65-L135",
+          "version": "repo-lines-v1:sha256:4b777e813ae3206887d9e34a25aee57829d9194b12901df42e0e709e46dc6700:eyJzZWxlY3RlZExpbmVDb3VudCI6NzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU3MjE2ZThlOWMwYTFhNjhkMDZjMmZiYWE1ZmQyMTM5NDgyYjhlZmQwYTE5MzE1YjkxNWU2Y2NlODQ5ZDg5ZGMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ1MDEwMGM5Y2E1Y2ZkOWI4ODFlYzMxNDA4OTY0NjBkYWUyNzZkZjhhODgwMWZkYmE0NmY0ODRhZWQ4YWIzZjAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjUzOWM0ZTM2MzUzYmJjODhhNjc5YjJhNTBhNDY1ZTQ2ZGQxY2I3NjVjMzYzZjMxZGFjNTUwMGExYzQzZjc0N2UiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFiMDMzNzBjMjcyNzNhNDdmZDM0MDAxMjYxYWNkMDQwNzViYTMwYWY1ZTMwMTUyZTNmM2YxMDIzNTZlN2E1NjQifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/dialogs/settings/settings/RemoteProjectsSettingsSection.tsx#L1488-L1491",
+          "version": "repo-lines-v1:sha256:a3497219822ac8ff274e04c74f90191fc080f8a107228284c4c794b13c2548d8:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiODZmNzhmMzcwNzczNDZhZWI0YjMwOTk3NmU5MjI3OTE2NDdhYzJiZTM5NGU4MjM0OGYzMGI5OGQ1NTdjNDgxNSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMWIxMDYzYzRkZWE2OGEzODE2NjExMGJhZDJkMzM4YjRkNzJlMDJkMzdiZTA4MTVhNzg0NTFlOTkzMzJkNmRmZiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZWFiYWNhOTQ3ZDVmNzRlZThiMjg4MTI3NWVhMjFiMzY4ZWUzZWExNGNhZTJiMzQyMzllY2U5MDUxM2ZjMWVjZCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZGU2MWU3MjJhMTdjN2NjNGI4N2VlZDExZjA4MjNlMWJmZjhhYzcxYmExODMzYzY0NTM4NTM1Y2EyMmVhOTVlYSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_56713e656585415e89b459be6a85ef12",
+      "statement": "設定のProject選択が変わるとkeyにより移送パネルを再生成し、選択ファイル・preview・履歴などのローカル状態をリセットする。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/shared/components/ProjectTransferPanel.tsx#L21-L38",
+          "version": "repo-lines-v1:sha256:8320537596fe4e33d16322823452c1d0f327a0d844fddedfded7a89127a320a8:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBiODJiOTlkOTE5ZDc0OGJkZjM4MTgwYzYyZjE1YmIwZDU0MTU5ZjFkNTQwZDE5ZGMxYzNjMGJlNWI5ZDc1NjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ2OGY5OGM5NDAwYWVkNGU4MzdhNjY2OGYwYTNhMjhmMzliZDE0Njg0MDJkNGMyMjk4ZWI1M2YxY2VjYWIxZjMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM4YzU5M2UwZjZiMzk1OTc1MGZiZWJlOTY0MWM0YzBlMDc5NzdiMmM4MDM2NWZmOWIyYjg3NzM2MzRlYzFlMDkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNkYjI0ZTE3NjM1OTVlZGQ1YTMwODcxNDNiNTRlM2IwMTNmYmEwOTJkZjRhODA0ZTAwYzNkYTU2ZjU3OTk2NTAifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/dialogs/settings/settings/RemoteProjectsSettingsSection.tsx#L1488-L1491",
+          "version": "repo-lines-v1:sha256:a3497219822ac8ff274e04c74f90191fc080f8a107228284c4c794b13c2548d8:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiODZmNzhmMzcwNzczNDZhZWI0YjMwOTk3NmU5MjI3OTE2NDdhYzJiZTM5NGU4MjM0OGYzMGI5OGQ1NTdjNDgxNSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMWIxMDYzYzRkZWE2OGEzODE2NjExMGJhZDJkMzM4YjRkNzJlMDJkMzdiZTA4MTVhNzg0NTFlOTkzMzJkNmRmZiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZWFiYWNhOTQ3ZDVmNzRlZThiMjg4MTI3NWVhMjFiMzY4ZWUzZWExNGNhZTJiMzQyMzllY2U5MDUxM2ZjMWVjZCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZGU2MWU3MjJhMTdjN2NjNGI4N2VlZDExZjA4MjNlMWJmZjhhYzcxYmExODMzYzY0NTM4NTM1Y2EyMmVhOTVlYSJ9"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.9.0",
-    "at": "2026-11-23T00:23:16.293Z"
+    "at": "2026-11-24T08:19:31.399Z"
   }
 }

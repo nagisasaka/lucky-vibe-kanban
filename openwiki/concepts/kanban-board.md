@@ -5,10 +5,8 @@ description: Project の Issue を状態別に表示するボード。
 tags: [kanban, board, project]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-24T02:54:42.940Z
+    at: 2026-11-24T08:19:31.399Z
 sources:
-  - id: openwiki-source-f4e0f9b2ce513d3f8b8b070e
-    resource: repo://crates/executors/src/executors/provider_adapter.rs
   - id: openwiki-source-3d5de3bbc96079ee456ed0f5
     resource: repo://crates/server/src/routes/board_run_events.rs
   - id: openwiki-source-699012344cbfd472d165f098
@@ -31,13 +29,15 @@ sources:
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/SpeechSynthesisSettingsSection.tsx
   - id: openwiki-source-a7576c2af3663c39efa0974d
     resource: repo://packages/web-core/src/shared/lib/speechSynthesis.ts
+  - id: openwiki-source-962c2abf1ebe2a34b79d4e37
+    resource: repo://packages/web-core/src/shared/lib/speechText.ts
   - id: openwiki-source-6393181e558dceee5ef998cc
     resource: repo://tests/kanban/run-speech-lifetime.mjs
   - id: openwiki-source-2ed526da66878b98eebfeeff
     resource: repo://tests/saved-filters/navigation.spec.ts
   - id: openwiki-source-eece9c51da74bcdb3fe07f45
     resource: repo://tests/speech-synthesis/settings.spec.ts
-generated: { by: "codex", at: "2026-11-24T02:54:42.940Z" }
+generated: { by: "codex", at: "2026-11-24T08:19:31.399Z" }
 ---
 
 # Kanban board
@@ -72,6 +72,14 @@ Project の route は Kanban 画面を開き、Board API はその Project の I
 4. オフにすると再生中の発話と待ち行列を即時に止める。再度オンにしても停止中の履歴は読み返さない。ボードを離れた場合も購読と発話を停止する。
 
 [音声切替](../../packages/web-core/src/features/kanban/ui/RunSpeechToggle.tsx)は Provider の状態を表示する。購読と発話キューは Project ごとの [RunSpeechProvider](../../packages/web-core/src/features/kanban/ui/RunSpeechProvider.tsx) が所有し、[SharedAppLayout](../../packages/web-core/src/shared/components/ui-new/containers/SharedAppLayout.tsx) が画面内の再マウントより上に配置する。詳細の開閉、画面幅変更、loading、同一ボード内のページ再マウントでオン状態を失わない。別 Project、ボード離脱、新しいタブは別の寿命であり、新規ボードはオフになる。サーバーに音声キューや別モデルによる要約は設けない。
+
+### 並行 Session の識別と Markdown
+
+開始通知は同時実行数にかかわらず「LOCAL-482 セッション1の作業を Codex が開始しました」のように番号と agent 名を読む。中間応答は同じ Workspace 内に他の活動中 Session がある場合だけ「セッションN」を付け、agent 名を付けない。終了も本人を除いた残りの Session で判定し、残りゼロなら Issue 番号だけを読む。失敗と停止は成功とは異なる定型文のままである。[発話ラベル](../../packages/web-core/src/features/kanban/model/runSpeechQueue.ts)
+
+番号は Workspace 内の初回開始を示す保存済み canonical イベントの順序から導出する。タブ順や現在の同時実行数では採番せず、終了済み Session を順位に残し、同じ Session の次 Run や再開でも再利用する。開始前に失敗した launch は終端イベントを採番の基点にする。他の活動中 Session 数は同じ Workspace 内で本人を除いて重複を除くため、他 Workspace や同じ Session の複数 Run を加算しない。活動判定は既存の非終端状態の規則を使う。[番号と活動状態](../../crates/server/src/routes/board_run_events.rs)
+
+発話直前に共通処理が Markdown を構文解析して平文にする。強調は本文、リンクは表示名、インラインコードは囲みを除いた内容を読む。コードの `a * b`、`C++`、エスケープされたリテラル記号を一律削除せず、語の境界には空白を補う。本文を解析した後で発話元ラベルを付けるため、本文先頭の見出しやリストも Markdown として解釈できる。画面・ログ・保存済み本文は書き換えない。[Markdown 平文化](../../packages/web-core/src/shared/lib/speechText.ts)・[発話生成](../../packages/web-core/src/shared/lib/speechSynthesis.ts)
 
 ### 音声・速度・読み上げる内容を選ぶ
 

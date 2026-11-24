@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:556c524a088c556a214365fbf115a91fc6d6ff70ad491bc02377700fc8e1af11",
+  "pageVersion": "sha256:ca8ab4087389667ac464c9c69fde9a1ae0dff071c91490cdd0dd5255afe335ad",
   "claims": [
     {
       "id": "claim_74578ddbc1aa40458f09b1684172c9f1",
@@ -25,10 +25,38 @@
           "version": "repo-lines-v1:sha256:d6cb7d5b2e819b9a0e61caf9a284a7a3446a54f3da39a30331bdd4d200f2b78d:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOTI5YzVkM2RhZGM0YTVlYzNmYjc0MmE1ZDViNzAwMjQ5ZTgzMDk0ODM1ZjJlYWM1ODMzYjdhZWY4ZWEzNTY4NiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMmJhYTI5NGJhYzUzODRhMTZhZmI3MTUxNjQxNzc2NzBkMmZlNGI0MDM5OGNkMmQ5ZjJhOWM5MWY2NTcwZDkxZCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiN2U4OTQ5YzA4MzMyMGY3ODk3MDBkOTkxZDBmYTM2MTlkNjliY2IzMmI0NTI1MmZiOWJhZTcwZGUzZDUzMWMyMiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZmYwZDc1OTUwZGYwZmY5YTNlZTk2NjM5ZGNjOGZmNWVhZWRiNDBkNjgyYmVhOTI2MjJiNTIwZGQ4ODdkOTNlOSJ9"
         }
       ]
+    },
+    {
+      "id": "claim_3e43f1f73f5c4d76b4c1c51e5b79d464",
+      "statement": "Markdownファイルプレビューは先頭の有効なYAML mappingだけを分離し、既定で閉じたメタデータに元テキストを表示する。titleを本文見出しに昇格させずファイル切替で閉状態に戻る。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/features/workspace-files/model/markdownFrontmatter.ts",
+          "version": "repo-file-v1:sha256:4d07cd51bdc6266d48e4d2ab9270a008cf046df628b29903f3a0696543f01346"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/workspace-files/ui/viewers/MarkdownFileViewer.tsx",
+          "version": "repo-file-v1:sha256:39002a1e6b067255104e319c1911031273f4c7ed6fd5bd7f7f4b55fdec2d3d95"
+        }
+      ]
+    },
+    {
+      "id": "claim_05bb38f7473e443092fb1c7ec215a7d1",
+      "statement": "未閉鎖・構文エラー・mapping以外のフロントマターは全文を保持し、YAML aliasを展開せず構文木だけで検査する。ソース表示は分離前の内容を使う。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/features/workspace-files/model/markdownFrontmatter.ts",
+          "version": "repo-file-v1:sha256:4d07cd51bdc6266d48e4d2ab9270a008cf046df628b29903f3a0696543f01346"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/workspace-files/ui/WorkspaceFilePreviewPanel.tsx#L100-L130",
+          "version": "repo-lines-v1:sha256:014fc07776f1fe79c8c2159e6bce91589de6f2f8f052dac6c6ec4abea28f9f26:eyJzZWxlY3RlZExpbmVDb3VudCI6MzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY4YzUyNmQ0N2M1OGU4ZGU0OTc0ZmE1MWMzYTBkMTBlOTE2MzI2YzU5MDIzYTU3ZWE5NTZlYjgzNjcxZjVmY2QiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBiNTkyZTA3YjRjZjUzYTgzODZjNTY4MGNmYjdmM2U0ZTc1NDI5NjljODcyNmFjNWVkMzI3NTNmOGNhOTU5NzQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImZmMGU1YmU2YzQ5ZjMxYTQwMDQ3YzdmYjBhMWMyNzMwYTMxNjMwOTU1YzkxYzMyMzg0MWRiNDM0ZTcxNmVmZDYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjY3ODM1ZjlhZTc0NjM4MzRkNmU0Mjk3YjI4NmY3OTMyNTE2ZWM2OTg5NzdhOTdlMGI2NTYyZTM5M2RjOWY4YzIifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.9.0",
-    "at": "2026-11-23T00:23:16.293Z"
+    "at": "2026-11-24T08:19:31.399Z"
   }
 }

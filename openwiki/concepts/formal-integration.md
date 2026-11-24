@@ -5,13 +5,15 @@ description: 固定 source と target の統合、検証、Wiki と公開。
 tags: [integration, git, validation, lifecycle, recovery]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-23T00:23:16.293Z
+    at: 2026-11-24T08:19:31.399Z
 sources:
   - id: openwiki-source-595d5d0308d670e38ef27fbf
     resource: repo://crates/server/src/routes/integrations/admission.rs
   - id: openwiki-source-5720d865d1c837f0e6b7dab7
     resource: repo://crates/server/src/routes/integrations/conversation.rs
-generated: { by: "codex", at: "2026-11-23T00:23:16.293Z" }
+  - id: openwiki-source-0c7c883005a8c160cd795437
+    resource: repo://crates/server/src/routes/integrations/issue_archive.rs
+generated: { by: "codex", at: "2026-11-24T08:19:31.399Z" }
 ---
 
 # Auto-merge の選択・検証・公開
@@ -49,6 +51,22 @@ Wiki が有効ならコード検証後、同じ候補 branch で OpenWiki lifecy
 ## 任意の Issue 本文アーカイブと回復
 
 `issue_archive_enabled` は既定 OFF で Wiki 設定と独立する。ON で受付した場合、固定された採用 Issue の現在仕様本文を候補内の `docs/changes/` に保存する。コメント、会話、添付実体は対象外であり、保存資料は当時の意図であって現在の実装や実行許可の証明ではない。アーカイブ準備は検証・Wiki 準備前に行い、その commit を検証対象 SHA とする。[設定](../../crates/services/src/services/config/versions/v9.rs)・[準備と検証](../../crates/server/src/routes/integrations/issue_archive.rs)
+
+同じ Issue の控えが既にあっても再マージできる。控えは Git だけで各統合時点の人間の意図を辿るために残し、現在の知識をまとめる Wiki と役割を分ける。[採用仕様](../../docs/changes/2026-11-24-LOCAL-484-5541b8f3.md)
+
+保存計画は固定候補の `docs/changes/` にある YAML フロントマターの `issue_id` UUID で同一 Issue を探す。本文中の ID や表示番号では照合しない。現在の blob が Git 祖先履歴で導入された順序を辿り、直近の控えの本文と採用 snapshot の本文を比較する。日付・タイトル・版などメタデータだけの差は追加保存の理由にならない。同一 commit で複数の候補が導入され直近を決められない場合は拒否する。[比較と履歴](../../crates/server/src/routes/integrations/issue_archive.rs)
+
+| 状態 | 保存と次の工程 |
+| --- | --- |
+| 初回 | 採用本文の全文を Markdown として追加する |
+| 直近と本文が同じ | 既存 blob を検証して再利用し、追加 commit なしで候補検証・Wiki へ進む |
+| 直近と本文が異なる | Integration UUID を含む別パスへ全文を追加し、既存控えは上書き・削除しない |
+| さらに以前の本文へ戻る | 直近と異なるため、新しい控えとして残す |
+| 保存 OFF | 控えを作らず通常の候補工程を進める |
+
+同じ Integration の再試行は保存済み親 SHA、固定採用 snapshot と Integration ID から同じ計画を復元し、保存済み tree/commit receipt を照合する。後から Issue 本文が変わっても採用版を置き換えず、二重 commit を作らない。追加がない場合のコード検証 SHA はその候補自身である。真正なパス衝突、symlink、不正な file mode、無関係な index 差分や既存 blob の改変は引き続き拒否する。[保存と回復](../../crates/server/src/routes/integrations/issue_archive.rs)・[回帰試験](../../crates/server/src/routes/integrations/issue_archive_tests.rs)
+
+控えの閲覧では[Markdown メタデータ表示](../operations/workspace-inspection.md#markdown-のメタデータとソース表示)を使える。表示の折りたたみは保存本文や比較規則を変更しない。
 
 中断後は同じ会話を明示的に再開できる。保持された編集・index・過去の失敗を勝手に reset や成功への書換えをせず、現在の operation receipt、writer と Git を確認する。Wiki では過去に監査された同じ所有者の run ID を引き継ぎ、監査欠損や未完了 writer を成功と扱わない。[会話](../../crates/server/src/routes/integrations/conversation.rs)・[Wiki proof](../../crates/server/src/routes/openwiki/completion.rs)
 

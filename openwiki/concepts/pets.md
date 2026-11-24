@@ -5,7 +5,7 @@ description: Sidebar Pet の形式、安全な取込、保存と帰属。
 tags: [pets, sprites, security, persistence, attribution]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-23T19:12:52.102Z
+    at: 2026-11-24T08:19:31.399Z
 sources:
   - id: openwiki-source-d20a82e2192a07c687b838cb
     resource: repo://crates/db/src/models/agent_runtime.rs
