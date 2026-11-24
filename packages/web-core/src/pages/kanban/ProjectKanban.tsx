@@ -18,6 +18,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Group, type Layout, Panel, Separator } from 'react-resizable-panels';
 import { KanbanContainer } from '@/features/kanban/ui/KanbanContainer';
+import { useRunObservationIssueRefresh } from '@/features/kanban/ui/useRunObservationIssueRefresh';
 import { useActions } from '@/shared/hooks/useActions';
 import { useAppNavigation } from '@/shared/hooks/useAppNavigation';
 import { useAuth } from '@/shared/hooks/auth/useAuth';
@@ -133,6 +134,8 @@ function ProjectKanbanBoard() {
 
 function ProjectKanbanLayout({ projectName }: { projectName: string }) {
   const { projectId } = useProjectContext();
+  // Above pane and loading remounts, so detail/mobile switches keep one subscription.
+  useRunObservationIssueRefresh(projectId);
   const { issueId } = useCurrentKanbanRouteState();
   const [detail, setDetail] = useState<'file' | 'wiki' | null>(null);
   useEffect(() => setDetail(null), [issueId]);

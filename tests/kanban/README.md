@@ -144,3 +144,20 @@ their existing defaults. Existing palette/typeface tokens remain in use; the mai
 Issue title is 1.5rem to distinguish it from Markdown section headings. Workflow,
 single agent and Arena share a responsive choice grid and explanatory copy,
 while their existing handlers are preserved.
+
+## Run lifecycle card refresh (LOCAL-486)
+
+```sh
+PLAYWRIGHT_BROWSERS_PATH=/opt/lvk-browsers node tests/kanban/run-observation-refresh.mjs
+```
+
+The fixture mounts the real RunSpeechProvider, refresh hook and Issue collection
+against a mocked server that commits the card status together with the `running`
+or terminal event, as the server does. It reports the delay from that commit to
+the DOM change and checks speech on/off, board-originated and external starts,
+one refresh per page, initial history, reconnection, an injected hidden tab,
+board close and Project switching, and an idle board without extra full-list
+requests. The 30s fallback timer is recorded but not fired, so counts stay
+exact. `RUN_OBSERVATION_BEFORE_FIX=1` replaces the hook with a no-op and fails
+at the first card move. Mocked endpoints, speech and visibility events do not
+prove real AgentRun timing or physical tab suspension.
