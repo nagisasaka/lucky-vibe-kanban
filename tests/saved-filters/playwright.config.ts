@@ -2,6 +2,7 @@ import { defineConfig } from "@playwright/test";
 export default defineConfig({
   testDir: ".",
   testMatch: "*.spec.ts",
+  testIgnore: "**/runtime/**",
   use: { baseURL: "http://127.0.0.1:4178", headless: true },
   workers: 1,
   outputDir: "../../.build/saved-filters/test-results",
