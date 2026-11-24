@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:a863f2d1c89acf509b5209b77f4738b0504247e1487105b0f5aa1143016022ac",
+  "pageVersion": "sha256:7c436ff8675def06335d262c114a4fb535756ea05a0f1a9b3aa33b7b78b3e4d6",
   "claims": [
     {
       "id": "claim_de4e21d43dff4217a64b7e38af697b8a",
@@ -21,10 +21,62 @@
           "version": "repo-lines-v1:sha256:749ff6a262d0ffc9a45d933d6aa4ca91254690d4a404982a33500817af4ea95a:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA5N2VmZTI3MjhlZWYzMmUyN2MzMDQ2NDE2YWRiMTUyMmNhMmM3ZWQzOWFhZmVkOTc1MjkwYTMzZTczMmMxMzciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk2MDIzZTc5YWM3Njk0NGE5NTJjZmZjZWJlNDNhNzE4NjBlM2E1MWNhODQ1NTNjODc0OWRiY2JhZTZmZTUwNDIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE5Mzc2MjViMWUxYmQyNGFmZDJhYzkyNzI3YWM3ZGU3NmJiOWRkMmZkNzBmYTQ4NDRiOTEwMGU1YTQ3MTVkYTAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjA4YmFiYTIzMGUwMjllYzJkOTBkMmQ3NDcyNzBjMjRlZDEwNDNmZDVlNGNiMDg5ZWY5YzljYjMxYzdiMWJlYWIifQ"
         }
       ]
+    },
+    {
+      "id": "claim_45b6b5f198aa49fd8b400fc44ab1d023",
+      "statement": "分離ビルドはfrontendでCargoを呼ばずbackendでViteを呼ばず、bothは同じ固定SHAの一組を生成する。",
+      "evidence": [
+        {
+          "resource": "repo://deploy/developer/switch/build.py",
+          "version": "repo-file-v1:sha256:3b0c406256530ecaa1443df859cd365c663ebd4c04c111d2494ec2b5c2c18615"
+        },
+        {
+          "resource": "repo://deploy/developer/switch/test_split_build.py",
+          "version": "repo-file-v1:sha256:3467e25f16d962803af38b3feaf9234947aaa56b2ad5104dd1fe664d389d4ea8"
+        }
+      ]
+    },
+    {
+      "id": "claim_5a8c4135a940497da3357641178e7728",
+      "statement": "frontend切替はstart.lock内でcurrentを原子的に選択し、health失敗時は直前の選択へ戻し、未解決backend operationを拒否する。",
+      "evidence": [
+        {
+          "resource": "repo://deploy/developer/switch/frontend_switch.py",
+          "version": "repo-file-v1:sha256:1828ef95652b1d3c6c7bceb3c896a66e716decdbc75e884a48091c1bb01a3a90"
+        }
+      ]
+    },
+    {
+      "id": "claim_d515f7162c584f3d8ae13a0fc04e07ae",
+      "statement": "backend-onlyは稼働frontendを保持し、paired bundleでは同じ対象SHAを検証してfrontendも配置する。",
+      "evidence": [
+        {
+          "resource": "repo://deploy/developer/switch/start_binary.py",
+          "version": "repo-file-v1:sha256:754561f0d0e813189d209edec2721fd8e33d533a2ee4dfba347c9fcfed3c3c8e"
+        }
+      ]
+    },
+    {
+      "id": "claim_39a9c67e692a4caa9e90625727d33210",
+      "statement": "初回外部frontend移行には同一revisionのkit・binary・distと停止・backup・起動設定変更が必要で、稼働中launch.jsonのみの変更はidentity検証で拒否される。",
+      "evidence": [
+        {
+          "resource": "repo://deploy/developer/switch/EXTERNAL_FRONTEND.md",
+          "version": "repo-file-v1:sha256:1c9eaf1050364c6cc0f51e6b8f4ecddcc285b49dae3685f51466999902c6bcb8"
+        },
+        {
+          "resource": "repo://deploy/developer/switch/launcher.py",
+          "version": "repo-file-v1:sha256:835eecafdb0bc06a3d2c8077aebb16bd9a3dfcff4dfb84dce60c99b0a2e93d4e"
+        },
+        {
+          "resource": "repo://deploy/developer/switch/start_binary.py",
+          "version": "repo-file-v1:sha256:754561f0d0e813189d209edec2721fd8e33d533a2ee4dfba347c9fcfed3c3c8e"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.9.0",
-    "at": "2026-11-23T00:45:55.554Z"
+    "at": "2026-11-24T01:12:27.599Z"
   }
 }

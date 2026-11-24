@@ -5,13 +5,21 @@ description: Web、Board snapshot と Agent Run stream の同期境界。
 tags: [frontend, synchronization, transport, persistence]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-23T00:23:16.293Z
+    at: 2026-11-24T01:12:27.599Z
 sources:
   - id: openwiki-source-162bcfe1ee47c1047ccf7d52
     resource: repo://crates/server/src/routes/agent_runs.rs
+  - id: openwiki-source-a9b6d4be264787a78357c9d6
+    resource: repo://crates/server/src/routes/config.rs
+  - id: openwiki-source-65cd4bfb8846cf29de08f4b3
+    resource: repo://crates/server/src/routes/dev_frontend.rs
+  - id: openwiki-source-4f90d37fb90b7f5198b7b293
+    resource: repo://crates/server/src/routes/frontend.rs
+  - id: openwiki-source-6a6615932d0836983751ed06
+    resource: repo://packages/ui/src/components/BuildInfoLabel.tsx
   - id: openwiki-source-e665e0fe8e478ec542e0ace4
     resource: repo://packages/web-core/src/shared/lib/electric/collections.ts
-generated: { by: "codex", at: "2026-11-23T00:23:16.293Z" }
+generated: { by: "codex", at: "2026-11-24T01:12:27.599Z" }
 ---
 
 # Web の実行環境と同期
@@ -25,6 +33,18 @@ Local Web はブラウザーの shell と共有画面を組み合わせ、[Proje
 Bootstrap は fetch 補助を登録し、製品 App を `ServerAccessGate` の内側で遅延読込する。fetch 補助は同一 origin の `/api/` に対する変更要求だけへ CSRF を付け、業務 API の 401/423 で認証状態の再確認を促す。最終的な認証は backend の責任である。[Bootstrap](../../packages/local-web/src/app/entry/Bootstrap.tsx)・[fetch 補助](../../packages/local-web/src/app/auth/serverAccess.ts)・[サーバー認証](../concepts/server-access.md)
 
 `remoteApi` は歴史的な名前だが、現在は `/api/local/` を使う。local transport は古い remote host 指定を HTTP と WebSocket の送信前に拒否する。未知の `/api` は SPA の HTML 成功応答にせず 404 とし、通常画面の fallback と区別する。[API](../../packages/web-core/src/shared/lib/remoteApi.ts)・[transport](../../packages/web-core/src/shared/lib/localApiTransport.ts)・[fallback](../../crates/server/src/routes/frontend.rs)
+
+## 共有 dev の配信世代と稼働 SHA
+
+共有 dev は `developer-runtime` feature と `LVK_DEV_EXTERNAL_FRONTEND=1` の両方がある場合、既存 Rust router から外部 dist を配信する。別の Vite 常駐 service は追加しない。安定版の埋め込み配信と preview2 の HMR はこの選択に切り替えない。[配信入口](../../crates/server/src/routes/frontend.rs)・[外部 dist](../../crates/server/src/routes/dev_frontend.rs)
+
+選択の正本は `LVK_INSTANCE_DIR/current.json` の `frontend` manifest で、実体は `frontend-releases/SHA/` に置く。読み手は選択 manifest と保存済み manifest、ファイル hash を照合する。無効な外部選択は埋め込み版へ黙って戻さず、起動前検証で拒否し、配信時の検証失敗では 503 を返す。[起動検証](../../crates/server/src/runtime_payload.rs)
+
+Vite の base は `/__lvk_frontend/SHA/` である。保持済み旧世代の chunk をその URL で読み出すため、切替前のタブも lazy import を続けられる。旧世代の要求は対象 chunk の hash を確認する。世代付きの未知アセットは SPA HTML に変換せず 404 とする。世代付き応答は immutable、通常 URL は no-cache で、応答の `x-lvk-frontend-revision` は配信元を示す。旧 dist の保持と整理、初回移行前のタブの扱いは[開発運用](../operations/development.md#共有-dev-の分離ビルドと切替)を参照する。
+
+`/api/info` の `build_info.revision` は実 backend binary の SHA を維持する。外部選択を読める場合だけ `frontend_revision` を追加し、UI の詳細表示に両方を出す。短いラベルは backend SHA のままである。両 SHA の相違は frontend 単独更新で正常に生じる。[情報 API](../../crates/server/src/routes/config.rs)・[表示](../../packages/ui/src/components/BuildInfoLabel.tsx)
+
+注意: 同じ router の Host/Origin・maintenance・API/MCP 認証境界を維持することと、すべての shell asset にログインを要求することは異なる。既存方針で shell asset は公開され、API/MCP は資格情報を要求する。`routes::dev_frontend` の境界試験はこの区別を検査するが、実 Auth0 の接続成功は証明しない。
 
 ## Board snapshot と書込み
 

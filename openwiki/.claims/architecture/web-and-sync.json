@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:16ac144d418722266fec2fb16a49586a4bf448a65310bbeaef1cc7eefb1635b9",
+  "pageVersion": "sha256:e4fb8bbc05db8e13b1f4fdb57124c5f4fea3c10c4d180ffe95951d446e179537",
   "claims": [
     {
       "id": "claim_2cac9a17980644eaa29f32d49f55dda1",
@@ -21,10 +21,48 @@
           "version": "repo-lines-v1:sha256:2a01582739149eb8eb41eb1d9b7d27be843fb0179af0b0cf6fb8d560d30cd482:eyJzZWxlY3RlZExpbmVDb3VudCI6NTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM5MWQwY2UyNzI1MWE3ZGMzOTc2NDgxZTMxNjdjZmZlYjFkYzc2Yzk5Zjk2MzZjYjVlMzkzMDMyY2QzZGU4ZGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU3OTA0ZDNmYjNhNDRkN2U3MDU5NDA4MjgzZjE5NDYxOWUyMzE3Y2M2MjU2OGUxZDVjZTUwMDZjMTQxMzkwNDMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJkMjk1ODJjOTAyMWE2NWNhYjBjOTc0Nzk0NGRlZjM1MGJkMzA1YThmOWZmZTM4NzczZWI4MDBmODBjMDBmY2IiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImRhM2FkMDU4N2JiYWEzNGQ3NjllYmUzZDhhNzdhZjMyZmMyMDkyMjRlZDE2YjQ4NTZmN2ZjMDhiOWRhOWI5ZDcifQ"
         }
       ]
+    },
+    {
+      "id": "claim_9f6f3bc3e5fe4d0388f02a27454641c7",
+      "statement": "developer-runtimeと明示的な外部frontend設定で同じRust配信入口がcurrent.jsonのdistを選び、破損時に埋め込みへfallbackしない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/routes/dev_frontend.rs",
+          "version": "repo-file-v1:sha256:73900dc07bc3913c5bd4e7c5247f0505e456769e8c02f0f8bf9c2ba20cdcb28d"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/frontend.rs",
+          "version": "repo-file-v1:sha256:c624ebdc16267d963c0687407847afc0ae2f86b9a42926c31ef2d72802e19a57"
+        }
+      ]
+    },
+    {
+      "id": "claim_11e4a90aa39b44b2b3a77a52df30a933",
+      "statement": "世代付きURLは保持済み旧chunkのhashを確認して配信し、未知アセットをSPAにせず404とする。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/routes/dev_frontend.rs",
+          "version": "repo-file-v1:sha256:73900dc07bc3913c5bd4e7c5247f0505e456769e8c02f0f8bf9c2ba20cdcb28d"
+        }
+      ]
+    },
+    {
+      "id": "claim_5fd565c1bdd7416b87c6915dc21dc678",
+      "statement": "build_info.revisionはbackend SHAで、選択済みfrontend_revisionを任意追加しUI詳細で両SHAを表示する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/routes/config.rs",
+          "version": "repo-file-v1:sha256:0400d7694ba57c2489cb33ba65fb80a97484f51a40fc2804169f7defd80db408"
+        },
+        {
+          "resource": "repo://packages/ui/src/components/BuildInfoLabel.tsx",
+          "version": "repo-file-v1:sha256:cbb09fcde0aea70a31c30270982ce060122d4f0c26cd9e68aa970212f2996992"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.9.0",
-    "at": "2026-11-23T00:23:16.293Z"
+    "at": "2026-11-24T01:12:27.599Z"
   }
 }
