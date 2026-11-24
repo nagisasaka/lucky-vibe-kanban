@@ -59,6 +59,121 @@ fn documents(run: &IntegrationRun) -> anyhow::Result<BTreeMap<String, String>> {
     Ok(files)
 }
 
+/// Select the most recently introduced current blob in candidate ancestry.
+/// Topological order keeps later saves ahead of their ancestors even across merges.
+fn latest_archive(
+    repo: &git2::Repository,
+    parent: &str,
+    issue: Uuid,
+) -> anyhow::Result<Option<(String, String, String)>> {
+    let commit = repo.find_commit(git2::Oid::from_str(parent)?)?;
+    let tree = commit.tree()?;
+    let mut matches = BTreeMap::new();
+    if let Ok(directory) = tree.get_path(Path::new("docs/changes")) {
+        for entry in &repo.find_tree(directory.id())? {
+            if entry.kind() != Some(git2::ObjectType::Blob) {
+                continue;
+            }
+            let blob = repo.find_blob(entry.id())?;
+            let Ok(text) = std::str::from_utf8(blob.content()) else {
+                continue;
+            };
+            let Some((header, rest)) = text
+                .strip_prefix("---\n")
+                .and_then(|s| s.split_once("\n---\n"))
+            else {
+                continue;
+            };
+            let Ok(metadata) = serde_yaml::from_str::<serde_yaml::Value>(header) else {
+                continue;
+            };
+            if metadata
+                .get("issue_id")
+                .and_then(|v| v.as_str())
+                .and_then(|id| Uuid::parse_str(id).ok())
+                != Some(issue)
+            {
+                continue;
+            }
+            ensure!(
+                entry.filemode() == 0o100644,
+                "Invalid Issue archive file mode"
+            );
+            let body = rest
+                .strip_prefix(&format!("\n> {NOTICE}\n\n"))
+                .context("Invalid existing Issue archive body envelope")?;
+            let path = format!(
+                "docs/changes/{}",
+                entry.name().context("Invalid archive path")?
+            );
+            matches.insert(path, (entry.id(), text.to_owned(), body.to_owned()));
+        }
+    }
+    if matches.is_empty() {
+        return Ok(None);
+    }
+    let mut history = repo.revwalk()?;
+    history.set_sorting(git2::Sort::TOPOLOGICAL)?;
+    history.push(commit.id())?;
+    for oid in history {
+        let commit = repo.find_commit(oid?)?;
+        let current = commit.tree()?;
+        let parents = commit
+            .parents()
+            .map(|p| p.tree())
+            .collect::<Result<Vec<_>, _>>()?;
+        let introduced: Vec<_> = matches
+            .iter()
+            .filter(|(path, (oid, _, _))| {
+                current
+                    .get_path(Path::new(path))
+                    .is_ok_and(|e| e.id() == *oid)
+                    && !parents
+                        .iter()
+                        .any(|t| t.get_path(Path::new(path)).is_ok_and(|e| e.id() == *oid))
+            })
+            .collect();
+        ensure!(introduced.len() <= 1, "Ambiguous latest Issue archive");
+        if let Some((path, (_, content, body))) = introduced.first() {
+            return Ok(Some(((*path).clone(), content.clone(), body.clone())));
+        }
+    }
+    anyhow::bail!("Missing Issue archive history")
+}
+
+/// The saved parent SHA and admitted snapshots are immutable plan inputs.
+/// Recomputing from those objects also supports receipts written by older hosts.
+fn planned_documents(
+    run: &IntegrationRun,
+    root: &Path,
+    parent: &str,
+) -> anyhow::Result<BTreeMap<String, String>> {
+    let mut files = documents(run)?; // retain all snapshot/selection validation
+    let repo = git2::Repository::open(root)?;
+    for source in &run.payload.sources {
+        let snapshot = source.issue_snapshot.as_ref().unwrap();
+        let (path, content) = document(snapshot)?;
+        if let Some((previous_path, previous_content, body)) =
+            latest_archive(&repo, parent, snapshot.issue_id)?
+        {
+            files.remove(&path);
+            let (path, content) = if body == snapshot.body {
+                (previous_path, previous_content)
+            } else {
+                (
+                    format!("{}-{}.md", path.trim_end_matches(".md"), run.id),
+                    content,
+                )
+            };
+            ensure!(
+                files.insert(path, content).is_none(),
+                "Duplicate Issue archive path"
+            );
+        }
+    }
+    Ok(files)
+}
+
 fn message(run: &IntegrationRun) -> anyhow::Result<String> {
     let mut text = "Archive adopted Issue intent\n".to_owned();
     for source in &run.payload.sources {
@@ -96,7 +211,7 @@ pub(super) fn verify(run: &IntegrationRun, root: &Path, candidate: &str) -> anyh
         "Candidate lost Issue archive commit"
     );
     let tree = repo.find_commit(candidate)?.tree()?;
-    for (path, content) in documents(run)? {
+    for (path, content) in planned_documents(run, root, &publication.parent_commit)? {
         let entry = tree
             .get_path(Path::new(&path))
             .context("Candidate lost Issue archive file")?;
@@ -126,7 +241,6 @@ pub(super) async fn prepare(
         run.payload.issue_archive_enabled,
         "Issue archives are disabled for this integration"
     );
-    let files = documents(run)?;
     let commit_message = message(run)?;
     if let Some(saved) = &run.payload.archive_publication {
         ensure!(
@@ -135,34 +249,7 @@ pub(super) async fn prepare(
         );
     } else {
         git.require_clean_source(root, expected)?;
-        // Reject another archive for this UUID, even if its date/display ID changed.
-        {
-            let repo = git2::Repository::open(root)?;
-            let tree = repo.find_commit(git2::Oid::from_str(expected)?)?.tree()?;
-            if let Ok(directory) = tree.get_path(Path::new("docs/changes")) {
-                let directory = repo.find_tree(directory.id())?;
-                for entry in &directory {
-                    if entry.kind() != Some(git2::ObjectType::Blob) {
-                        continue;
-                    }
-                    let blob = repo.find_blob(entry.id())?;
-                    for source in &run.payload.sources {
-                        let marker = format!("issue_id: {}", source.selection.card_id);
-                        // An Issue mentioned inside another archive's original body
-                        // is not that archive's identity. Read metadata only.
-                        let header = std::str::from_utf8(blob.content())
-                            .ok()
-                            .and_then(|text| text.strip_prefix("---\n"))
-                            .and_then(|text| text.split_once("\n---\n"))
-                            .map(|(header, _)| header);
-                        ensure!(
-                            !header.is_some_and(|header| header.lines().any(|line| line == marker)),
-                            "Issue already has an archive; intentional re-merge is not supported"
-                        );
-                    }
-                }
-            }
-        }
+        planned_documents(run, root, expected)?;
         run.payload.archive_publication = Some(IntegrationArchivePublication {
             request_id,
             parent_commit: expected.into(),
@@ -171,10 +258,51 @@ pub(super) async fn prepare(
         });
         run.save(pool).await?;
     }
+    let planned = planned_documents(run, root, expected)?;
+    let files = {
+        let repo = git2::Repository::open(root)?;
+        let tree = repo.find_commit(git2::Oid::from_str(expected)?)?.tree()?;
+        let mut files = BTreeMap::new();
+        for (path, content) in planned {
+            if let Ok(entry) = tree.get_path(Path::new(&path)) {
+                ensure!(
+                    entry.filemode() == 0o100644
+                        && repo.find_blob(entry.id())?.content() == content.as_bytes(),
+                    "Issue archive path already exists"
+                );
+                // Only the selected previous archive may be reused, never a new path collision.
+                ensure!(
+                    run.payload.sources.iter().any(|source| {
+                        latest_archive(&repo, expected, source.selection.card_id)
+                            .ok()
+                            .flatten()
+                            .is_some_and(|(old, _, body)| {
+                                old == path
+                                    && source
+                                        .issue_snapshot
+                                        .as_ref()
+                                        .is_some_and(|s| s.body == body)
+                            })
+                    }),
+                    "Issue archive path already exists"
+                );
+            } else {
+                files.insert(path, content);
+            }
+        }
+        files
+    };
     let saved = run.payload.archive_publication.as_ref().unwrap();
     if let Some(commit) = &saved.commit {
         verify(run, root, &support::git(root, &["rev-parse", "HEAD"])?)?;
         return Ok(commit.clone());
+    }
+    if files.is_empty() {
+        git.require_clean_source(root, expected)?;
+        run.payload.archive_publication.as_mut().unwrap().commit = Some(expected.into());
+        verify(run, root, expected)?;
+        run.save(pool).await?;
+        return Ok(expected.into());
     }
     let head = support::git(root, &["rev-parse", "HEAD"])?;
     if head != expected {

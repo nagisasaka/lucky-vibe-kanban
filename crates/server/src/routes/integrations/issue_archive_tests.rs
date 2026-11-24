@@ -207,7 +207,7 @@ async fn archive_refuses_symlink_and_unrelated_index() -> anyhow::Result<()> {
 }
 
 #[tokio::test]
-async fn archive_multiple_issues_once_and_reject_later_second_archive() -> anyhow::Result<()> {
+async fn archive_multiple_issues_once_and_skip_unchanged() -> anyhow::Result<()> {
     let (dir, pool, mut run) = fixture().await?;
     let root = dir.path();
     let mut second = run.payload.sources[0].clone();
@@ -239,7 +239,7 @@ async fn archive_multiple_issues_once_and_reject_later_second_archive() -> anyho
     assert!(trailers.contains("LVK-Issue: LOCAL-399"));
     assert!(trailers.contains("LVK-Issue: LOCAL-400"));
     assert_eq!(support::git(root, &["rev-list", "--count", "HEAD"])?, "2");
-    // A new Integration/day cannot create a second archive for the same Issue.
+    // A new Integration/day with unchanged bodies reuses the existing archives.
     run.payload.archive_publication = None;
     for source in &mut run.payload.sources {
         source.issue_snapshot.as_mut().unwrap().frozen_at = "2026-11-18T00:00:00Z".into();
@@ -253,11 +253,32 @@ async fn archive_multiple_issues_once_and_reject_later_second_archive() -> anyho
             Uuid::new_v4(),
             &commit
         )
-        .await
-        .is_err()
+        .await?
+            == commit
     );
     assert_eq!(std::fs::read_dir(root.join("docs/changes"))?.count(), 2);
     assert_eq!(support::git(root, &["rev-parse", "HEAD"])?, commit);
+    verify(&run, root, &commit)?;
+    // One unchanged Issue and one changed Issue share a single preparation.
+    run.payload.archive_publication = None;
+    run.payload.sources[1]
+        .issue_snapshot
+        .as_mut()
+        .unwrap()
+        .body
+        .push_str("updated");
+    let updated = prepare(
+        &pool,
+        &git::GitService::new(),
+        &mut run,
+        root,
+        Uuid::new_v4(),
+        &commit,
+    )
+    .await?;
+    assert_ne!(updated, commit);
+    assert_eq!(std::fs::read_dir(root.join("docs/changes"))?.count(), 3);
+    verify(&run, root, &updated)?;
     Ok(())
 }
 
@@ -286,7 +307,7 @@ async fn archive_multiple_issues_and_one_archive_per_issue() -> anyhow::Result<(
     let log = support::git(dir.path(), &["log", "-1", "--format=%B"])?;
     assert_eq!(log.matches("LVK-Issue: LOCAL-399").count(), 2);
     assert_eq!(log.matches("LVK-Issue-UUID:").count(), 2);
-    // A separate admission of the same Issue on a later day is not a retry.
+    // A separate admission of unchanged bodies needs no new commit.
     run.payload.archive_publication = None;
     for source in &mut run.payload.sources {
         source.issue_snapshot.as_mut().unwrap().frozen_at = "2026-11-17T00:00:01Z".into();
@@ -300,8 +321,8 @@ async fn archive_multiple_issues_and_one_archive_per_issue() -> anyhow::Result<(
             Uuid::new_v4(),
             &commit
         )
-        .await
-        .is_err()
+        .await?
+            == commit
     );
     assert_eq!(
         std::fs::read_dir(dir.path().join("docs/changes"))?.count(),
@@ -427,5 +448,169 @@ async fn archive_body_mentions_do_not_claim_another_issue_identity() -> anyhow::
         std::fs::read_dir(dir.path().join("docs/changes"))?.count(),
         2
     );
+    Ok(())
+}
+
+#[tokio::test]
+async fn archive_remerge_latest_body_same_day_revert_and_metadata() -> anyhow::Result<()> {
+    let (dir, pool, mut run) = fixture().await?;
+    let root = dir.path();
+    let git = git::GitService::new();
+    let mut parent = run.payload.observed_target.clone();
+    let original = run.payload.sources[0]
+        .issue_snapshot
+        .as_ref()
+        .unwrap()
+        .body
+        .clone();
+    let mut preserved = BTreeMap::new();
+    for (body, count) in [
+        (original.clone(), 1),
+        (original.clone(), 1),
+        ("updated\n".into(), 2),
+        (original, 3),
+    ] {
+        run.id = Uuid::new_v4();
+        sqlx::query("INSERT INTO integration_runs(id) VALUES(?)")
+            .bind(run.id)
+            .execute(&pool)
+            .await?;
+        run.payload.archive_publication = None;
+        let snapshot = run.payload.sources[0].issue_snapshot.as_mut().unwrap();
+        snapshot.body = body;
+        snapshot.title.push_str(" changed metadata");
+        snapshot.version_id = Uuid::new_v4();
+        snapshot.version_revision += 1;
+        let commit = prepare(&pool, &git, &mut run, root, Uuid::new_v4(), &parent).await?;
+        verify(&run, root, &commit)?;
+        assert_eq!(std::fs::read_dir(root.join("docs/changes"))?.count(), count);
+        // DB receipt serialization and a fresh operation ID cannot duplicate the commit.
+        run = serde_json::from_str(&serde_json::to_string(&run)?)?;
+        assert_eq!(
+            prepare(&pool, &git, &mut run, root, Uuid::new_v4(), &parent).await?,
+            commit
+        );
+        for entry in std::fs::read_dir(root.join("docs/changes"))? {
+            let path = entry?.path();
+            let bytes = std::fs::read(&path)?;
+            if let Some(old) = preserved.insert(path, bytes.clone()) {
+                assert_eq!(old, bytes);
+            }
+        }
+        parent = commit;
+    }
+    assert_eq!(support::git(root, &["rev-list", "--count", "HEAD"])?, "4");
+    Ok(())
+}
+
+#[tokio::test]
+async fn archive_quoted_uuid_and_unchanged_blob_are_verified() -> anyhow::Result<()> {
+    let (dir, pool, mut run) = fixture().await?;
+    let root = dir.path();
+    let snapshot = run.payload.sources[0].issue_snapshot.as_ref().unwrap();
+    let (path, content) = document(snapshot)?;
+    let content = content.replace(
+        &format!("issue_id: {}", snapshot.issue_id),
+        &format!("issue_id: '{}'", snapshot.issue_id),
+    );
+    std::fs::create_dir_all(root.join("docs/changes"))?;
+    std::fs::write(root.join(&path), content)?;
+    support::git(root, &["add", "-f", "--", &path])?;
+    support::git(root, &["commit", "-m", "legacy archive"])?;
+    let parent = support::git(root, &["rev-parse", "HEAD"])?;
+    let commit = prepare(
+        &pool,
+        &git::GitService::new(),
+        &mut run,
+        root,
+        Uuid::new_v4(),
+        &parent,
+    )
+    .await?;
+    assert_eq!(commit, parent);
+    std::fs::write(root.join(&path), "tampered")?;
+    support::git(root, &["add", "-f", "--", &path])?;
+    support::git(root, &["commit", "-m", "tamper"])?;
+    assert!(verify(&run, root, &support::git(root, &["rev-parse", "HEAD"])?).is_err());
+    Ok(())
+}
+
+#[tokio::test]
+async fn archive_changed_body_refuses_tracked_revision_path_collision() -> anyhow::Result<()> {
+    let (dir, pool, mut run) = fixture().await?;
+    let root = dir.path();
+    let git = git::GitService::new();
+    let parent = run.payload.observed_target.clone();
+    prepare(&pool, &git, &mut run, root, Uuid::new_v4(), &parent).await?;
+    run.id = Uuid::new_v4();
+    run.payload.archive_publication = None;
+    let snapshot = run.payload.sources[0].issue_snapshot.as_mut().unwrap();
+    snapshot.body = "changed body".into();
+    let (path, _) = document(snapshot)?;
+    let path = format!("{}-{}.md", path.trim_end_matches(".md"), run.id);
+    std::fs::write(root.join(&path), "tracked collision")?;
+    support::git(root, &["add", "-f", "--", &path])?;
+    support::git(root, &["commit", "-m", "collision"])?;
+    let parent = support::git(root, &["rev-parse", "HEAD"])?;
+    assert!(
+        prepare(&pool, &git, &mut run, root, Uuid::new_v4(), &parent)
+            .await
+            .is_err()
+    );
+    assert_eq!(
+        std::fs::read_to_string(root.join(path))?,
+        "tracked collision"
+    );
+    assert_eq!(support::git(root, &["rev-parse", "HEAD"])?, parent);
+    Ok(())
+}
+
+#[tokio::test]
+async fn archive_latest_follows_history_through_merge() -> anyhow::Result<()> {
+    let (dir, pool, mut run) = fixture().await?;
+    let root = dir.path();
+    let git = git::GitService::new();
+    let base = run.payload.observed_target.clone();
+    let first = prepare(&pool, &git, &mut run, root, Uuid::new_v4(), &base).await?;
+    run.payload.archive_publication = None;
+    run.payload.sources[0].issue_snapshot.as_mut().unwrap().body = "latest intent".into();
+    prepare(&pool, &git, &mut run, root, Uuid::new_v4(), &first).await?;
+    support::git(root, &["checkout", "-b", "other-target", &base])?;
+    std::fs::write(root.join("other-code"), "independent change")?;
+    support::git(root, &["add", "other-code"])?;
+    support::git(root, &["commit", "-m", "other target"])?;
+    support::git(root, &["merge", "--no-edit", "candidate"])?;
+    let merged = support::git(root, &["rev-parse", "HEAD"])?;
+    run.payload.archive_publication = None;
+    let result = prepare(&pool, &git, &mut run, root, Uuid::new_v4(), &merged).await?;
+    assert_eq!(result, merged);
+    verify(&run, root, &result)?;
+    assert_eq!(std::fs::read_dir(root.join("docs/changes"))?.count(), 2);
+    Ok(())
+}
+
+#[tokio::test]
+async fn archive_unchanged_still_refuses_git_conflict() -> anyhow::Result<()> {
+    let (dir, pool, mut run) = fixture().await?;
+    let root = dir.path();
+    let git = git::GitService::new();
+    let base = run.payload.observed_target.clone();
+    prepare(&pool, &git, &mut run, root, Uuid::new_v4(), &base).await?;
+    support::git(root, &["checkout", "-b", "conflicting"])?;
+    std::fs::write(root.join("code"), "branch change")?;
+    support::git(root, &["commit", "-am", "branch"])?;
+    support::git(root, &["checkout", "candidate"])?;
+    std::fs::write(root.join("code"), "candidate change")?;
+    support::git(root, &["commit", "-am", "candidate"])?;
+    let parent = support::git(root, &["rev-parse", "HEAD"])?;
+    assert!(support::git(root, &["merge", "--no-edit", "conflicting"]).is_err());
+    run.payload.archive_publication = None;
+    assert!(
+        prepare(&pool, &git, &mut run, root, Uuid::new_v4(), &parent)
+            .await
+            .is_err()
+    );
+    assert!(git2::Repository::open(root)?.index()?.has_conflicts());
+    assert_eq!(support::git(root, &["rev-parse", "HEAD"])?, parent);
     Ok(())
 }

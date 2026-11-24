@@ -7195,6 +7195,7 @@ dependencies = [
  "sentry",
  "serde",
  "serde_json",
+ "serde_yaml",
  "server-access",
  "services",
  "sha2",

@@ -73,6 +73,8 @@ async fn exercise(deployment: &DeploymentImpl, instance: &std::path::Path) -> an
         "archive-off",
         "archive-collision",
         "wiki-archive-success",
+        "archive-unchanged",
+        "wiki-archive-unchanged",
         "multi-source",
         "source-head-unavailable",
         "safe-drift",
@@ -412,6 +414,21 @@ async fn exercise(deployment: &DeploymentImpl, instance: &std::path::Path) -> an
                     sqlx::query("UPDATE agent_process_registry SET registry_status='not_started' WHERE run_attempt_id=?").bind(attempt.run_attempt_id).execute(pool).await?;
                     continue;
                 }
+                let source = if mode.ends_with("archive-unchanged") {
+                    let mut prior = run.clone();
+                    prior.id = Uuid::new_v4();
+                    super::super::issue_archive::prepare(
+                        pool,
+                        deployment.git(),
+                        &mut prior,
+                        &checkout,
+                        Uuid::new_v4(),
+                        &source,
+                    )
+                    .await?
+                } else {
+                    source
+                };
                 let prepare = call(Uuid::new_v4(), "prepare_archive", &source, None);
                 let result = action(deployment, prepare.clone()).await?;
                 ensure!(action(deployment, prepare).await? == result);
@@ -419,6 +436,12 @@ async fn exercise(deployment: &DeploymentImpl, instance: &std::path::Path) -> an
                     .as_str()
                     .context("Archive SHA missing")?
                     .to_owned();
+                if mode.ends_with("archive-unchanged") {
+                    ensure!(
+                        candidate == source,
+                        "Unchanged body created an archive commit"
+                    );
+                }
                 let archived = IntegrationRun::find(pool, id).await?;
                 super::super::issue_archive::verify(&archived, &checkout, &candidate)?;
                 candidate
