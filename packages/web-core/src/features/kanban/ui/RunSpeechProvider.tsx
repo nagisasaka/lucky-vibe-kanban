@@ -14,7 +14,7 @@ import {
 } from '@/shared/lib/speechSynthesis';
 import { RunSpeechQueue } from '../model/runSpeechQueue';
 import {
-  startRunObservationPolling,
+  RunObservationHub,
   type RunObservationPage,
 } from '../model/runObservationPolling';
 
@@ -31,6 +31,13 @@ export function useRunSpeech() {
   return speech;
 }
 
+const RunObservationContext = createContext<RunObservationHub | null>(null);
+
+/** The board Project's shared observation, or null outside a board. */
+export function useRunObservations() {
+  return useContext(RunObservationContext);
+}
+
 // Owned by the app layout above route, loading and mobile/detail remounts.
 // Key by the current board project; leaving it destroys this ephemeral session.
 export function RunSpeechProvider({
@@ -40,10 +47,22 @@ export function RunSpeechProvider({
   projectId: string;
   children: ReactNode;
 }) {
+  // Speech only listens to the board's observation; it does not own polling.
+  const [requested, setRequested] = useState(false);
   const [enabled, setEnabled] = useState(false);
-  const [connecting, setConnecting] = useState(false);
-  const initialPage = useRef<RunObservationPage | null>(null);
-  const connectAbort = useRef<AbortController | null>(null);
+  const [hub] = useState(() =>
+    projectId
+      ? new RunObservationHub(projectId, async (cursor, signal) => {
+          const suffix = cursor === undefined ? '' : `?after=${cursor}`;
+          const response = await makeLocalApiRequest(
+            `/api/projects/${projectId}/run-observations${suffix}`,
+            { signal }
+          );
+          if (!response.ok) throw new Error('Run observations unavailable');
+          return response.json() as Promise<RunObservationPage>;
+        })
+      : null
+  );
   const queue = useRef<RunSpeechQueue>();
   if (!queue.current && getSpeechSynthesis()) {
     queue.current = new RunSpeechQueue({
@@ -78,67 +97,53 @@ export function RunSpeechProvider({
       },
     });
   }
-  useEffect(() => () => connectAbort.current?.abort(), []);
   useEffect(() => {
     const speech = queue.current;
-    const initial = initialPage.current;
-    if (!enabled || !speech || !initial) return;
-    speech.enable();
-    const stop = startRunObservationPolling(
-      initial,
-      async (cursor, signal) => {
-        const suffix = cursor === undefined ? '' : `?after=${cursor}`;
-        const response = await makeLocalApiRequest(
-          `/api/projects/${projectId}/run-observations${suffix}`,
-          { signal }
-        );
-        if (!response.ok) throw new Error('Run observations unavailable');
-        return response.json() as Promise<RunObservationPage>;
+    if (!requested || !speech || !hub) return;
+    // The switch becomes on only after a baseline is established; later
+    // pages carry only events after that cursor.
+    let joined = false;
+    const unsubscribe = hub.subscribe({
+      page(page, baseline) {
+        if (!joined) {
+          joined = true;
+          speech.enable();
+          setEnabled(true);
+        }
+        speech.accept(page.events, page.pending, baseline);
       },
-      (page, baseline) => speech.accept(page.events, page.pending, baseline)
-    );
+      // Leave the switch off if a subscription could not be established.
+      error: () => setRequested(false),
+    });
     return () => {
-      stop();
+      unsubscribe();
+      if (!joined) return;
       speech.disable();
+      setEnabled(false);
     };
-  }, [enabled, projectId]);
+  }, [requested, hub]);
   const toggle = () => {
     if (enabled) {
       // Cancel synchronously, without waiting for React cleanup.
       queue.current?.disable();
       setEnabled(false);
+      setRequested(false);
       return;
     }
-    if (connectAbort.current) return;
-    const abort = new AbortController();
-    connectAbort.current = abort;
-    setConnecting(true);
-    // The switch becomes on only after the baseline is established; every
-    // event after that baseline is then fetched using its cursor.
-    void makeLocalApiRequest(`/api/projects/${projectId}/run-observations`, {
-      signal: abort.signal,
-    })
-      .then(async (response) => {
-        if (!response.ok) throw new Error('Run observations unavailable');
-        const page: RunObservationPage = await response.json();
-        if (!abort.signal.aborted) {
-          initialPage.current = page;
-          setEnabled(true);
-        }
-      })
-      .catch(() => {
-        // Leave the switch off if a subscription could not be established.
-      })
-      .finally(() => {
-        if (connectAbort.current === abort) connectAbort.current = null;
-        if (!abort.signal.aborted) setConnecting(false);
-      });
+    setRequested(true);
   };
   return (
     <RunSpeechContext.Provider
-      value={{ enabled, connecting, supported: Boolean(queue.current), toggle }}
+      value={{
+        enabled,
+        connecting: requested && !enabled,
+        supported: Boolean(queue.current),
+        toggle,
+      }}
     >
-      {children}
+      <RunObservationContext.Provider value={hub}>
+        {children}
+      </RunObservationContext.Provider>
     </RunSpeechContext.Provider>
   );
 }
