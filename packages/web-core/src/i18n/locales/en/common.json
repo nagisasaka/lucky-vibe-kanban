@@ -2381,6 +2381,7 @@
     "missingExplanation": "This run has no instruction delivery record."
   },
   "projectTransfer": {
+    "settingsHint": "Select a project above to export it. Import adds a new Project regardless of the selection.",
     "title": "Project transfer",
     "scope": "Carry LVK records in one SQLite file. This is not a full backup. Git, worktrees, attachment files and native agent sessions are excluded. Prepare the destination repositories yourself; commit and transfer Git changes as needed.",
     "optIn": "Include completed conversation history",

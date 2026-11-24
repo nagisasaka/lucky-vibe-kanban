@@ -2,10 +2,11 @@
 
 `db::project_transfer` exports selected LVK-owned Project data to one standalone
 SQLite file and imports it as a new Project. Authenticated API and the existing
-Project utilities UI expose explicit export, preview, Repo mapping, unique key
-selection and additional import. Project settings also offer import without an
-existing Project. Import success refreshes the existing Project list; the new
-Project link appears only after its ID is observed, without changing missing-
+Project settings UI expose explicit export, preview, Repo mapping, unique key
+selection and additional import. In Settings → Projects → Project transfer,
+select a Project above to export it. Import is available without selecting or
+creating an existing Project. Import success refreshes the existing Project list;
+the new Project link appears only after its ID is observed, without changing missing-
 Project/404 behavior. A delayed list refresh never relabels a committed import
 as a failed import. This is not an instance backup or Git transfer.
 Existing destination Projects, Issues and Repo settings are never updated.
