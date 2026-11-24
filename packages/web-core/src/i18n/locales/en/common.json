@@ -1550,7 +1550,6 @@
     }
   },
   "modelSelector": {
-    "followCliConfig": "Follow CLI config",
     "preset": "Preset",
     "custom": "Custom",
     "permissions": "Permissions",

@@ -1170,7 +1170,6 @@
     }
   },
   "modelSelector": {
-    "followCliConfig": "跟隨 CLI 設定",
     "preset": "預設配置",
     "custom": "自訂",
     "permissions": "權限",

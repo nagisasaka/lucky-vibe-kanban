@@ -864,7 +864,6 @@
     }
   },
   "modelSelector": {
-    "followCliConfig": "CLIの設定に従う",
     "preset": "プリセット",
     "custom": "カスタマイズ",
     "permissions": "権限",
