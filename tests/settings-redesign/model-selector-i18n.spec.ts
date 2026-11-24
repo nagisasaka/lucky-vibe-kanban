@@ -10,8 +10,7 @@ test(`model selector JA→EN: live labels retain provider/model/reasoning and ov
   const controls = page.getByTestId("model-controls");
   await controls
     .getByRole("button", {
-      name: "Raw Alpha 原文 · Raw reasoning 原文",
-      exact: true,
+      name: /Raw Alpha 原文.*Raw reasoning 原文/,
     })
     .click({ timeout: 15000 });
   const menu = page.locator("[data-model-selector-popover]");
@@ -38,14 +37,19 @@ test(`model selector JA→EN: live labels retain provider/model/reasoning and ov
     '"model_id":"beta/raw:model"',
   );
   await expect(page.getByTestId("model-config")).toContainText(
-    '"reasoning_id":"raw-effort"',
+    '"reasoning_id":null',
   );
+  await menu.getByRole("button", { name: "Unverified", exact: true }).click();
+  await page
+    .getByRole("menuitem", { name: "Raw reasoning 原文", exact: true })
+    .click();
+
   await menu
     .getByRole("button", { name: "Raw reasoning 原文", exact: true })
     .click();
   await page
     .getByRole("menuitem", {
-      name: "Follow CLI config",
+      name: "Clear override",
       exact: true,
     })
     .click();

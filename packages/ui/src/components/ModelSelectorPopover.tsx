@@ -6,6 +6,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuLabel,
+  DropdownMenuItem,
   DropdownMenuSearchInput,
   DropdownMenuTrigger,
 } from "./Dropdown";
@@ -37,6 +38,7 @@ export interface ModelSelectorPopoverProps {
   selectedProviderId: string | null;
   selectedModelId: string | null;
   selectedReasoningId: string | null;
+  reasoningOverridden?: boolean;
   searchQuery: string;
   onSearchChange: (value: string) => void;
   onModelSelect: (id: string, providerId?: string) => void;
@@ -116,6 +118,7 @@ interface ProviderAccordionProps {
   selectedProviderId: string | null;
   selectedModelId: string | null;
   selectedReasoningId: string | null;
+  reasoningOverridden?: boolean;
   searchQuery: string;
   onModelSelect: (id: string, providerId?: string) => void;
   onReasoningSelect: (reasoningId: string | null) => void;
@@ -132,6 +135,7 @@ function ProviderAccordion({
   selectedProviderId,
   selectedModelId,
   selectedReasoningId,
+  reasoningOverridden,
   searchQuery,
   onModelSelect,
   onReasoningSelect,
@@ -231,6 +235,7 @@ function ProviderAccordion({
                           ? (selectedModel?.reasoning_options ?? [])
                           : []
                       }
+                      reasoningOverridden={reasoningOverridden}
                       selectedReasoningId={
                         isSelectedProvider ? selectedReasoningId : null
                       }
@@ -276,7 +281,7 @@ function ProviderAccordion({
                   isDefaultSelected && "font-semibold",
                 )}
               >
-                {t("modelSelector.default")}
+                {t("modelSelector.clearOverride")}
               </span>
             </button>
           </div>
@@ -295,6 +300,7 @@ export function ModelSelectorPopover({
   selectedProviderId,
   selectedModelId,
   selectedReasoningId,
+  reasoningOverridden,
   searchQuery,
   onSearchChange,
   onModelSelect,
@@ -324,6 +330,7 @@ export function ModelSelectorPopover({
         config={config}
         selectedProviderId={selectedProviderId}
         selectedModelId={selectedModelId}
+        reasoningOverridden={reasoningOverridden}
         selectedReasoningId={selectedReasoningId}
         searchQuery={searchQuery}
         onModelSelect={onModelSelect}
@@ -352,6 +359,7 @@ export function ModelSelectorPopover({
         searchQuery={searchQuery}
         onSelect={onModelSelect}
         reasoningOptions={selectedModel?.reasoning_options ?? []}
+        reasoningOverridden={reasoningOverridden}
         selectedReasoningId={selectedReasoningId}
         onReasoningSelect={onReasoningSelect}
         justifyEnd
@@ -393,6 +401,17 @@ export function ModelSelectorPopover({
           <DropdownMenuLabel>{t("modelSelector.model")}</DropdownMenuLabel>
           <div className="flex flex-col flex-1 min-h-0 min-w-0">
             {content}
+            {reasoningOverridden &&
+              !getSelectedModel(
+                models,
+                selectedProviderId,
+                selectedModelId,
+              ) && (
+                <DropdownMenuItem onClick={() => onReasoningSelect(null)}>
+                  {t("modelSelector.reasoningSupported")}:{" "}
+                  {t("modelSelector.clearOverride")}
+                </DropdownMenuItem>
+              )}
             {showSearch && (
               <div className="border-t border-border">
                 <DropdownMenuSearchInput

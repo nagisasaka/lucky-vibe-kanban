@@ -56,6 +56,30 @@ fn has_container_ref(workspace: &Workspace) -> bool {
     )
 }
 
+/// Discovery is read-only: new-thread configuration cannot verify a resumed thread.
+#[cfg(any(not(feature = "qa-mode"), test))]
+fn hide_new_thread_defaults(mut patch: Patch) -> Patch {
+    for operation in &mut patch.0 {
+        let (path, value) = match operation {
+            json_patch::PatchOperation::Add(op) => (&op.path, &mut op.value),
+            json_patch::PatchOperation::Replace(op) => (&op.path, &mut op.value),
+            _ => continue,
+        };
+        let defaults = match path.as_str() {
+            "/options" => value.pointer_mut("/model_selector/run_defaults"),
+            "/options/model_selector/run_defaults" => Some(value),
+            _ => None,
+        };
+        if let Some(defaults) = defaults {
+            *defaults = serde_json::json!({
+                "model": null, "reasoning": null, "approval": null,
+                "model_source": "resume", "reasoning_source": "resume"
+            });
+        }
+    }
+    patch
+}
+
 #[derive(Debug, Error)]
 pub enum ContainerError {
     #[error(transparent)]
@@ -262,10 +286,27 @@ pub trait ContainerService {
                 executors::executors::utils::spawn_global_cache_refresh_for_agent(base_agent);
             }
 
+            let resuming = if let Some(id) = session_id {
+                sqlx::query_scalar::<_, bool>(
+                    "SELECT EXISTS(SELECT 1 FROM agent_provider_sessions WHERE session_id = ?)",
+                )
+                .bind(id)
+                .fetch_one(&self.db().pool)
+                .await?
+            } else {
+                false
+            };
             let stream = executor
                 .discover_options(workdir.as_deref(), repo_path.as_deref(), &repository_roots)
                 .await?;
-            Ok(Some(stream))
+            let stream = stream.map(move |patch| {
+                if resuming {
+                    hide_new_thread_defaults(patch)
+                } else {
+                    patch
+                }
+            });
+            Ok(Some(Box::pin(stream)))
         }
     }
 
@@ -1070,5 +1111,48 @@ pub trait ContainerService {
 
         tracing::debug!("Started next action: {:?}", next_action);
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod discovery_defaults_tests {
+    use serde_json::json;
+
+    use super::hide_new_thread_defaults;
+
+    #[test]
+    fn resumed_discovery_hides_initial_and_streamed_defaults_only() {
+        let defaults = json!({"model":"new-model", "reasoning":"high", "approval":"never",
+            "model_source":"configured", "reasoning_source":"provider"});
+        for (path, value, pointer) in [
+            (
+                "/options",
+                json!({"model_selector":{"run_defaults":defaults.clone(), "models":[{"id":"candidate"}]} }),
+                "/model_selector/run_defaults",
+            ),
+            ("/options/model_selector/run_defaults", defaults.clone(), ""),
+        ] {
+            for op in ["add", "replace"] {
+                let patch = serde_json::from_value(json!([
+                    {"op":op,"path":path,"value":value},
+                    {"op":"replace","path":"/options/other","value":defaults}
+                ]))
+                .unwrap();
+                let result = serde_json::to_value(hide_new_thread_defaults(patch)).unwrap();
+                let hidden = result[0]["value"].pointer(pointer).unwrap();
+                assert!(hidden["model"].is_null());
+                assert!(hidden["reasoning"].is_null());
+                assert!(hidden["approval"].is_null());
+                assert_eq!(hidden["model_source"], "resume");
+                assert_eq!(hidden["reasoning_source"], "resume");
+                assert_eq!(result[1]["value"], defaults);
+                if path == "/options" {
+                    assert_eq!(
+                        result[0]["value"]["model_selector"]["models"],
+                        json!([{"id":"candidate"}])
+                    );
+                }
+            }
+        }
     }
 }

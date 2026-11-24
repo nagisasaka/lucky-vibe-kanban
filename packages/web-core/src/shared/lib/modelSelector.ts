@@ -197,3 +197,47 @@ export function buildModelSelectionOverride(
 
   return { model_id };
 }
+
+/** Resolve read-only picker values without manufacturing launch overrides. */
+export function resolveRunSelection(
+  config: ModelSelectorConfig | null,
+  overrides: import('shared/types').ExecutorConfig | null,
+  preset: import('shared/types').ExecutorConfig | null | undefined
+) {
+  const defaults = config?.run_defaults;
+  const baseModel = preset?.model_id ?? defaults?.model ?? null;
+  const model = overrides?.model_id ?? baseModel;
+  const parsed = parseModelId(model, (config?.providers.length ?? 0) > 0);
+  const selected = config
+    ? getSelectedModel(config.models, parsed.providerId, parsed.modelId)
+    : null;
+  const sameModel = model === baseModel;
+  const defaultsMatchModel = model === defaults?.model;
+  const baseReasoning = sameModel
+    ? (preset?.reasoning_id ??
+      (defaultsMatchModel ? defaults?.reasoning : null) ??
+      null)
+    : null;
+  const reasoning = overrides?.reasoning_id ?? baseReasoning;
+  return {
+    model,
+    reasoning,
+    baseModel,
+    baseReasoning,
+    modelOverridden:
+      overrides?.model_id != null && overrides.model_id !== baseModel,
+    reasoningOverridden:
+      overrides?.reasoning_id != null &&
+      overrides.reasoning_id !== baseReasoning,
+    modelSource: preset?.model_id
+      ? 'profile'
+      : (defaults?.model_source ?? 'unverified'),
+    reasoningSource:
+      sameModel && preset?.reasoning_id
+        ? 'profile'
+        : ((sameModel && defaultsMatchModel
+            ? defaults?.reasoning_source
+            : 'unverified') ?? 'unverified'),
+    reasoningUnsupported: !!selected && selected.reasoning_options.length === 0,
+  };
+}

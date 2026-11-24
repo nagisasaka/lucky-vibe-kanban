@@ -26,7 +26,7 @@ describe('immutable Session launch restoration', () => {
     ).toBeUndefined();
     expect(
       resolveExecutorOverride('reasoning_id', {}, null, null, editedPreset)
-    ).toBe('low');
+    ).toBeUndefined();
   });
   it('preserves explicit null, max/ultra, zero concurrency and user/draft edits', () => {
     expect(
@@ -70,7 +70,7 @@ describe('Scratch reasoning round trip', () => {
     ]) {
       expect(
         resolveExecutorOverride('reasoning_id', {}, saved, null, preset)
-      ).toBe('high');
+      ).toBeUndefined();
     }
     expect(
       resolveExecutorOverride(

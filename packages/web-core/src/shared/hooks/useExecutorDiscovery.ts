@@ -13,6 +13,13 @@ const defaultOptions: ExecutorDiscoveredOptions = {
     providers: [],
     models: [],
     default_model: null,
+    run_defaults: {
+      model: null,
+      reasoning: null,
+      approval: null,
+      model_source: null,
+      reasoning_source: null,
+    },
     agents: [],
     permissions: [],
   },

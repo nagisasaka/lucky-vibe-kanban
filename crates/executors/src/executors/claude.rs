@@ -154,6 +154,9 @@ pub struct ClaudeCode {
     #[ts(skip)]
     #[derivative(Debug = "ignore", PartialEq = "ignore")]
     approvals_service: Option<Arc<dyn ExecutorApprovalService>>,
+    #[serde(skip)]
+    #[ts(skip)]
+    unsupported_permission_policy: bool,
 }
 
 impl ClaudeCode {
@@ -184,6 +187,9 @@ impl ClaudeCode {
 
     pub(crate) fn apply_direct_overrides(&mut self, executor_config: &ExecutorConfig) {
         if let Some(model_id) = &executor_config.model_id {
+            if self.model.as_ref() != Some(model_id) && executor_config.reasoning_id.is_none() {
+                self.effort = None;
+            }
             self.model = Some(model_id.clone());
         }
         if let Some(agent) = &executor_config.agent_id {
@@ -193,11 +199,13 @@ impl ClaudeCode {
             self.effort = reasoning_id.parse().ok();
         }
         if let Some(permission_policy) = executor_config.permission_policy.clone() {
+            self.unsupported_permission_policy = permission_policy == PermissionPolicy::OnRequest;
             match permission_policy {
                 PermissionPolicy::Plan => {
                     self.plan = Some(true);
                     self.approvals = Some(false);
                 }
+                PermissionPolicy::OnRequest => {}
                 PermissionPolicy::Supervised => {
                     self.plan = Some(false);
                     self.approvals = Some(true);
@@ -218,6 +226,12 @@ impl ClaudeCode {
     }
 
     fn validate_permission_support(&self) -> Result<(), ExecutorError> {
+        if self.unsupported_permission_policy {
+            return Err(ExecutorError::Io(std::io::Error::new(
+                std::io::ErrorKind::Unsupported,
+                "On-request approval is available only for Codex",
+            )));
+        }
         if self.plan.unwrap_or(false) {
             return Err(ExecutorError::Io(std::io::Error::new(
                 std::io::ErrorKind::Unsupported,
@@ -473,7 +487,8 @@ fn default_discovered_options(
         model_selector: ModelSelectorConfig {
             providers: vec![],
             models: claude_model_options(supports_effort),
-            default_model: Some("opus".to_string()),
+            default_model: None,
+            run_defaults: Default::default(),
             agents: vec![],
             permissions: vec![PermissionPolicy::Auto, PermissionPolicy::Supervised],
         },
@@ -762,12 +777,7 @@ impl StandardCodingAgentExecutor for ClaudeCode {
         ExecutorConfig {
             executor: BaseCodingAgent::ClaudeCode,
             variant: None,
-            model_id: self.model.clone().or_else(|| {
-                default_discovered_options(false)
-                    .model_selector
-                    .default_model
-                    .clone()
-            }),
+            model_id: self.model.clone(),
             agent_id: None,
             reasoning_id: self.effort.as_ref().map(|e| e.as_ref().to_owned()),
             permission_policy: Some(permission_policy),
@@ -3252,9 +3262,41 @@ mod tests {
             dangerously_skip_permissions: None,
             cmd: crate::command::CmdOverrides::default(),
             approvals_service: None,
+            unsupported_permission_policy: false,
             disable_api_key: None,
             require_subscription_login: None,
         }
+    }
+
+    #[test]
+    fn codex_on_request_permission_is_rejected_without_coercion() {
+        let mut agent = test_executor(None);
+        let mut config = ExecutorConfig::new(BaseCodingAgent::ClaudeCode);
+        config.permission_policy = Some(PermissionPolicy::OnRequest);
+        agent.apply_direct_overrides(&config);
+        assert!(agent.validate_permission_support().is_err());
+        assert!(agent.approvals.is_none());
+        config.permission_policy = Some(PermissionPolicy::Auto);
+        agent.apply_direct_overrides(&config);
+        assert!(agent.validate_permission_support().is_ok());
+    }
+
+    #[test]
+    fn model_change_clears_inherited_reasoning_but_preserves_explicit_effort() {
+        let mut agent = test_executor(None);
+        agent.model = Some("original".into());
+        agent.effort = Some(ClaudeEffort::High);
+        let mut config = ExecutorConfig::new(BaseCodingAgent::ClaudeCode);
+        config.model_id = Some("original".into());
+        agent.apply_direct_overrides(&config);
+        assert_eq!(agent.effort, Some(ClaudeEffort::High));
+        config.model_id = Some("different".into());
+        agent.apply_direct_overrides(&config);
+        assert_eq!(agent.effort, None);
+        config.model_id = Some("third".into());
+        config.reasoning_id = Some("low".into());
+        agent.apply_direct_overrides(&config);
+        assert_eq!(agent.effort, Some(ClaudeEffort::Low));
     }
 
     #[tokio::test]
@@ -3828,6 +3870,7 @@ mod tests {
                 env: None,
             },
             approvals_service: None,
+            unsupported_permission_policy: false,
             disable_api_key: None,
             require_subscription_login: None,
         };

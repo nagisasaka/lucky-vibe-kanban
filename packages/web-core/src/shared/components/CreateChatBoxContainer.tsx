@@ -328,6 +328,7 @@ export function CreateChatBoxContainer({
           <ModelSelectorContainer
             agent={effectiveExecutor}
             workspaceId={undefined}
+            repoId={workspaceMode === 'worktree' ? repoId : undefined}
             onAdvancedSettings={handleCustomise}
             presets={variantOptions}
             selectedPreset={selectedVariant}
