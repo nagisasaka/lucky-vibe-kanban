@@ -279,12 +279,58 @@ mod linux {
     }
 
     pub(super) fn identity(pid: u32) -> io::Result<Identity> {
-        read_identity(|| std::fs::read_to_string(format!("/proc/{pid}/stat"))).map_err(|error| {
-            io::Error::new(
-                error.kind(),
-                format!("process identity for pid {pid}: {error}"),
-            )
+        identity_from(pid, || std::fs::read_to_string(format!("/proc/{pid}/stat")))
+    }
+
+    // Context replaces the errno, and std maps ESRCH (a stat read after the
+    // task was reaped) to Uncategorized. Classify exit before wrapping.
+    fn identity_from(pid: u32, read: impl FnMut() -> io::Result<String>) -> io::Result<Identity> {
+        read_identity(read).map_err(|error| {
+            let kind = if vanished(&error) {
+                io::ErrorKind::NotFound
+            } else {
+                error.kind()
+            };
+            io::Error::new(kind, format!("process identity for pid {pid}: {error}"))
         })
+    }
+
+    /// procfs or pidfd reported that the PID no longer exists. Permission and
+    /// unknown failures are never treated as exit.
+    fn vanished(error: &io::Error) -> bool {
+        error.kind() == io::ErrorKind::NotFound
+            || matches!(error.raw_os_error(), Some(libc::ENOENT | libc::ESRCH))
+    }
+
+    /// One procfs snapshot. A non-anchor PID that exits between enumeration
+    /// and its stat read or pidfd pin is not a live member and is skipped.
+    /// The anchor, enumeration, permission and other errors fail closed.
+    fn scan_members<T>(
+        anchor: u32,
+        pids: impl IntoIterator<Item = io::Result<u32>>,
+        mut identity: impl FnMut(u32) -> io::Result<Identity>,
+        owned: impl Fn(&Identity) -> bool,
+        mut pin: impl FnMut(u32, Identity) -> io::Result<T>,
+    ) -> io::Result<Vec<T>> {
+        let mut members = Vec::new();
+        for pid in pids {
+            let pid = pid?;
+            let exited = |error: &io::Error| pid != anchor && vanished(error);
+            let observed = match identity(pid) {
+                Ok(value) => value,
+                Err(error) if exited(&error) => continue,
+                Err(error) => return Err(error),
+            };
+            if !owned(&observed) {
+                continue;
+            }
+            match pin(pid, observed) {
+                Ok(member) => members.push(member),
+                Err(error) if exited(&error) => {}
+                Err(error) => return Err(error),
+            }
+        }
+        Ok(members)
     }
 
     // procfs enumeration races with exit. Retry an incomplete/malformed sample,
@@ -345,6 +391,14 @@ mod linux {
 
     impl Process {
         pub(super) fn pin(pid: u32, expected: Identity) -> io::Result<Self> {
+            Self::pin_with(pid, expected, identity)
+        }
+
+        fn pin_with(
+            pid: u32,
+            expected: Identity,
+            identity: impl FnOnce(u32) -> io::Result<Identity>,
+        ) -> io::Result<Self> {
             // SAFETY: scalar pidfd_open arguments, descriptor owned on success.
             let fd = unsafe { libc::syscall(libc::SYS_pidfd_open, pid, 0) };
             if fd < 0 {
@@ -390,30 +444,20 @@ mod linux {
 
         fn find_members(&self, same_group: bool) -> io::Result<Vec<Self>> {
             self.verify_anchor()?;
-            let mut members = Vec::new();
-            for entry in std::fs::read_dir("/proc")? {
-                let entry = entry?;
-                let Some(pid) = entry.file_name().to_str().and_then(|v| v.parse().ok()) else {
-                    continue;
-                };
-                let observed = match identity(pid) {
-                    Ok(value) => value,
-                    Err(error) if error.kind() == io::ErrorKind::NotFound => continue,
-                    Err(error) => return Err(error),
-                };
-                if (same_group && observed.group != self.identity.group)
-                    || observed.session != self.identity.session
-                {
-                    continue;
-                }
-                match Self::pin(pid, observed) {
-                    Ok(member) => members.push(member),
-                    Err(error)
-                        if error.kind() == io::ErrorKind::NotFound
-                            || error.raw_os_error() == Some(libc::ESRCH) => {}
-                    Err(error) => return Err(error),
-                }
-            }
+            let pids = std::fs::read_dir("/proc")?.filter_map(|entry| match entry {
+                Ok(entry) => entry.file_name().to_str()?.parse().ok().map(Ok),
+                Err(error) => Some(Err(error)),
+            });
+            let members = scan_members(
+                self.pid,
+                pids,
+                identity,
+                |observed| {
+                    (!same_group || observed.group == self.identity.group)
+                        && observed.session == self.identity.session
+                },
+                Self::pin,
+            )?;
             self.verify_anchor()?;
             Ok(members)
         }
@@ -526,6 +570,139 @@ mod linux {
                 .err()
                 .unwrap();
             assert_eq!(error.kind(), io::ErrorKind::NotFound);
+        }
+
+        fn errno(code: i32) -> io::Error {
+            io::Error::from_raw_os_error(code)
+        }
+        fn fixture(group: u32) -> Identity {
+            Identity {
+                parent: 1,
+                group,
+                session: 10,
+                start: 900,
+            }
+        }
+        fn injected(pid: u32, code: Option<i32>) -> io::Result<Identity> {
+            identity_from(pid, || match code {
+                Some(code) => Err(errno(code)),
+                None => Ok(stat()),
+            })
+        }
+        fn scan(
+            anchor: u32,
+            outcomes: &[(u32, Option<i32>)],
+            pin: impl FnMut(u32, Identity) -> io::Result<u32>,
+        ) -> io::Result<Vec<u32>> {
+            let mut reads = outcomes
+                .iter()
+                .copied()
+                .collect::<std::collections::HashMap<_, _>>();
+            scan_members(
+                anchor,
+                outcomes.iter().map(|&(pid, _)| Ok(pid)),
+                |pid| injected(pid, reads.remove(&pid).unwrap()),
+                |observed| observed.group == 42,
+                pin,
+            )
+        }
+
+        #[test]
+        fn reaped_stat_read_keeps_exit_classification_with_context() {
+            for code in [libc::ESRCH, libc::ENOENT] {
+                let error = injected(7, Some(code)).err().unwrap();
+                assert_eq!(error.kind(), io::ErrorKind::NotFound);
+                assert!(vanished(&error));
+                assert!(error.to_string().contains("pid 7"));
+            }
+            let denied = injected(7, Some(libc::EACCES)).err().unwrap();
+            assert_eq!(denied.kind(), io::ErrorKind::PermissionDenied);
+            assert!(!vanished(&denied));
+            assert!(!vanished(&injected(7, Some(libc::EIO)).err().unwrap()));
+        }
+
+        #[test]
+        fn scan_skips_only_non_anchor_pids_that_vanished() {
+            let members = scan(
+                1,
+                &[
+                    (1, None),
+                    (2, Some(libc::ESRCH)),
+                    (3, Some(libc::ENOENT)),
+                    (4, None),
+                ],
+                |pid, _| Ok(pid),
+            )
+            .unwrap();
+            assert_eq!(members, [1, 4]);
+            for code in [libc::EACCES, libc::EIO] {
+                let error = scan(1, &[(1, None), (2, Some(code))], |pid, _| Ok(pid))
+                    .err()
+                    .unwrap();
+                assert!(!vanished(&error));
+            }
+            let anchor = scan(1, &[(1, Some(libc::ESRCH))], |pid, _| Ok(pid))
+                .err()
+                .unwrap();
+            assert!(anchor.to_string().contains("pid 1"));
+            let enumeration = scan_members(
+                1,
+                [Err(errno(libc::EIO))],
+                |_| Ok(fixture(42)),
+                |_| true,
+                |pid, _| Ok(pid),
+            );
+            assert!(enumeration.is_err());
+        }
+
+        #[test]
+        fn scan_skips_pin_failures_only_when_the_pid_vanished() {
+            let pin = |code: i32| {
+                move |pid: u32, _: Identity| if pid == 2 { Err(errno(code)) } else { Ok(pid) }
+            };
+            let members = scan(1, &[(1, None), (2, None)], pin(libc::ESRCH)).unwrap();
+            assert_eq!(members, [1]);
+            let error = scan(1, &[(1, None), (2, None)], pin(libc::EACCES))
+                .err()
+                .unwrap();
+            assert_eq!(error.kind(), io::ErrorKind::PermissionDenied);
+            let anchor = scan(1, &[(1, None)], |_, _| Err(errno(libc::ESRCH)));
+            assert!(anchor.is_err());
+        }
+
+        #[test]
+        fn pin_classifies_post_pidfd_stat_race_without_relaxing_identity() {
+            // A live PID makes pidfd_open succeed; the stat read is injected.
+            let pid = std::process::id();
+            let own = identity(pid).unwrap();
+            let pin = |code: Option<i32>| {
+                Process::pin_with(pid, own, |pid| match code {
+                    Some(code) => injected(pid, Some(code)),
+                    None => Ok(fixture(own.group)),
+                })
+                .map(|process| process.pid)
+            };
+            let reaped = pin(Some(libc::ESRCH)).err().unwrap();
+            assert!(vanished(&reaped));
+            let denied = pin(Some(libc::EACCES)).err().unwrap();
+            assert!(!vanished(&denied));
+            // A different start time is PID reuse, not exit.
+            let reused = pin(None).err().unwrap();
+            assert!(!vanished(&reused));
+            assert_eq!(
+                scan_members(
+                    0,
+                    [Ok(pid)],
+                    |_| Ok(own),
+                    |_| true,
+                    |pid, expected| Process::pin_with(pid, expected, |pid| {
+                        injected(pid, Some(libc::ESRCH))
+                    }),
+                )
+                .unwrap()
+                .len(),
+                0
+            );
         }
     }
 }
