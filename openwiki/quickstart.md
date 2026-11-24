@@ -5,11 +5,13 @@ description: LVK の目的、主要概念、操作段階と調査先。
 tags: [overview, quickstart]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-23T00:23:16.293Z
+    at: 2026-11-24T02:54:42.940Z
 sources:
+  - id: openwiki-source-71c7c94338c94576d4db90b5
+    resource: repo://packages/web-core/src/shared/dialogs/settings/settings/settingsRegistry.tsx
   - id: openwiki-source-23775c3de52f3ab95a13cb8b
     resource: repo://README.md
-generated: { by: "codex", at: "2026-11-23T00:23:16.293Z" }
+generated: { by: "codex", at: "2026-11-24T02:54:42.940Z" }
 ---
 
 # クイックスタートと調査案内
@@ -31,6 +33,8 @@ Lucky Vibe Kanban（LVK）は Kanban で仕事を計画し、coding agent を実
 | 内容受入 | 成果や Wiki が目的と根拠を満たすかの判断。receipt や公開だけでは保証されない |
 
 ## 調査先
+
+- 共有条件で仕事を絞り込むには[保存フィルター](concepts/saved-filters.md)、通常の表示と音声は[カンバン](concepts/kanban-board.md)を読む。保存フィルターは設定から管理し、機械条件・自然文評価・共有リンク・MCPの契約を確認する。[設定入口](../packages/web-core/src/shared/dialogs/settings/settings/settingsRegistry.tsx)
 
 - 概念の関係は [用語集](concepts/glossary.md)、実行と回復は [Agent Runtime](architecture/agent-runtime.md) を読む。
 - ファイル・差分・実行状態は [Workspace の確認](operations/workspace-inspection.md)、外部接続と receipt は [外部 MCP](integrations/remote-access.md) を参照する。

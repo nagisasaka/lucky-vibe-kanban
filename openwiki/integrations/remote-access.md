@@ -5,23 +5,29 @@ description: 外部接続、認可、receipt と実行の境界。
 tags: [mcp, remote, operations]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-23T02:42:04.517Z
+    at: 2026-11-24T02:54:42.940Z
 sources:
   - id: openwiki-source-968299ada9380d38d5782188
     resource: repo://crates/mcp/src/task_server/tools/model_capabilities.rs
+  - id: openwiki-source-15800b1548293b5a66707572
+    resource: repo://crates/mcp/src/task_server/tools/saved_filters.rs
   - id: openwiki-source-c6b92f5dd86f9cc046935fa4
     resource: repo://crates/mcp/src/task_server/tools/sessions.rs
   - id: openwiki-source-b5eef61c63c11d3fe10b3ccf
     resource: repo://crates/server/src/remote_mcp/launch.rs
   - id: openwiki-source-6adda10f98b079272f82a4cc
     resource: repo://crates/server/src/remote_mcp/operations.rs
+  - id: openwiki-source-a07fe658f0e63a34c99525fa
+    resource: repo://crates/server/src/remote_mcp/saved_filters.rs
   - id: openwiki-source-ab70a43b3f61734a8322478b
     resource: repo://crates/server/src/remote_mcp/stdio.rs
   - id: openwiki-source-a74a882889154c2549e88f41
     resource: repo://crates/server/src/routes/sessions/executor_config.rs
   - id: openwiki-source-bdb4dae5722fe76ec5e44001
     resource: repo://crates/server/src/routes/workspaces/create.rs
-generated: { by: "codex", at: "2026-11-23T02:42:04.517Z" }
+  - id: openwiki-source-8fa37c0e4986291e7871c7fa
+    resource: repo://skills/lvk-orchestration/references/saved-filters.md
+generated: { by: "codex", at: "2026-11-24T02:54:42.940Z" }
 ---
 
 # 外部アクセス・MCP
@@ -77,3 +83,11 @@ stdio の新規 Session は最初の実行時に既存 Session ロックを取�
 - 通常起動の追加入力は、Wiki や Auto-merge の専用起動設定を一括で変更するものではない。
 
 [remote 受付試験](../../crates/server/src/remote_mcp/launch_tests.rs)、[設定の保存・読戻し試験](../../crates/server/src/routes/sessions/executor_config.rs)、[stdio 転送試験](../../crates/mcp/src/task_server/tools/sessions.rs)と [Codex 起動入力試験](../../crates/executors/src/executors/codex.rs)は入力・拒否・要求同一性・保存を扱う。実 provider の採用値、隔離 remote MCP 実機 E2E、実サーバーでの stdio 同時初回起動は別途確認が必要であり、これらの試験から実施済みとは扱わない。
+
+## 保存フィルターを共有する
+
+[保存フィルター](../concepts/saved-filters.md)の定義・結果はUI、remote、stdioで共通である。読取の `list_saved_filters`・`get_saved_filter`・`get_saved_filter_results`・`get_saved_filter_link` と、変更の `create_saved_filter`・`update_saved_filter`・`delete_saved_filter`・`evaluate_saved_filter` を提供する。全てProjectへのアクセスと `lvk:read` を要し、変更・評価は `lvk:write` も要する。[remote](../../crates/server/src/remote_mcp/saved_filters.rs)・[stdio](../../crates/mcp/src/task_server/tools/saved_filters.rs)
+
+結果取得はAIを起動せず、evaluateはサーバー側の推論を起動し得る。受付後は `get_operation` と結果のstate・staleを確認し、未評価や失敗を完了した0件と扱わない。結果の次ページは評価revisionを固定し、競合なら先頭から読み直す。リンクは安定した定義IDを選択するURLであり、利用者の開いている画面を遠隔変更しない。
+
+[正本Skillの保存フィルター参照](../../skills/lvk-orchestration/references/saved-filters.md)と[Claude配布用参照](../../plugins/lvk-orchestration/claude/skills/lvk-orchestration/references/saved-filters.md)は、保存・評価の依頼範囲、request IDとrevision、再送・結果確認を案内する。リポジトリ内の同期と、接続先への配備・登録済みplugin更新は別である。実際に接続したcatalogとschemaで利用可能性を確かめる。

@@ -1,20 +1,20 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:d9af6f5850f7e366d9d236cbb8cf6f43e67735fa1a05f6af69d80b4fea95e1ca",
+  "pageVersion": "sha256:de883ef1eacef7c4589058c341721aba2bdb871b36115e415d7b20f131e357a0",
   "claims": [
     {
       "id": "claim_f00ebae85edf4208a33499f323bab7c8",
       "statement": "外部 MCP は Issue、実行、統合、状態読取などの tool を公開する。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/remote_mcp/mod.rs#L460-L503",
-          "version": "repo-lines-v1:sha256:2213e96582960dae06286bfb92a864e8e0ef381970915d94aef7daa020841f86:eyJzZWxlY3RlZExpbmVDb3VudCI6NDQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYyMDg2YjYwYTc0ZDYzZjA0MjVhZDAxZjA4ZmY4OGFjZDAzMzMyNmY0NTk4NzM2NDM3MjM3YzQyZjAwNjNiMjciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg1OWI2MjJmY2E2OTI2M2ViNDNlMmZlMTU0YjAwMGQxNWI3ZjFjNjA0NjIxNWVjY2RiOWE5ZDUwNDBlMTk3ODgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE5ZTc2MzU1Y2YxMTk5NDgwYzNmOTk4MzZiMTQ4NmM4NDFkODkxZmFhZDkwNGM2MDhlMDkzMDIyZDM3NTdhZWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImM2Y2NiMWZkMjY2Mzg2M2Y0NmVhZTBkMDlkY2YzYzI0MDJjYTYxYzE3YTViYTM2ZDQ3MDMzNGM1MWVmZmZmNzgifQ"
+          "resource": "repo://crates/server/src/remote_mcp/mod.rs#L465-L509",
+          "version": "repo-lines-v1:sha256:46fc6c9450f1f20d8d337b5277b999cf6d84b8e967b268b53b81a855582999fb:eyJzZWxlY3RlZExpbmVDb3VudCI6NDUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYyMDg2YjYwYTc0ZDYzZjA0MjVhZDAxZjA4ZmY4OGFjZDAzMzMyNmY0NTk4NzM2NDM3MjM3YzQyZjAwNjNiMjciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg1OWI2MjJmY2E2OTI2M2ViNDNlMmZlMTU0YjAwMGQxNWI3ZjFjNjA0NjIxNWVjY2RiOWE5ZDUwNDBlMTk3ODgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE5ZTc2MzU1Y2YxMTk5NDgwYzNmOTk4MzZiMTQ4NmM4NDFkODkxZmFhZDkwNGM2MDhlMDkzMDIyZDM3NTdhZWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImM2Y2NiMWZkMjY2Mzg2M2Y0NmVhZTBkMDlkY2YzYzI0MDJjYTYxYzE3YTViYTM2ZDQ3MDMzNGM1MWVmZmZmNzgifQ"
         }
       ]
     }
   ],
   "verification": {
     "by": "openwiki/0.9.0",
-    "at": "2026-11-23T00:23:16.293Z"
+    "at": "2026-11-24T02:54:42.940Z"
   }
 }

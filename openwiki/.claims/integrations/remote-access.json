@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:1cb9b54c0be2b0a8ba2389fc0649a3bd91b4eab9b7c9ee53f5377121c78d3f34",
+  "pageVersion": "sha256:cdceae66b744185e11984d4a135221da14c5c3a843e888b107c1edb714b30191",
   "claims": [
     {
       "id": "claim_bed538bcf8c240c58bd6aaec32bb2894",
@@ -71,7 +71,7 @@
       "statement": "stdio初回Session実行は既存Sessionロック下でキューとRunを再確認し、保存設定に明示値を適用して検証・起動する。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/remote_mcp/stdio.rs#L785-L909",
+          "resource": "repo://crates/server/src/remote_mcp/stdio.rs#L786-L910",
           "version": "repo-lines-v1:sha256:c77ce01fe73e45336ace767783e6c3c0282354aacff4a8f27469a50385d2fc6a:eyJzZWxlY3RlZExpbmVDb3VudCI6MTI1LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI0NWYzODMxNGY1NmFjYzkzNTljZjI2MzVlMDg4YTc1ZDRkYTIyOWRmMDM4Mzk0MGQ0MGRjYjMxODQ2ODk4ZTU3IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIwYzEyYjVlM2ZmZDgzOTU2Zjk0NjRmMzJkNjg1YjQ5NmRiOGNiZDJhZmY4Yzg3NGE1OTU5NjRlYjJlMDIzYmU1IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIwZjZhMDM3OGZkZTI4NDlmMmE4MTdjMTQ2NDNjNDlmNGYwNWI3M2JkYTA4OGY3NDdiYzUyMjZlNzFlY2Y0ZDcxIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiIwZjYwOWIzMWI5NWNhZTA0MzRkZjQ2MjQ3NWI5YmU0ZGU3ZWMzOWJkMjE0MGFmZDJiNTkwZGI3YzNmYzYyNjJkIn0"
         }
       ]
@@ -89,10 +89,34 @@
           "version": "repo-lines-v1:sha256:3ba9c35bf7cee07fa4cc1cddff0fe894a73f4089e59c2a7c1d82ec5de86df72b:eyJzZWxlY3RlZExpbmVDb3VudCI6ODUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ3NDdkZDYwOWI0ZmU2YjdjMWU2ZWFkNjE0NGEwNjYxMTM1Mzc0MzdiOTI5ZTUzOWM1YjRiMGU0MTIzMDM5NzciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU2YjQwOWMxYTE2YWY3ZDU0NWQzMzdmYzJkMmQ3ZmFmZThlZWY0MWIzMzIwNWVlNTVkOGVlODY5NGI4ZjY5ODUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY0NGExMzU0NmUxNGFlZDIwMDFkM2I1Njc0MmU5YzE4ZGViNDVmMjc0ODk3Mjg0MmM2NWY4MmY5YzI5N2NlYzIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFmNmE2MTk1NDJmZmI3Yzc4MGUyOWMxZDFiYTMyMzQyOGJiZTIwMzVkMTUyYTQyOWU0NzBlOGU1NzFlYjZkODcifQ"
         }
       ]
+    },
+    {
+      "id": "claim_c9225c946d2240d6b73b14a9f7a4268d",
+      "statement": "remoteとstdioの保存フィルター8操作は共通契約を使い、Projectアクセスとread/write権限を区別する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/mcp/src/task_server/tools/saved_filters.rs",
+          "version": "repo-file-v1:sha256:b6135cfb2b4634db1a0c776ab88219c3721fdea58ad901a016368c37768fcdc4"
+        },
+        {
+          "resource": "repo://crates/server/src/remote_mcp/saved_filters.rs",
+          "version": "repo-file-v1:sha256:8f8ed8ce2c2ed6b289a9aae0632c185fb55437132b570637695421513e883bf2"
+        }
+      ]
+    },
+    {
+      "id": "claim_73dc2318b63548048d9c406f716d117e",
+      "statement": "保存フィルターSkillは接続先catalogの確認と保存・推論の依頼範囲、receipt・評価結果の区別を要求する。",
+      "evidence": [
+        {
+          "resource": "repo://skills/lvk-orchestration/references/saved-filters.md",
+          "version": "repo-file-v1:sha256:b94e37c8f8f49f102a6d8092300f5097d94d34933fa0b1a795783c20268224af"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.9.0",
-    "at": "2026-11-23T02:42:04.517Z"
+    "at": "2026-11-24T02:54:42.940Z"
   }
 }

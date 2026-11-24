@@ -5,7 +5,7 @@ description: Project の Issue を状態別に表示するボード。
 tags: [kanban, board, project]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-23T22:15:01.079Z
+    at: 2026-11-24T02:54:42.940Z
 sources:
   - id: openwiki-source-f4e0f9b2ce513d3f8b8b070e
     resource: repo://crates/executors/src/executors/provider_adapter.rs
@@ -13,12 +13,16 @@ sources:
     resource: repo://crates/server/src/routes/board_run_events.rs
   - id: openwiki-source-699012344cbfd472d165f098
     resource: repo://crates/server/src/routes/local_remote/board_api/mod.rs
+  - id: openwiki-source-f7410fb786e9a362721ca134
+    resource: repo://packages/local-web/src/app/navigation/AppNavigation.ts
   - id: openwiki-source-92cb09ac7279f8310b0dd21e
     resource: repo://packages/local-web/src/routes/_app.projects.%24projectId.tsx
   - id: openwiki-source-fd4f99568f51e2e5788058d5
     resource: repo://packages/web-core/src/features/kanban/model/runObservationPolling.ts
   - id: openwiki-source-fa9be7983cc21002d2346ef7
     resource: repo://packages/web-core/src/features/kanban/model/runSpeechQueue.ts
+  - id: openwiki-source-e0c2de9e01617a8949b78360
+    resource: repo://packages/web-core/src/features/kanban/ui/KanbanContainer.tsx
   - id: openwiki-source-2706dbba10a20a516c29675e
     resource: repo://packages/web-core/src/features/kanban/ui/RunSpeechProvider.tsx
   - id: openwiki-source-4f5acbe99dd0d72515b7e82b
@@ -29,9 +33,11 @@ sources:
     resource: repo://packages/web-core/src/shared/lib/speechSynthesis.ts
   - id: openwiki-source-6393181e558dceee5ef998cc
     resource: repo://tests/kanban/run-speech-lifetime.mjs
+  - id: openwiki-source-2ed526da66878b98eebfeeff
+    resource: repo://tests/saved-filters/navigation.spec.ts
   - id: openwiki-source-eece9c51da74bcdb3fe07f45
     resource: repo://tests/speech-synthesis/settings.spec.ts
-generated: { by: "codex", at: "2026-11-23T22:15:01.079Z" }
+generated: { by: "codex", at: "2026-11-24T02:54:42.940Z" }
 ---
 
 # Kanban board
@@ -41,6 +47,20 @@ Kanban board は [Project](project.md) の [Issue](issue.md) を [Column](column
 [Card](card.md) の移動は共有 Issue の状態や順位を変更する。表示 filter と実行状態は別であり、表示列だけから処理の完了や統合を判定しない。自動状態同期や archive の詳細は [Project と Issue](project-and-issue.md) にある。
 
 Project の route は Kanban 画面を開き、Board API はその Project の Issue と status を取得する。[画面入口](../../packages/local-web/src/routes/_app.projects.$projectId.tsx)・[Board API](../../crates/server/src/routes/local_remote/board_api/mod.rs)
+
+## 保存条件で仕事を絞り込む
+
+[保存フィルター](saved-filters.md)はProjectで共有する条件を選び、現行のIssueから対象集合を求める。設定の「カンバンボードのフィルター」で管理し、ボードの選択欄または安定ID付きリンクから適用する。名前や条件の変更後も同じIDを参照する。
+
+選択中は保存条件の結果を表示し、一時検索・Team/Personal・タグ・archiveタブ・blocked非表示では追加の絞り込みを行わない。結果に含まれるhidden列のIssueと子Issueも表示する。通常条件へ戻るには保存フィルターを解除する。表示件数は取得できた対象Issueに基づき、一括操作は表示集合に対応する選択に限る。[表示と選択](../../packages/web-core/src/features/kanban/ui/KanbanContainer.tsx)
+
+未評価・初回評価中・失敗を完了した0件と区別し、前回結果を表示する場合は古い結果であることを示す。評価結果のIssue本体がまだ読み込まれていない間も確定一覧にしない。[状態表示](../../packages/web-core/src/shared/components/saved-filters/SavedFilterStatus.tsx)・[評価hook](../../packages/web-core/src/shared/hooks/useSavedFilter.ts)
+
+保存フィルターの選択と解除は現在のProject内のWorkspace・Sessionを保ってURLを更新する。同じProjectのIssueへ移動するとフィルターを保持し、別Projectへの移動では持ち越さない。[AppNavigation](../../packages/local-web/src/app/navigation/AppNavigation.ts)
+
+保存条件の作成・編集は共有定義の変更であり、選択そのものはIssue本文や関係の書換えではない。機械条件の検索と通常のボード検索では対象項目や関連展開が異なるため、[条件の意味](saved-filters.md#機械条件の意味)を確認する。保存フィルター選択は以下のProject単位の音声購読の対象を絞り込まない。
+
+[ブラウザfixture](../../tests/saved-filters/integration.spec.ts)と[ナビゲーション試験](../../tests/saved-filters/navigation.spec.ts)は条件編集・状態・リンク・選択解除を扱う。fixtureは実providerや実サーバーの全画面受入を証明しない。
 
 ## Run の進捗を音声で聞く
 

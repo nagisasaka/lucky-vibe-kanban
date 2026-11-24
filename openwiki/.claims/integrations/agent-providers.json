@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:feb7416448c21f3150553898a7a9df38cb92b2ed360c447d389d7597cc6064ee",
+  "pageVersion": "sha256:aa3fe366aa40a3932323634d710b6b580d6d84f0be9904ff23f9dd6a4af9886d",
   "claims": [
     {
       "id": "claim_5dd974441b044185aec7cc0c264e31ee",
@@ -17,7 +17,7 @@
       "statement": "Claude subscription profile は実行前に CLI の subscription login を検査する。",
       "evidence": [
         {
-          "resource": "repo://crates/executors/src/executors/claude.rs#L807-L807",
+          "resource": "repo://crates/executors/src/executors/claude.rs#L821-L821",
           "version": "repo-lines-v1:sha256:f5f0f7a01b5bac9a496ba4bf11050544b37948e66e53be2dfbcf01016dcf58fa:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZjVmMGY3YTAxYjViYWM5YTQ5NmJhNGJmMTEwNTA1NDRiMzc5NDhlNjZlNTNiZTJkZmJjZjAxMDE2ZGNmNThmYSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZjVmMGY3YTAxYjViYWM5YTQ5NmJhNGJmMTEwNTA1NDRiMzc5NDhlNjZlNTNiZTJkZmJjZjAxMDE2ZGNmNThmYSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMWY4M2NlYzNmY2Y1N2JkY2M5MzZjNjU5ODZmNjEzMDg4ZjA1NTk5YmJhOTBjOGQ5NzY0MzJlNjRlYWYwNDcxZCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZmIxZDY4OGNkNDMwNGViNmM3NjZlZjM4ODU2OTJlNWMzODZjMmRkNzA1YzBhNzVlYWUyODc3NTc1MTJiNjM3ZCJ9"
         },
         {
@@ -25,10 +25,38 @@
           "version": "repo-lines-v1:sha256:d6b48156983fff7c26c6a021def43454089b7036fc672dc295e7bd3f801d6a90:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNDJlY2Y3MjZmYTdlYmVhNjVhMWIxZWE5N2NmNmI1ODE4Zjc2Mjk0YWY3N2M5NGExM2U4M2VjYjg2NDY5YmYwYyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMzY4Y2I0ZjlkNTE5MmYyYmQ3NWQzNjUzNDBkNjU4NDliOWNmNWM2NjAxZWU4MmY4ZmJhZDdhODUzODE2MjMxYyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMTYyZWU1N2U0MWE4YzIwYWUwMTY0ZGYyNjE0MzlkY2M0OTlkMzUyMDgzNDE1MTUxNmQwNDdlOGRlYWU4YTQ2NiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNDBkZjFjNjc5ZDI4Y2FiZTUyOGVkMTc2MDI0MWQ4NDFhNzg0NzU3NjU3YWFiOGRmNjMyZWNkZWNmZDZjMjEwNCJ9"
         }
       ]
+    },
+    {
+      "id": "claim_02a9073b2e8041b3afa1933d945f77a3",
+      "statement": "保存フィルターの推論専用roleはhostが永続予約と実行文脈を照合して決め、通常REVIEWと区別する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/local-deployment/src/agent_run_port.rs",
+          "version": "repo-file-v1:sha256:dbc61b4cf2fafb10fe49a50bde437b95e5cb6887b7355f71da378e980c37db35"
+        }
+      ]
+    },
+    {
+      "id": "claim_22455bed0f8c400c8cef7e783c825cb2",
+      "statement": "推論専用実行はCodexとClaudeの工具・MCP・hook等を制限し、profile overrideによる迂回を拒否する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/executors/src/executors/claude.rs#L930-L960",
+          "version": "repo-lines-v1:sha256:0dca58e61f0043dd955c5c4e9f42daac8e4376eb89893d30e151d72f22963660:eyJzZWxlY3RlZExpbmVDb3VudCI6MzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJiNmMyYjg3ODI5NDgyMjQwMjQxNGU1YjBlNjZlN2I1MWQ3ZTc5ZDAxZmZiYTIwYzVhZmFiOGIwNjRmNmUxMzkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRhZDUzOTU1MDMwMmM3ODZmMTkzNjBjMDNlMTVlODM0NDVlOGY4YTQzNTM3Y2FiNzNjNjk2ZmExNmJlZTVmNGIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjlkNDFhMTNjMDVhYmMxMDhkZjViMmMwMzhmZTM5NjU1NTM4NTBhZDYxNzljNTZkNTE2ZWZjMzYzOGI4ZWU0NDQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQ2YjIyOTRkZDI1ZjdlMjc4YmQ0NTU1NzUwNzU0ZmFjM2E2ODhkYjBkMWQ3NWY0YzZjYTlhMDkwNGM3MmQ2NmUifQ"
+        },
+        {
+          "resource": "repo://crates/executors/src/executors/codex.rs#L1208-L1222",
+          "version": "repo-lines-v1:sha256:62e6003952e2785bc1378da77b27c8aa45b8890a719288353f71f76cf18ba0c8:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ4MzRkYzRmY2I1MTlmMTZhZTNmYzBkYWFiZGVmZDdmOGY5NDZjOWU2Yzg1OGQzOTkwNWNlMjBlMTI4NDllMzkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMzODg1NzJiM2I3YmEyODZkMDVhODAyMWE3M2VkNTZjNWY1MzVkNGU3MDNhYjQzN2U5MDNiNzJhZjg3OTA3N2IiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQ1NTkyZGQzY2Y3YjJkZThiMTVmMjM0ZTg1YzI3NzFmODllZGJmNjY4NTA0NDYzNTNmYmFmZDMyMDdmYWI4ZjQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY1NjJkNjZiMGI3YjhkYmVkNjkyMWY1YTNlYWZkMjljZDI4NGMwZTU2MDdkNjRiYjU2NzJkNjUyMWM4MTg4ZmIifQ"
+        },
+        {
+          "resource": "repo://crates/executors/src/source_protection.rs",
+          "version": "repo-file-v1:sha256:55deba47bb5b460fba9bcc3b9e7dcb91553a219fe089b2967d30af87bf7eae9f"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.9.0",
-    "at": "2026-11-23T00:23:16.293Z"
+    "at": "2026-11-24T02:54:42.940Z"
   }
 }

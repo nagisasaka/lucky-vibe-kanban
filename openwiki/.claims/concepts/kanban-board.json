@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:e85c7fbe5b38f47d883972bd9394e8c323e23a93bdb33d35f8e4b2b02742bfec",
+  "pageVersion": "sha256:402cdadcd96e6b7d88262a8db5807cf03aa273d78e5bdad4e2a5918309a51dab",
   "claims": [
     {
       "id": "claim_625a2942e9e646aab640baf76f348af5",
@@ -177,10 +177,38 @@
           "version": "repo-lines-v1:sha256:a04a38fbe687738bddc5da3fdb861892ce23f54f96d505ca85a82999f35a8d29:eyJzZWxlY3RlZExpbmVDb3VudCI6MzIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE1NzQ0NjViMDQzY2QyYWVmNWY3ZWFkMTEyNmFjMzQ0NWNhZWM5MGI5YTBlYjU3YmY0ZDZjMGQ5OWEzNWFiOTciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjgyYWEzMjMwZTZkYzAxMzk0MGQyZDQ5ZDFhNGU4NDJlYmUzNDEzNGZiNzVlZjBmZWM0MDhkYzM1NDNlMTNmOGYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
         }
       ]
+    },
+    {
+      "id": "claim_475a3ecd92854da68946eb6a68d28b9d",
+      "statement": "保存フィルター選択中は通常の一時絞り込みより保存結果を優先し、hidden列のIssueを含めて表示する。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L371-L397",
+          "version": "repo-lines-v1:sha256:bbb261d330fb1e34db131677051a61495221311db94b48979fb137b2eb639cea:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIxY2Y1Njg2OWQyODkwMjUyY2I1YWMxZWYxNmIxYzhkYTEzMGE0M2FkMzU4MmI0YTg5OTE5Y2ZmM2Y4ZGI0ODciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU0NjExMGU0ZDM3YzkxNjZmYmRhOTViOWQ1YTYxM2NmMDFlYmFjYjVhZDc2MjkwNTNhODBjZjg2ODc1MjgzZGEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImEwYmI3ZTk3YjdmYjU2OWI1OTBlNWM0YjEzY2QwZTRjNDhmNjZjMDAxYjU4NTlkOTU2NDljZTZmN2JkMTU5MDUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjljMWZiZjFjNTZiNjI4ODdhZDVhYjNhMWJhOTM4OTE4NWVmZjFiNWNmYjA4NjlmYjIzN2RjZjlhODhhMmRiMTcifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L544-L555",
+          "version": "repo-lines-v1:sha256:9b57916d224ba53572415823e1387fbb38d2f724718f9a947ce7ff8c84fdfc83:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJkMzg1ZGQwY2E4MTdmYzY3ZjcwMWNiMzBmNmE5MmYxZjNkYzU1OWNmNzM0OWVjODk5ODJlNzQ0MzU2ZGQ2ZmEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU5NjZmYmZhODg5OThkYTc0NjU2YzUwMTk0OTU2YzI1ZjA4NDk0NTc2NjBjMDA5ZmU2M2QxZTlmYTlkYzkzMWMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImMwMzNkMDIxN2ViOGIzMGFjMDM0MDQyNDhlYzBiNTI5NTE4MTQ2OGYwNTFmYTY0MGRjOWJlMWIzMTkwNWYwYWEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjI3ZjFiYmM2NWFiY2I1MWZkYzQ4NjUxZDdiN2MwOWIyMmZmYTBiNjVjMWM3NjNjZDBhMmVhOWIxMWQ2ZThkODcifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_6413d6526a564ebda21b6d166dd3e955",
+      "statement": "保存フィルター選択・解除は現在のProject内のdestinationとsearchを保持してURLを更新する。",
+      "evidence": [
+        {
+          "resource": "repo://packages/local-web/src/app/navigation/AppNavigation.ts#L274-L290",
+          "version": "repo-lines-v1:sha256:812902ddb318f94e118aafd7cd6311a2d1145255df5a956c9ec4afd57d7ec74f:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA2MTAwNzcyZDQ4ZTZlMTAyNzM1NmRkNGVjMTdlMmE4ZTUzZmQyNmM1MTRhYjhhN2ZhYTE2M2Y4ODQ1OTk2OWYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFmMGNkYjk3MmE3YmZiN2VkMjQ2ZjlmZjY3MjM4NWU1NWY0OTY4ZmMxMTA0M2RjNWI2ODRkNTFkZmEzMWRiY2IiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImMzMGYyMDc2NGUwYzQzMjViYWUyNjY4ZDQ2MDJkMmFiMTEwZjUzMmVkMDI0MGJhMzJlMGM4MDg5Y2YyNzY4YzQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUyNGM5YzNkZmFjN2M2NWRjZDkwNzNmYTFlZWJhMTkyZTE0OTZlMmE2MDE4ZjBmODNlMTYyNWJmZWFkYmI4ODEifQ"
+        },
+        {
+          "resource": "repo://tests/saved-filters/navigation.spec.ts",
+          "version": "repo-file-v1:sha256:ea18da8f42d66a8c4fc163dddd0f4f115a18945c29e85a79cd5505ba55cd6ea3"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.9.0",
-    "at": "2026-11-23T22:15:01.079Z"
+    "at": "2026-11-24T02:54:42.940Z"
   }
 }

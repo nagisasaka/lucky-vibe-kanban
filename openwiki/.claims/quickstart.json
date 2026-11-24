@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:4870a13a273273973e9f023a8cc8da152eb01e87fa6fb662725fe4cb52690c5a",
+  "pageVersion": "sha256:e05a798e9cb843b9cf30b899d3a5d93440a9eb7a6dd1d9aca62960236556d7ce",
   "claims": [
     {
       "id": "claim_c601391949a2435db349e4eb0c479394",
@@ -21,10 +21,20 @@
           "version": "repo-lines-v1:sha256:995125fd7f8259c9b823829edb080c1aedf019e8a2cd5ac3cc5e87af02d8a513:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiODU0ZTc3Yzc1N2JmOTA5YjlmMWI4ZjE1MWE0N2NhMTM4MjIwNGVjOGNjNjhhYTAyODRjYjczOTkxMTA5ODYxNCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNmRhZTQzZjBmODkyMDE1MTk2YWE0ZWFmYjUwYWJmNTE3YzgxZGZlNGY2OGExMmIwZjU2NTE3MDRjNWE4ZGNjMSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZDU5MDJmMjUxMjRiNjRjNmI1NWJkNGVkMjY5NDRiYzM0ODAzMTA3NDRiMmM2Yjc0ZjVjZWE3OTc3MDkxMjUzNCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYjBhMmE2YTg3NjI0YjhiYzVjMjI0YTk4ZWRhZDRmN2VmNzNiMzRiMjBlMWVmOGQzN2UxODE2ODFkMzY0OTI2YSJ9"
         }
       ]
+    },
+    {
+      "id": "claim_ecc9806524f6458cbc57afb8e4ea1e9f",
+      "statement": "保存フィルターの共有条件は設定の専用セクションから管理する。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/shared/dialogs/settings/settings/settingsRegistry.tsx",
+          "version": "repo-file-v1:sha256:40eab9cd811439d906a9ba3a1dde181a3e2335d25d9b057b880fea8b4ef74cc9"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.9.0",
-    "at": "2026-11-23T00:23:16.293Z"
+    "at": "2026-11-24T02:54:42.940Z"
   }
 }

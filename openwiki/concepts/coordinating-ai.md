@@ -5,7 +5,7 @@ description: MCP から仕様相談、委任と進捗確認を行う AI の役�
 tags: [orchestration, mcp, agent]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-23T00:23:16.293Z
+    at: 2026-11-24T02:54:42.940Z
 sources:
   - id: openwiki-source-71f837a8aa36443ad9688945
     resource: repo://crates/server/src/remote_mcp/mod.rs

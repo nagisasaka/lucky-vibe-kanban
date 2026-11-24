@@ -5,15 +5,19 @@ description: 仕事、作業場所、会話、統合と記憶の用語。
 tags: [glossary, concepts, terminology]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-23T00:23:16.293Z
+    at: 2026-11-24T02:54:42.940Z
 sources:
+  - id: openwiki-source-197f7022bc1d59dbb53ead2d
+    resource: repo://crates/api-types/src/saved_filter.rs
   - id: openwiki-source-d20a82e2192a07c687b838cb
     resource: repo://crates/db/src/models/agent_runtime.rs
   - id: openwiki-source-3e5425718d87b437a12edd60
     resource: repo://crates/db/src/models/session.rs
+  - id: openwiki-source-3c467ccf60af806a1327ad3c
+    resource: repo://crates/server/src/routes/saved_filters/mod.rs
   - id: openwiki-source-23775c3de52f3ab95a13cb8b
     resource: repo://README.md
-generated: { by: "codex", at: "2026-11-23T00:23:16.293Z" }
+generated: { by: "codex", at: "2026-11-24T02:54:42.940Z" }
 ---
 
 # LVK 用語集
@@ -28,6 +32,7 @@ generated: { by: "codex", at: "2026-11-23T00:23:16.293Z" }
 | Column (lane) | Board を状態ごとに分ける列。Project ごとに変更できる。[Column](column.md) |
 | Issue | 実際の仕事。本文に仕様と人間の意図を記録する。[Issue](issue.md) |
 | Project | 開発作業の大きな整理単位。複数の Git Repository を関連付けられる。[Project](project.md) |
+| 保存フィルター | Projectで共有する名前付き条件。安定IDを持ち、対象Issue集合は評価結果として導出する。[保存フィルター](saved-filters.md) |
 | Workspace | coding agent の作業場所。通常は一つ以上の Repo worktree を含み、DirectFolder もある。Issue に属する場合と独立する場合がある。[Workspace](workspace.md) |
 | Session | Workspace 内の coding agent との一つの会話。同じ Workspace の Session は作業木を共有するが会話 context は独立する。[Session](session.md) |
 | Agent Run (Run) | Session 内で agent が開始して終了する一単位。Retry は同じ Run 内の新しい Attempt である。[Run](agent-run.md) |

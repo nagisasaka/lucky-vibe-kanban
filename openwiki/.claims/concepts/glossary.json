@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:283e0dfbc044b8087854c09a049ef7d660c1404723798ab4342ab6b9db3bd871",
+  "pageVersion": "sha256:88d03b91340c9ff643ccccdddebb7b6bc107c8b88c06b785479744481c76d514",
   "claims": [
     {
       "id": "claim_b23abeecbbfa4e3eba815150affe2021",
@@ -25,10 +25,24 @@
           "version": "repo-file-v1:sha256:3b18d9845c68c947c6f32d69da40c83f3c47a0c73366cc3c104fd2f7b8a2d909"
         }
       ]
+    },
+    {
+      "id": "claim_25781bcd35b84a938a9e3a0c2430cd37",
+      "statement": "保存フィルターはProjectに属する安定ID付き条件で、対象Issue集合は評価結果として導出する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/api-types/src/saved_filter.rs",
+          "version": "repo-file-v1:sha256:0406334e887b970495bff9e273b228ea3c92c07235ef8d5acba5edab26feba60"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/saved_filters/mod.rs#L90-L173",
+          "version": "repo-lines-v1:sha256:6a7f8001254567587ab20366d72d01ed019f6a014dfe5bdd8c4917918895aed0:eyJzZWxlY3RlZExpbmVDb3VudCI6ODQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBhZDRkYWU3YTQ0ZDk2YTFhMDRkMTQxN2Q4MmQxNzY3YTEyNTczNDQxNDJkNTgzNzkwOWM4NWQyMjJjZmM3MTIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk4NzhlYzc2NzE0NjQ4N2Y5ZmU2M2Q1MTQ5Yzc5NDQxMzJlZWRmZTY4NmQ0NTU5YTY3M2I2ZjhkMzBiM2VjYTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImRiYzQxYTRmZTk0MTM5MWZlMzYzZDRlZDY1ZGU3ZjhhN2IzMTgxZjI3NTllNzc2NGQ4OGM1ZDRlMmQzODIyNWIifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.9.0",
-    "at": "2026-11-23T00:23:16.293Z"
+    "at": "2026-11-24T02:54:42.940Z"
   }
 }

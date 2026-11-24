@@ -26,6 +26,7 @@
 - [Repository Memory](repository-memory.md) - Run の意味記録、Git、Wiki と回復 artifact の境界。
 - [Repository shared storage](repository-shared-storage.md) - 登録 Repo ごとに Workspace 間で共有する Git 外の領域。
 - [Runtime access](runtime-access.md) - 外部 MCP の直接 file・process 操作と権限境界。
+- [保存フィルター](saved-filters.md) - Project共有の機械条件・自然文条件を管理し、現行Issueを評価する仕組みと状態・HTTP/MCP契約。
 - [Server access](server-access.md) - 初回認証、閉鎖状態と限定された operator 回復。
 - [Session と Agent Run](session-and-agent-run.md) - 会話、実行依頼、試行と継続の境界。
 - [Session](session.md) - Workspace 内で coding agent と行う独立した会話。

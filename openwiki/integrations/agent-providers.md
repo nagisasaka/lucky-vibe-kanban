@@ -5,7 +5,7 @@ description: provider の認証、profile、能力と MCP の境界。
 tags: [providers, codex, claude, mcp]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-23T00:23:16.293Z
+    at: 2026-11-24T02:54:42.940Z
 sources:
   - id: openwiki-source-bfcf08b9feacd16360e862a4
     resource: repo://crates/executors/src/executors/claude.rs
@@ -13,7 +13,11 @@ sources:
     resource: repo://crates/executors/src/executors/claude/auth.rs
   - id: openwiki-source-22b82518475034ade38104e6
     resource: repo://crates/executors/src/executors/codex.rs
-generated: { by: "codex", at: "2026-11-23T00:23:16.293Z" }
+  - id: openwiki-source-f23c89ae54db56391783fef4
+    resource: repo://crates/executors/src/source_protection.rs
+  - id: openwiki-source-788fa2f6f1a3d449a1a9efe4
+    resource: repo://crates/local-deployment/src/agent_run_port.rs
+generated: { by: "codex", at: "2026-11-24T02:54:42.940Z" }
 ---
 
 # Agent provider・設定・MCP・Skill
@@ -37,3 +41,11 @@ Claude の supervised 実行は対応する承認 service と直接 CLI の条�
 ## MCP と Skill
 
 MCP の設定・資格情報は provider の実行環境と権限に依存する。[外部アクセス](remote-access.md)と [実行時権限](../concepts/runtime-access.md)を参照する。selected Skill は name/path の参照で、通常 chat と Goal 起動では渡す場所が異なる。利用可能であること自体は必ず実行する指示ではない。[Codex 実装](../../crates/executors/src/executors/codex.rs)
+
+## 保存フィルターの推論専用実行
+
+[保存フィルター](../concepts/saved-filters.md)の自然文評価は既存のReview Runを使うが、通常のREVIEW全体を制限する設定ではない。hostは永続化したpending予約のWorkspace・Session・実行場所を照合して推論専用roleを選ぶ。Git外の専用direct-folderで起動し、通常のrepositoryやIssueの実行文脈を付与しない。[roleの決定](../../crates/local-deployment/src/agent_run_port.rs)
+
+Codexはfresh threadのみを許し、read-only・承認要求なし・environmentとdynamic toolsなしに固定する。shell・web・plugins・apps・hooksなどの設定も無効化する。Claudeは空のtoolsとstrictな空MCP設定を使い、slash command・hookを無効にする。profileの環境変数・command overrideでこの境界を迂回する設定は拒否する。[共通制約](../../crates/executors/src/source_protection.rs)・[Codex](../../crates/executors/src/executors/codex.rs)・[Claude](../../crates/executors/src/executors/claude.rs)
+
+これはモデルへのプロンプトだけの約束ではなく、hostとprovider起動引数の制約である。provider境界の単体試験とfixtureによる意味評価は、実providerの認証・応答品質・実行成功の代用にはならない。

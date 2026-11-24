@@ -1,0 +1,110 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:1e3b2b58fe2a8f6918633120f5aa5cf442fa4f85f8834af37370f18bcd9787a3",
+  "claims": [
+    {
+      "id": "claim_51761cdf99344040a86d3f332bfece14",
+      "statement": "保存フィルターはProject共有の安定ID付き条件で、対象Issue集合は評価で導出する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/api-types/src/saved_filter.rs",
+          "version": "repo-file-v1:sha256:0406334e887b970495bff9e273b228ea3c92c07235ef8d5acba5edab26feba60"
+        }
+      ]
+    },
+    {
+      "id": "claim_3e48c9c4f49b4ceba9580cbe586c8317",
+      "statement": "機械条件は項目間AND・項目内原則ORで、検索・期間・関係の明示的意味を持つ。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/routes/saved_filters/machine.rs",
+          "version": "repo-file-v1:sha256:4668409376ac674c5e44cc1d3ccf022b9597794fc2b2eb505fed7840c7ab2e0f"
+        }
+      ]
+    },
+    {
+      "id": "claim_8f486486bbae4a9ebdd937eb34c5ed62",
+      "statement": "意味評価は全Project snapshotを使い、機械候補だけに文脈を狭めない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/routes/local_remote/saved_filter_snapshot.rs",
+          "version": "repo-file-v1:sha256:34288f55daa92d53a5af35e1fe38d2d1617424be41407dd3aea15db06878681c"
+        }
+      ]
+    },
+    {
+      "id": "claim_493e1845d7b441dca85678ff74c47452",
+      "statement": "自然文評価はGit外のdirect-folder Workspaceで既存Review実行を用い、GETでAI起動せず同一失敗の再実行には明示retryを要する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/saved_filter_semantics.rs",
+          "version": "repo-file-v1:sha256:9e3a8164ed843ae222b0766d981f82a80a1bbf6280b2eabe2de9273bc2411b8e"
+        }
+      ]
+    },
+    {
+      "id": "claim_f1dd6171c4de4ee4bc23274298ead387",
+      "statement": "cacheは定義と証拠を追跡し古いgenerationの結果更新を防ぐ。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/saved_filter_semantics/engine.rs",
+          "version": "repo-file-v1:sha256:2b020d7388f02d7f2d55a6b0a6df4d0c65285930237e255ebf30da5a27f05e98"
+        }
+      ]
+    },
+    {
+      "id": "claim_b16c9721d2f6446fac93a4f012aaa882",
+      "statement": "結果は完了・未評価・進行・失敗とstaleを区別し、ページ継続には同じevaluation_revisionを要する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/routes/saved_filters/mod.rs",
+          "version": "repo-file-v1:sha256:6a553d1b7f1d7f99fb2ab745178c17608ffcb15dffdc72ec3f3e1ea8589b3d89"
+        }
+      ]
+    },
+    {
+      "id": "claim_d0a7632764444c2d944aa5aeb3e3c50a",
+      "statement": "MCPは共有契約の8操作を提供し変更受付receiptと完了を区別する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/remote_mcp/saved_filters.rs",
+          "version": "repo-file-v1:sha256:8f8ed8ce2c2ed6b289a9aae0632c185fb55437132b570637695421513e883bf2"
+        }
+      ]
+    },
+    {
+      "id": "claim_fff5012210c3439dbec2bafaa2b2636a",
+      "statement": "定義の更新と削除はrevisionを確認し、request receiptを保持して再送を処理する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/db/src/models/saved_filter.rs",
+          "version": "repo-file-v1:sha256:7811a0911ed90a085d6a88ca10332055694fad7f21f71f8f1cfd6e8aed1f0db1"
+        }
+      ]
+    },
+    {
+      "id": "claim_f1885ecad282497a9e216a70fc0ebf8a",
+      "statement": "保存フィルターの移行は専用3表を追加しcacheは定義削除に連動する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/db/migrations/20261123000000_saved_filters.sql",
+          "version": "repo-file-v1:sha256:c1ff592d89d3fb96f2d53b8cbbfe516e29583e8be37fca1f6d387881bffef005"
+        }
+      ]
+    },
+    {
+      "id": "claim_34d3b4735605499bb7b3f128251cfd44",
+      "statement": "ボードでは保存結果を優先し、選択解除は現在の同一Projectの行先を維持する。",
+      "evidence": [
+        {
+          "resource": "repo://packages/local-web/src/app/navigation/AppNavigation.ts",
+          "version": "repo-file-v1:sha256:711eb15c2847afec8f52d2d13c55626822f7acd4ee94e00eb52616472d9b2f34"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.9.0",
+    "at": "2026-11-24T02:54:42.940Z"
+  }
+}
