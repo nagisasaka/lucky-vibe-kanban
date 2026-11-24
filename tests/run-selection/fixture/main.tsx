@@ -12,18 +12,17 @@ import { presetOptionsKeys } from "@/shared/hooks/usePresetOptions";
 import { BaseCodingAgent, PermissionPolicy } from "shared/types";
 import "@/app/styles/new/index.css";
 
-await i18n
-  .use(initReactI18next)
-  .init({
-    lng: "ja",
-    resources: { ja: { common } },
-    defaultNS: "common",
-    interpolation: { escapeValue: false },
-  });
+await i18n.use(initReactI18next).init({
+  lng: "ja",
+  resources: { ja: { common } },
+  defaultNS: "common",
+  interpolation: { escapeValue: false },
+});
 const params = new URLSearchParams(location.search);
 const scenario = params.get("scenario") ?? "configured";
-const agent =
-  scenario === "claude" ? BaseCodingAgent.CLAUDE_CODE : BaseCodingAgent.CODEX;
+const agent = scenario.includes("claude")
+  ? BaseCodingAgent.CLAUDE_CODE
+  : BaseCodingAgent.CODEX;
 const preset =
   scenario === "profile"
     ? {
@@ -39,27 +38,46 @@ const client = new QueryClient({
 });
 client.setQueryData(presetOptionsKeys.byProfile(agent, "DEFAULT"), preset);
 const system = { profiles, setProfiles() {}, reloadSystem: async () => {} };
-const unknown = ["empty", "resume", "claude"].includes(scenario);
+const unknown = scenario.includes("failed") || scenario === "empty";
+const configuredEffort = ["configured", "claude-configured"].includes(scenario);
 const defaults = {
   model: unknown ? null : "alpha",
-  reasoning: unknown ? null : "high",
+  reasoning:
+    unknown || scenario.includes("partial")
+      ? null
+      : scenario === "profile"
+        ? "medium"
+        : "high",
   approval: unknown ? null : "never",
-  model_source: scenario === "resume" ? "resume" : "configured",
-  reasoning_source: scenario === "resume" ? "resume" : "configured",
+  model_source: scenario.includes("default") ? "provider" : "configured",
+  reasoning_source: configuredEffort ? "configured" : "provider",
 };
 const models = [
   {
     id: "alpha",
     name: "Alpha",
     reasoning_options: [
-      { id: "medium", label: "Medium", is_default: true },
-      { id: "high", label: "High", is_default: false },
+      {
+        id: "medium",
+        label: "Medium",
+        is_default:
+          unknown || scenario.includes("partial") || scenario === "profile",
+      },
+      {
+        id: "high",
+        label: "High",
+        is_default:
+          !unknown && !scenario.includes("partial") && scenario !== "profile",
+      },
     ],
   },
   {
     id: "beta",
     name: "Beta",
-    reasoning_options: [{ id: "low", label: "Low", is_default: true }],
+    reasoning_options: [
+      { id: "low", label: "Low", is_default: !configuredEffort },
+      { id: "high", label: "High", is_default: configuredEffort },
+    ],
   },
   { id: "haiku", name: "Haiku", reasoning_options: [] },
 ];
@@ -85,6 +103,7 @@ const discovery = {
             ]
           : [PermissionPolicy.AUTO, PermissionPolicy.SUPERVISED],
       run_defaults: defaults,
+      unsupported_reasoning_models: ["haiku"],
     },
     loading_models: false,
   },
@@ -95,9 +114,16 @@ const discovery = {
 function Fixture() {
   const [scratch, setScratch] = useState(null);
   const [sent, setSent] = useState(null);
+  const [phase, setPhase] = useState(0);
+  const [lastUsed, setLastUsed] = useState(null);
+  const sessionId = phase > 0 || scenario === "resume" ? "session" : undefined;
+  const currentDiscovery = {
+    ...discovery,
+    scope: { ...discovery.scope, sessionId },
+  };
   const { executorConfig, presetOptions, setOverrides } = useExecutorConfig({
     profiles,
-    lastUsedConfig: null,
+    lastUsedConfig: lastUsed,
     scratchConfig: scratch,
     configExecutorProfile: { executor: agent, variant: "DEFAULT" },
     onPersist: setScratch,
@@ -109,8 +135,8 @@ function Fixture() {
           <ModelSelectorContainer
             agent={agent}
             workspaceId="fixture"
-            sessionId={scenario === "resume" ? "session" : undefined}
-            discovery={discovery as never}
+            sessionId={sessionId}
+            discovery={currentDiscovery as never}
             presets={["DEFAULT"]}
             selectedPreset="DEFAULT"
             onPresetSelect={() => {}}
@@ -123,6 +149,15 @@ function Fixture() {
         <button onClick={() => setSent(executorConfig)} className="p-base">
           送信値を確認
         </button>
+        <button
+          onClick={() => {
+            setLastUsed(executorConfig);
+            setPhase(phase + 1);
+          }}
+        >
+          Run完了
+        </button>
+        <output data-testid="phase">{phase}</output>
         <pre className="whitespace-pre-wrap break-all" data-testid="draft">
           {JSON.stringify(executorConfig)}
         </pre>

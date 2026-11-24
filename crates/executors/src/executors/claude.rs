@@ -4,6 +4,7 @@ pub mod client;
 pub mod command_adapter;
 mod instructions;
 pub mod protocol;
+mod run_defaults;
 pub mod slash_commands;
 pub mod types;
 pub mod usage;
@@ -469,6 +470,20 @@ pub fn claude_model_options(supports_effort: bool) -> Vec<crate::model_selector:
     .collect()
 }
 
+fn apply_run_selection(
+    options: &mut crate::executor_discovery::ExecutorDiscoveredOptions,
+    selection: Option<&run_defaults::Selection>,
+) {
+    // Cached candidate data cannot preserve stale defaults after a failed read.
+    options.model_selector.run_defaults = selection.map(|s| s.defaults.clone()).unwrap_or_default();
+    options.model_selector.unsupported_reasoning_models = selection.map(|s| s.unsupported.clone());
+    if let Some(selection) = selection
+        && !selection.models.is_empty()
+    {
+        options.model_selector.models = selection.models.clone();
+    }
+}
+
 fn apply_claude_effort_support(
     options: &mut crate::executor_discovery::ExecutorDiscoveredOptions,
     supports_effort: bool,
@@ -489,6 +504,7 @@ fn default_discovered_options(
             models: claude_model_options(supports_effort),
             default_model: None,
             run_defaults: Default::default(),
+            unsupported_reasoning_models: None,
             agents: vec![],
             permissions: vec![PermissionPolicy::Auto, PermissionPolicy::Supervised],
         },
@@ -581,19 +597,25 @@ impl StandardCodingAgentExecutor for ClaudeCode {
             executor_discovery::ExecutorConfigCacheKey, executors::utils::executor_options_cache,
         };
 
+        let selection = if let Some(cwd) = workdir.or(repo_path) {
+            self.discover_run_selection(cwd).await.ok()
+        } else {
+            None
+        };
         let cache = executor_options_cache();
         let cmd_key =
             crate::repo_skills::discovery_cache_key(self.compute_cmd_key(), &repository_roots);
         let base_executor = BaseCodingAgent::ClaudeCode;
         let supports_effort = self.supports_effort_flag_or_false().await;
 
-        let (target_path, initial_options) = if let Some(wd) = workdir {
+        let (target_path, mut initial_options) = if let Some(wd) = workdir {
             let wd_buf = wd.to_path_buf();
             let target_key =
                 ExecutorConfigCacheKey::new(Some(&wd_buf), cmd_key.clone(), base_executor);
             if let Some(cached) = cache.get(&target_key) {
                 let mut options = cached.as_ref().clone().with_loading(false);
                 apply_claude_effort_support(&mut options, supports_effort);
+                apply_run_selection(&mut options, selection.as_ref());
                 return Ok(Box::pin(futures::stream::once(async move {
                     patch::executor_discovered_options(options)
                 })));
@@ -638,6 +660,7 @@ impl StandardCodingAgentExecutor for ClaudeCode {
             if let Some(cached) = cache.get(&target_key) {
                 let mut options = cached.as_ref().clone().with_loading(false);
                 apply_claude_effort_support(&mut options, supports_effort);
+                apply_run_selection(&mut options, selection.as_ref());
                 return Ok(Box::pin(futures::stream::once(async move {
                     patch::executor_discovered_options(options)
                 })));
@@ -670,6 +693,7 @@ impl StandardCodingAgentExecutor for ClaudeCode {
             if let Some(cached) = cache.get(&global_key) {
                 let mut options = cached.as_ref().clone().with_loading(false);
                 apply_claude_effort_support(&mut options, supports_effort);
+                apply_run_selection(&mut options, selection.as_ref());
                 return Ok(Box::pin(futures::stream::once(async move {
                     patch::executor_discovered_options(options)
                 })));
@@ -682,6 +706,7 @@ impl StandardCodingAgentExecutor for ClaudeCode {
             (None, opts)
         };
 
+        apply_run_selection(&mut initial_options, selection.as_ref());
         let initial_patch = patch::executor_discovered_options(initial_options);
 
         let this = self.clone();
@@ -690,6 +715,7 @@ impl StandardCodingAgentExecutor for ClaudeCode {
         let discovery_stream = async_stream::stream! {
             let discovery_path = target_path.clone().or_else(dirs::home_dir).unwrap_or_else(|| PathBuf::from("."));
             let mut final_options = default_discovered_options(supports_effort);
+            apply_run_selection(&mut final_options, selection.as_ref());
 
             match this.discover_agents_and_slash_commands_initial(&discovery_path, &repository_roots).await {
                 Ok((mut agent_options, slash_commands_initial, plugins, skills)) => {
@@ -935,6 +961,14 @@ impl ClaudeCode {
             .current_dir(current_dir)
             .env("NPM_CONFIG_LOGLEVEL", "error")
             .args(&args);
+
+        if protected_roots.is_none()
+            && !semantic_inference
+            && (self.model.is_none() || self.effort.is_none())
+            && let Ok(selection) = self.read_run_selection(current_dir).await
+        {
+            command.args(self.resolved_run_arguments(&selection));
+        }
 
         if let Some(paths) = &protected_roots {
             let auth = self.require_subscription_login.unwrap_or(false).then(|| {

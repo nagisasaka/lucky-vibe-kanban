@@ -428,19 +428,25 @@ export function ModelSelectorContainer({
       >
         {modelLabelBase}
       </span>
-      <span aria-hidden>·</span>
-      <span
-        title={reasoningTitle}
-        aria-label={`${reasoningLabel ?? t(selection.reasoningUnsupported ? 'modelSelector.unsupported' : 'modelSelector.unverified')}: ${reasoningTitle}`}
-        className={selection.reasoningOverridden ? 'text-brand' : 'text-normal'}
-      >
-        {reasoningLabel ??
-          t(
-            selection.reasoningUnsupported
-              ? 'modelSelector.unsupported'
-              : 'modelSelector.unverified'
-          )}
-      </span>
+      {!selection.reasoningUnsupported && (
+        <>
+          <span aria-hidden>·</span>
+          <span
+            title={reasoningTitle}
+            aria-label={`${reasoningLabel ?? t(selection.reasoningUnsupported ? 'modelSelector.unsupported' : 'modelSelector.unverified')}: ${reasoningTitle}`}
+            className={
+              selection.reasoningOverridden ? 'text-brand' : 'text-normal'
+            }
+          >
+            {reasoningLabel ??
+              t(
+                selection.reasoningUnsupported
+                  ? 'modelSelector.unsupported'
+                  : 'modelSelector.unverified'
+              )}
+          </span>
+        </>
+      )}
     </span>
   );
 

@@ -40,7 +40,9 @@ for (const scenario of ["configured", "profile"]) {
     await model.click();
     await page.getByRole("button", { name: "Beta", exact: true }).click();
     await page.keyboard.press("Escape");
-    await expect(picker).toContainText("未確認");
+    await expect(picker).toContainText(
+      ["configured", "claude-configured"].includes(scenario) ? "High" : "Low",
+    );
     await expect(picker.locator(".text-brand")).toHaveText(["Beta"]);
     await picker.getByRole("button").filter({ hasText: "Beta" }).click();
     await page.getByRole("button", { name: "Alpha", exact: true }).click();
@@ -98,7 +100,7 @@ for (const scenario of ["configured", "profile"]) {
   });
 }
 
-for (const scenario of ["empty", "resume", "claude"]) {
+for (const scenario of ["empty", "codex-failed", "claude-failed"]) {
   test(`${scenario}: unknown defaults are not guessed from model candidates`, async ({
     page,
   }, testInfo) => {
@@ -113,12 +115,15 @@ for (const scenario of ["empty", "resume", "claude"]) {
       .click();
     await page.getByRole("button", { name: "Haiku", exact: true }).click();
     await page.keyboard.press("Escape");
-    await expect(picker).toContainText("非対応");
+    await expect(picker).not.toContainText("非対応");
+    await expect(
+      picker.getByRole("button").filter({ hasText: "Haiku" }),
+    ).not.toContainText("未確認");
     await expect(picker.locator(".text-brand")).toHaveText(["Haiku"]);
     expect(
       JSON.parse(await page.getByTestId("draft").innerText()).reasoning_id,
     ).toBeNull();
-    if (scenario === "claude")
+    if (scenario.includes("claude"))
       await expect(picker).not.toContainText("必要時に確認");
     await page.setViewportSize({ width: 390, height: 844 });
     await page.evaluate(() => document.documentElement.classList.add("dark"));
@@ -134,3 +139,80 @@ for (const scenario of ["empty", "resume", "claude"]) {
     });
   });
 }
+
+for (const scenario of [
+  "codex-default",
+  "claude-default",
+  "configured",
+  "claude-configured",
+  "codex-partial",
+  "claude-partial",
+]) {
+  test(`${scenario}: first Run, completion and next send keep inherited selection`, async ({
+    page,
+  }) => {
+    await page.goto(`/?scenario=${scenario}`);
+    const picker = page.getByTestId("picker");
+    const effort = scenario.includes("partial") ? "Medium" : "High";
+    for (let phase = 0; phase < 3; phase++) {
+      await expect(picker).toContainText("Alpha");
+      await expect(picker).toContainText(effort);
+      await expect(picker.locator(".text-brand")).toHaveCount(0);
+      await page.getByText("送信値を確認").click();
+      const sent = JSON.parse(await page.getByTestId("sent").innerText());
+      expect(sent.model_id ?? null).toBeNull();
+      expect(sent.reasoning_id ?? null).toBeNull();
+      await page.getByText("Run完了", { exact: true }).click();
+      await expect(page.getByTestId("phase")).toHaveText(String(phase + 1));
+    }
+    await picker.getByRole("button").filter({ hasText: "Alpha" }).click();
+    await page.getByRole("button", { name: "Beta", exact: true }).click();
+    await page.keyboard.press("Escape");
+    await expect(picker).toContainText(
+      ["configured", "claude-configured"].includes(scenario) ? "High" : "Low",
+    );
+    await expect(picker.locator(".text-brand")).toHaveText(["Beta"]);
+    await page.getByText("送信値を確認").click();
+    expect(
+      JSON.parse(await page.getByTestId("sent").innerText()),
+    ).toMatchObject({ model_id: "beta", reasoning_id: null });
+    await page.getByText("Run完了", { exact: true }).click();
+    await expect(picker).toContainText("Beta");
+    await expect(picker).toContainText(
+      ["configured", "claude-configured"].includes(scenario) ? "High" : "Low",
+    );
+    await picker.getByRole("button").filter({ hasText: "Beta" }).click();
+    await page
+      .getByRole("button", { name: "上書きを解除", exact: true })
+      .click();
+    await page.keyboard.press("Escape");
+    await expect(picker).toContainText("Alpha");
+    await expect(picker).toContainText(effort);
+  });
+}
+
+test("Claude effort override and reset remain per-field across completion", async ({
+  page,
+}) => {
+  await page.goto("/?scenario=claude-configured");
+  const picker = page.getByTestId("picker");
+  await picker.getByRole("button").filter({ hasText: "Alpha" }).click();
+  await page.getByRole("button", { name: "High", exact: true }).click();
+  await page.getByRole("menuitem", { name: "Medium", exact: true }).click();
+  await page.keyboard.press("Escape");
+  await expect(picker.locator(".text-brand")).toHaveText(["Medium"]);
+  await page.getByText("送信値を確認").click();
+  const sent = JSON.parse(await page.getByTestId("sent").innerText());
+  expect(sent.model_id ?? null).toBeNull();
+  expect(sent.reasoning_id).toBe("medium");
+  await page.getByText("Run完了", { exact: true }).click();
+  await expect(picker.locator(".text-brand")).toHaveText(["Medium"]);
+  await picker.getByRole("button").filter({ hasText: "Alpha" }).click();
+  await page.getByRole("button", { name: "Medium", exact: true }).click();
+  await page
+    .getByRole("menuitem", { name: "上書きを解除", exact: true })
+    .click();
+  await page.keyboard.press("Escape");
+  await expect(picker.locator(".text-brand")).toHaveCount(0);
+  await expect(picker).toContainText("High");
+});

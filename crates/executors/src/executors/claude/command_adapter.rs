@@ -67,6 +67,42 @@ impl<'a> ClaudeCodeCommandAdapter<'a> {
         apply_overrides(builder, &self.agent.cmd)
     }
 
+    /// No user input, hooks, tools, MCP or session persistence. Load native
+    /// settings at the Run cwd and preserve the profile's environment/auth.
+    pub(super) fn build_settings_probe(&self) -> Result<CommandBuilder, CommandBuildError> {
+        let mut settings = if self.agent.require_subscription_login.unwrap_or(false) {
+            serde_json::from_str::<serde_json::Value>(SUBSCRIPTION_SETTINGS)
+                .expect("static settings")
+        } else {
+            serde_json::json!({})
+        };
+        settings["disableAllHooks"] = true.into();
+        let mut builder = CommandBuilder::new(base_command(false)).params([
+            "-p",
+            "--verbose",
+            "--input-format=stream-json",
+            "--output-format=stream-json",
+            "--no-session-persistence",
+            "--strict-mcp-config",
+            "--mcp-config",
+            "{\"mcpServers\":{}}",
+            "--tools",
+            "",
+            "--settings",
+            &settings.to_string(),
+        ]);
+        if let Some(model) = &self.agent.model {
+            builder = builder.extend_params(["--model", model]);
+        }
+        if let Some(effort) = &self.agent.effort {
+            builder = builder.extend_params(["--effort", effort.as_ref()]);
+        }
+        if let Some(agent) = &self.agent.agent {
+            builder = builder.extend_params(["--agent", agent]);
+        }
+        apply_overrides(builder, &self.agent.cmd)
+    }
+
     pub fn build_runtime(
         &self,
         supports_effort: bool,

@@ -185,6 +185,7 @@ describe('read-only inherited run selection', () => {
     providers: [],
     agents: [],
     permissions: [],
+    unsupported_reasoning_models: ['haiku'],
     run_defaults: {
       model: 'gpt-5.5',
       reasoning: 'xhigh',
@@ -290,6 +291,7 @@ it('does not display native default-model effort on a different profile model', 
     providers: [],
     agents: [],
     permissions: [],
+    unsupported_reasoning_models: ['haiku'],
     run_defaults: {
       model: 'gpt-5.5',
       reasoning: 'xhigh',
@@ -309,5 +311,80 @@ it('does not display native default-model effort on a different profile model', 
     reasoning: null,
     reasoningUnsupported: true,
     modelOverridden: false,
+  });
+});
+
+describe('next Run field resolution', () => {
+  const empty = { executor: BaseCodingAgent.CODEX };
+  const config: ModelSelectorConfig = {
+    models,
+    providers: [],
+    agents: [],
+    permissions: [],
+    run_defaults: {
+      model: 'gpt-5.5',
+      reasoning: null,
+      approval: null,
+      model_source: 'provider',
+      reasoning_source: null,
+    },
+  };
+  it('fills a missing effort from the matching model only', () => {
+    expect(resolveRunSelection(config, empty, null).reasoning).toBe('xhigh');
+    expect(
+      resolveRunSelection(
+        { ...config, run_defaults: { ...config.run_defaults, model: null } },
+        empty,
+        null
+      ).model
+    ).toBeNull();
+    expect(
+      resolveRunSelection(
+        { ...config, run_defaults: { ...config.run_defaults, model: null } },
+        empty,
+        null
+      ).reasoning
+    ).toBeNull();
+  });
+  it('uses the newly selected model default, not the previous profile effort', () => {
+    const result = resolveRunSelection(
+      config,
+      { ...empty, model_id: 'sonnet' },
+      { ...empty, model_id: 'gpt-5.5', reasoning_id: 'xhigh' }
+    );
+    expect(result).toMatchObject({
+      reasoning: 'high',
+      modelOverridden: true,
+      reasoningOverridden: false,
+      reasoningSource: 'provider',
+    });
+  });
+  it('does not treat absent capabilities as unsupported', () => {
+    expect(
+      resolveRunSelection(config, { ...empty, model_id: 'haiku' }, null)
+        .reasoningUnsupported
+    ).toBe(false);
+    expect(
+      resolveRunSelection(
+        { ...config, unsupported_reasoning_models: ['haiku'] },
+        { ...empty, model_id: 'haiku' },
+        null
+      ).reasoningUnsupported
+    ).toBe(true);
+  });
+  it('keeps known effort when model is unknown', () => {
+    const partial = {
+      ...config,
+      run_defaults: {
+        ...config.run_defaults,
+        model: null,
+        reasoning: 'medium',
+        reasoning_source: 'configured',
+      },
+    };
+    expect(resolveRunSelection(partial, empty, null)).toMatchObject({
+      model: null,
+      reasoning: 'medium',
+    });
   });
 });

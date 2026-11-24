@@ -213,11 +213,12 @@ export function resolveRunSelection(
     : null;
   const sameModel = model === baseModel;
   const defaultsMatchModel = model === defaults?.model;
-  const baseReasoning = sameModel
-    ? (preset?.reasoning_id ??
-      (defaultsMatchModel ? defaults?.reasoning : null) ??
-      null)
-    : null;
+  const modelDefault =
+    selected?.reasoning_options.find((r) => r.is_default)?.id ?? null;
+  const baseReasoning =
+    (sameModel ? preset?.reasoning_id : null) ??
+    (defaultsMatchModel ? defaults?.reasoning : null) ??
+    modelDefault;
   const reasoning = overrides?.reasoning_id ?? baseReasoning;
   return {
     model,
@@ -235,9 +236,13 @@ export function resolveRunSelection(
     reasoningSource:
       sameModel && preset?.reasoning_id
         ? 'profile'
-        : ((sameModel && defaultsMatchModel
+        : ((defaultsMatchModel && defaults?.reasoning != null
             ? defaults?.reasoning_source
-            : 'unverified') ?? 'unverified'),
-    reasoningUnsupported: !!selected && selected.reasoning_options.length === 0,
+            : modelDefault
+              ? 'provider'
+              : 'unverified') ?? 'unverified'),
+    reasoningUnsupported:
+      !!model &&
+      (config?.unsupported_reasoning_models?.includes(model) ?? false),
   };
 }

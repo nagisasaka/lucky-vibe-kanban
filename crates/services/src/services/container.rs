@@ -56,9 +56,10 @@ fn has_container_ref(workspace: &Workspace) -> bool {
     )
 }
 
-/// Discovery is read-only: new-thread configuration cannot verify a resumed thread.
+/// Model/effort now resolve next-Run launch values even on resume. Keep the
+/// existing approval-display boundary: resume approval is not resolved here.
 #[cfg(any(not(feature = "qa-mode"), test))]
-fn hide_new_thread_defaults(mut patch: Patch) -> Patch {
+fn hide_unobserved_resume_approval(mut patch: Patch) -> Patch {
     for operation in &mut patch.0 {
         let (path, value) = match operation {
             json_patch::PatchOperation::Add(op) => (&op.path, &mut op.value),
@@ -71,10 +72,7 @@ fn hide_new_thread_defaults(mut patch: Patch) -> Patch {
             _ => None,
         };
         if let Some(defaults) = defaults {
-            *defaults = serde_json::json!({
-                "model": null, "reasoning": null, "approval": null,
-                "model_source": "resume", "reasoning_source": "resume"
-            });
+            defaults["approval"] = serde_json::Value::Null;
         }
     }
     patch
@@ -301,7 +299,7 @@ pub trait ContainerService {
                 .await?;
             let stream = stream.map(move |patch| {
                 if resuming {
-                    hide_new_thread_defaults(patch)
+                    hide_unobserved_resume_approval(patch)
                 } else {
                     patch
                 }
@@ -1118,10 +1116,10 @@ pub trait ContainerService {
 mod discovery_defaults_tests {
     use serde_json::json;
 
-    use super::hide_new_thread_defaults;
+    use super::hide_unobserved_resume_approval;
 
     #[test]
-    fn resumed_discovery_hides_initial_and_streamed_defaults_only() {
+    fn resumed_discovery_preserves_next_run_model_and_effort() {
         let defaults = json!({"model":"new-model", "reasoning":"high", "approval":"never",
             "model_source":"configured", "reasoning_source":"provider"});
         for (path, value, pointer) in [
@@ -1138,13 +1136,13 @@ mod discovery_defaults_tests {
                     {"op":"replace","path":"/options/other","value":defaults}
                 ]))
                 .unwrap();
-                let result = serde_json::to_value(hide_new_thread_defaults(patch)).unwrap();
+                let result = serde_json::to_value(hide_unobserved_resume_approval(patch)).unwrap();
                 let hidden = result[0]["value"].pointer(pointer).unwrap();
-                assert!(hidden["model"].is_null());
-                assert!(hidden["reasoning"].is_null());
+                assert_eq!(hidden["model"], "new-model");
+                assert_eq!(hidden["reasoning"], "high");
                 assert!(hidden["approval"].is_null());
-                assert_eq!(hidden["model_source"], "resume");
-                assert_eq!(hidden["reasoning_source"], "resume");
+                assert_eq!(hidden["model_source"], "configured");
+                assert_eq!(hidden["reasoning_source"], "provider");
                 assert_eq!(result[1]["value"], defaults);
                 if path == "/options" {
                     assert_eq!(

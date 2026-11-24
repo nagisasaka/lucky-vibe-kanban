@@ -352,5 +352,13 @@ pub fn discovery_error(error: String) -> Patch {
 pub fn update_run_defaults(defaults: crate::model_selector::RunDefaults) -> Patch {
     serde_json::from_value(json!([
         {"op": "add", "path": "/options/model_selector/run_defaults", "value": defaults},
+    ]))
+    .unwrap_or_default()
+}
+
+/// A failed capability read must not be interpreted as unsupported.
+pub fn unsupported_reasoning_models(models: Vec<String>) -> Patch {
+    serde_json::from_value(json!([
+        {"op": "add", "path": "/options/model_selector/unsupported_reasoning_models", "value": models},
     ])).unwrap_or_default()
 }

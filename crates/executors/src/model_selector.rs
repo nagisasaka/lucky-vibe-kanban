@@ -78,6 +78,10 @@ pub struct RunDefaults {
 pub struct ModelSelectorConfig {
     #[serde(default)]
     pub run_defaults: RunDefaults,
+    /// Only models whose lack of effort support was confirmed by the provider.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub unsupported_reasoning_models: Option<Vec<String>>,
     /// Available providers
     pub providers: Vec<ModelProvider>,
 

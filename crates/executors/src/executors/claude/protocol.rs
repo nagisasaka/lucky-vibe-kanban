@@ -242,6 +242,23 @@ impl ProtocolPeer {
         })?
     }
 
+    pub(super) async fn read_run_settings(
+        &self,
+    ) -> Result<(serde_json::Value, serde_json::Value), ExecutorError> {
+        let initial = self
+            .request_control(SDKControlRequestType::Initialize { hooks: None })
+            .await;
+        let settings = self
+            .request_control(SDKControlRequestType::GetSettings {})
+            .await;
+        match (initial, settings) {
+            (Ok(initial), Ok(settings)) => Ok((initial, settings)),
+            (Ok(initial), Err(_)) => Ok((initial, serde_json::Value::Null)),
+            (Err(_), Ok(settings)) => Ok((serde_json::Value::Null, settings)),
+            (Err(e), Err(_)) => Err(e),
+        }
+    }
+
     pub(super) async fn initialize_passive(&self) -> Result<(), ExecutorError> {
         self.request_control(SDKControlRequestType::Initialize { hooks: None })
             .await

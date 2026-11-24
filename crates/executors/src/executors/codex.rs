@@ -541,6 +541,8 @@ impl StandardCodingAgentExecutor for Codex {
                     if models.is_empty() {
                         tracing::warn!("Codex model/list returned no models; keeping fallback list");
                     } else {
+                        yield patch::unsupported_reasoning_models(models.iter()
+                            .filter(|m| m.reasoning_options.is_empty()).map(|m| m.id.clone()).collect());
                         yield patch::update_models(models);
                     }
                     yield patch::update_run_defaults(defaults);
@@ -879,12 +881,7 @@ impl Codex {
     ) -> Result<(Vec<ModelInfo>, crate::model_selector::RunDefaults), ExecutorError> {
         let request_cwd = cwd.clone();
         self.with_discovery_app_server(&cwd, move |client| async move {
-            let config = client
-                .config_read(Some(request_cwd.to_string_lossy().into_owned()))
-                .await?
-                .config;
-            let response = client.model_list().await?;
-            Ok(run_defaults_from_config(config, response))
+            Ok(read_run_defaults(&client, Some(request_cwd.to_string_lossy().into_owned())).await)
         })
         .await
     }
@@ -1437,6 +1434,12 @@ impl Codex {
                         }
                     }
                 }
+                // Native resume may retain the previous model/effort. Ordinary Runs
+                // resolve the same next-Run values as discovery, on this connection.
+                if !workflow_read_only {
+                    let (models, defaults) = read_run_defaults(&client, params.cwd.clone()).await;
+                    apply_next_run_defaults(&mut params, &models, &defaults);
+                }
                 match action {
                     CodexSessionAction::Chat {
                         prompt,
@@ -1732,6 +1735,63 @@ fn skill_scope_to_string(scope: SkillScope) -> &'static str {
 }
 
 /// Keep configured launch values distinct from provider-advertised defaults.
+// Keep independently successful reads, including when the other method times out.
+async fn read_run_defaults(
+    client: &AppServerClient,
+    cwd: Option<String>,
+) -> (Vec<ModelInfo>, crate::model_selector::RunDefaults) {
+    let (config, models) = tokio::join!(
+        tokio::time::timeout(Duration::from_secs(4), client.config_read(cwd)),
+        tokio::time::timeout(Duration::from_secs(4), client.model_list()),
+    );
+    let config = config.ok().and_then(Result::ok).map(|r| r.config);
+    let models = models.ok().and_then(Result::ok).unwrap_or_else(|| {
+        serde_json::from_value(serde_json::json!({"data":[],"nextCursor":null}))
+            .expect("empty model list")
+    });
+    let Some(config) = config else {
+        // A catalog default cannot prove which configuration would override it.
+        // Retain capabilities, but do not override a possibly configured native
+        // launch value after a failed settings read.
+        let mut models = model_list_response_to_model_infos(models);
+        for model in &mut models {
+            for option in &mut model.reasoning_options {
+                option.is_default = false;
+            }
+        }
+        return (models, Default::default());
+    };
+    run_defaults_from_config(config, models)
+}
+
+/// Resolve ephemeral launch parameters only; never save them as Run/profile overrides.
+fn apply_next_run_defaults(
+    params: &mut ThreadStartParams,
+    models: &[ModelInfo],
+    defaults: &crate::model_selector::RunDefaults,
+) {
+    if params.model.is_none() {
+        params.model = defaults.model.clone();
+    }
+    let config = params.config.get_or_insert_with(HashMap::new);
+    if !config.contains_key("model_reasoning_effort") {
+        let effort = if defaults.reasoning_source.as_deref() == Some("configured")
+            || params.model == defaults.model
+        {
+            defaults.reasoning.clone()
+        } else {
+            models
+                .iter()
+                .find(|m| Some(&m.id) == params.model.as_ref())
+                .and_then(|m| m.reasoning_options.iter().find(|r| r.is_default))
+                .map(|r| r.id.clone())
+        };
+        if let Some(effort) = effort {
+            config.insert("model_reasoning_effort".into(), effort.into());
+        }
+    }
+}
+
 fn run_defaults_from_config(
     config: codex_app_server_protocol::Config,
     response: ModelListResponse,
@@ -1748,7 +1808,27 @@ fn run_defaults_from_config(
             .find(|m| m.is_default && !m.hidden)
             .map(|m| m.id.clone())
     });
-    let models = model_list_response_to_model_infos(response);
+    let mut models = model_list_response_to_model_infos(response);
+    // Native config effort applies to the selected model too. Keep it separate
+    // from the LVK profile's old-model effort, which model changes clear.
+    if let Some(effort) = &config.model_reasoning_effort {
+        let id = effort.to_string();
+        for model in &mut models {
+            if !model.reasoning_options.is_empty() {
+                for option in &mut model.reasoning_options {
+                    option.is_default = option.id == id;
+                }
+                if !model.reasoning_options.iter().any(|r| r.id == id) {
+                    model
+                        .reasoning_options
+                        .extend(ReasoningOption::from_names_with_default(
+                            [id.clone()],
+                            Some(&id),
+                        ));
+                }
+            }
+        }
+    }
     let reasoning_source = if config.model_reasoning_effort.is_some() {
         "configured"
     } else {
@@ -3136,5 +3216,115 @@ mod next_run_reasoning_tests {
                 .is_empty()
         );
         assert!(next_run_reasoning_options(None, &[]).1.is_empty());
+    }
+}
+
+#[cfg(test)]
+mod next_run_defaults_tests {
+    use serde_json::json;
+
+    use super::*;
+
+    #[tokio::test]
+    async fn next_run_partial_reads_and_resume_wire_match_display_without_saved_overrides() {
+        for case in ["empty", "models-fail", "config-fail", "models-timeout"] {
+            let root = tempfile::tempdir().unwrap();
+            let record = root.path().join("wire.jsonl");
+            let fixture = Path::new(env!("CARGO_MANIFEST_DIR"))
+                .join("../../tests/run-selection/fake-codex.py");
+            let agent: Codex = serde_json::from_value(json!({
+                "base_command_override":format!("python3 '{}'",fixture.display()),
+                "env":{"LVK480_RECORD":record,"LVK480_CASE":case}
+            }))
+            .unwrap();
+            let saved = serde_json::to_value(&agent).unwrap();
+            let cwd = root.path().to_path_buf();
+            let native_cwd = cwd.clone();
+            agent
+                .with_discovery_app_server(&cwd, move |client| async move {
+                    let (models, defaults) =
+                        read_run_defaults(&client, Some(native_cwd.to_string_lossy().into_owned()))
+                            .await;
+                    if case == "config-fail" {
+                        assert!(defaults.model.is_none() && defaults.reasoning.is_none());
+                        assert!(
+                            models
+                                .iter()
+                                .all(|m| m.reasoning_options.iter().all(|r| !r.is_default))
+                        );
+                        return Ok(());
+                    }
+                    assert_eq!(defaults.model.as_deref(), Some("astra"));
+                    assert_eq!(defaults.reasoning.as_deref(), Some("medium"));
+                    let mut params = ThreadStartParams::default();
+                    apply_next_run_defaults(&mut params, &models, &defaults);
+                    assert!(params.approval_policy.is_none());
+                    let result = client
+                        .thread_resume(resume_params_from("same-conversation".into(), params))
+                        .await?;
+                    assert_eq!(result.model, "astra");
+                    assert_eq!(result.reasoning_effort.unwrap().to_string(), "medium");
+                    Ok(())
+                })
+                .await
+                .unwrap();
+            assert_eq!(serde_json::to_value(&agent).unwrap(), saved);
+            let wire = std::fs::read_to_string(record).unwrap();
+            if case == "config-fail" {
+                assert!(!wire.contains("thread/resume"));
+                continue;
+            }
+            let resume: Value = wire
+                .lines()
+                .map(|line| serde_json::from_str::<Value>(line).unwrap())
+                .find(|r| r["method"] == "thread/resume")
+                .unwrap();
+            assert_eq!(resume["params"]["model"], "astra");
+            assert_eq!(
+                resume["params"]["config"]["model_reasoning_effort"],
+                "medium"
+            );
+            assert!(resume["params"]["approvalPolicy"].is_null());
+        }
+    }
+
+    #[test]
+    fn next_run_model_change_uses_matching_default_and_explicit_fields_win() {
+        let models = vec![ModelInfo {
+            id: "new".into(),
+            name: "New".into(),
+            provider_id: None,
+            reasoning_options: ReasoningOption::from_names_with_default(
+                ["low", "high"],
+                Some("low"),
+            ),
+        }];
+        let defaults = crate::model_selector::RunDefaults {
+            model: Some("old".into()),
+            reasoning: Some("high".into()),
+            reasoning_source: Some("provider".into()),
+            ..Default::default()
+        };
+        for explicit in [false, true] {
+            let mut params = ThreadStartParams {
+                model: Some("new".into()),
+                approval_policy: Some(V2AskForApproval::Never),
+                ..Default::default()
+            };
+            if explicit {
+                params.config = Some(HashMap::from([(
+                    "model_reasoning_effort".into(),
+                    json!("high"),
+                )]));
+            }
+            apply_next_run_defaults(&mut params, &models, &defaults);
+            assert_eq!(
+                params.config.as_ref().unwrap()["model_reasoning_effort"],
+                if explicit { "high" } else { "low" }
+            );
+            let resumed = resume_params_from("same".into(), params);
+            assert_eq!(resumed.model.as_deref(), Some("new"));
+            assert_eq!(resumed.approval_policy, Some(V2AskForApproval::Never));
+        }
     }
 }

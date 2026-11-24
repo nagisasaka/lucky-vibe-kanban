@@ -1450,6 +1450,10 @@ approval: string | null, model_source: string | null, reasoning_source: string |
 
 export type ModelSelectorConfig = { run_defaults: RunDefaults,
 /**
+ * Only models whose lack of effort support was confirmed by the provider.
+ */
+unsupported_reasoning_models?: Array<string>,
+/**
  * Available providers
  */
 providers: Array<ModelProvider>,
