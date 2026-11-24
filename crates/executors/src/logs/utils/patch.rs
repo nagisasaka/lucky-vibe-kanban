@@ -347,3 +347,10 @@ pub fn discovery_error(error: String) -> Patch {
     ]))
     .unwrap_or_default()
 }
+
+/// Defaults are display metadata, never ExecutorConfig overrides.
+pub fn update_run_defaults(defaults: crate::model_selector::RunDefaults) -> Patch {
+    serde_json::from_value(json!([
+        {"op": "add", "path": "/options/model_selector/run_defaults", "value": defaults},
+    ])).unwrap_or_default()
+}

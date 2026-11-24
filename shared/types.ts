@@ -1436,9 +1436,15 @@ name: string, };
 
 export type AgentInfo = { id: string, label: string, description?: string | null, is_default: boolean, };
 
-export enum PermissionPolicy { AUTO = "AUTO", SUPERVISED = "SUPERVISED", PLAN = "PLAN" }
+export enum PermissionPolicy { AUTO = "AUTO", SUPERVISED = "SUPERVISED", ON_REQUEST = "ON_REQUEST", PLAN = "PLAN" }
 
-export type ModelSelectorConfig = {
+export type RunDefaults = { model: string | null, reasoning: string | null,
+/**
+ * Native approval value; unknown/special values are never coerced to a UI policy.
+ */
+approval: string | null, model_source: string | null, reasoning_source: string | null, };
+
+export type ModelSelectorConfig = { run_defaults: RunDefaults,
 /**
  * Available providers
  */

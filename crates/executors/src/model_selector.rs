@@ -56,13 +56,28 @@ pub enum PermissionPolicy {
     Auto,
     /// Require approval for risky operations
     Supervised,
+    /// Let Codex request approval when needed
+    OnRequest,
     /// Plan mode before execution (executor-defined meaning)
     Plan,
+}
+
+/// Read-only launch defaults, separate from explicit run overrides and model candidates.
+#[derive(Debug, Clone, Serialize, Deserialize, TS, Default)]
+pub struct RunDefaults {
+    pub model: Option<String>,
+    pub reasoning: Option<String>,
+    /// Native approval value; unknown/special values are never coerced to a UI policy.
+    pub approval: Option<String>,
+    pub model_source: Option<String>,
+    pub reasoning_source: Option<String>,
 }
 
 /// Full model selector configuration
 #[derive(Debug, Clone, Serialize, Deserialize, TS, Default)]
 pub struct ModelSelectorConfig {
+    #[serde(default)]
+    pub run_defaults: RunDefaults,
     /// Available providers
     pub providers: Vec<ModelProvider>,
 

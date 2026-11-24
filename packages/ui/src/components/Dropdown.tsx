@@ -27,7 +27,7 @@ const DropdownMenuTrigger = DropdownMenuPrimitive.Trigger;
 interface DropdownMenuTriggerButtonProps
   extends React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Trigger> {
   icon?: Icon;
-  label?: string;
+  label?: React.ReactNode;
   showCaret?: boolean;
   size?: 'default' | 'sm';
 }

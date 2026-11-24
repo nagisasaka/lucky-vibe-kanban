@@ -453,12 +453,11 @@ impl StandardCodingAgentExecutor for Codex {
 
     fn get_preset_options(&self) -> ExecutorConfig {
         use crate::model_selector::*;
-        let permission_policy = if self.plan {
-            PermissionPolicy::Plan
-        } else if matches!(self.ask_for_approval, None | Some(AskForApproval::Never)) {
-            PermissionPolicy::Auto
-        } else {
-            PermissionPolicy::Supervised
+        let permission_policy = match self.ask_for_approval {
+            None => None,
+            Some(AskForApproval::Never) => Some(PermissionPolicy::Auto),
+            Some(AskForApproval::UnlessTrusted) => Some(PermissionPolicy::Supervised),
+            Some(AskForApproval::OnRequest) => Some(PermissionPolicy::OnRequest),
         };
 
         ExecutorConfig {
@@ -470,7 +469,7 @@ impl StandardCodingAgentExecutor for Codex {
                 .model_reasoning_effort
                 .as_ref()
                 .map(|e| e.as_str().to_string()),
-            permission_policy: Some(permission_policy),
+            permission_policy,
             execution_mode: Some(
                 if self.plan && self.execution_mode != ExecutionMode::Review {
                     ExecutionMode::Plan
@@ -496,6 +495,7 @@ impl StandardCodingAgentExecutor for Codex {
                 models: fallback_models(),
                 permissions: vec![
                     PermissionPolicy::Auto,
+                    PermissionPolicy::OnRequest,
                     PermissionPolicy::Supervised,
                     PermissionPolicy::Plan,
                 ],
@@ -524,15 +524,26 @@ impl StandardCodingAgentExecutor for Codex {
                 .unwrap_or_else(|| std::env::current_dir().unwrap_or_else(|_| PathBuf::from(".")));
             let models_result = tokio::time::timeout(
                 MODELS_DISCOVERY_TIMEOUT,
-                this.discover_models(model_dir),
+                async {
+                    if models_cwd.is_some() {
+                        this.discover_run_defaults(model_dir).await
+                    } else {
+                        // Candidate discovery has no Run cwd; do not present the
+                        // server process configuration as this Run's defaults.
+                        this.discover_models(model_dir).await
+                            .map(|models| (models, Default::default()))
+                    }
+                },
             )
             .await;
             match models_result {
-                Ok(Ok(models)) if !models.is_empty() => {
-                    yield patch::update_models(models);
-                }
-                Ok(Ok(_)) => {
-                    tracing::warn!("Codex model/list returned no models; keeping fallback list");
+                Ok(Ok((models, defaults))) => {
+                    if models.is_empty() {
+                        tracing::warn!("Codex model/list returned no models; keeping fallback list");
+                    } else {
+                        yield patch::update_models(models);
+                    }
+                    yield patch::update_run_defaults(defaults);
                 }
                 Ok(Err(err)) => {
                     tracing::warn!("Failed to discover Codex models: {err}; keeping fallback list");
@@ -645,6 +656,9 @@ impl Codex {
         // Preserve legacy Plan presets before applying independent permissions.
         self.execution_mode = self.effective_execution_mode();
         if let Some(model_id) = &executor_config.model_id {
+            if self.model.as_ref() != Some(model_id) && executor_config.reasoning_id.is_none() {
+                self.model_reasoning_effort = None;
+            }
             self.model = Some(model_id.clone());
         }
         if let Some(reasoning_id) = &executor_config.reasoning_id
@@ -659,9 +673,11 @@ impl Codex {
                     self.plan = false;
                 }
                 crate::model_selector::PermissionPolicy::Supervised => {
-                    if matches!(self.ask_for_approval, None | Some(AskForApproval::Never)) {
-                        self.ask_for_approval = Some(AskForApproval::UnlessTrusted);
-                    }
+                    self.ask_for_approval = Some(AskForApproval::UnlessTrusted);
+                    self.plan = false;
+                }
+                crate::model_selector::PermissionPolicy::OnRequest => {
+                    self.ask_for_approval = Some(AskForApproval::OnRequest);
                     self.plan = false;
                 }
                 crate::model_selector::PermissionPolicy::Plan => {
@@ -691,7 +707,7 @@ impl Codex {
             (&self.sandbox, &self.ask_for_approval),
             (
                 Some(SandboxMode::DangerFullAccess),
-                None | Some(AskForApproval::Never)
+                Some(AskForApproval::Never)
             )
         )
     }
@@ -853,6 +869,14 @@ impl Codex {
         &self,
         cwd: PathBuf,
     ) -> Result<(Vec<ModelInfo>, Option<String>, Option<String>), ExecutorError> {
+        let (models, defaults) = self.discover_run_defaults(cwd).await?;
+        Ok((models, defaults.model, defaults.reasoning))
+    }
+
+    async fn discover_run_defaults(
+        &self,
+        cwd: PathBuf,
+    ) -> Result<(Vec<ModelInfo>, crate::model_selector::RunDefaults), ExecutorError> {
         let request_cwd = cwd.clone();
         self.with_discovery_app_server(&cwd, move |client| async move {
             let config = client
@@ -860,19 +884,7 @@ impl Codex {
                 .await?
                 .config;
             let response = client.model_list().await?;
-            let default_model = config.model.or_else(|| {
-                response
-                    .data
-                    .iter()
-                    .find(|m| m.is_default && !m.hidden)
-                    .map(|m| m.id.clone())
-            });
-            let default_reasoning = config.model_reasoning_effort.map(|v| v.to_string());
-            Ok((
-                model_list_response_to_model_infos(response),
-                default_model,
-                default_reasoning,
-            ))
+            Ok(run_defaults_from_config(config, response))
         })
         .await
     }
@@ -1231,10 +1243,6 @@ impl Codex {
         };
 
         let approval_policy = match self.ask_for_approval.as_ref() {
-            None if matches!(self.sandbox.as_ref(), None | Some(SandboxMode::Auto)) => {
-                // match the Auto preset in codex
-                Some(V2AskForApproval::OnRequest)
-            }
             None => None,
             Some(AskForApproval::UnlessTrusted) => Some(V2AskForApproval::UnlessTrusted),
             Some(AskForApproval::OnRequest) => Some(V2AskForApproval::OnRequest),
@@ -1723,8 +1731,67 @@ fn skill_scope_to_string(scope: SkillScope) -> &'static str {
     }
 }
 
-/// Convert a live `model/list` response into the UI model-selector shape,
-/// dropping models hidden from the default picker.
+/// Keep configured launch values distinct from provider-advertised defaults.
+fn run_defaults_from_config(
+    config: codex_app_server_protocol::Config,
+    response: ModelListResponse,
+) -> (Vec<ModelInfo>, crate::model_selector::RunDefaults) {
+    let model_source = if config.model.is_some() {
+        "configured"
+    } else {
+        "provider"
+    };
+    let model = config.model.or_else(|| {
+        response
+            .data
+            .iter()
+            .find(|m| m.is_default && !m.hidden)
+            .map(|m| m.id.clone())
+    });
+    let models = model_list_response_to_model_infos(response);
+    let reasoning_source = if config.model_reasoning_effort.is_some() {
+        "configured"
+    } else {
+        "provider"
+    };
+    let reasoning = config
+        .model_reasoning_effort
+        .map(|v| v.to_string())
+        .or_else(|| {
+            models
+                .iter()
+                .find(|m| Some(&m.id) == model.as_ref())
+                .and_then(|m| m.reasoning_options.iter().find(|r| r.is_default))
+                .map(|r| r.id.clone())
+        });
+    let approval = serde_json::to_value(config.approval_policy)
+        .ok()
+        .and_then(|v| {
+            if v.is_null() {
+                None
+            } else {
+                Some(
+                    v.as_str()
+                        .map(str::to_owned)
+                        .unwrap_or_else(|| v.to_string()),
+                )
+            }
+        });
+    let model_source = model.as_ref().map(|_| model_source.into());
+    let reasoning_source = reasoning.as_ref().map(|_| reasoning_source.into());
+    (
+        models,
+        crate::model_selector::RunDefaults {
+            model,
+            reasoning,
+            approval,
+            model_source,
+            reasoning_source,
+        },
+    )
+}
+
+/// Convert live candidates, dropping models hidden from the default picker.
 fn model_list_response_to_model_infos(response: ModelListResponse) -> Vec<ModelInfo> {
     response
         .data
@@ -2181,11 +2248,98 @@ mod tests {
     }
 
     #[test]
+    fn approval_inheritance_and_explicit_policies_round_trip_without_coercion() {
+        use super::V2AskForApproval;
+        use crate::model_selector::PermissionPolicy;
+        for (approval, policy, expected) in [
+            (None, None, None),
+            (
+                Some(AskForApproval::Never),
+                Some(PermissionPolicy::Auto),
+                Some(V2AskForApproval::Never),
+            ),
+            (
+                Some(AskForApproval::UnlessTrusted),
+                Some(PermissionPolicy::Supervised),
+                Some(V2AskForApproval::UnlessTrusted),
+            ),
+            (
+                Some(AskForApproval::OnRequest),
+                Some(PermissionPolicy::OnRequest),
+                Some(V2AskForApproval::OnRequest),
+            ),
+        ] {
+            for mode in [
+                ExecutionMode::Code,
+                ExecutionMode::Review,
+                ExecutionMode::Plan,
+                ExecutionMode::Goal,
+            ] {
+                for sandbox in [
+                    None,
+                    Some(super::SandboxMode::Auto),
+                    Some(super::SandboxMode::WorkspaceWrite),
+                    Some(super::SandboxMode::DangerFullAccess),
+                ] {
+                    let mut executor = test_executor();
+                    executor.ask_for_approval = approval.clone();
+                    executor.sandbox = sandbox;
+                    assert_eq!(executor.get_preset_options().permission_policy, policy);
+                    let mut config = ExecutorConfig::new(BaseCodingAgent::Codex);
+                    config.execution_mode = Some(mode);
+                    executor.apply_direct_overrides(&config);
+                    assert_eq!(executor.get_preset_options().permission_policy, policy);
+                    assert_eq!(executor.get_preset_options().execution_mode, Some(mode));
+                    let params = executor.build_thread_start_params(Path::new("/workspace"));
+                    assert_eq!(params.approval_policy, expected);
+                    let resumed = super::resume_params_from("thread-1".into(), params);
+                    assert_eq!(resumed.approval_policy, expected);
+                }
+            }
+            if let Some(policy) = policy {
+                let mut executor = test_executor();
+                executor.ask_for_approval = Some(AskForApproval::OnRequest);
+                let mut config = ExecutorConfig::new(BaseCodingAgent::Codex);
+                config.permission_policy = Some(policy.clone());
+                executor.apply_direct_overrides(&config);
+                assert_eq!(
+                    executor.get_preset_options().permission_policy,
+                    Some(policy)
+                );
+                assert_eq!(
+                    executor
+                        .build_thread_start_params(Path::new("/workspace"))
+                        .approval_policy,
+                    expected
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn model_change_clears_inherited_reasoning_but_preserves_explicit_effort() {
+        let mut executor = test_executor();
+        executor.model = Some("original".into());
+        executor.model_reasoning_effort = Some("high".parse().unwrap());
+        let mut config = ExecutorConfig::new(BaseCodingAgent::Codex);
+        config.model_id = Some("original".into());
+        executor.apply_direct_overrides(&config);
+        assert!(executor.model_reasoning_effort.is_some());
+        config.model_id = Some("different".into());
+        executor.apply_direct_overrides(&config);
+        assert!(executor.model_reasoning_effort.is_none());
+        config.model_id = Some("third".into());
+        config.reasoning_id = Some("low".into());
+        executor.apply_direct_overrides(&config);
+        assert_eq!(executor.model_reasoning_effort.unwrap().as_str(), "low");
+    }
+
+    #[test]
     fn supervised_waits_but_full_access_auto_keeps_its_permission_contract() {
         let mut executor = test_executor();
         executor.sandbox = Some(super::SandboxMode::DangerFullAccess);
         executor.ask_for_approval = None;
-        assert!(executor.auto_approve_tool_requests());
+        assert!(!executor.auto_approve_tool_requests());
         let mut config = ExecutorConfig::new(BaseCodingAgent::Codex);
         config.permission_policy = Some(crate::model_selector::PermissionPolicy::Supervised);
         executor.apply_direct_overrides(&config);
@@ -2466,6 +2620,44 @@ mod tests {
         assert_eq!(resume.service_tier, expected_service_tier);
         assert!(resume.path.is_none());
         assert!(resume.history.is_none());
+    }
+
+    #[test]
+    fn discovery_defaults_preserve_configured_and_special_values() {
+        let (_, absent) = super::run_defaults_from_config(
+            serde_json::from_value(json!({})).unwrap(),
+            ModelListResponse {
+                data: vec![],
+                next_cursor: None,
+            },
+        );
+        assert!(absent.model.is_none());
+        assert!(absent.reasoning.is_none());
+        assert!(absent.model_source.is_none());
+        assert!(absent.reasoning_source.is_none());
+        let response: ModelListResponse = serde_json::from_value(json!({"data":[{
+            "id":"candidate", "model":"candidate", "displayName":"Candidate", "description":"test",
+            "hidden":false, "isDefault":true, "supportedReasoningEfforts":[{"reasoningEffort":"high","description":"High"}],
+            "defaultReasoningEffort":"high", "inputModalities":[], "supportsPersonality":false,
+            "additionalSpeedTiers":[], "serviceTiers":[]
+        }], "nextCursor":null})).unwrap();
+        let config = serde_json::from_value(json!({})).unwrap();
+        let (_, defaults) = super::run_defaults_from_config(config, response.clone());
+        assert_eq!(defaults.model.as_deref(), Some("candidate"));
+        assert_eq!(defaults.reasoning.as_deref(), Some("high"));
+        assert_eq!(defaults.model_source.as_deref(), Some("provider"));
+        assert!(defaults.approval.is_none());
+        let granular = json!({"granular":{"sandbox_approval":true,"rules":false,"skill_approval":false,"request_permissions":false,"mcp_elicitations":true}});
+        let config = serde_json::from_value(json!({"model":"unlisted-model", "model_reasoning_effort":"max-plus", "approval_policy":granular})).unwrap();
+        let (_, defaults) = super::run_defaults_from_config(config, response);
+        assert_eq!(defaults.model.as_deref(), Some("unlisted-model"));
+        assert_eq!(defaults.reasoning.as_deref(), Some("max-plus"));
+        assert_eq!(defaults.model_source.as_deref(), Some("configured"));
+        assert_eq!(defaults.reasoning_source.as_deref(), Some("configured"));
+        assert_eq!(
+            serde_json::from_str::<serde_json::Value>(&defaults.approval.unwrap()).unwrap(),
+            granular
+        );
     }
 
     #[test]
@@ -2792,7 +2984,7 @@ mod integration_worker_tests {
     #[test]
     fn approval_overrides_match_for_fresh_normal_and_integration_threads() {
         for (profile, expected) in [
-            (serde_json::json!({}), Some(V2AskForApproval::OnRequest)),
+            (serde_json::json!({}), None),
             (
                 serde_json::json!({"ask_for_approval":"never"}),
                 Some(V2AskForApproval::Never),
@@ -2803,10 +2995,7 @@ mod integration_worker_tests {
             ),
             (serde_json::json!({"sandbox":"workspace-write"}), None),
             (serde_json::json!({"sandbox":"danger-full-access"}), None),
-            (
-                serde_json::json!({"profile":"native-profile"}),
-                Some(V2AskForApproval::OnRequest),
-            ),
+            (serde_json::json!({"profile":"native-profile"}), None),
         ] {
             let codex: Codex = serde_json::from_value(profile).unwrap();
             let mut env = ExecutionEnv::new(RepoContext::default());

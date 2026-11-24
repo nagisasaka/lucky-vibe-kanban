@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { mergeExecutorOverrides } from "@/shared/lib/executorOverrides";
 import { ModelSelectorContainer } from "@/shared/components/ModelSelectorContainer";
 import {
   BaseCodingAgent,
@@ -31,6 +32,13 @@ const config = {
     { id: "beta", name: "Raw provider B 原文" },
   ],
   default_model: "alpha/raw:model",
+  run_defaults: {
+    model: "alpha/raw:model",
+    reasoning: "raw-effort",
+    approval: "untrusted",
+    model_source: "configured",
+    reasoning_source: "configured",
+  },
   agents: [{ id: "raw-agent", label: "Raw agent 原文", is_default: true }],
   permissions: [
     PermissionPolicy.SUPERVISED,
@@ -79,7 +87,7 @@ export function ModelSelectorFixture() {
           executorConfig={executorConfig}
           presetOptions={null}
           onOverrideChange={(patch) => {
-            setConfig((old) => ({ ...old, ...patch }));
+            setConfig((old) => mergeExecutorOverrides(old, patch));
           }}
         />
       </div>

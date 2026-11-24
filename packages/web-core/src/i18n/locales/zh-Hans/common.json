@@ -1269,7 +1269,21 @@
     "permissionPlan": "计划",
     "agent": "代理",
     "default": "默认",
-    "model": "模型"
+    "model": "模型",
+    "clearOverride": "Clear override",
+    "unverified": "Unverified",
+    "unsupported": "Unsupported",
+    "approvalNever": "Never ask",
+    "approvalOnRequest": "Ask when needed",
+    "approvalUntrusted": "Ask for untrusted operations",
+    "source": {
+      "override": "Explicit override",
+      "profile": "Inherited: explicit profile setting",
+      "configured": "Inherited: configured value",
+      "provider": "Inherited: provider default",
+      "resume": "Inherited: resumed value (unverified)",
+      "unverified": "Inherited value is unverified"
+    }
   },
   "crashScreen": {
     "title": "出了点问题",

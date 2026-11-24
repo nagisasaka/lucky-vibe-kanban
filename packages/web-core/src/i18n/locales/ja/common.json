@@ -893,7 +893,21 @@
     "off": "無効",
     "maximum": "上限",
     "parallelAgentLimit": "並列エージェントの上限",
-    "parallelHint": "並列エージェント数は、メインエージェントを除くサブエージェントの最大数です。"
+    "parallelHint": "並列エージェント数は、メインエージェントを除くサブエージェントの最大数です。",
+    "clearOverride": "上書きを解除",
+    "unverified": "未確認",
+    "unsupported": "非対応",
+    "approvalNever": "確認しない",
+    "approvalOnRequest": "必要時に確認",
+    "approvalUntrusted": "信頼されていない操作を確認",
+    "source": {
+      "override": "明示上書き",
+      "profile": "継承: プリセットの明示設定",
+      "configured": "継承: 設定済みの値",
+      "provider": "継承: プロバイダーの既定値",
+      "resume": "継承: 再開時の値（未確認）",
+      "unverified": "継承値は未確認"
+    }
   },
   "crashScreen": {
     "title": "問題が発生しました",

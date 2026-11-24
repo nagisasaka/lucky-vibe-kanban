@@ -22,11 +22,24 @@ export function resolveExecutorOverride<K extends keyof ExecutorConfig>(
       (key) => key !== 'executor' && key !== 'variant'
     );
     const draft: ExecutorConfig = hasOverrides
-      ? { reasoning_id: null, ...scratch }
+      ? {
+          model_id: null,
+          reasoning_id: null,
+          permission_policy: null,
+          ...scratch,
+        }
       : scratch;
     if (Object.hasOwn(draft, field)) return draft[field];
   }
   if (launch) return launch[field];
+  // Display inheritance separately. The adapter already applies the selected
+  // profile; copying its display values here turns a read into an override.
+  if (
+    field === 'model_id' ||
+    field === 'reasoning_id' ||
+    field === 'permission_policy'
+  )
+    return undefined;
   return preset?.[field];
 }
 

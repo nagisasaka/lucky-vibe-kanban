@@ -171,3 +171,143 @@ describe('model selector reasoning overrides', () => {
     }
   );
 });
+
+import { BaseCodingAgent, type ModelSelectorConfig } from 'shared/types';
+import { resolveRunSelection } from './modelSelector';
+import {
+  resolveExecutorOverride,
+  mergeExecutorOverrides,
+} from './executorOverrides';
+
+describe('read-only inherited run selection', () => {
+  const config: ModelSelectorConfig = {
+    models,
+    providers: [],
+    agents: [],
+    permissions: [],
+    run_defaults: {
+      model: 'gpt-5.5',
+      reasoning: 'xhigh',
+      approval: 'never',
+      model_source: 'configured',
+      reasoning_source: 'provider',
+    },
+  };
+  const empty = { executor: BaseCodingAgent.CODEX };
+  it('displays resolved values without turning them or profile values into overrides', () => {
+    expect(resolveRunSelection(config, empty, null)).toMatchObject({
+      model: 'gpt-5.5',
+      reasoning: 'xhigh',
+      modelOverridden: false,
+      reasoningOverridden: false,
+    });
+    const preset = { ...empty, model_id: 'gpt-5.5', reasoning_id: 'xhigh' };
+    for (const field of [
+      'model_id',
+      'reasoning_id',
+      'permission_policy',
+    ] as const) {
+      expect(
+        resolveExecutorOverride(field, {}, null, null, preset)
+      ).toBeUndefined();
+    }
+    expect(empty).toEqual({ executor: BaseCodingAgent.CODEX });
+  });
+  it('marks only changed fields, and removes emphasis on same value or reset', () => {
+    expect(
+      resolveRunSelection(config, { ...empty, reasoning_id: 'max' }, null)
+    ).toMatchObject({ modelOverridden: false, reasoningOverridden: true });
+    for (const reasoning_id of ['xhigh', null]) {
+      expect(
+        resolveRunSelection(config, { ...empty, reasoning_id }, null)
+          .reasoningOverridden
+      ).toBe(false);
+    }
+    expect(
+      resolveRunSelection(config, { ...empty, model_id: 'gpt-5.5' }, null)
+        .modelOverridden
+    ).toBe(false);
+  });
+  it('clears old reasoning when changing model and does not guess a new effort', () => {
+    const next = mergeExecutorOverrides(
+      { ...empty, reasoning_id: 'xhigh' },
+      { model_id: 'haiku' }
+    );
+    expect(next.reasoning_id).toBeNull();
+    expect(resolveRunSelection(config, next, null)).toMatchObject({
+      model: 'haiku',
+      reasoning: null,
+      reasoningUnsupported: true,
+      modelOverridden: true,
+      reasoningOverridden: false,
+    });
+  });
+  it('preserves explicit unknown values and distinguishes unverified resume from candidates', () => {
+    const resumed = {
+      ...config,
+      run_defaults: {
+        model: null,
+        reasoning: null,
+        approval: null,
+        model_source: 'resume',
+        reasoning_source: 'resume',
+      },
+    };
+    expect(resolveRunSelection(resumed, empty, null)).toMatchObject({
+      model: null,
+      reasoning: null,
+      modelSource: 'resume',
+      modelOverridden: false,
+    });
+    expect(
+      resolveRunSelection(
+        resumed,
+        { ...empty, model_id: 'custom', reasoning_id: 'ultra' },
+        null
+      )
+    ).toMatchObject({
+      model: 'custom',
+      reasoning: 'ultra',
+      modelOverridden: true,
+      reasoningOverridden: true,
+    });
+  });
+  it('a saved reset does not resurrect a previous launch override', () => {
+    const saved = { ...empty, execution_mode: undefined };
+    const previous = { ...empty, model_id: 'custom', reasoning_id: 'ultra' };
+    expect(
+      resolveExecutorOverride('model_id', {}, saved, previous, null)
+    ).toBeNull();
+    expect(
+      resolveExecutorOverride('reasoning_id', {}, saved, previous, null)
+    ).toBeNull();
+  });
+});
+
+it('does not display native default-model effort on a different profile model', () => {
+  const config: ModelSelectorConfig = {
+    models,
+    providers: [],
+    agents: [],
+    permissions: [],
+    run_defaults: {
+      model: 'gpt-5.5',
+      reasoning: 'xhigh',
+      approval: null,
+      model_source: 'configured',
+      reasoning_source: 'configured',
+    },
+  };
+  expect(
+    resolveRunSelection(
+      config,
+      { executor: BaseCodingAgent.CODEX },
+      { executor: BaseCodingAgent.CODEX, model_id: 'haiku' }
+    )
+  ).toMatchObject({
+    model: 'haiku',
+    reasoning: null,
+    reasoningUnsupported: true,
+    modelOverridden: false,
+  });
+});

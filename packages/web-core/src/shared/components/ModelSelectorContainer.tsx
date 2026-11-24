@@ -27,11 +27,9 @@ import {
   escapeAttributeValue,
   parseModelId,
   appendPresetModel,
-  resolveDefaultModelId,
-  isModelAvailable,
   buildModelSelectionOverride,
   findModelForSelection,
-  resolveConfiguredReasoningIdForOptions,
+  resolveRunSelection,
 } from '@/shared/lib/modelSelector';
 import { profilesApi } from '@/shared/lib/api';
 import { useUserSystem } from '@/shared/hooks/useUserSystem';
@@ -55,6 +53,7 @@ interface ModelSelectorContainerProps {
   agent: BaseCodingAgent | null;
   workspaceId: string | undefined;
   sessionId?: string;
+  repoId?: string;
   onAdvancedSettings: () => void;
   presets: string[];
   selectedPreset: string | null;
@@ -75,6 +74,7 @@ export function ModelSelectorContainer({
   agent,
   workspaceId,
   sessionId,
+  repoId,
   onAdvancedSettings,
   presets,
   selectedPreset,
@@ -98,11 +98,23 @@ export function ModelSelectorContainer({
     { label: string; icon: Icon }
   > = {
     [PermissionPolicy.AUTO]: {
-      label: t('modelSelector.permissionAuto'),
+      label: t(
+        agent === BaseCodingAgent.CODEX
+          ? 'modelSelector.approvalNever'
+          : 'modelSelector.permissionAuto'
+      ),
       icon: FastForwardIcon,
     },
     [PermissionPolicy.SUPERVISED]: {
-      label: t('modelSelector.permissionAsk'),
+      label: t(
+        agent === BaseCodingAgent.CODEX
+          ? 'modelSelector.approvalUntrusted'
+          : 'modelSelector.permissionAsk'
+      ),
+      icon: HandIcon,
+    },
+    [PermissionPolicy.ON_REQUEST]: {
+      label: t('modelSelector.approvalOnRequest'),
       icon: HandIcon,
     },
     [PermissionPolicy.PLAN]: {
@@ -123,9 +135,9 @@ export function ModelSelectorContainer({
     agent,
     {
       variant: resolvedPreset,
-      workspaceId:
-        agent === 'CLAUDE_CODE' || sessionId ? workspaceId : undefined,
+      workspaceId,
       sessionId,
+      repoId,
     },
     discovery
   );
@@ -144,85 +156,14 @@ export function ModelSelectorContainer({
     [config?.providers]
   );
   const hasProviders = availableProviderIds.length > 0;
-  const providerIdMap = useMemo(
-    () => new Map(availableProviderIds.map((id) => [id.toLowerCase(), id])),
-    [availableProviderIds]
+  const selection = resolveRunSelection(
+    baseConfig,
+    executorConfig,
+    presetOptions
   );
-  const resolveProviderId = (value?: string | null) =>
-    value ? (providerIdMap.get(value.toLowerCase()) ?? null) : null;
-
-  const { providerId: configProviderId, modelId: configModelId } = useMemo(
-    () => parseModelId(executorConfig?.model_id, hasProviders),
-    [executorConfig?.model_id, hasProviders]
-  );
-
-  const fallbackProviderId = availableProviderIds[0] ?? null;
-  const resolvedConfigProviderId = resolveProviderId(configProviderId);
-
-  const { providerId: presetProviderId } = useMemo(
-    () => parseModelId(presetOptions?.model_id, hasProviders),
-    [presetOptions?.model_id, hasProviders]
-  );
-  const resolvedPresetProviderId = resolveProviderId(presetProviderId);
-
-  const hasDefaultModel = Boolean(config?.default_model);
-  const selectedProviderId =
-    resolvedConfigProviderId ??
-    resolvedPresetProviderId ??
-    (hasDefaultModel ? fallbackProviderId : null);
-
-  const defaultModelId = config
-    ? resolveDefaultModelId(
-        config.models,
-        selectedProviderId,
-        config.default_model,
-        hasProviders
-      )
-    : null;
-
-  const { modelId: presetModelId } = useMemo(
-    () => parseModelId(presetOptions?.model_id, hasProviders),
-    [presetOptions?.model_id, hasProviders]
-  );
-
-  const presetModelMatchesProvider =
-    !selectedProviderId ||
-    !resolvedPresetProviderId ||
-    resolvedPresetProviderId === selectedProviderId;
-  const resolvedPresetModelId = presetModelMatchesProvider
-    ? presetModelId
-    : null;
-
-  const selectedModelId = (() => {
-    const candidate = configModelId ?? resolvedPresetModelId ?? defaultModelId;
-    if (!candidate || !config || !selectedProviderId) return candidate;
-    const hasMatch = isModelAvailable(config, selectedProviderId, candidate);
-    return hasMatch
-      ? candidate
-      : resolveDefaultModelId(
-          config.models,
-          selectedProviderId,
-          config.default_model,
-          hasProviders
-        );
-  })();
-
-  const selectedModel = config
-    ? getSelectedModel(config.models, selectedProviderId, selectedModelId)
-    : null;
-
-  const selectedReasoningOptions =
-    selectedModel?.reasoning_options ?? EMPTY_REASONING_OPTIONS;
-  const hasConfiguredReasoning = Boolean(
-    executorConfig &&
-      Object.prototype.hasOwnProperty.call(executorConfig, 'reasoning_id')
-  );
-  const configuredReasoningId = executorConfig?.reasoning_id;
-  const selectedReasoningId = resolveConfiguredReasoningIdForOptions(
-    selectedReasoningOptions,
-    configuredReasoningId,
-    hasConfiguredReasoning
-  );
+  const { providerId: selectedProviderId, modelId: selectedModelId } =
+    parseModelId(selection.model, hasProviders);
+  const selectedReasoningId = selection.reasoning;
 
   const defaultAgentId =
     config?.agents.find((entry) => entry.is_default)?.id ?? null;
@@ -234,9 +175,25 @@ export function ModelSelectorContainer({
 
   const supportsPermissions = (config?.permissions.length ?? 0) > 0;
 
+  const nativeApproval = config?.run_defaults?.approval;
+  const nativePolicy =
+    nativeApproval === 'never'
+      ? PermissionPolicy.AUTO
+      : nativeApproval === 'on-request'
+        ? PermissionPolicy.ON_REQUEST
+        : nativeApproval === 'untrusted'
+          ? PermissionPolicy.SUPERVISED
+          : null;
   const basePermissionPolicy = supportsPermissions
-    ? (presetOptions?.permission_policy ?? config?.permissions[0] ?? null)
+    ? (presetOptions?.permission_policy ??
+      (agent === BaseCodingAgent.CODEX
+        ? nativePolicy
+        : config?.permissions[0]) ??
+      null)
     : null;
+  const permissionOverridden =
+    executorConfig?.permission_policy != null &&
+    executorConfig.permission_policy !== basePermissionPolicy;
   const permissionPolicy = supportsPermissions
     ? (executorConfig?.permission_policy ?? basePermissionPolicy)
     : null;
@@ -312,7 +269,18 @@ export function ModelSelectorContainer({
               : modelId
             : null,
         };
-    onOverrideChange(modelOverride);
+    onOverrideChange({
+      ...modelOverride,
+      model_id:
+        modelOverride.model_id === selection.baseModel
+          ? null
+          : modelOverride.model_id,
+      // Removing an old redundant model override does not change the model.
+      // Keep an independent explicit effort in that case.
+      ...((modelOverride.model_id ?? selection.baseModel) === selection.model
+        ? { reasoning_id: executorConfig?.reasoning_id ?? null }
+        : {}),
+    });
 
     pendingModelRef.current =
       modelId && config
@@ -322,7 +290,10 @@ export function ModelSelectorContainer({
   };
 
   const handleReasoningSelect = (reasoningId: string | null) => {
-    onOverrideChange({ reasoning_id: reasoningId });
+    onOverrideChange({
+      reasoning_id:
+        reasoningId === selection.baseReasoning ? null : reasoningId,
+    });
     pendingReasoningRef.current = { reasoningId };
   };
 
@@ -332,7 +303,9 @@ export function ModelSelectorContainer({
 
   const handlePermissionPolicyChange = (policy: PermissionPolicy) => {
     if (!supportsPermissions) return;
-    onOverrideChange({ permission_policy: policy });
+    onOverrideChange({
+      permission_policy: policy === basePermissionPolicy ? null : policy,
+    });
   };
 
   const scrollRef = useRef<HTMLDivElement | null>(null);
@@ -413,21 +386,55 @@ export function ModelSelectorContainer({
     );
   }
 
-  const showModelSelector = loadingModels || config.models.length > 0;
-  const showDefaultOption = !config.default_model && config.models.length > 0;
-  const displaySelectedModel = showModelSelector
-    ? getSelectedModel(config.models, selectedProviderId, selectedModelId)
-    : null;
+  const showDefaultOption = selection.modelOverridden;
+  const displaySelectedModel = getSelectedModel(
+    config.models,
+    selectedProviderId,
+    selectedModelId
+  );
   const reasoningLabel = getReasoningLabel(
     displaySelectedModel?.reasoning_options ?? EMPTY_REASONING_OPTIONS,
     selectedReasoningId
   );
   const modelLabelBase = loadingModels
     ? loadingLabel
-    : (displaySelectedModel?.name ?? selectedModelId ?? defaultLabel);
-  const modelLabel = reasoningLabel
-    ? `${modelLabelBase} · ${reasoningLabel}`
-    : modelLabelBase;
+    : (displaySelectedModel?.name ??
+      selectedModelId ??
+      t('modelSelector.unverified'));
+  const sourceLabel = (overridden: boolean, source: string) =>
+    t(`modelSelector.source.${overridden ? 'override' : source}`);
+  const modelTitle = sourceLabel(
+    selection.modelOverridden,
+    selection.modelSource
+  );
+  const reasoningTitle = sourceLabel(
+    selection.reasoningOverridden,
+    selection.reasoningSource
+  );
+  const modelLabel = (
+    <span className="inline-flex gap-1">
+      <span
+        title={modelTitle}
+        aria-label={`${modelLabelBase}: ${modelTitle}`}
+        className={selection.modelOverridden ? 'text-brand' : 'text-normal'}
+      >
+        {modelLabelBase}
+      </span>
+      <span aria-hidden>·</span>
+      <span
+        title={reasoningTitle}
+        aria-label={`${reasoningLabel ?? t(selection.reasoningUnsupported ? 'modelSelector.unsupported' : 'modelSelector.unverified')}: ${reasoningTitle}`}
+        className={selection.reasoningOverridden ? 'text-brand' : 'text-normal'}
+      >
+        {reasoningLabel ??
+          t(
+            selection.reasoningUnsupported
+              ? 'modelSelector.unsupported'
+              : 'modelSelector.unverified'
+          )}
+      </span>
+    </span>
+  );
 
   const agentLabel = selectedAgentId
     ? (config.agents.find((entry) => entry.id === selectedAgentId)?.label ??
@@ -437,6 +444,14 @@ export function ModelSelectorContainer({
   const permissionMeta = permissionPolicy
     ? (permissionMetaByPolicy[permissionPolicy] ?? null)
     : null;
+  const permissionSource = presetOptions?.permission_policy
+    ? 'profile'
+    : nativeApproval
+      ? 'configured'
+      : config.run_defaults?.model_source === 'resume'
+        ? 'resume'
+        : 'unverified';
+  const permissionTitle = sourceLabel(permissionOverridden, permissionSource);
   const permissionIcon = permissionMeta?.icon ?? HandIcon;
   const isCodex = agent === BaseCodingAgent.CODEX;
   const savedExecutionMode =
@@ -514,37 +529,36 @@ export function ModelSelectorContainer({
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {showModelSelector && (
-        <ModelSelectorPopover
-          isOpen={isOpen}
-          onOpenChange={handleOpenChange}
-          trigger={
-            <DropdownMenuTriggerButton
-              size="sm"
-              label={modelLabel}
-              disabled={loadingModels}
-            />
-          }
-          config={config}
-          error={streamError}
-          selectedProviderId={selectedProviderId}
-          selectedModelId={selectedModelId}
-          selectedReasoningId={selectedReasoningId}
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          onModelSelect={handleModelSelect}
-          onReasoningSelect={handleReasoningSelect}
-          recentModelEntries={recentModelEntries}
-          showDefaultOption={showDefaultOption}
-          onSelectDefault={() => handleModelSelect(null)}
-          scrollRef={scrollRef}
-          expandedProviderId={expandedProviderId}
-          onExpandedProviderIdChange={setExpandedProviderId}
-          resolvedTheme={resolvedTheme}
-        />
-      )}
+      <ModelSelectorPopover
+        isOpen={isOpen}
+        onOpenChange={handleOpenChange}
+        trigger={
+          <DropdownMenuTriggerButton
+            size="sm"
+            label={modelLabel}
+            disabled={loadingModels}
+          />
+        }
+        config={config}
+        error={streamError}
+        selectedProviderId={selectedProviderId}
+        selectedModelId={selectedModelId}
+        selectedReasoningId={selectedReasoningId}
+        reasoningOverridden={selection.reasoningOverridden}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        onModelSelect={handleModelSelect}
+        onReasoningSelect={handleReasoningSelect}
+        recentModelEntries={recentModelEntries}
+        showDefaultOption={showDefaultOption}
+        onSelectDefault={() => handleModelSelect(null)}
+        scrollRef={scrollRef}
+        expandedProviderId={expandedProviderId}
+        onExpandedProviderIdChange={setExpandedProviderId}
+        resolvedTheme={resolvedTheme}
+      />
 
-      {!showModelSelector && streamError && (
+      {streamError && (
         <span role="alert" className="text-sm text-error">
           {t('modelSelector.loadError')} {streamError}
         </span>
@@ -676,18 +690,35 @@ export function ModelSelectorContainer({
         </DropdownMenu>
       )}
 
-      {permissionPolicy && config.permissions.length > 0 && (
+      {config.permissions.length > 0 && (
         <DropdownMenu>
           <DropdownMenuTriggerButton
             size="sm"
             icon={permissionIcon}
-            aria-label={t('modelSelector.permissions')}
+            label={
+              <span
+                className={permissionOverridden ? 'text-brand' : 'text-normal'}
+              >
+                {permissionMeta?.label ??
+                  nativeApproval ??
+                  t('modelSelector.unverified')}
+              </span>
+            }
+            title={permissionTitle}
+            aria-label={`${t('modelSelector.permissions')}: ${permissionMeta?.label ?? nativeApproval ?? t('modelSelector.unverified')} (${permissionTitle})`}
             showCaret={false}
           />
           <DropdownMenuContent align="start">
             <DropdownMenuLabel>
               {t('modelSelector.permissions')}
             </DropdownMenuLabel>
+            {permissionOverridden && (
+              <DropdownMenuItem
+                onClick={() => onOverrideChange({ permission_policy: null })}
+              >
+                {t('modelSelector.clearOverride')}
+              </DropdownMenuItem>
+            )}
             {config.permissions
               .filter((policy) => !isCodex || policy !== PermissionPolicy.PLAN)
               .map((policy) => {

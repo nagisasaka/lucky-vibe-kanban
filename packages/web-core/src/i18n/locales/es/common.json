@@ -679,7 +679,21 @@
     "permissionPlan": "Plan",
     "agent": "Agente",
     "default": "Predeterminado",
-    "model": "Modelo"
+    "model": "Modelo",
+    "clearOverride": "Clear override",
+    "unverified": "Unverified",
+    "unsupported": "Unsupported",
+    "approvalNever": "Never ask",
+    "approvalOnRequest": "Ask when needed",
+    "approvalUntrusted": "Ask for untrusted operations",
+    "source": {
+      "override": "Explicit override",
+      "profile": "Inherited: explicit profile setting",
+      "configured": "Inherited: configured value",
+      "provider": "Inherited: provider default",
+      "resume": "Inherited: resumed value (unverified)",
+      "unverified": "Inherited value is unverified"
+    }
   },
   "crashScreen": {
     "title": "Algo salió mal",

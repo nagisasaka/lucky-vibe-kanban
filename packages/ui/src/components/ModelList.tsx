@@ -48,20 +48,20 @@ interface ReasoningDropdownProps {
   options: ModelReasoningOption[];
   selectedId: string | null;
   onSelect: (reasoningId: string | null) => void;
+  overridden?: boolean;
 }
 
 function ReasoningDropdown({
   options,
   selectedId,
   onSelect,
+  overridden = false,
 }: ReasoningDropdownProps) {
   const { t } = useTranslation('common');
   if (!options.length && !selectedId) return null;
 
   const selectedLabel =
-    getReasoningLabel(options, selectedId) ??
-    t('modelSelector.followCliConfig');
-  const isDefaultSelected = selectedId === null;
+    getReasoningLabel(options, selectedId) ?? t('modelSelector.unverified');
 
   return (
     <DropdownMenu>
@@ -85,12 +85,11 @@ function ReasoningDropdown({
         data-model-selector-dropdown
         className="min-w-[160px]"
       >
-        <DropdownMenuItem
-          icon={isDefaultSelected ? CheckIcon : undefined}
-          onClick={() => onSelect(null)}
-        >
-          {t('modelSelector.followCliConfig')}
-        </DropdownMenuItem>
+        {overridden && (
+          <DropdownMenuItem onClick={() => onSelect(null)}>
+            {t('modelSelector.clearOverride')}
+          </DropdownMenuItem>
+        )}
         {selectedId && !options.some((option) => option.id === selectedId) && (
           <DropdownMenuItem icon={CheckIcon} disabled>
             {selectedLabel}
@@ -117,6 +116,7 @@ export interface ModelListProps {
   onSelect: (id: string, providerId?: string) => void;
   reasoningOptions: ModelReasoningOption[];
   selectedReasoningId: string | null;
+  reasoningOverridden?: boolean;
   onReasoningSelect: (reasoningId: string | null) => void;
   justifyEnd?: boolean;
   className?: string;
@@ -132,6 +132,7 @@ export function ModelList({
   onSelect,
   reasoningOptions,
   selectedReasoningId,
+  reasoningOverridden,
   onReasoningSelect,
   justifyEnd = false,
   className,
@@ -180,7 +181,7 @@ export function ModelList({
             isDefaultSelected && 'font-semibold'
           )}
         >
-          {t('modelSelector.default')}
+          {t('modelSelector.clearOverride')}
         </span>
       </button>
     </div>
@@ -255,6 +256,7 @@ export function ModelList({
                 <div className="flex items-center justify-end gap-half pr-base">
                   {showReasoningSelector && (
                     <ReasoningDropdown
+                      overridden={reasoningOverridden}
                       options={reasoningOptions}
                       selectedId={selectedReasoningId}
                       onSelect={onReasoningSelect}
