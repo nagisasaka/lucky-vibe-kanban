@@ -401,8 +401,16 @@ export function ModelSelectorContainer({
     : (displaySelectedModel?.name ??
       selectedModelId ??
       t('modelSelector.unverified'));
+  const sourceLabels: Record<string, string> = {
+    override: t('modelSelector.source.override'),
+    profile: t('modelSelector.source.profile'),
+    configured: t('modelSelector.source.configured'),
+    provider: t('modelSelector.source.provider'),
+    resume: t('modelSelector.source.resume'),
+    unverified: t('modelSelector.source.unverified'),
+  };
   const sourceLabel = (overridden: boolean, source: string) =>
-    t(`modelSelector.source.${overridden ? 'override' : source}`);
+    sourceLabels[overridden ? 'override' : source] ?? sourceLabels.unverified;
   const modelTitle = sourceLabel(
     selection.modelOverridden,
     selection.modelSource
