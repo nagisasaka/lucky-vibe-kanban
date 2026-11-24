@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:254ae1070fe015d757bcd9bd273c705c08cf4fbc49d75a0afb480416f8a6e8dc",
+  "pageVersion": "sha256:751c0d69aba1eb9c20ae664731215a3436d3206ad77cd94e163d82e60f8bf245",
   "claims": [
     {
       "id": "claim_5dd974441b044185aec7cc0c264e31ee",
@@ -129,10 +129,34 @@
           "version": "repo-lines-v1:sha256:ea25488d1168370c0d97b2e0cc29868e7a1415a7b976132cf7e5ae1479c2f4e5:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJhYmQ1YWFhZmU5MDg1MTQzMzNhOGZmNTllZTA3YTc3MDhjYjNlOTA1Y2MwNWU4M2U1M2YzOTY1Mjg2YWVhOWYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk4Yjg5YWMzNDM1MjVjYWEwMjc3MTQwYTBhZTYyNmE1M2Q0YTA1MjE4MmE2MjhkN2FiYjBhZjNmNDg0NDk2NjIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjlmMmUzNzk2MjA2Y2E3MTg1NjFkNGQ5MzIxZGI2ZTBkMTZmYmFiOTQ3ZjQ4MWUyYjliNjhjMThmNzE0ZDE2ZmUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijc4ZDAyMWZkODUxYjUxYTc3NzQ0NzM3ZGE5NDg4ZGFkNGYwMTExM2MxMzY1NGE0MzkwMmU5YTRmYzI5M2MzNGQifQ"
         }
       ]
+    },
+    {
+      "id": "claim_a4ae056658494281993bc374f60068b7",
+      "statement": "Claudeのpassive利用枠取得は同時一つ・開始間隔5秒で制限し、閉じたゲートはcleanup_unconfirmed、取得中はin_progressとして区別する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/executors/src/executors/claude/usage.rs#L115-L148",
+          "version": "repo-lines-v1:sha256:f7b8f78e15e7c79071a02889ee5240d2bd5332e1b66706f8aee3bbfc1204d1ba:eyJzZWxlY3RlZExpbmVDb3VudCI6MzQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE2MDgxZTJkYjY3ZmM2ODYyZDM0OWFiODQ2MGI2NjcyY2ExODViMGMxMThiZGYzM2M3NjM5NzFmNWUzYzVjZWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YjA0NDkxNDY5NzIyZTgzNjNhOTRlNDA0NDUzOGUwMTNhMmEyMTdlMzZiMWU1NjhiYTYwYWNiN2I0YzhmMmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjI0N2VkOWI3ZDY3ZWZlZjBhZGU4N2Q1OTNiZWU1YzFiYTM1NGU1NWY1YzM5YmIxYWM0ZWZmMDdjOTIyNTYyYjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjczOTE0NTY3ZmZmMzM0OThjMzI1MTM0ZDgwZTgxNWRiNWI1NDQ4ZGNkMDZhMWVhMDUxYmI0ODA2MmM2ZWY3MmYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_0900158f2d5f427086c048ede3bb2a09",
+      "statement": "Claudeの利用枠取得は所有プロセス回収失敗や制御リーダー終了未確認でSLOTを閉じ、以後の取得を停止する。閉じたSLOTを自動再開しない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/executors/src/executors/claude/usage.rs#L225-L255",
+          "version": "repo-lines-v1:sha256:fd34152337d1bc00ac324d94180f049601eb7adb7eb7b6af41b9a31006ca5183:eyJzZWxlY3RlZExpbmVDb3VudCI6MzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImViZjZhNzcyMTlkZDQ1ZDAzY2FhZDM1ZmFkY2NiM2Q0N2YyY2IzZGQ2MWY0ZGFmNTVjNDBkNzFhZDNiY2VhYjEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkzYjA1OTc4OTYyMWM0YjJhYTk2NTk3ZGJkNTQ0MWY1MjEwNmU0OWY1YmZiN2FiZjVlNzdjODlhNDQ0M2VjMDAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjYwM2UxYjRkYzQ0ZjNhZWJmY2JlY2U3MTNjNzBmY2Y4ODhhNmIyZDA4ZjUxMWYxMzc3Yjk5NDlmMWUxNjc3YWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImEzNGEwNWFkY2U1M2VkMDRiYzIzOWJhMTY1MDBkMDMyMzNjNzQ1MDA1NmE2NWUyMjY4ODExN2ViNzlhNTQyNDIifQ"
+        },
+        {
+          "resource": "repo://crates/executors/src/executors/claude/usage.rs#L335-L354",
+          "version": "repo-lines-v1:sha256:c4f83b8f5b752b043f0af9ad31b47707fa538e8dabef452e398bbd63b2c3eb4b:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM2YzY1M2ViMGNiNDBhMGFhNTkzMjUwMTEwNWQ0MDdlZDY3YWQ4NjRlMmQxZmVjY2M5ZGM0NzQwMmQzNGFkZGYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVjNDljYWZlOTc5YmJjYTIxMDU2NGQxOTVkM2ZiYTNhNGRlN2FkY2QzOTIwMTZjMGViMmM1OTk0YmQ5NzhlYTYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImEyYzY5NjIzYWMzNTAyMmI4YjcyY2ZiYTlhYzFlMGRhNGRkMmEyMmY3YTcxYmJiOWZiOGIxZTczMDc1NjIzYjIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjliYWRmODhkZDkwZWQ5ZTM3ZDg1OWZmMzZhY2MyZDUwZDhmMjY5MjI3MGRhNDJhZjMwYmFmOTI1Mjc2MWIzMzMifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.9.0",
-    "at": "2026-11-24T09:04:01.540Z"
+    "at": "2026-11-24T09:45:04.787Z"
   }
 }

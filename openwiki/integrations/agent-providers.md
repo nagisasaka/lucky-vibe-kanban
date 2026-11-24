@@ -1,16 +1,18 @@
 ---
 type: integration
 title: Agent providers
-description: provider の認証、profile、能力と MCP の境界。
+description: provider の認証、利用枠取得、profile、能力と MCP の境界。
 tags: [providers, codex, claude, mcp]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-24T09:04:01.540Z
+    at: 2026-11-24T09:45:04.787Z
 sources:
   - id: openwiki-source-bfcf08b9feacd16360e862a4
     resource: repo://crates/executors/src/executors/claude.rs
   - id: openwiki-source-5514d83ac049ec5c68456f7b
     resource: repo://crates/executors/src/executors/claude/auth.rs
+  - id: openwiki-source-f615018b2948c78d0299828c
+    resource: repo://crates/executors/src/executors/claude/usage.rs
   - id: openwiki-source-22b82518475034ade38104e6
     resource: repo://crates/executors/src/executors/codex.rs
   - id: openwiki-source-f23c89ae54db56391783fef4
@@ -19,7 +21,7 @@ sources:
     resource: repo://crates/local-deployment/src/agent_run_port.rs
   - id: openwiki-source-379c8cd3e1e9932f9adda9ee
     resource: repo://crates/services/src/services/container.rs
-generated: { by: "codex", at: "2026-11-24T09:04:01.540Z" }
+generated: { by: "codex", at: "2026-11-24T09:45:04.787Z" }
 ---
 
 # Agent provider・設定・MCP・Skill
@@ -33,6 +35,19 @@ LVK server の認証と provider CLI の認証は別である。login、status�
 Codex は非空 `CODEX_HOME`、それ以外は実行 account の `~/.codex` を使う。native MCP 設定と login 状態もその解決先に依存する。カスタム home は永続化と秘密保護を別途確保し、profile だけの環境 override が server 自身の探索先も変えると仮定しない。[Codex](../../crates/executors/src/executors/codex.rs)
 
 Claude の `CLAUDE_CONFIG_DIR` を使う場合も同一環境で CLI の login／status を行う。SUBSCRIPTION profile は起動直前に公式 CLI の認証 metadata を検査し、失敗時に別課金方式へ黙って fallback しない。画面の installation や discovery の候補は認証、quota、実モデル応答の証明ではない。[auth probe](../../crates/executors/src/executors/claude/auth.rs)・[起動](../../crates/executors/src/executors/claude.rs)
+
+## Claude の利用枠取得と回収失敗
+
+Claude の利用枠取得は、通常の Run とは別の passive CLI 経路である。公式 CLI と互換性のある認証・起動設定を要求し、同時取得は一つ、開始間隔は5秒以上とする。既に取得中なら `in_progress`、短時間の再要求なら `rate_limited` を返し、重複プロセスを起動しない。[取得と受付](../../crates/executors/src/executors/claude/usage.rs)
+
+`cleanup_unconfirmed` は、利用枠取得に使うプロセスや制御リーダーの回収を確認できず、そのサーバープロセス内の取得用ゲートが閉じた状態である。ログイン失敗や利用枠残量ゼロを意味しない。通常の Claude Run が動くことも、このゲートが開いている証拠にはならない。回収の失敗や制御リーダーの終了未確認ではゲートを閉じ、以後の取得を停止する。自動で開き直す経路は設けていない。[停止ガード](../../crates/executors/src/executors/claude/usage.rs)
+
+非アンカー PID が procfs 走査中に消滅しただけなら、共通回収処理は終了済みとして扱う。アンカー・PID 再利用・権限・未知エラーの保護は維持する。[回収の境界](../architecture/agent-runtime.md#失敗取消終端)を参照する。この修正は、既に閉じたゲートを解除する操作でも、共有環境の再起動許可でもない。
+
+注意点:
+
+- 警告が出たら残量取得を連打せず、対象の回収失敗記録と実プロセス状態を運用担当が照合する。認証変更やガード迂回で解決したと見なさない。
+- 閉じたゲートは同じプロセス内で再開できない。再起動を伴う復旧は、進行中の仕事と残留プロセスを確認し、[サーバー運用](../operations/server-container.md)の手順と承認に従う別作業である。
 
 ## Discovery と実行
 
@@ -75,3 +90,5 @@ Codexはfresh threadのみを許し、read-only・承認要求なし・environme
 これはモデルへのプロンプトだけの約束ではなく、hostとprovider起動引数の制約である。provider境界の単体試験とfixtureによる意味評価は、実providerの認証・応答品質・実行成功の代用にはならない。
 
 検証の境界: Codex の approval 継承・Code/Plan/Review/Goal・start/resume は adapter 試験で、再開 discovery は services 試験で扱う。[隔離 native 設定試験](../../scripts/test-codex-approval-config.py)と[offline MCP fixture](../../scripts/test-codex-mcp-readonly.py)は実 CLI を使えるが、外部モデルや実アカウントの end-to-end 成功とは別である。
+
+利用枠の受付・cleanup の Rust 回帰はローカルのゲートと所有プロセス処理を検証する。実認証、実アカウントの残量取得、稼働サーバーの停止ガード解除を証明するものではない。

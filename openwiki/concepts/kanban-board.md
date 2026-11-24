@@ -1,11 +1,11 @@
 ---
 type: concept
 title: Kanban board
-description: Project の Issue を状態別に表示するボード。
+description: Project の Issue を状態別に表示し、Run 観測をカード更新と音声で共有するボード。
 tags: [kanban, board, project]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-24T08:19:31.399Z
+    at: 2026-11-24T09:45:04.787Z
 sources:
   - id: openwiki-source-3d5de3bbc96079ee456ed0f5
     resource: repo://crates/server/src/routes/board_run_events.rs
@@ -23,10 +23,14 @@ sources:
     resource: repo://packages/web-core/src/features/kanban/ui/KanbanContainer.tsx
   - id: openwiki-source-2706dbba10a20a516c29675e
     resource: repo://packages/web-core/src/features/kanban/ui/RunSpeechProvider.tsx
+  - id: openwiki-source-04002561a004e06b93652c94
+    resource: repo://packages/web-core/src/features/kanban/ui/useRunObservationIssueRefresh.ts
   - id: openwiki-source-4f5acbe99dd0d72515b7e82b
     resource: repo://packages/web-core/src/shared/components/ui-new/containers/SharedAppLayout.tsx
   - id: openwiki-source-06199fac94fe2f7f1f9bd1b2
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/SpeechSynthesisSettingsSection.tsx
+  - id: openwiki-source-e665e0fe8e478ec542e0ace4
+    resource: repo://packages/web-core/src/shared/lib/electric/collections.ts
   - id: openwiki-source-a7576c2af3663c39efa0974d
     resource: repo://packages/web-core/src/shared/lib/speechSynthesis.ts
   - id: openwiki-source-962c2abf1ebe2a34b79d4e37
@@ -37,7 +41,7 @@ sources:
     resource: repo://tests/saved-filters/navigation.spec.ts
   - id: openwiki-source-eece9c51da74bcdb3fe07f45
     resource: repo://tests/speech-synthesis/settings.spec.ts
-generated: { by: "codex", at: "2026-11-24T08:19:31.399Z" }
+generated: { by: "codex", at: "2026-11-24T09:45:04.787Z" }
 ---
 
 # Kanban board
@@ -62,14 +66,24 @@ Project の route は Kanban 画面を開き、Board API はその Project の I
 
 [ブラウザfixture](../../tests/saved-filters/integration.spec.ts)と[ナビゲーション試験](../../tests/saved-filters/navigation.spec.ts)は条件編集・状態・リンク・選択解除を扱う。fixtureは実providerや実サーバーの全画面受入を証明しない。
 
+## Run 観測によるカード更新
+
+表示中のボードは音声がオフでも、その Project の既存 Run 観測 API を購読する。音声とカード更新は `RunObservationHub` のカーソル付きポーリングを共有し、音声切替で二重購読を起動しない。`RunSpeechProvider` が Hub を提供し、カード側は詳細パネルや loading の再マウントより上の `ProjectKanbanLayout` で購読する。[共有観測](../../packages/web-core/src/features/kanban/model/runObservationPolling.ts)・[カード側の寿命](../../packages/web-core/src/pages/kanban/ProjectKanban.tsx)
+
+カード側は `running` または終了の lifecycle イベントを含むページごとに最大1回、既存の Issue 一覧を再取得する。`starting` や commentary は再取得の契機にしない。同じ購読期間に既に `running` を観測した attempt の待機からの再開でも追加取得しない。サーバーが canonical イベントと同じ transaction で Issue 状態を更新することを前提とし、音声の発話時刻を状態更新の証拠には使わない。終了イベントでの再取得も、必ず列が移動するという意味ではなく、サーバー側の所有者・他の活動 Run などの条件に従った状態を読み直す。[状態同期](../../crates/db/src/models/agent_runtime_kanban.rs)
+
+初期ベースラインは追加取得せず、再接続や非表示からの復帰のベースラインでは取りこぼしを補うため1回取得する。非表示タブではカード側の購読を外し、音声オフなら観測を止める。音声オンならその購読は続く。ボード離脱や Project 切替で以前の購読を終了する。[表示状態と購読](../../packages/web-core/src/features/kanban/ui/useRunObservationIssueRefresh.ts)
+
+30秒周期のフォールバック全件取得は維持する。約1秒の Run 観測と Issue 全件取得は別の通信であり、音声オフでも表示中のボードに観測通信は発生する。全件取得は周期を短縮せず、上記の遷移・再接続・可視化復帰で増える。音声の発話直前に行う活動状態・未回答確認のリクエストも、共有ポーリングとは別に残る。[一覧同期](../../packages/web-core/src/shared/lib/electric/collections.ts)・[音声直前の確認](../../packages/web-core/src/features/kanban/ui/RunSpeechProvider.tsx)
+
 ## Run の進捗を音声で聞く
 
 音声切替は、複数の [Workspace](workspace.md) で動く [Run](agent-run.md) を個々の画面で見張らずに把握するための機能である。ボード右上のスピーカーをオンにすると、その Project に属する新着 Run イベントを Issue 番号付きで読む。表示中の Workspace だけに対象を絞らない。ボードを開いた時点と Project 切替時はオフで、オン／オフは保存しない。音声・速度・読み上げる内容の選好は別途ブラウザに保存する。[画面への接続](../../packages/web-core/src/features/kanban/ui/KanbanContainer.tsx)
 
 1. `speechSynthesis` を利用できるブラウザで対象 Project のボードを開く。非対応の場合は切替が無効になる。
-2. スピーカーを押す。新着の基準位置を取得する間は接続中となり、取得できてからオンになる。接続に失敗した場合はオフのままなので、接続状態を確認して再操作する。
+2. スピーカーを押す。共有観測の基準位置が未確立なら接続中となり、取得後にオンになる。既にカード更新の観測が動いていれば、最後に配信したカーソルへ参加し、接続を増やさない。初回接続に失敗した場合はオフのままなので、接続状態を確認して再操作する。
 3. 開始、成功・失敗・停止、回答待ちの短い定型文と、agent が人へ送った commentary を聞く。「結果と要対応だけ」を選んだ場合は開始と commentary を除く。ボード発話の言語は、解決した音声の正規化済み言語、ブラウザ優先言語、`ja-JP` の順で決まる。
-4. オフにすると再生中の発話と待ち行列を即時に止める。再度オンにしても停止中の履歴は読み返さない。ボードを離れた場合も購読と発話を停止する。
+4. オフにすると再生中の発話と待ち行列を即時に止める。再度オンにしても既に観測済みの履歴は読み返さない。共有カーソルへの参加のため、操作の最大約1秒前に発生してまだ観測していないイベントが読まれる場合はある。ボードを離れた場合も購読と発話を停止する。
 
 [音声切替](../../packages/web-core/src/features/kanban/ui/RunSpeechToggle.tsx)は Provider の状態を表示する。購読と発話キューは Project ごとの [RunSpeechProvider](../../packages/web-core/src/features/kanban/ui/RunSpeechProvider.tsx) が所有し、[SharedAppLayout](../../packages/web-core/src/shared/components/ui-new/containers/SharedAppLayout.tsx) が画面内の再マウントより上に配置する。詳細の開閉、画面幅変更、loading、同一ボード内のページ再マウントでオン状態を失わない。別 Project、ボード離脱、新しいタブは別の寿命であり、新規ボードはオフになる。サーバーに音声キューや別モデルによる要約は設けない。
 
@@ -120,3 +134,5 @@ commentary の分類は provider が明示した情報に基づく。Codex は `
 - 再接続後は新着から再開する。切断中の報告を取り戻す機能ではない。
 
 [キュー試験](../../packages/web-core/src/features/kanban/model/runSpeechQueue.test.ts)、[接続試験](../../packages/web-core/src/features/kanban/model/runObservationPolling.test.ts)、[切替試験](../../packages/web-core/src/features/kanban/ui/RunSpeechToggle.test.tsx)、[音声設定ブラウザ試験](../../tests/speech-synthesis/settings.spec.ts)、[ボード寿命ブラウザ試験](../../tests/kanban/run-speech-lifetime.mjs)と API・adapter の試験は分類、順序、再接続、Project 分離、選好のライブ反映、旧イベント非再生と試聴の独立を扱う。ブラウザ fixture の音声APIはモックであり、実音声の聴取や利用者環境の音声品質を証明しない。
+
+[カード更新ブラウザ試験](../../tests/kanban/run-observation-refresh.mjs)は mock HTTP・音声・visibility を使い、ミュート中の開始/終了、音声切替時の単一観測、復帰と通信回数を確認する。30秒タイマーは登録を確認して発火を抑え、周期動作は[一覧同期単体](../../packages/web-core/src/shared/lib/electric/collections.test.ts)の fake timer で扱う。実 provider の開始から表示までの時間や実データ規模での観測 SQL 負荷は未計測である。

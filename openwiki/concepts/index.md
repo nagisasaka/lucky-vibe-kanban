@@ -14,7 +14,7 @@
 - [対話ヘルプ](interactive-help.md) - 稼働版の公開 source に基づく質問と版固定読取。
 - [Issue の共同作業](issue-collaboration.md) - コメント、レビュー、関係と添付の境界。
 - [Issue](issue.md) - Project の仕事、本文版と実施の関係。
-- [Kanban board](kanban-board.md) - Project の Issue を状態別に表示するボード。
+- [Kanban board](kanban-board.md) - Project の Issue を状態別に表示し、Run 観測をカード更新と音声で共有するボード。
 - [Kanban](kanban.md) - 仕事の流れを可視化して管理する方法。
 - [組織とメンバー](organization-and-membership.md) - local Board の組織、認証主体とメンバーの境界。
 - [Pet](pets.md) - Sidebar Pet の形式、安全な取込、保存と帰属。

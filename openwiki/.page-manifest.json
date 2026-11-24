@@ -2,11 +2,11 @@
   "schemaVersion": 1,
   "pages": {
     "/openwiki/architecture/agent-runtime.md": {
-      "gitHead": "70290945ade4ca349ee6d965b4b5b10f207f3d6a",
-      "sourceFingerprint": "sha256:ab78b7d525baa6e9bd214dd4d0e769f45df84b97899c54fe2cd2d36e27fb92df",
-      "pageVersion": "sha256:040d1b30570384ced0355e1c8cb99ff03d02c3b0d1ebb40a52e1ff721b50e9ff",
+      "pageVersion": "sha256:9f3b808f5fe3058a406463f9ba0d02b3d767fe1e3125fc9c825e91febe7b4ddc",
       "completedBy": "codex",
-      "completedRunId": "18f6014b-9694-408d-94a9-ee2a345d7eb3"
+      "completedRunId": "0bf72b91-95c0-4567-b837-adaf27814643",
+      "gitHead": "19630227a0dded3403b5c937e3fa0b570728be5d",
+      "sourceFingerprint": "sha256:1161fb900530386d1308df0a1fda45955fa8ff4180ee4b20170e54abaf4b1e91"
     },
     "/openwiki/architecture/system.md": {
       "gitHead": "d3c0c505f142a77994f66063b436e1c2c3d76daf",
@@ -93,11 +93,11 @@
       "completedRunId": "2c68adf3-4dd7-47ae-bb16-e15c4f09ae7a"
     },
     "/openwiki/concepts/formal-integration.md": {
+      "gitHead": "abf10cff964bb21b3f3d32f4b2aad262308bc8e9",
+      "sourceFingerprint": "sha256:be1b6fc14ae19f63f7436fc9d07a8ea14d7c23dcb48d5d930b5c901f2d6e72f2",
       "pageVersion": "sha256:c36b21505ced4865e0c43671aaeda3f34f41345574af6bdcba0f6740a6629b22",
       "completedBy": "codex",
-      "completedRunId": "1c56c6a8-e743-44d0-94db-83e0132884b9",
-      "gitHead": "abf10cff964bb21b3f3d32f4b2aad262308bc8e9",
-      "sourceFingerprint": "sha256:be1b6fc14ae19f63f7436fc9d07a8ea14d7c23dcb48d5d930b5c901f2d6e72f2"
+      "completedRunId": "1c56c6a8-e743-44d0-94db-83e0132884b9"
     },
     "/openwiki/concepts/glossary.md": {
       "gitHead": "9bf0e275be9215f718e5f06e779d7c1afc0c6d8f",
@@ -128,11 +128,11 @@
       "completedRunId": "2c68adf3-4dd7-47ae-bb16-e15c4f09ae7a"
     },
     "/openwiki/concepts/kanban-board.md": {
-      "gitHead": "efdb633db3f8f733289190a10e238eec836323ae",
-      "sourceFingerprint": "sha256:d7c98cfd056e31a6a47497e06a87695ca2735c7e9779af250c0450a8624a3fe0",
-      "pageVersion": "sha256:230dcf4a56d5050a66930451542f79f999770166e4abb6e31d6f1b1edb272fc3",
+      "pageVersion": "sha256:f3e32c81a57bc2ec01deb15664dff4671fda697b58876e49f385b438d6722685",
       "completedBy": "codex",
-      "completedRunId": "5bd2df9a-247f-4450-9cdf-656ab3a3e82a"
+      "completedRunId": "0bf72b91-95c0-4567-b837-adaf27814643",
+      "gitHead": "19630227a0dded3403b5c937e3fa0b570728be5d",
+      "sourceFingerprint": "sha256:1161fb900530386d1308df0a1fda45955fa8ff4180ee4b20170e54abaf4b1e91"
     },
     "/openwiki/concepts/kanban.md": {
       "gitHead": "d3c0c505f142a77994f66063b436e1c2c3d76daf",
@@ -261,11 +261,11 @@
       "completedRunId": "2c68adf3-4dd7-47ae-bb16-e15c4f09ae7a"
     },
     "/openwiki/integrations/agent-providers.md": {
-      "gitHead": "3519b946bac1f04d142ff44795fad799325f2e5c",
-      "sourceFingerprint": "sha256:653eb60157ccade4165fc0f337e4fa7685aa17ab09bbddb5181eb88aa14a6d97",
-      "pageVersion": "sha256:254ae1070fe015d757bcd9bd273c705c08cf4fbc49d75a0afb480416f8a6e8dc",
+      "pageVersion": "sha256:751c0d69aba1eb9c20ae664731215a3436d3206ad77cd94e163d82e60f8bf245",
       "completedBy": "codex",
-      "completedRunId": "94378260-33ca-4a61-b39d-3df94866fedd"
+      "completedRunId": "0bf72b91-95c0-4567-b837-adaf27814643",
+      "gitHead": "19630227a0dded3403b5c937e3fa0b570728be5d",
+      "sourceFingerprint": "sha256:1161fb900530386d1308df0a1fda45955fa8ff4180ee4b20170e54abaf4b1e91"
     },
     "/openwiki/integrations/github-review.md": {
       "gitHead": "d3c0c505f142a77994f66063b436e1c2c3d76daf",

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:040d1b30570384ced0355e1c8cb99ff03d02c3b0d1ebb40a52e1ff721b50e9ff",
+  "pageVersion": "sha256:9f3b808f5fe3058a406463f9ba0d02b3d767fe1e3125fc9c825e91febe7b4ddc",
   "claims": [
     {
       "id": "claim_410d7ecd76c840bd906a575b212c0e27",
@@ -55,10 +55,30 @@
           "version": "repo-lines-v1:sha256:7f16ae1ca21c8b6207cd5d67f34f541dea5f9fc411d523237325302de38bfa90:eyJzZWxlY3RlZExpbmVDb3VudCI6MzksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjlhOGFmMDRlMjIwMDIzNzFlOTE2ZThiMzViYjBiY2ZjODI2MzllY2JlMDEwOTQ3MjIzZWI3NTVjZGFkYTY5MjEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRhNWVkNmE1NDlhZDA3ZTBiOTg1NzFhNWU4NjI5ZmU0MWJiYzgwMWE0MjdmNTAyN2RiZGRkMjE2NGZlZTE3OTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjAwN2M4NjA2ZmY4MGZiOGE1MjdjN2Y0YzUzOWJmOGMzMGYxZDhhODhmYTk4ZmEwNTg5MzhmZmMyOTgyZjRhMWIifQ"
         }
       ]
+    },
+    {
+      "id": "claim_6de7f193a7cd404999b2a35c9200269a",
+      "statement": "Linuxの所有プロセス走査はstat読取またはpidfd捕捉でENOENT/ESRCHとなった非アンカーPIDだけを終了済みとして除外し、アンカー消滅・権限・その他エラーは失敗として扱う。",
+      "evidence": [
+        {
+          "resource": "repo://crates/utils/src/process/owned_group.rs#L281-L335",
+          "version": "repo-lines-v1:sha256:f3941efa000cd9146d535d8d5137330c7d378fbeb0624c0a31b93a506d3dba56:eyJzZWxlY3RlZExpbmVDb3VudCI6NTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJkNDFmODBkZDlkN2M1MWI4NzIwNDE5YzY0MzZkZTU1Njk2MDI0MWEyMjE2OGI1NTNjN2U1ZDdkNzBlNTExMTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImExZDFkODU4MDNhODExNzBiOTJhN2Q4NzEzOGYxMjA3YTc2MGYxZjllMGRmMWU2NDZmZDQxYjM2NTI1MWY5M2IiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFiZDQ5ZTZiZGVlZmMzNTE1NDFjYWI3ZDFmMTYyMDMxMGE0YTY4OTA4ZDViOGZhY2NlNWUzNzNjYjVmZTNiZDkifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_cbc54a1d09e646c39f2a30431182913c",
+      "statement": "回収は走査前後のアンカー検証、捕捉時の開始時刻・group・session照合、およびpidfd経由のsignalによりPID再利用保護を維持する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/utils/src/process/owned_group.rs#L392-L486",
+          "version": "repo-lines-v1:sha256:c780f9e29be35d07fac85949ab7cbc33da0896dc57db7b447118af919d4a8a92:eyJzZWxlY3RlZExpbmVDb3VudCI6OTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY4MWRjNzQ5NjlkZWE3YWFkZWQ0M2MxNWJhYTNjMTFiNTlmMDFmNWJhYzUzZDliODc3NDZjNzBkODNkY2Y0ZjYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhZGNjOWJkYjE2Y2RiZjFiZjg0NDE0ZTYzMGEwYTc0MWE1NjViYzRmNmE4M2E0N2E4ZTJiZmM2YzIwMzZmNWQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjlhYmEyYTRkNjFiMjExMDVjNzMzOTU2NTJlZWIyM2ZiOGU4ZjUwMDYzMjZjZGUyZWE3Njg4YjZiM2UwYzQyMzQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImEwYjZhZDI1YzFlOTBlNjhjMWQxZmRiM2NkZTQ3MmI1ZmNkZjMyZjM3ZjI3MDRmZjVhYWM2ZGEwN2U2MmU4ZTMifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.9.0",
-    "at": "2026-11-23T19:12:52.102Z"
+    "at": "2026-11-24T09:45:04.787Z"
   }
 }

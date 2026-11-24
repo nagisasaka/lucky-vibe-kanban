@@ -1,17 +1,19 @@
 ---
 type: architecture
 title: Agent Runtime
-description: Agent Run の監査、投影と回復の責任を説明する。
+description: Agent Run の監査、投影、プロセス回収と回復の責任を説明する。
 tags: [agent-runtime, audit, persistence, recovery]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-23T19:12:52.102Z
+    at: 2026-11-24T09:45:04.787Z
 sources:
   - id: openwiki-source-d20a82e2192a07c687b838cb
     resource: repo://crates/db/src/models/agent_runtime.rs
   - id: openwiki-source-c88a7c6fabdac15166554032
     resource: repo://crates/executors/src/executors/codex/client.rs
-generated: { by: "codex", at: "2026-11-23T19:12:52.102Z" }
+  - id: openwiki-source-7272325fd3387a1cecfd5cbc
+    resource: repo://crates/utils/src/process/owned_group.rs
+generated: { by: "codex", at: "2026-11-24T09:45:04.787Z" }
 ---
 
 # Agent Runtime の監査・投影・回復
@@ -50,6 +52,10 @@ DB は host batch の identity を照合し、event、provider session、投影�
 
 取消は native interrupt と実プロセスの cleanup を伴う。Linux では所有 identity と捕捉した子を照合して停止を確認する。捕捉前に逃れた daemon や強制的な runtime 破棄までの完全な回収保証ではない。[process cleanup](../../crates/utils/src/process/owned_group.rs)・[検証範囲](../../tests/codex-process-cleanup/README.md)
 
+Linux の所有プロセス回収は、未回収の leader をアンカーとして保持し、走査の前後に同一性を確認する。`/proc` 列挙後に非アンカー PID が消滅し、stat 読み取りまたは pidfd の捕捉で `ENOENT` / `ESRCH` が返った場合だけ、その PID を終了済みとして除外する。stat エラーに PID の文脈を付ける前に消滅を分類するため、errno が失われても正常な終了競合を回収失敗と誤認しない。[走査と分類](../../crates/utils/src/process/owned_group.rs)
+
+アンカーの消滅、権限不足、列挙失敗、未知の I/O エラーや読み取れない stat は失敗として扱う。捕捉時の開始時刻・process group・session の一致確認と pidfd による signal は維持し、PID 再利用を終了済みとして除外しない。この共通処理は Run だけでなく Claude の利用枠取得、Codex discovery、PTY の回収にも使われる。利用枠の停止ガードは [provider の利用枠取得](../integrations/agent-providers.md#claude-の利用枠取得と回収失敗)を参照する。
+
 Provider の turn 完了、OS exit、Host Terminal は同じではない。Host は cleanup 後に出力を drain し、監査を閉じて terminal を記録する。exit 0 だけから provider の成功を作らず、後着の成功で取消、監査失敗や非ゼロ終了を上書きしない。通信失敗だけで死亡と決めたり、代替 provider を勝手に起動したりしない。[終端処理](../../crates/local-deployment/src/process_host.rs)
 
 ### Codex の子エージェントと親の完了
@@ -75,3 +81,5 @@ Codex と Claude の mapper は native frame を canonical event に変換し、
 DB の batch・reservation 回帰、process host の drain と terminal の回帰、Linux の所有 process cleanup を変更範囲に応じて確認する。これらの fixture は実 provider、全 OS、サーバー強制終了を越える回復の受入を証明しない。[DB tests](../../crates/db/src/models/agent_runtime_reservation_tests.rs)・[host tests](../../crates/local-deployment/src/process_host.rs)
 
 Codex client の `version_check_tests` は V1 grouped wait、V2 mailbox wait、再開・明示非終端・古い turn 完了を合成通知で検証する。実 Codex の fan-out → wait → 親完了と LVK の成功・成果保存は、候補の server/host を隔離 instance で動かして別に照合する。合成試験だけでは実モデルの動作を証明しない。[対象回帰](../../crates/executors/src/executors/codex/client.rs)・[隔離手順](../../deploy/developer/STAGING.md)
+
+`owned_group` の注入試験は消滅 errno、アンカー、権限・I/O エラーと PID 再利用を区別し、実プロセス fixture は所有 group の回収を確認する。実アカウントの利用枠取得や全 OS の回収成功を証明するものではない。
