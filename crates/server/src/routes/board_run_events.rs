@@ -105,7 +105,8 @@ async fn page(pool: &SqlitePool, project: Uuid, after: Option<i64>) -> Result<Pa
     // Order by the first canonical start, not tab order or queued Run creation.
     // Keep finished Sessions in the ranking across retries and subsequent Runs.
     // A launch that fails before starting still gets a number at its terminal event.
-    let rows: Vec<(i64, Uuid, String, String, bool, bool, String, i64, i64)> = sqlx::query_as(
+    type ObservationRow = (i64, Uuid, String, String, bool, bool, String, i64, i64);
+    let rows: Vec<ObservationRow> = sqlx::query_as(
         "WITH first_runs AS (
           SELECT r.workspace_id, r.session_id, MIN((
             SELECT e.rowid FROM agent_events e WHERE e.agent_run_id=r.id
