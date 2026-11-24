@@ -223,6 +223,7 @@ pub trait ContainerService {
         workspace_id: Option<Uuid>,
         repo_id: Option<Uuid>,
         repo_ids: &[Uuid],
+        selected_model: Option<&str>,
     ) -> Result<Option<BoxStream<'static, Patch>>, ContainerError> {
         let (workdir, repo_path) = self
             .executor_discovery_paths(
@@ -262,6 +263,7 @@ pub trait ContainerService {
         }
         #[cfg(feature = "qa-mode")]
         {
+            let _ = selected_model;
             let _ = executor_profile_id;
             let _ = workdir;
             let _ = repo_path;
@@ -273,6 +275,16 @@ pub trait ContainerService {
             let executor = ExecutorConfigs::get_cached()
                 .get_coding_agent(&executor_profile_id)
                 .ok_or_else(|| ContainerError::Other(anyhow!("Agent profile not found")))?;
+
+            if let Some(model) = selected_model {
+                if let executors::executors::CodingAgent::ClaudeCode(claude) = &executor
+                    && let Some(cwd) = workdir.as_deref().or(repo_path.as_deref())
+                {
+                    let patch = claude.discover_selected_model(cwd, model).await?;
+                    return Ok(Some(Box::pin(futures::stream::once(async move { patch }))));
+                }
+                return Ok(None);
+            }
 
             // Spawn background task to refresh global cache for this executor
             let base_agent = executors::executors::BaseCodingAgent::from(&executor);

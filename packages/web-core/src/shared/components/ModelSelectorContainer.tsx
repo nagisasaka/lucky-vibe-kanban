@@ -148,7 +148,66 @@ export function ModelSelectorContainer({
     }
   }, [streamError]);
 
-  const baseConfig = streamConfig;
+  const inheritedModel =
+    presetOptions?.model_id ?? streamConfig?.run_defaults?.model;
+  const selectedModelProbe =
+    agent === BaseCodingAgent.CLAUDE_CODE &&
+    executorConfig?.model_id &&
+    executorConfig.model_id !== inheritedModel
+      ? executorConfig.model_id
+      : undefined;
+  const selectedDiscovery = useModelSelectorConfig(
+    selectedModelProbe ? agent : null,
+    {
+      variant: resolvedPreset,
+      workspaceId,
+      sessionId,
+      repoId,
+      selectedModel: selectedModelProbe,
+    }
+  );
+  // Keep baseline defaults (and override comparisons) independent of this
+  // request. The stream hook discards results for previous endpoint keys.
+  const baseConfig = useMemo(() => {
+    if (!streamConfig || !selectedModelProbe || !selectedDiscovery.config)
+      return streamConfig;
+    const selected = selectedDiscovery.config;
+    const effort = selected.run_defaults?.reasoning;
+    return {
+      ...streamConfig,
+      models: streamConfig.models.map((row) => {
+        if (row.id !== selectedModelProbe) return row;
+        const native = selected.models.find((m) => m.id === selectedModelProbe);
+        const options = [
+          ...(native?.reasoning_options ?? row.reasoning_options),
+        ];
+        if (effort && !options.some((r) => r.id === effort)) {
+          options.push({
+            id: effort,
+            label: toPrettyCase(effort),
+            is_default: true,
+          });
+        }
+        return {
+          ...row,
+          reasoning_options: options.map((r) => ({
+            ...r,
+            is_default: effort ? r.id === effort : r.is_default,
+          })),
+        };
+      }),
+      unsupported_reasoning_models: [
+        ...new Set([
+          ...(streamConfig.unsupported_reasoning_models ?? []),
+          ...(selected.unsupported_reasoning_models ?? []),
+        ]),
+      ],
+    };
+  }, [streamConfig, selectedModelProbe, selectedDiscovery.config]);
+  const selectedModelLoading =
+    !!selectedModelProbe &&
+    !selectedDiscovery.isInitialized &&
+    !selectedDiscovery.error;
   const config = appendPresetModel(baseConfig, presetOptions?.model_id);
 
   const availableProviderIds = useMemo(
@@ -392,10 +451,11 @@ export function ModelSelectorContainer({
     selectedProviderId,
     selectedModelId
   );
-  const reasoningLabel = getReasoningLabel(
-    displaySelectedModel?.reasoning_options ?? EMPTY_REASONING_OPTIONS,
-    selectedReasoningId
-  );
+  const reasoningLabel =
+    getReasoningLabel(
+      displaySelectedModel?.reasoning_options ?? EMPTY_REASONING_OPTIONS,
+      selectedReasoningId
+    ) ?? (selectedModelLoading ? loadingLabel : null);
   const modelLabelBase = loadingModels
     ? loadingLabel
     : (displaySelectedModel?.name ??

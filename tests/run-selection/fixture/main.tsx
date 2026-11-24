@@ -81,6 +81,16 @@ const models = [
   },
   { id: "haiku", name: "Haiku", reasoning_options: [] },
 ];
+if (scenario === "claude-demand") {
+  models[1].reasoning_options.forEach((r) => {
+    r.is_default = false;
+  });
+  models.push({
+    id: "gamma",
+    name: "Gamma",
+    reasoning_options: [{ id: "medium", label: "Medium", is_default: false }],
+  });
+}
 const discovery = {
   scope: {
     agent,

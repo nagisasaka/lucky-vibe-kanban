@@ -1621,6 +1621,7 @@ export const agentsApi = {
       repoId?: string;
       repoIds?: string[];
       variant?: string | null;
+      selectedModel?: string;
     }
   ): string => {
     const params = new URLSearchParams();
@@ -1630,6 +1631,7 @@ export const agentsApi = {
     if (opts?.repoId) params.set('repo_id', opts.repoId);
     if (opts?.repoIds?.length) params.set('repo_ids', opts.repoIds.join(','));
     if (opts?.variant) params.set('variant', opts.variant);
+    if (opts?.selectedModel) params.set('selected_model', opts.selectedModel);
 
     return `/api/agents/discovered-options/ws?${params.toString()}`;
   },

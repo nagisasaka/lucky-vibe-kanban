@@ -814,6 +814,7 @@ async fn get_agent_preset_options(
 
 #[derive(Debug, Deserialize)]
 pub struct ExecutorDiscoveredOptionsStreamQuery {
+    selected_model: Option<String>,
     executor: BaseCodingAgent,
     variant: Option<String>,
     #[serde(default)]
@@ -853,20 +854,23 @@ async fn handle_executor_discovered_options_ws(
         .filter(|s| !s.is_empty())
         .map(Uuid::parse_str)
         .collect::<Result<Vec<_>, _>>()?;
-    match deployment
-        .container()
-        .discover_executor_options(
-            match query.variant {
-                Some(variant) => ExecutorProfileId::with_variant(query.executor, variant),
-                None => ExecutorProfileId::new(query.executor),
-            },
-            query.session_id,
-            query.workspace_id,
-            query.repo_id,
-            &repo_ids,
-        )
-        .await
-    {
+    let container = deployment.container();
+    let discovery = container.discover_executor_options(
+        match query.variant {
+            Some(variant) => ExecutorProfileId::with_variant(query.executor, variant),
+            None => ExecutorProfileId::new(query.executor),
+        },
+        query.session_id,
+        query.workspace_id,
+        query.repo_id,
+        &repo_ids,
+        query.selected_model.as_deref(),
+    );
+    let result = tokio::select! {
+        result = discovery => result,
+        _ = socket.recv(), if query.selected_model.is_some() => return Ok(()),
+    };
+    match result {
         Ok(Some(mut stream)) => {
             if let Some(patch) = stream.next().await {
                 let _ = socket
@@ -906,6 +910,10 @@ async fn handle_executor_discovered_options_ws(
         }
         Err(e) => {
             tracing::warn!("Failed to start discovered options stream: {}", e);
+            if query.selected_model.is_some() {
+                // A completed failed read is unresolved, not still loading.
+                let _ = socket.send(LogMsg::Ready.to_ws_message_unchecked()).await;
+            }
         }
     }
 

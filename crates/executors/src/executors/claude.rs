@@ -598,7 +598,7 @@ impl StandardCodingAgentExecutor for ClaudeCode {
         };
 
         let selection = if let Some(cwd) = workdir.or(repo_path) {
-            self.discover_run_selection(cwd).await.ok()
+            self.read_run_selection(cwd).await.ok()
         } else {
             None
         };
@@ -606,7 +606,14 @@ impl StandardCodingAgentExecutor for ClaudeCode {
         let cmd_key =
             crate::repo_skills::discovery_cache_key(self.compute_cmd_key(), &repository_roots);
         let base_executor = BaseCodingAgent::ClaudeCode;
-        let supports_effort = self.supports_effort_flag_or_false().await;
+        let supports_effort = if let Some(selection) = &selection {
+            selection
+                .models
+                .iter()
+                .any(|m| !m.reasoning_options.is_empty())
+        } else {
+            self.supports_effort_flag_or_false().await
+        };
 
         let (target_path, mut initial_options) = if let Some(wd) = workdir {
             let wd_buf = wd.to_path_buf();

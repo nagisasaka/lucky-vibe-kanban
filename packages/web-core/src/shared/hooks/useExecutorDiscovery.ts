@@ -39,6 +39,7 @@ type DiscoveryScope = {
   repoId?: string;
   repoIds?: string[];
   variant?: string | null;
+  selectedModel?: string;
 };
 
 export interface ExecutorDiscoverySnapshot {
@@ -58,7 +59,7 @@ export function useExecutorDiscovery(
   shared?: ExecutorDiscoverySnapshot
 ): ExecutorDiscoverySnapshot {
   const hostId = useHostId();
-  const { workspaceId, sessionId, repoId, variant } = opts ?? {};
+  const { workspaceId, sessionId, repoId, variant, selectedModel } = opts ?? {};
   const repoIdsKey = opts?.repoIds?.join(',') ?? '';
   const matchesShared =
     !!shared &&
@@ -68,7 +69,8 @@ export function useExecutorDiscovery(
     shared.scope.sessionId === sessionId &&
     shared.scope.repoId === repoId &&
     (shared.scope.repoIds?.join(',') ?? '') === repoIdsKey &&
-    shared.scope.variant === variant;
+    shared.scope.variant === variant &&
+    shared.scope.selectedModel === selectedModel;
   const endpoint = useMemo(() => {
     if (!agent || matchesShared) return undefined;
     return agentsApi.getDiscoveredOptionsStreamUrl(agent, {
@@ -77,6 +79,7 @@ export function useExecutorDiscovery(
       repoId,
       repoIds: repoIdsKey ? repoIdsKey.split(',') : undefined,
       variant,
+      selectedModel,
     });
   }, [
     agent,
@@ -85,6 +88,7 @@ export function useExecutorDiscovery(
     repoId,
     repoIdsKey,
     variant,
+    selectedModel,
     matchesShared,
   ]);
 
@@ -129,6 +133,7 @@ export function useExecutorDiscovery(
       repoId,
       repoIds: opts?.repoIds,
       variant,
+      selectedModel,
     },
     options: data?.options ?? null,
     error: combinedError,

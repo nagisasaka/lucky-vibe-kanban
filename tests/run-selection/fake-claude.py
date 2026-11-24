@@ -3,12 +3,15 @@
 import json
 import os
 import sys
+import time
 args = sys.argv[1:]
 with open(os.environ['LVK480_RECORD'], 'a') as log:
-    log.write(json.dumps({'args': args}) + '\n')
+    log.write(json.dumps({'args': args, 'time': time.monotonic()}) + '\n')
 mode = os.environ.get('LVK480_CASE', '')
 model = args[args.index('--model') + 1] if '--model' in args else 'astra'
 effort = args[args.index('--effort') + 1] if '--effort' in args else ('low' if model == 'beta' else 'medium')
+if model == 'beta':
+    time.sleep(float(os.environ.get('LVK480_BETA_DELAY', '0')))
 for line in sys.stdin:
     req = json.loads(line)
     assert req['type'] == 'control_request'

@@ -187,44 +187,19 @@ impl ClaudeCode {
         }).await.map_err(|e| ExecutorError::Io(std::io::Error::other(e)))?
     }
 
-    pub(super) async fn discover_run_selection(
+    /// Only resolve the requested model; never enumerate candidate defaults.
+    pub async fn discover_selected_model(
         &self,
         cwd: &Path,
-    ) -> Result<Selection, ExecutorError> {
-        let mut selection = self.read_run_selection(cwd).await?;
-        // A fresh non-persistent process per model lets the native resolver apply
-        // per-model settings/defaults without retaining another model's effort.
-        let deadline = tokio::time::Instant::now() + Duration::from_secs(10);
-        for row in selection.models.iter_mut().take(12) {
-            if Some(&row.id) == selection.defaults.model.as_ref() {
-                continue;
-            }
-            let mut probe = self.clone();
-            probe.model = Some(row.id.clone());
-            probe.effort = None;
-            let Ok(result) = tokio::time::timeout_at(deadline, probe.read_run_selection(cwd)).await
-            else {
-                break;
-            };
-            if let Ok(value) = result
-                && value.defaults.model.as_deref() == Some(&row.id)
-            {
-                for effort in &mut row.reasoning_options {
-                    effort.is_default = Some(&effort.id) == value.defaults.reasoning.as_ref();
-                }
-                if !value.unsupported.contains(&row.id)
-                    && let Some(effort) = &value.defaults.reasoning
-                    && !row.reasoning_options.iter().any(|r| &r.id == effort)
-                {
-                    row.reasoning_options
-                        .extend(ReasoningOption::from_names_with_default(
-                            [effort.clone()],
-                            Some(effort),
-                        ));
-                }
-            }
-        }
-        Ok(selection)
+        model: &str,
+    ) -> Result<json_patch::Patch, ExecutorError> {
+        let mut probe = self.clone();
+        probe.model = Some(model.to_owned());
+        probe.effort = None;
+        let selection = probe.read_run_selection(cwd).await.ok();
+        let mut options = crate::executor_discovery::ExecutorDiscoveredOptions::default();
+        super::apply_run_selection(&mut options, selection.as_ref());
+        Ok(super::patch::executor_discovered_options(options))
     }
 }
 
@@ -310,19 +285,113 @@ mod tests {
         let agent: ClaudeCode = serde_json::from_value(json!({"base_command_override":executable,
             "env":{"LVK480_RECORD":root.path().join("models.jsonl")}}))
         .unwrap();
-        let selection = agent.discover_run_selection(root.path()).await.unwrap();
+        let selection = agent.read_run_selection(root.path()).await.unwrap();
         let beta = selection.models.iter().find(|m| m.id == "beta").unwrap();
-        assert_eq!(
-            beta.reasoning_options
-                .iter()
-                .find(|r| r.is_default)
-                .unwrap()
-                .id,
-            "low"
-        );
+        assert!(!beta.reasoning_options.iter().any(|r| r.is_default));
         let explicit: ClaudeCode =
             serde_json::from_value(json!({"model":"custom","effort":"high"})).unwrap();
         assert!(explicit.resolved_run_arguments(&selection).is_empty());
+    }
+
+    #[cfg(unix)]
+    #[tokio::test]
+    async fn next_run_discovery_never_probes_unselected_candidates_even_with_cache() {
+        use std::os::unix::fs::PermissionsExt;
+
+        use futures::StreamExt;
+
+        use crate::{
+            executor_discovery::ExecutorConfigCacheKey,
+            executors::{BaseCodingAgent, StandardCodingAgentExecutor},
+        };
+        let root = tempfile::tempdir().unwrap();
+        let executable = root.path().join("claude");
+        std::fs::write(
+            &executable,
+            include_str!("../../../../../tests/run-selection/fake-claude.py"),
+        )
+        .unwrap();
+        std::fs::set_permissions(&executable, std::fs::Permissions::from_mode(0o700)).unwrap();
+        let record = root.path().join("calls.jsonl");
+        let agent: ClaudeCode = serde_json::from_value(json!({"base_command_override":executable,
+            "env":{"LVK480_RECORD":record,"LVK480_BETA_DELAY":"2"}}))
+        .unwrap();
+        for cached in [false, true] {
+            if cached {
+                let key = ExecutorConfigCacheKey::new(
+                    Some(&root.path().to_path_buf()),
+                    crate::repo_skills::discovery_cache_key(agent.compute_cmd_key(), &[]),
+                    BaseCodingAgent::ClaudeCode,
+                );
+                crate::executors::utils::executor_options_cache()
+                    .put(key, super::super::default_discovered_options(true));
+            }
+            let started = std::time::Instant::now();
+            let mut stream = agent
+                .discover_options(Some(root.path()), None, &[])
+                .await
+                .unwrap();
+            let patch = stream.next().await.unwrap();
+            let elapsed = started.elapsed();
+            let mut data = json!({"options":null});
+            json_patch::patch(&mut data, &patch).unwrap();
+            assert_eq!(
+                data["options"]["model_selector"]["run_defaults"]["model"],
+                "astra"
+            );
+            assert_eq!(
+                data["options"]["model_selector"]["run_defaults"]["reasoning"],
+                "medium"
+            );
+            assert!(elapsed < Duration::from_secs(2));
+            let calls = std::fs::read_to_string(&record).unwrap();
+            assert_eq!(calls.lines().count(), if cached { 2 } else { 1 });
+            assert!(!calls.contains("beta"));
+            eprintln!(
+                "first usable cached={cached}: {}ms, total children={}",
+                elapsed.as_millis(),
+                calls.lines().count()
+            );
+        }
+        let started = std::time::Instant::now();
+        let patch = agent
+            .discover_selected_model(root.path(), "beta")
+            .await
+            .unwrap();
+        let mut data = json!({"options":null});
+        json_patch::patch(&mut data, &patch).unwrap();
+        assert_eq!(
+            data["options"]["model_selector"]["run_defaults"]["reasoning"],
+            "low"
+        );
+        assert_eq!(std::fs::read_to_string(record).unwrap().lines().count(), 3);
+        eprintln!(
+            "selected beta: {}ms, total children=3",
+            started.elapsed().as_millis()
+        );
+        for (case, expected) in [
+            ("models-fail", Some("low")),
+            ("effort-missing", None),
+            ("settings-fail", None),
+        ] {
+            let probe: ClaudeCode =
+                serde_json::from_value(json!({"base_command_override":executable,
+                "env":{"LVK480_RECORD":root.path().join("partial.jsonl"),"LVK480_CASE":case}}))
+                .unwrap();
+            let patch = probe
+                .discover_selected_model(root.path(), "beta")
+                .await
+                .unwrap();
+            let mut data = json!({"options":null});
+            json_patch::patch(&mut data, &patch).unwrap();
+            assert_eq!(
+                data["options"]["model_selector"]["run_defaults"]["reasoning"].as_str(),
+                expected
+            );
+            if case == "models-fail" {
+                assert_eq!(data["options"]["model_selector"]["models"], json!([]));
+            }
+        }
     }
 
     #[test]

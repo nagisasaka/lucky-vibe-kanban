@@ -3,6 +3,37 @@ import { test, expect } from "@playwright/test";
 test.beforeEach(async ({ page }) => {
   // The fixture must never talk to an LVK instance or start an agent.
   await page.route("**/api/**", (route) => route.abort());
+  await page.routeWebSocket("**/api/agents/discovered-options/ws?**", (ws) => {
+    const model = new URL(ws.url()).searchParams.get("selected_model");
+    const configured =
+      new URL(page.url()).searchParams.get("scenario") === "claude-configured";
+    ws.send(
+      JSON.stringify({
+        JsonPatch: [
+          {
+            op: "add",
+            path: "/options",
+            value: {
+              model_selector: {
+                models: [],
+                providers: [],
+                agents: [],
+                permissions: [],
+                run_defaults: {
+                  model,
+                  reasoning:
+                    model === "beta" ? (configured ? "high" : "low") : null,
+                },
+              },
+              loading_models: false,
+            },
+          },
+        ],
+      }),
+    );
+    ws.send(JSON.stringify({ Ready: true }));
+    ws.send(JSON.stringify({ finished: true }));
+  });
 });
 
 for (const scenario of ["configured", "profile"]) {
