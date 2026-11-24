@@ -41,6 +41,7 @@ Read only the references relevant to the user's intent and planned operation; ea
 | Investigate source, request REVIEW, review specifications or share review evidence | [Investigation](references/investigation.md) |
 | Start/check Auto-merge, validation, publication or Wiki; resume failed work; replace/transfer an Issue, close old work; archive an Issue/Workspace or clean up folders (even without a merge or transfer) | [Auto-merge, transfer and cleanup](references/auto-merge.md) |
 | Record Todos, Design Notes, priority, tags or Issue relationships | [Records](references/records.md) |
+| Create/edit shared saved filters, evaluate conditions, read results or return a filtered board link | [Saved filters](references/saved-filters.md) |
 | Try unmerged changes, prepare or check a preview | [Previews](references/previews.md) |
 | Develop LVK itself; switch/restart its development server | [LVK development](references/lvk-development.md) |
 
