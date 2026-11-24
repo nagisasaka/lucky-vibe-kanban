@@ -2002,6 +2002,7 @@
     "open": "Wikiを開く"
   },
   "workspaceFiles": {
+    "metadata": "メタデータ",
     "search_files": "ファイルを検索",
     "refresh_files": "ファイル一覧を更新",
     "loading_files": "ファイルを読み込み中",
