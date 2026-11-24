@@ -54,6 +54,10 @@ export interface AppNavigation {
     transition?: NavigationTransition
   ): void;
   goToExport(transition?: NavigationTransition): void;
+  setProjectSavedFilter(
+    projectId: string,
+    savedFilter: string | undefined
+  ): void;
   goToProject(projectId: string, transition?: NavigationTransition): void;
   goToProjectWorkflows(
     projectId: string,

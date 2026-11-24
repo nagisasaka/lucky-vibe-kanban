@@ -58,6 +58,20 @@ function App() {
       <button onClick={() => localAppNavigation.goToWorkspaces()}>
         Workspaces
       </button>
+      <button
+        onClick={() =>
+          localAppNavigation.setProjectSavedFilter("project", "selected")
+        }
+      >
+        Select filter
+      </button>
+      <button
+        onClick={() =>
+          localAppNavigation.setProjectSavedFilter("project", undefined)
+        }
+      >
+        Clear filter
+      </button>
       <output data-testid="location">
         {JSON.stringify({
           pathname: location.pathname,

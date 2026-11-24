@@ -271,6 +271,23 @@ export function createLocalAppNavigation(): AppNavigation {
     goToWorkspaceVsCode: (workspaceId, transition) =>
       navigateTo({ kind: 'workspace-vscode', workspaceId }, transition),
     goToExport: (transition) => navigateTo({ kind: 'export' }, transition),
+    setProjectSavedFilter: (projectId, savedFilter) => {
+      const current = resolveLocalDestinationFromPath(
+        router.state.location.pathname
+      );
+      const destination: AppDestination =
+        current && 'projectId' in current && current.projectId === projectId
+          ? current
+          : { kind: 'project', projectId };
+      void router.navigate({
+        ...destinationToLocalTarget(destination, {
+          currentHostId: parseLocalHostIdFromPathname(
+            router.state.location.pathname
+          ),
+        }),
+        search: (previous) => ({ ...previous, savedFilter }),
+      });
+    },
     goToProject: (projectId, transition) =>
       navigateTo({ kind: 'project', projectId }, transition),
     goToProjectWorkflows: (projectId, transition) =>

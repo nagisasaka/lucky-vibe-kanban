@@ -15,6 +15,8 @@ import { SavedFiltersManager } from "@/shared/components/saved-filters/SavedFilt
 import { useSavedFilter } from "@/shared/hooks/useSavedFilter";
 import { SavedFilterStatus } from "@/shared/components/saved-filters/SavedFilterStatus";
 import NiceModal from "@ebay/nice-modal-react";
+import { AppNavigationProvider } from "@/shared/hooks/useAppNavigation";
+import type { AppNavigation } from "@/shared/lib/routes/appNavigation";
 function Board() {
   const view = useSavedFilter();
   return (
@@ -104,7 +106,17 @@ export function Integration() {
   return (
     <QueryClientProvider client={client}>
       <NiceModal.Provider>
-        <RouterProvider router={router} />
+        <AppNavigationProvider
+          value={
+            {
+              setProjectSavedFilter: (_projectId, savedFilter) => {
+                void router.navigate({ to: "/", search: { savedFilter } });
+              },
+            } as AppNavigation
+          }
+        >
+          <RouterProvider router={router} />
+        </AppNavigationProvider>
       </NiceModal.Provider>
     </QueryClientProvider>
   );

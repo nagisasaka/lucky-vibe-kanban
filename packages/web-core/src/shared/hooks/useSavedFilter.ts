@@ -1,6 +1,6 @@
 import { useEffect, useRef, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useNavigate, useRouterState } from '@tanstack/react-router';
+import { useRouterState } from '@tanstack/react-router';
 import type { SavedFilterEvaluation } from 'shared/remote-types';
 import { useProjectContext } from '@/shared/hooks/useProjectContext';
 import {
@@ -8,6 +8,7 @@ import {
   savedFilterKeys,
   SavedFilterRequestError,
 } from '@/shared/lib/savedFiltersApi';
+import { useAppNavigation } from '@/shared/hooks/useAppNavigation';
 import { hasEvaluationResult } from '@/shared/lib/savedFilters';
 
 export function useSavedFilter() {
@@ -16,7 +17,7 @@ export function useSavedFilter() {
     select: (state) => state.location.search as { savedFilter?: string },
   });
   const id = search.savedFilter;
-  const navigate = useNavigate();
+  const navigation = useAppNavigation();
   const selected = id !== undefined;
   const list = useQuery({
     queryKey: savedFilterKeys.list(project.projectId),
@@ -134,13 +135,7 @@ export function useSavedFilter() {
           ? ('evaluating' as const)
           : ('unevaluated' as const))),
     select: (next: string | undefined) =>
-      void navigate({
-        to: '.',
-        search: (prev: Record<string, unknown>) => ({
-          ...prev,
-          savedFilter: next,
-        }),
-      }),
+      navigation.setProjectSavedFilter(project.projectId, next),
     refresh: async () => {
       const current = await definition.refetch();
       if (current.data && !current.error) {

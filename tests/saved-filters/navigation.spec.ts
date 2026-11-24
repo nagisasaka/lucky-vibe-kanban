@@ -47,3 +47,27 @@ test("actual AppNavigation preserves only the project filter, with existing sess
   await page.getByRole("button", { name: "Workspaces", exact: true }).click();
   await expect.poll(location).toEqual({ pathname: "/workspaces", search: {} });
 });
+
+test("filter selection and clearing retain the current workspace and session", async ({
+  page,
+}) => {
+  await page.goto("/navigation.html");
+  const location = async () =>
+    JSON.parse(await page.getByTestId("location").textContent());
+  await page
+    .getByRole("button", { name: "Seed ordinary", exact: true })
+    .click();
+  await expect(page.getByTestId("location")).toContainText("agent_run_id");
+  const before = await location();
+  await page
+    .getByRole("button", { name: "Select filter", exact: true })
+    .click();
+  await expect
+    .poll(location)
+    .toEqual({
+      ...before,
+      search: { ...before.search, savedFilter: "selected" },
+    });
+  await page.getByRole("button", { name: "Clear filter", exact: true }).click();
+  await expect.poll(location).toEqual(before);
+});
