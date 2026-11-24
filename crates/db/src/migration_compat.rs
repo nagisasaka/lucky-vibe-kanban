@@ -125,6 +125,113 @@ mod tests {
     use super::*;
 
     #[tokio::test]
+    async fn saved_filter_upgrade_preserves_existing_rows_and_is_repeatable() {
+        let pool = SqlitePoolOptions::new()
+            .max_connections(1)
+            .connect("sqlite::memory:")
+            .await
+            .unwrap();
+        let compatible = migrator(&pool).await.unwrap();
+        Migrator::new(ResolvedMigrations(
+            compatible
+                .iter()
+                .filter(|m| m.version < 20261123000000)
+                .cloned()
+                .collect(),
+        ))
+        .await
+        .unwrap()
+        .run(&pool)
+        .await
+        .unwrap();
+        let project = Uuid::new_v4();
+        let status = Uuid::new_v4();
+        let issue = Uuid::new_v4();
+        sqlx::query("INSERT INTO projects(id,name,key) VALUES(?,'Retained project','FIX')")
+            .bind(project)
+            .execute(&pool)
+            .await
+            .unwrap();
+        sqlx::query("INSERT INTO local_project_statuses(id,project_id,name,color,sort_order) VALUES(?,?,'Todo','blue',0)")
+            .bind(status).bind(project).execute(&pool).await.unwrap();
+        sqlx::query("INSERT INTO local_issues(id,project_id,issue_number,simple_id,status_id,title,description,sort_order) VALUES(?,?,1,'FIX-1',?,'Retained issue','Original body',0)")
+            .bind(issue).bind(project).bind(status).execute(&pool).await.unwrap();
+        let tables = sqlx::query_scalar::<_, String>("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name != '_sqlx_migrations' ORDER BY name")
+            .fetch_all(&pool).await.unwrap();
+        async fn snapshot(pool: &SqlitePool, tables: &[String]) -> Vec<Vec<String>> {
+            let mut snapshot = Vec::new();
+            for table in tables {
+                let columns = sqlx::query_scalar::<_, String>(
+                    "SELECT name FROM pragma_table_info(?) ORDER BY cid",
+                )
+                .bind(table)
+                .fetch_all(pool)
+                .await
+                .unwrap();
+                let values = columns
+                    .iter()
+                    .map(|c| format!("quote(\"{}\")", c.replace('"', "\"\"")))
+                    .collect::<Vec<_>>()
+                    .join(",");
+                let query = format!(
+                    "SELECT json_array({values}) FROM \"{}\" ORDER BY rowid",
+                    table.replace('"', "\"\"")
+                );
+                snapshot.push(
+                    sqlx::query_scalar::<_, String>(&query)
+                        .fetch_all(pool)
+                        .await
+                        .unwrap(),
+                );
+            }
+            snapshot
+        }
+        let before = snapshot(&pool, &tables).await;
+        crate::run_migrations(&pool).await.unwrap();
+        crate::run_migrations(&pool).await.unwrap();
+        assert_eq!(snapshot(&pool, &tables).await, before);
+        assert!(
+            sqlx::query("PRAGMA foreign_key_check")
+                .fetch_all(&pool)
+                .await
+                .unwrap()
+                .is_empty()
+        );
+        assert_eq!(
+            sqlx::query_scalar::<_, String>("PRAGMA integrity_check")
+                .fetch_one(&pool)
+                .await
+                .unwrap(),
+            "ok"
+        );
+        let filter = Uuid::new_v4();
+        sqlx::query("INSERT INTO saved_filters VALUES(?,?,'{}',1,'2026-01-01','2026-01-01')")
+            .bind(filter)
+            .bind(project)
+            .execute(&pool)
+            .await
+            .unwrap();
+        sqlx::query("INSERT INTO saved_filter_semantic_cache VALUES(?,1,'{}')")
+            .bind(filter)
+            .execute(&pool)
+            .await
+            .unwrap();
+        sqlx::query("DELETE FROM saved_filters WHERE id=?")
+            .bind(filter)
+            .execute(&pool)
+            .await
+            .unwrap();
+        assert_eq!(
+            sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM saved_filter_semantic_cache")
+                .fetch_one(&pool)
+                .await
+                .unwrap(),
+            0
+        );
+        assert_eq!(snapshot(&pool, &tables).await, before);
+    }
+
+    #[tokio::test]
     async fn reservation_terminal_migration_supports_fresh_and_previous_main_upgrade() {
         for upgrade in [false, true] {
             let pool = SqlitePoolOptions::new()
