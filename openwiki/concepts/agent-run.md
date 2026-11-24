@@ -5,7 +5,7 @@ description: Session 内の実行依頼と試行、状態の関係。
 tags: [agent-run, session, lifecycle]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-24T09:04:01.540Z
+    at: 2026-11-24T14:16:53.361Z
 sources:
   - id: openwiki-source-d20a82e2192a07c687b838cb
     resource: repo://crates/db/src/models/agent_runtime.rs
@@ -17,9 +17,9 @@ sources:
     resource: repo://packages/web-core/src/shared/lib/executorOverrides.ts
   - id: openwiki-source-f66eb76c24833219ccd50c84
     resource: repo://packages/web-core/src/shared/lib/modelSelector.ts
-  - id: openwiki-source-a39b52d7feac73d8bad0b233
-    resource: repo://tests/run-selection/selection.spec.ts
-generated: { by: "codex", at: "2026-11-24T09:04:01.540Z" }
+  - id: openwiki-source-540291fed63f1f0f52cb1e86
+    resource: repo://tests/run-selection/demand.spec.ts
+generated: { by: "codex", at: "2026-11-24T14:16:53.361Z" }
 ---
 
 # Agent Run
@@ -39,13 +39,15 @@ Run は待機、起動、実行、入力・承認待ち、取消を経て終端�
 | 表示 | 意味 |
 | --- | --- |
 | 継承: プリセットの明示設定 | 選択した profile の値を表示している |
-| 継承: 設定済みの値／プロバイダーの既定値 | 読み取りで得た設定または provider の既定候補であり、実行後の観測値ではない |
+| 継承: 設定済みの値／プロバイダーの既定値 | 読み取りで解決した次 Run の設定または provider 既定値であり、実行後の観測値ではない |
 | 明示上書き | その項目について継承値と異なる値を選んでいる |
 | 未確認 | 安全に値を解決できていない。候補一覧から実行値を推測しない |
-| 非対応 | 選択モデルの候補情報に対応する推論深さの選択肢がない |
+| 非対応 | provider が推論深さ非対応と確認したモデル。入力欄の推論深さ表示を隠す。候補の取得失敗や空配列だけでは非対応としない |
 
 継承値と同じ値を選ぶと、その項目の override を外す。「上書きを解除」は上書きがある場合だけ表示する。モデルを別のものへ変えると古い推論深さを解除する。同じ実効モデルの冗長な override だけを外す場合は、独立した明示の推論深さを保持する。[選択処理](../../packages/web-core/src/shared/components/ModelSelectorContainer.tsx)・[変更の合成](../../packages/web-core/src/shared/lib/executorOverrides.ts)
 
-再開 Session の discovery は、新規 thread 用に読み取った値を再開後の実値として使わない。明示設定などから分からない値は未確認のまま表示する。空の native 設定だけを理由にモデルの設定を必須にするものではない。Codex と Claude の解決方法や承認の境界は [provider の設定](../integrations/agent-providers.md#run-の継承値と承認)を参照する。
+再開 Session でも discovery が解決した次 Run のモデル・推論深さを表示する。承認は再開後の実値を確認していないため、discovery の承認値を隠す。解決できない項目は未確認のまま表示し、他の取得済み項目を消さない。空の native 設定だけを理由にモデルの設定を必須にするものではない。Codex と Claude の解決方法や承認の境界は [provider の設定](../integrations/agent-providers.md#run-の継承値と承認)を参照する。
+
+Claude で継承モデルと異なるモデルを明示選択すると、そのモデルだけを追加照会する。候補一覧を開くだけでは候補ごとの照会を始めない。取得中は未解決の推論深さに loading を表示し、失敗時は未確認とする。解除や別モデルへの変更後に旧応答が到着しても、現在の選択へ適用しない。[選択時照会の回帰](../../tests/run-selection/demand.spec.ts)
 
 [Run-selection ブラウザ fixture](../../tests/run-selection/selection.spec.ts)と[選択単体試験](../../packages/web-core/src/shared/lib/modelSelector.test.ts)は表示・送信分離、同値解除、モデル変更、未確認と非対応を検証する。fixture は実 provider の応答や通常／Goal の end-to-end 成功を証明しない。

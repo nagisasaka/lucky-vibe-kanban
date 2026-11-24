@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:98be4e0a5e8516d197f0b411c6caff306dbd4b00481bd68c9bc5be4a476faab7",
+  "pageVersion": "sha256:5ca40a3561a6eccbe26d66c5b7ec8c903bacac8a43a359a74e48edf05f9d8ef9",
   "claims": [
     {
       "id": "claim_56c711ea42fe4edba05403566a12ed51",
@@ -17,12 +17,8 @@
       "statement": "Run入力欄は継承値と項目別の明示上書きを色と出典で区別し、表示用のモデル・推論深さ・承認値を読むだけでは起動overrideへコピーしない。",
       "evidence": [
         {
-          "resource": "repo://packages/web-core/src/shared/components/ModelSelectorContainer.tsx#L155-L213",
-          "version": "repo-lines-v1:sha256:59a1e8122c2bd402f73d2e0f796c538b444339f0c7d8e5a464f69c66588ad033:eyJzZWxlY3RlZExpbmVDb3VudCI6NTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhmMjJlMmQwMjFmZGFmMjNjOTBjOWY0NWExZGEwNTg5NDExMjcwNWZiNzdlYjA5ODM0NmRkNzNmNjFmZTI4ZWEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhjNDk4OTg3MGNkNDU5OTYyZTIxYmYxYjY3ZTliMDhiMzEwZGM5MGNjZTE5ZWNhZTYxYjFmYzM3ZTRlY2EyNWYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRlYjQyZTk4NTAxODhlN2IwMzgxMDg5ZDVmZGNjNjM0NzgwODQ0YWY5M2RhNWNjOGVkNjFjYjNmYjk3ZjVkNmQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdkZTIwMTE2OTJkZDZlYzgyYjQwMTBlZTU1MzRlM2M1Njc4YTg0YTNiNTljMzgyZjUyZmRlMjFkNzg5NDBhOWYifQ"
-        },
-        {
-          "resource": "repo://packages/web-core/src/shared/components/ModelSelectorContainer.tsx#L404-L435",
-          "version": "repo-lines-v1:sha256:80e96a001d42f88def2aba52a476d9bd87b50ec7cd1be6eef084da038f67b340:eyJzZWxlY3RlZExpbmVDb3VudCI6MzIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU4OTdkYjY3YThiY2U3MmRkMzRhODllYWExYjg1YjExYjFiMGIxNDU1YThlNTg4NjQzZjc2MmViM2M0ZTIwYjUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI2NWNmNmJlNmY3NzU3YWRhYWRkNTlmNTE4MzRiZTE4NDA0ZjhiZmM0YmJkNjU1ZjNiOWI4NzZjYTUyZDAwMTciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjU3YjIxZDJiYTI5ODZiNDQ0MTM5NTQ5YjYxN2U5ZjA3NzZkYTg5ZjI4OWIyNzNmZjU3OTc1YmI0OWU0MmYyYTEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE5ZDA3MzIwZDhjOTNkNWNjNzUwYTcxYTA3Y2VmY2FkZjU0ODVlNjQyMWI3OWU5NzQ1NTFjNGZiYjg4MDc0MTYifQ"
+          "resource": "repo://packages/web-core/src/shared/components/ModelSelectorContainer.tsx#L452-L516",
+          "version": "repo-lines-v1:sha256:8c85f041aed10a10a712c5e498e66d10e7cf83d50de1d2134ff918c1c5a8d3f2:eyJzZWxlY3RlZExpbmVDb3VudCI6NjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJjYmQ1ZDY4NGNhOTRmMWY0NGQwOGZkMDJkMjA5Y2FhNTIzY2M4NmFhZjU0MWRlMjY2YTIzMmYwYzM1ZDFjNWUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM2YWY0Y2I5MmI3ZWQ5N2Y2YjUwNzJmYjI3ZmRiMDRhMmI2MWRkZjZjZTFmYzk3NTlhNjMyZjA1Njc4ZTZkNDkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImE1YmFiM2UzODJlZTk3OTA4OTJjOGZjOWZmNzhkNTJlZmE4ZjM5YTEwYWJjNjQ1MjFkYzg5NmFmMzIyNTM2OTQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImMxODU0MmMzNTk5MzIwMmU2Y2RiMmYwZGNkM2I0M2VkMTU4ZjkwYzU0YTM1YzAzMzQzMDczMWU2ZjJiN2VjZWMifQ"
         },
         {
           "resource": "repo://packages/web-core/src/shared/lib/executorOverrides.ts#L8-L43",
@@ -35,7 +31,7 @@
       "statement": "継承値と同値の選択はoverrideを解除し、異なるモデルへの変更は旧推論深さを解除するが、実効モデルが同じ冗長なoverride解除では独立した明示effortを保持する。",
       "evidence": [
         {
-          "resource": "repo://packages/web-core/src/shared/components/ModelSelectorContainer.tsx#L260-L313",
+          "resource": "repo://packages/web-core/src/shared/components/ModelSelectorContainer.tsx#L319-L372",
           "version": "repo-lines-v1:sha256:3f2da88ecfe263fb06574eb2901ba5a835cc542eaa8812bc77754f721c95f2a7:eyJzZWxlY3RlZExpbmVDb3VudCI6NTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFmOWRiYzdmMmYyNGI1Mjg0MzU3Zjk4NjMwNmZlZjA0MTdjYzZmODFhODNhMDJiZjgxNTBmNzExMmY4ODNiMDkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU5NjZmYmZhODg5OThkYTc0NjU2YzUwMTk0OTU2YzI1ZjA4NDk0NTc2NjBjMDA5ZmU2M2QxZTlmYTlkYzkzMWMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFjYjBlNTNmYTM0ZGEyOTFmMDljYmFlMzUwYmExODdlMTg2NDdiODNlYjBmOGVlZmYyYzA1MGNhMmUyYzZhZjAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjIwYTQxYmVkODIwM2JiYmRmZjY4ZDgyNjVlZWZkMWRkZjgzMDUyYmJmYjM4YzQ5Zjc0N2FlMWUwOGIwMTU4YmQifQ"
         },
         {
@@ -46,29 +42,45 @@
     },
     {
       "id": "claim_99596fb8ac30461485d6c0eee07e334f",
-      "statement": "再開Sessionのdiscoveryは新規threadの既定値を隠し、UIは未確認と推論深さ非対応を区別する。",
+      "statement": "再開Sessionのdiscoveryは次Runのモデル・推論深さを保持し、未観測の承認値だけを隠す。",
       "evidence": [
         {
-          "resource": "repo://crates/services/src/services/container.rs#L289-L311",
-          "version": "repo-lines-v1:sha256:ae28abe876f45b223379b2d0b8996a747d099236292f223d7b30437befd65d46:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM1YTI4NDY1M2ZiNGY4YjU3NTNlYzk2MGJkYmM4MjM4NzEwMTJmYjc4NDkwMjI0ZGIxYWRkMDc2NjU5ODZiM2IiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE0Y2E3NDIxZmM2ZjE2ZWMyOWIxYTQ4NDY0OWYxODljYTI0Yzg4ZWRjZTFmZmRmMDc4NGM5NDhmYTBlZTFiNDMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFiYjlmYWJmNDdmZWQxMjY5NzlkYWQxZDc3ODQzZGNlNDI3NjZiNjgxZGUxYWZhMjVjM2YwNTBiMzdkY2EyZjAifQ"
-        },
-        {
           "resource": "repo://crates/services/src/services/container.rs#L59-L82",
-          "version": "repo-lines-v1:sha256:f91a9aa1dad861560734704fca62a590e6c6d9374cf17c700c8131b7a727cf24:eyJzZWxlY3RlZExpbmVDb3VudCI6MjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJmNWFhNTUwMjljZTZjMzcwNDFmZjAyODhiZTJmNTlkOTNjOWUxZDdiMmIzNWJmOTFjYjAxMGVlYTNhNmE4YzEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImU5NmY4Y2IwODNmYTgwMGE0ZGNkMjk2OTcyMmQ3YjkyNjg2YWRkOWViZTM2NTU0OTJmYTY3MmIxYTdjZWQyNDIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjYwYTUzYzRkZjczMmZjNTlhZDcxZTE2MjJkMzI5ZmQ5YmYyNWEyOGY0NDk3OWE1NDU4NzYxMzE0Y2RhZTRiOTQifQ"
+          "version": "repo-lines-v1:sha256:3626cce2a75177dc36aa078d685fb53c283a1c0bb141f1e30ccc1ff3aaaea1e9:eyJzZWxlY3RlZExpbmVDb3VudCI6MjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJjYWU1ZDIzMzI0MDE0ZGRiNGFhNWY5NDU5NjVlYWU2OTc0YWJiOWU0YmQyZTQ2MWZmMzk5YTE1N2JlZWQzYTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI3OGQ2YmJiMzc5YjVhNThmMWRiYmNkOGU2NjUzODg5ZjNjMjllYTA0YTMyZDE4OWQ2ZjU1NjQ4ZjhjOWE1YWYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImU5NmY4Y2IwODNmYTgwMGE0ZGNkMjk2OTcyMmQ3YjkyNjg2YWRkOWViZTM2NTU0OTJmYTY3MmIxYTdjZWQyNDIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY3YWI3NGQ5NTU2ZDdhOWQzOGExOWI5NGMzNGQ4MmQyNDcwOTQwOTMwYjU5NTM5ZjJmNDAwNTg2MGUwN2FmZTgifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_a61d9dd5cf4a48c4a5117ffb21d84f7f",
+      "statement": "UIはproviderが明示した推論深さ非対応と未確認を区別し、非対応モデルの推論深さ表示を隠す。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/shared/components/ModelSelectorContainer.tsx#L491-L513",
+          "version": "repo-lines-v1:sha256:d5440430c3964f953cd53c45e60366ebbc49db6322d5e17a57b7706db40fb23b:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY3ODVlMzE5ZWM4MTFkNTc3ZTY1MWU0NmE3ZGU1YWM0ZmYyNGUyN2E5ZGMzZjRmZTY0Y2YwZDgxMjQ3YjU3OTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY3YmZlZGEzNjQyMjQ4ZmI5MjI4ZjU4ZGMxODY5ZTA1ZTVlZDBjZmM2MTJhMTc4Y2RmOTE0NWYzODc4Y2M2MTIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjAwYjJhNmQ2MTkzYTIwMTdmNjQ5OTNjYWRhZmY0YmNkZTc5ODJmNDY4NWQ2ZjIxZmE0NTViNzcyZDdlZGVmODQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE1ODQzMTRkZDcxNWJlZTMxM2VjNDI4YmE4M2MxZWVhZGE1MDM2OTA1NjIyMGI1OTdmZmYwZjNkYzRjZDM4Y2MifQ"
         },
         {
-          "resource": "repo://packages/web-core/src/shared/lib/modelSelector.ts#L201-L243",
-          "version": "repo-lines-v1:sha256:65b4a97554c6714a5bad7f603e779621b71742aa2fcea9b5eb1b9e1ee65b8995:eyJzZWxlY3RlZExpbmVDb3VudCI6NDMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ2MjczYWUwZmM4YjViYTQwMzRlYjBmOTk1MGQ4NDNhN2I2YThkNzJjZmJjM2E3MGUzZDM3ZDBhOWRiMGYzOTciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImZiODg3ODQ0YjYxNmE2MWU3YWJkNWNhMjBiOGI5MzBjNzhiMjQwNjY3ZTUzM2Y4NGM1Yzg5MThmM2E2NWFkNmIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+          "resource": "repo://packages/web-core/src/shared/lib/modelSelector.ts#L239-L247",
+          "version": "repo-lines-v1:sha256:a3732633ffdf623cec30f89d78105c2387903103964ec085f58d431c2070c2ea:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNWM2YWU0ODA5ODM3ODFmZjk3NmFhNTNjMzM0OWI1YjM5NmU3MzBmN2E4ZmE3MWM2OGNhN2E2ZjZkYWYxNjMwYyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDJhMmNiMjVhMTIyYjQ0MjIxYTYyMzRlYzY2MGE3YjVmYjdmOWJkZTdiM2I5ZTJiM2M1NTlhMGQ5NmZhYzczOSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiY2I2MmRlODMxNzAzZjJhZjhiZmFlMTBkYWFhNTg3N2M0M2RmOGM5YjE0YmFlY2JmYzBlYjFkYmU1ZGEyN2EyMyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjEsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNDEyY2EzNDVjY2Y3NWJmOWMwODA2YmNlNjk1YmU4ZGU4MDhiNzk5ODQyNTFhN2E1NGQyMDJjZjYxMDFkZDQ1MSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_50dca5a914484c1c84bdc11c0821807a",
+      "statement": "Claudeの追加モデル照会は継承モデルと異なる明示選択時だけ行い、基準の継承値と別streamで結果を扱う。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/shared/components/ModelSelectorContainer.tsx#L151-L214",
+          "version": "repo-lines-v1:sha256:eec2813c3b8190c9b2d363c99d18c2c09ba5f2e9eb052564838ef23f70a8f23d:eyJzZWxlY3RlZExpbmVDb3VudCI6NjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJlZTQ4YzJmYmRiNjgwYmRlZGUyMjU4ODRkMGFlMWI1OWY5OWY2OWQxYzlhNjkzYTE2NDE3M2I3ZTk1MzViY2UiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhmMjJlMmQwMjFmZGFmMjNjOTBjOWY0NWExZGEwNTg5NDExMjcwNWZiNzdlYjA5ODM0NmRkNzNmNjFmZTI4ZWEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjVhMWQ1MWVhOTk3ZjRhOGM1NjM2NjlmNGJmMTAxNWY0MTllNDAzYTViY2QzNDZhZjQ3M2UzNmU3NDgwOGVkNWYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUwYWJkNWJlODFmOThhZTZhMGEwNjliZDI4NTE1MGI3NzE3NTI1MzQyNDIyOGMyNzk4YmQzZDg5MDEyZDFlODIifQ"
         },
         {
-          "resource": "repo://tests/run-selection/selection.spec.ts#L101-L136",
-          "version": "repo-lines-v1:sha256:57cc415b72d9fad6f7bcc7b0a0a5035378753ba19182317d96e695c76afc54c4:eyJzZWxlY3RlZExpbmVDb3VudCI6MzYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZkOGFmMjkxODBmMzI5OWZmMDhiZTU4YjFmZmNkYTVlNWIwZjYyMTY4Nzc5NWY1NDIwZjEyMWU3ZDkwYTBlNjMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJkMGYyZDNhM2FhZGEyNzU4NjQ1NzhkMGE0MzkxNTYzOGQ1NDNmZWNhMmM5NDg1OGRiOTQxMjExZTg2Y2VmMmIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+          "resource": "repo://tests/run-selection/demand.spec.ts",
+          "version": "repo-file-v1:sha256:997c826d18c817db6b11570f11608d36d3adf17aecb644c13fe0f60b31ed5f6a"
         }
       ]
     }
   ],
   "verification": {
     "by": "openwiki/0.9.0",
-    "at": "2026-11-24T09:04:01.540Z"
+    "at": "2026-11-24T14:16:53.361Z"
   }
 }

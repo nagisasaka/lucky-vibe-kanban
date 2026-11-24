@@ -5,12 +5,18 @@ description: provider の認証、利用枠取得、profile、能力と MCP の�
 tags: [providers, codex, claude, mcp]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-24T09:45:04.787Z
+    at: 2026-11-24T14:16:53.361Z
 sources:
   - id: openwiki-source-bfcf08b9feacd16360e862a4
     resource: repo://crates/executors/src/executors/claude.rs
   - id: openwiki-source-5514d83ac049ec5c68456f7b
     resource: repo://crates/executors/src/executors/claude/auth.rs
+  - id: openwiki-source-b352d709d360d1bf77a8f1d5
+    resource: repo://crates/executors/src/executors/claude/command_adapter.rs
+  - id: openwiki-source-b15b24f9113eb215c902d4b4
+    resource: repo://crates/executors/src/executors/claude/protocol.rs
+  - id: openwiki-source-59d039bc707966d37d843ecb
+    resource: repo://crates/executors/src/executors/claude/run_defaults.rs
   - id: openwiki-source-f615018b2948c78d0299828c
     resource: repo://crates/executors/src/executors/claude/usage.rs
   - id: openwiki-source-22b82518475034ade38104e6
@@ -19,9 +25,9 @@ sources:
     resource: repo://crates/executors/src/source_protection.rs
   - id: openwiki-source-788fa2f6f1a3d449a1a9efe4
     resource: repo://crates/local-deployment/src/agent_run_port.rs
-  - id: openwiki-source-379c8cd3e1e9932f9adda9ee
-    resource: repo://crates/services/src/services/container.rs
-generated: { by: "codex", at: "2026-11-24T09:45:04.787Z" }
+  - id: openwiki-source-540291fed63f1f0f52cb1e86
+    resource: repo://tests/run-selection/demand.spec.ts
+generated: { by: "codex", at: "2026-11-24T14:16:53.361Z" }
 ---
 
 # Agent provider・設定・MCP・Skill
@@ -57,9 +63,15 @@ Claude の supervised 実行は対応する承認 service と直接 CLI の条�
 
 ## Run の継承値と承認
 
-通常 Run の表示用 discovery と起動 override は別のデータである。Codex は既存の作業位置・環境で `config/read` と `model/list` を読み、設定されたモデル・推論深さを優先する。設定がない項目は該当モデルの provider 既定候補から補えるが、モデル候補を実行後の観測値として扱わない。作業位置が未確定なら候補だけを返す。再開 Session では新規 thread 用の defaults を隠す。[Codex discovery](../../crates/executors/src/executors/codex.rs)・[再開判定](../../crates/services/src/services/container.rs)
+通常 Run の表示用 discovery と保存する明示 override は別のデータである。継続時も次 Run のモデル・推論深さを解決する。起動時には同じ resolver が得た値を未指定の一時パラメータへ適用し、native resume に残る古いモデル・effortとの食い違いを防ぐ。保存済み profile や Run override は書き換えない。再開 discovery で隠すのは未観測の承認値だけである。[起動値](../../crates/executors/src/executors/codex.rs)・[Claude 起動](../../crates/executors/src/executors/claude.rs)・[再開時の表示境界](../../crates/services/src/services/container.rs)
 
-取得した候補外モデル、独自 effort、特殊な approval 設定は表示用情報に保持し、既知の選択肢へ勝手に丸めない。Claude は未観測の native defaults を補完せず、モデル・推論深さに同じ継承表示の原則を使う。具体的な色・出典・解除操作は [Run 入力欄](../concepts/agent-run.md#次の-run-の設定を読む変更する)を参照する。[値の解決](../../crates/executors/src/executors/codex.rs)・[Claude](../../crates/executors/src/executors/claude.rs)
+Codex は既存の作業位置・環境で `config/read` と `model/list` を独立に、各4秒の期限で読む。設定済みのモデル・推論深さを優先し、設定がない項目は対応する provider 既定値で補う。モデル一覧が失敗しても読めた設定を保持する。設定読取が失敗した場合は、候補一覧だけから次 Run の既定値を推測せず、起動値も上書きしない。作業位置が未確定なら defaults を取得しない。[Codex resolver](../../crates/executors/src/executors/codex.rs)
+
+取得した候補外モデル、独自 effort、特殊な approval 設定は表示用情報に保持し、既知の選択肢へ勝手に丸めない。モデル変更時は旧 LVK profile の effort を持ち越さない一方、Codex native config の effort は新しいモデルにも適用する。明示指定は読み取った既定値より優先する。具体的な色・出典・解除操作は [Run 入力欄](../concepts/agent-run.md#次の-run-の設定を読む変更する)を参照する。[値の解決](../../crates/executors/src/executors/codex.rs)
+
+Claude は公式 CLI の `initialize` と `get_settings` control 応答から能力と項目ごとの設定を取得する。`applied` の値を優先し、なければ取得できた `effective` の値を使う。各 control 要求には5秒の期限があり、一方だけ成功してもその情報を保持する。probe は Run の cwd と profile 環境を使うが、user turn は送らず、hooks・tools・MCP・session persistence を無効にする。所有タスクが終了・取消時の子プロセスを回収する。custom router や安全な passive launcher を使えない構成は、値を作らず未確認とする。[設定読取](../../crates/executors/src/executors/claude/run_defaults.rs)・[probe 引数](../../crates/executors/src/executors/claude/command_adapter.rs)・[control 通信](../../crates/executors/src/executors/claude/protocol.rs)
+
+Claude の初回 discovery は現在の継承値とモデル候補を取得し、未選択候補ごとの defaults を順番に照会しない。継承モデルと異なるモデルを明示選択したときだけ、既存 discovery WebSocket の `selected_model` を使ってそのモデルを照会する。この probe は旧 effort を外した runtime copy を使う。結果は基準の継承 stream と分離され、解除・選択変更後の旧応答を現在の表示に使わない。[選択照会](../../crates/executors/src/executors/claude/run_defaults.rs)・[API](../../crates/server/src/routes/config.rs)・[UI](../../packages/web-core/src/shared/components/ModelSelectorContainer.tsx)
 
 Codex の承認が未指定なら、通常の thread start と resume でも未指定を維持する。Sandbox Auto を理由に `on-request` を暗黙送信しない。明示された profile や Run の選択は明示値として維持する。[起動値と再開変換](../../crates/executors/src/executors/codex.rs)
 
@@ -92,3 +104,5 @@ Codexはfresh threadのみを許し、read-only・承認要求なし・environme
 検証の境界: Codex の approval 継承・Code/Plan/Review/Goal・start/resume は adapter 試験で、再開 discovery は services 試験で扱う。[隔離 native 設定試験](../../scripts/test-codex-approval-config.py)と[offline MCP fixture](../../scripts/test-codex-mcp-readonly.py)は実 CLI を使えるが、外部モデルや実アカウントの end-to-end 成功とは別である。
 
 利用枠の受付・cleanup の Rust 回帰はローカルのゲートと所有プロセス処理を検証する。実認証、実アカウントの残量取得、稼働サーバーの停止ガード解除を証明するものではない。
+
+次 Run の表示・継続送信・選択時照会は [ブラウザ fixture](../../tests/run-selection/selection.spec.ts)、[遅延・逆順応答 fixture](../../tests/run-selection/demand.spec.ts)、provider の記録 stub 試験で検証する。[非推論 native probe](../../tests/run-selection/native-probe.py)は設定読取と新規 thread 応答を扱うが、実モデル応答後の会話継続 E2E は証明しない。

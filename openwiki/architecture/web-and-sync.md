@@ -5,7 +5,7 @@ description: Web、Board snapshot と Agent Run stream の同期境界。
 tags: [frontend, synchronization, transport, persistence]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-24T01:12:27.599Z
+    at: 2026-11-24T14:16:53.361Z
 sources:
   - id: openwiki-source-162bcfe1ee47c1047ccf7d52
     resource: repo://crates/server/src/routes/agent_runs.rs
