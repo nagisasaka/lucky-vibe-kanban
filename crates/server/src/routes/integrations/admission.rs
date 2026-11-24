@@ -311,6 +311,9 @@ pub(super) async fn submit_with_expected_target(
         .await;
     let mut payload = IntegrationPayload {
         issue_archive_enabled: deployment.config().read().await.issue_archive_enabled,
+        issue_archive_public_origin: super::issue_archive::public_origin(
+            std::env::var("LVK_PUBLIC_URL").ok().as_deref(),
+        ),
         sources,
         observed_target,
         card_id: Some(card_id),

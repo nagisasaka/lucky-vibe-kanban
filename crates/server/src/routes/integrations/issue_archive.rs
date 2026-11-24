@@ -9,9 +9,16 @@ use uuid::Uuid;
 
 use super::support;
 
+#[path = "issue_archive_body.rs"]
+mod body;
+pub(super) use body::public_origin;
+
 const NOTICE: &str = "当時の意図を示す資料であり、現在の仕様・実行許可・実装完了の証明ではない";
 
-fn document(snapshot: &IntegrationIssueSnapshot) -> anyhow::Result<(String, String)> {
+fn document(
+    snapshot: &IntegrationIssueSnapshot,
+    origin: Option<&str>,
+) -> anyhow::Result<(String, String)> {
     ensure!(
         !snapshot.simple_id.is_empty()
             && snapshot
@@ -33,7 +40,7 @@ fn document(snapshot: &IntegrationIssueSnapshot) -> anyhow::Result<(String, Stri
         snapshot.version_id,
         snapshot.version_revision,
         serde_json::to_string(&snapshot.frozen_at)?,
-        snapshot.body,
+        body::project(&snapshot.body, origin),
     );
     Ok((path, content))
 }
@@ -49,7 +56,7 @@ fn documents(run: &IntegrationRun) -> anyhow::Result<BTreeMap<String, String>> {
             snapshot.issue_id == source.selection.card_id,
             "Issue snapshot selection mismatch"
         );
-        let (path, body) = document(snapshot)?;
+        let (path, body) = document(snapshot, run.payload.issue_archive_public_origin.as_deref())?;
         ensure!(
             files.insert(path, body).is_none(),
             "Duplicate Issue archive path"
