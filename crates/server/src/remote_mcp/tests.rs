@@ -824,10 +824,12 @@ async fn board_reads_use_real_schema_bound_pages_and_reject_mixed_targets() {
     );
     for table in ["agent_runs", "remote_mcp_operations"] {
         assert_eq!(
-            sqlx::query_scalar::<_, i64>(&format!("SELECT count(*) FROM {table}"))
-                .fetch_one(&pool)
-                .await
-                .unwrap(),
+            sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(format!(
+                "SELECT count(*) FROM {table}"
+            )))
+            .fetch_one(&pool)
+            .await
+            .unwrap(),
             0
         );
     }
@@ -1378,10 +1380,11 @@ async fn issue_writes_reuse_board_services_and_enforce_scope_retries_and_revisio
         .unwrap();
     assert_eq!(count, 1);
     for table in ["workspaces", "sessions", "agent_runs"] {
-        let count: i64 = sqlx::query_scalar(&format!("SELECT count(*) FROM {table}"))
-            .fetch_one(&pool)
-            .await
-            .unwrap();
+        let count: i64 =
+            sqlx::query_scalar(sqlx::AssertSqlSafe(format!("SELECT count(*) FROM {table}")))
+                .fetch_one(&pool)
+                .await
+                .unwrap();
         assert_eq!(count, 0, "{table}");
     }
     let other = auth::Principal {
@@ -1529,10 +1532,11 @@ async fn issue_writes_reuse_board_services_and_enforce_scope_retries_and_revisio
             .is_err()
     );
     for table in ["local_workspace_links", "local_issue_comments"] {
-        let count: i64 = sqlx::query_scalar(&format!("SELECT count(*) FROM {table}"))
-            .fetch_one(&pool)
-            .await
-            .unwrap();
+        let count: i64 =
+            sqlx::query_scalar(sqlx::AssertSqlSafe(format!("SELECT count(*) FROM {table}")))
+                .fetch_one(&pool)
+                .await
+                .unwrap();
         assert_eq!(count, 0, "{table}");
     }
     let retained: (bool, bool) =

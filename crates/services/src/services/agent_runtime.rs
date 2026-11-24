@@ -459,14 +459,16 @@ mod tests {
             .map(|row| (row.get("run_attempt_number"), row.get("sequence")))
             .collect();
         assert_eq!(positions, vec![(2, 1), (2, 2)]);
-        let plan = sqlx::query(&format!("EXPLAIN QUERY PLAN {HISTORY_AFTER_SQL}"))
-            .bind("run")
-            .bind(1)
-            .bind(2)
-            .bind(10)
-            .fetch_all(&pool)
-            .await
-            .unwrap();
+        let plan = sqlx::query(sqlx::AssertSqlSafe(format!(
+            "EXPLAIN QUERY PLAN {HISTORY_AFTER_SQL}"
+        )))
+        .bind("run")
+        .bind(1)
+        .bind(2)
+        .bind(10)
+        .fetch_all(&pool)
+        .await
+        .unwrap();
         let details = plan
             .iter()
             .map(|row| row.get::<String, _>("detail"))

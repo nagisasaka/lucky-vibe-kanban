@@ -58,10 +58,12 @@ async fn retires_populated_chat_without_removing_board_or_question_state() {
         "sessions",
         "agent_question_answers",
     ] {
-        let count: i64 = sqlx::query_scalar(&format!("SELECT count(*) FROM {table}"))
-            .fetch_one(&pool)
-            .await
-            .unwrap();
+        // Table identifiers come from the fixed fixture list above.
+        let count: i64 =
+            sqlx::query_scalar(sqlx::AssertSqlSafe(format!("SELECT count(*) FROM {table}")))
+                .fetch_one(&pool)
+                .await
+                .unwrap();
         assert_eq!(count, 1, "{table}");
     }
     let guard: i64 = sqlx::query_scalar(

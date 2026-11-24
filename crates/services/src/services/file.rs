@@ -236,10 +236,11 @@ impl FileService {
         let _guard = self.issue_upload_guard.lock().await;
         // A reference may have appeared since the cleanup snapshot. SQLite's
         // conditional delete is the authority, never the earlier SELECT.
-        let path: Option<String> = sqlx::query_scalar(&format!(
+        // Only the constant pet-reference predicate is interpolated; id is bound.
+        let path: Option<String> = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
             "DELETE FROM attachments WHERE id=? AND NOT EXISTS (SELECT 1 FROM workspace_attachments WHERE attachment_id=attachments.id) AND NOT EXISTS (SELECT 1 FROM project_attachments WHERE attachment_id=attachments.id) AND NOT EXISTS (SELECT 1 FROM issue_attachments WHERE attachment_id=attachments.id) AND {} RETURNING file_path",
             db::models::file::NO_PET_ATTACHMENT_REFERENCE
-        )).bind(id).fetch_optional(&self.pool).await?;
+        ))).bind(id).fetch_optional(&self.pool).await?;
         let Some(path) = path else {
             return Ok(false);
         };

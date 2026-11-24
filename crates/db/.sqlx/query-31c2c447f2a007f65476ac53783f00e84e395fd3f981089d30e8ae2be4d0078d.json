@@ -6,67 +6,145 @@
       {
         "name": "id!: Uuid",
         "ordinal": 0,
-        "type_info": "Blob"
+        "type_info": "Blob",
+        "origin": {
+          "Table": {
+            "table": "arena_groups",
+            "name": "id"
+          }
+        }
       },
       {
         "name": "issue_id!: Uuid",
         "ordinal": 1,
-        "type_info": "Blob"
+        "type_info": "Blob",
+        "origin": {
+          "Table": {
+            "table": "arena_groups",
+            "name": "issue_id"
+          }
+        }
       },
       {
         "name": "project_id!: Uuid",
         "ordinal": 2,
-        "type_info": "Blob"
+        "type_info": "Blob",
+        "origin": {
+          "Table": {
+            "table": "arena_groups",
+            "name": "project_id"
+          }
+        }
       },
       {
         "name": "prompt",
         "ordinal": 3,
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "arena_groups",
+            "name": "prompt"
+          }
+        }
       },
       {
         "name": "base_branch",
         "ordinal": 4,
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "arena_groups",
+            "name": "base_branch"
+          }
+        }
       },
       {
         "name": "mode!: ArenaMode",
         "ordinal": 5,
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "arena_groups",
+            "name": "mode"
+          }
+        }
       },
       {
         "name": "lifecycle_status!: ArenaLifecycleStatus",
         "ordinal": 6,
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "arena_groups",
+            "name": "lifecycle_status"
+          }
+        }
       },
       {
         "name": "promoted_workspace_id: Uuid",
         "ordinal": 7,
-        "type_info": "Blob"
+        "type_info": "Blob",
+        "origin": {
+          "Table": {
+            "table": "arena_groups",
+            "name": "promoted_workspace_id"
+          }
+        }
       },
       {
         "name": "implementation_workspace_id: Uuid",
         "ordinal": 8,
-        "type_info": "Blob"
+        "type_info": "Blob",
+        "origin": {
+          "Table": {
+            "table": "arena_groups",
+            "name": "implementation_workspace_id"
+          }
+        }
       },
       {
         "name": "promoted_at: DateTime<Utc>",
         "ordinal": 9,
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "arena_groups",
+            "name": "promoted_at"
+          }
+        }
       },
       {
         "name": "closed_at: DateTime<Utc>",
         "ordinal": 10,
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "arena_groups",
+            "name": "closed_at"
+          }
+        }
       },
       {
         "name": "created_at!: DateTime<Utc>",
         "ordinal": 11,
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "arena_groups",
+            "name": "created_at"
+          }
+        }
       },
       {
         "name": "updated_at!: DateTime<Utc>",
         "ordinal": 12,
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "arena_groups",
+            "name": "updated_at"
+          }
+        }
       }
     ],
     "parameters": {

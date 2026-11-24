@@ -44,22 +44,25 @@ async fn history(pool: &SqlitePool) -> Vec<Vec<String>> {
         "agent_process_registry",
         "_sqlx_migrations",
     ] {
-        let columns: Vec<String> =
-            sqlx::query_scalar(&format!("SELECT name FROM pragma_table_info('{table}')"))
-                .fetch_all(pool)
-                .await
-                .unwrap();
+        let columns: Vec<String> = sqlx::query_scalar("SELECT name FROM pragma_table_info(?)")
+            .bind(table)
+            .fetch_all(pool)
+            .await
+            .unwrap();
         assert!(!columns.is_empty(), "{table}");
         let fields = columns
             .iter()
-            .map(|c| format!("quote(\"{c}\")"))
+            .map(|c| format!("quote(\"{}\")", c.replace('"', "\"\"")))
             .collect::<Vec<_>>()
             .join(" || ',' || ");
+        // Tables are fixed above; schema-derived column names are identifier-quoted.
         result.push(
-            sqlx::query_scalar(&format!("SELECT {fields} FROM {table} ORDER BY rowid"))
-                .fetch_all(pool)
-                .await
-                .unwrap(),
+            sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
+                "SELECT {fields} FROM {table} ORDER BY rowid"
+            )))
+            .fetch_all(pool)
+            .await
+            .unwrap(),
         );
     }
     result

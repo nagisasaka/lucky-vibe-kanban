@@ -118,12 +118,15 @@ impl Fixture {
         } else {
             "workflow_runs"
         };
-        sqlx::query(&format!("UPDATE {table} SET status=? WHERE id=?"))
-            .bind(status)
-            .bind(self.run)
-            .execute(&self.pool)
-            .await
-            .unwrap();
+        // The branch above selects one of two fixed table names; values are bound.
+        sqlx::query(sqlx::AssertSqlSafe(format!(
+            "UPDATE {table} SET status=? WHERE id=?"
+        )))
+        .bind(status)
+        .bind(self.run)
+        .execute(&self.pool)
+        .await
+        .unwrap();
     }
     async fn agent_status(&self, run: Uuid, status: &str) {
         sqlx::query("UPDATE agent_runs SET status=? WHERE id=?")

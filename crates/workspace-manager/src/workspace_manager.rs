@@ -391,9 +391,10 @@ async fn delete_orchestration_runs_in_transaction(
             "orchestration_events",
             "orchestration_node_executions",
         ] {
-            sqlx::query(&format!(
+            // Table names come only from the fixed list above; the run id is bound.
+            sqlx::query(sqlx::AssertSqlSafe(format!(
                 "DELETE FROM {table} WHERE orchestration_run_id = ?"
-            ))
+            )))
             .bind(orchestration_run_id)
             .execute(&mut *connection)
             .await?;
@@ -948,7 +949,7 @@ mod tests {
     }
 
     async fn count(pool: &SqlitePool, table: &str) -> i64 {
-        sqlx::query_scalar(&format!("SELECT COUNT(*) FROM {table}"))
+        sqlx::query_scalar(sqlx::AssertSqlSafe(format!("SELECT COUNT(*) FROM {table}")))
             .fetch_one(pool)
             .await
             .expect("count table")

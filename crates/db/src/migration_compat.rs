@@ -1,10 +1,8 @@
 //! Two immutable SQL variants of one known migration, selected by the actual
 //! applied checksum. SQLx still validates and records the SQL it really runs.
-use std::borrow::Cow;
-
 use futures::future::BoxFuture;
 use sqlx::{
-    Error, SqlitePool,
+    AssertSqlSafe, Error, SqlSafeStr, SqlitePool,
     error::BoxDynError,
     migrate::{MigrateError, Migration, MigrationSource, Migrator},
 };
@@ -47,11 +45,13 @@ fn mismatch() -> Error {
 }
 
 fn with_sql(template: &Migration, sql: String) -> Migration {
+    // SQL comes only from embedded migration artifacts and their LF/CRLF variants;
+    // select_project_keys validates their immutable checksums before execution.
     Migration::new(
         template.version,
         template.description.clone(),
         template.migration_type,
-        Cow::Owned(sql),
+        AssertSqlSafe(sql).into_sql_str(),
         template.no_tx,
     )
 }
@@ -78,7 +78,7 @@ fn select_project_keys(
     // receipts instead select the exact historical bytes, across checkouts.
     let wanted = applied.unwrap_or(compatible.checksum.as_ref());
     for template in [original, &compatible] {
-        let lf = template.sql.replace("\r\n", "\n");
+        let lf = template.sql.as_str().replace("\r\n", "\n");
         for sql in [lf.clone(), lf.replace('\n', "\r\n")] {
             let variant = with_sql(template, sql);
             if variant.checksum.as_ref() == wanted {
@@ -177,8 +177,9 @@ mod tests {
                     "SELECT json_array({values}) FROM \"{}\" ORDER BY rowid",
                     table.replace('"', "\"\"")
                 );
+                // Table and column identifiers from the fixture schema are quoted above.
                 snapshot.push(
-                    sqlx::query_scalar::<_, String>(&query)
+                    sqlx::query_scalar::<_, String>(AssertSqlSafe(query))
                         .fetch_all(pool)
                         .await
                         .unwrap(),
@@ -439,7 +440,7 @@ mod tests {
             .iter()
             .find(|m| m.version == PROJECT_KEYS_VERSION)
             .unwrap();
-        let old_lf = template.sql.replace("\r\n", "\n");
+        let old_lf = template.sql.as_str().replace("\r\n", "\n");
         let new_lf =
             include_str!("../migration_compat/project_keys_multi.sql").replace("\r\n", "\n");
         let originals = [old_lf.clone(), old_lf.replace('\n', "\r\n")];
@@ -475,7 +476,10 @@ mod tests {
             .find(|m| m.version == PROJECT_KEYS_VERSION)
             .unwrap();
         let new = include_str!("../migration_compat/project_keys_multi.sql");
-        let altered = with_sql(original, format!("{}-- unrecognised edit", original.sql));
+        let altered = with_sql(
+            original,
+            format!("{}-- unrecognised edit", original.sql.as_str()),
+        );
         assert!(select_project_keys(&altered, new, None).is_err());
         assert!(
             select_project_keys(original, &format!("{new}-- unrecognised edit"), None).is_err()

@@ -1625,6 +1625,7 @@ async fn workflow_run_rows(
     issue_id: Option<Uuid>,
     workflow_id: Option<Uuid>,
 ) -> Result<Vec<WorkflowRunFallbackRow>, ApiError> {
+    // Only this fixed SELECT is interpolated below; request values use binds.
     let select = r#"
         SELECT id, orchestration_run_id, workflow_id, attempt_id, issue_id, repository_id, workspace_id, trigger_source, input_text,
                output_text, status, started_at, finished_at, error_text, created_at, updated_at
@@ -1633,34 +1634,36 @@ async fn workflow_run_rows(
 
     let rows = match (issue_id, workflow_id) {
         (Some(issue_id), Some(workflow_id)) => {
-            sqlx::query(&format!(
+            sqlx::query(sqlx::AssertSqlSafe(format!(
                 "{select} WHERE issue_id = ? AND workflow_id = ? ORDER BY created_at ASC"
-            ))
+            )))
             .bind(issue_id)
             .bind(workflow_id)
             .fetch_all(pool)
             .await?
         }
         (Some(issue_id), None) => {
-            sqlx::query(&format!(
+            sqlx::query(sqlx::AssertSqlSafe(format!(
                 "{select} WHERE issue_id = ? ORDER BY created_at ASC"
-            ))
+            )))
             .bind(issue_id)
             .fetch_all(pool)
             .await?
         }
         (None, Some(workflow_id)) => {
-            sqlx::query(&format!(
+            sqlx::query(sqlx::AssertSqlSafe(format!(
                 "{select} WHERE workflow_id = ? ORDER BY created_at ASC"
-            ))
+            )))
             .bind(workflow_id)
             .fetch_all(pool)
             .await?
         }
         (None, None) => {
-            sqlx::query(&format!("{select} ORDER BY created_at ASC"))
-                .fetch_all(pool)
-                .await?
+            sqlx::query(sqlx::AssertSqlSafe(format!(
+                "{select} ORDER BY created_at ASC"
+            )))
+            .fetch_all(pool)
+            .await?
         }
     };
 
@@ -1674,6 +1677,7 @@ async fn node_execution_rows(
     pool: &SqlitePool,
     run_id: Option<Uuid>,
 ) -> Result<Vec<NodeExecutionFallbackRow>, ApiError> {
+    // Only this fixed SELECT is interpolated below; request values use binds.
     let select = r#"
         SELECT ne.id, ne.run_id, ne.node_id, ne.node_type, ne.iteration, ne.status,
                ne.input_text, ne.output_text, ne.session_id,
@@ -1687,17 +1691,19 @@ async fn node_execution_rows(
 
     let rows = match run_id {
         Some(run_id) => {
-            sqlx::query(&format!(
+            sqlx::query(sqlx::AssertSqlSafe(format!(
                 "{select} WHERE ne.run_id = ? ORDER BY ne.iteration ASC, ne.created_at ASC"
-            ))
+            )))
             .bind(run_id)
             .fetch_all(pool)
             .await?
         }
         None => {
-            sqlx::query(&format!("{select} ORDER BY ne.created_at ASC"))
-                .fetch_all(pool)
-                .await?
+            sqlx::query(sqlx::AssertSqlSafe(format!(
+                "{select} ORDER BY ne.created_at ASC"
+            )))
+            .fetch_all(pool)
+            .await?
         }
     };
 

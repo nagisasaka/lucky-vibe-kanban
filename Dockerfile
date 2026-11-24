@@ -34,7 +34,7 @@ COPY shared/ shared/
 
 RUN pnpm -C packages/local-web build
 
-FROM rust:1.93-slim-bookworm AS rust-toolchain
+FROM rust:1.94-slim-bookworm AS rust-toolchain
 
 ENV CARGO_REGISTRIES_CRATES_IO_PROTOCOL=sparse
 ENV CARGO_NET_GIT_FETCH_WITH_CLI=true

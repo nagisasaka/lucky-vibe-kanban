@@ -1889,12 +1889,12 @@ mod tests {
         .unwrap();
 
         for index in unique_indexes {
-            let columns: Vec<String> = sqlx::query_scalar(&format!(
-                "SELECT name FROM pragma_index_info('{index}') ORDER BY seqno"
-            ))
-            .fetch_all(&pool)
-            .await
-            .unwrap();
+            let columns: Vec<String> =
+                sqlx::query_scalar("SELECT name FROM pragma_index_info(?) ORDER BY seqno")
+                    .bind(index)
+                    .fetch_all(&pool)
+                    .await
+                    .unwrap();
             assert_ne!(
                 columns,
                 vec![

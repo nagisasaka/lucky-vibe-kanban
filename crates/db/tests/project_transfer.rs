@@ -22,8 +22,9 @@ async fn database(path: &Path) -> SqlitePool {
     sqlx::migrate!("./migrations").run(&pool).await.unwrap();
     pool
 }
+// Callers supply only fixed fixture table names; no package data becomes SQL.
 async fn count(pool: &SqlitePool, table: &str) -> i64 {
-    sqlx::query_scalar(&format!("SELECT count(*) FROM {table}"))
+    sqlx::query_scalar(sqlx::AssertSqlSafe(format!("SELECT count(*) FROM {table}")))
         .fetch_one(pool)
         .await
         .unwrap()
@@ -373,7 +374,7 @@ async fn rejects_unknown_envelopes_executable_schema_and_invalid_identity() {
         let path=temp.path().join(format!("invalid-{index}.sqlite"));
         std::fs::copy(&package,&path).unwrap();
         let edit=SqlitePoolOptions::new().max_connections(1).connect_with(SqliteConnectOptions::new().filename(&path)).await.unwrap();
-        sqlx::query(mutation).execute(&edit).await.unwrap(); edit.close().await;
+        sqlx::query(*mutation).execute(&edit).await.unwrap(); edit.close().await;
         assert!(import_project(&dest,&path,"NEW",org,&BTreeMap::new()).await.is_err(),"accepted mutation {index}");
     }
     assert_eq!(count(&dest, "projects").await, 0);

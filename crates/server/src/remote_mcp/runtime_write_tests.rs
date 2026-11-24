@@ -1244,10 +1244,11 @@ async fn reopened_database_preserves_work_questions_and_uncertain_operation_iden
         ("remote_mcp_operations", 1),
         ("agent_run_commands", 0),
     ] {
-        let count: i64 = sqlx::query_scalar(&format!("SELECT count(*) FROM {table}"))
-            .fetch_one(&restarted.pool)
-            .await
-            .unwrap();
+        let count: i64 =
+            sqlx::query_scalar(sqlx::AssertSqlSafe(format!("SELECT count(*) FROM {table}")))
+                .fetch_one(&restarted.pool)
+                .await
+                .unwrap();
         assert_eq!(count, expected, "{table}");
     }
     restarted.pool.close().await;

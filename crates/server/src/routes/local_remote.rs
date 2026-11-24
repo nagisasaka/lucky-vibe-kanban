@@ -4112,7 +4112,7 @@ mod tests {
         DesignNote::write(&pool,p,"human",input(serde_json::json!({"action":"set_addition_hidden","note_id":n.id,"addition_id":add.id,"expected_revision":1,"hidden":true}))).await.unwrap();
         async fn dump(pool: &SqlitePool, table: &str) -> Vec<String> {
             use sqlx::Row;
-            let columns = sqlx::query(&format!("PRAGMA table_info({table})"))
+            let columns = sqlx::query(sqlx::AssertSqlSafe(format!("PRAGMA table_info({table})")))
                 .fetch_all(pool)
                 .await
                 .unwrap();
@@ -4121,9 +4121,9 @@ mod tests {
                 .map(|r| format!("quote(\"{}\")", r.get::<String, _>("name")))
                 .collect::<Vec<_>>()
                 .join(",");
-            sqlx::query_scalar(&format!(
+            sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
                 "SELECT json_array({fields}) FROM {table} ORDER BY rowid"
-            ))
+            )))
             .fetch_all(pool)
             .await
             .unwrap()
@@ -4181,7 +4181,7 @@ mod tests {
             }
             assert!(DesignNote::detail(&pool, p, n.id).await.is_ok());
             // Remove only the synthetic blocker in this isolated fixture.
-            sqlx::query(&format!("DELETE FROM {table}"))
+            sqlx::query(sqlx::AssertSqlSafe(format!("DELETE FROM {table}")))
                 .execute(&pool)
                 .await
                 .unwrap();
@@ -4559,10 +4559,12 @@ mod tests {
             "local_tags",
         ] {
             assert_eq!(
-                sqlx::query_scalar::<_, i64>(&format!("SELECT count(*) FROM {table}"))
-                    .fetch_one(&pool)
-                    .await
-                    .unwrap(),
+                sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(format!(
+                    "SELECT count(*) FROM {table}"
+                )))
+                .fetch_one(&pool)
+                .await
+                .unwrap(),
                 0
             );
         }

@@ -316,3 +316,7 @@ impl EventService {
         &self.msg_store
     }
 }
+
+#[cfg(test)]
+#[path = "events/hook_tests.rs"]
+mod hook_tests;

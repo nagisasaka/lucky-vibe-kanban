@@ -392,9 +392,10 @@ async fn goal_real_dispatch_releases_lock_and_rejects_missing_provider_binding()
         ("execution_processes", 0),
         ("agent_provider_sessions", 0),
     ] {
-        let count: i64 = sqlx::query_scalar(&format!("SELECT count(*) FROM {table}"))
-            .fetch_one(pool)
-            .await?;
+        let count: i64 =
+            sqlx::query_scalar(sqlx::AssertSqlSafe(format!("SELECT count(*) FROM {table}")))
+                .fetch_one(pool)
+                .await?;
         assert_eq!(count, expected, "unexpected side effect in {table}");
     }
     let after = observation(pool, &target, None).await?;

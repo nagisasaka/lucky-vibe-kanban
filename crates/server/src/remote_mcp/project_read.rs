@@ -122,9 +122,10 @@ impl Remote {
             )
         );
         if let Some(cursor) = args.cursor {
+            // SESSIONS is constant SQL; project, cursor and filtering values are bound.
             let sql =
                 format!("SELECT EXISTS(SELECT 1 FROM ({SESSIONS}) WHERE id=? AND (?=0 OR active))");
-            let exists: bool = sqlx::query_scalar(&sql)
+            let exists: bool = sqlx::query_scalar(sqlx::AssertSqlSafe(sql))
                 .bind(args.project_id)
                 .bind(cursor)
                 .bind(args.active_only)
@@ -141,7 +142,7 @@ impl Remote {
         let sql = format!(
             "SELECT * FROM ({SESSIONS}) WHERE (?=0 OR active) AND (? IS NULL OR id>?) ORDER BY id LIMIT ?"
         );
-        let rows = sqlx::query(&sql)
+        let rows = sqlx::query(sqlx::AssertSqlSafe(sql))
             .bind(args.project_id)
             .bind(args.active_only)
             .bind(args.cursor)
@@ -160,7 +161,7 @@ impl Remote {
         // Aggregate scoped Session identities and canonical question state. Only
         // counts and the first 20 active summaries leave this boundary.
         let sql = format!("{SESSIONS} ORDER BY s.id");
-        let rows = sqlx::query(&sql)
+        let rows = sqlx::query(sqlx::AssertSqlSafe(sql))
             .bind(project)
             .fetch_all(&self.pool)
             .await?;
@@ -298,10 +299,12 @@ mod tests {
         assert_eq!(next["has_more"], false);
         for table in ["remote_mcp_operations", "agent_run_commands"] {
             assert_eq!(
-                sqlx::query_scalar::<_, i64>(&format!("SELECT count(*) FROM {table}"))
-                    .fetch_one(&remote.pool)
-                    .await
-                    .unwrap(),
+                sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(format!(
+                    "SELECT count(*) FROM {table}"
+                )))
+                .fetch_one(&remote.pool)
+                .await
+                .unwrap(),
                 0
             );
         }

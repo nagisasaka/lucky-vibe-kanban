@@ -328,12 +328,14 @@ impl Workspace {
             WorkspaceUsage::Interactive
         };
         let owner = owner.map(Json);
+        // SQLite RETURNING nullability inference can differ across engine versions.
+        // Preserve the nullable schema contract for these optional fields explicitly.
         Ok(sqlx::query_as!(
             Workspace,
             r#"INSERT INTO workspaces (id, task_id, container_ref, branch, setup_completed_at, name, usage, execution_owner)
                VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-               RETURNING id as "id!: Uuid", task_id as "task_id: Uuid", container_ref, workspace_kind as "workspace_kind!: WorkspaceKind", container_ownership as "container_ownership!: ContainerOwnership",
-                       usage as "usage!: WorkspaceUsage", execution_owner as "execution_owner: Json<WorkspaceExecutionOwner>", branch, setup_completed_at as "setup_completed_at: DateTime<Utc>", created_at as "created_at!: DateTime<Utc>", updated_at as "updated_at!: DateTime<Utc>", archived as "archived!: bool", pinned as "pinned!: bool", name, worktree_deleted as "worktree_deleted!: bool", arena_group_id as "arena_group_id: Uuid", arena_status as "arena_status!: ArenaStatus""#,
+               RETURNING id as "id!: Uuid", task_id as "task_id: Uuid", container_ref as "container_ref?", workspace_kind as "workspace_kind!: WorkspaceKind", container_ownership as "container_ownership!: ContainerOwnership",
+                       usage as "usage!: WorkspaceUsage", execution_owner as "execution_owner?: Json<WorkspaceExecutionOwner>", branch, setup_completed_at as "setup_completed_at: DateTime<Utc>", created_at as "created_at!: DateTime<Utc>", updated_at as "updated_at!: DateTime<Utc>", archived as "archived!: bool", pinned as "pinned!: bool", name, worktree_deleted as "worktree_deleted!: bool", arena_group_id as "arena_group_id?: Uuid", arena_status as "arena_status!: ArenaStatus""#,
             id,
             Option::<Uuid>::None,
             Option::<String>::None,
@@ -353,6 +355,8 @@ impl Workspace {
         id: Uuid,
         container_ref: &str,
     ) -> Result<Self, WorkspaceError> {
+        // SQLite RETURNING nullability inference can differ across engine versions.
+        // Preserve the nullable schema contract for these optional fields explicitly.
         Ok(sqlx::query_as!(
             Workspace,
             r#"INSERT INTO workspaces (
@@ -368,10 +372,10 @@ impl Workspace {
                VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
                RETURNING id as "id!: Uuid",
                          task_id as "task_id: Uuid",
-                         container_ref,
+                         container_ref as "container_ref?",
                          workspace_kind as "workspace_kind!: WorkspaceKind",
                          container_ownership as "container_ownership!: ContainerOwnership",
-                       usage as "usage!: WorkspaceUsage", execution_owner as "execution_owner: Json<WorkspaceExecutionOwner>",
+                       usage as "usage!: WorkspaceUsage", execution_owner as "execution_owner?: Json<WorkspaceExecutionOwner>",
                          branch,
                          setup_completed_at as "setup_completed_at: DateTime<Utc>",
                          created_at as "created_at!: DateTime<Utc>",
@@ -380,7 +384,7 @@ impl Workspace {
                          pinned as "pinned!: bool",
                          name,
                          worktree_deleted as "worktree_deleted!: bool",
-                         arena_group_id as "arena_group_id: Uuid",
+                         arena_group_id as "arena_group_id?: Uuid",
                          arena_status as "arena_status!: ArenaStatus""#,
             id,
             Option::<Uuid>::None,

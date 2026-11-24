@@ -101,6 +101,16 @@ async fn main() -> Result<(), VibeKanbanError> {
     let shutdown_token = CancellationToken::new();
 
     let deployment = DeploymentImpl::new(shutdown_token.clone()).await?;
+    // Report the engine on the server's own pool, not the host's sqlite3 CLI.
+    let (sqlite_version, fts5, preupdate_hook, unlock_notify): (String, bool, bool, bool) =
+        sqlx::query_as(
+            "SELECT sqlite_version(), sqlite_compileoption_used('ENABLE_FTS5'),
+                    sqlite_compileoption_used('ENABLE_PREUPDATE_HOOK'),
+                    sqlite_compileoption_used('ENABLE_UNLOCK_NOTIFY')",
+        )
+        .fetch_one(&deployment.db().pool)
+        .await?;
+    tracing::info!(%sqlite_version, fts5, preupdate_hook, unlock_notify, "SQLite engine initialized");
     deployment.update_sentry_scope().await?;
     // Deployment construction reconciles the durable process owner before
     // returning. Replay commands only after that attachment pass completes;

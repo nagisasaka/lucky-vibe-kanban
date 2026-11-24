@@ -1,0 +1,218 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO workspaces (id, task_id, container_ref, branch, setup_completed_at, name, usage, execution_owner)\n               VALUES ($1, $2, $3, $4, $5, $6, $7, $8)\n               RETURNING id as \"id!: Uuid\", task_id as \"task_id: Uuid\", container_ref as \"container_ref?\", workspace_kind as \"workspace_kind!: WorkspaceKind\", container_ownership as \"container_ownership!: ContainerOwnership\",\n                       usage as \"usage!: WorkspaceUsage\", execution_owner as \"execution_owner?: Json<WorkspaceExecutionOwner>\", branch, setup_completed_at as \"setup_completed_at: DateTime<Utc>\", created_at as \"created_at!: DateTime<Utc>\", updated_at as \"updated_at!: DateTime<Utc>\", archived as \"archived!: bool\", pinned as \"pinned!: bool\", name, worktree_deleted as \"worktree_deleted!: bool\", arena_group_id as \"arena_group_id?: Uuid\", arena_status as \"arena_status!: ArenaStatus\"",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!: Uuid",
+        "ordinal": 0,
+        "type_info": "Blob",
+        "origin": {
+          "Table": {
+            "table": "workspaces",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "name": "task_id: Uuid",
+        "ordinal": 1,
+        "type_info": "Blob",
+        "origin": {
+          "Table": {
+            "table": "workspaces",
+            "name": "task_id"
+          }
+        }
+      },
+      {
+        "name": "container_ref?",
+        "ordinal": 2,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "workspaces",
+            "name": "container_ref"
+          }
+        }
+      },
+      {
+        "name": "workspace_kind!: WorkspaceKind",
+        "ordinal": 3,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "workspaces",
+            "name": "workspace_kind"
+          }
+        }
+      },
+      {
+        "name": "container_ownership!: ContainerOwnership",
+        "ordinal": 4,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "workspaces",
+            "name": "container_ownership"
+          }
+        }
+      },
+      {
+        "name": "usage!: WorkspaceUsage",
+        "ordinal": 5,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "workspaces",
+            "name": "usage"
+          }
+        }
+      },
+      {
+        "name": "execution_owner?: Json<WorkspaceExecutionOwner>",
+        "ordinal": 6,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "workspaces",
+            "name": "execution_owner"
+          }
+        }
+      },
+      {
+        "name": "branch",
+        "ordinal": 7,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "workspaces",
+            "name": "branch"
+          }
+        }
+      },
+      {
+        "name": "setup_completed_at: DateTime<Utc>",
+        "ordinal": 8,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "workspaces",
+            "name": "setup_completed_at"
+          }
+        }
+      },
+      {
+        "name": "created_at!: DateTime<Utc>",
+        "ordinal": 9,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "workspaces",
+            "name": "created_at"
+          }
+        }
+      },
+      {
+        "name": "updated_at!: DateTime<Utc>",
+        "ordinal": 10,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "workspaces",
+            "name": "updated_at"
+          }
+        }
+      },
+      {
+        "name": "archived!: bool",
+        "ordinal": 11,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "workspaces",
+            "name": "archived"
+          }
+        }
+      },
+      {
+        "name": "pinned!: bool",
+        "ordinal": 12,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "workspaces",
+            "name": "pinned"
+          }
+        }
+      },
+      {
+        "name": "name",
+        "ordinal": 13,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "workspaces",
+            "name": "name"
+          }
+        }
+      },
+      {
+        "name": "worktree_deleted!: bool",
+        "ordinal": 14,
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "workspaces",
+            "name": "worktree_deleted"
+          }
+        }
+      },
+      {
+        "name": "arena_group_id?: Uuid",
+        "ordinal": 15,
+        "type_info": "Blob",
+        "origin": {
+          "Table": {
+            "table": "workspaces",
+            "name": "arena_group_id"
+          }
+        }
+      },
+      {
+        "name": "arena_status!: ArenaStatus",
+        "ordinal": 16,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "workspaces",
+            "name": "arena_status"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 8
+    },
+    "nullable": [
+      true,
+      true,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      false,
+      false,
+      false,
+      false,
+      true,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "8c7c5044effc38f056d3bc51b918db041ef87e63b19600a5502ee98577b0355b"
+}

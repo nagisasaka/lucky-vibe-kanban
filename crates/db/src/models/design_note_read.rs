@@ -152,7 +152,7 @@ pub async fn read(
         let sql = format!(
             "SELECT revision,json_extract(snapshot,'$.updated_at') AS saved_at FROM {table} WHERE {key}=? AND revision>? ORDER BY revision LIMIT ?"
         );
-        let rows = sqlx::query(&sql)
+        let rows = sqlx::query(sqlx::AssertSqlSafe(sql))
             .bind(id)
             .bind(a.after_revision.unwrap_or(0))
             .bind(size + 1)
@@ -169,7 +169,7 @@ pub async fn read(
     let sql = format!(
         "SELECT revision,length(snapshot) AS total,substr(snapshot,?,?) AS content FROM {table} WHERE {key}=? AND (? IS NULL OR revision=?) ORDER BY revision DESC LIMIT 1"
     );
-    let r = sqlx::query(&sql)
+    let r = sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(i64::from(a.offset) + 1)
         .bind(limit)
         .bind(id)

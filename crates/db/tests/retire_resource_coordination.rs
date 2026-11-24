@@ -56,9 +56,11 @@ async fn retires_populated_resources_and_runner_preserving_normal_work() {
         ("sessions", "02"),
         ("execution_processes", "03"),
     ] {
-        let count: i64 = sqlx::query_scalar(&format!(
-            "SELECT count(*) FROM {table} WHERE hex(id)='{id}'"
-        ))
+        // Table identifiers come from the fixed fixture list above.
+        let count: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
+            "SELECT count(*) FROM {table} WHERE hex(id)=?"
+        )))
+        .bind(id)
         .fetch_one(&pool)
         .await
         .unwrap();

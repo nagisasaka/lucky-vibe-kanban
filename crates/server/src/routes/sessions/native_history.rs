@@ -816,7 +816,7 @@ fn finalize_sessions(
         })
         .collect::<Vec<_>>();
 
-    sessions.sort_by(|a, b| b.last_used_at.cmp(&a.last_used_at));
+    sessions.sort_by_key(|session| std::cmp::Reverse(session.last_used_at));
     sessions.truncate(limit);
     sessions
 }
@@ -860,7 +860,7 @@ fn normalize_path_for_match(path: &Path) -> String {
 fn collect_jsonl_files(root: &Path, max_depth: usize) -> Vec<(PathBuf, DateTime<Utc>)> {
     let mut files = Vec::new();
     collect_jsonl_files_inner(root, 0, max_depth, &mut files);
-    files.sort_by(|a, b| b.1.cmp(&a.1));
+    files.sort_by_key(|file| std::cmp::Reverse(file.1));
     files
 }
 

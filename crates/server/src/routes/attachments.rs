@@ -137,7 +137,8 @@ pub async fn serve_file(
     Path(file_id): Path<Uuid>,
     State(deployment): State<DeploymentImpl>,
 ) -> Result<Response, ApiError> {
-    let issue_only: bool = sqlx::query_scalar(&format!("SELECT EXISTS(SELECT 1 FROM attachments WHERE id=?1 AND EXISTS(SELECT 1 FROM issue_attachments WHERE attachment_id=?1) AND NOT EXISTS(SELECT 1 FROM workspace_attachments WHERE attachment_id=?1) AND NOT EXISTS(SELECT 1 FROM project_attachments WHERE attachment_id=?1) AND {})", db::models::file::NO_PET_ATTACHMENT_REFERENCE))
+    // The interpolated attachment-reference predicate is constant SQL; id is bound.
+    let issue_only: bool = sqlx::query_scalar(sqlx::AssertSqlSafe(format!("SELECT EXISTS(SELECT 1 FROM attachments WHERE id=?1 AND EXISTS(SELECT 1 FROM issue_attachments WHERE attachment_id=?1) AND NOT EXISTS(SELECT 1 FROM workspace_attachments WHERE attachment_id=?1) AND NOT EXISTS(SELECT 1 FROM project_attachments WHERE attachment_id=?1) AND {})", db::models::file::NO_PET_ATTACHMENT_REFERENCE)))
         .bind(file_id).fetch_one(&deployment.db().pool).await?;
     if issue_only {
         return Err(ApiError::File(FileError::NotFound));

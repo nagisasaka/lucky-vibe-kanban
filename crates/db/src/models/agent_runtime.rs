@@ -2751,10 +2751,12 @@ mod tests {
             "agent_process_registry",
             "agent_run_state",
         ] {
-            let count: i64 = sqlx::query_scalar(&format!("SELECT COUNT(*) FROM {table}"))
-                .fetch_one(&pool)
-                .await
-                .unwrap();
+            // Table names come from the fixed fixture list above.
+            let count: i64 =
+                sqlx::query_scalar(sqlx::AssertSqlSafe(format!("SELECT COUNT(*) FROM {table}")))
+                    .fetch_one(&pool)
+                    .await
+                    .unwrap();
             assert_eq!(count, 1, "{table} should contain one logical identity");
         }
 
@@ -3733,15 +3735,17 @@ mod tests {
             } else {
                 request.agent_run_id
             };
-            let old: String =
-                sqlx::query_scalar(&format!("SELECT {column} FROM {table} WHERE {id_column}=?"))
-                    .bind(id)
-                    .fetch_one(&pool)
-                    .await
-                    .unwrap();
-            sqlx::query(&format!(
+            // All identifiers come from the fixed fixture cases; values remain bound.
+            let old: String = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
+                "SELECT {column} FROM {table} WHERE {id_column}=?"
+            )))
+            .bind(id)
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+            sqlx::query(sqlx::AssertSqlSafe(format!(
                 "UPDATE {table} SET {column}=? WHERE {id_column}=?"
-            ))
+            )))
             .bind(value)
             .bind(id)
             .execute(&pool)
@@ -3753,9 +3757,9 @@ mod tests {
                     .unwrap()
                     .is_empty()
             );
-            sqlx::query(&format!(
+            sqlx::query(sqlx::AssertSqlSafe(format!(
                 "UPDATE {table} SET {column}=? WHERE {id_column}=?"
-            ))
+            )))
             .bind(old)
             .bind(id)
             .execute(&pool)
@@ -4367,12 +4371,12 @@ mod tests {
         ];
 
         for table in tables {
-            let foreign_tables: Vec<String> = sqlx::query_scalar(&format!(
-                "SELECT \"table\" FROM pragma_foreign_key_list('{table}')"
-            ))
-            .fetch_all(&pool)
-            .await
-            .unwrap();
+            let foreign_tables: Vec<String> =
+                sqlx::query_scalar("SELECT \"table\" FROM pragma_foreign_key_list(?)")
+                    .bind(table)
+                    .fetch_all(&pool)
+                    .await
+                    .unwrap();
             assert!(
                 foreign_tables.iter().all(|target| !matches!(
                     target.as_str(),

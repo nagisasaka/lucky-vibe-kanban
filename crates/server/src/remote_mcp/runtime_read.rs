@@ -182,7 +182,7 @@ impl Remote {
         let sql = format!(
             "SELECT r.id,r.session_id,r.status,r.projection_status,r.updated_at,s.last_event_sequence,(SELECT json_extract(a.request_envelope,'$.executor_config.execution_mode') FROM agent_run_attempts a WHERE a.agent_run_id=r.id ORDER BY julianday(a.created_at) DESC,a.rowid DESC LIMIT 1) AS execution_mode,NOT EXISTS (SELECT 1 FROM agent_runs newer WHERE newer.session_id=r.session_id AND (newer.created_at>r.created_at OR (newer.created_at=r.created_at AND newer.rowid>r.rowid))) AS is_current_run,json_extract(s.state_json,'$.goal.status') AS goal_status,json_extract(s.state_json,'$.goal.token_budget') AS goal_token_budget,json_extract(s.state_json,'$.goal.tokens_used') AS goal_tokens_used,json_extract(s.state_json,'$.goal.time_used_seconds') AS goal_time_used_seconds,json_extract(s.state_json,'$.last_error.code') AS error_code,CASE WHEN json_type(s.state_json,'$.last_error.kind')='text' THEN json_extract(s.state_json,'$.last_error.kind') END AS error_kind,CASE WHEN json_type(s.state_json,'$.last_error.provider_code')='text' THEN json_extract(s.state_json,'$.last_error.provider_code') END AS error_provider_code,CASE WHEN json_type(s.state_json,'$.last_error.will_retry') IN ('true','false') THEN json_extract(s.state_json,'$.last_error.will_retry') END AS error_will_retry,substr(coalesce({expression},''),?,?) AS content,length(coalesce({expression},'')) AS total FROM agent_runs r LEFT JOIN agent_run_state s ON s.agent_run_id=r.id WHERE r.id=? AND r.workspace_id=?"
         );
-        let row = sqlx::query(&sql)
+        let row = sqlx::query(sqlx::AssertSqlSafe(sql))
             .bind(i64::from(args.offset) + 1)
             .bind(args.limit)
             .bind(args.agent_run_id)

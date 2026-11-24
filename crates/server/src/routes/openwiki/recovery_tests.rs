@@ -160,9 +160,11 @@ async fn exercise(deployment: &DeploymentImpl, instance: &FsPath) -> anyhow::Res
                 );
             }
             for table in ["workspaces", "sessions", "agent_runs", "workflow_runs"] {
-                let count: i64 = sqlx::query_scalar(&format!("SELECT COUNT(*) FROM {table}"))
-                    .fetch_one(&deployment.db().pool)
-                    .await?;
+                let count: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
+                    "SELECT COUNT(*) FROM {table}"
+                )))
+                .fetch_one(&deployment.db().pool)
+                .await?;
                 assert_eq!(count, 0, "{scenario}: no new {table}");
             }
         }

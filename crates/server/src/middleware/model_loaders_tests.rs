@@ -204,10 +204,12 @@ async fn public_workspace_and_session_routes_reject_before_handler_side_effects(
     );
     for table in ["agent_runs", "execution_processes", "local_workspace_links"] {
         assert_eq!(
-            sqlx::query_scalar::<_, i64>(&format!("SELECT COUNT(*) FROM {table}"))
-                .fetch_one(&pool)
-                .await
-                .unwrap(),
+            sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(format!(
+                "SELECT COUNT(*) FROM {table}"
+            )))
+            .fetch_one(&pool)
+            .await
+            .unwrap(),
             0
         );
     }

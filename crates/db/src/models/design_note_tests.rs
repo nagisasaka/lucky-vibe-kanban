@@ -695,10 +695,12 @@ async fn rejected_revision_rolls_back_note_and_idempotency_record() {
         .unwrap_err();
     assert!(matches!(error, DesignNoteError::Database(_)));
     for table in ["design_notes", "design_note_requests"] {
-        let count: i64 = sqlx::query_scalar(&format!("SELECT count(*) FROM {table}"))
-            .fetch_one(&pool)
-            .await
-            .unwrap();
+        // Table identifiers come from the fixed fixture list above.
+        let count: i64 =
+            sqlx::query_scalar(sqlx::AssertSqlSafe(format!("SELECT count(*) FROM {table}")))
+                .fetch_one(&pool)
+                .await
+                .unwrap();
         assert_eq!(count, 0);
     }
     sqlx::raw_sql("DROP TRIGGER reject_revision")

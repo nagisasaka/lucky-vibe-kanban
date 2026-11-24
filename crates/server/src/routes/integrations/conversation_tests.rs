@@ -704,7 +704,7 @@ async fn exercise(deployment: &DeploymentImpl, instance: &std::path::Path) -> an
             if restored_resume {
                 // A crash/guard failure after restoration but before durable
                 // publication intent must not consume permission to resume Wiki.
-                sqlx::query(&format!("CREATE TRIGGER fixture_intent_failure BEFORE UPDATE ON integration_runs WHEN NEW.id=X'{}' AND json_extract(NEW.payload,'$.publication_intent')=1 BEGIN SELECT RAISE(FAIL,'injected before publication intent'); END",id.simple())).execute(pool).await?;
+                sqlx::query(sqlx::AssertSqlSafe(format!("CREATE TRIGGER fixture_intent_failure BEFORE UPDATE ON integration_runs WHEN NEW.id=X'{}' AND json_extract(NEW.payload,'$.publication_intent')=1 BEGIN SELECT RAISE(FAIL,'injected before publication intent'); END",id.simple()))).execute(pool).await?;
                 ensure!(
                     advance(deployment, IntegrationRun::find(pool, id).await?)
                         .await
@@ -953,7 +953,7 @@ async fn exercise(deployment: &DeploymentImpl, instance: &std::path::Path) -> an
             continue;
         }
         if mode.ends_with("receipt-crash") {
-            sqlx::query(&format!("CREATE TRIGGER fixture_receipt_failure BEFORE UPDATE ON integration_runs WHEN NEW.id=X'{}' AND json_extract(NEW.payload,'$.published')=1 BEGIN SELECT RAISE(FAIL,'injected receipt failure'); END",id.simple())).execute(pool).await?;
+            sqlx::query(sqlx::AssertSqlSafe(format!("CREATE TRIGGER fixture_receipt_failure BEFORE UPDATE ON integration_runs WHEN NEW.id=X'{}' AND json_extract(NEW.payload,'$.published')=1 BEGIN SELECT RAISE(FAIL,'injected receipt failure'); END",id.simple()))).execute(pool).await?;
         }
         if mode == "source-head-unavailable" {
             sqlx::query("UPDATE workspaces SET container_ref=NULL WHERE id=?")

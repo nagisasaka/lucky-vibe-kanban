@@ -186,8 +186,9 @@ impl Remote {
             )
         );
         if let Some(cursor) = args.cursor {
+            // SQL fragments are constants; project and cursor values remain bound.
             let sql = format!("SELECT EXISTS(SELECT 1 FROM ({MEMBERS}) WHERE id=?)");
-            let exists: bool = sqlx::query_scalar(&sql)
+            let exists: bool = sqlx::query_scalar(sqlx::AssertSqlSafe(sql))
                 .bind(args.project_id)
                 .bind(cursor)
                 .fetch_one(&self.pool)
@@ -202,7 +203,7 @@ impl Remote {
         }
         let sql =
             format!("SELECT * FROM ({MEMBERS}) WHERE (? IS NULL OR id>?) ORDER BY id LIMIT ?");
-        let rows = sqlx::query(&sql)
+        let rows = sqlx::query(sqlx::AssertSqlSafe(sql))
             .bind(args.project_id)
             .bind(args.cursor)
             .bind(args.cursor)
@@ -230,7 +231,7 @@ impl Remote {
     }
     pub(super) async fn project_merges(&self, project: Uuid) -> anyhow::Result<Value> {
         let sql = format!("{MEMBERS} ORDER BY wr.id");
-        let rows = sqlx::query(&sql)
+        let rows = sqlx::query(sqlx::AssertSqlSafe(sql))
             .bind(project)
             .fetch_all(&self.pool)
             .await?;
@@ -463,10 +464,12 @@ mod tests {
         assert!(remote.merge_status(foreign).await.is_err());
         for table in ["remote_mcp_operations", "agent_run_commands"] {
             assert_eq!(
-                sqlx::query_scalar::<_, i64>(&format!("SELECT count(*) FROM {table}"))
-                    .fetch_one(&remote.pool)
-                    .await
-                    .unwrap(),
+                sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(format!(
+                    "SELECT count(*) FROM {table}"
+                )))
+                .fetch_one(&remote.pool)
+                .await
+                .unwrap(),
                 0
             );
         }

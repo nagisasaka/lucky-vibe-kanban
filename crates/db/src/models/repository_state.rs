@@ -117,7 +117,8 @@ impl RepositoryMemoryStore {
             .replace("CREATE TABLE ", "CREATE TABLE IF NOT EXISTS ")
             .replace("CREATE INDEX ", "CREATE INDEX IF NOT EXISTS ");
             for statement in schema.split(';').filter(|s| !s.trim().is_empty()) {
-                sqlx::query(statement)
+                // Statements come only from the embedded fixture migrations above.
+                sqlx::query(sqlx::AssertSqlSafe(statement.to_owned()))
                     .execute(&mut *conn)
                     .await
                     .map_err(invalid)?;
@@ -203,14 +204,16 @@ impl RepositoryMemoryStore {
         Ok(())
     }
 
+    // These private helpers receive only fixed repository_* table names from
+    // this module. Record identifiers and JSON payloads always remain bound.
     async fn get<T: serde::de::DeserializeOwned>(
         &self,
         table: &str,
         id: Uuid,
     ) -> io::Result<Option<T>> {
-        let json: Option<String> = sqlx::query_scalar(&format!(
+        let json: Option<String> = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
             "SELECT payload FROM {table} WHERE repository_id=? AND id=?"
-        ))
+        )))
         .bind(self.repository_id)
         .bind(id)
         .fetch_optional(&mut *self.connection().await?)
@@ -233,9 +236,9 @@ impl RepositoryMemoryStore {
             return Err(invalid("Operational record is too large"));
         }
         if !replace {
-            let old: Option<String> = sqlx::query_scalar(&format!(
+            let old: Option<String> = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
                 "SELECT payload FROM {table} WHERE repository_id=? AND id=?"
-            ))
+            )))
             .bind(self.repository_id)
             .bind(id)
             .fetch_optional(&mut *conn)
@@ -250,7 +253,7 @@ impl RepositoryMemoryStore {
                 ));
             }
         }
-        sqlx::query(&format!("INSERT INTO {table}(repository_id,id,payload) VALUES(?,?,?) ON CONFLICT(repository_id,id) DO UPDATE SET payload=excluded.payload")).bind(self.repository_id).bind(id).bind(json).execute(conn).await.map_err(invalid)?;
+        sqlx::query(sqlx::AssertSqlSafe(format!("INSERT INTO {table}(repository_id,id,payload) VALUES(?,?,?) ON CONFLICT(repository_id,id) DO UPDATE SET payload=excluded.payload"))).bind(self.repository_id).bind(id).bind(json).execute(conn).await.map_err(invalid)?;
         Ok(())
     }
 

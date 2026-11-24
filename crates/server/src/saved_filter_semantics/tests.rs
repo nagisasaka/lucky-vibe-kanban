@@ -567,7 +567,7 @@ async fn live_fixture_fingerprint(pool: &SqlitePool, run_id: Uuid) -> String {
         ("agent_runs", "id=?"),
         ("agent_run_state", "agent_run_id=?"),
     ] {
-        let columns = sqlx::query(&format!("PRAGMA table_info({table})"))
+        let columns = sqlx::query(sqlx::AssertSqlSafe(format!("PRAGMA table_info({table})")))
             .fetch_all(pool)
             .await
             .unwrap();
@@ -581,7 +581,7 @@ async fn live_fixture_fingerprint(pool: &SqlitePool, run_id: Uuid) -> String {
             .join(",");
         let sql =
             format!("SELECT json_array({quoted}) FROM {table} WHERE {predicate} ORDER BY rowid");
-        let mut query = sqlx::query_scalar::<_, String>(&sql);
+        let mut query = sqlx::query_scalar::<_, String>(sqlx::AssertSqlSafe(sql));
         if predicate != "1=1" {
             query = query.bind(run_id);
         }
