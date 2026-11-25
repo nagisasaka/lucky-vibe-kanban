@@ -5,13 +5,17 @@ description: HTTPS 配置、永続化、バックアップと復元。
 tags: [server, docker, backup, recovery]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-23T00:23:16.293Z
+    at: 2026-11-25T03:59:01.553Z
 sources:
+  - id: openwiki-source-a13fe4db1eee073d0a7e2c4d
+    resource: repo://crates/server/src/main.rs
   - id: openwiki-source-f771a8041ae618a5a49437b9
     resource: repo://deploy/developer/STAGING.md
   - id: openwiki-source-df6b7819295f53fc2381f23d
     resource: repo://deploy/server/compose.yaml
-generated: { by: "codex", at: "2026-11-23T00:23:16.293Z" }
+  - id: openwiki-source-bb1ebe868e35e9e500714501
+    resource: repo://Dockerfile
+generated: { by: "codex", at: "2026-11-25T03:59:01.553Z" }
 ---
 
 # サーバーコンテナー運用
@@ -25,6 +29,16 @@ versioned image、`LVK_HOST`、証明書と鍵を用意し、配置 directory �
 配置 directory で `LVK_IMAGE` に版固定 image、`LVK_HOST` と `LVK_PUBLIC_URL` に公開先を設定し、`secrets` に対応する証明書と鍵を用意する。Compose project と既存 volume を確認し、`docker compose up -d` で起動する。`docker compose ps` と logs、HTTPS を確認してから初回認証へ進む。設定や証明書に問題があれば修正して再確認し、空 volume で代用しない。
 
 三つの named volume は home `/home/appuser`（DB、設定、認証）、repos `/repos`（元 Repo）、work `/var/tmp`（worktree と run 関連）を保持する。Compose project 名変更は別 volume の選択になる。custom mount は別途保護し、再起動が実行中 process を復元すると仮定しない。[Compose](../../deploy/server/compose.yaml)
+
+## 配布イメージの SQLite と補助ツール
+
+セルフホスト用 `server` image は `server-tools` → `server-browser` → `server` の継承で `nano` を含み、最終実行 user は `appuser` である。nano は server-tools の apt 一覧に追加され、ビルド用 stage や別の最終 `runtime` target への追加ではない。廃止済み `scripts/local-runner` の不存在ファイルをコピーする行は削除されている。[Dockerfile](../../Dockerfile)
+
+配布候補を隔離環境で確認するときは、image digest と実行 SHA に加え、通常の `appuser` で `nano --version` を確認する。apt で解決する nano の版を Dockerfile が固定しているわけではない。稼働コンテナーへ手動導入して候補の検査に代えない。
+
+サーバー起動ログの `SQLite engine initialized` は、実際の DB pool から取得した `sqlite_version`、`fts5`、`preupdate_hook`、`unlock_notify` を記録する。LOCAL-495 の期待 engine は SQLite 3.54.1 である。host の `sqlite3 --version` や Python の SQLite 版はこの確認の代わりにならない。[起動処理](../../crates/server/src/main.rs)・[依存と互換試験](development.md#sqlite-と-sqlx-の更新互換性検証)
+
+注意: 起動ログは engine と compile options の確認であり、静的リンクの実バイナリ検査、DB データ保持やバックアップ復元の成功を単独では証明しない。旧版との小規模 fixture が成功しても、新しい schema や SQLite 機能を使った後の downgrade は保証されない。以下のバックアップと復元検証を省略しない。
 
 ## Provider の実行アカウントを準備する
 

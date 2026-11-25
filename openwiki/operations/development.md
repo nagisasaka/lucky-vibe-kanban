@@ -5,8 +5,18 @@ description: source 開発、検証、cache と復旧の境界。
 tags: [development, testing]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-24T01:12:27.599Z
+    at: 2026-11-25T03:59:01.553Z
 sources:
+  - id: openwiki-source-21cc2c4c9c881a800c33a448
+    resource: repo://.github/actions/cargo-checks-common-setup/action.yml
+  - id: openwiki-source-16e6e7418602542c69565bde
+    resource: repo://Cargo.lock
+  - id: openwiki-source-5c2565a649f8be059d306209
+    resource: repo://crates/db/src/lib.rs
+  - id: openwiki-source-7b783ec1a704bf9dadb9c003
+    resource: repo://crates/db/src/migration_compat.rs
+  - id: openwiki-source-b32329ab5b5881417948073f
+    resource: repo://crates/db/tests/sqlite_runtime.rs
   - id: openwiki-source-f771a8041ae618a5a49437b9
     resource: repo://deploy/developer/STAGING.md
   - id: openwiki-source-be93997623f6f900b78dd099
@@ -21,9 +31,13 @@ sources:
     resource: repo://deploy/developer/switch/start_binary.py
   - id: openwiki-source-6dc3f97222d590fbb8686593
     resource: repo://deploy/developer/switch/test_split_build.py
+  - id: openwiki-source-b7793decf9d7c9ba48e57e0f
+    resource: repo://rust-toolchain.toml
   - id: openwiki-source-8ea6c46d63953a7104f5dd97
     resource: repo://scripts/dev-cargo.mjs
-generated: { by: "codex", at: "2026-11-24T01:12:27.599Z" }
+  - id: openwiki-source-e433d5ca645048f1043ca4a3
+    resource: repo://tests/sqlite-upgrade/run.py
+generated: { by: "codex", at: "2026-11-25T03:59:01.553Z" }
 ---
 
 # 開発と検証
@@ -106,6 +120,25 @@ built preview は実行中の backend に接続する frontend のビルド結�
 3. エラーの場合は対象と checksum を確認し、履歴を手修正せず原因を調査する。[互換選択](../../crates/db/src/migration_compat.rs)
 
 注意: 互換版の適用後、raw `cargo sqlx migrate run` は元の SQL しか知らず checksum 不一致となる。旧 server も互換 checksum を拒否するため、単純な旧版への切り戻しはサポートされない。`_sqlx_migrations` の手修正で回避しない。[保守資料](../../crates/db/migration_compat/README.md)
+
+## SQLite と SQLx の更新・互換性検証
+
+LOCAL-495 は SQLite 自体を更新するため、SQLx 0.9.1 と libsqlite3-sys 0.40.0 を [Cargo.lock](../../Cargo.lock) に固定した。サーバーが使用する同梱 SQLite の期待値は 3.54.1 で、FTS5・preupdate hook・unlock notify は [runtime 試験](../../crates/db/tests/sqlite_runtime.rs)で検査する。検索機能や WAL 化はこの変更に含めない。[Issue 原文](../../docs/changes/2026-11-25-LOCAL-495-b65b381b.md)
+
+Rust は `nightly-2026-03-06`、CI の sqlx-cli は 0.9.1 を使う。依存を更新する際は [toolchain](../../rust-toolchain.toml)、[Dockerfile](../../Dockerfile)、[CI setup](../../.github/actions/cargo-checks-common-setup/action.yml)を一組として確認する。SQL query metadata は `pnpm run prepare-db` で生成し、`pnpm run prepare-db:check` で照合する。既存の metadata を手で調整して型差分を隠さない。
+
+SQLx 0.9 の動的 SQL は、識別子の allowlist・引用と値の bind を維持して `AssertSqlSafe` を適用する。この型は入力を自動的に無害化する仕組みではない。[動的 query](../../crates/db/src/models/design_note_read.rs)を変更するときも、SQL の生成元を確認する。migration の API 追従は埋め込み SQL と LF/CRLF の既知 checksum を選択する既存境界を維持する。[互換 migration](../../crates/db/src/migration_compat.rs)
+
+[DBService](../../crates/db/src/lib.rs)の journal mode は DELETE、busy timeout は5秒のままである。SQLite 更新を理由とした schema migration、WAL 切替、VACUUM は追加していない。既存の通知 hook は維持し、[通知試験](../../crates/services/src/services/events/hook_tests.rs)と runtime 試験が削除通知、接続設定、NULL と transaction recovery の回帰を扱う。
+
+旧版と新版の実 DBService を比較する場合は、稼働 DB ではなく次の隔離 fixture を使う。[fixture 手順](../../tests/sqlite-upgrade/README.md)
+
+1. 旧版・新版の固定 checkout に `tests/sqlite-upgrade/sqlite_upgrade_fixture.rs` を一時的に `crates/db/tests/` へコピーし、それぞれの toolchain で `node scripts/dev-cargo.mjs test -p db --test sqlite_upgrade_fixture --no-run` を実行する。
+2. 生成した二つの実行ファイルを指定し、`python3 -B tests/sqlite-upgrade/run.py --old /absolute/old-test --new /absolute/new-test --repo /absolute/new-checkout` を実行する。driver の期待版は旧3.46.0・新3.54.1であり、任意の旧版を受け付ける汎用ツールではない。
+3. driver の結果、実行ファイル hash と対象 SHA を保存する。旧→新→旧の読み書き、全テーブルと migration receipt、integrity/FK、双方向 Project export/import、既存 Python `backup_data` による backup と復元後の再接続を確認する。Project import は ID を再割当てし、`extension_metadata` を除外する既存契約に従う。
+4. 一時コピーした Rust fixture を削除する。driver は一時 instance と package を終了時に掃除する。失敗時は出力を保持し、実 DB の migration 履歴を手修正して試験を通さない。
+
+注意: fixture の存在は実行成功の証明ではない。小規模な代表データの互換性は、全 production データ、添付実体、将来の schema・SQLite 機能や拡張、Docker 配布、実機切替を保証しない。Python の SQLite とサーバーにリンクされた SQLite は別である。配備と rollback は [サーバー配置と復元](server-container.md)の整合 backup と版対応の確認に従う。
 
 ## 開発用 Cargo の用途選択
 

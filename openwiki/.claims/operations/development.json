@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:7c436ff8675def06335d262c114a4fb535756ea05a0f1a9b3aa33b7b78b3e4d6",
+  "pageVersion": "sha256:1ff5085036cfaf138468311815758bd3e04da2cc413fa87a70320ad66c411f9f",
   "claims": [
     {
       "id": "claim_de4e21d43dff4217a64b7e38af697b8a",
@@ -73,10 +73,76 @@
           "version": "repo-file-v1:sha256:754561f0d0e813189d209edec2721fd8e33d533a2ee4dfba347c9fcfed3c3c8e"
         }
       ]
+    },
+    {
+      "id": "claim_559e5d5eb9fd45ff917660a66b30ba6a",
+      "statement": "SQLx 0.9.1とlibsqlite3-sys 0.40.0を固定し、runtime試験はSQLite 3.54.1とFTS5・preupdate hook・unlock notifyを期待する。",
+      "evidence": [
+        {
+          "resource": "repo://Cargo.lock#L4076-L4088",
+          "version": "repo-lines-v1:sha256:fabcba4fb877cfd263519d63560a147604b912bb90ab3eec1a8477a7a9373698:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIxNTNhNTBiMTMxYzhjMzM3NjZmOWE2NjU4NjEwZTY4YWY1NTM5OWY4YzZiNjk4MThmMWI2MmNjZDBhN2Q4MGQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIxNTNhNTBiMTMxYzhjMzM3NjZmOWE2NjU4NjEwZTY4YWY1NTM5OWY4YzZiNjk4MThmMWI2MmNjZDBhN2Q4MGQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjczYWEwN2M5OTE0NmI5MDM2NjljM2RkNTFiMTEyYTU5YWRiNmJkMDU2YTZmMGJhNGY4ZWE2MmY1OTkxOGJlZjciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjAyMWY4MTliYjAyYzA1MDFlZjA4ZDczOWZmNzY2OTAyY2FhMjI4ZTNiMzEyYjU3MTFiOGZkOTE5ZTJhZTdmNWEifQ"
+        },
+        {
+          "resource": "repo://Cargo.lock#L7536-L7548",
+          "version": "repo-lines-v1:sha256:8ab820f3973959e2e5b1e36b9bcfffb8784d8e450e120b60cf6fb83e5921bea2:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIxNTNhNTBiMTMxYzhjMzM3NjZmOWE2NjU4NjEwZTY4YWY1NTM5OWY4YzZiNjk4MThmMWI2MmNjZDBhN2Q4MGQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjdkNjg4YTY2YWM2NTQ3Njk5Y2RlMDk3YzMzYTVhYmVhZGU3NWRhNDRmY2JmYjc2MzBhZTc1N2M5NjkyNjIwYTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFlYzk2YzJiN2MwNzM2M2M5MzU2M2Y2NTBhZDUxZDk1NzE1OTU4ZDVkOWRjOWZmYmYwNzQ4MDg3YWQ4NGI4NzkifQ"
+        },
+        {
+          "resource": "repo://crates/db/tests/sqlite_runtime.rs#L75-L100",
+          "version": "repo-lines-v1:sha256:3297322f0161339b810fe6b155e48b07ca2ac32817b075cfa1770e99b787b5d6:eyJzZWxlY3RlZExpbmVDb3VudCI6MjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjljNmZmZWY4YjFkNGI2NDYwMzU1OWRlYmRiNDA2MTNmNzUzOThiZGRmOGEwYjRlMmUwMDRkMTU3MjI0MmY2ZTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImZhODQwZTgxODhkOWJiMTNlODQ1ZmZiNDkyN2E5Zjk5NzMxNzIxNTNlNGYwNDY4ZjljNjdjYmEyMjkyZTQyZmQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM4MjEwODk0NGFjNDFiMmQ0ZWM3NzYwNzM0NmZhNzU4OGUwMTNmOGVmN2IwYmM2OGMwNDlhN2I2ZTNlNGJmZjQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_2291b7a548754b24a38fd783d482be3b",
+      "statement": "DBServiceはSQLite更新後もDELETE journalと5秒busy timeoutを使用する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/db/src/lib.rs#L18-L21",
+          "version": "repo-lines-v1:sha256:ea3e36f0ed3a66aa21226b7a3f7dbd5dd09b6beaabba0d20cd0a0e4c31c177f2:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYmExNWI4ZmE0NzkwYWU2N2VmYWQ2ZjBkMTAwZDVlNzg2MmU3MWE1NGY1NDg2NGQ2YTI4YzkxYjY4YWU4NGVjYyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMTY4YTA2MTVjZjQyMjUwMjBlYzJjMDkyMjQ0MWU4NGI0MzFhOGZkZTE0M2NkYzUzYTE3NWI4ZWIxZDM0NjkwYSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiN2UxZDRhYjU1YmI0MjdjMDA4OGY3ZWU1ODkwM2M3ZjU5OGIyZGFkZGJlY2JkMWU0ZGY1Y2ZjZmQ5MWY3NmIzOCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiM2JhOTc3NmJlZWE2NmVmZTQ4Y2Y2YmM5ZjYzZTQyOTAzZjhhOTUwM2VmOTdjNzhlNjA4ZDQzODk2ZWQwMTE5YiJ9"
+        },
+        {
+          "resource": "repo://crates/db/src/lib.rs#L275-L300",
+          "version": "repo-lines-v1:sha256:c848303b845254c7cb1cbad2754eb8f490fe2e7b9ff528c47e41eb3b73c12d5d:eyJzZWxlY3RlZExpbmVDb3VudCI6MjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBkYWFmZGJiOTM5YzU0NjQ4OTY3ZDkxZTI1YzIyYmYxNzNkOTUzMGQwNjVjZGNhNjliMGZlMmFiMThjZmVkZWIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcwMTA0MjI5NTg4ZjcyM2ZmNGVlMmY4OTBiMzllZmE4NTViMjMzZjZmYTdhNmE3MDM0MzVlNzk2MmRiNmYwZDgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjU2YzkyODEzMmM1ZDc2YTI3MmJiZGQ2NTZmZWJiOGRjMGExMDYxNDIwNTc1YjZjMDlmMjJmNTBjODM1YWFlNzQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjY5YWQwYTIxYmIyMDQyZGQ5ZmI0MWM3MWI3ZjY1ZWE5NThjYTU4MjM2YjMzY2FjNmE3MjU1MmMzZDdmM2M0ZmUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_7d714754ca434e36b1f17bd886b7c33b",
+      "statement": "隔離SQLite upgrade driverは旧3.46.0/新3.54.1の実DB fixtureを使い、双方向データ移送と既存backup_dataによる復元再接続を検査する。",
+      "evidence": [
+        {
+          "resource": "repo://tests/sqlite-upgrade/run.py",
+          "version": "repo-file-v1:sha256:f27ca6430fed9e57ddbefaa0c440b28842fde62dee2e9c222a64675e87bac848"
+        }
+      ]
+    },
+    {
+      "id": "claim_e93d307dcc6445ff86fe695ce7083dc4",
+      "statement": "Rust toolchainはnightly-2026-03-06、CIのsqlx-cliは0.9.1に固定される。",
+      "evidence": [
+        {
+          "resource": "repo://.github/actions/cargo-checks-common-setup/action.yml#L58-L64",
+          "version": "repo-lines-v1:sha256:e8d0ace4a135bfa798f4c22deed1bf87ed1e4775eb63100daa03f6e4930fe855:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNjk3NmE5MWI0NGU2ZjAwNWU5YTE4ZmZiNjI5MGY4M2ZlMjIxN2E1ZGFjMmNmNjgzZDM3YmIwZjk5NzExMmYwYSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDhjNzFjNjcyN2M2OGNlOWRjZjQwMDMwODU1NTc1ZDBmOTRiNDNkODI2NDBjZjcyM2VkNjZhYjE5OWIxNjliMCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMDVkODcxMDAzMWIxZTFjMDFmNzNhNzAzYjc4MjcyMjYwYWExNzM1MzIxOGVhMWU2ZWNhMGVjMWI4ZTMwNDkwMyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjAsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSJ9"
+        },
+        {
+          "resource": "repo://rust-toolchain.toml",
+          "version": "repo-file-v1:sha256:8caa50e197559c3d5f7214a22cbc542214a255cdd672ad89b4e5245a6022dc85"
+        }
+      ]
+    },
+    {
+      "id": "claim_3f602671f6354d359043607846b69e1d",
+      "statement": "SQLx 0.9のMigration API追従は埋め込みSQLと既知LF/CRLF checksumの選択境界を維持する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/db/src/migration_compat.rs#L47-L91",
+          "version": "repo-lines-v1:sha256:da47cac74ccbb103d76c12af5d292a155ccf6e503d22b1e2de4021d30d0d26e3:eyJzZWxlY3RlZExpbmVDb3VudCI6NDUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZmODQzNDM2Nzc4ODZhMmE0OGZhNGVhZWI2OTczZDhhMWJjOGI5NzQxMTZiNTc4NDM2MmYyNWNkODkzZTU2MmQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE0MmM2NGVhMDlmYzRhY2IxOTFiMTExZWM2NzFmMDU5MjgwMWJhMDhiMTY2ZWVlYTA1OGJmNDEzY2M4MjQ3M2UiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjRkMzhjMjc2NmI5NjEyYmZlMTQ3ZjczZjQ1MWMxYjA2NjJjMzYyZDZjNDM1NWMwNGE1MWUzMTY2NGI0ZTE3MzUifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.9.0",
-    "at": "2026-11-24T01:12:27.599Z"
+    "at": "2026-11-25T03:59:01.553Z"
   }
 }

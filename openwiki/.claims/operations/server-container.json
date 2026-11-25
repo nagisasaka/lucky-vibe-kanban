@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:e3877d737d10568e4471f90c377a3656dd7d95f853321d633a085ab4bd8b6095",
+  "pageVersion": "sha256:bfaf67f602d99b3915234ee7d7276f947751a7f4935554856b55e2fd7eb0a346",
   "claims": [
     {
       "id": "claim_c37f1211b5944a1d99635e047beae57d",
@@ -21,10 +21,34 @@
           "version": "repo-lines-v1:sha256:03acf994cc730d474926eee44c7b9af336f9285a4501db7d9d41c82d140e1c27:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiY2JhZWE4ZWIzM2E5NDIzZmU5NzlkMDZjNGY2MGIwNDE5ZjY0NmI3NjcxYjVjYTk2YzRlOTBkNmRkMTE0NzJiZCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNGFmNmQ3YmQzNmVhOGNiYTk5MWJkOGM4NzhiNzQ5MzdmZjYzMTRkYzllNWZhODcxOGNhMzU1MzE5NmJhYTQwZCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiODhlYTIxM2RiNWVlNjU0ZDVmMmU4YzRiNThlODVkNTdlOTQ3MGYyZWNjYzI5ZTJkNjE4NzBmNjYwYWIxYjhkNCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMGQ5MDA3Mjk5M2JhNmQxZWI1Yzc2ODY2ZWFmMTgwZGIzODcyYTBmODg2MmNiNzRjODA1NjJlMDU2NzE4YTJlNiJ9"
         }
       ]
+    },
+    {
+      "id": "claim_3658de861dea4c889263fd912580bef4",
+      "statement": "セルフホストserverはserver-tools/server-browser経由でnanoを含み、最終USERはappuserである。",
+      "evidence": [
+        {
+          "resource": "repo://Dockerfile#L170-L180",
+          "version": "repo-lines-v1:sha256:b6add18a49e12ad92679647464f82cf32b073fb8a30fae0ad19925180a307c99:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdhYzc3YjkxMDhlMzlkNGI2ZTliMDAyNGRjOGM3MjJjNDlmZjNkZWI4ZDVjNTkxNTk0ZjA0YmZmYWQxNDk2OGMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUyNGQ2YzE3NTE3YzAyNWI5YWI4MzQzOWJkYzQ1YjY1NDQ1MTBiZTkxNzQwOGU2Y2RiZjQ4NGNiOTVjZmIxYTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY2NjkxMzYwNzZkNDM5OTdmZjIxYjZhN2Y3ZTk2N2RkYWE4NDY4YWRmZWQ3NzM3ZmFkY2I5YWJjYTVmZjE2OTEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFkZmRmM2UyODBhNWY2YjUzMjc2ZmUzNGEwMTU2NDc3MzU4YjFhYjY0ZmZkM2ZlZmFlNGNiZmZmNmMxNWJhZGIifQ"
+        },
+        {
+          "resource": "repo://Dockerfile#L223-L239",
+          "version": "repo-lines-v1:sha256:8fa209c4290ef28dd5b9f581e7a6ba9f74909608fba66f5e5c9b39001880ff4e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVlZTI3YTEzMjFlMmViMmFjMDk3NGYyYWE4MWI5OGVhMTUzNzhkNDNhNTg4NzFlOTljMDUxZDFkODQyMjEwOWEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcxYjMzN2VlNWJlMjI0ZGM0ZmI4N2ZiZmE0YTNlY2Q1NTBlOTU5MDMzMmNkY2YyMDE2OTIzMzRlZDRmOWJiZjgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjMwNTM2MjQyMzkwMDcyZDlkMDJhYzQ1YjFiNGZmZjYzYWEzMmFlZjk5Y2IwNmZkZjk0Y2NjN2QzY2JiOTg3MDYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZhYjhmY2ZkNGJhZWNlZjJjYTRlMTkyMjYxZTg4YzgwYTljZGMzZDlhYjJiMmZhNjM1ZWY5MTAwYThmYmJhZWYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_ddb60833167f4ed0874fcf040a4fd0e8",
+      "statement": "サーバー起動は実際のDB poolからSQLite版とFTS5/preupdate hook/unlock notifyのcompile optionsを取得してログへ記録する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/main.rs#L103-L114",
+          "version": "repo-lines-v1:sha256:15bf24e454a82384e9b66ba81242f8472a53a6602529136995a851290ffc7770:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk3MmM4ZjNlN2QzNTA0ZTYzNTRmY2ZhODhhZDRmMGExNzNjMzQxNzI2NDdhODRmODdjYjJmNzMyNjkzMmY2YTEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVmZWNkNjk3MjhiZDk0ZmU1MmY1NzE3NmI1NWJlYzcwMzUwMjBmMDI2ZjA3ODk1MDMwMzM2YjlkMzE4YThhYzUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImM5M2Q2M2FlMmU1NTU4YzMzMDJkM2NiYzQwMzhhZTlkNTY4MzVlZTdlMmViN2Q1ZTBiMzI2YjYwNzczZWY0NTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjVkM2Y4MWU5ZmViNGZiN2Q3ZmY2YTU5ZjZiMDA1NmM5Y2U5OGFmMjYwMjU5ZWMzM2QyYmQ2ZTM4NzExMjUxMWIifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.9.0",
-    "at": "2026-11-23T00:23:16.293Z"
+    "at": "2026-11-25T03:59:01.553Z"
   }
 }
