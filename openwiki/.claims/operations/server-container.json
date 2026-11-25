@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:bfaf67f602d99b3915234ee7d7276f947751a7f4935554856b55e2fd7eb0a346",
+  "pageVersion": "sha256:b820785eeb156e468d3ba765431a7dd2531bd1b8609de9b3aa04e484de18de03",
   "claims": [
     {
       "id": "claim_c37f1211b5944a1d99635e047beae57d",
@@ -28,7 +28,7 @@
       "evidence": [
         {
           "resource": "repo://Dockerfile#L170-L180",
-          "version": "repo-lines-v1:sha256:b6add18a49e12ad92679647464f82cf32b073fb8a30fae0ad19925180a307c99:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdhYzc3YjkxMDhlMzlkNGI2ZTliMDAyNGRjOGM3MjJjNDlmZjNkZWI4ZDVjNTkxNTk0ZjA0YmZmYWQxNDk2OGMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUyNGQ2YzE3NTE3YzAyNWI5YWI4MzQzOWJkYzQ1YjY1NDQ1MTBiZTkxNzQwOGU2Y2RiZjQ4NGNiOTVjZmIxYTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY2NjkxMzYwNzZkNDM5OTdmZjIxYjZhN2Y3ZTk2N2RkYWE4NDY4YWRmZWQ3NzM3ZmFkY2I5YWJjYTVmZjE2OTEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFkZmRmM2UyODBhNWY2YjUzMjc2ZmUzNGEwMTU2NDc3MzU4YjFhYjY0ZmZkM2ZlZmFlNGNiZmZmNmMxNWJhZGIifQ"
+          "version": "repo-lines-v1:sha256:4b1d9e81049045aedb359845bf49637dc7c1a647020f0bfbfc23711f911ba500:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdhYzc3YjkxMDhlMzlkNGI2ZTliMDAyNGRjOGM3MjJjNDlmZjNkZWI4ZDVjNTkxNTk0ZjA0YmZmYWQxNDk2OGMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUyNGQ2YzE3NTE3YzAyNWI5YWI4MzQzOWJkYzQ1YjY1NDQ1MTBiZTkxNzQwOGU2Y2RiZjQ4NGNiOTVjZmIxYTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY2NjkxMzYwNzZkNDM5OTdmZjIxYjZhN2Y3ZTk2N2RkYWE4NDY4YWRmZWQ3NzM3ZmFkY2I5YWJjYTVmZjE2OTEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFkZmRmM2UyODBhNWY2YjUzMjc2ZmUzNGEwMTU2NDc3MzU4YjFhYjY0ZmZkM2ZlZmFlNGNiZmZmNmMxNWJhZGIifQ"
         },
         {
           "resource": "repo://Dockerfile#L223-L239",
@@ -45,10 +45,48 @@
           "version": "repo-lines-v1:sha256:15bf24e454a82384e9b66ba81242f8472a53a6602529136995a851290ffc7770:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk3MmM4ZjNlN2QzNTA0ZTYzNTRmY2ZhODhhZDRmMGExNzNjMzQxNzI2NDdhODRmODdjYjJmNzMyNjkzMmY2YTEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVmZWNkNjk3MjhiZDk0ZmU1MmY1NzE3NmI1NWJlYzcwMzUwMjBmMDI2ZjA3ODk1MDMwMzM2YjlkMzE4YThhYzUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImM5M2Q2M2FlMmU1NTU4YzMzMDJkM2NiYzQwMzhhZTlkNTY4MzVlZTdlMmViN2Q1ZTBiMzI2YjYwNzczZWY0NTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjVkM2Y4MWU5ZmViNGZiN2Q3ZmY2YTU5ZjZiMDA1NmM5Y2U5OGFmMjYwMjU5ZWMzM2QyYmQ2ZTM4NzExMjUxMWIifQ"
         }
       ]
+    },
+    {
+      "id": "claim_5c6ca35c55644980ac38e3bc71a53529",
+      "statement": "serverは既存server-toolsのapt経路でDebian ffmpegを同梱し、汎用媒体変換CLIとして提供する。別runtime targetやLVK動画API/UIの追加ではない。",
+      "evidence": [
+        {
+          "resource": "repo://Dockerfile#L159-L180",
+          "version": "repo-lines-v1:sha256:885c1ad98468190bf3a19296b8f5f3473b9309bac74a2a1c76784c461d8d111d:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjljMTkyYmYyYWRkNzNmNDJjMGRiYjdjMTkwOWIzN2RjMmVlOGQ3NzUxOWZlMzgzMjU4YWE5YTMwOGQ0MzBiYjAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUyNGQ2YzE3NTE3YzAyNWI5YWI4MzQzOWJkYzQ1YjY1NDQ1MTBiZTkxNzQwOGU2Y2RiZjQ4NGNiOTVjZmIxYTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjYwMjVjNjQxNDYxZmEzNDUzZjViM2FjMDNlNWEyODRmNmExZjU5MTA2M2U2MGYxN2JkNmRkMTRmZTcxNDVmNDgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFkZmRmM2UyODBhNWY2YjUzMjc2ZmUzNGEwMTU2NDc3MzU4YjFhYjY0ZmZkM2ZlZmFlNGNiZmZmNmMxNWJhZGIifQ"
+        },
+        {
+          "resource": "repo://docs/changes/2026-11-25-LOCAL-501-0fd246f8.md",
+          "version": "repo-file-v1:sha256:6694465a9873989e0bdd7d9565828792ed61b455bc574ec2a6104c8ec21b3ddb"
+        }
+      ]
+    },
+    {
+      "id": "claim_995250fed26545fab2bba7afe5fb0b48",
+      "statement": "ffmpeg-smoke.shはappuser UID 10001で人工FFV1素材をMPEG-4へ変換し、ffprobeで寸法・長さ・サイズを確認し、再デコードとSHA-256読取を行う。",
+      "evidence": [
+        {
+          "resource": "repo://deploy/server/ffmpeg-smoke.sh",
+          "version": "repo-file-v1:sha256:0d124c94561718f0d2ae35c1ea6eabb7705c9bc9c4a19c3fe1dac4486e20b852"
+        }
+      ]
+    },
+    {
+      "id": "claim_838934528aee481cb3d52a32bb2e2139",
+      "statement": "FFmpeg検証手順は同条件before/afterのimageサイズとパッケージ差分を照合し、外部配布前の全依存表示・対応ソース提供を未完了の別確認として扱う。",
+      "evidence": [
+        {
+          "resource": "repo://deploy/server/FFMPEG.md#L151-L171",
+          "version": "repo-lines-v1:sha256:a1c8f9815152dd830f59a2b56c47c2529f1d4d9d0961b1003c19670a00afa6b0:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM2MWQ0Yjc3ZTM2MGQ3ZDllOGJiYjM0NmZiNDVjODQxZThiMjlhOGY3MzMwZmIyM2Q2MDY5MTQ5ZDZhNjk0MWEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI2ODRkOTU4MTVhZTAwNWVkNzhiMDVmNzkzNGIxZTEwNzM1ZGFiZGQ3MTg4NWM5MGEyMWZkNWRiM2ZjNDc1YmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjUxMmI2OTg1NWVlM2Q0NzIyN2NhMjZkYzRhZDM3NGQxNGQ2YTUzNDA0MzU4MWJlMWY3MjY4NDIyMjc4NGIwMDUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        },
+        {
+          "resource": "repo://deploy/server/FFMPEG.md#L33-L111",
+          "version": "repo-lines-v1:sha256:14e19f3be511a1f8f418b720b68267d6436c1ddd7dbeeb1897929713ee9364af:eyJzZWxlY3RlZExpbmVDb3VudCI6NzksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdkZTQxY2YwNGZiNmY5OGEzZjUyMWFiZTlhMjQwNDRhYTk5MWQxMjlhMjAxY2JiY2M1NDI0MmFiY2Q4YTU3NjMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2M2UyOTZhYjE2MDYwZTllMGRmODk4YjJkMGQ5YzIxMTJlYzBjNDI4OWFkMGJlYTIwYTYyODIzNzdiNjU1MDciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjVkODZjYzJmZjc3ZjcyOTQ0MjcwNjlkNGZlMmExZmYzNmM5MDYxYzJlNGFkNGMxZTFiNzdiMGViYTA1MzlmZjAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdiNWNmYWQ4NTlmMmMyN2QyMjFlYzVjMWMwYmE1NDc0NGVlNzUzYTEwNzlhZTU5ZDQ5ZmMzNjBlZDkyNmVlMWQifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.9.0",
-    "at": "2026-11-25T03:59:01.553Z"
+    "at": "2026-11-25T07:33:39.418Z"
   }
 }

@@ -5,7 +5,7 @@ description: HTTPS 配置、永続化、バックアップと復元。
 tags: [server, docker, backup, recovery]
 verified:
   - by: openwiki/0.9.0
-    at: 2026-11-25T03:59:01.553Z
+    at: 2026-11-25T07:33:39.418Z
 sources:
   - id: openwiki-source-a13fe4db1eee073d0a7e2c4d
     resource: repo://crates/server/src/main.rs
@@ -13,9 +13,15 @@ sources:
     resource: repo://deploy/developer/STAGING.md
   - id: openwiki-source-df6b7819295f53fc2381f23d
     resource: repo://deploy/server/compose.yaml
+  - id: openwiki-source-b62c808fd8e21e00434e716d
+    resource: repo://deploy/server/ffmpeg-smoke.sh
+  - id: openwiki-source-62c18d078e22dc3ceaf8bd8e
+    resource: repo://deploy/server/FFMPEG.md
   - id: openwiki-source-bb1ebe868e35e9e500714501
     resource: repo://Dockerfile
-generated: { by: "codex", at: "2026-11-25T03:59:01.553Z" }
+  - id: openwiki-source-ef37b53f9e3030caf4e3bc84
+    resource: repo://docs/changes/2026-11-25-LOCAL-501-0fd246f8.md
+generated: { by: "codex", at: "2026-11-25T07:33:39.418Z" }
 ---
 
 # サーバーコンテナー運用
@@ -39,6 +45,35 @@ versioned image、`LVK_HOST`、証明書と鍵を用意し、配置 directory �
 サーバー起動ログの `SQLite engine initialized` は、実際の DB pool から取得した `sqlite_version`、`fts5`、`preupdate_hook`、`unlock_notify` を記録する。LOCAL-495 の期待 engine は SQLite 3.54.1 である。host の `sqlite3 --version` や Python の SQLite 版はこの確認の代わりにならない。[起動処理](../../crates/server/src/main.rs)・[依存と互換試験](development.md#sqlite-と-sqlx-の更新互換性検証)
 
 注意: 起動ログは engine と compile options の確認であり、静的リンクの実バイナリ検査、DB データ保持やバックアップ復元の成功を単独では証明しない。旧版との小規模 fixture が成功しても、新しい schema や SQLite 機能を使った後の downgrade は保証されない。以下のバックアップと復元検証を省略しない。
+
+## FFmpeg による媒体変換と候補の検証
+
+`server` は Debian の公式 `ffmpeg` パッケージを `server-tools` の既存 apt 経路で導入する。利用者が録画の切り出しや形式変換に使う汎用 CLI としての同梱で、LVK 本体の動画 API/UI の追加ではない。別 target の `runtime` と dev バンドルはこの変更の対象外である。[Dockerfile](../../Dockerfile)・[LOCAL-501 の採用時仕様](../../docs/changes/2026-11-25-LOCAL-501-0fd246f8.md)
+
+候補を検証する場合は、Docker を使える隔離環境と候補 image ID を用意する。LOCAL-495 の比較 image と既存 builder/cache を保持し、dev の重いビルドと重ねない。通常の稼働環境や永続 volume を検査に使わない。
+
+1. `server/linux-amd64` の before/after を、同じ context、build args、FROM digest、apt snapshot、npm 解決結果で用意する。before は ffmpeg 追加だけを除く。未公開 SHA を公開 Git から取得する `bundled-source` に渡せない場合の前提と停止条件は[検証手順](../../deploy/server/FFMPEG.md)を参照する。
+2. image ID、platform、既定 user、パッケージ版一覧を保存する。追加だけでなく更新・削除も比較し、無関係な差があれば同条件比較として扱わない。非圧縮 image の `.Size` の差を bytes と MiB で記録する。共有 layer を除いたディスク使用量や転送量とは異なる。
+3. `AFTER` に候補の不変 image ID を設定し、repository root から次を実行する。既定 user を上書きせず、ネットワーク、host mount、永続 volume、公開 port を使わない。
+
+```bash
+docker run --rm -i --network none --read-only \
+  --tmpfs /tmp:rw,nosuid,nodev,size=64m --cap-drop ALL \
+  --security-opt no-new-privileges --entrypoint /bin/sh "$AFTER" \
+  -s < deploy/server/ffmpeg-smoke.sh
+```
+
+4. [smoke](../../deploy/server/ffmpeg-smoke.sh) は appuser/UID 10001、ffmpeg/ffprobe の実行、人工 2 秒 FFV1 素材から 1 秒 MPEG-4/MP4 への変換、寸法・長さ・サイズ、全出力の再デコードと SHA-256 読取を確認する。全段階 exit 0 と image ID・ログを対応付ける。失敗時はログを保持して稼働環境へ適用せず、終了した検査の一時素材だけを片付ける。
+
+2026-11-25 の統合依頼では、対象 SHA `3f4d8297127bff5516d2a63ac886c55821c901df` の VPS 隔離実行で appuser の変換・probe・再デコードが成功し、同条件 A/B 増分は **301.13 MiB** と報告された。これは依頼者提供の実測情報であり、この Wiki 更新時に再実行した結果ではない。候補の Dockerfile・smoke・手順が対象 SHA と同一であることを確認して Docker 再実行を省略した。[実装時の記録](../../deploy/server/FFMPEG.md)にある「未実施」は元の coding Workspace 時点の履歴である。
+
+外部配布前には、候補に入る実版の全依存、著作権・ライセンス表示、対応ソースの保存と提供経路・維持責任を別ゲートで確認する。[配布確認項目](../../deploy/server/FFMPEG.md)は未解決事項を含み、CLI の実行成功やローカル main への統合は配布条件の充足を証明しない。
+
+注意:
+
+- apt 解決版は Dockerfile で固定されていないため、後日の build が同じ package set や容量になるとは限らない。
+- この smoke は全 codec、GPU、音声、NewsRoom ワークフローを検証しない。
+- source 作業時の `server:check` は 34 passed / 1 failed / 8 skipped と記録されている。今回の統合では再実行せず、差分とシェル構文のみを確認した。過去の失敗・未実施を pass に読み替えない。
 
 ## Provider の実行アカウントを準備する
 
