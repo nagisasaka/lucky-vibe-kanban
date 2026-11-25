@@ -175,7 +175,7 @@ RUN apt-get update \
  && apt-get install -y --no-install-recommends \
     nginx apache2-utils openssl curl bash git git-lfs gh ripgrep less nano \
     build-essential libclang-dev libssl-dev pkg-config cmake ninja-build nasm \
-    python3 python3-venv unzip zip bubblewrap socat \
+    python3 python3-venv unzip zip bubblewrap socat ffmpeg \
  && rm -rf /var/lib/apt/lists/* \
  && npm install --global --omit=dev "@openai/codex@${CODEX_VERSION}" pnpm@10.13.1 \
  && codex --version \
